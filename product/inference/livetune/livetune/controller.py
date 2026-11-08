@@ -7,7 +7,6 @@ from typing import Any, Callable
 
 from livetune.knobs import VARIANT_KEY
 from livetune.metrics import Window
-from livetune.variants import STOCK
 from livetune.policy import Policy, Rule, Shape
 
 logger = logging.getLogger(__name__)
@@ -42,6 +41,8 @@ class Controller:
     variant_dwell: int = 6
     variant_cooldown_s: float = 600.0
     margin: float = 0.15
+    # Off in observe mode: nothing was applied, so live SLO results say nothing about the rule.
+    judge_changes: bool = True
     # Settings a rule omits fall back to these, so every rule, and every rollback, sets the same keys.
     startup: dict[str, Any] = field(default_factory=dict)
     current: str | None = None
@@ -86,12 +87,7 @@ class Controller:
             return None
         verdict = self._slo(window)
         if self.current is None:
-            rule = self.policy.select(shape)
-            # After a failed apply the server's variant is unknown; a variant switch, which may be
-            # what failed, waits out its cooldown instead of retrying every window.
-            if self._switches_variant(rule) and now - self._last_variant_change < self.variant_cooldown_s:
-                return None
-            return self._change(rule, now, "initial", verdict)
+            return self._change(self.policy.select(shape), now, "initial", verdict, defer_variant=True)
 
         rollback = self._judge_probation(verdict, now)
         if rollback is not None:
@@ -100,6 +96,8 @@ class Controller:
             self._recent_slo = (self._recent_slo + [verdict])[-6:]
 
         target = self._robust_target(shape)
+        if target.name == self.current and self._variant_deferred(target, now):
+            return self._change(target, now, "retry variant", verdict, probation=False)
         if target.name == self.current or self._penalties.get(target.name, float("-inf")) > now:
             self._candidate, self._candidate_windows = None, 0
             return None
@@ -152,20 +150,28 @@ class Controller:
         return {**self.startup, **rule.settings}
 
     def _switches_variant(self, rule: Rule) -> bool:
+        # An unknown variant (nothing applied yet, or forgotten after a failure) counts as a switch.
         settings = self._settings(rule)
-        return VARIANT_KEY in settings and settings[VARIANT_KEY] != self.applied.get(VARIANT_KEY, STOCK)
+        return VARIANT_KEY in settings and settings[VARIANT_KEY] != self.applied.get(VARIANT_KEY)
 
-    def _change(self, rule: Rule, now: float, reason: str, verdict: bool | None, probation: bool = True) -> Action:
-        if self._switches_variant(rule):
-            self._last_variant_change = now
+    def _variant_deferred(self, rule: Rule, now: float) -> bool:
+        return VARIANT_KEY in self._settings(rule) and VARIANT_KEY not in self.applied and now - self._last_variant_change >= self.variant_cooldown_s
+
+    def _change(self, rule: Rule, now: float, reason: str, verdict: bool | None, probation: bool = True, defer_variant: bool = False) -> Action:
         previous = self.current
         settings = self._settings(rule)
+        if defer_variant and now - self._last_variant_change < self.variant_cooldown_s:
+            # Re-applying after a failure: the variant switch may be what failed, so set the other
+            # knobs now and retry the variant once its cooldown has passed.
+            settings.pop(VARIANT_KEY, None)
         diff = {key: value for key, value in settings.items() if self.applied.get(key, object()) != value}
+        if VARIANT_KEY in diff:
+            self._last_variant_change = now
         slo_before = all(self._recent_slo[-3:]) if self._recent_slo else bool(verdict)
         self.current, self._last_change = rule.name, now
         self._candidate, self._candidate_windows = None, 0
         self.applied.update(settings)
-        if probation and previous is not None:
+        if probation and self.judge_changes and previous is not None:
             self._probation = _Probation(rule.name, previous, now, slo_before)
         self._recent_slo = []
         return Action(rule.name, diff, reason)

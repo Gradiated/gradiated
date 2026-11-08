@@ -243,13 +243,25 @@ class ControllerTest(unittest.TestCase):
         self.assertEqual([a.rule for a in moved if a], ["u36"])  # two windows at 35-36 pick u36; 40 is within its margin
 
     def test_a_failed_variant_switch_is_not_retried_every_window(self):
-        policy = Policy(Slo(50, 5), (Rule("light", 4, math.inf, {"forward_variant": 0}), Rule("busy", math.inf, math.inf, {"forward_variant": 2})))
+        policy = Policy(Slo(50, 5), (Rule("light", 4, math.inf, {"forward_variant": 0, "max_running_requests": 8}),
+                                     Rule("busy", math.inf, math.inf, {"forward_variant": 2, "max_running_requests": 32})))
         ctl = control.Controller(policy, dwell=1, cooldown_s=0, variant_dwell=1, variant_cooldown_s=100, smoothing=1.0, demand_decay=0)
         ctl.step(_window(2), 0)
-        self.assertEqual(ctl.step(_window(10), 5).rule, "busy")
-        ctl.forget()  # the run loop's response to a failed apply
-        self.assertIsNone(ctl.step(_window(10), 10))
-        self.assertEqual(ctl.step(_window(10), 105).rule, "busy")
+        self.assertEqual(ctl.step(_window(10), 100).settings, {"forward_variant": 2, "max_running_requests": 32})
+        ctl.forget()  # the run loop's response to the switch failing
+        # The knobs come back at once; the variant waits out its cooldown, then is retried once.
+        self.assertEqual(ctl.step(_window(10), 105).settings, {"max_running_requests": 32})
+        self.assertIsNone(ctl.step(_window(10), 150))
+        self.assertEqual(ctl.step(_window(10), 200).settings, {"forward_variant": 2})
+        self.assertIsNone(ctl.step(_window(10), 205))
+
+    def test_observe_mode_does_not_judge_changes_it_never_applied(self):
+        ctl = control.Controller(_policy(), dwell=1, cooldown_s=0, probation_s=10, smoothing=1.0, judge_changes=False)
+        ctl.step(_window(2), 0)
+        ctl.step(_window(2), 5)
+        ctl.step(_window(10, tps=20), 10)
+        self.assertIsNone(ctl.step(_window(10, tps=20), 25))
+        self.assertEqual(ctl.current, "busy")
 
     def test_variant_switches_need_longer_dwell_and_cooldown(self):
         policy = Policy(Slo(50, 5), (Rule("light", 4, math.inf, {"forward_variant": 1}), Rule("busy", math.inf, math.inf, {"forward_variant": 0})))

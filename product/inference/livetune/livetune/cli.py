@@ -222,8 +222,9 @@ def main(argv: list[str] | None = None) -> int:
         replay(args, server)
     elif args.command == "control":
         policy = load_policy(args.policy, server, args.allow_scope_mismatch)
-        controller = control.Controller(policy, startup=server.livetune_state()["startup"])
-        apply = server.apply if args.mode == "act" else (lambda settings: None)
+        acting = args.mode == "act"
+        controller = control.Controller(policy, startup=server.livetune_state()["startup"], judge_changes=acting)
+        apply = server.apply if acting else (lambda settings: None)
         control.run(controller, server.scrape, apply, window, interval_s=args.interval, log=_appender(args.log))
     return 0
 

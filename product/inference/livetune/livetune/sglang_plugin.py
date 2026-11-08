@@ -59,6 +59,13 @@ class LiveTuner:
                 variants.resolve(value)
             return
         KNOBS[key].validate(value, self.startup, self.page_size)
+        if key == "max_running_requests" and value != self.startup[key]:
+            from sglang.srt.runtime_context import get_parallel
+
+            # The cap is enforced as a per-stage budget, so only multiples of pp_size are exact.
+            pp_size = get_parallel().pp_size
+            if value % pp_size:
+                raise InvalidSetting(f"max_running_requests={value} must be a multiple of pp_size {pp_size}")
 
     def apply(self, key: str, value: Any) -> dict[str, Any] | None:
         # Never raises: SGLang treats an exception in an update handler as fatal to
@@ -86,7 +93,7 @@ class LiveTuner:
 
             # The running-batch budget is pp_max_micro_batch_size; buffers stay at startup size.
             # The startup cap restores the startup budget exactly, explicit or derived.
-            budget = self.pp_micro_batch_startup if value == self.startup[key] else max(value // get_parallel().pp_size, 1)
+            budget = self.pp_micro_batch_startup if value == self.startup[key] else value // get_parallel().pp_size
             overrides = {"pp_max_micro_batch_size": budget}
         elif key == "chunked_prefill_size":
             self.scheduler.chunked_prefill_size = value

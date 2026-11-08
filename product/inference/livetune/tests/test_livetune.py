@@ -329,6 +329,21 @@ class ControllerTest(unittest.TestCase):
         self.assertEqual([e.get("reconciled") for e in events[1:]], [{"max_running_requests": 8}, None])
         self.assertEqual(live["max_running_requests"], 8)
 
+    def test_run_loop_stamps_events_before_applying_and_holds_the_step_lock(self):
+        import threading
+
+        ctl = control.Controller(_policy(), smoothing=1.0)
+        lock, walls, events, held = threading.Lock(), iter([100.0, 200.0, 300.0]), [], []
+
+        def apply(settings):
+            held.append(lock.locked())
+            return {}
+
+        control.run(ctl, lambda: 0, apply, lambda a, b: _window(2), log=events.append, stop=lambda: len(events) >= 1,
+                    clock=lambda: 0.0, sleep=lambda s: None, wall=lambda: next(walls), step_lock=lock)
+        self.assertEqual((events[0]["wall"], held), (100.0, [True]))
+        self.assertFalse(lock.locked())
+
     def test_run_loop_survives_a_failed_scrape(self):
         ctl = control.Controller(_policy(), smoothing=1.0)
         events, calls, results = [], [], iter([0, RuntimeError("metrics down"), 1, 2, 3])
@@ -655,6 +670,15 @@ class PluginTest(unittest.TestCase):
         self.assertEqual(self.tuner.apply("max_running_requests", 16), {"pp_max_micro_batch_size": 16})
         self.assertEqual(self.tuner.apply("max_running_requests", 64), {"pp_max_micro_batch_size": 48})
         self.assertEqual(self.tuner.readback()["pp_micro_batch_startup"], 48)
+
+    def test_pipeline_caps_must_be_exact_multiples_of_pp_size(self):
+        self.parallel.pp_size = 2
+        self.tuner.validate("max_running_requests", 4)
+        self.tuner.validate("max_running_requests", 64)  # the startup cap restores the startup budget
+        for value in (1, 3):
+            with self.subTest(value=value), self.assertRaises(knobs.InvalidSetting):
+                self.tuner.validate("max_running_requests", value)
+        self.assertEqual(self.tuner.apply("max_running_requests", 4), {"pp_max_micro_batch_size": 2})
 
     def test_validate_bounds_by_startup_not_current_value(self):
         self.tuner.apply("chunked_prefill_size", 2048)

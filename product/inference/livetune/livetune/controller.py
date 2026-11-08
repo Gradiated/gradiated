@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
+from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -187,51 +188,60 @@ def run(
     stop: Callable[[], bool] = lambda: False,
     clock: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
+    wall: Callable[[], float] = time.time,
+    step_lock: AbstractContextManager[Any] | None = None,
 ) -> None:
+    # step_lock is held from scrape to log, so a reader holding it never sees a window half done.
+    lock = step_lock if step_lock is not None else nullcontext()
     previous = None
     while not stop():
         if previous is not None:
             sleep(interval_s)
             if stop():
                 break
-        try:
-            current = scrape()
-            win = window_of(previous, current) if previous is not None else None
-        except Exception as exc:
-            # A failed scrape loses one window; the next good scrape starts a fresh one.
-            log({"t": clock(), "error": f"{type(exc).__name__}: {exc}"})
-            previous = None
-            sleep(interval_s)
-            continue
-        previous = current
-        if win is None:
-            continue
-        now = clock()
-        action = controller.step(win, now)
-        event: dict[str, Any] = {
-            "t": now,
-            "demand": round(win.demand, 2),
-            "prompt": win.prompt_per_request,
-            "tps_per_user": win.tps_per_user,
-            "ttft_p90": win.ttft_p90,
-            "output_tps": round(win.output_tps, 1),
-            "rule": controller.current,
-        }
-        if action is not None:
-            event["action"] = {"rule": action.rule, "settings": action.settings, "reason": action.reason}
-        if controller.current is not None:
-            # Re-assert the whole rule every window: a restarted server comes back on its startup
-            # settings, and apply sends only what differs from the live state.
-            started = clock()
+        with lock:
             try:
-                sent = apply(dict(controller.applied))
+                current = scrape()
             except Exception as exc:
-                event.setdefault("action", {"rule": controller.current, "reason": "reconcile"})["error"] = f"{type(exc).__name__}: {exc}"
-                logger.exception("applying %s failed", controller.current)
-                controller.forget()
-            else:
-                if action is not None:
-                    event["action"]["apply_s"] = round(clock() - started, 3)
-                elif sent:
-                    event["reconciled"] = sent
-        log(event)
+                # A failed scrape loses one window; the next good scrape starts a fresh one.
+                log({"t": clock(), "wall": wall(), "error": f"{type(exc).__name__}: {exc}"})
+                current = None
+            if current is not None and previous is not None:
+                _step(controller, window_of(previous, current), apply, log, clock(), wall())
+        if current is None:
+            sleep(interval_s)
+        previous = current
+
+
+def _step(controller: Controller, win: Window, apply: Callable[[dict[str, Any]], dict[str, Any] | None],
+          log: Callable[[dict[str, Any]], None], now: float, wall: float) -> None:
+    action = controller.step(win, now)
+    # Stamped before applying, so an event belongs to the window it started in however long the apply takes.
+    event: dict[str, Any] = {
+        "t": now,
+        "wall": wall,
+        "demand": round(win.demand, 2),
+        "prompt": win.prompt_per_request,
+        "tps_per_user": win.tps_per_user,
+        "ttft_p90": win.ttft_p90,
+        "output_tps": round(win.output_tps, 1),
+        "rule": controller.current,
+    }
+    if action is not None:
+        event["action"] = {"rule": action.rule, "settings": action.settings, "reason": action.reason}
+    if controller.current is not None:
+        # Re-assert the whole rule every window: a restarted server comes back on its startup
+        # settings, and apply sends only what differs from the live state.
+        started = time.monotonic()
+        try:
+            sent = apply(dict(controller.applied))
+        except Exception as exc:
+            event.setdefault("action", {"rule": controller.current, "reason": "reconcile"})["error"] = f"{type(exc).__name__}: {exc}"
+            logger.exception("applying %s failed", controller.current)
+            controller.forget()
+        else:
+            if action is not None:
+                event["action"]["apply_s"] = round(time.monotonic() - started, 3)
+            elif sent:
+                event["reconciled"] = sent
+    log(event)

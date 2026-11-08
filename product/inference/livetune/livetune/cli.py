@@ -82,19 +82,20 @@ def replay(args: argparse.Namespace, server: Server) -> None:
     stop = threading.Event()
     events: list[dict[str, Any]] = []
     failures: list[BaseException] = []
+    step_lock = threading.Lock()
     thread = None
     if not args.static:
         # Seeded from readback, so the first rule changes only what differs and starts no variant cooldown.
         controller = control.Controller(policy, startup=startup, applied=dict(server.livetune_state()["settings"]))
 
         def log(event: dict[str, Any]) -> None:
-            event["wall"] = time.time()
             events.append(event)
             write({"controller": event})
 
         def run_controller() -> None:
             try:
-                control.run(controller, server.scrape, server.apply, window, interval_s=args.interval, log=log, stop=stop.is_set, sleep=stop.wait)
+                control.run(controller, server.scrape, server.apply, window, interval_s=args.interval, log=log, stop=stop.is_set,
+                            sleep=stop.wait, step_lock=step_lock)
             except BaseException as exc:
                 failures.append(exc)
                 raise
@@ -116,9 +117,11 @@ def replay(args: argparse.Namespace, server: Server) -> None:
             if index == len(phases) - 1:
                 # Join first, so a failure while the last phase ran cannot slip past this check.
                 stop_controller()
-            if failures:
-                raise RuntimeError("the controller stopped during the replay; its results are not controlled") from failures[0]
-            write(phase_report(summary, events, started, phase.seconds, policy, "static" if args.static else "controlled"))
+            # Waits out a window still applying, so every event that started in this phase is counted.
+            with step_lock:
+                if failures:
+                    raise RuntimeError("the controller stopped during the replay; its results are not controlled") from failures[0]
+                write(phase_report(summary, events, started, time.time() - started, policy, "static" if args.static else "controlled"))
     finally:
         stop_controller()
         server.apply(startup)

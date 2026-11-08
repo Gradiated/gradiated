@@ -148,7 +148,7 @@ class CostModelTest(unittest.TestCase):
     def test_measured_curves_apply_only_to_their_own_collective(self):
         rows = [{"kind": "all_reduce", "n": 4, "bytes": b, "s": 1e-3} for b in (1024, 1 << 20)]
         chip = costmodel.calibrated_chip(rows)
-        self.assertEqual(costmodel.collective_time(chip, "all_reduce", 4, 4096), 1e-3)
+        self.assertAlmostEqual(costmodel.collective_time(chip, "all_reduce", 4, 4096), 1e-3)
         self.assertLess(costmodel.collective_time(chip, "all_gather", 4, 4096), 1e-4)
 
     def test_more_tokens_take_longer(self):

@@ -164,6 +164,13 @@ class ControllerTest(unittest.TestCase):
         switch = ctl.step(_window(10), 25)
         self.assertEqual((switch.rule, switch.settings), ("busy", {"max_running_requests": 32}))
 
+    def test_no_initial_rule_until_a_prompt_length_is_seen(self):
+        ctl = control.Controller(_policy(), smoothing=1.0)
+        quiet = metrics.Window(10, 3, 0, 0, 0, 500, 0, 0.01, 0.01, None)
+        self.assertIsNone(ctl.step(quiet, 0))
+        self.assertIsNone(ctl.current)
+        self.assertEqual(ctl.step(_window(2), 5).rule, "light")
+
     def test_noise_does_not_flap(self):
         ctl = control.Controller(_policy(), dwell=2, cooldown_s=0, smoothing=1.0)
         ctl.step(_window(2), 0)
@@ -343,6 +350,9 @@ class LoadSummaryTest(unittest.TestCase):
         self.assertEqual(len(prompts.prompt(1500, 0.5, 0)), 1500)
         with self.assertRaises(ValueError):
             prompts.prompt(5000, 0.5, 0)
+        for bad in (-0.1, 1.5):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                prompts.prompt(100, bad, 0)
 
 
 class ReplayReportTest(unittest.TestCase):

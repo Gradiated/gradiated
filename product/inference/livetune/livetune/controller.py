@@ -55,10 +55,13 @@ class Controller:
     def forget(self) -> None:
         self.current, self.applied, self._probation = None, {}, None
 
-    def observe(self, window: Window) -> Shape:
+    def observe(self, window: Window) -> Shape | None:
         prompt = window.prompt_per_request
         if self.shape is None:
-            self.shape = Shape(window.demand, prompt if prompt is not None else 0.0)
+            # Prompt length is unknown until a request arrives; do not guess a shape.
+            if prompt is None:
+                return None
+            self.shape = Shape(window.demand, prompt)
         else:
             a = self.smoothing
             self.shape = Shape(
@@ -74,6 +77,8 @@ class Controller:
 
     def step(self, window: Window, now: float) -> Action | None:
         shape = self.observe(window)
+        if shape is None:
+            return None
         verdict = self._slo(window)
         if self.current is None:
             return self._change(self.policy.select(shape), now, "initial", verdict)

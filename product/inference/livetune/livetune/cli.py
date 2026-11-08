@@ -31,8 +31,8 @@ def _corpus(path: str) -> list[int]:
     return list(data)
 
 
-def _appender(path: str | None):
-    handle = open(path, "a") if path else None
+def _appender(path: str | None, mode: str = "a"):
+    handle = open(path, mode) if path else None
 
     def write(event: Any) -> None:
         line = event if isinstance(event, str) else json.dumps(event)
@@ -158,7 +158,7 @@ def main(argv: list[str] | None = None) -> int:
         slo = Slo(args.slo_tps, args.slo_ttft)
         prompts = loadgen.PromptSource(_corpus(args.corpus))
         start = {k: v for k, v in server.livetune_state()["startup"].items()}
-        record = _appender(args.out + ".trials.jsonl")
+        record = _appender(args.out + ".trials.jsonl", mode="w")
 
         def measure(profile: tune.Profile, settings: dict[str, Any]) -> dict[str, Any]:
             server.apply(settings)

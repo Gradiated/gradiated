@@ -63,6 +63,8 @@ class PromptSource:
         self.rng = random.Random(seed)
 
     def prompt(self, length: int, shared: float, shared_seed: int) -> list[int]:
+        if not 0.0 <= shared <= 1.0:
+            raise ValueError(f"shared_prefix must be in [0, 1], got {shared}")
         shared_len = int(length * shared)
         if shared_len >= len(self.corpus):
             raise ValueError(f"shared prefix of {shared_len} tokens needs a corpus longer than {len(self.corpus)} tokens")

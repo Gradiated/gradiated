@@ -374,6 +374,12 @@ class TuneTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             tune.best_from_trials(trials, self.slo, {"max_running_requests": 64})
 
+    def test_profiles_the_policy_cannot_tell_apart_are_refused(self):
+        results = [{"profile": {"name": name, "users": 8, "prompt_tokens": 1000, "output_tokens": out}, "settings": {}, "summary": {}}
+                   for name, out in (("short", 64), ("long", 1024))]
+        with self.assertRaises(ValueError):
+            tune.build_policy(results, self.slo, {}, {"max_running_requests": 64})
+
     def test_policy_boxes_sit_between_profiles_and_stop_near_the_evidence(self):
         results = [
             {"profile": {"name": f"u{u}-p{p}", "users": u, "prompt_tokens": p}, "settings": {"max_running_requests": u}, "summary": {}}
@@ -417,9 +423,9 @@ class FingerprintTest(unittest.TestCase):
         return Fake("http://gpu-host:30000"), server_module
 
     def test_scope_names_the_gpu_the_server_reports_not_the_callers(self):
-        server, _ = self._server({"gpu": "NVIDIA B300", "startup": STARTUP})
+        server, _ = self._server({"gpu": "NVIDIA B300", "page_size": 256, "startup": STARTUP})
         scope = server.fingerprint()
-        self.assertEqual((scope["gpu"], scope["model_path"], scope["startup"]), ("NVIDIA B300", "m", STARTUP))
+        self.assertEqual((scope["gpu"], scope["model_path"], scope["page_size"], scope["startup"]), ("NVIDIA B300", "m", 256, STARTUP))
 
     def test_server_that_does_not_report_its_gpu_has_no_scope(self):
         server, server_module = self._server({"startup": STARTUP})

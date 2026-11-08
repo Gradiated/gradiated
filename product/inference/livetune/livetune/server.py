@@ -35,7 +35,8 @@ class Server:
         # The scheduler reports its own GPU; the client running this may have none, or different ones.
         if not state.get("gpu"):
             raise UpdateFailed(f"{self.url} does not report its GPU; upgrade its livetune plugin")
-        return {**{key: info.get(key) for key in keys}, "gpu": state["gpu"], "startup": state.get("startup")}
+        # Page size bounds which knob values the server accepts, so it is part of the envelope.
+        return {**{key: info.get(key) for key in keys}, "gpu": state["gpu"], "page_size": state.get("page_size"), "startup": state.get("startup")}
 
     def livetune_states(self) -> list[dict[str, Any]]:
         # One entry per data-parallel scheduler.

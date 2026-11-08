@@ -57,7 +57,7 @@ A policy is an SLO plus an ordered list of rules. Each rule is a box in (demand,
 }
 ```
 
-Each policy records the scope it was tuned on: model, revision, parallel layout, KV dtype, SGLang version, the GPU product the scheduler reports and startup settings. `control` and `replay` refuse a policy whose scope differs from the live server unless given `--allow-scope-mismatch`. `livetune tune` writes policies from measurements. Each rule records the measured throughput, per-user speed and time to first token behind it. A setting a rule omits takes its startup value.
+Each policy records the scope it was tuned on: model, revision, parallel layout, KV dtype, SGLang version, the GPU product the scheduler reports, page size and startup settings. `control` and `replay` refuse a policy whose scope differs from the live server unless given `--allow-scope-mismatch`. `livetune tune` writes policies from measurements. Each rule records the measured throughput, per-user speed and time to first token behind it. A setting a rule omits takes its startup value. Rules select on prompt length and demand only, so `tune` refuses two profiles with the same prompt length and user count.
 
 ## Controller safety
 

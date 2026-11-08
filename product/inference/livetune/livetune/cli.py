@@ -181,11 +181,10 @@ def main(argv: list[str] | None = None) -> int:
             record({"profile": profile.name, "settings": settings, "summary": summary, "scope": scope})
             return summary
 
+        profiles = json.loads(Path(args.profiles).read_text())
+        tune.check_distinguishable(profiles)
         try:
-            results = [
-                tune.tune_profile(tune.Profile(**p), start, json.loads(Path(args.grid).read_text()), slo, measure)
-                for p in json.loads(Path(args.profiles).read_text())
-            ]
+            results = [tune.tune_profile(tune.Profile(**p), start, json.loads(Path(args.grid).read_text()), slo, measure) for p in profiles]
         finally:
             server.apply(start)
         policy = tune.build_policy(results, slo, {"tuned_at": time.time(), "url": args.url, "scope": scope}, start)

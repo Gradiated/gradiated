@@ -139,8 +139,17 @@ def best_from_trials(trials: Sequence[Mapping[str, Any]], slo: Slo, start: Mappi
     return results
 
 
+def check_distinguishable(profiles: Sequence[Mapping[str, Any]]) -> None:
+    # Rules select on prompt length and demand only; other workload differences cannot be told apart.
+    shapes = [(p["prompt_tokens"], p["users"]) for p in profiles]
+    duplicates = sorted({shape for shape in shapes if shapes.count(shape) > 1})
+    if duplicates:
+        raise ValueError(f"profiles share a (prompt_tokens, users) shape the policy cannot distinguish: {duplicates}")
+
+
 def build_policy(results: Sequence[Mapping[str, Any]], slo: Slo, provenance: Mapping[str, Any], start: Mapping[str, Any]) -> Policy:
     """One rule per profile; outside the measured envelope the startup settings apply."""
+    check_distinguishable([r["profile"] for r in results])
     prompts = sorted({r["profile"]["prompt_tokens"] for r in results})
     prompt_edges = dict(zip(prompts, _edges(prompts)))
     rules: list[Rule] = []

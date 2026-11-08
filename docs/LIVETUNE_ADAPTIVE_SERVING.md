@@ -87,6 +87,19 @@ livetune does not write kernels itself today. The path is:
 - **Staged rollout.** Replay cannot reproduce prompt content, which drives MoE routing, speculative acceptance and numerics. Nor can it reproduce hours of cache state or the fleet router. So a winner runs on one replica first, and `livetune.rollout.judge` compares it with its peers window for window under matched load. Promotion needs an SLO pass rate within 5 points of the peers and per-user speed within 5%. For code-tier changes this stage is mandatory.
 - **Production guard.** A live change is on probation for 45 s from the moment it took effect. It is rolled back and penalised if it breaks an SLO that held before. Live per-user speed comes from SGLang's per-request histogram, whose buckets must be fine around the SLO (`--bucket-inter-token-latency`).
 
+## When a change is rolled back
+
+| Layer | Watches | Rolls back when | How |
+| --- | --- | --- | --- |
+| Tuning | A candidate against startup on the same recorded traffic | It does not beat startup on the worse of two interleaved repetitions | Never published |
+| Variant gate (`variant-eval`) | Greedy continuations and logprobs against stock, relative to stock's agreement with itself | Prefix agreement falls more than 0.25 below stock's, or logprob drift exceeds 1.5× stock's (at least 0.08 nats) | Switched back to stock; rejected |
+| Each server | The SLO for 45 s after a live change takes effect | The SLO held before and fails in most windows | Previous rule restored; the rule banned for 10 min |
+| Variant switch | Install and graph recapture on every rank | Either fails on any rank | Previous variant restored, then stock; the scheduler stops if neither works |
+| Staged replica | The replica against its peers, window for window, at matched load | SLO pass rate more than 5 points lower, per-user speed more than 5% lower, or TTFT more than 5% worse and over the SLO, over at least 12 measured windows | The replica's previous policy restored; nothing published |
+| Fleet guard | The fleet for `--guard-seconds` after publishing, against the same span before | The same thresholds as the stage | The previous policy republished |
+
+A large shift in demand between the compared spans makes the stage or guard inconclusive rather than a regression. The stage publishes nothing; the guard keeps the change, which has already passed replay and the stage.
+
 ## Rollout
 
 | Tier | How a change ships | Blast radius |
@@ -122,4 +135,6 @@ All of these were measured on DeepSeek V4.1 Flash, TP4, on 4×B300, on SGLang `f
 | Trace replay and `tune --trace` | Implemented |
 | `livetune improve`: advise → canary replay → publish, with policy hot-reload in `control` | Implemented; needs a canary host per scope |
 | Starting `control` and `improve` from the runtime's `service.py` | Next |
-| Code-tier targets handed to the variant agent loop | Next; the loop exists in `research/tkcc` |
+| `livetune variant-eval`: register, switch live, gate against stock, measure on a trace, switch back | Implemented |
+| Fleet guard after promotion | Implemented |
+| Code-tier targets handed to the variant agent loop, which calls `variant-eval` | Next; the loop exists in `research/tkcc` |

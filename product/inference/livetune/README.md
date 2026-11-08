@@ -69,6 +69,22 @@ With `--stage-url`, `--stage-policy` and `--peers`, a winner first runs on one p
 
 `advise` proposes live levers with values to try, restart levers (launch flags for a canary) and code levers, giving the hot shapes for a forward variant. Each proposal carries the measurements behind it. Its `grid` is a valid `tune --grid`. `--trace` replays recorded requests open loop at their recorded times, keeping each prefix family's shared prefix, so every candidate meets the same traffic.
 
+## Trying a variant
+
+```bash
+python -m livetune variant-eval --url CANARY --variant my_kernel.py --name my-kernel --corpus corpus.json \
+    --trace DIR --slo-tps 80 --slo-ttft 10
+```
+
+`variant-eval` registers the file under its content hash, so every revision gets its own pinned id. It then:
+
+1. takes two greedy, logprob-carrying stock baselines on fixed prompts, each from a flushed cache;
+2. switches the variant in live and gates it against stock, relative to how well stock agrees with itself (`livetune.gate`);
+3. if the gate passes, measures variant and stock alternately on the recorded trace;
+4. switches back to stock, whatever happened.
+
+It prints one JSON report ending in `keep` or `reject`. The canary must run with `LIVETUNE_LIVE_VARIANTS=1` and share `LIVETUNE_VARIANTS_DIR`. This is the command an agent iterating on a kernel calls.
+
 ## Policies
 
 A policy is an SLO plus an ordered list of rules. Each rule is a box in (demand, prompt length) space with the settings to use inside it. Demand is the number of running plus queued requests. The first box that contains the current shape wins, and the last rule is a catch-all. `livetune tune` gives each measured profile a box that reaches at most 1.25× above and below its user count and prompt length, meeting a neighbour halfway where their reaches overlap. Everywhere else, including gaps between sparse profiles, the startup settings apply. A tuned rule also applies only near its profile's cache hit (within 0.2 of its shared-prefix fraction) and output length (within 2×). Live traffic outside those ranges falls through to startup settings, because rules do not select on those dimensions.

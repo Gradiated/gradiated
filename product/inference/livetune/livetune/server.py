@@ -57,6 +57,21 @@ class Server:
         except urllib.error.HTTPError as exc:
             raise UpdateFailed(f"{self.url} would not flush its prefix cache: {exc.read()[:200]!r}") from exc
 
+    def greedy(self, prompts: list[list[int]], max_new_tokens: int = 64) -> Any:
+        """Greedy continuations with logprobs, each from a cold prefix cache so every probe runs the same path."""
+        import math
+
+        from livetune.gate import Sample
+
+        tokens, logprobs = [], []
+        for ids in prompts:
+            self.flush_cache()
+            body = {"input_ids": ids, "sampling_params": {"max_new_tokens": max_new_tokens, "temperature": 0}, "return_logprob": True}
+            entries = json.loads(self._request("/generate", body, timeout=600))["meta_info"]["output_token_logprobs"]
+            tokens.append([int(entry[1]) for entry in entries])
+            logprobs.append([float(entry[0]) if entry[0] is not None else math.nan for entry in entries])
+        return Sample(tokens, logprobs)
+
     def info(self) -> dict[str, Any]:
         return json.loads(self._request("/server_info"))
 

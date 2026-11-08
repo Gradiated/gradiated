@@ -1161,7 +1161,7 @@ class ImproveTest(unittest.TestCase):
             try:
                 args = argparse.Namespace(canary="canary", work_dir=tmp, advise_seconds=0, interval=1, trace_dir=tmp, window=600,
                                           slo_tps=50, slo_ttft=5, corpus="", speed=1.0, policy_out=str(Path(tmp, "policy.json")), every=0, once=True,
-                                          stage_url=None)
+                                          stage_url=None, fleet="", guard_seconds=0)
                 cli.improve(args, prod)
             finally:
                 cli.Server = saved
@@ -1402,3 +1402,89 @@ class DataParallelUtilizationTest(unittest.TestCase):
         win = metrics.window(metrics.parse(lines(0), 0.0), metrics.parse(lines(2.5), 10.0))
         self.assertEqual((win.schedulers, win.forward_s), (4, 10.0))
         self.assertAlmostEqual(win.forward_share, 0.25)  # each scheduler busy 2.5 s of 10
+
+
+class GateTest(unittest.TestCase):
+    def _sample(self, rows, drift=0.0):
+        from livetune import gate
+
+        return gate.Sample([list(r) for r in rows], [[-1.0 - drift] * len(r) for r in rows])
+
+    def test_a_variant_is_judged_against_how_well_stock_agrees_with_itself(self):
+        from livetune import gate
+
+        stock = self._sample([[1, 2, 3, 4, 5, 6, 7, 8, 9]] * 4)
+        noisy = self._sample([[1, 2, 3, 4, 5, 6, 7, 8, 9]] * 3 + [[1, 2, 3, 9, 9, 9, 9, 9, 9]])  # stock itself diverges on one prompt
+        close = self._sample([[1, 2, 3, 4, 5, 6, 7, 8, 9]] * 3 + [[1, 2, 3, 4, 9, 9, 9, 9, 9]], drift=0.01)
+        broken = self._sample([[7, 7, 7, 7, 7, 7, 7, 7, 7]] * 4)
+        self.assertTrue(gate.judge(stock, noisy, close).passed)
+        verdict = gate.judge(stock, noisy, broken)
+        self.assertFalse(verdict.passed)
+        self.assertTrue(any("prefix match" in r for r in verdict.reasons))
+        drifted = gate.judge(stock, stock, self._sample([[1, 2, 3, 4, 5, 6, 7, 8, 9]] * 4, drift=0.5))
+        self.assertTrue(any("logprob drift" in r for r in drifted.reasons))
+
+
+class VariantEvalTest(unittest.TestCase):
+    def test_a_failing_variant_is_rejected_and_the_server_returns_to_stock(self):
+        import argparse
+        from livetune import gate
+
+        applied, calls = [], {"greedy": 0}
+        good = gate.Sample([[1, 2, 3, 4, 5, 6, 7, 8]] * 2, [[-1.0] * 8] * 2)
+        bad = gate.Sample([[9] * 8] * 2, [[-1.0] * 8] * 2)
+
+        def greedy(prompts, tokens):
+            calls["greedy"] += 1
+            return good if calls["greedy"] <= 2 else bad  # two stock runs, then the variant
+
+        server = types.SimpleNamespace(url="http://x", livetune_state=lambda: {"settings": {"forward_variant": 0}},
+                                       greedy=greedy, apply=lambda s: applied.append(dict(s)), flush_cache=lambda: None)
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "v.py").write_text("def install(model, patch, ctx):\n    pass\n")
+            Path(tmp, "corpus.json").write_text(json.dumps(list(range(5000))))
+            args = argparse.Namespace(variant=str(Path(tmp, "v.py")), name="kernel", variants_dir=str(Path(tmp, "variants")),
+                                      corpus=str(Path(tmp, "corpus.json")), prompts=2, prompt_tokens=64, tokens=8, seed=7,
+                                      trace=None, speed=1.0, slo_tps=None, slo_ttft=None)
+            report = cli.variant_eval(args, server)
+            self.assertTrue(report["variant"].startswith("kernel-"))
+            self.assertEqual((report["decision"], report["gate"]["passed"]), ("reject", False))
+            self.assertEqual(applied[-1], {"forward_variant": 0})  # always back to stock
+            self.assertEqual(variants.resolve(report["id"], str(Path(tmp, "variants"))).name, report["variant"])
+
+
+class GuardTest(unittest.TestCase):
+    def test_the_fleet_reverts_to_the_previous_policy_when_it_regresses_after_promotion(self):
+        import argparse
+
+        good, bad = [_window(40, tps=100, ttft=2)] * 12, [_window(40, tps=60, ttft=2)] * 12
+        watched = iter([[good], [bad]])
+        saved_watch = cli._watch
+        cli._watch = lambda servers, seconds, interval: next(watched)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "policy.json")
+            path.write_text("previous")
+            args = argparse.Namespace(fleet="", policy_out=str(path), slo_tps=80, slo_ttft=10, guard_seconds=60, interval=5)
+            try:
+                verdict = cli.promote(args, types.SimpleNamespace(url="prod"), _policy())
+            finally:
+                cli._watch = saved_watch
+            self.assertEqual((verdict.decision, path.read_text()), ("revert", "previous"))
+
+    def test_an_improvement_stays_published(self):
+        import argparse
+
+        before, after = [_window(40, tps=85, ttft=2)] * 12, [_window(40, tps=110, ttft=3)] * 12
+        watched = iter([[before], [after]])
+        saved_watch = cli._watch
+        cli._watch = lambda servers, seconds, interval: next(watched)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "policy.json")
+            path.write_text("previous")
+            args = argparse.Namespace(fleet="", policy_out=str(path), slo_tps=80, slo_ttft=10, guard_seconds=60, interval=5)
+            try:
+                verdict = cli.promote(args, types.SimpleNamespace(url="prod"), _policy())
+            finally:
+                cli._watch = saved_watch
+            self.assertEqual(verdict.decision, "promote")
+            self.assertNotEqual(path.read_text(), "previous")

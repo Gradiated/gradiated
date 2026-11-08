@@ -4,6 +4,7 @@ import argparse
 import dataclasses
 import json
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -11,6 +12,7 @@ from typing import Any
 
 from livetune import controller as control
 from livetune import advisor, loadgen, rollout, trace, tune
+from livetune.knobs import VARIANT_KEY
 from livetune.metrics import window
 from livetune.policy import Policy, Slo
 from livetune.server import KV_TOLERANCE, Server
@@ -184,6 +186,50 @@ def tune_policy(
     return tune.build_policy(results, slo, {"tuned_at": time.time(), "url": server.url, "scope": scope}, start)
 
 
+def variant_eval(args: argparse.Namespace, server: Server) -> dict[str, Any]:
+    """Try one forward variant live on a canary: gate it against stock, measure it, and switch back.
+
+    The variant is registered under its content hash, so every revision gets its own pinned id.
+    The canary must run with LIVETUNE_LIVE_VARIANTS=1 and share LIVETUNE_VARIANTS_DIR with this host.
+    """
+    import asyncio
+    import hashlib
+
+    from livetune import gate, variants
+
+    code = Path(args.variant).read_text()
+    name = f"{args.name}-{hashlib.sha256(code.encode()).hexdigest()[:10]}"
+    variant_id = variants.register(args.variants_dir, name, code)
+    source = loadgen.PromptSource(_corpus(args.corpus), seed=args.seed)
+    prompts = [source.family_prompt(args.prompt_tokens, 0, None) for _ in range(args.prompts)]
+    stock_id = server.livetune_state()["settings"].get(VARIANT_KEY, 0)
+    report: dict[str, Any] = {"variant": name, "id": variant_id, "stock_id": stock_id}
+    try:
+        stock, stock_again = server.greedy(prompts, args.tokens), server.greedy(prompts, args.tokens)
+        started = time.monotonic()
+        server.apply({VARIANT_KEY: variant_id})
+        report["switch_s"] = round(time.monotonic() - started, 1)
+        verdict = gate.judge(stock, stock_again, server.greedy(prompts, args.tokens))
+        report["gate"] = dataclasses.asdict(verdict)
+        if verdict.passed and args.trace:
+            arrivals = trace.arrivals(list(trace.read([args.trace])), speed=args.speed)
+            ids = loadgen.trace_prompts(arrivals, source)
+            runs: dict[str, list[dict[str, Any]]] = {"variant": [], "stock": []}
+            # Interleaved, and every run starts from a flushed cache, so order and warmth cancel out.
+            for label in ("variant", "stock", "variant", "stock"):
+                server.apply({VARIANT_KEY: variant_id if label == "variant" else stock_id})
+                server.flush_cache()
+                runs[label].append(asyncio.run(loadgen.run_arrivals(server.url, arrivals, ids, name=label)).summary())
+            merged = {label: tune.merged(summaries) for label, summaries in runs.items()}
+            report["performance"] = merged
+            if args.slo_tps is not None and args.slo_ttft is not None:
+                report["faster"] = tune._wins(merged["variant"], merged["stock"], Slo(args.slo_tps, args.slo_ttft), 0.02)
+        report["decision"] = "keep" if verdict.passed and report.get("faster", True) else "reject"
+    finally:
+        server.apply({VARIANT_KEY: stock_id})
+    return report
+
+
 def improve(args: argparse.Namespace, server: Server) -> None:
     """Keep improving: advise from production, measure the proposals on a canary against the
     production traffic just recorded, and publish a policy only when something beat startup."""
@@ -217,8 +263,10 @@ def improve(args: argparse.Namespace, server: Server) -> None:
                 if verdict is not None:
                     entry["stage"] = dataclasses.asdict(verdict)
                 if verdict is None or verdict.decision == "promote":
-                    _publish(args.policy_out, policy.to_json())
                     entry["published"] = args.policy_out
+                    guard = promote(args, server, policy)
+                    if guard is not None:
+                        entry["guard"] = dataclasses.asdict(guard)
         write(entry)
         if args.once:
             return
@@ -278,6 +326,24 @@ def _wait_applied(server: Server, policy: Policy, timeout_s: float, interval_s: 
         if time.monotonic() >= deadline:
             return False
         time.sleep(interval_s)
+
+
+def promote(args: argparse.Namespace, production: Server, policy: Policy) -> rollout.Verdict | None:
+    """Publish to the fleet, then guard it: compare the fleet after against just before, and restore
+    the previous policy if it regressed. A big shift in traffic makes the comparison inconclusive, and
+    the change stays, since it has already passed replay and the stage."""
+    fleet = [production] + [Server(url) for url in (args.fleet or "").split(",") if url]
+    previous = Path(args.policy_out).read_text() if Path(args.policy_out).exists() else None
+    slo = Slo(args.slo_tps, args.slo_ttft)
+    before = _watch(fleet, args.guard_seconds, args.interval) if args.guard_seconds and previous is not None else None
+    _publish(args.policy_out, policy.to_json())
+    if before is None:
+        return None
+    after = _watch(fleet, args.guard_seconds, args.interval)
+    verdict = rollout.judge([w for side in after for w in side], [w for side in before for w in side], slo)
+    if verdict.decision == "revert":
+        _publish(args.policy_out, previous)
+    return verdict
 
 
 def stage(args: argparse.Namespace, production: Server, policy: Policy) -> rollout.Verdict:
@@ -369,7 +435,7 @@ def asyncio_phase(url: str, phase: loadgen.Phase, prompts: loadgen.PromptSource,
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="livetune")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("status", "set", "load", "tune", "control", "replay", "policy", "traffic", "advise", "improve"):
+    for name in ("status", "set", "load", "tune", "control", "replay", "policy", "traffic", "advise", "improve", "variant-eval"):
         p = sub.add_parser(name)
         p.add_argument("--url", default="http://127.0.0.1:30000")
     sub.choices["set"].add_argument("pairs", nargs="+")
@@ -410,6 +476,19 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--interval", type=float, default=5.0)
     a.add_argument("--trace-dir", help="the server's LIVETUNE_TRACE_DIR, for the traffic mix")
     a.add_argument("--out", help="write the report here as well")
+    ve = sub.choices["variant-eval"]
+    ve.add_argument("--variant", required=True, help="a Python file defining install(model, patch, ctx)")
+    ve.add_argument("--name", required=True)
+    ve.add_argument("--variants-dir", default=os.environ.get("LIVETUNE_VARIANTS_DIR"), required=not os.environ.get("LIVETUNE_VARIANTS_DIR"))
+    ve.add_argument("--corpus", required=True)
+    ve.add_argument("--prompts", type=int, default=8)
+    ve.add_argument("--prompt-tokens", type=int, default=1024)
+    ve.add_argument("--tokens", type=int, default=64)
+    ve.add_argument("--seed", type=int, default=7)
+    ve.add_argument("--trace", help="recorded traffic to measure the variant against stock, interleaved")
+    ve.add_argument("--speed", type=float, default=1.0)
+    ve.add_argument("--slo-tps", type=float)
+    ve.add_argument("--slo-ttft", type=float)
     im = sub.choices["improve"]
     im.add_argument("--canary", required=True, help="a server with the production scope that only replayed traffic reaches")
     im.add_argument("--trace-dir", required=True)
@@ -429,6 +508,8 @@ def main(argv: list[str] | None = None) -> int:
     im.add_argument("--peers", default="", help="comma-separated production replicas to compare against")
     im.add_argument("--stage-seconds", type=float, default=1800)
     im.add_argument("--stage-apply-s", type=float, default=180, help="how long the staged controller may take to apply the candidate")
+    im.add_argument("--fleet", default="", help="comma-separated production replicas the guard watches with --url")
+    im.add_argument("--guard-seconds", type=float, default=1800, help="fleet time before and after publishing to compare; 0 disables")
     c = sub.choices["control"]
     c.add_argument("--policy", required=True)
     c.add_argument("--interval", type=float, default=5.0)
@@ -446,6 +527,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.out:
             Path(args.out).write_text(json.dumps(report, indent=1))
         print(json.dumps(report, indent=1))
+        return 0
+    if args.command == "variant-eval":
+        print(json.dumps(variant_eval(args, server), indent=1))
         return 0
     if args.command == "improve":
         if args.stage_url and not (args.stage_policy and args.peers):

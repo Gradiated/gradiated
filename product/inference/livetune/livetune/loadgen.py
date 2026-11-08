@@ -238,7 +238,21 @@ def trace_prompts(arrivals: Sequence[Any], prompts: PromptSource) -> list[list[i
     return [prompts.family_prompt(a.prompt_tokens, a.shared_tokens, a.family, getattr(a, "ancestors", ())) for a in arrivals]
 
 
-async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource | Sequence[list[int]], name: str = "trace") -> PhaseResult:
+def prewarm(url: str, arrivals: Sequence[Any], ids_for: Sequence[list[int]]) -> None:
+    """Load the prefixes production had cached before the window, ahead of a replay that skips its own prewarm."""
+    if not warm_prefixes(arrivals, ids_for):
+        return
+    import aiohttp
+
+    async def go() -> None:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=None, sock_read=600)) as session:
+            await _prewarm(session, url, arrivals, ids_for)
+
+    asyncio.run(go())
+
+
+async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource | Sequence[list[int]], name: str = "trace",
+                       warm: bool = True) -> PhaseResult:
     """Open loop: each recorded request arrives at its own time, whatever the server is doing."""
     import aiohttp
 
@@ -259,7 +273,8 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
     timeout = aiohttp.ClientTimeout(total=None, sock_read=600)
     ids_for = trace_prompts(arrivals, prompts) if isinstance(prompts, PromptSource) else list(prompts)
     async with aiohttp.ClientSession(timeout=timeout, connector=aiohttp.TCPConnector(limit=0)) as session:
-        await _prewarm(session, url, arrivals, ids_for)
+        if warm:
+            await _prewarm(session, url, arrivals, ids_for)
         started = time.perf_counter()
 
         async def send(arrival: Any, ids: list[int]) -> None:

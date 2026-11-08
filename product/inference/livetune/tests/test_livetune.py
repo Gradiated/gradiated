@@ -1269,7 +1269,7 @@ class ReplayIsolationTest(unittest.TestCase):
 
         sent = []
 
-        async def fake(url, schedule, prompts, name="trace"):
+        async def fake(url, schedule, prompts, name="trace", warm=True):
             calls.append(("replay",))
             sent.append([list(ids) for ids in prompts])
             result = loadgen.PhaseResult(loadgen.Phase(0, 2000, 8, 1.0))
@@ -1950,3 +1950,51 @@ class SeedAndGuardFailureTest(unittest.TestCase):
             finally:
                 cli._watch, cli._wait_applied, cli._runs_candidate = saved
             self.assertEqual((verdict.decision, path.read_text()), ("revert", "previous"))
+
+
+class SeedPrecisionTest(unittest.TestCase):
+    def test_large_integer_seeds_survive_recording(self):
+        from livetune import sglang_plugin, trace
+
+        class FINISH_LENGTH:
+            pass
+
+        times = types.SimpleNamespace(scheduler_recv_time=0.0, wait_queue_entry_time=1.0, prefill_finished_time=1.5, completion_time=2.0,
+                                      queue_duration_s=0.0, forward_entry_time=1.1)
+        params = types.SimpleNamespace(temperature=0.7, max_new_tokens=8, sampling_seed=9007199254740993, top_p=0.9)
+        req = types.SimpleNamespace(rid="r", time_stats=times, origin_input_ids=list(range(10)), output_ids=[1] * 8, cached_tokens=0,
+                                    finished_reason=FINISH_LENGTH(), sampling_params=params, finished=lambda: True)
+        record = sglang_plugin.Telemetry(None).record(req, 100.0, 2.0)
+        self.assertEqual(trace.Record.from_json(record.to_json()).sampling["sampling_seed"], 9007199254740993)
+        self.assertEqual(record.sampling["top_p"], 0.9)
+
+
+class ServerSideSloTest(unittest.TestCase):
+    def test_non_streaming_traces_are_judged_on_the_servers_histograms(self):
+        text = "\n".join([
+            'sglang:request_time_per_output_token_seconds_bucket{le="0.01"} %d', 'sglang:request_time_per_output_token_seconds_bucket{le="+Inf"} %d',
+            'sglang:request_time_per_output_token_seconds_count %d',
+            'sglang:time_to_first_token_seconds_bucket{le="1.0"} %d', 'sglang:time_to_first_token_seconds_bucket{le="+Inf"} %d',
+            'sglang:time_to_first_token_seconds_count %d'])
+        scrapes = iter([metrics.parse(text % (0, 0, 0, 0, 0, 0), 0.0), metrics.parse(text % (10, 10, 10, 10, 10, 10), 60.0)])
+        server = types.SimpleNamespace(url="http://x", livetune_state=lambda: {"startup": {"max_running_requests": 64}}, fingerprint=lambda: {},
+                                       apply=lambda s: None, flush_cache=lambda: None, scrape=lambda: next(scrapes))
+        arrivals = [types.SimpleNamespace(at=0.0, prompt_tokens=2000, output_tokens=8, shared_tokens=0, family=None, temperature=0.7,
+                                          seconds=1.0, cached_tokens=0, priority=None, stream=False)]
+        saved = loadgen.run_arrivals
+
+        async def fake(url, schedule, prompts, name="trace", warm=True):
+            result = loadgen.PhaseResult(loadgen.Phase(0, 2000, 8, 1.0))
+            result.requests = [loadgen.RequestRecord(0.0, tokens=8)]
+            return result
+
+        loadgen.run_arrivals = fake
+        trials = []
+        try:
+            cli.tune_policy(server, Slo(50, 5), loadgen.PromptSource(list(range(5000))), {}, None, arrivals, 0, 0, trials.append)
+        finally:
+            loadgen.run_arrivals = saved
+        summary = trials[0]["summary"]
+        self.assertEqual(summary["slo_from"], "server")
+        self.assertIsNotNone(summary["tps_per_user_p50"])
+        self.assertIsNotNone(summary["ttft_p90"])

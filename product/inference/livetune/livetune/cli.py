@@ -78,6 +78,9 @@ def replay(args: argparse.Namespace, server: Server) -> None:
     write = _appender(args.out)
     startup = server.livetune_state()["startup"]
     server.apply(startup)
+    # Built (and any trace prewarm run) before a controller starts watching the server.
+    prompts = loadgen.PromptSource(_corpus(args.corpus))
+    segments = _segments(args, prompts)
     stop = threading.Event()
     events: list[dict[str, Any]] = []
     failures: list[BaseException] = []
@@ -109,8 +112,6 @@ def replay(args: argparse.Namespace, server: Server) -> None:
             thread.join()
 
     try:
-        prompts = loadgen.PromptSource(_corpus(args.corpus))
-        segments = _segments(args, prompts)
         for index, run_segment in enumerate(segments):
             started = time.time()
             summary = run_segment()
@@ -128,7 +129,11 @@ def replay(args: argparse.Namespace, server: Server) -> None:
 
 
 def _segments(args: argparse.Namespace, prompts: loadgen.PromptSource) -> list[Any]:
-    """What a replay plays: scripted closed-loop phases, or recorded traffic arriving open loop."""
+    """What a replay plays: scripted closed-loop phases, or recorded traffic arriving open loop.
+
+    A trace's cache prewarm runs here, before the caller starts a controller, so the controller never
+    sees the synthetic warmups as traffic.
+    """
     import asyncio
 
     if args.trace:
@@ -138,7 +143,9 @@ def _segments(args: argparse.Namespace, prompts: loadgen.PromptSource) -> list[A
             raise SystemExit(f"{args.trace}: {exc}") from exc
         if not arrivals:
             raise SystemExit(f"no records in {args.trace}")
-        return [lambda: asyncio.run(loadgen.run_arrivals(args.url, arrivals, prompts)).summary()]
+        ids = loadgen.trace_prompts(arrivals, prompts)
+        loadgen.prewarm(args.url, arrivals, ids)
+        return [lambda: asyncio.run(loadgen.run_arrivals(args.url, arrivals, ids, warm=False)).summary()]
     phases = [loadgen.Phase(**p) for p in json.loads(Path(args.phases).read_text())]
     return [lambda phase=phase, index=index: asyncio_phase(args.url, phase, prompts, index) for index, phase in enumerate(phases)]
 
@@ -174,7 +181,15 @@ def tune_policy(
         server.flush_cache()
         if arrivals is not None:
             # Every candidate meets the same recorded traffic, arriving at its recorded times.
-            summary = asyncio.run(loadgen.run_arrivals(server.url, arrivals, trace_ids, name=profile.name)).summary()
+            loadgen.prewarm(server.url, arrivals, trace_ids)
+            unstreamed = any(not getattr(a, "stream", True) for a in arrivals)
+            before = server.scrape() if unstreamed else None
+            summary = asyncio.run(loadgen.run_arrivals(server.url, arrivals, trace_ids, name=profile.name, warm=False)).summary()
+            if unstreamed:
+                # The client cannot time a non-streaming response; the server's per-request histograms
+                # cover every request. They are coarser than client timing near the SLO.
+                served = window(before, server.scrape())
+                summary = {**summary, "tps_per_user_p50": served.tps_per_user, "ttft_p90": served.ttft_p90, "slo_from": "server"}
         else:
             if warmup:
                 loadgen.run(server.url, [profile.phase(warmup)], prompts, log=lambda _: None)

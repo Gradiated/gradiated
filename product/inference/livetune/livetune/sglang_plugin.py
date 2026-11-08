@@ -425,8 +425,10 @@ class Telemetry:
             families=self.keys.families(ids),
             cached_family=self.keys.digest(ids, cached_pages) if cached_pages else None,
             cached_family_tokens=cached_pages,
-            sampling={key: float(getattr(params, key)) for key, default in _SAMPLING_DEFAULTS.items()
-                      if getattr(params, key, default) not in (None, default)},
+            # Integers stay integers: a seed above 2**53 would not survive a float.
+            sampling={key: value if isinstance(value, int) and not isinstance(value, bool) else float(value)
+                      for key, default in _SAMPLING_DEFAULTS.items()
+                      if (value := getattr(params, key, default)) not in (None, default)},
             logprobs=int(getattr(getattr(req, "logprob", None), "top_logprobs_num", 0) or 0) if getattr(req, "return_logprob", False) else -1,
             logprob_start=int(getattr(req, "logprob_start_len", -1)) if getattr(req, "return_logprob", False) else -1,
             stream=bool(getattr(req, "stream", True)),

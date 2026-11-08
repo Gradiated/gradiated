@@ -46,7 +46,7 @@ class Record:
     families: tuple[str, ...] = ()  # keyed prefix hashes at FAMILY_DEPTHS that the prompt reaches
     cached_family: str | None = None  # keyed hash of the cached prefix
     cached_family_tokens: int = 0  # how many tokens that hash covers: the cached prefix rounded down to whole pages
-    sampling: dict[str, float] = field(default_factory=dict)  # sampling parameters that differ from SGLang's defaults
+    sampling: dict[str, float | int] = field(default_factory=dict)  # sampling parameters that differ from SGLang's defaults
     logprobs: int = -1  # -1 none; otherwise logprobs were requested, with this many top alternatives
     logprob_start: int = -1  # -1 none; otherwise prompt logprobs were computed from this position
     stream: bool = True

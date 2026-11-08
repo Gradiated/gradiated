@@ -34,7 +34,7 @@ In production, a variant is chosen at startup with `LIVETUNE_STARTUP_VARIANT=<id
 
 - **In-flight batches.** Recapturing while a batch is still in flight under the overlap scheduler corrupted that batch. The plugin therefore defers a switch until the scheduler is idle and pauses admission meanwhile; if the scheduler doesn't drain within `LIVETUNE_DRAIN_STEPS`, the switch is cancelled.
 - **Broken graphs.** Even a switch made while idle produced decode graphs that hit an illegal memory access on DeepSeek V4.1 Flash. SGLang's own recapture paths first drop attention-backend graph state, and a plain `init_decode_cuda_graph()` re-call does not.
-- **Agreement.** Ranks all-reduce install success, so either all of them switch or none does.
+- **Agreement.** Ranks all-reduce install success, so either all of them switch or none does. Data-parallel servers refuse live switching, because their schedulers drain independently.
 
 Keep live switching off until a recapture path is qualified for the model's attention backend. A recapture also pauses decoding for about 27 s on DeepSeek V4.1 Flash with 12 graph sizes.
 

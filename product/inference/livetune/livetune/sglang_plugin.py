@@ -39,6 +39,11 @@ class LiveTuner:
         if key == VARIANT_KEY:
             if os.environ.get("LIVETUNE_LIVE_VARIANTS") != "1":
                 raise InvalidSetting(f"live {VARIANT_KEY} switching is disabled; set LIVETUNE_STARTUP_VARIANT and restart")
+            from sglang.srt.runtime_context import get_parallel
+
+            # Data-parallel schedulers drain independently, so their switches cannot be made atomic.
+            if getattr(get_parallel(), "dp_size", 1) > 1:
+                raise InvalidSetting(f"live {VARIANT_KEY} switching is not supported with data parallelism")
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
                 raise InvalidSetting(f"{VARIANT_KEY} must be a variant id (0 = stock)")
             if value != variants.STOCK:

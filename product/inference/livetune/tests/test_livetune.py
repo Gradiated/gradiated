@@ -401,7 +401,8 @@ class PluginTest(unittest.TestCase):
         from livetune import sglang_plugin
 
         self.plugin = sglang_plugin
-        parallel = types.SimpleNamespace(pp_size=1, tp_rank=0, tp_size=4)
+        parallel = types.SimpleNamespace(pp_size=1, tp_rank=0, tp_size=4, dp_size=1)
+        self.parallel = parallel
         runtime = types.ModuleType("sglang.srt.runtime_context")
         runtime.get_parallel = lambda: parallel
         self._saved = {name: sys.modules.get(name) for name in ("sglang", "sglang.srt", "sglang.srt.runtime_context")}
@@ -458,6 +459,11 @@ class PluginTest(unittest.TestCase):
             finally:
                 del os.environ["LIVETUNE_VARIANTS_DIR"]
         self.assertEqual(len(self.recaptures), 2)
+
+    def test_live_variant_switching_is_refused_with_data_parallelism(self):
+        self.parallel.dp_size = 2
+        with self.assertRaises(knobs.InvalidSetting):
+            self.tuner.validate("forward_variant", 1)
 
     def test_live_variant_switching_is_off_unless_enabled(self):
         os.environ.pop("LIVETUNE_LIVE_VARIANTS")

@@ -174,14 +174,14 @@ def main(argv: list[str] | None = None) -> int:
             ]
         finally:
             server.apply(start)
-        policy = tune.build_policy(results, slo, {"tuned_at": time.time(), "url": args.url, "startup": start})
+        policy = tune.build_policy(results, slo, {"tuned_at": time.time(), "url": args.url, "startup": start}, start)
         Path(args.out).write_text(policy.to_json())
         print(policy.to_json())
     elif args.command == "policy":
         slo = Slo(args.slo_tps, args.slo_ttft)
         trials = [json.loads(line) for line in Path(args.trials).read_text().splitlines() if line.strip()]
         start = server.livetune_state()["startup"]
-        policy = tune.build_policy(tune.best_from_trials(trials, slo, start), slo, {"trials": args.trials, "startup": start})
+        policy = tune.build_policy(tune.best_from_trials(trials, slo, start), slo, {"trials": args.trials, "startup": start}, start)
         Path(args.out).write_text(policy.to_json())
         print(policy.to_json())
     elif args.command == "replay":

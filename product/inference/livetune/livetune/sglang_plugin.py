@@ -26,7 +26,8 @@ class LiveTuner:
             "chunked_prefill_size": scheduler.chunked_prefill_size,
             "max_prefill_tokens": scheduler.max_prefill_tokens,
         }
-        self.settings: dict[str, Any] = {**self.startup, VARIANT_KEY: getattr(runner, "_livetune_variant_id", variants.STOCK)}
+        self.startup[VARIANT_KEY] = getattr(runner, "_livetune_variant_id", variants.STOCK)
+        self.settings: dict[str, Any] = dict(self.startup)
         self.variant: variants.InstalledVariant | None = getattr(runner, "_livetune_variant", None)
         self.pending_variant: int | None = None
         self.pending_since_step = 0

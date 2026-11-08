@@ -324,16 +324,20 @@ class TuneTest(unittest.TestCase):
                  {"profile": "c4", "settings": {"max_running_requests": 8}, "summary": dict(trials[0]["summary"], phase=dict(phase, users=4), output_tps=1700)}]
         self.assertEqual(tune.best_from_trials(light, Slo(50, 10), {"max_running_requests": 64})[0]["settings"]["max_running_requests"], 64)
 
-    def test_policy_boxes_sit_between_profiles(self):
+    def test_policy_boxes_sit_between_profiles_and_stop_near_the_evidence(self):
         results = [
             {"profile": {"name": f"u{u}-p{p}", "users": u, "prompt_tokens": p}, "settings": {"max_running_requests": u}, "summary": {}}
             for u in (1, 8, 32) for p in (1000, 30000)
         ]
-        policy = tune.build_policy(results, self.slo, {})
+        start = {"max_running_requests": 64}
+        policy = tune.build_policy(results, self.slo, {}, start)
         self.assertEqual(policy.select(Shape(5, 900)).name, "u8-p1000")
         self.assertEqual(policy.select(Shape(4, 900)).name, "u1-p1000")
-        self.assertEqual(policy.select(Shape(100, 20000)).name, "u32-p30000")
+        self.assertEqual(policy.select(Shape(35, 20000)).name, "u32-p30000")
         self.assertEqual(policy.select(Shape(2, 16000)).name, "u1-p30000")
+        for beyond in (Shape(100, 20000), Shape(100, 900), Shape(2, 90000)):
+            with self.subTest(beyond=beyond):
+                self.assertEqual(policy.select(beyond).settings, start)
 
 
 class LoadSummaryTest(unittest.TestCase):

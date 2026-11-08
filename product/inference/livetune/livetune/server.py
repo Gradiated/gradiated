@@ -38,6 +38,8 @@ class Server:
         return self.livetune_states()[0]
 
     def apply(self, settings: dict[str, Any], timeout: float = 300.0) -> None:
+        live = self.livetune_states()
+        settings = {k: v for k, v in settings.items() if any(state.get("settings", {}).get(k) != v for state in live)}
         if not settings:
             return
         reply = json.loads(self._request("/set_internal_state", {"server_args": settings}, timeout=timeout))

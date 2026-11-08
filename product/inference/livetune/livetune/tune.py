@@ -99,9 +99,13 @@ def tune_profile(
     return {"profile": asdict(profile), "settings": best_settings, "summary": best, "trials": trials}
 
 
-def _midpoints(levels: Sequence[float]) -> list[float]:
+EVIDENCE_REACH = 1.25
+
+
+def _edges(levels: Sequence[float]) -> list[float]:
+    # Halfway between neighbouring measurements; the top one reaches only a little past its evidence.
     ordered = sorted(set(levels))
-    return [(a + b) / 2 for a, b in zip(ordered, ordered[1:])] + [math.inf]
+    return [(a + b) / 2 for a, b in zip(ordered, ordered[1:])] + [ordered[-1] * EVIDENCE_REACH]
 
 
 def best_from_trials(trials: Sequence[Mapping[str, Any]], slo: Slo, start: Mapping[str, Any], min_gain: float = 0.02) -> list[dict[str, Any]]:
@@ -118,7 +122,8 @@ def best_from_trials(trials: Sequence[Mapping[str, Any]], slo: Slo, start: Mappi
             settings = dict(row["settings"])
             if all(binding(k, v, profile) or v == start.get(k) for k, v in settings.items()):
                 groups.setdefault(json.dumps(settings, sort_keys=True), []).append(row["summary"])
-        startup_key = json.dumps(dict(start), sort_keys=True)
+        recorded = rows[0]["settings"].keys()
+        startup_key = json.dumps({k: v for k, v in start.items() if k in recorded}, sort_keys=True)
         best_key = startup_key
         best = merged(groups[startup_key])
         for key, summaries in groups.items():
@@ -128,15 +133,14 @@ def best_from_trials(trials: Sequence[Mapping[str, Any]], slo: Slo, start: Mappi
     return results
 
 
-def build_policy(results: Sequence[Mapping[str, Any]], slo: Slo, provenance: Mapping[str, Any]) -> Policy:
-    # One rule per profile; box edges sit halfway between neighbouring profiles.
+def build_policy(results: Sequence[Mapping[str, Any]], slo: Slo, provenance: Mapping[str, Any], start: Mapping[str, Any]) -> Policy:
+    """One rule per profile; outside the measured envelope the startup settings apply."""
     prompts = sorted({r["profile"]["prompt_tokens"] for r in results})
-    prompt_edges = dict(zip(prompts, _midpoints(prompts)))
+    prompt_edges = dict(zip(prompts, _edges(prompts)))
     rules: list[Rule] = []
     for prompt in prompts:
         rows = sorted((r for r in results if r["profile"]["prompt_tokens"] == prompt), key=lambda r: r["profile"]["users"])
-        demand_edges = _midpoints([r["profile"]["users"] for r in rows])
-        for row, edge in zip(rows, demand_edges):
+        for row, edge in zip(rows, _edges([r["profile"]["users"] for r in rows])):
             summary = row["summary"]
             rules.append(
                 Rule(
@@ -147,8 +151,7 @@ def build_policy(results: Sequence[Mapping[str, Any]], slo: Slo, provenance: Map
                     evidence={k: summary.get(k) for k in ("output_tps", "tps_per_user_p50", "ttft_p90", "errors")},
                 )
             )
+        rules.append(Rule(f"beyond-{rows[-1]['profile']['name']}", math.inf, prompt_edges[prompt], dict(start)))
     rules.sort(key=lambda rule: (rule.max_prompt_tokens, rule.max_demand))
-    last = rules[-1]
-    if not (math.isinf(last.max_demand) and math.isinf(last.max_prompt_tokens)):
-        rules.append(Rule("fallback", math.inf, math.inf, dict(last.settings)))
+    rules.append(Rule("unmeasured", math.inf, math.inf, dict(start)))
     return Policy(slo, tuple(rules), dict(provenance))

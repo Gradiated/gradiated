@@ -300,6 +300,12 @@ class Engine:
         result["queue_wait_s"] = started - job.submitted
         try:
             with self.gpu() as lock_wait:
+                # A restart may have been scheduled while this job waited for the lock.
+                if not getattr(self, "accepting", True):
+                    job.status = "engine_restarting"
+                    job.result = {"job_id": job.id, "status": "engine_restarting", "error": "engine restarted before this job ran; resubmit"}
+                    self.current = None
+                    return
                 self.current_started = time.perf_counter()
                 result["gpu_lock_wait_s"] = lock_wait
                 t = time.perf_counter()
@@ -409,6 +415,15 @@ class Engine:
         if not source:
             yield
             return
+        self.utility_started = time.perf_counter()
+        try:
+            with self._installed_candidate(source, label):
+                yield
+        finally:
+            self.utility_started = 0.0
+
+    @contextmanager
+    def _installed_candidate(self, source: str, label: str):
         reload = self.llm.collective_rpc("tkcc_hot_reload", args=(f"{label}-{uuid.uuid4().hex[:6]}", source))
         failures = [r for r in reload if not r.get("ok")]
         if any(f.get("teardown_error") for f in failures):
@@ -419,11 +434,9 @@ class Engine:
             if len(failures) < len(reload):
                 self._teardown_or_restart()
             raise ValueError(f"candidate failed to install: {failures[0].get('error')}")
-        self.utility_started = time.perf_counter()
         try:
             yield
         finally:
-            self.utility_started = 0.0
             self._restart_if_weights_changed()
             self._teardown_or_restart()
 

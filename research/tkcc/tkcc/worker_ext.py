@@ -162,8 +162,9 @@ class TkccWorkerExtension:
             module = types.ModuleType(module_name)
             module.__file__ = str(path)
             sys.modules[module_name] = module
-            exec(compile(source, str(path), "exec"), module.__dict__)
+            # Recorded before exec so teardown purges its imports even if top-level code raises.
             self._tkcc_module = module
+            exec(compile(source, str(path), "exec"), module.__dict__)
             ctx = {
                 "rank": rank,
                 "tp_size": torch.distributed.get_world_size() if torch.distributed.is_initialized() else 1,

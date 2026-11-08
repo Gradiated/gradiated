@@ -310,7 +310,13 @@ def _publish(path: str, text: str) -> None:
 def _watch(servers: list[Server], seconds: float, interval: float) -> list[list[Any]]:
     """Metric windows from several servers over the same span."""
     windows: list[list[Any]] = [[] for _ in servers]
-    previous = [s.scrape() for s in servers]
+    def first(server: Server) -> Any:
+        try:
+            return server.scrape()
+        except Exception:  # an unreadable replica loses its first window, not the whole watch
+            return None
+
+    previous = [first(s) for s in servers]
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
         time.sleep(interval)
@@ -327,13 +333,15 @@ def _watch(servers: list[Server], seconds: float, interval: float) -> list[list[
 
 
 def _runs_candidate(server: Server, policy: Policy) -> bool:
-    """Whether the server's controller has loaded this policy and is applying one of its tuned rules."""
-    live = server.livetune_state().get("settings", {})
-    if live.get("policy_version") != policy.version:
-        return False
+    """Whether every data-parallel scheduler has this policy loaded and is applying one of its tuned rules."""
     startup = policy.rules[-1].settings
     candidates = [rule.settings for rule in policy.rules if rule.settings != startup]
-    return any(all(live.get(key) == value for key, value in settings.items()) for settings in candidates)
+
+    def runs(live: dict[str, Any]) -> bool:
+        return live.get("policy_version") == policy.version and any(all(live.get(k) == v for k, v in c.items()) for c in candidates)
+
+    states = server.livetune_states()
+    return bool(states) and all(runs(state.get("settings", {})) for state in states)
 
 
 def _wait_applied(server: Server, policy: Policy, timeout_s: float, interval_s: float) -> bool:

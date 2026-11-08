@@ -375,7 +375,7 @@ def _schedule_policy(scheduler: Any, name: str) -> Any:
 
 # SGLang's defaults; a request that differs is recorded and replayed with the same values.
 _SAMPLING_DEFAULTS = {"top_p": 1.0, "top_k": -1, "min_p": 0.0, "repetition_penalty": 1.0, "frequency_penalty": 0.0, "presence_penalty": 0.0,
-                      "min_new_tokens": 0}
+                      "min_new_tokens": 0, "stream_interval": None}
 
 _FINISH_NAMES = {"FINISH_LENGTH": "length", "FINISH_ABORT": "abort", "FINISH_MATCHED_TOKEN": "stop", "FINISH_MATCHED_STR": "stop", "FINISHED_MATCHED_REGEX": "stop"}
 

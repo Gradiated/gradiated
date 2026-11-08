@@ -1340,7 +1340,7 @@ class OpenLoopProfileTest(unittest.TestCase):
 
     def test_the_stage_recognises_a_replica_running_a_tuned_rule(self):
         policy = Policy(Slo(80, 10), (Rule("trace", 25, 2500, {"max_running_requests": 16}), Rule("unmeasured", math.inf, math.inf, {"max_running_requests": 64})))
-        running = lambda settings: types.SimpleNamespace(livetune_state=lambda: {"settings": settings})
+        running = lambda settings: types.SimpleNamespace(livetune_states=lambda: [{"settings": settings}])
         self.assertTrue(cli._runs_candidate(running({**STARTUP, "max_running_requests": 16, "policy_version": policy.version}), policy))
         self.assertFalse(cli._runs_candidate(running(dict(STARTUP)), policy))
 
@@ -1702,7 +1702,7 @@ class StreamModeTest(unittest.TestCase):
 class PolicyIdentityAndAbortTest(unittest.TestCase):
     def test_a_replica_counts_as_running_the_candidate_only_once_its_controller_loaded_it(self):
         policy = Policy(Slo(80, 10), (Rule("trace", 25, 2500, {"max_running_requests": 16}), Rule("unmeasured", math.inf, math.inf, {"max_running_requests": 64})))
-        running = lambda settings: types.SimpleNamespace(livetune_state=lambda: {"settings": settings})
+        running = lambda settings: types.SimpleNamespace(livetune_states=lambda: [{"settings": settings}])
         matching = {**STARTUP, "max_running_requests": 16}
         self.assertFalse(cli._runs_candidate(running(matching), policy))  # same settings, other policy
         self.assertTrue(cli._runs_candidate(running({**matching, "policy_version": policy.version}), policy))
@@ -1879,3 +1879,29 @@ class WorkloadShapeTest(unittest.TestCase):
                 writer.write(_record(t, ttft_s=0.0, decode_s=0.0))
             writer.close()
             self.assertEqual([r.t for r in trace.read([tmp], since=150.0, until=250.0)], [200.0])
+
+
+class DataParallelCandidateTest(unittest.TestCase):
+    def test_every_scheduler_must_run_the_candidate(self):
+        policy = Policy(Slo(80, 10), (Rule("trace", 25, 2500, {"max_running_requests": 16}), Rule("unmeasured", math.inf, math.inf, {"max_running_requests": 64})))
+        good = {**STARTUP, "max_running_requests": 16, "policy_version": policy.version}
+        mixed = types.SimpleNamespace(livetune_states=lambda: [{"settings": good}, {"settings": dict(STARTUP)}])
+        self.assertFalse(cli._runs_candidate(mixed, policy))
+
+    def test_a_failed_first_scrape_loses_a_window_not_the_watch(self):
+        calls = {"n": 0}
+
+        def scrape():
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise OSError("metrics down")
+            return metrics.parse("", float(calls["n"]))
+
+        server = types.SimpleNamespace(scrape=scrape)
+        saved = cli.time.sleep
+        cli.time.sleep = lambda s: None
+        try:
+            windows = cli._watch([server], seconds=0.0001, interval=0)
+        finally:
+            cli.time.sleep = saved
+        self.assertEqual(len(windows), 1)

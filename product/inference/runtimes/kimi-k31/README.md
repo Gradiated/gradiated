@@ -139,8 +139,8 @@ pods and does not evict running ones.
 The public model is available and advertises text input only. OpenRouter capacity
 is disabled in its catalog configuration (`openrouterModelId: null`), so the
 gateway serves Kimi only through qualified local deployments. If local capacity
-is unavailable, requests receive the existing capacity errors. Prices are $1.80
-per million input tokens, $0.18 per million cached input tokens and $9.00 per
+is unavailable, requests receive the existing capacity errors. Prices are $1.60
+per million input tokens, $0.16 per million cached input tokens and $9.00 per
 million output tokens. There is no separate
 cache-write price: the gateway adds a cache-write price on top of input, so
 cache writes are charged at the input rate. Its initial

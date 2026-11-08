@@ -1058,7 +1058,7 @@ class TelemetryTest(unittest.TestCase):
         self.assertEqual(len(records), 1)
         r = records[0]
         self.assertEqual((r.prompt_tokens, r.cached_tokens, r.output_tokens, r.finish, r.constrained), (3000, 2100, 256, "length", True))
-        self.assertAlmostEqual(r.ttft_s, 0.6)
+        self.assertAlmostEqual(r.ttft_s, 0.5)  # from waiting-queue entry, on the scheduler's own clock
         self.assertAlmostEqual(r.decode_tps, 100.0)
         self.assertEqual(len(r.families), 2)  # 256 and 2048 tokens deep
         self.assertIsNotNone(r.cached_family)  # 2048 tokens, rounded down to whole pages
@@ -1068,12 +1068,12 @@ class TelemetryTest(unittest.TestCase):
         from livetune import sglang_plugin
 
         telemetry = sglang_plugin.Telemetry(None)
-        decode = types.SimpleNamespace(forward_mode=types.SimpleNamespace(name="DECODE"), reqs=[1] * 40, extend_num_tokens=0, launch_ts=None)
+        decode = types.SimpleNamespace(forward_mode=types.SimpleNamespace(name="DECODE"), reqs=[1] * 40, extend_num_tokens=99999, launch_ts=None)
         extend = types.SimpleNamespace(forward_mode=types.SimpleNamespace(name="EXTEND"), reqs=[1] * 2, extend_num_tokens=8192, launch_ts=None)
         telemetry.on_batch(decode, types.SimpleNamespace(can_run_cuda_graph=True))
         telemetry.on_batch(extend, types.SimpleNamespace(can_run_cuda_graph=False))
         batches = telemetry.readback()["batches"]
-        self.assertEqual((batches["decode_requests"], batches["decode_graph_batches"], batches["extend_tokens"]), (40, 1, 8192))
+        self.assertEqual((batches["decode_requests"], batches["decode_tokens"], batches["decode_graph_batches"], batches["extend_tokens"]), (40, 40, 1, 8192))
 
 
 class AdvisorTest(unittest.TestCase):

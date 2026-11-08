@@ -383,7 +383,9 @@ class Telemetry:
 
     def record(self, req: Any, now_wall: float, now: float) -> trace.Record:
         ts = req.time_stats
-        arrival = ts.scheduler_recv_time or ts.wait_queue_entry_time
+        # Waiting-queue entry and prefill completion share the scheduler's perf_counter clock;
+        # scheduler_recv_time is calibrated against another process and read 2 s early on the pod.
+        arrival = ts.wait_queue_entry_time
         first = ts.prefill_finished_time
         done = ts.completion_time or now
         ids = req.origin_input_ids
@@ -424,7 +426,8 @@ class Telemetry:
     def on_batch(self, batch: Any, result: Any) -> None:
         mode = getattr(getattr(batch, "forward_mode", None), "name", "unknown").lower()
         requests = len(getattr(batch, "reqs", ()) or ())
-        tokens = getattr(batch, "extend_num_tokens", 0) or (requests if mode == "decode" else 0)
+        # A decode step makes one token per request; extend_num_tokens is only meaningful for prefill.
+        tokens = requests if mode == "decode" else int(getattr(batch, "extend_num_tokens", 0) or 0)
         launched = getattr(batch, "launch_ts", None)
         self.batches.add(mode, requests, int(tokens), bool(getattr(result, "can_run_cuda_graph", False)), time.monotonic() - launched if launched else None)
 

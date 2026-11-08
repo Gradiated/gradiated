@@ -120,7 +120,7 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
     if seed is not None:
         body["sampling_params"]["sampling_seed"] = seed
     for key, value in (sampling or {}).items():
-        body["sampling_params"][key] = int(value) if key in ("top_k", "min_new_tokens", "stream_interval") else value
+        body["sampling_params"][key] = int(value) if key in ("top_k", "min_new_tokens", "stream_interval", "sampling_seed") else value
     if logprobs >= 0:
         body["return_logprob"] = True
         body["top_logprobs_num"] = logprobs
@@ -262,17 +262,18 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
         await _prewarm(session, url, arrivals, ids_for)
         started = time.perf_counter()
 
-        async def send(arrival: Any, ids: list[int], seed: int) -> None:
+        async def send(arrival: Any, ids: list[int]) -> None:
             await asyncio.sleep(max(arrival.at - (time.perf_counter() - started), 0.0))
             record = RequestRecord(time.perf_counter())
             result.requests.append(record)
             temperature = 0.7 if arrival.temperature is None else arrival.temperature
-            # A fixed seed per arrival, so sampled requests generate the same tokens in every replay.
-            await _one(session, url, ids, arrival.output_tokens, record, temperature, getattr(arrival, "priority", None), seed,
+            # Only the seed production sent: on some runtimes a seed changes the decoding path (Kimi's
+            # DFLASH turns off), so an unseeded request stays unseeded, at the cost of sampling noise.
+            await _one(session, url, ids, arrival.output_tokens, record, temperature, getattr(arrival, "priority", None), None,
                        getattr(arrival, "sampling", None), getattr(arrival, "logprobs", -1),
                        getattr(arrival, "stream", True), getattr(arrival, "logprob_start", -1), getattr(arrival, "max_new_tokens", None))
 
-        await asyncio.gather(*(send(a, ids, index) for index, (a, ids) in enumerate(zip(arrivals, ids_for))))
+        await asyncio.gather(*(send(a, ids) for a, ids in zip(arrivals, ids_for)))
     # Every request runs to completion, so the phase lasts until the last one finishes.
     result.phase = dataclasses.replace(phase, seconds=time.perf_counter() - started)
     return result

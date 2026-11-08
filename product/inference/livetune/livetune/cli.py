@@ -371,6 +371,17 @@ def promote(args: argparse.Namespace, production: Server, policy: Policy) -> rol
     _publish(args.policy_out, policy.to_json())
     if before is None:
         return None
+    try:
+        verdict = _guard(args, fleet, policy, before, slo)
+    except Exception as exc:
+        # A guard that cannot finish has not shown the candidate is safe.
+        verdict = rollout.Verdict("revert", f"the guard could not finish: {type(exc).__name__}: {exc}", rollout.Side.of([], slo), rollout.Side.of([], slo))
+    if verdict.decision == "revert":
+        _publish(args.policy_out, previous)
+    return verdict
+
+
+def _guard(args: argparse.Namespace, fleet: list[Server], policy: Policy, before: list[list[Any]], slo: Slo) -> rollout.Verdict:
     # Judge only the replicas that took the candidate up, from the moment they did.
     from concurrent.futures import ThreadPoolExecutor
 
@@ -381,16 +392,19 @@ def promote(args: argparse.Namespace, production: Server, policy: Policy) -> rol
     if not applied:
         return rollout.Verdict("inconclusive", "no fleet replica applied the published policy", rollout.Side.of([], slo), rollout.Side.of([], slo))
     after = _watch([fleet[i] for i in applied], args.guard_seconds, args.interval)
-    left = [fleet[i].url for i in applied if not _runs_candidate(fleet[i], policy)]
+
+    def still_runs(server: Server) -> bool:
+        try:
+            return _runs_candidate(server, policy)
+        except Exception:  # unverifiable counts as not running it
+            return False
+
+    left = [fleet[i].url for i in applied if not still_runs(fleet[i])]
     if left:
-        # A replica that dropped the candidate mid-guard (local probation rollback, say) was measured
-        # partly on other settings; a guard prefers the known-good policy over an unproven one.
-        verdict = rollout.Verdict("revert", f"replicas left the candidate during the guard: {left}", rollout.Side.of([], slo), rollout.Side.of([], slo))
-    else:
-        verdict = rollout.judge([w for side in after for w in side], [w for i in applied for w in before[i]], slo)
-    if verdict.decision == "revert":
-        _publish(args.policy_out, previous)
-    return verdict
+        # A replica that dropped the candidate mid-guard (local probation rollback, say), or whose state
+        # cannot be read, was not shown running it; a guard prefers the known-good policy.
+        return rollout.Verdict("revert", f"replicas not verified on the candidate at the end of the guard: {left}", rollout.Side.of([], slo), rollout.Side.of([], slo))
+    return rollout.judge([w for side in after for w in side], [w for i in applied for w in before[i]], slo)
 
 
 def stage(args: argparse.Namespace, production: Server, policy: Policy) -> rollout.Verdict:

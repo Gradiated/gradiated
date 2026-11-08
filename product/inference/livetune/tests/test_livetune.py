@@ -1905,3 +1905,48 @@ class DataParallelCandidateTest(unittest.TestCase):
         finally:
             cli.time.sleep = saved
         self.assertEqual(len(windows), 1)
+
+
+class SeedAndGuardFailureTest(unittest.TestCase):
+    def test_replay_sends_only_the_seed_production_sent(self):
+        import asyncio
+
+        class Response:
+            status = 200
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *exc):
+                return False
+
+            async def json(self):
+                return {"meta_info": {"completion_tokens": 1}}
+
+        bodies = []
+        session = types.SimpleNamespace(post=lambda url, json: bodies.append(json) or Response())
+        for sampling in ({}, {"sampling_seed": 42.0}):
+            asyncio.run(loadgen._one(session, "http://x", [1], 1, loadgen.RequestRecord(0.0), stream=False, sampling=sampling))
+        self.assertNotIn("sampling_seed", bodies[0]["sampling_params"])
+        self.assertEqual(bodies[1]["sampling_params"]["sampling_seed"], 42)
+
+    def test_a_guard_that_cannot_read_a_replica_restores_the_previous_policy(self):
+        import argparse
+
+        saved = (cli._watch, cli._wait_applied, cli._runs_candidate)
+        cli._watch = lambda servers, seconds, interval: [[_window(40, tps=100)] * 12 for _ in servers]
+        cli._wait_applied = lambda server, policy, timeout, interval: True
+
+        def unreadable(server, policy):
+            raise OSError("server_info timed out")
+
+        cli._runs_candidate = unreadable
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "policy.json")
+            path.write_text("previous")
+            args = argparse.Namespace(fleet="", policy_out=str(path), slo_tps=80, slo_ttft=10, guard_seconds=60, interval=5, stage_apply_s=0)
+            try:
+                verdict = cli.promote(args, types.SimpleNamespace(url="prod", fingerprint=lambda: {}), _policy())
+            finally:
+                cli._watch, cli._wait_applied, cli._runs_candidate = saved
+            self.assertEqual((verdict.decision, path.read_text()), ("revert", "previous"))

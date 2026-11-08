@@ -436,9 +436,11 @@ def _guard(args: argparse.Namespace, fleet: list[Server], policy: Policy, before
     with ThreadPoolExecutor(max_workers=max(len(fleet), 1)) as pool:
         ready = list(pool.map(lambda m: _wait_applied(m, policy, args.stage_apply_s, args.interval), fleet))
     applied = [i for i, ok in enumerate(ready) if ok]
-    if not applied:
-        # Unmeasured in the fleet, it would take effect later, after the guard; withdraw it instead.
-        return rollout.Verdict("revert", "no fleet replica applied the published policy", rollout.Side.of([], slo), rollout.Side.of([], slo))
+    missed = [fleet[i].url for i, ok in enumerate(ready) if not ok]
+    if missed:
+        # A replica that misses the window would load the policy later, after the guard, unmeasured on its
+        # traffic; the fleet takes a candidate together or not at all.
+        return rollout.Verdict("revert", f"replicas did not apply the published policy in time: {missed}", rollout.Side.of([], slo), rollout.Side.of([], slo))
     after = _watch([fleet[i] for i in applied], args.guard_seconds, args.interval)
 
     left = [fleet[i].url for i in applied if not _verified_on(fleet[i], policy)]

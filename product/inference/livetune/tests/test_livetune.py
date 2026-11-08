@@ -2087,3 +2087,24 @@ class NamespaceAndFirstPublishTest(unittest.TestCase):
         burst = [_record(100.0 + d, ttft_s=0.0, decode_s=d) for d in (1.0, 1.0, 59.0)]  # all started at 100
         quick = _record(110.0, ttft_s=0.0, decode_s=10.0)
         self.assertEqual(trace.summarize(burst + [quick])["seconds"], 0.0)
+
+
+class AllReplicasTest(unittest.TestCase):
+    def test_a_partial_application_withdraws_the_candidate(self):
+        import argparse
+
+        saved = (cli.Server, cli._watch, cli._wait_applied, cli._runs_candidate)
+        cli.Server = lambda url: types.SimpleNamespace(url=url, fingerprint=lambda: {})
+        cli._watch = lambda servers, seconds, interval: [[_window(40, tps=100)] * 12 for _ in servers]
+        cli._wait_applied = lambda server, policy, timeout, interval: server.url != "slow"
+        cli._runs_candidate = lambda server, policy: True
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "policy.json")
+            path.write_text("previous")
+            args = argparse.Namespace(fleet="slow", policy_out=str(path), slo_tps=80, slo_ttft=10, guard_seconds=60, interval=5, stage_apply_s=0)
+            try:
+                verdict = cli.promote(args, types.SimpleNamespace(url="prod", fingerprint=lambda: {}), _policy())
+            finally:
+                cli.Server, cli._watch, cli._wait_applied, cli._runs_candidate = saved
+            self.assertEqual((verdict.decision, path.read_text()), ("revert", "previous"))
+            self.assertIn("slow", verdict.reason)

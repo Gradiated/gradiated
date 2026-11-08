@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import atexit
 import dataclasses
+import json
 import logging
 import os
 import queue
@@ -433,6 +434,8 @@ class Telemetry:
         self.batches = trace.BatchStats()
         self.recent: list[str] = []
         self.since = time.time()  # wall clock: a trace window before this was not recorded by this process
+        self.enqueued = 0  # snapshots handed to the writer thread
+        self.processed = 0  # of those, written or failed: once it reaches a count read earlier, those are on disk
         self.dropped = 0  # on the scheduler thread: the backlog was full
         self.failed = 0  # on the writer thread: a record could not be hashed or written
         self.error: str | None = None
@@ -474,7 +477,9 @@ class Telemetry:
         verify = getattr(req, "spec_verify_ct", 0)
         reason = type(req.finished_reason).__name__ if req.finished_reason is not None else "unknown"
         cached_pages = min(cached // self.page_size * self.page_size, len(ids))
-        namespace = "|".join(str(v) for v in (getattr(req, "cache_salt", None), getattr(req, "extra_key", None)) if v) or None
+        # Both parts, typed and in order, so ("a|b", None) and ("a", "b") stay distinct namespaces.
+        parts = (getattr(req, "cache_salt", None), getattr(req, "extra_key", None))
+        namespace = json.dumps(parts, default=str, separators=(",", ":")) if any(parts) else None
         record = trace.Record(
             t=now_wall,
             prompt_tokens=len(ids),
@@ -520,6 +525,7 @@ class Telemetry:
         started = time.perf_counter()
         try:
             self._queue.put_nowait(self._snapshot(req, time.time(), started))
+            self.enqueued += 1
         except queue.Full:
             self.dropped += 1
         self.scheduler_s += time.perf_counter() - started
@@ -537,6 +543,7 @@ class Telemetry:
                 logger.debug("livetune: could not write a record", exc_info=True)
             finally:
                 self.writer_s += time.perf_counter() - started
+                self.processed += 1
                 self._queue.task_done()
 
     def drain(self, timeout: float = 5.0) -> bool:
@@ -561,6 +568,8 @@ class Telemetry:
             "records": self.writer.written if self.writer else 0,
             "dropped": self.dropped + self.failed,
             "pending": self._queue.qsize(),
+            "enqueued": self.enqueued,
+            "processed": self.processed,
             "scheduler_s": round(self.scheduler_s, 6),
             "writer_s": round(self.writer_s, 6),
             "error": self.error,

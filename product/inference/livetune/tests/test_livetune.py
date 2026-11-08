@@ -2346,6 +2346,36 @@ class TraceCompletenessTest(unittest.TestCase):
             self.assertIn("rotated", cli._trace_gap(self._server(tmp), tmp, 100.0, {}))
 
 
+class PendingRecordsTest(unittest.TestCase):
+    def test_tuning_waits_for_records_queued_before_it_reads(self):
+        readings = iter([{"enqueued": 10, "processed": 7}, {"enqueued": 12, "processed": 9}, {"enqueued": 13, "processed": 10}])
+        server = types.SimpleNamespace(livetune_states=lambda: [{"telemetry": next(readings)}])
+        self.assertTrue(cli._await_written(server, timeout_s=5, interval_s=0))  # 10 processed covers the 10 queued at the start
+        stuck = types.SimpleNamespace(livetune_states=lambda: [{"telemetry": {"enqueued": 5, "processed": 1}}])
+        self.assertFalse(cli._await_written(stuck, timeout_s=0, interval_s=0))
+
+    def test_cache_namespaces_keep_their_parts_apart(self):
+        from livetune import sglang_plugin
+
+        class FINISH_LENGTH:
+            pass
+
+        def namespace(salt, key):
+            times = types.SimpleNamespace(wait_queue_entry_time=1.0, prefill_finished_time=1.5, completion_time=2.0, queue_duration_s=0.0)
+            req = types.SimpleNamespace(rid="r", time_stats=times, origin_input_ids=list(range(300)), output_ids=[1], cached_tokens=0,
+                                        finished_reason=FINISH_LENGTH(), sampling_params=types.SimpleNamespace(), cache_salt=salt, extra_key=key)
+            return sglang_plugin.Telemetry(None, keys=trace_module().PrefixKeys(b"k" * 32)).record(req, 0.0, 2.0).families
+
+        self.assertNotEqual(namespace("a|b", None), namespace("a", "b"))
+        self.assertEqual(namespace(None, None), trace_module().PrefixKeys(b"k" * 32).families(list(range(300))))
+
+
+def trace_module():
+    from livetune import trace
+
+    return trace
+
+
 class QuietLogTest(unittest.TestCase):
     def test_uneventful_windows_are_logged_as_a_heartbeat_and_actions_always(self):
         logged, now = [], [0.0]

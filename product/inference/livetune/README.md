@@ -42,7 +42,12 @@ A variant can be chosen at startup with `LIVETUNE_STARTUP_VARIANT=<id>`, which i
 - **Measured** on DeepSeek V4.1 Flash, TP4, under an 8-user load:
   - Three switches (to a no-op variant, to a variant that adds a kernel after the final norm, and back to stock) each paused serving for 27–33 s. There were 0 request errors and 0 illegal memory accesses.
   - Greedy output on three real prompts, with the cache flushed before each, was identical to stock after switching back. With the extra kernel it was identical on 2 of 3 prompts; on the third, the first run diverged at token 22.
-- **Still unsafe at larger batches.** After later switches, a burst of about 44 requests arrived at once and crashed the scheduler on the first batch after recapture, with an illegal memory access. That was the ninth switch on that server, during a `variant-eval` run. The passing test above never ran more than 8 requests at once. Keep live switching to canaries until a batch-size sweep after recapture passes; in production, use startup variants.
+- **Not safe for production on DeepSeek V4.** Live switching passed every short-context test:
+  - nine switches under a 48-user 2k-token load;
+  - a sweep up to 64 concurrent requests after a switch.
+
+  It still crashes with an illegal memory access when a server switches a variant in and back to stock and then serves long-context traffic (24k-token prompts with shared prefixes). That happened with or without a prefix-cache flush, by the second round. With `CUDA_LAUNCH_BLOCKING=1` it did not crash, so it is a race in the runtime recapture path, not a fixed out-of-bounds access. Use startup variants and rolling restarts in production, and live switching only for short-context checks on a canary.
+
 - **What a variant can change.** Any Python on the forward path: module forwards, and calls into Triton or CUDA kernels compiled at runtime. What a variant cannot change is fixed when the server starts: memory pools, KV-cache layout and dtype, weight layout and the captured batch sizes.
 - **Agreement.** Ranks all-reduce the success of install plus graph recapture, so either all of them switch or none does. A failed switch restores the variant that was serving, or stock if that fails too. If neither comes back, the scheduler stops rather than serve without working graphs. Data-parallel servers refuse live switching, because their schedulers drain independently.
 

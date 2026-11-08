@@ -80,7 +80,7 @@ def replay(args: argparse.Namespace, server: Server) -> None:
     server.apply(startup)
     # Built (and any trace prewarm run) before a controller starts watching the server.
     prompts = loadgen.PromptSource(_corpus(args.corpus))
-    segments = _segments(args, prompts)
+    segments = _segments(args, prompts, server)
     stop = threading.Event()
     events: list[dict[str, Any]] = []
     failures: list[BaseException] = []
@@ -128,7 +128,7 @@ def replay(args: argparse.Namespace, server: Server) -> None:
         server.apply(startup)
 
 
-def _segments(args: argparse.Namespace, prompts: loadgen.PromptSource) -> list[Any]:
+def _segments(args: argparse.Namespace, prompts: loadgen.PromptSource, server: Server) -> list[Any]:
     """What a replay plays: scripted closed-loop phases, or recorded traffic arriving open loop.
 
     A trace's cache prewarm runs here, before the caller starts a controller, so the controller never
@@ -144,6 +144,8 @@ def _segments(args: argparse.Namespace, prompts: loadgen.PromptSource) -> list[A
         if not arrivals:
             raise SystemExit(f"no records in {args.trace}")
         ids = loadgen.trace_prompts(arrivals, prompts)
+        # From an empty cache, then the recorded initial state: a previous replay's prefixes must not linger.
+        server.flush_cache()
         loadgen.prewarm(args.url, arrivals, ids)
         return [lambda: asyncio.run(loadgen.run_arrivals(args.url, arrivals, ids, warm=False)).summary()]
     phases = [loadgen.Phase(**p) for p in json.loads(Path(args.phases).read_text())]
@@ -393,7 +395,10 @@ def promote(args: argparse.Namespace, production: Server, policy: Policy) -> rol
     the previous policy if it regressed. A big shift in traffic makes the comparison inconclusive, and
     the change stays, since it has already passed replay and the stage."""
     scope = production.fingerprint()
-    members = [production] + [Server(url) for url in (args.fleet or "").split(",") if url]
+    # The staged replica already runs the candidate, so its windows cannot serve as the previous policy's
+    # baseline; it was judged against its peers during the stage.
+    staged = getattr(args, "stage_url", None)
+    members = [m for m in [production] + [Server(url) for url in (args.fleet or "").split(",") if url] if m.url != staged]
     # Replicas outside production's scope refuse the policy, so their unchanged windows would dilute the comparison.
     fleet = [m for m in members if not _scope_differences(scope, m.fingerprint())]
     previous = Path(args.policy_out).read_text() if Path(args.policy_out).exists() else None

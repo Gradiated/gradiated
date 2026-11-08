@@ -2027,3 +2027,25 @@ class StageReadbackTest(unittest.TestCase):
             finally:
                 cli.Server, cli._watch, cli._wait_applied, cli._runs_candidate = saved
             self.assertEqual((verdict.decision, stage_policy.read_text()), ("inconclusive", "previous"))
+
+
+class StagedReplicaGuardTest(unittest.TestCase):
+    def test_the_fleet_guard_leaves_out_the_staged_replica(self):
+        import argparse
+
+        watched = []
+        saved = (cli.Server, cli._watch, cli._wait_applied, cli._runs_candidate)
+        cli.Server = lambda url: types.SimpleNamespace(url=url, fingerprint=lambda: {})
+        cli._watch = lambda servers, seconds, interval: watched.append([s.url for s in servers]) or [[_window(40, tps=100)] * 12 for _ in servers]
+        cli._wait_applied = lambda server, policy, timeout, interval: True
+        cli._runs_candidate = lambda server, policy: True
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "policy.json")
+            path.write_text("previous")
+            args = argparse.Namespace(fleet="staged,other", stage_url="staged", policy_out=str(path), slo_tps=80, slo_ttft=10,
+                                      guard_seconds=60, interval=5, stage_apply_s=0)
+            try:
+                cli.promote(args, types.SimpleNamespace(url="prod", fingerprint=lambda: {}), _policy())
+            finally:
+                cli.Server, cli._watch, cli._wait_applied, cli._runs_candidate = saved
+        self.assertTrue(watched and all("staged" not in urls for urls in watched))

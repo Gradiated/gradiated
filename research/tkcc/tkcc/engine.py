@@ -467,6 +467,8 @@ class Engine:
             for name, prompts in sets.items():
                 self.llm.collective_rpc("tkcc_call", args=("reset",))
                 for prompt in prompts:
+                    # Every prompt must be a full prefill, or shared leading blocks would hide tokens from the probe.
+                    self.llm.reset_prefix_cache()
                     self._generate([prompt], max_tokens)
                 out[name] = self.llm.collective_rpc("tkcc_call", args=("collect",))[0]
         return out

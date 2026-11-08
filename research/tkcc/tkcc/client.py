@@ -6,6 +6,7 @@ import argparse
 import json
 import sys
 import time
+import urllib.error
 import urllib.request
 
 PORTS = {"fast": 18110, "slow": 18120}
@@ -32,6 +33,10 @@ def wait(tier: str, job_id: str, timeout: float) -> dict:
     while time.time() < deadline:
         try:
             data = _get(tier, f"/result?id={job_id}")
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                return {"status": "lost", "job_id": job_id, "error": "the engine restarted and no longer knows this job; resubmit"}
+            data = {"status": "unreachable", "error": str(exc)}
         except OSError as exc:
             data = {"status": "unreachable", "error": str(exc)}
         if data.get("status") not in ("queued", "running", "unreachable"):

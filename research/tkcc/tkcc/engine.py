@@ -257,6 +257,8 @@ class Engine:
         source = payload.get("source")
         if not isinstance(source, str) or not source.strip():
             raise ValueError("source is required")
+        if not getattr(self, "accepting", True):
+            raise ValueError("engine is restarting; resubmit in a few minutes")
         job = Job(
             id=f"{self.config.tier}-{time.strftime('%H%M%S')}-{uuid.uuid4().hex[:6]}",
             agent=str(payload.get("agent", "anon"))[:40],
@@ -287,6 +289,8 @@ class Engine:
 
     def _run_job(self, job: Job) -> None:
         job.status = "running"
+        # The watchdog times only GPU work; waiting for another tier's lock is not a hang.
+        self.current_started = 0.0
         self.current = job
         result: dict[str, Any] = {"job_id": job.id, "agent": job.agent, "name": job.name, "tier": self.config.tier}
         started = _now()
@@ -315,6 +319,8 @@ class Engine:
                     else:
                         self._evaluate(job, result)
                 finally:
+                    # Even a candidate that failed to install may have edited weights before raising.
+                    self._check_weights(result)
                     if installed:
                         self._teardown(result)
         except Exception as exc:
@@ -329,6 +335,7 @@ class Engine:
         job.result = result
         job.status = result.get("status", "unknown")
         self.current = None
+        self.current_started = 0.0
         self.jobs_log.write(json.dumps({**result, "source_sha": _sha(job.source)}) + "\n")
         self.jobs_log.flush()
         (self.run_dir / "sources").mkdir(exist_ok=True)
@@ -337,9 +344,7 @@ class Engine:
             self.best = {"job_id": job.id, "agent": job.agent, "name": job.name, "speedup": result["speedup"]}
         self.log("finished", job=job.id, status=job.status, speedup=result.get("speedup"), job_s=result["job_s"])
         if getattr(self, "restart_after_job", False):
-            self.log("restart_after_profile", job=job.id)
-            time.sleep(15)
-            hard_exit(0)
+            self._exit_for_restart(job.id)
 
     def _evaluate(self, job: Job, result: dict[str, Any]) -> None:
         t = time.perf_counter()
@@ -362,7 +367,13 @@ class Engine:
                 self.restart_after_job = True
                 result["profile_note"] = "fast engine restarts after a profiled job to clear CUPTI overhead (~3-4 min)"
                 result["profile"] = self._profile()
-        weights = self.llm.collective_rpc("tkcc_weights_unchanged")
+    def _check_weights(self, result: dict[str, Any]) -> None:
+        try:
+            weights = self.llm.collective_rpc("tkcc_weights_unchanged")
+        except Exception as exc:
+            result["weights_error"] = f"{type(exc).__name__}: {exc}"
+            self.restart_after_job = True
+            return
         if not all(w["ok"] for w in weights):
             # Teardown cannot restore tensor contents, so only a restart gives back a stock model.
             result["status"] = "weights_modified"
@@ -397,16 +408,21 @@ class Engine:
         if any(f.get("teardown_error") for f in failures):
             self._schedule_restart()
         if failures:
+            self._restart_if_weights_changed()
             if len(failures) < len(reload):
                 self._teardown_or_restart()
             raise ValueError(f"candidate failed to install: {failures[0].get('error')}")
         try:
             yield
         finally:
-            weights = self.llm.collective_rpc("tkcc_weights_unchanged")
-            if not all(w["ok"] for w in weights):
-                self._schedule_restart()
+            self._restart_if_weights_changed()
             self._teardown_or_restart()
+
+    def _restart_if_weights_changed(self) -> None:
+        result: dict[str, Any] = {}
+        self._check_weights(result)
+        if result.get("status") == "weights_modified" or "weights_error" in result:
+            self._schedule_restart()
 
     def _teardown_or_restart(self) -> None:
         try:
@@ -418,8 +434,20 @@ class Engine:
     def _schedule_restart(self) -> None:
         if not getattr(self, "restart_scheduled", False):
             self.restart_scheduled = True
-            self.log("restart_scheduled")
-            threading.Thread(target=lambda: (time.sleep(15), hard_exit(0)), daemon=True).start()
+            threading.Thread(target=lambda: (time.sleep(15), self._exit_for_restart(None)), daemon=True).start()
+
+    def _exit_for_restart(self, after_job: str | None) -> None:
+        """Fail queued jobs visibly, give polling clients time to see it, then exit for the supervisor."""
+        self.accepting = False
+        with self.state_lock:
+            for job_id in self.order:
+                job = self.jobs[job_id]
+                if job.status == "queued":
+                    job.status = "engine_restarting"
+                    job.result = {"job_id": job.id, "status": "engine_restarting", "error": "engine restarted before this job ran; resubmit"}
+        self.log("restart", after_job=after_job)
+        time.sleep(15)
+        hard_exit(0)
 
     def experiment(self, payload: dict[str, Any]) -> dict[str, Any]:
         sets: dict[str, list[list[int]]] = payload["prompt_sets"]

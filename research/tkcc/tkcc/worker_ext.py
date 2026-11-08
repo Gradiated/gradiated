@@ -207,6 +207,12 @@ class TkccWorkerExtension:
             restored = self._tkcc_patcher.undo()
         if self._tkcc_module is not None:
             sys.modules.pop(self._tkcc_module.__name__, None)
+            # Candidates may import helper modules from their job directory; drop those too.
+            job_dir = os.path.dirname(self._tkcc_module.__file__ or "") + os.sep
+            for name, module in list(sys.modules.items()):
+                if (getattr(module, "__file__", None) or "").startswith(job_dir):
+                    sys.modules.pop(name, None)
+            gc.collect()
         self._tkcc_patcher = None
         self._tkcc_module = None
         recapture_s = self._tkcc_recapture()

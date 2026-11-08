@@ -1831,3 +1831,30 @@ class WindowStartTest(unittest.TestCase):
             writer.write(dataclasses_replace(_record(1000.0), server_s=1800.0))  # a long one that started at -800
             writer.close()
             self.assertEqual(len(list(trace.read([tmp], since=900.0))), 1)
+
+
+class MinTokensAndVersionTest(unittest.TestCase):
+    def test_min_new_tokens_is_replayed(self):
+        import asyncio
+
+        class Response:
+            status = 200
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *exc):
+                return False
+
+            async def json(self):
+                return {"meta_info": {"completion_tokens": 8}}
+
+        bodies = []
+        session = types.SimpleNamespace(post=lambda url, json: bodies.append(json) or Response())
+        asyncio.run(loadgen._one(session, "http://x", [1], 8, loadgen.RequestRecord(0.0), stream=False, sampling={"min_new_tokens": 8.0}))
+        self.assertEqual(bodies[0]["sampling_params"]["min_new_tokens"], 8)
+
+    def test_the_controller_never_reasserts_a_stale_policy_version(self):
+        ctl = control.Controller(_policy(), smoothing=1.0, applied={"max_running_requests": 8})
+        ctl.step(_window(2), 0)
+        self.assertNotIn("policy_version", ctl.applied)

@@ -85,7 +85,8 @@ def replay(args: argparse.Namespace, server: Server) -> None:
     thread = None
     if not args.static:
         # Seeded from readback, so the first rule changes only what differs and starts no variant cooldown.
-        controller = control.Controller(policy, startup=startup, applied=dict(server.livetune_state()["settings"]))
+        controller = control.Controller(policy, startup=startup,
+                                        applied={k: v for k, v in server.livetune_state()["settings"].items() if k != "policy_version"})
 
         def log(event: dict[str, Any]) -> None:
             events.append(event)
@@ -624,7 +625,9 @@ def main(argv: list[str] | None = None) -> int:
         policy = load_policy(args.policy, server, args.allow_scope_mismatch)
         acting = args.mode == "act"
         live = server.livetune_state()
-        controller = control.Controller(policy, startup=live["startup"], applied=dict(live["settings"]), judge_changes=acting)
+        # policy_version is announced, never reconciled: a value left by a previous controller must not be restored.
+        applied = {key: value for key, value in live["settings"].items() if key != "policy_version"}
+        controller = control.Controller(policy, startup=live["startup"], applied=applied, judge_changes=acting)
         apply = server.apply if acting else (lambda settings: None)
         if acting:
             server.apply({"policy_version": policy.version})  # announce which policy this replica runs

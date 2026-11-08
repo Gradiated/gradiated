@@ -120,7 +120,7 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
     if seed is not None:
         body["sampling_params"]["sampling_seed"] = seed
     for key, value in (sampling or {}).items():
-        body["sampling_params"][key] = int(value) if key == "top_k" else value
+        body["sampling_params"][key] = int(value) if key in ("top_k", "min_new_tokens") else value
     if logprobs >= 0:
         body["return_logprob"] = True
         body["top_logprobs_num"] = logprobs

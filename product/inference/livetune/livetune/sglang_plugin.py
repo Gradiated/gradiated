@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import atexit
+import dataclasses
 import logging
 import os
+import queue
+import threading
 import time
 from typing import Any
 
@@ -34,6 +38,7 @@ class LiveTuner:
         self.pp_micro_batch_startup = get_parallel().pp_max_micro_batch_size
         self.gpu = _gpu_name()
         self._runtime: dict[str, str | None] | None = None
+        self._runtime_thread: threading.Thread | None = None
         self.settings: dict[str, Any] = dict(self.startup)
         self.variant: variants.InstalledVariant | None = getattr(runner, "_livetune_variant", None)
         # The code installed at startup, by hash: re-registering a name later changes the catalog, not this.
@@ -58,6 +63,10 @@ class LiveTuner:
             # Data-parallel schedulers drain independently, so their switches cannot be made atomic.
             if getattr(get_parallel(), "dp_size", 1) > 1:
                 raise InvalidSetting(f"live {VARIANT_KEY} switching is not supported with data parallelism")
+            # Recapture rebuilds the target model's graphs; a draft model's graphs would keep the old code.
+            spec = getattr(self.scheduler, "spec_algorithm", None)
+            if spec is not None and not spec.is_none():
+                raise InvalidSetting(f"live {VARIANT_KEY} switching is not supported with speculative decoding")
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
                 raise InvalidSetting(f"{VARIANT_KEY} must be a variant id (0 = stock)")
             if value != variants.STOCK:
@@ -243,16 +252,29 @@ class LiveTuner:
         runner.decode_cuda_graph_runner = recapture_elastic_cuda_graph(model_runner=runner).runner
 
     @property
-    def runtime(self) -> dict[str, str | None]:
-        # Hashing thousands of files takes seconds on a busy host, so it waits for the first readback.
-        if self._runtime is None:
+    def runtime(self) -> dict[str, str | None] | None:
+        """Digests of the code and inputs serving, or None while they are being computed.
+
+        Hashing thousands of files takes about a second, which would stall serving on the scheduler
+        thread. It starts at the first readback, after startup has written its caches, and runs in the
+        background; clients wait for it.
+        """
+        if self._runtime is None and self._runtime_thread is None:
+            self._runtime_thread = threading.Thread(target=self._compute_runtime, name="livetune-runtime", daemon=True)
+            self._runtime_thread.start()
+        return self._runtime
+
+    def _compute_runtime(self) -> None:
+        try:
             self._runtime = {
                 "sglang": _source_digest("sglang"),
                 "livetune": _source_digest("livetune"),
                 "packages": _packages_digest(),
                 "inputs": _inputs_digest(os.environ.get("LIVETUNE_RUNTIME_INPUTS", "")),
             }
-        return self._runtime
+        except Exception as exc:  # an unreadable input is a scope nobody can match, not a crash
+            logger.exception("livetune: could not digest the runtime")
+            self._runtime = {"error": f"{type(exc).__name__}: {exc}"}
 
     def _resolve(self, variant_id: int) -> variants.VariantSource:
         source = variants.resolve(variant_id)
@@ -394,16 +416,42 @@ _FINISH_NAMES = {"FINISH_LENGTH": "length", "FINISH_ABORT": "abort", "FINISH_MAT
 class Telemetry:
     """What the scheduler saw, on attention-TP rank 0: one record per finished request, counters per batch."""
 
+    # Finished requests waiting to be hashed and written; beyond this the scheduler drops records
+    # rather than wait or grow memory.
+    BACKLOG = 8192
+
     def __init__(self, directory: str | None, page_size: int = 1, keys: trace.PrefixKeys | None = None) -> None:
         self.writer = trace.Writer(directory) if directory else None
         self.keys = keys or trace.PrefixKeys(directory=directory)
         self.page_size = max(page_size, 1)
         self.batches = trace.BatchStats()
         self.recent: list[str] = []
-        self.dropped = 0
+        self.dropped = 0  # on the scheduler thread: the backlog was full
+        self.failed = 0  # on the writer thread: a record could not be hashed or written
         self.error: str | None = None
+        # Seconds spent recording, on the scheduler thread and on the writer thread.
+        self.scheduler_s = 0.0
+        self.writer_s = 0.0
+        self._queue: queue.Queue[tuple[trace.Record, Any, int, str | None]] = queue.Queue(self.BACKLOG)
+        if self.writer is not None:
+            # Hashing a long prompt takes milliseconds, which would stall every running request if
+            # the scheduler did it; the scheduler only snapshots the request.
+            threading.Thread(target=self._write_loop, name="livetune-trace", daemon=True).start()
+            atexit.register(self.drain)
 
     def record(self, req: Any, now_wall: float, now: float) -> trace.Record:
+        """The complete record of a finished request."""
+        return self._hashed(*self._snapshot(req, now_wall, now))
+
+    def _hashed(self, record: trace.Record, ids: Any, cached_pages: int, namespace: str | None) -> trace.Record:
+        depths = [d for d in trace.FAMILY_DEPTHS if len(ids) >= d]
+        found = self.keys.digests(ids, depths + ([cached_pages] if cached_pages else []), namespace)
+        return dataclasses.replace(record, families=tuple(found[d] for d in depths),
+                                   cached_family=found[cached_pages] if cached_pages else None)
+
+    def _snapshot(self, req: Any, now_wall: float, now: float) -> tuple[trace.Record, Any, int, str | None]:
+        """Everything but the prefix hashes, cheap enough for the scheduler thread; SGLang does not
+        change a finished request's prompt ids, so they are kept by reference."""
         ts = req.time_stats
         # Waiting-queue entry and prefill completion share the scheduler's perf_counter clock;
         # scheduler_recv_time is calibrated against another process and read 2 s early on the pod.
@@ -418,9 +466,9 @@ class Telemetry:
         params = req.sampling_params
         verify = getattr(req, "spec_verify_ct", 0)
         reason = type(req.finished_reason).__name__ if req.finished_reason is not None else "unknown"
-        cached_pages = cached // self.page_size * self.page_size
+        cached_pages = min(cached // self.page_size * self.page_size, len(ids))
         namespace = "|".join(str(v) for v in (getattr(req, "cache_salt", None), getattr(req, "extra_key", None)) if v) or None
-        return trace.Record(
+        record = trace.Record(
             t=now_wall,
             prompt_tokens=len(ids),
             cached_tokens=cached,
@@ -438,8 +486,6 @@ class Telemetry:
             priority=getattr(req, "priority", None),
             lora=getattr(req, "lora_id", None) is not None,
             session=getattr(req, "session_id", None) is not None,
-            families=self.keys.families(ids, namespace),
-            cached_family=self.keys.digest(ids, cached_pages, namespace) if cached_pages else None,
             salted=namespace is not None,
             hidden_states=bool(getattr(req, "return_hidden_states", False)),
             cached_family_tokens=cached_pages,
@@ -455,14 +501,43 @@ class Telemetry:
             multimodal=getattr(req, "multimodal_inputs", None) is not None or getattr(req, "input_embeds", None) is not None
             or getattr(req, "origin_input_ids_unpadded", ids) is not ids,
         )
+        return record, ids, cached_pages, namespace
 
     def on_finish(self, req: Any) -> None:
         # With overlap scheduling a finished request can reach the output path twice.
         if req.rid in self.recent:
             return
         self.recent = (self.recent + [req.rid])[-256:]
-        if self.writer is not None:
-            self.writer.write(self.record(req, time.time(), time.perf_counter()))
+        if self.writer is None:
+            return
+        started = time.perf_counter()
+        try:
+            self._queue.put_nowait(self._snapshot(req, time.time(), started))
+        except queue.Full:
+            self.dropped += 1
+        self.scheduler_s += time.perf_counter() - started
+
+    def _write_loop(self) -> None:
+        while True:
+            item = self._queue.get()
+            started = time.perf_counter()
+            try:
+                # A burst is written whole and flushed once, so readers see it promptly at little cost.
+                self.writer.write(self._hashed(*item), flush=self._queue.empty())
+            except Exception as exc:
+                self.failed += 1
+                self.error = f"{type(exc).__name__}: {exc}"
+                logger.debug("livetune: could not write a record", exc_info=True)
+            finally:
+                self.writer_s += time.perf_counter() - started
+                self._queue.task_done()
+
+    def drain(self, timeout: float = 5.0) -> bool:
+        """Wait for queued records to reach the trace file; true if none are left."""
+        deadline = time.monotonic() + timeout
+        while self._queue.unfinished_tasks and time.monotonic() < deadline:
+            time.sleep(0.005)
+        return not self._queue.unfinished_tasks
 
     def on_batch(self, batch: Any, result: Any) -> None:
         mode = getattr(getattr(batch, "forward_mode", None), "name", "unknown").lower()
@@ -476,7 +551,10 @@ class Telemetry:
         return {
             "trace_path": str(self.writer.path) if self.writer else None,
             "records": self.writer.written if self.writer else 0,
-            "dropped": self.dropped,
+            "dropped": self.dropped + self.failed,
+            "pending": self._queue.qsize(),
+            "scheduler_s": round(self.scheduler_s, 6),
+            "writer_s": round(self.writer_s, 6),
             "error": self.error,
             "batches": self.batches.snapshot(),
         }

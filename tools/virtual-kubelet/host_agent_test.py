@@ -68,6 +68,19 @@ class HostAgentTest(unittest.TestCase):
             with self.subTest(invalid_profile=name), self.assertRaises(ValueError):
                 agent.runtime_profile(self.host.config, self.pod)
 
+    @unittest.skipIf("recovery" in Path(agent.__file__).parts, "the frozen recovery agent predates live tuning")
+    def test_live_tuning_mode_is_validated(self):
+        profile = {'image': self.pod['spec']['containers'][0]['image'], 'environment': {}}
+        self.host.config['runtimes'] = {'a' * 64: profile}
+        for mode in ('off', 'observe', 'act'):
+            profile['environment']['LIVETUNE_MODE'] = mode
+            with self.subTest(mode=mode):
+                self.assertEqual(agent.runtime_profile(self.host.config, self.pod)[1], profile)
+        for mode in ('', 'on', 'ACT', 'act ', 1):
+            profile['environment']['LIVETUNE_MODE'] = mode
+            with self.subTest(invalid_mode=mode), self.assertRaises(ValueError):
+                agent.runtime_profile(self.host.config, self.pod)
+
     @unittest.skipIf("recovery" in Path(agent.__file__).parts, "the frozen recovery agent predates prefill budget overrides")
     def test_prefill_budget_must_allow_at_least_four_sequences(self):
         digest = 'a' * 64

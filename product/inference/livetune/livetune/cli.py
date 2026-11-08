@@ -4,11 +4,12 @@ import argparse
 import dataclasses
 import json
 import logging
+import math
 import os
 import sys
 import time
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Callable, Sequence
 
 from livetune import controller as control
 from livetune import advisor, loadgen, rollout, trace, tune
@@ -32,6 +33,28 @@ def _corpus(path: str) -> list[int]:
     if isinstance(data, dict) and "prompts" in data:
         return [token for prompt in data["prompts"] for token in prompt]
     return list(data)
+
+
+# sysexits EX_CONFIG: the controller cannot run with this configuration, so restarting will not help.
+CONFIG_ERROR = 78
+
+
+def _quiet(log: Any, every_s: float, clock: Any = time.monotonic) -> Any:
+    """Log every event that did something, and an uneventful window at most every every_s seconds."""
+    if every_s <= 0:
+        return log
+    last = -math.inf
+
+    def write(event: Any) -> None:
+        nonlocal last
+        eventful = not isinstance(event, dict) or any(key in event for key in ("action", "reconciled", "error"))
+        eventful = eventful or any(key.startswith("policy_") for key in event)
+        now = clock()
+        if eventful or now - last >= every_s:
+            last = now if not eventful else last
+            log(event)
+
+    return write
 
 
 def _appender(path: str | None, mode: str = "a"):
@@ -353,26 +376,31 @@ def _publish(path: str, text: str) -> None:
     tmp.replace(path)  # controllers reload a complete file, never a partial one
 
 
-def _watch(servers: list[Server], seconds: float, interval: float) -> list[list[Any]]:
-    """Metric windows from several servers over the same span."""
+def _watch(servers: list[Server], seconds: float, interval: float,
+           running: Sequence[Callable[[Server], bool] | None] | None = None) -> list[list[Any]]:
+    """Metric windows from several servers over the same span.
+
+    A server with a running check keeps only the windows it passed at both ends: a staged replica
+    whose traffic moved to the policy's startup rule mid-watch was not running the candidate then.
+    """
+    checks = list(running) if running is not None else [None] * len(servers)
     windows: list[list[Any]] = [[] for _ in servers]
-    def first(server: Server) -> Any:
+
+    def read(i: int) -> Any:
+        # An unreadable replica, or one not running what is being judged, loses the window.
         try:
-            return server.scrape()
-        except Exception:  # an unreadable replica loses its first window, not the whole watch
+            current = servers[i].scrape()
+            return current if checks[i] is None or checks[i](servers[i]) else None
+        except Exception:
             return None
 
-    previous = [first(s) for s in servers]
+    previous = [read(i) for i in range(len(servers))]
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
         time.sleep(interval)
-        for i, s in enumerate(servers):
-            try:
-                current = s.scrape()
-            except Exception:  # a peer that cannot be read loses this window
-                previous[i] = None
-                continue
-            if previous[i] is not None:
+        for i in range(len(servers)):
+            current = read(i)
+            if previous[i] is not None and current is not None:
                 windows[i].append(window(previous[i], current))
             previous[i] = current
     return windows
@@ -468,7 +496,8 @@ def _guard(args: argparse.Namespace, fleet: list[Server], policy: Policy, before
         # A replica that misses the window would load the policy later, after the guard, unmeasured on its
         # traffic; the fleet takes a candidate together or not at all.
         return rollout.Verdict("revert", f"replicas did not apply the published policy in time: {missed}", rollout.Side.of([], slo), rollout.Side.of([], slo))
-    after = _watch([fleet[i] for i in applied], args.guard_seconds, args.interval)
+    on_candidate = lambda server: _verified_on(server, policy)
+    after = _watch([fleet[i] for i in applied], args.guard_seconds, args.interval, [on_candidate] * len(applied))
 
     left = [fleet[i].url for i in applied if not _verified_on(fleet[i], policy)]
     if left:
@@ -513,7 +542,8 @@ def stage(args: argparse.Namespace, production: Server, policy: Policy) -> rollo
         if not _wait_applied(replica, policy, args.stage_apply_s, args.interval):
             verdict = rollout.Verdict("inconclusive", "the staged replica did not apply the candidate", rollout.Side.of([], slo), rollout.Side.of([], slo))
             return verdict
-        watched = _watch([replica, *peers], args.stage_seconds, args.interval)
+        watched = _watch([replica, *peers], args.stage_seconds, args.interval,
+                         [lambda server: _verified_on(server, policy)] + [None] * len(peers))
         verdict = rollout.judge(watched[0], [w for side in watched[1:] for w in side], slo)
         if verdict.decision == "promote" and not _verified_on(replica, policy):
             verdict = rollout.Verdict("inconclusive", "the staged replica is not verified on the candidate at the end of the stage", verdict.stage, verdict.peers)
@@ -548,11 +578,14 @@ def advise(args: argparse.Namespace, server: Server) -> dict[str, Any]:
         previous = current
     after_state = server.livetune_state()
     after = _batch_counters(server)
-    # The traffic mix comes from a closed window as long as this one, ending close_s ago, so requests
-    # still running now (the long ones) are not missing from it.
+    ended_wall = time.time()
+    # The traffic mix is the requests that started while the metrics were watched, so utilization
+    # and shape describe one workload. A record is written when its request finishes, so wait close_s
+    # for the long ones to finish before reading.
     close_s = getattr(args, "close_s", 600.0)
-    closed_until = time.time() - close_s
-    records = list(trace.read([args.trace_dir], since=closed_until - (time.time() - started_wall), until=closed_until)) if args.trace_dir else []
+    if args.trace_dir and ended_wall + close_s > time.time():
+        time.sleep(ended_wall + close_s - time.time())
+    records = list(trace.read([args.trace_dir], since=started_wall, until=ended_wall)) if args.trace_dir else []
     batches = trace.batch_deltas(before, after)
     evidence = advisor.Evidence(
         windows=windows,
@@ -640,7 +673,7 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--interval", type=float, default=5.0)
     a.add_argument("--trace-dir", help="the server's LIVETUNE_TRACE_DIR, for the traffic mix")
     a.add_argument("--out", help="write the report here as well")
-    a.add_argument("--close-s", type=float, default=600, help="the traffic mix is read from a window ending this long ago, so its requests have finished")
+    a.add_argument("--close-s", type=float, default=600, help="the traffic mix is the requests that started while watching, read this long after, once they have finished")
     ve = sub.choices["variant-eval"]
     ve.add_argument("--variant", required=True, help="a Python file defining install(model, patch, ctx)")
     ve.add_argument("--name", required=True)
@@ -681,6 +714,8 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--interval", type=float, default=5.0)
     c.add_argument("--log")
     c.add_argument("--mode", choices=("act", "observe"), default="act", help="observe logs decisions without applying them")
+    c.add_argument("--log-every", type=float, default=0.0,
+                   help="seconds between logged windows that changed nothing; 0 logs every window")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     server = Server(args.url)
@@ -741,7 +776,13 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "replay":
         replay(args, server)
     elif args.command == "control":
-        policy = load_policy(args.policy, server, args.allow_scope_mismatch)
+        try:
+            policy = load_policy(args.policy, server, args.allow_scope_mismatch)
+        except (SystemExit, ValueError, OSError) as exc:
+            # A missing, invalid or out-of-scope policy stays that way until a new one is released;
+            # a supervisor should not restart into the same refusal.
+            print(f"livetune control: {exc}", file=sys.stderr)
+            return CONFIG_ERROR
         acting = args.mode == "act"
         live = server.livetune_state()
         # policy_version is announced, never reconciled: a value left by a previous controller must not be restored.
@@ -750,7 +791,7 @@ def main(argv: list[str] | None = None) -> int:
         apply = server.apply if acting else (lambda settings: None)
         if acting:
             server.apply({"policy_version": policy.version})  # announce which policy this replica runs
-        log = _appender(args.log)
+        log = _quiet(_appender(args.log), args.log_every)
         seen = Path(args.policy).stat().st_mtime
 
         def scrape() -> Any:

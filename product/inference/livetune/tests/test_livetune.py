@@ -1,5 +1,6 @@
 import hashlib
 from dataclasses import replace as dataclasses_replace
+import itertools
 import json
 import math
 import os
@@ -901,6 +902,13 @@ class PluginTest(unittest.TestCase):
         self.assertEqual(len(self.recaptures), 2)  # the switch to "good", then its restore
         self.assertIn("illegal memory access", state["recent_errors"][-1]["error"])
 
+    def test_live_switching_is_refused_with_speculative_decoding(self):
+        self.scheduler.spec_algorithm = types.SimpleNamespace(is_none=lambda: False)
+        with self.assertRaisesRegex(Exception, "speculative decoding"):
+            self.tuner.validate("forward_variant", 0)
+        self.scheduler.spec_algorithm = types.SimpleNamespace(is_none=lambda: True)
+        self.tuner.validate("forward_variant", 0)
+
     def test_ranks_vote_on_the_install_before_any_of_them_recaptures(self):
         votes = []
 
@@ -950,6 +958,8 @@ class PluginTest(unittest.TestCase):
     def test_runtime_digest_covers_the_installed_package_sources(self):
         digest = self.plugin._source_digest("livetune")
         self.assertRegex(digest, "^[0-9a-f]{64}$")
+        self.assertIsNone(self.tuner.readback()["runtime"])  # digesting in the background, off the scheduler thread
+        self.tuner._runtime_thread.join(30)
         self.assertEqual(self.tuner.readback()["runtime"]["livetune"], digest)
         self.assertIsNone(self.plugin._source_digest("no_such_package_livetune"))
         self.assertRegex(self.tuner.readback()["runtime"]["packages"], "^[0-9a-f]{64}$")
@@ -1075,6 +1085,7 @@ class TelemetryTest(unittest.TestCase):
             telemetry = sglang_plugin.Telemetry(tmp, page_size=256)
             telemetry.on_finish(req)
             telemetry.on_finish(req)  # the overlap scheduler outputs a finished request twice
+            self.assertTrue(telemetry.drain())
             telemetry.writer.close()
             from livetune import trace
 
@@ -1523,7 +1534,7 @@ class GuardTest(unittest.TestCase):
         watched = iter([[good], [bad]])
         saved_watch, saved_runs = cli._watch, cli._runs_candidate
         cli._runs_candidate = lambda server, policy: True
-        cli._watch = lambda servers, seconds, interval: next(watched)
+        cli._watch = lambda servers, seconds, interval, running=None: next(watched)
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp, "policy.json")
             path.write_text("previous")
@@ -1543,7 +1554,7 @@ class GuardTest(unittest.TestCase):
         watched = iter([[before], [after]])
         saved_watch, saved_runs = cli._watch, cli._runs_candidate
         cli._runs_candidate = lambda server, policy: True
-        cli._watch = lambda servers, seconds, interval: next(watched)
+        cli._watch = lambda servers, seconds, interval, running=None: next(watched)
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp, "policy.json")
             path.write_text("previous")
@@ -1578,7 +1589,7 @@ class FleetEvidenceTest(unittest.TestCase):
         import argparse
 
         saved = (cli._watch, cli._wait_applied, cli._runs_candidate)
-        cli._watch = lambda servers, seconds, interval: [[_window(40, tps=100)] * 12 for _ in servers]
+        cli._watch = lambda servers, seconds, interval, running=None: [[_window(40, tps=100)] * 12 for _ in servers]
         cli._wait_applied = lambda server, policy, timeout, interval: True
         cli._runs_candidate = lambda server, policy: False  # rolled back by its controller mid-guard
         with tempfile.TemporaryDirectory() as tmp:
@@ -1599,7 +1610,7 @@ class FleetEvidenceTest(unittest.TestCase):
         watched, waited = [], []
         saved = (cli.Server, cli._watch, cli._wait_applied)
         cli.Server = lambda url: members[url]
-        cli._watch = lambda servers, seconds, interval: watched.append([s.url for s in servers]) or [[_window(40, tps=100)] * 12 for _ in servers]
+        cli._watch = lambda servers, seconds, interval, running=None: watched.append([s.url for s in servers]) or [[_window(40, tps=100)] * 12 for _ in servers]
         cli._wait_applied = lambda server, policy, timeout, interval: waited.append(server.url) or False
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp, "policy.json")
@@ -2012,7 +2023,7 @@ class SeedAndGuardFailureTest(unittest.TestCase):
         import argparse
 
         saved = (cli._watch, cli._wait_applied, cli._runs_candidate)
-        cli._watch = lambda servers, seconds, interval: [[_window(40, tps=100)] * 12 for _ in servers]
+        cli._watch = lambda servers, seconds, interval, running=None: [[_window(40, tps=100)] * 12 for _ in servers]
         cli._wait_applied = lambda server, policy, timeout, interval: True
 
         def unreadable(server, policy):
@@ -2094,6 +2105,97 @@ class FinishHookTest(unittest.TestCase):
         self.assertEqual(seen, [req, req])
 
 
+class RuntimeWaitTest(unittest.TestCase):
+    def test_the_fingerprint_waits_for_a_runtime_still_being_digested(self):
+        from livetune import server as server_module
+
+        class Fake(server_module.Server):
+            def __init__(self, states):
+                super().__init__("http://x")
+                object.__setattr__(self, "states", states)
+
+            def _request(self, path, *args, **kwargs):
+                return json.dumps({"model_path": "m"} if path == "/model_info" else {})
+
+            def livetune_states(self):
+                return next(self.states)
+
+        saved = server_module.time.sleep
+        server_module.time.sleep = lambda seconds: None
+        try:
+            ready = Fake(iter([[{"gpu": "B300", "runtime": None}], [{"gpu": "B300", "runtime": {"sglang": "s"}}]]))
+            self.assertEqual(ready.fingerprint()["runtime"], {"sglang": "s"})
+            stuck = Fake(itertools.repeat([{"gpu": "B300", "runtime": None}]))
+            with self.assertRaises(server_module.UpdateFailed):
+                stuck.fingerprint(runtime_wait_s=0)
+        finally:
+            server_module.time.sleep = saved
+
+
+class ControlConfigTest(unittest.TestCase):
+    def test_a_policy_the_controller_refuses_exits_with_the_config_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = str(Path(tmp, "nope.json"))
+            saved = cli.Server
+            cli.Server = lambda url: types.SimpleNamespace(url=url, fingerprint=lambda: {})
+            try:
+                self.assertEqual(cli.main(["control", "--policy", missing]), cli.CONFIG_ERROR)
+            finally:
+                cli.Server = saved
+
+
+class CandidateWindowsTest(unittest.TestCase):
+    def test_only_windows_with_the_candidate_live_at_both_ends_are_judged(self):
+        live = iter([True, True, False, True, True, True])
+        staged = types.SimpleNamespace(scrape=itertools.count().__next__)
+        peer = types.SimpleNamespace(scrape=itertools.count(100).__next__)
+        saved = (cli.window, cli.time.sleep, cli.time.monotonic)
+        clock = itertools.count()
+        cli.window = lambda a, b: (a, b)
+        cli.time.sleep = lambda s: None
+        cli.time.monotonic = lambda: float(next(clock))
+        try:
+            staged_windows, peer_windows = cli._watch([staged, peer], 5.5, 1, [lambda s: next(live), None])
+        finally:
+            cli.window, cli.time.sleep, cli.time.monotonic = saved
+        # The candidate dropped at the third scrape, so the windows ending and starting there are gone.
+        self.assertEqual(staged_windows, [(0, 1), (3, 4), (4, 5)])
+        self.assertEqual(len(peer_windows), 5)
+
+    def test_the_advisor_reads_requests_that_started_while_it_watched(self):
+        reads, sleeps = [], []
+        server = types.SimpleNamespace(scrape=lambda: None, livetune_state=lambda: {"settings": {}, "startup": {}},
+                                       livetune_states=lambda: [{}], info=lambda: {"max_total_num_tokens": 1000})
+        saved = (cli.window, cli.time.sleep, cli.trace.read)
+        cli.window = lambda a, b: _window(10)
+        cli.time.sleep = sleeps.append
+        cli.trace.read = lambda dirs, since=0.0, until=None: reads.append((since, until)) or iter(())
+        try:
+            cli.advise(types.SimpleNamespace(seconds=0, interval=1, trace_dir="/t", close_s=600), server)
+        finally:
+            cli.window, cli.time.sleep, cli.trace.read = saved
+        (since, until), = reads
+        self.assertLessEqual(until - since, 1.0)  # the watched interval, not one ending close_s ago
+        self.assertGreater(sleeps[-1], 599)  # waited for those requests to finish
+
+
+class QuietLogTest(unittest.TestCase):
+    def test_uneventful_windows_are_logged_as_a_heartbeat_and_actions_always(self):
+        logged, now = [], [0.0]
+        log = cli._quiet(logged.append, 300, clock=lambda: now[0])
+        for t in range(0, 900, 5):
+            now[0] = float(t)
+            log({"t": t, "rule": "r"})
+            if t == 400:
+                log({"t": t, "action": {"rule": "s"}})
+            if t == 405:
+                log({"t": t, "policy_reloaded": "p"})
+        self.assertEqual([e["t"] for e in logged], [0, 300, 400, 405, 600])
+        everything = []
+        cli._quiet(everything.append, 0)({"t": 1})
+        self.assertEqual(len(everything), 1)
+
+
 class ChunkedEarlyStopTest(unittest.TestCase):
     def _server(self, interval):
         return types.SimpleNamespace(livetune_states=lambda: [{"settings": {"stream_interval": interval}}])
@@ -2155,7 +2257,7 @@ class StageReadbackTest(unittest.TestCase):
         peer = types.SimpleNamespace(url="peer", fingerprint=lambda: scope)
         saved = (cli.Server, cli._watch, cli._wait_applied, cli._runs_candidate)
         cli.Server = lambda url: {"replica": replica, "peer": peer}[url]
-        cli._watch = lambda servers, seconds, interval: [[_window(40, tps=110)] * 12, [_window(40, tps=85)] * 12]
+        cli._watch = lambda servers, seconds, interval, running=None: [[_window(40, tps=110)] * 12, [_window(40, tps=85)] * 12]
         cli._wait_applied = lambda server, policy, timeout, interval: True
 
         def unreadable(server, policy):
@@ -2181,7 +2283,7 @@ class StagedReplicaGuardTest(unittest.TestCase):
         watched = []
         saved = (cli.Server, cli._watch, cli._wait_applied, cli._runs_candidate)
         cli.Server = lambda url: types.SimpleNamespace(url=url, fingerprint=lambda: {})
-        cli._watch = lambda servers, seconds, interval: watched.append([s.url for s in servers]) or [[_window(40, tps=100)] * 12 for _ in servers]
+        cli._watch = lambda servers, seconds, interval, running=None: watched.append([s.url for s in servers]) or [[_window(40, tps=100)] * 12 for _ in servers]
         cli._wait_applied = lambda server, policy, timeout, interval: True
         cli._runs_candidate = lambda server, policy: True
         with tempfile.TemporaryDirectory() as tmp:
@@ -2212,7 +2314,7 @@ class NamespaceAndFirstPublishTest(unittest.TestCase):
 
         saved = (cli._watch, cli._wait_applied, cli._runs_candidate)
         watched = iter([[[_window(40, tps=100)] * 12], [[_window(40, tps=60)] * 12]])
-        cli._watch = lambda servers, seconds, interval: next(watched)
+        cli._watch = lambda servers, seconds, interval, running=None: next(watched)
         cli._wait_applied = lambda server, policy, timeout, interval: True
         cli._runs_candidate = lambda server, policy: True
         with tempfile.TemporaryDirectory() as tmp:
@@ -2240,7 +2342,7 @@ class AllReplicasTest(unittest.TestCase):
 
         saved = (cli.Server, cli._watch, cli._wait_applied, cli._runs_candidate)
         cli.Server = lambda url: types.SimpleNamespace(url=url, fingerprint=lambda: {})
-        cli._watch = lambda servers, seconds, interval: [[_window(40, tps=100)] * 12 for _ in servers]
+        cli._watch = lambda servers, seconds, interval, running=None: [[_window(40, tps=100)] * 12 for _ in servers]
         cli._wait_applied = lambda server, policy, timeout, interval: server.url != "slow"
         cli._runs_candidate = lambda server, policy: True
         with tempfile.TemporaryDirectory() as tmp:
@@ -2297,7 +2399,7 @@ class HiddenStateAndUnstagedGuardTest(unittest.TestCase):
         import argparse
 
         saved = (cli._watch, cli._wait_applied, cli._runs_candidate)
-        cli._watch = lambda servers, seconds, interval: [[] for _ in servers]  # metrics never readable
+        cli._watch = lambda servers, seconds, interval, running=None: [[] for _ in servers]  # metrics never readable
         cli._wait_applied = lambda server, policy, timeout, interval: True
         cli._runs_candidate = lambda server, policy: True
         with tempfile.TemporaryDirectory() as tmp:

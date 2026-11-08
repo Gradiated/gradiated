@@ -75,12 +75,22 @@ class Server:
     def info(self) -> dict[str, Any]:
         return json.loads(self._request("/server_info"))
 
-    def fingerprint(self) -> dict[str, Any]:
+    def fingerprint(self, runtime_wait_s: float = 120.0) -> dict[str, Any]:
         info = json.loads(self._request("/server_info"))
         # Page size bounds which knob values the server accepts. The startup variant id (in startup)
         # and the verified catalog fix the forward code; the live variant is state, not scope.
         envelope = ("gpu", "page_size", "pp_micro_batch_startup", "startup", "startup_variant", "variants", "live_variants", "runtime")
-        scopes = [{key: state.get(key) for key in envelope} for state in self.livetune_states()]
+        deadline = time.monotonic() + runtime_wait_s
+        while True:
+            states = self.livetune_states()
+            # A scheduler digests its runtime in the background after the first readback.
+            pending = [state for state in states if "runtime" in state and state["runtime"] is None]
+            if not pending or time.monotonic() >= deadline:
+                break
+            time.sleep(0.5)
+        scopes = [{key: state.get(key) for key in envelope} for state in states]
+        if pending:
+            raise UpdateFailed(f"{self.url} did not finish digesting its runtime in {runtime_wait_s:.0f}s")
         # The scheduler reports its own GPU; the client running this may have none, or different ones.
         if not all(scope["gpu"] for scope in scopes):
             raise UpdateFailed(f"{self.url} does not report its GPU; upgrade its livetune plugin")

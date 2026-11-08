@@ -23,6 +23,9 @@ from typing import Any, Iterable, Iterator, Mapping, Sequence
 
 # Prefix depths, in tokens, that name a request's prefix family: the system prompt, then deeper shared context.
 FAMILY_DEPTHS = (256, 2048, 16384)
+# Tokens converted to bytes per step. Each step holds the GIL briefly, and its 32 KB hash update
+# releases it, so a scheduler thread never waits long behind a long prompt being hashed.
+_HASH_CHUNK = 4096
 
 
 @dataclass(frozen=True)
@@ -84,15 +87,30 @@ class PrefixKeys:
         env = os.environ.get("LIVETUNE_TRACE_KEY")
         self.key = key or (bytes.fromhex(env) if env else (_directory_key(Path(directory)) if directory else os.urandom(32)))
 
-    def digest(self, ids: Sequence[int], length: int, namespace: str | None = None) -> str:
-        head = ids[:length]
-        data = head.tobytes() if isinstance(head, array) and head.typecode == "q" else array("q", head).tobytes()
+    def digests(self, ids: Sequence[int], lengths: Iterable[int], namespace: str | None = None) -> dict[int, str]:
+        """Keyed digests of several prefixes of ids, in one pass over the longest of them."""
+        wanted = sorted({min(max(n, 0), len(ids)) for n in lengths})
+        h = hashlib.blake2b(key=self.key[:64], digest_size=8)
         # A cache namespace (cache_salt, extra_key) is part of SGLang's radix key, so it is part of ours.
-        prefix = namespace.encode() + b"\0" if namespace else b""
-        return hashlib.blake2b(prefix + data, key=self.key[:64], digest_size=8).hexdigest()
+        if namespace:
+            h.update(namespace.encode() + b"\0")
+        out: dict[int, str] = {}
+        pos = 0
+        for length in wanted:
+            while pos < length:
+                end = min(pos + _HASH_CHUNK, length)
+                chunk = ids[pos:end]
+                h.update(chunk.tobytes() if isinstance(chunk, array) and chunk.typecode == "q" else array("q", chunk).tobytes())
+                pos = end
+            out[length] = h.copy().hexdigest()
+        return out
+
+    def digest(self, ids: Sequence[int], length: int, namespace: str | None = None) -> str:
+        return next(iter(self.digests(ids, [length], namespace).values()))
 
     def families(self, ids: Sequence[int], namespace: str | None = None) -> tuple[str, ...]:
-        return tuple(self.digest(ids, depth, namespace) for depth in FAMILY_DEPTHS if len(ids) >= depth)
+        found = self.digests(ids, [d for d in FAMILY_DEPTHS if len(ids) >= d], namespace)
+        return tuple(found[d] for d in FAMILY_DEPTHS if d in found)
 
 
 def _directory_key(directory: Path) -> bytes:
@@ -135,13 +153,14 @@ class Writer:
         self.handle = os.fdopen(os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600), "a", buffering=1 << 16)
         self.bytes = 0
 
-    def write(self, record: Record) -> None:
+    def write(self, record: Record, flush: bool = True) -> None:
         line = record.to_json() + "\n"
         self.handle.write(line)
         self.bytes += len(line)
         self.written += 1
-        # Every record is visible to readers as soon as it is written; a quiet server leaves no tail behind.
-        self.handle.flush()
+        # A caller writing a burst flushes once at its end; a quiet server leaves no tail behind.
+        if flush:
+            self.handle.flush()
         if self.bytes >= self.max_bytes:
             self.handle.close()
             self._prune()
@@ -160,6 +179,9 @@ class Writer:
                 exited.append(path)
         for old in mine[: -self.keep + 1 or None] + exited[: -self.keep or None]:
             old.unlink(missing_ok=True)
+
+    def flush(self) -> None:
+        self.handle.flush()
 
     def close(self) -> None:
         self.handle.close()

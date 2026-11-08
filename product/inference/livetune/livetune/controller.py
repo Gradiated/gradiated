@@ -37,6 +37,7 @@ class Controller:
     probation_s: float = 45.0
     penalty_s: float = 600.0
     smoothing: float = 0.5
+    demand_decay: float = 0.8
     min_requests: float = 2.0
     variant_dwell: int = 6
     variant_cooldown_s: float = 600.0
@@ -64,8 +65,10 @@ class Controller:
             self.shape = Shape(window.demand, prompt)
         else:
             a = self.smoothing
+            # Closed-loop clients finish in waves, so a scrape can land in a gap: rise at once, decay slowly.
+            demand = max(window.demand, self.demand_decay * self.shape.demand)
             self.shape = Shape(
-                a * window.demand + (1 - a) * self.shape.demand,
+                demand,
                 a * prompt + (1 - a) * self.shape.prompt_tokens if prompt is not None else self.shape.prompt_tokens,
             )
         return self.shape

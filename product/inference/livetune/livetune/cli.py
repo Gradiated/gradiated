@@ -61,8 +61,7 @@ def replay(args: argparse.Namespace, server: Server) -> None:
         def log(event: dict[str, Any]) -> None:
             event["wall"] = time.time()
             events.append(event)
-            if "action" in event:
-                write({"controller": event})
+            write({"controller": event})
 
         def run_controller() -> None:
             try:

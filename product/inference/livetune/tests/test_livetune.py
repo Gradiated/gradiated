@@ -164,6 +164,15 @@ class ControllerTest(unittest.TestCase):
         switch = ctl.step(_window(10), 25)
         self.assertEqual((switch.rule, switch.settings), ("busy", {"max_running_requests": 32}))
 
+    def test_demand_holds_through_completion_waves_and_decays_when_load_drops(self):
+        ctl = control.Controller(_policy(), smoothing=1.0)
+        ctl.step(_window(56), 0)
+        ctl.step(_window(0), 5)
+        self.assertGreater(ctl.shape.demand, 40)
+        for t in range(10, 80, 5):
+            ctl.step(_window(2), t)
+        self.assertLess(ctl.shape.demand, 4)
+
     def test_no_initial_rule_until_a_prompt_length_is_seen(self):
         ctl = control.Controller(_policy(), smoothing=1.0)
         quiet = metrics.Window(10, 3, 0, 0, 0, 500, 0, 0.01, 0.01, None)
@@ -171,11 +180,11 @@ class ControllerTest(unittest.TestCase):
         self.assertIsNone(ctl.current)
         self.assertEqual(ctl.step(_window(2), 5).rule, "light")
 
-    def test_noise_does_not_flap(self):
+    def test_oscillating_load_settles_instead_of_flapping(self):
         ctl = control.Controller(_policy(), dwell=2, cooldown_s=0, smoothing=1.0)
         ctl.step(_window(2), 0)
-        for t, demand in enumerate([10, 2, 10, 2, 10, 2], start=1):
-            self.assertIsNone(ctl.step(_window(demand), t * 5))
+        actions = [ctl.step(_window(demand), t * 5) for t, demand in enumerate([10, 2, 10, 2, 10, 2, 10, 2], start=1)]
+        self.assertEqual([a.rule for a in actions if a], ["busy"])
 
     def test_rollback_when_slo_breaks_after_change_and_penalty_applies(self):
         ctl = control.Controller(_policy(), dwell=1, cooldown_s=0, probation_s=30, penalty_s=100, smoothing=1.0)

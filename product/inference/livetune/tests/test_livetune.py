@@ -2108,3 +2108,16 @@ class AllReplicasTest(unittest.TestCase):
                 cli.Server, cli._watch, cli._wait_applied, cli._runs_candidate = saved
             self.assertEqual((verdict.decision, path.read_text()), ("revert", "previous"))
             self.assertIn("slow", verdict.reason)
+
+
+class EmptyFleetTest(unittest.TestCase):
+    def test_nothing_is_published_when_only_the_staged_replica_remains(self):
+        import argparse
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "policy.json")
+            path.write_text("previous")
+            args = argparse.Namespace(fleet="", stage_url="prod", policy_out=str(path), slo_tps=80, slo_ttft=10, guard_seconds=60,
+                                      interval=5, stage_apply_s=0)
+            verdict = cli.promote(args, types.SimpleNamespace(url="prod", fingerprint=lambda: {}), _policy())
+            self.assertEqual((verdict.decision, path.read_text()), ("revert", "previous"))

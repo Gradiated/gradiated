@@ -305,7 +305,12 @@ def improve(args: argparse.Namespace, server: Server) -> None:
                     entry["stage"] = dataclasses.asdict(verdict)
                 if verdict is None or verdict.decision == "promote":
                     entry["published"] = args.policy_out
-                    guard = promote(args, server, policy)
+                    try:
+                        guard = promote(args, server, policy)
+                    except BaseException:
+                        if staged_before is not None:
+                            _publish(args.stage_policy, staged_before)  # an unfinished promotion promoted nothing
+                        raise
                     if guard is not None:
                         entry["guard"] = dataclasses.asdict(guard)
                         if guard.decision == "revert" and staged_before is not None:
@@ -402,6 +407,9 @@ def promote(args: argparse.Namespace, production: Server, policy: Policy) -> rol
     # Replicas outside production's scope refuse the policy, so their unchanged windows would dilute the comparison.
     fleet = [m for m in members if not _scope_differences(scope, m.fingerprint())]
     slo = Slo(args.slo_tps, args.slo_ttft)
+    if not fleet:
+        # Nothing left to guard (the staged replica was the only one): publishing would be unmeasured.
+        return rollout.Verdict("revert", "no fleet replica to guard the publication; nothing published", rollout.Side.of([], slo), rollout.Side.of([], slo))
     # The first publication still needs a restore point: a policy that holds the startup settings.
     previous = Path(args.policy_out).read_text() if Path(args.policy_out).exists() else _startup_policy(production, policy, slo).to_json()
     before = _watch(fleet, args.guard_seconds, args.interval) if args.guard_seconds else None

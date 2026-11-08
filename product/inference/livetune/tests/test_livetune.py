@@ -2,6 +2,7 @@ import hashlib
 from dataclasses import replace as dataclasses_replace
 import itertools
 import json
+import threading
 import time
 import math
 import os
@@ -1099,6 +1100,31 @@ class TelemetryTest(unittest.TestCase):
         self.assertEqual(len(r.families), 2)  # 256 and 2048 tokens deep
         self.assertIsNotNone(r.cached_family)  # 2048 tokens, rounded down to whole pages
         self.assertNotIn("1, 2, 3", r.to_json())
+
+    def test_a_record_counts_as_processed_only_once_it_is_flushed(self):
+        from livetune import sglang_plugin
+
+        flushed = []
+
+        class Writer:
+            written = 0
+            path = "x"
+
+            def write(self, record, flush=True):
+                self.written += 1
+
+            def flush(self):
+                flushed.append(self.written)
+
+        telemetry = sglang_plugin.Telemetry(None)
+        telemetry.writer = Writer()
+        telemetry._hashed = lambda *item: item
+        for i in range(5):
+            telemetry._queue.put((i,))
+        threading.Thread(target=telemetry._write_loop, daemon=True).start()
+        self.assertTrue(telemetry.drain())
+        self.assertEqual(telemetry.processed, 5)
+        self.assertEqual(flushed[-1], 5)  # everything counted was flushed first
 
     def test_batches_accumulate_counters_by_forward_mode(self):
         from livetune import sglang_plugin

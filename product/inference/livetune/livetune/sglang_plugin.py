@@ -551,20 +551,35 @@ class Telemetry:
             self.dropped += 1
         self.scheduler_s += time.perf_counter() - started
 
+    FLUSH_S = 0.2  # a busy writer still flushes this often, so records reach readers promptly
+
     def _write_loop(self) -> None:
+        unflushed, flushed_at = 0, time.monotonic()
         while True:
             item = self._queue.get()
             started = time.perf_counter()
             try:
-                # A burst is written whole and flushed once, so readers see it promptly at little cost.
-                self.writer.write(self._hashed(*item), flush=self._queue.empty())
+                self.writer.write(self._hashed(*item), flush=False)
+                unflushed += 1
             except Exception as exc:
                 self.failed += 1
+                self.processed += 1  # it will never be written
                 self.error = f"{type(exc).__name__}: {exc}"
                 logger.debug("livetune: could not write a record", exc_info=True)
+            try:
+                # A burst is flushed once, but never held longer than FLUSH_S. A record counts as
+                # processed only once flushed, so a reader waiting on the count finds it on disk.
+                if unflushed and (self._queue.empty() or time.monotonic() - flushed_at >= self.FLUSH_S):
+                    self.writer.flush()
+                    self.processed += unflushed
+                    unflushed, flushed_at = 0, time.monotonic()
+            except Exception as exc:
+                self.failed += unflushed
+                self.processed += unflushed
+                unflushed = 0
+                self.error = f"{type(exc).__name__}: {exc}"
             finally:
                 self.writer_s += time.perf_counter() - started
-                self.processed += 1
                 self._queue.task_done()
 
     def drain(self, timeout: float = 5.0) -> bool:

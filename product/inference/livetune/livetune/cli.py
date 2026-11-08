@@ -255,8 +255,12 @@ def stage(args: argparse.Namespace, production: Server, policy: Policy) -> rollo
     replica = Server(args.stage_url)
     peers = [Server(url) for url in args.peers.split(",") if url]
     slo = Slo(args.slo_tps, args.slo_ttft)
-    if _scope_differences(production.fingerprint(), replica.fingerprint()):
-        return rollout.Verdict("inconclusive", "the staged replica's scope differs from production", rollout.Side.of([], slo), rollout.Side.of([], slo))
+    scope = production.fingerprint()
+    # Evidence counts only from replicas running the intervention production runs.
+    outside = [s.url for s in (replica, *peers) if _scope_differences(scope, s.fingerprint())]
+    if outside or not peers:
+        reason = f"replicas outside production's scope: {outside}" if outside else "no peers to compare against"
+        return rollout.Verdict("inconclusive", reason, rollout.Side.of([], slo), rollout.Side.of([], slo))
     previous = Path(args.stage_policy).read_text()
     _publish(args.stage_policy, policy.to_json())
     verdict = None

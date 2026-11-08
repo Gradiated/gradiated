@@ -1249,3 +1249,42 @@ class ReplayIsolationTest(unittest.TestCase):
             loadgen.run_arrivals = saved
         replays = [i for i, c in enumerate(calls) if c[0] == "replay"]
         self.assertTrue(replays and all(calls[i - 1] == ("flush",) for i in replays))
+
+
+class FamilyDepthTest(unittest.TestCase):
+    def test_prompts_of_different_lengths_group_at_the_depth_they_share(self):
+        from livetune import trace
+
+        keys = trace.PrefixKeys(b"k" * 32)
+        long, short = list(range(20000)), list(range(2048)) + [9] * 2000
+        records = [dataclasses_replace(_record(100.0 + i, prompt=len(ids), family=None), families=keys.families(ids)) for i, ids in enumerate((long, short))]
+        self.assertEqual(trace.summarize(records)["families"]["requests_sharing"], 1.0)
+        schedule = trace.arrivals(records)
+        self.assertEqual(len({a.family for a in schedule}), 1)
+        self.assertEqual({a.shared_tokens for a in schedule}, {2048})
+
+
+class RolloutEvidenceTest(unittest.TestCase):
+    def test_promotion_needs_windows_that_measured_the_slo_on_both_sides(self):
+        from livetune import rollout
+
+        quiet = [_window(40, tps=110, ttft=3)] + [metrics.Window(5, 40, 0, 0, 0, 0, 0, None, None)] * 11
+        self.assertEqual(rollout.judge(quiet, [_window(40, tps=85, ttft=3)] * 24, Slo(80, 10)).decision, "inconclusive")
+
+    def test_a_peer_outside_productions_scope_makes_the_stage_inconclusive(self):
+        import argparse
+
+        good, stale = {"gpu": "B300"}, {"gpu": "H200"}
+        servers = {"replica": types.SimpleNamespace(url="replica", fingerprint=lambda: good),
+                   "peer": types.SimpleNamespace(url="peer", fingerprint=lambda: stale)}
+        with tempfile.TemporaryDirectory() as tmp:
+            stage_policy = Path(tmp, "stage.json")
+            stage_policy.write_text("previous")
+            args = argparse.Namespace(stage_url="replica", peers="peer", stage_policy=str(stage_policy), stage_seconds=0, interval=0, slo_tps=80, slo_ttft=10)
+            saved = cli.Server
+            cli.Server = lambda url: servers[url]
+            try:
+                verdict = cli.stage(args, types.SimpleNamespace(fingerprint=lambda: good), _policy())
+            finally:
+                cli.Server = saved
+            self.assertEqual((verdict.decision, "peer" in verdict.reason, stage_policy.read_text()), ("inconclusive", True, "previous"))

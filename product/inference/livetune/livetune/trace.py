@@ -133,6 +133,20 @@ def _band(prompt_tokens: int) -> str:
     return ">=64k"
 
 
+def shared_families(records: Sequence[Record]) -> list[tuple[str, int] | None]:
+    """Each record's family: the deepest fixed-depth prefix hash it shares with another record, and that depth.
+
+    Requests of different lengths reach different depths, so a long and a short prompt that share
+    their first 2,048 tokens are grouped at 2,048 rather than split at the long one's deepest hash.
+    """
+    counts = Counter(key for r in records for key in r.families)
+    out: list[tuple[str, int] | None] = []
+    for r in records:
+        shared = [(key, FAMILY_DEPTHS[i]) for i, key in enumerate(r.families) if counts[key] > 1]
+        out.append(shared[-1] if shared else None)
+    return out
+
+
 def summarize(records: Sequence[Record]) -> dict[str, Any]:
     """The traffic mix: what to tune for and what to propose."""
     if not records:
@@ -144,12 +158,8 @@ def summarize(records: Sequence[Record]) -> dict[str, Any]:
     by_band: dict[str, list[Record]] = defaultdict(list)
     for r in records:
         by_band[_band(r.prompt_tokens)].append(r)
-    # A family is a shared prefix at the deepest depth several requests reach.
-    family_counts: Counter[str] = Counter()
-    for r in records:
-        if r.families:
-            family_counts[r.families[-1]] += 1
-    shared = sum(count for count in family_counts.values() if count > 1)
+    family_counts = Counter(found[0] for found in shared_families(records) if found is not None)
+    shared = sum(family_counts.values())
     rates = [r.decode_tps for r in records if r.decode_tps]
     return {
         "requests": len(records),
@@ -211,21 +221,15 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
     def started(r: Record) -> float:
         return r.t - sum(x or 0.0 for x in (r.ttft_s, r.decode_s))
 
-    counts = Counter(key for r in records for key in r.families)
-
-    def family(r: Record) -> tuple[str, int] | None:
-        shared = [(key, FAMILY_DEPTHS[i]) for i, key in enumerate(r.families) if counts[key] > 1]
-        return shared[-1] if shared else None
-
+    families = shared_families(records)
     lengths: dict[str, int] = {}
-    for r in records:
-        if (found := family(r)) is not None:
+    for r, found in zip(records, families):
+        if found is not None:
             key, depth = found
             lengths[key] = max(lengths.get(key, depth), r.cached_tokens)
     t0 = min(started(r) for r in records)
     out = []
-    for r in records:
-        found = family(r)
+    for r, found in zip(records, families):
         out.append(
             Arrival(
                 at=(started(r) - t0) / speed,

@@ -19,6 +19,7 @@ from livetune.policy import Slo
 @dataclass(frozen=True)
 class Side:
     windows: int
+    judged: int  # windows that measured both halves of the SLO
     slo_met: float | None  # share of judged windows meeting the SLO
     tps_per_user: float | None  # median over windows
     ttft_p90: float | None  # median over windows
@@ -31,6 +32,7 @@ class Side:
         ttfts = [w.ttft_p90 for w in windows if w.ttft_p90 is not None]
         return cls(
             windows=len(windows),
+            judged=len(verdicts),
             slo_met=sum(map(bool, verdicts)) / len(verdicts) if verdicts else None,
             tps_per_user=statistics.median(rates) if rates else None,
             ttft_p90=statistics.median(ttfts) if ttfts else None,
@@ -53,8 +55,9 @@ def judge(stage: Sequence[Window], peers: Sequence[Window], slo: Slo, tolerance:
     def verdict(decision: str, reason: str) -> Verdict:
         return Verdict(decision, reason, s, p)
 
-    if s.windows < min_windows or s.slo_met is None or p.slo_met is None:
-        return verdict("inconclusive", "too few measured windows")
+    # Only windows that measured both per-user speed and TTFT count as evidence, on both sides.
+    if s.judged < min_windows or p.judged < min_windows:
+        return verdict("inconclusive", f"too few windows measured the SLO: {s.judged} staged, {p.judged} peers")
     # A router can starve or flood one replica; outcomes under different load are not comparable.
     if p.demand > 0 and not 0.7 <= s.demand / p.demand <= 1.3:
         return verdict("inconclusive", f"staged demand {s.demand:.1f} differs from peers {p.demand:.1f}")

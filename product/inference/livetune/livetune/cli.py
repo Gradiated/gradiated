@@ -332,15 +332,22 @@ def promote(args: argparse.Namespace, production: Server, policy: Policy) -> rol
     """Publish to the fleet, then guard it: compare the fleet after against just before, and restore
     the previous policy if it regressed. A big shift in traffic makes the comparison inconclusive, and
     the change stays, since it has already passed replay and the stage."""
-    fleet = [production] + [Server(url) for url in (args.fleet or "").split(",") if url]
+    scope = production.fingerprint()
+    members = [production] + [Server(url) for url in (args.fleet or "").split(",") if url]
+    # Replicas outside production's scope refuse the policy, so their unchanged windows would dilute the comparison.
+    fleet = [m for m in members if not _scope_differences(scope, m.fingerprint())]
     previous = Path(args.policy_out).read_text() if Path(args.policy_out).exists() else None
     slo = Slo(args.slo_tps, args.slo_ttft)
     before = _watch(fleet, args.guard_seconds, args.interval) if args.guard_seconds and previous is not None else None
     _publish(args.policy_out, policy.to_json())
     if before is None:
         return None
-    after = _watch(fleet, args.guard_seconds, args.interval)
-    verdict = rollout.judge([w for side in after for w in side], [w for side in before for w in side], slo)
+    # Judge only the replicas that took the candidate up, from the moment they did.
+    applied = [i for i, m in enumerate(fleet) if _wait_applied(m, policy, args.stage_apply_s, args.interval)]
+    if not applied:
+        return rollout.Verdict("inconclusive", "no fleet replica applied the published policy", rollout.Side.of([], slo), rollout.Side.of([], slo))
+    after = _watch([fleet[i] for i in applied], args.guard_seconds, args.interval)
+    verdict = rollout.judge([w for side in after for w in side], [w for i in applied for w in before[i]], slo)
     if verdict.decision == "revert":
         _publish(args.policy_out, previous)
     return verdict
@@ -376,9 +383,18 @@ def stage(args: argparse.Namespace, production: Server, policy: Policy) -> rollo
             _publish(args.stage_policy, previous)
 
 
+def _batch_counters(server: Server) -> dict[str, float]:
+    """Batch counters summed over every data-parallel scheduler, so they cover what the metrics and trace cover."""
+    total: dict[str, float] = {}
+    for state in server.livetune_states():
+        for key, value in ((state.get("telemetry") or {}).get("batches") or {}).items():
+            total[key] = total.get(key, 0.0) + value
+    return total
+
+
 def advise(args: argparse.Namespace, server: Server) -> dict[str, Any]:
     """Watch the server for a while, then propose experiments from what it saw."""
-    before = server.livetune_state()
+    before = _batch_counters(server)
     started_wall = time.time()
     windows, previous = [], server.scrape()
     deadline = time.monotonic() + args.seconds
@@ -387,17 +403,18 @@ def advise(args: argparse.Namespace, server: Server) -> dict[str, Any]:
         current = server.scrape()
         windows.append(window(previous, current))
         previous = current
-    after = server.livetune_state()
+    after_state = server.livetune_state()
+    after = _batch_counters(server)
     records = list(trace.read([args.trace_dir], since=started_wall)) if args.trace_dir else []
-    batches = trace.batch_deltas((before.get("telemetry") or {}).get("batches", {}), (after.get("telemetry") or {}).get("batches", {}))
+    batches = trace.batch_deltas(before, after)
     evidence = advisor.Evidence(
         windows=windows,
         traffic=trace.summarize(records),
         batches=batches,
-        settings=after.get("settings", {}),
-        startup=after.get("startup", {}),
+        settings=after_state.get("settings", {}),
+        startup=after_state.get("startup", {}),
         kv_capacity=int(server.info().get("max_total_num_tokens") or 0),
-        page_size=int(after.get("page_size") or 1),
+        page_size=int(after_state.get("page_size") or 1),
     )
     proposals = advisor.advise(evidence)
     utilization = {

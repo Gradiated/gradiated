@@ -2,7 +2,7 @@
 
 A record holds lengths, cache hits, timings, sampling features and keyed hashes of prompt
 prefixes. It never holds text or token ids. Prefix keys are BLAKE2b digests keyed by
-``LIVETUNE_TRACE_KEY`` (hex), or a random per-process key, so a key groups requests that
+``LIVETUNE_TRACE_KEY`` (hex), or a random key kept in the trace directory, so a key groups requests that
 share a prefix without revealing the prefix and without linking across deployments that
 use different keys.
 """
@@ -61,9 +61,9 @@ class Record:
 
 
 class PrefixKeys:
-    def __init__(self, key: bytes | None = None) -> None:
+    def __init__(self, key: bytes | None = None, directory: str | Path | None = None) -> None:
         env = os.environ.get("LIVETUNE_TRACE_KEY")
-        self.key = key or (bytes.fromhex(env) if env else os.urandom(32))
+        self.key = key or (bytes.fromhex(env) if env else (_directory_key(Path(directory)) if directory else os.urandom(32)))
 
     def digest(self, ids: Sequence[int], length: int) -> str:
         head = ids[:length]
@@ -72,6 +72,29 @@ class PrefixKeys:
 
     def families(self, ids: Sequence[int]) -> tuple[str, ...]:
         return tuple(self.digest(ids, depth) for depth in FAMILY_DEPTHS if len(ids) >= depth)
+
+
+def _directory_key(directory: Path) -> bytes:
+    """One key per trace directory: schedulers that share it hash prefixes alike, other deployments differ.
+
+    The first process to arrive creates it exclusively; the rest read it. It is as sensitive as the
+    traces it keys, so it is readable by the owner only.
+    """
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / ".trace-key"
+    try:
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError:
+        for _ in range(50):  # the creator may not have written it yet
+            key = bytes.fromhex(path.read_text().strip() or "00")
+            if len(key) == 32:
+                return key
+            time.sleep(0.05)
+        raise ValueError(f"{path} does not hold a 32-byte hex key")
+    key = os.urandom(32)
+    with os.fdopen(fd, "w") as handle:
+        handle.write(key.hex())
+    return key
 
 
 class Writer:

@@ -1140,6 +1140,9 @@ class ImproveTest(unittest.TestCase):
             def livetune_state(this):
                 return {"settings": dict(STARTUP), "startup": dict(STARTUP), "page_size": 256, "telemetry": {"batches": {}}}
 
+            def livetune_states(this):
+                return [this.livetune_state()]
+
             def scrape(this):
                 return metrics.parse("", 0.0)
 
@@ -1464,11 +1467,13 @@ class GuardTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp, "policy.json")
             path.write_text("previous")
-            args = argparse.Namespace(fleet="", policy_out=str(path), slo_tps=80, slo_ttft=10, guard_seconds=60, interval=5)
+            args = argparse.Namespace(fleet="", policy_out=str(path), slo_tps=80, slo_ttft=10, guard_seconds=60, interval=5, stage_apply_s=0)
+            saved_wait = cli._wait_applied
+            cli._wait_applied = lambda server, policy, timeout, interval: True
             try:
-                verdict = cli.promote(args, types.SimpleNamespace(url="prod"), _policy())
+                verdict = cli.promote(args, types.SimpleNamespace(url="prod", fingerprint=lambda: {}), _policy())
             finally:
-                cli._watch = saved_watch
+                cli._watch, cli._wait_applied = saved_watch, saved_wait
             self.assertEqual((verdict.decision, path.read_text()), ("revert", "previous"))
 
     def test_an_improvement_stays_published(self):
@@ -1481,10 +1486,50 @@ class GuardTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp, "policy.json")
             path.write_text("previous")
-            args = argparse.Namespace(fleet="", policy_out=str(path), slo_tps=80, slo_ttft=10, guard_seconds=60, interval=5)
+            args = argparse.Namespace(fleet="", policy_out=str(path), slo_tps=80, slo_ttft=10, guard_seconds=60, interval=5, stage_apply_s=0)
+            saved_wait = cli._wait_applied
+            cli._wait_applied = lambda server, policy, timeout, interval: True
             try:
-                verdict = cli.promote(args, types.SimpleNamespace(url="prod"), _policy())
+                verdict = cli.promote(args, types.SimpleNamespace(url="prod", fingerprint=lambda: {}), _policy())
             finally:
-                cli._watch = saved_watch
+                cli._watch, cli._wait_applied = saved_watch, saved_wait
             self.assertEqual(verdict.decision, "promote")
             self.assertNotEqual(path.read_text(), "previous")
+
+
+class FleetEvidenceTest(unittest.TestCase):
+    def test_schedulers_sharing_a_trace_directory_share_one_prefix_key(self):
+        from livetune import trace
+
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as other:
+            a, b = trace.PrefixKeys(directory=tmp), trace.PrefixKeys(directory=tmp)
+            self.assertEqual(a.digest(list(range(300)), 256), b.digest(list(range(300)), 256))
+            self.assertNotEqual(a.key, trace.PrefixKeys(directory=other).key)  # another deployment
+            self.assertEqual(oct(Path(tmp, ".trace-key").stat().st_mode & 0o777), "0o600")
+            self.assertEqual(list(trace.read([tmp])), [])  # the key file is not a trace
+
+    def test_batch_counters_cover_every_data_parallel_scheduler(self):
+        server = types.SimpleNamespace(livetune_states=lambda: [{"telemetry": {"batches": {"decode_batches": 10.0}}},
+                                                               {"telemetry": {"batches": {"decode_batches": 30.0}}}, {}])
+        self.assertEqual(cli._batch_counters(server), {"decode_batches": 40.0})
+
+    def test_the_guard_ignores_replicas_outside_scope_and_waits_for_the_rest(self):
+        import argparse
+
+        good = {"gpu": "B300"}
+        members = {"stale": types.SimpleNamespace(url="stale", fingerprint=lambda: {"gpu": "H200"})}
+        watched, waited = [], []
+        saved = (cli.Server, cli._watch, cli._wait_applied)
+        cli.Server = lambda url: members[url]
+        cli._watch = lambda servers, seconds, interval: watched.append([s.url for s in servers]) or [[_window(40, tps=100)] * 12 for _ in servers]
+        cli._wait_applied = lambda server, policy, timeout, interval: waited.append(server.url) or False
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "policy.json")
+            path.write_text("previous")
+            args = argparse.Namespace(fleet="stale", policy_out=str(path), slo_tps=80, slo_ttft=10, guard_seconds=60, interval=5, stage_apply_s=0)
+            try:
+                verdict = cli.promote(args, types.SimpleNamespace(url="prod", fingerprint=lambda: good), _policy())
+            finally:
+                cli.Server, cli._watch, cli._wait_applied = saved
+        self.assertEqual((watched, waited), ([["prod"]], ["prod"]))
+        self.assertEqual(verdict.decision, "inconclusive")  # nothing applied, so nothing was judged

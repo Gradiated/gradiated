@@ -48,7 +48,7 @@ Keep live switching off until a recapture path is qualified for the model's atte
 
 ## Traffic data
 
-Set `LIVETUNE_TRACE_DIR` and the plugin writes one JSON line per finished request on attention-TP rank 0. Each line holds prompt, cached and output tokens, queue time, scheduler TTFT and decode time, finish reason, retractions, spec accept length, sampling features, and keyed hashes of the prompt prefix at 256, 2,048 and 16,384 tokens and at the cached length. It holds no text and no token ids. Prefix hashes are keyed by `LIVETUNE_TRACE_KEY` (hex), or by a random per-process key. Files rotate at 64 MB, and the 8 newest are kept. The plugin also counts batches, requests, tokens, CUDA-graph batches and seconds for each forward mode, and reports them under `telemetry` in `/server_info`.
+Set `LIVETUNE_TRACE_DIR` and the plugin writes one JSON line per finished request on attention-TP rank 0. Each line holds prompt, cached and output tokens, queue time, scheduler TTFT and decode time, finish reason, retractions, spec accept length, sampling features, and keyed hashes of the prompt prefix at 256, 2,048 and 16,384 tokens and at the cached length. It holds no text and no token ids. Prefix hashes are keyed by `LIVETUNE_TRACE_KEY` (hex), or by a random key kept in the trace directory (`.trace-key`, mode 0600), so data-parallel schedulers that share the directory group prefixes alike. Files rotate at 64 MB, and the 8 newest are kept. The plugin also counts batches, requests, tokens, CUDA-graph batches and seconds for each forward mode, and reports them under `telemetry` in `/server_info`.
 
 ```bash
 python -m livetune traffic --trace-dir /var/lib/livetune/trace          # the traffic mix

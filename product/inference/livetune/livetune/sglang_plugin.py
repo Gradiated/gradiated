@@ -379,7 +379,7 @@ class Telemetry:
 
     def __init__(self, directory: str | None, page_size: int = 1, keys: trace.PrefixKeys | None = None) -> None:
         self.writer = trace.Writer(directory) if directory else None
-        self.keys = keys or trace.PrefixKeys()
+        self.keys = keys or trace.PrefixKeys(directory=directory)
         self.page_size = max(page_size, 1)
         self.batches = trace.BatchStats()
         self.recent: list[str] = []

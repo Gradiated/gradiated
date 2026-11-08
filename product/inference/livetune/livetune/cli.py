@@ -367,6 +367,14 @@ def _runs_candidate(server: Server, policy: Policy) -> bool:
     return bool(states) and all(runs(state.get("settings", {})) for state in states)
 
 
+def _verified_on(server: Server, policy: Policy) -> bool:
+    """_runs_candidate, with a state that cannot be read counting as not running the candidate."""
+    try:
+        return _runs_candidate(server, policy)
+    except Exception:
+        return False
+
+
 def _wait_applied(server: Server, policy: Policy, timeout_s: float, interval_s: float) -> bool:
     deadline = time.monotonic() + timeout_s
     while True:
@@ -416,13 +424,7 @@ def _guard(args: argparse.Namespace, fleet: list[Server], policy: Policy, before
         return rollout.Verdict("inconclusive", "no fleet replica applied the published policy", rollout.Side.of([], slo), rollout.Side.of([], slo))
     after = _watch([fleet[i] for i in applied], args.guard_seconds, args.interval)
 
-    def still_runs(server: Server) -> bool:
-        try:
-            return _runs_candidate(server, policy)
-        except Exception:  # unverifiable counts as not running it
-            return False
-
-    left = [fleet[i].url for i in applied if not still_runs(fleet[i])]
+    left = [fleet[i].url for i in applied if not _verified_on(fleet[i], policy)]
     if left:
         # A replica that dropped the candidate mid-guard (local probation rollback, say), or whose state
         # cannot be read, was not shown running it; a guard prefers the known-good policy.
@@ -452,9 +454,12 @@ def stage(args: argparse.Namespace, production: Server, policy: Policy) -> rollo
             return verdict
         watched = _watch([replica, *peers], args.stage_seconds, args.interval)
         verdict = rollout.judge(watched[0], [w for side in watched[1:] for w in side], slo)
-        if verdict.decision == "promote" and not _runs_candidate(replica, policy):
-            verdict = rollout.Verdict("inconclusive", "the staged replica left the candidate during the stage", verdict.stage, verdict.peers)
+        if verdict.decision == "promote" and not _verified_on(replica, policy):
+            verdict = rollout.Verdict("inconclusive", "the staged replica is not verified on the candidate at the end of the stage", verdict.stage, verdict.peers)
         return verdict
+    except BaseException:
+        verdict = None  # a stage that did not finish has promoted nothing
+        raise
     finally:
         if verdict is None or verdict.decision != "promote":
             _publish(args.stage_policy, previous)

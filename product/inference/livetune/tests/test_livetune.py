@@ -1999,3 +1999,31 @@ class ServerSideSloTest(unittest.TestCase):
         self.assertIsNotNone(summary["tps_per_user_p50"])
         self.assertIsNotNone(summary["ttft_p90"])
 
+
+
+class StageReadbackTest(unittest.TestCase):
+    def test_an_unreadable_final_state_restores_the_staged_policy(self):
+        import argparse
+
+        scope = {"gpu": "B300"}
+        replica = types.SimpleNamespace(url="replica", fingerprint=lambda: scope)
+        peer = types.SimpleNamespace(url="peer", fingerprint=lambda: scope)
+        saved = (cli.Server, cli._watch, cli._wait_applied, cli._runs_candidate)
+        cli.Server = lambda url: {"replica": replica, "peer": peer}[url]
+        cli._watch = lambda servers, seconds, interval: [[_window(40, tps=110)] * 12, [_window(40, tps=85)] * 12]
+        cli._wait_applied = lambda server, policy, timeout, interval: True
+
+        def unreadable(server, policy):
+            raise OSError("server_info timed out")
+
+        cli._runs_candidate = unreadable
+        with tempfile.TemporaryDirectory() as tmp:
+            stage_policy = Path(tmp, "stage.json")
+            stage_policy.write_text("previous")
+            args = argparse.Namespace(stage_url="replica", peers="peer", stage_policy=str(stage_policy), stage_seconds=0, interval=0,
+                                      slo_tps=80, slo_ttft=10, stage_apply_s=0)
+            try:
+                verdict = cli.stage(args, types.SimpleNamespace(fingerprint=lambda: scope), _policy())
+            finally:
+                cli.Server, cli._watch, cli._wait_applied, cli._runs_candidate = saved
+            self.assertEqual((verdict.decision, stage_policy.read_text()), ("inconclusive", "previous"))

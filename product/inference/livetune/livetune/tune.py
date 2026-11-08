@@ -48,8 +48,12 @@ def binding(knob: str, value: Any, profile: Profile) -> bool:
 def merged(summaries: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     def median(key: str, higher_is_better: bool = True) -> float | None:
         # With an even count, take the worse of the two middle values, so one lucky run of two cannot carry a setting.
-        values = sorted((v for v in (s.get(key) for s in summaries) if v is not None), reverse=not higher_is_better)
-        return values[(len(values) - 1) // 2] if values else None
+        values = [s.get(key) for s in summaries]
+        # A repetition that did not measure a metric makes the merged metric inconclusive too.
+        if not values or any(v is None for v in values):
+            return None
+        values.sort(reverse=not higher_is_better)
+        return values[(len(values) - 1) // 2]
 
     return {
         "completed": min(s.get("completed", 0) for s in summaries),
@@ -106,10 +110,20 @@ def tune_profile(
 EVIDENCE_REACH = 1.25
 
 
-def _edges(levels: Sequence[float]) -> list[float]:
-    # Halfway between neighbouring measurements; the top one reaches only a little past its evidence.
+def _cells(levels: Sequence[float]) -> list[tuple[float | None, float]]:
+    """(measured level, upper edge) for each cell in order; a level of None is a gap no measurement reaches.
+
+    A measurement covers at most EVIDENCE_REACH above and below itself, meeting its neighbour halfway
+    where their reaches overlap. What lies beyond every reach gets the startup settings.
+    """
     ordered = sorted(set(levels))
-    return [(a + b) / 2 for a, b in zip(ordered, ordered[1:])] + [ordered[-1] * EVIDENCE_REACH]
+    cells: list[tuple[float | None, float]] = [(None, ordered[0] / EVIDENCE_REACH)]
+    for a, b in zip(ordered, ordered[1:]):
+        if a * EVIDENCE_REACH >= b / EVIDENCE_REACH:
+            cells.append((a, min(max((a + b) / 2, b / EVIDENCE_REACH), a * EVIDENCE_REACH)))
+        else:
+            cells += [(a, a * EVIDENCE_REACH), (None, b / EVIDENCE_REACH)]
+    return cells + [(ordered[-1], ordered[-1] * EVIDENCE_REACH)]
 
 
 def _profile_of(name: str, phase: Mapping[str, Any]) -> Profile:
@@ -152,25 +166,22 @@ def check_distinguishable(profiles: Sequence[Mapping[str, Any]]) -> None:
 
 
 def build_policy(results: Sequence[Mapping[str, Any]], slo: Slo, provenance: Mapping[str, Any], start: Mapping[str, Any]) -> Policy:
-    """One rule per profile; outside the measured envelope the startup settings apply."""
+    """One rule per profile, reaching only near its measurement; everywhere else the startup settings apply."""
     check_distinguishable([r["profile"] for r in results])
-    prompts = sorted({r["profile"]["prompt_tokens"] for r in results})
-    prompt_edges = dict(zip(prompts, _edges(prompts)))
     rules: list[Rule] = []
-    for prompt in prompts:
-        rows = sorted((r for r in results if r["profile"]["prompt_tokens"] == prompt), key=lambda r: r["profile"]["users"])
-        for row, edge in zip(rows, _edges([r["profile"]["users"] for r in rows])):
-            summary = row["summary"]
-            rules.append(
-                Rule(
-                    name=row["profile"]["name"],
-                    max_demand=edge,
-                    max_prompt_tokens=prompt_edges[prompt],
-                    settings=dict(row["settings"]),
-                    evidence={k: summary.get(k) for k in ("output_tps", "tps_per_user_p50", "ttft_p90", "errors")},
-                )
-            )
-        rules.append(Rule(f"beyond-{rows[-1]['profile']['name']}", math.inf, prompt_edges[prompt], dict(start)))
+    for prompt, prompt_edge in _cells([r["profile"]["prompt_tokens"] for r in results]):
+        if prompt is None:
+            rules.append(Rule(f"startup-prompt-{prompt_edge:g}", math.inf, prompt_edge, dict(start)))
+            continue
+        rows = {r["profile"]["users"]: r for r in results if r["profile"]["prompt_tokens"] == prompt}
+        for users, edge in _cells(list(rows)):
+            if users is None:
+                rules.append(Rule(f"startup-prompt-{prompt:g}-users-{edge:g}", edge, prompt_edge, dict(start)))
+                continue
+            row = rows[users]
+            evidence = {k: row["summary"].get(k) for k in ("output_tps", "tps_per_user_p50", "ttft_p90", "errors")}
+            rules.append(Rule(row["profile"]["name"], edge, prompt_edge, dict(row["settings"]), evidence))
+        rules.append(Rule(f"beyond-{rows[max(rows)]['profile']['name']}", math.inf, prompt_edge, dict(start)))
     rules.sort(key=lambda rule: (rule.max_prompt_tokens, rule.max_demand))
     rules.append(Rule("unmeasured", math.inf, math.inf, dict(start)))
     return Policy(slo, tuple(rules), dict(provenance))

@@ -363,6 +363,10 @@ class TuneTest(unittest.TestCase):
         self.assertEqual((merged["output_tps"], merged["tps_per_user_p50"], merged["ttft_p90"]), (100, 60, 3.0))
         self.assertEqual(tune.merged([*runs, {"output_tps": 150, "tps_per_user_p50": 70, "ttft_p90": 2.0}])["output_tps"], 150)
 
+    def test_a_repetition_missing_a_metric_makes_the_merge_inconclusive(self):
+        runs = [{"output_tps": 180, "tps_per_user_p50": 90, "ttft_p90": 1.0}, {"output_tps": 170, "tps_per_user_p50": None, "ttft_p90": 1.0}]
+        self.assertEqual(tune.score(tune.merged([dict(r, completed=5, errors=0) for r in runs]), self.slo), (0, -math.inf))
+
     def test_coordinate_search_keeps_real_gains_only(self):
         def measure(profile, settings):
             tps = {8: 100, 16: 150, 32: 151}[settings["max_running_requests"]]
@@ -432,13 +436,20 @@ class TuneTest(unittest.TestCase):
         ]
         start = {"max_running_requests": 64}
         policy = tune.build_policy(results, self.slo, {}, start)
-        self.assertEqual(policy.select(Shape(5, 900)).name, "u8-p1000")
-        self.assertEqual(policy.select(Shape(4, 900)).name, "u1-p1000")
-        self.assertEqual(policy.select(Shape(35, 20000)).name, "u32-p30000")
-        self.assertEqual(policy.select(Shape(2, 16000)).name, "u1-p30000")
-        for beyond in (Shape(100, 20000), Shape(100, 900), Shape(2, 90000)):
-            with self.subTest(beyond=beyond):
-                self.assertEqual(policy.select(beyond).settings, start)
+        self.assertEqual(policy.select(Shape(7, 900)).name, "u8-p1000")
+        self.assertEqual(policy.select(Shape(1.2, 1200)).name, "u1-p1000")
+        self.assertEqual(policy.select(Shape(35, 26000)).name, "u32-p30000")
+        # Sparse levels leave gaps: 4.5 users is between the reach of 1 and of 8, 15,500 tokens between
+        # the reach of 1,000 and of 30,000, so neither measurement is stretched across them.
+        for unmeasured in (Shape(100, 20000), Shape(100, 900), Shape(2, 90000), Shape(4.5, 900), Shape(8, 15500), Shape(20, 900)):
+            with self.subTest(unmeasured=unmeasured):
+                self.assertEqual(policy.select(unmeasured).settings, start)
+
+    def test_neighbouring_measurements_meet_halfway_when_their_reaches_overlap(self):
+        results = [{"profile": {"name": f"u{u}", "users": u, "prompt_tokens": 1000}, "settings": {"max_running_requests": u}, "summary": {}}
+                   for u in (16, 24)]
+        policy = tune.build_policy(results, self.slo, {}, {"max_running_requests": 64})
+        self.assertEqual([policy.select(Shape(d, 1000)).name for d in (13, 19.9, 20.1, 30)], ["u16", "u16", "u24", "u24"])
 
 
 class PolicyScopeTest(unittest.TestCase):

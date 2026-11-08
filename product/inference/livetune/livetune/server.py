@@ -59,7 +59,10 @@ class Server:
             raise UpdateFailed(f"{self.url} does not report its GPU; upgrade its livetune plugin")
         if any(scope != scopes[0] for scope in scopes):
             raise UpdateFailed(f"{self.url} has data-parallel schedulers with different scopes: {scopes}")
-        return {"server_args": serving_config(info), "kv_tokens": info.get("max_total_num_tokens"), **scopes[0]}
+        # Weights can be replaced in place; /model_info names the ones serving now.
+        model = json.loads(self._request("/model_info"))
+        live_model = {key: model.get(key) for key in ("model_path", "weight_version")}
+        return {"server_args": serving_config(info), "model": live_model, "kv_tokens": info.get("max_total_num_tokens"), **scopes[0]}
 
     def livetune_states(self) -> list[dict[str, Any]]:
         # One entry per data-parallel scheduler.

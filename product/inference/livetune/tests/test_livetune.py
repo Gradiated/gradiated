@@ -488,7 +488,8 @@ class FingerprintTest(unittest.TestCase):
 
         info = {"model_path": "m", "tp_size": 4, "speculative_num_steps": 3, "api_key": "x", "port": 30000, "dist_init_addr": "10.0.0.1:5000",
                 "max_running_requests": 16, "random_seed": 7, "max_total_num_tokens": 123}
-        replies = {"/server_info": {**info, "internal_states": [{"livetune": livetune}]}}
+        replies = {"/server_info": {**info, "internal_states": [{"livetune": livetune}]},
+                   "/model_info": {"model_path": "m2", "weight_version": "step-900", "is_generation": True}}
 
         class Fake(server_module.Server):
             def _request(self, path, body=None, timeout=None):
@@ -503,6 +504,7 @@ class FingerprintTest(unittest.TestCase):
         # Launch arguments are in scope, except secrets, per-replica addresses, random draws and the knobs livetune moves.
         self.assertEqual(scope["server_args"], {"model_path": "m", "speculative_num_steps": 3, "tp_size": 4})
         self.assertEqual((scope["kv_tokens"], scope["variants"]), (123, {"1": "ab"}))
+        self.assertEqual(scope["model"], {"model_path": "m2", "weight_version": "step-900"})  # the weights serving now
         self.assertNotIn("variant", scope)  # the live variant is state, not scope
 
     def test_data_parallel_schedulers_must_share_one_scope(self):

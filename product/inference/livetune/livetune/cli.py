@@ -156,6 +156,9 @@ def tune_policy(
 
     def measure(profile: tune.Profile, settings: dict[str, Any]) -> dict[str, Any]:
         server.apply(settings)
+        # Every measurement starts from the same cold prefix cache; a cache warmed by the previous
+        # trial would favour whichever candidate ran later.
+        server.flush_cache()
         if arrivals is not None:
             # Every candidate meets the same recorded traffic, arriving at its recorded times.
             summary = asyncio.run(loadgen.run_arrivals(server.url, arrivals, prompts, name=profile.name)).summary()

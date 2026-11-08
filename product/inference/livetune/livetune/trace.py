@@ -199,25 +199,43 @@ class Arrival:
 
 
 def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
-    """An open-loop replay schedule; arrival time is completion minus the request's server time."""
+    """An open-loop replay schedule; arrival time is completion minus the request's server time.
+
+    A family is the deepest fixed-depth prefix hash that several requests share, so every member,
+    including the cold first one, carries the same prefix. Its length is that depth, or the most any
+    member actually hit in cache, so replay can reproduce the recorded hits.
+    """
     if not records:
         return []
 
     def started(r: Record) -> float:
         return r.t - sum(x or 0.0 for x in (r.ttft_s, r.decode_s))
 
+    counts = Counter(key for r in records for key in r.families)
+
+    def family(r: Record) -> tuple[str, int] | None:
+        shared = [(key, FAMILY_DEPTHS[i]) for i, key in enumerate(r.families) if counts[key] > 1]
+        return shared[-1] if shared else None
+
+    lengths: dict[str, int] = {}
+    for r in records:
+        if (found := family(r)) is not None:
+            key, depth = found
+            lengths[key] = max(lengths.get(key, depth), r.cached_tokens)
     t0 = min(started(r) for r in records)
-    out = [
-        Arrival(
-            at=(started(r) - t0) / speed,
-            prompt_tokens=r.prompt_tokens,
-            output_tokens=max(r.output_tokens, 1),
-            shared_tokens=min(r.cached_tokens, r.prompt_tokens),
-            family=r.cached_family or (r.families[-1] if r.families else None),
-            temperature=r.temperature,
+    out = []
+    for r in records:
+        found = family(r)
+        out.append(
+            Arrival(
+                at=(started(r) - t0) / speed,
+                prompt_tokens=r.prompt_tokens,
+                output_tokens=max(r.output_tokens, 1),
+                shared_tokens=min(lengths[found[0]], r.prompt_tokens) if found else 0,
+                family=found[0] if found else None,
+                temperature=r.temperature,
+            )
         )
-        for r in records
-    ]
     return sorted(out, key=lambda a: a.at)
 
 

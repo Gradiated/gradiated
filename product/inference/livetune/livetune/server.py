@@ -48,6 +48,15 @@ class Server:
     def scrape(self) -> Scrape:
         return parse(self._request("/metrics").decode(), time.monotonic())
 
+    def flush_cache(self, wait_s: float = 60.0) -> None:
+        """Empty the prefix cache once the server is idle; SGLang answers 400 if it cannot."""
+        import urllib.error
+
+        try:
+            self._request(f"/flush_cache?timeout={wait_s}", {}, timeout=wait_s + self.timeout_s)
+        except urllib.error.HTTPError as exc:
+            raise UpdateFailed(f"{self.url} would not flush its prefix cache: {exc.read()[:200]!r}") from exc
+
     def info(self) -> dict[str, Any]:
         return json.loads(self._request("/server_info"))
 

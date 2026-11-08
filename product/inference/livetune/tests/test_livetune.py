@@ -1,4 +1,5 @@
 import hashlib
+from dataclasses import replace as dataclasses_replace
 import json
 import math
 import os
@@ -1207,3 +1208,44 @@ class RolloutTest(unittest.TestCase):
             finally:
                 cli.Server = saved
             self.assertEqual((verdict.decision, stage_policy.read_text()), ("inconclusive", "previous"))
+
+
+class ReplayIsolationTest(unittest.TestCase):
+    def test_cold_first_members_share_the_family_prefix_at_one_length(self):
+        from livetune import trace
+
+        keys = trace.PrefixKeys(b"k" * 32)
+        family = keys.families(list(range(24000)))  # every agent prompt shares its first 24k ids here
+        records = [
+            dataclasses_replace(_record(100.0, prompt=24000, cached=0, family=None), families=family),  # cold first request
+            dataclasses_replace(_record(101.0, prompt=24000, cached=19200, family=None), families=family),
+            dataclasses_replace(_record(102.0, prompt=24000, cached=18176, family=None), families=family),
+            _record(103.0, prompt=2000, family=None),
+        ]
+        schedule = sorted(trace.arrivals(records), key=lambda a: a.prompt_tokens)
+        agents = [a for a in schedule if a.prompt_tokens == 24000]
+        self.assertEqual({a.family for a in agents}, {family[-1]})
+        self.assertEqual([a.shared_tokens for a in agents], [19200, 19200, 19200])  # the cold one included
+        self.assertEqual((schedule[0].family, schedule[0].shared_tokens), (None, 0))
+
+    def test_every_measurement_starts_from_a_flushed_cache(self):
+        calls = []
+        server = types.SimpleNamespace(
+            url="http://x", livetune_state=lambda: {"startup": {"max_running_requests": 64}}, fingerprint=lambda: {},
+            apply=lambda settings: calls.append(("apply", dict(settings))), flush_cache=lambda: calls.append(("flush",)))
+        arrivals = [types.SimpleNamespace(at=0.0, prompt_tokens=2000, output_tokens=8, shared_tokens=0, family=None, temperature=0.7)]
+        saved = loadgen.run_arrivals
+
+        async def fake(url, schedule, prompts, name="trace"):
+            calls.append(("replay",))
+            result = loadgen.PhaseResult(loadgen.Phase(0, 2000, 8, 1.0))
+            result.requests = [loadgen.RequestRecord(0.0, ttft=0.1, tokens=8, decode_tps=100.0)]
+            return result
+
+        loadgen.run_arrivals = fake
+        try:
+            cli.tune_policy(server, Slo(50, 5), None, {"max_running_requests": [8]}, None, arrivals, 0, 0, lambda r: None)
+        finally:
+            loadgen.run_arrivals = saved
+        replays = [i for i, c in enumerate(calls) if c[0] == "replay"]
+        self.assertTrue(replays and all(calls[i - 1] == ("flush",) for i in replays))

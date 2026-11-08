@@ -173,8 +173,8 @@ def _alive(pid: int) -> bool:
     return True
 
 
-def read(paths: Iterable[str | Path], since: float = 0.0) -> Iterator[Record]:
-    """Records of requests that started at or after ``since``, so a window holds only its own workload."""
+def read(paths: Iterable[str | Path], since: float = 0.0, until: float = math.inf) -> Iterator[Record]:
+    """Records of requests that started in [since, until), so a window holds only its own workload."""
     for path in paths:
         path = Path(path)
         files = sorted(path.glob("trace-*.jsonl")) if path.is_dir() else [path]
@@ -183,7 +183,7 @@ def read(paths: Iterable[str | Path], since: float = 0.0) -> Iterator[Record]:
                 for line in handle:
                     if line.strip():
                         record = Record.from_json(line)
-                        if record.started >= since:
+                        if since <= record.started < until:
                             yield record
 
 

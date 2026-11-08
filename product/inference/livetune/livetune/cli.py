@@ -253,8 +253,10 @@ def improve(args: argparse.Namespace, server: Server) -> None:
         report = advise(argparse.Namespace(seconds=args.advise_seconds, interval=args.interval, trace_dir=args.trace_dir), server)
         entry: dict[str, Any] = {"t": started, "proposals": report["proposals"], "grid": report["grid"]}
         differs = _scope_differences(server.fingerprint(), canary.fingerprint())
-        # The window ends now, after advising, so it is the trailing --window seconds and no more.
-        records = list(trace.read([args.trace_dir], since=time.time() - args.window))
+        # A record is written when its request finishes, so a window that ended just now would miss its
+        # long requests. Replay one that closed --close-s ago, whose requests have had time to finish.
+        until = time.time() - args.close_s
+        records = list(trace.read([args.trace_dir], since=until - args.window, until=until))
         if differs:
             # A canary that differs from production would measure another intervention.
             entry["skipped"] = {"canary_scope_differs": sorted(differs)}
@@ -546,6 +548,7 @@ def main(argv: list[str] | None = None) -> int:
     im.add_argument("--work-dir", required=True)
     im.add_argument("--every", type=float, default=3600)
     im.add_argument("--window", type=float, default=600, help="seconds of recorded traffic to replay")
+    im.add_argument("--close-s", type=float, default=600, help="how long before now the replayed window ends, so its requests have finished")
     im.add_argument("--advise-seconds", type=float, default=300)
     im.add_argument("--interval", type=float, default=5.0)
     im.add_argument("--speed", type=float, default=1.0)

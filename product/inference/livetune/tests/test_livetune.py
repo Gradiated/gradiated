@@ -1164,7 +1164,7 @@ class ImproveTest(unittest.TestCase):
             try:
                 args = argparse.Namespace(canary="canary", work_dir=tmp, advise_seconds=0, interval=1, trace_dir=tmp, window=600,
                                           slo_tps=50, slo_ttft=5, corpus="", speed=1.0, policy_out=str(Path(tmp, "policy.json")), every=0, once=True,
-                                          stage_url=None, fleet="", guard_seconds=0)
+                                          stage_url=None, fleet="", guard_seconds=0, close_s=0)
                 cli.improve(args, prod)
             finally:
                 cli.Server = saved
@@ -1858,3 +1858,24 @@ class MinTokensAndVersionTest(unittest.TestCase):
         ctl = control.Controller(_policy(), smoothing=1.0, applied={"max_running_requests": 8})
         ctl.step(_window(2), 0)
         self.assertNotIn("policy_version", ctl.applied)
+
+
+class WorkloadShapeTest(unittest.TestCase):
+    def test_a_different_workload_at_the_same_load_is_inconclusive(self):
+        from livetune import rollout
+
+        chat = [_window(40, tps=100)] * 12
+        agentic = [metrics.Window(10, 40, 0, 5, 5 * 24000, 1000, 5 * 19200, 0.01, 1.0)] * 12
+        verdict = rollout.judge(agentic, chat, Slo(80, 10))
+        self.assertEqual(verdict.decision, "inconclusive")
+        self.assertIn("workloads differ", verdict.reason)
+
+    def test_replay_windows_close_before_now(self):
+        from livetune import trace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            writer = trace.Writer(tmp)
+            for t in (100.0, 200.0, 300.0):
+                writer.write(_record(t, ttft_s=0.0, decode_s=0.0))
+            writer.close()
+            self.assertEqual([r.t for r in trace.read([tmp], since=150.0, until=250.0)], [200.0])

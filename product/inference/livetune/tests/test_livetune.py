@@ -2152,6 +2152,9 @@ class RuntimeWaitTest(unittest.TestCase):
         try:
             ready = Fake(iter([[{"gpu": "B300", "runtime": None}], [{"gpu": "B300", "runtime": {"sglang": "s"}}]]))
             self.assertEqual(ready.fingerprint()["runtime"], {"sglang": "s"})
+            broken = Fake(itertools.repeat([{"gpu": "B300", "runtime": {"error": "OSError: unreadable"}}]))
+            with self.assertRaises(server_module.UpdateFailed):
+                broken.fingerprint()
             stuck = Fake(itertools.repeat([{"gpu": "B300", "runtime": None}]))
             with self.assertRaises(server_module.UpdateFailed):
                 stuck.fingerprint(runtime_wait_s=0)

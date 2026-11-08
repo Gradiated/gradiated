@@ -89,6 +89,10 @@ class Server:
                 break
             time.sleep(0.5)
         scopes = [{key: state.get(key) for key in envelope} for state in states]
+        failed = [scope["runtime"]["error"] for scope in scopes if isinstance(scope["runtime"], dict) and "error" in scope["runtime"]]
+        if failed:
+            # Two hosts that failed the same way would otherwise match each other's scope.
+            raise UpdateFailed(f"{self.url} could not digest its runtime: {failed[0]}")
         if pending:
             raise UpdateFailed(f"{self.url} did not finish digesting its runtime in {runtime_wait_s:.0f}s")
         # The scheduler reports its own GPU; the client running this may have none, or different ones.

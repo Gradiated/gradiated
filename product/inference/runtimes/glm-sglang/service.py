@@ -76,7 +76,13 @@ class Controller:
             print(f'livetune controller exited with {code}; restarting in {delay}s', file=sys.stderr, flush=True)
             self.child, self.restart_at = None, now + delay
         if self.child is None and now >= self.restart_at:
-            self.child, self.started_at = self.start(self.command), now
+            try:
+                self.child, self.started_at = self.start(self.command), now
+            except Exception as exc:  # a controller that cannot even start must not stop serving
+                self.failures += 1
+                delay = min(CONTROLLER_BACKOFF_SECONDS[0] * 2 ** (self.failures - 1), CONTROLLER_BACKOFF_SECONDS[1])
+                print(f'livetune controller could not start ({exc}); retrying in {delay}s', file=sys.stderr, flush=True)
+                self.restart_at = now + delay
 
     def children(self):
         return [self.child] if self.child is not None else []

@@ -185,6 +185,12 @@ class LiveTuning(unittest.TestCase):
         now[0] += 10_000
         controller.tick()
         self.assertEqual((controller.child, controller.children()), (None, []))
+        def broken(command):
+            raise OSError('No such file or directory')
+
+        failing = service.Controller(['livetune'], clock=lambda: now[0], start=broken)
+        failing.tick()  # does not raise: serving goes on
+        self.assertEqual((failing.child, failing.restart_at - now[0]), (None, 30))
         idle = service.Controller(None, start=start)
         idle.tick()
         self.assertEqual(idle.children(), [])

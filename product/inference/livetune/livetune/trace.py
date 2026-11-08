@@ -272,6 +272,7 @@ class Arrival:
     logprobs: int = -1
     logprob_start: int = -1
     stream: bool = True
+    max_new_tokens: int | None = None  # the declared limit, which admission and KV headroom are sized by
     launched: bool = True  # a forward pass ran for it, which matters for a request aborted with no output
     multimodal: bool = False  # images or embeddings, which replay cannot send
 
@@ -376,6 +377,7 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
                 logprobs=r.logprobs,
                 logprob_start=r.logprob_start,
                 stream=r.stream,
+                max_new_tokens=max(r.max_new_tokens, r.output_tokens, 1) if r.max_new_tokens else None,
             )
         )
     return sorted(out, key=lambda a: a.at)

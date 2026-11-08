@@ -105,10 +105,14 @@ class PromptSource:
 
 async def _one(session: Any, url: str, ids: list[int], output_tokens: int, record: RequestRecord, temperature: float = 0.7,
                priority: int | None = None, seed: int | None = None, sampling: dict[str, float] | None = None, logprobs: int = -1,
-               stream: bool = True, logprob_start: int = -1) -> None:
+               stream: bool = True, logprob_start: int = -1, max_new_tokens: int | None = None) -> None:
+    # Declared limit as production sent it (admission and KV headroom use it); the request is cut off
+    # after the observed output_tokens, as the client or a stop condition did in production.
+    # A non-streaming request cannot be cut off mid-way, so it asks for exactly what it produced.
+    budget = max(max_new_tokens or output_tokens, output_tokens) if stream else output_tokens
     body: dict[str, Any] = {
         "input_ids": ids,
-        "sampling_params": {"max_new_tokens": output_tokens, "temperature": temperature, "ignore_eos": True},
+        "sampling_params": {"max_new_tokens": budget, "temperature": temperature, "ignore_eos": True},
         "stream": stream,
     }
     if priority is not None:
@@ -152,6 +156,8 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
                         # only tokens after the first chunk have a measured decode time.
                         first_tokens = tokens
                     last, record.tokens = now, tokens
+                    if budget > output_tokens and tokens >= output_tokens:
+                        break  # closing the stream aborts the request, as the recorded stop did
     except asyncio.CancelledError:
         raise
     except Exception as exc:  # network errors are data, not crashes
@@ -188,6 +194,37 @@ async def run_phase(url: str, phase: Phase, prompts: PromptSource, phase_index: 
     return result
 
 
+def warm_prefixes(arrivals: Sequence[Any], ids_for: Sequence[list[int]]) -> list[list[int]]:
+    """Prefixes production already had cached when the window began.
+
+    A request whose recorded hit no earlier request in the window explains hit something cached
+    before it; prewarming exactly that prefix reproduces the hit from a flushed cache.
+    """
+    covered: dict[str, int] = {}
+    warm = []
+    for arrival, ids in sorted(zip(arrivals, ids_for), key=lambda pair: pair[0].at):
+        cached = min(getattr(arrival, "cached_tokens", 0), len(ids))
+        explained = arrival.family is not None and covered.get(arrival.family, 0) >= cached
+        if cached and not explained:
+            warm.append(ids[:cached])
+        if arrival.family:
+            # Once a member has run, later members find the family prefix cached.
+            covered[arrival.family] = max(covered.get(arrival.family, 0), arrival.shared_tokens)
+    return warm
+
+
+async def _prewarm(session: Any, url: str, arrivals: Sequence[Any], ids_for: Sequence[list[int]], parallel: int = 8) -> None:
+    gate = asyncio.Semaphore(parallel)
+
+    async def one(ids: list[int]) -> None:
+        async with gate:
+            body = {"input_ids": ids, "sampling_params": {"max_new_tokens": 1, "temperature": 0}}
+            async with session.post(f"{url}/generate", json=body) as response:
+                await response.read()
+
+    await asyncio.gather(*(one(ids) for ids in warm_prefixes(arrivals, ids_for)))
+
+
 def trace_prompts(arrivals: Sequence[Any], prompts: PromptSource) -> list[list[int]]:
     """The token ids for each arrival, built once so every replay of a trace sends the same content."""
     return [prompts.family_prompt(a.prompt_tokens, a.shared_tokens, a.family, getattr(a, "ancestors", ())) for a in arrivals]
@@ -214,6 +251,7 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
     timeout = aiohttp.ClientTimeout(total=None, sock_read=600)
     ids_for = trace_prompts(arrivals, prompts) if isinstance(prompts, PromptSource) else list(prompts)
     async with aiohttp.ClientSession(timeout=timeout, connector=aiohttp.TCPConnector(limit=0)) as session:
+        await _prewarm(session, url, arrivals, ids_for)
         started = time.perf_counter()
 
         async def send(arrival: Any, ids: list[int], seed: int) -> None:
@@ -224,7 +262,7 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
             # A fixed seed per arrival, so sampled requests generate the same tokens in every replay.
             await _one(session, url, ids, arrival.output_tokens, record, temperature, getattr(arrival, "priority", None), seed,
                        getattr(arrival, "sampling", None), getattr(arrival, "logprobs", -1),
-                       getattr(arrival, "stream", True), getattr(arrival, "logprob_start", -1))
+                       getattr(arrival, "stream", True), getattr(arrival, "logprob_start", -1), getattr(arrival, "max_new_tokens", None))
 
         await asyncio.gather(*(send(a, ids, index) for index, (a, ids) in enumerate(zip(arrivals, ids_for))))
     # Every request runs to completion, so the phase lasts until the last one finishes.

@@ -1730,3 +1730,43 @@ class PolicyIdentityAndAbortTest(unittest.TestCase):
             writer.write(_record(100.0))
             self.assertEqual(len(list(trace.read([tmp]))), 1)  # before close
             writer.close()
+
+
+class BudgetAndPrewarmTest(unittest.TestCase):
+    def test_replay_declares_the_recorded_limit_and_stops_at_the_observed_output(self):
+        import asyncio
+        from livetune import trace
+
+        arrival = trace.arrivals([dataclasses_replace(_record(100.0, output=3), max_new_tokens=512, finish="stop")])[0]
+        self.assertEqual((arrival.max_new_tokens, arrival.output_tokens), (512, 3))
+        chunks = [{"meta_info": {"completion_tokens": n}} for n in range(1, 10)]
+        bodies = []
+
+        class Response:
+            status = 200
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *exc):
+                return False
+
+            @property
+            async def content(self):
+                for chunk in chunks:
+                    yield f"data: {json.dumps(chunk)}".encode()
+
+        session = types.SimpleNamespace(post=lambda url, json: bodies.append(json) or Response())
+        record = loadgen.RequestRecord(0.0)
+        asyncio.run(loadgen._one(session, "http://x", [1], arrival.output_tokens, record, max_new_tokens=arrival.max_new_tokens))
+        self.assertEqual((bodies[0]["sampling_params"]["max_new_tokens"], record.tokens), (512, 3))
+
+    def test_hits_from_before_the_window_are_prewarmed_and_in_window_ones_are_not(self):
+        from livetune import trace
+
+        a = trace.Arrival(at=0.0, prompt_tokens=100, output_tokens=1, shared_tokens=0, family=None, temperature=None, cached_tokens=40)
+        b = trace.Arrival(at=1.0, prompt_tokens=100, output_tokens=1, shared_tokens=60, family="f", temperature=None, cached_tokens=0)
+        c = trace.Arrival(at=2.0, prompt_tokens=100, output_tokens=1, shared_tokens=60, family="f", temperature=None, cached_tokens=60)
+        ids = [list(range(i * 100, i * 100 + 100)) for i in range(3)]
+        warm = loadgen.warm_prefixes([a, b, c], ids)
+        self.assertEqual(warm, [ids[0][:40]])  # c's hit is explained by b, earlier in the window

@@ -44,13 +44,24 @@ def _appender(path: str | None, mode: str = "a"):
     return write
 
 
+def _differences(expected: dict[str, Any], actual: dict[str, Any], prefix: str = "") -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for key in sorted(set(expected) | set(actual)):
+        a, b = expected.get(key), actual.get(key)
+        if isinstance(a, dict) and isinstance(b, dict):
+            out.update(_differences(a, b, f"{prefix}{key}."))
+        elif a != b:
+            out[prefix + key] = (a, b)
+    return out
+
+
 def load_policy(path: str, server: Server, allow_scope_mismatch: bool) -> Policy:
     policy = Policy.load(path)
     expected, actual = policy.provenance.get("scope"), server.fingerprint()
     if expected is None and not allow_scope_mismatch:
         raise SystemExit(f"{path} records no tuning scope; rebuild it with `livetune policy`, or pass --allow-scope-mismatch")
     if expected is not None and expected != actual and not allow_scope_mismatch:
-        differs = {k: (expected.get(k), actual.get(k)) for k in set(expected) | set(actual) if expected.get(k) != actual.get(k)}
+        differs = _differences(expected, actual)
         raise SystemExit(f"{path} was tuned for a different server (policy, live): {differs}; pass --allow-scope-mismatch to override")
     return policy
 

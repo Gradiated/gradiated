@@ -1,17 +1,34 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 import urllib.request
 from dataclasses import dataclass
 from typing import Any
 
-from livetune.knobs import VARIANT_KEY
+from livetune.knobs import KNOBS, VARIANT_KEY
 from livetune.metrics import Scrape, parse
 
 
 class UpdateFailed(RuntimeError):
     pass
+
+
+# Every launch argument that can change serving performance is in scope. Left out: what differs
+# between replicas of one deployment (addresses, ports, ranks, paths), what the controller itself
+# changes, what SGLang derives at startup from free memory or a random draw, and anything that
+# can hold a secret.
+_INSTANCE = re.compile(r"^_|key|password|secret|(^|_)(host|ports?|addr|endpoints?|rank|dir|folder|path|file)$|^log_")
+_KEEP = {"model_path", "tokenizer_path", "speculative_draft_model_path", "quantization_param_path", "max_lora_rank", "mamba_max_states_per_path"}
+_NOT_SCOPE = {
+    "internal_states", "status", "startup_time", "launch_command", "base_gpu_id", "weight_version", "warmups",
+    "served_model_name", "max_total_num_tokens", "random_seed", "pp_max_micro_batch_size", *KNOBS,
+}
+
+
+def serving_config(info: dict[str, Any]) -> dict[str, Any]:
+    return {k: v for k, v in sorted(info.items()) if k in _KEEP or not (k in _NOT_SCOPE or _INSTANCE.search(k))}
 
 
 @dataclass(frozen=True)
@@ -30,7 +47,6 @@ class Server:
 
     def fingerprint(self) -> dict[str, Any]:
         info = json.loads(self._request("/server_info"))
-        keys = ("model_path", "served_model_name", "revision", "tp_size", "dp_size", "ep_size", "pp_size", "attn_cp_size", "kv_cache_dtype", "quantization", "version")
         state = self.livetune_state()
         # The scheduler reports its own GPU; the client running this may have none, or different ones.
         if not state.get("gpu"):
@@ -38,7 +54,7 @@ class Server:
         # Page size bounds which knob values the server accepts; the variant code, installed and
         # selectable by id, is what a policy's forward_variant settings were measured with.
         envelope = ("gpu", "page_size", "startup", "variant", "variants")
-        return {**{key: info.get(key) for key in keys}, **{key: state.get(key) for key in envelope}}
+        return {"server_args": serving_config(info), **{key: state.get(key) for key in envelope}}
 
     def livetune_states(self) -> list[dict[str, Any]]:
         # One entry per data-parallel scheduler.

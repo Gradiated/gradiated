@@ -318,6 +318,10 @@ class TuneTest(unittest.TestCase):
         self.assertGreater(tune.score(good, self.slo), tune.score(fast_but_slow_users, self.slo))
         self.assertEqual(tune.score({"completed": 0, "errors": 2}, self.slo)[0], 0)
 
+    def test_a_result_without_a_per_user_rate_is_inconclusive(self):
+        single_chunk = {"completed": 5, "errors": 0, "output_tps": 900, "tps_per_user_p50": None, "ttft_p90": 1}
+        self.assertEqual(tune.score(single_chunk, self.slo), (0, -math.inf))
+
     def test_coordinate_search_keeps_real_gains_only(self):
         def measure(profile, settings):
             tps = {8: 100, 16: 150, 32: 151}[settings["max_running_requests"]]
@@ -397,6 +401,11 @@ class TuneTest(unittest.TestCase):
 
 
 class PolicyScopeTest(unittest.TestCase):
+    def test_scope_mismatch_names_the_differing_launch_arguments(self):
+        scope = {"server_args": {"speculative_num_steps": 3, "tp_size": 4}, "gpu": "B300"}
+        self.assertEqual(cli._differences(scope, {**scope, "server_args": {"speculative_num_steps": 2, "tp_size": 4}}),
+                         {"server_args.speculative_num_steps": (3, 2)})
+
     def test_policy_from_a_different_server_is_refused_unless_overridden(self):
         scope = {"model_path": "a", "tp_size": 4, "gpu": "B300"}
         live = types.SimpleNamespace(fingerprint=lambda: {**scope, "gpu": "H200"})
@@ -414,7 +423,9 @@ class FingerprintTest(unittest.TestCase):
     def _server(self, livetune):
         from livetune import server as server_module
 
-        replies = {"/server_info": {"model_path": "m", "tp_size": 4, "internal_states": [{"livetune": livetune}]}}
+        info = {"model_path": "m", "tp_size": 4, "speculative_num_steps": 3, "api_key": "x", "port": 30000, "dist_init_addr": "10.0.0.1:5000",
+                "max_running_requests": 16, "random_seed": 7}
+        replies = {"/server_info": {**info, "internal_states": [{"livetune": livetune}]}}
 
         class Fake(server_module.Server):
             def _request(self, path, body=None, timeout=None):
@@ -425,7 +436,9 @@ class FingerprintTest(unittest.TestCase):
     def test_scope_names_the_gpu_the_server_reports_not_the_callers(self):
         server, _ = self._server({"gpu": "NVIDIA B300", "page_size": 256, "startup": STARTUP, "variant": None, "variants": {"1": "ab"}})
         scope = server.fingerprint()
-        self.assertEqual((scope["gpu"], scope["model_path"], scope["page_size"], scope["startup"]), ("NVIDIA B300", "m", 256, STARTUP))
+        self.assertEqual((scope["gpu"], scope["page_size"], scope["startup"]), ("NVIDIA B300", 256, STARTUP))
+        # Launch arguments are in scope, except secrets, per-replica addresses, random draws and the knobs livetune moves.
+        self.assertEqual(scope["server_args"], {"model_path": "m", "speculative_num_steps": 3, "tp_size": 4})
         self.assertEqual((scope["variant"], scope["variants"]), (None, {"1": "ab"}))
 
     def test_server_that_does_not_report_its_gpu_has_no_scope(self):
@@ -572,6 +585,8 @@ class PluginTest(unittest.TestCase):
                 self.assertFalse(self.tuner.admission_blocked())
                 self.assertEqual(self.tuner.readback()["variant"]["name"], "bump")
                 self.assertEqual(self.tuner.readback()["variants"], {str(variant): variants.resolve(variant).sha256})
+                Path(tmp, "bump.py").write_text("tampered")
+                self.assertIn("does not match", self.tuner.readback()["variants"])
                 self.tuner.apply("forward_variant", 0)
                 self.tuner.on_idle()
                 self.assertEqual(self.model.value, 1)

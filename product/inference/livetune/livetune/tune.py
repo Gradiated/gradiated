@@ -25,6 +25,9 @@ def score(summary: Mapping[str, Any], slo: Slo) -> tuple[int, float]:
     # (feasible, value): any SLO-feasible result outranks every infeasible one.
     if summary.get("errors") or not summary.get("completed"):
         return (0, -math.inf)
+    # Tuning judges both halves of the SLO: a result missing either is inconclusive.
+    if summary.get("tps_per_user_p50") is None or summary.get("ttft_p90") is None:
+        return (0, -math.inf)
     met = slo.met(summary.get("tps_per_user_p50"), summary.get("ttft_p90"))
     if met:
         return (1, float(summary["output_tps"]))

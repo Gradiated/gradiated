@@ -57,11 +57,12 @@ class VariantSource:
 
 
 def catalog(variants_dir: str | None = None) -> dict[str, str]:
-    """Variant id to pinned sha256 for every selectable variant; empty without a manifest."""
+    """Variant id to sha256 for every selectable variant, each verified against its file."""
     manifest_path = Path(variants_dir or os.environ.get("LIVETUNE_VARIANTS_DIR", "")) / "manifest.json"
     if not manifest_path.is_file():
         return {}
-    return {str(entry["id"]): entry["sha256"] for entry in json.loads(manifest_path.read_text()).get("variants", [])}
+    ids = [entry["id"] for entry in json.loads(manifest_path.read_text()).get("variants", [])]
+    return {str(variant_id): resolve(variant_id, variants_dir).sha256 for variant_id in ids}
 
 
 def resolve(variant_id: int, variants_dir: str | None = None) -> VariantSource:

@@ -1,0 +1,2 @@
+[sglang.srt.plugins]
+livetune = livetune.sglang_plugin:register

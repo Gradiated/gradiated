@@ -168,7 +168,8 @@ def tune_policy(
             if warmup:
                 loadgen.run(server.url, [profile.phase(warmup)], prompts, log=lambda _: None)
             summary = loadgen.run(server.url, [profile.phase(seconds)], prompts, log=lambda _: None)[0]
-        record({"profile": profile.name, "settings": settings, "summary": summary, "scope": scope})
+        # The workload mode decides which caps can bind when `policy` rebuilds from these trials.
+        record({"profile": profile.name, "open_loop": profile.open_loop, "settings": settings, "summary": summary, "scope": scope})
         return summary
 
     profiles = profiles if profiles is not None else [tune.trace_profile(arrivals or [])]

@@ -146,8 +146,8 @@ def _cells(levels: Sequence[float]) -> list[tuple[float | None, float]]:
     return cells + [(ordered[-1], ordered[-1] * EVIDENCE_REACH)]
 
 
-def _profile_of(name: str, phase: Mapping[str, Any]) -> Profile:
-    return Profile(name, phase["users"], phase["prompt_tokens"], phase["output_tokens"], phase.get("shared_prefix", 0.0))
+def _profile_of(name: str, phase: Mapping[str, Any], open_loop: bool = False) -> Profile:
+    return Profile(name, phase["users"], phase["prompt_tokens"], phase["output_tokens"], phase.get("shared_prefix", 0.0), open_loop)
 
 
 def best_from_trials(trials: Sequence[Mapping[str, Any]], slo: Slo, start: Mapping[str, Any], min_gain: float = 0.02) -> list[dict[str, Any]]:
@@ -157,7 +157,7 @@ def best_from_trials(trials: Sequence[Mapping[str, Any]], slo: Slo, start: Mappi
         by_profile.setdefault(trial["profile"], []).append(trial)
     results = []
     for name, rows in by_profile.items():
-        profiles = {_profile_of(name, row["summary"]["phase"]) for row in rows}
+        profiles = {_profile_of(name, row["summary"]["phase"], row.get("open_loop", False)) for row in rows}
         if len(profiles) != 1:
             raise ValueError(f"profile {name!r} was measured with different workloads; give each workload its own name")
         (profile,) = profiles

@@ -100,14 +100,40 @@ class Writer:
             self.last_flush = time.monotonic()
         if self.bytes >= self.max_bytes:
             self.handle.close()
-            # Only this writer's files: on a data-parallel server several schedulers share the directory,
-            # and another's active file must not be unlinked under it.
-            for old in sorted(self.directory.glob(f"trace-*-{os.getpid()}-*.jsonl"))[: -self.keep + 1 or None]:
-                old.unlink(missing_ok=True)
+            self._prune()
             self._open()
+
+    def _prune(self) -> None:
+        # Several schedulers can share the directory (data parallelism) and restarted ones leave files
+        # behind. Keep this writer's newest files, and the newest files of writers that have exited;
+        # never touch a live writer's files, which it may still be appending to.
+        mine, exited = [], []
+        for path in sorted(self.directory.glob("trace-*.jsonl")):
+            pid = _writer_pid(path)
+            if pid == os.getpid():
+                mine.append(path)
+            elif pid is not None and not _alive(pid):
+                exited.append(path)
+        for old in mine[: -self.keep + 1 or None] + exited[: -self.keep or None]:
+            old.unlink(missing_ok=True)
 
     def close(self) -> None:
         self.handle.close()
+
+
+def _writer_pid(path: Path) -> int | None:
+    parts = path.stem.split("-")
+    return int(parts[2]) if len(parts) == 4 and parts[2].isdigit() else None
+
+
+def _alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
 
 
 def read(paths: Iterable[str | Path], since: float = 0.0) -> Iterator[Record]:

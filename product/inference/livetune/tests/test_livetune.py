@@ -1336,6 +1336,28 @@ class TelemetryRobustnessTest(unittest.TestCase):
             for name, module in saved.items():
                 sys.modules.pop(name, None) if module is None else sys.modules.__setitem__(name, module)
 
+    def test_rotation_keeps_a_bounded_tail_of_exited_writers(self):
+        from livetune import trace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            dead = 2 ** 22 + 12345  # beyond the default pid range, so no live process has it
+            for i in range(5):
+                Path(tmp, f"trace-20260101T00000{i}-{dead}-{i:012d}.jsonl").write_text("")
+            writer = trace.Writer(tmp, max_bytes=200, keep=2, flush_s=0)
+            for i in range(10):
+                writer.write(_record(1000.0 + i))
+            writer.close()
+            left = sorted(p.name for p in Path(tmp).glob(f"trace-*-{dead}-*.jsonl"))
+            self.assertEqual(left, [f"trace-20260101T00000{i}-{dead}-{i:012d}.jsonl" for i in (3, 4)])
+
+    def test_trials_remember_an_open_loop_workload(self):
+        phase = {"users": 20, "prompt_tokens": 2000, "output_tokens": 256}
+        summary = {"completed": 9, "errors": 0, "output_tps": 1000, "tps_per_user_p50": 90, "ttft_p90": 1, "phase": phase}
+        trials = [{"profile": "trace", "open_loop": True, "settings": {"max_running_requests": cap}, "summary": dict(summary, output_tps=tps)}
+                  for cap, tps in ((64, 1000), (32, 1200), (32, 1200))]
+        best = tune.best_from_trials(trials, Slo(80, 10), {"max_running_requests": 64})
+        self.assertEqual(best[0]["settings"]["max_running_requests"], 32)  # 32 >= 20 users, but open loop lets it bind
+
     def test_rotation_never_deletes_another_writers_files(self):
         from livetune import trace
 

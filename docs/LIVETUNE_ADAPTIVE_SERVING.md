@@ -124,6 +124,9 @@ All of these were measured on DeepSeek V4.1 Flash, TP4, on 4×B300, on SGLang `f
   - Until then, `advise` reports `eviction_share` and KV occupancy, so the condition is visible when it happens.
 - **Live control with a tuned policy** met the SLO in 5 of 5 traffic phases against 3–4 for static settings. Per-user speed in a long-context burst was 112–115 tok/s against 66–67 (see the [livetune README](../product/inference/livetune/README.md)).
 - **The default per-request TPOT buckets** are too coarse around an 80 tok/s SLO: live windows read 86 tok/s while the client measured 77.
+- **The plugin costs about 1% at most.** Recording was on, and the plugin was compared with a server without it, in two alternating restarts per arm. A 40-user, 24k-token agentic phase ran at 45.3 tok/s per user with the plugin and 45.2 without, with TTFT p90 at 3.1 s in both. A 64-user burst of 1.5k-token prompts ran at 48.6 against 49.0 tok/s per user (−0.9%), with TTFT p90 at 1.22 s against 1.18 s.
+  - The scheduler thread spent 0.05 s recording about 3,000 requests, 17 µs each. Before hashing moved to a writer thread, a 120k-token prompt cost 5 ms of scheduler time per finished request.
+  - The small burst gap is consistent with the writer thread holding the GIL while it serializes records.
 
 ## Status
 
@@ -134,7 +137,7 @@ All of these were measured on DeepSeek V4.1 Flash, TP4, on 4×B300, on SGLang `f
 | Advisor rules across the three tiers | Implemented; rules are thresholds, to be calibrated on canary traffic |
 | Trace replay and `tune --trace` | Implemented |
 | `livetune improve`: advise → canary replay → publish, with policy hot-reload in `control` | Implemented; needs a canary host per scope |
-| Starting `control` and `improve` from the runtime's `service.py` | Next |
+| Starting `control` from the GLM runtime's `service.py` (`LIVETUNE_MODE` off, observe, act or canary) | Implemented; `improve` runs as an operator job against a canary |
 | `livetune variant-eval`: register, switch live, gate against stock, measure on a trace, switch back | Implemented |
 | Fleet guard after promotion | Implemented |
 | Code-tier targets handed to the variant agent loop, which calls `variant-eval` | Next; the loop exists in `research/tkcc` |

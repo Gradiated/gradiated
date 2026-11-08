@@ -432,6 +432,7 @@ class Telemetry:
         self.page_size = max(page_size, 1)
         self.batches = trace.BatchStats()
         self.recent: list[str] = []
+        self.since = time.time()  # wall clock: a trace window before this was not recorded by this process
         self.dropped = 0  # on the scheduler thread: the backlog was full
         self.failed = 0  # on the writer thread: a record could not be hashed or written
         self.error: str | None = None
@@ -556,6 +557,7 @@ class Telemetry:
     def readback(self) -> dict[str, Any]:
         return {
             "trace_path": str(self.writer.path) if self.writer else None,
+            "since": self.since,
             "records": self.writer.written if self.writer else 0,
             "dropped": self.dropped + self.failed,
             "pending": self._queue.qsize(),

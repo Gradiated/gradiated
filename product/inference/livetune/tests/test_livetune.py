@@ -2198,7 +2198,8 @@ class InFlightWarmupTest(unittest.TestCase):
         warm = sorted((a for a in schedule if a.warmup), key=lambda a: a.output_tokens)
         self.assertEqual([a.at for a in warm], [0.0, 0.0])
         self.assertEqual(warm[1].output_tokens, 105)  # 200 tokens over 19 s of decode, 10 s of it left
-        self.assertEqual(warm[1].cached_tokens, warm[1].prompt_tokens)  # its prompt was cached while it ran
+        # Its context is the prompt plus the 95 tokens it had generated, all cached as it ran.
+        self.assertEqual((warm[1].prompt_tokens, warm[1].cached_tokens), (2095, 2095))
         self.assertEqual((warm[0].output_tokens, warm[0].cached_tokens), (50, 0))  # still queued at 100: replays whole
         measured = [a for a in schedule if not a.warmup]
         self.assertEqual([a.prompt_tokens for a in measured], [3000])
@@ -2317,6 +2318,32 @@ class ReplayStopTest(unittest.TestCase):
             loadgen.run_arrivals, loadgen.prewarm = saved
         self.assertEqual((summary["tps_per_user_p50"], summary["ttft_p90"]), (None, None))
         self.assertIn("warm-ups", summary["slo_from"])
+
+
+class TraceCompletenessTest(unittest.TestCase):
+    def _server(self, tmp, **telemetry):
+        path = str(Path(tmp, "trace-20261108T100000-4242-000000000000.jsonl"))
+        state = {"trace_path": path, "since": 0.0, "dropped": 0, "error": None, **telemetry}
+        return types.SimpleNamespace(livetune_states=lambda: [{"telemetry": state}])
+
+    def test_a_window_with_lost_records_is_not_tuned_on(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "trace-20261108T100000-4242-000000000000.jsonl").write_text("")
+            self.assertIsNone(cli._trace_gap(self._server(tmp), tmp, 100.0, {}))
+            self.assertIn("not recording", cli._trace_gap(types.SimpleNamespace(livetune_states=lambda: [{"telemetry": None}]), tmp, 100.0, {}))
+            self.assertIn("failed", cli._trace_gap(self._server(tmp, error="OSError: disk full"), tmp, 100.0, {}))
+            self.assertIn("started recording", cli._trace_gap(self._server(tmp, since=150.0), tmp, 100.0, {}))
+            self.assertIn("dropped", cli._trace_gap(self._server(tmp, dropped=3), tmp, 100.0, {}))
+            # A reading from before the window with the same count vouches for it; a later drop does not.
+            history = {("4242", 0.0): [(50.0, 3)]}
+            self.assertIsNone(cli._trace_gap(self._server(tmp, dropped=3), tmp, 100.0, history))
+            self.assertIn("dropped", cli._trace_gap(self._server(tmp, dropped=4), tmp, 100.0, history))
+
+    def test_a_window_whose_files_were_rotated_away_is_not_tuned_on(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            # The writer's first file is gone; its oldest left was opened long after the window began.
+            Path(tmp, "trace-20991231T000000-4242-000000500000.jsonl").write_text("")
+            self.assertIn("rotated", cli._trace_gap(self._server(tmp), tmp, 100.0, {}))
 
 
 class QuietLogTest(unittest.TestCase):

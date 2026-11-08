@@ -323,6 +323,46 @@ def variant_eval(args: argparse.Namespace, server: Server) -> dict[str, Any]:
     return report
 
 
+def _rotated_away(trace_dir: str, pid: str, since: float) -> bool:
+    """Whether a writer's files from before since are gone. A writer's first file still being there
+    proves nothing rotated away; otherwise its oldest file must have been opened before since."""
+    files = sorted(Path(trace_dir).glob(f"trace-*-{pid}-*.jsonl"))
+    if not files:
+        return True
+    oldest = files[0].stem.split("-")
+    if oldest[3] == "0" * 12:
+        return False
+    return time.mktime(time.strptime(oldest[1], "%Y%m%dT%H%M%S")) > since
+
+
+def _trace_gap(server: Server, trace_dir: str, since: float, history: dict[tuple[str, float], list[tuple[float, int]]]) -> str | None:
+    """Why the production trace may be missing requests that started at or after since, or None.
+
+    A window replayed with requests missing is a lighter workload than production served. Records
+    are lost when the scheduler was not recording, restarted, dropped records, failed to write them,
+    or rotated the files away. history holds this process's earlier readings of each writer's drop
+    count, so a writer that dropped records once can still vouch for a later window.
+    """
+    now = time.time()
+    for state in server.livetune_states():
+        telemetry = state.get("telemetry") or {}
+        path, started, dropped = telemetry.get("trace_path"), telemetry.get("since"), int(telemetry.get("dropped") or 0)
+        if not path or started is None:
+            return "a scheduler is not recording traffic"
+        if telemetry.get("error"):
+            return f"a scheduler's trace writer failed: {telemetry['error']}"
+        if started > since:
+            return "a scheduler started recording during the window"
+        pid = Path(path).stem.split("-")[2]
+        if _rotated_away(trace_dir, pid, since):
+            return "the window's oldest trace file was rotated away"
+        readings = history.setdefault((pid, started), [])
+        readings.append((now, dropped))
+        if dropped and not any(t <= since and d == dropped for t, d in readings):
+            return f"a scheduler dropped {dropped} records, and none of them can be ruled out of the window"
+    return None
+
+
 def improve(args: argparse.Namespace, server: Server) -> None:
     """Keep improving: advise from production, measure the proposals on a canary against the
     production traffic just recorded, and publish a policy only when something beat startup."""
@@ -332,6 +372,8 @@ def improve(args: argparse.Namespace, server: Server) -> None:
     out.mkdir(mode=0o700, parents=True, exist_ok=True)
     out.chmod(0o700)
     write = _appender(str(out / "improve.jsonl"))
+    # Each production writer's drop count as read in earlier cycles, to vouch for later windows.
+    history: dict[tuple[str, float], list[tuple[float, int]]] = {}
     while True:
         started = time.time()
         report = advise(argparse.Namespace(seconds=args.advise_seconds, interval=args.interval, trace_dir=args.trace_dir, close_s=args.close_s), server)
@@ -348,6 +390,9 @@ def improve(args: argparse.Namespace, server: Server) -> None:
             entry["skipped"] = {"canary_scope_differs": sorted(differs)}
         elif not report["grid"] or not records:
             entry["skipped"] = "nothing to test" if not report["grid"] else "no recorded traffic"
+        elif gap := _trace_gap(server, args.trace_dir, since, history):
+            # Tuning on a partial trace measures a lighter workload than production served.
+            entry["skipped"] = {"incomplete_trace": gap}
         elif gaps := trace.replay_gaps(records):
             # Replay would send these as plain requests and tune for a different workload.
             entry["skipped"] = {"unreproducible_modes": gaps}

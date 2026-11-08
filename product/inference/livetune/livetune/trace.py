@@ -398,16 +398,19 @@ def chunked_early_stops(arrivals: Sequence[Arrival], stream_interval: int, specu
 def _warmup(r: Record, since_wall: float) -> Record:
     """What remained at since of a request already running then, arriving at since.
 
-    One that had prefilled replays with the output it had left and its prompt cached, as production
-    held it while it ran: decode work and KV occupancy, no prefill. One still waiting or prefilling
+    One that had prefilled replays with the output it had left. Its prompt and the tokens it had
+    already generated are its context, cached as production held them while it ran, so it decodes
+    at the same KV length: decode work and KV occupancy, no prefill. One still waiting or prefilling
     replays whole.
     """
     prefilled = r.started + (r.ttft_s or 0.0)
     moved = {"server_s": r.t - since_wall, "queue_s": 0.0, "lookup_s": 0.0, "retractions": 0}
     if prefilled > since_wall:
         return replace(r, **moved)
-    left = r.output_tokens * (r.t - since_wall) / max(r.t - prefilled, 1e-9)
-    return replace(r, output_tokens=max(1, min(r.output_tokens, round(left))), cached_tokens=r.prompt_tokens, ttft_s=0.0, **moved)
+    left = max(1, min(r.output_tokens, round(r.output_tokens * (r.t - since_wall) / max(r.t - prefilled, 1e-9))))
+    context = r.prompt_tokens + r.output_tokens - left
+    budget = max(r.max_new_tokens - (r.output_tokens - left), left) if r.max_new_tokens else None
+    return replace(r, prompt_tokens=context, output_tokens=left, cached_tokens=context, max_new_tokens=budget, ttft_s=0.0, **moved)
 
 
 def arrivals(records: Sequence[Record], speed: float = 1.0, measured_from: float | None = None) -> list[Arrival]:

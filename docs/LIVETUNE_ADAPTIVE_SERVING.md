@@ -56,7 +56,6 @@ Levers come in three tiers, by how they change and what a change risks.
 | `schedule_conservativeness` | Decode headroom reserved at admission | Rebuilds `NewTokenRatioTracker` after the override |
 | `stream_interval` | Tokens per streamed chunk | Read fresh on every output step |
 | `max_queued_requests` | Admission limit; 0 = unlimited | Rejects only new arrivals |
-| `min_evict_tokens` | Minimum prefix-cache eviction batch | livetune's own, through a hook on `evict_for_alloc`; see [Findings](#findings) |
 
 Considered but not exposed:
 - `num_continuous_decode_steps`: nothing reads it.
@@ -101,11 +100,14 @@ A policy only runs on the server it was tuned on. The scope covers launch argume
 
 All of these were measured on DeepSeek V4.1 Flash, TP4, on 4×B300, on SGLang `f171859`.
 
-- **Throughput fell as the prefix cache filled.** A 40-user long-context probe ran at 43.9 tok/s per user and 1,092 output tok/s with a full cache. After `/flush_cache` the same probe ran at 65.5 and 1,768.
-  - Decode speed at a fixed batch shape did not change over 5.5 hours of uptime: 113 tok/s per request at 40 requests. GPU clocks were at their maximum with no throttling.
-  - With the cache full, eviction took 17.1 s of the 150 s probe (44 ms per call, about 8,000 tokens each), and batch scheduling time doubled.
-  - Each eviction builds a heap over every evictable leaf and walks the sliding-window LRU list under a cross-rank consensus.
-  - `min_evict_tokens` frees a larger batch per walk. Its effect is measured below.
+- **Throughput fell as the prefix cache filled, and the fix is still open.** On a server that had run replays for hours, a 40-user long-context probe ran at 43.9 tok/s per user and 1,092 output tok/s. After `/flush_cache` the same probe ran at 65.5 and 1,768.
+  - Decode speed at a fixed batch shape did not change over 5.5 hours of uptime: 113 tok/s per request at 40 requests. GPU clocks were at their maximum with no throttling. The lost time was in the scheduler.
+  - With the cache full, eviction took 17.1 s of the 150 s probe (44 ms per call), and batch scheduling time doubled.
+  - On a fresh server filled with 20 prefix families over 40 minutes, the first probe reproduced it: 51.3 tok/s per user, with 10.1 s of eviction in 150 s.
+  - In that reproduction, every later probe ran at 66 tok/s with 0.6 s of eviction, at the same occupancy and with no intervention. The original server stayed slow for hours, so the slow state depends on what fills the cache, not only on how full it is.
+  - A hook that raised the minimum eviction size did not engage on this model. Most allocations evict through the sliding-window path or a joint-reclaim walk, which the hook left alone, and the lever was removed.
+  - Next: profile the scheduler with py-spy in the slow state. Then test two options against the original replay pattern: proactive eviction to a watermark, and a smaller prefix-cache budget.
+  - Until then, `advise` reports `eviction_share` and KV occupancy, so the condition is visible when it happens.
 - **Live control with a tuned policy** met the SLO in 5 of 5 traffic phases against 3–4 for static settings. Per-user speed in a long-context burst was 112–115 tok/s against 66–67 (see the [livetune README](../product/inference/livetune/README.md)).
 - **The default per-request TPOT buckets** are too coarse around an 80 tok/s SLO: live windows read 86 tok/s while the client measured 77.
 

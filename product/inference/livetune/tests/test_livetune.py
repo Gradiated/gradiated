@@ -754,7 +754,7 @@ class PluginTest(unittest.TestCase):
                                                tree_cache=None, enable_hierarchical_cache=False, enable_priority_scheduling=False,
                                                schedule_low_priority_values_first=False,
                                                tp_rank=0, tp_size=4, tp_worker=types.SimpleNamespace(model_runner=runner))
-        self.addCleanup(self.plugin._EVICTION.update, min_tokens=0)
+
         os.environ["LIVETUNE_LIVE_VARIANTS"] = "1"
         self.addCleanup(os.environ.pop, "LIVETUNE_LIVE_VARIANTS", None)
         self.tuner = sglang_plugin.LiveTuner(self.scheduler)
@@ -803,25 +803,6 @@ class PluginTest(unittest.TestCase):
         self.tuner.apply("max_queued_requests", 0)
         self.assertIsNone(self.scheduler.max_queued_requests)
         self.assertEqual(self.tuner.apply("stream_interval", 8), {"stream_interval": 8})
-
-    def test_eviction_batches_up_to_the_floor_but_leaves_joint_reclaim_alone(self):
-        import dataclasses
-
-        @dataclasses.dataclass
-        class EvictParams:
-            num_tokens: int = 0
-            swa_num_tokens: int = 0
-
-        seen = []
-        evict = lambda cache, params, **kw: seen.append(params.num_tokens)
-        with self.assertRaises(knobs.InvalidSetting):
-            self.tuner.validate("min_evict_tokens", 300_000)  # over a quarter of the cache
-        self.tuner.apply("min_evict_tokens", 100_000)
-        self.plugin._batch_eviction(evict, None, EvictParams(num_tokens=512))
-        self.plugin._batch_eviction(evict, None, EvictParams(num_tokens=250_000))
-        self.plugin._batch_eviction(evict, None, EvictParams(num_tokens=0, swa_num_tokens=64))
-        self.plugin._batch_eviction(evict, None, EvictParams(num_tokens=512), allocation_reclaim_satisfied=lambda: True)
-        self.assertEqual(seen, [100_000, 250_000, 0, 512])
 
     def test_validate_bounds_by_startup_not_current_value(self):
         self.tuner.apply("chunked_prefill_size", 2048)
@@ -1105,17 +1086,8 @@ class AdvisorTest(unittest.TestCase):
     def _evidence(self, windows, traffic=None, batches=None, settings=None):
         from livetune import advisor
 
-        settings = {**STARTUP, "schedule_policy": 0, "schedule_conservativeness": 1.0, "stream_interval": 1, "min_evict_tokens": 0, **(settings or {})}
+        settings = {**STARTUP, "schedule_policy": 0, "schedule_conservativeness": 1.0, "stream_interval": 1, **(settings or {})}
         return advisor.Evidence(windows, traffic or {"requests": 0}, batches or {}, settings, {**STARTUP}, kv_capacity=49_000_000, page_size=256)
-
-    def test_a_full_cache_spending_time_on_eviction_proposes_batched_eviction(self):
-        from livetune import advisor
-
-        proposals = advisor.advise(self._evidence([self._window()] * 6))
-        evict = [p for p in proposals if p.lever == "min_evict_tokens"]
-        self.assertEqual(evict[0].values, (490_000, 980_000))
-        self.assertEqual(advisor.as_grid(proposals)["min_evict_tokens"], [490_000, 980_000])
-        self.assertFalse([p for p in advisor.advise(self._evidence([self._window(kv_available=20e6, eviction_s=0)] * 6)) if p.lever == "min_evict_tokens"])
 
     def test_traffic_mix_rules_and_tiers(self):
         from livetune import advisor

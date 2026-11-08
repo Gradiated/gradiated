@@ -46,17 +46,6 @@ class Evidence:
         return self.batches.get(key, 0.0) / total if total else None
 
 
-def _eviction(e: Evidence) -> list[Proposal]:
-    eviction = e.mean("eviction_share")
-    free = [w.kv_free_share for w in e.windows if w.kv_free_share is not None]
-    if eviction < 0.02 or not free or min(free) > 0.02 or not e.kv_capacity:
-        return []
-    batches = tuple(v for v in (e.kv_capacity // 100, e.kv_capacity // 50) if v > e.settings.get("min_evict_tokens", 0))
-    return [Proposal("live", "min_evict_tokens", batches,
-                     "the prefix cache is full and allocations spend scheduler time evicting a few pages at a time",
-                     {"eviction_share": round(eviction, 3), "kv_free_share_min": round(min(free), 4)})] if batches else []
-
-
 def _prefix_order(e: Evidence) -> list[Proposal]:
     families = e.traffic.get("families", {})
     sharing = families.get("requests_sharing", 0.0)
@@ -157,7 +146,7 @@ def _hot_shapes(e: Evidence) -> list[Proposal]:
                       "cache_hit": e.traffic.get("cache_hit")})]
 
 
-RULES = (_eviction, _prefix_order, _retraction, _admission, _long_prefill, _streaming, _graphs, _spec, _hot_shapes)
+RULES = (_prefix_order, _retraction, _admission, _long_prefill, _streaming, _graphs, _spec, _hot_shapes)
 
 
 def advise(evidence: Evidence) -> list[Proposal]:

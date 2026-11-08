@@ -64,7 +64,6 @@ KNOBS: dict[str, Knob] = {
         Knob("schedule_conservativeness", "float", minimum=0.1, maximum=2.0, doc="how much decode headroom prefill admission reserves; low admits more and risks retraction"),
         Knob("stream_interval", "int", minimum=1, maximum=64, doc="tokens per streamed chunk; higher cuts per-token output overhead"),
         Knob("max_queued_requests", "int", minimum=0, maximum=1_000_000, doc="waiting-queue limit, 0 = unlimited; arrivals beyond it are rejected"),
-        Knob("min_evict_tokens", "int", minimum=0, maximum=1 << 40, doc="prefix-cache eviction batch, 0 = stock; each eviction walks the whole tree"),
     )
 }
 

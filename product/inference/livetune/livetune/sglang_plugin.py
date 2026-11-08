@@ -15,11 +15,6 @@ _TARGET = "sglang.srt.managers.scheduler_components.internal_state.SchedulerInte
 _SCHEDULER = "sglang.srt.managers.scheduler.Scheduler"
 _MODEL_RUNNER = "sglang.srt.model_executor.model_runner.ModelRunner"
 _STREAMER = "sglang.srt.managers.scheduler_components.output_streamer.SchedulerOutputStreamer"
-# Classes that define evict_for_alloc; a hook on a base class does not reach a subclass override.
-_EVICTING_CACHES = (
-    "sglang.srt.mem_cache.base_prefix_cache.BasePrefixCache",
-    "sglang.srt.mem_cache.unified_radix_cache.UnifiedRadixCache",
-)
 
 
 class NoUsableVariant(RuntimeError):
@@ -71,8 +66,7 @@ class LiveTuner:
         KNOBS[key].validate(value, self.startup, self.page_size)
         if key == "schedule_policy":
             _schedule_policy(self.scheduler, SCHEDULE_POLICIES[value])  # incompatible policies raise here, not mid-apply
-        if key == "min_evict_tokens" and value > _kv_capacity(self.scheduler) // 4:
-            raise InvalidSetting(f"min_evict_tokens={value} exceeds a quarter of the KV cache ({_kv_capacity(self.scheduler)} tokens)")
+
         if key == "max_running_requests" and value != self.startup[key]:
             from sglang.srt.runtime_context import get_parallel
 
@@ -133,8 +127,7 @@ class LiveTuner:
             overrides = {key: value}
         elif key == "max_queued_requests":
             self.scheduler.max_queued_requests = value or None
-        elif key == "min_evict_tokens":
-            _EVICTION["min_tokens"] = value
+
         elif key == VARIANT_KEY:
             # Recapturing graphs under an in-flight overlap batch corrupts its buffers, so
             # the switch waits for an idle scheduler; admission pauses until then.
@@ -345,10 +338,6 @@ def _gpu_name() -> str | None:
     return torch.cuda.get_device_name() if torch.cuda.is_available() else None
 
 
-# Eviction runs inside the prefix cache, which has no path back to its scheduler; one scheduler runs per process.
-_EVICTION: dict[str, int] = {"min_tokens": 0}
-
-
 def _startup_settings(scheduler: Any) -> dict[str, Any]:
     from sglang.srt.runtime_context import get_schedule, get_serving
 
@@ -361,7 +350,6 @@ def _startup_settings(scheduler: Any) -> dict[str, Any]:
         "schedule_conservativeness": get_schedule().schedule_conservativeness,
         "stream_interval": get_serving().stream_interval,
         "max_queued_requests": getattr(scheduler, "max_queued_requests", None) or 0,
-        "min_evict_tokens": 0,
     }
     # A knob whose startup value is unknown is left out, which makes it unavailable.
     return {key: value for key, value in startup.items() if value is not None}
@@ -377,24 +365,6 @@ def _schedule_policy(scheduler: Any, name: str) -> Any:
         scheduler.enable_priority_scheduling,
         scheduler.schedule_low_priority_values_first,
     )
-
-
-def _kv_capacity(scheduler: Any) -> int:
-    return int(getattr(scheduler, "max_total_num_tokens", 0) or 0)
-
-
-def _batch_eviction(original: Any, cache: Any, params: Any, *args: Any, **kwargs: Any) -> Any:
-    # Each eviction walk visits every evictable leaf, so with a full cache freeing a few pages per
-    # allocation costs tens of milliseconds each time; freeing a larger batch pays that once.
-    # Joint-reclaim walks stop on a predicate rather than a count, so they are left alone. Every
-    # rank sets the floor at the same step and raises the count the same way, so the cross-rank
-    # consensus on eviction parameters still holds.
-    floor = _EVICTION["min_tokens"]
-    if floor and kwargs.get("allocation_reclaim_satisfied") is None and 0 < getattr(params, "num_tokens", 0) < floor:
-        import dataclasses
-
-        params = dataclasses.replace(params, num_tokens=floor)
-    return original(cache, params, *args, **kwargs)
 
 
 _FINISH_NAMES = {"FINISH_LENGTH": "length", "FINISH_ABORT": "abort", "FINISH_MATCHED_TOKEN": "stop", "FINISH_MATCHED_STR": "stop", "FINISHED_MATCHED_REGEX": "stop"}
@@ -574,5 +544,3 @@ def register() -> None:
     HookRegistry.register(f"{_MODEL_RUNNER}.init_cuda_graphs", _install_startup_variant, HookType.BEFORE)
     HookRegistry.register(f"{_STREAMER}._maybe_log_time_stats", _record_finished, HookType.AFTER)
     HookRegistry.register(f"{_SCHEDULER}.process_batch_result", _record_batch, HookType.AFTER)
-    for cache in _EVICTING_CACHES:
-        HookRegistry.register(f"{cache}.evict_for_alloc", _batch_eviction, HookType.AROUND)

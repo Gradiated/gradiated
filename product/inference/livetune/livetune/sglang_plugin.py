@@ -502,7 +502,9 @@ def _telemetry(page_size: int = 1) -> Telemetry | None:
 
 
 def _record_finished(result: Any, streamer: Any, *args: Any, **kwargs: Any) -> Any:
-    req = kwargs.get("req")
+    # f171859 declares req keyword-only; a positional call is accepted too, so a signature change
+    # upstream cannot silently empty the trace.
+    req = kwargs.get("req", args[0] if args else None)
     if req is not None and req.finished():
         telemetry = _telemetry()
         if telemetry is not None:

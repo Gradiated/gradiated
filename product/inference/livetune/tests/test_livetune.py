@@ -2077,6 +2077,23 @@ class RetractionTimingTest(unittest.TestCase):
         self.assertEqual(trace.arrivals([older])[0].scheduled_s, 0.0)  # no lookup recorded: the arrival bounds it
 
 
+class FinishHookTest(unittest.TestCase):
+    def test_the_finish_hook_finds_the_request_by_keyword_or_position(self):
+        from livetune import sglang_plugin
+
+        seen = []
+        telemetry = types.SimpleNamespace(on_finish=seen.append, dropped=0)
+        saved = sglang_plugin._telemetry
+        sglang_plugin._telemetry = lambda *a: telemetry
+        try:
+            req = types.SimpleNamespace(finished=lambda: True)
+            sglang_plugin._record_finished(None, object(), req=req)
+            sglang_plugin._record_finished(None, object(), req)
+        finally:
+            sglang_plugin._telemetry = saved
+        self.assertEqual(seen, [req, req])
+
+
 class ChunkedEarlyStopTest(unittest.TestCase):
     def _server(self, interval):
         return types.SimpleNamespace(livetune_states=lambda: [{"settings": {"stream_interval": interval}}])
@@ -2088,6 +2105,7 @@ class ChunkedEarlyStopTest(unittest.TestCase):
         full = dataclasses_replace(early, output_tokens=512)
         cli._refuse_chunked_early_stops(self._server(1), [early, full])
         cli._refuse_chunked_early_stops(self._server(4), [full])  # nothing stopped early
+        cli._refuse_chunked_early_stops(self._server(4), [dataclasses_replace(early, output_tokens=1)])  # the first token streams alone
         cli._refuse_chunked_early_stops(self._server(4), [dataclasses_replace(early, sampling={"stream_interval": 1})])
         with self.assertRaises(SystemExit):
             cli._refuse_chunked_early_stops(self._server(4), [early])

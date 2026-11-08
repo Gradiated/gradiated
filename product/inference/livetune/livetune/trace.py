@@ -354,7 +354,8 @@ def chunked_early_stops(arrivals: Sequence[Arrival], stream_interval: int) -> in
 
     Replay ignores EOS and closes the stream at the recorded output, but it sees that output only at
     a chunk boundary, so it decodes past it; production stopped exactly. Those requests do more work
-    in replay than they did in production.
+    in replay than they did in production. SGLang sends the first token alone whatever the interval,
+    so a one-token stop is cut off exactly.
     """
     def early(a: Arrival) -> bool:
         declared = getattr(a, "max_new_tokens", None)

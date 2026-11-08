@@ -299,52 +299,22 @@ class Engine:
                 reload = self.llm.collective_rpc("tkcc_hot_reload", args=(job.id, job.source))
                 result["hot_reload_s"] = time.perf_counter() - t
                 failures = [r for r in reload if not r.get("ok")]
+                installed = len(failures) < len(reload)
                 result["install"] = {
                     "patches": reload[0].get("patches"),
                     "recapture_s": max(r.get("recapture_s", 0.0) for r in reload),
                 }
-                if failures:
-                    result["status"] = "install_error"
-                    result["error"] = failures[0].get("error")
-                    result["traceback"] = failures[0].get("traceback")
-                    result["teardown_error"] = failures[0].get("teardown_error")
-                    if len(failures) < len(reload):
-                        try:
-                            self.llm.collective_rpc("tkcc_teardown")
-                        except Exception as exc:
-                            result["teardown_error"] = f"{type(exc).__name__}: {exc}"
-                else:
-                    t = time.perf_counter()
-                    check = compare_outputs(self.reference, self._check_run(), self.reference_repeat)
-                    result["check_s"] = time.perf_counter() - t
-                    result["correctness"] = check
-                    if not check["pass"]:
-                        result["status"] = "incorrect"
+                try:
+                    if failures:
+                        result["status"] = "install_error"
+                        result["error"] = failures[0].get("error")
+                        result["traceback"] = failures[0].get("traceback")
+                        result["teardown_error"] = failures[0].get("teardown_error")
                     else:
-                        t = time.perf_counter()
-                        measured = self._measure()
-                        result["measure_s"] = time.perf_counter() - t
-                        result["measurement"] = measured
-                        result["speedup"] = geomean_speedup(measured, self.baseline)
-                        result["per_concurrency_speedup"] = {
-                            c: measured[c]["tps_per_user"] / self.baseline[c]["tps_per_user"] for c in measured
-                        }
-                        weights = self.llm.collective_rpc("tkcc_weights_unchanged")
-                        if not all(w["ok"] for w in weights):
-                            result["status"] = "weights_modified"
-                            result["changed"] = weights[0].get("changed")
-                        else:
-                            result["status"] = "ok"
-                        if job.profile and self.config.tier == "slow":
-                            result["profile_note"] = "profiling is disabled on the slow tier (CUPTI overhead persists in-process); use --tier fast --profile"
-                        elif job.profile:
-                            result["profile"] = self._profile()
-                            result["profile_note"] = "fast engine restarts after a profiled job to clear CUPTI overhead (~3-4 min)"
-                            self.restart_after_job = True
-                if not failures:
-                    t = time.perf_counter()
-                    self.llm.collective_rpc("tkcc_teardown")
-                    result["teardown_s"] = time.perf_counter() - t
+                        self._evaluate(job, result)
+                finally:
+                    if installed:
+                        self._teardown(result)
         except Exception as exc:
             result["status"] = "engine_error"
             result["error"] = f"{type(exc).__name__}: {exc}"
@@ -368,6 +338,44 @@ class Engine:
             self.log("restart_after_profile", job=job.id)
             time.sleep(15)
             hard_exit(0)
+
+    def _evaluate(self, job: Job, result: dict[str, Any]) -> None:
+        t = time.perf_counter()
+        check = compare_outputs(self.reference, self._check_run(), self.reference_repeat)
+        result["check_s"] = time.perf_counter() - t
+        result["correctness"] = check
+        result["status"] = "ok" if check["pass"] else "incorrect"
+        if check["pass"]:
+            t = time.perf_counter()
+            measured = self._measure()
+            result["measure_s"] = time.perf_counter() - t
+            result["measurement"] = measured
+            result["speedup"] = geomean_speedup(measured, self.baseline)
+            result["per_concurrency_speedup"] = {
+                c: measured[c]["tps_per_user"] / self.baseline[c]["tps_per_user"] for c in measured
+            }
+            if job.profile and self.config.tier == "slow":
+                result["profile_note"] = "profiling is disabled on the slow tier (CUPTI overhead persists in-process); use --tier fast --profile"
+            elif job.profile:
+                result["profile"] = self._profile()
+                result["profile_note"] = "fast engine restarts after a profiled job to clear CUPTI overhead (~3-4 min)"
+                self.restart_after_job = True
+        weights = self.llm.collective_rpc("tkcc_weights_unchanged")
+        if not all(w["ok"] for w in weights):
+            # Teardown cannot restore tensor contents, so only a restart gives back a stock model.
+            result["status"] = "weights_modified"
+            result["changed"] = weights[0].get("changed")
+            self.restart_after_job = True
+
+    def _teardown(self, result: dict[str, Any]) -> None:
+        t = time.perf_counter()
+        try:
+            self.llm.collective_rpc("tkcc_teardown")
+        except Exception as exc:
+            # A candidate that cannot be removed would be measured as the next baseline.
+            result["teardown_error"] = f"{type(exc).__name__}: {exc}"
+            self.restart_after_job = True
+        result["teardown_s"] = time.perf_counter() - t
 
     def _profile(self) -> list[dict[str, Any]]:
         self.llm.collective_rpc("tkcc_profile_start")

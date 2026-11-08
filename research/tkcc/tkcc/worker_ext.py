@@ -38,6 +38,22 @@ def _rank() -> int:
     return 0
 
 
+def _content_checksum(tensor: torch.Tensor) -> torch.Tensor:
+    """Sum and xor of every 4-byte word (zero-padded), so any byte change is caught."""
+    raw = tensor.contiguous().reshape(-1).view(torch.uint8)
+    pad = (-raw.numel()) % 4
+    if pad:
+        raw = torch.cat([raw, raw.new_zeros(pad)])
+    words = raw.view(torch.int32)
+    total = words.sum(dtype=torch.int64)
+    if hasattr(torch, "hash_tensor"):
+        mixed = torch.hash_tensor(words, mode=0).view(torch.int64)
+    else:
+        weights = torch.arange(words.numel(), device=words.device, dtype=torch.int64) % 2_147_483_629 + 1
+        mixed = (words.to(torch.int64) * weights).sum()
+    return torch.stack([total, mixed])
+
+
 def _text_model(model: torch.nn.Module) -> torch.nn.Module:
     for module in model.modules():
         if type(module).__name__ == "DeepseekV4Model":
@@ -48,7 +64,7 @@ def _text_model(model: torch.nn.Module) -> torch.nn.Module:
 class TkccWorkerExtension:
     _tkcc_patcher: Patcher | None = None
     _tkcc_module: types.ModuleType | None = None
-    _tkcc_fingerprint: dict[str, float] | None = None
+    _tkcc_fingerprint: dict[str, tuple[int, ...]] | None = None
     _tkcc_profiler: Any = None
 
     def _tkcc_runner(self):
@@ -106,8 +122,8 @@ class TkccWorkerExtension:
             "rank": _rank(),
         }
 
-    def tkcc_fingerprint(self) -> dict[str, tuple[int, int, int]]:
-        """Cheap per-parameter (pointer, byte checksum head, byte checksum tail)."""
+    def tkcc_fingerprint(self) -> dict[str, tuple[int, ...]]:
+        """Pointer plus full-content checksums of every parameter, computed on the GPU."""
         names: list[str] = []
         pointers: list[int] = []
         sums: list[torch.Tensor] = []
@@ -115,17 +131,11 @@ class TkccWorkerExtension:
             for name, param in self._tkcc_model().named_parameters():
                 if param.device.type != "cuda" or param.numel() == 0:
                     continue
-                raw = param.detach().reshape(-1).view(torch.uint8)
-                head = raw[: 1 << 16].to(torch.int64).sum()
-                tail = raw[-(1 << 16):].to(torch.int64).sum()
                 names.append(name)
                 pointers.append(param.data_ptr())
-                sums.append(torch.stack([head, tail]))
+                sums.append(_content_checksum(param.detach()))
             values = torch.stack(sums).tolist() if sums else []
-        return {
-            name: (pointer, int(value[0]), int(value[1]))
-            for name, pointer, value in zip(names, pointers, values)
-        }
+        return {name: (pointer, *map(int, value)) for name, pointer, value in zip(names, pointers, values)}
 
     def tkcc_hot_reload(self, job_id: str, source: str) -> dict[str, Any]:
         rank = _rank()
@@ -144,7 +154,9 @@ class TkccWorkerExtension:
         patcher = Patcher()
         self._tkcc_patcher = patcher
         try:
-            self._tkcc_fingerprint = self.tkcc_fingerprint()
+            if TkccWorkerExtension._tkcc_fingerprint is None:
+                # Stock weights never legitimately change, so one startup fingerprint serves every job.
+                TkccWorkerExtension._tkcc_fingerprint = self.tkcc_fingerprint()
             start = time.perf_counter()
             module_name = f"tkcc_candidate_{hashlib.sha1(job_id.encode()).hexdigest()[:12]}"
             module = types.ModuleType(module_name)
@@ -182,7 +194,7 @@ class TkccWorkerExtension:
         return result
 
     def tkcc_weights_unchanged(self) -> dict[str, Any]:
-        before = self._tkcc_fingerprint
+        before = TkccWorkerExtension._tkcc_fingerprint
         if before is None:
             return {"ok": True, "checked": 0}
         after = self.tkcc_fingerprint()
@@ -197,7 +209,6 @@ class TkccWorkerExtension:
             sys.modules.pop(self._tkcc_module.__name__, None)
         self._tkcc_patcher = None
         self._tkcc_module = None
-        self._tkcc_fingerprint = None
         recapture_s = self._tkcc_recapture()
         torch.cuda.empty_cache()
         return {"rank": _rank(), "restored": restored, "recapture_s": recapture_s}

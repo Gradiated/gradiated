@@ -415,15 +415,6 @@ class Engine:
         if not source:
             yield
             return
-        self.utility_started = time.perf_counter()
-        try:
-            with self._installed_candidate(source, label):
-                yield
-        finally:
-            self.utility_started = 0.0
-
-    @contextmanager
-    def _installed_candidate(self, source: str, label: str):
         reload = self.llm.collective_rpc("tkcc_hot_reload", args=(f"{label}-{uuid.uuid4().hex[:6]}", source))
         failures = [r for r in reload if not r.get("ok")]
         if any(f.get("teardown_error") for f in failures):
@@ -477,11 +468,23 @@ class Engine:
                     job.status = "engine_restarting"
                     job.result = {"job_id": job.id, "status": "engine_restarting", "error": "engine restarted before this job ran; resubmit"}
 
+    @contextmanager
+    def _utility(self):
+        """GPU lock plus watchdog for a utility call; refused once a restart is scheduled."""
+        with self.gpu():
+            if not getattr(self, "accepting", True):
+                raise ValueError("engine is restarting; retry in a few minutes")
+            self.utility_started = time.perf_counter()
+            try:
+                yield
+            finally:
+                self.utility_started = 0.0
+
     def experiment(self, payload: dict[str, Any]) -> dict[str, Any]:
         sets: dict[str, list[list[int]]] = payload["prompt_sets"]
         max_tokens = int(payload.get("max_tokens", 1))
         out: dict[str, Any] = {}
-        with self.gpu(), self._candidate(payload["source"], "exp"):
+        with self._utility(), self._candidate(payload["source"], "exp"):
             for name, prompts in sets.items():
                 self.llm.collective_rpc("tkcc_call", args=("reset",))
                 for prompt in prompts:
@@ -495,7 +498,7 @@ class Engine:
         from vllm import SamplingParams
 
         params = SamplingParams(max_tokens=int(payload.get("max_tokens", 256)), temperature=0.0, stop=payload.get("stop"))
-        with self.gpu(), self._candidate(payload.get("source"), "gen"):
+        with self._utility(), self._candidate(payload.get("source"), "gen"):
             outputs = self.llm.generate([{"prompt_token_ids": p} for p in payload["prompts"]], params, use_tqdm=False)
         return {"texts": [o.outputs[0].text for o in outputs]}
 
@@ -503,11 +506,9 @@ class Engine:
         if self.config.tier == "slow":
             raise ValueError("profiling is disabled on the slow tier")
         try:
-            with self.gpu():
-                self.utility_started = time.perf_counter()
+            with self._utility():
                 return self._profile()
         finally:
-            self.utility_started = 0.0
             self._schedule_restart()
 
     def watchdog(self) -> None:

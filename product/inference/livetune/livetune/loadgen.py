@@ -29,6 +29,7 @@ class RequestRecord:
     decode_tps: float | None = None
     error: str | None = None
     cut: bool = False
+    warmup: bool = False  # loads the server as production was loaded; never measured
 
 
 @dataclass
@@ -37,11 +38,12 @@ class PhaseResult:
     requests: list[RequestRecord] = field(default_factory=list)
 
     def summary(self) -> dict[str, Any]:
-        done = [r for r in self.requests if r.error is None and r.tokens and not r.cut]
+        measured = [r for r in self.requests if not r.warmup]
+        done = [r for r in measured if r.error is None and r.tokens and not r.cut]
         ttfts = sorted(r.ttft for r in done if r.ttft is not None)
         # A response that arrived in one chunk completed, but has no measurable decode rate.
         rates = sorted(r.decode_tps for r in done if r.decode_tps)
-        tokens = sum(r.tokens for r in self.requests)
+        tokens = sum(r.tokens for r in measured)
 
         def pct(values: list[float], q: float) -> float | None:
             # Nearest-rank percentile: the smallest value with at least q of the samples at or below it.
@@ -50,7 +52,7 @@ class PhaseResult:
         return {
             "phase": asdict(self.phase),
             "completed": len(done),
-            "errors": sum(r.error is not None for r in self.requests),
+            "errors": sum(r.error is not None for r in measured),
             "tps_per_user_p50": statistics.median(rates) if rates else None,
             "tps_per_user_p10": pct(rates, 0.1),
             "ttft_p50": pct(ttfts, 0.5),
@@ -280,11 +282,12 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
     from livetune.trace import concurrency, observed_cache_hit
 
     span = max((a.at for a in arrivals), default=0.0)
+    measured = [a for a in arrivals if not getattr(a, "warmup", False)]
     phase = Phase(
         # Open loop has no user count; the demand the trace produced stands in for it.
         users=concurrency(arrivals) if arrivals else 0,
-        prompt_tokens=int(statistics.median(a.prompt_tokens for a in arrivals)) if arrivals else 0,
-        output_tokens=int(statistics.median(a.output_tokens for a in arrivals)) if arrivals else 0,
+        prompt_tokens=int(statistics.median(a.prompt_tokens for a in measured)) if measured else 0,
+        output_tokens=int(statistics.median(a.output_tokens for a in measured)) if measured else 0,
         seconds=span,
         # Recorded so `policy --trials` rebuilds the same profile, and the same cache-hit guard.
         shared_prefix=observed_cache_hit(arrivals) if arrivals else 0.0,
@@ -300,7 +303,7 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
 
         async def send(arrival: Any, ids: list[int]) -> None:
             await asyncio.sleep(max(arrival.at - (time.perf_counter() - started), 0.0))
-            record = RequestRecord(time.perf_counter())
+            record = RequestRecord(time.perf_counter(), warmup=getattr(arrival, "warmup", False))
             result.requests.append(record)
             temperature = 0.7 if arrival.temperature is None else arrival.temperature
             # Only the seed production sent: on some runtimes a seed changes the decoding path (Kimi's

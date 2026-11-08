@@ -17,7 +17,7 @@ import statistics
 import time
 from array import array
 from collections import Counter, defaultdict
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Mapping, Sequence
 
@@ -202,8 +202,12 @@ def _alive(pid: int) -> bool:
     return True
 
 
-def read(paths: Iterable[str | Path], since: float = 0.0, until: float = math.inf) -> Iterator[Record]:
-    """Records of requests that started in [since, until), so a window holds only its own workload."""
+def read(paths: Iterable[str | Path], since: float = 0.0, until: float = math.inf, overlapping: bool = False) -> Iterator[Record]:
+    """Records of requests that started in [since, until), so a window holds only its own workload.
+
+    With overlapping, also the requests still running at since: their decoding and KV occupancy were
+    part of the window's load, and a replay that left them out would start from an idle server.
+    """
     for path in paths:
         path = Path(path)
         files = sorted(path.glob("trace-*.jsonl")) if path.is_dir() else [path]
@@ -212,7 +216,7 @@ def read(paths: Iterable[str | Path], since: float = 0.0, until: float = math.in
                 for line in handle:
                     if line.strip():
                         record = Record.from_json(line)
-                        if since <= record.started < until:
+                        if since <= record.started < until or (overlapping and record.started < since < record.t):
                             yield record
 
 
@@ -320,6 +324,8 @@ class Arrival:
     # looked up the cache, and when its prefill finished and its prefix became cached for others.
     scheduled_s: float | None = None
     prefilled_s: float | None = None
+    # Running when the window began: replayed to load the server as production was, never measured.
+    warmup: bool = False
 
 
 def replay_gaps(records: Sequence[Record]) -> dict[str, int]:
@@ -338,8 +344,9 @@ def replay_gaps(records: Sequence[Record]) -> dict[str, int]:
 
 
 def observed_cache_hit(schedule: Sequence[Arrival]) -> float:
-    prompt = sum(a.prompt_tokens for a in schedule)
-    return round(sum(a.cached_tokens for a in schedule) / prompt, 3) if prompt else 0.0
+    measured = [a for a in schedule if not getattr(a, "warmup", False)]
+    prompt = sum(a.prompt_tokens for a in measured)
+    return round(sum(a.cached_tokens for a in measured) / prompt, 3) if prompt else 0.0
 
 
 def concurrency(schedule: Sequence[Arrival], q: float = 0.9) -> int:
@@ -386,7 +393,22 @@ def chunked_early_stops(arrivals: Sequence[Arrival], stream_interval: int) -> in
     return sum(1 for a in arrivals if early(a) and int(getattr(a, "sampling", {}).get("stream_interval", stream_interval)) > 1)
 
 
-def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
+def _warmup(r: Record, since_wall: float) -> Record:
+    """What remained at since of a request already running then, arriving at since.
+
+    One that had prefilled replays with the output it had left and its prompt cached, as production
+    held it while it ran: decode work and KV occupancy, no prefill. One still waiting or prefilling
+    replays whole.
+    """
+    prefilled = r.started + (r.ttft_s or 0.0)
+    moved = {"server_s": r.t - since_wall, "queue_s": 0.0, "lookup_s": 0.0, "retractions": 0}
+    if prefilled > since_wall:
+        return replace(r, **moved)
+    left = r.output_tokens * (r.t - since_wall) / max(r.t - prefilled, 1e-9)
+    return replace(r, output_tokens=max(1, min(r.output_tokens, round(left))), cached_tokens=r.prompt_tokens, ttft_s=0.0, **moved)
+
+
+def arrivals(records: Sequence[Record], speed: float = 1.0, measured_from: float | None = None) -> list[Arrival]:
     """An open-loop replay schedule; arrival time is completion minus the request's server time.
 
     A family is the deepest fixed-depth prefix hash that several requests share, so every member,
@@ -411,6 +433,15 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
     # tokens it produced, which replay reproduces by generating exactly that many.
     # A zero-token abort whose forward had launched did its prefill: it replays as a one-token request.
     records = [r for r in records if not (r.finish == "abort" and r.output_tokens == 0 and not r.launched)]
+    warm: set[int] = set()
+    if measured_from is not None:
+        moved = []
+        for r in records:
+            if r.started < measured_from:
+                r = _warmup(r, measured_from)
+                warm.add(id(r))
+            moved.append(r)
+        records = moved
     if not records:
         return []
     families = shared_families(records)
@@ -457,6 +488,7 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
                 scheduled_s=started(r) - t0 + _first_lookup(r),
                 # A request with no first token (a launched abort) is only known to be done at completion.
                 prefilled_s=started(r) - t0 + (r.ttft_s if r.ttft_s is not None else elapsed(r)),
+                warmup=id(r) in warm,
             )
         )
     return sorted(out, key=lambda a: a.at)

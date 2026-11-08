@@ -55,12 +55,14 @@ def trace_profile(arrivals: Sequence[Any]) -> dict[str, Any]:
 
     if not arrivals:
         raise ValueError("the trace has no requests")
+    # Requests already running when the window began load the server but are not its workload.
+    measured = [a for a in arrivals if not getattr(a, "warmup", False)] or list(arrivals)
     return {
         "name": "trace",
         "users": concurrency(arrivals),
         "open_loop": True,
-        "prompt_tokens": round(statistics.fmean(a.prompt_tokens for a in arrivals)),
-        "output_tokens": round(statistics.fmean(a.output_tokens for a in arrivals)),
+        "prompt_tokens": round(statistics.fmean(a.prompt_tokens for a in measured)),
+        "output_tokens": round(statistics.fmean(a.output_tokens for a in measured)),
         # The cache hit production recorded, which is what the controller will observe, not the
         # sharing replay could reach from a cold cache.
         "shared_prefix": observed_cache_hit(arrivals),

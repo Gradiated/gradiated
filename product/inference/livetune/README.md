@@ -67,7 +67,7 @@ python -m livetune replay --url URL --trace DIR --policy policy.json --corpus co
 `livetune improve` closes the loop. Every `--every` seconds it:
 
 1. advises from the production server;
-2. replays the last `--window` seconds of recorded production traffic on a canary with the same scope, measuring each live proposal;
+2. replays the last `--window` seconds of recorded production traffic on a canary with the same scope, measuring each live proposal. Requests that were already running when the window began replay from its start, unmeasured. Each gets the output it had left and its prompt cached, so the canary starts as loaded as production was;
 3. publishes a policy to `--policy-out` when a candidate beat the startup settings.
 
 With `--stage-url`, `--stage-policy` and `--peers`, a winner first runs on one production replica for `--stage-seconds`. That replica and its peers serve the same live traffic, so they are compared window for window. The winner is published to the fleet only if the staged replica meets the SLO as often as its peers and is no slower. Otherwise the replica's previous policy is restored. A replica starved or flooded by the router (demand outside 0.7–1.3× its peers) gives an inconclusive result, and nothing is published. Replay picks the winner; the stage checks what replay cannot reproduce: prompt content, hours of cache state and fleet routing.

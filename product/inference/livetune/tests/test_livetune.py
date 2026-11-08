@@ -2179,6 +2179,40 @@ class CandidateWindowsTest(unittest.TestCase):
         self.assertGreater(sleeps[-1], 599)  # waited for those requests to finish
 
 
+class InFlightWarmupTest(unittest.TestCase):
+    def test_requests_running_at_the_window_start_replay_unmeasured(self):
+        from livetune import trace
+
+        # Started at 90 (prefilled by 91), finishing at 110: half its decode lies inside the window from 100.
+        running = dataclasses_replace(_record(110.0, output=200), queue_s=0.0, ttft_s=1.0, decode_s=19.0, server_s=20.0)
+        waiting = dataclasses_replace(_record(104.0, output=50), queue_s=12.0, ttft_s=13.0, decode_s=1.0, server_s=14.0)
+        finished = dataclasses_replace(_record(95.0), server_s=5.0)
+        inside = dataclasses_replace(_record(105.0, prompt=3000), server_s=3.0)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "trace-x.jsonl")
+            path.write_text("".join(r.to_json() + "\n" for r in (running, waiting, finished, inside)))
+            self.assertEqual(len(list(trace.read([tmp], since=100.0, until=200.0))), 1)
+            records = list(trace.read([tmp], since=100.0, until=200.0, overlapping=True))
+        self.assertEqual(len(records), 3)  # the one that finished before the window is not in it
+        schedule = trace.arrivals(records, measured_from=100.0)
+        warm = sorted((a for a in schedule if a.warmup), key=lambda a: a.output_tokens)
+        self.assertEqual([a.at for a in warm], [0.0, 0.0])
+        self.assertEqual(warm[1].output_tokens, 105)  # 200 tokens over 19 s of decode, 10 s of it left
+        self.assertEqual(warm[1].cached_tokens, warm[1].prompt_tokens)  # its prompt was cached while it ran
+        self.assertEqual((warm[0].output_tokens, warm[0].cached_tokens), (50, 0))  # still queued at 100: replays whole
+        measured = [a for a in schedule if not a.warmup]
+        self.assertEqual([a.prompt_tokens for a in measured], [3000])
+        self.assertEqual(trace.observed_cache_hit(schedule), 0.0)
+        self.assertEqual(tune.trace_profile(schedule)["prompt_tokens"], 3000)
+
+    def test_warmup_requests_are_left_out_of_the_summary(self):
+        result = loadgen.PhaseResult(loadgen.Phase(1, 1, 1, 10.0), [
+            loadgen.RequestRecord(0.0, ttft=9.0, tokens=500, decode_tps=5.0, warmup=True),
+            loadgen.RequestRecord(1.0, ttft=0.5, tokens=100, decode_tps=50.0)])
+        summary = result.summary()
+        self.assertEqual((summary["completed"], summary["ttft_p90"], summary["output_tps"]), (1, 0.5, 10.0))
+
+
 class QuietLogTest(unittest.TestCase):
     def test_uneventful_windows_are_logged_as_a_heartbeat_and_actions_always(self):
         logged, now = [], [0.0]

@@ -320,7 +320,9 @@ def improve(args: argparse.Namespace, server: Server) -> None:
         # A record is written when its request finishes, so a window that ended just now would miss its
         # long requests. Replay one that closed --close-s ago, whose requests have had time to finish.
         until = time.time() - args.close_s
-        records = list(trace.read([args.trace_dir], since=until - args.window, until=until))
+        since = until - args.window
+        # Requests running when the window began loaded the server too; they replay unmeasured.
+        records = list(trace.read([args.trace_dir], since=since, until=until, overlapping=True))
         if differs:
             # A canary that differs from production would measure another intervention.
             entry["skipped"] = {"canary_scope_differs": sorted(differs)}
@@ -334,7 +336,7 @@ def improve(args: argparse.Namespace, server: Server) -> None:
             with os.fdopen(os.open(snapshot, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w") as handle:
                 handle.write("".join(r.to_json() + "\n" for r in records))
             policy = tune_policy(canary, Slo(args.slo_tps, args.slo_ttft), loadgen.PromptSource(_corpus(args.corpus)), report["grid"],
-                                 None, trace.arrivals(records, speed=args.speed), 0, 0, _appender(str(out / f"trials-{int(started)}.jsonl")))
+                                 None, trace.arrivals(records, speed=args.speed, measured_from=since), 0, 0, _appender(str(out / f"trials-{int(started)}.jsonl")))
             winner = policy.rule("trace").settings
             entry["winner"] = winner
             if winner != policy.rule("unmeasured").settings:

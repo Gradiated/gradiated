@@ -2229,10 +2229,20 @@ class InFlightWarmupTest(unittest.TestCase):
         self.assertEqual((warm[1].prompt_tokens, warm[1].cached_tokens), (2095, 2095))
         self.assertEqual((warm[0].output_tokens, warm[0].cached_tokens), (50, 0))  # still queued at 100: replays whole
         self.assertAlmostEqual(warm[0].prefilled_s, 3.0)  # prefill at 103 as in production, not 13 s after the boundary
+        self.assertAlmostEqual(warm[0].scheduled_s, 2.0)  # it first looked up the cache at 102, as in production
+
         measured = [a for a in schedule if not a.warmup]
         self.assertEqual([a.prompt_tokens for a in measured], [3000])
         self.assertEqual(trace.observed_cache_hit(schedule), 0.0)
         self.assertEqual(tune.trace_profile(schedule)["prompt_tokens"], 3000)
+
+    def test_a_boundary_request_aborted_before_its_first_token_replays_its_prefill(self):
+        from livetune import trace
+
+        aborted = dataclasses_replace(_record(108.0, output=0), finish="abort", launched=True, queue_s=0.0, ttft_s=None, decode_s=None,
+                                      server_s=12.0)
+        warm, = trace.arrivals([aborted], measured_from=100.0)
+        self.assertEqual((warm.warmup, warm.prompt_tokens, warm.cached_tokens, warm.output_tokens), (True, 2000, 0, 1))
 
     def test_a_warmup_finishing_last_does_not_stretch_the_measured_time(self):
         import asyncio

@@ -403,8 +403,12 @@ def _warmup(r: Record, since_wall: float) -> Record:
     at the same KV length: decode work and KV occupancy, no prefill. One still waiting or prefilling
     replays whole.
     """
-    prefilled = r.started + (r.ttft_s or 0.0)
-    moved = {"server_s": r.t - since_wall, "queue_s": 0.0, "lookup_s": 0.0, "retractions": 0}
+    # A request with no first token (aborted while prefilling) never finished its prefill.
+    prefilled = r.started + r.ttft_s if r.ttft_s is not None else r.t
+    # A lookup still ahead at since keeps its remaining delay, so the hits it found stay explained by
+    # the prefills that finished before it.
+    lookup = max(r.started + _first_lookup(r) - since_wall, 0.0)
+    moved = {"server_s": r.t - since_wall, "queue_s": lookup, "lookup_s": lookup, "retractions": 0}
     if prefilled > since_wall:
         # Its prefill still finishes when production's did, so later hits it explains stay explained.
         return replace(r, ttft_s=prefilled - since_wall, **moved)

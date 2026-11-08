@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import importlib
 import json
+import linecache
 import os
 import re
 import sys
@@ -112,7 +113,10 @@ class InstalledVariant:
 def install(source: VariantSource, model: Any, ctx: dict[str, Any]) -> InstalledVariant:
     installed = InstalledVariant(source)
     module = types.ModuleType(f"livetune_variant_{source.sha256[:12]}")
-    module.__file__ = f"<variant {source.name}>"
+    module.__file__ = f"<variant {source.name} {source.sha256[:12]}>"
+    # Kernel compilers read a function's source (triton.jit uses inspect.getsource): serve the
+    # verified code from linecache under the module's name, not from a file that could change.
+    linecache.cache[module.__file__] = (len(source.code), None, source.code.splitlines(True), module.__file__)
     try:
         exec(compile(source.code, module.__file__, "exec"), module.__dict__)
         entry: Callable[..., Any] | None = getattr(module, "install", None)

@@ -45,6 +45,9 @@ class LiveTuner:
         self.gpu = _gpu_name()
         self._runtime: dict[str, str | None] | None = None
         self._runtime_thread: threading.Thread | None = None
+        # Speculative runtime states by variant id, least recently used first.
+        self.states: dict[int, Any] = {}
+        self.max_states = max(2, int(os.environ.get("LIVETUNE_VARIANT_STATES", "3") or 3))
         self.settings: dict[str, Any] = dict(self.startup)
         self.variant: variants.InstalledVariant | None = getattr(runner, "_livetune_variant", None)
         # The code installed at startup, by hash: re-registering a name later changes the catalog, not this.
@@ -69,10 +72,15 @@ class LiveTuner:
             # Data-parallel schedulers drain independently, so their switches cannot be made atomic.
             if getattr(get_parallel(), "dp_size", 1) > 1:
                 raise InvalidSetting(f"live {VARIANT_KEY} switching is not supported with data parallelism")
-            # Recapture rebuilds the target model's graphs; a draft model's graphs would keep the old code.
+            # A speculative server switches whole runtime states, target and draft; one whose worker
+            # cannot build them, or that switches them itself (adaptive steps), would keep old code.
             spec = getattr(self.scheduler, "spec_algorithm", None)
             if spec is not None and not spec.is_none():
-                raise InvalidSetting(f"live {VARIANT_KEY} switching is not supported with speculative decoding")
+                worker = _state_worker(self.scheduler)
+                if worker is None:
+                    raise InvalidSetting(f"live {VARIANT_KEY} switching needs a speculative worker that builds runtime states")
+                if getattr(worker, "adaptive_controller", None) is not None:
+                    raise InvalidSetting(f"live {VARIANT_KEY} switching is not supported with adaptive speculative steps")
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
                 raise InvalidSetting(f"{VARIANT_KEY} must be a variant id (0 = stock)")
             if value != variants.STOCK:
@@ -224,12 +232,37 @@ class LiveTuner:
                 self.variant = None
             return error or RuntimeError("variant install failed on another tensor-parallel rank")
         try:
-            self._recapture(self.scheduler.tp_worker.model_runner)
+            self._rebuild(variant_id)
         except Exception as exc:
             error = exc
         if self._all_ranks_agree(error is None):
             return None
         return error or RuntimeError("variant switch failed on another tensor-parallel rank")
+
+    def _rebuild(self, variant_id: int) -> None:
+        """Put graphs captured with the installed code in place.
+
+        A speculative worker gets a runtime state per variant, built the way SGLang builds its adaptive
+        speculative states: fresh attention backends and graph runners for the target and draft
+        models, captured with the variant installed. Switching to a state built before is a pointer
+        swap, and no switch frees the graphs being left, so nothing serving can see freed memory.
+        Other servers recapture in place with SGLang's elastic sequence.
+        """
+        worker = _state_worker(self.scheduler)
+        if worker is None:
+            self._recapture(self.scheduler.tp_worker.model_runner)
+            return
+        if not self.states:
+            # The graphs captured at startup belong to the variant serving before the first switch.
+            self.states[self.settings[VARIANT_KEY]] = _current_state(worker)
+        state = self.states.pop(variant_id, None)
+        if state is None:
+            state = worker.build_adaptive_runtime_state(worker.speculative_num_steps, worker.speculative_num_draft_tokens)
+        self.states[variant_id] = state  # most recently used last
+        _apply_state(worker, state)
+        # Keep a bounded number of states: drop the least recently used, never the one now serving.
+        while len(self.states) > self.max_states:
+            del self.states[next(iter(self.states))]
 
     def _all_ranks_agree(self, ok: bool) -> bool:
         group = getattr(self.scheduler, "tp_cpu_group", None)
@@ -338,6 +371,7 @@ class LiveTuner:
             "variant": {"name": self.variant.source.name, "sha256": self.variant.source.sha256} if self.variant else None,
             "variants": catalog,
             "pending_variant": self.pending_variant,
+            "variant_states": list(self.states),
             "recent_changes": self.changes[-10:],
             "recent_errors": self.errors[-5:],
         }
@@ -391,6 +425,37 @@ def _packages_digest() -> str:
     for name, version, record in entries:
         digest.update(f"{name}=={version}\n".encode() + record.encode())
     return digest.hexdigest()
+
+
+def _state_worker(scheduler: Any) -> Any:
+    """The speculative worker, if it can build and apply complete runtime states."""
+    worker = getattr(scheduler, "draft_worker", None)
+    if worker is None or not all(callable(getattr(worker, name, None)) for name in ("build_adaptive_runtime_state", "apply_runtime_state")):
+        return None
+    return worker
+
+
+def _current_state(worker: Any) -> Any:
+    from sglang.srt.speculative.adaptive_runtime_state import SpecRuntimeState
+
+    draft, target = worker._draft_worker, worker._target_worker.model_runner
+    return SpecRuntimeState(
+        speculative_num_steps=worker.speculative_num_steps,
+        speculative_num_draft_tokens=worker.speculative_num_draft_tokens,
+        draft_attn_backend=draft.draft_attn_backend,
+        cuda_graph_runner=draft.cuda_graph_runner,
+        target_attn_backend=target.attn_backend,
+        target_graph_runner=target.decode_cuda_graph_runner,
+        draft_extend_attn_backend=draft.draft_extend_attn_backend,
+        cuda_graph_runner_for_draft_extend=draft.cuda_graph_runner_for_draft_extend,
+    )
+
+
+def _apply_state(worker: Any, state: Any) -> None:
+    # SGLang applies a state only when the step count changes (its adaptive use); a variant's state
+    # has the same steps, so mark the worker unset to make it apply every resource.
+    worker.speculative_num_steps = -1
+    worker.apply_runtime_state(state)
 
 
 def _live_variants() -> bool:

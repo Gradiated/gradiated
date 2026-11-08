@@ -203,8 +203,9 @@ The controller is a third child of the service. Its exit never stops SGLang or
 SMG; the service restarts it after 30 s, doubling to 10 minutes while it keeps
 failing. It logs every change and a heartbeat every 5 minutes. A policy is part
 of the bundle, so changing one is a reviewed release, and the controller refuses
-a policy tuned on a different scope. Forward-code variants are not switched
-live in production. `test_livetune_contract.py` checks every SGLang method the
+a policy tuned on a different scope. Forward-code variants switch live
+only with `LIVETUNE_LIVE_VARIANTS=1`: each gets its own speculative runtime
+state, so a switch to one built before is a pointer swap. `test_livetune_contract.py` checks every SGLang method the
 plugin hooks against the installed SGLang during the bundle build.
 
 ## Portable artifacts and verification

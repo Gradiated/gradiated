@@ -906,10 +906,69 @@ class PluginTest(unittest.TestCase):
 
     def test_live_switching_is_refused_with_speculative_decoding(self):
         self.scheduler.spec_algorithm = types.SimpleNamespace(is_none=lambda: False)
-        with self.assertRaisesRegex(Exception, "speculative decoding"):
+        with self.assertRaisesRegex(Exception, "speculative worker that builds runtime states"):
             self.tuner.validate("forward_variant", 0)
         self.scheduler.spec_algorithm = types.SimpleNamespace(is_none=lambda: True)
         self.tuner.validate("forward_variant", 0)
+
+    def test_a_speculative_server_switches_whole_states_and_builds_each_once(self):
+        built, applied = [], []
+        holder = {}
+
+        class Worker:
+            speculative_num_steps, speculative_num_draft_tokens = 2, 3
+            adaptive_controller = None
+            _draft_worker = types.SimpleNamespace(draft_attn_backend="d0", cuda_graph_runner="g0", draft_extend_attn_backend=None,
+                                                  cuda_graph_runner_for_draft_extend="e0")
+            _target_worker = types.SimpleNamespace(model_runner=types.SimpleNamespace(attn_backend="t0", decode_cuda_graph_runner="v0"))
+
+            def build_adaptive_runtime_state(this, steps, draft_tokens, cuda_graph_bs=None):
+                built.append(self.model.value)  # captured with whatever code is installed
+                return f"state-{self.model.value}"
+
+            def apply_runtime_state(this, state):
+                applied.append((this.speculative_num_steps, state))
+                this.speculative_num_steps = 2
+
+        self.scheduler.draft_worker = Worker()
+        self.scheduler.spec_algorithm = types.SimpleNamespace(is_none=lambda: False)
+        saved = self.plugin._current_state
+        self.plugin._current_state = lambda worker: "startup-state"
+        with tempfile.TemporaryDirectory() as tmp:
+            one = variants.register(tmp, "one", "def install(model, patch, ctx):\n    patch(model, 'value', 2)\n")
+            two = variants.register(tmp, "two", "def install(model, patch, ctx):\n    patch(model, 'value', 3)\n")
+            three = variants.register(tmp, "three", "def install(model, patch, ctx):\n    patch(model, 'value', 4)\n")
+            os.environ["LIVETUNE_VARIANTS_DIR"] = tmp
+            try:
+                for variant in (one, 0, one, two, three):
+                    self.tuner.apply("forward_variant", variant)
+                    self.tuner.on_idle()
+            finally:
+                del os.environ["LIVETUNE_VARIANTS_DIR"]
+                self.plugin._current_state = saved
+        self.assertEqual(built, [2, 3, 4])  # stock and a revisited variant are never rebuilt
+        self.assertEqual([state for _, state in applied], ["state-2", "startup-state", "state-2", "state-3", "state-4"])
+        self.assertTrue(all(steps == -1 for steps, _ in applied))  # every resource applied, not skipped as unchanged
+        self.assertEqual(self.recaptures, [])  # no in-place recapture on a speculative server
+        state = self.tuner.readback()
+        self.assertEqual((self.model.value, state["settings"]["forward_variant"]), (4, three))
+        self.assertEqual(state["variant_states"], [one, two, three])  # bounded at 3: the stock state, least recently used, was dropped
+        self.assertNotIn(0, state["variant_states"])
+
+    def test_adaptive_speculative_steps_refuse_live_switching(self):
+        self.scheduler.spec_algorithm = types.SimpleNamespace(is_none=lambda: False)
+        self.scheduler.draft_worker = types.SimpleNamespace(build_adaptive_runtime_state=lambda *a: None, apply_runtime_state=lambda s: None,
+                                                            adaptive_controller=object())
+        with self.assertRaisesRegex(Exception, "adaptive"):
+            self.tuner.validate("forward_variant", 0)
+
+    def test_a_variant_can_read_its_own_source_as_kernel_compilers_do(self):
+        code = "import inspect\ndef kernel(x):\n    return x\ndef install(model, patch, ctx):\n    patch(model, 'value', len(inspect.getsource(kernel)))\n"
+        with tempfile.TemporaryDirectory() as tmp:
+            variant = variants.register(tmp, "jit", code)
+            installed = variants.install(variants.resolve(variant, tmp), self.model, {})
+        self.assertEqual(self.model.value, len("def kernel(x):\n    return x\n"))
+        variants.uninstall(installed)
 
     def test_ranks_vote_on_the_install_before_any_of_them_recaptures(self):
         votes = []

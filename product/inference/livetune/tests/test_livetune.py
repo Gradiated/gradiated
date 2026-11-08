@@ -2472,6 +2472,30 @@ def trace_module():
     return trace
 
 
+class ControlStartupTest(unittest.TestCase):
+    def test_a_server_not_answering_yet_is_retried_not_a_config_error(self):
+        import urllib.error
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "policy.json")
+            path.write_text(_policy().to_json())
+
+            def unreachable():
+                raise urllib.error.URLError("timed out")
+
+            saved = cli.Server
+            cli.Server = lambda url: types.SimpleNamespace(url=url, fingerprint=unreachable)
+            try:
+                with self.assertRaises(OSError):
+                    cli.main(["control", "--policy", str(path)])
+            finally:
+                cli.Server = saved
+
+    def test_decimal_values_parse_as_numbers(self):
+        self.assertEqual((cli._value("1.3"), cli._value("7"), cli._value("nan"), cli._value("fcfs"), cli._value("null")),
+                         (1.3, 7, "nan", "fcfs", None))
+
+
 class QuietLogTest(unittest.TestCase):
     def test_uneventful_windows_are_logged_as_a_heartbeat_and_actions_always(self):
         logged, now = [], [0.0]

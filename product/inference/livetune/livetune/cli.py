@@ -25,7 +25,12 @@ def _value(raw: str) -> Any:
     try:
         return int(raw)
     except ValueError:
+        pass
+    try:
+        number = float(raw)
+    except ValueError:
         return raw
+    return number if math.isfinite(number) else raw
 
 
 def _corpus(path: str) -> list[int]:
@@ -874,11 +879,17 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "replay":
         replay(args, server)
     elif args.command == "control":
+        # A missing, invalid or out-of-scope policy stays that way until a new one is released, so a
+        # supervisor should not restart into the same refusal. A server that does not answer yet is
+        # transient: that raises, and the supervisor retries.
+        try:
+            Policy.load(args.policy)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            print(f"livetune control: {args.policy}: {exc}", file=sys.stderr)
+            return CONFIG_ERROR
         try:
             policy = load_policy(args.policy, server, args.allow_scope_mismatch)
-        except (SystemExit, ValueError, OSError) as exc:
-            # A missing, invalid or out-of-scope policy stays that way until a new one is released;
-            # a supervisor should not restart into the same refusal.
+        except SystemExit as exc:
             print(f"livetune control: {exc}", file=sys.stderr)
             return CONFIG_ERROR
         acting = args.mode == "act"

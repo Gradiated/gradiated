@@ -1147,3 +1147,55 @@ class UtilizationMetricsTest(unittest.TestCase):
         win = metrics.window(metrics.parse(text, 0.0), metrics.parse(later, 5.0))
         self.assertEqual((win.kv_available, win.eviction_s, win.forward_s), (100, 1.0, 4.0))
         self.assertAlmostEqual(win.forward_share, 0.8)
+
+
+class ImproveTest(unittest.TestCase):
+    def test_a_replaced_policy_takes_over_at_the_next_window_keeping_the_servers_state(self):
+        ctl = control.Controller(_policy(), smoothing=1.0, applied={"max_running_requests": 8})
+        self.assertEqual(ctl.step(_window(2), 0).settings, {})
+        ctl.replace_policy(Policy(Slo(50, 5), (Rule("all", math.inf, math.inf, {"max_running_requests": 24}),)))
+        action = ctl.step(_window(2), 5)
+        self.assertEqual((action.rule, action.settings), ("all", {"max_running_requests": 24}))
+
+    def _servers(self, canary_gpu):
+        scope = {"gpu": "B300", "startup": STARTUP}
+
+        class Fake:
+            def __init__(this, url, gpu):
+                this.url, this.gpu = url, gpu
+
+            def livetune_state(this):
+                return {"settings": dict(STARTUP), "startup": dict(STARTUP), "page_size": 256, "telemetry": {"batches": {}}}
+
+            def scrape(this):
+                return metrics.parse("", 0.0)
+
+            def info(this):
+                return {"max_total_num_tokens": 1000}
+
+            def fingerprint(this):
+                return {**scope, "gpu": this.gpu}
+
+        return Fake("prod", "B300"), Fake("canary", canary_gpu)
+
+    def _improve(self, canary_gpu):
+        import argparse
+
+        prod, canary = self._servers(canary_gpu)
+        with tempfile.TemporaryDirectory() as tmp:
+            saved = cli.Server
+            cli.Server = lambda url: canary
+            try:
+                args = argparse.Namespace(canary="canary", work_dir=tmp, advise_seconds=0, interval=1, trace_dir=tmp, window=600,
+                                          slo_tps=50, slo_ttft=5, corpus="", speed=1.0, policy_out=str(Path(tmp, "policy.json")), every=0, once=True)
+                cli.improve(args, prod)
+            finally:
+                cli.Server = saved
+            return [json.loads(line) for line in Path(tmp, "improve.jsonl").read_text().splitlines()]
+
+    def test_improve_refuses_a_canary_that_would_measure_another_intervention(self):
+        self.assertEqual(self._improve("H200")[0]["skipped"], {"canary_scope_differs": ["gpu"]})
+
+    def test_improve_publishes_nothing_without_a_proposal(self):
+        entry = self._improve("B300")[0]
+        self.assertEqual((entry["skipped"], entry.get("published")), ("nothing to test", None))

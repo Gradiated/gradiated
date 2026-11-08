@@ -140,6 +140,83 @@ def _segments(args: argparse.Namespace, prompts: loadgen.PromptSource) -> list[A
     return [lambda phase=phase, index=index: asyncio_phase(args.url, phase, prompts, index) for index, phase in enumerate(phases)]
 
 
+def tune_policy(
+    server: Server,
+    slo: Slo,
+    prompts: loadgen.PromptSource,
+    grid: dict[str, list[Any]],
+    profiles: list[dict[str, Any]] | None,
+    arrivals: list[trace.Arrival] | None,
+    seconds: float,
+    warmup: float,
+    record: Any,
+) -> Policy:
+    """Measure each grid value against the startup settings, per profile or against recorded traffic."""
+    import asyncio
+
+    start = dict(server.livetune_state()["startup"])
+    scope = server.fingerprint()
+
+    def measure(profile: tune.Profile, settings: dict[str, Any]) -> dict[str, Any]:
+        server.apply(settings)
+        if arrivals is not None:
+            # Every candidate meets the same recorded traffic, arriving at its recorded times.
+            summary = asyncio.run(loadgen.run_arrivals(server.url, arrivals, prompts, name=profile.name)).summary()
+        else:
+            if warmup:
+                loadgen.run(server.url, [profile.phase(warmup)], prompts, log=lambda _: None)
+            summary = loadgen.run(server.url, [profile.phase(seconds)], prompts, log=lambda _: None)[0]
+        record({"profile": profile.name, "settings": settings, "summary": summary, "scope": scope})
+        return summary
+
+    profiles = profiles if profiles is not None else [tune.trace_profile(arrivals or [])]
+    tune.check_distinguishable(profiles)
+    try:
+        results = [tune.tune_profile(tune.Profile(**p), start, grid, slo, measure) for p in profiles]
+    finally:
+        server.apply(start)
+    return tune.build_policy(results, slo, {"tuned_at": time.time(), "url": server.url, "scope": scope}, start)
+
+
+def improve(args: argparse.Namespace, server: Server) -> None:
+    """Keep improving: advise from production, measure the proposals on a canary against the
+    production traffic just recorded, and publish a policy only when something beat startup."""
+    canary = Server(args.canary)
+    out = Path(args.work_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    write = _appender(str(out / "improve.jsonl"))
+    while True:
+        started = time.time()
+        report = advise(argparse.Namespace(seconds=args.advise_seconds, interval=args.interval, trace_dir=args.trace_dir), server)
+        entry: dict[str, Any] = {"t": started, "proposals": report["proposals"], "grid": report["grid"]}
+        differs = _differences(server.fingerprint(), canary.fingerprint())
+        kv = differs.get("kv_tokens")
+        if kv and all(kv) and abs(kv[1] - kv[0]) <= KV_TOLERANCE * kv[0]:
+            del differs["kv_tokens"]
+        records = list(trace.read([args.trace_dir], since=started - args.window))
+        if differs:
+            # A canary that differs from production would measure another intervention.
+            entry["skipped"] = {"canary_scope_differs": sorted(differs)}
+        elif not report["grid"] or not records:
+            entry["skipped"] = "nothing to test" if not report["grid"] else "no recorded traffic"
+        else:
+            snapshot = out / f"trace-{int(started)}.jsonl"
+            snapshot.write_text("".join(r.to_json() + "\n" for r in records))
+            policy = tune_policy(canary, Slo(args.slo_tps, args.slo_ttft), loadgen.PromptSource(_corpus(args.corpus)), report["grid"],
+                                 None, trace.arrivals(records, speed=args.speed), 0, 0, _appender(str(out / f"trials-{int(started)}.jsonl")))
+            winner = policy.rule("trace").settings
+            entry["winner"] = winner
+            if winner != policy.rule("unmeasured").settings:
+                tmp = Path(args.policy_out + ".tmp")
+                tmp.write_text(policy.to_json())
+                tmp.replace(args.policy_out)  # controllers reload a complete file, never a partial one
+                entry["published"] = args.policy_out
+        write(entry)
+        if args.once:
+            return
+        time.sleep(max(args.every - (time.time() - started), 0))
+
+
 def advise(args: argparse.Namespace, server: Server) -> dict[str, Any]:
     """Watch the server for a while, then propose experiments from what it saw."""
     before = server.livetune_state()
@@ -199,7 +276,7 @@ def asyncio_phase(url: str, phase: loadgen.Phase, prompts: loadgen.PromptSource,
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="livetune")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("status", "set", "load", "tune", "control", "replay", "policy", "traffic", "advise"):
+    for name in ("status", "set", "load", "tune", "control", "replay", "policy", "traffic", "advise", "improve"):
         p = sub.add_parser(name)
         p.add_argument("--url", default="http://127.0.0.1:30000")
     sub.choices["set"].add_argument("pairs", nargs="+")
@@ -240,6 +317,20 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--interval", type=float, default=5.0)
     a.add_argument("--trace-dir", help="the server's LIVETUNE_TRACE_DIR, for the traffic mix")
     a.add_argument("--out", help="write the report here as well")
+    im = sub.choices["improve"]
+    im.add_argument("--canary", required=True, help="a server with the production scope that only replayed traffic reaches")
+    im.add_argument("--trace-dir", required=True)
+    im.add_argument("--corpus", required=True)
+    im.add_argument("--slo-tps", type=float, required=True)
+    im.add_argument("--slo-ttft", type=float, required=True)
+    im.add_argument("--policy-out", required=True, help="where controllers read their policy")
+    im.add_argument("--work-dir", required=True)
+    im.add_argument("--every", type=float, default=3600)
+    im.add_argument("--window", type=float, default=600, help="seconds of recorded traffic to replay")
+    im.add_argument("--advise-seconds", type=float, default=300)
+    im.add_argument("--interval", type=float, default=5.0)
+    im.add_argument("--speed", type=float, default=1.0)
+    im.add_argument("--once", action="store_true")
     c = sub.choices["control"]
     c.add_argument("--policy", required=True)
     c.add_argument("--interval", type=float, default=5.0)
@@ -258,6 +349,9 @@ def main(argv: list[str] | None = None) -> int:
             Path(args.out).write_text(json.dumps(report, indent=1))
         print(json.dumps(report, indent=1))
         return 0
+    if args.command == "improve":
+        improve(args, server)
+        return 0
     if args.command == "status":
         print(json.dumps(server.livetune_state(), indent=1))
     elif args.command == "set":
@@ -269,38 +363,13 @@ def main(argv: list[str] | None = None) -> int:
         phases = [loadgen.Phase(**p) for p in json.loads(Path(args.phases).read_text())]
         loadgen.run(args.url, phases, loadgen.PromptSource(_corpus(args.corpus)), log=_appender(args.out))
     elif args.command == "tune":
-        slo = Slo(args.slo_tps, args.slo_ttft)
-        prompts = loadgen.PromptSource(_corpus(args.corpus))
-        start = {k: v for k, v in server.livetune_state()["startup"].items()}
-        scope = server.fingerprint()
-        record = _appender(args.out + ".trials.jsonl", mode="w")
-
-        arrivals = trace.arrivals(list(trace.read([args.trace])), speed=args.speed) if args.trace else None
-
-        def measure(profile: tune.Profile, settings: dict[str, Any]) -> dict[str, Any]:
-            import asyncio
-
-            server.apply(settings)
-            if arrivals is not None:
-                # Every candidate meets the same recorded traffic, arriving at its recorded times.
-                summary = asyncio.run(loadgen.run_arrivals(args.url, arrivals, prompts, name=profile.name)).summary()
-            else:
-                if args.warmup:
-                    loadgen.run(args.url, [profile.phase(args.warmup)], prompts, log=lambda _: None)
-                summary = loadgen.run(args.url, [profile.phase(args.seconds)], prompts, log=lambda _: None)[0]
-            record({"profile": profile.name, "settings": settings, "summary": summary, "scope": scope})
-            return summary
-
         grid = json.loads(Path(args.grid).read_text())
         # An `advise` report carries its live proposals as a grid.
         grid = grid["grid"] if "proposals" in grid else grid
-        profiles = json.loads(Path(args.profiles).read_text()) if args.profiles else [tune.trace_profile(arrivals)]
-        tune.check_distinguishable(profiles)
-        try:
-            results = [tune.tune_profile(tune.Profile(**p), start, grid, slo, measure) for p in profiles]
-        finally:
-            server.apply(start)
-        policy = tune.build_policy(results, slo, {"tuned_at": time.time(), "url": args.url, "scope": scope}, start)
+        arrivals = trace.arrivals(list(trace.read([args.trace])), speed=args.speed) if args.trace else None
+        profiles = json.loads(Path(args.profiles).read_text()) if args.profiles else None
+        policy = tune_policy(server, Slo(args.slo_tps, args.slo_ttft), loadgen.PromptSource(_corpus(args.corpus)), grid,
+                             profiles, arrivals, args.seconds, args.warmup, _appender(args.out + ".trials.jsonl", mode="w"))
         Path(args.out).write_text(policy.to_json())
         print(policy.to_json())
     elif args.command == "policy":
@@ -322,7 +391,23 @@ def main(argv: list[str] | None = None) -> int:
         live = server.livetune_state()
         controller = control.Controller(policy, startup=live["startup"], applied=dict(live["settings"]), judge_changes=acting)
         apply = server.apply if acting else (lambda settings: None)
-        control.run(controller, server.scrape, apply, window, interval_s=args.interval, log=_appender(args.log))
+        log = _appender(args.log)
+        seen = Path(args.policy).stat().st_mtime
+
+        def scrape() -> Any:
+            # A republished policy takes effect at the next window; one that fails its scope check is ignored.
+            nonlocal seen
+            mtime = Path(args.policy).stat().st_mtime
+            if mtime != seen:
+                seen = mtime
+                try:
+                    controller.replace_policy(load_policy(args.policy, server, args.allow_scope_mismatch))
+                    log({"t": time.time(), "policy_reloaded": args.policy})
+                except (SystemExit, ValueError, OSError) as exc:
+                    log({"t": time.time(), "policy_rejected": str(exc)})
+            return server.scrape()
+
+        control.run(controller, scrape, apply, window, interval_s=args.interval, log=log)
     return 0
 
 

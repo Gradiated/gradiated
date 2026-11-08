@@ -9,7 +9,7 @@ livetune keeps SGLang servers tuned to the traffic they carry. It observes each 
 | Observe | The plugin in each scheduler; `/metrics`; the controller's windows | Continuous | Per-request records, per-batch counters, utilization windows |
 | Act | `livetune control` applying the current policy | Every 5 s | Live settings that follow the traffic shape, judged on probation |
 | Advise | `livetune advise` over a trailing window | Every few minutes | Proposals with evidence, in three tiers |
-| Experiment | `livetune tune --trace` against recorded traffic | Per proposal batch | Confirmed winners, or no change |
+| Experiment | `livetune improve` running `tune --trace` on a canary against production's recorded traffic | Per proposal batch | Confirmed winners, or no change |
 | Decide | `livetune policy` | Per experiment | A policy, scoped to the runtime that measured it |
 | Roll out | Policy file, launch flags or a bundle, by tier | Per tier | A policy file in seconds; restart-tier and code-tier changes through a canary |
 
@@ -117,6 +117,6 @@ All of these were measured on DeepSeek V4.1 Flash, TP4, on 4×B300, on SGLang `f
 | Per-request records, per-batch counters, utilization windows | Implemented and tested |
 | Advisor rules across the three tiers | Implemented; rules are thresholds, to be calibrated on canary traffic |
 | Trace replay and `tune --trace` | Implemented |
-| Starting `control` and `advise` from the runtime's `service.py` | Next |
-| Scheduling the advise → tune → policy loop on a canary | Next |
+| `livetune improve`: advise → canary replay → publish, with policy hot-reload in `control` | Implemented; needs a canary host per scope |
+| Starting `control` and `improve` from the runtime's `service.py` | Next |
 | Code-tier targets handed to the variant agent loop | Next; the loop exists in `research/tkcc` |

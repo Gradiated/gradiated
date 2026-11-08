@@ -55,6 +55,14 @@ python -m livetune tune --url URL --trace DIR --grid advice.json --slo-tps 80 --
 python -m livetune replay --url URL --trace DIR --policy policy.json --corpus corpus.json
 ```
 
+`livetune improve` closes the loop. Every `--every` seconds it:
+
+1. advises from the production server;
+2. replays the last `--window` seconds of recorded production traffic on a canary with the same scope, measuring each live proposal;
+3. publishes a policy to `--policy-out` when a candidate beat the startup settings.
+
+`control` reloads its policy file when the file changes, and ignores a file that fails the scope check. Tuning never adds load to production, and production only changes through a measured policy.
+
 `advise` proposes live levers with values to try, restart levers (launch flags for a canary) and code levers, giving the hot shapes for a forward variant. Each proposal carries the measurements behind it. Its `grid` is a valid `tune --grid`. `--trace` replays recorded requests open loop at their recorded times, keeping each prefix family's shared prefix, so every candidate meets the same traffic.
 
 ## Policies

@@ -336,24 +336,27 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
             # Only the hashed pages are proven common; the remainder of a partial page is not.
             hashed = r.cached_family_tokens or r.cached_tokens
             proven_cached[r.cached_family] = min(proven_cached.get(r.cached_family, hashed), hashed)
-    lengths: dict[str, int] = {}
-    for r, found in zip(records, families):
-        if found is not None:
-            key, depth = found
-            proven = proven_cached.get(r.cached_family, 0) if r.cached_family else 0
-            lengths[key] = max(lengths.get(key, depth), proven)
     counts = Counter(key for r in records for key in r.families)
+
+    def prefix(r: Record, found: tuple[str, int] | None) -> tuple[int, str | None]:
+        # The fixed-depth family is shared by all its members; a deeper cached prefix only by the
+        # subgroup whose cached hash matches, so it extends theirs alone.
+        depth, key = (found[1], found[0]) if found else (0, None)
+        proven = proven_cached.get(r.cached_family, 0) if r.cached_family else 0
+        return (proven, r.cached_family) if proven > depth else (depth, key)
+
     t0 = min(started(r) for r in records)
     out = []
     for r, found in zip(records, families):
         ancestors = tuple((FAMILY_DEPTHS[i], key) for i, key in enumerate(r.families) if counts[key] > 1)
+        shared, family = prefix(r, found)
         out.append(
             Arrival(
                 at=(started(r) - t0) / speed,
                 prompt_tokens=r.prompt_tokens,
                 output_tokens=max(r.output_tokens, 1),
-                shared_tokens=min(lengths[found[0]], r.prompt_tokens) if found else 0,
-                family=found[0] if found else None,
+                shared_tokens=min(shared, r.prompt_tokens),
+                family=family,
                 temperature=r.temperature,
                 # Only arrivals are compressed: requests still take their recorded time on the server.
                 seconds=sum(x or 0.0 for x in (r.ttft_s, r.decode_s)),

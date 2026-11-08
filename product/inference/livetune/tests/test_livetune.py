@@ -1229,9 +1229,10 @@ class ReplayIsolationTest(unittest.TestCase):
         ]
         schedule = sorted(trace.arrivals(records), key=lambda a: a.prompt_tokens)
         agents = [a for a in schedule if a.prompt_tokens == 24000]
-        self.assertEqual({a.family for a in agents}, {family[-1]})
-        # Two members share the hash of a 19,200-token cached prefix, so that much is proven common.
-        self.assertEqual([a.shared_tokens for a in agents], [19200, 19200, 19200])  # the cold one included
+        # All three share the 16,384-token fixed family, the cold first one included; the two whose
+        # cached prefixes hash alike share 19,200 tokens, which the cold one is not proven to.
+        self.assertEqual(sorted(a.shared_tokens for a in agents), [16384, 19200, 19200])
+        self.assertEqual({a.family for a in agents}, {family[-1], "c19200"})
         self.assertEqual((schedule[0].family, schedule[0].shared_tokens), (None, 0))
 
     def test_one_members_cache_hit_does_not_extend_the_family(self):
@@ -1463,7 +1464,8 @@ class GuardTest(unittest.TestCase):
 
         good, bad = [_window(40, tps=100, ttft=2)] * 12, [_window(40, tps=60, ttft=2)] * 12
         watched = iter([[good], [bad]])
-        saved_watch = cli._watch
+        saved_watch, saved_runs = cli._watch, cli._runs_candidate
+        cli._runs_candidate = lambda server, policy: True
         cli._watch = lambda servers, seconds, interval: next(watched)
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp, "policy.json")
@@ -1474,7 +1476,7 @@ class GuardTest(unittest.TestCase):
             try:
                 verdict = cli.promote(args, types.SimpleNamespace(url="prod", fingerprint=lambda: {}), _policy())
             finally:
-                cli._watch, cli._wait_applied = saved_watch, saved_wait
+                cli._watch, cli._wait_applied, cli._runs_candidate = saved_watch, saved_wait, saved_runs
             self.assertEqual((verdict.decision, path.read_text()), ("revert", "previous"))
 
     def test_an_improvement_stays_published(self):
@@ -1482,7 +1484,8 @@ class GuardTest(unittest.TestCase):
 
         before, after = [_window(40, tps=85, ttft=2)] * 12, [_window(40, tps=110, ttft=3)] * 12
         watched = iter([[before], [after]])
-        saved_watch = cli._watch
+        saved_watch, saved_runs = cli._watch, cli._runs_candidate
+        cli._runs_candidate = lambda server, policy: True
         cli._watch = lambda servers, seconds, interval: next(watched)
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp, "policy.json")
@@ -1493,7 +1496,7 @@ class GuardTest(unittest.TestCase):
             try:
                 verdict = cli.promote(args, types.SimpleNamespace(url="prod", fingerprint=lambda: {}), _policy())
             finally:
-                cli._watch, cli._wait_applied = saved_watch, saved_wait
+                cli._watch, cli._wait_applied, cli._runs_candidate = saved_watch, saved_wait, saved_runs
             self.assertEqual(verdict.decision, "promote")
             self.assertNotEqual(path.read_text(), "previous")
 
@@ -1513,6 +1516,23 @@ class FleetEvidenceTest(unittest.TestCase):
         server = types.SimpleNamespace(livetune_states=lambda: [{"telemetry": {"batches": {"decode_batches": 10.0}}},
                                                                {"telemetry": {"batches": {"decode_batches": 30.0}}}, {}])
         self.assertEqual(cli._batch_counters(server), {"decode_batches": 40.0})
+
+    def test_the_guard_reverts_when_a_replica_leaves_the_candidate(self):
+        import argparse
+
+        saved = (cli._watch, cli._wait_applied, cli._runs_candidate)
+        cli._watch = lambda servers, seconds, interval: [[_window(40, tps=100)] * 12 for _ in servers]
+        cli._wait_applied = lambda server, policy, timeout, interval: True
+        cli._runs_candidate = lambda server, policy: False  # rolled back by its controller mid-guard
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "policy.json")
+            path.write_text("previous")
+            args = argparse.Namespace(fleet="", policy_out=str(path), slo_tps=80, slo_ttft=10, guard_seconds=60, interval=5, stage_apply_s=0)
+            try:
+                verdict = cli.promote(args, types.SimpleNamespace(url="prod", fingerprint=lambda: {}), _policy())
+            finally:
+                cli._watch, cli._wait_applied, cli._runs_candidate = saved
+            self.assertEqual((verdict.decision, path.read_text()), ("revert", "previous"))
 
     def test_the_guard_ignores_replicas_outside_scope_and_waits_for_the_rest(self):
         import argparse
@@ -1629,3 +1649,20 @@ class PageDepthTest(unittest.TestCase):
         records = [dataclasses_replace(_record(100.0 + i, prompt=3000, cached=2100, family=None), families=family,
                                        cached_family="c", cached_family_tokens=2048) for i in range(2)]
         self.assertEqual({a.shared_tokens for a in trace.arrivals(records)}, {2048})
+
+
+class CachedSubfamilyTest(unittest.TestCase):
+    def test_a_deeper_cached_prefix_extends_only_the_members_that_share_it(self):
+        from livetune import trace
+
+        family = trace.PrefixKeys(b"k" * 32).families(list(range(9000)))[:2]  # shared to 2,048
+        deep = [dataclasses_replace(_record(100.0 + i, prompt=9000, cached=8192, family=None), families=family,
+                                    cached_family="deep", cached_family_tokens=8192) for i in range(2)]
+        shallow = dataclasses_replace(_record(103.0, prompt=9000, cached=0, family=None), families=family)
+        schedule = sorted(trace.arrivals(deep + [shallow]), key=lambda a: a.shared_tokens)
+        self.assertEqual([a.shared_tokens for a in schedule], [2048, 8192, 8192])
+        prompts = loadgen.PromptSource(list(range(20000)))
+        built = [prompts.family_prompt(a.prompt_tokens, a.shared_tokens, a.family, a.ancestors) for a in schedule]
+        self.assertEqual(built[1][:8192], built[2][:8192])
+        self.assertEqual(built[0][:2048], built[1][:2048])
+        self.assertNotEqual(built[0][2048:2100], built[1][2048:2100])

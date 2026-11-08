@@ -415,7 +415,7 @@ class Telemetry:
             spec_accept=getattr(req, "spec_num_correct_drafts", 0) / verify + 1 if verify else None,
             temperature=getattr(params, "temperature", None),
             max_new_tokens=getattr(params, "max_new_tokens", None),
-            constrained=any(getattr(params, key, None) for key in ("json_schema", "regex", "ebnf")),
+            constrained=any(getattr(params, key, None) for key in ("json_schema", "regex", "ebnf", "structural_tag")),
             priority=getattr(req, "priority", None),
             lora=getattr(req, "lora_id", None) is not None,
             session=getattr(req, "session_id", None) is not None,

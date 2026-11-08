@@ -358,7 +358,13 @@ def promote(args: argparse.Namespace, production: Server, policy: Policy) -> rol
     if not applied:
         return rollout.Verdict("inconclusive", "no fleet replica applied the published policy", rollout.Side.of([], slo), rollout.Side.of([], slo))
     after = _watch([fleet[i] for i in applied], args.guard_seconds, args.interval)
-    verdict = rollout.judge([w for side in after for w in side], [w for i in applied for w in before[i]], slo)
+    left = [fleet[i].url for i in applied if not _runs_candidate(fleet[i], policy)]
+    if left:
+        # A replica that dropped the candidate mid-guard (local probation rollback, say) was measured
+        # partly on other settings; a guard prefers the known-good policy over an unproven one.
+        verdict = rollout.Verdict("revert", f"replicas left the candidate during the guard: {left}", rollout.Side.of([], slo), rollout.Side.of([], slo))
+    else:
+        verdict = rollout.judge([w for side in after for w in side], [w for i in applied for w in before[i]], slo)
     if verdict.decision == "revert":
         _publish(args.policy_out, previous)
     return verdict

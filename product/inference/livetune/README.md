@@ -63,6 +63,7 @@ A policy is an SLO plus an ordered list of rules. Each rule is a box in (demand,
 
 - **Hysteresis:** a new rule must win `dwell` consecutive windows (default 2 × 5 s), and changes are at least `cooldown_s` apart (default 20 s).
 - **Box edges:** a new rule must still be selected when the observed shape is ±15% larger or smaller, so a shape sitting on a boundary keeps the current rule. Without this, a cap flapped between 24 and 64 and cut throughput by 40% in a traffic-shift test.
+- **Demand estimate:** closed-loop clients finish in waves, so the running-plus-queued gauge read at a scrape instant swings between near zero and the full load. The controller takes a new peak at once and decays the estimate by 0.8 per window. Smoothing alone let the shape wander across boxes, and the controller stayed on a light-chat rule through a 56-user overload.
 - **Probation and rollback:** after a change the rule is on probation. If the SLO held before the change and fails in most probation windows, the controller restores the previous rule and penalises the failed one for 10 minutes.
 - **Readback:** every change is checked against `/server_info`. If an update fails, the controller forgets what it believes the server runs and re-applies a full rule at the next window.
 

@@ -210,7 +210,12 @@ class LiveTuner:
     def runtime(self) -> dict[str, str | None]:
         # Hashing thousands of files takes seconds on a busy host, so it waits for the first readback.
         if self._runtime is None:
-            self._runtime = {"sglang": _source_digest("sglang"), "livetune": _source_digest("livetune"), "packages": _packages_digest()}
+            self._runtime = {
+                "sglang": _source_digest("sglang"),
+                "livetune": _source_digest("livetune"),
+                "packages": _packages_digest(),
+                "inputs": _inputs_digest(os.environ.get("LIVETUNE_RUNTIME_INPUTS", "")),
+            }
         return self._runtime
 
     def _resolve(self, variant_id: int) -> variants.VariantSource:
@@ -267,6 +272,24 @@ def _source_digest(package: str) -> str | None:
     digest = hashlib.sha256()
     for path in sorted(root.rglob("*.py")):
         digest.update(str(path.relative_to(root)).encode() + b"\0" + path.read_bytes())
+    return digest.hexdigest()
+
+
+def _inputs_digest(spec: str) -> str | None:
+    # Runtime inputs outside Python distributions, such as kernel artifact manifests and autotune
+    # seeds, named by the deployment. Paths are hashed relative to themselves so replicas match.
+    import hashlib
+    from pathlib import Path
+
+    if not spec:
+        return None
+    digest = hashlib.sha256()
+    for index, raw in enumerate(spec.split(os.pathsep)):
+        root = Path(raw)
+        files = sorted(p for p in root.rglob("*") if p.is_file()) if root.is_dir() else [root] if root.is_file() else []
+        digest.update(f"input {index}: {len(files)} files\n".encode())
+        for path in files:
+            digest.update(str(path.relative_to(root) if root.is_dir() else path.name).encode() + b"\0" + path.read_bytes())
     return digest.hexdigest()
 
 

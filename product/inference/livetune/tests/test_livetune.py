@@ -258,6 +258,12 @@ class ControllerTest(unittest.TestCase):
         self.assertEqual(ctl.step(_window(8), 5).settings, {})
         self.assertEqual(ctl.step(_window(30), 10).rule, "c")  # not held behind a probation of "b"
 
+    def test_a_window_without_a_per_request_rate_cannot_pass_probation(self):
+        ctl = control.Controller(_policy(), smoothing=1.0)
+        unfinished = metrics.Window(5, 10, 0, 5, 5000, 1000, 0, None, 1.0)
+        self.assertIsNone(ctl._slo(unfinished))
+        self.assertFalse(ctl._slo(metrics.Window(5, 10, 0, 5, 5000, 1000, 0, None, 9.0)))  # a measured miss still counts
+
     def test_no_rollback_if_slo_was_already_failing(self):
         ctl = control.Controller(_policy(), dwell=1, cooldown_s=0, probation_s=10, smoothing=1.0)
         ctl.step(_window(2, tps=20), 0)
@@ -855,6 +861,18 @@ class PluginTest(unittest.TestCase):
         self.assertEqual(self.tuner.readback()["runtime"]["livetune"], digest)
         self.assertIsNone(self.plugin._source_digest("no_such_package_livetune"))
         self.assertRegex(self.tuner.readback()["runtime"]["packages"], "^[0-9a-f]{64}$")
+
+    def test_runtime_inputs_digest_changes_with_artifact_content_not_location(self):
+        with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
+            for root in (a, b):
+                Path(root, "autotune").mkdir()
+                Path(root, "autotune", "sm103.json").write_text("{}")
+                Path(root, "artifacts.json").write_text('{"files": []}')
+            spec = lambda root: os.pathsep.join([str(Path(root, "artifacts.json")), str(Path(root, "autotune"))])
+            self.assertEqual(self.plugin._inputs_digest(spec(a)), self.plugin._inputs_digest(spec(b)))
+            Path(b, "autotune", "sm103.json").write_text('{"tile": 128}')
+            self.assertNotEqual(self.plugin._inputs_digest(spec(a)), self.plugin._inputs_digest(spec(b)))
+        self.assertIsNone(self.plugin._inputs_digest(""))
 
     def test_readback_reports_whether_live_variants_are_enabled(self):
         self.assertTrue(self.tuner.readback()["live_variants"])

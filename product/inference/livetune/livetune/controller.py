@@ -88,7 +88,12 @@ class Controller:
     def _slo(self, window: Window) -> bool | None:
         if window.requests < self.min_requests and window.generation_tokens <= 0:
             return None
-        return self.policy.slo.met(window.tps_per_user, window.ttft_p90)
+        # A measured miss fails the window; passing needs both halves, since a window can carry first
+        # tokens before any request has finished and given a per-request rate.
+        met = self.policy.slo.met(window.tps_per_user, window.ttft_p90)
+        if met and (window.tps_per_user is None or window.ttft_p90 is None):
+            return None
+        return met
 
     def step(self, window: Window, now: float) -> Action | None:
         shape = self.observe(window)

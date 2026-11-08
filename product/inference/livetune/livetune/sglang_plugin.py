@@ -426,6 +426,7 @@ class Telemetry:
             families=self.keys.families(ids, namespace),
             cached_family=self.keys.digest(ids, cached_pages, namespace) if cached_pages else None,
             salted=namespace is not None,
+            hidden_states=bool(getattr(req, "return_hidden_states", False)),
             cached_family_tokens=cached_pages,
             # Integers stay integers: a seed above 2**53 would not survive a float.
             sampling={key: value if isinstance(value, int) and not isinstance(value, bool) else float(value)

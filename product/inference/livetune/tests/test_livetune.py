@@ -2121,3 +2121,48 @@ class EmptyFleetTest(unittest.TestCase):
                                       interval=5, stage_apply_s=0)
             verdict = cli.promote(args, types.SimpleNamespace(url="prod", fingerprint=lambda: {}), _policy())
             self.assertEqual((verdict.decision, path.read_text()), ("revert", "previous"))
+
+
+class HiddenStateAndUnstagedGuardTest(unittest.TestCase):
+    def test_hidden_state_requests_are_replayed_with_the_flag(self):
+        import asyncio
+        from livetune import trace
+
+        arrival = trace.arrivals([dataclasses_replace(_record(100.0), hidden_states=True)])[0]
+        self.assertTrue(arrival.hidden_states)
+
+        class Response:
+            status = 200
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *exc):
+                return False
+
+            async def json(self):
+                return {"meta_info": {"completion_tokens": 1}}
+
+        bodies = []
+        session = types.SimpleNamespace(post=lambda url, json: bodies.append(json) or Response())
+        asyncio.run(loadgen._one(session, "http://x", [1], 1, loadgen.RequestRecord(0.0), stream=False, hidden_states=True))
+        self.assertTrue(bodies[0]["return_hidden_states"])
+
+    def test_an_inconclusive_guard_without_a_stage_withdraws_the_candidate(self):
+        import argparse
+
+        saved = (cli._watch, cli._wait_applied, cli._runs_candidate)
+        cli._watch = lambda servers, seconds, interval: [[] for _ in servers]  # metrics never readable
+        cli._wait_applied = lambda server, policy, timeout, interval: True
+        cli._runs_candidate = lambda server, policy: True
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "policy.json")
+            path.write_text("previous")
+            args = argparse.Namespace(fleet="", policy_out=str(path), slo_tps=80, slo_ttft=10, guard_seconds=60, interval=5, stage_apply_s=0)
+            try:
+                unstaged = cli.promote(args, types.SimpleNamespace(url="prod", fingerprint=lambda: {}), _policy())
+                path.write_text("previous")
+                staged = cli.promote(args, types.SimpleNamespace(url="prod", fingerprint=lambda: {}), _policy(), staged_ok=True)
+            finally:
+                cli._watch, cli._wait_applied, cli._runs_candidate = saved
+        self.assertEqual((unstaged.decision, staged.decision), ("revert", "inconclusive"))

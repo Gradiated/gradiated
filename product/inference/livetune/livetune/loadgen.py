@@ -105,7 +105,7 @@ class PromptSource:
 
 async def _one(session: Any, url: str, ids: list[int], output_tokens: int, record: RequestRecord, temperature: float = 0.7,
                priority: int | None = None, seed: int | None = None, sampling: dict[str, float] | None = None, logprobs: int = -1,
-               stream: bool = True, logprob_start: int = -1, max_new_tokens: int | None = None) -> None:
+               stream: bool = True, logprob_start: int = -1, max_new_tokens: int | None = None, hidden_states: bool = False) -> None:
     # Declared limit as production sent it (admission and KV headroom use it); the request is cut off
     # after the observed output_tokens, as the client or a stop condition did in production.
     # A non-streaming request cannot be cut off mid-way, so it asks for exactly what it produced.
@@ -115,6 +115,8 @@ async def _one(session: Any, url: str, ids: list[int], output_tokens: int, recor
         "sampling_params": {"max_new_tokens": budget, "temperature": temperature, "ignore_eos": True},
         "stream": stream,
     }
+    if hidden_states:
+        body["return_hidden_states"] = True
     if priority is not None:
         body["priority"] = priority  # recorded admission priority, so priority scheduling is replayed too
     if seed is not None:
@@ -286,7 +288,8 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
             # DFLASH turns off), so an unseeded request stays unseeded, at the cost of sampling noise.
             await _one(session, url, ids, arrival.output_tokens, record, temperature, getattr(arrival, "priority", None), None,
                        getattr(arrival, "sampling", None), getattr(arrival, "logprobs", -1),
-                       getattr(arrival, "stream", True), getattr(arrival, "logprob_start", -1), getattr(arrival, "max_new_tokens", None))
+                       getattr(arrival, "stream", True), getattr(arrival, "logprob_start", -1), getattr(arrival, "max_new_tokens", None),
+                       getattr(arrival, "hidden_states", False))
 
         await asyncio.gather(*(send(a, ids) for a, ids in zip(arrivals, ids_for)))
     # Every request runs to completion, so the phase lasts until the last one finishes.

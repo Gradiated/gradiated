@@ -306,7 +306,7 @@ def improve(args: argparse.Namespace, server: Server) -> None:
                 if verdict is None or verdict.decision == "promote":
                     entry["published"] = args.policy_out
                     try:
-                        guard = promote(args, server, policy)
+                        guard = promote(args, server, policy, staged_ok=verdict is not None and verdict.decision == "promote")
                     except BaseException:
                         if staged_before is not None:
                             _publish(args.stage_policy, staged_before)  # an unfinished promotion promoted nothing
@@ -395,7 +395,7 @@ def _wait_applied(server: Server, policy: Policy, timeout_s: float, interval_s: 
         time.sleep(interval_s)
 
 
-def promote(args: argparse.Namespace, production: Server, policy: Policy) -> rollout.Verdict | None:
+def promote(args: argparse.Namespace, production: Server, policy: Policy, staged_ok: bool = False) -> rollout.Verdict | None:
     """Publish to the fleet, then guard it: compare the fleet after against just before, and restore
     the previous policy if it regressed. A big shift in traffic makes the comparison inconclusive, and
     the change stays, since it has already passed replay and the stage."""
@@ -421,6 +421,9 @@ def promote(args: argparse.Namespace, production: Server, policy: Policy) -> rol
     except Exception as exc:
         # A guard that cannot finish has not shown the candidate is safe.
         verdict = rollout.Verdict("revert", f"the guard could not finish: {type(exc).__name__}: {exc}", rollout.Side.of([], slo), rollout.Side.of([], slo))
+    if verdict.decision == "inconclusive" and not staged_ok:
+        # With no stage either, nothing live has shown the candidate is safe.
+        verdict = rollout.Verdict("revert", f"the guard was inconclusive and there was no stage: {verdict.reason}", verdict.stage, verdict.peers)
     if verdict.decision == "revert":
         _publish(args.policy_out, previous)
     return verdict

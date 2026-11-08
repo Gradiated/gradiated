@@ -54,6 +54,7 @@ class Record:
     server_s: float | None = None  # waiting-queue entry to completion, whatever happened in between
     multimodal: bool = False  # images or embeddings, which replay cannot send
     salted: bool = False  # in its own cache namespace (cache_salt or extra_key), which replay does not reproduce
+    hidden_states: bool = False  # asked for hidden states, which costs a copy out per token
 
     @property
     def started(self) -> float:
@@ -285,10 +286,12 @@ class Arrival:
     logprob_start: int = -1
     stream: bool = True
     max_new_tokens: int | None = None  # the declared limit, which admission and KV headroom are sized by
+    hidden_states: bool = False
     launched: bool = True  # a forward pass ran for it, which matters for a request aborted with no output
     server_s: float | None = None  # waiting-queue entry to completion, whatever happened in between
     multimodal: bool = False  # images or embeddings, which replay cannot send
     salted: bool = False  # in its own cache namespace (cache_salt or extra_key), which replay does not reproduce
+    hidden_states: bool = False  # asked for hidden states, which costs a copy out per token
 
 
 def replay_gaps(records: Sequence[Record]) -> dict[str, int]:
@@ -399,6 +402,7 @@ def arrivals(records: Sequence[Record], speed: float = 1.0) -> list[Arrival]:
                 logprob_start=r.logprob_start,
                 stream=r.stream,
                 max_new_tokens=max(r.max_new_tokens, r.output_tokens, 1) if r.max_new_tokens else None,
+                hidden_states=r.hidden_states,
             )
         )
     return sorted(out, key=lambda a: a.at)

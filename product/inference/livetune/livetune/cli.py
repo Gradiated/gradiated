@@ -100,19 +100,26 @@ def replay(args: argparse.Namespace, server: Server) -> None:
 
         thread = threading.Thread(target=run_controller, daemon=True)
         thread.start()
+
+    def stop_controller() -> None:
+        stop.set()
+        if thread is not None:
+            thread.join()
+
     try:
         phases = [loadgen.Phase(**p) for p in json.loads(Path(args.phases).read_text())]
         prompts = loadgen.PromptSource(_corpus(args.corpus))
         for index, phase in enumerate(phases):
             started = time.time()
             summary = asyncio_phase(args.url, phase, prompts, index)
+            if index == len(phases) - 1:
+                # Join first, so a failure while the last phase ran cannot slip past this check.
+                stop_controller()
             if failures:
                 raise RuntimeError("the controller stopped during the replay; its results are not controlled") from failures[0]
             write(phase_report(summary, events, started, phase.seconds, policy, "static" if args.static else "controlled"))
     finally:
-        stop.set()
-        if thread is not None:
-            thread.join()
+        stop_controller()
         server.apply(startup)
 
 

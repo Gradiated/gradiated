@@ -484,6 +484,14 @@ class FingerprintTest(unittest.TestCase):
         self.assertEqual((scope["kv_tokens"], scope["variants"]), (123, {"1": "ab"}))
         self.assertNotIn("variant", scope)  # the live variant is state, not scope
 
+    def test_data_parallel_schedulers_must_share_one_scope(self):
+        server, server_module = self._server({"gpu": "NVIDIA B300", "page_size": 256, "startup": STARTUP})
+        info = json.loads(server._request("/server_info"))
+        info["internal_states"].append({"livetune": {"gpu": "NVIDIA H200", "page_size": 256, "startup": STARTUP}})
+        server._request = lambda path, body=None, timeout=None: json.dumps(info).encode()
+        with self.assertRaises(server_module.UpdateFailed):
+            server.fingerprint()
+
     def test_server_that_does_not_report_its_gpu_has_no_scope(self):
         server, server_module = self._server({"startup": STARTUP})
         with self.assertRaises(server_module.UpdateFailed):

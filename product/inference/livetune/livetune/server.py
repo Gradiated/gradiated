@@ -50,14 +50,16 @@ class Server:
 
     def fingerprint(self) -> dict[str, Any]:
         info = json.loads(self._request("/server_info"))
-        state = self.livetune_state()
-        # The scheduler reports its own GPU; the client running this may have none, or different ones.
-        if not state.get("gpu"):
-            raise UpdateFailed(f"{self.url} does not report its GPU; upgrade its livetune plugin")
         # Page size bounds which knob values the server accepts. The startup variant id (in startup)
         # and the verified catalog fix the forward code; the live variant is state, not scope.
         envelope = ("gpu", "page_size", "startup", "variants")
-        return {"server_args": serving_config(info), "kv_tokens": info.get("max_total_num_tokens"), **{key: state.get(key) for key in envelope}}
+        scopes = [{key: state.get(key) for key in envelope} for state in self.livetune_states()]
+        # The scheduler reports its own GPU; the client running this may have none, or different ones.
+        if not all(scope["gpu"] for scope in scopes):
+            raise UpdateFailed(f"{self.url} does not report its GPU; upgrade its livetune plugin")
+        if any(scope != scopes[0] for scope in scopes):
+            raise UpdateFailed(f"{self.url} has data-parallel schedulers with different scopes: {scopes}")
+        return {"server_args": serving_config(info), "kv_tokens": info.get("max_total_num_tokens"), **scopes[0]}
 
     def livetune_states(self) -> list[dict[str, Any]]:
         # One entry per data-parallel scheduler.

@@ -405,6 +405,7 @@ class Telemetry:
         verify = getattr(req, "spec_verify_ct", 0)
         reason = type(req.finished_reason).__name__ if req.finished_reason is not None else "unknown"
         cached_pages = cached // self.page_size * self.page_size
+        namespace = "|".join(str(v) for v in (getattr(req, "cache_salt", None), getattr(req, "extra_key", None)) if v) or None
         return trace.Record(
             t=now_wall,
             prompt_tokens=len(ids),
@@ -422,8 +423,9 @@ class Telemetry:
             priority=getattr(req, "priority", None),
             lora=getattr(req, "lora_id", None) is not None,
             session=getattr(req, "session_id", None) is not None,
-            families=self.keys.families(ids),
-            cached_family=self.keys.digest(ids, cached_pages) if cached_pages else None,
+            families=self.keys.families(ids, namespace),
+            cached_family=self.keys.digest(ids, cached_pages, namespace) if cached_pages else None,
+            salted=namespace is not None,
             cached_family_tokens=cached_pages,
             # Integers stay integers: a seed above 2**53 would not survive a float.
             sampling={key: value if isinstance(value, int) and not isinstance(value, bool) else float(value)

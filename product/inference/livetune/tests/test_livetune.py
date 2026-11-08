@@ -1553,7 +1553,7 @@ class FleetEvidenceTest(unittest.TestCase):
             finally:
                 cli.Server, cli._watch, cli._wait_applied = saved
         self.assertEqual((watched, waited), ([["prod"]], ["prod"]))
-        self.assertEqual(verdict.decision, "inconclusive")  # nothing applied, so nothing was judged
+        self.assertEqual(verdict.decision, "revert")  # nothing applied, so it is withdrawn rather than left to load later
 
 
 class GateBaselineAndAbortTest(unittest.TestCase):
@@ -2049,3 +2049,41 @@ class StagedReplicaGuardTest(unittest.TestCase):
             finally:
                 cli.Server, cli._watch, cli._wait_applied, cli._runs_candidate = saved
         self.assertTrue(watched and all("staged" not in urls for urls in watched))
+
+
+class NamespaceAndFirstPublishTest(unittest.TestCase):
+    def test_cache_namespaces_keep_token_identical_prompts_apart(self):
+        from livetune import trace
+
+        keys = trace.PrefixKeys(b"k" * 32)
+        ids = list(range(3000))
+        self.assertNotEqual(keys.families(ids, "tenant-a"), keys.families(ids, "tenant-b"))
+        self.assertEqual(keys.families(ids), keys.families(ids, None))
+        with self.assertRaises(ValueError):
+            trace.arrivals([dataclasses_replace(_record(100.0), salted=True)])
+
+    def test_the_first_publication_is_guarded_with_a_startup_restore_point(self):
+        import argparse
+
+        saved = (cli._watch, cli._wait_applied, cli._runs_candidate)
+        watched = iter([[[_window(40, tps=100)] * 12], [[_window(40, tps=60)] * 12]])
+        cli._watch = lambda servers, seconds, interval: next(watched)
+        cli._wait_applied = lambda server, policy, timeout, interval: True
+        cli._runs_candidate = lambda server, policy: True
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "policy.json")  # does not exist yet
+            args = argparse.Namespace(fleet="", policy_out=str(path), slo_tps=80, slo_ttft=10, guard_seconds=60, interval=5, stage_apply_s=0)
+            try:
+                verdict = cli.promote(args, types.SimpleNamespace(url="prod", fingerprint=lambda: {}), _policy())
+            finally:
+                cli._watch, cli._wait_applied, cli._runs_candidate = saved
+            self.assertEqual(verdict.decision, "revert")
+            restored = Policy.from_json(path.read_text())
+            self.assertEqual((len(restored.rules), restored.provenance.get("startup_only")), (1, True))
+
+    def test_arrival_rate_uses_start_times(self):
+        from livetune import trace
+
+        burst = [_record(100.0 + d, ttft_s=0.0, decode_s=d) for d in (1.0, 1.0, 59.0)]  # all started at 100
+        quick = _record(110.0, ttft_s=0.0, decode_s=10.0)
+        self.assertEqual(trace.summarize(burst + [quick])["seconds"], 0.0)

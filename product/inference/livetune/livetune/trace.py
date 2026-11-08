@@ -53,6 +53,7 @@ class Record:
     launched: bool = True  # a forward pass ran for it, which matters for a request aborted with no output
     server_s: float | None = None  # waiting-queue entry to completion, whatever happened in between
     multimodal: bool = False  # images or embeddings, which replay cannot send
+    salted: bool = False  # in its own cache namespace (cache_salt or extra_key), which replay does not reproduce
 
     @property
     def started(self) -> float:
@@ -79,13 +80,15 @@ class PrefixKeys:
         env = os.environ.get("LIVETUNE_TRACE_KEY")
         self.key = key or (bytes.fromhex(env) if env else (_directory_key(Path(directory)) if directory else os.urandom(32)))
 
-    def digest(self, ids: Sequence[int], length: int) -> str:
+    def digest(self, ids: Sequence[int], length: int, namespace: str | None = None) -> str:
         head = ids[:length]
         data = head.tobytes() if isinstance(head, array) and head.typecode == "q" else array("q", head).tobytes()
-        return hashlib.blake2b(data, key=self.key[:64], digest_size=8).hexdigest()
+        # A cache namespace (cache_salt, extra_key) is part of SGLang's radix key, so it is part of ours.
+        prefix = namespace.encode() + b"\0" if namespace else b""
+        return hashlib.blake2b(prefix + data, key=self.key[:64], digest_size=8).hexdigest()
 
-    def families(self, ids: Sequence[int]) -> tuple[str, ...]:
-        return tuple(self.digest(ids, depth) for depth in FAMILY_DEPTHS if len(ids) >= depth)
+    def families(self, ids: Sequence[int], namespace: str | None = None) -> tuple[str, ...]:
+        return tuple(self.digest(ids, depth, namespace) for depth in FAMILY_DEPTHS if len(ids) >= depth)
 
 
 def _directory_key(directory: Path) -> bytes:
@@ -217,7 +220,8 @@ def summarize(records: Sequence[Record]) -> dict[str, Any]:
     """The traffic mix: what to tune for and what to propose."""
     if not records:
         return {"requests": 0}
-    span = max(r.t for r in records) - min(r.t for r in records)
+    # Arrivals are when requests started; completions are spread out by each request's own duration.
+    span = max(r.started for r in records) - min(r.started for r in records)
     prompt = [r.prompt_tokens for r in records]
     output = [r.output_tokens for r in records]
     prompt_total = sum(prompt)
@@ -284,6 +288,7 @@ class Arrival:
     launched: bool = True  # a forward pass ran for it, which matters for a request aborted with no output
     server_s: float | None = None  # waiting-queue entry to completion, whatever happened in between
     multimodal: bool = False  # images or embeddings, which replay cannot send
+    salted: bool = False  # in its own cache namespace (cache_salt or extra_key), which replay does not reproduce
 
 
 def replay_gaps(records: Sequence[Record]) -> dict[str, int]:
@@ -294,6 +299,7 @@ def replay_gaps(records: Sequence[Record]) -> dict[str, int]:
         "lora": sum(r.lora for r in records),
         "session": sum(r.session for r in records),
         "multimodal": sum(r.multimodal for r in records),
+        "cache_namespace": sum(r.salted for r in records),
         # A non-streaming request cannot be cut off, so one that stopped early cannot keep its declared budget.
         "non_streaming_early_stop": sum((not r.stream) and bool(r.max_new_tokens) and r.output_tokens < r.max_new_tokens for r in records),
     }

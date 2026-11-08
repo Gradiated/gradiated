@@ -401,9 +401,10 @@ def promote(args: argparse.Namespace, production: Server, policy: Policy) -> rol
     members = [m for m in [production] + [Server(url) for url in (args.fleet or "").split(",") if url] if m.url != staged]
     # Replicas outside production's scope refuse the policy, so their unchanged windows would dilute the comparison.
     fleet = [m for m in members if not _scope_differences(scope, m.fingerprint())]
-    previous = Path(args.policy_out).read_text() if Path(args.policy_out).exists() else None
     slo = Slo(args.slo_tps, args.slo_ttft)
-    before = _watch(fleet, args.guard_seconds, args.interval) if args.guard_seconds and previous is not None else None
+    # The first publication still needs a restore point: a policy that holds the startup settings.
+    previous = Path(args.policy_out).read_text() if Path(args.policy_out).exists() else _startup_policy(production, policy, slo).to_json()
+    before = _watch(fleet, args.guard_seconds, args.interval) if args.guard_seconds else None
     _publish(args.policy_out, policy.to_json())
     if before is None:
         return None
@@ -417,6 +418,16 @@ def promote(args: argparse.Namespace, production: Server, policy: Policy) -> rol
     return verdict
 
 
+def _startup_policy(production: Server, candidate: Policy, slo: Slo) -> Policy:
+    import math
+
+    from livetune.policy import Rule
+
+    startup = candidate.rules[-1].settings
+    return Policy(slo, (Rule("unmeasured", math.inf, math.inf, dict(startup)),), {"scope": candidate.provenance.get("scope") or production.fingerprint(),
+                                                                              "startup_only": True})
+
+
 def _guard(args: argparse.Namespace, fleet: list[Server], policy: Policy, before: list[list[Any]], slo: Slo) -> rollout.Verdict:
     # Judge only the replicas that took the candidate up, from the moment they did.
     from concurrent.futures import ThreadPoolExecutor
@@ -426,7 +437,8 @@ def _guard(args: argparse.Namespace, fleet: list[Server], policy: Policy, before
         ready = list(pool.map(lambda m: _wait_applied(m, policy, args.stage_apply_s, args.interval), fleet))
     applied = [i for i, ok in enumerate(ready) if ok]
     if not applied:
-        return rollout.Verdict("inconclusive", "no fleet replica applied the published policy", rollout.Side.of([], slo), rollout.Side.of([], slo))
+        # Unmeasured in the fleet, it would take effect later, after the guard; withdraw it instead.
+        return rollout.Verdict("revert", "no fleet replica applied the published policy", rollout.Side.of([], slo), rollout.Side.of([], slo))
     after = _watch([fleet[i] for i in applied], args.guard_seconds, args.interval)
 
     left = [fleet[i].url for i in applied if not _verified_on(fleet[i], policy)]

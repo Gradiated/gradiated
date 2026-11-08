@@ -320,8 +320,8 @@ def calibrated_chip(micro_rows: list[dict], base: ChipSpec = B300_SPEC) -> ChipS
         points.sort()
 
     def curve(kind: str, n: int, size: float) -> float:
-        key = ("all_reduce" if kind != "all_to_all" else "all_to_all", n)
-        points = curves.get(key)
+        # Only collectives that were measured use a curve; the rest keep the analytical model.
+        points = curves.get((kind, n))
         if not points:
             factor = 2 * (n - 1) / n if kind == "all_reduce" else (n - 1) / n
             return base.collective_alpha(kind, n) + size * factor / base.link_bw

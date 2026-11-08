@@ -377,13 +377,14 @@ _FINISH_NAMES = {"FINISH_LENGTH": "length", "FINISH_ABORT": "abort", "FINISH_MAT
 class Telemetry:
     """What the scheduler saw, on attention-TP rank 0: one record per finished request, counters per batch."""
 
-    def __init__(self, directory: str | None, page_size: int = 1) -> None:
+    def __init__(self, directory: str | None, page_size: int = 1, keys: trace.PrefixKeys | None = None) -> None:
         self.writer = trace.Writer(directory) if directory else None
-        self.keys = trace.PrefixKeys()
+        self.keys = keys or trace.PrefixKeys()
         self.page_size = max(page_size, 1)
         self.batches = trace.BatchStats()
         self.recent: list[str] = []
         self.dropped = 0
+        self.error: str | None = None
 
     def record(self, req: Any, now_wall: float, now: float) -> trace.Record:
         ts = req.time_stats
@@ -440,6 +441,7 @@ class Telemetry:
             "trace_path": str(self.writer.path) if self.writer else None,
             "records": self.writer.written if self.writer else 0,
             "dropped": self.dropped,
+            "error": self.error,
             "batches": self.batches.snapshot(),
         }
 
@@ -453,7 +455,13 @@ def _telemetry(page_size: int = 1) -> Telemetry | None:
     if getattr(get_parallel(), "attn_tp_rank", 0) != 0:
         return None
     if "rank0" not in _TELEMETRY:
-        _TELEMETRY["rank0"] = Telemetry(os.environ.get("LIVETUNE_TRACE_DIR"), page_size)
+        try:
+            _TELEMETRY["rank0"] = Telemetry(os.environ.get("LIVETUNE_TRACE_DIR"), page_size)
+        except Exception as exc:  # telemetry is optional: a bad key or directory disables it, never serving
+            logger.exception("livetune: telemetry disabled")
+            disabled = Telemetry(None, page_size, keys=trace.PrefixKeys(os.urandom(32)))
+            disabled.error = f"{type(exc).__name__}: {exc}"
+            _TELEMETRY["rank0"] = disabled
     return _TELEMETRY["rank0"]
 
 

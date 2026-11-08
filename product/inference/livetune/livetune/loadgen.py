@@ -160,7 +160,12 @@ async def run_phase(url: str, phase: Phase, prompts: PromptSource, phase_index: 
     return result
 
 
-async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource, name: str = "trace") -> PhaseResult:
+def trace_prompts(arrivals: Sequence[Any], prompts: PromptSource) -> list[list[int]]:
+    """The token ids for each arrival, built once so every replay of a trace sends the same content."""
+    return [prompts.family_prompt(a.prompt_tokens, a.shared_tokens, a.family) for a in arrivals]
+
+
+async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource | Sequence[list[int]], name: str = "trace") -> PhaseResult:
     """Open loop: each recorded request arrives at its own time, whatever the server is doing."""
     import aiohttp
 
@@ -177,18 +182,18 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource,
     )
     result = PhaseResult(phase)
     timeout = aiohttp.ClientTimeout(total=None, sock_read=600)
+    ids_for = trace_prompts(arrivals, prompts) if isinstance(prompts, PromptSource) else list(prompts)
     async with aiohttp.ClientSession(timeout=timeout, connector=aiohttp.TCPConnector(limit=0)) as session:
         started = time.perf_counter()
 
-        async def send(arrival: Any) -> None:
+        async def send(arrival: Any, ids: list[int]) -> None:
             await asyncio.sleep(max(arrival.at - (time.perf_counter() - started), 0.0))
-            ids = prompts.family_prompt(arrival.prompt_tokens, arrival.shared_tokens, arrival.family)
             record = RequestRecord(time.perf_counter())
             result.requests.append(record)
             temperature = 0.7 if arrival.temperature is None else arrival.temperature
             await _one(session, url, ids, arrival.output_tokens, record, temperature)
 
-        await asyncio.gather(*(send(a) for a in arrivals))
+        await asyncio.gather(*(send(a, ids) for a, ids in zip(arrivals, ids_for)))
     # Every request runs to completion, so the phase lasts until the last one finishes.
     result.phase = dataclasses.replace(phase, seconds=time.perf_counter() - started)
     return result

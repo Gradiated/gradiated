@@ -1238,19 +1238,23 @@ class ReplayIsolationTest(unittest.TestCase):
         arrivals = [types.SimpleNamespace(at=0.0, prompt_tokens=2000, output_tokens=8, shared_tokens=0, family=None, temperature=0.7, seconds=1.0)]
         saved = loadgen.run_arrivals
 
+        sent = []
+
         async def fake(url, schedule, prompts, name="trace"):
             calls.append(("replay",))
+            sent.append([list(ids) for ids in prompts])
             result = loadgen.PhaseResult(loadgen.Phase(0, 2000, 8, 1.0))
             result.requests = [loadgen.RequestRecord(0.0, ttft=0.1, tokens=8, decode_tps=100.0)]
             return result
 
         loadgen.run_arrivals = fake
         try:
-            cli.tune_policy(server, Slo(50, 5), None, {"max_running_requests": [8]}, None, arrivals, 0, 0, lambda r: None)
+            cli.tune_policy(server, Slo(50, 5), loadgen.PromptSource(list(range(5000))), {"max_running_requests": [8]}, None, arrivals, 0, 0, lambda r: None)
         finally:
             loadgen.run_arrivals = saved
         replays = [i for i, c in enumerate(calls) if c[0] == "replay"]
         self.assertTrue(replays and all(calls[i - 1] == ("flush",) for i in replays))
+        self.assertTrue(len(sent) > 1 and all(ids == sent[0] for ids in sent))  # the same token ids for every trial
 
 
 class FamilyDepthTest(unittest.TestCase):
@@ -1310,3 +1314,36 @@ class OpenLoopProfileTest(unittest.TestCase):
         running = lambda settings: types.SimpleNamespace(livetune_state=lambda: {"settings": settings})
         self.assertTrue(cli._runs_candidate(running({**STARTUP, "max_running_requests": 16}), policy))
         self.assertFalse(cli._runs_candidate(running(dict(STARTUP)), policy))
+
+
+class TelemetryRobustnessTest(unittest.TestCase):
+    def test_a_bad_trace_key_disables_telemetry_instead_of_raising_into_serving(self):
+        from livetune import sglang_plugin
+
+        runtime = types.ModuleType("sglang.srt.runtime_context")
+        runtime.get_parallel = lambda: types.SimpleNamespace(attn_tp_rank=0)
+        saved = {name: sys.modules.get(name) for name in ("sglang", "sglang.srt", "sglang.srt.runtime_context")}
+        sys.modules.update({"sglang": types.ModuleType("sglang"), "sglang.srt": types.ModuleType("sglang.srt"), "sglang.srt.runtime_context": runtime})
+        os.environ["LIVETUNE_TRACE_KEY"] = "not-hex"
+        sglang_plugin._TELEMETRY.clear()
+        try:
+            telemetry = sglang_plugin._telemetry()
+            self.assertIsNone(telemetry.writer)
+            self.assertIn("ValueError", telemetry.readback()["error"])
+        finally:
+            del os.environ["LIVETUNE_TRACE_KEY"]
+            sglang_plugin._TELEMETRY.clear()
+            for name, module in saved.items():
+                sys.modules.pop(name, None) if module is None else sys.modules.__setitem__(name, module)
+
+    def test_rotation_never_deletes_another_writers_files(self):
+        from livetune import trace
+
+        with tempfile.TemporaryDirectory() as tmp:
+            other = Path(tmp, "trace-20260101T000000-999999-000000000000.jsonl")
+            other.write_text("")
+            writer = trace.Writer(tmp, max_bytes=200, keep=1, flush_s=0)
+            for i in range(10):
+                writer.write(_record(1000.0 + i))
+            writer.close()
+            self.assertTrue(other.exists())

@@ -100,7 +100,9 @@ class Writer:
             self.last_flush = time.monotonic()
         if self.bytes >= self.max_bytes:
             self.handle.close()
-            for old in sorted(self.directory.glob("trace-*.jsonl"))[: -self.keep + 1 or None]:
+            # Only this writer's files: on a data-parallel server several schedulers share the directory,
+            # and another's active file must not be unlinked under it.
+            for old in sorted(self.directory.glob(f"trace-*-{os.getpid()}-*.jsonl"))[: -self.keep + 1 or None]:
                 old.unlink(missing_ok=True)
             self._open()
 

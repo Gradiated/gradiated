@@ -423,9 +423,10 @@ class FingerprintTest(unittest.TestCase):
         return Fake("http://gpu-host:30000"), server_module
 
     def test_scope_names_the_gpu_the_server_reports_not_the_callers(self):
-        server, _ = self._server({"gpu": "NVIDIA B300", "page_size": 256, "startup": STARTUP})
+        server, _ = self._server({"gpu": "NVIDIA B300", "page_size": 256, "startup": STARTUP, "variant": None, "variants": {"1": "ab"}})
         scope = server.fingerprint()
         self.assertEqual((scope["gpu"], scope["model_path"], scope["page_size"], scope["startup"]), ("NVIDIA B300", "m", 256, STARTUP))
+        self.assertEqual((scope["variant"], scope["variants"]), (None, {"1": "ab"}))
 
     def test_server_that_does_not_report_its_gpu_has_no_scope(self):
         server, server_module = self._server({"startup": STARTUP})
@@ -570,6 +571,7 @@ class PluginTest(unittest.TestCase):
                 self.assertEqual(self.model.value, 2)
                 self.assertFalse(self.tuner.admission_blocked())
                 self.assertEqual(self.tuner.readback()["variant"]["name"], "bump")
+                self.assertEqual(self.tuner.readback()["variants"], {str(variant): variants.resolve(variant).sha256})
                 self.tuner.apply("forward_variant", 0)
                 self.tuner.on_idle()
                 self.assertEqual(self.model.value, 1)

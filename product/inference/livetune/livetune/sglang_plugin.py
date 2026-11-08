@@ -180,12 +180,17 @@ class LiveTuner:
         torch.cuda.synchronize()
 
     def readback(self) -> dict[str, Any]:
+        try:
+            catalog: dict[str, str] | str = variants.catalog()
+        except Exception as exc:  # a broken manifest must not take down /server_info
+            catalog = f"unreadable: {type(exc).__name__}: {exc}"
         return {
             "settings": dict(self.settings),
             "startup": dict(self.startup),
             "page_size": self.page_size,
             "gpu": self.gpu,
             "variant": {"name": self.variant.source.name, "sha256": self.variant.source.sha256} if self.variant else None,
+            "variants": catalog,
             "pending_variant": self.pending_variant,
             "recent_changes": self.changes[-10:],
             "recent_errors": self.errors[-5:],

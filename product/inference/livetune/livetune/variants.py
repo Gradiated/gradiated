@@ -56,6 +56,14 @@ class VariantSource:
     sha256: str
 
 
+def catalog(variants_dir: str | None = None) -> dict[str, str]:
+    """Variant id to pinned sha256 for every selectable variant; empty without a manifest."""
+    manifest_path = Path(variants_dir or os.environ.get("LIVETUNE_VARIANTS_DIR", "")) / "manifest.json"
+    if not manifest_path.is_file():
+        return {}
+    return {str(entry["id"]): entry["sha256"] for entry in json.loads(manifest_path.read_text()).get("variants", [])}
+
+
 def resolve(variant_id: int, variants_dir: str | None = None) -> VariantSource:
     if isinstance(variant_id, bool) or not isinstance(variant_id, int) or variant_id < 1:
         raise VariantError(f"variant id must be a positive integer, got {variant_id!r}")

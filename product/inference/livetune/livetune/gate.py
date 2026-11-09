@@ -28,6 +28,10 @@ BASELINE_FLOOR = {"prefix_match_rate": 0.75, "mean_prefix_fraction": 0.5}
 BIAS_FACTOR = 3.0  # how many times stock's own mean scored-logprob shift a variant may show
 MIN_BIAS_LIMIT = 0.03  # nats
 BIAS_Z = 4.0  # and the shift must be this many standard errors from zero to count
+# A greedy shortfall must also be unlikely as chance: with 8 prompts on a model that repeats 6 of 8,
+# 3 of 8 is within noise (p = 0.16), while a broken kernel's 0 of 8 is not (p = 0.004).
+MATCH_P = 0.01
+FRACTION_Z = 3.5  # paired over the same prompts; about p = 0.005 one-sided for 8 prompts
 
 
 @dataclass(frozen=True)
@@ -47,6 +51,8 @@ class Agreement:
     non_finite: int
     scored_shift: float | None = None  # mean of candidate minus reference scored logprobs
     scored_shift_se: float | None = None
+    matches: int = 0  # prompts whose first PREFIX_TOKENS tokens agree
+    prefix_fractions: tuple[float, ...] = ()  # per prompt, the share before the first difference
 
 
 def _common(a: Sequence[int], b: Sequence[int]) -> int:
@@ -82,7 +88,26 @@ def agreement(reference: Sample, candidate: Sample) -> Agreement:
         non_finite=non_finite,
         scored_shift=shift,
         scored_shift_se=se,
+        matches=matches,
+        prefix_fractions=tuple(fractions),
     )
+
+
+def fewer_matches_p(variant: int, stock: int, prompts: int) -> float:
+    """One-sided Fisher exact p that the variant matches stock less often than stock matches itself."""
+    total = variant + stock
+    ways = math.comb(2 * prompts, total)
+    return sum(math.comb(prompts, x) * math.comb(prompts, total - x) for x in range(0, variant + 1) if total - x <= prompts) / ways
+
+
+def shorter_continuations_z(stock: Sequence[float], variant: Sequence[float]) -> float:
+    """Paired z of how much shorter the variant's agreeing continuations are, prompt by prompt."""
+    differences = [a - b for a, b in zip(stock, variant)]
+    if len(differences) < 2:
+        return 0.0
+    mean = sum(differences) / len(differences)
+    se = math.sqrt(sum((d - mean) ** 2 for d in differences) / (len(differences) - 1) / len(differences))
+    return math.inf if se == 0 and mean > 0 else (mean / se if se else 0.0)
 
 
 @dataclass(frozen=True)
@@ -107,10 +132,14 @@ def judge(stock: Sample, stock_again: Sample, variant: Sample) -> Verdict:
     if theirs.non_finite:
         reasons.append(f"{theirs.non_finite} non-finite logprobs")
     # Greedy agreement is judged only where stock repeats itself; elsewhere the scored prompts decide.
-    if not unusable and theirs.prefix_match_rate < own.prefix_match_rate - MATCH_MARGIN:
-        reasons.append(f"prefix match {theirs.prefix_match_rate:.2f} against stock's {own.prefix_match_rate:.2f}")
-    if not unusable and theirs.mean_prefix_fraction < own.mean_prefix_fraction - MATCH_MARGIN:
-        reasons.append(f"shared continuation {theirs.mean_prefix_fraction:.2f} against stock's {own.mean_prefix_fraction:.2f}")
+    # A shortfall counts when it is both large and unlikely as run-to-run noise.
+    prompts = len(stock.tokens)
+    if (not unusable and theirs.prefix_match_rate < own.prefix_match_rate - MATCH_MARGIN
+            and (p := fewer_matches_p(theirs.matches, own.matches, prompts)) < MATCH_P):
+        reasons.append(f"prefix match {theirs.prefix_match_rate:.2f} against stock's {own.prefix_match_rate:.2f} (p {p:.3f})")
+    if (not unusable and theirs.mean_prefix_fraction < own.mean_prefix_fraction - MATCH_MARGIN
+            and (z := shorter_continuations_z(own.prefix_fractions, theirs.prefix_fractions)) > FRACTION_Z):
+        reasons.append(f"shared continuation {theirs.mean_prefix_fraction:.2f} against stock's {own.mean_prefix_fraction:.2f} (z {z:.1f})")
     if scored:
         limit = max(MIN_BIAS_LIMIT, BIAS_FACTOR * abs(own.scored_shift))
         z = theirs.scored_shift / theirs.scored_shift_se if theirs.scored_shift_se else math.inf

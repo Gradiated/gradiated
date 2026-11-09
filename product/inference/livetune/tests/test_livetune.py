@@ -1743,16 +1743,23 @@ class GateTest(unittest.TestCase):
     def test_a_variant_is_judged_against_how_well_stock_agrees_with_itself(self):
         from livetune import gate
 
-        stock = self._sample([[1, 2, 3, 4, 5, 6, 7, 8, 9]] * 4)
-        noisy = self._sample([[1, 2, 3, 4, 5, 6, 7, 8, 9]] * 3 + [[1, 2, 3, 9, 9, 9, 9, 9, 9]])  # stock itself diverges on one prompt
-        close = self._sample([[1, 2, 3, 4, 5, 6, 7, 8, 9]] * 3 + [[1, 2, 3, 4, 9, 9, 9, 9, 9]], drift=0.01)
-        broken = self._sample([[7, 7, 7, 7, 7, 7, 7, 7, 7]] * 4)
+        same, diverged = [1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 9, 9, 9, 9, 9, 9]
+        stock = self._sample([same] * 8)
+        noisy = self._sample([same] * 6 + [diverged] * 2)  # stock itself diverges on two prompts
+        close = self._sample([same] * 6 + [[1, 2, 3, 4, 9, 9, 9, 9, 9]] * 2, drift=0.01)
+        broken = self._sample([[7, 7, 7, 7, 7, 7, 7, 7, 7]] * 8)
         self.assertTrue(gate.judge(stock, noisy, close).passed)
         verdict = gate.judge(stock, noisy, broken)
         self.assertFalse(verdict.passed)
         self.assertTrue(any("prefix match" in r for r in verdict.reasons))
-        drifted = gate.judge(stock, stock, self._sample([[1, 2, 3, 4, 5, 6, 7, 8, 9]] * 4, drift=0.5))
+        self.assertTrue(any("shared continuation" in r for r in verdict.reasons))
+        drifted = gate.judge(stock, stock, self._sample([same] * 8, drift=0.5))
         self.assertTrue(any("logprob drift" in r for r in drifted.reasons))
+        # GLM on B300: an exact Triton copy matched 3 of 8 against stock's own 6 of 8. That is run-to-run
+        # noise (p = 0.16), not a broken kernel, and passes.
+        unlucky = self._sample([same] * 3 + [diverged] * 5)
+        self.assertTrue(gate.judge(stock, noisy, unlucky).passed)
+        self.assertLess(gate.fewer_matches_p(0, 6, 8), 0.01)
 
 
 class VariantEvalTest(unittest.TestCase):

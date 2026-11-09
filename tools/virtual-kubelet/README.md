@@ -213,7 +213,7 @@ traffic in proportion to their slots.
 
 ```json
 "dealignai/glm-5.3-flash-uncensored": {
-  "min_slots": 60,
+  "min_slots": 24,
   "pools": {
     "glm-dealign-sglang": {"runtime": "722c…", "gpu": "B300", "max_replicas": 5, "progress_deadline_seconds": 5400},
     "glm-dealign-sglang-h200": {"runtime": "130e…", "gpu": "H200", "max_replicas": 0, "progress_deadline_seconds": 5400}

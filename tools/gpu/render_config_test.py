@@ -338,7 +338,7 @@ class RenderTests(unittest.TestCase):
         floors = {name: (pool['floor'], pool['maximum'], pool['slots']) for name, pool in pools.items()}
         # Sixty uncensored slots fill the five B300 replicas of twelve slots;
         # the B200 and H200 pools are switched off.
-        self.assertEqual(floors['glm-dealign-sglang'], (5, 5, 12))
+        self.assertEqual(floors['glm-dealign-sglang'], (2, 5, 12))
         self.assertEqual(floors['glm-dealign-sglang-b200'][:2], (0, 0))
         self.assertEqual(floors['glm-dealign-sglang-h200'][:2], (0, 0))
         self.assertEqual(floors['kev'], (2, 2, 1))
@@ -597,7 +597,7 @@ class RenderTests(unittest.TestCase):
         self.assertEqual([doc['kind'] for doc in serving], ['Rollout', 'PodDisruptionBudget', 'ScaledObject'])
         self.assertNotIn('annotations', serving[0]['metadata'])
         # A host drain takes a pool at most one replica below its floor.
-        self.assertEqual(serving[1]['spec']['minAvailable'], 4)
+        self.assertEqual(serving[1]['spec']['minAvailable'], 1)
 
     def test_every_pool_scales_on_utilization_and_refusals_in_its_own_slots(self):
         self.assertEqual((renderer.UTILIZATION, renderer.REFUSAL_SHARE), (0.7, 0.05))
@@ -639,9 +639,9 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(set(by_rollout), set(pools))
         self.assertEqual(by_rollout['glm-dealign-sglang'], {
             'gradiated_model_desired_replicas':
-                'max(rollout_info_replicas_desired{namespace="gpu-inference",name="glm-dealign-sglang"}) or vector(5)',
+                'max(rollout_info_replicas_desired{namespace="gpu-inference",name="glm-dealign-sglang"}) or vector(2)',
             # A one-at-a-time rollout of the five-replica floor keeps four serving.
-            'gradiated_model_minimum_replicas': 'vector(4)'})
+            'gradiated_model_minimum_replicas': 'vector(1)'})
         self.assertEqual(by_rollout['kev']['gradiated_model_minimum_replicas'], 'vector(2)')
         # One replica of a single-replica floor must stay, even if a rollout may take it down.
         single = renderer.replica_rules({'pool': {**pools['glm-dealign-sglang'], 'floor': 1, 'max_unavailable': 1}})

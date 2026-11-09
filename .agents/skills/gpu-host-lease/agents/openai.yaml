@@ -1,0 +1,4 @@
+interface:
+  display_name: "GPU Host Lease"
+  short_description: "Lease a whole GPU host for hand-run work, then hand it back"
+  default_prompt: "Use $gpu-host-lease to lease a GPU host out of the serving pool, work on it safely, and hand it back to be wiped."

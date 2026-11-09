@@ -29,7 +29,8 @@ const problem = (
   if (findings.conflict)
     return { reason: "PostgresConflict", message: findings.conflict };
   const rollout = host.status?.rollout;
-  if (rollout?.result === "Failed")
+  // A failed lease is the holder's outcome; the host never left the pool.
+  if (rollout?.result === "Failed" && rollout.kind !== "lease")
     return {
       reason: "RolloutFailed",
       message: `The ${rollout.kind} rollout failed at ${rollout.step}: ${rollout.lastError ?? "no reason recorded"}`,

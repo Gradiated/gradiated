@@ -579,6 +579,71 @@ python3 product/inference/images/gpu-base/tests/e2e_image.py /tmp/gpu-fleet-e2e
 (cd product/services/gpu-fleet && GPU_FLEET_E2E=/tmp/gpu-fleet-e2e pnpm exec vitest run --config vitest.e2e.config.ts)
 ```
 
+### Leasing a host
+
+Hand-run work, such as training on sensitive data, leases a whole host; a host
+is never shared between a lease and serving or training pods. The gpu-fleet
+operator does the work and `tools/gpu/host-lease.py` writes the request, the
+`fleet.gradiated.com/lease` annotation on the `GpuHost`
+(`{"holder", "purpose", "until", "preemptible"}`):
+
+```sh
+python3 tools/gpu/host-lease.py acquire 01a0f19d --hours 6 --purpose "SFT sweep" [--no-preempt]
+python3 tools/gpu/host-lease.py wait 01a0f19d     # until the host is leased, or the lease fails
+python3 tools/gpu/host-lease.py extend 01a0f19d --hours 2
+python3 tools/gpu/host-lease.py release 01a0f19d  # hand it back early
+python3 tools/gpu/host-lease.py status
+```
+
+- A lease rollout first checks the request and the host, and refuses reserved
+  hosts (a `gradiated.com/reserved` taint), hosts that do not answer or have
+  no node, nodes already cordoned (by a person, a qualification slot or a
+  failed rollout), hosts whose rollout is blocked waiting for room, and pods
+  with a RunPod volume, which a re-image keeps (Kev's RTX host `01a0f1bc` and
+  both Kimi hosts have one). An operator in observe mode, or without RunPod and
+  Tailscale access, refuses every lease. It then cordons the host
+  and moves its model replicas onto free GPUs on other hosts, as a re-image
+  does, drains it and records `status.lease`. It does not rearrange other
+  hosts' pods to make room. If the replicas have no room, a training job runs
+  there, or a replacement replica finds no host, the lease fails at once and
+  the host stays in the pool.
+- Each request is tried once. The operator records the outcome on
+  `status.rollout` (with the request in `rollout.lease`) and removes the
+  annotation, so the host is planned like any other again; run `acquire` again
+  to retry. A failed lease never holds up the fleet's other rollouts, and the
+  retry annotation does not apply to it. A failed lease does not mark the host
+  Degraded. A lease waits its turn behind a
+  rollout that is running, but not behind one waiting for capacity.
+- While leased, the host is cordoned, cordoned again if someone lifts it or the
+  node is recreated, and the operator does nothing else to it: no re-image,
+  bundle update or recovery. Autoscaling has one host fewer, and
+  overflow goes to OpenRouter.
+- A lease is preemptible unless requested with `--no-preempt`
+  (`"preemptible": false`). Once a model replica that would fit on a
+  preemptible leased host has found no host for ten minutes, counted from the
+  last rollout to finish, the operator returns that host, the one due back
+  soonest first, and the replica lands there after the return. The holder gets
+  no warning beyond `status`. A re-image waiting for room does not preempt a
+  lease; it waits for the lease to end.
+- Removing the annotation hands the host back; reaching `until` does the same,
+  and a request from a different holder is treated as a hand-back followed by
+  a new lease, so the host is wiped between holders.
+  A return rollout re-images the RunPod pod onto the pinned image, which
+  recreates its container disk and so removes everything the holder left, then
+  enrolls, verifies, soaks and uncordons it. A return runs even while another
+  rollout waits for capacity, since it adds a host. A return that cannot run
+  fails rather than blocks, so the host stays cordoned until it is wiped, and
+  is retried once the pins change or the retry annotation is set;
+  `GpuHostLeaseOverdue` warns an hour after an unreturned lease expires or its
+  return starts. The tool caps a lease at seven days, and writes each change
+  only if the `GpuHost` is unchanged since it was read, so two holders cannot
+  both acquire it.
+
+The host keeps its management key across the return. A holder with root could
+read it, so rotate it by hand after leasing a host that ran untrusted code;
+rotating it automatically needs `secretsmanager:PutSecretValue` for the
+operator. The `$gpu-host-lease` skill has the procedure for agents.
+
 ### Reserving an isolated qualification slot
 
 Before running an unmanaged TP1 test beside serving allocations, use the merged

@@ -172,6 +172,8 @@ const selector = (key: string, value: string) =>
 export type NodeState = NodePlacement & {
   ready: boolean;
   unschedulable: boolean;
+  // The cordon is a rollout's own, not a person's or the drain's.
+  cordonedByRollout?: boolean;
 };
 
 // The value of the drain's CORDONED_BY marker for a rollout's cordon.
@@ -207,7 +209,11 @@ export const createCluster = (
     node: async (instanceId: string): Promise<NodeState | undefined> => {
       const node = (await api.get(nodePath(instanceId))) as
         | {
-            metadata?: { name?: string; labels?: Record<string, string> };
+            metadata?: {
+              name?: string;
+              labels?: Record<string, string>;
+              annotations?: Record<string, string>;
+            };
             spec?: {
               unschedulable?: boolean;
               taints?: NodePlacement["taints"];
@@ -222,6 +228,9 @@ export const createCluster = (
           node.status?.conditions?.find((entry) => entry.type === "Ready")
             ?.status === "True",
         unschedulable: Boolean(node.spec?.unschedulable),
+        cordonedByRollout:
+          Boolean(node.spec?.unschedulable) &&
+          node.metadata?.annotations?.[CORDONED_BY] === ROLLOUT_CORDON,
         ...(node.metadata?.name && { name: node.metadata.name }),
         labels: node.metadata?.labels ?? {},
         taints: node.spec?.taints ?? [],
@@ -262,6 +271,14 @@ export const createCluster = (
           `${PODS}?fieldSelector=${selector("spec.nodeName", hostName(instanceId))}`,
         ),
       ),
+
+    // Model pods the scheduler has not placed.
+    unscheduledModelPods: async () =>
+      clusterPods(
+        await api.list(
+          `${PODS}?fieldSelector=${selector("spec.nodeName", "")}`,
+        ),
+      ).filter((pod) => pod.model),
 
     modelPods: async (model: string) =>
       clusterPods(

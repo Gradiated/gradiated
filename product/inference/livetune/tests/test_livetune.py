@@ -1028,6 +1028,37 @@ class PluginTest(unittest.TestCase):
         self.assertNotIn(one, self.tuner.states)  # a retry builds it again, as the failed rank will
         self.assertEqual(self.tuner.settings["forward_variant"], 0)
 
+    def test_a_server_without_speculation_switches_target_states(self):
+        built, forwards = [], []
+        runner = self.scheduler.tp_worker.model_runner
+        runner.attn_backend, runner.decode_cuda_graph_runner = "backend-0", "graphs-0"
+        self.scheduler.tp_worker.forward_batch_generation = lambda batch: forwards.append((batch, runner.decode_cuda_graph_runner))
+
+        def build(cls, r):
+            built.append(self.model.value)
+            return cls(f"backend-{self.model.value}", f"graphs-{self.model.value}")
+
+        saved = self.plugin._TargetState.build
+        self.plugin._TargetState.build = classmethod(build)
+        os.environ["LIVETUNE_RECAPTURE"] = "states"
+        with tempfile.TemporaryDirectory() as tmp:
+            one = variants.register(tmp, "one", "def install(model, patch, ctx):\n    patch(model, 'value', 2)\n")
+            os.environ["LIVETUNE_VARIANTS_DIR"] = tmp
+            try:
+                self.tuner.apply("forward_variant", one)
+                self.tuner.on_idle()  # built at an idle point
+                self.tuner.apply("forward_variant", 0)
+                self.scheduler.tp_worker.forward_batch_generation("batch-1")  # switched at the forward, no drain
+                self.tuner.apply("forward_variant", one)
+                self.scheduler.tp_worker.forward_batch_generation("batch-2")
+            finally:
+                del os.environ["LIVETUNE_VARIANTS_DIR"], os.environ["LIVETUNE_RECAPTURE"]
+                self.plugin._TargetState.build = saved
+        self.assertEqual(built, [2])
+        self.assertEqual(self.recaptures, [])  # no in-place recapture
+        self.assertEqual(forwards, [("batch-1", "graphs-0"), ("batch-2", "graphs-2")])
+        self.assertEqual((runner.attn_backend, self.model.value), ("backend-2", 2))
+
     def test_adaptive_speculative_steps_refuse_live_switching(self):
         self.scheduler.spec_algorithm = types.SimpleNamespace(is_none=lambda: False)
         self.scheduler.draft_worker = types.SimpleNamespace(build_adaptive_runtime_state=lambda *a: None, apply_runtime_state=lambda s: None,

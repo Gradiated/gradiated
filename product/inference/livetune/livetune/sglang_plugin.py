@@ -158,7 +158,7 @@ class LiveTuner:
             if value == self.settings[VARIANT_KEY]:
                 self.pending_variant = self.forward_pending = None
                 return None
-            worker = _state_worker(self.scheduler)
+            worker = _state_worker(self.scheduler) or (self.scheduler.tp_worker if _target_states() else None)
             if worker is not None and value in self.states:
                 # A state built before is switched in at the next forward pass, as SGLang switches
                 # its adaptive states, with requests in flight: nothing is captured or freed, so
@@ -274,17 +274,24 @@ class LiveTuner:
         Other servers recapture in place with SGLang's elastic sequence.
         """
         worker = _state_worker(self.scheduler)
-        if worker is None:
-            self._recapture(self.scheduler.tp_worker.model_runner)
+        runner = self.scheduler.tp_worker.model_runner
+        if worker is None and not _target_states():
+            self._recapture(runner)
             return
         if not self.states:
             # The graphs captured at startup belong to the variant serving before the first switch.
-            self.states[self.settings[VARIANT_KEY]] = _current_state(worker)
+            self.states[self.settings[VARIANT_KEY]] = _current_state(worker) if worker is not None else _TargetState.current(runner)
         state = self.states.pop(variant_id, None)
         if state is None:
-            state = worker.build_adaptive_runtime_state(worker.speculative_num_steps, worker.speculative_num_draft_tokens)
+            if worker is not None:
+                state = worker.build_adaptive_runtime_state(worker.speculative_num_steps, worker.speculative_num_draft_tokens)
+            else:
+                state = _TargetState.build(runner)
         self.states[variant_id] = state  # most recently used last
-        _apply_state(worker, state)
+        if worker is not None:
+            _apply_state(worker, state)
+        else:
+            state.apply(runner)
         # Keep a bounded number of states: drop the least recently used, never the one now serving.
         while len(self.states) > self.max_states:
             del self.states[next(iter(self.states))]
@@ -450,6 +457,41 @@ def _packages_digest() -> str:
     for name, version, record in entries:
         digest.update(f"{name}=={version}\n".encode() + record.encode())
     return digest.hexdigest()
+
+
+def _target_states() -> bool:
+    # Servers without speculative decoding switch target-only states instead of recapturing in place.
+    return os.environ.get("LIVETUNE_RECAPTURE", "") == "states"
+
+
+@dataclasses.dataclass
+class _TargetState:
+    """The target model's attention backend and decode graphs, for a server without speculative decoding:
+    the target half of SGLang's adaptive speculative state."""
+
+    attn_backend: Any
+    graph_runner: Any
+
+    @classmethod
+    def current(cls, runner: Any) -> "_TargetState":
+        return cls(runner.attn_backend, runner.decode_cuda_graph_runner)
+
+    @classmethod
+    def build(cls, runner: Any) -> "_TargetState":
+        from sglang.srt.model_executor.runner.decode_cuda_graph_runner import DecodeCudaGraphRunner
+
+        # A fresh workspace, as SGLang builds a state's target backend, so states share no scratch.
+        backup = runner.init_new_workspace
+        try:
+            backend = runner._get_attention_backend(init_new_workspace=True)
+        finally:
+            runner.init_new_workspace = backup
+        graphs = DecodeCudaGraphRunner(runner, attn_backend=backend) if runner.decode_cuda_graph_runner is not None else None
+        return cls(backend, graphs)
+
+    def apply(self, runner: Any) -> None:
+        runner.attn_backend = self.attn_backend
+        runner.decode_cuda_graph_runner = self.graph_runner
 
 
 def _state_worker(scheduler: Any) -> Any:

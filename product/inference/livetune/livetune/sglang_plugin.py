@@ -186,6 +186,8 @@ class LiveTuner:
         return True
 
     def on_idle(self) -> None:
+        # An idle scheduler is also a safe point for a built state, and the only one if no request comes.
+        self.on_forward()
         if self.pending_variant is None:
             return
         variant_id, self.pending_variant = self.pending_variant, None

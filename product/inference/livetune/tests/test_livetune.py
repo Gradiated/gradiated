@@ -995,7 +995,9 @@ class PluginTest(unittest.TestCase):
                 self.plugin._current_state = saved
         self.assertEqual(applied, ["state-2", "startup-state", "state-2"])
         self.assertEqual(forwards, [("batch-1", 1), ("batch-2", 2)])  # each forward ran on the code just switched in
-        self.assertEqual(self.tuner.settings["forward_variant"], one)
+        self.tuner.apply("forward_variant", 0)
+        self.tuner.on_idle()  # no request comes: the idle scheduler switches
+        self.assertEqual((applied[-1], self.tuner.settings["forward_variant"]), ("startup-state", 0))
 
     def test_adaptive_speculative_steps_refuse_live_switching(self):
         self.scheduler.spec_algorithm = types.SimpleNamespace(is_none=lambda: False)

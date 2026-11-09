@@ -2505,6 +2505,7 @@ class InFlightWarmupTest(unittest.TestCase):
             else:
                 sys.modules["aiohttp"] = saved[1]
         self.assertLess(result.phase.seconds, 0.2)
+        self.assertEqual(result.phase.prompt_tokens, 10)  # the measured requests' mean, as trace_profile uses
 
     def test_warmup_requests_are_left_out_of_the_summary(self):
         result = loadgen.PhaseResult(loadgen.Phase(1, 1, 1, 10.0), [

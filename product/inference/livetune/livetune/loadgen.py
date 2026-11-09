@@ -307,8 +307,9 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
     phase = Phase(
         # Open loop has no user count; the demand the trace produced stands in for it.
         users=concurrency(arrivals) if arrivals else 0,
-        prompt_tokens=int(statistics.median(a.prompt_tokens for a in measured)) if measured else 0,
-        output_tokens=int(statistics.median(a.output_tokens for a in measured)) if measured else 0,
+        # Per-request means, as trace_profile places the rule, so `policy --trials` rebuilds the same one.
+        prompt_tokens=round(statistics.fmean(a.prompt_tokens for a in measured)) if measured else 0,
+        output_tokens=round(statistics.fmean(a.output_tokens for a in measured)) if measured else 0,
         seconds=span,
         # Recorded so `policy --trials` rebuilds the same profile, and the same cache-hit guard.
         shared_prefix=observed_cache_hit(arrivals) if arrivals else 0.0,

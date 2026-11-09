@@ -211,7 +211,7 @@ const products = [
  * fold's sharpen-from-blur, at paragraph scale. Reduced motion renders it
  * standing.
  */
-type StreamPart = { href?: string; text: string };
+type StreamPart = { emphasis?: boolean; href?: string; text: string };
 
 const StreamedProse = ({
   className,
@@ -264,6 +264,8 @@ const StreamedProse = ({
                 <a className="gr-link" href={part.href} key={qi}>
                   {words(part.text)}
                 </a>
+              ) : part.emphasis ? (
+                <em key={qi}>{words(part.text)}</em>
               ) : (
                 <span key={qi}>{words(part.text)}</span>
               ),
@@ -320,26 +322,25 @@ const HomeProducts = (): ReactElement => (
       className="gr-products-prelude"
       paragraphs={[
         {
-          text: "It is undeniable that the frontier model companies offer the path of least resistance for your most important work. It is however also true that it comes at a cost ~10\u201315x higher than using open models. That's a significant dent on your cash flows and consequently, runway.",
+          parts: [
+            {
+              text: "Frontier model companies offer the path of least resistance for powering your product. As you scale, most companies want to improve their unit costs, whilst using AI ",
+            },
+            { emphasis: true, text: "more" },
+            { text: " intensively." },
+          ],
         },
         {
-          text: "So then, why do most teams that try open weight models just end up switching back? In our experience we've seen that teams tend to switch their base models but don't optimize any of their other parameters. And models can be temperamental, to say the least. This leads to performance regressions and the inevitable switch back.",
+          text: "Yet why do most teams that try open weight models just end up switching back? Teams tend to switch their base models but don't optimize any of their other parameters, and post training is a new skillset and requires GPUs. This leads to performance regressions and the inevitable switch back.",
         },
         {
-          text: "At Gradiated we start with your real production traces. We benchmark open models against them, show you before-and-afters, and tune your prompts to your preferences until the open model matches or beats what you run now. All that with significant cost savings.",
+          text: "At Gradiated we proxy your current inference and collect your real production traces. We set up benchmarks or use your existing ones and test open models against them, show you before-and-afters, and tune your prompts, and the model itself to your preferences until we beat what you run now.",
         },
         {
           text: "We then continue the cycle and ensure an automated RL loop keeps your models getting better over time.",
         },
         {
-          parts: [
-            { text: "We'd be " },
-            {
-              href: "https://cal.com/jsgradiated/30min",
-              text: "happy to help",
-            },
-            { text: " you figure this out." },
-          ],
+          text: "Today, we do this by giving you a self-serve (!) forward deployed researcher. We make money on the inference if you move to your own model, and we aim to be the cheapest in the world at that too...",
         },
       ]}
     />

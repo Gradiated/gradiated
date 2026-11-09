@@ -624,3 +624,32 @@ async fn sends_one_normal_streaming_request_for_a_private_model() {
         request.runtime_model_name.as_ref().unwrap().as_str()
     );
 }
+
+#[tokio::test]
+async fn an_open_output_limit_is_sent_only_to_capped_runtimes() {
+    for (revision, expected) in [
+        ("kimi-k31-d25d7c28cd76", Some(131_072)),
+        ("kimi-k31-capped", None),
+    ] {
+        let runtime = MockRuntime::builder()
+            .json(CHAT, StatusCode::OK, completion())
+            .start()
+            .await;
+        let mut deployment = runtime.deployment();
+        deployment.release.runtime_revision = revision.to_owned();
+        let mut request = chat_request();
+        request.open_output_limit = true;
+
+        client()
+            .complete(&deployment, request, 131_072, deadline(5))
+            .await
+            .unwrap();
+
+        let body = &runtime.requests()[0].body;
+        assert_eq!(
+            body.get("max_completion_tokens").and_then(Value::as_u64),
+            expected,
+            "{revision}"
+        );
+    }
+}

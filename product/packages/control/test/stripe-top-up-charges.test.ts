@@ -80,6 +80,11 @@ describe("Stripe top-up charger", () => {
       amount: 50_000_000_000n,
     });
     expect(onInvoice).toHaveBeenCalledWith("in_123");
+    // A customer whose default currency is not USD still gets a USD invoice.
+    expect(calls.create).toHaveBeenCalledWith(
+      expect.objectContaining({ currency: "usd" }),
+      expect.anything(),
+    );
     expect(calls.item).toHaveBeenCalledWith(
       expect.objectContaining({ amount: 5_000, currency: "usd" }),
       { idempotencyKey: `top-up-charge:${charge().id}:item` },

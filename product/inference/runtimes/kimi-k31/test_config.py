@@ -39,13 +39,18 @@ class Configuration(unittest.TestCase):
         self.assertNotIn('--enable-cache-report', backend)
         self.assertNotIn('--disable-radix-cache', backend)
         self.assertEqual(settings['backend'], 18084)
-        self.assertEqual(router[router.index('--queue-size') + 1], '2')
+        self.assertEqual(router[router.index('--queue-size') + 1], '0')
         self.assertIn('--disable-retries', router)
 
     def test_maximum_output_has_time_for_floor_rate_decode_and_prefill(self):
         _, _, router = config.commands(self.environment)
         timeout = int(router[router.index('--request-timeout-secs') + 1])
-        self.assertGreaterEqual(timeout, math.ceil(131072 / 80) + 600)
+        self.assertGreaterEqual(timeout, math.ceil(config.MAX_OUTPUT_TOKENS / 80) + 600)
+
+    def test_backend_caps_unlimited_requests_at_the_catalog_maximum(self):
+        environment = config.backend_environment({'PATH': '/bin'})
+        self.assertEqual(environment['SGLANG_MAX_NEW_TOKENS_LIMIT'], '131072')
+        self.assertEqual(environment['PATH'], '/bin')
 
     def test_pinned_draft_and_sampling_correctness_geometry(self):
         _, backend, _ = config.commands(self.environment)

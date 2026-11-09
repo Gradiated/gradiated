@@ -57,9 +57,13 @@ seeded, mixed and inverse-mixed rows, before publishing readiness. This warms
 shape-specific kernels before batches shrink or grow during serving.
 
 SMG 1.13.0 supplies the same guarded refused-upload drain fix used by the GLM
-runtime. Its single-worker frontend admits five requests and queues two for
-at most ten seconds, disables retries, and keeps each permit through response
-completion. The gateway routes using the same five-request capacity.
+runtime. Its single-worker frontend admits five requests and queues none: a
+sixth request gets an immediate `429 admission_queue_full`. The gateway retries
+it on the other replica and, if that is full too, returns the capacity error so
+the caller can go elsewhere at once. It disables retries
+and keeps each permit through response completion. The backend runs with
+`SGLANG_MAX_NEW_TOKENS_LIMIT=131072`, because the gateway sends no output limit
+when a caller sets none. The gateway routes using the same five-request capacity.
 Changing that capacity changes the immutable runtime and requires matched
 measurements and requalification.
 
@@ -135,8 +139,8 @@ pods and does not evict running ones.
 The public model is available and advertises text input only. OpenRouter capacity
 is disabled in its catalog configuration (`openrouterModelId: null`), so the
 gateway serves Kimi only through qualified local deployments. If local capacity
-is unavailable, requests receive the existing capacity errors. Prices are $1.80
-per million input tokens, $0.18 per million cached input tokens and $9.00 per
+is unavailable, requests receive the existing capacity errors. Prices are $1.60
+per million input tokens, $0.16 per million cached input tokens and $9.00 per
 million output tokens. There is no separate
 cache-write price: the gateway adds a cache-write price on top of input, so
 cache writes are charged at the input rate. Its initial

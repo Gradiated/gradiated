@@ -82,6 +82,9 @@ export const createStripeTopUpCharger = (stripe: Stripe): TopUpCharger => {
           : await stripe.invoices.create(
               {
                 customer: charge.stripeCustomerId,
+                // Without this Stripe uses the customer's default currency,
+                // which may not be USD, and rejects the USD line item.
+                currency: "usd",
                 collection_method: "charge_automatically",
                 auto_advance: false,
                 pending_invoice_items_behavior: "exclude",

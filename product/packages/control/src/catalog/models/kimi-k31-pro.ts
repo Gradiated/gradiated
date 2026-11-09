@@ -24,8 +24,8 @@ export const createKimiK31ProModelConfiguration = () =>
             max_context_length: { value: 1_048_576, unit: "token" },
           },
           pricing: [
-            { type: "prompt", unit: "token", cost: 1_800 },
-            { type: "cached_prompt", unit: "token", cost: 180 },
+            { type: "prompt", unit: "token", cost: 1_600 },
+            { type: "cached_prompt", unit: "token", cost: 160 },
           ],
         },
       ],
@@ -33,7 +33,9 @@ export const createKimiK31ProModelConfiguration = () =>
         {
           type: "text",
           max_length: { value: 131_072, unit: "token" },
-          default_length: { value: 4_096, unit: "token" },
+          // A request without a limit may use the model maximum. The gateway
+          // sends no limit, so the runtime also stops at the remaining context.
+          default_length: { value: 131_072, unit: "token" },
           streaming: true,
           supported_parameters: {
             temperature: { type: "range", min: 0, max: 2 },
@@ -45,6 +47,12 @@ export const createKimiK31ProModelConfiguration = () =>
             tools: { type: "unknown" },
             tool_choice: { type: "unknown" },
             parallel_tool_calls: { type: "boolean" },
+            // Rendered into the Kimi prompt and, for json_schema, enforced by
+            // the runtime grammar unless `strict` is false.
+            response_format: { type: "unknown" },
+            // Moonshot Partial Mode: `partial: true` on the final assistant
+            // message. The gateway continues that message without reasoning.
+            partial: { type: "boolean" },
             reasoning: { type: "unknown" },
             reasoning_effort: { type: "enum", values: ["low", "high", "max"] },
           },

@@ -140,6 +140,26 @@ describe("GpuHost status", () => {
     });
   });
 
+  it("does not report a failed lease as Degraded: the host never left the pool", () => {
+    const refused = host({
+      rollout: {
+        kind: "lease",
+        target: {
+          image: "image",
+          bundle: { sha256: "b".repeat(64), baseId: "v3" },
+        },
+        step: "Cordon",
+        result: "Failed",
+        startedAt: created,
+        stepStartedAt: created,
+        lastError: "Not leased: the host is reserved",
+      },
+    });
+    const status = hostStatus(refused, { observation: answering }, at(10));
+    expect(status.phase).not.toBe("Degraded");
+    expect(condition(status, "Degraded")?.status).not.toBe("True");
+  });
+
   it("keeps the last real answer when a host goes silent, not the older stored lastSeen", () => {
     const stored = host({
       phase: "Ready",

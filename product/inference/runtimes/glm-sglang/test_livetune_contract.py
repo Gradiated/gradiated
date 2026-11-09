@@ -80,6 +80,20 @@ class LivetuneContract(unittest.TestCase):
         self.assertIn('length', inspect.signature(schedule_batch.FINISH_LENGTH).parameters)
         self.assertIn('custom_params', inspect.signature(sampling_params.SamplingParams).parameters)
 
+    def test_variant_states_build_the_way_sglang_does(self):
+        from sglang.srt.model_executor.model_runner import ModelRunner
+        from sglang.srt.model_executor.runner.decode_cuda_graph_runner import DecodeCudaGraphRunner
+        from sglang.srt.speculative.adaptive_runtime_state import SpecRuntimeState
+        from sglang.srt.speculative.eagle_worker_v2 import EAGLEWorkerV2
+
+        self.assertIn('attn_backend', inspect.signature(DecodeCudaGraphRunner).parameters)
+        self.assertIn('init_new_workspace', inspect.signature(ModelRunner._get_attention_backend).parameters)
+        for name in ('build_adaptive_runtime_state', 'apply_runtime_state', 'forward_batch_generation'):
+            self.assertTrue(callable(getattr(EAGLEWorkerV2, name)), name)
+        fields = {field.name for field in dataclasses.fields(SpecRuntimeState)}
+        self.assertTrue({'draft_attn_backend', 'cuda_graph_runner', 'target_attn_backend', 'target_graph_runner',
+                         'draft_extend_attn_backend', 'cuda_graph_runner_for_draft_extend'} <= fields)
+
     def test_scheduler_and_model_runner_attributes_the_plugin_reads(self):
         import re
         from pathlib import Path

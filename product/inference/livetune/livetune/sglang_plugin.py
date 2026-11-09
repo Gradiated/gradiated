@@ -460,8 +460,9 @@ def _packages_digest() -> str:
 
 
 def _target_states() -> bool:
-    # Servers without speculative decoding switch target-only states instead of recapturing in place.
-    return os.environ.get("LIVETUNE_RECAPTURE", "") == "states"
+    # Servers without speculative decoding switch target-only states. LIVETUNE_RECAPTURE=elastic keeps
+    # SGLang's in-place recapture, which crashed DeepSeek V4 under long contexts by the second round.
+    return os.environ.get("LIVETUNE_RECAPTURE", "states") != "elastic"
 
 
 @dataclasses.dataclass

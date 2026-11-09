@@ -761,6 +761,9 @@ class PluginTest(unittest.TestCase):
 
         os.environ["LIVETUNE_LIVE_VARIANTS"] = "1"
         self.addCleanup(os.environ.pop, "LIVETUNE_LIVE_VARIANTS", None)
+        # These tests exercise the in-place recapture path; target states have their own test.
+        os.environ["LIVETUNE_RECAPTURE"] = "elastic"
+        self.addCleanup(os.environ.pop, "LIVETUNE_RECAPTURE", None)
         self.tuner = sglang_plugin.LiveTuner(self.scheduler)
         self.recaptures = []
         self.tuner._recapture = lambda runner: self.recaptures.append(runner)
@@ -1052,7 +1055,8 @@ class PluginTest(unittest.TestCase):
                 self.tuner.apply("forward_variant", one)
                 self.scheduler.tp_worker.forward_batch_generation("batch-2")
             finally:
-                del os.environ["LIVETUNE_VARIANTS_DIR"], os.environ["LIVETUNE_RECAPTURE"]
+                del os.environ["LIVETUNE_VARIANTS_DIR"]
+                os.environ["LIVETUNE_RECAPTURE"] = "elastic"
                 self.plugin._TargetState.build = saved
         self.assertEqual(built, [2])
         self.assertEqual(self.recaptures, [])  # no in-place recapture

@@ -60,6 +60,8 @@ export const slackChannelName = (company: string) => {
   return `ext-${slug}-gradiated`;
 };
 
+export const GRADIATED_ENGINEER_SLACK_USER_IDS = ["U0BQB2QL1PC", "U0BSUKX7VPB"];
+
 export const createSlackConnect = (
   configuration: { token: string; engineerUserIds: string[] },
   request: typeof fetch = fetch,

@@ -12,50 +12,17 @@ const baseEnvironment = {
 };
 
 describe("API environment", () => {
-  it("keeps Slack Connect disabled by default and validates configured engineer IDs", () => {
-    expect(
-      parseApiEnvironment({ ...baseEnvironment, SLACK_BOT_TOKEN: "" }),
-    ).toMatchObject({
-      SLACK_CONNECT_ENABLED: "false",
-      SLACK_BOT_TOKEN: undefined,
-      SLACK_ENGINEER_USER_IDS: [],
-    });
+  it("treats blank provider secrets as unset", () => {
     expect(
       parseApiEnvironment({
         ...baseEnvironment,
-        SLACK_ENGINEER_USER_IDS: "U123, W456",
-      }).SLACK_ENGINEER_USER_IDS,
-    ).toEqual(["U123", "W456"]);
-    expect(() =>
-      parseApiEnvironment({
-        ...baseEnvironment,
-        SLACK_ENGINEER_USER_IDS: "not-a-member-id",
+        PANDADOC_API_KEY: "",
+        SLACK_BOT_TOKEN: " ",
       }),
-    ).toThrow();
-  });
-  it("leaves embedded NDA signing disabled when PandaDoc credentials are absent or blank", () => {
-    const environment = parseApiEnvironment({
-      ...baseEnvironment,
-      PANDADOC_API_KEY: "",
-      PANDADOC_NDA_TEMPLATE_VERSION: " ",
+    ).toMatchObject({
+      PANDADOC_API_KEY: undefined,
+      SLACK_BOT_TOKEN: undefined,
     });
-    expect(environment.PANDADOC_NDA_ENABLED).toBe("false");
-    expect(environment.PANDADOC_API_KEY).toBeUndefined();
-    expect(environment.PANDADOC_NDA_TEMPLATE_VERSION).toBeUndefined();
-    expect(environment.PANDADOC_NDA_TEMPLATE_ID).toBe("bTmxaYhTaU2tQ28fLhVrHn");
-  });
-  it("defaults the NDA countersigner and accepts an override", () => {
-    expect(parseApiEnvironment(baseEnvironment)).toMatchObject({
-      PANDADOC_NDA_COUNTERSIGNER_COMPANY: "PostHog Inc.",
-      PANDADOC_NDA_COUNTERSIGNER_NAME: "James Hawkins",
-      PANDADOC_NDA_COUNTERSIGNER_TITLE: "Co-CEO",
-    });
-    expect(
-      parseApiEnvironment({
-        ...baseEnvironment,
-        PANDADOC_NDA_COUNTERSIGNER_NAME: " Grace Hopper ",
-      }).PANDADOC_NDA_COUNTERSIGNER_NAME,
-    ).toBe("Grace Hopper");
   });
   it("applies the API-only defaults", () => {
     expect(parseApiEnvironment(baseEnvironment)).toMatchObject({

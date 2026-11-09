@@ -4,8 +4,11 @@ import { createApiAnalytics, createSignupHandler } from "./analytics.js";
 import { createEvaluationModelValidator } from "./catalog/evaluation-models.js";
 import { createTrainingEngine } from "./training/engine.js";
 import { serve } from "@hono/node-server";
-import { createPandaDocNda } from "./legal/pandadoc.js";
-import { createSlackConnect } from "./slack/connect.js";
+import { createPandaDocNda, GRADIATED_NDA_TEMPLATE } from "./legal/pandadoc.js";
+import {
+  createSlackConnect,
+  GRADIATED_ENGINEER_SLACK_USER_IDS,
+} from "./slack/connect.js";
 import { createGithubInstallations } from "./github/installations.js";
 import { createGpuControlApp } from "./gpu-control.js";
 import {
@@ -142,12 +145,7 @@ const createEmailSenders = () => {
       ...resend,
       consoleUrl: environment.CONSOLE_URL,
     }),
-    notifyEngineerOnboarding: environment.ENGINEER_ONBOARDING_NOTIFY_EMAIL
-      ? createResendEngineerOnboardingNotifier({
-          ...resend,
-          to: environment.ENGINEER_ONBOARDING_NOTIFY_EMAIL,
-        })
-      : createLoggingEngineerOnboardingNotifier(),
+    notifyEngineerOnboarding: createResendEngineerOnboardingNotifier(resend),
   };
 };
 
@@ -207,37 +205,21 @@ const validateEvaluationModel = createEvaluationModelValidator(
 
 const app = createApp({
   githubInstallations:
-    environment.GITHUB_INSTALLATIONS_ENABLED === "true" &&
-    environment.GITHUB_CLIENT_ID &&
-    environment.GITHUB_CLIENT_SECRET
+    environment.GITHUB_CLIENT_ID && environment.GITHUB_CLIENT_SECRET
       ? createGithubInstallations()
       : undefined,
-  slackConnect:
-    environment.SLACK_CONNECT_ENABLED === "true" &&
-    environment.SLACK_BOT_TOKEN &&
-    environment.SLACK_ENGINEER_USER_IDS.length
-      ? createSlackConnect({
-          token: environment.SLACK_BOT_TOKEN,
-          engineerUserIds: environment.SLACK_ENGINEER_USER_IDS,
-        })
-      : undefined,
-  ndaDocuments:
-    environment.PANDADOC_NDA_ENABLED === "true" &&
-    environment.PANDADOC_API_KEY &&
-    environment.PANDADOC_NDA_TEMPLATE_ID &&
-    environment.PANDADOC_NDA_TEMPLATE_VERSION
-      ? createPandaDocNda({
-          apiKey: environment.PANDADOC_API_KEY,
-          templateId: environment.PANDADOC_NDA_TEMPLATE_ID,
-          templateVersion: environment.PANDADOC_NDA_TEMPLATE_VERSION,
-          dateField: environment.PANDADOC_NDA_DATE_FIELD,
-          countersigner: {
-            company: environment.PANDADOC_NDA_COUNTERSIGNER_COMPANY,
-            name: environment.PANDADOC_NDA_COUNTERSIGNER_NAME,
-            title: environment.PANDADOC_NDA_COUNTERSIGNER_TITLE,
-          },
-        })
-      : undefined,
+  slackConnect: environment.SLACK_BOT_TOKEN
+    ? createSlackConnect({
+        token: environment.SLACK_BOT_TOKEN,
+        engineerUserIds: GRADIATED_ENGINEER_SLACK_USER_IDS,
+      })
+    : undefined,
+  ndaDocuments: environment.PANDADOC_API_KEY
+    ? createPandaDocNda({
+        apiKey: environment.PANDADOC_API_KEY,
+        ...GRADIATED_NDA_TEMPLATE,
+      })
+    : undefined,
   analytics,
   externalModels,
   allowedOrigins: trustedOrigins,

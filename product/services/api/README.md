@@ -33,27 +33,22 @@ Progress is stored in `organizations.metadata.onboarding` (NDA, submission,
 contact channel) and the `integrations` table (Slack channel, GitHub
 installations); see [DATA_MODEL.md](../../../docs/DATA_MODEL.md).
 
-| Setting                            | Value                                                                            |
-| ---------------------------------- | -------------------------------------------------------------------------------- |
-| `ENGINEER_ONBOARDING_NOTIFY_EMAIL` | Optional team address for submissions, sent through Resend; unset logs a warning |
+Each provider is enabled when its secret is set: `PANDADOC_API_KEY`,
+`SLACK_BOT_TOKEN`, and the existing `GITHUB_CLIENT_ID` and
+`GITHUB_CLIENT_SECRET`. Use a PandaDoc sandbox key locally. Submissions are
+emailed to `team@gradiated.com` through Resend.
 
 ### PandaDoc mutual NDA
 
-| Setting                                           | Value                                                                |
-| ------------------------------------------------- | -------------------------------------------------------------------- |
-| `PANDADOC_NDA_ENABLED`                            | `true` only after the checks below                                   |
-| `PANDADOC_API_KEY`                                | Key from the workspace that owns the template                        |
-| `PANDADOC_NDA_TEMPLATE_ID`                        | Defaults to the approved template; use a separate template for tests |
-| `PANDADOC_NDA_TEMPLATE_VERSION`                   | Approved revision; change it when the legal text changes             |
-| `PANDADOC_NDA_DATE_FIELD`                         | Optional date Merge Field, for example `Agreement.Date`              |
-| `PANDADOC_NDA_COUNTERSIGNER_{COMPANY,NAME,TITLE}` | Pre-filled PostHog party details                                     |
+The template ID, approved version (`GRADIATED_NDA_TEMPLATE` in
+`src/legal/pandadoc.ts`) and the `Agreement.Date` field are constants; bump the
+version when the legal text changes.
 
 The API creates the document, waits for draft readiness, sends it and opens a
 15-minute embedded signing session for the signed-in signer. `details` is null
 while PandaDoc prepares the document. Reading a completed document records it
 as the organization's NDA, replaced only for a new template version. The
-countersigner settings fill the PostHog party (defaults: PostHog Inc., James
-Hawkins, Co-CEO). Document creation is not retried automatically; after an uncertain
+PostHog party is pre-filled as PostHog Inc., James Hawkins, Co-CEO. Document creation is not retried automatically; after an uncertain
 response, check PandaDoc for a draft before creating another.
 
 Template setup:
@@ -68,17 +63,14 @@ Template setup:
    In **Recipient experience → Document completion**, enable completion emails
    with the PDF attached.
 
-Before enabling, test with a sandbox key: create, send, embedded signing,
+Before setting the production key, test with a sandbox key: create, send, embedded signing,
 completion with all parties, a pending countersignature, changed signer
 details, an expired session, cross-organization access and a provider outage.
 
 ### Slack Connect
 
-| Setting                   | Value                                        |
-| ------------------------- | -------------------------------------------- |
-| `SLACK_CONNECT_ENABLED`   | `true` only after the checks below           |
-| `SLACK_BOT_TOKEN`         | Bot token of the internal Slack app          |
-| `SLACK_ENGINEER_USER_IDS` | Comma-separated member IDs added to channels |
+Engineers added to each channel are `GRADIATED_ENGINEER_SLACK_USER_IDS` in
+`src/slack/connect.ts`.
 
 Create an internal app from `slack-app-manifest.json` and install it in the
 Gradiated workspace with the bot scopes `channels:manage`, `channels:read`,
@@ -94,13 +86,13 @@ one invitation per 10 minutes; sooner returns 429 `slack_invitation_cooldown`
 with `Retry-After`. Submission notes are posted as plain-text blocks. Mutating
 Slack calls are not retried automatically.
 
-Before enabling, test channel creation, engineer membership, invitation
+Before setting the production token, test channel creation, engineer membership, invitation
 delivery and acceptance, and an explicit retry with an authorized external
 recipient.
 
 ### GitHub App installation
 
-Set `GITHUB_INSTALLATIONS_ENABLED=true`. Verification reuses the **Gradiated**
+Verification reuses the **Gradiated**
 GitHub App (`gradiated`) OAuth credentials in `gradiated/prod/product/github-auth`;
 confirm they belong to that app. The app needs read-only Contents permission.
 Customers install it from `https://github.com/apps/gradiated/installations/new`.

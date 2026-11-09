@@ -37,14 +37,13 @@ const submission = {
 afterEach(() => vi.restoreAllMocks());
 
 describe("engineer onboarding notification", () => {
-  it("emails the configured team address with escaped customer content", async () => {
+  it("emails the team address with escaped customer content", async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(
       async () => new Response(null, { status: 200 }),
     );
     await createResendEngineerOnboardingNotifier({
       from: "Gradiated <auth@example.com>",
       apiKey: "resend-test-key",
-      to: "team@example.com",
       fetch,
     })({
       organizationId,
@@ -57,13 +56,13 @@ describe("engineer onboarding notification", () => {
     });
 
     const body = JSON.parse(String(fetch.mock.calls[0]?.[1]?.body));
-    expect(body.to).toEqual(["team@example.com"]);
+    expect(body.to).toEqual(["team@gradiated.com"]);
     expect(body.subject).toBe("Engineer onboarding submitted: <Example>");
     expect(body.html).not.toContain("<script>");
     expect(body.text).toContain("<script>alert(1)</script>");
   });
 
-  it("logs a warning when no team address is configured", async () => {
+  it("logs instead of emailing in test mail mode", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     await createLoggingEngineerOnboardingNotifier()({
       organizationId,

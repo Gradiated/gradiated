@@ -136,6 +136,17 @@ const decodeDetails = (metadata: Record<string, unknown>) =>
     }),
   );
 
+export const GRADIATED_NDA_TEMPLATE = {
+  templateId: "bTmxaYhTaU2tQ28fLhVrHn",
+  templateVersion: "1",
+  dateField: "Agreement.Date",
+  countersigner: {
+    company: "PostHog Inc.",
+    name: "James Hawkins",
+    title: "Co-CEO",
+  },
+};
+
 export interface PandaDocConfiguration {
   apiKey: string;
   templateId: string;

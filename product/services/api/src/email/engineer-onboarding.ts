@@ -54,13 +54,13 @@ const noticeContent = (notice: EngineerOnboardingNotice): EmailContent => {
   };
 };
 
+export const ENGINEER_ONBOARDING_EMAIL = "team@gradiated.com";
+
 export const createResendEngineerOnboardingNotifier =
-  (
-    configuration: ResendConfiguration & { to: string },
-  ): EngineerOnboardingNotifier =>
+  (configuration: ResendConfiguration): EngineerOnboardingNotifier =>
   (notice) =>
     sendResendEmail(configuration, {
-      to: configuration.to,
+      to: ENGINEER_ONBOARDING_EMAIL,
       subject: `Engineer onboarding submitted: ${notice.organizationName}`,
       content: noticeContent(notice),
     });
@@ -69,6 +69,6 @@ export const createLoggingEngineerOnboardingNotifier =
   (): EngineerOnboardingNotifier => async (notice) => {
     serviceLog("warn", "engineer_onboarding_notification_skipped", {
       organization_id: notice.organizationId,
-      reason: "notify_email_unset",
+      reason: "test_mail",
     });
   };

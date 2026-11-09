@@ -2,49 +2,14 @@ import { parseEnvironment, type Environment } from "@gradiated/config";
 import { z } from "@hono/zod-openapi";
 
 const PortSchema = z.coerce.number().int().min(1).max(65_535);
-const OptionalPandaDocSetting = z.preprocess(
+const OptionalSecret = z.preprocess(
   (value) => (typeof value === "string" && !value.trim() ? undefined : value),
   z.string().trim().min(1).optional(),
 );
 
 const ApiOnlyEnvironmentSchema = z.object({
-  ENGINEER_ONBOARDING_NOTIFY_EMAIL: z.preprocess(
-    (value) => (typeof value === "string" && !value.trim() ? undefined : value),
-    z.string().trim().toLowerCase().pipe(z.email()).optional(),
-  ),
-  GITHUB_INSTALLATIONS_ENABLED: z.enum(["true", "false"]).default("false"),
-  SLACK_CONNECT_ENABLED: z.enum(["true", "false"]).default("false"),
-  SLACK_BOT_TOKEN: OptionalPandaDocSetting,
-  SLACK_ENGINEER_USER_IDS: z
-    .string()
-    .default("")
-    .transform((value) =>
-      value
-        .split(",")
-        .map((id) => id.trim())
-        .filter(Boolean),
-    )
-    .pipe(z.array(z.string().regex(/^[UW][A-Z0-9]+$/)).max(20)),
-  PANDADOC_API_KEY: OptionalPandaDocSetting,
-  PANDADOC_NDA_TEMPLATE_ID: z
-    .string()
-    .trim()
-    .min(1)
-    .default("bTmxaYhTaU2tQ28fLhVrHn"),
-  PANDADOC_NDA_TEMPLATE_VERSION: OptionalPandaDocSetting,
-  PANDADOC_NDA_DATE_FIELD: OptionalPandaDocSetting,
-  PANDADOC_NDA_ENABLED: z.enum(["true", "false"]).default("false"),
-  PANDADOC_NDA_COUNTERSIGNER_COMPANY: z
-    .string()
-    .trim()
-    .min(1)
-    .default("PostHog Inc."),
-  PANDADOC_NDA_COUNTERSIGNER_NAME: z
-    .string()
-    .trim()
-    .min(1)
-    .default("James Hawkins"),
-  PANDADOC_NDA_COUNTERSIGNER_TITLE: z.string().trim().min(1).default("Co-CEO"),
+  SLACK_BOT_TOKEN: OptionalSecret,
+  PANDADOC_API_KEY: OptionalSecret,
   POSTHOG_KEY: z
     .string()
     .optional()

@@ -259,6 +259,9 @@ class LiveTuner:
             error = exc
         if self._all_ranks_agree(error is None):
             return None
+        # Every rank forgets the attempted state, so a retry builds it again on all of them; a state
+        # cached on some ranks only would send them down different paths at the next switch.
+        self.states.pop(variant_id, None)
         return error or RuntimeError("variant switch failed on another tensor-parallel rank")
 
     def _rebuild(self, variant_id: int) -> None:

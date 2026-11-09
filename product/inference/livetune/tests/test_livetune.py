@@ -999,6 +999,35 @@ class PluginTest(unittest.TestCase):
         self.tuner.on_idle()  # no request comes: the idle scheduler switches
         self.assertEqual((applied[-1], self.tuner.settings["forward_variant"]), ("startup-state", 0))
 
+    def test_a_state_that_failed_on_another_rank_is_forgotten_everywhere(self):
+        class Worker:
+            speculative_num_steps, speculative_num_draft_tokens = 2, 3
+            adaptive_controller = None
+
+            def build_adaptive_runtime_state(this, steps, draft_tokens, cuda_graph_bs=None):
+                return "built"
+
+            def apply_runtime_state(this, state):
+                this.speculative_num_steps = 2
+
+        self.scheduler.draft_worker = Worker()
+        self.scheduler.spec_algorithm = types.SimpleNamespace(is_none=lambda: False)
+        votes = iter([True, False, True, True])  # install agreed, then another rank failed its build
+        self.tuner._all_ranks_agree = lambda ok: next(votes) and ok
+        saved = self.plugin._current_state
+        self.plugin._current_state = lambda w: "startup-state"
+        with tempfile.TemporaryDirectory() as tmp:
+            one = variants.register(tmp, "one", "def install(model, patch, ctx):\n    patch(model, 'value', 2)\n")
+            os.environ["LIVETUNE_VARIANTS_DIR"] = tmp
+            try:
+                self.tuner.apply("forward_variant", one)
+                self.tuner.on_idle()
+            finally:
+                del os.environ["LIVETUNE_VARIANTS_DIR"]
+                self.plugin._current_state = saved
+        self.assertNotIn(one, self.tuner.states)  # a retry builds it again, as the failed rank will
+        self.assertEqual(self.tuner.settings["forward_variant"], 0)
+
     def test_adaptive_speculative_steps_refuse_live_switching(self):
         self.scheduler.spec_algorithm = types.SimpleNamespace(is_none=lambda: False)
         self.scheduler.draft_worker = types.SimpleNamespace(build_adaptive_runtime_state=lambda *a: None, apply_runtime_state=lambda s: None,
@@ -1429,6 +1458,33 @@ class ReplayIsolationTest(unittest.TestCase):
         records = [_record(100.0 + i, prompt=10000, cached=4000 if i % 2 else 0, family="f") for i in range(10)]
         profile = tune.trace_profile(trace.arrivals(records))
         self.assertEqual(profile["shared_prefix"], 0.2)  # 4,000 of 10,000 tokens hit on half the requests
+
+    def test_stream_interval_is_tuned_where_the_server_ends_early_stops_itself(self):
+        def applied_intervals(stops):
+            calls = []
+            server = types.SimpleNamespace(
+                url="http://x", livetune_state=lambda: {"startup": {"max_running_requests": 64, "stream_interval": 1}},
+                livetune_states=lambda: [{"settings": {"stream_interval": 1}, "replay_stops": stops}], fingerprint=lambda: {},
+                info=lambda: {}, apply=lambda settings: calls.append(dict(settings)), flush_cache=lambda: None)
+            early = types.SimpleNamespace(at=0.0, prompt_tokens=2000, output_tokens=8, shared_tokens=0, family=None, temperature=0.7,
+                                          seconds=1.0, cached_tokens=0, priority=None, max_new_tokens=512, stream=True, sampling={})
+
+            async def fake(url, schedule, prompts, name="trace", warm=True, server_stops=False):
+                result = loadgen.PhaseResult(loadgen.Phase(0, 2000, 8, 1.0))
+                result.requests = [loadgen.RequestRecord(0.0, ttft=0.1, tokens=8, decode_tps=100.0)]
+                return result
+
+            saved = (loadgen.run_arrivals, loadgen.prewarm)
+            loadgen.run_arrivals, loadgen.prewarm = fake, lambda *a: None
+            try:
+                cli.tune_policy(server, Slo(50, 5), loadgen.PromptSource(list(range(5000))), {"stream_interval": [4]}, None, [early], 0, 0,
+                                lambda r: None)
+            finally:
+                loadgen.run_arrivals, loadgen.prewarm = saved
+            return {c.get("stream_interval") for c in calls}
+
+        self.assertIn(4, applied_intervals(stops=True))
+        self.assertNotIn(4, applied_intervals(stops=False))
 
     def test_every_measurement_starts_from_a_flushed_cache(self):
         calls = []

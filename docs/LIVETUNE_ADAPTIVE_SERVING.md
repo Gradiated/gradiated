@@ -156,6 +156,13 @@ All of these were measured on DeepSeek V4.1 Flash, TP4, on 4×B300, on SGLang `f
 
   On the replayed 300 s window (822 requests per replay), identity and the two cache-aware schedule orders the advisor proposed (`lpm`, `dfs-weight`) ran within 0.5% of startup throughput (687.8–691.1 tok/s). The run published `dfs-weight` anyway: one failed request in the first startup replay made startup lose every confirmation, because repetitions summed their errors. Errors now merge as a median.
 
+  A rerun with both fixes, on the same replicas and a later window, gated all three correctly:
+  - The Triton copy passed (shift −0.005).
+  - Identity passed (−0.005).
+  - The ×1.05 scale was rejected (−0.068, z = −9.7).
+
+  Stock matched itself on only 4 of 8 greedy prompts, so the scored test decided. On this window startup missed the 8 s TTFT SLO in all three replays (p90 10.5, 8.2 and 8.3 s). `lpm` met it in all three (6.9, 7.3 and 7.4 s) at the same throughput (676–678 tok/s), so `lpm` was published: a confirmed SLO win. Both variants, measured on top of `lpm`, matched it and were not chosen. Production traffic had 0 errors in both runs.
+
   Then a policy carrying the Triton variant for every prompt length was published to the production replica, with the variant's file first deleted from that host:
   - Its controller rewrote the file from the policy within a second.
   - It switched the variant in 42 s after publishing: six 5 s windows of dwell, then 8.3 s to build the variant's runtime state under load.

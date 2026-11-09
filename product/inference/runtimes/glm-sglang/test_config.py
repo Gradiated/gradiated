@@ -123,6 +123,16 @@ class Configuration(unittest.TestCase):
             self.assertIs(config.detect_profile(explicit), explicit)
             run.assert_not_called()
 
+    def test_per_user_speed_buckets_are_fine_where_glm_serves(self):
+        _, backend, _ = config.commands(self.environment)
+        start = backend.index('--bucket-inter-token-latency') + 1
+        edges = [float(v) for v in backend[start:start + len(config.ITL_BUCKETS)]]
+        self.assertEqual(edges, sorted(edges))
+        served = [edge for edge in edges if 0.004 <= edge <= 0.04]
+        self.assertTrue(all(b / a <= 1.051 for a, b in zip(served, served[1:])))
+        self.assertGreaterEqual(served[-1], 0.039)
+        self.assertTrue(backend[start + len(edges)].startswith('--'))
+
     def test_python_entrypoint_has_no_shell_or_external_router(self):
         _, backend, router = config.commands(self.environment)
         self.assertEqual(backend[:3], [str(self.root / 'python/bin/python3'), '-m', 'sglang.launch_server'])

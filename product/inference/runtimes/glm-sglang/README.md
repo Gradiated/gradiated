@@ -199,6 +199,11 @@ The bundle installs the livetune SGLang plugin (`product/inference/livetune`).
   recorded length, exactly, even under speculative decoding; nothing is recorded
   or changed.
 
+SGLang launches with per-request time-per-output-token buckets 5% apart from 4
+to 40 ms (250 to 25 tok/s per user), since the controller and the rollout guard
+read live per-user speed from that histogram. SGLang's default edges are 33–50%
+apart in that range.
+
 The controller is a third child of the service. Its exit never stops SGLang or
 SMG; the service restarts it after 30 s, doubling to 10 minutes while it keeps
 failing. It logs every change and a heartbeat every 5 minutes. A policy is part

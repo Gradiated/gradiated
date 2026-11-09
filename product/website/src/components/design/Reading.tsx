@@ -110,7 +110,9 @@ export const Reading = ({
             <p className="gr-read-author">
               {author}
               {authorTitle ? (
-                <span className="gr-read-author-title">{authorTitle}</span>
+                <span className="gr-label gr-read-author-title">
+                  {authorTitle}
+                </span>
               ) : null}
             </p>
           ) : null}

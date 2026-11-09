@@ -21,7 +21,6 @@
 }
 
 .sf {
-  --sf-sft: var(--color-kiln-500);
   --sf-plot-h: 10rem;
 
   margin-inline: 0;
@@ -85,12 +84,11 @@
 .sf-fill {
   height: calc(var(--h) * 100%);
   border-radius: var(--radius-md) var(--radius-md) 0 0;
-  background: color-mix(in srgb, var(--sf-sft) 55%, transparent);
+  background: var(--color-cloud-azure);
 }
 
 .sf-bar--base .sf-fill {
-  background: var(--color-text-muted);
-  opacity: 0.45;
+  background: var(--color-cloud-sky);
 }
 
 .sf-value {

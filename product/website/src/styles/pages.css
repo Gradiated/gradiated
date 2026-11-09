@@ -2545,8 +2545,8 @@
   line-height: 1.3;
 }
 
-.gr-read-author-title {
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+.gr-root .gr-read-author-title {
+  line-height: 1.3;
 }
 
 .gr-read-sections {

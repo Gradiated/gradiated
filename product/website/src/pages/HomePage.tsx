@@ -198,7 +198,7 @@ const products = [
     features: [
       "Learn from real production traces",
       "Evaluations built around your tasks",
-      "Served through the same API",
+      "Get your own model weights. Served through the same API",
     ],
     action: "Contact us to set up",
     href: "https://cal.com/jsgradiated/30min",
@@ -554,7 +554,7 @@ const InferenceExample = (): ReactElement => {
 const RL_STEPS = [
   "Production traces",
   "Evaluations + RL",
-  "Your post-trained model",
+  "Own the weights to your own post-trained model",
 ];
 
 /** A 3x3 field of square dies; `lit` of them are on. The matrix fills as
@@ -575,9 +575,6 @@ const RlExample = (): ReactElement => {
   const active = useCycle(RL_STEPS.length, 1800);
   return (
     <div className="gr-rl-example">
-      <span className="gr-example-caption">
-        Your workload is the training data
-      </span>
       {RL_STEPS.map((step, stepIndex) => (
         <div
           className="gr-rl-step"

@@ -16,6 +16,10 @@ export interface CatalogService {
     name: string;
     status: ModelRecord["status"];
     properties: ModelPropertiesInput;
+    /** Omitted means OpenRouter cannot serve the model. */
+    openrouterModelId?: string | null;
+    /** A Hugging Face tokenizer at a commit, for counting without a deployment. */
+    tokenizer?: { path: string; revision: string } | null;
   }): Promise<ModelRecord>;
   upsertModelDeployment(input: {
     id: string;

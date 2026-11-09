@@ -39,7 +39,10 @@ async fn qualifies_the_complete_pre_admission_request() {
     assert_eq!(request.pricing.prompt(), 150);
     assert_eq!(request.pricing.cached_prompt(), 75);
     assert_eq!(request.pricing.completion(), 300);
-    assert!(request.served_release_digest.starts_with("sha256:"));
+    assert!(request
+        .local_capacity()
+        .release_digest
+        .starts_with("sha256:"));
     assert_eq!(
         *state.calls.lock().unwrap(),
         ["credential", "workspace", "account", "model"]
@@ -403,13 +406,21 @@ async fn a_rollout_keeps_a_healthy_release_until_its_replacement_is_ready() {
         let qualified = qualify_chat(Arc::new(state), CHAT_BODY).await.unwrap();
         if expected_revision != "either" {
             assert_eq!(
-                qualified.deployment.release.runtime_revision,
+                qualified
+                    .local_capacity()
+                    .deployment
+                    .release
+                    .runtime_revision,
                 expected_revision
             );
         }
         assert_eq!(
-            qualified.served_release_digest,
-            qualified.deployment.served_release_digest().unwrap()
+            qualified.local_capacity().release_digest,
+            qualified
+                .local_capacity()
+                .deployment
+                .served_release_digest()
+                .unwrap()
         );
         assert_eq!(qualified.request.model, "model-a");
     }
@@ -686,4 +697,70 @@ async fn release_choice_follows_the_reported_active_request_limits() {
         "{}",
         share(large[1])
     );
+}
+
+#[tokio::test]
+async fn partial_mode_applies_only_to_models_that_declare_it() {
+    const PARTIAL: &[u8] = br#"{"model":"model-a","messages":[{"role":"user","content":"hi"},{"role":"assistant","content":"Once","partial":true}],"partial":true}"#;
+    const MISPLACED: &[u8] =
+        br#"{"model":"model-a","messages":[{"role":"user","content":"hi","partial":true}]}"#;
+
+    let ignored = qualify_chat(Arc::new(TestServingState::ready()), PARTIAL)
+        .await
+        .unwrap();
+    assert!(!ignored.request.continue_final_message);
+    assert!(qualify_chat(Arc::new(TestServingState::ready()), MISPLACED)
+        .await
+        .is_ok());
+
+    let declaring = || {
+        let mut state = TestServingState::ready();
+        state.model.as_mut().unwrap().properties.output_modalities[0]
+            .supported_parameters
+            .insert(
+                "partial".to_owned(),
+                serde_json::from_value(serde_json::json!({"type": "boolean"})).unwrap(),
+            );
+        Arc::new(state)
+    };
+    const MESSAGE_ONLY: &[u8] = br#"{"model":"model-a","messages":[{"role":"user","content":"hi"},{"role":"assistant","content":"Once","partial":true}]}"#;
+    let partial = qualify_chat(declaring(), MESSAGE_ONLY).await.unwrap();
+    assert!(partial.request.continue_final_message);
+    assert!(qualify_chat(declaring(), MISPLACED).await.is_err());
+    // Body-level `partial` is not Partial Mode, so it must not look honoured.
+    assert!(qualify_chat(declaring(), PARTIAL).await.is_err());
+}
+
+#[tokio::test]
+async fn only_open_limit_models_leave_an_unset_output_limit_to_the_runtime() {
+    let kimi = || {
+        let mut state = TestServingState::ready();
+        state.model.as_mut().unwrap().id = "moonshotai/kimi-k3.1-pro".to_owned();
+        Arc::new(state)
+    };
+    const UNSET: &[u8] = br#"{"model":"moonshotai/kimi-k3.1-pro","messages":[{}]}"#;
+    const SET: &[u8] = br#"{"model":"moonshotai/kimi-k3.1-pro","messages":[{}],"max_tokens":64}"#;
+
+    let open = qualify_chat(kimi(), UNSET).await.unwrap();
+    assert!(open.request.open_output_limit);
+    assert_eq!(open.effective_output_tokens, 1_024);
+    let body = open
+        .request
+        .into_upstream_body_for_model(open.effective_output_tokens, None);
+    assert!(body.get("max_completion_tokens").is_none());
+
+    let set = qualify_chat(kimi(), SET).await.unwrap();
+    assert!(!set.request.open_output_limit);
+    let body = set
+        .request
+        .into_upstream_body_for_model(set.effective_output_tokens, None);
+    assert_eq!(body["max_tokens"], 64);
+
+    let other = qualify_chat(
+        Arc::new(TestServingState::ready()),
+        br#"{"model":"model-a","messages":[{}]}"#,
+    )
+    .await
+    .unwrap();
+    assert!(!other.request.open_output_limit);
 }

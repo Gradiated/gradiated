@@ -1,0 +1,865 @@
+/* The two-layer rail nav — ported from the /home-experiment lab with
+   its tuning intact: 248px rail (68px padding both sides of a 112px
+   content column), 15px links, critically-damped sheet slide, 4:5
+   poster cards, models on the card grid. The base layer is ALWAYS ink;
+   the sheet carries the page's own theme. */
+
+.gr-rail-root {
+  --rail-w: 264px;
+  /* The whole nav layer sits on zinc-900; in the dark theme the page
+     content sits deeper, on the 950 substrate. */
+  --rail-ink: #18181b;
+  --rail-panel: #18181b;
+  --rail-under-pad: clamp(40px, 6vw, 120px);
+  --rail-under-gap: clamp(24px, 3vw, 56px);
+  /* Poster cards shrink with the viewport HEIGHT so a reveal fits a
+     laptop screen whole rather than scrolling inside the drawer. */
+  --rail-card: clamp(140px, calc((100vh - 600px) / 1.3), 250px);
+  --rail-content: calc(2 * var(--rail-card) + var(--rail-under-gap));
+  --rail-shift: min(
+    calc(var(--rail-content) + 2 * var(--rail-under-pad)),
+    calc(100vw - var(--rail-w) - 120px)
+  );
+}
+
+/* The lattice sizes --u on PAGE roots only; the shell's would fall to
+   the CSS fallback (7px on a phone) and shrink every rail rule built on
+   the unit. The rail is a fixed 24-unit design. Double-scoped to beat
+   tokens.css's own .gr-root declaration. */
+.gr-root.gr-rail-root {
+  --u: 24px;
+}
+
+/* -- layer 1: the base ----------------------------------------------------- */
+
+.gr-rail-base {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: var(--rail-w) minmax(0, 1fr);
+  /* Doc mode widens the rail; the column eases in step with the
+     sheet's own glide so the two surfaces move as one. */
+  transition: grid-template-columns 0.65s cubic-bezier(0.65, 0, 0.15, 1);
+  background: var(--rail-panel);
+}
+
+/* Doc mode: a wider panel, so a TOC breathes. */
+.gr-rail-root[data-doc] {
+  --rail-w: 340px;
+}
+
+.gr-rail-rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 64px 68px;
+  background: var(--rail-ink);
+  border-right: 1px solid #27272a;
+  overflow: hidden;
+}
+
+.gr-rail-wordmark {
+  transition:
+    transform 0.65s cubic-bezier(0.65, 0, 0.15, 1),
+    opacity 0.4s ease;
+}
+
+.gr-rail-wordmark img {
+  height: min(680px, calc(100vh - 560px));
+  min-height: 160px;
+  width: auto;
+  display: block;
+  /* A white-filled asset, NOT an inverted ink one: iOS rasterises a
+     filtered <img> at 1x and the mark blurs on a 3x screen. */
+}
+
+/* Doc mode: the wordmark leaves the stage left; nav + CTA slide-fade
+   with it, keeping their hit area only until the fade completes. */
+.gr-rail-root[data-doc] .gr-rail-wordmark {
+  position: absolute;
+  top: 64px;
+  left: 68px;
+  transform: translateX(-220%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gr-rail-nav,
+.gr-rail-cta {
+  transition:
+    transform 0.65s cubic-bezier(0.65, 0, 0.15, 1),
+    opacity 0.35s ease,
+    visibility 0s 0.65s;
+}
+
+.gr-rail-root[data-doc] .gr-rail-nav,
+.gr-rail-root[data-doc] .gr-rail-cta {
+  transform: translateX(-80px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+  bottom: 64px;
+  left: 68px;
+}
+
+/* "Back", above the wordmark: the site's chevron-to-arrow turned, with
+   the index's name in caps. Registered by the page via useRailBack. */
+.gr-rail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: start;
+  margin-bottom: 28px;
+  color: #d4d4d8;
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.gr-rail-back:hover {
+  color: #fafafa;
+}
+
+.gr-rail-back .gr-arrow {
+  rotate: 180deg;
+  margin-inline-end: -0.38em;
+}
+
+.gr-rail-back:hover .gr-arrow {
+  translate: -0.15em 0;
+}
+
+.gr-rail-back:hover .gr-arrow-shaft {
+  stroke-dashoffset: 0;
+}
+
+/* The incoming doc chrome waits for the outgoing to clear. */
+/* Back control and the page's name on one line: <- G Handbook. */
+.gr-rail-dochead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: start;
+  margin-bottom: 40px;
+  text-decoration: none;
+  animation: gr-rail-in 0.5s 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+}
+
+.gr-rail-doctitle {
+  font-family: var(--font-title);
+  /* Sized so the longest title (Sand to Thought) holds ONE line beside
+     the arrow and glyph — the lockup must never wrap. */
+  font-size: 19px;
+  font-weight: 650;
+  white-space: nowrap;
+  color: #fafafa;
+}
+
+.gr-rail-docback {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #fafafa;
+}
+
+/* The arrow's box is square but its chevron ink sits mid-box, and the
+   180-degree turn puts ALL the empty box on the glyph's side — about
+   10px of invisible slack. Pull the box in so the VISUAL gap is the
+   8px the eye expects. */
+.gr-rail-docback .gr-arrow {
+  margin-inline-end: -0.38em;
+}
+
+.gr-rail-docback .gr-arrow {
+  rotate: 180deg;
+  width: 1.2em;
+  height: 1.2em;
+}
+
+.gr-rail-docback:hover .gr-arrow {
+  translate: -0.15em 0;
+}
+
+.gr-rail-docback:hover .gr-arrow-shaft {
+  stroke-dashoffset: 0;
+}
+
+.gr-rail-docnav {
+  display: grid;
+  gap: 28px;
+  align-content: start;
+  overflow-y: auto;
+  animation: gr-rail-in 0.5s 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+}
+
+.gr-rail-docnav-group {
+  display: grid;
+  gap: 8px;
+}
+
+.gr-rail-docnav-title {
+  font-family: var(--font-caps);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #71717a;
+  margin-bottom: 2px;
+}
+
+.gr-rail-docnav a {
+  position: relative;
+  /* A gutter for the active chip, held by every item so nothing
+     shifts when the selection moves. */
+  padding-left: 16px;
+  color: #d4d4d8;
+  font-size: 15px;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+/* The chip: a die on the rail, lit when its page is open. Square,
+   like every container in the system. */
+.gr-rail-docnav a::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: 0 -50%;
+  width: 7px;
+  height: 7px;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+.gr-rail-docnav a[data-sub] {
+  padding-left: 30px;
+  font-size: 13px;
+}
+
+.gr-rail-docnav a:hover {
+  color: #fafafa;
+}
+
+.gr-rail-docnav a[data-active] {
+  color: var(--color-cloud-lavender);
+}
+
+.gr-rail-docnav a[data-active]::before {
+  background: var(--color-cloud-lavender);
+}
+
+.gr-rail-nav {
+  display: grid;
+  gap: 22px;
+  margin-top: auto;
+  padding-block: 44px;
+}
+
+.gr-rail-link {
+  color: #d4d4d8;
+  font-size: 15px;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    color 0.2s ease,
+    transform 0.3s ease;
+}
+
+.gr-rail-link[data-hot],
+.gr-rail-link:hover {
+  color: #ffffff;
+}
+
+.gr-rail-link[data-hot] {
+  transform: translateX(6px);
+}
+
+/* Light / dark: one icon button — a moon on the light theme, a sun on
+   the dark. On desktop it is PINNED to the rail's bottom-left corner,
+   out of the flow, so it holds still whatever the rail is showing —
+   the nav, or a doc-mode contents list of any length. */
+.gr-rail-rail .gr-rail-theme {
+  position: absolute;
+  top: 56px;
+  right: 24px;
+}
+
+.gr-rail-theme {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: #a1a1aa;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.gr-rail-theme:hover {
+  color: #fafafa;
+}
+
+.gr-rail-theme .gr-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* The system's primary button, in the base layer's dark set: same
+   metrics and voice as .gr-button everywhere else. */
+.gr-rail-cta {
+  display: inline-flex;
+  align-self: start;
+  align-items: center;
+  gap: 0.6em;
+  padding: calc(0.4 * var(--u)) var(--u);
+  white-space: nowrap;
+  border-radius: var(--radius);
+  background: #fafafa;
+  color: #09090b;
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: opacity var(--dur-fast) var(--ease-response);
+}
+
+.gr-rail-cta:hover {
+  opacity: 0.85;
+}
+
+.gr-rail-cta .gr-arrow {
+  margin-inline-start: -0.25em;
+}
+
+.gr-rail-cta:hover .gr-arrow {
+  translate: 0.15em 0;
+}
+
+.gr-rail-cta:hover .gr-arrow-shaft {
+  stroke-dashoffset: 0;
+}
+
+/* -- the reveal body -------------------------------------------------------- */
+
+.gr-rail-under {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(32px, 6vh, 64px) var(--rail-under-pad);
+  color: #fafafa;
+  /* Taller reveals scroll internally — stretching the base shifts the
+     nav under the cursor and oscillates the peek. */
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+/* Doubled scope: the shell root is a .gr-root (for tokens), so the
+   site's own heading resets reach in here and win on specificity. */
+.gr-rail-root .gr-rail-under-title {
+  margin: 0 0 clamp(20px, 4vh, 40px);
+  max-width: min(16ch, var(--rail-content));
+  font-family: var(--font-title);
+  font-size: clamp(26px, 2.6vw, 40px);
+  font-weight: 650;
+  line-height: 1.06;
+  animation: gr-rail-in 0.5s 0.15s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+}
+
+.gr-rail-under-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, var(--rail-card)));
+  gap: var(--rail-under-gap);
+}
+
+.gr-rail-under-card {
+  display: grid;
+  gap: 8px;
+  color: #fafafa;
+  text-decoration: none;
+  animation: gr-rail-in 0.5s 0.25s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+}
+
+.gr-rail-under-art {
+  position: relative;
+  display: block;
+  aspect-ratio: 542 / 677;
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 8px;
+  transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.gr-rail-under-card:hover .gr-rail-under-art {
+  transform: translateY(-6px);
+}
+
+.gr-rail-under-art[data-framed] {
+  border: 1px solid #202020;
+}
+
+.gr-rail-under-art > img,
+.gr-rail-under-art > video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+/* The site's text-link gesture, driven from the whole card. */
+.gr-rail-under-name {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  justify-self: start;
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.gr-rail-under-name::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.15em;
+  height: 1px;
+  background: currentColor;
+  transform-origin: left;
+  scale: 0 1;
+  transition: scale var(--dur-base) var(--ease-response);
+}
+
+.gr-rail-under-card:hover .gr-rail-under-name::after {
+  scale: 1 1;
+}
+
+.gr-rail-under-card:hover .gr-arrow {
+  translate: 0.15em 0;
+}
+
+.gr-rail-under-card:hover .gr-arrow-shaft {
+  stroke-dashoffset: 0;
+}
+
+.gr-rail-under-blurb {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: #a1a1aa;
+}
+
+/* -- the models rail -------------------------------------------------------- */
+
+.gr-rail-under-rule {
+  border: none;
+  border-top: 1px solid #27272a;
+  max-width: var(--rail-content);
+  margin: clamp(24px, 5vh, 56px) 0 0;
+}
+
+.gr-rail-models-lede {
+  align-self: flex-start;
+  margin: clamp(16px, 3vh, 32px) 0 18px;
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 500;
+  color: #fafafa;
+}
+
+.gr-rail-models {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, var(--rail-card)));
+  gap: 20px var(--rail-under-gap);
+}
+
+.gr-rail-model {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #d4d4d8;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.gr-rail-model:hover {
+  color: #fafafa;
+}
+
+.gr-rail-model:hover .gr-arrow {
+  translate: 0.15em 0;
+}
+
+.gr-rail-model:hover .gr-arrow-shaft {
+  stroke-dashoffset: 0;
+}
+
+.gr-rail-model-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+}
+
+.gr-rail-model-tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  flex: none;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.gr-rail-model-tile img {
+  width: 22px;
+  height: 22px;
+}
+
+.gr-rail-model-initial {
+  font-family: var(--font-title);
+  font-size: 24px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+/* The exit mirrors the entrance: the doc chrome slides out the way the
+   wordmark left, while the rail eases back underneath it. */
+.gr-rail-dochead[data-leaving],
+.gr-rail-docnav[data-leaving] {
+  animation: gr-rail-out 0.3s cubic-bezier(0.65, 0, 0.15, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes gr-rail-out {
+  to {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+}
+
+@keyframes gr-rail-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* -- layer 2: the sheet ----------------------------------------------------- */
+
+.gr-rail-sheet {
+  /* The sheet IS the viewport for everything inside it: full-bleed
+     tricks must use this, not 100vw, or they mis-centre by half the
+     rail (the fold shifted 32px before this existed). */
+  --bleed-w: calc(100vw - var(--rail-w));
+  /* Legacy sheets cap `main`; the sheet is the whole second layer. */
+  max-width: none;
+  position: relative;
+  z-index: 2;
+  margin-left: var(--rail-w);
+  min-height: 100vh;
+  background: var(--color-substrate);
+  box-shadow: -24px 0 60px rgba(0, 0, 0, 0.35);
+  /* Pages carry 100vw full-bleed layers; clip them to the sheet. */
+  overflow-x: clip;
+  /* A block formatting context: no child margin can collapse through
+     the sheet and open a gap to the layer behind it. */
+  display: flow-root;
+  /* ONE declaration — a second transition line replaces the first. */
+  transition:
+    transform 0.5s cubic-bezier(0.3, 0, 0.06, 1),
+    margin-left 0.65s cubic-bezier(0.65, 0, 0.15, 1);
+}
+
+.gr-rail-root[data-peek] .gr-rail-sheet {
+  transform: translateX(var(--rail-shift));
+}
+
+/* -- narrow: strip + slide-over menu ---------------------------------------- */
+
+.gr-rail-strip,
+.gr-rail-menu {
+  display: none;
+}
+
+@media (max-width: 60rem) {
+  .gr-rail-base {
+    display: none;
+  }
+
+  .gr-rail-sheet,
+  .gr-rail-root[data-peek] .gr-rail-sheet {
+    --bleed-w: calc(100vw - 64px);
+    margin-left: 64px;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .gr-rail-strip {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 64px;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0 24px;
+    background: var(--rail-ink);
+    border-right: 1px solid #27272a;
+  }
+
+  .gr-rail-strip-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .gr-rail-strip-back {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 32px;
+    color: #fafafa;
+  }
+
+  .gr-rail-strip-back .gr-arrow {
+    rotate: 180deg;
+    width: 1.2em;
+    height: 1.2em;
+  }
+
+  .gr-rail-strip-mark img {
+    width: 24px;
+    display: block;
+  }
+
+  .gr-rail-burger {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: transparent;
+    color: #fafafa;
+    cursor: pointer;
+  }
+
+  .gr-rail-burger-bar {
+    position: absolute;
+    left: 11px;
+    right: 11px;
+    height: 2px;
+    border-radius: 1px;
+    background: currentColor;
+    top: calc(50% - 1px);
+    transition:
+      translate var(--dur-base) var(--ease-response),
+      rotate var(--dur-base) var(--ease-response);
+  }
+
+  .gr-rail-burger-bar:first-child {
+    translate: 0 -0.25rem;
+  }
+
+  .gr-rail-burger-bar:last-child {
+    translate: 0 0.25rem;
+  }
+
+  .gr-rail-burger[aria-expanded="true"] .gr-rail-burger-bar {
+    translate: 0 0;
+  }
+
+  .gr-rail-burger[aria-expanded="true"] .gr-rail-burger-bar:first-child {
+    rotate: 45deg;
+  }
+
+  .gr-rail-burger[aria-expanded="true"] .gr-rail-burger-bar:last-child {
+    rotate: -45deg;
+  }
+
+  /* The menu is the BASE layer; opening slides the sheet aside with
+     the same damped gesture as the desktop peek. */
+  .gr-rail-menu {
+    position: fixed;
+    inset: 0 0 0 64px;
+    z-index: 1;
+    background: var(--rail-panel);
+    color: #fafafa;
+    display: flex;
+    align-items: stretch;
+    overflow-y: auto;
+    /* The items start near the top — the panel is a list, not a hero. */
+    padding: 20px 76px 32px 28px;
+  }
+
+  .gr-rail-root[data-menu] .gr-rail-sheet {
+    transform: translateX(calc(100vw - 64px - 48px));
+  }
+
+  /* A column: items, then the CTA pinned to the foot via margin-top
+     auto, so it sits where a thumb lands. */
+  .gr-rail-menu nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+    min-height: 100%;
+  }
+
+  /* Nothing in the column shrinks — the toggle was squashed to 2px. */
+  .gr-rail-menu nav > * {
+    flex: none;
+  }
+
+  /* Every item row the same height, label centred in it. */
+  /* Equal padding above and below every label, so each sits centred
+     between its rules. */
+  .gr-rail-menu nav .gr-rail-menu-item > a,
+  .gr-rail-menu-section button {
+    min-height: 92px;
+    padding-block: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .gr-rail-menu nav .gr-rail-menu-item > a {
+    color: #fafafa;
+    font-family: var(--font-body);
+    font-size: 26px;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .gr-rail-menu-rule {
+    border: none;
+    border-top: 1px solid #27272a;
+    margin: 0;
+  }
+
+  .gr-rail-menu-section button {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #fafafa;
+    font-family: var(--font-body);
+    font-size: 26px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .gr-rail-menu-section button .gr-arrow {
+    transition: rotate 0.45s cubic-bezier(0.65, 0, 0.15, 1);
+  }
+
+  .gr-rail-menu-section button[aria-expanded="true"] .gr-arrow {
+    rotate: 90deg;
+  }
+
+  .gr-rail-menu-reveal {
+    margin-top: 20px;
+    animation: gr-rail-in 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+  }
+
+  .gr-rail-menu-reveal .gr-rail-under-title {
+    display: none;
+  }
+
+  .gr-rail-menu-reveal .gr-rail-under-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .gr-rail-menu-reveal .gr-rail-under-name {
+    font-size: 16px;
+  }
+
+  .gr-rail-menu-reveal .gr-rail-under-blurb {
+    font-size: 13px;
+  }
+
+  .gr-rail-menu-reveal .gr-rail-models {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .gr-rail-menu-reveal .gr-rail-models-lede {
+    /* Blockified: an inline anchor ignores vertical margins, and the
+       menu reveal is a block container (the desktop reveal is flex). */
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    font-size: 16px;
+    margin: 28px 0 16px;
+  }
+
+  .gr-rail-menu-reveal .gr-rail-models {
+    padding-bottom: 32px;
+  }
+
+  .gr-rail-menu-reveal .gr-rail-under-rule {
+    margin-top: 24px;
+  }
+
+  .gr-rail-strip-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .gr-rail-strip .gr-rail-theme {
+    margin: 0;
+  }
+
+  .gr-rail-menu-cta {
+    display: inline-flex;
+    justify-content: center;
+    align-self: stretch;
+    margin-top: auto;
+    /* Room under the thumb: the CTA does not kiss the screen's edge. */
+    margin-bottom: 28px;
+    padding: calc(0.6 * var(--u)) var(--u);
+    border-radius: var(--radius);
+    background: #fafafa;
+    color: #09090b;
+    font-family: var(--font-caps);
+    font-size: var(--text-caps);
+    font-weight: var(--weight-caps);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-rail-sheet,
+  .gr-rail-under-title,
+  .gr-rail-under-card,
+  .gr-rail-menu-reveal {
+    transition: none;
+    animation: none;
+  }
+}

@@ -11,7 +11,6 @@
     "tools/gpu/*",
     "product/inference/gpu/*",
     "infra/environments/prod/us-east-1/kubernetes/gpu-inference/*",
-    "tools/models/model-replica-rules.mjs",
     "infra/environments/prod/us-east-1/kubernetes/workloads/observability/model-replica-rules.yaml",
     "infra/environments/prod/us-east-1/kubernetes/platform/gpu-fleet.yaml",
     "infra/environments/prod/us-east-1/kubernetes/platform/gpu-models.yaml",

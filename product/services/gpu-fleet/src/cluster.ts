@@ -3,6 +3,12 @@ import { z } from "zod";
 import { hostName, NODES, PODS, ROLLOUTS, SCALED_OBJECTS } from "./hosts.js";
 import { CORDONED_BY } from "./drain.js";
 import type { Kubernetes } from "./kubernetes.js";
+import {
+  podPlacementSchema,
+  POD_NAMESPACE,
+  type PodPlacement,
+  type NodePlacement,
+} from "./placement.js";
 
 const MODEL_LABEL = "app.kubernetes.io/name";
 const QUALIFIED_RUNTIME = "gradiated.com/qualified-runtime";
@@ -19,6 +25,7 @@ const podSchema = z.object({
   metadata: z.object({
     name: z.string(),
     uid: z.string(),
+    namespace: z.string().nullish(),
     labels: z.record(z.string(), z.string()).nullish(),
     annotations: z.record(z.string(), z.string()).nullish(),
     deletionTimestamp: z.string().nullish(),
@@ -28,6 +35,7 @@ const podSchema = z.object({
   }),
   spec: z
     .object({
+      ...podPlacementSchema.shape,
       nodeName: z.string().nullish(),
       containers: z
         .array(
@@ -66,12 +74,16 @@ const podSchema = z.object({
 export type ClusterPod = {
   name: string;
   uid: string;
+  namespace?: string;
+  labels?: Record<string, string>;
   model?: string;
+  modelId?: string;
   training: boolean;
   node?: string;
   ready: boolean;
   terminating: boolean;
   gpus: number;
+  placement?: PodPlacement;
   // Since when the scheduler has found no node for it.
   unschedulableSince?: string;
   qualifiedRuntime?: string;
@@ -106,9 +118,16 @@ export const clusterPod = (item: unknown): ClusterPod | undefined => {
     status?.conditions?.find((entry) => entry.type === type);
   const scheduled = condition("PodScheduled");
   const incarnation = status?.containerStatuses?.[0]?.containerID;
+  const modelId =
+    metadata.annotations?.["gradiated.com/serving-model-id"] ??
+    metadata.annotations?.["gradiated.com/model-id"];
+  const placement = podPlacementSchema.parse(spec ?? {});
   return {
     name: metadata.name,
     uid: metadata.uid,
+    namespace: metadata.namespace ?? POD_NAMESPACE,
+    labels: metadata.labels ?? {},
+    ...(modelId && { modelId }),
     ...(metadata.labels?.[MODEL_LABEL] &&
       metadata.ownerReferences?.some(
         (owner) => owner.kind === "ReplicaSet",
@@ -130,6 +149,9 @@ export const clusterPod = (item: unknown): ClusterPod | undefined => {
         ),
       0,
     ),
+    ...(Object.values(placement).some((value) => value != null) && {
+      placement,
+    }),
     ...(scheduled?.status === "False" &&
       scheduled.reason === "Unschedulable" && {
         unschedulableSince: scheduled.lastTransitionTime ?? "",
@@ -147,7 +169,10 @@ export const clusterPod = (item: unknown): ClusterPod | undefined => {
 const selector = (key: string, value: string) =>
   encodeURIComponent(`${key}=${value}`);
 
-export type NodeState = { ready: boolean; unschedulable: boolean };
+export type NodeState = NodePlacement & {
+  ready: boolean;
+  unschedulable: boolean;
+};
 
 // The value of the drain's CORDONED_BY marker for a rollout's cordon.
 export const ROLLOUT_CORDON = "gpu-fleet-rollout";
@@ -182,7 +207,11 @@ export const createCluster = (
     node: async (instanceId: string): Promise<NodeState | undefined> => {
       const node = (await api.get(nodePath(instanceId))) as
         | {
-            spec?: { unschedulable?: boolean };
+            metadata?: { name?: string; labels?: Record<string, string> };
+            spec?: {
+              unschedulable?: boolean;
+              taints?: NodePlacement["taints"];
+            };
             status?: { conditions?: { type: string; status: string }[] };
           }
         | undefined;
@@ -193,6 +222,9 @@ export const createCluster = (
           node.status?.conditions?.find((entry) => entry.type === "Ready")
             ?.status === "True",
         unschedulable: Boolean(node.spec?.unschedulable),
+        ...(node.metadata?.name && { name: node.metadata.name }),
+        labels: node.metadata?.labels ?? {},
+        taints: node.spec?.taints ?? [],
       };
     },
 

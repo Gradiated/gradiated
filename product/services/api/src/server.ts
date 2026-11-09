@@ -174,11 +174,10 @@ const auth = createAuthService(database, {
 const metrics = new ApiMetrics();
 
 const trainingEngine = createTrainingEngine(process.env);
-const adapterDownloads = createAdapterDownloads(
-  environment.TRAINING_ARTIFACTS_BUCKET
-    ? new ObjectStorage(environment.TRAINING_ARTIFACTS_BUCKET)
-    : undefined,
-);
+const artifactStorage = environment.TRAINING_ARTIFACTS_BUCKET
+  ? new ObjectStorage(environment.TRAINING_ARTIFACTS_BUCKET)
+  : undefined;
+const adapterDownloads = createAdapterDownloads(artifactStorage);
 
 const externalModels = createExternalModelCatalog();
 const validateEvaluationModel = createEvaluationModelValidator(
@@ -226,6 +225,7 @@ const app = createApp({
       adapterDownloads,
       trainingEngine.engine,
       validateEvaluationModel,
+      artifactStorage,
     ),
   },
 });
@@ -237,9 +237,6 @@ const server = serve({
   // Keep backend connections open beyond the public ALB's 660-second idle timeout.
   serverOptions: { keepAliveTimeout: 670_000 },
 });
-const runtimeBundleStorage = environment.TRAINING_ARTIFACTS_BUCKET
-  ? new ObjectStorage(environment.TRAINING_ARTIFACTS_BUCKET)
-  : undefined;
 const gpuControlServer = environment.GPU_CONTROL_PROVIDER
   ? serve({
       fetch: createGpuControlApp({
@@ -248,13 +245,13 @@ const gpuControlServer = environment.GPU_CONTROL_PROVIDER
         adapters: {
           service: createAdapterHostingService(database, adapterDownloads),
         },
-        ...(runtimeBundleStorage
+        ...(artifactStorage
           ? {
               runtimeBundle: async (digest: string) => {
                 const key = `bundles/sha256/${digest}.tar.gz`;
-                if (!(await runtimeBundleStorage.exists(key))) return;
+                if (!(await artifactStorage.exists(key))) return;
                 return {
-                  url: await runtimeBundleStorage.signDownload(key, {
+                  url: await artifactStorage.signDownload(key, {
                     expiresIn: 7200,
                   }),
                 };

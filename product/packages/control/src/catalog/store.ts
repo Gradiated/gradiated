@@ -29,9 +29,13 @@ export const createCatalogStore = (
     const now = new Date();
     const properties = ModelPropertiesInputSchema.parse(input.properties);
 
+    const { tokenizer, ...model } = input;
     const record = ModelRecordSchema.parse({
-      ...input,
+      ...model,
       properties,
+      openrouterModelId: input.openrouterModelId ?? null,
+      tokenizerPath: tokenizer?.path ?? null,
+      tokenizerRevision: tokenizer?.revision ?? null,
       createdAt: now,
       updatedAt: now,
     });
@@ -45,6 +49,9 @@ export const createCatalogStore = (
           name: record.name,
           status: record.status,
           properties: record.properties,
+          openrouterModelId: record.openrouterModelId,
+          tokenizerPath: record.tokenizerPath,
+          tokenizerRevision: record.tokenizerRevision,
           updatedAt: now,
         },
       })

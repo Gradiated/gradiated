@@ -357,3 +357,17 @@ html {
 .gr-root :where(ul) {
   list-style-type: square;
 }
+
+/* -- icons ------------------------------------------------------------------
+   Lucide glyphs re-struck in the system's voice. CSS beats presentation
+   attributes, which is what lets one rule retake Lucide's round caps. The
+   weight and size dials live in tokens.css. */
+
+.gr-icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  flex: none;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
+}

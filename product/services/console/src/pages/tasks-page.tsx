@@ -1,3 +1,7 @@
+import { latestVersionEvaluation } from "@/store/fine-tuning-views";
+import { UploadModelDialog } from "@/components/fine-tuning/upload-model-dialog";
+import { useTrainingMutation } from "@/hooks/use-training";
+import { Plus } from "lucide-react";
 import { ModelLabel } from "@/components/model-label";
 import { modelDisplayName } from "@gradiated/contracts/model-catalog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -74,17 +78,25 @@ const TasksPageBody = () => {
   const tasks = query.data?.data ?? [];
   const [tab, setTab] = useState<(typeof TABS)[number]["value"]>("tasks");
   const [connectOpen, setConnectOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const { canEdit } = useTrainingMutation("");
 
   return (
     <ConsolePage
       page="tasks"
       title="Training"
       actions={
-        tasks.length ? (
-          <Button variant="outline" onClick={() => setConnectOpen(true)}>
-            Train a model
+        <div className="flex flex-wrap items-center gap-2">
+          {tasks.length ? (
+            <Button variant="outline" onClick={() => setConnectOpen(true)}>
+              Train a model
+            </Button>
+          ) : null}
+          <Button disabled={!canEdit} onClick={() => setUploadOpen(true)}>
+            <Plus className="size-4" />
+            Add model
           </Button>
-        ) : null
+        </div>
       }
     >
       <OptionTabs value={tab} options={TABS} onValueChange={setTab}>
@@ -134,6 +146,9 @@ const TasksPageBody = () => {
       </OptionTabs>
 
       <ConnectDialog open={connectOpen} onOpenChange={setConnectOpen} />
+      {uploadOpen ? (
+        <UploadModelDialog onClose={() => setUploadOpen(false)} />
+      ) : null}
     </ConsolePage>
   );
 };
@@ -159,7 +174,7 @@ const TasksTable = ({
           <TableHead className="h-11 px-4">Cost</TableHead>
           <TableHead className="h-11 px-4">Speed</TableHead>
           <TableHead className="h-11 px-4">Quality</TableHead>
-          <TableHead className="h-11 pr-5">Last trained</TableHead>
+          <TableHead className="h-11 pr-5">Last updated</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -204,8 +219,9 @@ const TaskRowView = ({
   onOpen: () => void;
 }) => {
   const run = task.latest_run;
-  const summary = run?.evaluation;
-  const version = run?.version_name;
+  const uploaded = task.latest_version?.training_run_id === null;
+  const summary = latestVersionEvaluation(task);
+  const version = task.latest_version?.name ?? run?.version_name;
 
   return (
     <TableRow className="cursor-pointer" onClick={onOpen}>
@@ -266,9 +282,18 @@ const TaskRowView = ({
         )}
       </TableCell>
       <TableCell className="pr-5 text-muted-foreground">
-        {version && run?.finished_at
-          ? trainedDate.format(new Date(run.finished_at))
-          : "—"}
+        {task.latest_version?.created_at ? (
+          <span>
+            {trainedDate.format(new Date(task.latest_version.created_at))}
+            {uploaded ? (
+              <span className="ml-1.5 text-xs">· Uploaded</span>
+            ) : null}
+          </span>
+        ) : version && run?.finished_at ? (
+          trainedDate.format(new Date(run.finished_at))
+        ) : (
+          "—"
+        )}
       </TableCell>
     </TableRow>
   );

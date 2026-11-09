@@ -22,6 +22,7 @@ import {
   UuidSchema,
   WorkspaceSchema,
 } from "@gradiated/contracts";
+import { ModelRecordSchema } from "../catalog/records.js";
 import type { ControlDatabase } from "../db/client.js";
 import {
   models,
@@ -116,11 +117,22 @@ export const createTrainingStore = (database: ControlDatabase) => {
 
     async getModel(modelId: string) {
       const [row] = await database
-        .select({ id: models.id, status: models.status })
+        .select({
+          id: models.id,
+          status: models.status,
+          properties: models.properties,
+        })
         .from(models)
         .where(eq(models.id, ModelSchema.shape.id.parse(modelId)));
 
-      return row && ModelSchema.pick({ id: true, status: true }).parse(row);
+      return (
+        row &&
+        ModelRecordSchema.pick({
+          id: true,
+          status: true,
+          properties: true,
+        }).parse(row)
+      );
     },
 
     async updateTask(taskId: string, value: z.input<typeof UpdateTaskSchema>) {
@@ -194,9 +206,25 @@ export const createTrainingStore = (database: ControlDatabase) => {
         }),
       );
 
+      const latestVersions = VersionRecordSchema.array().parse(
+        await database
+          .selectDistinctOn([taskVersions.taskId])
+          .from(taskVersions)
+          .where(eq(taskVersions.workspaceId, id))
+          .orderBy(
+            asc(taskVersions.taskId),
+            desc(taskVersions.createdAt),
+            desc(taskVersions.id),
+          ),
+      );
+      const versionsByTask = new Map(
+        latestVersions.map((version) => [version.taskId, version]),
+      );
+
       return rows.map((task) => ({
         ...task,
         latestRun: byTask.get(task.id) ?? null,
+        latestVersion: versionsByTask.get(task.id) ?? null,
       }));
     },
 
@@ -330,7 +358,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
               ModelSchema.shape.id.parse(baseModelId),
             ),
             eq(taskVersions.status, "available"),
-            sql`coalesce(${taskVersions.adapter}->>'base_model_revision', '') <> ''`,
+            sql`coalesce(nullif(${taskVersions.adapter}->>'validated_base_model_revision', ''), ${taskVersions.adapter}->>'base_model_revision', '') <> ''`,
             sql`(${taskVersions.adapter}->>'size_bytes')::bigint > 0`,
             isNull(workspaces.archivedAt),
             eq(organizations.status, "active"),

@@ -129,3 +129,37 @@ export const getEvaluationResults = (
       },
     ),
   );
+
+export const createModelUpload = (
+  workspace_id: string,
+  body: components["schemas"]["CreateModelUpload"],
+) =>
+  requireData(
+    api.POST("/api/v1/workspaces/{workspace_id}/model-uploads", {
+      params: { path: { workspace_id } },
+      body,
+    }),
+  );
+
+export const completeModelUpload = (workspace_id: string, upload_id: string) =>
+  requireData(
+    api.PUT(
+      "/api/v1/workspaces/{workspace_id}/model-uploads/{upload_id}/version",
+      { params: { path: { workspace_id, upload_id } } },
+    ),
+  );
+
+export const getAdapterConfiguration = (
+  workspace_id: string,
+  model_id: string,
+  signal?: AbortSignal,
+) =>
+  requireData(
+    api.GET(
+      "/api/v1/workspaces/{workspace_id}/adapter-configurations/{model_id}",
+      {
+        params: { path: { workspace_id, model_id } },
+        signal: signal ?? null,
+      },
+    ),
+  );

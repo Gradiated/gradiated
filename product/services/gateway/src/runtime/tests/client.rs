@@ -505,10 +505,11 @@ fn logged_attempt(failure: &RuntimeFailure) -> serde_json::Value {
     failure.log_attempt(
         Uuid::from_u128(1),
         "hosted-model",
-        Uuid::from_u128(2),
+        Some(Uuid::from_u128(2)),
+        "local",
         1,
         20,
-        false,
+        None,
     );
 
     let events = logs.events();

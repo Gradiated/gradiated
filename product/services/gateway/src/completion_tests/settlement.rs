@@ -9,12 +9,11 @@ use crate::{
 #[tokio::test]
 async fn decision_settlement_bills_input_and_cached_input_without_output() {
     let mut request = qualified_request(1);
-    for deployment in &mut request.model_deployments {
+    let local = request.local_capacity_mut();
+    for deployment in &mut local.deployments {
         deployment.release.protocol = Some(crate::RuntimeProtocol::SystemOne);
     }
-    request.served_release_digest = request.model_deployments[0]
-        .served_release_digest()
-        .unwrap();
+    local.release_digest = local.deployments[0].served_release_digest().unwrap();
     request.effective_output_tokens = 0;
     request.request = InferenceRequest::parse_kind(
         br#"{"model":"model-a","state":"x","questions":{"q":{"type":"noul","instructions":"yes?"}}}"#,

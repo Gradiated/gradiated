@@ -12,6 +12,9 @@ import { jobs } from "./careers";
 import { handbookPages } from "./handbook";
 import { models } from "./models";
 import { ModelsPage } from "./pages/ModelsPage";
+import { LibraryPage } from "./pages/LibraryPage";
+import { SystemPage } from "./pages/SystemPage";
+import { RailShell } from "./components/design/RailShell";
 import { ModelDetailPage } from "./pages/ModelDetailPage";
 import { CareersIndexPage, JobDetailPage } from "./pages/CareersPages";
 import { DocsNextPage } from "./pages/DocsNextPage";
@@ -41,22 +44,6 @@ const SandJourneyRedirect = (): ReactElement => {
   return <Navigate replace to={`/sand-to-thought/${hash}`} />;
 };
 
-const LibraryRedirect = (): ReactElement => {
-  const { search } = useLocation();
-  const destination = new URLSearchParams(search).get("show");
-  const target =
-    destination === "methods" || destination === "handbook"
-      ? "/handbook/"
-      : "/notes/";
-
-  useEffect(() => {
-    window.location.replace(target);
-  }, [target]);
-
-  /* Keep any served fallback stable until the query-based redirect runs. */
-  return <NotesIndexPage />;
-};
-
 const RouteScrollRestoration = (): null => {
   const { hash, pathname } = useLocation();
 
@@ -81,11 +68,22 @@ const RouteScrollRestoration = (): null => {
   return null;
 };
 
+/* The rail shell wraps every routed page EXCEPT the doc-rail pages
+   (/design wears DocRail) — the two shells are the two faces of the
+   same base layer and never nest. */
+const Shelled = ({ children }: { children: ReactElement }): ReactElement => (
+  <RailShell>{children}</RailShell>
+);
+
 export const AppRoutes = (): ReactElement => (
   <Routes>
     {articles.map((article) => (
       <Route
-        element={<ArticleReadingPage article={article} />}
+        element={
+          <Shelled>
+            <ArticleReadingPage article={article} />
+          </Shelled>
+        }
         key={article.path}
         path={article.path}
       />
@@ -93,21 +91,79 @@ export const AppRoutes = (): ReactElement => (
     {/* No SiteLayout: the homepage carries its own Nav and Footer now, like
         every other page on the design system. The legacy layout is what was
         giving it the old nav and the old footer. */}
-    <Route element={<HomePage />} path="/" />
-    <Route element={<AboutPage />} path="/about/" />
-    <Route element={<LibraryRedirect />} path="/library/" />
-    <Route element={<SandLibraryPage />} path={SAND_TO_THOUGHT_URL} />
     <Route
-      element={<SandJourneyRedirect />}
+      element={
+        <Shelled>
+          <HomePage />
+        </Shelled>
+      }
+      path="/"
+    />
+    <Route element={<SystemPage />} path="/design" />
+    <Route
+      element={
+        <Shelled>
+          <AboutPage />
+        </Shelled>
+      }
+      path="/about/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <LibraryPage />
+        </Shelled>
+      }
+      path="/library/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <SandLibraryPage />
+        </Shelled>
+      }
+      path={SAND_TO_THOUGHT_URL}
+    />
+    <Route
+      element={
+        <Shelled>
+          <SandJourneyRedirect />
+        </Shelled>
+      }
       path="/library/how-to-get-an-answer-out-of-sand/"
     />
-    <Route element={<NotesIndexPage />} path="/notes/" />
-    <Route element={<HandbookPage />} path="/handbook/" />
+    <Route
+      element={
+        <Shelled>
+          <NotesIndexPage />
+        </Shelled>
+      }
+      path="/notes/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <HandbookPage />
+        </Shelled>
+      }
+      path="/handbook/"
+    />
     <Route element={<Navigate replace to="/handbook/" />} path="/methods/" />
-    <Route element={<CareersIndexPage />} path="/careers/" />
+    <Route
+      element={
+        <Shelled>
+          <CareersIndexPage />
+        </Shelled>
+      }
+      path="/careers/"
+    />
     {jobs.map((job) => (
       <Route
-        element={<JobDetailPage job={job} />}
+        element={
+          <Shelled>
+            <JobDetailPage job={job} />
+          </Shelled>
+        }
         key={job.slug}
         path={`/careers/${job.slug}/`}
       />
@@ -115,7 +171,11 @@ export const AppRoutes = (): ReactElement => (
     {handbookPages.map((page) => (
       <Fragment key={page.slug}>
         <Route
-          element={<HandbookPage slug={page.slug} />}
+          element={
+            <Shelled>
+              <HandbookPage slug={page.slug} />
+            </Shelled>
+          }
           path={`/handbook/${page.slug}/`}
         />
         <Route
@@ -128,28 +188,92 @@ export const AppRoutes = (): ReactElement => (
         />
       </Fragment>
     ))}
-    <Route element={<DocsNextPage />} path="/docs/*" />
+    <Route
+      element={
+        <Shelled>
+          <DocsNextPage />
+        </Shelled>
+      }
+      path="/docs/*"
+    />
     {Object.keys(LEGAL).map((slug) => (
       <Route
-        element={<LegalPage slug={slug as LegalSlug} />}
+        element={
+          <Shelled>
+            <LegalPage slug={slug as LegalSlug} />
+          </Shelled>
+        }
         key={`legal-${slug}`}
         path={`/${slug}/`}
       />
     ))}
-    <Route element={<InferencePage />} path="/inference/" />
-    <Route element={<TrainingPage />} path="/training/" />
-    <Route element={<HardwarePage />} path="/hardware/" />
-    <Route element={<ArtworkGeneratorPage />} path="/artwork-generator/" />
-    <Route element={<ModelsPage />} path="/models/" />
+    <Route
+      element={
+        <Shelled>
+          <InferencePage />
+        </Shelled>
+      }
+      path="/inference/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <TrainingPage />
+        </Shelled>
+      }
+      path="/training/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <HardwarePage />
+        </Shelled>
+      }
+      path="/hardware/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <ArtworkGeneratorPage />
+        </Shelled>
+      }
+      path="/artwork-generator/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <ModelsPage />
+        </Shelled>
+      }
+      path="/models/"
+    />
     {models.map((model) => (
       <Route
-        element={<ModelDetailPage model={model} />}
+        element={
+          <Shelled>
+            <ModelDetailPage model={model} />
+          </Shelled>
+        }
         key={model.slug}
         path={`/models/${model.slug}/`}
       />
     ))}
-    <Route element={<StylePage />} path="/style/" />
-    <Route element={<NotFoundPage />} path="*" />
+    <Route
+      element={
+        <Shelled>
+          <StylePage />
+        </Shelled>
+      }
+      path="/style/"
+    />
+    <Route
+      element={
+        <Shelled>
+          <NotFoundPage />
+        </Shelled>
+      }
+      path="*"
+    />
   </Routes>
 );
 

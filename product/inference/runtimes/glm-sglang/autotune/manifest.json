@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "source": "sm103/96221b077c9fc690.json",
+      "directory": "flashinfer/autotune/0.7.2/sm103/96221b077c9fc690",
+      "ranks": 2,
+      "size": 9574,
+      "sha256": "743a247a52cc5b4c1845c8a7584a70096bad5f95debcea39cbab9a3eed025c5e"
+    },
+    {
+      "source": "sm103/914a2f33d0a0bcde.json",
+      "directory": "flashinfer/autotune/0.7.2/sm103/914a2f33d0a0bcde",
+      "ranks": 2,
+      "size": 18767,
+      "sha256": "13cf2a42b68839b70ed3eb76db8a0f994669f9489c479846e8dce42b4780f807"
+    }
+  ]
+}

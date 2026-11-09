@@ -6,6 +6,7 @@ import {
 const secretIds = {
   openai: "gradiated/prod/providers/openai",
   anthropic: "gradiated/prod/providers/anthropic",
+  openrouter: "gradiated/prod/providers/openrouter",
 } as const;
 
 const CACHE_TTL_MS = 5 * 60 * 1000;

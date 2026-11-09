@@ -100,7 +100,9 @@ const writing: Story[] = articles
   .map((article) => ({
     art: NOTE_ART[article.path],
     cover: NOTE_COVERS[article.path],
-    date: article.status === "draft" ? "" : displayDate(article.publishedAt),
+    /* Drafts carry their authored date too — they only list in dev,
+       and a dateless card reads as a bug rather than a status. */
+    date: displayDate(article.publishedAt),
     dateTime: article.status === "draft" ? undefined : article.publishedAt,
     href: article.path,
     kind: "note",

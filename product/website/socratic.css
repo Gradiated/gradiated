@@ -1,13 +1,16 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400&family=Libre+Franklin:wght@300;400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap");
 
 :root {
-  --paper: #e8e2d5;
-  --ink: #1c1b18;
-  --muted: #68665f;
-  --line: #c9c1b2;
-  --accent: #72745a;
-  --earth: #9a7449;
-  --soft: #ddd7ca;
+  /* Legacy aliases, restruck to the relaunch system (Nov 2026): zinc
+     neutrals, cloud interaction, energy emphasis. Values mirror
+     brand.css — this sheet loads before it and cannot reference it. */
+  --paper: #fafafa;
+  --ink: #09090b;
+  --muted: #52525b;
+  --line: #e4e4e7;
+  --accent: #472f96;
+  --earth: #e4504e;
+  --soft: #f4f4f5;
   color-scheme: light;
 }
 body {

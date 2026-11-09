@@ -24,6 +24,42 @@
       "original_sha256": "d6d037c09b3f1352171ac6256f9eb4788a5c8e4f949d9266502beca69f007282",
       "overlay_sha256": "3c71a5b522cd3d366c0fd15db04964208758763ce48d46a5659fe42a14a412bd",
       "patch": "glm5_next_mhc_prewarm.patch"
+    },
+    {
+      "path": "sglang/kernels/ops/attention/dsa/dequant_k_cache.py",
+      "original_sha256": "9e00dc31050c166d972660ad4955b8f8d8722b4224757bc2217338b3d5a45774",
+      "overlay_sha256": "8cc0d8026e7b289fc134ae62fa12d9fe3cc49016b7b55cb159ad57807e2be81d",
+      "patch": "h200-fp8-dequant_k_cache.patch"
+    },
+    {
+      "path": "sglang/srt/arg_groups/overrides.py",
+      "original_sha256": "ec3e99814a67dd82e9432c60e1427bfb99d95dd0c8afcdb526d3dee8ab93175a",
+      "overlay_sha256": "5e4609e0536e3dd44e587da350ad247e253585701c76ff2363781bc5be1f6eba",
+      "patch": "h200-fp8-overrides.patch"
+    },
+    {
+      "path": "sglang/srt/configs/model_config.py",
+      "original_sha256": "b3d56b879e291006028605133018506639b95f5e448871f588183cc65ad4b9f1",
+      "overlay_sha256": "f8cd02f4edf94585e47865dbc377acb930589883af559c740b14cb02eb865ae8",
+      "patch": "h200-fp8-model_config.patch"
+    },
+    {
+      "path": "sglang/srt/layers/attention/dsa/dsa_backend_kpool.py",
+      "original_sha256": "55dbd8d5fb432fb70443897cff066e4eb3a4d6b722e70ff78c5e4126272f059c",
+      "overlay_sha256": "d0738b03c0911148b3db995fe7cd7f0fb1248581cdb4098599cf21b8df138b76",
+      "patch": "h200-fp8-dsa_backend_kpool.patch"
+    },
+    {
+      "path": "sglang/srt/layers/attention/dsa_backend.py",
+      "original_sha256": "c89740cdfc2f7d32c132f3c5bec425ac5f04746aa98339b22ef1fa3c74e3169c",
+      "overlay_sha256": "25860d9546392eea2e2b948ed1ff0f706c1c76a312aee54ccb2b9e2d53dc1449",
+      "patch": "h200-fp8-dsa_backend.patch"
+    },
+    {
+      "path": "sglang/srt/mem_cache/kv_cache_configurator.py",
+      "original_sha256": "e20e551819b1fe94499d2eca85ad53ce47337ea1972f358fca230248bcb4cada",
+      "overlay_sha256": "8b6f81e31ccfc60dc06c1c33ad7314e8c5fb3d3e9508c36b8c88401927684714",
+      "patch": "h200-fp8-kv_cache_configurator.patch"
     }
   ]
 }

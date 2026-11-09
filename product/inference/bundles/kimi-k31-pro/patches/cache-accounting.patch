@@ -1,0 +1,55 @@
+--- a/sglang/srt/entrypoints/openai/serving_chat.py
++++ b/sglang/srt/entrypoints/openai/serving_chat.py
+@@ -902,6 +902,12 @@
+             prompt_tokens = max(0, prompt_tokens - self._KIMI_K3_GENERATION_STUB_TOKENS)
+         return prompt_tokens
+ 
++    def _reported_cached_tokens(self, meta_info: dict[str, Any]) -> int:
++        cached = int(meta_info.get("cached_tokens", 0) or 0)
++        if self.chat_encoding_spec == "kimi_k3":
++            return min(max(cached, 0), self._reported_prompt_tokens(meta_info))
++        return cached
++
+     @staticmethod
+     def _sort_tool_message_run(
+         run: list[dict[str, Any]],
+@@ -2572,7 +2578,7 @@
+         if self.chat_encoding_spec != "kimi_k3" or not prefix:
+             return {}
+         prompt = self._reported_prompt_tokens(meta_info)
+-        cached = meta_info.get("cached_tokens", 0) or 0
++        cached = self._reported_cached_tokens(meta_info)
+         return {
+             f"{prefix}-Prompt-Tokens": str(prompt),
+             f"{prefix}-Cached-Tokens": str(cached),
+@@ -2693,7 +2699,11 @@
+                 reasoning_tokens[index] = content["meta_info"].get(
+                     "reasoning_tokens", 0
+                 )
+-                cached_tokens[index] = content["meta_info"].get("cached_tokens", 0)
++                cached_tokens[index] = (
++                    self._reported_cached_tokens(content["meta_info"])
++                    if self.chat_encoding_spec == "kimi_k3"
++                    else content["meta_info"].get("cached_tokens", 0)
++                )
+                 hidden_states[index] = content["meta_info"].get("hidden_states", None)
+                 routed_experts[index] = content["meta_info"].get("routed_experts", None)
+                 cached_tokens_details[index] = content["meta_info"].get(
+@@ -3140,6 +3150,9 @@
+                         "prompt_tokens": self._reported_prompt_tokens(
+                             item["meta_info"]
+                         ),
++                        "cached_tokens": self._reported_cached_tokens(
++                            item["meta_info"]
++                        ),
+                     },
+                 }
+                 for item in ret
+@@ -3524,6 +3537,7 @@
+         """
+         if self.chat_encoding_spec != "kimi_k3":
+             return usage
++        cached_tokens = min(max(int(cached_tokens or 0), 0), max(int(usage.prompt_tokens), 0))
+         usage.completion_tokens_details = CompletionTokensDetails(
+             reasoning_tokens=int(reasoning_tokens or 0)
+         )

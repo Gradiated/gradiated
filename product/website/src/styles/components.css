@@ -404,7 +404,7 @@
    16px caps type made it read as a toolbar rather than a control — the
    chevron stays attached because the wrapper hugs the select too, which was
    the whole reason it went full-width in the first place. */
-.gr-root:not([data-tier="wide"]) .gr-tabselect {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-tabselect {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -415,7 +415,7 @@
 /* The quiet variant is exempt: its cells are max-content, so it fits a phone
    on its own terms, and it is usually nested under a segmented control that
    has already become a select. */
-.gr-root:not([data-tier="wide"]) .gr-tabs:not(.gr-tabs--quiet) {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-tabs:not(.gr-tabs--quiet) {
   display: none;
 }
 

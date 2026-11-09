@@ -29,17 +29,18 @@ class Configuration(unittest.TestCase):
     def test_measured_pcp_marlin_and_native_front(self):
         settings, backend, router = config.commands(self.environment)
         for key, value in [('--tp-size', '2'), ('--attn-cp-size', '2'), ('--moe-runner-backend', 'marlin'),
-                           ('--max-running-requests', '16'), ('--chunked-prefill-size', '16384'),
+                           ('--max-running-requests', '12'), ('--chunked-prefill-size', '16384'),
                            ('--max-prefill-tokens', '16384'), ('--prefill-decode-interval', '64'),
                            ('--speculative-num-steps', '2'), ('--speculative-num-draft-tokens', '3'),
-                           ('--revision', config.REVISION), ('--schedule-policy', 'shortest-prefill-first')]:
+                           ('--revision', config.REVISION), ('--mem-fraction-static', '0.85'),
+                           ('--schedule-policy', 'shortest-prefill-first')]:
             self.assertEqual(backend[backend.index(key) + 1], value)
         self.assertNotIn('--max-queued-requests', backend)
         self.assertNotIn('--disable-radix-cache', backend)
         self.assertNotIn('--disaggregation-mode', backend)
         self.assertNotIn('--disable-flashinfer-autotune', backend)
-        for key, value in [('--max-concurrent-requests', '16'), ('--queue-size', '2'),
-                           ('--queue-timeout-secs', '60'), ('--rate-limit-tokens-per-second', '0')]:
+        for key, value in [('--max-concurrent-requests', '12'), ('--queue-size', '2'),
+                           ('--queue-timeout-secs', '10'), ('--rate-limit-tokens-per-second', '0')]:
             self.assertEqual(router[router.index(key) + 1], value)
         self.assertIn('--disable-retries', router)
         self.assertEqual(settings['backend'], 18084)
@@ -57,15 +58,17 @@ class Configuration(unittest.TestCase):
         environment = {**self.environment, 'GLM_SGLANG_PROFILE': 'h200-tp2'}
         settings, backend, router = config.commands(environment)
         self.assertEqual(settings['gpu_product'], 'H200')
-        for flag, value in [('--dsa-prefill-backend', 'flashmla_sparse'), ('--dsa-decode-backend', 'fa3'),
-                            ('--max-running-requests', '4'), ('--cuda-graph-max-bs-decode', '4'),
+        for flag, value in [('--dsa-prefill-backend', 'flashmla_sparse_q8'), ('--dsa-decode-backend', 'tilelang'),
+                            ('--max-running-requests', '3'), ('--cuda-graph-max-bs-decode', '3'),
                             ('--chunked-prefill-size', '4096'), ('--max-prefill-tokens', '4096'),
                             ('--page-size', '256'), ('--tp-size', '2'), ('--moe-runner-backend', 'marlin'),
-                            ('--kv-cache-dtype', 'bfloat16')]:
+                            ('--kv-cache-dtype', 'fp8_e4m3'), ('--speculative-num-steps', '3'),
+                            ('--speculative-num-draft-tokens', '4'), ('--speculative-algorithm', 'EAGLE'),
+                            ('--mem-fraction-static', '0.9'), ('--mamba-full-memory-ratio', '1.8')]:
             self.assertEqual(backend[backend.index(flag) + 1], value)
         self.assertNotIn('--enable-prefill-cp', backend)
         self.assertNotIn('--attn-cp-size', backend)
-        self.assertEqual(router[router.index('--max-concurrent-requests') + 1], '4')
+        self.assertEqual(router[router.index('--max-concurrent-requests') + 1], '3')
         self.assertEqual(router[router.index('--queue-size') + 1], '2')
 
     def test_b200_keeps_blackwell_attention_with_a_smaller_admission_limit(self):
@@ -74,7 +77,7 @@ class Configuration(unittest.TestCase):
         _, b300, _ = config.commands(self.environment)
         self.assertEqual(settings['gpu_product'], 'B200')
         for flag, value in [('--dsa-prefill-backend', 'trtllm'), ('--dsa-decode-backend', 'trtllm'),
-                            ('--max-running-requests', '8'), ('--cuda-graph-max-bs-decode', '8'),
+                            ('--max-running-requests', '6'), ('--cuda-graph-max-bs-decode', '6'),
                             ('--chunked-prefill-size', '16384'), ('--attn-cp-size', '2')]:
             self.assertEqual(backend[backend.index(flag) + 1], value)
         self.assertIn('--enable-prefill-cp', backend)
@@ -82,7 +85,7 @@ class Configuration(unittest.TestCase):
         limits = {'--max-running-requests', '--cuda-graph-max-bs-decode'}
         strip = lambda args: [a for i, a in enumerate(args) if a not in limits and (i == 0 or args[i - 1] not in limits)]
         self.assertEqual(strip(backend), strip(b300))
-        self.assertEqual(router[router.index('--max-concurrent-requests') + 1], '8')
+        self.assertEqual(router[router.index('--max-concurrent-requests') + 1], '6')
 
     def test_profile_validation_does_not_silently_fall_back(self):
         with self.assertRaisesRegex(ValueError, 'Unknown'):

@@ -1,0 +1,77 @@
+--- a/sglang/srt/speculative/seeded_dflash.py
++++ b/sglang/srt/speculative/seeded_dflash.py
+@@ -1,7 +1,10 @@
+-"""Counter-based DFLASH variates; candidate-only pending GPU qualification."""
++"""Counter-based DFLASH variates with fused CUDA and portable reference paths."""
+ from __future__ import annotations
+ 
+ import torch
++import triton
++import triton.language as tl
++from triton.language.extra.cuda import libdevice
+ 
+ 
+ def _dflash_mul32(a: torch.Tensor, b: int):
+@@ -13,7 +16,7 @@
+     return high, low
+ 
+ 
+-def seeded_dflash_uniforms(*, stock, seeds, positions, stream: int):
++def seeded_dflash_uniforms_reference(*, stock, seeds, positions, stream: int):
+     """Use Philox4x32-10(seed64, absolute position, stream) for seeded rows.
+ 
+     Stream0 proposes, stream1 accepts, stream2 samples residual/bonus. Positions
+@@ -45,3 +48,53 @@
+     # Exactly representable float32 lattice in [0,1), like torch.rand.
+     seeded = (c0 >> 8).to(torch.float32) * (2.0 ** -24)
+     return torch.where(seeds[:, None] >= 0, seeded, stock)
++
++
++@triton.jit
++def _uniform_kernel(Stock, Seeds, Positions, Output, N: tl.constexpr, W: tl.constexpr,
++                    S0: tl.constexpr, S1: tl.constexpr, SS: tl.constexpr, PS: tl.constexpr,
++                    STREAM: tl.constexpr, TILE: tl.constexpr):
++    offset = tl.program_id(0) * TILE + tl.arange(0, TILE)
++    valid = offset < N
++    row, column = offset // W, offset % W
++    seed = tl.load(Seeds + row * SS, valid, other=0).to(tl.int64)
++    position = tl.load(Positions + row * PS, valid, other=0).to(tl.uint64)
++    absolute = position + column.to(tl.uint64)
++    c0, c1 = absolute.to(tl.uint32), (absolute >> 32).to(tl.uint32)
++    c2 = tl.full((TILE,), STREAM, tl.uint32)
++    c3 = tl.full((TILE,), 0, tl.uint32)
++    key = seed.to(tl.uint64)
++    k0, k1 = key.to(tl.uint32), (key >> 32).to(tl.uint32)
++    a = tl.full((TILE,), 0xD2511F53, tl.uint32)
++    b = tl.full((TILE,), 0xCD9E8D57, tl.uint32)
++    for _ in tl.static_range(10):
++        hi_b, lo_b = libdevice.mulhi(c2, b), c2 * b
++        hi_a, lo_a = libdevice.mulhi(c0, a), c0 * a
++        c0, c1, c2, c3 = hi_b ^ c1 ^ k0, lo_b, hi_a ^ c3 ^ k1, lo_a
++        k0 = k0 + tl.full((TILE,), 0x9E3779B9, tl.uint32)
++        k1 = k1 + tl.full((TILE,), 0xBB67AE85, tl.uint32)
++    seeded = (c0 >> 8).to(tl.float32) * (2.0 ** -24)
++    stock = tl.load(Stock + row * S0 + column * S1, valid, other=0)
++    tl.store(Output + offset, tl.where(seed >= 0, seeded, stock), valid)
++
++
++def seeded_dflash_uniforms(*, stock, seeds, positions, stream: int):
++    if seeds is None:
++        return stock
++    if positions is None:
++        raise ValueError('Seeded DFLASH requires absolute sampling positions.')
++    if stock.ndim != 2 or seeds.ndim != 1 or positions.ndim != 1:
++        raise ValueError('Seeded DFLASH uniform shape mismatch.')
++    if stock.shape[0] != seeds.numel() or positions.numel() != seeds.numel():
++        raise ValueError('Seeded DFLASH seed/position row mismatch.')
++    # Keep uncommon dtypes and CPU behavior on the untouched incumbent reference.
++    if (not stock.is_cuda or stock.dtype != torch.float32 or seeds.dtype != torch.int64
++            or positions.dtype != torch.int64 or stock.numel() == 0):
++        return seeded_dflash_uniforms_reference(stock=stock,seeds=seeds,positions=positions,stream=stream)
++    if seeds.device != stock.device or positions.device != stock.device:
++        raise ValueError('Seeded DFLASH seed/position device mismatch.')
++    output = torch.empty(stock.shape,device=stock.device,dtype=stock.dtype)
++    _uniform_kernel[(triton.cdiv(stock.numel(),128),)](
++        stock,seeds,positions,output,stock.numel(),stock.shape[1],stock.stride(0),stock.stride(1),
++        seeds.stride(0),positions.stride(0),stream,128,num_warps=4)
++    return output

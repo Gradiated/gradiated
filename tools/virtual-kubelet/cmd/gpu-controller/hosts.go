@@ -25,8 +25,9 @@ type gpuHost struct {
 		Name string `json:"name"`
 	} `json:"metadata"`
 	Spec struct {
-		InstanceID string `json:"instanceId"`
-		Provider   struct {
+		InstanceID  string     `json:"instanceId"`
+		ExtraTaints hostTaints `json:"extraTaints,omitempty"`
+		Provider    struct {
 			MachineID string `json:"machineId"`
 		} `json:"provider"`
 		Inventory struct {
@@ -44,7 +45,7 @@ func validateHost(h host) error {
 	if h.GPUCount < 1 || h.GPUCount > 8 || h.CPU < 1 || h.CPU > 512 || h.MemoryGiB < 1 || h.MemoryGiB > 4096 {
 		return fmt.Errorf("host %s has invalid resource capacity", h.InstanceID)
 	}
-	return nil
+	return validateExtraTaints(h.ExtraTaints)
 }
 
 func hostFromObject(object map[string]any) (host, error) {
@@ -69,6 +70,7 @@ func hostFromObject(object map[string]any) (host, error) {
 		MemoryGiB:   item.Spec.Inventory.MemoryGiB,
 		GPUProduct:  item.Spec.Inventory.GPUProduct,
 		FaultDomain: item.Spec.Provider.MachineID,
+		ExtraTaints: item.Spec.ExtraTaints,
 	}
 	return h, validateHost(h)
 }

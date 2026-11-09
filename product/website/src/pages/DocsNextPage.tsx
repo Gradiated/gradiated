@@ -11,6 +11,7 @@ import {
   Substrate,
 } from "../components/design";
 import type { SectionNavigationGroup } from "../components/design";
+import { useRailDocNav } from "../components/design/RailShell";
 import { DocsAccount } from "../components/docs/DocsAccount";
 import { DocsApiKeyAction } from "../components/docs/InteractiveQuickstart";
 import { DocsModelCatalog } from "../components/docs/DocsModelCatalog";
@@ -243,6 +244,10 @@ const DocsBody = (): ReactElement => {
   const location = useLocation();
   const path = location.pathname;
 
+  /* The site rail carries the docs' contents — doc mode is a state of
+     the ONE nav, so the page draws no sidebar of its own. */
+  useRailDocNav({ title: "Docs", current: path, groups: docsNavigation });
+
   const redirect = legacyPaths[path];
   if (redirect) {
     return <Navigate replace to={redirect} />;
@@ -263,15 +268,6 @@ const DocsBody = (): ReactElement => {
       <Band>
         <Module className="gr-module--top" index={0}>
           <div className="gr-doc">
-            <aside className="gr-doc-side">
-              <DocsAccount />
-              <SectionNavigation
-                ariaLabel="Documentation"
-                current={document.path}
-                groups={docsNavigation}
-              />
-            </aside>
-
             {/* The sidebar's mobile form. Router links, like the sidebar's —
                 an <a href> here reloads the document. Hidden above the wide
                 tier, where the sticky sidebar does this job. */}

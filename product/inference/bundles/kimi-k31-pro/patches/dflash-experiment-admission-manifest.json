@@ -1,0 +1,33 @@
+{
+  "upstream_sha": "afcd7d6b487a9cbe73e25941971b4cc107e6f9ae",
+  "requires": [
+    "manifest.json",
+    "baseline-request-seed-manifest.json",
+    "dflash-request-seed-manifest.json"
+  ],
+  "status": "EXPERIMENT ONLY: seeded API admission enabled under bounded geometry; not production-qualified",
+  "geometry": {
+    "tensor_parallel": 8,
+    "pipeline_parallel": 1,
+    "overlap": false,
+    "blocks": [
+      5,
+      8
+    ],
+    "block_verification": false,
+    "nvidia_megakernel": false,
+    "dcp": "unchanged; no additional restriction",
+    "ep": "unchanged; no additional restriction"
+  },
+  "guards": "Worker selector and materialized seed checks remain before target prefill/verification sampling; all unsupported min_p/repetition/min_new_tokens guards remain",
+  "qualification": "Parent-reported B300 v1/v2 synthetic kernel GPU qualification passed; full-model API correctness and performance remain required",
+  "files": [
+    {
+      "path": "sglang/srt/speculative/dflash_utils.py",
+      "original_sha256": "6fc39639455b4359cc6e82c4fe1818bd761b32c3b19681401d7c8042d02c4942",
+      "overlay_sha256": "012bd6eafc9be170d760e2ef94adae6193561f386d86127a08bb53b726c08ede"
+    }
+  ],
+  "patch": "dflash-experiment-admission.patch",
+  "patch_sha256": "c6db86d67030d02d6935cb0e9a8aeb5becec8db160c2c8490779dcc46d8191e7"
+}

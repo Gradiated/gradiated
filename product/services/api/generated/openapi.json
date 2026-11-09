@@ -2641,6 +2641,226 @@
           "raw"
         ]
       },
+      "AdapterConfiguration": {
+        "type": "object",
+        "properties": {
+          "layerCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4096,
+            "description": "Number of transformer layers."
+          },
+          "expertCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4096,
+            "description": "Routed experts per layer."
+          },
+          "projectionShapes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "description": "Output and input dimensions keyed by layer and module."
+          }
+        },
+        "required": [
+          "layerCount",
+          "expertCount"
+        ]
+      },
+      "ModelUpload": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "config_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "weights_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "config_url",
+          "weights_url",
+          "expires_at"
+        ]
+      },
+      "CreateModelUpload": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "create_task": {
+            "type": "boolean",
+            "default": false
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+          },
+          "base_model_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "base_model_revision": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}$",
+            "description": "Legacy hint; the uploaded config determines declared training provenance."
+          },
+          "config_size": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 65536
+          },
+          "weights_size": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 536870912
+          }
+        },
+        "required": [
+          "task",
+          "name",
+          "base_model_id",
+          "config_size",
+          "weights_size"
+        ],
+        "additionalProperties": false
+      },
+      "TaskVersion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "name": {
+            "type": "string"
+          },
+          "task": {
+            "type": "string"
+          },
+          "training_run_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "base_model_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "adapter": {
+            "$ref": "#/components/schemas/TaskVersionAdapter"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "unavailable"
+            ],
+            "description": "Durable serving eligibility. Available versions may be called or promoted after serving validation; this does not indicate runtime health or adapter cache residency."
+          },
+          "is_production": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "task",
+          "training_run_id",
+          "base_model_id",
+          "adapter",
+          "status",
+          "is_production",
+          "created_at"
+        ]
+      },
+      "TaskVersionAdapter": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "peft_lora"
+            ]
+          },
+          "artifact_uri": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rank": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "base_model_revision": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300,
+            "description": "Immutable training checkpoint declared in the adapter config, when known."
+          },
+          "declared_base_model_revision": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "validated_base_model_revision": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}$",
+            "description": "Supported base checkpoint used for deterministic tensor validation; this is not proof of training provenance."
+          }
+        },
+        "required": [
+          "format",
+          "artifact_uri",
+          "sha256",
+          "size_bytes",
+          "rank"
+        ]
+      },
       "StartTrainingRunResponse": {
         "type": "object",
         "properties": {
@@ -2690,6 +2910,69 @@
           {
             "type": "object",
             "properties": {
+              "latest_version": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "task": {
+                    "type": "string"
+                  },
+                  "training_run_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uuid",
+                    "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+                  },
+                  "base_model_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "adapter": {
+                    "$ref": "#/components/schemas/TaskVersionAdapter"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "available",
+                      "unavailable"
+                    ],
+                    "description": "Durable serving eligibility. Available versions may be called or promoted after serving validation; this does not indicate runtime health or adapter cache residency."
+                  },
+                  "is_production": {
+                    "type": "boolean"
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2026-08-16T12:00:00.000Z"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "task",
+                  "training_run_id",
+                  "base_model_id",
+                  "adapter",
+                  "status",
+                  "is_production",
+                  "created_at"
+                ],
+                "description": "Latest model version, including externally uploaded adapters."
+              },
               "latest_run": {
                 "allOf": [
                   {
@@ -3735,101 +4018,6 @@
         },
         "required": [
           "data"
-        ]
-      },
-      "TaskVersion": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-          },
-          "name": {
-            "type": "string"
-          },
-          "task": {
-            "type": "string"
-          },
-          "training_run_id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-          },
-          "base_model_id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "adapter": {
-            "$ref": "#/components/schemas/TaskVersionAdapter"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "available",
-              "unavailable"
-            ],
-            "description": "Durable serving eligibility. Available versions may be called or promoted after serving validation; this does not indicate runtime health or adapter cache residency."
-          },
-          "is_production": {
-            "type": "boolean"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-08-16T12:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "task",
-          "training_run_id",
-          "base_model_id",
-          "adapter",
-          "status",
-          "is_production",
-          "created_at"
-        ]
-      },
-      "TaskVersionAdapter": {
-        "type": "object",
-        "properties": {
-          "format": {
-            "type": "string",
-            "enum": [
-              "peft_lora"
-            ]
-          },
-          "artifact_uri": {
-            "type": "string"
-          },
-          "sha256": {
-            "type": "string",
-            "pattern": "^[0-9a-f]{64}$"
-          },
-          "size_bytes": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "rank": {
-            "type": "integer",
-            "exclusiveMinimum": 0
-          },
-          "base_model_revision": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 300,
-            "description": "Immutable base checkpoint revision used to train this adapter."
-          }
-        },
-        "required": [
-          "format",
-          "artifact_uri",
-          "sha256",
-          "size_bytes",
-          "rank"
         ]
       },
       "EvaluationResults": {
@@ -5507,7 +5695,7 @@
                 },
                 "is_ready": {
                   "type": "boolean",
-                  "description": "Whether a healthy deployment can currently accept inference requests."
+                  "description": "Whether the model can currently accept inference requests."
                 },
                 "hugging_face_id": {
                   "type": "string",
@@ -8158,6 +8346,319 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspace_id}/adapter-configurations/{model_id}": {
+      "get": {
+        "operationId": "getAdapterConfiguration",
+        "summary": "Get adapter configuration",
+        "description": "Gets the pinned base checkpoint dimensions used to validate an adapter.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Exact catalog base model ID."
+            },
+            "required": true,
+            "description": "Exact catalog base model ID.",
+            "name": "model_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pinned checkpoint structure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdapterConfiguration"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/model-uploads": {
+      "post": {
+        "operationId": "createModelUpload",
+        "summary": "Create model upload",
+        "description": "Creates a workspace-scoped upload for PEFT LoRA config and safetensors files. Grants expire after one hour.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateModelUpload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Private file upload grants.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelUpload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/model-uploads/{upload_id}/version": {
+      "put": {
+        "operationId": "completeModelUpload",
+        "summary": "Complete model upload",
+        "description": "Validates adapter files and creates a model version. Retries return the same version. Serving remains disabled until qualification.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "upload_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Uploaded model version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskVersion"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspace_id}/training-runs": {
       "post": {
         "operationId": "startTrainingRun",
@@ -8333,6 +8834,16 @@
               }
             }
           },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Invalid request parameters or body.",
             "content": {
@@ -8412,6 +8923,16 @@
           },
           "404": {
             "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -8512,6 +9033,16 @@
               }
             }
           },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Invalid request parameters or body.",
             "content": {
@@ -8588,6 +9119,16 @@
           },
           "404": {
             "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -8690,6 +9231,16 @@
               }
             }
           },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Invalid request parameters or body.",
             "content": {
@@ -8783,6 +9334,16 @@
           },
           "404": {
             "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -8908,6 +9469,16 @@
               }
             }
           },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Invalid request parameters or body.",
             "content": {
@@ -8994,6 +9565,16 @@
           },
           "404": {
             "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -9106,6 +9687,16 @@
               }
             }
           },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Invalid request parameters or body.",
             "content": {
@@ -9210,6 +9801,16 @@
               }
             }
           },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Invalid request parameters or body.",
             "content": {
@@ -9305,6 +9906,16 @@
           },
           "404": {
             "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
             "content": {
               "application/problem+json": {
                 "schema": {

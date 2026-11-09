@@ -1,6 +1,8 @@
 """Exercise the actual trusted workflow scripts with offline GitHub API fixtures."""
+import base64
 import json
 import os
+import runpy
 from pathlib import Path
 import shutil
 import subprocess
@@ -17,6 +19,14 @@ P1 = "**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)
 P2 = "**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  Tidy it**"
 CODEX = "chatgpt-codex-connector"
 APP = "gradiated-review"
+
+
+def receipt(commit=HEAD[:10]):
+    return {"author": {"__typename": "Bot", "login": CODEX},
+            "body": "<!-- codex-review-receipt:v1 -->\n\n"
+                    "Codex Review: Didn't find any major issues. :rocket:\n\n"
+                    f"**Reviewed commit:** `{commit}`\n",
+            "userContentEdits": {"pageInfo": {"hasNextPage": False}, "nodes": []}}
 
 
 def step_scripts():
@@ -60,6 +70,9 @@ def login(who):
 reviews=f['reviews']
 if '/statuses/' in endpoint:
     write('status')
+elif '/contents/tools/ci/codex_receipts.py?ref=' in endpoint:
+    assert endpoint.endswith('?ref='+f['workflow_sha']), 'Parser source must be the trusted workflow revision'
+    emit({'content': f['parser']})
 elif '/collaborators/' in endpoint:
     emit({'role_name': f['role']})
 elif endpoint.endswith('/reactions'):
@@ -93,7 +106,10 @@ elif endpoint=='graphql':
                                'has_any_findings':f['codex_findings']}}
         rows=[{'body':'<!-- codex-review-state:v1 '+json.dumps(marker)+' -->',
                'userContentEdits':{'nodes':[]}}]
-    print(json.dumps(rows))
+    rows.extend(f['receipts'])
+    for row in rows:
+        row.setdefault('author', {'__typename':'Bot','login':'chatgpt-codex-connector'})
+    emit({'data': {'repository': {'pullRequest': {'comments': {'nodes': rows}}}}})
 elif '/check-runs?' in endpoint:
     sha=endpoint.split('/commits/')[1].split('/')[0]
     rows=[]
@@ -115,12 +131,13 @@ class ReviewGateTests(unittest.TestCase):
     def run_gate(self, codex=None, graphite=None, codex_state="completed", state="open",
                  codex_findings=False, threads=(), reviews=(), base="main", author="joshsny",
                  issue_comments=(), event="workflow_dispatch", commenter_type="", role="write",
-                 ask_codex=""):
-        fixture = {"head": HEAD, "mid": MID, "old": OLD, "codex": codex, "graphite": graphite,
+                 ask_codex="", receipts=(), mid=MID):
+        fixture = {"head": HEAD, "mid": mid, "old": OLD, "codex": codex, "graphite": graphite,
                    "codex_state": codex_state, "codex_findings": codex_findings,
                    "state": state, "threads": list(threads), "reviews": list(reviews),
                    "base": base, "author": author, "issue_comments": list(issue_comments),
-                   "role": role}
+                   "role": role, "receipts": list(receipts), "workflow_sha": "e"*40,
+                   "parser": base64.b64encode((ROOT / 'tools/ci/codex_receipts.py').read_bytes()).decode()}
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp)
             (directory / "fixture.json").write_text(json.dumps(fixture))
@@ -138,6 +155,7 @@ class ReviewGateTests(unittest.TestCase):
                        STATUS_TOKEN="status-token", APP_SLUG=APP, GITHUB_OUTPUT=str(output),
                        EVENT=event, COMMENTER="someone", COMMENTER_TYPE=commenter_type,
                        COMMENT_ID="99", REQUESTED="", ASK_CODEX=ask_codex)
+            env["WORKFLOW_SHA"] = fixture["workflow_sha"]
             for n, script in enumerate(step_scripts()):
                 result = subprocess.run(["bash", "-c", script], cwd=tmp, env=env,
                                         capture_output=True, text=True, timeout=20)
@@ -203,6 +221,76 @@ class ReviewGateTests(unittest.TestCase):
         result = self.approval(codex=OLD)
         self.assertEqual(result["commit_id"], HEAD)
         self.assertIn(f"Codex reviewed `{OLD}`", result["body"])
+
+    def test_versioned_clean_receipt_resolves_short_and_full_pr_commits(self):
+        for commit in (HEAD[:10], HEAD):
+            with self.subTest(commit=commit):
+                result = self.approval(receipts=[receipt(commit)])
+                self.assertIn(f"Codex reviewed `{HEAD}`", result["body"])
+
+    def test_receipt_cannot_be_forged_by_human_or_another_bot(self):
+        for actor in ({"__typename": "User", "login": CODEX},
+                      {"__typename": "User", "login": "joshsny"},
+                      {"__typename": "Bot", "login": "another-bot"}):
+            with self.subTest(actor=actor):
+                forged = receipt()
+                forged["author"] = actor
+                self.assertIsNone(self.approval(receipts=[forged]))
+
+    def test_receipt_requires_trusted_complete_edit_history(self):
+        for editor in ({"__typename": "User", "login": "joshsny"}, None):
+            changed = receipt()
+            changed["userContentEdits"]["nodes"] = [{"editor": editor, "diff": "forged clean body"}]
+            self.assertIsNone(self.approval(receipts=[changed]))
+        incomplete = receipt()
+        incomplete["userContentEdits"]["pageInfo"]["hasNextPage"] = True
+        self.assertIsNone(self.approval(receipts=[incomplete]))
+        trusted = receipt()
+        trusted["userContentEdits"]["nodes"] = [{"editor": {"__typename": "Bot", "login": CODEX}, "diff": "trusted edit"}]
+        self.assertIsNotNone(self.approval(receipts=[trusted]))
+
+    def test_receipt_rejects_ambiguous_foreign_or_multiple_commit_references(self):
+        self.assertIsNone(self.approval(receipts=[receipt()], mid=HEAD[:10]+"d"*30))
+        self.assertIsNone(self.approval(receipts=[receipt(FOREIGN[:10])]))
+        multiple = receipt()
+        multiple["body"] += f"**Reviewed commit:** `{MID[:10]}`\n"
+        self.assertIsNone(self.approval(receipts=[multiple]))
+        self.assertIsNotNone(self.approval(receipts=[receipt(HEAD)], mid=HEAD[:10]+"d"*30))
+
+    def test_receipt_requires_explicit_clean_result_and_version_marker(self):
+        for replacement in ("Here are some automated review suggestions for this pull request.",
+                            "Codex review is running.", "Review failed."):
+            changed = receipt()
+            changed["body"] = changed["body"].replace("Codex Review: Didn't find any major issues. :rocket:", replacement)
+            self.assertIsNone(self.approval(receipts=[changed]))
+        for marker in ("", "<!-- codex-review-receipt:v2 -->"):
+            changed = receipt()
+            changed["body"] = changed["body"].replace("<!-- codex-review-receipt:v1 -->", marker)
+            self.assertIsNone(self.approval(receipts=[changed]))
+        contradictory = receipt()
+        contradictory["body"] += P2
+        self.assertIsNone(self.approval(receipts=[contradictory]))
+        quoted = receipt()
+        quoted["body"] = "Example receipt:\n```\n" + quoted["body"] + "```\n"
+        self.assertIsNone(self.approval(receipts=[quoted]))
+
+    def test_clean_receipt_does_not_override_inline_p1_or_unresolved_threads(self):
+        self.assertIsNone(self.approval(receipts=[receipt()],
+            reviews=[(CODEX, "COMMENTED", HEAD, [P1])], threads=[(CODEX, P1, True)]))
+        self.assertIsNone(self.approval(receipts=[receipt()], threads=[("joshsny", "unresolved", False)]))
+
+    def test_receipt_parser_itself_filters_inline_blocking_findings(self):
+        parse = runpy.run_path(str(ROOT / 'tools/ci/codex_receipts.py'))['clean_commits']
+        for badge in (P1, P1.replace('P1', 'P0')):
+            finding = {"login": CODEX+'[bot]', "reply": None, "commit": HEAD, "body": badge}
+            self.assertEqual(parse([receipt()], [HEAD, OLD], [finding]), [])
+            self.assertEqual(parse([receipt()], [HEAD, OLD], [{**finding, "commit": OLD}]), [HEAD])
+            self.assertEqual(parse([receipt()], [HEAD, OLD], [{**finding, "login": 'joshsny'}]), [HEAD])
+
+    def test_newer_clean_receipt_clears_old_p1_but_same_commit_does_not(self):
+        history = {"reviews": [(CODEX, "COMMENTED", OLD, [P1])], "threads": [(CODEX, P1, True)]}
+        self.assertIsNotNone(self.approval(receipts=[receipt()], **history))
+        self.assertIsNone(self.approval(receipts=[receipt(OLD[:10])], **history))
 
     def test_graphite_alone_approves(self):
         result = self.approval(graphite=(HEAD, "success"))

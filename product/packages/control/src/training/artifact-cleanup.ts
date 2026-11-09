@@ -4,6 +4,7 @@ import {
 } from "@gradiated/contracts/model-catalog";
 import type { ControlDatabase } from "../db/client.js";
 import type { ContentStore } from "../traces/storage.js";
+import { createModelUploadStore } from "./upload-store.js";
 import { createTrainingStore } from "./store.js";
 import type { TrainingEngine } from "./types.js";
 
@@ -25,7 +26,22 @@ export const createTrainingArtifactCleanup = (
       new Date(at - FINISHED_GRACE_MILLISECONDS),
       new Date(at - ABANDONED_AFTER_MILLISECONDS),
     );
-    if (!runId) return;
+    if (!runId) {
+      const uploads = createModelUploadStore(database);
+      const upload = await uploads.cleanupCandidate(
+        new Date(at - FINISHED_GRACE_MILLISECONDS),
+      );
+      if (!upload) return;
+
+      const [outputs, inputs] = await Promise.all([
+        objects.list(`runs/${upload.id}/`, { limit: 1000 }),
+        objects.list(`uploads/${upload.id}/`, { limit: 1000 }),
+      ]);
+      const keys = [...inputs.keys, ...outputs.keys].slice(0, 1000);
+      if (keys.length) await objects.delete(keys);
+      else await uploads.delete(upload.id);
+      return;
+    }
 
     const page = await objects.list(`runs/${runId}/`, { limit: 1000 });
     if (page.keys.length) {

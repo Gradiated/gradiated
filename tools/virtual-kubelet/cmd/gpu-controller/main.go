@@ -50,6 +50,7 @@ type host struct {
 	MemoryGiB   int64           `json:"memory_gib"`
 	GPUProduct  string          `json:"gpu_product"`
 	FaultDomain string          `json:"fault_domain,omitempty"`
+	ExtraTaints hostTaints      `json:"extra_taints,omitempty"`
 }
 
 // Hosts and their host bundles come from GpuHost objects; the ConfigMap
@@ -357,6 +358,9 @@ func (p *provider) NotifyNodeStatus(ctx context.Context, callback func(*v1.Node)
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
+				if err := reconcileNodeTaints(ctx, p.client.Nodes(), p.host); err != nil {
+					log.Printf("reconcile node reservations %s: %v", p.host.InstanceID, err)
+				}
 				copy := p.node.DeepCopy()
 				ready := v1.ConditionTrue
 				if p.Ping(ctx) != nil {
@@ -379,8 +383,11 @@ func runHost(ctx context.Context, client kubernetes.Interface, namespace string,
 	if err := labelNode(ctx, client, h); err != nil {
 		return err
 	}
+	if err := reconcileNodeTaints(ctx, client.CoreV1().Nodes(), h); err != nil {
+		return err
+	}
 	spec := &v1.Node{ObjectMeta: metav1.ObjectMeta{Name: name, Labels: labels},
-		Spec:   v1.NodeSpec{Taints: []v1.Taint{{Key: "gradiated.com/gpu", Value: "true", Effect: v1.TaintEffectNoSchedule}}},
+		Spec:   v1.NodeSpec{Taints: nodeTaints(h)},
 		Status: v1.NodeStatus{Capacity: resources, Allocatable: resources.DeepCopy(), NodeInfo: v1.NodeSystemInfo{OperatingSystem: "linux", Architecture: "amd64", KubeletVersion: "v1.33.5"}, Conditions: []v1.NodeCondition{{Type: v1.NodeReady, Status: v1.ConditionTrue, LastHeartbeatTime: metav1.Now(), LastTransitionTime: metav1.Now()}}}}
 	factory := informers.NewSharedInformerFactoryWithOptions(client, time.Minute, informers.WithNamespace(namespace), informers.WithTweakListOptions(func(o *metav1.ListOptions) {
 		o.FieldSelector = fields.OneTermEqualSelector("spec.nodeName", name).String()

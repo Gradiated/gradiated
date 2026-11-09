@@ -32,9 +32,17 @@ public ALB ---> proxy ---> gateway (Rust, EKS) ---> private transport / restrict
 ```
 
 There is no general gateway, provider router, model alias layer, fallback
-graph, third-party inference adapter or fleet service. A request names one
-exact hosted model. Direct customers and OpenRouter use the same Rust gateway
-and the same Valkey-backed authentication, admission and settlement path.
+graph or fleet service. A request names one exact hosted model. Direct
+customers and OpenRouter use the same Rust gateway and the same Valkey-backed
+authentication, admission and settlement path.
+
+The gateway has one external capacity: Gradiated's own OpenRouter account. It
+serves a catalog model whose row maps the exact OpenRouter model when our
+deployments are absent, unhealthy, saturated or fail before any output. The
+caller is billed once at catalog prices and sees only Gradiated's response;
+OpenRouter's own traffic and deployment-pinned requests never use it. The
+[gateway architecture](../product/services/gateway/ARCHITECTURE.md#external-capacity-openrouter)
+owns the rules.
 
 The one exception is the customer-key proxy in `product/services/proxy`, which
 the [proxy feature plan](PROXY_FEATURE_PLAN.md) governs. It relays requests to

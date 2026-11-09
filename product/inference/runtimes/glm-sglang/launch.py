@@ -64,7 +64,7 @@ def full_kv_pressure(text):
     return max(values)
 
 
-def metrics(config):
+def metrics(config, qualification=None):
     texts = []
     for port in [config['backend'], config['metrics']]:
         with urllib.request.urlopen(f'http://127.0.0.1:{port}/metrics', timeout=2) as response:
@@ -83,6 +83,10 @@ def metrics(config):
         ('vllm:kv_cache_usage_perc', pressure, 'Compatibility alias: maximum native SGLang non-evictable full-attention KV usage ratio.'),
     ]:
         chunks.append(f'\n# HELP {name} {help_text}\n# TYPE {name} gauge\n{name} {value}\n'.encode())
+    if qualification:
+        name = 'gradiated_runtime_startup_qualification'
+        chunks.append(f'\n# HELP {name} Startup qualification this process passed: full, short or short_to_full.\n'
+                      f'# TYPE {name} gauge\n{name}{{mode="{qualification}"}} 1\n'.encode())
     return b'\n'.join(chunks)
 
 
@@ -93,7 +97,7 @@ def handler(supervisor, config):
             if self.path != '/metrics':
                 return super().do_GET()
             try:
-                body, code = metrics(config), 200
+                body, code = metrics(config, supervisor.mode), 200
             except (OSError, RuntimeError, ValueError):
                 body, code = b'native metrics unavailable\n', 503
             self.send_response(code)
@@ -104,6 +108,24 @@ def handler(supervisor, config):
     return Handler
 
 
+def qualification_identity(config, bundle_root=root):
+    """What a recorded qualification must match beyond the GPUs, or None outside a verified bundle."""
+    try:
+        digest = (bundle_root / '.bundle-sha256').read_text().strip()
+    except OSError:
+        return None
+    if not re.fullmatch(r'[0-9a-f]{64}', digest):
+        return None
+    # Ports and the bundle path vary between pods on one host and do not change what qualified.
+    placement = {'root', 'front', 'warmup', 'backend', 'metrics'}
+    return {'bundle': digest, 'config': {name: value for name, value in config.items() if name not in placement}}
+
+
+def qualification_records(environment):
+    cache = environment.get('XDG_CACHE_HOME') or str(Path(environment.get('HOME', '/home/runtime')) / '.cache')
+    return Path(cache) / 'glm-sglang' / 'qualification'
+
+
 def main(environment=os.environ):
     config = settings(detect_profile(environment))
     original = base.handler
@@ -112,7 +134,8 @@ def main(environment=os.environ):
         supervisor = Supervisor([sys.executable, str(root / 'glm-sglang/service.py')],
             runtime_url=f"http://127.0.0.1:{config['front']}",
             timeout=int(environment.get('RUNTIME_STARTUP_TIMEOUT_SECONDS', '3600')),
-            max_queued_requests=config['active_requests'] + QUEUED_REQUESTS)
+            max_queued_requests=config['active_requests'] + QUEUED_REQUESTS,
+            record_dir=qualification_records(environment), identity=qualification_identity(config))
         return supervisor.run(port=config['warmup'])
     finally:
         base.handler = original

@@ -49,6 +49,7 @@ const engine = (
     ping: fleet.ping,
     pins: async () => pinned,
     enrollment: async () => fleet.enrollment,
+    modelStatuses: async () => new Map(),
     mode: "act",
     leading: () => true,
     identity: "gpu-fleet-a",
@@ -195,7 +196,7 @@ describe("rolling re-image", () => {
         ),
     ).toEqual([]);
     expect(fleet.sim(FIRST)).toMatchObject({ image: OLD_IMAGE, resets: 0 });
-    expect(fleet.node(FIRST).spec?.unschedulable).toBe(false);
+    expect(fleet.node(FIRST).spec?.unschedulable).not.toBe(true);
     expect(
       fleet.scaledObject("kev").metadata.annotations?.[PAUSED_REPLICAS],
     ).toBeUndefined();
@@ -210,6 +211,216 @@ describe("rolling re-image", () => {
       `gradiated_gpu_fleet_rollout_blocked{instance_id="${FIRST}"} 1`,
     );
     expect(fleet.violations).toEqual([]);
+  });
+
+  it.each(["reservation", "selector", "affinity"])(
+    "blocks before cordon or surge when the spare violates %s",
+    async (constraint) => {
+      const fleet = simulateFleet(
+        [
+          { instanceId: FIRST, podId: "serving", gpus: 8 },
+          {
+            instanceId: SECOND,
+            podId: "reserved",
+            gpus: 8,
+            image: NEW_IMAGE,
+            bundle: NEW_BUNDLE,
+          },
+        ],
+        [{ name: "glm", gpus: 8, replicas: 1 }],
+      );
+      fleet.place("glm", FIRST);
+      const node = fleet.kube.objects.get(
+        `${NODES}/gpu-${SECOND}`,
+      ) as unknown as {
+        spec: { taints?: { key: string; value: string; effect: string }[] };
+      };
+      const pod = fleet.podsOn(FIRST)[0]!;
+      if (constraint === "reservation")
+        node.spec.taints = [
+          {
+            key: "gradiated.com/kimi-k31",
+            value: "reserved",
+            effect: "NoSchedule",
+          },
+        ];
+      if (constraint === "selector")
+        pod.spec.nodeSelector = { "gradiated.com/instance-id": FIRST };
+      if (constraint === "affinity")
+        pod.spec.affinity = {
+          nodeAffinity: {
+            requiredDuringSchedulingIgnoredDuringExecution: {
+              nodeSelectorTerms: [
+                {
+                  matchExpressions: [
+                    {
+                      key: "gradiated.com/instance-id",
+                      operator: "In",
+                      values: [FIRST],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        };
+      const baseline = fleet.kube.calls.length;
+      await run(
+        fleet,
+        pins(NEW_IMAGE, NEW_BUNDLE),
+        () => rollout(fleet, FIRST)?.result === "Blocked",
+      );
+      expect(rollout(fleet, FIRST)?.lastError).toBe(
+        "No capacity for a replacement glm replica",
+      );
+      expect(fleet.node(FIRST).spec?.unschedulable).not.toBe(true);
+      expect(
+        fleet.scaledObject("glm").metadata.annotations?.[PAUSED_REPLICAS],
+      ).toBeUndefined();
+      expect(
+        fleet.kube.calls
+          .slice(baseline)
+          .filter(
+            (call) =>
+              call.method === "PATCH" &&
+              (call.path.startsWith(NODES) ||
+                call.path.includes("scaledobjects")),
+          ),
+      ).toEqual([]);
+      expect(
+        fleet
+          .podsOn(FIRST)
+          .filter((item) =>
+            item.status?.conditions?.some(
+              (c: { type: string; status: string }) =>
+                c.type === "Ready" && c.status === "True",
+            ),
+          ),
+      ).toHaveLength(1);
+      expect(fleet.sim(FIRST).resets).toBe(0);
+      expect(fleet.violations).toEqual([]);
+    },
+  );
+
+  it("preserves both local Kimi replicas when re-imaging has no replacement capacity", async () => {
+    const fleet = simulateFleet(
+      [
+        { instanceId: FIRST, podId: "zhimpngvqyotuj", gpus: 8 },
+        { instanceId: SECOND, podId: "dv31b4wrd2yc8n", gpus: 8 },
+      ],
+      [{ name: "kimi-k31-pro", gpus: 8, replicas: 2 }],
+    );
+    fleet.place("kimi-k31-pro", FIRST);
+    fleet.place("kimi-k31-pro", SECOND);
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, FIRST)?.result === "Blocked",
+    );
+
+    expect(rollout(fleet, FIRST)).toMatchObject({
+      result: "Blocked",
+      lastError: "No capacity for a replacement kimi-k31-pro replica",
+    });
+    expect(fleet.ready("kimi-k31-pro")).toBe(2);
+    for (const id of [FIRST, SECOND]) {
+      expect(fleet.sim(id)).toMatchObject({ image: OLD_IMAGE, resets: 0 });
+      expect(fleet.node(id).spec?.unschedulable).not.toBe(true);
+    }
+    expect(fleet.violations).toEqual([]);
+  });
+
+  it("retires one replica of an opted-in model when no host has room, never all of them", async () => {
+    const fleet = simulateFleet(
+      [
+        { instanceId: FIRST, podId: "zhimpngvqyotuj", gpus: 1 },
+        { instanceId: SECOND, podId: "dv31b4wrd2yc8n", gpus: 1 },
+      ],
+      [{ name: "kev", gpus: 1, replicas: 2 }],
+    );
+    fleet.place("kev", FIRST);
+    fleet.place("kev", SECOND);
+
+    const events = await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () =>
+        [FIRST, SECOND].every(
+          (id) => rollout(fleet, id)?.result === "Succeeded",
+        ) && fleet.ready("kev") === 2,
+      { retireOnReimage: new Set(["kev"]) },
+    );
+
+    expect(started(events)).toEqual([FIRST, SECOND]);
+    for (const id of [FIRST, SECOND]) {
+      expect(fleet.sim(id)).toMatchObject({
+        image: NEW_IMAGE,
+        bundle: NEW_BUNDLE,
+        state: "enrolled",
+        resets: 1,
+      });
+      expect(fleet.node(id).spec?.unschedulable).toBeFalsy();
+    }
+    // One replica is down while its host is re-imaged; the other always serves.
+    expect(fleet.violations.length).toBeGreaterThan(0);
+    expect(
+      fleet.violations.every((violation) =>
+        violation.endsWith("kev had 1 Ready replicas"),
+      ),
+    ).toBe(true);
+    expect(fleet.ready("kev")).toBe(2);
+    expect(
+      fleet.scaledObject("kev").metadata.annotations?.[PAUSED_REPLICAS],
+    ).toBeUndefined();
+  });
+
+  it("does not retire the only replica of an opted-in model", async () => {
+    const fleet = simulateFleet(
+      [
+        { instanceId: FIRST, podId: "zhimpngvqyotuj", gpus: 1 },
+        { instanceId: SECOND, podId: "dv31b4wrd2yc8n", gpus: 1 },
+      ],
+      [
+        { name: "kev", gpus: 1, replicas: 1 },
+        { name: "glm", gpus: 1, replicas: 1 },
+      ],
+    );
+    fleet.place("kev", FIRST);
+    fleet.place("glm", SECOND);
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, FIRST)?.result === "Blocked",
+      { retireOnReimage: new Set(["kev"]) },
+    );
+
+    expect(rollout(fleet, FIRST)).toMatchObject({
+      result: "Blocked",
+      lastError: "Retiring this host's kev replicas would leave none",
+    });
+    expect(fleet.sim(FIRST)).toMatchObject({ image: OLD_IMAGE, resets: 0 });
+    expect(fleet.violations).toEqual([]);
+    expect(fleet.ready("kev")).toBe(1);
+
+    // Nothing changes, so the blocked host is not cordoned or retried again.
+    const blockedAt = fleet.kube.calls.length;
+    const events = await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => false,
+      { retireOnReimage: new Set(["kev"]) },
+      40,
+    );
+    expect(started(events)).toEqual([]);
+    expect(
+      fleet.kube.calls
+        .slice(blockedAt)
+        .filter(
+          (call) => call.method === "PATCH" && call.path.startsWith(NODES),
+        ),
+    ).toEqual([]);
   });
 
   it("retries a blocked host only once its pods fit on another host", async () => {
@@ -252,6 +463,193 @@ describe("rolling re-image", () => {
     );
 
     expect(fleet.sim(FIRST)).toMatchObject({ image: NEW_IMAGE, resets: 1 });
+    expect(fleet.violations).toEqual([]);
+  });
+
+  it("keeps a reservation blocked until the serving workload tolerates it", async () => {
+    const fleet = simulateFleet(
+      [
+        { instanceId: FIRST, podId: "serving", gpus: 8 },
+        {
+          instanceId: SECOND,
+          podId: "reserved",
+          gpus: 8,
+          image: NEW_IMAGE,
+          bundle: NEW_BUNDLE,
+        },
+      ],
+      [{ name: "reserved-model", gpus: 8, replicas: 1 }],
+    );
+    fleet.place("reserved-model", FIRST);
+    const node = fleet.kube.objects.get(
+      `${NODES}/gpu-${SECOND}`,
+    ) as unknown as {
+      spec: { taints: { key: string; value: string; effect: string }[] };
+    };
+    const reservation = {
+      key: "gradiated.com/kimi-k31",
+      value: "reserved",
+      effect: "NoSchedule",
+    };
+    node.spec.taints = [reservation];
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    await run(fleet, pinned, () => rollout(fleet, FIRST)?.result === "Blocked");
+    const blockedCount = rollout(fleet, FIRST)?.blockedCount;
+    await run(fleet, pinned, () => false, {}, 40);
+    expect(rollout(fleet, FIRST)?.blockedCount).toBe(blockedCount);
+    expect(fleet.sim(FIRST).resets).toBe(0);
+
+    fleet.podsOn(FIRST)[0]!.spec.tolerations = [reservation];
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.result === "Succeeded",
+    );
+    expect(fleet.sim(FIRST).resets).toBe(1);
+    expect(fleet.node(SECOND).spec).toMatchObject({ taints: [reservation] });
+    expect(fleet.violations).toEqual([]);
+  });
+
+  it.each([false, true])(
+    "honors required hostname anti-affinity with a matching destination resident=%s",
+    async (occupied) => {
+      const fleet = simulateFleet(
+        [
+          { instanceId: FIRST, podId: "serving", gpus: 4 },
+          {
+            instanceId: SECOND,
+            podId: "spare",
+            gpus: 8,
+            image: NEW_IMAGE,
+            bundle: NEW_BUNDLE,
+          },
+        ],
+        [{ name: "glm", gpus: 4, replicas: occupied ? 2 : 1 }],
+      );
+      fleet.place("glm", FIRST);
+      if (occupied) fleet.place("glm", SECOND);
+      for (const id of [FIRST, SECOND]) {
+        const node = fleet.kube.objects.get(
+          `${NODES}/gpu-${id}`,
+        ) as unknown as { metadata: { labels: Record<string, string> } };
+        node.metadata.labels = { "kubernetes.io/hostname": `gpu-${id}` };
+      }
+      fleet.podsOn(FIRST)[0]!.spec.affinity = {
+        podAntiAffinity: {
+          requiredDuringSchedulingIgnoredDuringExecution: [
+            {
+              topologyKey: "kubernetes.io/hostname",
+              labelSelector: {
+                matchLabels: { "app.kubernetes.io/name": "glm" },
+              },
+            },
+          ],
+        },
+      };
+      await run(
+        fleet,
+        pins(NEW_IMAGE, NEW_BUNDLE),
+        () =>
+          rollout(fleet, FIRST)?.result ===
+          (occupied ? "Blocked" : "Succeeded"),
+      );
+      expect(rollout(fleet, FIRST)?.result).toBe(
+        occupied ? "Blocked" : "Succeeded",
+      );
+      expect(fleet.sim(FIRST).resets).toBe(occupied ? 0 : 1);
+      expect(fleet.violations).toEqual([]);
+    },
+  );
+
+  it("assigns a constrained equal-size replica before a flexible replica", async () => {
+    const fleet = simulateFleet(
+      [
+        { instanceId: FIRST, podId: "serving", gpus: 4 },
+        {
+          instanceId: SPARE,
+          podId: "restricted",
+          gpus: 2,
+          image: NEW_IMAGE,
+          bundle: NEW_BUNDLE,
+        },
+        {
+          instanceId: SECOND,
+          podId: "flexible",
+          gpus: 2,
+          image: NEW_IMAGE,
+          bundle: NEW_BUNDLE,
+        },
+      ],
+      [
+        { name: "flexible", gpus: 2, replicas: 1 },
+        { name: "restricted", gpus: 2, replicas: 1 },
+      ],
+    );
+    fleet.place("flexible", FIRST);
+    fleet.place("restricted", FIRST);
+    const restricted = fleet
+      .podsOn(FIRST)
+      .find(
+        (pod) => pod.metadata.labels["app.kubernetes.io/name"] === "restricted",
+      )!;
+    restricted.spec.nodeSelector = { pool: "restricted" };
+    const node = fleet.kube.objects.get(`${NODES}/gpu-${SPARE}`) as unknown as {
+      metadata: { labels: Record<string, string> };
+    };
+    node.metadata.labels = { pool: "restricted" };
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () =>
+        rollout(fleet, FIRST)?.step === "Surge" ||
+        rollout(fleet, FIRST)?.result === "Blocked",
+    );
+    expect(rollout(fleet, FIRST)).toMatchObject({
+      result: "Running",
+      step: "Surge",
+    });
+    expect(fleet.violations).toEqual([]);
+  });
+
+  it("backtracks an initially valid GPU packing when later replicas cannot fit", async () => {
+    const fleet = simulateFleet(
+      [
+        { instanceId: FIRST, podId: "serving", gpus: 8 },
+        {
+          instanceId: SPARE,
+          podId: "four-slots",
+          gpus: 4,
+          image: NEW_IMAGE,
+          bundle: NEW_BUNDLE,
+        },
+        {
+          instanceId: SECOND,
+          podId: "three-slots",
+          gpus: 3,
+          image: NEW_IMAGE,
+          bundle: NEW_BUNDLE,
+        },
+      ],
+      [
+        { name: "wide", gpus: 3, replicas: 1 },
+        { name: "pair", gpus: 2, replicas: 2 },
+      ],
+    );
+    fleet.place("wide", FIRST);
+    fleet.place("pair", FIRST);
+    fleet.place("pair", FIRST);
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () =>
+        rollout(fleet, FIRST)?.step === "Surge" ||
+        rollout(fleet, FIRST)?.result === "Blocked",
+    );
+    expect(rollout(fleet, FIRST)).toMatchObject({
+      result: "Running",
+      step: "Surge",
+    });
+    expect(fleet.sim(FIRST).resets).toBe(0);
     expect(fleet.violations).toEqual([]);
   });
 
@@ -505,6 +903,8 @@ describe("pods as the virtual kubelet publishes them", () => {
     ).toEqual({
       name: DEEPSEEK,
       uid: `${DEEPSEEK}-uid`,
+      namespace: "gpu-inference",
+      labels: { "app.kubernetes.io/name": "deepseek" },
       model: "deepseek",
       training: false,
       node: `gpu-${FIRST}`,
@@ -535,6 +935,19 @@ describe("pods as the virtual kubelet publishes them", () => {
     expect(failed("runpod://4242:2026-10-23T09:12:44Z")).toBe(true);
     expect(failed("runpod://4242:2026-10-22T08:00:00Z")).toBe(false);
     expect(clusterPod(pod)?.qualificationFailed).toBe(false);
+  });
+
+  it("resolves the catalog identity from annotations, including an explicit empty mapping", () => {
+    const pod = virtualKubeletPod("kev", "kev-test", `gpu-${FIRST}`);
+    const annotations = pod.metadata.annotations as Record<string, string>;
+    annotations["gradiated.com/model-id"] = "private/kev";
+    expect(clusterPod(pod)?.modelId).toBe("private/kev");
+
+    annotations["gradiated.com/serving-model-id"] = "jaredpalmer/kev-9b";
+    expect(clusterPod(pod)?.modelId).toBe("jaredpalmer/kev-9b");
+
+    annotations["gradiated.com/serving-model-id"] = "";
+    expect(clusterPod(pod)?.modelId).toBeUndefined();
   });
 
   // Three 8-GPU B300 hosts, each of the two serving hosts running one
@@ -982,6 +1395,196 @@ describe("in-place bundle update", () => {
 
     expect(fleet.sim(FIRST)).toMatchObject({ bundle: NEW_BUNDLE });
     expect(rollout(fleet, FIRST)?.baseline).toEqual({});
+  });
+
+  it("updates past an unready unavailable model without qualification or pod restarts", async () => {
+    const { fleet, pod } = bundleFleet();
+    fleet.notReady.add(pod);
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/model-id"] = "jaredpalmer/kev-9b";
+    delete item.metadata.annotations["gradiated.com/qualified-runtime"];
+    const events = await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, FIRST)?.result === "Succeeded",
+      {
+        modelStatuses: async () =>
+          new Map([["jaredpalmer/kev-9b", "unavailable"]]),
+      },
+    );
+
+    expect(rollout(fleet, FIRST)?.baseline).toEqual({});
+    expect(fleet.sim(FIRST)).toMatchObject({ bundle: NEW_BUNDLE, resets: 0 });
+    expect(fleet.podsOn(FIRST).map((item) => item.metadata.name)).toEqual([
+      pod,
+    ]);
+    expect(events).toContainEqual({
+      event: "gpu_bundle_unavailable_models_excluded",
+      instance_id: FIRST,
+      bundle: NEW_BUNDLE,
+      pods: [{ uid: item.metadata.uid, model_id: "jaredpalmer/kev-9b" }],
+    });
+  });
+
+  it.each(["available", "retired", undefined] as const)(
+    "keeps waiting for an unready pod when its catalog status is %s",
+    async (status) => {
+      const { fleet, pod } = bundleFleet();
+      fleet.notReady.add(pod);
+      const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+      item.metadata.annotations["gradiated.com/model-id"] =
+        "jaredpalmer/kev-9b";
+      const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+      const overrides = {
+        modelStatuses: async () =>
+          new Map(status ? [["jaredpalmer/kev-9b", status]] : []),
+      };
+      await run(
+        fleet,
+        pinned,
+        () => rollout(fleet, FIRST)?.step === "Apply",
+        overrides,
+      );
+      await run(fleet, pinned, () => false, overrides, 10);
+
+      expect(rollout(fleet, FIRST)?.step).toBe("Apply");
+      expect(fleet.sim(FIRST).bundle).toBe(OLD_BUNDLE);
+    },
+  );
+
+  it("leaves Apply unchanged if the catalog cannot be read, then retries the read", async () => {
+    const { fleet, pod } = bundleFleet();
+    fleet.notReady.add(pod);
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/model-id"] = "jaredpalmer/kev-9b";
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    const overrides = {
+      modelStatuses: async () => {
+        throw new Error("catalog unavailable");
+      },
+    };
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.step === "Apply",
+      overrides,
+    );
+    await run(fleet, pinned, () => false, overrides, 10);
+    expect(rollout(fleet, FIRST)).toMatchObject({
+      step: "Apply",
+      lastError: "catalog unavailable",
+    });
+    expect(fleet.sim(FIRST).bundle).toBe(OLD_BUNDLE);
+
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.result === "Succeeded",
+      {
+        modelStatuses: async () =>
+          new Map([["jaredpalmer/kev-9b", "unavailable"]]),
+      },
+    );
+    expect(fleet.sim(FIRST)).toMatchObject({ bundle: NEW_BUNDLE, resets: 0 });
+  });
+
+  it("uses the serving model identity rather than the Rollout name or private identity", async () => {
+    const { fleet, pod } = bundleFleet();
+    fleet.notReady.add(pod);
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/model-id"] = "private/kev";
+    item.metadata.annotations["gradiated.com/serving-model-id"] =
+      "jaredpalmer/kev-9b";
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    const overrides = {
+      modelStatuses: async () =>
+        new Map([
+          ["private/kev", "available" as const],
+          ["jaredpalmer/kev-9b", "unavailable" as const],
+        ]),
+    };
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.result === "Succeeded",
+      overrides,
+    );
+    expect(rollout(fleet, FIRST)?.baseline).toEqual({});
+    expect(fleet.sim(FIRST).bundle).toBe(NEW_BUNDLE);
+  });
+
+  it("still protects a Ready unavailable model even with a qualification error", async () => {
+    const { fleet, pod } = bundleFleet();
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/model-id"] = "jaredpalmer/kev-9b";
+    item.metadata.annotations["gradiated.com/qualification-error"] =
+      "runpod://4242:2026-10-23T09:12:44Z";
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    const overrides = {
+      modelStatuses: async () =>
+        new Map([["jaredpalmer/kev-9b", "unavailable" as const]]),
+    };
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.step === "Soak",
+      overrides,
+    );
+    expect(rollout(fleet, FIRST)?.baseline).toHaveProperty(item.metadata.uid);
+
+    fleet.kube.objects.delete(`${PODS}/${pod}`);
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.result === "Failed",
+      overrides,
+    );
+    expect(rollout(fleet, FIRST)?.lastError).toBe(
+      "A serving pod restarted or left the host during the bundle update",
+    );
+  });
+
+  it("still waits for qualification of a Ready unavailable model", async () => {
+    const { fleet, pod } = bundleFleet();
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/model-id"] = "jaredpalmer/kev-9b";
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    const overrides = {
+      modelStatuses: async () =>
+        new Map([["jaredpalmer/kev-9b", "unavailable" as const]]),
+    };
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.step === "Apply",
+      overrides,
+    );
+    delete item.metadata.annotations["gradiated.com/qualified-runtime"];
+    await engine(fleet, pinned, overrides).rollouts.pass();
+    expect(rollout(fleet, FIRST)?.step).toBe("Apply");
+    expect(fleet.sim(FIRST).bundle).toBe(OLD_BUNDLE);
+  });
+
+  it("rechecks readiness after reading the catalog and protects a pod that became Ready", async () => {
+    const { fleet, pod } = bundleFleet();
+    fleet.notReady.add(pod);
+    const item = fleet.kube.objects.get(`${PODS}/${pod}`) as any;
+    item.metadata.annotations["gradiated.com/model-id"] = "jaredpalmer/kev-9b";
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    const overrides = {
+      modelStatuses: async () => {
+        fleet.notReady.delete(pod);
+        await fleet.observe();
+        return new Map([["jaredpalmer/kev-9b", "unavailable" as const]]);
+      },
+    };
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.result === "Succeeded",
+      overrides,
+    );
+    expect(rollout(fleet, FIRST)?.baseline).toHaveProperty(item.metadata.uid);
   });
 
   it("still waits when the qualification error names an earlier container", async () => {

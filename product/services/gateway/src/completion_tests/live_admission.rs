@@ -54,16 +54,14 @@ fn live_call() -> RuntimeCall {
     fallback.release = release;
     fallback.fault_domain = primary.fault_domain.clone();
 
-    RuntimeCall {
+    RuntimeCall::local(
         runtime,
-        generation_id: Uuid::now_v7(),
         request,
-        effective_output_tokens: 8,
-        deadline: Utc::now() + TimeDelta::seconds(4),
-        deployment: primary,
-        fallbacks: vec![fallback],
-        attempts: 0,
-    }
+        8,
+        Utc::now() + TimeDelta::seconds(4),
+        primary,
+        vec![fallback],
+    )
 }
 
 #[tokio::test]
@@ -76,19 +74,19 @@ async fn live_tp1_admission_rejection_fails_over_within_probe_deadline() {
         call.request.stream = streaming;
         let failure = if streaming {
             call.runtime
-                .stream(&call.deployment, call.request.clone(), 8, call.deadline)
+                .stream(call.deployment(), call.request.clone(), 8, call.deadline)
                 .await
                 .err()
                 .expect("full primary accepted a stream")
         } else {
             call.runtime
-                .complete(&call.deployment, call.request.clone(), 8, call.deadline)
+                .complete(call.deployment(), call.request.clone(), 8, call.deadline)
                 .await
                 .unwrap_err()
         };
         assert_eq!(failure.kind(), RuntimeFailureKind::CapacityExceeded);
         assert_eq!(failure.usage(), NormalizedUsage::zero());
-        let fallback_id = call.fallbacks[0].id;
+        let fallback_id = call.plan.fallbacks[0].id;
         let started = Instant::now();
         let output_tokens = if streaming {
             tokio::time::timeout(std::time::Duration::from_secs(4), async {
@@ -123,7 +121,7 @@ async fn live_tp1_admission_rejection_fails_over_within_probe_deadline() {
                 .usage()
                 .output_tokens()
         };
-        assert_eq!(call.deployment.id, fallback_id);
+        assert_eq!(call.deployment().id, fallback_id);
         assert!(output_tokens > 0);
         assert!(started.elapsed().as_secs_f64() < 4.0);
         println!(
@@ -142,9 +140,11 @@ async fn live_tp1_both_at_capacity_return_429_after_two_attempts() {
     for streaming in [false, true] {
         let call = live_call();
         let mut request = qualified_request(2);
-        request.deployment = call.deployment.clone();
-        request.served_release_digest = request.deployment.served_release_digest().unwrap();
-        request.model_deployments = vec![call.deployment.clone(), call.fallbacks[0].clone()];
+        request.local = Some(crate::coordinator::LocalCapacity {
+            deployment: call.deployment().clone(),
+            deployments: vec![call.deployment().clone(), call.plan.fallbacks[0].clone()],
+            release_digest: call.deployment().served_release_digest().unwrap(),
+        });
         request.request = call.request;
         request.request.stream = streaming;
         request.effective_output_tokens = 8;
@@ -206,7 +206,7 @@ async fn live_tp1_million_token_prefill_can_exceed_the_generation_idle_timeout()
         .await
         .unwrap_or_else(|_| panic!("live long stream failed to open"));
     if std::env::var("GRADIATED_QUEUE_TEST_REQUIRE_FALLBACK").as_deref() == Ok("1") {
-        assert_eq!(call.deployment.id, Uuid::from_u128(2));
+        assert_eq!(call.deployment().id, Uuid::from_u128(2));
     }
     let mut first_output = None;
     let mut usage = None;

@@ -82,8 +82,8 @@ These shapes must run before readiness so MTP batch specializations are compiled
 before serving traffic. Queue limits bound the qualification bursts.
 
 Retire stock GLM only after the new deployment passes production verification.
-`autoscaling.paused_replicas: 0` renders KEDA's paused-replica annotation, which
-sets the old Rollout to zero while retaining its immutable rollback profile.
+Setting the pool's `max_replicas` to `0` holds the old Rollout at zero while
+retaining its immutable rollback profile.
 Retiring the base also requires marking its trained adapters unavailable;
 retain their artifacts and training history.
 

@@ -50,6 +50,16 @@ export const bundles = {
     "product/inference/runtimes/glm-sglang",
     "product/inference/runtimes/glm/warmup-supervisor.py",
   ],
+  "kimi-k31-pro": [
+    "product/inference/bundles/kimi-k31-pro",
+    "product/inference/runtimes/kimi-k31",
+    "product/inference/runtimes/glm/warmup-supervisor.py",
+    "product/inference/bundles/glm-5-3-flash-sglang/smg-build-requirements.txt",
+    "product/inference/bundles/glm-5-3-flash-sglang/smg-patches.json",
+    "product/inference/bundles/glm-5-3-flash-sglang/apply-patches.py",
+    "product/inference/bundles/glm-5-3-flash-sglang/patches/smg_refused_upload.patch",
+    "product/inference/bundles/glm-5-3-flash-sglang/patches/smg_build_marker.patch",
+  ],
   "deepseek-v4-1-flash": [
     "product/inference/bundles/deepseek-v4-1-flash",
     "product/inference/images/deepseek-v4-1-flash/start.sh",
@@ -89,6 +99,7 @@ export const manifest = ({
     ...(bundle === "glm-5-3-flash-sglang"
       ? { runtimeProfiles: ["b300-pcp2", "h200-tp2", "b200-pcp2"] }
       : {}),
+    ...(bundle === "kimi-k31-pro" ? { runtimeProfiles: ["b300-tp8"] } : {}),
     source,
     baseImage,
     baseId,

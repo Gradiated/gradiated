@@ -1,15 +1,21 @@
+use std::time::Duration;
+
 use chrono::{DateTime, Utc};
 use tokio::sync::{mpsc, watch};
 
 use super::{
-    dispatch::RuntimeCall,
+    dispatch::{RuntimeCall, Target},
     settlement::{Delivery, GenerationEnd, GenerationTerminal, Unsuccessful},
     tasks::force_shutdown_requested,
 };
 use crate::{
-    generation::FinishReason, protocol::StreamItem, CancellationOwner, GatewayError,
-    NormalizedUsage, RuntimeEventStream, RuntimeFailure, RuntimeStreamChunk, RuntimeStreamEvent,
+    generation::FinishReason, metrics::Capacity, protocol::StreamItem, CancellationOwner,
+    GatewayError, NormalizedUsage, RuntimeEventStream, RuntimeFailure, RuntimeFailureKind,
+    RuntimeStreamChunk, RuntimeStreamEvent,
 };
+
+/// OpenRouter sends its usage frame right after the finish reason.
+const FINAL_USAGE_GRACE: Duration = Duration::from_secs(2);
 
 pub(super) struct StreamProgress {
     usage: NormalizedUsage,
@@ -18,6 +24,7 @@ pub(super) struct StreamProgress {
     pub(super) terminal_response: Option<serde_json::Value>,
     first_token_at: Option<DateTime<Utc>>,
     frame_delivered: bool,
+    upstream_cost_nano_usd: Option<u64>,
 }
 
 impl StreamProgress {
@@ -29,6 +36,7 @@ impl StreamProgress {
             terminal_response: None,
             first_token_at: None,
             frame_delivered: false,
+            upstream_cost_nano_usd: None,
         }
     }
 
@@ -99,8 +107,32 @@ impl StreamProgress {
         }
 
         self.terminal_usage_seen |= chunk.is_terminal_usage();
+        if let Some(cost) = chunk.upstream_cost_nano_usd() {
+            self.upstream_cost_nano_usd = Some(cost);
+        }
 
         Ok(())
+    }
+
+    /// OpenRouter reports usage only in its final frame, so a caller that leaves
+    /// after the finish reason, holding its answer, is still billed for it.
+    pub(super) async fn collect_final_usage(
+        &mut self,
+        runtime_stream: &mut Box<dyn RuntimeEventStream>,
+    ) {
+        if self.finish_reason.is_none() || self.terminal_usage_seen {
+            return;
+        }
+
+        let collect = async {
+            while let Ok(Some(RuntimeStreamEvent::Chunk(chunk))) = runtime_stream.next_event().await
+            {
+                if self.observe(&chunk).is_err() || chunk.is_terminal_usage() {
+                    return;
+                }
+            }
+        };
+        let _ = tokio::time::timeout(FINAL_USAGE_GRACE, collect).await;
     }
 
     fn observe_failure(&mut self, failure: &RuntimeFailure) {
@@ -124,11 +156,17 @@ impl StreamProgress {
             && !self.terminal_usage_seen
     }
 
-    pub(super) fn into_terminal(self, stop: StreamStop) -> GenerationTerminal {
+    pub(super) fn into_terminal(self, stop: StreamStop, call: &RuntimeCall) -> GenerationTerminal {
+        let own_error = stop
+            .failure_kind()
+            .filter(|_| !self.frame_delivered)
+            .and_then(|kind| call.own_error(kind));
+
         GenerationTerminal {
             delivery: self.delivery(),
-            end: stop.into_end(),
+            end: own_error.map_or_else(|| stop.into_end(), GenerationEnd::failed),
             usage: self.usage,
+            upstream_cost_nano_usd: self.upstream_cost_nano_usd,
         }
     }
 
@@ -161,11 +199,62 @@ pub(super) enum StreamStop {
 }
 
 impl StreamStop {
+    /// Moves the call to its next capacity, logging the failed attempt, unless a
+    /// frame already reached the caller.
+    pub(super) fn fall_back(
+        &self,
+        call: &mut RuntimeCall,
+        progress: &StreamProgress,
+        attempt_started: std::time::Instant,
+        started_at: DateTime<Utc>,
+    ) -> bool {
+        let Some(kind) = self.failure_kind() else {
+            return false;
+        };
+        if progress.frame_delivered {
+            return false;
+        }
+
+        let failed = call.plan.target.clone();
+        let refused =
+            kind == RuntimeFailureKind::CapacityExceeded && progress.can_retry_before_any_frame();
+        let Some(next) = call.fall_back(kind, refused) else {
+            return false;
+        };
+
+        match self {
+            Self::RuntimeFailed(failure) => failure.log_attempt(
+                call.generation_id,
+                &call.request.model,
+                failed.deployment_id(),
+                failed.capacity().as_str(),
+                call.attempts,
+                attempt_started.elapsed().as_millis() as u64,
+                Some(next.as_str()),
+            ),
+            _ => self.warn_if_abnormal(call, &failed, progress, started_at, Some(next)),
+        }
+
+        true
+    }
+
+    fn failure_kind(&self) -> Option<RuntimeFailureKind> {
+        match self {
+            Self::RuntimeFailed(failure) => Some(failure.kind()),
+            Self::InvalidUsage | Self::InvalidFinishReason | Self::Incomplete | Self::Panicked => {
+                Some(RuntimeFailureKind::ProtocolViolation)
+            }
+            Self::Finished(_) | Self::ClientGone | Self::Deadline | Self::Shutdown => None,
+        }
+    }
+
     pub(super) fn warn_if_abnormal(
         &self,
         call: &RuntimeCall,
+        target: &Target,
         progress: &StreamProgress,
         started_at: DateTime<Utc>,
+        next: Option<Capacity>,
     ) {
         let Some(reason) = self.abnormal_reason() else {
             return;
@@ -176,7 +265,10 @@ impl StreamStop {
             _ => None,
         };
         crate::diagnostics::limited_warn!(generation_id = %call.generation_id,
-            model_id = %call.request.model, deployment_id = %call.deployment.id,
+            model_id = %call.request.model,
+            deployment_id = target.deployment_id().map(tracing::field::display),
+            capacity = target.capacity().as_str(),
+            next_capacity = next.map(Capacity::as_str),
             phase = "stream", reason,
             failure_kind = ?failure.map(RuntimeFailure::kind),
             transport = failure.and_then(RuntimeFailure::transport_code),

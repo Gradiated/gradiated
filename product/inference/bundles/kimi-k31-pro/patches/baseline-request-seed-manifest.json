@@ -1,0 +1,25 @@
+{
+  "upstream_sha": "afcd7d6b487a9cbe73e25941971b4cc107e6f9ae",
+  "scope": "Optional normal target sampler per-request seed support without global deterministic inference",
+  "limitations": [
+    "Does not enable DFLASH request seeds; DFLASH guard still rejects them",
+    "Seeded batches use stock PyTorch full-vocabulary sort for top-p; no throughput claim",
+    "Mixed unseeded rows retain ordinary categorical draws; seeded batches pay an extra categorical draw to avoid CPU synchronization",
+    "min_p plus seed remains upstream unsupported; Kimi catalog does not advertise min_p",
+    "Model-kernel numerical determinism across batching is not guaranteed without global deterministic inference; seed controls sampling randomness only"
+  ],
+  "files": [
+    {
+      "path": "sglang/srt/sampling/sampling_batch_info.py",
+      "original_sha256": "5ddd691c5a3bd5e7f78fb4700012e00da75baecfa5c2dde2adf3766ca3fdfb90",
+      "overlay_sha256": "9aa55c55cc4a8cfbbe53c73626cbbe13e3c5d798c54d20a48dc2d33210d1d132"
+    },
+    {
+      "path": "sglang/srt/layers/sampler.py",
+      "original_sha256": "b9b0c965731104a5a7a1565bc5927d1ddb6dea278f19e3beb981382c468d63e6",
+      "overlay_sha256": "47bef4a4234c549b78b748e513ceef6c3ae1136c2973be913136bfb7644efda0"
+    }
+  ],
+  "patch": "baseline-request-seed.patch",
+  "patch_sha256": "17e96a63636b2eb78c22daa64f9b0891305e2edc3bb89836c8746d306f6f536f"
+}

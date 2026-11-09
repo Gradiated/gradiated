@@ -151,105 +151,165 @@ remain unchanged until their pods drain. Select the runtime and placement in `gp
 catalogue; an unstaged candidate retries while existing replicas keep serving.
 The controller image is built and pinned by the normal application release.
 
-The model configuration names the runtime digest, replica count, deadline and
-placement. Optional `max_surge` is a positive integer, defaulting to one; GLM
-Dealign permits two extra replicas while retaining `maxUnavailable: 0`. Actual
-parallel startup depends on spare GPU, CPU and memory capacity. The current
-fleet fits only one extra full-size GLM replica; a second candidate can remain
-Pending until capacity is released. This ceiling does not provision capacity or
-guarantee two simultaneous starts. The renderer supplies the common canary strategy, qualification,
-service account, drain period and resources from the runtime catalogue. Do not
-edit generated Rollouts directly. Non-inventory fields in controller and RBAC
+The host agent accepts `GLM_SGLANG_PROFILE` values `b300-pcp2`, `b200-pcp2`, and
+`h200-tp2` from the runtime catalogue. It validates these profiles when rebuilding
+the proxy for existing pods as well as before launching new ones, so a bundle
+update must support every active runtime's environment. Configuration tests check
+the current catalogue against the host agent; an incompatible agent can crash
+at startup and trigger the launcher's bundle rollback without restarting models.
+
+Each pool in `models.json` names its runtime digest, GPU type, deadline and
+rollout limits; see [pools and slots](#pools-slots-and-autoscaling). The renderer
+supplies the common canary strategy, qualification, service account, drain
+period and resources from the runtime catalogue. `max_surge` defaults to one and
+`max_unavailable` to zero; a packed pool such as GLM sets `max_surge: 0` and
+`max_unavailable: 1` to replace one replica at a time without a spare GPU.
+Actual parallel startup depends on spare GPU, CPU and memory capacity.
+Rollouts have no manual pause: the default canary moves to half weight, runs
+SDK analysis and then completes. `rolling_update: true` moves directly to the
+target revision without that half-weight canary. Per-pod SDK qualification still
+gates readiness, and the rollout retains its final SDK analysis. Do not edit
+generated Rollouts directly. Non-inventory fields in controller and RBAC
 manifests remain editable; rendering preserves them. CI checks that generated
-fields match the inputs. Remove a retired host Service or model Rollout explicitly after draining
-its workloads; rendering and --check fail if retired resources remain.
+fields match the inputs. Remove a retired host Service or pool Rollout
+explicitly after draining its workloads; rendering and --check fail if retired
+resources remain.
 
 ## Argo CD applications
 
-Each model is its own Argo CD application, so one model's sync, health or
-pruning never waits on another. `render-config.py` writes each model's Rollout
-and ScaledObject to `gpu-inference/models/<model>/`, and the `gpu-models`
-ApplicationSet (`platform/gpu-models.yaml`) creates a `gpu-model-<model>`
-application for every such directory from one template; adding a model is a
-new directory. Two plain applications read the rest of `gpu-inference/`:
+Each pool is its own Argo CD application, so one pool's sync, health or
+pruning never waits on another. `render-config.py` writes each pool's Rollout,
+disruption budget and ScaledObject to `gpu-inference/models/<pool>/`, and the
+`gpu-models` ApplicationSet (`platform/gpu-models.yaml`) creates a
+`gpu-model-<pool>` application for every such directory from one template;
+adding a pool is a new directory. Two plain applications read the rest of `gpu-inference/`:
 `gpu-fleet` (the `GpuHost` CRD and objects, the operator and its pins) and
 `gpu-platform` (everything else: the namespace, gpu-controller, credentials,
 RBAC, the training priority class and qualification). `gpu-fleet` creates the
 namespaces it deploys into, but the operator can cordon nodes only once
 `gpu-platform`'s `rbac.yaml` has synced.
 
-Removing a model is explicit, because deleting its directory deletes its
-application but leaves the Rollout serving (`preserveResourcesOnDeletion`):
-1. Withdraw the model from traffic.
-2. Remove it from `models.json` and delete `gpu-inference/models/<model>/` in
+Removing a pool is explicit, because deleting its directory deletes its
+application but leaves the Rollout serving (`preserveResourcesOnDeletion`).
+To stop a pool but keep its definition, set `max_replicas: 0` instead.
+
+1. Withdraw the pool from traffic, for example with `max_replicas: 0`.
+2. Remove it from `models.json` and delete `gpu-inference/models/<pool>/` in
    the same change, render and merge.
-3. Wait until Argo has deleted the `gpu-model-<model>` application; its Rollout
-   and ScaledObject keep running, no longer managed. Deleting them earlier
-   would let the application's self-heal recreate them.
-4. Run `kubectl -n gpu-inference delete rollout,scaledobject <model>`. Its pods
-   stop with their normal termination grace period.
+3. Wait until Argo has deleted the `gpu-model-<pool>` application; its Rollout
+   keeps running, no longer managed. Deleting it earlier would let the
+   application's self-heal recreate it.
+4. Run `kubectl -n gpu-inference delete rollout,scaledobject,pdb <pool>`. Its
+   pods stop with their normal termination grace period.
 
-## Model autoscaling
+## Pools, slots and autoscaling
 
-KEDA owns each Rollout's replica count through the standard Kubernetes scale
-API. Argo CD ignores `spec.replicas` while autoscaling is active. With an explicit
-`paused_replicas` override, Git owns the paused replica count so a concurrent
-sync cannot restore the bootstrap count after KEDA pauses. Argo still reconciles model releases,
-placement and scaling policy. Set the minimum with `replicas` and the ceiling
-and initial target in `models.json`'s `autoscaling` field, then render the
-manifests. Desmond continues reporting short-lived health directly to the
-private control API for routing; Prometheus supplies scaling measurements.
+`models.json` maps each public model to `min_slots` and its pools. A pool is one
+Rollout: one runtime release on one GPU type. A slot is one concurrent request
+a replica admits: the runtime's enforced `active_requests`, or the pool's
+`slots` for a runtime that enforces none (Kev and the vLLM runtimes). The same
+limit weights gateway routing, so pools of different GPUs share one model's
+traffic in proportion to their slots.
 
-Three gateway signals inform the HPA: concurrent generations over the last
-minute, runtime seconds per second over two minutes (so short requests between
-scrapes count once a rate baseline exists), and capacity rejections. Each signal is scoped to the exact
-model and summed across gateway replicas. The HPA takes the largest recommendation.
-Capacity rejections request the configured ceiling; customer balance and
-concurrency policy rejections do not. The initial concurrency targets are 0.7
-for Kev's single execution slot and 16 for the batched runtimes. The batched
-targets are conservative starting policy, not measured throughput guarantees;
-tune them against time to first token and queue pressure under representative
-traffic. GPU memory allocation alone is not a useful scale-down signal.
-Prometheus samples traffic; a first successful burst that finishes before the
-first scrape can be missed. Runtime work series are created at admission and
-for every fallback candidate before dispatch so a scrape during an in-flight
-request establishes zero.
-Sustained traffic supplies the subsequent samples. The capacity timestamp
-signal captures a first rejection even without a preceding scrape. Warm minimum
-replicas remain necessary for sudden bursts; autoscaling cannot load a model
-in time for a burst that has already finished.
+```json
+"dealignai/glm-5.3-flash-uncensored": {
+  "min_slots": 24,
+  "pools": {
+    "glm-dealign-sglang": {"runtime": "722c…", "gpu": "B300", "max_replicas": 5, "progress_deadline_seconds": 5400},
+    "glm-dealign-sglang-h200": {"runtime": "130e…", "gpu": "H200", "max_replicas": 0, "progress_deadline_seconds": 5400}
+  }
+}
+```
 
-All queries require fresh, complete gateway telemetry. Missing samples or a
-Prometheus outage trigger a fallback that retains the current replica count
-when it exceeds the minimum. Scale-up adds at most one replica per minute;
-scale-down waits ten minutes and removes at most one per 750 seconds, longer
-than the runtime drain. New replicas become available only after the existing
-SDK qualification. None of this provisions or resets a provider GPU.
+A pool may set `runtime`, `gpu`, `gpu_count`, `reservation`, `spread`
+(`required` or `preferred` one replica per host), `slots`, `max_replicas`,
+`mode`, `replicas`, `progress_deadline_seconds`, `max_surge`, `max_unavailable`,
+`rolling_update`, `labels` and `annotations`. The renderer rejects anything
+else, so a model cannot pin instance IDs or carry its own affinity.
 
-The current ceilings are Kev 2, GLM 2 and DeepSeek 2. Kev retains its third RTX
-host for a zero-unavailable rollout. GLM retains a third B300 host for its hard
-host anti-affinity during a rollout. DeepSeek can grow from one to two replicas.
-These bounds preserve existing availability and rollout capacity; raising them
-requires reviewing GPU, CPU, memory, placement and concurrent training demand.
-Training Jobs use the `gpu-training` PriorityClass, below the default priority of
-model pods, so a model replica or rollout pod that cannot fit preempts training
-rather than waiting. Training never preempts. A preempted trainer resumes in a new
-Job from its latest checkpoint, with up to three attempts per training stage.
+Production pools fill in the order listed, so list the cheapest slots first.
+The renderer turns `min_slots` into each pool's replica floor, filling earlier
+pools to their maximum before later ones get any. The floor is the KEDA minimum
+and the Rollout's initial count; a production pool with a floor of two or more
+gets a disruption budget one below it. `max_replicas: 0` switches a pool off:
+Argo holds its Rollout at zero and it has no autoscaler. A pool with a floor of
+zero scales to zero after thirty minutes without demand, and a chat model is
+served through OpenRouter meanwhile. OpenRouter cannot serve SystemOne, so the
+renderer requires positive `min_slots` for SystemOne models such as Kev.
+OpenRouter's own traffic to us never falls back, so it fails while a model has
+no capacity of ours.
 
-DeepSeek selects eight-GPU hosts: the current four-GPU training host does not have
-space for its weights alongside the existing training cache. Node labels publish
-the host GPU count, and Kubernetes enforces this placement selector. At two
-DeepSeek replicas, each eight-GPU host also runs GLM, leaving no contiguous
-four-GPU slot for a DeepSeek rollout surge. Scale DeepSeek to its minimum before
-updating its runtime, or provide another eligible host; do not assume spare GPUs
-split across hosts satisfy a tensor-parallel replica.
-Scaling down a model releases GPUs but does not reduce the RunPod reservation bill.
+Every pool scales on the same three signals, in its own slots, and the HPA takes
+the largest:
 
-Availability alerts use the Git minimum, so normal scale-up warmup does not page.
-No ready replicas still alerts after fifteen seconds, and falling below the
-minimum alerts after thirty seconds. Additional requested capacity that remains
-unready for twenty minutes has a separate warning. Keep the minimum large enough
-for immediate traffic; autoscaling adds capacity after model startup.
+- **Utilization.** The model's peak in-flight generations over the last minute
+  (`gradiated:model_busy_slots`), divided by 0.7, less the slots the pools ahead
+  of this one serve: a pool still growing counts at its maximum, and one that
+  requests its maximum counts only its ready replicas, so demand it cannot place
+  or serve passes to the next pool. In-flight generations include those
+  OpenRouter serves, so demand stays visible while our pools are full or at
+  zero.
+- **Refusals.** While our own capacity refuses more than 5% of the model's
+  requests for being full (`gradiated:model_capacity_refusal_ratio`), the pool
+  asks for one replica more than it has ready (10% more above ten replicas),
+  so capacity grows one replica at a time as each finishes loading. Refusals
+  are routing capacity rejections, moves to OpenRouter for capacity and our
+  `capacity_exceeded` failures, over admissions plus routing rejections.
+  Customer balance and concurrency policy rejections do not count. A pool steps
+  up on refusals only once every pool ahead of it requests its maximum, so a
+  pool that cannot place its replicas hands demand on.
+
+There is no CPU, memory or GPU-memory signal. Both recording rules live in
+`workloads/observability/autoscaling-prometheus-rules.yaml`; the scaling
+constants live in `tools/gpu/render-config.py`. All queries require fresh,
+complete gateway telemetry. Missing samples or a Prometheus outage trigger a
+fallback that retains the current replica count when it exceeds the floor.
+Scale-up adds every replica the signals ask for at once, at least doubling or
+adding four every 15 seconds, because a start takes minutes; scale-down waits ten minutes and
+removes one at a time: a third signal, `draining`, holds the requested count
+while any of the pool's replicas is terminating, because it can still hold its
+GPUs, so the next removal waits only as long as the actual drain. New replicas
+become available only after SDK qualification, so keep the floor large enough
+for immediate traffic. None of this provisions or resets a provider GPU, and
+scaling down releases GPUs without reducing the RunPod reservation bill.
+
+### Reservations
+
+A host is reserved with a `gradiated.com/reserved=<name>` `NoSchedule` taint in
+`hosts.yaml`. A pool with `"reservation": "<name>"` tolerates it and is
+confined to exactly the hosts carrying it; the renderer derives that host list,
+so adding a host to a reservation is a `hosts.yaml` change. Kimi K3.1 Pro
+reserves both eight-B300 hosts as `kimi-k31`; every other host is shared. A
+tensor-parallel replica needs all its GPUs on one host; `gpu_count` selects
+hosts by size.
+
+Training runs opportunistically on shared capacity. Training Jobs use the
+`gpu-training` PriorityClass, below the default priority of model pods, so a
+model replica that cannot fit preempts training rather than waiting; training
+never preempts. A preempted trainer resumes in a new Job from its latest S3
+checkpoint, with up to three attempts per training stage. Its pod directory is
+retired with the pod, so local disk is scratch: work since the last checkpoint
+is lost. To hold capacity for training that must not be preempted, give a host
+the `training` reservation, which training Jobs tolerate and models cannot use.
+
+### Staging a pool
+
+A pool with `"mode": "qualification"` and a fixed `replicas` count runs a
+private runtime model ID. It passes SDK qualification but is never routed,
+scaled by demand, counted in the floor or alerted on; test it with the
+`x-gradiated-deployment-id` header. It keeps a fixed autoscaler so the fleet
+operator can surge it during a host re-image. Promote it by replacing `mode` and
+`replicas` with `max_replicas`, which places it in the fill order. The GLM and
+Kimi helpers in `tools/gpu/` stage and promote their pools this way.
+
+### Availability alerts
+
+Alerts use the rendered floors and the Rollouts' requested counts. No ready
+replica of a model with a positive floor alerts after one minute, and falling
+below the floor after thirty seconds. A pool's alert floor allows the
+`max_unavailable` replicas a rollout replaces at once, but never drops below one
+replica, so a one-at-a-time replacement does not warn. Requested capacity that stays unready for
+twenty minutes, including a scale-up from zero, has a separate warning.
 
 ## Rollout alerts
 
@@ -259,8 +319,8 @@ SDK qualification, or cannot reconcile. It does not retry automatically. Free
 capacity if needed, then run `kubectl argo rollouts retry rollout <name> -n
 gpu-inference` or push a fix. `GpuRolloutBlocked` warns when a model pod has had no
 GPU host for 15 minutes, before the deadline aborts the rollout. To free capacity,
-lower another model's `replicas` or `max_replicas` in `models.json`, or pin it
-temporarily with the ScaledObject's `autoscaling.keda.sh/paused-replicas`
+lower another model's `min_slots` or a pool's `max_replicas` in `models.json`, or
+pin it temporarily with the ScaledObject's `autoscaling.keda.sh/paused-replicas`
 annotation and remove the annotation afterwards.
 
 ## Recovery and disk limits
@@ -383,7 +443,13 @@ one at a time, and records each host's progress in `status.rollout` of its
   (`autoscaling.keda.sh/paused-replicas`) and wait until the replacements are
   Ready on other hosts; mark the host's pods to be removed first
   (`controller.kubernetes.io/pod-deletion-cost`) and lower the count again, so no
-  model ever has fewer Ready replicas than it had; resume KEDA; re-image the pod
+  model ever has fewer Ready replicas than it had. A model listed in
+  `RETIRE_ON_REIMAGE` (`product/services/gpu-fleet/src/rollout.ts`; currently
+  empty) is not moved: once its
+  other replicas are Ready elsewhere, its pods on the host are marked first and
+  its count lowered by that many, and the host blocks if that would leave the
+  model with no replica. Such a model needs no room elsewhere to proceed. Resume
+  KEDA; re-image the pod
   through RunPod with a single-use bootstrap key; wait for
   `gpu-bootstrap-<pod>`; free the `gpu-<instance id>` name; run
   `gradiated-host enroll`; wait for promotion and claim the exact name; wait until
@@ -429,6 +495,30 @@ no other host starts until the pins change or someone sets the
 `fleet.gradiated.com/retry` annotation on the host to a new value; a retry
 restarts only that host. A host on the old image keeps its old bundle until it
 is re-imaged.
+
+Before an in-place bundle update, every Ready model pod must have a qualified
+runtime and enters the protected baseline for verification and soak. Non-Ready
+pods whose current containers failed SDK qualification do not block the update.
+Neither do non-Ready pods whose models are explicitly `unavailable` in the live
+PostgreSQL catalog: the worker intentionally skips SDK qualification for those
+models, and the gateway rejects their customer requests. The operator resolves
+catalog identity from `gradiated.com/serving-model-id`, falling back to
+`gradiated.com/model-id`; the Rollout's name is not the catalog identity.
+
+Enabled models still wait for readiness and qualification. Missing identities,
+unknown models and retired models retain the default wait; a catalog read error
+leaves `Apply` unchanged and is retried. After reading the catalog, the operator
+reads pods again so a newly Ready pod joins the baseline. Every Ready pod stays
+protected regardless of model availability or qualification-error annotations.
+Serial host order, failure holds and image rollout behavior are unchanged. This
+allows host maintenance while a model is disabled without changing its catalog
+status, fabricating a qualification result, or restarting model processes.
+Existing installations must reapply the reviewed
+[`gpu-fleet-db-bootstrap.yaml`](../../infra/environments/prod/us-east-1/kubernetes/operations/gpu-fleet-db-bootstrap.yaml)
+job before deploying this catalog-aware gate, to grant the fleet role read access
+to `models`. Confirm the grants and remove the temporary bootstrap resources as
+described in the operations guide. The operator reuses its rotating PostgreSQL
+credential and needs no additional Kubernetes or AWS permissions.
 
 Only the leader acts, and it checks its lease before every side effect. Status
 writes carry the `GpuHost`'s resourceVersion, so a deposed leader's write fails.
@@ -488,7 +578,6 @@ by `e2e_image.py` contains `/etc/gradiated/test-control-server`, without which
 python3 product/inference/images/gpu-base/tests/e2e_image.py /tmp/gpu-fleet-e2e
 (cd product/services/gpu-fleet && GPU_FLEET_E2E=/tmp/gpu-fleet-e2e pnpm exec vitest run --config vitest.e2e.config.ts)
 ```
-
 
 ### Reserving an isolated qualification slot
 

@@ -1,0 +1,2 @@
+ALTER TABLE "models" ADD COLUMN "openrouter_model_id" text;--> statement-breakpoint
+ALTER TABLE "models" ADD CONSTRAINT "models_openrouter_model_id_check" CHECK ("models"."openrouter_model_id" ~ '^[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$' and char_length("models"."openrouter_model_id") <= 200);

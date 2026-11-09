@@ -218,14 +218,20 @@ The raw format is `grad_<32 random bytes encoded as base64url>`. Authentication 
 
 Global hosted-model catalog. It is not organization-scoped. The primary key is the immutable human-readable model identifier used in direct requests and returned to OpenRouter, for example `google/gemma-4-31b-it`.
 
-| Field        | Type        | Null | Rules                                            |
-| ------------ | ----------- | ---- | ------------------------------------------------ |
-| `id`         | text        | no   | Primary key; lowercase immutable public model ID |
-| `name`       | text        | no   | Bounded customer-facing name                     |
-| `status`     | text        | no   | `available`, `unavailable`, `retired`            |
-| `properties` | jsonb       | no   | Closed Zod `ModelProperties` document            |
-| `created_at` | timestamptz | no   | Creation time                                    |
-| `updated_at` | timestamptz | no   | Last mutation time                               |
+| Field                 | Type        | Null | Rules                                                                        |
+| --------------------- | ----------- | ---- | ---------------------------------------------------------------------------- |
+| `id`                  | text        | no   | Primary key; lowercase immutable public model ID                             |
+| `name`                | text        | no   | Bounded customer-facing name                                                 |
+| `status`              | text        | no   | `available`, `unavailable`, `retired`                                        |
+| `properties`          | jsonb       | no   | Closed Zod `ModelProperties` document                                        |
+| `openrouter_model_id` | text        | yes  | Exact OpenRouter `author/slug` of the same model; no `:variant` or `~` alias |
+| `created_at`          | timestamptz | no   | Creation time                                                                |
+| `updated_at`          | timestamptz | no   | Last mutation time                                                           |
+
+`openrouter_model_id` is not part of `ModelProperties`, so it is never
+published. Catalog membership decides that Gradiated bills a request; the
+mapping only lets OpenRouter serve it, and a mapped model can serve with no
+deployment. Git-owned catalog definitions set it, and omitting it clears it.
 
 `ModelProperties` is a closed, versioned Zod document inspired by OpenRouter's
 current provider schema. It keeps model capabilities, limits, and prices in the
@@ -261,7 +267,12 @@ entries use `prompt`, `cached_prompt`, and optional `cache_write`. The launch
 text output modality contains its positive token `max_length`, positive
 `default_length`, a `streaming` flag, `supported_parameters`, and pricing
 entries for `completion` and optional `internal_reasoning`. `default_length`
-cannot exceed `max_length`. Each pricing entry has `unit = token` and a
+cannot exceed `max_length`. The gateway sends `default_length` as the limit
+when a request sets none, except for models it lists as open-limit (Kimi K3.1
+Pro): those get no limit, so the runtime stops at the remaining context or its
+own cap, which equals `max_length`. Runtime releases built before that cap
+still receive `default_length`. The 630-second generation deadline still
+applies, so an output that long needs a fast enough stream to finish. Each pricing entry has `unit = token` and a
 nonnegative integer `cost` in nano-USD. Pricing types are unique within their
 modality; `prompt`, `cached_prompt`, and `completion` are present in every
 stored document.
@@ -467,7 +478,11 @@ it must identify the pinned Kev release and cannot serve Chat Completions.
 This transport discriminator is included in the release digest, not stored in
 an additional routing record.
 Rust serializes this typed object canonically and hashes only it to produce the
-`served_release_digest` captured by each admitted generation.
+`served_release_digest` captured by each admitted generation. Settlement names
+what actually served: an adapter's own digest, the base release when the base
+model served an adapter request without it, or
+`sha256({"capacity":"openrouter","model":<openrouter_model_id>})` when
+OpenRouter served.
 
 There is no generic deployment metadata. A field that affects routing,
 availability, capacity, compliance, or cost becomes an explicit column or part
@@ -831,7 +846,8 @@ and recovery checkpoints have typed payloads; trainer observations carry an
 extensible name, message, metrics and details. Observations cannot authorize
 workflow transitions. See [the run contract](TASK_FINE_TUNING_RUN_CONTRACT.md).
 
-`task_versions` reference their workspace, task and training run. Composite
+`task_versions` reference their workspace, task and optional training run. External
+adapters have no training run. Composite
 foreign keys require that the workspace owns the task and that the run belongs
 to that same task. Each run produces at most one version; version names are
 workspace-unique. Adapter metadata records an immutable URI, digest, byte size,
@@ -863,3 +879,12 @@ configuration, not stored adapter properties. The loader reuses existing task
 version metadata and checks it against the host's local configuration. Signed
 download URLs are temporary grants and are not persisted on versions. See
 [the implementation stack](LORA_HOSTING_PR_STACK.md).
+
+### External adapter uploads
+
+`model_uploads` stores an ID, workspace FK, validated upload intent JSON, creation
+time and nullable published version FK. Grants last one hour. Publication locks
+the upload row and is idempotent. `task_versions.training_run_id` is nullable for
+external adapters; those versions use `runs/<version_id>/output/<sha256>/adapter.tar.gz`
+and have no evaluation. Their initial serving status is `unavailable`. The upload
+intent is retained for artifact cleanup even after its version or task is deleted.

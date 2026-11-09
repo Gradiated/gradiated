@@ -20,6 +20,7 @@ mod tests;
 
 pub(crate) use decoder::TokenDecoder;
 pub use registry::ModelTokenizer;
+use registry::TokenizerRelease;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct BoundedRequest {
@@ -46,9 +47,17 @@ impl ModelTokenizer {
     }
 
     async fn encode(&self, qualified: &QualifiedRequest) -> Result<Vec<u32>, GatewayError> {
-        let release = &qualified.deployment.release;
+        // A deployment's tokenizer is what it serves; without one, the model's own
+        // pin counts. With neither there is nothing exact to count with.
+        let release = qualified
+            .local
+            .as_ref()
+            .or(qualified.base.as_ref())
+            .map(|local| TokenizerRelease::from(&local.deployment.release))
+            .or_else(|| qualified.tokenizer.as_ref().map(TokenizerRelease::from))
+            .ok_or(GatewayError::ModelUnavailable)?;
         let tokenizer = self
-            .tokenizer(release)
+            .tokenizer_for(release.clone())
             .await
             .map_err(|_| GatewayError::ServingStateUnavailable)?;
 
@@ -61,13 +70,13 @@ impl ModelTokenizer {
             Ok(Ok(input_ids)) => Ok(input_ids),
             Ok(Err(error)) => {
                 if let Some(error_code) = error.hidden_code() {
-                    log_hidden_failure(release, error_code);
+                    log_hidden_failure(&release, error_code);
                 }
 
                 Err(map_request_error(error))
             }
             Err(_) => {
-                log_hidden_failure(release, "task");
+                log_hidden_failure(&release, "task");
                 Err(GatewayError::ServingStateUnavailable)
             }
         }
@@ -82,10 +91,10 @@ impl ModelTokenizer {
 }
 
 // The error text is not logged: a render error can echo template input.
-fn log_hidden_failure(release: &ModelDeploymentRelease, error_code: &'static str) {
+fn log_hidden_failure(release: &TokenizerRelease, error_code: &'static str) {
     crate::diagnostics::limited_error!(
-        tokenizer_path = %release.tokenizer_path,
-        tokenizer_revision = %release.tokenizer_revision,
+        tokenizer_path = %release.path,
+        tokenizer_revision = %release.revision,
         error_code,
         "prompt tokenization failed"
     );

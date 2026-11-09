@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -34,105 +35,211 @@ def inventory(documents):
             raise ValueError('GpuHost instance and pod IDs must be unique')
         pods.add(spec['provider']['podId'])
         capacity = spec['inventory']
+        extra_taints = host_taints(spec)
         hosts.append({'instance_id': instance,
                       'endpoint': f'http://gpu-{instance}.tailscale-inference.svc.cluster.local:8888/_kubelet',
                       'token_file': f'/var/run/gradiated-host-keys/{instance}',
                       'gpu_count': capacity['gpuCount'], 'cpu': capacity['cpu'],
-                      'memory_gib': capacity['memoryGiB'], 'gpu_product': capacity['gpuProduct']})
+                      'memory_gib': capacity['memoryGiB'], 'gpu_product': capacity['gpuProduct'],
+                      **({'extra_taints': extra_taints} if extra_taints else {})})
         secrets.append({'secretKey': instance, 'remoteRef': dict(spec['managementSecret'])})
     if not hosts:
         raise ValueError('GPU inventory cannot be empty')
     return hosts, secrets
 
 
-def rollout(name, model, runtimes):
-    if len(name) > 63 or not re.fullmatch(r'[a-z](?:[a-z0-9-]*[a-z0-9])?', name):
-        raise ValueError('Invalid model resource name')
-    if 'app.kubernetes.io/name' in model.get('labels', {}):
+def valid_label_key(key):
+    label = r'[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?'
+    dns_label = r'[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?'
+    parts = key.split('/')
+    return (len(parts) <= 2 and re.fullmatch(label, parts[-1]) is not None
+            and (len(parts) == 1 or (len(parts[0]) <= 253
+                 and all(re.fullmatch(dns_label, segment) for segment in parts[0].split('.')))))
+
+
+def host_taints(spec):
+    taints = spec.get('extraTaints', [])
+    if not isinstance(taints, list) or len(taints) > 16:
+        raise ValueError('GpuHost extraTaints must be a list of at most 16 reservations')
+    keys = {'gradiated.com/gpu'}
+    label = r'[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?'
+    for item in taints:
+        if (not isinstance(item, dict) or set(item) != {'key', 'value', 'effect'}
+                or not all(isinstance(value, str) for value in item.values())
+                or item['effect'] != 'NoSchedule' or not valid_label_key(item['key'])
+                or item['key'].startswith(('node.kubernetes.io/', 'node.cloudprovider.kubernetes.io/'))
+                or (item['value'] and not re.fullmatch(label, item['value'])) or item['key'] in keys):
+            raise ValueError('GpuHost extraTaints require unique explicit key/value NoSchedule reservations')
+        keys.add(item['key'])
+    return [dict(item) for item in taints]
+
+
+# models.json maps each public model to its minimum slots and its pools. A pool is
+# one Rollout: one runtime release on one GPU type. A slot is one concurrent
+# request a replica admits: its runtime's enforced active_requests, or the pool's
+# slots for a runtime without one. Every pool scales on the same two signals;
+# there is no per-model tuning.
+UTILIZATION = 0.7  # keep each model's in-flight requests at 70% of its slots
+REFUSAL_SHARE = 0.05  # add a replica while our capacity refuses over 5% of requests
+RESERVED = 'gradiated.com/reserved'
+PROMETHEUS = 'http://observability-kube-prometh-prometheus.observability.svc:9090'
+REPLICA_RULES = KUBE / 'workloads/observability/model-replica-rules.yaml'
+NAME = re.compile(r'[a-z](?:[a-z0-9-]*[a-z0-9])?')
+POOL_FIELDS = {'runtime', 'gpu', 'gpu_count', 'reservation', 'spread', 'slots', 'max_replicas', 'mode', 'replicas',
+               'progress_deadline_seconds', 'max_surge', 'max_unavailable', 'rolling_update', 'labels', 'annotations'}
+SERVING_ANNOTATIONS = {'gradiated.com/model-id', 'gradiated.com/release',
+                       'gradiated.com/serving-model-id', 'gradiated.com/serving-mode'}
+
+
+def count(value, minimum=0):
+    return type(value) is int and value >= minimum
+
+
+def plan(models, runtimes, hosts):
+    """Validate models.json and derive every pool's slots, replica floor and fill position."""
+    if not isinstance(models, dict) or not models:
+        raise ValueError('models.json must map public model IDs to their pools')
+    reserved = {}
+    for host in hosts:
+        for taint in host.get('extra_taints', []):
+            if taint['key'] == RESERVED:
+                reserved.setdefault(taint['value'], []).append(host['instance_id'])
+    pools = {}
+    for model_id, model in models.items():
+        if not isinstance(model, dict) or set(model) != {'min_slots', 'pools'}:
+            raise ValueError(f'Model {model_id} needs exactly min_slots and pools')
+        if not count(model['min_slots']):
+            raise ValueError(f'Model {model_id} min_slots must be a non-negative integer')
+        if not isinstance(model['pools'], dict) or not model['pools']:
+            raise ValueError(f'Model {model_id} needs at least one pool')
+        # Production pools fill in the order they are listed: the floor first,
+        # then demand, so earlier pools should be the cheaper slots.
+        ahead, unfilled = [], model['min_slots']
+        for name, pool in model['pools'].items():
+            # The name becomes a directory and the gpu-model-<name> application,
+            # which must stay a 63-character label.
+            if len(name) > 53 or not NAME.fullmatch(name):
+                raise ValueError('A pool name must be a DNS label of at most 53 characters: ' + repr(name))
+            if name in pools:
+                raise ValueError(f'Pool {name} appears under two models')
+            if not isinstance(pool, dict) or not set(pool) <= POOL_FIELDS:
+                raise ValueError(f'Pool {name} has unknown fields: {sorted(set(pool) - POOL_FIELDS)}')
+            runtime = runtimes[pool['runtime']]
+            if runtime.get('kind') == 'training':
+                raise ValueError(f'Pool {name} cannot serve a training runtime')
+            if runtime['model_id'] != model_id and runtime['model_id'] in models:
+                raise ValueError(f'Pool {name} runs another public model')
+            if runtime.get('active_requests') is None:
+                slots = pool.get('slots')
+                if not count(slots, 1):
+                    raise ValueError(f'Pool {name} needs slots: its runtime enforces no active_requests')
+            elif 'slots' in pool:
+                raise ValueError(f'Pool {name} takes its slots from its runtime active_requests')
+            else:
+                slots = runtime['active_requests']
+            mode = pool.get('mode', 'production')
+            if mode == 'qualification':
+                # Staged capacity: SDK-qualified but never routed, scaled or counted.
+                if runtime['model_id'] == model_id:
+                    raise ValueError(f'Qualification pool {name} needs a private runtime model ID')
+                if 'max_replicas' in pool or not count(pool.get('replicas'), 1):
+                    raise ValueError(f'Qualification pool {name} needs a fixed replicas count, not max_replicas')
+                floor = maximum = pool['replicas']
+            elif mode == 'production':
+                maximum = pool.get('max_replicas')
+                if 'replicas' in pool or not count(maximum):
+                    raise ValueError(f'Production pool {name} needs max_replicas; min_slots sets its floor')
+                floor = min(maximum, math.ceil(unfilled / slots))
+                unfilled = max(0, unfilled - floor * slots)
+            else:
+                raise ValueError(f'Pool {name} mode must be production or qualification')
+            if 'reservation' in pool and not reserved.get(pool['reservation']):
+                raise ValueError(f'Pool {name} needs a host in hosts.yaml reserved for {pool["reservation"]!r}')
+            pools[name] = {**pool, 'model': model_id, 'mode': mode, 'slots': slots, 'floor': floor,
+                           'maximum': maximum, 'ahead': list(ahead),
+                           'hosts': sorted(reserved.get(pool.get('reservation'), []))}
+            if mode == 'production' and maximum:
+                ahead.append((name, maximum, slots))
+        if unfilled:
+            raise ValueError(f'Model {model_id} min_slots exceeds what its production pools can hold')
+        if not model['min_slots'] and any(runtimes[pool['runtime']]['release'].get('protocol') == 'system_one'
+                                          for pool in model['pools'].values()):
+            raise ValueError(f'Model {model_id} serves SystemOne, which OpenRouter cannot serve, so min_slots must be positive')
+    return pools
+
+
+def rollout(name, pool, runtimes):
+    if 'app.kubernetes.io/name' in pool.get('labels', {}):
         raise ValueError('The model identity label is reserved')
-    if model['replicas'] < 1 or model['progress_deadline_seconds'] < 1:
-        raise ValueError('Serving replicas and deadlines must be positive')
-    parent = model.get('canary_for')
-    if 'canary_for' in model and (not isinstance(parent, str) or parent == name
-                                  or not re.fullmatch(r'[a-z](?:[a-z0-9-]*[a-z0-9])?', parent)):
-        raise ValueError('canary_for must name a distinct primary model resource')
-    surge = model.get('max_surge', 1)
-    if type(surge) is not int or surge < (0 if parent else 1):
-        raise ValueError('Rollout max_surge must be positive unless an explicit canary can become unavailable')
-    unavailable = model.get('max_unavailable', 0)
-    maximum = model['replicas'] if parent else model['replicas'] - 1
-    if type(unavailable) is not int or not 0 <= unavailable <= maximum:
-        raise ValueError('Rollout max_unavailable exceeds the replica availability bound')
-    if surge == 0 and unavailable == 0:
-        raise ValueError('Rollout max_surge and max_unavailable cannot both be zero')
-    paused = model.get('autoscaling', {}).get('paused_replicas')
-    reserved = {'gradiated.com/canary-of', 'gradiated.com/model-id',
-                'gradiated.com/serving-model-id', 'gradiated.com/serving-mode'}
-    if reserved.intersection(model.get('annotations', {})):
+    if SERVING_ANNOTATIONS.intersection(pool.get('annotations', {})):
         raise ValueError('Model identity and serving annotations are reserved')
-    if 'serving_model_id' in model and 'serving_mode' not in model:
-        raise ValueError('A serving model mapping requires explicit serving_mode')
-    mode = model.get('serving_mode', 'production')
-    if mode not in ('production', 'qualification'):
-        raise ValueError('serving_mode must be production or qualification')
-    if ('serving_model_id' in model or mode == 'qualification') and not parent:
-        raise ValueError('Serving identity mapping and qualification require an explicit canary')
-    if 'serving_model_id' in model and (not isinstance(model['serving_model_id'], str) or not model['serving_model_id'].strip()):
-        raise ValueError('serving_model_id must be a nonempty model ID')
-    runtime = runtimes[model['runtime']]
-    if mode == 'qualification' and ('serving_model_id' not in model
-                                    or runtime['model_id'] == model['serving_model_id']):
-        raise ValueError('Qualification requires a public mapping and a distinct private runtime model ID')
-    if runtime.get('kind') == 'training':
-        raise ValueError('Training runtimes cannot serve a Rollout')
-    labels = {'app.kubernetes.io/name': name, **model.get('labels', {})}
-    annotations = {**model.get('annotations', {}), 'gradiated.com/model-id': runtime['model_id'],
+    if not count(pool.get('progress_deadline_seconds'), 1):
+        raise ValueError('progress_deadline_seconds must be a positive integer')
+    surge, unavailable = pool.get('max_surge', 1), pool.get('max_unavailable', 0)
+    if not count(surge) or not count(unavailable) or surge + unavailable == 0:
+        raise ValueError('max_surge and max_unavailable must be non-negative integers and not both zero')
+    rolling = pool.get('rolling_update', False)
+    if type(rolling) is not bool:
+        raise ValueError('rolling_update must be a boolean')
+    if not isinstance(pool.get('gpu'), str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,62}', pool['gpu']):
+        raise ValueError('gpu must be the GPU product label of the hosts the pool runs on')
+    runtime = runtimes[pool['runtime']]
+    labels = {'app.kubernetes.io/name': name, **pool.get('labels', {})}
+    annotations = {**pool.get('annotations', {}), 'gradiated.com/model-id': runtime['model_id'],
                    'gradiated.com/release': json.dumps(runtime['release'], separators=(',', ':'))}
-    if parent:
-        annotations['gradiated.com/canary-of'] = parent
-        annotations['gradiated.com/serving-model-id'] = model.get('serving_model_id', runtime['model_id'])
-        annotations['gradiated.com/serving-mode'] = mode
+    if runtime['model_id'] != pool['model']:
+        # The worker routes a private runtime identity under its public model
+        # only in production mode, so a qualification pool is never served.
+        annotations['gradiated.com/serving-model-id'] = pool['model']
+        annotations['gradiated.com/serving-mode'] = pool['mode']
     steps = [
-        {'setWeight': 50},
+        {'setWeight': 100 if rolling else 50},
         {'analysis': {'templates': [{'templateName': 'sdk-qualification'}], 'args': [
             {'name': 'app', 'value': name},
             {'name': 'hash', 'valueFrom': {'podTemplateHashValue': 'Latest'}}]}}
     ]
-    if parent:
-        steps.append({'pause': {}})
-    steps.append({'setWeight': 100})
+    if not rolling:
+        steps.append({'setWeight': 100})
+    selector = {'gradiated.com/provider': 'runpod', 'nvidia.com/gpu.product': pool['gpu']}
+    if 'gpu_count' in pool:
+        if not count(pool['gpu_count'], 1):
+            raise ValueError('gpu_count must be a positive integer')
+        selector['nvidia.com/gpu.count'] = str(pool['gpu_count'])
+    tolerations = [{'key': 'gradiated.com/gpu', 'operator': 'Equal', 'value': 'true', 'effect': 'NoSchedule'}]
+    affinity = {}
+    if pool['hosts']:
+        # A reservation both admits the pool to its hosts and keeps it on them.
+        tolerations.append({'key': RESERVED, 'operator': 'Equal', 'value': pool['reservation'], 'effect': 'NoSchedule'})
+        affinity['nodeAffinity'] = {'requiredDuringSchedulingIgnoredDuringExecution': {'nodeSelectorTerms': [
+            {'matchExpressions': [{'key': 'gradiated.com/instance-id', 'operator': 'In', 'values': pool['hosts']}]}]}}
+    spread = pool.get('spread')
+    term = {'topologyKey': 'kubernetes.io/hostname', 'labelSelector': {'matchLabels': {'app.kubernetes.io/name': name}}}
+    if spread == 'required':
+        affinity['podAntiAffinity'] = {'requiredDuringSchedulingIgnoredDuringExecution': [term]}
+    elif spread == 'preferred':
+        affinity['podAntiAffinity'] = {'preferredDuringSchedulingIgnoredDuringExecution': [
+            {'weight': 100, 'podAffinityTerm': term}]}
+    elif spread is not None:
+        raise ValueError('spread must be required or preferred')
     limits = {'cpu': runtime['cpu'], 'memory': runtime['memory'], 'nvidia.com/gpu': str(runtime['gpus'])}
     pod = {
         'serviceAccountName': 'model-runtime', 'automountServiceAccountToken': False,
-        'terminationGracePeriodSeconds': 750, 'nodeSelector': model['node_selector'],
-        'tolerations': [{'key': 'gradiated.com/gpu', 'operator': 'Equal', 'value': 'true', 'effect': 'NoSchedule'}],
+        'terminationGracePeriodSeconds': 750, 'nodeSelector': selector, 'tolerations': tolerations,
         'containers': [{'name': 'runtime', 'image': runtime['image'], 'resources': {
             'requests': {**limits, 'memory': runtime.get('request_memory', runtime['memory'])}, 'limits': limits}}]}
-    if 'affinity' in model:
-        pod['affinity'] = model['affinity']
+    if affinity:
+        pod['affinity'] = affinity
+    metadata = {'name': name, 'namespace': 'gpu-inference'}
+    if not pool['maximum']:
+        # Argo holds a switched-off pool at zero; otherwise KEDA owns replicas.
+        metadata['annotations'] = {'gradiated.com/paused-replicas': '0'}
     return {
-        'apiVersion': 'argoproj.io/v1alpha1', 'kind': 'Rollout',
-        'metadata': {'name': name, 'namespace': 'gpu-inference',
-                     **({'annotations': {'gradiated.com/paused-replicas': str(paused)}} if paused is not None else {})},
-        'spec': {'replicas': paused if paused is not None else model['replicas'], 'progressDeadlineSeconds': model['progress_deadline_seconds'],
+        'apiVersion': 'argoproj.io/v1alpha1', 'kind': 'Rollout', 'metadata': metadata,
+        'spec': {'replicas': pool['floor'], 'progressDeadlineSeconds': pool['progress_deadline_seconds'],
                  'progressDeadlineAbort': True,
                  'strategy': {'canary': {'maxSurge': surge, 'maxUnavailable': unavailable, 'steps': steps}},
                  'selector': {'matchLabels': labels},
                  'template': {'metadata': {'labels': labels, 'annotations': annotations}, 'spec': pod}}}
-
-
-def validate_canaries(models, runtimes):
-    for name, model in models.items():
-        if 'canary_for' not in model:
-            continue
-        parent_name = model['canary_for']
-        if not isinstance(parent_name, str) or parent_name == name or parent_name not in models:
-            raise ValueError('canary_for must name an existing distinct primary model resource')
-        parent = models[parent_name]
-        if 'canary_for' in parent:
-            raise ValueError('A canary_for target cannot itself be a canary')
-        if model.get('serving_model_id', runtimes[model['runtime']]['model_id']) != parent.get('serving_model_id', runtimes[parent['runtime']]['model_id']):
-            raise ValueError('A canary must serve the same model ID as its primary')
 
 
 GLM_SGLANG_CONFIG = ROOT / 'product/inference/runtimes/glm-sglang/config.py'
@@ -150,85 +257,142 @@ def glm_sglang_profiles():
     return config.PROFILES
 
 
-def validate_active_requests(models, runtimes, profiles):
-    # Desmond reports this limit and the gateway weights routing by it, so it
-    # must be the limit the runtime enforces. A declared value that drifted from
-    # the launcher is how the earlier maximum_concurrency field went wrong.
+def validate_active_requests(pools, runtimes, profiles):
+    # Desmond reports this limit, the gateway weights routing by it and the
+    # autoscaler counts it as the replica's slots, so it must be the limit the
+    # runtime enforces. A declared value that drifted from the launcher is how
+    # the earlier maximum_concurrency field went wrong.
     for key, runtime in runtimes.items():
         limit = runtime.get('active_requests')
         if 'active_requests' in runtime and (type(limit) is not int or not 1 <= limit <= 4096):
             raise ValueError(f'Runtime release {key} active_requests must be an integer from 1 to 4096')
-    for name, model in models.items():
-        runtime = runtimes[model['runtime']]
+    for name, pool in pools.items():
+        runtime = runtimes[pool['runtime']]
         if not runtime['image'].startswith('gradiated/glm-sglang-bundle@'):
             continue
-        product = model['node_selector'].get('nvidia.com/gpu.product')
         selected = runtime.get('environment', {}).get('GLM_SGLANG_PROFILE')
         matching = [profile for profile_name, profile in profiles.items()
-                    if profile_name == selected or (selected is None and profile['gpu_product'] == product)]
+                    if profile_name == selected or (selected is None and profile['gpu_product'] == pool['gpu'])]
         if len(matching) != 1:
-            raise ValueError(f'Model {name} has no single GLM SGLang profile for its GPU')
-        if runtime.get('active_requests') != matching[0]['active_requests']:
-            raise ValueError(f'Model {name} runtime active_requests must equal its launcher profile, '
-                             f'{matching[0]["active_requests"]}')
+            raise ValueError(f'Pool {name} has no single GLM SGLang profile for its GPU')
+        enforced = matching[0]['active_requests']
+        if runtime.get('active_requests') != enforced:
+            raise ValueError(f'Pool {name} runtime active_requests must equal its launcher profile, {enforced}')
 
 
-def disruption_budget(name, model):
-    minimum = model['min_available']
-    if type(minimum) is not int or not 1 <= minimum <= model['replicas']:
-        raise ValueError('Model min_available must be an integer between one and replicas')
-    settings = model.get('autoscaling', {})
-    if 'paused_replicas' in settings:
-        paused = settings['paused_replicas']
-        if type(paused) is not int or not 0 <= paused <= settings['max_replicas']:
-            raise ValueError('Paused replicas must be an integer within the scaling bounds')
-        # A retired or deliberately reduced pool cannot meet its active floor.
-        # Keep the configured minimum intact so removing the pause restores it.
-        minimum = min(minimum, paused)
+def disruption_budget(name, pool):
+    # Voluntary disruptions, such as a host drain, take one replica below the floor at most.
     return {'apiVersion': 'policy/v1', 'kind': 'PodDisruptionBudget',
             'metadata': {'name': name, 'namespace': 'gpu-inference'},
-            'spec': {'minAvailable': minimum,
+            'spec': {'minAvailable': pool['floor'] - 1,
                      'selector': {'matchLabels': {'app.kubernetes.io/name': name}}}}
 
 
-def autoscaler(name, model, runtime):
-    settings = model['autoscaling']
-    maximum = settings['max_replicas']
-    target = settings['target_concurrency']
-    if type(maximum) is not int or maximum < model['replicas']:
-        raise ValueError('Autoscaling maximum must cover the minimum replicas')
-    if type(target) not in (int, float) or not 0 < target < float('inf'):
-        raise ValueError('Autoscaling concurrency target must be finite and positive')
-    annotations = {'argocd.argoproj.io/sync-options': 'SkipDryRunOnMissingResource=true'}
-    if 'paused_replicas' in settings:
-        paused = settings['paused_replicas']
-        if type(paused) is not int or not 0 <= paused <= maximum:
-            raise ValueError('Paused replicas must be an integer within the scaling bounds')
-        annotations['autoscaling.keda.sh/paused-replicas'] = str(paused)
-    selector = 'namespace="gradiated",model=' + json.dumps(model.get('serving_model_id', runtime['model_id']))
+def desired_replicas(name):
+    return f'max(rollout_info_replicas_desired{{namespace="gpu-inference",name="{name}"}})'
+
+
+def ready_replicas(name):
+    return f'max(rollout_info_replicas_available{{namespace="gpu-inference",name="{name}"}})'
+
+
+def scaling_queries(name, pool):
+    """The two signals every pool scales on, in slots for this pool to supply."""
+    model = 'model=' + json.dumps(pool['model'])
+    # The model's slot need at the target utilization, less what the pools
+    # ahead of this one serve. A pool ahead still growing counts at its
+    # maximum; once it requests its maximum only its ready replicas count, so
+    # demand it cannot place or serve passes on.
+    busy = f'(max(gradiated:model_busy_slots{{{model}}}) or (0 * sum(gradiated:autoscaling_demand{{service="gateway"}})))'
+    need = f'{busy} / {UTILIZATION}' + ''.join(
+        f' - (({ready_replicas(other)} * {slots} and on() ({desired_replicas(other)} >= {maximum}))'
+        f' or vector({maximum * slots}))' for other, maximum, slots in pool['ahead'])
+    # While refusals exceed their share, ask for one replica more than are
+    # ready, so capacity grows one replica at a time as each finishes loading.
+    # Above ten replicas ask for 10% more, past the HPA's 10% tolerance. A pool
+    # steps up only once every pool ahead of it requests its maximum, so a pool
+    # that cannot place its replicas hands demand on.
+    ready = ready_replicas(name)
+    step = f'({ready} + 1 + floor({ready} / 10)) * {pool["slots"]}'
+    full = ''.join(f' and on() ({desired_replicas(other)} >= {maximum})' for other, maximum, _ in pool['ahead'])
+    refusing = f'(gradiated:model_capacity_refusal_ratio{{{model}}} > {REFUSAL_SHARE})'
+    # While a replica of this pool drains it can still hold its GPUs, so hold
+    # the current count and remove the next replica only once it has gone.
+    draining = f'(count(kube_pod_deletion_timestamp{{namespace="gpu-inference",pod=~"{name}-[a-z0-9]+-[a-z0-9]+"}}) > 0)'
+    # Each scaling signal keeps its ten-minute peak: scale-up follows at once,
+    # scale-down only after ten quiet minutes. Kept here, not in the HPA window,
+    # so a draining hold does not restart the wait.
+    return {'utilization': f'max_over_time(clamp_min({need}, 0)[10m:30s])',
+            'refusals': f'max_over_time((({step} and on() {refusing}{full}) or vector(0))[10m:30s])',
+            'draining': f'(({desired_replicas(name)} * {pool["slots"]} and on() {draining}) or vector(0))'}
+
+
+def autoscaler(name, pool):
     health = 'gradiated:autoscaling_demand{service="gateway"}'
+    # Missing or stale gateway telemetry yields no sample, so KEDA falls back
+    # and holds the current count instead of reading load as zero.
     fresh = f'({health} and (timestamp({health}) > time() - 45))'
-    idle = f'(0 * sum({health}))'
-    queries = {
-        'concurrency': f'max_over_time((sum(gradiated_gateway_active_generations{{{selector}}}) or {idle})[1m:15s])',
-        'work': f'(sum(rate(gradiated_gateway_runtime_latency_seconds_sum{{{selector}}}[2m])) or {idle})',
-        'capacity': f'((max(gradiated_gateway_capacity_rejection_timestamp_seconds{{{selector}}} > time() - 120) > bool 0) or vector(0)) * {maximum}',
-    }
     return {
         'apiVersion': 'keda.sh/v1alpha1', 'kind': 'ScaledObject',
-        'metadata': {'name': name, 'namespace': 'gpu-inference', 'annotations': annotations},
+        'metadata': {'name': name, 'namespace': 'gpu-inference',
+                     'annotations': {'argocd.argoproj.io/sync-options': 'SkipDryRunOnMissingResource=true'}},
         'spec': {
             'scaleTargetRef': {'apiVersion': 'argoproj.io/v1alpha1', 'kind': 'Rollout', 'name': name},
-            'pollingInterval': 15, 'minReplicaCount': model['replicas'], 'maxReplicaCount': maximum,
-            'fallback': {'failureThreshold': 3, 'replicas': model['replicas'], 'behavior': 'currentReplicasIfHigher'},
+            # A pool scales to zero only after half an hour without demand.
+            'pollingInterval': 15, 'cooldownPeriod': 1800,
+            'minReplicaCount': pool['floor'], 'maxReplicaCount': pool['maximum'],
+            'fallback': {'failureThreshold': 3, 'replicas': pool['floor'], 'behavior': 'currentReplicasIfHigher'},
             'advanced': {'restoreToOriginalReplicaCount': False, 'horizontalPodAutoscalerConfig': {'behavior': {
-                'scaleUp': {'stabilizationWindowSeconds': 0, 'policies': [{'type': 'Pods', 'value': 1, 'periodSeconds': 60}]},
-                'scaleDown': {'stabilizationWindowSeconds': 600, 'policies': [{'type': 'Pods', 'value': 1, 'periodSeconds': 750}]}}}},
+                # Starts take minutes, so add every replica the signals ask for at once.
+                'scaleUp': {'stabilizationWindowSeconds': 0, 'selectPolicy': 'Max', 'policies': [
+                    {'type': 'Percent', 'value': 100, 'periodSeconds': 15}, {'type': 'Pods', 'value': 4, 'periodSeconds': 15}]},
+                # One replica at a time: the draining signal holds the count
+                # until the last removed replica has gone.
+                'scaleDown': {'stabilizationWindowSeconds': 60, 'policies': [{'type': 'Pods', 'value': 1, 'periodSeconds': 60}]}}}},
             'triggers': [{'type': 'prometheus', 'name': signal, 'metricType': 'AverageValue', 'metadata': {
-                'serverAddress': 'http://observability-kube-prometh-prometheus.observability.svc:9090',
-                'query': f'({query}) and on() {fresh}',
-                'threshold': str(1 if signal == 'capacity' else target), 'ignoreNullValues': 'false'}}
-                for signal, query in queries.items()]}}
+                'serverAddress': PROMETHEUS, 'query': f'{query} and on() {fresh}',
+                'threshold': str(pool['slots']), 'ignoreNullValues': 'false'}}
+                for signal, query in scaling_queries(name, pool).items()]}}
+
+
+def replica_rules(pools):
+    """Per-pool replica targets for the model availability alerts."""
+    rules = []
+    for name, pool in pools.items():
+        serving = pool['mode'] == 'production' and pool['maximum']
+        # A rollout may take max_unavailable replicas below the floor while it
+        # replaces them, but a pool with a floor always needs one ready replica.
+        minimum = max(pool['floor'] - pool.get('max_unavailable', 0), min(pool['floor'], 1)) if serving else 0
+        labels = {'model': pool['model'], 'rollout': name}
+        rules += [
+            {'record': 'gradiated_model_desired_replicas', 'labels': dict(labels),
+             'expr': f'{desired_replicas(name)} or vector({pool["floor"]})' if serving else 'vector(0)'},
+            {'record': 'gradiated_model_minimum_replicas', 'labels': dict(labels),
+             'expr': f'vector({minimum})'},
+            # The slots ready replicas offer, for dashboards of slot utilization.
+            {'record': 'gradiated_model_ready_slots', 'labels': dict(labels),
+             'expr': f'({ready_replicas(name)} or vector(0)) * {pool["slots"]}' if serving else 'vector(0)'}]
+    return {'apiVersion': 'monitoring.coreos.com/v1', 'kind': 'PrometheusRule',
+            'metadata': {'name': 'gradiated-model-replicas', 'labels': {'release': 'observability'}},
+            'spec': {'groups': [{'name': 'gradiated.models.desired', 'rules': rules}]}}
+
+
+def model_outputs(models, runtimes, hosts):
+    pools = plan(models, runtimes, hosts)
+    validate_active_requests(pools, runtimes, glm_sglang_profiles())
+    outputs = {}
+    for name, pool in pools.items():
+        documents = [rollout(name, pool, runtimes)]
+        if pool['mode'] == 'production' and pool['floor'] >= 2:
+            documents.append(disruption_budget(name, pool))
+        # A switched-off pool has no pods and no autoscaler. A qualification
+        # pool keeps one at its fixed count so the fleet operator can surge it
+        # during a host re-image like any other pool.
+        if pool['maximum']:
+            documents.append(autoscaler(name, pool))
+        outputs[MODELS / name / f'{name}.yaml'] = documents
+    outputs[REPLICA_RULES] = [replica_rules(pools)]
+    return pools, outputs
 
 
 def node_names(documents):
@@ -319,26 +483,14 @@ def render(retire=()):
                    'data': {'pins.json': json.dumps(pins, indent=2) + '\n'}}]
     outputs = {GPU / 'controller.yaml': controller, GPU / 'rbac.yaml': rbac, GPU / 'credentials.yaml': credentials,
                GPU / 'gpu-fleet-pins.yaml': fleet_pins}
-    models = json.loads((GPU / 'models.json').read_text())
-    validate_canaries(models, runtimes)
-    validate_active_requests(models, runtimes, glm_sglang_profiles())
-    for name, model in models.items():
-        # The name becomes a directory and the gpu-model-<name> application,
-        # which must stay a 63-character label.
-        if len(name) > 53 or not re.fullmatch(r'[a-z](?:[a-z0-9-]*[a-z0-9])?', name):
-            raise ValueError('A model name must be a DNS label of at most 53 characters: ' + repr(name))
-        path = MODELS / name / f'{name}.yaml'
-        outputs[path] = [rollout(name, model, runtimes)]
-        if 'min_available' in model:
-            outputs[path].append(disruption_budget(name, model))
-        if "autoscaling" in model:
-            outputs[path].append(autoscaler(name, model, runtimes[model["runtime"]]))
-    # A list generator rather than a git directory generator: listing
-    # directories makes Argo check out the repository with its submodules,
-    # and the private autotrain submodule cannot be fetched there.
+    pools, rendered = model_outputs(json.loads((GPU / 'models.json').read_text()), runtimes, hosts)
+    outputs.update(rendered)
+    # One Argo application per pool, named after the pool. A list generator
+    # rather than a git directory generator: listing directories makes Argo
+    # check out the repository with its submodules, and the private autotrain
+    # submodule cannot be fetched there.
     applications = yaml.safe_load(APPLICATIONS.read_text())
-    applications['spec']['generators'] = [{'list': {'elements': [
-        {'model': name} for name in sorted(json.loads((GPU / 'models.json').read_text()))]}}]
+    applications['spec']['generators'] = [{'list': {'elements': [{'model': name} for name in sorted(pools)]}}]
     outputs[APPLICATIONS] = [applications]
     return outputs
 
@@ -372,7 +524,7 @@ def main():
         else:
             path.write_text(content)
     for path, documents in outputs.items():
-        content = ('# One Argo application per model from one template. The model list is generated by\n'
+        content = ('# One Argo application per model pool from one template. The pool list is generated by\n'
                    '# tools/gpu/render-config.py from models.json; other fields are editable. Deleting an\n'
                    "# application keeps its Rollout serving (preserveResourcesOnDeletion).\n"
                    if path == APPLICATIONS else

@@ -3,6 +3,7 @@ import {
   GatewayModelDeploymentSchema,
   ModelPropertiesSchema,
   ModelSchema,
+  OpenRouterModelIdSchema,
   UuidSchema,
 } from "@gradiated/contracts";
 import { MODEL_STATUSES } from "../db/schema/index.js";
@@ -12,6 +13,12 @@ export const ModelRecordSchema = z.object({
   name: ModelSchema.shape.name,
   status: z.enum(MODEL_STATUSES),
   properties: ModelPropertiesSchema,
+  openrouterModelId: OpenRouterModelIdSchema.nullable(),
+  tokenizerPath: z.string().min(1).max(300).nullable(),
+  tokenizerRevision: z
+    .string()
+    .regex(/^[0-9a-f]{40}$/)
+    .nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

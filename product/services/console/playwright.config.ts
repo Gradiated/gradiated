@@ -10,6 +10,7 @@ export default defineConfig({
   testDir: "./e2e",
   testIgnore: [
     "task-ui.spec.ts",
+    "model-upload-ui.spec.ts",
     "settings-ui.spec.ts",
     "onboarding-ui.spec.ts",
     "members-ui.spec.ts",

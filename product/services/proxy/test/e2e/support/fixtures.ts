@@ -1,6 +1,9 @@
 import { afterAll, afterEach, beforeAll, expect, inject } from "vitest";
 
-import type { Case } from "../../../../gateway/test/integration/case.js";
+import type {
+  Case,
+  CaseOptions,
+} from "../../../../gateway/test/integration/case.js";
 import type {
   Headers,
   Response,
@@ -139,7 +142,7 @@ export interface ExtraProxyOptions {
 
 export interface ProxyFixture {
   /** A tenant with a hosted model that the proxy's catalog already holds. */
-  hostedCase(): Promise<Case>;
+  hostedCase(options?: CaseOptions): Promise<Case>;
   /**
    * Another proxy process with the same upstreams and some settings changed. It
    * stops after the current test.
@@ -160,7 +163,7 @@ export interface ProxyFixture {
  * gateway stack. After each test the provider must have seen no contract error.
  */
 export const useProxy = (
-  makeCase: (kind: "vllm") => Promise<Case>,
+  makeCase: (kind: "vllm", options?: CaseOptions) => Promise<Case>,
   options: ProxyFixtureOptions = {},
 ): ProxyFixture => {
   let proxy: ProxyProcess | undefined;
@@ -227,8 +230,8 @@ export const useProxy = (
   };
 
   return {
-    async hostedCase() {
-      const instance = await makeCase("vllm");
+    async hostedCase(options) {
+      const instance = await makeCase("vllm", options);
       // Only a load that starts after the model row is committed can contain it.
       await required(proxy, "proxy").catalogRefreshedAfter(Date.now());
 

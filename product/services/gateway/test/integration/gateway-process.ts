@@ -33,6 +33,7 @@ export interface GatewayOptions {
   readonly logLevel?: "warn" | "info";
   readonly leaseFinalizationMarginSeconds?: number;
   readonly expiredLeaseCleanupGraceSeconds?: number;
+  readonly openRouter?: { readonly baseUrl: string; readonly apiKey: string };
 }
 
 export interface Exit {
@@ -91,6 +92,12 @@ export class GatewayProcess {
         ),
         GATEWAY_BROWSER_ORIGINS: BROWSER_ORIGIN,
         SGLANG_API_KEY: options.runtimeToken,
+        ...(options.openRouter
+          ? {
+              OPENROUTER_API_KEY: options.openRouter.apiKey,
+              OPENROUTER_BASE_URL: options.openRouter.baseUrl,
+            }
+          : {}),
         RUST_LOG: options.logLevel ?? "warn",
         AWS_EC2_METADATA_DISABLED: "true",
         HF_HUB_OFFLINE: "1",

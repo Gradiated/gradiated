@@ -82,7 +82,7 @@ fn rejects_invalid_tool_call_argument_json() {
 async fn logs_a_template_render_failure_with_a_bounded_code() {
     let qualified = qualified(None);
     let tokenizer = ModelTokenizer::seeded(
-        &qualified.deployment.release,
+        &qualified.local_capacity().deployment.release,
         word_level(&["[UNK]"], "{{ messages[0].content + 1 }}"),
     );
     let logs = crate::diagnostics::capture::Logs::default();
@@ -96,7 +96,7 @@ async fn logs_a_template_render_failure_with_a_bounded_code() {
     assert_eq!(events[0]["fields"]["error_code"], "render");
     assert_eq!(
         events[0]["fields"]["tokenizer_path"],
-        qualified.deployment.release.tokenizer_path
+        qualified.local_capacity().deployment.release.tokenizer_path
     );
     assert!(!events[0].to_string().contains("hello"));
 }

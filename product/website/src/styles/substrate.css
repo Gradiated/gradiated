@@ -206,8 +206,8 @@
    aligns with type in a banded one — only the ground extends. Same breakout
    as the seam lines, so it needs nothing from the band's layout. */
 .gr-module--bleed {
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
+  width: var(--bleed-w, 100vw);
+  margin-left: calc(50% - var(--bleed-w, 100vw) / 2);
 }
 
 .gr-module--bleed .gr-module-inner {
@@ -615,7 +615,7 @@
 
 /* Below the wide tier the valley cannot hold: the mark takes its own row and
    the links fall to two columns. */
-.gr-root:not([data-tier="wide"]) .gr-footer-top {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-footer-top {
   grid-template-columns: repeat(2, 1fr);
   row-gap: calc(2 * var(--u));
 }
@@ -629,11 +629,11 @@
  *
  * The lead above the wordmark halves; the room below the copyright comes down
  * to the band's own inset, which is enough to end a page on. */
-.gr-root:not([data-tier="wide"]) {
+.gr-root[data-tier]:not([data-tier="wide"]) {
   --wordmark-lead: calc(3 * var(--u));
 }
 
-.gr-root:not([data-tier="wide"]) .gr-footer {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-footer {
   padding-block-end: calc(2 * var(--u));
 }
 
@@ -644,11 +644,11 @@
  * it. Which is why the footer came out three tracks wide with Product sitting
  * to the right of Developers and Company, and Legal alone underneath: the
  * links were in neither document order nor a 2x2. */
-.gr-root:not([data-tier="wide"]) .gr-footer-top nav:first-of-type {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-footer-top nav:first-of-type {
   grid-column-start: auto;
 }
 
-.gr-root:not([data-tier="wide"]) .gr-footer-mark {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-footer-mark {
   grid-column: 1 / -1;
 }
 
@@ -732,8 +732,10 @@
 
 .gr-footer-bar {
   display: grid;
+  /* Ownership left, clock centred, copyright far right — all three on
+     the ownership line's baseline. */
   grid-template-columns: 1fr auto 1fr;
-  align-items: center;
+  align-items: last baseline;
   margin-block-start: calc(3 * var(--u));
   padding-block-start: calc(1.5 * var(--u));
   border-top: 1px solid var(--color-rule);
@@ -743,6 +745,12 @@
   font-family: var(--font-body);
   font-size: var(--text-ui);
   color: var(--color-text-muted);
+  justify-self: center;
+}
+
+.gr-footer-bar > .gr-footer-legal {
+  justify-self: end;
+  margin: 0;
 }
 
 .gr-footer-clock {
@@ -949,7 +957,7 @@
  * Baseline, not centre: the picker's dots line up with a line of type rather
  * than floating against the middle of a two-line block, which is what ties
  * the control to the text beside it. */
-.gr-root:not([data-tier="wide"]) .gr-footer-bar {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-footer-bar {
   grid-template-columns: 1fr auto;
   align-items: baseline;
   row-gap: calc(0.4 * var(--u));
@@ -959,19 +967,24 @@
   margin-block-start: calc(2 * var(--u));
 }
 
-.gr-root:not([data-tier="wide"]) .gr-footer-clock {
-  grid-area: 1 / 1;
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-footer-clock {
+  grid-area: 2 / 1;
   justify-self: start;
 }
 
-.gr-root:not([data-tier="wide"]) .gr-footer-ownership {
-  grid-area: 2 / 1;
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-footer-bar > .gr-footer-legal {
+  grid-area: 3 / 1;
+  justify-self: start;
+}
+
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-footer-ownership {
+  grid-area: 1 / 1;
   justify-self: start;
 }
 
 /* On the copyright's row, not the clock's: the bar ends on that line, so the
    control ending there too closes the block rather than hanging above it. */
-.gr-root:not([data-tier="wide"]) .gr-swatches {
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-swatches {
   grid-area: 2 / 2;
   align-self: baseline;
 }

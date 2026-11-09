@@ -1,0 +1,44 @@
+{
+  "oracle_sources": {
+    "sglang/srt/models/dflash.py": "0ec72d0935aa22c0cb967e66ada25bec8c574f9205c1eff806e04cae22a3bef7"
+  },
+  "upstream_sha": "afcd7d6b487a9cbe73e25941971b4cc107e6f9ae",
+  "requires": [
+    "manifest.json correctness overlay",
+    "baseline-request-seed-manifest.json normal prefill sampler seed overlay"
+  ],
+  "status": "CANDIDATE ONLY: existing request seed admission guard intentionally retained until GPU qualification",
+  "scope": "DFlash2 sequential CUDA selector seeded proposal, acceptance and actual-position residual/bonus variates",
+  "limitations": [
+    "Explicit seeds reject block verification, megakernel, absent/disabled DFlash2 selector, NPU",
+    "Seeded proposal runs eager selector after captured backbone, discarding graph proposal; unseeded graph/static buffers unchanged",
+    "CPU kernel execution uses a Triton-language memory emulator; CUDA compilation/capture/TP tests required",
+    "Seed controls RNG; numerical model determinism or identical baseline token sequence not claimed",
+    "Nonzero penalties still require overlap disabled per separate correctness guard",
+    "Philox helper uses many Torch ops; seeded GPU latency not measured"
+  ],
+  "files": [
+    {
+      "path": "sglang/srt/speculative/dflash_worker_v2.py",
+      "original_sha256": "b842b39e938f45bb0949bf794a21bedb397c4de3bf5910ac17035f4311b40bd2",
+      "overlay_sha256": "23df9850630c82f3b63d3965f585924c608741202d9ea12a545cf83be6935171"
+    },
+    {
+      "path": "sglang/kernels/ops/speculative/dspark/dspark_accept.py",
+      "original_sha256": "d5657fbab56949a9a2788039153ecf510c88efb825fdba9535b84d427a0dda99",
+      "overlay_sha256": "4c30ed2c4436546fd5cc0310251c5888e7e1554487c3decb8903fc6948de6c1a"
+    },
+    {
+      "path": "sglang/kernels/ops/speculative/reject_sampling.py",
+      "original_sha256": "62caac17755082e2f89b1c81a743f55c81c31b7ff0485b7533c0267e72e9262c",
+      "overlay_sha256": "7adccefaa11eecf14d8e78c246a6bc6506aac60b05aff2440c32affa74a4047f"
+    },
+    {
+      "path": "sglang/srt/speculative/seeded_dflash.py",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "overlay_sha256": "a560fbc2bd235917267b09f34b707d48e89dfd4365f418ac79e82ded1da614f7"
+    }
+  ],
+  "patch": "dflash-request-seed.patch",
+  "patch_sha256": "9e83e34b19ae47aac599e737661ee08044a4b2369a6962226c74fa8db3192318"
+}

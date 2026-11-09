@@ -18,7 +18,7 @@ On first use, vLLM's native `LoRAResolver` plugin calls the allocation's loopbac
 
 1. Obtains existing task-version metadata and a short-lived download grant.
 2. Reuses verified local files or downloads the S3 archive into a staging directory.
-3. Verifies size/checksum, safe archive contents, base revision, rank, layer coverage
+3. Verifies size/checksum, safe archive contents, base revision, rank, layer range
    and expert completeness.
 4. Returns the retained local path and tensor format flag, without calling vLLM.
 

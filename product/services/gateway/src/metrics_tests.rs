@@ -10,7 +10,7 @@ const GENERATION: [&str; 5] = ["deployment", "model", "protocol", "service_tier"
 fn scope(deployment: Uuid) -> GenerationScope<'static> {
     GenerationScope {
         model: "model-a",
-        deployment,
+        deployment: deployment.to_string(),
         protocol: "openai_chat",
         stream: true,
         service_tier: ServiceTier::Fast,
@@ -37,6 +37,9 @@ impl Terminal {
             usage: self.usage,
             charge_nano_usd: self.charge_nano_usd,
             timing: &self.timing,
+            capacity: Capacity::Local,
+            fallback_reason: None,
+            upstream_cost_nano_usd: None,
         }
     }
 }
@@ -459,10 +462,10 @@ fn served_by_moves_the_active_generation_to_the_serving_deployment() {
     };
     let mut generation = metrics.generation_admitted(&scope(primary));
 
-    generation.served_by(primary);
+    generation.served_by(primary.to_string());
     assert_eq!((active(primary), active(fallback)), (Some(1), None));
 
-    generation.served_by(fallback);
+    generation.served_by(fallback.to_string());
     assert_eq!((active(primary), active(fallback)), (Some(0), Some(1)));
 
     drop(generation);
@@ -481,9 +484,9 @@ fn runtime_work_has_a_zero_baseline_before_completion_including_fallbacks() {
     };
     let mut generation = admitted(&metrics);
     assert!(baseline(Uuid::from_u128(1)));
-    generation.prepare_deployment(Uuid::from_u128(2));
+    generation.prepare_deployment(Uuid::from_u128(2).to_string());
     assert!(baseline(Uuid::from_u128(2)));
-    generation.served_by(Uuid::from_u128(2));
+    generation.served_by(Uuid::from_u128(2).to_string());
     assert!(baseline(Uuid::from_u128(2)));
 }
 

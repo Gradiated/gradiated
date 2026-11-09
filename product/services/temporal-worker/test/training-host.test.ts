@@ -38,6 +38,12 @@ it("keeps placement inside the registered pool and transfers no cluster credenti
   expect(spec.automountServiceAccountToken).toBe(false);
   expect(spec.restartPolicy).toBe("Never");
   expect(spec.priorityClassName).toBe("gpu-training");
+  expect(spec.tolerations).toContainEqual({
+    key: "gradiated.com/reserved",
+    operator: "Equal",
+    value: "training",
+    effect: "NoSchedule",
+  });
   expect(job.spec.backoffLimit).toBe(0);
   expect(JSON.stringify(job)).not.toMatch(
     /DATABASE|TEMPORAL|secretKeyRef|envFrom/,

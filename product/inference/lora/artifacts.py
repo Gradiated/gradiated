@@ -300,12 +300,12 @@ def validate_tensors(directory, spec, model_config, deadline=None):
         pair = name.replace(f"lora_{side}", "lora")
         pairs.setdefault(pair, set()).add(side)
         coverage.add((layer, module))
-    if (
-        {layer for layer, _module in coverage} != set(range(layer_count))
-        or not pairs
-        or any(sides != {"A", "B"} for sides in pairs.values())
-    ):
+    if not pairs or any(sides != {"A", "B"} for sides in pairs.values()):
         raise ValueError("Incomplete adapter coverage")
+    if {target.split(".")[-1] for target in config["target_modules"]} - {
+        module for _layer, module in coverage
+    }:
+        raise ValueError("Adapter target modules have no tensors")
     if any(indices != set(range(expert_count)) for indices in expert_coverage.values()):
         raise ValueError("Incomplete expert coverage")
     if len(expert_layouts) > 1:

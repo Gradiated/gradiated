@@ -99,7 +99,8 @@ class Loader:
         if (
             adapter.get("format") != "peft_lora"
             or version["base_model_id"] != self.config["base_model_id"]
-            or adapter.get("base_model_revision") != self.config["base_model_revision"]
+            or adapter.get("validated_base_model_revision", adapter.get("base_model_revision"))
+            != self.config["base_model_revision"]
             or not re.fullmatch(r"[a-f0-9]{64}", adapter["sha256"])
             or str(uuid.UUID(version["id"])) != version["id"]
             or str(uuid.UUID(workspace)) != workspace

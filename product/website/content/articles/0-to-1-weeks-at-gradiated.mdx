@@ -55,9 +55,11 @@ We did actually observe this. After our SFT experiment, the resulting model perf
 
 **Why might it not be working?**
 
-The data used in post-training was a paired list where each pair is a user's question and Sonnet's reply. SFT trains Qwen to answer like the frontier model. Qwen doesn't have the same capabilities as the frontier model.
+The data used in post-training was a paired list where each pair is a user's question and Sonnet's reply. SFT trains Qwen to answer like the frontier model. Ideally Qwen learns the functionality that made Sonnet's answers useful, but this isn't always the case.
 
-Qwen may be able to solve the problem, but if it tries to solve the problem like Sonnet would it might do worse than if it just tried on its own. For example, Sonnet often replies with confidence, which makes sense given it's a highly capable model. SFT can result in Qwen learning to [copy confidence](https://thinkingmachines.ai/blog/on-policy-distillation/#:~:text=style%20and%20confidence,factual%20accuracy) without the functional gains to match it.
+For example, Sonnet often replies with confidence, which makes sense given it's a highly capable model. SFT can result in Qwen learning to [copy confidence](https://thinkingmachines.ai/blog/on-policy-distillation/#:~:text=style%20and%20confidence,factual%20accuracy) without the functional gains to match it.
+
+Qwen may be able to solve the problem, but if it tries to solve the problem like Sonnet it might end up just sounding like Sonnet with no functional gains.
 
 **How sure are we that this is what's happening?**
 

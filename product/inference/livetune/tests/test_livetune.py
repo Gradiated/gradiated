@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from livetune import controller as control  # noqa: E402
-from livetune import cli, knobs, loadgen, metrics, tune, variants  # noqa: E402
+from livetune import cli, gate, knobs, loadgen, metrics, tune, variants  # noqa: E402
 from livetune.policy import Policy, Rule, Shape, Slo  # noqa: E402
 
 STARTUP = {"max_running_requests": 64, "chunked_prefill_size": 8192, "max_prefill_tokens": 8192}
@@ -2621,6 +2621,32 @@ class ControlStartupTest(unittest.TestCase):
     def test_decimal_values_parse_as_numbers(self):
         self.assertEqual((cli._value("1.3"), cli._value("7"), cli._value("nan"), cli._value("fcfs"), cli._value("null")),
                          (1.3, 7, "nan", "fcfs", None))
+
+
+class ScoredGateTest(unittest.TestCase):
+    """At the magnitudes measured on GLM-5.3 Flash: greedy decoding that does not repeat, and scored
+    prompt logprobs that move about 0.2 nats per token between identical runs."""
+
+    def _sample(self, shift, seed):
+        import random
+
+        rng = random.Random(seed)
+        tokens = [[rng.randrange(100) for _ in range(48)] for _ in range(6)]  # diverges at once
+        scored = [[-2.0 + shift + rng.gauss(0, 0.3) for _ in range(400)] for _ in range(12)]
+        return gate.Sample(tokens, [[-0.5] * 48 for _ in range(6)], scored)
+
+    def test_an_unrepeatable_model_is_judged_on_its_scored_prompts(self):
+        stock, again = self._sample(0.0, 1), self._sample(0.0, 2)
+        self.assertTrue(gate.judge(stock, again, self._sample(0.0, 3)).passed)
+        shifted = gate.judge(stock, again, self._sample(-0.083, 4))
+        self.assertFalse(shifted.passed)
+        self.assertIn("scored logprobs shifted", shifted.reasons[0])
+
+    def test_without_scored_prompts_an_unrepeatable_baseline_still_refuses(self):
+        bare = lambda s: gate.Sample(s.tokens, s.logprobs)
+        verdict = gate.judge(bare(self._sample(0.0, 1)), bare(self._sample(0.0, 2)), bare(self._sample(0.0, 3)))
+        self.assertFalse(verdict.passed)
+        self.assertIn("does not repeat", verdict.reasons[0])
 
 
 class QuietLogTest(unittest.TestCase):

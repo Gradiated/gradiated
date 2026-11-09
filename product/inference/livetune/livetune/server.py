@@ -57,20 +57,28 @@ class Server:
         except urllib.error.HTTPError as exc:
             raise UpdateFailed(f"{self.url} would not flush its prefix cache: {exc.read()[:200]!r}") from exc
 
-    def greedy(self, prompts: list[list[int]], max_new_tokens: int = 64) -> Any:
-        """Greedy continuations with logprobs, each from a cold prefix cache so every probe runs the same path."""
+    def greedy(self, prompts: list[list[int]], max_new_tokens: int = 64, scored_tokens: int = 400) -> Any:
+        """Greedy continuations with logprobs, and the teacher-forced logprobs of each prompt's last
+        scored_tokens tokens, each from a cold prefix cache so every probe runs the same path."""
         import math
 
         from livetune.gate import Sample
 
-        tokens, logprobs = [], []
+        def value(entry: Any) -> float:
+            return float(entry[0]) if entry[0] is not None else math.nan
+
+        tokens, logprobs, scored = [], [], []
         for ids in prompts:
             self.flush_cache()
-            body = {"input_ids": ids, "sampling_params": {"max_new_tokens": max_new_tokens, "temperature": 0}, "return_logprob": True}
-            entries = json.loads(self._request("/generate", body, timeout=600))["meta_info"]["output_token_logprobs"]
+            body = {"input_ids": ids, "sampling_params": {"max_new_tokens": max_new_tokens, "temperature": 0}, "return_logprob": True,
+                    "logprob_start_len": max(len(ids) - scored_tokens, 0)}
+            meta = json.loads(self._request("/generate", body, timeout=600))["meta_info"]
+            entries = meta["output_token_logprobs"]
             tokens.append([int(entry[1]) for entry in entries])
-            logprobs.append([float(entry[0]) if entry[0] is not None else math.nan for entry in entries])
-        return Sample(tokens, logprobs)
+            logprobs.append([value(entry) for entry in entries])
+            # The first prompt token has no logprob; it carries None, not a measurement.
+            scored.append([value(entry) for entry in meta.get("input_token_logprobs") or [] if entry[0] is not None])
+        return Sample(tokens, logprobs, scored)
 
     def info(self) -> dict[str, Any]:
         return json.loads(self._request("/server_info"))

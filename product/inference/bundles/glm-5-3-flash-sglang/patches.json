@@ -78,6 +78,60 @@
       "original_sha256": "3c71a5b522cd3d366c0fd15db04964208758763ce48d46a5659fe42a14a412bd",
       "overlay_sha256": "97d614986a23259dd0546300c15bdb97d403aebe54c2eeef4f041337ce25805c",
       "patch": "glm5_next_lora_hidden_dim.patch"
+    },
+    {
+      "path": "sglang/srt/arg_groups/deepseek_v4_hook.py",
+      "original_sha256": "c9a17a64b61463317514a34274acc013f6607fc63413690e92118a8ff79420c1",
+      "overlay_sha256": "644ce1ca281386ee846c2cc8f46fb1a2d0b8aa7d817bb1d0c6b333a54098b07b",
+      "patch": "dsv4_lora_deepseek_v4_hook.patch"
+    },
+    {
+      "path": "sglang/srt/lora/backend/base_backend.py",
+      "original_sha256": "7bbc3129520988a73b0944e156a8f60606ba590542b6627f62d1a524a2a6aac8",
+      "overlay_sha256": "2ae6565b902563e83581cdb3512c84591967c1998da995efd14ecaca6ecd98bb",
+      "patch": "dsv4_lora_base_backend.patch"
+    },
+    {
+      "path": "sglang/srt/lora/backend/triton_backend.py",
+      "original_sha256": "294928ed60ea216f8f519ea3b9a64e36637cb200b0e5dfa77dfc562620f6ba67",
+      "overlay_sha256": "e640ff1c5ad66ada9ed8275025ce4e3eebd7cba42893b0cee41cd8335f3b266d",
+      "patch": "dsv4_lora_triton_backend.patch"
+    },
+    {
+      "path": "sglang/srt/lora/layers.py",
+      "original_sha256": "e99ad701df5e64f19720826a564cca4b1eff90308390123a920f347c79999a23",
+      "overlay_sha256": "515ea3b8efdb2f675a1b34432ded719700584bdaa532c59658bc86b4577c4f90",
+      "patch": "dsv4_lora_layers.patch"
+    },
+    {
+      "path": "sglang/srt/lora/lora_manager.py",
+      "original_sha256": "f98639739ee30eb2397b022b3e08d1cd8f23c3c34700d8e45cd858880e0d707d",
+      "overlay_sha256": "7850085959b4c580a0ed1f73a2bfda847ed3de05d5276760ea2a5fc150e3540b",
+      "patch": "dsv4_lora_lora_manager.patch"
+    },
+    {
+      "path": "sglang/srt/lora/mem_pool.py",
+      "original_sha256": "88ae59329cc033bd89fb9927329e1d699de2b6468e2a3b5106fb2b129cdd949a",
+      "overlay_sha256": "9e37d6ca2c20a4e1b2142167f8752533976646b6c8b96cf470c0a068953f5485",
+      "patch": "dsv4_lora_mem_pool.patch"
+    },
+    {
+      "path": "sglang/srt/lora/utils.py",
+      "original_sha256": "608b178b6762c4cfd9c1dfbc5826561de7114ee07b5e3f7964a0882558d886c8",
+      "overlay_sha256": "21442d1ea4d4b85fddf64c6ffdc69872a9a56862b5c099aacfa45d90db9ad3d8",
+      "patch": "dsv4_lora_lora_utils.patch"
+    },
+    {
+      "path": "sglang/srt/models/deepseek_v4.py",
+      "original_sha256": "8e2acf2aa143abfa76955508d5f01bb622274da9c1bee86cf228fcfb8532b73d",
+      "overlay_sha256": "dacc12ca7b9d4afeb6d3f23197a815b93333000c42e8a8bc70f5328f25f3ca72",
+      "patch": "dsv4_lora_deepseek_v4.patch"
+    },
+    {
+      "path": "sglang/srt/utils/common.py",
+      "original_sha256": "34dc280f0679c8355bbc6f0621c0ca0476c469c4bf98c9c8544c00bf54f10e54",
+      "overlay_sha256": "a102c601e006b657091e02d87ec176863bcc209f77c0ba82ca54a4b17fafff7e",
+      "patch": "dsv4_lora_common_srt.patch"
     }
   ]
 }

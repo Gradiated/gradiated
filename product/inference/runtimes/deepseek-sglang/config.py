@@ -12,8 +12,9 @@ TENSOR_PARALLEL_SIZE = 4
 ACTIVE_REQUESTS = 32
 QUEUED_REQUESTS = 2
 QUEUE_TIMEOUT_SECONDS = 10
-# PR sgl-project/sglang#45231 (patched into the bundle) adapts the five attention projections and the
-# shared expert; routed experts stay unadapted. Names are the checkpoint's module leaves.
+# The bundle's port of sgl-project/sglang#45231 adapts the five attention projections and the shared
+# expert (w1/w2/w3); routed-expert adapters are rejected at load because neither FP4 MoE kernel exposes
+# LoRA hooks. Names are the checkpoint's module leaves.
 LORA_TARGETS = ['wq_a', 'wq_b', 'wkv', 'wo_a', 'wo_b', 'w1', 'w2', 'w3']
 PROFILES = {
     'b300-tp4': {'gpu_product': 'B300', 'active_requests': ACTIVE_REQUESTS, 'prefill_tokens': 16384,
@@ -104,7 +105,9 @@ def commands(environment):
                '--enable-metrics', '--enable-cache-report', '--random-seed', '42',
                '--host', '127.0.0.1', '--port', str(config['backend']), '--watchdog-timeout', '3600']
     if config['lora']:
-        backend += lora_arguments(environment)
+        # Only the Triton LoRA backend implements the grouped wo_a adapter; LoRA keeps the
+        # FlashMLA (not MegaAttention) decode backend that the patched hook requires.
+        backend += ['--lora-backend', 'triton', *lora_arguments(environment)]
     router = [python, '-m', 'smg.launch_router', '--worker-urls',
               f"http://127.0.0.1:{config['backend']}", '--policy', 'round_robin',
               '--host', '127.0.0.1', '--port', str(config['front']),

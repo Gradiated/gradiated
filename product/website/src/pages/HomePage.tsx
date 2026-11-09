@@ -194,7 +194,7 @@ const products = [
     id: "post-training",
     title: "Automated RL",
     description:
-      "Automated reinforcement learning turns your production traces into a model trained for your workload.",
+      "We'll improve and run your benchmarks, move you to open source and run automated reinforcement learning to turn your production traces into a model trained for your workload.",
     features: [
       "Learn from real production traces",
       "Evaluations built around your tasks",

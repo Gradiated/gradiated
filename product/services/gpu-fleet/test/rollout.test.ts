@@ -1360,6 +1360,27 @@ describe("in-place bundle update", () => {
     );
   });
 
+  it("waits out a serving pod that is briefly not Ready during the update", async () => {
+    const { fleet, pod } = bundleFleet();
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    await run(fleet, pinned, () => rollout(fleet, FIRST)?.step === "Verify");
+
+    fleet.notReady.add(pod);
+    await run(fleet, pinned, () => false, {}, 5);
+    expect(["Verify", "Soak"]).toContain(rollout(fleet, FIRST)?.step);
+    expect(rollout(fleet, FIRST)?.result).toBe("Running");
+
+    fleet.notReady.delete(pod);
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, FIRST)?.result === "Succeeded",
+    );
+    expect(fleet.podsOn(FIRST).map((item) => item.metadata.name)).toEqual([
+      pod,
+    ]);
+  });
+
   it("waits for every serving pod to be Ready before taking the baseline", async () => {
     const { fleet, pod } = bundleFleet();
     fleet.notReady.add(pod);

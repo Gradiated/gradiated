@@ -416,20 +416,25 @@ export const createRollouts = (deps: RolloutDependencies) => {
     (rollout.kind === "bundle" ||
       ((facts.node?.ready ?? false) && imageRuns(facts, rollout)));
 
-  // An in-place update must not restart a serving process: each pod stays on
-  // the host, Ready, with the same qualified runtime. A pod that is gone also
-  // stops the update, so rescheduling cannot certify the bundle.
-  const baselineBroken = async (host: GpuHost, rollout: Rollout) => {
+  // An update that restarted, moved or requalified a serving pod is broken; one
+  // only briefly not Ready, as while the host agent restarts, is waited for.
+  const baselineState = async (host: GpuHost, rollout: Rollout) => {
     const pods = await cluster.podsOn(host.spec.instanceId);
-    return Object.entries(rollout.baseline ?? {}).some(([uid, runtime]) => {
-      const pod = pods.find((item) => item.uid === uid);
-      return (
-        !pod ||
-        pod.terminating ||
-        !pod.ready ||
-        pod.qualifiedRuntime !== runtime
-      );
-    });
+    const baseline = Object.entries(rollout.baseline ?? {}).map(
+      ([uid, runtime]) => ({
+        pod: pods.find((item) => item.uid === uid),
+        runtime,
+      }),
+    );
+    if (
+      baseline.some(
+        ({ pod, runtime }) =>
+          !pod || pod.terminating || pod.qualifiedRuntime !== runtime,
+      )
+    )
+      return "broken";
+
+    return baseline.every(({ pod }) => pod?.ready) ? "ready" : "unready";
   };
 
   const runningTraining = async (host: GpuHost, rollout: Rollout) =>
@@ -773,10 +778,13 @@ export const createRollouts = (deps: RolloutDependencies) => {
           ].includes(digest)
         )
           throw new Fatal(`The host rejected or rolled back bundle ${digest}`);
-        if (await baselineBroken(facts.host, rollout))
+        const baseline = await baselineState(facts.host, rollout);
+        if (baseline === "broken")
           throw new Fatal(
             "A serving pod restarted or left the host during the bundle update",
           );
+        if (baseline === "unready")
+          return { stay: "Waiting for the serving pods to be Ready again" };
       }
       return healthy(facts, rollout)
         ? { next: "Soak" }
@@ -789,14 +797,16 @@ export const createRollouts = (deps: RolloutDependencies) => {
     },
 
     Soak: async (facts, rollout) => {
-      if (
-        rollout.kind === "bundle" &&
-        (await baselineBroken(facts.host, rollout))
-      )
+      const baseline =
+        rollout.kind === "bundle"
+          ? await baselineState(facts.host, rollout)
+          : "ready";
+      if (baseline === "broken")
         throw new Fatal(
           "A serving pod restarted or left the host during the bundle update",
         );
-      if (!healthy(facts, rollout))
+      // A serving pod that stops being Ready restarts the soak.
+      if (baseline === "unready" || !healthy(facts, rollout))
         return {
           stay: "The host is not healthy",
           set: { healthySince: undefined },

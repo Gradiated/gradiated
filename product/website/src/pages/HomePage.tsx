@@ -183,9 +183,9 @@ const products = [
     description:
       "Bring your existing code, change your base URL, and start sending requests to the latest frontier or open models.",
     features: [
-      "Usage-based pricing",
+      "Usage-based pricing or bring your own key",
       "No infrastructure to manage",
-      "Plug n Play",
+      "Trivial to start",
     ],
     action: "Start Research",
     href: CONSOLE_BASE_URL,

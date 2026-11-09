@@ -440,7 +440,7 @@ class RenderTests(unittest.TestCase):
         self.assertNotIn('PodDisruptionBudget', documents)
         rules = outputs[renderer.REPLICA_RULES][0]['spec']['groups'][0]['rules']
         staged_rules = [rule['expr'] for rule in rules if rule['labels']['rollout'] == 'staged']
-        self.assertEqual(staged_rules, ['vector(0)', 'vector(0)'])
+        self.assertEqual(staged_rules, ['vector(0)', 'vector(0)', 'vector(0)'])
         serving = renderer.rollout('serving', pools['serving'], catalogue)['spec']['template']['metadata']['annotations']
         self.assertNotIn('gradiated.com/serving-mode', serving)
         for pool, message in [
@@ -641,13 +641,16 @@ class RenderTests(unittest.TestCase):
             'gradiated_model_desired_replicas':
                 'max(rollout_info_replicas_desired{namespace="gpu-inference",name="glm-dealign-sglang"}) or vector(2)',
             # A one-at-a-time rollout of the five-replica floor keeps four serving.
-            'gradiated_model_minimum_replicas': 'vector(1)'})
+            'gradiated_model_minimum_replicas': 'vector(1)',
+            'gradiated_model_ready_slots':
+                '(max(rollout_info_replicas_available{namespace="gpu-inference",name="glm-dealign-sglang"}) or vector(0)) * 12'})
         self.assertEqual(by_rollout['kev']['gradiated_model_minimum_replicas'], 'vector(2)')
         # One replica of a single-replica floor must stay, even if a rollout may take it down.
         single = renderer.replica_rules({'pool': {**pools['glm-dealign-sglang'], 'floor': 1, 'max_unavailable': 1}})
         self.assertEqual(single['spec']['groups'][0]['rules'][1]['expr'], 'vector(1)')
         self.assertEqual(by_rollout['glm-dealign-sglang-h200'], {
-            'gradiated_model_desired_replicas': 'vector(0)', 'gradiated_model_minimum_replicas': 'vector(0)'})
+            'gradiated_model_desired_replicas': 'vector(0)', 'gradiated_model_minimum_replicas': 'vector(0)',
+            'gradiated_model_ready_slots': 'vector(0)'})
         rendered = yaml.safe_load(renderer.REPLICA_RULES.read_text().split('\n', 1)[1])
         self.assertEqual(rendered, renderer.replica_rules(pools))
 

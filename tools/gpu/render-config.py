@@ -358,7 +358,10 @@ def replica_rules(pools):
             {'record': 'gradiated_model_desired_replicas', 'labels': dict(labels),
              'expr': f'{desired_replicas(name)} or vector({pool["floor"]})' if serving else 'vector(0)'},
             {'record': 'gradiated_model_minimum_replicas', 'labels': dict(labels),
-             'expr': f'vector({minimum})'}]
+             'expr': f'vector({minimum})'},
+            # The slots ready replicas offer, for dashboards of slot utilization.
+            {'record': 'gradiated_model_ready_slots', 'labels': dict(labels),
+             'expr': f'({ready_replicas(name)} or vector(0)) * {pool["slots"]}' if serving else 'vector(0)'}]
     return {'apiVersion': 'monitoring.coreos.com/v1', 'kind': 'PrometheusRule',
             'metadata': {'name': 'gradiated-model-replicas', 'labels': {'release': 'observability'}},
             'spec': {'groups': [{'name': 'gradiated.models.desired', 'rules': rules}]}}

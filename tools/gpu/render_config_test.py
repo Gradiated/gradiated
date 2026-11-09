@@ -607,16 +607,16 @@ class RenderTests(unittest.TestCase):
                                                       'progress_deadline_seconds': 60}},
                                           min_slots=0, twelve={'active_requests': 12}, three={'active_requests': 3})
         first, second = (renderer.scaling_queries(name, pools[name]) for name in ('first', 'second'))
-        self.assertEqual(set(first), {'utilization', 'refusals'})
+        self.assertEqual(set(first), {'utilization', 'refusals', 'draining'})
         model = 'model="test/model"'
         # One sample: the per-model rule's label must not survive beside the idle zero.
         self.assertIn(f'max(gradiated:model_busy_slots{{{model}}})', first['utilization'])
-        self.assertTrue(first['utilization'].endswith('/ 0.7, 0)'))
+        self.assertTrue(first['utilization'].endswith('/ 0.7, 0)[10m:30s])'))
         # The second pool supplies what the first cannot serve: its maximum while
         # it grows, its ready replicas once it requests its maximum.
         self.assertTrue(second['utilization'].endswith(
             '/ 0.7 - ((max(rollout_info_replicas_available{namespace="gpu-inference",name="first"}) * 12 and on() '
-            '(max(rollout_info_replicas_desired{namespace="gpu-inference",name="first"}) >= 2)) or vector(24)), 0)'))
+            '(max(rollout_info_replicas_desired{namespace="gpu-inference",name="first"}) >= 2)) or vector(24)), 0)[10m:30s])'))
         self.assertIn(f'gradiated:model_capacity_refusal_ratio{{{model}}} > 0.05', first['refusals'])
         self.assertNotIn('name="first"} >=', first['refusals'])
         # One replica more than are ready, so capacity grows as replicas finish loading.

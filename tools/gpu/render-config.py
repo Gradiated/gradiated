@@ -316,8 +316,15 @@ def scaling_queries(name, pool):
     step = f'({ready} + 1 + floor({ready} / 10)) * {pool["slots"]}'
     full = ''.join(f' and on() ({desired_replicas(other)} >= {maximum})' for other, maximum, _ in pool['ahead'])
     refusing = f'(gradiated:model_capacity_refusal_ratio{{{model}}} > {REFUSAL_SHARE})'
-    return {'utilization': f'clamp_min({need}, 0)',
-            'refusals': f'(({step} and on() {refusing}{full}) or vector(0))'}
+    # While a replica of this pool drains it can still hold its GPUs, so hold
+    # the current count and remove the next replica only once it has gone.
+    draining = f'(count(kube_pod_deletion_timestamp{{namespace="gpu-inference",pod=~"{name}-[a-z0-9]+-[a-z0-9]+"}}) > 0)'
+    # Each scaling signal keeps its ten-minute peak: scale-up follows at once,
+    # scale-down only after ten quiet minutes. Kept here, not in the HPA window,
+    # so a draining hold does not restart the wait.
+    return {'utilization': f'max_over_time(clamp_min({need}, 0)[10m:30s])',
+            'refusals': f'max_over_time((({step} and on() {refusing}{full}) or vector(0))[10m:30s])',
+            'draining': f'(({desired_replicas(name)} * {pool["slots"]} and on() {draining}) or vector(0))'}
 
 
 def autoscaler(name, pool):
@@ -336,9 +343,12 @@ def autoscaler(name, pool):
             'minReplicaCount': pool['floor'], 'maxReplicaCount': pool['maximum'],
             'fallback': {'failureThreshold': 3, 'replicas': pool['floor'], 'behavior': 'currentReplicasIfHigher'},
             'advanced': {'restoreToOriginalReplicaCount': False, 'horizontalPodAutoscalerConfig': {'behavior': {
-                'scaleUp': {'stabilizationWindowSeconds': 0, 'policies': [{'type': 'Pods', 'value': 1, 'periodSeconds': 60}]},
-                # Removing a replica waits out its 750-second drain.
-                'scaleDown': {'stabilizationWindowSeconds': 600, 'policies': [{'type': 'Pods', 'value': 1, 'periodSeconds': 750}]}}}},
+                # Starts take minutes, so add every replica the signals ask for at once.
+                'scaleUp': {'stabilizationWindowSeconds': 0, 'selectPolicy': 'Max', 'policies': [
+                    {'type': 'Percent', 'value': 100, 'periodSeconds': 15}, {'type': 'Pods', 'value': 4, 'periodSeconds': 15}]},
+                # One replica at a time: the draining signal holds the count
+                # until the last removed replica has gone.
+                'scaleDown': {'stabilizationWindowSeconds': 60, 'policies': [{'type': 'Pods', 'value': 1, 'periodSeconds': 60}]}}}},
             'triggers': [{'type': 'prometheus', 'name': signal, 'metricType': 'AverageValue', 'metadata': {
                 'serverAddress': PROMETHEUS, 'query': f'{query} and on() {fresh}',
                 'threshold': str(pool['slots']), 'ignoreNullValues': 'false'}}

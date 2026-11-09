@@ -239,8 +239,8 @@ renderer requires positive `min_slots` for SystemOne models such as Kev.
 OpenRouter's own traffic to us never falls back, so it fails while a model has
 no capacity of ours.
 
-Every pool scales on the same two signals, in its own slots, and the HPA takes
-the larger:
+Every pool scales on the same three signals, in its own slots, and the HPA takes
+the largest:
 
 - **Utilization.** The model's peak in-flight generations over the last minute
   (`gradiated:model_busy_slots`), divided by 0.7, less the slots the pools ahead
@@ -264,8 +264,11 @@ There is no CPU, memory or GPU-memory signal. Both recording rules live in
 constants live in `tools/gpu/render-config.py`. All queries require fresh,
 complete gateway telemetry. Missing samples or a Prometheus outage trigger a
 fallback that retains the current replica count when it exceeds the floor.
-Scale-up adds at most one replica per minute; scale-down waits ten minutes and
-removes at most one per 750 seconds, longer than the runtime drain. New replicas
+Scale-up adds every replica the signals ask for at once, at least doubling or
+adding four every 15 seconds, because a start takes minutes; scale-down waits ten minutes and
+removes one at a time: a third signal, `draining`, holds the requested count
+while any of the pool's replicas is terminating, because it can still hold its
+GPUs, so the next removal waits only as long as the actual drain. New replicas
 become available only after SDK qualification, so keep the floor large enough
 for immediate traffic. None of this provisions or resets a provider GPU, and
 scaling down releases GPUs without reducing the RunPod reservation bill.

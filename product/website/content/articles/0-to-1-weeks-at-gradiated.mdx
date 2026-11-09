@@ -31,9 +31,9 @@ PostHog is one of our first customers. They have an agent that lets you chat abo
 
 To start, we sent Josh our co-founder as a Forward Deployed Engineer to investigate and benchmark. The idea is to gauge how open-source models perform vs. Sonnet on recent data from production. The expectation is not that open-source models out of the box will match the frontier model. More practically, we want to know how big is the difference in quality on this specific work, and how much can we close that gap?
 
-Open-source models, by nature of being open-source, allow you to continue training the model. In pre-training, the model learns to perform well on a wide variety of tasks, and is subsequently post-trained to improve the model's behavior and knowledge in more targeted areas. You can post-train a model to teach it how to call your specific tools, and you can also post-train to teach the model what good looks like on your specific work.
+Open-weight models, by nature of having their weights published, allow you to continue training the model. In pre-training, the model learns to perform well on a wide variety of tasks, and is subsequently post-trained to improve the model's behavior and knowledge in more targeted areas. You can post-train a model to teach it how to call your specific tools, and you can also post-train to teach the model what good looks like on your specific work.
 
-You can try at least. Josh has been running an initial experiment where we post-train [Qwen](https://huggingface.co/Qwen/Qwen3.8-27B), a smaller open-weight model to learn from production traces where Sonnet performed well. The details below.
+You can try at least. Josh has been running an initial experiment where we post-train [Qwen](https://huggingface.co/Qwen/Qwen3.8-27B), a smaller open-source model to learn from production traces where Sonnet performed well. The details below.
 
 <div className="gr-qa">
 

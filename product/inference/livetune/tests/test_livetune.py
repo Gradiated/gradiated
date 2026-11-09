@@ -2406,19 +2406,20 @@ class CandidateWindowsTest(unittest.TestCase):
 
     def test_the_advisor_reads_requests_that_started_while_it_watched(self):
         reads, sleeps = [], []
+        unfinished = iter([[{"oldest_unfinished": 0.0}], [{"oldest_unfinished": None}]] + [[{}]] * 10)
         server = types.SimpleNamespace(scrape=lambda: None, livetune_state=lambda: {"settings": {}, "startup": {}},
-                                       livetune_states=lambda: [{}], info=lambda: {"max_total_num_tokens": 1000})
+                                       livetune_states=lambda: next(unfinished), info=lambda: {"max_total_num_tokens": 1000})
         saved = (cli.window, cli.time.sleep, cli.trace.read)
         cli.window = lambda a, b: _window(10)
         cli.time.sleep = sleeps.append
         cli.trace.read = lambda dirs, since=0.0, until=None: reads.append((since, until)) or iter(())
         try:
-            cli.advise(types.SimpleNamespace(seconds=0, interval=1, trace_dir="/t", close_s=600), server)
+            report = cli.advise(types.SimpleNamespace(seconds=0, interval=1, trace_dir="/t", close_s=600), server)
         finally:
             cli.window, cli.time.sleep, cli.trace.read = saved
         (since, until), = reads
         self.assertLessEqual(until - since, 1.0)  # the watched interval, not one ending close_s ago
-        self.assertGreater(sleeps[-1], 599)  # waited for those requests to finish
+        self.assertTrue(report["traffic_complete"])  # it waited for the request still running, then read
 
 
 class InFlightWarmupTest(unittest.TestCase):

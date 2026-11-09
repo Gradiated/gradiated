@@ -423,6 +423,9 @@ def improve(args: argparse.Namespace, server: Server) -> None:
         if differs:
             # A canary that differs from production would measure another intervention.
             entry["skipped"] = {"canary_scope_differs": sorted(differs)}
+        elif not report.get("traffic_complete", True):
+            # The proposals were drawn from a traffic mix that was still missing requests.
+            entry["skipped"] = {"incomplete_trace": "the advisor's traffic was still being recorded"}
         elif not report["grid"] or not records:
             entry["skipped"] = "nothing to test" if not report["grid"] else "no recorded traffic"
         elif gap := ("requests from the window are still running" if not finished else "records were still being written" if not written
@@ -686,8 +689,11 @@ def advise(args: argparse.Namespace, server: Server) -> dict[str, Any]:
     # and shape describe one workload. A record is written when its request finishes, so wait close_s
     # for the long ones to finish before reading.
     close_s = getattr(args, "close_s", 600.0)
-    if args.trace_dir and ended_wall + close_s > time.time():
-        time.sleep(ended_wall + close_s - time.time())
+    complete = True
+    if args.trace_dir:
+        # Wait for every request that started while watching to finish and reach the trace (the
+        # longest outlive any fixed delay), within close_s; past that the mix is marked incomplete.
+        complete = _await_finished(server, ended_wall, close_s) and _await_written(server)
     records = list(trace.read([args.trace_dir], since=started_wall, until=ended_wall)) if args.trace_dir else []
     batches = trace.batch_deltas(before, after)
     evidence = advisor.Evidence(
@@ -706,7 +712,8 @@ def advise(args: argparse.Namespace, server: Server) -> dict[str, Any]:
         "kv_free_share": round(evidence.mean("kv_free_share"), 4),
         "output_tps": round(evidence.mean("output_tps"), 1),
     }
-    return {"utilization": utilization, "traffic": evidence.traffic, "batches": batches, "proposals": advisor.to_json(proposals), "grid": advisor.as_grid(proposals)}
+    return {"utilization": utilization, "traffic": evidence.traffic, "traffic_complete": complete, "batches": batches,
+            "proposals": advisor.to_json(proposals), "grid": advisor.as_grid(proposals)}
 
 
 def phase_report(summary: dict[str, Any], events: list[dict[str, Any]], started: float, seconds: float, policy: Policy, mode: str) -> dict[str, Any]:

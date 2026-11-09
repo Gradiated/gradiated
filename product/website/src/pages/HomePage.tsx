@@ -52,7 +52,7 @@ export const HomePage = (): ReactElement => (
           </h1>
           <div className="gr-home-actions">
             <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
-              Get API Key <Arrow />
+              Start Research <Arrow />
             </a>
             <Link className="gr-button gr-button--secondary" to="/docs/">
               View Docs <Arrow />
@@ -108,7 +108,7 @@ export const HomePage = (): ReactElement => (
           </h2>
           <div className="gr-home-actions">
             <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
-              Get API Key
+              Start Research
               <Arrow />
             </a>
           </div>
@@ -187,7 +187,7 @@ const products = [
       "No infrastructure to manage",
       "Plug n Play",
     ],
-    action: "Get API Key",
+    action: "Start Research",
     href: CONSOLE_BASE_URL,
   },
   {
@@ -200,7 +200,7 @@ const products = [
       "Evaluations built around your tasks",
       "Own your own model weights. Served through the same API",
     ],
-    action: "Contact us to set up",
+    action: "Start Research",
     href: "https://cal.com/jsgradiated/30min",
   },
 ] as const;

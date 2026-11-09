@@ -48,7 +48,7 @@ def run(environment=os.environ):
             # unknown adapter name, and it preloads production adapters after warmup.
             from adapter_service import start
             adapters, engine_environment = start(
-                environment, config['model'], config['revision'], 2, config['backend'],
+                environment, config['model'], config['revision'], config.get('tp', 2), config['backend'],
                 # Not started yet counts as alive: the watcher may run before the engine is published.
                 lambda: not children or children[0].poll() is None)
         children.append(subprocess.Popen(backend, env=engine_environment))

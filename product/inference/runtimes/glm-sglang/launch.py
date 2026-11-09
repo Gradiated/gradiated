@@ -9,7 +9,8 @@ import urllib.request
 
 from config import ACTIVE_REQUESTS, QUEUED_REQUESTS, QUEUE_TIMEOUT_SECONDS, detect_profile, settings
 
-root = Path(__file__).resolve().parents[1]
+here = Path(__file__).resolve().parent
+root = here.parent
 base_path = root / 'warmup-base.py'
 if not base_path.is_file():
     base_path = root / 'glm/warmup-supervisor.py'
@@ -123,7 +124,8 @@ def qualification_identity(config, bundle_root=root):
 
 def qualification_records(environment):
     cache = environment.get('XDG_CACHE_HOME') or str(Path(environment.get('HOME', '/home/runtime')) / '.cache')
-    return Path(cache) / 'glm-sglang' / 'qualification'
+    # Bundles that reuse this supervisor keep their records under their own runtime directory name.
+    return Path(cache) / here.name / 'qualification'
 
 
 def main(environment=os.environ):
@@ -134,7 +136,7 @@ def main(environment=os.environ):
     original = base.handler
     base.handler = lambda supervisor: handler(supervisor, config)
     try:
-        supervisor = Supervisor([sys.executable, str(root / 'glm-sglang/service.py')],
+        supervisor = Supervisor([sys.executable, str(here / 'service.py')],
             runtime_url=f"http://127.0.0.1:{config['front']}",
             timeout=int(environment.get('RUNTIME_STARTUP_TIMEOUT_SECONDS', '3600')),
             max_queued_requests=config['active_requests'] + QUEUED_REQUESTS,

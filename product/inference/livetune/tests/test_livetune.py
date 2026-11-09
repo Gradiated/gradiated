@@ -3115,7 +3115,11 @@ class CodeTierTest(unittest.TestCase):
         canary = types.SimpleNamespace(applied=[], greedy_calls=0)
 
         def apply(settings):
+            from livetune.server import UpdateFailed
+
             canary.applied.append(dict(settings))
+            if settings.get("forward_variant") == variants.code_id("def install(model, patch, ctx):\n    raise RuntimeError('no kernel')\n"):
+                raise UpdateFailed("readback mismatch: install failed")
             state.update(settings)
 
         def greedy(prompts, tokens):
@@ -3136,13 +3140,15 @@ class CodeTierTest(unittest.TestCase):
             Path(candidates, "fused.py").write_text(self.GOOD)
             Path(candidates, "scaled.py").write_text(self.BAD)
             Path(candidates, "Bad Name.py").write_text(self.GOOD + "# other revision\n")
+            broken = "def install(model, patch, ctx):\n    raise RuntimeError('no kernel')\n"
+            Path(candidates, "broken.py").write_text(broken)
             Path(tmp, "corpus.json").write_text(json.dumps(list(range(5000))))
             args = argparse.Namespace(candidates=str(candidates), variants_dir=str(Path(tmp, "variants")), corpus=str(Path(tmp, "corpus.json")),
                                       gate_prompts=2, gate_prompt_tokens=64, gate_tokens=8)
             ledger_path = Path(tmp, "variants.json")
             ledger = {entry["name"]: entry for entry in cli._variant_candidates(args, canary, ledger_path)}
             self.assertEqual({name: entry["status"] for name, entry in ledger.items()},
-                             {"fused": "candidate", "scaled": "rejected", "Bad Name": "invalid"})
+                             {"fused": "candidate", "scaled": "rejected", "Bad Name": "invalid", "broken": "rejected"})
             self.assertEqual(ledger["fused"]["id"], variants.code_id(self.GOOD))
             self.assertEqual(canary.applied[-1], {"forward_variant": 0})  # the canary is back on what it ran
             calls = canary.greedy_calls

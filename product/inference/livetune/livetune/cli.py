@@ -17,7 +17,7 @@ from livetune import advisor, loadgen, rollout, trace, tune, variants
 from livetune.knobs import VARIANT_KEY
 from livetune.metrics import window
 from livetune.policy import Policy, Slo
-from livetune.server import KV_TOLERANCE, Server
+from livetune.server import KV_TOLERANCE, Server, UpdateFailed
 
 
 def _value(raw: str) -> Any:
@@ -392,7 +392,9 @@ def _variant_candidates(args: argparse.Namespace, canary: Server, ledger_path: P
                     verdict, entry["switch_s"] = _gate_variant(canary, variant_id, prompts, args.gate_tokens, stock)
                     entry["gate"] = dataclasses.asdict(verdict)
                     entry["status"] = "candidate" if verdict.passed else "rejected"
-                except Exception as exc:  # a variant that cannot even be installed is rejected
+                except UpdateFailed as exc:
+                    # The server refused or failed the switch: the install raised, or building its state did.
+                    # Anything else (an unreachable canary) fails the cycle, and the variant is gated next time.
                     entry.update(status="rejected", reason=f"{type(exc).__name__}: {exc}")
                 ledger[sha256] = entry
                 canary.apply({VARIANT_KEY: variants.STOCK})

@@ -2758,6 +2758,31 @@ class ScoredGateTest(unittest.TestCase):
         self.assertIn("does not repeat", verdict.reasons[0])
 
 
+class SamplerTest(unittest.TestCase):
+    def test_the_sampler_records_where_a_thread_spends_its_time(self):
+        import threading
+
+        from livetune.sampler import StackSampler
+
+        stop = threading.Event()
+
+        def busy_scheduler_step():
+            while not stop.is_set():
+                sum(range(1000))
+
+        worker = threading.Thread(target=busy_scheduler_step)
+        worker.start()
+        with tempfile.TemporaryDirectory() as tmp:
+            sampler = StackSampler(worker.ident, 0.3, Path(tmp, "p.txt"), interval_s=0.005).start()
+            self.assertTrue(sampler.done.wait(5))
+            stop.set()
+            worker.join()
+            lines = Path(tmp, "p.txt").read_text().splitlines()
+        self.assertGreater(sampler.samples, 10)
+        self.assertTrue(any("busy_scheduler_step" in line for line in lines))
+        self.assertTrue(all(line.rsplit(" ", 1)[1].isdigit() for line in lines))
+
+
 class QuietLogTest(unittest.TestCase):
     def test_uneventful_windows_are_logged_as_a_heartbeat_and_actions_always(self):
         logged, now = [], [0.0]

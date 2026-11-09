@@ -71,6 +71,8 @@ KNOBS: dict[str, Knob] = {
 }
 
 VARIANT_KEY = "forward_variant"
+# Commands, not settings: they act once and are never read back as a setting.
+COMMAND_KEYS = frozenset({"profile_seconds"})
 
 
 def validate_settings(settings: Mapping[str, Any], startup: Mapping[str, Any], page_size: int) -> dict[str, Any]:

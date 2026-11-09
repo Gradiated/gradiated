@@ -7,7 +7,7 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any
 
-from livetune.knobs import KNOBS, VARIANT_KEY
+from livetune.knobs import COMMAND_KEYS, KNOBS, VARIANT_KEY
 from livetune.metrics import Scrape, parse
 
 
@@ -125,7 +125,16 @@ class Server:
     def apply(self, settings: dict[str, Any], timeout: float = 300.0) -> dict[str, Any]:
         """Send the settings that differ from any scheduler's live state; return what was sent."""
         live = self.livetune_states()
-        settings = {k: v for k, v in settings.items() if any(state.get("settings", {}).get(k) != v for state in live)}
+        commands = {k: v for k, v in settings.items() if k in COMMAND_KEYS}
+        settings = {k: v for k, v in settings.items() if k not in COMMAND_KEYS and any(state.get("settings", {}).get(k) != v for state in live)}
+        if commands:
+            # A command acts once and has nothing to read back.
+            reply = json.loads(self._request("/set_internal_state", {"server_args": commands}, timeout=timeout))
+            updated = reply if isinstance(reply, list) else [reply.get("updated", False)]
+            if not updated or not all(updated):
+                raise UpdateFailed(f"server rejected {commands}: {reply}")
+            if not settings:
+                return commands
         if not settings:
             return settings
         reply = json.loads(self._request("/set_internal_state", {"server_args": settings}, timeout=timeout))

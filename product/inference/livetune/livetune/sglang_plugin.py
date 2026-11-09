@@ -8,10 +8,11 @@ import os
 import queue
 import threading
 import time
+from pathlib import Path
 from typing import Any
 
 from livetune import trace, variants
-from livetune.knobs import KNOBS, SCHEDULE_POLICIES, VARIANT_KEY, InvalidSetting
+from livetune.knobs import COMMAND_KEYS, KNOBS, SCHEDULE_POLICIES, VARIANT_KEY, InvalidSetting
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,10 @@ _REQ = "sglang.srt.managers.schedule_batch.Req"
 # server finishes it at exactly that many tokens: a client cutting the stream would see the stop
 # only at a chunk boundary, and speculative decoding can accept several tokens past it.
 REPLAY_STOP_KEY = "livetune_stop_after"
+# Samples the scheduler thread's stack for this many seconds into LIVETUNE_PROFILE_DIR. A command, not
+# a setting: it is never stored in settings, so a controller reconciling settings cannot repeat it.
+PROFILE_KEY = "profile_seconds"
+assert PROFILE_KEY in COMMAND_KEYS
 
 
 class NoUsableVariant(RuntimeError):
@@ -59,12 +64,21 @@ class LiveTuner:
             self.pinned[str(self.startup[VARIANT_KEY])] = self.variant.source.sha256
         self.pending_variant: int | None = None
         self.forward_pending: int | None = None  # a built state to switch to at the next forward
+        self.profile: Any = None
         self.pending_since_step = 0
         self.drain_steps = int(os.environ.get("LIVETUNE_DRAIN_STEPS", "6000"))
         self.changes: list[dict[str, Any]] = []
         self.errors: list[dict[str, Any]] = []
 
     def validate(self, key: str, value: Any) -> None:
+        if key == PROFILE_KEY:
+            if not os.environ.get("LIVETUNE_PROFILE_DIR"):
+                raise InvalidSetting(f"{PROFILE_KEY} needs LIVETUNE_PROFILE_DIR")
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not 1 <= value <= 600:
+                raise InvalidSetting(f"{PROFILE_KEY} must be 1-600 seconds")
+            if self.profile is not None and not self.profile.done.is_set():
+                raise InvalidSetting("a profile is already running")
+            return
         if key == VARIANT_KEY:
             if not _live_variants():
                 raise InvalidSetting(f"live {VARIANT_KEY} switching is disabled; set LIVETUNE_STARTUP_VARIANT and restart")
@@ -110,7 +124,7 @@ class LiveTuner:
             self.errors.append({"t": time.time(), "key": key, "value": value, "error": f"{type(exc).__name__}: {exc}"})
             del self.errors[:-20]
             return None
-        if key == VARIANT_KEY:
+        if key in (VARIANT_KEY, PROFILE_KEY):
             return overrides
         self.settings[key] = value
         self.changes.append({"t": time.time(), "key": key, "value": value, "seconds": time.perf_counter() - started})
@@ -120,6 +134,14 @@ class LiveTuner:
 
     def _apply(self, key: str, value: Any) -> dict[str, Any] | None:
         overrides: dict[str, Any] | None = None
+        if key == PROFILE_KEY:
+            from livetune.sampler import StackSampler
+            from sglang.srt.runtime_context import get_parallel
+
+            # Handlers run on the scheduler thread, which is the one to profile.
+            name = f"scheduler-{time.strftime('%Y%m%dT%H%M%S')}-tp{get_parallel().tp_rank}-{os.getpid()}.txt"
+            self.profile = StackSampler(threading.get_ident(), float(value), Path(os.environ["LIVETUNE_PROFILE_DIR"]) / name).start()
+            return None
         if key == "max_running_requests":
             from sglang.srt.runtime_context import get_parallel
 
@@ -404,6 +426,8 @@ class LiveTuner:
             "variants": catalog,
             "pending_variant": self.pending_variant if self.pending_variant is not None else self.forward_pending,
             "variant_states": list(self.states),
+            "profile": {"path": str(self.profile.path), "done": self.profile.done.is_set(), "samples": self.profile.samples}
+            if self.profile is not None else None,
             "recent_changes": self.changes[-10:],
             "recent_errors": self.errors[-5:],
         }
@@ -866,7 +890,7 @@ def _add_handlers(handlers: dict, controller: Any) -> dict:
         except Exception as exc:
             raise UpdateRejected(f"{key}={value!r} rejected: {exc}") from exc
 
-    for key in [*KNOBS, VARIANT_KEY]:
+    for key in [*KNOBS, VARIANT_KEY, PROFILE_KEY]:
         handlers[key] = _UpdateHandler(validate, tuner.apply)
     return handlers
 

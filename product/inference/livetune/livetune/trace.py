@@ -389,7 +389,10 @@ def chunked_early_stops(arrivals: Sequence[Arrival], stream_interval: int, specu
     """
     def early(a: Arrival) -> bool:
         declared = getattr(a, "max_new_tokens", None)
-        return bool(getattr(a, "stream", True) and declared and 1 < a.output_tokens < declared)
+        # The first token streams alone, so a one-token stop is exact unless a speculative step
+        # could join later tokens to it; count it there too, to be safe.
+        shortest = 1 if speculative else 2
+        return bool(getattr(a, "stream", True) and declared and shortest <= a.output_tokens < declared)
 
     return sum(1 for a in arrivals
                if early(a) and (speculative or int(getattr(a, "sampling", {}).get("stream_interval", stream_interval)) > 1))
@@ -433,6 +436,8 @@ def arrivals(records: Sequence[Record], speed: float = 1.0, measured_from: float
     that depth, or a longer cached prefix whose hash two or more members share. A single member's
     cache hit may come from a request outside the trace, so it proves nothing about the others.
     """
+    if not (math.isfinite(speed) and speed > 0):
+        raise ValueError(f"replay speed must be a positive number, got {speed}")
     if not records:
         return []
     unreproducible = replay_gaps(records)

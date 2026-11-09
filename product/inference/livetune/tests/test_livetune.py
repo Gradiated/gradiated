@@ -2476,6 +2476,19 @@ class ReplayStopTest(unittest.TestCase):
         asyncio.run(loadgen._one(session, "http://x", [1], 40, record, stream=False))
         self.assertEqual((record.ttft, record.decode_tps, record.untimed), (0.8, 61.0, False))
 
+    def test_one_token_stops_count_as_chunked_only_on_speculative_servers(self):
+        from livetune import trace
+
+        one = trace.Arrival(at=0.0, prompt_tokens=100, output_tokens=1, shared_tokens=0, family=None, temperature=None, max_new_tokens=512)
+        self.assertEqual((trace.chunked_early_stops([one], 4), trace.chunked_early_stops([one], 1, speculative=True)), (0, 1))
+
+    def test_replay_speed_must_be_positive(self):
+        from livetune import trace
+
+        for speed in (0.0, -1.0, float("nan"), float("inf")):
+            with self.assertRaises(ValueError):
+                trace.arrivals([_record(100.0)], speed=speed)
+
     def test_speculative_servers_without_replay_stops_refuse_early_stops(self):
         from livetune import trace
 

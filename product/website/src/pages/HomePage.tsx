@@ -179,7 +179,7 @@ const MachineFold = (): ReactElement => {
 const products = [
   {
     id: "inference",
-    title: "Proxy your Model Inference",
+    title: "Proxy your Model Inference...",
     description:
       "Bring your existing code, change your base URL, and start sending requests to the latest frontier or open models.",
     features: [
@@ -192,7 +192,7 @@ const products = [
   },
   {
     id: "post-training",
-    title: "Automated RL",
+    title: "... to get your own Model.",
     description:
       "We'll improve and run your benchmarks, move you to open source and run automated reinforcement learning to turn your production traces into a model trained for your workload.",
     features: [

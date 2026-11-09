@@ -179,9 +179,9 @@ const MachineFold = (): ReactElement => {
 const products = [
   {
     id: "inference",
-    title: "Open Model Inference",
+    title: "Proxy your Model Inference",
     description:
-      "Bring your existing code, change your base URL, and start sending requests to the latest open models.",
+      "Bring your existing code, change your base URL, and start sending requests to the latest frontier or open models.",
     features: [
       "Usage-based pricing",
       "No infrastructure to manage",

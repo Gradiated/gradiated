@@ -211,7 +211,8 @@ def check_distinguishable(profiles: Sequence[Mapping[str, Any]]) -> None:
         raise ValueError(f"profiles share a (prompt_tokens, users) shape the policy cannot distinguish: {duplicates}")
 
 
-def build_policy(results: Sequence[Mapping[str, Any]], slo: Slo, provenance: Mapping[str, Any], start: Mapping[str, Any]) -> Policy:
+def build_policy(results: Sequence[Mapping[str, Any]], slo: Slo, provenance: Mapping[str, Any], start: Mapping[str, Any],
+                 variants: Mapping[str, dict[str, str]] | None = None) -> Policy:
     """One rule per profile, reaching only near its measurement; everywhere else the startup settings apply."""
     check_distinguishable([r["profile"] for r in results])
     rules: list[Rule] = []
@@ -230,4 +231,4 @@ def build_policy(results: Sequence[Mapping[str, Any]], slo: Slo, provenance: Map
         rules.append(Rule(f"beyond-{rows[max(rows)]['profile']['name']}", math.inf, prompt_edge, dict(start)))
     rules.sort(key=lambda rule: (rule.max_prompt_tokens, rule.max_demand))
     rules.append(Rule("unmeasured", math.inf, math.inf, dict(start)))
-    return Policy(slo, tuple(rules), dict(provenance))
+    return Policy(slo, tuple(rules), dict(provenance), dict(variants or {}))

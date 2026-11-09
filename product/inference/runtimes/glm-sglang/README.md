@@ -203,10 +203,19 @@ The controller is a third child of the service. Its exit never stops SGLang or
 SMG; the service restarts it after 30 s, doubling to 10 minutes while it keeps
 failing. It logs every change and a heartbeat every 5 minutes. A policy is part
 of the bundle, so changing one is a reviewed release, and the controller refuses
-a policy tuned on a different scope. Forward-code variants switch live
-only with `LIVETUNE_LIVE_VARIANTS=1`: each gets its own speculative runtime
-state, so a switch to one built before is a pointer swap. `test_livetune_contract.py` checks every SGLang method the
-plugin hooks against the installed SGLang during the bundle build.
+a policy tuned on a different scope.
+
+Every mode except `off` can switch forward-code variants live
+(`LIVETUNE_LIVE_VARIANTS=1`, with `LIVETUNE_VARIANTS_DIR` at
+`$XDG_CACHE_HOME/glm-sglang/livetune/variants/`), so a canary and production
+share one scope. Nothing switches until a policy rule asks. A policy carries the
+code of every variant its rules use, and the controller registers it in that
+directory before applying the rule. Each variant gets its own speculative
+runtime state: building one pauses serving for about 9 s, and a switch to one
+built before is a pointer swap. Because a policy with variants is code, it ships
+only as a reviewed bundle release, like any policy. `test_livetune_contract.py`
+checks every SGLang method the plugin hooks against the installed SGLang during
+the bundle build.
 
 ## Portable artifacts and verification
 

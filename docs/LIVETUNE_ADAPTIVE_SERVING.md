@@ -4,14 +4,14 @@ livetune keeps SGLang servers tuned to the traffic they carry. It observes each 
 
 ## The loop
 
-| Step | What runs | Cadence | Output |
-| --- | --- | --- | --- |
-| Observe | The plugin in each scheduler; `/metrics`; the controller's windows | Continuous | Per-request records, per-batch counters, utilization windows |
-| Act | `livetune control` applying the current policy | Every 5 s | Live settings that follow the traffic shape, judged on probation |
-| Advise | `livetune advise` over a trailing window | Every few minutes | Proposals with evidence, in three tiers |
-| Experiment | `livetune improve` running `tune --trace` on a canary against production's recorded traffic | Per proposal batch | Confirmed winners, or no change |
-| Decide | `livetune policy` | Per experiment | A policy, scoped to the runtime that measured it |
-| Roll out | Policy file, launch flags or a bundle, by tier | Per tier | A policy file in seconds; restart-tier and code-tier changes through a canary |
+| Step       | What runs                                                                                   | Cadence            | Output                                                                        |
+| ---------- | ------------------------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------- |
+| Observe    | The plugin in each scheduler; `/metrics`; the controller's windows                          | Continuous         | Per-request records, per-batch counters, utilization windows                  |
+| Act        | `livetune control` applying the current policy                                              | Every 5 s          | Live settings that follow the traffic shape, judged on probation              |
+| Advise     | `livetune advise` over a trailing window                                                    | Every few minutes  | Proposals with evidence, in three tiers                                       |
+| Experiment | `livetune improve` running `tune --trace` on a canary against production's recorded traffic | Per proposal batch | Confirmed winners, or no change                                               |
+| Decide     | `livetune policy`                                                                           | Per experiment     | A policy, scoped to the runtime that measured it                              |
+| Roll out   | Policy file, launch flags or a bundle, by tier                                              | Per tier           | A policy file in seconds; restart-tier and code-tier changes through a canary |
 
 Each step's output feeds the next, and nothing skips a measurement. A proposal is only a hypothesis. A setting is applied only after it beats the startup settings on the same traffic. A live change is kept only if it holds the SLO during probation.
 
@@ -19,12 +19,12 @@ Each step's output feeds the next, and nothing skips a measurement. A proposal i
 
 ### What is collected
 
-| Source | Contents | Where | Cost |
-| --- | --- | --- | --- |
-| Metric windows (`/metrics` every 5 s) | <ul><li>demand, prompt length, cache hit and output length per request</li><li>per-request decode rate and TTFT p90</li><li>KV used, evictable and free</li><li>eviction seconds, `run_batch` seconds, retractions</li><li>queue-time p90</li></ul> | The controller's log | One scrape per window |
-| Per-request records (`LIVETUNE_TRACE_DIR`) | <ul><li>prompt, cached and output tokens</li><li>queue time, scheduler TTFT and decode time</li><li>finish reason and retractions</li><li>spec accept length</li><li>temperature, `max_new_tokens`, and whether constrained, LoRA or session</li><li>keyed prefix-family hashes</li></ul> | JSONL beside the server, rotated at 64 MB, 8 files | One line per finished request, on attention-TP rank 0 |
-| Per-batch counters (readback `telemetry.batches`) | Batches, requests, tokens, CUDA-graph batches and seconds, per forward mode | `/server_info` | A few additions per batch |
-| Runtime scope | Launch arguments, weights, GPU, KV capacity, source and package digests, kernel and autotune artifacts | Every policy | Computed once, at the first readback |
+| Source                                            | Contents                                                                                                                                                                                                                                                                                  | Where                                              | Cost                                                  |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------- |
+| Metric windows (`/metrics` every 5 s)             | <ul><li>demand, prompt length, cache hit and output length per request</li><li>per-request decode rate and TTFT p90</li><li>KV used, evictable and free</li><li>eviction seconds, `run_batch` seconds, retractions</li><li>queue-time p90</li></ul>                                       | The controller's log                               | One scrape per window                                 |
+| Per-request records (`LIVETUNE_TRACE_DIR`)        | <ul><li>prompt, cached and output tokens</li><li>queue time, scheduler TTFT and decode time</li><li>finish reason and retractions</li><li>spec accept length</li><li>temperature, `max_new_tokens`, and whether constrained, LoRA or session</li><li>keyed prefix-family hashes</li></ul> | JSONL beside the server, rotated at 64 MB, 8 files | One line per finished request, on attention-TP rank 0 |
+| Per-batch counters (readback `telemetry.batches`) | Batches, requests, tokens, CUDA-graph batches and seconds, per forward mode                                                                                                                                                                                                               | `/server_info`                                     | A few additions per batch                             |
+| Runtime scope                                     | Launch arguments, weights, GPU, KV capacity, source and package digests, kernel and autotune artifacts                                                                                                                                                                                    | Every policy                                       | Computed once, at the first readback                  |
 
 The plugin records each request from SGLang's own output path (`SchedulerOutputStreamer._maybe_log_time_stats`) and each batch from `Scheduler.process_batch_result`. It needs no source patch. A failure to record drops that record and is counted, and it never fails the request.
 
@@ -34,13 +34,13 @@ Records never contain prompt or output text or token ids. Prompt prefixes appear
 
 ### What the data answers
 
-| Question | Evidence |
-| --- | --- |
-| Is the GPU the bottleneck? | `forward_share` (time in `run_batch`), decode batch sizes, graph coverage |
-| Is the scheduler the bottleneck? | Eviction share, `get_next_batch_to_run` time, queue time while the GPU has slack |
-| What is the traffic? | Prompt-length bands, output lengths, arrival rate, cache hit, prefix families and their sizes, constrained and greedy shares |
-| Where would a kernel pay off? | Forward time split by mode, mean decode batch, mean extend size, context lengths |
-| Did a change help? | The same trace replayed under each candidate, confirmed in interleaved rounds |
+| Question                         | Evidence                                                                                                                     |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Is the GPU the bottleneck?       | `forward_share` (time in `run_batch`), decode batch sizes, graph coverage                                                    |
+| Is the scheduler the bottleneck? | Eviction share, `get_next_batch_to_run` time, queue time while the GPU has slack                                             |
+| What is the traffic?             | Prompt-length bands, output lengths, arrival rate, cache hit, prefix families and their sizes, constrained and greedy shares |
+| Where would a kernel pay off?    | Forward time split by mode, mean decode batch, mean extend size, context lengths                                             |
+| Did a change help?               | The same trace replayed under each candidate, confirmed in interleaved rounds                                                |
 
 ## Levers
 
@@ -48,16 +48,17 @@ Levers come in three tiers, by how they change and what a change risks.
 
 ### Live: `/set_internal_state`, applied in milliseconds
 
-| Lever | Effect | Notes from SGLang `f171859` |
-| --- | --- | --- |
-| `max_running_requests` | Running-batch cap: TTFT against per-user speed | Applied as `pp_max_micro_batch_size`; bounded by the startup value, which sized buffers and graphs |
+| Lever                                        | Effect                                                        | Notes from SGLang `f171859`                                                                                                            |
+| -------------------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `max_running_requests`                       | Running-batch cap: TTFT against per-user speed                | Applied as `pp_max_micro_batch_size`; bounded by the startup value, which sized buffers and graphs                                     |
 | `chunked_prefill_size`, `max_prefill_tokens` | Prefill granularity: decode stalls against prefill efficiency | Returned as context overrides, so the sliding-window eviction path sees them too. The dynamic chunk sizer (PP > 1) ignores live values |
-| `schedule_policy` | Queue order; `lpm` and `dfs-weight` raise prefix hits | Rebuilds the scheduler's `SchedulePolicy`; a policy that cannot be built is rejected at validation |
-| `schedule_conservativeness` | Decode headroom reserved at admission | Rebuilds `NewTokenRatioTracker` after the override |
-| `stream_interval` | Tokens per streamed chunk | Read fresh on every output step |
-| `max_queued_requests` | Admission limit; 0 = unlimited | Rejects only new arrivals |
+| `schedule_policy`                            | Queue order; `lpm` and `dfs-weight` raise prefix hits         | Rebuilds the scheduler's `SchedulePolicy`; a policy that cannot be built is rejected at validation                                     |
+| `schedule_conservativeness`                  | Decode headroom reserved at admission                         | Rebuilds `NewTokenRatioTracker` after the override                                                                                     |
+| `stream_interval`                            | Tokens per streamed chunk                                     | Read fresh on every output step                                                                                                        |
+| `max_queued_requests`                        | Admission limit; 0 = unlimited                                | Rejects only new arrivals                                                                                                              |
 
 Considered but not exposed:
+
 - `num_continuous_decode_steps`: nothing reads it.
 - Turning priority scheduling or the prefill delayer on or off: queued requests and collectives assume the startup choice.
 - Speculative-decoding geometry: baked into CUDA graphs.
@@ -71,13 +72,29 @@ These need a restart and a rolling deploy. Examples are CUDA graph batch sizes, 
 
 ### Code: forward variants and kernels
 
-Forward variants are pinned Python patches over the model's forward pass, hashed into the scope. They can call new Triton or CUDA kernels compiled at runtime. A variant is installed at startup (`LIVETUNE_STARTUP_VARIANT`) or switched live (`LIVETUNE_LIVE_VARIANTS=1`). A live switch drains the scheduler, installs the variant and recaptures decode graphs with SGLang's own runtime sequence. On DeepSeek V4.1 Flash, three switches under an 8-user load each paused serving for 27–33 s with 0 errors, and switching back reproduced stock greedy output exactly. Long-context traffic after switching a variant in and back out still crashes it, with an illegal memory access. That happened with or without a cache flush, and not under `CUDA_LAUNCH_BLOCKING=1`, which points to a race. Rebuilding every graph runner from scratch, as startup does, crashed the same way. Building each variant its own state and switching by pointer, as below, never frees serving graphs, and on DeepSeek V4 it passed the same sequence: three rounds plus eight switches under a 40-user, 24k-token load, with 0 errors. On a speculative server, live switching takes a different path that never frees serving graphs. Each variant gets its own complete runtime state (attention backends, target-verify, draft and draft-extend graphs), built with SGLang's adaptive-speculation builder while the variant is installed, and a switch applies a state by pointer. On GLM-5.3 Flash with EAGLE on B300, building a state paused serving for about 9 s and used 0.4 GB per GPU. A switch to a built state happens at the next forward pass without draining. Under a 12-user, 16k-token load it took 2–3 ms with 0 request errors. Ten alternating switches under 24k-token agentic bursts, plus a runtime-compiled Triton kernel, ran with no errors. So on the production GLM runtime, kernel and forward-code changes can be hot-reloaded. GLM's stock decoding is not repeatable, so the gate also scores each probe prompt teacher-forced and tests the mean logprob shift against stock's own. Live on GLM it kept identity and runtime-compiled Triton variants and rejected a ×1.05 logit scale at z = −17. Startup variants and rolling restarts remain the path for code a state cannot hold (memory pools, KV layout, weight layout); forward and scheduler code switches live. Once it is fixed, testing a variant costs one switch on a running canary, not a restart. The [Together Compiler reproduction](../research/tkcc) is the agent loop that writes and checks such variants. It has a persistent engine, a correctness gate, a cost model and a message board. livetune gives that loop its targets. The advisor's code-tier proposal names whether decode or prefill dominates forward time, along with the mean decode batch, extend size, context length and cache hit. A recorded trace replays the traffic the variant has to win on. A winning variant goes to a staged replica, live or at startup, and ships in the bundle.
+Forward variants are Python patches over the model's forward pass or the scheduler. They can call new Triton or CUDA kernels compiled at runtime. A variant's id is the first 48 bits of its code's sha256, so an id names the same code on every host. A variant is installed at startup (`LIVETUNE_STARTUP_VARIANT`) or switched live (`LIVETUNE_LIVE_VARIANTS=1`, on in every GLM runtime mode).
 
-livetune does not write kernels itself today. The path is:
-1. The advisor names the hot shapes.
-2. The agent loop writes and checks a variant for them.
-3. The canary measures it on the recorded trace.
-4. A bundle rollout ships it.
+A live switch never frees graphs that are serving. Each variant gets its own runtime state, built while it is installed, and a switch applies a state by pointer:
+
+- **Speculative servers.** The state holds attention backends plus target-verify, draft and draft-extend graphs, built with SGLang's adaptive-speculation builder.
+- **Other servers.** The state holds a fresh attention backend and decode graphs.
+
+Measured:
+
+- **GLM-5.3 Flash with EAGLE on B300.** Building a state paused serving for about 9 s and used 0.4 GB per GPU. A switch to a built state happens at the next forward pass without draining. Under a 12-user, 16k-token load it took 2–3 ms with 0 request errors. Ten alternating switches under 24k-token agentic bursts, plus a runtime-compiled Triton kernel, ran with no errors.
+- **DeepSeek V4.1 Flash.** Three rounds plus eight switches under a 40-user, 24k-token load ran with 0 errors. The earlier design recaptured graphs in place, and long-context traffic after switching back crashed it with an illegal memory access.
+
+Code a state cannot hold (memory pools, KV layout, weight layout) still needs a startup variant and a rolling restart.
+
+GLM's stock decoding is not repeatable, so the gate also scores each probe prompt teacher-forced and tests the mean logprob shift against stock's own. Live on GLM it kept identity and runtime-compiled Triton variants, and rejected a ×1.05 logit scale at z = −17.
+
+The code tier runs inside `improve`:
+
+1. **Targets.** Each cycle writes `code-targets.json` to its work directory: the advisor's code proposal (whether decode or prefill dominates forward time, the mean decode batch, extend size, context length and cache hit), plus the snapshot of the production window replayed in that cycle.
+2. **Variants.** An agent loop such as the [Together Compiler reproduction](../research/tkcc) writes variants for those shapes into `--candidates`. livetune does not write kernels itself.
+3. **Gate.** Each new file is gated once per revision on the canary. A failure is rejected for good.
+4. **Tuning.** Variants that pass become values of `forward_variant` in the tuning grid. They are measured against the startup settings on the same recorded trace as the live knobs, with the same interleaved confirmation. A candidate that loses `--variant-tries` cycles (default 3) is retired.
+5. **Publish.** A winning rule's variant travels inside the policy: the policy carries its code. Each replica's controller registers that code in its variants directory before applying the rule. The policy then goes through the staged replica and fleet guard like any other.
 
 ## Experiments
 
@@ -89,26 +106,26 @@ livetune does not write kernels itself today. The path is:
 
 ## When a change is rolled back
 
-| Layer | Watches | Rolls back when | How |
-| --- | --- | --- | --- |
-| Tuning | A candidate against startup on the same recorded traffic | It does not beat startup on the worse of two interleaved repetitions | Never published |
-| Variant gate (`variant-eval`) | Greedy continuations and logprobs against stock, relative to stock's agreement with itself | Prefix agreement falls more than 0.25 below stock's, or logprob drift exceeds 1.5× stock's (at least 0.08 nats) | Switched back to stock; rejected |
-| Each server | The SLO for 45 s after a live change takes effect | The SLO held before and fails in most windows | Previous rule restored; the rule banned for 10 min |
-| Variant switch | Install and graph recapture on every rank | Either fails on any rank | Previous variant restored, then stock; the scheduler stops if neither works |
-| Staged replica | The replica against its peers, window for window, at matched load | SLO pass rate more than 5 points lower, per-user speed more than 5% lower, or TTFT more than 5% worse and over the SLO, over at least 12 measured windows | The replica's previous policy restored; nothing published |
-| Fleet guard | The fleet for `--guard-seconds` after publishing, against the same span before | The same thresholds as the stage | The previous policy republished |
+| Layer                                                 | Watches                                                                                                                          | Rolls back when                                                                                                                                                                                                                                  | How                                                                         |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| Tuning                                                | A candidate against startup on the same recorded traffic                                                                         | It does not beat startup on the worse of two interleaved repetitions                                                                                                                                                                             | Never published                                                             |
+| Variant gate (`variant-eval`, `improve --candidates`) | Greedy continuations, their logprobs and teacher-forced prompt logprobs against stock, relative to stock's agreement with itself | Prefix agreement falls more than 0.25 below stock's where stock repeats itself; logprob drift exceeds 1.5× stock's (at least 0.08 nats); or the mean prompt-logprob shift exceeds 3× stock's (at least 0.03 nats) at more than 4 standard errors | Switched back; rejected for that revision                                   |
+| Each server                                           | The SLO for 45 s after a live change takes effect                                                                                | The SLO held before and fails in most windows                                                                                                                                                                                                    | Previous rule restored; the rule banned for 10 min                          |
+| Variant switch                                        | Install and graph recapture on every rank                                                                                        | Either fails on any rank                                                                                                                                                                                                                         | Previous variant restored, then stock; the scheduler stops if neither works |
+| Staged replica                                        | The replica against its peers, window for window, at matched load                                                                | SLO pass rate more than 5 points lower, per-user speed more than 5% lower, or TTFT more than 5% worse and over the SLO, over at least 12 measured windows                                                                                        | The replica's previous policy restored; nothing published                   |
+| Fleet guard                                           | The fleet for `--guard-seconds` after publishing, against the same span before                                                   | The same thresholds as the stage                                                                                                                                                                                                                 | The previous policy republished                                             |
 
 A large shift in demand between the compared spans makes the stage or guard inconclusive rather than a regression. The stage publishes nothing; the guard keeps the change, which has already passed replay and the stage.
 
 ## Rollout
 
-| Tier | How a change ships | Blast radius |
-| --- | --- | --- |
-| Live | Canary replay picks a winner. One production replica runs it beside its peers on the same live traffic. It reaches the fleet only if the replica is no worse, and is reverted otherwise | One replica, then the fleet; each server still on probation |
-| Restart | New launch flags in the runtime config, through a canary and a rolling restart | Rolling, one host at a time |
-| Code | A variant registered by hash in the bundle, selected by `LIVETUNE_STARTUP_VARIANT`, through the bundle release pipeline | Rolling, with bundle qualification |
+| Tier    | How a change ships                                                                                                                                                                                      | Blast radius                                                       |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Live    | Canary replay picks a winner. One production replica runs it beside its peers on the same live traffic. It reaches the fleet only if the replica is no worse, and is reverted otherwise                 | One replica, then the fleet; each server still on probation        |
+| Restart | New launch flags in the runtime config, through a canary and a rolling restart                                                                                                                          | Rolling, one host at a time                                        |
+| Code    | Forward and scheduler code: a policy carrying the variant, through the canary, the staged replica and the fleet guard, switched live. Code a runtime state cannot hold: a startup variant in the bundle | One replica, then the fleet; or rolling, with bundle qualification |
 
-A policy only runs on the server it was tuned on. The scope covers launch arguments, weights, GPU, KV capacity, page size, startup settings and variant, the variant catalog, and digests of the SGLang and livetune sources, installed packages and bundle artifacts. A rebuilt bundle therefore needs new measurements, which the loop produces from the traffic it is already recording.
+A policy only runs on the server it was tuned on. The scope covers launch arguments, weights, GPU, KV capacity, page size, startup settings and variant, whether live variants are on, and digests of the SGLang and livetune sources, installed packages and bundle artifacts. A rebuilt bundle therefore needs new measurements, which the loop produces from the traffic it is already recording.
 
 ## Findings
 
@@ -138,14 +155,14 @@ All of these were measured on DeepSeek V4.1 Flash, TP4, on 4×B300, on SGLang `f
 
 ## Status
 
-| Piece | State |
-| --- | --- |
-| Live levers, controller, tuner, scope checks | Implemented and tested on the pod |
-| Per-request records, per-batch counters, utilization windows | Implemented and tested |
-| Advisor rules across the three tiers | Implemented; rules are thresholds, to be calibrated on canary traffic |
-| Trace replay and `tune --trace` | Implemented |
-| `livetune improve`: advise → canary replay → publish, with policy hot-reload in `control` | Implemented; needs a canary host per scope |
-| Starting `control` from the GLM runtime's `service.py` (`LIVETUNE_MODE` off, observe, act or canary) | Implemented; `improve` runs as an operator job against a canary |
-| `livetune variant-eval`: register, switch live, gate against stock, measure on a trace, switch back | Implemented |
-| Fleet guard after promotion | Implemented |
-| Code-tier targets handed to the variant agent loop, which calls `variant-eval` | Next; the loop exists in `research/tkcc` |
+| Piece                                                                                                                 | State                                                                 |
+| --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Live levers, controller, tuner, scope checks                                                                          | Implemented and tested on the pod                                     |
+| Per-request records, per-batch counters, utilization windows                                                          | Implemented and tested                                                |
+| Advisor rules across the three tiers                                                                                  | Implemented; rules are thresholds, to be calibrated on canary traffic |
+| Trace replay and `tune --trace`                                                                                       | Implemented                                                           |
+| `livetune improve`: advise → canary replay → publish, with policy hot-reload in `control`                             | Implemented; needs a canary host per scope                            |
+| Starting `control` from the GLM runtime's `service.py` (`LIVETUNE_MODE` off, observe, act or canary)                  | Implemented; `improve` runs as an operator job against a canary       |
+| `livetune variant-eval`: register, switch live, gate against stock, measure on a trace, switch back                   | Implemented                                                           |
+| Fleet guard after promotion                                                                                           | Implemented                                                           |
+| Code tier in `improve`: code targets out, variant candidates in, gated, tuned on the trace, shipped inside the policy | Implemented; the agent loop that writes variants is `research/tkcc`   |

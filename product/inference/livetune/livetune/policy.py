@@ -6,6 +6,9 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
+from livetune import variants
+from livetune.knobs import VARIANT_KEY
+
 
 @dataclass(frozen=True)
 class Shape:
@@ -58,6 +61,9 @@ class Policy:
     slo: Slo
     rules: tuple[Rule, ...]
     provenance: dict[str, Any] = field(default_factory=dict)
+    # Forward variants the rules switch to, by id, with their code: a policy carries the code it was
+    # measured with to every replica, whose controller registers it before applying a rule.
+    variants: dict[str, dict[str, str]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.rules:
@@ -68,6 +74,18 @@ class Policy:
         names = [rule.name for rule in self.rules]
         if len(set(names)) != len(names):
             raise ValueError("rule names must be unique")
+        for variant_id, entry in self.variants.items():
+            variants.check_embedded(variant_id, entry)
+        # The catch-all holds the startup settings, whose variant the server installed at startup.
+        known = {variants.STOCK, last.settings.get(VARIANT_KEY, variants.STOCK), *(int(i) for i in self.variants)}
+        for rule in self.rules:
+            if rule.settings.get(VARIANT_KEY, variants.STOCK) not in known:
+                raise ValueError(f"rule {rule.name} switches to variant {rule.settings[VARIANT_KEY]}, which the policy does not carry")
+
+    def used_variants(self) -> set[int]:
+        """Variant ids the rules switch to, other than stock and the startup variant."""
+        startup = self.rules[-1].settings.get(VARIANT_KEY, variants.STOCK)
+        return {rule.settings[VARIANT_KEY] for rule in self.rules if rule.settings.get(VARIANT_KEY, startup) not in (variants.STOCK, startup)}
 
     def select(self, shape: Shape) -> Rule:
         # The first box containing the shape decides. Boxes carry only upper bounds, so a rule whose
@@ -89,10 +107,14 @@ class Policy:
 
     def to_json(self) -> str:
         def bound(value: float) -> float | str:
-            return "inf" if math.isinf(value) else value
+            # Always a float, as from_json reads it, so a policy's version survives a round trip.
+            return "inf" if math.isinf(value) else float(value)
 
         rules = [{**asdict(rule), "max_demand": bound(rule.max_demand), "max_prompt_tokens": bound(rule.max_prompt_tokens)} for rule in self.rules]
-        return json.dumps({"slo": asdict(self.slo), "rules": rules, "provenance": self.provenance}, indent=1)
+        data: dict[str, Any] = {"slo": asdict(self.slo), "rules": rules, "provenance": self.provenance}
+        if self.variants:
+            data["variants"] = self.variants  # omitted when empty, so a knob-only policy keeps its version
+        return json.dumps(data, indent=1)
 
     @classmethod
     def from_json(cls, text: str) -> "Policy":
@@ -108,7 +130,7 @@ class Policy:
             )
             for r in data["rules"]
         )
-        return cls(Slo(**data["slo"]), rules, dict(data.get("provenance", {})))
+        return cls(Slo(**data["slo"]), rules, dict(data.get("provenance", {})), {str(k): dict(v) for k, v in data.get("variants", {}).items()})
 
     @classmethod
     def load(cls, path: str | Path) -> "Policy":

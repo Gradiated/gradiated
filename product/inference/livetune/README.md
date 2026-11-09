@@ -15,17 +15,17 @@ Livetune changes a running SGLang server's settings in response to the traffic i
 
 The plugin registers through SGLang's plugin entry point (`sglang.srt.plugins`), so SGLang loads it in every scheduler process with no source patch. A request to `/set_internal_state` is validated on every tensor-parallel rank before any rank applies it. Every rank applies it at the same point of its scheduling loop, so the ranks cannot diverge.
 
-| Setting                     | Effect                                                                                                                                          | Bound                                          |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `max_running_requests`      | Running-batch cap: trades time to first token against per-user decode speed                                                                     | 1 to the startup value                         |
-| `chunked_prefill_size`      | Prefill chunk size: smaller chunks stall decoding users less                                                                                    | page-aligned, up to the startup value          |
-| `max_prefill_tokens`        | Prefill token budget per step                                                                                                                   | page-aligned, up to the startup value          |
-| `schedule_policy`           | Waiting-queue order, as an index: 0 `fcfs`, 1 `lpm`, 2 `dfs-weight`, 3 `lof`, 4 `random`, 5 `hrrn`, 6 `shortest-prefill-first`, 7 `routing-key` | a policy the scheduler can build               |
-| `schedule_conservativeness` | Decode headroom reserved when admitting prefill; lower admits more and risks retraction                                                         | 0.1 to 2.0                                     |
-| `stream_interval`           | Tokens per streamed chunk                                                                                                                       | 1 to 64                                        |
-| `max_queued_requests`       | Waiting-queue limit; arrivals beyond it are rejected; 0 is unlimited                                                                            | 0 to 1,000,000                                 |
-| `policy_version`            | Not a lever: `control` sets it to the version of the policy it loaded, so stage and guard know a replica runs that policy                       | 48-bit                                         |
-| `forward_variant`           | Reports the installed forward-pass variant; see below for how it changes                                                                        | ids in the pinned variant manifest; 0 is stock |
+| Setting                     | Effect                                                                                                                                          | Bound                                                  |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `max_running_requests`      | Running-batch cap: trades time to first token against per-user decode speed                                                                     | 1 to the startup value                                 |
+| `chunked_prefill_size`      | Prefill chunk size: smaller chunks stall decoding users less                                                                                    | page-aligned, up to the startup value                  |
+| `max_prefill_tokens`        | Prefill token budget per step                                                                                                                   | page-aligned, up to the startup value                  |
+| `schedule_policy`           | Waiting-queue order, as an index: 0 `fcfs`, 1 `lpm`, 2 `dfs-weight`, 3 `lof`, 4 `random`, 5 `hrrn`, 6 `shortest-prefill-first`, 7 `routing-key` | a policy the scheduler can build                       |
+| `schedule_conservativeness` | Decode headroom reserved when admitting prefill; lower admits more and risks retraction                                                         | 0.1 to 2.0                                             |
+| `stream_interval`           | Tokens per streamed chunk                                                                                                                       | 1 to 64                                                |
+| `max_queued_requests`       | Waiting-queue limit; arrivals beyond it are rejected; 0 is unlimited                                                                            | 0 to 1,000,000                                         |
+| `policy_version`            | Not a lever: `control` sets it to the version of the policy it loaded, so stage and guard know a replica runs that policy                       | 48-bit                                                 |
+| `forward_variant`           | Reports the installed forward-pass variant; see below for how it changes                                                                        | variant ids (48 bits of the code's sha256); 0 is stock |
 
 Buffers and CUDA graphs are sized at startup, so a setting can only move inside the envelope the server started with. Start the server at the most permissive values the policy may use.
 
@@ -34,7 +34,7 @@ curl -s -X POST localhost:30000/set_internal_state -d '{"server_args": {"max_run
 python -m livetune status --url http://127.0.0.1:30000   # live settings, startup bounds, recent changes
 ```
 
-A forward variant is a module with `install(model, patch, ctx)`. Every change goes through `patch(obj, name, value)`, so it can be undone. Variants are selected by id, because SGLang's update endpoint carries numbers only. `LIVETUNE_VARIANTS_DIR/manifest.json` maps each id to a `<name>.py` file with a pinned sha256, and no code is ever sent over the wire. `livetune.variants.register` adds files on a host.
+A forward variant is a module with `install(model, patch, ctx)`. Every change goes through `patch(obj, name, value)`, so it can be undone. Variants are selected by id, because SGLang's update endpoint carries numbers only. An id is the first 48 bits of the code's sha256, so it names the same code on every host, and a revision is a new id. `LIVETUNE_VARIANTS_DIR/manifest.json` maps each id to a `<name>-<sha>.py` file, verified against both hashes before it is installed. No code is ever sent over the update endpoint. `livetune.variants.register` adds files on a host. A policy carries the code of every variant its rules switch to, and `control` registers that code in `--variants-dir` (the server's `LIVETUNE_VARIANTS_DIR`) before applying a rule, so a published policy can switch a kernel on every replica without a restart. A policy with variants is code that runs inside the server: publish it only through the path that reviews it.
 
 A variant can be chosen at startup with `LIVETUNE_STARTUP_VARIANT=<id>`, which installs it before SGLang captures its CUDA graphs. It can also be switched on a running server with `LIVETUNE_LIVE_VARIANTS=1`. Live switching is off by default, and should be enabled first on a canary or a staged replica:
 
@@ -89,14 +89,14 @@ python -m livetune variant-eval --url CANARY --variant my_kernel.py --name my-ke
     --trace DIR --slo-tps 80 --slo-ttft 10
 ```
 
-`variant-eval` registers the file under its content hash, so every revision gets its own pinned id. It then:
+`variant-eval` registers the file under its content hash, so every revision gets its own id. It then:
 
 1. takes two greedy, logprob-carrying stock baselines on fixed prompts, each from a flushed cache;
 2. switches the variant in live and gates it against stock, relative to how well stock agrees with itself (`livetune.gate`);
 3. if the gate passes, measures variant and stock alternately on the recorded trace;
 4. switches back to stock, whatever happened.
 
-It prints one JSON report ending in `keep` or `reject`. The canary must run with `LIVETUNE_LIVE_VARIANTS=1` and share `LIVETUNE_VARIANTS_DIR`. This is the command an agent iterating on a kernel calls.
+It prints one JSON report ending in `keep` or `reject`. The canary must run with `LIVETUNE_LIVE_VARIANTS=1` and share `LIVETUNE_VARIANTS_DIR`. This is the command an agent iterating on a kernel calls. `improve --candidates DIR` runs the same gate on every new file an agent drops in `DIR`. Variants that pass become one more tuning lever on the recorded trace (see the [adaptive serving doc](../../../docs/LIVETUNE_ADAPTIVE_SERVING.md)).
 
 ## Policies
 
@@ -117,7 +117,7 @@ A policy is an SLO plus an ordered list of rules. Each rule is a box in (demand,
 }
 ```
 
-Each policy records the scope it was tuned on. That is every SGLang launch argument that can change serving performance (model, parallel layout, KV dtype, speculative decoding, backends and so on). It also covers the model path and weight version serving now, from `/model_info`, so results do not cross checkpoints loaded in place, KV-cache capacity, within 5% because it is derived from free memory, the GPU product the scheduler reports, its page size and startup settings, including the startup variant, and the selectable forward variants, each hash verified against its file, whether live variant switching is enabled, and SHA-256 digests of the installed SGLang and livetune Python sources, overlays included, and of every installed distribution's version and RECORD, whose per-file hashes cover native libraries such as Torch, FlashInfer and the CUDA wheels. Files and directories the deployment names in `LIVETUNE_RUNTIME_INPUTS` are hashed too. The GLM bundle names its FlashInfer artifact manifest, patch manifest, model config and its FlashInfer autotune cache after seeding. A host keeps tactics it tuned itself, so the cache, not the seed, is what runs. A rebuilt runtime is a new scope. A variant id is pinned to the first hash its scheduler sees; re-registering the name with new code takes a restart. Addresses, ports, ranks, paths, logging, secrets, the random seed and the knobs livetune moves are left out, so replicas of one deployment match. `control` and `replay` refuse a policy whose scope differs from the live server unless given `--allow-scope-mismatch`. `livetune tune` writes policies from measurements. Each rule records the measured throughput, per-user speed and time to first token behind it. A setting a rule omits takes its startup value. Rules select on prompt length and demand only, so `tune` refuses two profiles with the same prompt length and user count.
+Each policy records the scope it was tuned on. That is every SGLang launch argument that can change serving performance (model, parallel layout, KV dtype, speculative decoding, backends and so on). It also covers the model path and weight version serving now, from `/model_info`, so results do not cross checkpoints loaded in place, KV-cache capacity, within 5% because it is derived from free memory, the GPU product the scheduler reports, its page size and startup settings, including the startup variant, whether live variant switching is enabled, and SHA-256 digests of the installed SGLang and livetune Python sources, overlays included, and of every installed distribution's version and RECORD, whose per-file hashes cover native libraries such as Torch, FlashInfer and the CUDA wheels. Files and directories the deployment names in `LIVETUNE_RUNTIME_INPUTS` are hashed too. The GLM bundle names its FlashInfer artifact manifest, patch manifest, model config and its FlashInfer autotune cache after seeding. A host keeps tactics it tuned itself, so the cache, not the seed, is what runs. A rebuilt runtime is a new scope. The variant catalog is not scope: an id is its code's hash, and a policy carries the code of the variants it uses. Addresses, ports, ranks, paths, logging, secrets, the random seed and the knobs livetune moves are left out, so replicas of one deployment match. `control` and `replay` refuse a policy whose scope differs from the live server unless given `--allow-scope-mismatch`. `livetune tune` writes policies from measurements. Each rule records the measured throughput, per-user speed and time to first token behind it. A setting a rule omits takes its startup value. Rules select on prompt length and demand only, so `tune` refuses two profiles with the same prompt length and user count.
 
 ## Controller safety
 
@@ -156,7 +156,7 @@ python3 -m unittest discover -s product/inference/livetune/tests -p 'test_*.py'
 
 The tests cover:
 
-- settings validation, and variant pinning, undo and drained switching
+- settings validation, content-addressed variants, policies carrying variant code, undo and drained switching
 - metrics windows, including real SGLang scrapes in `tests/fixtures`
 - policy selection, controller hysteresis, edge margins and rollback
 - the tuner's search and confirmation

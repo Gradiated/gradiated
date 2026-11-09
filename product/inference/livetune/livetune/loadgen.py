@@ -10,6 +10,10 @@ import time
 from dataclasses import asdict, dataclass, field
 from typing import Any, Sequence
 
+# Longest a response may go silent before the client gives up: past any supported request deadline
+# (the GLM runtime allows 900 s), so a non-streaming request that production let run is measured.
+READ_TIMEOUT_S = 1800
+
 
 @dataclass(frozen=True)
 class Phase:
@@ -190,7 +194,7 @@ async def run_phase(url: str, phase: Phase, prompts: PromptSource, phase_index: 
 
     result = PhaseResult(phase)
     deadline = time.perf_counter() + phase.seconds
-    timeout = aiohttp.ClientTimeout(total=None, sock_read=600)
+    timeout = aiohttp.ClientTimeout(total=None, sock_read=READ_TIMEOUT_S)
     connector = aiohttp.TCPConnector(limit=0)
     async with aiohttp.ClientSession(timeout=timeout, connector=connector) as session:
 
@@ -282,7 +286,7 @@ def prewarm(url: str, arrivals: Sequence[Any], ids_for: Sequence[list[int]]) -> 
     import aiohttp
 
     async def go() -> None:
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=None, sock_read=600)) as session:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=None, sock_read=READ_TIMEOUT_S)) as session:
             await _prewarm(session, url, arrivals, ids_for)
 
     asyncio.run(go())
@@ -311,7 +315,7 @@ async def run_arrivals(url: str, arrivals: Sequence[Any], prompts: PromptSource 
         name=name,
     )
     result = PhaseResult(phase)
-    timeout = aiohttp.ClientTimeout(total=None, sock_read=600)
+    timeout = aiohttp.ClientTimeout(total=None, sock_read=READ_TIMEOUT_S)
     ids_for = trace_prompts(arrivals, prompts) if isinstance(prompts, PromptSource) else list(prompts)
     async with aiohttp.ClientSession(timeout=timeout, connector=aiohttp.TCPConnector(limit=0)) as session:
         if warm:

@@ -537,13 +537,17 @@ class RenderTests(unittest.TestCase):
             self.assertFalse(pod['spec']['automountServiceAccountToken'])
             self.assertEqual(document['spec']['replicas'], pool['floor'])
             self.assertEqual(document['spec']['strategy']['canary']['maxUnavailable'], pool.get('max_unavailable', 0))
-            self.assertEqual(document['spec']['strategy']['canary']['steps'][1]['analysis']['templates'],
-                             [{'templateName': 'sdk-qualification'}])
+            steps = document['spec']['strategy']['canary']['steps']
+            if pool['maximum']:
+                self.assertEqual(steps[1]['analysis']['templates'], [{'templateName': 'sdk-qualification'}])
+            else:
+                self.assertEqual(steps, [])
             self.assertNotIn('gradiated.com/canary-of', pod['metadata']['annotations'])
 
     def test_rollout_strategy_bounds(self):
         models, runtimes, hosts = self.fleet()
-        pool = renderer.plan(models, runtimes, hosts)['glm-dealign-sglang-h200']
+        # Strategy steps apply to a pool that can serve; a switched-off one has none.
+        pool = {**renderer.plan(models, runtimes, hosts)['glm-dealign-sglang-h200'], 'maximum': 1}
         default = renderer.rollout('glm-dealign-sglang-h200', {**pool, 'rolling_update': False}, runtimes)
         self.assertEqual(default['spec']['strategy']['canary']['steps'][0], {'setWeight': 50})
         rolling = renderer.rollout('glm-dealign-sglang-h200', pool, runtimes)['spec']['strategy']['canary']
@@ -551,7 +555,7 @@ class RenderTests(unittest.TestCase):
         self.assertEqual((rolling['maxSurge'], rolling['maxUnavailable']), (0, 1))
         kev = renderer.plan(models, runtimes, hosts)['kev']
         self.assertEqual({k: v for k, v in renderer.rollout('kev', kev, runtimes)['spec']['strategy']['canary'].items()
-                          if k != 'steps'}, {'maxSurge': 1, 'maxUnavailable': 0})
+                          if k != 'steps'}, {'maxSurge': 0, 'maxUnavailable': 1})
         for change, message in [({'rolling_update': 1}, 'rolling_update'), ({'max_surge': 0, 'max_unavailable': 0}, 'both zero'),
                                 ({'max_surge': -1}, 'max_surge'), ({'max_unavailable': '1'}, 'max_unavailable'),
                                 ({'progress_deadline_seconds': 0}, 'progress_deadline_seconds'),
@@ -610,6 +614,8 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(documents[0]['spec']['replicas'], 0)
         # Argo holds it at zero; restoring max_replicas hands replicas back to KEDA.
         self.assertEqual(documents[0]['metadata']['annotations'], {'gradiated.com/paused-replicas': '0'})
+        # With no pods to qualify, a new revision must not wait on the analysis and abort.
+        self.assertEqual(documents[0]['spec']['strategy']['canary']['steps'], [])
         serving = outputs[renderer.MODELS / 'glm-dealign-sglang' / 'glm-dealign-sglang.yaml']
         self.assertEqual([doc['kind'] for doc in serving], ['Rollout', 'PodDisruptionBudget', 'ScaledObject'])
         self.assertNotIn('annotations', serving[0]['metadata'])
@@ -661,7 +667,8 @@ class RenderTests(unittest.TestCase):
             'gradiated_model_minimum_replicas': 'vector(1)',
             'gradiated_model_ready_slots':
                 '(max(rollout_info_replicas_available{namespace="gpu-inference",name="glm-dealign-sglang"}) or vector(0)) * 12'})
-        self.assertEqual(by_rollout['kev']['gradiated_model_minimum_replicas'], 'vector(2)')
+        # Kev replaces one of its two replicas at a time: no third host to surge onto.
+        self.assertEqual(by_rollout['kev']['gradiated_model_minimum_replicas'], 'vector(1)')
         # One replica of a single-replica floor must stay, even if a rollout may take it down.
         single = renderer.replica_rules({'pool': {**pools['glm-dealign-sglang'], 'floor': 1, 'max_unavailable': 1}})
         self.assertEqual(single['spec']['groups'][0]['rules'][1]['expr'], 'vector(1)')

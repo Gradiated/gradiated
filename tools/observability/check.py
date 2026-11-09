@@ -1221,6 +1221,14 @@ def main():
             inputs.append({'series': 'gradiated_gpu_fleet_postgres_last_sync_timestamp_seconds', 'values': synced})
         scenario(f'GPU fleet {name}', inputs, sync_failing if fires else None, [sync_failing], eval_time='45m')
 
+    # Promtool's clock starts at zero, so a lease due at 600s is overdue by 75 minutes at 85m.
+    for name, due, fires in [('lease still running', 10_000, False), ('lease due back an hour ago', 600, True)]:
+        scenario(f'GPU host {name}', [
+            {'series': 'gradiated_gpu_fleet_lease_until_timestamp_seconds{instance_id="h1",holder="agent"}',
+             'values': f'{due}+0x200'},
+        ], 'GpuHostLeaseOverdue' if fires else None, ['GpuHostLeaseOverdue'],
+           {'instance_id': 'h1', 'holder': 'agent'}, eval_time='85m')
+
     with tempfile.TemporaryDirectory(prefix='observability-check-') as directory:
         temp = Path(directory)
         (temp / 'rules.yaml').write_text(yaml.safe_dump({'groups': groups}))

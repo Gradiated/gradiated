@@ -53,6 +53,7 @@ This repository is the complete project state for the research and product-build
 - `$browser-research`: reproducible research on JavaScript-heavy or interactive websites.
 - `$product-build`: repository-first product implementation, verification, and handoff.
 - `$experiment-run`: bounded, reproducible experiments with cleanup; routine output stays untracked.
+- `$gpu-host-lease`: lease a whole GPU host out of the serving pool for hand-run work, then hand it back to be wiped.
 
 ## Pull request reviews
 

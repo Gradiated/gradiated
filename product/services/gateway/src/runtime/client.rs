@@ -125,6 +125,11 @@ impl SglangClient {
     }
 }
 
+/// Kimi releases built before the runtime capped output with
+/// `SGLANG_MAX_NEW_TOKENS_LIMIT`. Without a limit they would decode toward the
+/// whole remaining context, so they keep receiving the explicit default.
+const UNCAPPED_RUNTIME_REVISIONS: [&str; 1] = ["kimi-k31-d25d7c28cd76"];
+
 pub(super) struct Call<'a> {
     pub(super) deployment: &'a GatewayModelDeployment,
     pub(super) request: InferenceRequest,
@@ -145,6 +150,9 @@ impl<'a> Call<'a> {
         streaming: bool,
     ) -> Result<(Transport, Self), RuntimeFailure> {
         let transport = Transport::select(&deployment.release, &mut request, output_tokens)?;
+        if UNCAPPED_RUNTIME_REVISIONS.contains(&deployment.release.runtime_revision.as_str()) {
+            request.open_output_limit = false;
+        }
         if request.stream != streaming {
             return Err(ProtocolViolation::Dispatch.into());
         }

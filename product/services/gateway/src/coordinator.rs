@@ -151,6 +151,16 @@ impl HostedRequest {
             return Err(GatewayError::unsupported_parameter("stream"));
         }
 
+        // Partial Mode is a message field, so the parameter filter below never
+        // sees it. Models whose catalog lists `partial` honour it; others keep
+        // ignoring it.
+        if model.properties.parameter("partial").is_some() {
+            if request.parameters.contains_key("partial") {
+                return Err(GatewayError::invalid_request(Some("partial")));
+            }
+            request.continue_final_message = request.partial_mode()?;
+        }
+
         for (name, value) in &request.parameters {
             if model
                 .properties
@@ -164,6 +174,10 @@ impl HostedRequest {
         request
             .parameters
             .retain(|name, _| model.properties.parameter(name).is_some());
+        // `partial` is declared so the catalog can advertise Partial Mode. It
+        // belongs on the final message: models that declare it reject it in
+        // the body above, and others ignore it here.
+        request.parameters.remove("partial");
 
         let external = external.filter(|external| {
             request
@@ -176,6 +190,8 @@ impl HostedRequest {
         }
 
         let effective_output_tokens = effective_output_tokens(&request, output)?;
+        request.open_output_limit = request.output_token_limit().is_none()
+            && OPEN_OUTPUT_LIMIT_MODELS.contains(&model.id.as_str());
         let input = model.properties.text_input();
         let pricing = CapturedPricing::for_service_tier(
             &input.pricing,
@@ -762,6 +778,12 @@ fn listed_release_digest(model: &GatewayModel) -> Option<String> {
         }
     }
 }
+
+/// Models whose unset output limit goes to the runtime as no limit, so a
+/// request can use the whole remaining context up to the runtime's maximum.
+/// A fixed default would either cut reasoning short or, for long prompts,
+/// exceed the context window. The catalog default stays the model maximum.
+const OPEN_OUTPUT_LIMIT_MODELS: [&str; 1] = ["moonshotai/kimi-k3.1-pro"];
 
 fn effective_output_tokens(
     request: &InferenceRequest,

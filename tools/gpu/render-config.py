@@ -316,8 +316,22 @@ def scaling_queries(name, pool):
     step = f'({ready} + 1 + floor({ready} / 10)) * {pool["slots"]}'
     full = ''.join(f' and on() ({desired_replicas(other)} >= {maximum})' for other, maximum, _ in pool['ahead'])
     refusing = f'(gradiated:model_capacity_refusal_ratio{{{model}}} > {REFUSAL_SHARE})'
-    return {'utilization': f'clamp_min({need}, 0)',
-            'refusals': f'(({step} and on() {refusing}{full}) or vector(0))'}
+    # While a replica of this pool drains it can still hold its GPUs, so hold
+    # the replicas that are not terminating and remove the next only once it
+    # has gone. Both counts come from one kube-state-metrics scrape; the
+    # Rollout's desired count lags it and would re-add the replica just removed.
+    pods = f'namespace="gpu-inference",pod=~"{name}-[a-z0-9]+-[a-z0-9]+"'
+    # Failed or Succeeded pods awaiting garbage collection are not replicas.
+    active = f'(kube_pod_status_phase{{{pods},phase=~"Pending|Running"}} == 1)'
+    deleting = f'kube_pod_deletion_timestamp{{{pods}}}'
+    staying = f'count({active} unless on(pod) {deleting})'
+    draining = f'(count({deleting} and on(pod) {active}) > 0)'
+    # Each scaling signal keeps its ten-minute peak: scale-up follows at once,
+    # scale-down only after ten quiet minutes. Kept here, not in the HPA window,
+    # so a draining hold does not restart the wait.
+    return {'utilization': f'max_over_time(clamp_min({need}, 0)[10m:30s])',
+            'refusals': f'max_over_time((({step} and on() {refusing}{full}) or vector(0))[10m:30s])',
+            'draining': f'(({staying} * {pool["slots"]} and on() {draining}) or vector(0))'}
 
 
 def autoscaler(name, pool):
@@ -336,9 +350,12 @@ def autoscaler(name, pool):
             'minReplicaCount': pool['floor'], 'maxReplicaCount': pool['maximum'],
             'fallback': {'failureThreshold': 3, 'replicas': pool['floor'], 'behavior': 'currentReplicasIfHigher'},
             'advanced': {'restoreToOriginalReplicaCount': False, 'horizontalPodAutoscalerConfig': {'behavior': {
-                'scaleUp': {'stabilizationWindowSeconds': 0, 'policies': [{'type': 'Pods', 'value': 1, 'periodSeconds': 60}]},
-                # Removing a replica waits out its 750-second drain.
-                'scaleDown': {'stabilizationWindowSeconds': 600, 'policies': [{'type': 'Pods', 'value': 1, 'periodSeconds': 750}]}}}},
+                # Starts take minutes, so add every replica the signals ask for at once.
+                'scaleUp': {'stabilizationWindowSeconds': 0, 'selectPolicy': 'Max', 'policies': [
+                    {'type': 'Percent', 'value': 100, 'periodSeconds': 15}, {'type': 'Pods', 'value': 4, 'periodSeconds': 15}]},
+                # One replica at a time: the draining signal holds the count
+                # until the last removed replica has gone.
+                'scaleDown': {'stabilizationWindowSeconds': 60, 'policies': [{'type': 'Pods', 'value': 1, 'periodSeconds': 60}]}}}},
             'triggers': [{'type': 'prometheus', 'name': signal, 'metricType': 'AverageValue', 'metadata': {
                 'serverAddress': PROMETHEUS, 'query': f'{query} and on() {fresh}',
                 'threshold': str(pool['slots']), 'ignoreNullValues': 'false'}}
@@ -358,7 +375,10 @@ def replica_rules(pools):
             {'record': 'gradiated_model_desired_replicas', 'labels': dict(labels),
              'expr': f'{desired_replicas(name)} or vector({pool["floor"]})' if serving else 'vector(0)'},
             {'record': 'gradiated_model_minimum_replicas', 'labels': dict(labels),
-             'expr': f'vector({minimum})'}]
+             'expr': f'vector({minimum})'},
+            # The slots ready replicas offer, for dashboards of slot utilization.
+            {'record': 'gradiated_model_ready_slots', 'labels': dict(labels),
+             'expr': f'({ready_replicas(name)} or vector(0)) * {pool["slots"]}' if serving else 'vector(0)'}]
     return {'apiVersion': 'monitoring.coreos.com/v1', 'kind': 'PrometheusRule',
             'metadata': {'name': 'gradiated-model-replicas', 'labels': {'release': 'observability'}},
             'spec': {'groups': [{'name': 'gradiated.models.desired', 'rules': rules}]}}

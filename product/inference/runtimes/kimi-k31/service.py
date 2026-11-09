@@ -7,7 +7,7 @@ import threading
 import time
 import urllib.request
 
-from config import MODEL, commands, validate_hardware
+from config import MODEL, backend_environment, commands, validate_hardware
 
 
 def backend_ready(port):
@@ -40,7 +40,7 @@ def run(environment=os.environ):
         signal.signal(sig, lambda *_: stopping.set())
     children = []
     try:
-        children.append(subprocess.Popen(backend))
+        children.append(subprocess.Popen(backend, env=backend_environment(environment)))
         deadline = time.monotonic() + int(environment.get('RUNTIME_STARTUP_TIMEOUT_SECONDS', '3600'))
         while not stopping.is_set():
             if children[0].poll() is not None:

@@ -88,6 +88,12 @@ export const createMetrics = () => {
       labelNames: ["instance_id"],
       registers: [registry],
     }),
+    leaseUntil: new Gauge({
+      name: "gradiated_gpu_fleet_lease_until_timestamp_seconds",
+      help: "When a leased host is due back in the pool",
+      labelNames: ["instance_id", "holder"],
+      registers: [registry],
+    }),
     keyRevocationFailures: new Counter({
       name: "gradiated_gpu_fleet_key_revocation_failures_total",
       help: "Single-use Tailscale keys the operator could not revoke",

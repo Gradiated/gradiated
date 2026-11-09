@@ -453,5 +453,31 @@
       "TENSOR_PARALLEL_SIZE": "2"
     },
     "request_memory": "256Gi"
+  },
+  "386c7278e34d7ebcab1cbc4bc739451bf7f6c6c3b2ddea386779958c3bb23c7b": {
+    "image": "gradiated/kimi-k31-bundle@sha256:386c7278e34d7ebcab1cbc4bc739451bf7f6c6c3b2ddea386779958c3bb23c7b",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "386c7278e34d7ebcab1cbc4bc739451bf7f6c6c3b2ddea386779958c3bb23c7b"
+    },
+    "model_id": "moonshotai/kimi-k3.1-pro",
+    "release": {
+      "schema_version": 1,
+      "model_path": "moonshotai/Kimi-K3.1-Pro",
+      "model_revision": "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e",
+      "tokenizer_path": "moonshotai/Kimi-K3.1-Pro",
+      "tokenizer_revision": "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e",
+      "runtime_revision": "kimi-k31-386c7278e34d",
+      "runtime_model_name": "moonshotai/Kimi-K3.1-Pro"
+    },
+    "gpus": 8,
+    "cpu": "80",
+    "memory": "1000Gi",
+    "active_requests": 5,
+    "hf_home": "/var/lib/kimi-k31/hf",
+    "startup_timeout": 7200,
+    "warmup": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "8"
+    }
   }
 }

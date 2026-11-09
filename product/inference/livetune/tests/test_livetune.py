@@ -1760,6 +1760,9 @@ class GateTest(unittest.TestCase):
         unlucky = self._sample([same] * 3 + [diverged] * 5)
         self.assertTrue(gate.judge(stock, noisy, unlucky).passed)
         self.assertLess(gate.fewer_matches_p(0, 6, 8), 0.01)
+        # Against a stock that repeats every prompt, the same 3 of 8 is a corrupted decode, not noise.
+        corrupt = self._sample([same] * 3 + [[5, 5, 5, 5, 5, 5, 5, 5, 5]] * 5)
+        self.assertFalse(gate.judge(stock, stock, corrupt).passed)
 
 
 class VariantEvalTest(unittest.TestCase):
@@ -3161,6 +3164,10 @@ class CodeTierTest(unittest.TestCase):
             calls = canary.greedy_calls
             cli._variant_candidates(args, canary, ledger_path)
             self.assertEqual(canary.greedy_calls, calls)  # nothing new to gate
+            # The file refused for its name is gated once renamed, though its code is unchanged.
+            Path(candidates, "Bad Name.py").rename(Path(candidates, "renamed.py"))
+            renamed = {entry["name"]: entry for entry in cli._variant_candidates(args, canary, ledger_path)}
+            self.assertEqual(renamed["renamed"]["status"], "candidate")
             # A candidate that keeps losing to the incumbent settings is retired after --variant-tries cycles.
             for _ in range(2):
                 cli._score_candidates(ledger_path, [ledger["fused"]["id"]], 0, 2)

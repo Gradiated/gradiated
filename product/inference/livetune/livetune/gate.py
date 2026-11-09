@@ -28,10 +28,11 @@ BASELINE_FLOOR = {"prefix_match_rate": 0.75, "mean_prefix_fraction": 0.5}
 BIAS_FACTOR = 3.0  # how many times stock's own mean scored-logprob shift a variant may show
 MIN_BIAS_LIMIT = 0.03  # nats
 BIAS_Z = 4.0  # and the shift must be this many standard errors from zero to count
-# A greedy shortfall must also be unlikely as chance: with 8 prompts on a model that repeats 6 of 8,
-# 3 of 8 is within noise (p = 0.16), while a broken kernel's 0 of 8 is not (p = 0.004).
-MATCH_P = 0.01
-FRACTION_Z = 3.5  # paired over the same prompts; about p = 0.005 one-sided for 8 prompts
+# A greedy shortfall must also be unlikely as chance. With 8 prompts on a model that repeats 6 of 8,
+# 3 of 8 is within noise (p = 0.16); against a stock that repeats 8 of 8 it is not (p = 0.013), nor is a
+# broken kernel's 0 of 8 against 6 (p = 0.004). Probe with 16 prompts or more: 8 leave little power.
+MATCH_P = 0.02
+FRACTION_Z = 3.0  # paired over the same prompts
 
 
 @dataclass(frozen=True)

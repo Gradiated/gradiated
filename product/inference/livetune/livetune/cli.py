@@ -372,12 +372,14 @@ def _variant_candidates(args: argparse.Namespace, canary: Server, ledger_path: P
     for path in sorted(Path(args.candidates).glob("*.py")):
         code = path.read_text()
         sha256 = hashlib.sha256(code.encode()).hexdigest()
-        if sha256 in ledger:
+        # A file refused for its name is keyed by name too, so renaming it gets the same code gated.
+        invalid = f"{sha256}:{path.stem}"
+        if sha256 in ledger or invalid in ledger:
             continue
         try:
             variant_id = variants.register(args.variants_dir, path.stem, code)
         except variants.VariantError as exc:
-            ledger[sha256] = {"name": path.stem, "status": "invalid", "reason": str(exc), "t": time.time()}
+            ledger[invalid] = {"name": path.stem, "status": "invalid", "reason": str(exc), "t": time.time()}
             continue
         fresh.append((path.stem, sha256, variant_id))
     if fresh:
@@ -903,7 +905,7 @@ def main(argv: list[str] | None = None) -> int:
     ve.add_argument("--name", required=True)
     ve.add_argument("--variants-dir", default=os.environ.get("LIVETUNE_VARIANTS_DIR"), required=not os.environ.get("LIVETUNE_VARIANTS_DIR"))
     ve.add_argument("--corpus", required=True)
-    ve.add_argument("--prompts", type=int, default=8)
+    ve.add_argument("--prompts", type=int, default=16)
     ve.add_argument("--prompt-tokens", type=int, default=1024)
     ve.add_argument("--tokens", type=int, default=64)
     ve.add_argument("--seed", type=int, default=7)
@@ -935,7 +937,7 @@ def main(argv: list[str] | None = None) -> int:
     im.add_argument("--guard-seconds", type=float, default=1800, help="fleet time before and after publishing to compare; 0 disables")
     im.add_argument("--candidates", help="a directory of forward variant files (install(model, patch, ctx)) to gate and tune on the canary")
     im.add_argument("--variant-tries", type=int, default=3, help="cycles a gated variant may lose before it is retired")
-    im.add_argument("--gate-prompts", type=int, default=8)
+    im.add_argument("--gate-prompts", type=int, default=16)
     im.add_argument("--gate-prompt-tokens", type=int, default=1024)
     im.add_argument("--gate-tokens", type=int, default=64)
     c = sub.choices["control"]

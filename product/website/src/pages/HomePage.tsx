@@ -198,7 +198,7 @@ const products = [
     features: [
       "Learn from real production traces",
       "Evaluations built around your tasks",
-      "Get your own model weights. Served through the same API",
+      "Own your own model weights. Served through the same API",
     ],
     action: "Contact us to set up",
     href: "https://cal.com/jsgradiated/30min",

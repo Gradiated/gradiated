@@ -2,6 +2,9 @@
 
 Date: 2026-08-27
 
+Historical record: this run used the since-retired vLLM GLM runtime. GLM-5.3
+Flash now serves on SGLang (`product/inference/bundles/glm-5-3-flash-sglang`).
+
 ## Scope
 
 - Model: `z-ai/glm-5.3-flash`

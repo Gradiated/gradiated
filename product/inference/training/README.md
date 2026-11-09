@@ -99,7 +99,7 @@ dataset or allocating GPUs. GPT-6.1 Sol is the default comparison and judge;
 existing task selections are preserved. A successfully verified run publishes an
 available task version with its immutable adapter checksum and training base
 revision. Users can promote that version; inference requires a compatible host
-with LoRA enabled. Hosts download adapters on demand, while vLLM owns the CPU and
+with LoRA enabled. Hosts download adapters on demand, while SGLang owns the CPU and
 GPU adapter caches.
 
 When the base model also judges its own comparisons, judgments have a bounded

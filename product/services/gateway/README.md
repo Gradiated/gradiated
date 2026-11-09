@@ -103,8 +103,8 @@ is mapped. The response keeps the version slug and base prices; settlement recor
 the base release, or OpenRouter, as what served. A pinned request does not degrade. Each
 attempt sends a normal completion request through the existing authenticated ingress,
 using the immutable internal model name `<workspace_uuid>/<resolved_version_slug>`.
-The runtime client has no adapter preparation call or cache state. vLLM's native
-resolver asks the allocation-local loader for verified files on first use; vLLM
+The runtime client has no adapter preparation call or cache state. SGLang's
+adapter resolver asks the allocation-local loader for verified files on first use; SGLang
 owns registration, CPU/GPU caching and streaming. Cold loading counts against the
 existing generation deadline. Host failures use the existing inference retry rules.
 
@@ -179,8 +179,8 @@ raw identifiers are excluded. Without a usable explicit/SDK key, the gateway
 hashes the opening system/developer and first non-system messages, or the first
 8192 Unicode characters of the raw request body if the opening messages cannot
 be recognized. This fallback is infallible and does not bypass normal API
-validation. Stable placement helps reuse resident vLLM prefix blocks but does
-not guarantee cache hits or change vLLM cache configuration.
+validation. Stable placement helps reuse resident SGLang prefix blocks but does
+not guarantee cache hits or change SGLang cache configuration.
 
 Desmond sends `POST /v1/deployment-status` every second. The API checks provider
 ownership and runtime revision, timestamps the report, and writes the release's
@@ -210,11 +210,10 @@ prefill wait before response bytes begin, then retain the 30-second body-read
 idle limit. Rejection bodies retain their short idle limit. Deployment probes
 keep their own four-second total deadline.
 
-For the DeepSeek vLLM runtime, the launch script bounds admission with
-`--max-num-queued-reqs` and `--max-num-queued-tokens`. Size these for the deployment's
-batch capacity and prefill throughput; a token bound below one full-context
-prompt rejects work the engine could otherwise accept. Do not substitute
-`num_requests_running` for the engine's admission limits.
+The SGLang runtimes bound admission in SMG with `--max-concurrent-requests`
+and `--queue-size` (see `product/inference/runtimes/glm-sglang/config.py` and
+`deepseek-sglang/config.py`). Do not substitute `num_requests_running` for the
+engine's admission limits.
 
 OpenRouter's catalog omits a fixed `capacity` declaration: safe concurrency
 varies with prompt length. Temporary saturation returns `429`; it does not
@@ -223,7 +222,7 @@ keep a stopped runtime eligible for up to 15 seconds.
 
 ## Run locally
 
-For CPU-only integration tests against real Kev/vLLM HTTP mock servers and
+For CPU-only integration tests against real Kev and OpenAI-compatible HTTP mock servers and
 disposable Valkey, see [runtime integration tests](test/integration/README.md).
 The gateway is the actual built binary; the suite covers both successful
 requests and failure/cancellation/settlement boundaries without GPUs.

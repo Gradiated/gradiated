@@ -207,7 +207,7 @@ To stop a pool but keep its definition, set `max_replicas: 0` instead.
 `models.json` maps each public model to `min_slots` and its pools. A pool is one
 Rollout: one runtime release on one GPU type. A slot is one concurrent request
 a replica admits: the runtime's enforced `active_requests`, or the pool's
-`slots` for a runtime that enforces none (Kev and the vLLM runtimes). The same
+`slots` for a runtime that enforces none (such as Kev). The same
 limit weights gateway routing, so pools of different GPUs share one model's
 traffic in proportion to their slots.
 

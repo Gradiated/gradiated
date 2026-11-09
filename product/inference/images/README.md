@@ -43,21 +43,17 @@ the same payload is safe.
 The image keeps copies of the host bundle's `host_bundle.py` and `host_state.py`
 to verify the seed bundle, so changing either rebuilds the base image.
 
-The model image directories provide pinned runtime packaging and launch scripts.
-On RunPod, the host agent executes verified archives rather than starting nested
-Docker containers. Kubernetes schedules resources and Argo Rollouts manages
+Model runtimes are not images: they are verified bundle archives built from
+[`../bundles`](../bundles), and every chat model serves on SGLang. On RunPod,
+the host agent executes those archives rather than starting nested Docker
+containers. Kubernetes schedules resources and Argo Rollouts manages
 replacement. The adapter supports trusted configured runtimes, not arbitrary
 OCI workloads. Bare-metal deployments use ordinary kubelets and require OCI
 packaging for their workloads.
 
-GLM reserves two GPUs; DeepSeek reserves four. Launchers preserve the assigned
-GPU mask and use a dynamic loopback runtime port behind the private host proxy.
-The canonical pins and execution settings live in `../gpu/runtimes.json`.
+Launchers preserve the assigned GPU mask and use a dynamic loopback runtime
+port behind the private host proxy. The canonical pins and execution settings
+live in `../gpu/runtimes.json`.
 
-```sh
-bash product/inference/images/tests/test_launch.sh
-```
-
-These checks verify launch arguments and environment handling without a GPU.
 Runtime publication and production SDK qualification are separate checks. See
 [release workflow](../../../tools/models/README.md).

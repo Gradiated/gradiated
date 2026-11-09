@@ -726,7 +726,10 @@ _TELEMETRY: dict[str, Telemetry] = {}
 def _telemetry(page_size: int = 1) -> Telemetry | None:
     from sglang.srt.runtime_context import get_parallel
 
-    if getattr(get_parallel(), "attn_tp_rank", 0) != 0:
+    # One recorder per scheduler group: under attention context parallelism every CP rank is attention
+    # TP rank 0 and sees every request, so recording on each would write each request once per CP rank.
+    parallel = get_parallel()
+    if getattr(parallel, "attn_tp_rank", 0) != 0 or getattr(parallel, "attn_cp_rank", 0) != 0:
         return None
     if "rank0" not in _TELEMETRY:
         try:

@@ -101,6 +101,10 @@ class LivetuneContract(unittest.TestCase):
         for name in scheduler:
             with self.subTest(scheduler=name):
                 self.assertTrue(assigned('managers', name), name)
+        # Telemetry records on one rank per scheduler group: attention TP rank 0 and attention CP rank 0.
+        context = (srt / 'runtime_context.py').read_text()
+        for name in ('attn_tp_rank', 'attn_cp_rank'):
+            self.assertIn(f'"{name}"', context)
         for name in ('decode_cuda_graph_runner', 'prefill_cuda_graph_runner', 'eager_runner', 'graph_shared_output',
                      '_kernel_warmed_up', 'model'):
             with self.subTest(model_runner=name):

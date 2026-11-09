@@ -1600,6 +1600,24 @@ class OpenLoopProfileTest(unittest.TestCase):
 
 
 class TelemetryRobustnessTest(unittest.TestCase):
+    def test_only_one_context_parallel_rank_records(self):
+        from livetune import sglang_plugin
+
+        runtime = types.ModuleType("sglang.srt.runtime_context")
+        saved = {name: sys.modules.get(name) for name in ("sglang", "sglang.srt", "sglang.srt.runtime_context")}
+        sys.modules.update({"sglang": types.ModuleType("sglang"), "sglang.srt": types.ModuleType("sglang.srt"), "sglang.srt.runtime_context": runtime})
+        sglang_plugin._TELEMETRY.clear()
+        try:
+            # GLM on B300: TP2 with attention context parallelism 2, so both ranks are attention TP rank 0.
+            runtime.get_parallel = lambda: types.SimpleNamespace(attn_tp_rank=0, attn_cp_rank=1)
+            self.assertIsNone(sglang_plugin._telemetry())
+            runtime.get_parallel = lambda: types.SimpleNamespace(attn_tp_rank=0, attn_cp_rank=0)
+            self.assertIsNotNone(sglang_plugin._telemetry())
+        finally:
+            sglang_plugin._TELEMETRY.clear()
+            for name, module in saved.items():
+                sys.modules.pop(name, None) if module is None else sys.modules.__setitem__(name, module)
+
     def test_a_bad_trace_key_disables_telemetry_instead_of_raising_into_serving(self):
         from livetune import sglang_plugin
 

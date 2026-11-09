@@ -326,6 +326,40 @@ def prepare_model_cache(config, profile, directory, pods, log, files=hub_files, 
                 (cached / CACHE_MARKER).touch()
 
 
+def snapshot_complete(hub, repo, revision):
+    # Offline: a download leaves blobs/*.incomplete until a file finishes, and the index names every shard.
+    directory = repo_directory(hub, repo)
+    snapshot = directory / "snapshots" / revision
+    if not snapshot.is_dir() or any((directory / "blobs").glob("*.incomplete")):
+        return False
+    try:
+        if (snapshot / "model.safetensors.index.json").is_file():
+            shards = set(json.loads((snapshot / "model.safetensors.index.json").read_text())["weight_map"].values())
+        elif (snapshot / "model.safetensors").is_file():
+            shards = {"model.safetensors"}
+        else:
+            return False
+    except (OSError, ValueError, KeyError, AttributeError):
+        return False
+    return (snapshot / "config.json").is_file() and all((snapshot / shard).is_file() for shard in shards)
+
+
+def startup_parts(config, root):
+    parts = set()
+    base = BASE_ID.read_text().strip()
+    for digest, profile in config.get("runtimes", {}).items():
+        runtime = digest[:16]
+        bundle = profile.get("bundles", {}).get(base)
+        marker = root / "bundles" / str(bundle) / ".bundle-sha256"
+        if isinstance(bundle, str) and marker.is_file() and not marker.is_symlink() and marker.read_text().strip() == bundle:
+            parts.add(f"bundle.{runtime}")
+        hub = hf_home(config, profile) / "hub"
+        weights = model_weights(profile)
+        if weights and all(snapshot_complete(hub, repo, revision) for repo, revision in weights):
+            parts.add(f"weights.{runtime}")
+    return sorted(parts)
+
+
 def host_pods(config, exclude):
     # A pod whose state cannot be read may still hold weights, so its error skips eviction.
     pods = []
@@ -469,6 +503,7 @@ class Agent:
         self.catalogue_task = None
         self.catalogue_wanted = {}
         self.catalogue_ready = False
+        self.startup_parts = []
 
     def states(self):
         return [json.loads(path.read_text()) for path in (self.root / "pods").glob("*/state.json")]
@@ -503,6 +538,10 @@ class Agent:
         with self.lock, configuration_lock(self.root):
             if self.config_path is not None:
                 self.config = json.loads(self.config_path.read_text())
+            try:
+                self.startup_parts = startup_parts(self.config, self.root)
+            except (OSError, ValueError) as error:
+                print(f'Startup parts check failed: {type(error).__name__}', flush=True)
             states = self.states()
             protected = set(self.config.get('runtimes', {})) | set(self.catalogue_wanted)
             if self.config.get('bundle_sha256'):
@@ -781,6 +820,9 @@ class Agent:
         return {'configuring': True}
 
     def request(self, body):
+        # A read of the last housekeeping pass, so it needs neither the lock nor a fence.
+        if body.get('operation') == 'startup_parts':
+            return {'parts': list(self.startup_parts)}
         with self.lock, configuration_lock(self.root):
             if self.config_path is not None:
                 self.config = json.loads(self.config_path.read_text())

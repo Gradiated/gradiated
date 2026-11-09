@@ -273,6 +273,31 @@ become available only after SDK qualification, so keep the floor large enough
 for immediate traffic. None of this provisions or resets a provider GPU, and
 scaling down releases GPUs without reducing the RunPod reservation bill.
 
+### Startup state labels
+
+Each GPU node carries labels saying what a runtime it already pins needs
+to start is already on the host's disk, so model pods can prefer hosts that
+start faster. `<rt>` is the first 16 hex characters of the runtime's key in
+`product/inference/gpu/runtimes.json`:
+
+- `gradiated.com/bundle.<rt>=true`: the runtime's bundle for the host's base is
+  staged under the host agent's `bundles/` directory.
+- `gradiated.com/weights.<rt>=true`: every pinned model repository of the
+  release is in the host's Hugging Face cache at the pinned revision. The host
+  checks this offline: the snapshot has `config.json` and every shard its
+  `model.safetensors.index.json` names (or a `model.safetensors`), and the
+  repository has no `.incomplete` blob. A repository without safetensors never
+  counts as present.
+
+The host agent recomputes these parts from disk at start and every 60 seconds in
+housekeeping, and returns the last result to the `startup_parts` operation. The
+gpu-controller reads them every 60 seconds per host and patches the node: it
+adds missing labels and removes `gradiated.com/bundle.*` and
+`gradiated.com/weights.*` labels the host no longer reports, leaving every other
+label alone. A frozen recovery agent rejects the operation and so reports no
+parts. If the host cannot be read, the labels stay as they are, so a
+missed pass or a manual edit is corrected by the next successful one.
+
 ### Reservations
 
 A host is reserved with a `gradiated.com/reserved=<name>` `NoSchedule` taint in

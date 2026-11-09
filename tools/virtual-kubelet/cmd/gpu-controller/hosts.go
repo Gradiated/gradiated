@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"regexp"
 	"sort"
+	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -146,4 +148,72 @@ func labelNode(ctx context.Context, client kubernetes.Interface, h host) error {
 		return nil
 	}
 	return err
+}
+
+// startupPartKinds are the startup state the host agent reports per runtime.
+// A kind added here becomes a gradiated.com/<kind>.<runtime> label.
+var startupPartKinds = []string{"bundle", "weights"}
+
+var startupLabel = regexp.MustCompile(`^gradiated\.com/(` + strings.Join(startupPartKinds, "|") + `)\.[0-9a-f]{16}$`)
+
+// reconcileStartupLabels makes the node's gradiated.com/<kind>.<runtime>
+// labels match the parts the host reports: it adds missing ones, removes ones
+// no longer reported and leaves every other label alone. When the host cannot
+// be read the labels stay as they are.
+func reconcileStartupLabels(ctx context.Context, client kubernetes.Interface, name string, fetch func(context.Context) ([]string, error)) error {
+	parts, err := fetch(ctx)
+	if err != nil {
+		return fmt.Errorf("read startup parts: %w", err)
+	}
+	node, err := client.CoreV1().Nodes().Get(ctx, name, metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	wanted := map[string]bool{}
+	for _, part := range parts {
+		if key := "gradiated.com/" + part; startupLabel.MatchString(key) {
+			wanted[key] = true
+		}
+	}
+	labels := map[string]any{}
+	for key := range node.Labels {
+		if startupLabel.MatchString(key) && !wanted[key] {
+			labels[key] = nil
+		}
+	}
+	for key := range wanted {
+		if node.Labels[key] != "true" {
+			labels[key] = "true"
+		}
+	}
+	if len(labels) == 0 {
+		return nil
+	}
+	patch, err := json.Marshal(map[string]any{"metadata": map[string]any{"labels": labels}})
+	if err != nil {
+		return err
+	}
+	_, err = client.CoreV1().Nodes().Patch(ctx, name, types.MergePatchType, patch, metav1.PatchOptions{})
+	if apierrors.IsNotFound(err) {
+		return nil
+	}
+	return err
+}
+
+// reconcileStartupLabelsEvery corrects the startup labels now and then every
+// interval, so a missed pass or a manual edit is fixed by the next one.
+func reconcileStartupLabelsEvery(ctx context.Context, client kubernetes.Interface, name string, fetch func(context.Context) ([]string, error), every time.Duration) {
+	for {
+		if err := reconcileStartupLabels(ctx, client, name, fetch); err != nil && ctx.Err() == nil {
+			log.Printf("startup labels of %s left unchanged: %v", name, err)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(every):
+		}
+	}
 }

@@ -193,6 +193,36 @@ class HostAgentTest(unittest.TestCase):
         self.assertEqual(self.request({'operation': 'fence'}), {'epoch': 1})
         self.assertEqual(self.request(request), {'epoch': 2})
 
+    @unittest.skipUnless(hasattr(agent, 'startup_parts'), 'the frozen recovery agent predates startup parts')
+    def test_startup_parts_follow_the_bundles_and_weights_on_disk(self):
+        digest, bundle, revision = 'c' * 64, 'd' * 64, 'e' * 40
+        home = self.root / 'hf'
+        self.host.config = {**self.config, 'hf_home': str(home), 'runtimes': {digest: {
+            'image': 'gradiated/kev-bundle@sha256:' + digest, 'bundles': {'test-base': bundle},
+            'release': {'model_path': 'org/model', 'model_revision': revision,
+                        'tokenizer_path': 'org/model', 'tokenizer_revision': revision}}}}
+        self.host.housekeep()
+        self.assertEqual(self.request({'operation': 'startup_parts'}), {'parts': []})
+        (self.root / 'bundles' / bundle).mkdir(parents=True)
+        (self.root / 'bundles' / bundle / '.bundle-sha256').write_text(bundle + '\n')
+        repo = agent.repo_directory(home / 'hub', 'org/model')
+        snapshot = repo / 'snapshots' / revision
+        snapshot.mkdir(parents=True)
+        (repo / 'blobs').mkdir()
+        (snapshot / 'config.json').write_text('{}')
+        (snapshot / 'model.safetensors.index.json').write_text(json.dumps({'weight_map': {'a': 'one.safetensors', 'b': 'two.safetensors'}}))
+        (snapshot / 'one.safetensors').write_text('1')
+        (repo / 'blobs' / 'two.incomplete').write_text('')
+        self.host.housekeep()
+        self.assertEqual(self.request({'operation': 'startup_parts'}), {'parts': ['bundle.' + 'c' * 16]})
+        (repo / 'blobs' / 'two.incomplete').unlink()
+        (snapshot / 'two.safetensors').write_text('2')
+        self.host.housekeep()
+        self.assertEqual(self.request({'operation': 'startup_parts'})['parts'], ['bundle.' + 'c' * 16, 'weights.' + 'c' * 16])
+        shutil.rmtree(repo)
+        self.host.housekeep()
+        self.assertEqual(self.request({'operation': 'startup_parts'})['parts'], ['bundle.' + 'c' * 16])
+
     def test_cleanup_protects_active_and_staging_bundles_and_recent_retirement(self):
         import os
         now = 10 * 86400

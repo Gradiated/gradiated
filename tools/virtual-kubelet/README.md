@@ -586,8 +586,18 @@ registers.
 
 The operator exports host bundle versions, drift from the pin, rollout steps and
 failures under the metric names the controller used before
-(`gradiated_gpu_host_*`), so the controllers dashboard and alerts are unchanged;
-`GpuHostRolloutStuck` fires if a host stays in one step for two hours.
+(`gradiated_gpu_host_*`), so existing alerts are unchanged;
+`GpuHostRolloutStuck` fires if a host stays in one step for two hours. It also
+exports each host's GPUs labelled with its state
+(`gradiated_gpu_fleet_host_gpus`: `in_pool`, `reserved`, `cordoned` by a
+person, `leasing`, `leased`, `returning`, `updating` or `degraded`), the GPUs each workload's pods request on
+each host (`gradiated_gpu_fleet_host_workload_gpus`), each lease's holder,
+purpose and start, and lease outcomes
+(`gradiated_gpu_fleet_lease_events_total`: `granted`, `released`, `expired`,
+`preempted`, `failed`, `return_failed`). The
+[GPU Fleet dashboard](https://grafana.gradiated.com/d/gradiated-gpu-fleet)
+charts them with model slots, replicas and autoscaling signals, and the GPU host
+and fleet alerts link to its panels.
 
 Local checks use fake bundles and processes without GPUs or production access:
 
@@ -682,7 +692,9 @@ python3 tools/gpu/host-lease.py status
 The host keeps its management key across the return. A holder with root could
 read it, so rotate it by hand after leasing a host that ran untrusted code;
 rotating it automatically needs `secretsmanager:PutSecretValue` for the
-operator. The `$gpu-host-lease` skill has the procedure for agents.
+operator. The `$gpu-host-lease` skill has the procedure for agents. Active
+leases, their time left and their outcomes are on the
+[GPU Fleet dashboard](https://grafana.gradiated.com/d/gradiated-gpu-fleet).
 
 ### Reserving an isolated qualification slot
 

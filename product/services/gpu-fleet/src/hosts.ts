@@ -181,6 +181,51 @@ export const leaseEnded = (host: GpuHost) => {
   );
 };
 
+// What a host's GPUs are doing, for capacity: exactly one state per host.
+// in_pool and reserved hosts serve models and take new replicas; cordoned
+// hosts serve what already runs on them but take nothing new; the rest are
+// out of the pool, on their way in or out of it, or broken.
+export const HOST_STATES = [
+  "in_pool",
+  "leased",
+  "reserved",
+  "cordoned",
+  "leasing",
+  "returning",
+  "updating",
+  "degraded",
+] as const;
+export type HostState = (typeof HOST_STATES)[number];
+
+export const hostState = (
+  host: GpuHost,
+  node?: { unschedulable: boolean },
+): HostState => {
+  const status = host.status;
+  const rollout = status?.rollout;
+  const running = rollout?.result === "Running";
+  // Degraded wins over a lease or rollout, as gradiated_gpu_fleet_host_degraded
+  // reports it. A failed return leaves the phase to the next reconcile.
+  if (status?.phase === "Degraded") return "degraded";
+  if (status?.lease) {
+    if (rollout?.kind === "return" && rollout.result === "Failed")
+      return "degraded";
+    return running && rollout?.kind === "return" ? "returning" : "leased";
+  }
+  if (running) return rollout?.kind === "lease" ? "leasing" : "updating";
+  const request = leaseRequest(host);
+  // Requested and waiting for the operator to start draining it.
+  if (request && !("invalid" in request) && !leaseEnded(host)) return "leasing";
+  // Not seen yet (no phase, or Pending), or deleted with pods still on it
+  // (Draining).
+  if (status?.phase !== "Ready") return "updating";
+  // Cordoned by a person; a rollout's own cordon is a running rollout above.
+  if (node?.unschedulable) return "cordoned";
+  return host.spec.extraTaints?.some((taint) => taint.key === RESERVED_TAINT)
+    ? "reserved"
+    : "in_pool";
+};
+
 export const leaseRequest = (
   host: GpuHost,
 ): LeaseRequest | { invalid: string } | undefined => {

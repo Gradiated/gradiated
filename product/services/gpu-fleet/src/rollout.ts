@@ -5,6 +5,7 @@ import { ReimageNotSent, type Enrollment } from "./enroll.js";
 import {
   GPU_HOSTS,
   hostName,
+  hostState,
   LEASE_ANNOTATION,
   leaseEnded,
   leaseRequest,
@@ -35,6 +36,15 @@ type Facts = HostFacts & {
 };
 
 const MINUTE = 60_000;
+
+// How a finished return ended its lease: the holder handed the host back, or
+// the operator took it at the lease's end or for a model with nowhere to run.
+export const returnEvent = (rollout: Rollout) => {
+  if (!rollout.lease) return "released";
+  return Date.parse(rollout.lease.until) <= Date.parse(rollout.startedAt)
+    ? "expired"
+    : "preempted";
+};
 // The taint Kubernetes adds to a cordoned node.
 const UNSCHEDULABLE_TAINT = "node.kubernetes.io/unschedulable";
 
@@ -913,6 +923,10 @@ export const createRollouts = (deps: RolloutDependencies) => {
           blockedCount: (rollout.blockedCount ?? 0) + 1,
         }),
       });
+      if (rollout.kind === "lease")
+        metrics.leaseEvents.inc({ event: "failed" });
+      if (rollout.kind === "return" && result === "Failed")
+        metrics.leaseEvents.inc({ event: "return_failed" });
       if (rollout.kind === "lease") await endRequest(host);
     };
 
@@ -982,6 +996,10 @@ export const createRollouts = (deps: RolloutDependencies) => {
         ...(outcome.lease !== undefined && { lease: outcome.lease }),
         ...(rollout.kind === "return" && { lease: null }),
       });
+      if (rollout.kind === "lease")
+        metrics.leaseEvents.inc({ event: "granted" });
+      if (rollout.kind === "return")
+        metrics.leaseEvents.inc({ event: returnEvent(rollout) });
       // An expired or preempted lease's request is done with.
       if (rollout.kind === "return" && rollout.lease) await endRequest(host);
       return;
@@ -1054,7 +1072,10 @@ export const createRollouts = (deps: RolloutDependencies) => {
       },
       plan: refused ? null : plan.reason,
     });
-    if (refused) await endRequest(host);
+    if (refused) {
+      metrics.leaseEvents.inc({ event: "failed" });
+      await endRequest(host);
+    }
   };
 
   // The API server reorders a stored target's fields, so compare values.
@@ -1175,13 +1196,53 @@ export const createRollouts = (deps: RolloutDependencies) => {
       metrics.bundleInfo,
       metrics.bundleDrift,
       metrics.leaseUntil,
+      metrics.leaseStarted,
+      metrics.hostGpus,
+      metrics.workloadGpus,
     ])
       gauge.reset();
-    for (const { host, observation } of all) {
+    for (const { host, node, observation, residentWorkloads } of all) {
       const id = host.spec.instanceId;
       const rollout = host.status?.rollout;
       const lease = host.status?.lease;
       const request = leaseRequest(host);
+      metrics.hostGpus.set(
+        {
+          instance_id: id,
+          gpu_product: host.spec.inventory.gpuProduct,
+          state: hostState(host, node),
+        },
+        host.spec.inventory.gpuCount,
+      );
+      const workloads = new Map<string, { kind: string; gpus: number }>();
+      // A terminating pod holds its GPUs until it exits, which for a model
+      // replica can take its whole grace period.
+      for (const pod of residentWorkloads) {
+        if (!pod.gpus) continue;
+        const kind = pod.model
+          ? "serving"
+          : pod.training
+            ? "training"
+            : "other";
+        const name = pod.model ?? kind;
+        const entry = workloads.get(name) ?? { kind, gpus: 0 };
+        workloads.set(name, { kind, gpus: entry.gpus + pod.gpus });
+      }
+      for (const [workload, { kind, gpus }] of workloads)
+        metrics.workloadGpus.set({ instance_id: id, workload, kind }, gpus);
+      if (lease)
+        metrics.leaseStarted.set(
+          {
+            instance_id: id,
+            holder: lease.holder,
+            // Free text a person wrote; long enough to say what the host is for.
+            purpose: lease.purpose.slice(0, 120),
+            preemptible: String(
+              request && "until" in request ? request.preemptible : true,
+            ),
+          },
+          Date.parse(lease.since) / 1000,
+        );
       // A handed-back host is due back when its return starts; until then
       // it waits in the queue, which the gauge reports as now.
       if (lease)

@@ -336,6 +336,21 @@ below the floor after thirty seconds. A pool's alert floor allows the
 replica, so a one-at-a-time replacement does not warn. Requested capacity that stays unready for
 twenty minutes, including a scale-up from zero, has a separate warning.
 
+### GPU scheduler
+
+EKS runs `default-scheduler` in its managed control plane with a fixed profile
+that scores nodes `LeastAllocated`, so it spreads pods: a TP2 pod can take an
+empty 4-GPU host and leave no whole host for a TP4 or TP8 pod. The
+`gradiated-gpu` scheduler (`gpu-inference/gpu-scheduler.yaml`) is a second,
+upstream `kube-scheduler` in `gpu-inference`, two replicas behind a leader
+lease. Its one profile keeps the default plugins but scores `NodeResourcesFit`
+`MostAllocated` on `nvidia.com/gpu` only, so the fullest host that still fits
+wins and a TP2 pod takes a free 2-GPU host first. `NodeAffinity` has weight 10
+against packing's 1, so a preferred node affinity (a warm host, say) outranks
+packing. Pods opt in with `schedulerName: gradiated-gpu`; any other pod keeps
+`default-scheduler`. `GpuSchedulerUnavailable` warns when it has no ready
+replica for ten minutes.
+
 ## Rollout alerts
 
 `GpuRolloutFailed` warns when Argo Rollouts reports a Rollout as `Abort`,

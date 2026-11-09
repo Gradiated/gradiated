@@ -279,15 +279,18 @@ A host is reserved with a `gradiated.com/reserved=<name>` `NoSchedule` taint in
 `hosts.yaml`. A pool with `"reservation": "<name>"` tolerates it and is
 confined to exactly the hosts carrying it; the renderer derives that host list,
 so adding a host to a reservation is a `hosts.yaml` change. Kimi K3.1 Pro
-reserves both eight-B300 hosts as `kimi-k31`. The four-B300 host `01a0f19d`
-is reserved for `training`, which training Jobs tolerate. A tensor-parallel
-replica needs all its GPUs on one host; `gpu_count` selects hosts by size.
+reserves both eight-B300 hosts as `kimi-k31`; every other host is shared. A
+tensor-parallel replica needs all its GPUs on one host; `gpu_count` selects
+hosts by size.
 
-Training Jobs use the `gpu-training` PriorityClass, below the default priority
-of model pods, so on a shared host a model replica or rollout pod that cannot
-fit preempts training rather than waiting. Training never preempts. A preempted
-trainer resumes in a new Job from its latest checkpoint, with up to three
-attempts per training stage.
+Training runs opportunistically on shared capacity. Training Jobs use the
+`gpu-training` PriorityClass, below the default priority of model pods, so a
+model replica that cannot fit preempts training rather than waiting; training
+never preempts. A preempted trainer resumes in a new Job from its latest S3
+checkpoint, with up to three attempts per training stage. Its pod directory is
+retired with the pod, so local disk is scratch: work since the last checkpoint
+is lost. To hold capacity for training that must not be preempted, give a host
+the `training` reservation, which training Jobs tolerate and models cannot use.
 
 ### Staging a pool
 

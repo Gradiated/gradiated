@@ -336,9 +336,9 @@ class RenderTests(unittest.TestCase):
         models, runtimes, hosts = self.fleet()
         pools = renderer.plan(models, runtimes, hosts)
         floors = {name: (pool['floor'], pool['maximum'], pool['slots']) for name, pool in pools.items()}
-        # Sixty uncensored slots fill the five B300 replicas of twelve slots;
-        # the B200 and H200 pools are switched off.
-        self.assertEqual(floors['glm-dealign-sglang'], (2, 5, 12))
+        # Twenty-four uncensored slots fill two B300 replicas of twelve slots,
+        # and the pool may grow to seven; the B200 and H200 pools are off.
+        self.assertEqual(floors['glm-dealign-sglang'], (2, 7, 12))
         self.assertEqual(floors['glm-dealign-sglang-b200'][:2], (0, 0))
         self.assertEqual(floors['glm-dealign-sglang-h200'][:2], (0, 0))
         self.assertEqual(floors['kev'], (2, 2, 1))
@@ -480,17 +480,17 @@ class RenderTests(unittest.TestCase):
                                                 'effect': 'NoSchedule'}])
         self.assertNotIn('affinity', spec)
 
-    def test_hosts_reserve_training_and_kimi_capacity(self):
+    def test_only_kimi_reserves_capacity(self):
         hosts, _ = renderer.inventory(self.hosts)
         reserved = {}
         for host in hosts:
             for taint in host.get('extra_taints', []):
                 reserved.setdefault((taint['key'], taint['value']), []).append(host['instance_id'])
+        # No host is held for training: it runs on shared capacity, preemptible by models.
         self.assertEqual(reserved, {
-            ('gradiated.com/reserved', 'training'): ['01a0f19d-1ff3-7613-8cbf-81b693c0f0d4'],
             ('gradiated.com/reserved', 'kimi-k31'): ['01a0fbf7-5276-700b-903b-7e04da150ed6',
                                                      '01a0fbf8-06fc-7658-96e1-ae72f7dba135']})
-        # Training Jobs tolerate their reservation.
+        # Training Jobs tolerate a training reservation if a host is ever given one.
         trainer = (renderer.ROOT / 'product/services/temporal-worker/src/training/kubernetes-host.ts').read_text()
         self.assertIn('key: "gradiated.com/reserved"', trainer)
         self.assertIn('value: "training"', trainer)

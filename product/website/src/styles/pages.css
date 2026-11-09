@@ -2533,6 +2533,18 @@
   font-size: var(--text-note);
 }
 
+.gr-root .gr-read-author {
+  display: grid;
+  gap: 0.3em;
+  margin: calc(1.33 * var(--u)) 0 0;
+  font-size: var(--text-note);
+  line-height: 1.3;
+}
+
+.gr-read-author-title {
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
 .gr-read-sections {
   display: grid;
   margin-block-start: calc(3.33 * var(--u));
@@ -2642,6 +2654,11 @@
   margin-block-start: 1.1em;
 }
 
+/* Without a lede, an opening paragraph takes the gap an opening h2 would. */
+.gr-root .gr-read-title + .gr-prose > :first-child:not(h2, h3) {
+  margin-block-start: calc(2.2 * 1.15 * var(--text-heading) - 0.2em);
+}
+
 /* Space above a heading, not below it: a heading belongs to what follows it,
    and equal space on both sides leaves it floating between two sections. */
 .gr-prose h2,
@@ -2733,6 +2750,41 @@
 .gr-prose pre code {
   background: none;
   padding: 0;
+}
+
+/* A run of questions and answers, set in from the prose. A question is a
+   paragraph that is only bold text. */
+.gr-root .gr-prose > .gr-qa {
+  margin-block-start: 2em;
+  padding-inline-start: 2em;
+}
+
+.gr-root .gr-qa > * {
+  margin-block: 0;
+}
+
+.gr-root .gr-qa > * + * {
+  margin-block-start: 1.1em;
+}
+
+.gr-root .gr-qa > p:has(> strong:only-child) + * {
+  margin-block-start: 0.35em;
+}
+
+.gr-root .gr-qa > * + p:has(> strong:only-child) {
+  margin-block-start: 1.8em;
+}
+
+.gr-root .gr-prose > .gr-coda {
+  margin-block-start: 5em;
+}
+
+.gr-root .gr-coda > * {
+  margin-block: 0;
+}
+
+.gr-root .gr-coda > * + * {
+  margin-block-start: 1.1em;
 }
 
 .gr-prose hr {

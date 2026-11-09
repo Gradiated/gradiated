@@ -1,5 +1,7 @@
 ---
 title: "0 to 1 weeks at Gradiated"
+author: Charley Carriero
+authorTitle: Technical Staff
 path: /notes/0-to-1-weeks-at-gradiated/
 category: notes
 status: draft
@@ -7,67 +9,75 @@ publishedAt: "2026-11-09"
 image: /brand/library/zero-to-one-wide.webp
 ---
 
+import { SftFigure } from "../../src/components/articles/zero-to-one/SftFigure";
+
 I'm new to Gradiated. I joined on Monday (three days ago). The team is small (there's 6 of us), and we're all here in Cambridge this week. It's more or less my job now to understand what the team is working on and write about it.
 
-Write to whom?
+## Write to whom?
+
 Gradiated exists to deliver AI inference that is cheap and energy efficient. Anyone who cares how inference can get cheaper or why tokens per Joule is a useful metric should be able to follow along. The interesting developments are in the technical details, and that's hard to follow without a background in chips, inference, and models. We'd like for it not to be hard to follow. I'm not an expert in any of the above, I'm a software engineer, and whatever I need to learn to be able to follow the work, we should likely write about.
 
+## What's going on around here?
 
-So what's going on around here?
+We've just started selling inference on open-source models through an API directly to customers. We rented 24 top grade GPUs (B300s), self-hosted several open-source models, and set up API access to be self-serve.
 
-We sell inference on open-source models through an API directly to customers. We've rented 24 top grade GPUs (B300s), self-hosted several open-source models, and API keys are self-serve from the docs. With the infrastructure up and running we're focused on building our customer base.
-Perhaps this is obvious, but we pay for our GPUs per hour whether they're used or not, so while we have GPU capacity to spare we offload it to an inference marketplace. Our ✨first revenue arrived this week from the markeplace.
+With the infrastructure up and running we're focused on building our customer base. Perhaps this is obvious, but we pay for our GPUs per hour whether they're used or not, so while we have GPU capacity to spare we offload it to an inference marketplace. Our ✨first revenue arrived this week, it was from the marketplace.
 
-Selling inference is only part of a much larger plan. It allows us to start _learning_ what the real levers of cost are on serving production inference workflows. We can now observe the current drivers of cost, and understand what kinds of optimizations would be high yielding. This week I caught up on two such experiments.
-
+Selling inference is only part of a much larger plan. It allows us to start _learning_ what the real levers of cost are on serving production inference workflows. We can observe the current drivers of cost, and experiment with optimizations we think would be high yielding. This week I caught up on two such experiments.
 
 ## Post-training for PostHog AI
 
 PostHog is one of our first customers. They have an agent that lets you chat about your data. It uses Anthropic's Sonnet 5.5 and it costs PostHog $100,000 in tokens to run each month. The spend is significant enough for them to wonder how they can save money without sacrificing performance.
 
-To start, we sent Josh our co-founder as a Forward Deployed Engineer to investigate and benchmark. The idea is to guage how open-source models perform vs. Sonnet on recent data from production. The expectation is not that open-source models out of the box are able to match the Frontier model. More practically, we want to know how big is the difference in quality on this specific work, and how much can we close that gap?
+To start, we sent Josh our co-founder as a Forward Deployed Engineer to investigate and benchmark. The idea is to gauge how open-source models perform vs. Sonnet on recent data from production. The expectation is not that open-source models out of the box will match the Frontier model. More practically, we want to know how big is the difference in quality on this specific work, and how much can we close that gap?
 
-Open-source models, by nature of being open-source, allow you to continue training the model. In pre-training, the model learns to perform well on a wide variety of tasks, and is subsequently post-trained to improve the model's behaviour and knowledge in more targetted areas. You can post-train a model to teach it how to call your specific tools, and you can also post-train to teach the model what good looks like on your specific work.
+Open-source models, by nature of being open-source, allow you to continue training the model. In pre-training, the model learns to perform well on a wide variety of tasks, and is subsequently post-trained to improve the model's behaviour and knowledge in more targeted areas. You can post-train a model to teach it how to call your specific tools, and you can also post-train to teach the model what good looks like on your specific work.
 
-Here's how that's going.
-A preliminary benchmark
-`<graph where Qwen + post training is worse than base Qwen>`
+You can try at least. Josh has been running an initial experiment where we post-train [Qwen](https://huggingface.co/Qwen/Qwen3.8-27B), a smaller open-source model to learn from production traces where Sonnet performed well. The details below.
 
+<div className="gr-qa">
 
-In attempt to teach Qwen(link) what good responses to user requests looked like, we literally made performance worse than out-of-the-box Qwen. I was surprised by this but Josh was not. I didn't think post-training would guarantee an improvement, but I also didn't think degredation was such an easily accessible outcome. It's a bag of tricks approach, and this one didn't work. That's a bit too vague to be helpful, so here are the details.
+**How did we post-train?**
 
-How did we post-train?
+We did Supervised Fine Tuning (SFT), a common first-try approach. We built a dataset that started with 5000 production traces, anonymized the data (this was hard, if you're curious let me know) and filtered that down to around 1000 conversations where the differences between Sonnet and Qwen would be most observable.
 
-> We did Supervised Fine Tuning (SFT), a common starting point. We built a dataset that started with ~5000 production traces, anonymized the data (this was hard, if you're curious let me know) and filtered that down to around 1000 conversations that would be challenging to the model.
+**Expectations**
 
-Expectations?
+There is [literature](https://arxiv.org/abs/2305.15717) suggesting using SFT in a situation like this probably won't work and might actually degrade model performance, but that's not a guarantee, so it's worth trying anyways.
 
-> There is literature(link) suggesting using SFT in a situation like this can degrade model performance, but that's not a guarantee, so worth trying anyways. It indeed did degrade.
+**Results**
 
-In a situation like what?
+<SftFigure>
 
-> The data used in post-training was pairs of what the user asked and what Sonnet responded with. SFT trains Qwen to answer like the Frontier model... but Qwen doesn't have the capabilites of the Frontier model.
+We did actually observe this. After our SFT experiment, the resulting model performed the same or slightly worse than base Qwen without post-training. With 18 tasks, a difference of one or two is indistinguishable from noise, but there's no sign that SFT helped.
 
-Sonnet is confident, and it should be, it's great. But that level of confidence doesn't match Qwen's skills. Qwen may be able to solve the problem, but if it tries to solve the problem like Sonnet would it will do worse than if it just tried on its own.
+</SftFigure>
 
-That makes sense, how sure are we that this is what's happening?
+**Why might it not be working?**
 
-> Medium confidence. It makes sense that this is what could be happening. It's a concern with "off-policy" training. "Off" because it's learning from another model and not itself. We could try to probe at why it's performing poorly, but that's a new experiment.
+The data used in post-training was a paired list where each pair is a user's question and Sonnet's reply. SFT trains Qwen to answer like the Frontier model. Qwen doesn't have the same capabilities as the Frontier model.
 
+Qwen may be able to solve the problem, but if it tries to solve the problem like Sonnet would it might do worse than if it just tried on its own. For example, Sonnet often replies with confidence, which makes sense given it's a highly capable model. SFT can result in Qwen learning to [copy confidence](https://thinkingmachines.ai/blog/on-policy-distillation/#:~:text=style%20and%20confidence,factual%20accuracy) without the functional gains to match it.
 
-Josh is now working on "on-policy" post-training methods. "On" meaning Qwen can learn from it's own good and bad attempts at responding to a question. Results pending.
+**How sure are we that this is what's happening?**
 
+Medium confidence. It makes sense that this is what could be happening. It's a concern with "off-policy" training. "Off" because it's learning from another model and not itself. We could try to probe at why it's performing poorly, but that's a new experiment.
+
+</div>
+
+Josh is now working on "on-policy" post-training methods. "On" meaning Qwen can learn from its own good and bad attempts at responding to a question. Results pending.
 
 ## FPGAs
 
-Aidan is working on a long-term project. It's a knowledge building endeavour, and he is learning the fundamentals of how to build hardware. The approach is not what can we do with the hardware we have but what could we do if every part of the hardware chain was open for exploration.
+Aidan is working on a long-term project. It's a knowledge building endeavour, where instead of studying how to optimally use existing hardware, he's focused on what might be possible if every part of the hardware chain was open for exploration.
 
-He's giving the team weekly lectures, which feels like a special way to learn. This week he's working with an FPGA (field programmable gate array), a maximally customizable chip. Unlike a CPU or GPU, where the circuit is fixed and you write software for it, an FPGA lets you wire the circuit yourself. He's found a small language model that fits in the on-chip memory and the model tells jokes. We're curious how fast can it tell the jokes, how much heat that generates and what's the cost of doing so.
+He gives the team weekly lectures, which feels like a special way to learn. This week he's working with an FPGA (field programmable gate array) chip. Unlike a CPU or GPU, where the circuit is fixed and you write software for it, an FPGA lets you wire the circuit yourself and re-wire it whenever you like. He's found a small language model that fits in the on-chip memory and the model tells jokes. We're curious how fast can it tell the jokes, how much heat that generates and what's the cost of doing so.
 
 We've yet to see the jokes because finding a charger for the FPGA is reportedly much harder than programming it to serve the model. More on this when we can find one.
 
-
-
+<div className="gr-coda">
 
 The week was fast.
 The kind of content we'll produce is still being shaped. If there's something you're interested in understanding well, email me at charley@gradiated.com
+
+</div>

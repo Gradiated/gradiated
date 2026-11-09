@@ -32,6 +32,8 @@ const slug = (text: string) =>
     .replace(/^-|-$/g, "");
 
 export const Reading = ({
+  author,
+  authorTitle,
   byline,
   bylineDateTime,
   children,
@@ -41,6 +43,8 @@ export const Reading = ({
   tags = [],
   title,
 }: {
+  author?: string;
+  authorTitle?: string;
   byline?: string;
   bylineDateTime?: string;
   children: ReactNode;
@@ -116,6 +120,14 @@ export const Reading = ({
                 </li>
               ))}
             </ul>
+          ) : null}
+          {author ? (
+            <p className="gr-read-author">
+              {author}
+              {authorTitle ? (
+                <span className="gr-read-author-title">{authorTitle}</span>
+              ) : null}
+            </p>
           ) : null}
 
           {/* Absent rather than empty when a piece has no headings — a

@@ -148,12 +148,28 @@ def scaling_tests(name, pool, queries, wrap=False):
     case('another model does not affect this model', reporters() + [
         series('gradiated_gateway_active_generations', '100+0x12', model='other', deployment='d')], zero)
 
-    # A terminating replica of this pool holds the requested count until it has gone.
-    desired = {'series': f'rollout_info_replicas_desired{{namespace="gpu-inference",name="{name}"}}', 'values': '3+0x12'}
-    case('a draining replica holds the current count', reporters() + [desired, {
-        'series': f'kube_pod_deletion_timestamp{{namespace="gpu-inference",pod="{name}-5b4888d4c5-r7b27"}}', 'values': '1+0x12'}],
+    # A terminating replica holds the replicas that are staying until it has gone,
+    # whatever the lagging Rollout desired count still says.
+    def pod(suffix, deleting=False, phase='Running'):
+        selector = f'namespace="gpu-inference",pod="{name}-5b4888d4c5-{suffix}"'
+        result = [{'series': f'kube_pod_status_phase{{{selector},phase="{other}"}}',
+                   'values': f'{int(other == phase)}+0x12'} for other in ('Pending', 'Running', 'Succeeded', 'Failed')]
+        if deleting:
+            result.append({'series': f'kube_pod_deletion_timestamp{{namespace="gpu-inference",pod="{name}-5b4888d4c5-{suffix}"}}',
+                           'values': '1+0x12'})
+        return result
+    lagging = {'series': f'rollout_info_replicas_desired{{namespace="gpu-inference",name="{name}"}}', 'values': '4+0x12'}
+    case('a draining replica holds the replicas that stay', reporters() + [lagging] + pod('aaaaa') + pod('bbbbb')
+         + pod('ccccc') + pod('ddddd', deleting=True), {**zero, 'draining': 3 * pool['slots']})
+    case('a deleted failed pod neither drains nor reduces the staying count', reporters() + [lagging] + pod('aaaaa')
+         + pod('bbbbb') + pod('ccccc') + pod('eeeee', deleting=True, phase='Failed'), zero)
+    case('a deleted failed pod is not subtracted twice', reporters() + [lagging] + pod('aaaaa') + pod('bbbbb')
+         + pod('ccccc') + pod('eeeee', deleting=True, phase='Failed') + pod('ddddd', deleting=True),
          {**zero, 'draining': 3 * pool['slots']})
-    case("another pool's draining replica does not", reporters() + [desired, {
+    case('a failed pod awaiting garbage collection is not a staying replica', reporters() + [lagging] + pod('aaaaa')
+         + pod('bbbbb') + pod('ccccc') + pod('eeeee', phase='Failed') + pod('ddddd', deleting=True),
+         {**zero, 'draining': 3 * pool['slots']})
+    case("another pool's draining replica does not", reporters() + [lagging] + pod('aaaaa') + [{
         'series': f'kube_pod_deletion_timestamp{{namespace="gpu-inference",pod="{name}-b200-5b4888d4c5-r7b27"}}', 'values': '1+0x12'}],
          zero)
     case('refusals above 5% of requests add a replica', reporters() + requests(54, 6), {**zero, 'refusals': step})

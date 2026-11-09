@@ -317,14 +317,21 @@ def scaling_queries(name, pool):
     full = ''.join(f' and on() ({desired_replicas(other)} >= {maximum})' for other, maximum, _ in pool['ahead'])
     refusing = f'(gradiated:model_capacity_refusal_ratio{{{model}}} > {REFUSAL_SHARE})'
     # While a replica of this pool drains it can still hold its GPUs, so hold
-    # the current count and remove the next replica only once it has gone.
-    draining = f'(count(kube_pod_deletion_timestamp{{namespace="gpu-inference",pod=~"{name}-[a-z0-9]+-[a-z0-9]+"}}) > 0)'
+    # the replicas that are not terminating and remove the next only once it
+    # has gone. Both counts come from one kube-state-metrics scrape; the
+    # Rollout's desired count lags it and would re-add the replica just removed.
+    pods = f'namespace="gpu-inference",pod=~"{name}-[a-z0-9]+-[a-z0-9]+"'
+    # Failed or Succeeded pods awaiting garbage collection are not replicas.
+    active = f'(kube_pod_status_phase{{{pods},phase=~"Pending|Running"}} == 1)'
+    deleting = f'kube_pod_deletion_timestamp{{{pods}}}'
+    staying = f'count({active} unless on(pod) {deleting})'
+    draining = f'(count({deleting} and on(pod) {active}) > 0)'
     # Each scaling signal keeps its ten-minute peak: scale-up follows at once,
     # scale-down only after ten quiet minutes. Kept here, not in the HPA window,
     # so a draining hold does not restart the wait.
     return {'utilization': f'max_over_time(clamp_min({need}, 0)[10m:30s])',
             'refusals': f'max_over_time((({step} and on() {refusing}{full}) or vector(0))[10m:30s])',
-            'draining': f'(({desired_replicas(name)} * {pool["slots"]} and on() {draining}) or vector(0))'}
+            'draining': f'(({staying} * {pool["slots"]} and on() {draining}) or vector(0))'}
 
 
 def autoscaler(name, pool):

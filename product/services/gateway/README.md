@@ -299,7 +299,10 @@ status are the switch.
 Mappings live in the git-owned catalog definitions under
 `packages/control/src/catalog/models/`. Map only an OpenRouter entry for the same
 weights: check its `hugging_face_id` in `GET https://openrouter.ai/api/v1/models`.
-Verified on 2026-11-05: `z-ai/glm-5.3-flash` and `deepseek/deepseek-v4.1-flash`.
+Verified on 2026-11-05: `z-ai/glm-5.3-flash`. Verified on 2026-11-10:
+`deepseek/deepseek-v4.1-flash-1017` and `deepseek/deepseek-v4.1-flash`. The old
+DeepSeek V4.1 Flash has no deployment since 1017 replaced it, so the mapping
+serves its callers from OpenRouter.
 OpenRouter has no Dealign uncensored GLM and no SystemOne model; those stay
 unmapped, and standard GLM must never stand in for the uncensored one.
 

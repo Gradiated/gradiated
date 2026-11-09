@@ -140,3 +140,42 @@ async fn loads_and_renders_the_pinned_deepseek_v4_release() {
         ]
     );
 }
+
+async fn deepseek_v41_input_ids(repository: &str, revision: &str) -> Vec<u32> {
+    let mut qualified = pinned(repository, revision);
+    qualified.max_context_tokens = 1_048_576;
+    qualified.max_prompt_tokens = 1_048_512;
+    qualified
+        .local_capacity_mut()
+        .deployment
+        .release
+        .tokenizer_mode = Some(TokenizerMode::DeepseekV41);
+    qualified.request.messages = vec![
+        json!({"role": "system", "content": "Be concise."}),
+        json!({"role": "user", "content": "Hello"}),
+        json!({"role": "assistant", "content": "Hi"}),
+        json!({"role": "user", "content": "Continue"}),
+    ];
+
+    pinned_input_ids(qualified).await
+}
+
+#[tokio::test]
+#[ignore = "downloads the pinned DeepSeek V4.1 Flash tokenizers from Hugging Face"]
+async fn deepseek_v41_flash_1017_tokenizes_like_the_release_it_replaced() {
+    let replacement = deepseek_v41_input_ids(
+        "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+        "1bae0e1088993b9b82de08f59de5be5a34e42170",
+    )
+    .await;
+
+    assert!(!replacement.is_empty());
+    assert_eq!(
+        replacement,
+        deepseek_v41_input_ids(
+            "deepseek-ai/DeepSeek-V4.1-Flash",
+            "dba1be0a40aa45a94ad051997016db3960a90277",
+        )
+        .await
+    );
+}

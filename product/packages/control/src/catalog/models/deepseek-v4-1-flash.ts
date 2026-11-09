@@ -5,17 +5,20 @@ export const deepseekV41FlashModelId = "deepseek/deepseek-v4.1-flash";
 export const deepseekV41FlashArtifactModelPath =
   "deepseek-ai/DeepSeek-V4.1-Flash";
 
-// OpenRouter's most common provider prices on 2026-09-14, in nano-USD per token.
+// DeepSeek V4.1 Flash 1017 replaced this model on our capacity, so it is served
+// from OpenRouter only and existing callers keep working. Prices are unchanged:
+// OpenRouter's most common provider prices on 2026-09-14, in nano-USD per token,
+// above OpenRouter's current ones, which cap the fallback at our price.
 export const createDeepseekV41FlashModelConfiguration = () =>
   ({
     id: deepseekV41FlashModelId,
     name: modelDisplayName(deepseekV41FlashModelId),
     status: "available",
-    // Checked 2026-11-05: OpenRouter's entry has this model's Hugging Face ID.
+    // Checked 2026-11-10: OpenRouter's entry has this model's Hugging Face ID.
     openrouterModelId: "deepseek/deepseek-v4.1-flash",
     properties: {
       description:
-        "DeepSeek V4.1 Flash with TP4 and DSpark speculative decoding.",
+        "DeepSeek V4.1 Flash, served through OpenRouter. DeepSeek V4.1 Flash 1017 succeeds it.",
       released_at: "2026-09-10T00:00:00.000Z",
       hugging_face_id: deepseekV41FlashArtifactModelPath,
       quantization: "fp4",
@@ -53,7 +56,6 @@ export const createDeepseekV41FlashModelConfiguration = () =>
             tool_choice: { type: "unknown" },
             parallel_tool_calls: { type: "boolean" },
             reasoning_effort: { type: "unknown" },
-            chat_template_kwargs: { type: "unknown" },
           },
           pricing: [
             { type: "completion", unit: "token", cost: 1_200 },
@@ -65,8 +67,8 @@ export const createDeepseekV41FlashModelConfiguration = () =>
           ],
         },
       ],
-      // No generation_config.json, so the runtime's sampling defaults apply. The
-      // gateway renders an omitted effort as high; integers 1-100 are also accepted.
+      // No generation_config.json. Only parameters OpenRouter lists for the model
+      // are advertised (not chat_template_kwargs), so none holds a request back.
       default_parameters: {
         temperature: 1,
         top_p: 1,

@@ -86,7 +86,9 @@ describe("serving adapter dimensions", () => {
       moe_intermediate_size: 2304,
     });
 
-    // Matches the tensors in deepseek-ai/DeepSeek-V4.1-Flash at dba1be0.
+    // Matches the tensors in deepseek-ai/DeepSeek-V4.1-Flash at dba1be0 and
+    // DeepSeek-V4.1-Flash-1017 at 1bae0e1 (its routed experts pack two FP4
+    // values per byte, so their stored input width is half).
     expect(shapes).toMatchObject({
       "39/attn.wq_a": [1280, 5120],
       "39/attn.wq_b": [32768, 1280],

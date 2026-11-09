@@ -33,14 +33,21 @@ export const MODEL_CATALOG = [
     supportedUses: ["judge", "comparison", "serving"],
   },
   {
+    id: "deepseek/deepseek-v4.1-flash-1017",
+    displayName: "DeepSeek V4.1 Flash 1017",
+    icon: "/model-providers/deepseek.svg",
+    supportedUses: ["judge", "comparison", "serving"],
+    training: {
+      model: "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      revision: "1bae0e1088993b9b82de08f59de5be5a34e42170",
+    },
+  },
+  // Served from OpenRouter only, so it takes no adapters.
+  {
     id: "deepseek/deepseek-v4.1-flash",
     displayName: "DeepSeek V4.1 Flash",
     icon: "/model-providers/deepseek.svg",
     supportedUses: ["judge", "comparison", "serving"],
-    training: {
-      model: "deepseek-ai/DeepSeek-V4.1-Flash",
-      revision: "dba1be0a40aa45a94ad051997016db3960a90277",
-    },
   },
   {
     id: "z-ai/glm-5.3-flash",

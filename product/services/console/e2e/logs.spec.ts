@@ -15,7 +15,7 @@ const API_KEY_ID = "0198ae50-94d8-7d4d-a8be-0000000000aa";
 const generation = (id: string): GenerationLog => ({
   id,
   external_id: null,
-  model_id: "deepseek/deepseek-v4.1-flash",
+  model_id: "deepseek/deepseek-v4.1-flash-1017",
   status: "succeeded",
   streamed: false,
   charge: "1000",

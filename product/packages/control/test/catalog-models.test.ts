@@ -36,6 +36,7 @@ describe("model configurations", () => {
   });
 
   const pinnedPrices: Record<string, { input: number[]; output: number[] }> = {
+    "deepseek/deepseek-v4.1-flash-1017": { input: [6, 5], output: [500, 500] },
     "deepseek/deepseek-v4.1-flash": { input: [300, 6], output: [1_200, 1_200] },
     "z-ai/glm-5.3-flash": { input: [150, 30], output: [500, 500] },
     "dealignai/glm-5.3-flash-uncensored": {
@@ -68,6 +69,7 @@ describe("model configurations", () => {
     );
 
     expect(mappings).toEqual({
+      "deepseek/deepseek-v4.1-flash-1017": "deepseek/deepseek-v4.1-flash-1017",
       "deepseek/deepseek-v4.1-flash": "deepseek/deepseek-v4.1-flash",
       "z-ai/glm-5.3-flash": "z-ai/glm-5.3-flash",
       "dealignai/glm-5.3-flash-uncensored": null,
@@ -108,6 +110,7 @@ describe("model configurations", () => {
 
   it("classifies the generation models as chat", () => {
     expect(catalogModels.map((model) => modelType(model.id))).toEqual([
+      "chat",
       "chat",
       "chat",
       "chat",
@@ -159,6 +162,35 @@ it("offers Kimi on local capacity and advertises its exact reasoning contract", 
       },
     ],
   });
+});
+
+it("serves DeepSeek V4.1 Flash 1017 on our capacity from its native weights", () => {
+  const model = catalogModels.find(
+    (item) => item.id === "deepseek/deepseek-v4.1-flash-1017",
+  );
+
+  expect(model?.status).toBe("available");
+  expect(model?.name).toBe("DeepSeek V4.1 Flash 1017");
+  expect(model?.properties).toMatchObject({
+    hugging_face_id: "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+    quantization: "mxfp4",
+    tokenizer: "DeepSeek V4.1",
+    input_modalities: [
+      { supported_inputs: { max_context_length: { value: 1_048_576 } } },
+    ],
+  });
+});
+
+it("keeps the replaced DeepSeek V4.1 Flash available through OpenRouter", () => {
+  const model = catalogModels.find(
+    (item) => item.id === "deepseek/deepseek-v4.1-flash",
+  );
+  const properties = ModelPropertiesInputSchema.parse(model?.properties);
+
+  expect(model?.status).toBe("available");
+  expect(
+    properties.output_modalities[0]?.supported_parameters,
+  ).not.toHaveProperty("chat_template_kwargs");
 });
 
 it("identifies Dealign weights separately from the stock training base", () => {

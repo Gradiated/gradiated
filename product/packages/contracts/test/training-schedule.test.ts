@@ -47,6 +47,7 @@ it("separates training bases from comparison-only hosted and frontier models", (
   const ids = COMPARISON_MODELS.map(({ id }) => id);
   expect(ids).toContain("openai/gpt-6-astra");
   expect(ids).toContain("anthropic/claude-opus-5-5");
+  expect(ids).toContain("deepseek/deepseek-v4.1-flash-1017");
   expect(ids).toContain("deepseek/deepseek-v4.1-flash");
   expect(ids).not.toContain("jaredpalmer/kev-9b");
 });

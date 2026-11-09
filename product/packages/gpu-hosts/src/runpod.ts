@@ -15,6 +15,8 @@ export const runPodSchema = z.object({
   // restart, re-image or move to another machine resets it.
   lastStartedAt: z.string().nullish(),
   env: z.record(z.string(), z.string()).nullish(),
+  // A RunPod volume survives a re-image; the container disk does not.
+  volumeInGb: z.number().nonnegative().nullish(),
   machine: z.object({
     dataCenterId: z.string().nullish(),
     gpuTypeId: z.string().nullish(),

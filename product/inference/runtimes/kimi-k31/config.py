@@ -12,8 +12,17 @@ KIMI_OVERLAY_FINGERPRINT = '6509efad47e02e681caa9cdb49bb9b9375fb94aa30276fcfa5a0
 DRAFT_MODEL = 'RadixArk/Kimi-K3.1-Dflash2-Preview'
 DRAFT_REVISION = 'd0d8bc2e3c6d0a195d2e00a49017e71ca8d881f1'
 ACTIVE_REQUESTS = 5
-QUEUED_REQUESTS = 2
+# No frontend queue: a full replica rejects at once with 429, so the gateway
+# can try the other replica and otherwise tell the caller to go elsewhere.
+QUEUED_REQUESTS = 0
 QUEUE_TIMEOUT_SECONDS = 10
+# The gateway sends no output limit when a caller sets none; SGLang then stops
+# at the remaining context, and this caps it at the catalog maximum.
+MAX_OUTPUT_TOKENS = 131072
+
+
+def backend_environment(environment):
+    return {**environment, 'SGLANG_MAX_NEW_TOKENS_LIMIT': str(MAX_OUTPUT_TOKENS)}
 
 
 def cuda_visible_devices(environment):

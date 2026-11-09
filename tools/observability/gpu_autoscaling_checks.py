@@ -46,11 +46,14 @@ def check_gpu_autoscaling(root):
         assert spec['fallback'] == {'failureThreshold': 3, 'replicas': pool['floor'], 'behavior': 'currentReplicasIfHigher'}
         assert spec['advanced']['restoreToOriginalReplicaCount'] is False
         behavior = spec['advanced']['horizontalPodAutoscalerConfig']['behavior']
-        assert behavior['scaleUp']['policies'] == [{'type': 'Pods', 'value': 1, 'periodSeconds': 60}]
-        assert behavior['scaleDown']['stabilizationWindowSeconds'] >= 600
-        assert behavior['scaleDown']['policies'] == [{'type': 'Pods', 'value': 1, 'periodSeconds': 750}]
-        # Every pool scales on exactly these two signals, measured in its slots.
-        assert [trigger['name'] for trigger in spec['triggers']] == ['utilization', 'refusals']
+        # Scale-up requests the whole deficit at once; starts take minutes.
+        assert behavior['scaleUp']['selectPolicy'] == 'Max' and behavior['scaleUp']['stabilizationWindowSeconds'] == 0
+        assert behavior['scaleUp']['policies'] == [{'type': 'Percent', 'value': 100, 'periodSeconds': 15},
+                                                   {'type': 'Pods', 'value': 4, 'periodSeconds': 15}]
+        assert behavior['scaleDown']['stabilizationWindowSeconds'] == 60
+        assert behavior['scaleDown']['policies'] == [{'type': 'Pods', 'value': 1, 'periodSeconds': 60}]
+        # Every pool scales on exactly these signals, measured in its slots.
+        assert [trigger['name'] for trigger in spec['triggers']] == ['utilization', 'refusals', 'draining']
         for trigger in spec['triggers']:
             assert trigger['metricType'] == 'AverageValue'
             assert trigger['metadata']['ignoreNullValues'] == 'false'
@@ -111,7 +114,7 @@ def scaling_tests(name, pool, queries, wrap=False):
 
     ahead = sum(maximum * slots for _, maximum, slots in pool['ahead'])
     step = (pool['floor'] + 1 + pool['floor'] // 10) * pool['slots']
-    zero = {'utilization': 0, 'refusals': 0}
+    zero = {'utilization': 0, 'refusals': 0, 'draining': 0}
     absent = dict.fromkeys(zero)
 
     def requests(admitted, refused=0, metric='gradiated_gateway_routing_capacity_rejections_total', **labels):
@@ -138,9 +141,37 @@ def scaling_tests(name, pool, queries, wrap=False):
         series('gradiated_gateway_active_generations', '24+0x12', model=model, deployment='d'),
         series('gradiated_gateway_active_generations', '11+0x12', 'b', model=model, deployment='openrouter')],
          {**zero, 'utilization': max(0, 50 - ahead)})
+    # Utilization keeps its ten-minute peak, so load that just stopped still holds the count.
+    case('the slot need holds its ten-minute peak', reporters() + [
+        series('gradiated_gateway_active_generations', '35 35 0+0x10', model=model, deployment='d')],
+         {**zero, 'utilization': max(0, 50 - ahead)}, eval_time='5m')
     case('another model does not affect this model', reporters() + [
         series('gradiated_gateway_active_generations', '100+0x12', model='other', deployment='d')], zero)
 
+    # A terminating replica holds the replicas that are staying until it has gone,
+    # whatever the lagging Rollout desired count still says.
+    def pod(suffix, deleting=False, phase='Running'):
+        selector = f'namespace="gpu-inference",pod="{name}-5b4888d4c5-{suffix}"'
+        result = [{'series': f'kube_pod_status_phase{{{selector},phase="{other}"}}',
+                   'values': f'{int(other == phase)}+0x12'} for other in ('Pending', 'Running', 'Succeeded', 'Failed')]
+        if deleting:
+            result.append({'series': f'kube_pod_deletion_timestamp{{namespace="gpu-inference",pod="{name}-5b4888d4c5-{suffix}"}}',
+                           'values': '1+0x12'})
+        return result
+    lagging = {'series': f'rollout_info_replicas_desired{{namespace="gpu-inference",name="{name}"}}', 'values': '4+0x12'}
+    case('a draining replica holds the replicas that stay', reporters() + [lagging] + pod('aaaaa') + pod('bbbbb')
+         + pod('ccccc') + pod('ddddd', deleting=True), {**zero, 'draining': 3 * pool['slots']})
+    case('a deleted failed pod neither drains nor reduces the staying count', reporters() + [lagging] + pod('aaaaa')
+         + pod('bbbbb') + pod('ccccc') + pod('eeeee', deleting=True, phase='Failed'), zero)
+    case('a deleted failed pod is not subtracted twice', reporters() + [lagging] + pod('aaaaa') + pod('bbbbb')
+         + pod('ccccc') + pod('eeeee', deleting=True, phase='Failed') + pod('ddddd', deleting=True),
+         {**zero, 'draining': 3 * pool['slots']})
+    case('a failed pod awaiting garbage collection is not a staying replica', reporters() + [lagging] + pod('aaaaa')
+         + pod('bbbbb') + pod('ccccc') + pod('eeeee', phase='Failed') + pod('ddddd', deleting=True),
+         {**zero, 'draining': 3 * pool['slots']})
+    case("another pool's draining replica does not", reporters() + [lagging] + pod('aaaaa') + [{
+        'series': f'kube_pod_deletion_timestamp{{namespace="gpu-inference",pod="{name}-b200-5b4888d4c5-r7b27"}}', 'values': '1+0x12'}],
+         zero)
     case('refusals above 5% of requests add a replica', reporters() + requests(54, 6), {**zero, 'refusals': step})
     # The step counts ready replicas, so one still loading holds it until it serves.
     loading = [item for item in reporters() if 'gpu-inference' not in item['series']]
@@ -163,10 +194,12 @@ def scaling_tests(name, pool, queries, wrap=False):
          zero)
     case('customer policy rejection does not grow GPU pools', reporters() + requests(
         54, 6, 'gradiated_gateway_admission_rejections_total', reason='insufficient_balance'), zero)
-    case('refusals expire with their rate window', reporters() + [
-        series('gradiated_gateway_admissions_total', '0+54x4 216+0x8', model=model, deployment='d'),
-        series('gradiated_gateway_routing_capacity_rejections_total', '0+6x4 24+0x8', model=model)],
-         zero, eval_time='5m')
+    # A refusal burst keeps its step for ten minutes, so a starting replica is not removed.
+    burst = [series('gradiated_gateway_admissions_total', '0+54x4 216+0x40', model=model, deployment='d'),
+             series('gradiated_gateway_routing_capacity_rejections_total', '0+6x4 24+0x40', model=model)]
+    long_reporters = [{**item, 'values': item['values'].replace('x12', 'x40')} for item in reporters()]
+    case('a refusal burst holds its step for ten minutes', long_reporters + burst, {**zero, 'refusals': step}, eval_time='8m')
+    case('refusals expire ten minutes after their rate window', long_reporters + burst, zero, eval_time='16m')
     if pool['ahead']:
         case('refusals wait for the pools ahead to reach their maximum',
              [item for item in reporters() if 'gpu-inference' not in item['series']]

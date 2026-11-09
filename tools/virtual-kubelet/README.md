@@ -213,7 +213,7 @@ traffic in proportion to their slots.
 
 ```json
 "dealignai/glm-5.3-flash-uncensored": {
-  "min_slots": 60,
+  "min_slots": 24,
   "pools": {
     "glm-dealign-sglang": {"runtime": "722c…", "gpu": "B300", "max_replicas": 5, "progress_deadline_seconds": 5400},
     "glm-dealign-sglang-h200": {"runtime": "130e…", "gpu": "H200", "max_replicas": 0, "progress_deadline_seconds": 5400}
@@ -239,8 +239,8 @@ renderer requires positive `min_slots` for SystemOne models such as Kev.
 OpenRouter's own traffic to us never falls back, so it fails while a model has
 no capacity of ours.
 
-Every pool scales on the same two signals, in its own slots, and the HPA takes
-the larger:
+Every pool scales on the same three signals, in its own slots, and the HPA takes
+the largest:
 
 - **Utilization.** The model's peak in-flight generations over the last minute
   (`gradiated:model_busy_slots`), divided by 0.7, less the slots the pools ahead
@@ -264,8 +264,11 @@ There is no CPU, memory or GPU-memory signal. Both recording rules live in
 constants live in `tools/gpu/render-config.py`. All queries require fresh,
 complete gateway telemetry. Missing samples or a Prometheus outage trigger a
 fallback that retains the current replica count when it exceeds the floor.
-Scale-up adds at most one replica per minute; scale-down waits ten minutes and
-removes at most one per 750 seconds, longer than the runtime drain. New replicas
+Scale-up adds every replica the signals ask for at once, at least doubling or
+adding four every 15 seconds, because a start takes minutes; scale-down waits ten minutes and
+removes one at a time: a third signal, `draining`, holds the requested count
+while any of the pool's replicas is terminating, because it can still hold its
+GPUs, so the next removal waits only as long as the actual drain. New replicas
 become available only after SDK qualification, so keep the floor large enough
 for immediate traffic. None of this provisions or resets a provider GPU, and
 scaling down releases GPUs without reducing the RunPod reservation bill.
@@ -276,15 +279,18 @@ A host is reserved with a `gradiated.com/reserved=<name>` `NoSchedule` taint in
 `hosts.yaml`. A pool with `"reservation": "<name>"` tolerates it and is
 confined to exactly the hosts carrying it; the renderer derives that host list,
 so adding a host to a reservation is a `hosts.yaml` change. Kimi K3.1 Pro
-reserves both eight-B300 hosts as `kimi-k31`. The four-B300 host `01a0f19d`
-is reserved for `training`, which training Jobs tolerate. A tensor-parallel
-replica needs all its GPUs on one host; `gpu_count` selects hosts by size.
+reserves both eight-B300 hosts as `kimi-k31`; every other host is shared. A
+tensor-parallel replica needs all its GPUs on one host; `gpu_count` selects
+hosts by size.
 
-Training Jobs use the `gpu-training` PriorityClass, below the default priority
-of model pods, so on a shared host a model replica or rollout pod that cannot
-fit preempts training rather than waiting. Training never preempts. A preempted
-trainer resumes in a new Job from its latest checkpoint, with up to three
-attempts per training stage.
+Training runs opportunistically on shared capacity. Training Jobs use the
+`gpu-training` PriorityClass, below the default priority of model pods, so a
+model replica that cannot fit preempts training rather than waiting; training
+never preempts. A preempted trainer resumes in a new Job from its latest S3
+checkpoint, with up to three attempts per training stage. Its pod directory is
+retired with the pod, so local disk is scratch: work since the last checkpoint
+is lost. To hold capacity for training that must not be preempted, give a host
+the `training` reservation, which training Jobs tolerate and models cannot use.
 
 ### Staging a pool
 
@@ -572,6 +578,71 @@ by `e2e_image.py` contains `/etc/gradiated/test-control-server`, without which
 python3 product/inference/images/gpu-base/tests/e2e_image.py /tmp/gpu-fleet-e2e
 (cd product/services/gpu-fleet && GPU_FLEET_E2E=/tmp/gpu-fleet-e2e pnpm exec vitest run --config vitest.e2e.config.ts)
 ```
+
+### Leasing a host
+
+Hand-run work, such as training on sensitive data, leases a whole host; a host
+is never shared between a lease and serving or training pods. The gpu-fleet
+operator does the work and `tools/gpu/host-lease.py` writes the request, the
+`fleet.gradiated.com/lease` annotation on the `GpuHost`
+(`{"holder", "purpose", "until", "preemptible"}`):
+
+```sh
+python3 tools/gpu/host-lease.py acquire 01a0f19d --hours 6 --purpose "SFT sweep" [--no-preempt]
+python3 tools/gpu/host-lease.py wait 01a0f19d     # until the host is leased, or the lease fails
+python3 tools/gpu/host-lease.py extend 01a0f19d --hours 2
+python3 tools/gpu/host-lease.py release 01a0f19d  # hand it back early
+python3 tools/gpu/host-lease.py status
+```
+
+- A lease rollout first checks the request and the host, and refuses reserved
+  hosts (a `gradiated.com/reserved` taint), hosts that do not answer or have
+  no node, nodes already cordoned (by a person, a qualification slot or a
+  failed rollout), hosts whose rollout is blocked waiting for room, and pods
+  with a RunPod volume, which a re-image keeps (Kev's RTX host `01a0f1bc` and
+  both Kimi hosts have one). An operator in observe mode, or without RunPod and
+  Tailscale access, refuses every lease. It then cordons the host
+  and moves its model replicas onto free GPUs on other hosts, as a re-image
+  does, drains it and records `status.lease`. It does not rearrange other
+  hosts' pods to make room. If the replicas have no room, a training job runs
+  there, or a replacement replica finds no host, the lease fails at once and
+  the host stays in the pool.
+- Each request is tried once. The operator records the outcome on
+  `status.rollout` (with the request in `rollout.lease`) and removes the
+  annotation, so the host is planned like any other again; run `acquire` again
+  to retry. A failed lease never holds up the fleet's other rollouts, and the
+  retry annotation does not apply to it. A failed lease does not mark the host
+  Degraded. A lease waits its turn behind a
+  rollout that is running, but not behind one waiting for capacity.
+- While leased, the host is cordoned, cordoned again if someone lifts it or the
+  node is recreated, and the operator does nothing else to it: no re-image,
+  bundle update or recovery. Autoscaling has one host fewer, and
+  overflow goes to OpenRouter.
+- A lease is preemptible unless requested with `--no-preempt`
+  (`"preemptible": false`). Once a model replica that would fit on a
+  preemptible leased host has found no host for ten minutes, counted from the
+  last rollout to finish, the operator returns that host, the one due back
+  soonest first, and the replica lands there after the return. The holder gets
+  no warning beyond `status`. A re-image waiting for room does not preempt a
+  lease; it waits for the lease to end.
+- Removing the annotation hands the host back; reaching `until` does the same,
+  and a request from a different holder is treated as a hand-back followed by
+  a new lease, so the host is wiped between holders.
+  A return rollout re-images the RunPod pod onto the pinned image, which
+  recreates its container disk and so removes everything the holder left, then
+  enrolls, verifies, soaks and uncordons it. A return runs even while another
+  rollout waits for capacity, since it adds a host. A return that cannot run
+  fails rather than blocks, so the host stays cordoned until it is wiped, and
+  is retried once the pins change or the retry annotation is set;
+  `GpuHostLeaseOverdue` warns an hour after an unreturned lease expires or its
+  return starts. The tool caps a lease at seven days, and writes each change
+  only if the `GpuHost` is unchanged since it was read, so two holders cannot
+  both acquire it.
+
+The host keeps its management key across the return. A holder with root could
+read it, so rotate it by hand after leasing a host that ran untrusted code;
+rotating it automatically needs `secretsmanager:PutSecretValue` for the
+operator. The `$gpu-host-lease` skill has the procedure for agents.
 
 ### Reserving an isolated qualification slot
 

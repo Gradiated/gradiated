@@ -44,7 +44,7 @@ describe("model configurations", () => {
     },
     "jaredpalmer/kev-9b": { input: [30, 6], output: [0] },
     "moonshotai/kimi-k3.1-pro": {
-      input: [1_800, 180],
+      input: [1_600, 160],
       output: [9_000, 9_000],
     },
     "z-ai/glm-5.3": { input: [1_400, 260], output: [4_400, 4_400] },

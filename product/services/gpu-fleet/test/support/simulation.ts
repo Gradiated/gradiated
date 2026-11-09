@@ -15,6 +15,7 @@ import { uncordonIfReturned } from "../../src/drain.js";
 import { createEnrollment } from "../../src/enroll.js";
 import {
   GPU_HOSTS,
+  LEASE_ANNOTATION,
   NODES,
   PODS,
   ROLLOUTS,
@@ -48,6 +49,8 @@ export type HostSpec = {
   image?: string;
   bundle?: string;
   enrolled?: boolean;
+  // A RunPod volume, which survives a re-image.
+  volumeInGb?: number;
 };
 
 type Device = {
@@ -483,6 +486,7 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
         imageName: host.image,
         lastStartedAt: host.lastStartedAt,
         env: { ...host.env },
+        volumeInGb: host.volumeInGb ?? 0,
         machine: { dataCenterId: "US-TX-1", gpuTypeId: "NVIDIA B300" },
       };
     },
@@ -654,6 +658,18 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
     }
   };
 
+  // Writes or, given undefined, removes a host's lease annotation, as
+  // tools/gpu/host-lease.py does.
+  const annotateLease = (instanceId: string, request?: object) => {
+    const host = kube.objects.get(`${GPU_HOSTS}/gpu-${instanceId}`)! as {
+      metadata: { annotations?: Record<string, string> };
+    };
+    const { [LEASE_ANNOTATION]: _, ...rest } = host.metadata.annotations ?? {};
+    host.metadata.annotations = request
+      ? { ...rest, [LEASE_ANNOTATION]: JSON.stringify(request) }
+      : rest;
+  };
+
   // Someone cordons the node by hand, with no marker.
   const cordonByHand = (instanceId: string) => {
     kube.objects.get(`${NODES}/gpu-${instanceId}`)!.spec = {
@@ -684,6 +700,7 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
     host: (instanceId: string) =>
       kube.read(`${GPU_HOSTS}/gpu-${instanceId}`) as GpuHost,
     cordonByHand,
+    annotateLease,
     notReady,
     node: (instanceId: string) =>
       kube.read(`${NODES}/gpu-${instanceId}`) as {

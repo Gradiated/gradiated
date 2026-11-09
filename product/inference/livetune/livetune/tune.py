@@ -86,7 +86,8 @@ def merged(summaries: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
 
     return {
         "completed": min(s.get("completed", 0) for s in summaries),
-        "errors": sum(s.get("errors", 0) for s in summaries),
+        # A median like the rest: one transient failure in one repetition must not sink a setting for good.
+        "errors": median("errors", higher_is_better=False),
         "output_tps": median("output_tps"),
         "tps_per_user_p50": median("tps_per_user_p50"),
         "ttft_p90": median("ttft_p90", higher_is_better=False),

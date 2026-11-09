@@ -7,6 +7,7 @@ import math
 import random
 import statistics
 import time
+from collections import Counter
 from dataclasses import asdict, dataclass, field
 from typing import Any, Sequence
 
@@ -59,6 +60,8 @@ class PhaseResult:
             "phase": asdict(self.phase),
             "completed": len(done),
             "errors": sum(r.error is not None for r in measured),
+            # The exception type only: messages can carry a server's reply, never needed to tell failures apart.
+            "error_kinds": dict(Counter(r.error.split(":", 1)[0] for r in measured if r.error is not None)),
             "untimed": sum(r.untimed for r in done),
             "tps_per_user_p50": statistics.median(rates) if rates else None,
             "tps_per_user_p10": pct(rates, 0.1),

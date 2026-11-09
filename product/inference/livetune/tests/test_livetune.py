@@ -3218,3 +3218,21 @@ class CodeTierTest(unittest.TestCase):
         self.assertEqual((targets["targets"], targets["candidates"]), ([code], str(tmp)))
         self.assertTrue(targets["trace"].endswith(".jsonl"))
         self.assertEqual(seen["scored"][1:], ([7], None, 3))
+
+
+class TransientErrorTest(unittest.TestCase):
+    def test_one_failed_request_in_one_repetition_does_not_sink_a_setting(self):
+        slo = Slo(50, 8)
+        run = {"completed": 821, "output_tps": 691.0, "tps_per_user_p50": 117.0, "ttft_p90": 4.2}
+        startup = tune.merged([{**run, "errors": 1}, {**run, "errors": 0}, {**run, "errors": 0}])
+        self.assertEqual(startup["errors"], 0)
+        self.assertEqual(tune.score(startup, slo)[0], 1)
+        # A setting that fails in most repetitions stays infeasible.
+        self.assertEqual(tune.merged([{**run, "errors": 3}, {**run, "errors": 2}, {**run, "errors": 0}])["errors"], 2)
+
+    def test_a_replay_summary_names_the_kinds_of_errors_without_their_messages(self):
+        records = [loadgen.RequestRecord(0.0) for _ in range(3)]
+        records[0].error = "ClientPayloadError: Response payload is not completed: <reply text>"
+        records[1].error = "ClientPayloadError: other"
+        summary = loadgen.PhaseResult(loadgen.Phase(1, 10, 10, 1.0), records).summary()
+        self.assertEqual((summary["errors"], summary["error_kinds"]), (2, {"ClientPayloadError": 2}))

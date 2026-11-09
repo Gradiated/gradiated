@@ -42,33 +42,6 @@ configuration to run Vite with Node 22.
 
 Vite uses its default development port. Open `http://localhost:5173`.
 
-### Engineer onboarding (`/get-started/`)
-
-`/get-started/` lets an organization admin of a training customer sign the
-mutual NDA, set up a Slack Connect channel (or choose email) and install the
-Gradiated GitHub App. The homepage's **Automated RL** card links to it. The
-page reads the signed-in account through the generated API client. It sends
-guests to the console's `/login?next=engineer` and unfinished organizations to
-`/onboarding?next=engineer&organization=…`; both return to `/get-started/`.
-Without `next=engineer` the console behaves as usual. Progress comes from
-`GET …/engineer-onboarding`: a recorded NDA unlocks Slack and GitHub, and a
-recorded submission shows the confirmation. Browser storage keeps only unsent
-form values, scoped to user and organization. The GitHub installation is
-verified live with the user's token before continuing and again at submission.
-
-Local development runs the same code path as production. Start the `api`,
-`console` and `website` processes in mprocs (`pnpm dev`) and open
-`http://localhost:5173/get-started/`. Use `localhost`, not `127.0.0.1`, so the
-website shares the console's session cookie. The NDA, Slack and GitHub steps
-call the real providers with the keys in the repository-root `.env`; their
-switches and setup are in the [API README](../services/api/README.md).
-
-The dev server proxies `/api/` and `/health` to `WEBSITE_API_PROXY_URL`
-(default `http://127.0.0.1:3001`) and sends the console origin from
-`VITE_CONSOLE_BASE_URL` (default `http://localhost:3000`) as `Origin`. Set
-both, with the console's `CONSOLE_API_PROXY_URL` and `VITE_WEBSITE_URL`, to run
-the stack on other ports.
-
 ## Build
 
 Run the type check and production build:

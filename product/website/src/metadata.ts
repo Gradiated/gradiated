@@ -25,12 +25,6 @@ export const formatPageTitle = (title: string): string =>
   `${title} | Gradiated`;
 
 const pageMetadata: Record<string, PageMetadataContent> = {
-  "/get-started/": {
-    title: "Get a forward deployed engineer",
-    description:
-      "Set up your forward deployed engineer, review and sign your NDA, and connect your team.",
-    index: false,
-  },
   "/": {
     title: "Run open models",
     description:

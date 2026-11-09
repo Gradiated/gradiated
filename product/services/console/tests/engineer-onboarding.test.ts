@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  engineerOnboardingUrl,
+  loginSearchFor,
+  parseEngineerOnboardingSearch,
   parseOnboardingSearch,
   signInCallbacks,
 } from "@/lib/engineer-onboarding";
@@ -46,7 +47,9 @@ describe("post-account engineer onboarding", () => {
     expect(callbacks.newUserCallbackURL).toBe(
       "https://console.gradiated.com/onboarding?next=engineer",
     );
-    expect(new URL(callbacks.callbackURL).pathname).toBe("/get-started/");
+    expect(callbacks.callbackURL).toBe(
+      "https://console.gradiated.com/onboarding/engineer",
+    );
     expect(callbacks.errorCallbackURL).toBe(
       "https://console.gradiated.com/login?next=engineer",
     );
@@ -72,13 +75,20 @@ describe("post-account engineer onboarding", () => {
     });
   });
 
-  it("returns the newly created organization without putting identity details in the URL", () => {
-    const url = new URL(
-      engineerOnboardingUrl("organization-id", "https://gradiated.com"),
+  it("accepts only an organization ID on the engineer onboarding page", () => {
+    const organization = "0198ae59-294a-73a9-9d2f-962449d34226";
+    expect(
+      parseEngineerOnboardingSearch({ organization, next: "engineer" }),
+    ).toEqual({ organization });
+    expect(parseEngineerOnboardingSearch({ organization: "../admin" })).toEqual(
+      {},
     );
-    expect(url.pathname).toBe("/get-started/");
-    expect([...url.searchParams]).toEqual([
-      ["organization", "organization-id"],
-    ]);
+  });
+
+  it("returns an expired engineer session to engineer sign-in", () => {
+    expect(loginSearchFor("/onboarding/engineer")).toEqual({
+      next: "engineer",
+    });
+    expect(loginSearchFor("/api-keys")).toEqual({});
   });
 });

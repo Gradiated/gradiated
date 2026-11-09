@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+
 import {
   createNdaDocument,
   createNdaSession,
   getNdaDocument,
   type NdaDetails,
   type NdaDocument,
-} from "../api/nda";
+} from "@/api/engineer-onboarding";
+import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/ui/field";
 
 const detailsChanged = (bound: NdaDetails | null, expected: NdaDetails) =>
   bound !== null &&
@@ -55,13 +58,13 @@ const PandaDocEmbed = ({
 
   return (
     <>
-      {error && (
-        <p role="alert" className="gs-note">
+      {error ? (
+        <FieldError>
           The signing window could not load. Close it and reopen to get a fresh
           session.
-        </p>
-      )}
-      <div className="gs-signing-embed">
+        </FieldError>
+      ) : null}
+      <div className="min-h-[650px] overflow-hidden rounded-lg border">
         <div id={id} />
       </div>
     </>
@@ -212,54 +215,52 @@ export const NdaSigning = ({
   }, [verify]);
 
   return (
-    <section className="gs-signing" aria-labelledby="signing-title">
-      <div className="gs-step-title">
-        <h1 id="signing-title">Review & sign your NDA.</h1>
-      </div>
+    <section className="flex flex-col gap-4" aria-labelledby="signing-title">
+      <h1 id="signing-title" className="text-2xl font-bold tracking-tight">
+        Review & sign your NDA
+      </h1>
       {document?.status === "completed" ? (
-        <p role="status" className="gs-signed">
-          <CheckCircle2 size={18} /> NDA completed.
+        <p role="status" className="flex items-center gap-2 text-sm">
+          <CheckCircle2 className="size-4 text-emerald-600" /> NDA completed.
         </p>
       ) : document?.customer_completed ? (
-        <p role="status">You’ve signed. Waiting for PostHog’s signature.</p>
+        <p role="status" className="text-sm text-muted-foreground">
+          You’ve signed. Waiting for PostHog’s signature.
+        </p>
       ) : sessionId ? (
         <PandaDocEmbed sessionId={sessionId} onVerify={verifyCompletion} />
       ) : error ? (
-        <button
+        <Button
           type="button"
-          className="gr-button gs-primary"
+          className="self-start"
           disabled={busy}
           onClick={() => void open()}
         >
           {busy ? "Preparing your NDA…" : "Try again"}
-          <ArrowRight size={15} />
-        </button>
+          <ArrowRight />
+        </Button>
       ) : (
-        <p role="status">Preparing your NDA…</p>
-      )}
-      {documentId && (
-        <button
-          className="gs-text-button gs-signing-check"
-          type="button"
-          onClick={() => {
-            void verify().catch((error: Error) => setError(error.message));
-          }}
-        >
-          Check signing status
-        </button>
-      )}
-      {error && (
-        <p role="alert" className="gs-note">
-          {error}
+        <p role="status" className="text-sm text-muted-foreground">
+          Preparing your NDA…
         </p>
       )}
-      <button
-        type="button"
-        className="gs-back gs-signing-back"
-        onClick={onBack}
-      >
-        <ArrowLeft size={14} /> Back to details
-      </button>
+      {error ? <FieldError>{error}</FieldError> : null}
+      <div className="flex items-center justify-between gap-3">
+        <Button type="button" variant="ghost" onClick={onBack}>
+          <ArrowLeft /> Back to details
+        </Button>
+        {documentId ? (
+          <Button
+            type="button"
+            variant="link"
+            onClick={() => {
+              void verify().catch((error: Error) => setError(error.message));
+            }}
+          >
+            Check signing status
+          </Button>
+        ) : null}
+      </div>
     </section>
   );
 };

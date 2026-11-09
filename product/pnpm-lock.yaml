@@ -326,6 +326,9 @@ importers:
       openapi-fetch:
         specifier: 0.17.0
         version: 0.17.0
+      pandadoc-signing:
+        specifier: 1.0.1
+        version: 1.0.1
       posthog-js:
         specifier: ^1.430.2
         version: 1.430.2(@types/react@19.3.0)(react@19.3.0)
@@ -631,9 +634,6 @@ importers:
       openapi-fetch:
         specifier: 0.17.0
         version: 0.17.0
-      pandadoc-signing:
-        specifier: 1.0.1
-        version: 1.0.1
       posthog-js:
         specifier: 1.430.2
         version: 1.430.2(@types/react@19.2.18)(react@19.2.8)

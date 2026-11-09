@@ -20,7 +20,6 @@ import { CareersIndexPage, JobDetailPage } from "./pages/CareersPages";
 import { DocsNextPage } from "./pages/DocsNextPage";
 import { HardwarePage } from "./pages/HardwarePage";
 import { HomePage } from "./pages/HomePage";
-import { GetStartedPage } from "./pages/GetStartedPage";
 import { InferencePage } from "./pages/InferencePage";
 import { LEGAL, LegalPage } from "./pages/LegalPages";
 import type { LegalSlug } from "./pages/LegalPages";
@@ -78,7 +77,6 @@ const Shelled = ({ children }: { children: ReactElement }): ReactElement => (
 
 export const AppRoutes = (): ReactElement => (
   <Routes>
-    <Route element={<GetStartedPage />} path="/get-started/" />
     {articles.map((article) => (
       <Route
         element={

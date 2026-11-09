@@ -15,6 +15,7 @@ import { createRoot } from "react-dom/client";
 import { needsStaffSessionRecovery } from "@/api/client";
 import { getCurrentUser } from "@/api/queries";
 import { httpStatus, isClientError } from "@/lib/errors";
+import { loginSearchFor } from "@/lib/engineer-onboarding";
 import { toastMutationError } from "@/lib/mutation-errors";
 import { endSession } from "@/lib/session";
 import { router } from "@/router";
@@ -23,12 +24,19 @@ import "./styles.css";
 
 const MAX_QUERY_RETRIES = 3;
 
+const signIn = () =>
+  endSession(
+    queryClient,
+    router,
+    loginSearchFor(router.state.location.pathname),
+  );
+
 const handleUnauthorized = (error: Error) => {
   if (needsStaffSessionRecovery(error)) {
     void getCurrentUser().catch((failure: unknown) => {
-      if (httpStatus(failure) === 401) void endSession(queryClient, router);
+      if (httpStatus(failure) === 401) void signIn();
     });
-  } else if (httpStatus(error) === 401) void endSession(queryClient, router);
+  } else if (httpStatus(error) === 401) void signIn();
 };
 
 const queryFailed = (error: Error, { queryKey }: { queryKey: QueryKey }) => {

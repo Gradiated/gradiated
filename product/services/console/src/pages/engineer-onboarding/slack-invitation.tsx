@@ -1,32 +1,31 @@
-import { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
+import { useState } from "react";
 import { z } from "zod";
-import type { EngineerOnboarding } from "../api/engineer-onboarding";
-import { createSlackInvitation } from "../api/slack";
+
 import {
+  createSlackInvitation,
+  type EngineerOnboarding,
+} from "@/api/engineer-onboarding";
+import { ApiError } from "@/api/client";
+import { Button } from "@/components/ui/button";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  SLACK_CHANNEL_PATTERN,
   ndaReference,
+  proposedSlackChannel,
   slackInvitationProblem,
   slackInvited,
-} from "../onboarding";
-import type { OnboardingAccount, OnboardingDraft } from "../onboarding";
+  type OnboardingAccount,
+  type OnboardingDraft,
+} from "@/lib/engineer-onboarding";
 
-const channelPattern = /^ext-[a-z0-9]+(?:-[a-z0-9]+)*-gradiated$/;
-
-const proposedChannel = (company: string) => {
-  const slug =
-    company
-      .normalize("NFKD")
-      .replace(/[̀-ͯ]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 66)
-      .replace(/-$/g, "") || "customer";
-
-  return `ext-${slug}-gradiated`;
-};
-
-export const SlackConnectInvite = ({
+export const SlackInvitation = ({
   account,
   server,
   draft,
@@ -37,7 +36,7 @@ export const SlackConnectInvite = ({
   server: EngineerOnboarding;
   draft: OnboardingDraft;
   patch: (values: Partial<OnboardingDraft>) => void;
-  onInvited: () => Promise<void>;
+  onInvited: () => Promise<unknown>;
 }) => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -48,8 +47,9 @@ export const SlackConnectInvite = ({
   const channel =
     server.slack?.channel_name ??
     draft.slackChannelName ??
-    proposedChannel(account.company);
-  const validChannel = channelPattern.test(channel) && channel.length <= 80;
+    proposedSlackChannel(account.company);
+  const validChannel =
+    SLACK_CHANNEL_PATTERN.test(channel) && channel.length <= 80;
   const sent =
     slackInvited(server) &&
     server.slack?.invited_email?.toLowerCase() === recipient;
@@ -67,11 +67,9 @@ export const SlackConnectInvite = ({
       });
       await onInvited();
     } catch (cause) {
-      const code =
-        cause instanceof Error && "code" in cause
-          ? String(cause.code)
-          : undefined;
-      const problem = slackInvitationProblem(code);
+      const problem = slackInvitationProblem(
+        cause instanceof ApiError ? cause.code : undefined,
+      );
       if (problem?.renameChannel) patch({ slackChannelName: channel });
 
       setError(
@@ -86,11 +84,12 @@ export const SlackConnectInvite = ({
   };
 
   return (
-    <div className="gs-slack-invite">
-      <h2>Work with us in Slack</h2>
-      <label className="gs-field">
-        <span>Slack invite email</span>
-        <input
+    <section className="flex flex-col gap-3 rounded-lg border p-4">
+      <h2 className="font-semibold">Work with us in Slack</h2>
+      <Field>
+        <FieldLabel htmlFor="slack-email">Slack invite email</FieldLabel>
+        <Input
+          id="slack-email"
           type="email"
           maxLength={200}
           value={draft.slackEmail ?? account.email}
@@ -101,17 +100,21 @@ export const SlackConnectInvite = ({
           }}
           autoComplete="email"
         />
-      </label>
+      </Field>
       {sent ? (
-        <p role="status">
-          <CheckCircle2 size={16} /> Invite sent · #{channel}
+        <p role="status" className="flex items-center gap-2 text-sm">
+          <CheckCircle2 className="size-4 text-emerald-600" /> Invite sent · #
+          {channel}
         </p>
       ) : (
         <>
-          {renaming && (
-            <label className="gs-field">
-              <span>Slack channel name</span>
-              <input
+          {renaming ? (
+            <Field>
+              <FieldLabel htmlFor="slack-channel">
+                Slack channel name
+              </FieldLabel>
+              <Input
+                id="slack-channel"
                 type="text"
                 maxLength={80}
                 value={channel}
@@ -123,38 +126,34 @@ export const SlackConnectInvite = ({
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}
-                aria-describedby="slack-channel-hint"
               />
-              <small id="slack-channel-hint">
+              <FieldDescription>
                 Use ext-your-team-gradiated with lowercase letters, numbers and
                 hyphens.
-              </small>
-            </label>
-          )}
-          <p>
+              </FieldDescription>
+            </Field>
+          ) : null}
+          <p className="text-sm">
             We’ll {server.slack ? "use" : "create"} <strong>#{channel}</strong>{" "}
             and invite <strong>{recipient}</strong>.
           </p>
-          <button
+          <Button
             type="button"
-            className="gr-button"
+            variant="outline"
+            className="self-start"
             disabled={busy || !validRecipient || !validChannel}
             onClick={() => void send()}
           >
             {busy ? "Sending invite…" : "Send Slack invite"}
-          </button>
+          </Button>
         </>
       )}
-      <p className="gs-note">
+      <p className="text-sm text-muted-foreground">
         {sent
           ? "Accept the invitation in Slack or your inbox. Your workspace may require admin approval. You can continue below."
           : "Slack is our preferred way to work."}
       </p>
-      {error && (
-        <p role="alert" className="gs-note">
-          {error}
-        </p>
-      )}
-    </div>
+      {error ? <FieldError>{error}</FieldError> : null}
+    </section>
   );
 };

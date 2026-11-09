@@ -11,7 +11,10 @@ import {
 import { ApiKeysPage } from "@/pages/api-keys-page";
 import { BillingPage } from "@/pages/billing-page";
 import { parseLoginSearch } from "@/lib/login-search";
-import { parseOnboardingSearch } from "@/lib/engineer-onboarding";
+import {
+  parseEngineerOnboardingSearch,
+  parseOnboardingSearch,
+} from "@/lib/engineer-onboarding";
 import { LoginPage } from "@/pages/login-page";
 import { ModelsPage } from "@/pages/models-page";
 import { OnboardingPage } from "@/pages/onboarding-page";
@@ -50,6 +53,16 @@ const onboardingRoute = createRoute({
   path: "/onboarding",
   validateSearch: parseOnboardingSearch,
   component: OnboardingPage,
+});
+
+const engineerOnboardingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/onboarding/engineer",
+  validateSearch: parseEngineerOnboardingSearch,
+  component: lazyRouteComponent(
+    () => import("@/pages/engineer-onboarding/engineer-onboarding-page"),
+    "EngineerOnboardingPage",
+  ),
 });
 
 const apiKeysRoute = createRoute({
@@ -207,6 +220,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   invitationAcceptRoute,
   onboardingRoute,
+  engineerOnboardingRoute,
   apiKeysRoute,
   modelsRoute,
   playgroundRoute,

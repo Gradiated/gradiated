@@ -71,11 +71,6 @@ const syncAshbyJobs: Plugin = {
 
 export default defineConfig(({ command, isSsrBuild, mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
-  const apiProxyUrl =
-    process.env.WEBSITE_API_PROXY_URL ?? "http://127.0.0.1:3001";
-  const consoleOrigin = new URL(
-    env.VITE_CONSOLE_BASE_URL || "http://localhost:3000",
-  ).origin;
   if (
     process.env.VERCEL_ENV === "production" &&
     !env.VITE_POSTHOG_KEY?.trim()
@@ -176,10 +171,10 @@ export default defineConfig(({ command, isSsrBuild, mode }) => {
       proxy: {
         "/api/": {
           changeOrigin: true,
-          headers: { origin: consoleOrigin },
-          target: apiProxyUrl,
+          headers: { origin: "http://localhost:3000" },
+          target: "http://127.0.0.1:3001",
         },
-        "/health": apiProxyUrl,
+        "/health": "http://127.0.0.1:3001",
       },
     },
     build: {

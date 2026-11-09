@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigate, useNavigate, useSearch } from "@tanstack/react-router";
 import { ArrowRight, LoaderCircle } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 import { updateOrganization, type CurrentUser } from "@/api/queries";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
@@ -24,7 +24,6 @@ import {
   suggestedOrganizationName,
 } from "@/lib/onboarding";
 import { queryKeys } from "@/lib/query-keys";
-import { engineerOnboardingUrl } from "@/lib/engineer-onboarding";
 import { LoadFailed } from "@/pages/console-page";
 import { useWorkspaceSelection } from "@/store/workspace-selection";
 
@@ -34,11 +33,8 @@ export const OnboardingPage = () => {
   });
   const { user, signOut } = useSession();
   const me = useCurrentUser();
-  const selected = requestedOrganization
-    ? user?.organizations.find(
-        (row) => row.id === requestedOrganization && row.status === "active",
-      )
-    : undefined;
+  const [onboarded, setOnboarded] = useState<string>();
+  const engineerOrganization = requestedOrganization ?? onboarded;
   const organization = organizationToOnboard(user, requestedOrganization);
 
   if (me.isError && httpStatus(me.error) !== 401)
@@ -61,13 +57,10 @@ export const OnboardingPage = () => {
 
   if (!organization)
     return next === "engineer" ? (
-      <EngineerHandoff
-        organizationId={
-          requestedOrganization
-            ? selected?.id
-            : user.organizations.length === 1
-              ? user.organizations[0]?.id
-              : undefined
+      <Navigate
+        to="/onboarding/engineer"
+        search={
+          engineerOrganization ? { organization: engineerOrganization } : {}
         }
       />
     ) : (
@@ -81,7 +74,7 @@ export const OnboardingPage = () => {
         <OrganizationSetup
           user={user}
           organization={organization}
-          engineer={next === "engineer"}
+          onOnboarded={next === "engineer" ? setOnboarded : undefined}
           onSignOut={() => void signOut()}
         />
       </AuthCard>
@@ -89,32 +82,16 @@ export const OnboardingPage = () => {
   );
 };
 
-const EngineerHandoff = ({
-  organizationId,
-}: {
-  organizationId: string | undefined;
-}) => {
-  useEffect(() => {
-    window.location.replace(engineerOnboardingUrl(organizationId));
-  }, [organizationId]);
-
-  return (
-    <main className="grid min-h-svh place-items-center">
-      <LoaderCircle className="size-5 animate-spin" />
-    </main>
-  );
-};
-
 const OrganizationSetup = ({
   user,
   organization,
   onSignOut,
-  engineer,
+  onOnboarded,
 }: {
   user: CurrentUser;
   organization: CurrentUser["organizations"][number];
   onSignOut: () => void;
-  engineer: boolean;
+  onOnboarded: ((organizationId: string) => void) | undefined;
 }) => {
   const domain = user.company_email_domain;
   const [name, setName] = useState(suggestedOrganizationName(domain));
@@ -132,6 +109,7 @@ const OrganizationSetup = ({
         onboarding_completed: true,
       }),
     onSuccess: async (updated) => {
+      onOnboarded?.(updated.id);
       client.setQueryData<CurrentUser>(
         queryKeys.me,
         (current) =>
@@ -144,10 +122,7 @@ const OrganizationSetup = ({
       );
       selectOrganization(updated.id);
       selectWorkspace(updated.default_workspace_id);
-      if (engineer) {
-        window.location.assign(engineerOnboardingUrl(updated.id));
-        return;
-      }
+      if (onOnboarded) return;
 
       await navigate({ to: "/models", search: { welcome: true } });
     },

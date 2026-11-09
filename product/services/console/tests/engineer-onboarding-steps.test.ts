@@ -1,30 +1,73 @@
 import { describe, expect, it } from "vitest";
-import type { CurrentUser } from "../src/api/queries";
+import type { EngineerOnboarding } from "@/api/engineer-onboarding";
+import type { CurrentUser } from "@/api/queries";
 import {
-  accountStorageKey,
   changesNda,
   channelSummary,
   chooseAccount,
   confirmationMessage,
   counterpartyDetails,
+  draftStorageKey,
+  emptyDraft,
   engineerSubmission,
   ndaReference,
-  restoreOnboardingDraft,
+  proposedSlackChannel,
+  restoreDraft,
   resumeStep,
   resumeView,
   slackInvitationProblem,
   stepLocked,
   submitAction,
   submitProblem,
-} from "../src/onboarding";
-import {
-  account,
-  activeSlack,
-  exampleDraft,
-  installation,
-  serverState,
-  signedNda,
-} from "./onboarding-fixtures";
+  type OnboardingAccount,
+  type OnboardingDraft,
+} from "@/lib/engineer-onboarding";
+
+const account: OnboardingAccount = {
+  userId: "00000000-0000-4000-8000-000000000001",
+  organizationId: "00000000-0000-4000-8000-000000000002",
+  name: "Alex Morgan",
+  email: "alex@acme.example",
+  company: "Acme",
+};
+
+const exampleDraft = (
+  patch: Partial<OnboardingDraft> = {},
+): OnboardingDraft => ({
+  ...emptyDraft(),
+  legalName: "Acme, Inc.",
+  legalAddress: "123 Example Street\nSan Francisco, CA 94105",
+  signerTitle: "CTO",
+  context:
+    "We're building a support agent that sometimes calls the wrong tool when updating an order.",
+  ...patch,
+});
+
+const serverState = (
+  patch: Partial<EngineerOnboarding> = {},
+): EngineerOnboarding => ({
+  nda: null,
+  slack: null,
+  github_installations: [],
+  contact_channel: null,
+  submitted_at: null,
+  ...patch,
+});
+
+const signedNda = {
+  document_id: "document-1",
+  signed_at: "2026-11-01T12:00:00.000Z",
+};
+
+const activeSlack = {
+  channel_id: "C123",
+  channel_name: "ext-acme-gradiated",
+  status: "active" as const,
+  invited_email: "team@acme.example",
+  invited_at: "2026-11-01T12:30:00.000Z",
+};
+
+const installation = { id: 42, account: "acme", repository_count: 3 };
 
 describe("onboarding resume", () => {
   it("starts with the introduction until the NDA is recorded", () => {
@@ -51,7 +94,7 @@ describe("onboarding resume", () => {
   });
 
   it("restores only form fields from storage", () => {
-    const restored = restoreOnboardingDraft({
+    const restored = restoreDraft({
       ...exampleDraft(),
       step: 2,
       submitted: true,
@@ -59,14 +102,12 @@ describe("onboarding resume", () => {
     });
 
     expect(restored).toEqual(exampleDraft());
-    expect(restoreOnboardingDraft({ channel: "fax" })).toEqual(
-      restoreOnboardingDraft({}),
-    );
+    expect(restoreDraft({ channel: "fax" })).toEqual(restoreDraft({}));
   });
 
   it("scopes stored drafts to user and organization", () => {
-    expect(accountStorageKey(account)).toContain(account.userId);
-    expect(accountStorageKey(account)).toContain(account.organizationId);
+    expect(draftStorageKey(account)).toContain(account.userId);
+    expect(draftStorageKey(account)).toContain(account.organizationId);
   });
 });
 
@@ -183,6 +224,19 @@ describe("onboarding submission", () => {
   });
 });
 
+describe("onboarding Slack channel", () => {
+  it("proposes a channel name Slack accepts from the company name", () => {
+    expect(proposedSlackChannel("Acme, Inc.")).toBe("ext-acme-inc-gradiated");
+    expect(proposedSlackChannel("Café Société")).toBe(
+      "ext-cafe-societe-gradiated",
+    );
+    expect(proposedSlackChannel("!!!")).toBe("ext-customer-gradiated");
+    expect(proposedSlackChannel("a".repeat(200)).length).toBeLessThanOrEqual(
+      80,
+    );
+  });
+});
+
 describe("onboarding summary and confirmation", () => {
   it("summarizes the channel from server state", () => {
     expect(
@@ -262,7 +316,7 @@ describe("onboarding account", () => {
     const first = membership({ id: "first" });
     const second = membership({ id: "second" });
 
-    expect(chooseAccount(user(first, second), null)).toEqual({
+    expect(chooseAccount(user(first, second), undefined)).toEqual({
       kind: "pick",
       organizations: [first, second],
     });
@@ -290,7 +344,7 @@ describe("onboarding account", () => {
     expect(
       chooseAccount(
         user(membership({ id: "first", onboarding_completed: false })),
-        null,
+        undefined,
       ),
     ).toEqual({ kind: "setup", organizationId: "first" });
   });

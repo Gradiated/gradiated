@@ -5,13 +5,13 @@ described Zod schemas and generate the OpenAPI document and browser clients.
 
 ## Engineer onboarding
 
-The website's `/get-started/` flow uses organization-owned routes. Each
+The console's `/onboarding/engineer` page uses organization-owned routes. Each
 requires a verified active organization admin, rejects staff impersonation and
 returns `Cache-Control: no-store`. Local development calls the same providers:
-set the switches and keys below in the repository-root `.env` and run the
-`api`, `console` and `website` mprocs processes, with test credentials.
-Production credentials belong in the API secret `gradiated/prod/product/api`
-(`us-east-1`); preserve its other entries and never use a `VITE_` variable.
+set the keys below in the repository-root `.env` and run the `api` and `console`
+mprocs processes. Production credentials belong in the API secret
+`gradiated/prod/product/api` (`us-east-1`); preserve its other entries and never
+use a `VITE_` variable.
 
 | Route (under `/api/v1/organizations/{organization_id}`) | Purpose                                                                             | Limit per minute |
 | ------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------- |

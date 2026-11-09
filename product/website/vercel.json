@@ -83,10 +83,6 @@
   ],
   "headers": [
     {
-      "source": "/get-started/",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
-    },
-    {
       "source": "/style/",
       "headers": [
         {

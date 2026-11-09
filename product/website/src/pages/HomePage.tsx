@@ -1,4 +1,4 @@
-import { CONSOLE_BASE_URL, ENGINEER_ENTRY_PATH } from "../urls";
+import { CONSOLE_BASE_URL } from "../urls";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
@@ -212,7 +212,7 @@ const products = [
       "Served through the same API",
     ],
     action: "Get started",
-    href: ENGINEER_ENTRY_PATH,
+    href: `${CONSOLE_BASE_URL}/onboarding/engineer`,
   },
 ] as const;
 

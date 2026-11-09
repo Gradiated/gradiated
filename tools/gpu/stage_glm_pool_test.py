@@ -122,7 +122,9 @@ class H200Staging(unittest.TestCase):
         pod = rollout['spec']['template']
         self.assertEqual(pod['metadata']['annotations']['gradiated.com/serving-mode'], 'qualification')
         self.assertEqual(rollout['spec']['replicas'], 1)
-        self.assertNotIn('affinity', pod['spec'])
+        # A staged pool is pinned to no host and not spread; it only prefers warm hosts.
+        self.assertEqual(set(pod['spec']['affinity']), {'nodeAffinity'})
+        self.assertEqual(set(pod['spec']['affinity']['nodeAffinity']), {'preferredDuringSchedulingIgnoredDuringExecution'})
         self.assertEqual(pod['spec']['containers'][0]['resources']['requests']['memory'], '320Gi')
         self.assertEqual(pod['spec']['nodeSelector']['nvidia.com/gpu.product'], self.PRODUCT)
 

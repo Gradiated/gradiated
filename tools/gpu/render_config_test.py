@@ -470,6 +470,9 @@ class RenderTests(unittest.TestCase):
         terms = spec['affinity']['nodeAffinity']['requiredDuringSchedulingIgnoredDuringExecution']['nodeSelectorTerms']
         self.assertEqual(terms, [{'matchExpressions': [{'key': 'gradiated.com/instance-id', 'operator': 'In',
                                                         'values': [reserved['spec']['instanceId']]}]}])
+        # A reserved pool keeps the default scheduler and has no preferences to weigh.
+        self.assertNotIn('schedulerName', spec)
+        self.assertNotIn('preferredDuringSchedulingIgnoredDuringExecution', spec['affinity']['nodeAffinity'])
         with self.assertRaisesRegex(ValueError, 'reserved for'):
             self.synthetic({'kimi': {**pool, 'reservation': 'training'}}, hosts=hosts, kimi={'active_requests': 5})
         # An unreserved pool neither tolerates reservations nor names hosts.
@@ -478,7 +481,21 @@ class RenderTests(unittest.TestCase):
         spec = renderer.rollout('plain', plain['plain'], catalogue)['spec']['template']['spec']
         self.assertEqual(spec['tolerations'], [{'key': 'gradiated.com/gpu', 'operator': 'Equal', 'value': 'true',
                                                 'effect': 'NoSchedule'}])
+        # A runtime not keyed by a digest gets no startup labels to prefer, but still bin-packs.
         self.assertNotIn('affinity', spec)
+        self.assertEqual(spec['schedulerName'], 'gradiated-gpu')
+
+    def test_an_unreserved_pool_prefers_hosts_holding_its_startup_state(self):
+        digest = '0123456789abcdef' * 4
+        pools, catalogue = self.synthetic({'pool': {'runtime': digest, 'gpu': 'B300', 'max_replicas': 2,
+                                                    'progress_deadline_seconds': 60}}, **{digest: {'active_requests': 1}})
+        spec = renderer.rollout('pool', pools['pool'], catalogue)['spec']['template']['spec']
+        self.assertEqual(spec['affinity'], {'nodeAffinity': {'preferredDuringSchedulingIgnoredDuringExecution': [
+            {'weight': 15, 'preference': {'matchExpressions': [
+                {'key': 'gradiated.com/weights.0123456789abcdef', 'operator': 'In', 'values': ['true']}]}},
+            {'weight': 7, 'preference': {'matchExpressions': [
+                {'key': 'gradiated.com/bundle.0123456789abcdef', 'operator': 'In', 'values': ['true']}]}}]}})
+        self.assertEqual(spec['schedulerName'], 'gradiated-gpu')
 
     def test_only_kimi_reserves_capacity(self):
         hosts, _ = renderer.inventory(self.hosts)
@@ -502,10 +519,10 @@ class RenderTests(unittest.TestCase):
         term = {'topologyKey': 'kubernetes.io/hostname',
                 'labelSelector': {'matchLabels': {'app.kubernetes.io/name': 'pool'}}}
         required = renderer.rollout('pool', {**pool, 'spread': 'required'}, catalogue)['spec']['template']['spec']
-        self.assertEqual(required['affinity'], {'podAntiAffinity': {'requiredDuringSchedulingIgnoredDuringExecution': [term]}})
+        self.assertEqual(required['affinity']['podAntiAffinity'], {'requiredDuringSchedulingIgnoredDuringExecution': [term]})
         preferred = renderer.rollout('pool', {**pool, 'spread': 'preferred'}, catalogue)['spec']['template']['spec']
-        self.assertEqual(preferred['affinity'], {'podAntiAffinity': {'preferredDuringSchedulingIgnoredDuringExecution': [
-            {'weight': 100, 'podAffinityTerm': term}]}})
+        self.assertEqual(preferred['affinity']['podAntiAffinity'], {'preferredDuringSchedulingIgnoredDuringExecution': [
+            {'weight': 100, 'podAffinityTerm': term}]})
         with self.assertRaisesRegex(ValueError, 'spread'):
             renderer.rollout('pool', {**pool, 'spread': 'always'}, catalogue)
 

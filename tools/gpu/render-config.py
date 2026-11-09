@@ -168,6 +168,11 @@ def plan(models, runtimes, hosts):
     return pools
 
 
+GPU_SCHEDULER = 'gradiated-gpu'
+# Weights follow measured GLM start savings: weights ~4 min of download, bundle ~1-2 min.
+STARTUP_PARTS = [('weights', 15), ('bundle', 7)]
+
+
 def rollout(name, pool, runtimes):
     if 'app.kubernetes.io/name' in pool.get('labels', {}):
         raise ValueError('The model identity label is reserved')
@@ -212,6 +217,15 @@ def rollout(name, pool, runtimes):
         tolerations.append({'key': RESERVED, 'operator': 'Equal', 'value': pool['reservation'], 'effect': 'NoSchedule'})
         affinity['nodeAffinity'] = {'requiredDuringSchedulingIgnoredDuringExecution': {'nodeSelectorTerms': [
             {'matchExpressions': [{'key': 'gradiated.com/instance-id', 'operator': 'In', 'values': pool['hosts']}]}]}}
+    elif re.fullmatch(r'[0-9a-f]{16}', pool['runtime'][:16]):
+        # Prefer hosts that already hold this runtime's startup state, weighted by
+        # the time each part saves a start. The gpu-controller labels only runtimes
+        # keyed by a digest, as gradiated.com/<part>.<first 16 hex>.
+        runtime_label = pool['runtime'][:16]
+        affinity['nodeAffinity'] = {'preferredDuringSchedulingIgnoredDuringExecution': [
+            {'weight': weight, 'preference': {'matchExpressions': [
+                {'key': f'gradiated.com/{part}.{runtime_label}', 'operator': 'In', 'values': ['true']}]}}
+            for part, weight in STARTUP_PARTS]}
     spread = pool.get('spread')
     term = {'topologyKey': 'kubernetes.io/hostname', 'labelSelector': {'matchLabels': {'app.kubernetes.io/name': name}}}
     if spread == 'required':
@@ -229,6 +243,9 @@ def rollout(name, pool, runtimes):
             'requests': {**limits, 'memory': runtime.get('request_memory', runtime['memory'])}, 'limits': limits}}]}
     if affinity:
         pod['affinity'] = affinity
+    if not pool['hosts']:
+        # Bin-packs GPUs so a small replica leaves larger hosts whole (gpu-scheduler.yaml).
+        pod['schedulerName'] = GPU_SCHEDULER
     metadata = {'name': name, 'namespace': 'gpu-inference'}
     if not pool['maximum']:
         # Argo holds a switched-off pool at zero; otherwise KEDA owns replicas.

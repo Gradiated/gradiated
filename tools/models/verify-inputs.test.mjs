@@ -30,7 +30,7 @@ test("a bundle's own inputs verify only that bundle", () => {
     ["kev-9b"],
   );
   assert.deepEqual(bundlesToVerify(["product/inference/lora/manager.py"]), [
-    "glm-5-3-flash",
+    "glm-5-3-flash-sglang",
   ]);
 });
 test("docs, tests, GLM and release tooling verify nothing", () => {
@@ -86,7 +86,7 @@ test("SGLang GLM bundle and helper changes verify only that runtime", () => {
 test("shared warmup changes verify GLM and Kimi runtimes", () => {
   assert.deepEqual(
     bundlesToVerify(["product/inference/runtimes/glm/warmup-supervisor.py"]),
-    ["glm-5-3-flash", "glm-5-3-flash-sglang", "kimi-k31-pro"],
+    ["glm-5-3-flash-sglang", "kimi-k31-pro"],
   );
 });
 

@@ -274,8 +274,8 @@ class Loader:
     def prepare(self, name, workspace_id, deadline=None):
         files = self.resolve_files(name, workspace_id, deadline)
         runtime_name = f"{workspace_id}/{self.entries[name]['spec']['version']['name']}"
-        # Native resolution can call the loader while holding vLLM's model lock.
-        # Do not hold the materialization lock across calls back into vLLM.
+        # SGLang's resolver hook can call the loader while it loads an adapter.
+        # Do not hold the materialization lock across calls back into SGLang.
         with self.registration:
             entry = self.entries[name]
             if entry["registered"]:
@@ -290,12 +290,8 @@ class Loader:
             try:
                 self.engine(
                     "POST",
-                    "/v1/load_lora_adapter",
-                    {
-                        "lora_name": runtime_name,
-                        "lora_path": files["path"],
-                        "is_3d_lora_weight": files["is_3d_lora_weight"],
-                    },
+                    "/load_lora_adapter",
+                    {"lora_name": runtime_name, "lora_path": files["path"]},
                 )
             except ValueError:
                 models = json.loads(self.engine("GET", "/v1/models"))["data"]
@@ -357,7 +353,7 @@ class Loader:
             raise TimeoutError("Cold adapter deadline exceeded")
         with self.lock:
             self.counters["disk_hits"] += int(not fetched)
-            # vLLM retains returned paths for native CPU-cache reloads.
+            # SGLang reloads evicted adapters from the returned path.
             entry.update(disk=disk, pinned=True, used=time.time())
         return self.local_files(name)
 

@@ -23,11 +23,6 @@ target "verify-kev-9b" {
   dockerfile = "bundles/kev-9b/Dockerfile"
 }
 
-target "verify-glm-5-3-flash" {
-  inherits = ["bundle"]
-  dockerfile = "bundles/glm-5-3-flash/Dockerfile"
-}
-
 target "verify-training" {
   inherits   = ["bundle"]
   context    = "product"

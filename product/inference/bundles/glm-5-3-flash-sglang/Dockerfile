@@ -42,20 +42,24 @@ ADD --checksum=sha256:884b9e21d0efaa403fd307c413c7dd82306b1f5d72536314e2d115b805
     https://codeload.github.com/smg-project/smg/tar.gz/91b3e0c440f9ab7971aa3ba48b049d951bd963de /tmp/smg.tar.gz
 COPY bundles/glm-5-3-flash-sglang/smg-build-requirements.txt /tmp/smg-build-requirements.txt
 COPY bundles/glm-5-3-flash-sglang/smg-patches.json /tmp/sglang-patches/
+COPY bundles/glm-5-3-flash-sglang/smg-lora /tmp/smg-lora
 RUN uv pip install --python /bundle/python/bin/python3 --break-system-packages \
       --no-deps --require-hashes -r /tmp/smg-build-requirements.txt \
     && mkdir /src-smg && tar -xzf /tmp/smg.tar.gz -C /src-smg --strip-components=1 \
-    && /bundle/python/bin/python3 /tmp/sglang-patches/apply-patches.py /src-smg /tmp/sglang-patches --manifest smg-patches.json
+    && /bundle/python/bin/python3 /tmp/sglang-patches/apply-patches.py /src-smg /tmp/sglang-patches --manifest smg-patches.json \
+    && /bundle/python/bin/python3 /tmp/sglang-patches/apply-patches.py /src-smg /tmp/smg-lora --manifest smg-patches.json
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/src-smg/target \
     cd /src-smg && cargo test --locked --release -p smg --lib middleware::concurrency::tests \
+    && cargo test --locked --release -p smg --lib worker::registry::tests::unknown_models \
     && cd bindings/python \
     && /bundle/python/bin/maturin build --locked --release --interpreter /bundle/python/bin/python3 --compatibility linux --out /smg-wheels \
     && uv pip install --python /bundle/python/bin/python3 --break-system-packages --reinstall --no-deps /smg-wheels/smg-*.whl \
     && uv pip uninstall --python /bundle/python/bin/python3 --break-system-packages maturin \
     && uv pip check --python /bundle/python/bin/python3 \
-    && cp /tmp/sglang-patches/smg-patches.json /bundle/smg-patches.json
+    && cp /tmp/sglang-patches/smg-patches.json /bundle/smg-patches.json \
+    && cp /tmp/smg-lora/smg-patches.json /bundle/smg-lora-patches.json
 
 FROM smg-compiler AS package
 COPY bundles/package.sh /package.sh
@@ -64,6 +68,7 @@ COPY bundles/glm-5-3-flash-sglang/model-config.json bundles/glm-5-3-flash-sglang
 COPY runtimes/glm/warmup-supervisor.py /bundle/warmup-base.py
 COPY runtimes/glm-sglang/*.py /bundle/glm-sglang/
 COPY runtimes/glm-sglang/autotune /bundle/glm-sglang/autotune
+COPY lora/*.py /bundle/lora/
 COPY images/gpu-base/base-id /bundle/base-id
 RUN bash /package.sh
 
@@ -74,6 +79,7 @@ RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
     && CUDA_VISIBLE_DEVICES="" NVIDIA_VISIBLE_DEVICES="" \
        /bundle/python/bin/python3 /bundle/glm-sglang/verify-build.py /bundle \
     && GRADIATED_REQUIRE_SGLANG=1 /bundle/python/bin/python3 -m unittest discover -s /bundle/glm-sglang -p 'test_*.py' \
+    && /bundle/python/bin/python3 -m unittest discover -s /bundle/lora -p 'test_*.py' \
     && rm -rf /bundle && touch /verified
 
 FROM scratch AS artifact

@@ -6,6 +6,20 @@ import subprocess
 
 MODEL = 'dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4'
 REVISION = '745aac2ff0f10acf961f396df3f9418598aa7327'
+UNCENSORED = 'dealignai/glm-5.3-flash-uncensored'
+# Public model ID (MODEL_ID) -> served checkpoint. Runtimes without MODEL_ID serve the uncensored model.
+MODELS = {
+    UNCENSORED: {'model': MODEL, 'revision': REVISION, 'served_model_name': MODEL,
+                 'model_config_sha256': '08d31c499953794bcf83669497c69c856160927ce29c7df037b8ae315f4f5bdd',
+                 'moe_runner': 'marlin', 'lora_targets': None},
+    # NVIDIA's NVFP4 export keeps attention, shared experts and the router in BF16 and
+    # quantizes routed experts W4A4. Adapters train on the BF16 base (LORA_BASE_MODEL_REVISION).
+    'z-ai/glm-5.3-flash': {'model': 'nvidia/GLM-5.3-Flash-NVFP4', 'revision': '1d00738646cbb0c6d0a9eb403dac5f366f1473a7',
+                           'served_model_name': 'zai-org/GLM-5.3-Flash', 'model_config_sha256': None,
+                           'moe_runner': 'flashinfer_trtllm',
+                           'lora_targets': ['q_proj', 'k_proj', 'v_proj', 'o_proj', 'q_a_proj', 'q_b_proj',
+                                            'kv_a_proj_with_mqa', 'kv_b_proj']},
+}
 SGLANG_SOURCE = 'f171859219b54e1dad45dda60028034490836974'
 SMG_VERSION = '1.13.0'
 ACTIVE_REQUESTS = 12
@@ -31,7 +45,12 @@ def settings(environment):
     root = Path(environment['GRADIATED_RUNTIME_ROOT'])
     if not root.is_absolute():
         raise ValueError('Runtime root must be absolute')
-    if environment.get('LORA_ENABLED', 'false') != 'false':
+    model_id = environment.get('MODEL_ID', UNCENSORED)
+    if model_id not in MODELS:
+        raise ValueError('Unknown GLM SGLang model')
+    model = MODELS[model_id]
+    lora = environment.get('LORA_ENABLED', 'false')
+    if lora not in {'true', 'false'} or (lora == 'true' and not model['lora_targets']):
         raise ValueError('This checkpoint has no qualified adapters')
     if environment.get('TENSOR_PARALLEL_SIZE', '2') != '2':
         raise ValueError('GLM SGLang profiles require TP2')
@@ -48,7 +67,8 @@ def settings(environment):
     if len({front, warmup, backend, metrics}) != 4 or warmup in [front + 1, front + 2]:
         raise ValueError('Runtime ports overlap reserved host services')
     return {'root': root, 'front': front, 'warmup': warmup, 'backend': backend, 'metrics': metrics,
-            'profile': profile, **PROFILES[profile]}
+            'profile': profile, **PROFILES[profile], 'model_id': model_id, 'lora': lora == 'true',
+            **{key: model[key] for key in ('model', 'revision', 'served_model_name', 'moe_runner')}}
 
 
 GPU_PROFILES = {'B200': 'b200-pcp2', 'B300': 'b300-pcp2', 'H200': 'h200-tp2'}
@@ -79,19 +99,33 @@ def validate_hardware(environment):
         raise ValueError('Assigned GPUs do not match the selected GLM SGLang hardware profile')
 
 
+def lora_arguments(environment, targets):
+    # The adapter package ships beside this runtime in the bundle and in the repository.
+    import sys
+    for candidate in [Path(__file__).resolve().parents[1] / 'lora', Path(__file__).resolve().parents[2] / 'lora']:
+        if (candidate / 'adapter_service.py').is_file() and str(candidate) not in sys.path:
+            sys.path.insert(0, str(candidate))
+    from adapter_service import engine_arguments, engine_settings
+    settings = engine_settings(environment, '', int(environment.get('TENSOR_PARALLEL_SIZE', '2')), {})
+    return engine_arguments(settings, targets)
+
+
 def commands(environment):
     config = settings(environment)
     root = config['root']
     python = str(root / 'python/bin/python3')
-    model_config = json.loads((root / 'model-config.json').read_text())
-    encoded = json.dumps(model_config, sort_keys=True, separators=(',', ':')).encode()
-    if hashlib.sha256(encoded).hexdigest() != '08d31c499953794bcf83669497c69c856160927ce29c7df037b8ae315f4f5bdd':
-        raise ValueError('Qualified GLM quantization overrides changed')
-    backend = [python, '-m', 'sglang.launch_server', '--model-path', MODEL,
-               '--revision', REVISION, '--served-model-name', MODEL, '--tp-size', '2',
-               '--ep-size', '1', '--moe-dense-tp-size', '2', '--quantization', 'modelopt_fp4',
-               '--json-model-override-args', json.dumps(model_config, separators=(',', ':')),
-               '--moe-runner-backend', 'marlin', '--disable-shared-experts-fusion',
+    model = MODELS[config['model_id']]
+    overrides = []
+    if model['model_config_sha256']:
+        model_config = json.loads((root / 'model-config.json').read_text())
+        encoded = json.dumps(model_config, sort_keys=True, separators=(',', ':')).encode()
+        if hashlib.sha256(encoded).hexdigest() != model['model_config_sha256']:
+            raise ValueError('Qualified GLM quantization overrides changed')
+        overrides = ['--json-model-override-args', json.dumps(model_config, separators=(',', ':'))]
+    backend = [python, '-m', 'sglang.launch_server', '--model-path', config['model'],
+               '--revision', config['revision'], '--served-model-name', config['served_model_name'], '--tp-size', '2',
+               '--ep-size', '1', '--moe-dense-tp-size', '2', '--quantization', 'modelopt_fp4', *overrides,
+               '--moe-runner-backend', config['moe_runner'], '--disable-shared-experts-fusion',
                '--dsa-prefill-backend', config.get('dsa_prefill', config['dsa_backend']), '--dsa-decode-backend', config['dsa_backend'],
                '--kv-cache-dtype', config.get('kv_dtype', 'fp8_e4m3'), '--max-running-requests', str(config['active_requests']),
                '--chunked-prefill-size', str(config['prefill_tokens']), '--max-prefill-tokens', str(config['prefill_tokens']),
@@ -112,6 +146,8 @@ def commands(environment):
     else:
         # GLM pools four logical tokens per key; FlashMLA needs 64 physical slots per page.
         backend += ['--page-size', '256']
+    if config['lora']:
+        backend += lora_arguments(environment, model['lora_targets'])
     router = [python, '-m', 'smg.launch_router', '--worker-urls',
               f"http://127.0.0.1:{config['backend']}", '--policy', 'round_robin',
               '--host', '127.0.0.1', '--port', str(config['front']),

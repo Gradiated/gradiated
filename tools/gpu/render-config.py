@@ -266,10 +266,11 @@ def rollout(name, pool, runtimes):
 
 
 GLM_SGLANG_CONFIG = ROOT / 'product/inference/runtimes/glm-sglang/config.py'
+DEEPSEEK_SGLANG_CONFIG = ROOT / 'product/inference/runtimes/deepseek-sglang/config.py'
 
 
-def glm_sglang_profiles():
-    spec = importlib.util.spec_from_file_location('glm_sglang_config', GLM_SGLANG_CONFIG)
+def load_config(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
     config = importlib.util.module_from_spec(spec)
     # Rendering must not leave bytecode beside the launcher source.
     written, sys.dont_write_bytecode = sys.dont_write_bytecode, True
@@ -277,7 +278,11 @@ def glm_sglang_profiles():
         spec.loader.exec_module(config)
     finally:
         sys.dont_write_bytecode = written
-    return config.PROFILES
+    return config
+
+
+def glm_sglang_profiles():
+    return load_config('glm_sglang_config', GLM_SGLANG_CONFIG).PROFILES
 
 
 def validate_active_requests(pools, runtimes, profiles):
@@ -289,8 +294,16 @@ def validate_active_requests(pools, runtimes, profiles):
         limit = runtime.get('active_requests')
         if 'active_requests' in runtime and (type(limit) is not int or not 1 <= limit <= 4096):
             raise ValueError(f'Runtime release {key} active_requests must be an integer from 1 to 4096')
+    deepseek = None
     for name, pool in pools.items():
         runtime = runtimes[pool['runtime']]
+        if runtime['image'].startswith('gradiated/deepseek-sglang-bundle@'):
+            if deepseek is None:
+                deepseek = load_config('deepseek_sglang_config', DEEPSEEK_SGLANG_CONFIG).PROFILES
+            enforced = [profile['active_requests'] for profile in deepseek.values() if profile['gpu_product'] == pool['gpu']]
+            if len(enforced) != 1 or runtime.get('active_requests') != enforced[0]:
+                raise ValueError(f'Pool {name} runtime active_requests must equal its DeepSeek launcher profile')
+            continue
         if not runtime['image'].startswith('gradiated/glm-sglang-bundle@'):
             continue
         selected = runtime.get('environment', {}).get('GLM_SGLANG_PROFILE')

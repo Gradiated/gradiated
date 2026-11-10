@@ -342,8 +342,9 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(floors['glm-dealign-sglang-b200'][:2], (0, 0))
         self.assertEqual(floors['glm-dealign-sglang-h200'][:2], (0, 0))
         self.assertEqual(floors['kev'], (2, 2, 1))
-        for name in ('glm', 'deepseek'):
-            self.assertEqual(floors[name][:2], (0, 0))
+        # Plain GLM and DeepSeek 1017 scale from zero to one SGLang replica on demand.
+        self.assertEqual(floors['glm'], (0, 1, 12))
+        self.assertEqual(floors['deepseek'], (0, 1, 32))
         for model in ('dealignai/glm-5.3-flash-uncensored', 'jaredpalmer/kev-9b'):
             self.assertGreater(models[model]['min_slots'], 0)
         # Models never name hosts; reservations on hosts.yaml place pools instead.

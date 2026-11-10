@@ -1,0 +1,44 @@
+--- a/sglang/srt/arg_groups/deepseek_v4_hook.py
++++ b/sglang/srt/arg_groups/deepseek_v4_hook.py
+@@ -172,6 +172,19 @@
+             dsv4_attn_backend=_default_dsv4_attention_backend(server_args),
+         )
+ 
++    lora_enabled = bool(cfg.enable_lora or cfg.lora_paths)
++    if lora_enabled and cfg.dsv4_attn_backend == "flashmla_mega":
++        # MegaAttention absorbs wo_a into its own quantized copy and feeds wo_b
++        # a packed MXFP8 pair, so neither projection's adapter would apply.
++        raise ValueError(
++            "DeepSeek-V4 LoRA does not support --dsv4-attn-backend flashmla_mega; "
++            "use flashmla."
++        )
++    if lora_enabled and attn_dp_enabled_of(cfg):
++        # The routed-MoE gather runs the shared expert on every attention-DP
++        # rank's rows, which the DP-local LoRA batch layout does not describe.
++        raise ValueError("DeepSeek-V4 LoRA does not support DP attention yet.")
++
+     if cfg.dsv4_attn_backend == "flashmla_mega":
+         from sglang.srt.utils.common import is_sm100_supported
+ 
+@@ -244,6 +257,11 @@
+ def validate_deepseek_v4_cp(server_args: ServerArgs) -> None:
+     """Validate DeepSeek V4 context-parallel configuration."""
+     cfg = resolving_view(server_args)
++    if cfg.enable_cp_decode_attn_tp and (cfg.enable_lora or cfg.lora_paths):
++        # decode attention TP slices the raw attention linears, not a LoRA wrapper or its A/B
++        raise ValueError(
++            "DeepSeekV4 --enable-cp-decode-attn-tp does not support LoRA yet."
++        )
+     if not cfg.enable_prefill_cp:
+         return
+ 
+@@ -465,6 +483,9 @@
+             )
+ 
+     incompatible = (
++        # Late layers run on the compacted tail rows, which the LoRA batch
++        # segments do not describe.
++        ("LoRA", bool(cfg.enable_lora or cfg.lora_paths)),
+         (
+             "the prefill CUDA graph",
+             cfg.cuda_graph_config.prefill.backend

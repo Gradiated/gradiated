@@ -119,7 +119,7 @@ describe("playgroundModels", () => {
     const models = playgroundModels(
       [
         hosted("z-ai/glm-5.3-flash"),
-        hosted("deepseek/deepseek-v4.1-flash", { status: "unavailable" }),
+        hosted("deepseek/deepseek-v4.1-flash-1017", { status: "unavailable" }),
         hosted("jaredpalmer/kev-9b", { type: "decision" }),
         hosted("Qwen/Qwen3-8B"),
       ],
@@ -130,7 +130,7 @@ describe("playgroundModels", () => {
       models.map(({ id, source, available }) => [id, source, available]),
     ).toEqual([
       ["z-ai/glm-5.3-flash", "hosted", true],
-      ["deepseek/deepseek-v4.1-flash", "hosted", false],
+      ["deepseek/deepseek-v4.1-flash-1017", "hosted", false],
       ["support-assistant", "workspace", true],
     ]);
     expect(models[0]?.label).toBe("GLM-5.3 Flash");

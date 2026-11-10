@@ -15,6 +15,8 @@ const schema = z
   .object({
     title: z.string().trim().min(1),
     description: z.string().trim().min(1).optional(),
+    author: z.string().trim().min(1).optional(),
+    authorTitle: z.string().trim().min(1).optional(),
     path: z
       .string()
       .regex(

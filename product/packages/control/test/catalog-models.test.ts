@@ -2,7 +2,10 @@ import {
   ModelPropertiesInputSchema,
   OpenRouterModelIdSchema,
 } from "@gradiated/contracts";
-import { modelType } from "@gradiated/contracts/model-catalog";
+import {
+  modelType,
+  modelSupportedUses,
+} from "@gradiated/contracts/model-catalog";
 import { describe, expect, it } from "vitest";
 
 import { catalogModels, legacyModels } from "../src/catalog/models/index.js";
@@ -20,44 +23,56 @@ const prices = (model: { properties: unknown }) => {
 };
 
 describe("model configurations", () => {
-  it.each(catalogModels)("$id is a valid catalog model", (model) => {
-    const properties = ModelPropertiesInputSchema.parse(model.properties);
+  it.each([...catalogModels, ...legacyModels])(
+    "$id is a valid catalog model",
+    (model) => {
+      const properties = ModelPropertiesInputSchema.parse(model.properties);
 
-    expect(model.id).toBe(model.id.toLowerCase());
-    for (const output of properties.output_modalities) {
-      expect(output.default_length?.value ?? 0).toBeLessThanOrEqual(
-        output.max_length.value,
-      );
-    }
-    const { input, output } = prices(model);
-    for (const { cost } of [...input, ...output]) {
-      expect(Number.isSafeInteger(cost) && cost >= 0).toBe(true);
-    }
-  });
+      expect(model.id).toBe(model.id.toLowerCase());
+      for (const output of properties.output_modalities) {
+        expect(output.default_length?.value ?? 0).toBeLessThanOrEqual(
+          output.max_length.value,
+        );
+      }
+      const { input, output } = prices(model);
+      for (const { cost } of [...input, ...output]) {
+        expect(Number.isSafeInteger(cost) && cost >= 0).toBe(true);
+      }
+    },
+  );
 
   const pinnedPrices: Record<string, { input: number[]; output: number[] }> = {
-    "deepseek/deepseek-v4.1-flash": { input: [300, 6], output: [1_200, 1_200] },
+    "deepseek/deepseek-v4.1-flash-1017": { input: [6, 1], output: [200, 200] },
+    "deepseek/deepseek-v4.1-flash": { input: [6, 1], output: [200, 200] },
     "z-ai/glm-5.3-flash": { input: [150, 30], output: [500, 500] },
     "dealignai/glm-5.3-flash-uncensored": {
       input: [100, 10],
       output: [450, 450],
     },
+    "dealignai/glm-5.3-flash-uncensored-nvfp4": {
+      input: [100, 10],
+      output: [450, 450],
+    },
     "jaredpalmer/kev-9b": { input: [30, 6], output: [0] },
+    "perplexity-ai/pplx-decider-v1.2": { input: [20, 20], output: [0] },
     "moonshotai/kimi-k3.1-pro": {
-      input: [1_600, 160],
-      output: [9_000, 9_000],
+      input: [500, 50],
+      output: [5_000, 5_000],
     },
     "z-ai/glm-5.3": { input: [1_400, 260], output: [4_400, 4_400] },
   };
 
-  it.each(catalogModels)("pins the nano-USD prices of $id", (model) => {
-    const pinned = prices(model);
+  it.each([...catalogModels, ...legacyModels])(
+    "pins the nano-USD prices of $id",
+    (model) => {
+      const pinned = prices(model);
 
-    expect({
-      input: pinned.input.map(({ cost }) => cost),
-      output: pinned.output.map(({ cost }) => cost),
-    }).toEqual(pinnedPrices[model.id]);
-  });
+      expect({
+        input: pinned.input.map(({ cost }) => cost),
+        output: pinned.output.map(({ cost }) => cost),
+      }).toEqual(pinnedPrices[model.id]);
+    },
+  );
 
   it("maps only verified exact models to OpenRouter", () => {
     const mappings = Object.fromEntries(
@@ -68,11 +83,13 @@ describe("model configurations", () => {
     );
 
     expect(mappings).toEqual({
+      "deepseek/deepseek-v4.1-flash-1017": "deepseek/deepseek-v4.1-flash-1017",
       "deepseek/deepseek-v4.1-flash": "deepseek/deepseek-v4.1-flash",
       "z-ai/glm-5.3-flash": "z-ai/glm-5.3-flash",
       "dealignai/glm-5.3-flash-uncensored": null,
       "dealignai/glm-5.3-flash-uncensored-nvfp4": null,
       "jaredpalmer/kev-9b": undefined,
+      "perplexity-ai/pplx-decider-v1.2": null,
       "moonshotai/kimi-k3.1-pro": null,
       "z-ai/glm-5.3": "z-ai/glm-5.3",
     });
@@ -92,8 +109,8 @@ describe("model configurations", () => {
     }
   });
 
-  it("advertises Kev 9B as a decision model that cannot generate", () => {
-    expect(createKev9bModelConfiguration().status).toBe("available");
+  it("retains Kev 9B history while retiring it from published catalogs", () => {
+    expect(createKev9bModelConfiguration().status).toBe("retired");
     expect(modelType(createKev9bModelConfiguration().id)).toBe("decision");
     const [output] =
       createKev9bModelConfiguration().properties.output_modalities;
@@ -108,6 +125,7 @@ describe("model configurations", () => {
 
   it("classifies the generation models as chat", () => {
     expect(catalogModels.map((model) => modelType(model.id))).toEqual([
+      "decision",
       "chat",
       "chat",
       "chat",
@@ -161,6 +179,35 @@ it("offers Kimi on local capacity and advertises its exact reasoning contract", 
   });
 });
 
+it("serves DeepSeek V4.1 Flash 1017 on our capacity from its native weights", () => {
+  const model = catalogModels.find(
+    (item) => item.id === "deepseek/deepseek-v4.1-flash-1017",
+  );
+
+  expect(model?.status).toBe("available");
+  expect(model?.name).toBe("DeepSeek V4.1 Flash 1017");
+  expect(model?.properties).toMatchObject({
+    hugging_face_id: "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+    quantization: "mxfp4",
+    tokenizer: "DeepSeek V4.1",
+    input_modalities: [
+      { supported_inputs: { max_context_length: { value: 1_048_576 } } },
+    ],
+  });
+});
+
+it("retires original DeepSeek Flash and keeps 1017 as an explicit selection", () => {
+  const originalId = "deepseek/deepseek-v4.1-flash";
+  const retired = legacyModels.find((model) => model.id === originalId);
+  const replacement = catalogModels.find(
+    (model) => model.id === "deepseek/deepseek-v4.1-flash-1017",
+  );
+
+  expect(catalogModels.some((model) => model.id === originalId)).toBe(false);
+  expect(retired?.status).toBe("retired");
+  expect(replacement?.status).toBe("available");
+});
+
 it("identifies Dealign weights separately from the stock training base", () => {
   const model = catalogModels.find(
     (item) => item.id === "dealignai/glm-5.3-flash-uncensored",
@@ -171,4 +218,19 @@ it("identifies Dealign weights separately from the stock training base", () => {
     hugging_face_id: "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
     quantization: "nvfp4",
   });
+});
+
+it("serves text-only Decider with no external provider or training capability", () => {
+  const model = catalogModels.find(
+    (item) => item.id === "perplexity-ai/pplx-decider-v1.2",
+  );
+  expect(model?.status).toBe("available");
+  expect(
+    model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
+  ).toBeNull();
+  expect(modelType("perplexity-ai/pplx-decider-v1.2")).toBe("decision");
+  expect(modelSupportedUses("perplexity-ai/pplx-decider-v1.2")).toEqual([
+    "serving",
+  ]);
+  expect(model?.properties.quantization).toBe("int4");
 });

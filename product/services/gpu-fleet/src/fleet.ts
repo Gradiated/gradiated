@@ -284,6 +284,10 @@ export const createFleet = ({
       metrics.lastSeen,
       metrics.bundleInfo,
       metrics.bundleDrift,
+      metrics.leaseUntil,
+      metrics.leaseStarted,
+      metrics.hostGpus,
+      metrics.workloadGpus,
     ])
       gauge.reset();
     metrics.postgresConflicts.set(0);

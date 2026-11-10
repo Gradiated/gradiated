@@ -204,6 +204,7 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
       },
       ...(host.state === "enrolled" && {
         status: {
+          phase: "Ready",
           observed: {
             reachable: true,
             lastSeen: new Date(clock - 60_000).toISOString(),

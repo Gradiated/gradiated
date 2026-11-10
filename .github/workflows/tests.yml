@@ -14,6 +14,7 @@ on:
       - "product/inference/images/gpu-base/**"
       - "product/inference/host/**"
       - "product/inference/runtimes/kev/**"
+      - "product/inference/runtimes/decider/**"
       - "product/inference/runtimes/vllm/**"
       - "product/packages/**"
       - ".github/actions/product-changes/**"
@@ -51,6 +52,7 @@ on:
       - "tools/images/**"
       - "tools/virtual-kubelet/**"
       - "tools/deployment/**"
+      - "tools/docs-refresh/**"
       - "tools/github-apps/**"
   pull_request:
   workflow_dispatch:
@@ -84,7 +86,6 @@ jobs:
       integration: ${{ steps.plan.outputs.integration == 'true' && steps.reuse.outputs.reused != 'true' }}
       inference_native: ${{ steps.plan.outputs.inference_native == 'true' && steps.reuse.outputs.reused != 'true' }}
       native_cpp: ${{ steps.plan.outputs.native_cpp == 'true' && steps.reuse.outputs.reused != 'true' }}
-      native_vllm: ${{ steps.plan.outputs.native_vllm == 'true' && steps.reuse.outputs.reused != 'true' }}
       native_kev: ${{ steps.plan.outputs.native_kev == 'true' && steps.reuse.outputs.reused != 'true' }}
       gateway_contract: ${{ steps.plan.outputs.gateway_contract == 'true' && steps.reuse.outputs.reused != 'true' }}
       proxy_e2e: ${{ steps.plan.outputs.proxy_e2e == 'true' && steps.reuse.outputs.reused != 'true' }}
@@ -321,7 +322,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
-      - run: node --test tools/deployment/*.test.mjs tools/github-apps/*.test.mjs tools/images/*.test.mjs
+      - run: node --test tools/deployment/*.test.mjs tools/docs-refresh/*.test.mjs tools/github-apps/*.test.mjs tools/images/*.test.mjs
       - run: pnpm install --frozen-lockfile
         working-directory: product
       - run: pnpm --filter @gradiated/control... build
@@ -395,23 +396,16 @@ jobs:
         if: needs.changes.outputs.native_cpp == 'true'
         working-directory: build/inference
         run: ctest --output-on-failure --parallel "$(nproc)"
-      - name: Run vLLM status reporter tests
-        if: needs.changes.outputs.native_vllm == 'true'
-        working-directory: product/inference/runtimes/vllm
-        env:
-          PYTHONDONTWRITEBYTECODE: "1"
-        run: python3 -m unittest -v test_report_status
-
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         if: needs.changes.outputs.native_kev == 'true'
-      - name: Run Kev runtime CPU unit tests
+      - name: Run decision runtime CPU unit tests
         if: needs.changes.outputs.native_kev == 'true'
         env:
           PYTHONDONTWRITEBYTECODE: "1"
         run: >-
           uv run --no-project --python 3.12
           --with fastapi --with httpx --with pytest
-          python -m pytest -p no:cacheprovider product/inference/runtimes/kev -q
+          python -m pytest -p no:cacheprovider product/inference/runtimes/kev product/inference/runtimes/decider -q
 
   gateway-contract:
     name: Gateway runtime integration

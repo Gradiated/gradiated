@@ -336,7 +336,7 @@ private PodMonitor scrapes its dedicated metrics listener on port 9464.
 The Rust service exposes the launch inference contract:
 
 - `POST /v1/chat/completions`, streaming and non-streaming;
-- `POST /v1/systemone`, non-streaming native Kev pointer inference;
+- `POST /v1/systemone`, non-streaming native typed decision inference;
 - `GET /v1/models` with only exact currently advertised model IDs;
 - `/health/live`, `/health/ready` and `/metrics`.
 
@@ -442,9 +442,8 @@ limits, including bounded `max_running_requests` and `max_queued_requests`.
 SGLang enables priority scheduling with lower numeric values first. The native
 runtime applies the same order before cache-affinity selection. The scheduler
 can batch requests from different tiers after admission. It does not use a
-different per-request batch size for each tier. A vLLM deployment must use its
-priority scheduling policy. The gateway sends the same trusted `priority`
-field to either OpenAI-compatible runtime.
+different per-request batch size for each tier. The gateway sends the same
+trusted `priority` field to every OpenAI-compatible runtime.
 It does not implement customer authentication or billing. A second model is a
 second explicit catalog row, `model_deployments` row and SGLang deployment; it
 is not a reason to introduce a separate routing layer. Additional deployments

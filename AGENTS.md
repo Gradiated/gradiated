@@ -25,6 +25,7 @@ This repository is the complete project state for the research and product-build
 - Put decision-relevant browser captures and research outputs in the relevant `research/<workstream>/docs/` or `research/<workstream>/evidence/` directory.
 - Use `.env.example` for variable names and external secret storage for values.
 - Shared development keys (model provider, OAuth, Stripe test and similar) live as one JSON object in the AWS Secrets Manager secret `gradiated/dev/env` (us-east-1), readable by the `gradiated-readonly` and `gradiated-developer` profiles. Load them with `aws --profile gradiated-readonly secretsmanager get-secret-value --secret-id gradiated/dev/env --query SecretString --output text | jq -r 'to_entries[] | "\(.key)=\(.value)"' > .env` into an ignored `.env`, or read single keys the same way. Never print the values or commit the file. Ask a maintainer to add new shared dev keys there; do not put production credentials in it.
+- Development training GPUs are spot VMs (Nebius for now) from `tools/dev-training/dev_training.py`, using keys in `gradiated/dev/env`; see `$dev-training`. They join the tailnet as `tag:dev-training`, which reaches only other development training VMs. Keep customer data and production credentials off them, and copy results to S3 before `down`.
 - Use the read-only `gradiated-readonly` profile for day-to-day AWS access and `mise run aws:login` when its credentials expire. Opt in explicitly with `mise run aws:login --profile gradiated-developer` only when a task needs developer writes, or `mise run aws:login --profile gradiated-admin` for break-glass administrative work such as bootstrap applies. Match the login task to the profile used by the command; logging in does not change the shell's `AWS_PROFILE`.
 - Preserve existing on-demand GPU reservations. Repurpose running pods by changing processes over SSH, not by stopping, restarting, resetting, terminating, or changing provider image/environment settings. Those actions require explicit authorization to risk losing capacity; a file backup does not preserve the reservation. The one standing exception is the `gpu-fleet` operator's rollout in act mode, which re-images one drained host at a time onto a pinned image after its pods run elsewhere; a pin change merged to `main` authorizes it.
 - Do not make issue trackers, Notion, Drive, Jira, or Slack a required source of truth. The repository owns code, research, prompts, and artifacts.
@@ -53,7 +54,9 @@ This repository is the complete project state for the research and product-build
 - `$browser-research`: reproducible research on JavaScript-heavy or interactive websites.
 - `$product-build`: repository-first product implementation, verification, and handoff.
 - `$experiment-run`: bounded, reproducible experiments with cleanup; routine output stays untracked.
+- `$dev-training`: spot GPU VMs for development training, isolated from production on the tailnet.
 - `$gpu-host-lease`: lease a whole GPU host out of the serving pool for hand-run work, then hand it back to be wiped.
+- `$gpu-model-rollout`: roll a risky runtime change out to a GPU model pool one replica at a time, hold at the first, compare, then finish or roll back.
 
 ## Pull request reviews
 

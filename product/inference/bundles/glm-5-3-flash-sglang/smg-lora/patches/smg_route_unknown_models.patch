@@ -1,0 +1,74 @@
+--- a/model_gateway/src/worker/registry.rs
++++ b/model_gateway/src/worker/registry.rs
+@@ -299,6 +299,11 @@
+     /// once. Mutations never take it.
+     global_routing_update: parking_lot::Mutex<()>,
+ 
++    /// Route a model ID no worker advertises to every worker, letting the
++    /// engine resolve it (for example a dynamically loaded LoRA adapter).
++    /// Set from `SMG_ROUTE_UNKNOWN_MODELS=1` at construction.
++    route_unknown_models: bool,
++
+     /// Alias index kept separate from `model_index` so aliases do not appear as
+     /// models in discovery or statistics.
+     ///
+@@ -402,6 +407,7 @@
+             global_epoch: AtomicUsize::new(0),
+             global_membership_order: parking_lot::RwLock::new(()),
+             global_routing_update: parking_lot::Mutex::new(()),
++            route_unknown_models: std::env::var("SMG_ROUTE_UNKNOWN_MODELS").as_deref() == Ok("1"),
+             model_alias_index: Arc::new(DashMap::new()),
+             hash_rings: Arc::new(DashMap::new()),
+             hash_ring_update: parking_lot::Mutex::new(()),
+@@ -662,11 +668,15 @@
+             .model_alias_index
+             .get(model_id)
+             .map(|canonical_id| Arc::clone(canonical_id.value()));
+-        canonical_id.and_then(|canonical_id| {
++        let snapshot = canonical_id.and_then(|canonical_id| {
+             self.model_index
+                 .get(canonical_id.as_ref())
+                 .map(|workers| Arc::clone(workers.value()))
+-        })
++        });
++        if snapshot.is_none() && self.route_unknown_models && model_id != UNKNOWN_MODEL_ID {
++            return Some(self.current_global_routing_snapshot());
++        }
++        snapshot
+     }
+ 
+     /// One membership snapshot for multi-leg selection, with the wildcard
+@@ -3390,6 +3400,33 @@
+     }
+ 
+     #[test]
++    fn unknown_models_route_to_every_worker_only_when_enabled() {
++        for enabled in [false, true] {
++            let mut registry = WorkerRegistry::new();
++            registry.route_unknown_models = enabled;
++            registry
++                .register(Arc::new(
++                    BasicWorkerBuilder::new("http://worker1:8080")
++                        .model(ModelCard::new("base"))
++                        .worker_type(WorkerType::Regular)
++                        .connection_mode(ConnectionMode::Http)
++                        .health_config(no_health_check())
++                        .build(),
++                ))
++                .unwrap();
++            let adapter = registry.get_routing_pool(
++                "00000000-0000-0000-0000-000000000000/adapter",
++                RoutingPool::HttpRegular,
++            );
++            assert_eq!(adapter.len(), usize::from(enabled), "enabled={enabled}");
++            assert_eq!(
++                registry.get_routing_pool("base", RoutingPool::HttpRegular).len(),
++                1
++            );
++        }
++    }
++
++    #[test]
+     fn routing_pool_reuses_uniform_model_snapshot() {
+         let registry = WorkerRegistry::new();
+         for url in ["http://worker1:8080", "http://worker2:8080"] {

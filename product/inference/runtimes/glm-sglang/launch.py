@@ -7,9 +7,10 @@ from pathlib import Path
 import sys
 import urllib.request
 
-from config import ACTIVE_REQUESTS, QUEUED_REQUESTS, QUEUE_TIMEOUT_SECONDS, detect_profile, settings
+from config import ACTIVE_REQUESTS, QUEUED_REQUESTS, QUEUE_TIMEOUT_SECONDS, cache_root, detect_profile, qualification_identity, settings
 
-root = Path(__file__).resolve().parents[1]
+here = Path(__file__).resolve().parent
+root = here.parent
 base_path = root / 'warmup-base.py'
 if not base_path.is_file():
     base_path = root / 'glm/warmup-supervisor.py'
@@ -17,6 +18,16 @@ spec = importlib.util.spec_from_file_location('glm_warmup_base', base_path)
 base = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(base)
 base_handler = base.handler
+base_gpu_inventory = base.gpu_inventory
+
+
+def assigned_gpu_inventory(devices):
+    # Qualification records are keyed by the assigned GPU UUIDs. The DeepSeek entrypoint gives
+    # the engine physical indices in CUDA_VISIBLE_DEVICES, so look the UUIDs up instead.
+    return base_gpu_inventory(os.environ.get('NVIDIA_VISIBLE_DEVICES') or devices)
+
+
+base.gpu_inventory = assigned_gpu_inventory
 
 
 class Supervisor(base.Supervisor):
@@ -108,30 +119,19 @@ def handler(supervisor, config):
     return Handler
 
 
-def qualification_identity(config, bundle_root=root):
-    """What a recorded qualification must match beyond the GPUs, or None outside a verified bundle."""
-    try:
-        digest = (bundle_root / '.bundle-sha256').read_text().strip()
-    except OSError:
-        return None
-    if not re.fullmatch(r'[0-9a-f]{64}', digest):
-        return None
-    # Ports and the bundle path vary between pods on one host and do not change what qualified.
-    placement = {'root', 'front', 'warmup', 'backend', 'metrics'}
-    return {'bundle': digest, 'config': {name: value for name, value in config.items() if name not in placement}}
-
-
 def qualification_records(environment):
-    cache = environment.get('XDG_CACHE_HOME') or str(Path(environment.get('HOME', '/home/runtime')) / '.cache')
-    return Path(cache) / 'glm-sglang' / 'qualification'
+    return cache_root(environment) / 'qualification'
 
 
 def main(environment=os.environ):
     config = settings(detect_profile(environment))
+    # Startup probes must name the served model: with adapters enabled, any other
+    # model name is resolved as an adapter and fails closed.
+    base.MODEL = config['served_model_name']
     original = base.handler
     base.handler = lambda supervisor: handler(supervisor, config)
     try:
-        supervisor = Supervisor([sys.executable, str(root / 'glm-sglang/service.py')],
+        supervisor = Supervisor([sys.executable, str(here / 'service.py')],
             runtime_url=f"http://127.0.0.1:{config['front']}",
             timeout=int(environment.get('RUNTIME_STARTUP_TIMEOUT_SECONDS', '3600')),
             max_queued_requests=config['active_requests'] + QUEUED_REQUESTS,

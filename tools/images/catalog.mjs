@@ -98,18 +98,4 @@ export const catalog = {
       "product/inference/host/",
     ],
   },
-
-  "deepseek-v4-1-flash": {
-    context: "product/inference/images/deepseek-v4-1-flash",
-    repository: "gradiated/prod/inference",
-    target: "",
-    paths: ["product/inference/images/deepseek-v4-1-flash/"],
-  },
-  "glm-5-3-flash": {
-    context: "product/inference/images/glm-5-3-flash",
-    repository: "gradiated/prod/inference",
-    target: "",
-    paths: ["product/inference/images/glm-5-3-flash/"],
-    disabled: "The qualified GLM base image digest is not yet recorded.",
-  },
 };

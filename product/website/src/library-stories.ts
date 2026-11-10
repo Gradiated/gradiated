@@ -83,6 +83,10 @@ const NOTE_ART: Record<string, StoryArt> = {
     tall: "/brand/library/mission.webp",
     wide: "/brand/library/mission-wide.webp",
   },
+  "/notes/0-to-1-weeks-at-gradiated/": {
+    tall: "/brand/library/zero-to-one.webp",
+    wide: "/brand/library/zero-to-one-wide.webp",
+  },
 };
 
 const NOTE_COVERS: Record<string, StoryCover> = {

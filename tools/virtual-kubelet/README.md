@@ -207,7 +207,7 @@ To stop a pool but keep its definition, set `max_replicas: 0` instead.
 `models.json` maps each public model to `min_slots` and its pools. A pool is one
 Rollout: one runtime release on one GPU type. A slot is one concurrent request
 a replica admits: the runtime's enforced `active_requests`, or the pool's
-`slots` for a runtime that enforces none (Kev and the vLLM runtimes). The same
+`slots` for a runtime that enforces none (such as Kev). The same
 limit weights gateway routing, so pools of different GPUs share one model's
 traffic in proportion to their slots.
 
@@ -240,7 +240,7 @@ OpenRouter's own traffic to us never falls back, so it fails while a model has
 no capacity of ours.
 
 Every pool scales on the same three signals, in its own slots, and the HPA takes
-the largest:
+the largest (a pool with no floor has a fourth, below):
 
 - **Utilization.** The model's peak in-flight generations over the last minute
   (`gradiated:model_busy_slots`), divided by 0.7, less the slots the pools ahead
@@ -272,6 +272,15 @@ GPUs, so the next removal waits only as long as the actual drain. New replicas
 become available only after SDK qualification, so keep the floor large enough
 for immediate traffic. None of this provisions or resets a provider GPU, and
 scaling down releases GPUs without reducing the RunPod reservation bill.
+
+A pool with no floor may be at zero replicas when a new revision lands, so its
+canary analysis would have nothing to qualify. While its Rollout updates, a
+fourth signal, `qualifying`, asks for one replica, and the pool moves straight
+to the new revision rather than through a half-weight canary, which at one
+replica would also restart the previous runtime. That replica must pass SDK
+qualification; if no host can take it, the analysis times out and the Rollout
+aborts. Once the update completes, an idle pool returns to zero after the
+usual cooldown.
 
 ### Startup state labels
 
@@ -586,8 +595,18 @@ registers.
 
 The operator exports host bundle versions, drift from the pin, rollout steps and
 failures under the metric names the controller used before
-(`gradiated_gpu_host_*`), so the controllers dashboard and alerts are unchanged;
-`GpuHostRolloutStuck` fires if a host stays in one step for two hours.
+(`gradiated_gpu_host_*`), so existing alerts are unchanged;
+`GpuHostRolloutStuck` fires if a host stays in one step for two hours. It also
+exports each host's GPUs labelled with its state
+(`gradiated_gpu_fleet_host_gpus`: `in_pool`, `reserved`, `cordoned` by a
+person, `leasing`, `leased`, `returning`, `updating` or `degraded`), the GPUs each workload's pods request on
+each host (`gradiated_gpu_fleet_host_workload_gpus`), each lease's holder,
+purpose and start, and lease outcomes
+(`gradiated_gpu_fleet_lease_events_total`: `granted`, `released`, `expired`,
+`preempted`, `failed`, `return_failed`). The
+[GPU Fleet dashboard](https://grafana.gradiated.com/d/gradiated-gpu-fleet)
+charts them with model slots, replicas and autoscaling signals, and the GPU host
+and fleet alerts link to its panels.
 
 Local checks use fake bundles and processes without GPUs or production access:
 
@@ -682,7 +701,9 @@ python3 tools/gpu/host-lease.py status
 The host keeps its management key across the return. A holder with root could
 read it, so rotate it by hand after leasing a host that ran untrusted code;
 rotating it automatically needs `secretsmanager:PutSecretValue` for the
-operator. The `$gpu-host-lease` skill has the procedure for agents.
+operator. The `$gpu-host-lease` skill has the procedure for agents. Active
+leases, their time left and their outcomes are on the
+[GPU Fleet dashboard](https://grafana.gradiated.com/d/gradiated-gpu-fleet).
 
 ### Reserving an isolated qualification slot
 

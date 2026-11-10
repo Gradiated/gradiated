@@ -28,6 +28,13 @@ const {
     file: { path?: string },
   ) => void;
 };
+const { rehypeArticleExternalLinks } =
+  require("./scripts/article-links.cjs") as {
+    rehypeArticleExternalLinks: () => (
+      tree: unknown,
+      file: { path?: string },
+    ) => void;
+  };
 const { renderPost } = require("./scripts/sand-renderer.cjs") as {
   renderPost(
     source: string,
@@ -40,7 +47,10 @@ const { renderPost } = require("./scripts/sand-renderer.cjs") as {
 
 const mdxPlugin = mdx({
   remarkPlugins: [remarkFrontmatter, remarkGfm, remarkArticleCitations],
-  rehypePlugins: [[rehypeHighlight, { detect: false, languages: all }]],
+  rehypePlugins: [
+    [rehypeHighlight, { detect: false, languages: all }],
+    rehypeArticleExternalLinks,
+  ],
 });
 
 /* Job postings come only from Ashby, synced into src/ashby-jobs.generated.ts.

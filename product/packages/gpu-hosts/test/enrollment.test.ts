@@ -10,6 +10,7 @@ import {
   ENROLL_COMMAND,
   enroll,
   enrollmentPayload,
+  enrollmentResultSchema,
 } from "../src/enrollment.js";
 import type { RunSsh } from "../src/ssh.js";
 
@@ -63,11 +64,11 @@ describe("GPU enrollment contract", () => {
     });
     expect(() =>
       enrollmentPayload(
-        { ...instance, sku: "8x NVIDIA H100 80GB HBM3" },
+        { ...instance, sku: "8x NVIDIA A100-SXM4-80GB" },
         fields,
       ),
     ).toThrow(
-      "GPU enrollment supports B200, B300, H200 and RTX PRO 6000 hosts",
+      "GPU enrollment supports B200, B300, H100, H200, L40S and RTX PRO 6000 hosts",
     );
     expect(() =>
       enrollmentPayload(instance, { ...fields, api_endpoint: "10.40.1.1" }),
@@ -124,10 +125,25 @@ describe("GPU enrollment contract", () => {
     ).toThrow();
   });
 
+  it("enrolls H100 and L40S hosts but not an L40", () => {
+    for (const sku of ["8x NVIDIA H100 80GB HBM3", "1x NVIDIA L40S"])
+      expect(enrollmentPayload({ ...instance, sku }, fields)).toEqual({
+        version: 1,
+        ...fields,
+      });
+    expect(() =>
+      enrollmentPayload({ ...instance, sku: "1x NVIDIA L40" }, fields),
+    ).toThrow();
+    for (const gpu_product of ["H100", "L40S"])
+      expect(
+        enrollmentResultSchema.parse({ ...result, gpu_count: 1, gpu_product }),
+      ).toMatchObject({ gpu_product });
+  });
+
   it("rejects a malformed result without echoing it", async () => {
     for (const output of [
       "not json private_management",
-      JSON.stringify({ ...result, gpu_product: "H100" }),
+      JSON.stringify({ ...result, gpu_product: "A100" }),
       JSON.stringify({ ...result, extra: "private_management" }),
     ]) {
       await expect(

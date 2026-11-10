@@ -1,0 +1,17 @@
+--- a/sglang/srt/utils/common.py
++++ b/sglang/srt/utils/common.py
+@@ -4756,6 +4756,14 @@
+     # Inkling attention projections (merged q/k/v/r and its row-parallel output).
+     "qkvr",
+     "wo_ud",
++    # DeepSeek-V4 attention projections and shared-expert w1/w2/w3.
++    "wq_a",
++    "wkv",
++    "wo_a",
++    "wo_b",
++    "w1",
++    "w2",
++    "w3",
+ ]
+ 
+ LORA_TARGET_ALL_MODULES = "all"

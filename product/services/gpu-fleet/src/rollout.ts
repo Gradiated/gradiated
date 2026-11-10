@@ -5,6 +5,7 @@ import { ReimageNotSent, type Enrollment } from "./enroll.js";
 import {
   GPU_HOSTS,
   hostName,
+  hostState,
   LEASE_ANNOTATION,
   leaseEnded,
   leaseRequest,
@@ -35,6 +36,15 @@ type Facts = HostFacts & {
 };
 
 const MINUTE = 60_000;
+
+// How a finished return ended its lease: the holder handed the host back, or
+// the operator took it at the lease's end or for a model with nowhere to run.
+export const returnEvent = (rollout: Rollout) => {
+  if (!rollout.lease) return "released";
+  return Date.parse(rollout.lease.until) <= Date.parse(rollout.startedAt)
+    ? "expired"
+    : "preempted";
+};
 // The taint Kubernetes adds to a cordoned node.
 const UNSCHEDULABLE_TAINT = "node.kubernetes.io/unschedulable";
 
@@ -416,20 +426,25 @@ export const createRollouts = (deps: RolloutDependencies) => {
     (rollout.kind === "bundle" ||
       ((facts.node?.ready ?? false) && imageRuns(facts, rollout)));
 
-  // An in-place update must not restart a serving process: each pod stays on
-  // the host, Ready, with the same qualified runtime. A pod that is gone also
-  // stops the update, so rescheduling cannot certify the bundle.
-  const baselineBroken = async (host: GpuHost, rollout: Rollout) => {
+  // An update that restarted, moved or requalified a serving pod is broken; one
+  // only briefly not Ready, as while the host agent restarts, is waited for.
+  const baselineState = async (host: GpuHost, rollout: Rollout) => {
     const pods = await cluster.podsOn(host.spec.instanceId);
-    return Object.entries(rollout.baseline ?? {}).some(([uid, runtime]) => {
-      const pod = pods.find((item) => item.uid === uid);
-      return (
-        !pod ||
-        pod.terminating ||
-        !pod.ready ||
-        pod.qualifiedRuntime !== runtime
-      );
-    });
+    const baseline = Object.entries(rollout.baseline ?? {}).map(
+      ([uid, runtime]) => ({
+        pod: pods.find((item) => item.uid === uid),
+        runtime,
+      }),
+    );
+    if (
+      baseline.some(
+        ({ pod, runtime }) =>
+          !pod || pod.terminating || pod.qualifiedRuntime !== runtime,
+      )
+    )
+      return "broken";
+
+    return baseline.every(({ pod }) => pod?.ready) ? "ready" : "unready";
   };
 
   const runningTraining = async (host: GpuHost, rollout: Rollout) =>
@@ -773,10 +788,13 @@ export const createRollouts = (deps: RolloutDependencies) => {
           ].includes(digest)
         )
           throw new Fatal(`The host rejected or rolled back bundle ${digest}`);
-        if (await baselineBroken(facts.host, rollout))
+        const baseline = await baselineState(facts.host, rollout);
+        if (baseline === "broken")
           throw new Fatal(
             "A serving pod restarted or left the host during the bundle update",
           );
+        if (baseline === "unready")
+          return { stay: "Waiting for the serving pods to be Ready again" };
       }
       return healthy(facts, rollout)
         ? { next: "Soak" }
@@ -789,14 +807,16 @@ export const createRollouts = (deps: RolloutDependencies) => {
     },
 
     Soak: async (facts, rollout) => {
-      if (
-        rollout.kind === "bundle" &&
-        (await baselineBroken(facts.host, rollout))
-      )
+      const baseline =
+        rollout.kind === "bundle"
+          ? await baselineState(facts.host, rollout)
+          : "ready";
+      if (baseline === "broken")
         throw new Fatal(
           "A serving pod restarted or left the host during the bundle update",
         );
-      if (!healthy(facts, rollout))
+      // A serving pod that stops being Ready restarts the soak.
+      if (baseline === "unready" || !healthy(facts, rollout))
         return {
           stay: "The host is not healthy",
           set: { healthySince: undefined },
@@ -903,6 +923,10 @@ export const createRollouts = (deps: RolloutDependencies) => {
           blockedCount: (rollout.blockedCount ?? 0) + 1,
         }),
       });
+      if (rollout.kind === "lease")
+        metrics.leaseEvents.inc({ event: "failed" });
+      if (rollout.kind === "return" && result === "Failed")
+        metrics.leaseEvents.inc({ event: "return_failed" });
       if (rollout.kind === "lease") await endRequest(host);
     };
 
@@ -972,6 +996,10 @@ export const createRollouts = (deps: RolloutDependencies) => {
         ...(outcome.lease !== undefined && { lease: outcome.lease }),
         ...(rollout.kind === "return" && { lease: null }),
       });
+      if (rollout.kind === "lease")
+        metrics.leaseEvents.inc({ event: "granted" });
+      if (rollout.kind === "return")
+        metrics.leaseEvents.inc({ event: returnEvent(rollout) });
       // An expired or preempted lease's request is done with.
       if (rollout.kind === "return" && rollout.lease) await endRequest(host);
       return;
@@ -1044,7 +1072,10 @@ export const createRollouts = (deps: RolloutDependencies) => {
       },
       plan: refused ? null : plan.reason,
     });
-    if (refused) await endRequest(host);
+    if (refused) {
+      metrics.leaseEvents.inc({ event: "failed" });
+      await endRequest(host);
+    }
   };
 
   // The API server reorders a stored target's fields, so compare values.
@@ -1165,13 +1196,53 @@ export const createRollouts = (deps: RolloutDependencies) => {
       metrics.bundleInfo,
       metrics.bundleDrift,
       metrics.leaseUntil,
+      metrics.leaseStarted,
+      metrics.hostGpus,
+      metrics.workloadGpus,
     ])
       gauge.reset();
-    for (const { host, observation } of all) {
+    for (const { host, node, observation, residentWorkloads } of all) {
       const id = host.spec.instanceId;
       const rollout = host.status?.rollout;
       const lease = host.status?.lease;
       const request = leaseRequest(host);
+      metrics.hostGpus.set(
+        {
+          instance_id: id,
+          gpu_product: host.spec.inventory.gpuProduct,
+          state: hostState(host, node),
+        },
+        host.spec.inventory.gpuCount,
+      );
+      const workloads = new Map<string, { kind: string; gpus: number }>();
+      // A terminating pod holds its GPUs until it exits, which for a model
+      // replica can take its whole grace period.
+      for (const pod of residentWorkloads) {
+        if (!pod.gpus) continue;
+        const kind = pod.model
+          ? "serving"
+          : pod.training
+            ? "training"
+            : "other";
+        const name = pod.model ?? kind;
+        const entry = workloads.get(name) ?? { kind, gpus: 0 };
+        workloads.set(name, { kind, gpus: entry.gpus + pod.gpus });
+      }
+      for (const [workload, { kind, gpus }] of workloads)
+        metrics.workloadGpus.set({ instance_id: id, workload, kind }, gpus);
+      if (lease)
+        metrics.leaseStarted.set(
+          {
+            instance_id: id,
+            holder: lease.holder,
+            // Free text a person wrote; long enough to say what the host is for.
+            purpose: lease.purpose.slice(0, 120),
+            preemptible: String(
+              request && "until" in request ? request.preemptible : true,
+            ),
+          },
+          Date.parse(lease.since) / 1000,
+        );
       // A handed-back host is due back when its return starts; until then
       // it waits in the queue, which the gauge reports as now.
       if (lease)

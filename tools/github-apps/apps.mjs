@@ -35,6 +35,20 @@ export const apps = [
     },
   },
   {
+    key: "docs",
+    name: "Gradiated Docs",
+    description: "Opens and updates the daily developer docs pull request. No ruleset bypass.",
+    permissions: { contents: "write", pull_requests: "write" },
+    repositories: ["gradiated"],
+    store: {
+      github: {
+        repository: "gradiated",
+        secret: "DOCS_APP_PRIVATE_KEY",
+        variable: "DOCS_APP_CLIENT_ID",
+      },
+    },
+  },
+  {
     key: "autotrain-reader",
     name: "Gradiated Autotrain Reader",
     description: "Reads the private autotrain library for runtime builds.",

@@ -168,6 +168,11 @@ def plan(models, runtimes, hosts):
     return pools
 
 
+GPU_SCHEDULER = 'gradiated-gpu'
+# Weights follow measured GLM start savings: weights ~4 min of download, bundle ~1-2 min.
+STARTUP_PARTS = [('weights', 15), ('bundle', 7)]
+
+
 def rollout(name, pool, runtimes):
     if 'app.kubernetes.io/name' in pool.get('labels', {}):
         raise ValueError('The model identity label is reserved')
@@ -181,6 +186,10 @@ def rollout(name, pool, runtimes):
     rolling = pool.get('rolling_update', False)
     if type(rolling) is not bool:
         raise ValueError('rolling_update must be a boolean')
+    # A pool with no floor may hold only the replica its qualifying signal asks
+    # for. A half-weight canary of one replica would also restart the previous
+    # revision, so it moves straight to the new one and then qualifies it.
+    rolling = rolling or not pool['floor']
     if not isinstance(pool.get('gpu'), str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,62}', pool['gpu']):
         raise ValueError('gpu must be the GPU product label of the hosts the pool runs on')
     runtime = runtimes[pool['runtime']]
@@ -200,6 +209,12 @@ def rollout(name, pool, runtimes):
     ]
     if not rolling:
         steps.append({'setWeight': 100})
+    if not pool['maximum']:
+        # A switched-off pool has no pods to qualify, so the analysis would wait out
+        # its 90 minutes and abort the Rollout on every template change. Its
+        # revisions become stable at once; once max_replicas is raised the worker
+        # still routes only pods that pass their own SDK qualification.
+        steps = []
     selector = {'gradiated.com/provider': 'runpod', 'nvidia.com/gpu.product': pool['gpu']}
     if 'gpu_count' in pool:
         if not count(pool['gpu_count'], 1):
@@ -212,6 +227,15 @@ def rollout(name, pool, runtimes):
         tolerations.append({'key': RESERVED, 'operator': 'Equal', 'value': pool['reservation'], 'effect': 'NoSchedule'})
         affinity['nodeAffinity'] = {'requiredDuringSchedulingIgnoredDuringExecution': {'nodeSelectorTerms': [
             {'matchExpressions': [{'key': 'gradiated.com/instance-id', 'operator': 'In', 'values': pool['hosts']}]}]}}
+    elif re.fullmatch(r'[0-9a-f]{16}', pool['runtime'][:16]):
+        # Prefer hosts that already hold this runtime's startup state, weighted by
+        # the time each part saves a start. The gpu-controller labels only runtimes
+        # keyed by a digest, as gradiated.com/<part>.<first 16 hex>.
+        runtime_label = pool['runtime'][:16]
+        affinity['nodeAffinity'] = {'preferredDuringSchedulingIgnoredDuringExecution': [
+            {'weight': weight, 'preference': {'matchExpressions': [
+                {'key': f'gradiated.com/{part}.{runtime_label}', 'operator': 'In', 'values': ['true']}]}}
+            for part, weight in STARTUP_PARTS]}
     spread = pool.get('spread')
     term = {'topologyKey': 'kubernetes.io/hostname', 'labelSelector': {'matchLabels': {'app.kubernetes.io/name': name}}}
     if spread == 'required':
@@ -229,6 +253,9 @@ def rollout(name, pool, runtimes):
             'requests': {**limits, 'memory': runtime.get('request_memory', runtime['memory'])}, 'limits': limits}}]}
     if affinity:
         pod['affinity'] = affinity
+    if not pool['hosts']:
+        # Bin-packs GPUs so a small replica leaves larger hosts whole (gpu-scheduler.yaml).
+        pod['schedulerName'] = GPU_SCHEDULER
     metadata = {'name': name, 'namespace': 'gpu-inference'}
     if not pool['maximum']:
         # Argo holds a switched-off pool at zero; otherwise KEDA owns replicas.
@@ -243,10 +270,11 @@ def rollout(name, pool, runtimes):
 
 
 GLM_SGLANG_CONFIG = ROOT / 'product/inference/runtimes/glm-sglang/config.py'
+DEEPSEEK_SGLANG_CONFIG = ROOT / 'product/inference/runtimes/deepseek-sglang/config.py'
 
 
-def glm_sglang_profiles():
-    spec = importlib.util.spec_from_file_location('glm_sglang_config', GLM_SGLANG_CONFIG)
+def load_config(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
     config = importlib.util.module_from_spec(spec)
     # Rendering must not leave bytecode beside the launcher source.
     written, sys.dont_write_bytecode = sys.dont_write_bytecode, True
@@ -254,7 +282,11 @@ def glm_sglang_profiles():
         spec.loader.exec_module(config)
     finally:
         sys.dont_write_bytecode = written
-    return config.PROFILES
+    return config
+
+
+def glm_sglang_profiles():
+    return load_config('glm_sglang_config', GLM_SGLANG_CONFIG).PROFILES
 
 
 def validate_active_requests(pools, runtimes, profiles):
@@ -266,8 +298,16 @@ def validate_active_requests(pools, runtimes, profiles):
         limit = runtime.get('active_requests')
         if 'active_requests' in runtime and (type(limit) is not int or not 1 <= limit <= 4096):
             raise ValueError(f'Runtime release {key} active_requests must be an integer from 1 to 4096')
+    deepseek = None
     for name, pool in pools.items():
         runtime = runtimes[pool['runtime']]
+        if runtime['image'].startswith('gradiated/deepseek-sglang-bundle@'):
+            if deepseek is None:
+                deepseek = load_config('deepseek_sglang_config', DEEPSEEK_SGLANG_CONFIG).PROFILES
+            enforced = [profile['active_requests'] for profile in deepseek.values() if profile['gpu_product'] == pool['gpu']]
+            if len(enforced) != 1 or runtime.get('active_requests') != enforced[0]:
+                raise ValueError(f'Pool {name} runtime active_requests must equal its DeepSeek launcher profile')
+            continue
         if not runtime['image'].startswith('gradiated/glm-sglang-bundle@'):
             continue
         selected = runtime.get('environment', {}).get('GLM_SGLANG_PROFILE')
@@ -297,7 +337,7 @@ def ready_replicas(name):
 
 
 def scaling_queries(name, pool):
-    """The two signals every pool scales on, in slots for this pool to supply."""
+    """The signals a pool scales on, in slots for this pool to supply."""
     model = 'model=' + json.dumps(pool['model'])
     # The model's slot need at the target utilization, less what the pools
     # ahead of this one serve. A pool ahead still growing counts at its
@@ -329,9 +369,20 @@ def scaling_queries(name, pool):
     # Each scaling signal keeps its ten-minute peak: scale-up follows at once,
     # scale-down only after ten quiet minutes. Kept here, not in the HPA window,
     # so a draining hold does not restart the wait.
-    return {'utilization': f'max_over_time(clamp_min({need}, 0)[10m:30s])',
-            'refusals': f'max_over_time((({step} and on() {refusing}{full}) or vector(0))[10m:30s])',
-            'draining': f'(({staying} * {pool["slots"]} and on() {draining}) or vector(0))'}
+    signals = {'utilization': f'max_over_time(clamp_min({need}, 0)[10m:30s])',
+               'refusals': f'max_over_time((({step} and on() {refusing}{full}) or vector(0))[10m:30s])',
+               'draining': f'(({staying} * {pool["slots"]} and on() {draining}) or vector(0))'}
+    if not pool['floor']:
+        # A pool with no floor may be at zero replicas when a new revision lands,
+        # leaving its canary analysis nothing to qualify. While the Rollout updates,
+        # ask for one replica: at zero stable replicas Argo places it on the
+        # canary, which must pass SDK qualification. If no host can take it, the
+        # analysis times out and the Rollout aborts. The usual cooldown returns an
+        # idle pool to zero afterwards.
+        updating = (f'max(rollout_info{{namespace="gpu-inference",name="{name}",'
+                    f'phase=~"Progressing|Paused"}})')
+        signals['qualifying'] = f'(({updating} * {pool["slots"]}) or vector(0))'
+    return signals
 
 
 def autoscaler(name, pool):

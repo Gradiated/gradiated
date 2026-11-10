@@ -593,3 +593,149 @@ describe("host leases", () => {
     expect(fleet.violations).toEqual([]);
   });
 });
+
+describe("fleet metrics for the GPU fleet dashboard", () => {
+  const value = async (metrics: Metrics, name: string, labels: string) => {
+    const text = await metrics.registry.getSingleMetricAsString(name);
+    const line = text
+      .split("\n")
+      .find((row) => row.startsWith(`${name}{${labels}}`));
+    return line === undefined ? undefined : Number(line.split(" ").pop());
+  };
+  const state = async (metrics: Metrics, id: string) => {
+    const text = await metrics.registry.getSingleMetricAsString(
+      "gradiated_gpu_fleet_host_gpus",
+    );
+    return text.match(
+      new RegExp(`instance_id="${id}",gpu_product="[^"]+",state="([a-z_]+)"`),
+    )?.[1];
+  };
+
+  it("reports each host's state, the GPUs its workloads use, a lease's holder and purpose, and how it ended", async () => {
+    const fleet = kevFleet();
+    const metrics = createMetrics();
+    await run(fleet, CURRENT, () => false, metrics, 3);
+
+    expect(await state(metrics, SPARE)).toBe("in_pool");
+    expect(await state(metrics, FIRST)).toBe("in_pool");
+    expect(
+      await value(
+        metrics,
+        "gradiated_gpu_fleet_host_workload_gpus",
+        `instance_id="${FIRST}",workload="kev",kind="serving"`,
+      ),
+    ).toBe(1);
+    expect(
+      await value(
+        metrics,
+        "gradiated_gpu_fleet_host_workload_gpus",
+        `instance_id="${SPARE}",workload="kev",kind="serving"`,
+      ),
+    ).toBeUndefined();
+
+    const lease = request(fleet);
+    fleet.annotateLease(FIRST, lease);
+    await run(
+      fleet,
+      CURRENT,
+      () => fleet.host(FIRST).status?.rollout?.kind === "lease",
+      metrics,
+    );
+    await run(fleet, CURRENT, () => false, metrics, 1);
+    expect(await state(metrics, FIRST)).toBe("leasing");
+
+    await run(fleet, CURRENT, leased(fleet, FIRST), metrics);
+    await run(fleet, CURRENT, () => false, metrics, 1);
+    expect(await state(metrics, FIRST)).toBe("leased");
+    // Its replica moved to the spare host.
+    expect(
+      await value(
+        metrics,
+        "gradiated_gpu_fleet_host_workload_gpus",
+        `instance_id="${SPARE}",workload="kev",kind="serving"`,
+      ),
+    ).toBe(1);
+    const since = Date.parse(fleet.host(FIRST).status!.lease!.since) / 1000;
+    expect(
+      await value(
+        metrics,
+        "gradiated_gpu_fleet_lease_started_timestamp_seconds",
+        `instance_id="${FIRST}",holder="research-agent",purpose="SFT sweep on private data",preemptible="true"`,
+      ),
+    ).toBe(since);
+    expect(
+      await value(
+        metrics,
+        "gradiated_gpu_fleet_lease_events_total",
+        `event="granted"`,
+      ),
+    ).toBe(1);
+
+    fleet.annotateLease(FIRST);
+    await run(
+      fleet,
+      CURRENT,
+      () => fleet.host(FIRST).status?.rollout?.kind === "return",
+      metrics,
+    );
+    await run(fleet, CURRENT, () => false, metrics, 1);
+    expect(await state(metrics, FIRST)).toBe("returning");
+
+    await run(fleet, CURRENT, returned(fleet, FIRST), metrics);
+    await run(fleet, CURRENT, () => false, metrics, 1);
+    expect(
+      await value(
+        metrics,
+        "gradiated_gpu_fleet_lease_events_total",
+        `event="released"`,
+      ),
+    ).toBe(1);
+    expect(
+      await value(
+        metrics,
+        "gradiated_gpu_fleet_lease_started_timestamp_seconds",
+        `instance_id="${FIRST}",holder="research-agent",purpose="SFT sweep on private data",preemptible="true"`,
+      ),
+    ).toBeUndefined();
+  });
+
+  it("counts an expired, a preempted and a refused lease", async () => {
+    const expiring = kevFleet();
+    const metrics = createMetrics();
+    expiring.annotateLease(SPARE, request(expiring, 1));
+    await run(expiring, CURRENT, leased(expiring, SPARE), metrics);
+    expiring.advance(HOUR);
+    await run(expiring, CURRENT, returned(expiring, SPARE), metrics);
+    expect(
+      await value(
+        metrics,
+        "gradiated_gpu_fleet_lease_events_total",
+        `event="expired"`,
+      ),
+    ).toBe(1);
+
+    const wanted = kevFleet();
+    wanted.annotateLease(SPARE, request(wanted, 12));
+    await run(wanted, CURRENT, leased(wanted, SPARE), metrics);
+    scale(wanted, "kev", 3);
+    await run(wanted, CURRENT, returned(wanted, SPARE), metrics);
+    expect(
+      await value(
+        metrics,
+        "gradiated_gpu_fleet_lease_events_total",
+        `event="preempted"`,
+      ),
+    ).toBe(1);
+
+    const refused = kevFleet();
+    refused.annotateLease(SPARE, { ...request(refused), until: "tomorrow" });
+    await run(refused, CURRENT, failed(refused, SPARE), metrics);
+    expect(
+      await value(
+        metrics,
+        "gradiated_gpu_fleet_lease_events_total",
+        `event="failed"`,
+      ),
+    ).toBe(1);
+  });
+});

@@ -177,7 +177,9 @@ what the gateway put on the wire.
 ## Real runtimes
 
 `real-runtime.test.ts` runs the gateway against a real vLLM server and a real
-Kev server on the CPU. These tests find differences between the mocks and the
+Kev server on the CPU. Production serves every chat model on SGLang; the `vllm`
+case kind is the gateway's single OpenAI-compatible runtime wire, which SGLang
+also accepts, and vLLM is used here only because it ships a pinned CPU build. These tests find differences between the mocks and the
 real runtimes. They check wire shape and that billing uses the token counts
 from the runtime. They do not check exact token counts.
 

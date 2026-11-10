@@ -94,6 +94,30 @@ export const createMetrics = () => {
       labelNames: ["instance_id", "holder"],
       registers: [registry],
     }),
+    hostGpus: new Gauge({
+      name: "gradiated_gpu_fleet_host_gpus",
+      help: "A host's GPUs, labelled with what the host is doing (one state per host)",
+      labelNames: ["instance_id", "gpu_product", "state"],
+      registers: [registry],
+    }),
+    workloadGpus: new Gauge({
+      name: "gradiated_gpu_fleet_host_workload_gpus",
+      help: "GPUs a host's running pods request, by workload (a model pool's name, or training)",
+      labelNames: ["instance_id", "workload", "kind"],
+      registers: [registry],
+    }),
+    leaseStarted: new Gauge({
+      name: "gradiated_gpu_fleet_lease_started_timestamp_seconds",
+      help: "When a leased host was handed to its holder",
+      labelNames: ["instance_id", "holder", "purpose", "preemptible"],
+      registers: [registry],
+    }),
+    leaseEvents: new Counter({
+      name: "gradiated_gpu_fleet_lease_events_total",
+      help: "Lease outcomes: granted, failed, released, expired, preempted or return_failed",
+      labelNames: ["event"],
+      registers: [registry],
+    }),
     keyRevocationFailures: new Counter({
       name: "gradiated_gpu_fleet_key_revocation_failures_total",
       help: "Single-use Tailscale keys the operator could not revoke",

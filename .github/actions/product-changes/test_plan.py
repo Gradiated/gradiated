@@ -54,6 +54,38 @@ class ProductChangesTest(unittest.TestCase):
         self.assertTrue(result["playwright"])
         self.assertFalse(result["inference_native"])
 
+    def test_model_price_change_runs_only_typescript_checks(self):
+        result = plan(
+            [
+                "product/packages/control/src/catalog/models/kimi-k31-pro.ts",
+                "product/packages/control/test/catalog-models.test.ts",
+            ]
+        )
+        self.assertIn("@gradiated/control", result["packages"])
+        self.assertIn("@gradiated/api", result["packages"])
+        for package in ("@gradiated/gateway", "@gradiated/proxy", "@gradiated/collector"):
+            self.assertNotIn(package, result["packages"])
+        for job in (
+            "integration",
+            "gateway_contract",
+            "proxy_e2e",
+            "backend_storage",
+            "inference_e2e",
+            "playwright",
+        ):
+            self.assertFalse(result[job], job)
+
+    def test_other_control_changes_still_run_cross_service_checks(self):
+        result = plan(
+            [
+                "product/packages/control/src/catalog/models/kimi-k31-pro.ts",
+                "product/packages/control/src/db/schema/organizations.ts",
+            ]
+        )
+        self.assertIn("@gradiated/gateway", result["packages"])
+        self.assertTrue(result["integration"])
+        self.assertTrue(result["backend_storage"])
+
     def test_console_change_does_not_run_inference(self):
         result = plan(["product/services/console/src/pages/models-page.tsx"])
         self.assertEqual(result["packages"], ["@gradiated/console"])
@@ -81,7 +113,6 @@ class ProductChangesTest(unittest.TestCase):
         self.assertTrue(result["gateway_contract"])
         self.assertFalse(result["unit"])
         self.assertFalse(result["native_cpp"])
-        self.assertFalse(result["native_vllm"])
 
     def test_root_dependency_and_workflow_changes_run_all_checks(self):
         for path in (

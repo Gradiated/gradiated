@@ -16,7 +16,7 @@ export const States_: Story = {
         <ModelLabel id="z-ai/glm-5.3-flash" />
       </State>
       <State label="Another provider">
-        <ModelLabel id="deepseek/deepseek-v4.1-flash" />
+        <ModelLabel id="deepseek/deepseek-v4.1-flash-1017" />
       </State>
       <State label="Unknown provider">
         <ModelLabel id="acme/custom-model" />

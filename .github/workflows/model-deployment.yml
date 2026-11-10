@@ -17,9 +17,11 @@ on:
       - product/packages/autotrain
       - product/packages/autotrain/**
       - product/packages/contracts/src/training-recipe.json
+      - product/inference/runtimes/decider/**
       - product/inference/runtimes/kev/adapter.py
       - product/inference/runtimes/glm/**
       - product/inference/runtimes/glm-sglang/**
+      - product/inference/runtimes/deepseek-sglang/**
       - product/inference/runtimes/kimi-k31/**
       - product/inference/lora/**
       - product/inference/runtime-launcher/**
@@ -106,7 +108,6 @@ jobs:
       - run: python3 -m pip install PyYAML==6.0.2
       - run: |
           node --test tools/images/*.test.mjs tools/models/*.test.mjs
-          bash product/inference/images/tests/test_launch.sh
       - id: bundles
         run: echo "bundles=$(node tools/models/release.mjs list)" >> "$GITHUB_OUTPUT"
       - uses: depot/setup-action@91bc8495a33ebfc504ffc89e5674379ccf23c29c # v1.7.2

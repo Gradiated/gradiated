@@ -49,9 +49,10 @@ RUN uv pip install --python /bundle/python/bin/python3 --break-system-packages \
     && mkdir /src-smg && tar -xzf /tmp/smg.tar.gz -C /src-smg --strip-components=1 \
     && /bundle/python/bin/python3 /tmp/sglang-patches/apply-patches.py /src-smg /tmp/sglang-patches --manifest smg-patches.json \
     && /bundle/python/bin/python3 /tmp/sglang-patches/apply-patches.py /src-smg /tmp/smg-lora --manifest smg-patches.json
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/usr/local/cargo/git \
-    --mount=type=cache,target=/src-smg/target \
+# Same private locked caches as the GLM SGLang bundle, whose SMG build this one matches.
+RUN --mount=type=cache,id=sglang-lora-cargo-registry,target=/usr/local/cargo/registry,sharing=locked \
+    --mount=type=cache,id=sglang-lora-cargo-git,target=/usr/local/cargo/git,sharing=locked \
+    --mount=type=cache,id=sglang-lora-smg-target,target=/src-smg/target,sharing=locked \
     cd /src-smg && cargo test --locked --release -p smg --lib middleware::concurrency::tests \
     && cargo test --locked --release -p smg --lib worker::registry::tests::unknown_models \
     && cd bindings/python \

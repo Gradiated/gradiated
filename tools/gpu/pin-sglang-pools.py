@@ -17,6 +17,7 @@ import importlib.util
 import json
 from pathlib import Path
 import re
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 GPU = ROOT / 'infra/environments/prod/us-east-1/kubernetes/gpu-inference'
@@ -62,6 +63,18 @@ def models():
             'environment': {'TENSOR_PARALLEL_SIZE': '4', 'MODEL_ID': deepseek.MODEL_ID},
         },
     }
+
+
+LAUNCHERS = ['product/inference/runtimes/glm-sglang/config.py', 'product/inference/runtimes/deepseek-sglang/config.py']
+
+
+def check_source(source, root=ROOT):
+    """The pinned metadata comes from this checkout, so it must match the bundles' source."""
+    if not re.fullmatch('[0-9a-f]{40}', source):
+        raise ValueError('Source must be a full commit SHA')
+    changed = subprocess.run(['git', 'diff', '--quiet', source, '--', *LAUNCHERS], cwd=root)
+    if changed.returncode != 0:
+        raise ValueError('Launcher configs differ from the bundles\' source revision; check out that revision first')
 
 
 def runtime_for(model_id, spec, release, source, base_id):
@@ -128,6 +141,7 @@ def main():
     parser.add_argument('--max-replicas', type=int, default=1)
     parser.add_argument('--write', action='store_true', help='write the catalogues; otherwise print a dry run')
     args = parser.parse_args()
+    check_source(args.source)
     read = lambda path: json.loads(path.read_text())
     releases = {}
     for path in (args.glm_release, args.deepseek_release):

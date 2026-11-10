@@ -1,4 +1,5 @@
 import copy
+import subprocess
 import importlib.util
 import json
 from pathlib import Path
@@ -76,6 +77,16 @@ class SGLangPins(unittest.TestCase):
         hosts, _ = render.inventory(self.hosts)
         with self.assertRaisesRegex(ValueError, 'DeepSeek launcher profile'):
             render.validate_active_requests(render.plan(models, runtimes, hosts), runtimes, render.glm_sglang_profiles())
+
+    def test_metadata_must_come_from_the_bundles_source(self):
+        head = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=pin.ROOT, capture_output=True, text=True,
+                              check=True).stdout.strip()
+        pin.check_source(head)
+        root = subprocess.run(['git', 'rev-list', '--max-parents=0', 'HEAD'], cwd=pin.ROOT, capture_output=True,
+                              text=True, check=True).stdout.split()[0]
+        for source in [root, 'not-a-sha']:
+            with self.subTest(source=source), self.assertRaises(ValueError):
+                pin.check_source(source)
 
     def test_repinning_is_idempotent(self):
         models, runtimes = self.pin()

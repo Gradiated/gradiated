@@ -58,8 +58,10 @@ only what you copy to them, and `gradiated/dev/env` holds only development keys.
 
 ## Use
 
-1. Pick a GPU: `dev_training.py platforms --region <region>` lists platforms and
-   presets. Spot capacity varies by region; try another region if `up` fails.
+1. Pick a GPU: `dev_training.py capacity [platform]` shows, for every region and
+   preset, whether spot and on-demand capacity is available now and your quota
+   (`available/limit`). `platforms --region <region>` lists what each region offers.
+   Spot capacity changes quickly; pick a region with spot availability.
 2. Create: `dev_training.py up <name> --platform <platform> --preset <preset> [--region <region>]`.
    Names are unique per provider. The VM is billed at the spot price.
 3. Give the VM bucket access: `dev_training.py s3 <name>` installs a key that can

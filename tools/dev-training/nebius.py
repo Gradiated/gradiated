@@ -12,7 +12,8 @@ import subprocess
 import sys
 import tempfile
 
-PROJECTS = json.loads((Path(__file__).resolve().parent / 'nebius-projects.json').read_text())['projects']
+CONFIG = json.loads((Path(__file__).resolve().parent / 'nebius-projects.json').read_text())
+PROJECTS, TENANT = CONFIG['projects'], CONFIG['tenant_id']
 
 
 class Nebius:
@@ -60,6 +61,19 @@ class Nebius:
         for platform in self.items('compute', 'platform', 'list', '--parent-id', self.project(region)):
             if platform['metadata']['name'].startswith('gpu'):
                 yield f"{platform['metadata']['name']}: {', '.join(p['name'] for p in platform['spec'].get('presets', []))}"
+
+    def capacity(self, platform):
+        """Live availability per region and preset, from Nebius resource advice."""
+        level = lambda status: (status or {}).get('availability_level', '-').replace('AVAILABILITY_LEVEL_', '')
+        count = lambda status: f"{(status or {}).get('available', 0)}/{(status or {}).get('limit', '-')}"
+        for advice in self.items('capacity', 'resource-advice', 'list', '--parent-id', TENANT):
+            instance = advice['spec'].get('compute_instance')
+            if not instance or (platform and platform not in instance['platform']):
+                continue
+            status = advice.get('status', {})
+            yield (f"{instance['platform']:16} {instance['preset']['name']:22} {advice['spec']['region']:12} "
+                   f"spot {level(status.get('preemptible')):13} {count(status.get('preemptible')):6} "
+                   f"on-demand {level(status.get('on_demand')):13} {count(status.get('on_demand'))}")
 
     @staticmethod
     def vm(region, instance):

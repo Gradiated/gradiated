@@ -15,7 +15,8 @@ Shared by every provider:
 Nebius:
 - ensures the dev-training service account, a dev-training tenant group holding
   it, and an editor access permit for that group on every project in
-  nebius-projects.json (no tenant-level role, so it cannot change IAM);
+  nebius-projects.json, plus tenant viewer for capacity advice (no tenant-level
+  write role, so it cannot change IAM);
 - issues a new service account key and removes the older ones;
 - generates an ed25519 SSH key used only for Nebius dev nodes, once: existing
   VMs only trust the key they were created with, so it is replaced only with
@@ -92,6 +93,11 @@ def ensure_access():
         nebius('iam', 'group-membership', 'create', '--parent-id', group_id, '--member-id', account_id)
     permitted = {(p['spec']['resource_id'], p['spec']['role'])
                  for p in items('iam', 'access-permit', 'list', '--parent-id', group_id)}
+    # Tenant viewer is the narrowest role that reads capacity advice
+    # (`dev_training.py capacity`); it grants no changes.
+    if (tenant, 'viewer') not in permitted:
+        nebius('iam', 'access-permit', 'create', '--parent-id', group_id, '--resource-id', tenant, '--role', 'viewer')
+        print(f'granted viewer on {tenant}')
     for region, project in sorted(projects.items()):
         if (project, 'editor') not in permitted:
             nebius('iam', 'access-permit', 'create', '--parent-id', group_id, '--resource-id', project,

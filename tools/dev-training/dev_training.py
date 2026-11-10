@@ -2,6 +2,7 @@
 """Run development training work on spot GPU VMs from any supported provider.
 
   dev_training.py platforms [--provider P] [--region R]   GPU platforms and presets
+  dev_training.py capacity [PLATFORM] [--provider P]      where each GPU can launch now (spot and on-demand)
   dev_training.py up NAME --platform X --preset Y [--provider P] [--region R] [--disk-gib N]
   dev_training.py ls [--provider P]
   dev_training.py ssh NAME [command...]
@@ -33,6 +34,7 @@ import json
 import os
 from pathlib import Path
 import re
+import socket
 import subprocess
 import sys
 import time
@@ -135,6 +137,19 @@ def platforms(args):
         print(line)
 
 
+def capacity(args):
+    for line in provider(args.provider).capacity(args.platform):
+        print(line)
+
+
+def ssh_ready(address):
+    try:
+        with socket.create_connection((address, 22), timeout=5):
+            return True
+    except OSError:
+        return False
+
+
 def up(args):
     if not re.fullmatch('[a-z][a-z0-9-]{1,40}', args.name):
         sys.exit('NAME must be lowercase letters, digits and dashes')
@@ -150,7 +165,8 @@ def up(args):
     deadline = time.time() + 1200
     while time.time() < deadline:
         vm = cloud.find(args.name)
-        if vm and vm['state'] == 'RUNNING' and vm['address']:
+        # Cloud-init starts SSH a minute or so after the provider reports RUNNING.
+        if vm and vm['state'] == 'RUNNING' and vm['address'] and ssh_ready(vm['address']):
             print(f"{args.name} is running at {vm['address']}; it joins the tailnet as {host} "
                   'a minute or two after boot')
             return
@@ -235,6 +251,7 @@ def main():
         return sub
 
     command('platforms', platforms).add_argument('--region')
+    command('capacity', capacity).add_argument('platform', nargs='?', help='filter, for example b300')
     sub = command('up', up, vm=True)
     sub.add_argument('--platform', required=True, help='for example gpu-h100-sxm; see `platforms`')
     sub.add_argument('--preset', required=True, help='for example 1gpu-16vcpu-200gb')

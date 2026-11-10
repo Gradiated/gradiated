@@ -1,3 +1,4 @@
+import csv
 from pathlib import Path
 import re
 import subprocess
@@ -53,6 +54,32 @@ def settings(environment):
     return {'root': root, 'front': front, 'warmup': warmup, 'backend': backend, 'metrics': metrics,
             'profile': profile, **PROFILES[profile], 'model_id': MODEL_ID, 'lora': lora == 'true',
             'model': MODEL, 'revision': REVISION, 'served_model_name': MODEL, 'tp': TENSOR_PARALLEL_SIZE}
+
+
+def cuda_visible_devices(environment):
+    """Physical indices for the assigned GPU UUIDs, in assignment order.
+
+    SGLang's Engram and custom all-reduce NVLink checks parse CUDA_VISIBLE_DEVICES
+    as integers, so the UUIDs the host agent assigns are mapped as the Kimi runtime does.
+    """
+    devices = environment['NVIDIA_VISIBLE_DEVICES'].split(',')
+    if (len(devices) != TENSOR_PARALLEL_SIZE or len(set(devices)) != TENSOR_PARALLEL_SIZE
+            or any(not d.startswith('GPU-') for d in devices)):
+        raise ValueError('DeepSeek SGLang requires exactly four assigned GPU UUIDs')
+    result = subprocess.run(['nvidia-smi', '--id=' + ','.join(devices), '--query-gpu=index,uuid',
+                             '--format=csv,noheader,nounits'], capture_output=True, text=True, check=True, timeout=30)
+    indices, seen = {}, set()
+    for row in csv.reader(result.stdout.splitlines()):
+        if len(row) != 2:
+            raise ValueError('GPU inventory must contain an index and UUID')
+        index, uuid = (value.strip() for value in row)
+        if not re.fullmatch('[0-9]+', index) or uuid not in devices or uuid in indices or int(index) in seen:
+            raise ValueError('GPU inventory has an invalid or duplicate assignment')
+        indices[uuid] = str(int(index))
+        seen.add(int(index))
+    if set(indices) != set(devices):
+        raise ValueError('GPU inventory does not cover every assigned UUID')
+    return ','.join(indices[uuid] for uuid in devices)
 
 
 def gpu_names(environment):
@@ -117,3 +144,10 @@ def commands(environment):
               '--rate-limit-tokens-per-second', '0', '--request-timeout-secs', '900',
               '--worker-startup-timeout-secs', '3000', '--disable-retries']
     return config, backend, router
+
+
+if __name__ == '__main__':
+    import os
+    if sys.argv[1:] != ['--cuda-visible-devices']:
+        raise SystemExit('usage: config.py --cuda-visible-devices')
+    print(cuda_visible_devices(os.environ))

@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 root="${GRADIATED_RUNTIME_ROOT:?}"
-export CUDA_VISIBLE_DEVICES="${NVIDIA_VISIBLE_DEVICES:?Host agent must assign GPU UUIDs}"
+: "${NVIDIA_VISIBLE_DEVICES:?Host agent must assign GPU UUIDs}"
 export CUDA_HOME="$root/python/lib/python3.12/site-packages/nvidia/cu13"
 export CUDA_PATH="$CUDA_HOME"
 export PATH="$root/python/bin:$CUDA_HOME/bin:$PATH"
 export LD_LIBRARY_PATH="$CUDA_HOME/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export CPATH="$root/python/include/python3.12${CPATH:+:$CPATH}"
 unset PYTHONPATH PYTHONHOME LD_PRELOAD FLASHINFER_CUBIN_CHECKSUM_DISABLED
+# SGLang parses CUDA_VISIBLE_DEVICES as indices in its Engram and NVLink checks.
+deepseek_cuda_devices="$("$root/python/bin/python3" "$root/deepseek-sglang/config.py" --cuda-visible-devices)"
+export CUDA_VISIBLE_DEVICES="$deepseek_cuda_devices"
+export CUDA_DEVICE_ORDER=PCI_BUS_ID
 export SGLANG_ENABLE_HEALTH_ENDPOINT_GENERATION=0
 export TOKENIZERS_PARALLELISM=false
 cache="${XDG_CACHE_HOME:-$HOME/.cache}/deepseek-sglang"

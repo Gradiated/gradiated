@@ -2,6 +2,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -50,6 +51,17 @@ class Configuration(unittest.TestCase):
                       {'LORA_ENABLED': 'yes'}, {'DEEPSEEK_SGLANG_PROFILE': 'h200-tp4'}]:
             with self.subTest(delta=delta), self.assertRaises(ValueError):
                 config.commands({**self.environment, **delta})
+
+    def test_assigned_uuids_become_physical_indices_in_assignment_order(self):
+        inventory = 'GPU-a, 2\n'
+        rows = '3, GPU-d\n0, GPU-a\n2, GPU-c\n1, GPU-b\n'
+        with patch.object(config.subprocess, 'run', return_value=type('R', (), {'stdout': rows})()):
+            self.assertEqual(config.cuda_visible_devices(self.environment), '0,1,2,3')
+        for bad in ['0, GPU-a\n0, GPU-b\n2, GPU-c\n3, GPU-d\n', '0, GPU-a\n1, GPU-b\n2, GPU-c\n', inventory,
+                    'x, GPU-a\n1, GPU-b\n2, GPU-c\n3, GPU-d\n']:
+            with self.subTest(bad=bad), self.assertRaises(ValueError), \
+                    patch.object(config.subprocess, 'run', return_value=type('R', (), {'stdout': bad})()):
+                config.cuda_visible_devices(self.environment)
 
     def test_profile_comes_from_the_assigned_gpus(self):
         original = config.gpu_names

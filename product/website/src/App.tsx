@@ -15,6 +15,7 @@ import { ModelsPage } from "./pages/ModelsPage";
 import { LibraryPage } from "./pages/LibraryPage";
 import { SystemPage } from "./pages/SystemPage";
 import { RailShell } from "./components/design/RailShell";
+import { PageMetadata } from "./components/PageMetadata";
 import { ModelDetailPage } from "./pages/ModelDetailPage";
 import { CareersIndexPage, JobDetailPage } from "./pages/CareersPages";
 import { DocsNextPage } from "./pages/DocsNextPage";
@@ -280,6 +281,7 @@ export const AppRoutes = (): ReactElement => (
 export const App = (): ReactElement => (
   <BrowserRouter>
     <RouteScrollRestoration />
+    <PageMetadata />
     <AppRoutes />
   </BrowserRouter>
 );

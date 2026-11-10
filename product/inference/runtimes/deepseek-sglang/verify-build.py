@@ -35,9 +35,11 @@ def verify(root):
     manifest = json.loads((root / 'patches.json').read_text())
     if manifest['upstream_sha'] != SGLANG_SOURCE:
         raise RuntimeError('Qualified source pin changed')
-    for item in manifest['files']:
-        if hashlib.sha256((site / item['path']).read_bytes()).hexdigest() != item['overlay_sha256']:
-            raise RuntimeError('Qualified source overlay changed: ' + item['path'])
+    # A path may carry stacked overlays; the installed file must match the last one.
+    final = {item['path']: item['overlay_sha256'] for item in manifest['files']}
+    for path, digest in final.items():
+        if hashlib.sha256((site / path).read_bytes()).hexdigest() != digest:
+            raise RuntimeError('Qualified source overlay changed: ' + path)
     env = {'GRADIATED_RUNTIME_ROOT': str(root), 'RUNTIME_PORT': '28080', 'WARMUP_PORT': '28083',
            'NVIDIA_VISIBLE_DEVICES': ','.join(f'GPU-cpu-check-{index}' for index in range(4))}
     parser = argparse.ArgumentParser()

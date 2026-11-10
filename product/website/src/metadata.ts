@@ -55,7 +55,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description: "Create Gradiated wafer-field artwork from a motif or image.",
     index: false,
   },
-  "/sand-to-thought/library/": {
+  "/library/sand-to-thought/": {
     title: "Sand to Thought",
     description:
       "Explore the semiconductor stack through an illustrated journey from silicon to computers and deeper articles about how chips are made.",

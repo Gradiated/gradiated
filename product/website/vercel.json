@@ -41,7 +41,27 @@
     },
     {
       "source": "/library/how-to-get-an-answer-out-of-sand/",
-      "destination": "/sand-to-thought/",
+      "destination": "/library/sand-to-thought/how-to-get-an-answer-out-of-sand/",
+      "permanent": true
+    },
+    {
+      "source": "/sand-to-thought/",
+      "destination": "/library/sand-to-thought/how-to-get-an-answer-out-of-sand/",
+      "permanent": true
+    },
+    {
+      "source": "/sand-to-thought/fabricating-a-transistor/",
+      "destination": "/library/sand-to-thought/fabricating-a-transistor/",
+      "permanent": true
+    },
+    {
+      "source": "/sand-to-thought/library/",
+      "destination": "/library/sand-to-thought/",
+      "permanent": true
+    },
+    {
+      "source": "/library/gemma-inference-engine/",
+      "destination": "/notes/gemma-inference-engine/",
       "permanent": true
     },
     {

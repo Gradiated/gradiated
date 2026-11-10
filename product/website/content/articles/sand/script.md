@@ -68,7 +68,7 @@ When `A` is `0`, the p-type switch is on and the n-type is off. The output is co
 
 How are these two transistors and their connections actually made on silicon?
 
-[Follow a wafer through the fabrication process](/sand-to-thought/fabricating-a-transistor/)
+[Follow a wafer through the fabrication process](/library/sand-to-thought/fabricating-a-transistor/)
 
 <!-- scene: nor -->
 

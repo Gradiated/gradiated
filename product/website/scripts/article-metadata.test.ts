@@ -121,7 +121,10 @@ test("the published sand journey has its own collection and is included in produ
   const article = parseArticleMetadata(source, "sand");
   assert.equal(article.category, "hardware");
   assert.equal(article.collection, "sand-to-thought");
-  assert.equal(article.path, "/sand-to-thought/");
+  assert.equal(
+    article.path,
+    "/library/sand-to-thought/how-to-get-an-answer-out-of-sand/",
+  );
   assert.equal(article.layout, "journey");
   assert.equal(buildArticleRegistry({ sand: source }, true).length, 1);
   assert.equal(article.status, "published");

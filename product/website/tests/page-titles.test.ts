@@ -52,7 +52,7 @@ vi.mock("../src/pages/ReadingPages", () => ({
   ArticleReadingPage: () => null,
 }));
 
-import { AppRoutes } from "../src/App";
+import { AppRoutes, MovedJourney } from "../src/App";
 import { getSeoPages } from "../src/entry-server";
 import { getPageMetadata } from "../src/metadata";
 
@@ -74,6 +74,7 @@ const routePaths = (): string[] => {
     const { element, path } = route;
     if (!path || path === "*") return [];
     if (isValidElement(element) && element.type === Navigate) return [];
+    if (isValidElement(element) && element.type === MovedJourney) return [];
     if (path === "/docs/*") return docsPaths;
     if (redirectedAtTheEdge.has(path)) return [];
     return [canonical(path)];

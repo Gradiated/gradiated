@@ -39,10 +39,24 @@ import { AboutPage } from "./pages/AboutPage";
    Footer, so there is nowhere left for the legacy SiteLayout to be reached
    from — the 404 was the last one. */
 
-const SandJourneyRedirect = (): ReactElement => {
+/* The journeys moved under /library/sand-to-thought/. The edge 308s in
+   vercel.json carry the old URLs in production; these keep the hash
+   (scene anchors) when the router handles one client-side. */
+export const MovedJourney = ({ to }: { to: string }): ReactElement => {
   const { hash } = useLocation();
 
-  return <Navigate replace to={`/sand-to-thought/${hash}`} />;
+  return <Navigate replace to={`${to}${hash}`} />;
+};
+
+const MOVED_JOURNEYS: Record<string, string> = {
+  "/sand-to-thought/":
+    "/library/sand-to-thought/how-to-get-an-answer-out-of-sand/",
+  "/library/how-to-get-an-answer-out-of-sand/":
+    "/library/sand-to-thought/how-to-get-an-answer-out-of-sand/",
+  "/sand-to-thought/fabricating-a-transistor/":
+    "/library/sand-to-thought/fabricating-a-transistor/",
+  "/sand-to-thought/library/": "/library/sand-to-thought/",
+  "/library/gemma-inference-engine/": "/notes/gemma-inference-engine/",
 };
 
 const RouteScrollRestoration = (): null => {
@@ -125,14 +139,9 @@ export const AppRoutes = (): ReactElement => (
       }
       path={SAND_TO_THOUGHT_URL}
     />
-    <Route
-      element={
-        <Shelled>
-          <SandJourneyRedirect />
-        </Shelled>
-      }
-      path="/library/how-to-get-an-answer-out-of-sand/"
-    />
+    {Object.entries(MOVED_JOURNEYS).map(([from, to]) => (
+      <Route element={<MovedJourney to={to} />} key={from} path={from} />
+    ))}
     <Route
       element={
         <Shelled>

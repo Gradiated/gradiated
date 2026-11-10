@@ -309,8 +309,9 @@ DeepSeek V4.1 Flash 1017 replaced `deepseek/deepseek-v4.1-flash` on our
 capacity. The old ID stays available and is served through OpenRouter's
 `deepseek/deepseek-v4.1-flash`, so existing callers keep working. It keeps its
 13 September 2026 prices: $0.30 input, $0.006 cached input, and $1.20 output per
-million tokens, the common full provider rate then. It takes no adapters and does
-not advertise `chat_template_kwargs`, which OpenRouter does not accept. Limits
+million tokens, the common full provider rate then. It takes no adapters. It still
+declares `chat_template_kwargs`, which OpenRouter does not accept, so a request
+carrying it fails for want of capacity instead of losing the setting. Limits
 also use the cited snapshots. These are
 local catalog fixtures, not measured serving limits or production pricing.
 GLM reuses the existing model configuration. Both seeds expose text input.

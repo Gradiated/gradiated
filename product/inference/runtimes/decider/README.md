@@ -1,7 +1,7 @@
 # Decider v1.2 27B runtime
 
 Native, text-only SystemOne serving for `perplexity-ai/pplx-decider-v1.2`.
-The catalog is initially unavailable; enable it with qualified local capacity.
+The catalog advertises the qualified single-replica `decider-l40s` pool.
 There is no OpenRouter mapping or external fallback for this model. Customer
 training is not exposed by this runtime.
 
@@ -42,5 +42,10 @@ Source, locked dependencies and raw outputs are retained at
 The catalog price is $0.02/M input tokens (20 nano-USD/token), matching
 [Perplexity's published rate](https://docs.perplexity.ai/docs/getting-started/pricing#decisions-api-pricing).
 Cached-input pricing is the same because this runtime has no prefix cache.
-Keep Kev serving until the new L40S replica passes SDK qualification and
-deployment-pinned decision requests.
+The L40S replica passed SDK qualification and 12 deployment-pinned synthetic
+requests (four cases, three repeats). Median end-to-end latency was 0.62–0.67 s
+at 163–170 tokens and 4.72 s at 7,288 tokens. Observed total GPU memory peaked
+at 29.03 GiB, with no runtime restarts. Selected choices matched the stored BF16
+B300 reference, with a maximum probability delta of 0.032716. These are synthetic
+smoke checks on one L40S, not a broad accuracy or production-load benchmark.
+Kev is retired from availability; its historical model ID remains in the catalog.

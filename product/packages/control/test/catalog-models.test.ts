@@ -109,8 +109,8 @@ describe("model configurations", () => {
     }
   });
 
-  it("advertises Kev 9B as a decision model that cannot generate", () => {
-    expect(createKev9bModelConfiguration().status).toBe("available");
+  it("retains Kev 9B history while retiring it from published catalogs", () => {
+    expect(createKev9bModelConfiguration().status).toBe("retired");
     expect(modelType(createKev9bModelConfiguration().id)).toBe("decision");
     const [output] =
       createKev9bModelConfiguration().properties.output_modalities;

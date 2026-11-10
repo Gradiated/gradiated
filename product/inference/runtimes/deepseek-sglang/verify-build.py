@@ -21,6 +21,10 @@ def verify(root):
     for name, version in expected.items():
         if importlib.metadata.version(name) != version:
             raise RuntimeError('Qualified dependency changed: ' + name)
+    import flashinfer_jit_cache
+    providers = {p.provider_id: p for p in flashinfer_jit_cache.get_jit_cache_providers()}
+    if 'fused_moe_trtllm_sm100' not in getattr(providers.get('sm103a'), 'modules', ()):
+        raise RuntimeError('Prebuilt B300 FlashInfer MoE op is missing')
     import sglang
     from sglang.srt.server_args import ServerArgs
     from sglang.srt.models.deepseek_v4 import DeepseekV4ForCausalLM  # noqa: F401

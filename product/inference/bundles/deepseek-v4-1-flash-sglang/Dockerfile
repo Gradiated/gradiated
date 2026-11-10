@@ -63,6 +63,10 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     && cp /tmp/smg-lora/smg-patches.json /bundle/smg-lora-patches.json
 
 FROM smg-compiler AS package
+COPY bundles/deepseek-v4-1-flash-sglang/jit-cache-requirements.txt /tmp/jit-cache-requirements.txt
+RUN uv pip install --python /bundle/python/bin/python3 --break-system-packages \
+      --no-deps --require-hashes -r /tmp/jit-cache-requirements.txt \
+    && uv pip check --python /bundle/python/bin/python3
 COPY bundles/package.sh /package.sh
 COPY --chmod=755 bundles/deepseek-v4-1-flash-sglang/entrypoint /bundle/entrypoint
 COPY bundles/glm-5-3-flash-sglang/patches.json /bundle/

@@ -19,13 +19,17 @@ test("base and shared packaging changes verify every bundle", () => {
 test("a bundle's own inputs verify only that bundle", () => {
   assert.deepEqual(
     bundlesToVerify(["product/inference/runtimes/kev/adapter.py"]),
-    ["kev-9b"],
+    ["decider-27b", "kev-9b"],
   );
   assert.deepEqual(bundlesToVerify(["product/inference/lora/manager.py"]), [
     "glm-5-3-flash-sglang",
     "deepseek-v4-1-flash-sglang",
   ]);
 });
+test("Decider runtime changes verify its isolated bundle", () => {
+  assert.deepEqual(bundlesToVerify(["product/inference/runtimes/decider/service.py"]), ["decider-27b"]);
+});
+
 test("docs, tests, GLM and release tooling verify nothing", () => {
   assert.deepEqual(
     bundlesToVerify([

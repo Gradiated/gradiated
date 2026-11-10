@@ -17,6 +17,7 @@ on:
       - product/packages/autotrain
       - product/packages/autotrain/**
       - product/packages/contracts/src/training-recipe.json
+      - product/inference/runtimes/decider/**
       - product/inference/runtimes/kev/adapter.py
       - product/inference/runtimes/glm/**
       - product/inference/runtimes/glm-sglang/**

@@ -1,0 +1,14 @@
+{
+  "repository": "perplexity-ai/pplx-decider-v1.2",
+  "revision": "cce0f3f80033e9d89d80831d5281fd72124aacce",
+  "files": {
+    "LICENSE": "bbedc3fda3305820b977265f01b8619d87570a6739de3a5582c3464840f1e57a",
+    "NOTICE": "b8cf12a80395cbf75e5d8493fa28cecb383ecdc52e2fa552a989d0ac838618ac",
+    "source/src/pplx_decider/__init__.py": "48c26c24432476f2e4a43486d60e24ee0a6e124093a38fb8803686e99fecb5b3",
+    "source/src/pplx_decider/fast.py": "afef05e1935be967b6ab6015bea3c86933dd5a45b7f349b0ed2ab5788a66cdbc",
+    "source/src/pplx_decider/model.py": "ab5f42bd051d9e04cb9266e378d96dd72684c7a7f074efd9fc5117508e3dee91",
+    "source/src/pplx_decider/types.py": "3de3e545d81692346f65c0f4ff9843952696a12f7b357cf6a5d0e8545badff8a",
+    "source/src/pplx_decider/protocol.py": "b29d7a50d7214bd42397f8d3ddd5b5706cb8da2b257e175bf89b5a8da455d6a0",
+    "source/src/pplx_decider/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

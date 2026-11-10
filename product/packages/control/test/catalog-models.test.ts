@@ -2,7 +2,10 @@ import {
   ModelPropertiesInputSchema,
   OpenRouterModelIdSchema,
 } from "@gradiated/contracts";
-import { modelType } from "@gradiated/contracts/model-catalog";
+import {
+  modelType,
+  modelSupportedUses,
+} from "@gradiated/contracts/model-catalog";
 import { describe, expect, it } from "vitest";
 
 import { catalogModels, legacyModels } from "../src/catalog/models/index.js";
@@ -44,6 +47,7 @@ describe("model configurations", () => {
       output: [450, 450],
     },
     "jaredpalmer/kev-9b": { input: [30, 6], output: [0] },
+    "perplexity-ai/pplx-decider-v1.2": { input: [20, 20], output: [0] },
     "moonshotai/kimi-k3.1-pro": {
       input: [1_000, 100],
       output: [9_000, 9_000],
@@ -75,6 +79,7 @@ describe("model configurations", () => {
       "dealignai/glm-5.3-flash-uncensored": null,
       "dealignai/glm-5.3-flash-uncensored-nvfp4": null,
       "jaredpalmer/kev-9b": undefined,
+      "perplexity-ai/pplx-decider-v1.2": null,
       "moonshotai/kimi-k3.1-pro": null,
       "z-ai/glm-5.3": "z-ai/glm-5.3",
     });
@@ -110,6 +115,7 @@ describe("model configurations", () => {
 
   it("classifies the generation models as chat", () => {
     expect(catalogModels.map((model) => modelType(model.id))).toEqual([
+      "decision",
       "chat",
       "chat",
       "chat",
@@ -205,4 +211,19 @@ it("identifies Dealign weights separately from the stock training base", () => {
     hugging_face_id: "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
     quantization: "nvfp4",
   });
+});
+
+it("stages text-only Decider with no external provider or training capability", () => {
+  const model = catalogModels.find(
+    (item) => item.id === "perplexity-ai/pplx-decider-v1.2",
+  );
+  expect(model?.status).toBe("unavailable");
+  expect(
+    model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
+  ).toBeNull();
+  expect(modelType("perplexity-ai/pplx-decider-v1.2")).toBe("decision");
+  expect(modelSupportedUses("perplexity-ai/pplx-decider-v1.2")).toEqual([
+    "serving",
+  ]);
+  expect(model?.properties.quantization).toBe("int4");
 });

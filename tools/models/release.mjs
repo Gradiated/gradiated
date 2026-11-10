@@ -76,6 +76,11 @@ export const bundles = {
     "product/inference/bundles/glm-5-3-flash-sglang/jit-cache-requirements.txt",
     "product/inference/lora",
   ],
+  "decider-27b": [
+    "product/inference/bundles/decider-27b",
+    "product/inference/runtimes/decider",
+    "product/inference/runtimes/kev/adapter.py",
+  ],
   "kev-9b": [
     "product/inference/bundles/kev-9b",
     "product/inference/runtimes/kev/adapter.py",

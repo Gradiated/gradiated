@@ -14,6 +14,7 @@ on:
       - "product/inference/images/gpu-base/**"
       - "product/inference/host/**"
       - "product/inference/runtimes/kev/**"
+      - "product/inference/runtimes/decider/**"
       - "product/inference/runtimes/vllm/**"
       - "product/packages/**"
       - ".github/actions/product-changes/**"
@@ -396,14 +397,14 @@ jobs:
         run: ctest --output-on-failure --parallel "$(nproc)"
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         if: needs.changes.outputs.native_kev == 'true'
-      - name: Run Kev runtime CPU unit tests
+      - name: Run decision runtime CPU unit tests
         if: needs.changes.outputs.native_kev == 'true'
         env:
           PYTHONDONTWRITEBYTECODE: "1"
         run: >-
           uv run --no-project --python 3.12
           --with fastapi --with httpx --with pytest
-          python -m pytest -p no:cacheprovider product/inference/runtimes/kev -q
+          python -m pytest -p no:cacheprovider product/inference/runtimes/kev product/inference/runtimes/decider -q
 
   gateway-contract:
     name: Gateway runtime integration

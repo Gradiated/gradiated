@@ -13,6 +13,11 @@ target "bundle" {
   }
 }
 
+target "verify-decider-27b" {
+  inherits   = ["bundle"]
+  dockerfile = "bundles/decider-27b/Dockerfile"
+}
+
 target "verify-kev-9b" {
   inherits   = ["bundle"]
   dockerfile = "bundles/kev-9b/Dockerfile"

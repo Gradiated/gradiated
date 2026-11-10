@@ -51,7 +51,7 @@ JOB_PATHS = {
         "product/inference/desmond/*",
         "product/inference/engine/*",
     ),
-    "native_kev": ("product/inference/runtimes/kev/*",),
+    "native_kev": ("product/inference/runtimes/kev/*", "product/inference/runtimes/decider/*"),
     "gateway_contract": (*GATEWAY, *RUNTIMES, "product/docker-compose.yml"),
     "proxy_e2e": (
         *PROXY,

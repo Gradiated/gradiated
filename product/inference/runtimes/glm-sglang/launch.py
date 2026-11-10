@@ -18,6 +18,16 @@ spec = importlib.util.spec_from_file_location('glm_warmup_base', base_path)
 base = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(base)
 base_handler = base.handler
+base_gpu_inventory = base.gpu_inventory
+
+
+def assigned_gpu_inventory(devices):
+    # Qualification records are keyed by the assigned GPU UUIDs. The DeepSeek entrypoint gives
+    # the engine physical indices in CUDA_VISIBLE_DEVICES, so look the UUIDs up instead.
+    return base_gpu_inventory(os.environ.get('NVIDIA_VISIBLE_DEVICES') or devices)
+
+
+base.gpu_inventory = assigned_gpu_inventory
 
 
 class Supervisor(base.Supervisor):

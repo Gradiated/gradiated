@@ -56,6 +56,26 @@ export const bundles = {
     "product/inference/bundles/glm-5-3-flash-sglang/patches/smg_refused_upload.patch",
     "product/inference/bundles/glm-5-3-flash-sglang/patches/smg_build_marker.patch",
   ],
+  "deepseek-v4-1-flash-sglang": [
+    "product/inference/bundles/deepseek-v4-1-flash-sglang",
+    "product/inference/runtimes/deepseek-sglang",
+    "product/inference/runtimes/glm-sglang/launch.py",
+    "product/inference/runtimes/glm-sglang/service.py",
+    "product/inference/runtimes/glm-sglang/artifact-cache.py",
+    "product/inference/runtimes/glm-sglang/autotune-seed.py",
+    "product/inference/runtimes/glm/warmup-supervisor.py",
+    "product/inference/bundles/glm-5-3-flash-sglang/requirements.txt",
+    "product/inference/bundles/glm-5-3-flash-sglang/patches",
+    "product/inference/bundles/glm-5-3-flash-sglang/patches.json",
+    "product/inference/bundles/glm-5-3-flash-sglang/apply-patches.py",
+    "product/inference/bundles/glm-5-3-flash-sglang/artifacts.json",
+    "product/inference/bundles/glm-5-3-flash-sglang/fetch-artifacts.py",
+    "product/inference/bundles/glm-5-3-flash-sglang/smg-build-requirements.txt",
+    "product/inference/bundles/glm-5-3-flash-sglang/smg-patches.json",
+    "product/inference/bundles/glm-5-3-flash-sglang/smg-lora",
+    "product/inference/bundles/glm-5-3-flash-sglang/jit-cache-requirements.txt",
+    "product/inference/lora",
+  ],
   "deepseek-v4-1-flash": [
     "product/inference/bundles/deepseek-v4-1-flash",
     "product/inference/images/deepseek-v4-1-flash/start.sh",
@@ -96,6 +116,9 @@ export const manifest = ({
       ? { runtimeProfiles: ["b300-pcp2", "h200-tp2", "b200-pcp2"] }
       : {}),
     ...(bundle === "kimi-k31-pro" ? { runtimeProfiles: ["b300-tp8"] } : {}),
+    ...(bundle === "deepseek-v4-1-flash-sglang"
+      ? { runtimeProfiles: ["b300-tp4"] }
+      : {}),
     source,
     baseImage,
     baseId,

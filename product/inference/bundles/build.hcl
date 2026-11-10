@@ -44,3 +44,8 @@ target "verify-kimi-k31-pro" {
   inherits = ["bundle"]
   dockerfile = "bundles/kimi-k31-pro/Dockerfile"
 }
+
+target "verify-deepseek-v4-1-flash-sglang" {
+  inherits = ["bundle"]
+  dockerfile = "bundles/deepseek-v4-1-flash-sglang/Dockerfile"
+}

@@ -53,6 +53,14 @@ class Lifecycle(unittest.TestCase):
                 else:
                     self.assertIn(f'gradiated_runtime_startup_qualification{{mode="{mode}"}} 1', result)
 
+    def test_qualification_records_use_assigned_uuids_when_the_engine_gets_indices(self):
+        seen = []
+        with patch.object(launch, 'base_gpu_inventory', side_effect=lambda devices: seen.append(devices) or [{}]), \
+             patch.dict(launch.os.environ, {'CUDA_VISIBLE_DEVICES': '0,1,2,3',
+                                            'NVIDIA_VISIBLE_DEVICES': 'GPU-a,GPU-b,GPU-c,GPU-d'}):
+            launch.base.gpu_inventory('0,1,2,3')
+        self.assertEqual(seen, ['GPU-a,GPU-b,GPU-c,GPU-d'])
+
     def test_startup_probes_name_the_served_model(self):
         with tempfile.TemporaryDirectory() as root:
             environment = {'GRADIATED_RUNTIME_ROOT': root, 'NVIDIA_VISIBLE_DEVICES': 'GPU-a,GPU-b',

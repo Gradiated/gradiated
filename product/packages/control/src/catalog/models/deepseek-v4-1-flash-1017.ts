@@ -5,8 +5,6 @@ export const deepseekV41Flash1017ModelId = "deepseek/deepseek-v4.1-flash-1017";
 export const deepseekV41Flash1017ArtifactModelPath =
   "deepseek-ai/DeepSeek-V4.1-Flash-1017";
 
-// Prices match OpenRouter's entry on 2026-11-10 ($0.006 input, $0.005 cached and
-// $0.50 output per 1M tokens), so its fallback, capped at our price, still serves.
 export const createDeepseekV41Flash1017ModelConfiguration = () =>
   ({
     id: deepseekV41Flash1017ModelId,
@@ -32,7 +30,7 @@ export const createDeepseekV41Flash1017ModelConfiguration = () =>
           },
           pricing: [
             { type: "prompt", unit: "token", cost: 6 },
-            { type: "cached_prompt", unit: "token", cost: 5 },
+            { type: "cached_prompt", unit: "token", cost: 1 },
           ],
         },
       ],
@@ -60,11 +58,11 @@ export const createDeepseekV41Flash1017ModelConfiguration = () =>
             chat_template_kwargs: { type: "unknown" },
           },
           pricing: [
-            { type: "completion", unit: "token", cost: 500 },
+            { type: "completion", unit: "token", cost: 200 },
             {
               type: "internal_reasoning",
               unit: "token",
-              cost: 500,
+              cost: 200,
             },
           ],
         },

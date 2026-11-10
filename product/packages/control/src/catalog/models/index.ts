@@ -12,7 +12,6 @@ import { createKimiK31ProModelConfiguration } from "./kimi-k31-pro.js";
 export const catalogModels = [
   createDecider27bModelConfiguration(),
   createDeepseekV41Flash1017ModelConfiguration(),
-  createDeepseekV41FlashModelConfiguration(),
   createGlm53FlashModelConfiguration(),
   createDealignGlm53FlashModelConfiguration(),
   createKev9bModelConfiguration(),
@@ -26,6 +25,7 @@ export const legacyModels = [
     id: "dealignai/glm-5.3-flash-uncensored-nvfp4",
     status: "retired" as const,
   },
+  createDeepseekV41FlashModelConfiguration(),
 ];
 
 export {

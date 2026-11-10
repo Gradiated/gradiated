@@ -23,26 +23,33 @@ const prices = (model: { properties: unknown }) => {
 };
 
 describe("model configurations", () => {
-  it.each(catalogModels)("$id is a valid catalog model", (model) => {
-    const properties = ModelPropertiesInputSchema.parse(model.properties);
+  it.each([...catalogModels, ...legacyModels])(
+    "$id is a valid catalog model",
+    (model) => {
+      const properties = ModelPropertiesInputSchema.parse(model.properties);
 
-    expect(model.id).toBe(model.id.toLowerCase());
-    for (const output of properties.output_modalities) {
-      expect(output.default_length?.value ?? 0).toBeLessThanOrEqual(
-        output.max_length.value,
-      );
-    }
-    const { input, output } = prices(model);
-    for (const { cost } of [...input, ...output]) {
-      expect(Number.isSafeInteger(cost) && cost >= 0).toBe(true);
-    }
-  });
+      expect(model.id).toBe(model.id.toLowerCase());
+      for (const output of properties.output_modalities) {
+        expect(output.default_length?.value ?? 0).toBeLessThanOrEqual(
+          output.max_length.value,
+        );
+      }
+      const { input, output } = prices(model);
+      for (const { cost } of [...input, ...output]) {
+        expect(Number.isSafeInteger(cost) && cost >= 0).toBe(true);
+      }
+    },
+  );
 
   const pinnedPrices: Record<string, { input: number[]; output: number[] }> = {
-    "deepseek/deepseek-v4.1-flash-1017": { input: [6, 5], output: [500, 500] },
-    "deepseek/deepseek-v4.1-flash": { input: [300, 6], output: [1_200, 1_200] },
+    "deepseek/deepseek-v4.1-flash-1017": { input: [6, 1], output: [200, 200] },
+    "deepseek/deepseek-v4.1-flash": { input: [6, 1], output: [200, 200] },
     "z-ai/glm-5.3-flash": { input: [150, 30], output: [500, 500] },
     "dealignai/glm-5.3-flash-uncensored": {
+      input: [100, 10],
+      output: [450, 450],
+    },
+    "dealignai/glm-5.3-flash-uncensored-nvfp4": {
       input: [100, 10],
       output: [450, 450],
     },
@@ -55,14 +62,17 @@ describe("model configurations", () => {
     "z-ai/glm-5.3": { input: [1_400, 260], output: [4_400, 4_400] },
   };
 
-  it.each(catalogModels)("pins the nano-USD prices of $id", (model) => {
-    const pinned = prices(model);
+  it.each([...catalogModels, ...legacyModels])(
+    "pins the nano-USD prices of $id",
+    (model) => {
+      const pinned = prices(model);
 
-    expect({
-      input: pinned.input.map(({ cost }) => cost),
-      output: pinned.output.map(({ cost }) => cost),
-    }).toEqual(pinnedPrices[model.id]);
-  });
+      expect({
+        input: pinned.input.map(({ cost }) => cost),
+        output: pinned.output.map(({ cost }) => cost),
+      }).toEqual(pinnedPrices[model.id]);
+    },
+  );
 
   it("maps only verified exact models to OpenRouter", () => {
     const mappings = Object.fromEntries(
@@ -116,7 +126,6 @@ describe("model configurations", () => {
   it("classifies the generation models as chat", () => {
     expect(catalogModels.map((model) => modelType(model.id))).toEqual([
       "decision",
-      "chat",
       "chat",
       "chat",
       "chat",
@@ -187,18 +196,16 @@ it("serves DeepSeek V4.1 Flash 1017 on our capacity from its native weights", ()
   });
 });
 
-it("keeps the replaced DeepSeek V4.1 Flash available through OpenRouter", () => {
-  const model = catalogModels.find(
-    (item) => item.id === "deepseek/deepseek-v4.1-flash",
+it("retires original DeepSeek Flash and keeps 1017 as an explicit selection", () => {
+  const originalId = "deepseek/deepseek-v4.1-flash";
+  const retired = legacyModels.find((model) => model.id === originalId);
+  const replacement = catalogModels.find(
+    (model) => model.id === "deepseek/deepseek-v4.1-flash-1017",
   );
-  const properties = ModelPropertiesInputSchema.parse(model?.properties);
 
-  expect(model?.status).toBe("available");
-  // Declared so requests carrying it fail for want of capacity rather than
-  // reaching OpenRouter with the setting silently dropped.
-  expect(properties.output_modalities[0]?.supported_parameters).toHaveProperty(
-    "chat_template_kwargs",
-  );
+  expect(catalogModels.some((model) => model.id === originalId)).toBe(false);
+  expect(retired?.status).toBe("retired");
+  expect(replacement?.status).toBe("available");
 });
 
 it("identifies Dealign weights separately from the stock training base", () => {

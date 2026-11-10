@@ -91,6 +91,32 @@ describe("catalog apply", () => {
     );
   });
 
+  it("retires original DeepSeek Flash without redirecting its model ID", async () => {
+    const catalog = createCatalogService(testDatabase.database);
+    const original = legacyModels.find(
+      (model) => model.id === "deepseek/deepseek-v4.1-flash",
+    )!;
+    await catalog.upsertModel({ ...original, status: "available" });
+
+    await applyCatalog(testDatabase.database);
+
+    const [stored] = await testDatabase.database
+      .select()
+      .from(models)
+      .where(eq(models.id, original.id));
+    expect(stored?.status).toBe("retired");
+    const listed = await catalog.listModels();
+    expect(listed.some((model) => model.id === original.id)).toBe(false);
+    expect(listed).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "deepseek/deepseek-v4.1-flash-1017",
+          status: "available",
+        }),
+      ]),
+    );
+  });
+
   it.each(["dealignai/glm-5.3-flash-uncensored-nvfp4", "z-ai/glm-5.3-flash"])(
     "moves active %s selections and disables retired-base training",
     async (legacy) => {

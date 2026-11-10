@@ -5,20 +5,17 @@ export const deepseekV41FlashModelId = "deepseek/deepseek-v4.1-flash";
 export const deepseekV41FlashArtifactModelPath =
   "deepseek-ai/DeepSeek-V4.1-Flash";
 
-// DeepSeek V4.1 Flash 1017 replaced this model on our capacity, so it is served
-// from OpenRouter only and existing callers keep working. Prices are unchanged:
-// OpenRouter's most common provider prices on 2026-09-14, in nano-USD per token,
-// above OpenRouter's current ones, which cap the fallback at our price.
+// The original checkpoint is retired; callers must select Flash 1017 explicitly.
 export const createDeepseekV41FlashModelConfiguration = () =>
   ({
     id: deepseekV41FlashModelId,
     name: modelDisplayName(deepseekV41FlashModelId),
-    status: "available",
+    status: "retired",
     // Checked 2026-11-10: OpenRouter's entry has this model's Hugging Face ID.
     openrouterModelId: "deepseek/deepseek-v4.1-flash",
     properties: {
       description:
-        "DeepSeek V4.1 Flash, served through OpenRouter. DeepSeek V4.1 Flash 1017 succeeds it.",
+        "Retired DeepSeek V4.1 Flash checkpoint. Use deepseek/deepseek-v4.1-flash-1017.",
       released_at: "2026-09-10T00:00:00.000Z",
       hugging_face_id: deepseekV41FlashArtifactModelPath,
       quantization: "fp4",
@@ -30,8 +27,8 @@ export const createDeepseekV41FlashModelConfiguration = () =>
             max_context_length: { value: 1_048_576, unit: "token" },
           },
           pricing: [
-            { type: "prompt", unit: "token", cost: 300 },
-            { type: "cached_prompt", unit: "token", cost: 6 },
+            { type: "prompt", unit: "token", cost: 6 },
+            { type: "cached_prompt", unit: "token", cost: 1 },
           ],
         },
       ],
@@ -62,11 +59,11 @@ export const createDeepseekV41FlashModelConfiguration = () =>
             chat_template_kwargs: { type: "unknown" },
           },
           pricing: [
-            { type: "completion", unit: "token", cost: 1_200 },
+            { type: "completion", unit: "token", cost: 200 },
             {
               type: "internal_reasoning",
               unit: "token",
-              cost: 1_200,
+              cost: 200,
             },
           ],
         },

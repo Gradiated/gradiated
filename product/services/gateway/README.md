@@ -299,9 +299,11 @@ Mappings live in the git-owned catalog definitions under
 `packages/control/src/catalog/models/`. Map only an OpenRouter entry for the same
 weights: check its `hugging_face_id` in `GET https://openrouter.ai/api/v1/models`.
 Verified on 2026-11-05: `z-ai/glm-5.3-flash`. Verified on 2026-11-10:
-`deepseek/deepseek-v4.1-flash-1017` and `deepseek/deepseek-v4.1-flash`. The old
-DeepSeek V4.1 Flash has no deployment since 1017 replaced it, so the mapping
-serves its callers from OpenRouter.
+`deepseek/deepseek-v4.1-flash-1017` and `deepseek/deepseek-v4.1-flash`. The original
+DeepSeek V4.1 Flash is retired, so its retained mapping does not permit serving.
+Callers must explicitly select `deepseek/deepseek-v4.1-flash-1017`, which is hosted
+on our capacity at $0.006 input, $0.001 cached input, and $0.20 output per million
+tokens. Its OpenRouter fallback remains subject to those input/output price caps.
 OpenRouter has no Dealign uncensored GLM and no SystemOne model; those stay
 unmapped, and standard GLM must never stand in for the uncensored one.
 

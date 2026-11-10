@@ -301,20 +301,16 @@ DeepSeek IDs were checked on 10 November 2026; GLM IDs on 13 September 2026:
 - [GLM weights](https://huggingface.co/zai-org/GLM-5.3-Flash):
   `zai-org/GLM-5.3-Flash`.
 
-DeepSeek V4.1 Flash 1017 prices match its OpenRouter entry on 10 November 2026:
-$0.006 input, $0.005 cached input, and $0.50 output per million tokens. The
-OpenRouter fallback is capped at our price, so a lower price would stop it.
+DeepSeek V4.1 Flash 1017 is hosted on our capacity at $0.006 input,
+$0.001 cached input, and $0.20 output per million tokens. Output pricing also
+applies to reasoning tokens. OpenRouter fallback is capped at our input/output
+prices; providers above either cap cannot serve fallback requests.
 
-DeepSeek V4.1 Flash 1017 replaced `deepseek/deepseek-v4.1-flash` on our
-capacity. The old ID stays available and is served through OpenRouter's
-`deepseek/deepseek-v4.1-flash`, so existing callers keep working. It keeps its
-13 September 2026 prices: $0.30 input, $0.006 cached input, and $1.20 output per
-million tokens, the common full provider rate then. It takes no adapters. It still
-declares `chat_template_kwargs`, which OpenRouter does not accept, so a request
-carrying it fails for want of capacity instead of losing the setting. Limits
-also use the cited snapshots. These are
-local catalog fixtures, not measured serving limits or production pricing.
-GLM reuses the existing model configuration. Both seeds expose text input.
+The original `deepseek/deepseek-v4.1-flash` checkpoint is retired and is neither
+listed nor served, including through its retained OpenRouter mapping. Existing
+callers must explicitly select `deepseek/deepseek-v4.1-flash-1017`; the old ID is
+not an alias. GLM reuses the existing model configuration. Both active seeds
+expose text input.
 
 Verification: API type checks and three model configuration tests passed.
 Two catalog-only seed runs returned exactly the two requested models from the

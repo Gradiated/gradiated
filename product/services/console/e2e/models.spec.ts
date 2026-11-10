@@ -18,6 +18,10 @@ test("models page shows the available model and pricing", async ({ page }) => {
     page.getByText("deepseek/deepseek-v4.1-flash-1017", { exact: true }),
   ).toBeVisible();
 
+  await expect(
+    page.getByText("deepseek/deepseek-v4.1-flash", { exact: true }),
+  ).toHaveCount(0);
+
   const modelCard = page
     .locator("article")
     .filter({ hasText: "deepseek/deepseek-v4.1-flash-1017" })
@@ -34,10 +38,10 @@ test("models page shows the available model and pricing", async ({ page }) => {
   ).toHaveText(["Input", "$0.00400", "$0.00600", "$0.00900"]);
   await expect(
     table.getByRole("row", { name: /^Cached input / }).getByRole("cell"),
-  ).toHaveText(["Cached input", "$0.00300", "$0.00500", "$0.00700"]);
+  ).toHaveText(["Cached input", "$0.00", "$0.00100", "$0.00100"]);
   await expect(
     table.getByRole("row", { name: /^Output / }).getByRole("cell"),
-  ).toHaveText(["Output", "$0.350", "$0.500", "$0.750"]);
+  ).toHaveText(["Output", "$0.140", "$0.200", "$0.300"]);
 
   const layout = await table.evaluate((element) => {
     const tableWidth = element.getBoundingClientRect().width;

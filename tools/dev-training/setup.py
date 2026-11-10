@@ -112,8 +112,17 @@ def main():
                                TAILSCALE_SECRET, '--query', 'SecretString', '--output', 'text'))
     environment = json.loads(aws(args.aws_profile, 'secretsmanager', 'get-secret-value', '--secret-id',
                                  DEV_SECRET, '--query', 'SecretString', '--output', 'text'))
-    aws_keys = [k['AccessKeyId'] for k in json.loads(aws(
-        args.aws_profile, 'iam', 'list-access-keys', '--user-name', BUCKET_USER))['AccessKeyMetadata']]
+    listed = subprocess.run(['aws', '--profile', args.aws_profile, '--region', 'us-east-1', 'iam',
+                             'list-access-keys', '--user-name', BUCKET_USER],
+                            text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60)
+    # The bucket user comes from the dev-storage Terraform unit; until it exists,
+    # set up everything else and add the bucket key on a later run.
+    bucket_user = listed.returncode == 0
+    if not bucket_user and 'NoSuchEntity' not in listed.stderr:
+        raise SystemExit(listed.stderr.strip())
+    if not bucket_user:
+        print(f'{BUCKET_USER} does not exist yet; skipping the bucket key. Run this again once it does.')
+    aws_keys = [k['AccessKeyId'] for k in json.loads(listed.stdout)['AccessKeyMetadata']] if bucket_user else []
     unused = [k for k in aws_keys if k != environment.get('DEV_TRAINING_AWS_ACCESS_KEY_ID')]
     if len(aws_keys) >= 2 and unused:
         # IAM allows two keys a user. The one in gradiated/dev/env becomes the
@@ -136,13 +145,14 @@ def main():
                             '-f', str(ssh_key)], check=True, timeout=30)
             ssh = {'NEBIUS_SSH_PRIVATE_KEY_B64': encode(ssh_key.read_text()),
                    'NEBIUS_SSH_PUBLIC_KEY_B64': encode(Path(f'{ssh_key}.pub').read_text().strip())}
-        bucket_key = json.loads(aws(args.aws_profile, 'iam', 'create-access-key', '--user-name',
-                                    BUCKET_USER))['AccessKey']
+        bucket = {'DEV_TRAINING_S3_BUCKET': BUCKET}
+        if bucket_user:
+            key = json.loads(aws(args.aws_profile, 'iam', 'create-access-key', '--user-name', BUCKET_USER))['AccessKey']
+            bucket.update({'DEV_TRAINING_AWS_ACCESS_KEY_ID': key['AccessKeyId'],
+                           'DEV_TRAINING_AWS_SECRET_ACCESS_KEY': key['SecretAccessKey']})
         # Base64 keeps multi-line and quoted values safe in a sourced .env file.
         added = {
-            'DEV_TRAINING_S3_BUCKET': BUCKET,
-            'DEV_TRAINING_AWS_ACCESS_KEY_ID': bucket_key['AccessKeyId'],
-            'DEV_TRAINING_AWS_SECRET_ACCESS_KEY': bucket_key['SecretAccessKey'],
+            **bucket,
             'NEBIUS_TENANT_ID': CONFIG['tenant_id'],
             'NEBIUS_SERVICE_ACCOUNT_CREDENTIALS_B64': encode(credentials.read_text()),
             **ssh,

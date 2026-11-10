@@ -240,7 +240,7 @@ OpenRouter's own traffic to us never falls back, so it fails while a model has
 no capacity of ours.
 
 Every pool scales on the same three signals, in its own slots, and the HPA takes
-the largest:
+the largest (a pool with no floor has a fourth, below):
 
 - **Utilization.** The model's peak in-flight generations over the last minute
   (`gradiated:model_busy_slots`), divided by 0.7, less the slots the pools ahead
@@ -272,6 +272,15 @@ GPUs, so the next removal waits only as long as the actual drain. New replicas
 become available only after SDK qualification, so keep the floor large enough
 for immediate traffic. None of this provisions or resets a provider GPU, and
 scaling down releases GPUs without reducing the RunPod reservation bill.
+
+A pool with no floor may be at zero replicas when a new revision lands, so its
+canary analysis would have nothing to qualify. While its Rollout updates, a
+fourth signal, `qualifying`, asks for one replica, and the pool moves straight
+to the new revision rather than through a half-weight canary, which at one
+replica would also restart the previous runtime. That replica must pass SDK
+qualification; if no host can take it, the analysis times out and the Rollout
+aborts. Once the update completes, an idle pool returns to zero after the
+usual cooldown.
 
 ### Startup state labels
 

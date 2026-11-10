@@ -53,7 +53,9 @@ def check_gpu_autoscaling(root):
         assert behavior['scaleDown']['stabilizationWindowSeconds'] == 60
         assert behavior['scaleDown']['policies'] == [{'type': 'Pods', 'value': 1, 'periodSeconds': 60}]
         # Every pool scales on exactly these signals, measured in its slots.
-        assert [trigger['name'] for trigger in spec['triggers']] == ['utilization', 'refusals', 'draining']
+        # A pool with no floor also brings up a replica for its updating Rollout to qualify.
+        assert [trigger['name'] for trigger in spec['triggers']] == (
+            ['utilization', 'refusals', 'draining'] + ([] if pool['floor'] else ['qualifying'])), name
         for trigger in spec['triggers']:
             assert trigger['metricType'] == 'AverageValue'
             assert trigger['metadata']['ignoreNullValues'] == 'false'
@@ -125,6 +127,16 @@ def scaling_tests(name, pool, queries, wrap=False):
         return result
 
     case('healthy idle model is zero', reporters(), zero)
+    if 'qualifying' in queries:
+        def phase(value):
+            return [{'series': f'rollout_info{{namespace="gpu-inference",name="{name}",phase="{value}"}}',
+                     'values': '1+0x12'}]
+        case('settled rollout asks for no qualifying replica', reporters() + phase('Completed'), {'qualifying': 0})
+        case('aborted rollout releases its qualifying replica', reporters() + phase('Abort'), {'qualifying': 0})
+        for value in ('Progressing', 'Paused'):
+            case(f'{value.lower()} rollout asks for one replica to qualify', reporters() + phase(value),
+                 {'qualifying': pool['slots']})
+        case('missing telemetry holds a qualifying replica', phase('Progressing'), {'qualifying': None})
     case('missing telemetry holds replicas', [], absent)
     partial = [item for item in reporters() if item['series'] != series('up', '', 'b', job='gateway')['series']]
     case('missing gateway cannot hide load', partial, absent)

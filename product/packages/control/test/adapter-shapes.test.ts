@@ -87,20 +87,20 @@ describe("serving adapter dimensions", () => {
     });
 
     // Matches the tensors in deepseek-ai/DeepSeek-V4.1-Flash at dba1be0 and
-    // DeepSeek-V4.1-Flash-1017 at 1bae0e1 (its routed experts pack two FP4
-    // values per byte, so their stored input width is half).
+    // DeepSeek-V4.1-Flash-1017 at 1bae0e1. Routed experts are not adaptable on
+    // the SGLang runtime, so uploads targeting them are rejected.
     expect(shapes).toMatchObject({
       "39/attn.wq_a": [1280, 5120],
       "39/attn.wq_b": [32768, 1280],
       "39/attn.wkv": [512, 5120],
       "39/attn.wo_a": [8192, 4096],
       "39/attn.wo_b": [5120, 8192],
-      "39/ffn.experts.w2": [5120, 2304],
       "39/ffn.shared_experts.w1": [2304, 5120],
       "39/ffn.shared_experts.w2": [5120, 2304],
       "39/ffn.shared_experts.w3": [2304, 5120],
     });
-    expect(Object.keys(shapes ?? {})).toHaveLength(440);
+    expect(shapes).not.toHaveProperty("39/ffn.experts.w2");
+    expect(Object.keys(shapes ?? {})).toHaveLength(320);
   });
 
   it("does not assume unknown architectures are supported", () => {

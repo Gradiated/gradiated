@@ -13,7 +13,8 @@ test("apps have unique keys, names and storage targets", () => {
 test("only the release app writes to the production repository through a protected environment", () => {
   for (const app of apps) {
     assert.ok(app.repositories.length > 0);
-    assert.deepEqual(Object.keys(app.permissions), ["contents"]);
+    const expected = app.key === "docs" ? ["contents", "pull_requests"] : ["contents"];
+    assert.deepEqual(Object.keys(app.permissions), expected);
   }
   assert.equal(apps.find((app) => app.key === "release").store.github.environment, "production");
   assert.equal(apps.find((app) => app.key === "autotrain-reader").permissions.contents, "read");

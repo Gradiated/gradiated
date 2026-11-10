@@ -205,11 +205,13 @@ def rollout(name, pool, runtimes):
     ]
     if not rolling:
         steps.append({'setWeight': 100})
-    if not pool['maximum']:
-        # A switched-off pool has no pods to qualify, so the analysis would wait out
-        # its 90 minutes and abort the Rollout on every template change. Its
-        # revisions become stable at once; once max_replicas is raised the worker
-        # still routes only pods that pass their own SDK qualification.
+    if not pool['floor']:
+        # A pool with no floor may be at zero replicas: switched off, or scaled to
+        # zero for lack of demand. With no pods to qualify, the analysis would wait
+        # out its 90 minutes and abort the Rollout, leaving the previous revision
+        # stable, so the next scale-up would start the old runtime. Its revisions
+        # become stable at once instead; the worker still routes only pods that
+        # pass their own SDK qualification.
         steps = []
     selector = {'gradiated.com/provider': 'runpod', 'nvidia.com/gpu.product': pool['gpu']}
     if 'gpu_count' in pool:

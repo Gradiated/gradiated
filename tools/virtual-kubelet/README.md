@@ -168,7 +168,11 @@ Actual parallel startup depends on spare GPU, CPU and memory capacity.
 Rollouts have no manual pause: the default canary moves to half weight, runs
 SDK analysis and then completes. `rolling_update: true` moves directly to the
 target revision without that half-weight canary. Per-pod SDK qualification still
-gates readiness, and the rollout retains its final SDK analysis. Do not edit
+gates readiness, and the rollout retains its final SDK analysis. A pool with no
+floor (`min_slots` leaves it zero replicas) has no canary steps: at zero
+replicas the analysis has nothing to qualify, would time out and abort, and the
+next scale-up would start the previous runtime. Its revisions become stable at
+once, and the worker routes only pods that pass their own SDK qualification. Do not edit
 generated Rollouts directly. Non-inventory fields in controller and RBAC
 manifests remain editable; rendering preserves them. CI checks that generated
 fields match the inputs. Remove a retired host Service or pool Rollout

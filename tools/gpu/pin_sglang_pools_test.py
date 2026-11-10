@@ -103,6 +103,13 @@ class SGLangPins(unittest.TestCase):
         pinned, _ = self.pin(model_catalog=models)
         self.assertEqual(pinned['z-ai/glm-5.3-flash']['pools']['glm-h200'], extra)
 
+    def test_other_pools_of_the_retired_deepseek_model_are_refused(self):
+        models = copy.deepcopy(self.models)
+        models['deepseek/deepseek-v4.1-flash']['pools']['deepseek-h200'] = {
+            'runtime': next(iter(self.runtimes)), 'gpu': 'H200', 'max_replicas': 0}
+        with self.assertRaisesRegex(ValueError, 'Retire or migrate'):
+            self.pin(model_catalog=models)
+
     def test_deepseek_release_counts_with_the_pinned_v41_encoder(self):
         models, runtimes = self.pin()
         deepseek = runtimes[models['deepseek/deepseek-v4.1-flash-1017']['pools']['deepseek']['runtime']]

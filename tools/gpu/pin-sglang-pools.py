@@ -128,6 +128,9 @@ def pin(model_catalog, runtimes, pins, releases, source, max_replicas=1):
         # gateway then serves locally; the old ID falls back to OpenRouter.
         source_model = retired if model_id not in updated_models and retired in updated_models else model_id
         entry = updated_models.pop(source_model, None) or {'min_slots': 0, 'pools': {}}
+        if source_model != model_id and set(entry['pools']) - {spec['pool']}:
+            # Other pools of the retired model would serve its old checkpoint under the new ID.
+            raise ValueError(f'Retire or migrate the other {source_model} pools before pinning {model_id}')
         pool = {'runtime': runtime_id, 'gpu': 'B300', 'max_replicas': max_replicas,
                 'progress_deadline_seconds': 5400}
         previous = entry['pools'].get(spec['pool'], {})

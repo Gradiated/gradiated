@@ -111,6 +111,8 @@ class Nebius:
                         'source_image_family': {'image_family': image or 'ubuntu24.04-cuda13.0'}}}},
                 # Preemption stops the VM; pricing defaults to on-demand, so ask for spot.
                 'preemptible': {'on_preemption': 'STOP'},
+                # Nebius accepts only FAIL for preemptible VMs.
+                'recovery_policy': 'FAIL',
                 'follows_spot_price': {},
                 'cloud_init_user_data': user_data,
             },

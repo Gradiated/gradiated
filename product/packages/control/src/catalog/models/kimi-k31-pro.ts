@@ -24,8 +24,8 @@ export const createKimiK31ProModelConfiguration = () =>
             max_context_length: { value: 1_048_576, unit: "token" },
           },
           pricing: [
-            { type: "prompt", unit: "token", cost: 1_600 },
-            { type: "cached_prompt", unit: "token", cost: 160 },
+            { type: "prompt", unit: "token", cost: 1_000 },
+            { type: "cached_prompt", unit: "token", cost: 100 },
           ],
         },
       ],

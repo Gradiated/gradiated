@@ -11,10 +11,7 @@ import {
 import { ApiKeysPage } from "@/pages/api-keys-page";
 import { BillingPage } from "@/pages/billing-page";
 import { parseLoginSearch } from "@/lib/login-search";
-import {
-  parseEngineerOnboardingSearch,
-  parseOnboardingSearch,
-} from "@/lib/engineer-onboarding";
+import { parseOnboardingSearch } from "@/lib/engineer-onboarding";
 import { LoginPage } from "@/pages/login-page";
 import { ModelsPage } from "@/pages/models-page";
 import { OnboardingPage } from "@/pages/onboarding-page";
@@ -55,14 +52,15 @@ const onboardingRoute = createRoute({
   component: OnboardingPage,
 });
 
-const engineerOnboardingRoute = createRoute({
+const onboardingJourneyRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/onboarding/engineer",
-  validateSearch: parseEngineerOnboardingSearch,
-  component: lazyRouteComponent(
-    () => import("@/pages/engineer-onboarding/engineer-onboarding-page"),
-    "EngineerOnboardingPage",
-  ),
+  path: "/onboarding/$journey",
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: "/onboarding",
+      search: parseOnboardingSearch({ journey: params.journey }),
+    });
+  },
 });
 
 const apiKeysRoute = createRoute({
@@ -220,7 +218,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   invitationAcceptRoute,
   onboardingRoute,
-  engineerOnboardingRoute,
+  onboardingJourneyRoute,
   apiKeysRoute,
   modelsRoute,
   playgroundRoute,

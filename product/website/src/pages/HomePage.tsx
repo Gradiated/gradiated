@@ -212,7 +212,7 @@ const products = [
       "Served through the same API",
     ],
     action: "Get started",
-    href: `${CONSOLE_BASE_URL}/onboarding/engineer`,
+    href: `${CONSOLE_BASE_URL}/onboarding/post-training`,
   },
 ] as const;
 

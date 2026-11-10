@@ -1,94 +1,83 @@
 import { describe, expect, it } from "vitest";
 import {
   loginSearchFor,
-  parseEngineerOnboardingSearch,
   parseOnboardingSearch,
   signInCallbacks,
 } from "@/lib/engineer-onboarding";
 import { parseLoginSearch } from "@/lib/login-search";
 
-describe("post-account engineer onboarding", () => {
+const origin = "https://console.gradiated.com";
+
+describe("post-training onboarding journey", () => {
   it("preserves a valid organization selection and drops invalid IDs", () => {
     const organization = "0198ae59-294a-73a9-9d2f-962449d34226";
-    expect(parseOnboardingSearch({ next: "engineer", organization })).toEqual({
-      next: "engineer",
-      organization,
-    });
+    expect(
+      parseOnboardingSearch({ journey: "post-training", organization }),
+    ).toEqual({ journey: "post-training", organization });
     expect(
       parseOnboardingSearch({
-        next: "engineer",
+        journey: "post-training",
         organization: "https://example.com",
       }),
-    ).toEqual({ next: "engineer" });
+    ).toEqual({ journey: "post-training" });
   });
-  it("only accepts the fixed engineer destination", () => {
-    expect(parseLoginSearch({ next: "engineer" })).toEqual({
-      next: "engineer",
+
+  it("only accepts the known journey", () => {
+    expect(parseLoginSearch({ journey: "post-training" })).toEqual({
+      journey: "post-training",
     });
-    expect(parseOnboardingSearch({ next: "engineer" })).toEqual({
-      next: "engineer",
-    });
-    for (const next of [
+    for (const journey of [
       "https://evil.example",
       "//evil.example",
-      "/get-started/",
-      "engineer?url=evil",
+      "engineer",
+      "post-training?url=evil",
     ]) {
-      expect(parseLoginSearch({ next })).toEqual({});
-      expect(parseOnboardingSearch({ next })).toEqual({});
+      expect(parseLoginSearch({ journey })).toEqual({});
+      expect(parseOnboardingSearch({ journey })).toEqual({});
     }
   });
 
-  it("routes a new engineer customer through existing organization setup", () => {
-    const callbacks = signInCallbacks(
-      { next: "engineer" },
-      "https://console.gradiated.com",
-    );
-    expect(callbacks.newUserCallbackURL).toBe(
-      "https://console.gradiated.com/onboarding?next=engineer",
-    );
-    expect(callbacks.callbackURL).toBe(
-      "https://console.gradiated.com/onboarding/engineer",
-    );
-    expect(callbacks.errorCallbackURL).toBe(
-      "https://console.gradiated.com/login?next=engineer",
-    );
+  it("returns every post-training sign-in to the journey", () => {
+    expect(signInCallbacks({ journey: "post-training" }, origin)).toEqual({
+      callbackURL: `${origin}/onboarding?journey=post-training`,
+      newUserCallbackURL: `${origin}/onboarding?journey=post-training`,
+      errorCallbackURL: `${origin}/login?journey=post-training`,
+    });
   });
 
-  it("keeps invitation acceptance ahead of engineer onboarding", () => {
+  it("keeps invitation acceptance ahead of the journey", () => {
     const invitation = "A".repeat(43);
     const callbacks = signInCallbacks(
-      { invitation, next: "engineer" },
-      "https://console.gradiated.com",
+      { invitation, journey: "post-training" },
+      origin,
     );
     expect(callbacks.callbackURL).toBe(
-      "https://console.gradiated.com/invitations/accept?token=" + invitation,
+      `${origin}/invitations/accept?token=${invitation}`,
     );
     expect(callbacks.newUserCallbackURL).toBe(callbacks.callbackURL);
   });
 
   it("preserves the standard sign-in and signup destinations", () => {
-    expect(signInCallbacks({}, "https://console.gradiated.com")).toEqual({
-      callbackURL: "https://console.gradiated.com/api-keys",
-      newUserCallbackURL: "https://console.gradiated.com/onboarding",
-      errorCallbackURL: "https://console.gradiated.com/login",
+    expect(signInCallbacks({}, origin)).toEqual({
+      callbackURL: `${origin}/api-keys`,
+      newUserCallbackURL: `${origin}/onboarding`,
+      errorCallbackURL: `${origin}/login`,
     });
   });
 
-  it("accepts only an organization ID on the engineer onboarding page", () => {
-    const organization = "0198ae59-294a-73a9-9d2f-962449d34226";
+  it("returns an expired session on the journey to its sign-in", () => {
     expect(
-      parseEngineerOnboardingSearch({ organization, next: "engineer" }),
-    ).toEqual({ organization });
-    expect(parseEngineerOnboardingSearch({ organization: "../admin" })).toEqual(
-      {},
-    );
-  });
-
-  it("returns an expired engineer session to engineer sign-in", () => {
-    expect(loginSearchFor("/onboarding/engineer")).toEqual({
-      next: "engineer",
-    });
-    expect(loginSearchFor("/api-keys")).toEqual({});
+      loginSearchFor({
+        pathname: "/onboarding",
+        search: { journey: "post-training" },
+      }),
+    ).toEqual({ journey: "post-training" });
+    expect(loginSearchFor({ pathname: "/onboarding", search: {} })).toEqual({});
+    expect(
+      loginSearchFor({
+        pathname: "/api-keys",
+        search: { journey: "post-training" },
+      }),
+    ).toEqual({});
   });
 });

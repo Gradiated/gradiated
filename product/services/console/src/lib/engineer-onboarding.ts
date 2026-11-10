@@ -5,43 +5,60 @@ import type {
   EngineerOnboardingSubmission,
 } from "@/api/engineer-onboarding";
 import type { CurrentUser } from "@/api/queries";
-import { invitationPath, type LoginSearch } from "@/lib/login-search";
+import {
+  POST_TRAINING_JOURNEY,
+  invitationPath,
+  type LoginSearch,
+} from "@/lib/login-search";
 
-export const ENGINEER_ONBOARDING_PATH = "/onboarding/engineer";
+export interface OnboardingSearch {
+  journey?: typeof POST_TRAINING_JOURNEY;
+  organization?: string;
+}
 
-export const parseEngineerOnboardingSearch = (
-  search: Record<string, unknown>,
-): { organization?: string } => {
-  const organization = z.uuid().safeParse(search.organization);
-
-  return organization.success ? { organization: organization.data } : {};
-};
+export const POST_TRAINING_ONBOARDING_PATH = `/onboarding?journey=${POST_TRAINING_JOURNEY}`;
 
 export const parseOnboardingSearch = (
   search: Record<string, unknown>,
-): { next?: "engineer"; organization?: string } => ({
-  ...(search.next === "engineer" ? { next: "engineer" as const } : {}),
-  ...parseEngineerOnboardingSearch(search),
-});
+): OnboardingSearch => {
+  const organization = z.uuid().safeParse(search.organization);
 
-export const loginSearchFor = (pathname: string): LoginSearch =>
-  pathname === ENGINEER_ONBOARDING_PATH ? { next: "engineer" } : {};
+  return {
+    ...(search.journey === POST_TRAINING_JOURNEY
+      ? { journey: POST_TRAINING_JOURNEY }
+      : {}),
+    ...(organization.success ? { organization: organization.data } : {}),
+  };
+};
+
+export const loginSearchFor = (location: {
+  pathname: string;
+  search: Record<string, unknown>;
+}): LoginSearch =>
+  location.pathname === "/onboarding" &&
+  location.search.journey === POST_TRAINING_JOURNEY
+    ? { journey: POST_TRAINING_JOURNEY }
+    : {};
 
 export const signInCallbacks = (search: LoginSearch, consoleOrigin: string) => {
   const invitation = search.invitation
     ? invitationPath(search.invitation)
     : undefined;
-  const engineer = !invitation && search.next === "engineer";
+  const postTraining = !invitation && search.journey === POST_TRAINING_JOURNEY;
   const callbackUrl = (path: string) => new URL(path, consoleOrigin).toString();
 
   return {
     callbackURL: callbackUrl(
-      invitation ?? (engineer ? ENGINEER_ONBOARDING_PATH : "/api-keys"),
+      invitation ??
+        (postTraining ? POST_TRAINING_ONBOARDING_PATH : "/api-keys"),
     ),
     newUserCallbackURL: callbackUrl(
-      invitation ?? (engineer ? "/onboarding?next=engineer" : "/onboarding"),
+      invitation ??
+        (postTraining ? POST_TRAINING_ONBOARDING_PATH : "/onboarding"),
     ),
-    errorCallbackURL: callbackUrl(engineer ? "/login?next=engineer" : "/login"),
+    errorCallbackURL: callbackUrl(
+      postTraining ? `/login?journey=${POST_TRAINING_JOURNEY}` : "/login",
+    ),
   };
 };
 
@@ -260,7 +277,6 @@ type Membership = CurrentUser["organizations"][number];
 export type AccountChoice =
   | { kind: "pick"; organizations: Membership[] }
   | { kind: "missing" }
-  | { kind: "setup"; organizationId: string }
   | { kind: "ready"; account: OnboardingAccount };
 
 export const chooseAccount = (
@@ -277,9 +293,6 @@ export const chooseAccount = (
     ? memberships.find((row) => row.id === requestedOrganizationId)
     : memberships[0];
   if (!organization) return { kind: "missing" };
-
-  if (organization.role === "admin" && !organization.onboarding_completed)
-    return { kind: "setup", organizationId: organization.id };
 
   return {
     kind: "ready",

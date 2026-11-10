@@ -353,12 +353,10 @@ test("a new engineer customer sets up the organization, signs the NDA, invites S
     companyEmailDomain: "acme.com",
   });
 
-  await page.goto("/onboarding?next=engineer");
+  await page.goto("/onboarding/post-training");
+  await expect(page).toHaveURL(/\/onboarding\?journey=post-training$/);
   await page.getByRole("button", { name: "Continue" }).click();
 
-  await expect(page).toHaveURL(
-    /\/onboarding\/engineer\?organization=00000000-0000-4000-8000-000000000001$/,
-  );
   expect(patches).toEqual([
     { name: "Acme", auto_join_domain: "acme.com", onboarding_completed: true },
   ]);
@@ -449,7 +447,7 @@ test("a returning customer with a signed NDA waits for GitHub, chooses email and
   });
   engineer.githubInstalled = false;
 
-  await page.goto("/onboarding/engineer");
+  await page.goto("/onboarding?journey=post-training");
   await expect(
     page.getByRole("heading", { name: "Set up Slack & GitHub" }),
   ).toBeVisible();
@@ -493,7 +491,7 @@ test("a returning customer with a signed NDA waits for GitHub, chooses email and
   ).toBeVisible();
 });
 
-test("a signed-out visitor is sent to sign in and kept on the engineer path", async ({
+test("a signed-out visitor is sent to sign in and kept on the post-training journey", async ({
   page,
 }) => {
   await setup(page, {
@@ -502,7 +500,21 @@ test("a signed-out visitor is sent to sign in and kept on the engineer path", as
     signedIn: false,
   });
 
-  await page.goto("/onboarding/engineer");
+  await page.goto("/onboarding/post-training");
 
-  await expect(page).toHaveURL(/\/login\?next=engineer$/);
+  await expect(page).toHaveURL(/\/login\?journey=post-training$/);
+});
+
+test("onboarded admins without the journey still skip onboarding", async ({
+  page,
+}) => {
+  await setup(page, {
+    email: "alex@acme.com",
+    companyEmailDomain: "acme.com",
+    onboardingCompleted: true,
+  });
+
+  await page.goto("/onboarding/unknown");
+
+  await expect(page).toHaveURL(/\/models$/);
 });

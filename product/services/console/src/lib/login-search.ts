@@ -1,8 +1,10 @@
+export const POST_TRAINING_JOURNEY = "post-training";
+
 export const INVITATION_TOKEN = /^[A-Za-z0-9_-]{43}$/;
 
 export interface LoginSearch {
   invitation?: string;
-  next?: "engineer";
+  journey?: typeof POST_TRAINING_JOURNEY;
 }
 
 export const parseLoginSearch = (
@@ -12,7 +14,9 @@ export const parseLoginSearch = (
   INVITATION_TOKEN.test(search.invitation)
     ? { invitation: search.invitation }
     : {}),
-  ...(search.next === "engineer" ? { next: "engineer" as const } : {}),
+  ...(search.journey === POST_TRAINING_JOURNEY
+    ? { journey: POST_TRAINING_JOURNEY }
+    : {}),
 });
 
 export const invitationPath = (token: string) =>

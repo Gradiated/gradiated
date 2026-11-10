@@ -25,11 +25,7 @@ import "./styles.css";
 const MAX_QUERY_RETRIES = 3;
 
 const signIn = () =>
-  endSession(
-    queryClient,
-    router,
-    loginSearchFor(router.state.location.pathname),
-  );
+  endSession(queryClient, router, loginSearchFor(router.state.location));
 
 const handleUnauthorized = (error: Error) => {
   if (needsStaffSessionRecovery(error)) {

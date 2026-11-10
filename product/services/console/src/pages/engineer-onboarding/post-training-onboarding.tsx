@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Navigate, useNavigate, useSearch } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Check, LoaderCircle } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
@@ -12,7 +12,6 @@ import {
 } from "@/api/engineer-onboarding";
 import type { CurrentUser } from "@/api/queries";
 import { AuthCard } from "@/components/auth-card";
-import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
 import {
@@ -22,9 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCurrentUser, useSession } from "@/hooks/use-session";
 import {
-  ENGINEER_ONBOARDING_PATH,
   changesNda,
   chooseAccount,
   confirmationMessage,
@@ -44,9 +41,8 @@ import {
   type OnboardingView,
   type VerifiedInstallation,
 } from "@/lib/engineer-onboarding";
-import { httpStatus } from "@/lib/errors";
+import { POST_TRAINING_JOURNEY } from "@/lib/login-search";
 import { cn } from "@/lib/utils";
-import { LoadFailed } from "@/pages/console-page";
 import { NdaSigning } from "@/pages/engineer-onboarding/nda-signing";
 import {
   NdaStep,
@@ -69,63 +65,38 @@ const engineerOnboardingKey = (organizationId: string) => [
   organizationId,
 ];
 
-export const EngineerOnboardingPage = () => {
-  const { organization } = useSearch({ from: ENGINEER_ONBOARDING_PATH });
-  const { user } = useSession();
-  const me = useCurrentUser();
-
-  if (me.isError && httpStatus(me.error) !== 401)
-    return (
-      <main className="grid min-h-svh place-items-center bg-muted">
-        <LoadFailed
-          subject="your account"
-          retrying={me.isFetching}
-          onRetry={() => void me.refetch()}
-        />
-      </main>
-    );
-
-  if (!user)
-    return (
-      <main className="grid min-h-svh place-items-center bg-muted">
-        <LoaderCircle className="size-5 animate-spin text-muted-foreground" />
-      </main>
-    );
-
+export const PostTrainingOnboarding = ({
+  user,
+  organization,
+}: {
+  user: CurrentUser;
+  organization: string | undefined;
+}) => {
   const choice = chooseAccount(user, organization);
 
-  if (choice.kind === "setup")
+  if (choice.kind === "pick")
+    return <OrganizationPicker organizations={choice.organizations} />;
+
+  if (choice.kind === "missing")
     return (
-      <Navigate
-        to="/onboarding"
-        search={{ next: "engineer", organization: choice.organizationId }}
-      />
+      <AuthCard>
+        <div className="flex flex-col gap-2 p-6 md:p-9">
+          <h1 className="text-2xl font-bold tracking-tight">
+            We couldn’t find that organization
+          </h1>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Ask an admin of your organization to invite you, then try again.
+          </p>
+          <OnboardingHelp step="Choose an organization" />
+        </div>
+      </AuthCard>
     );
 
   return (
-    <>
-      <ImpersonationBanner user={user} />
-      {choice.kind === "pick" ? (
-        <OrganizationPicker organizations={choice.organizations} />
-      ) : choice.kind === "missing" ? (
-        <AuthCard>
-          <div className="flex flex-col gap-2 p-6 md:p-9">
-            <h1 className="text-2xl font-bold tracking-tight">
-              We couldn’t find that organization
-            </h1>
-            <p className="text-sm leading-6 text-muted-foreground">
-              Ask an admin of your organization to invite you, then try again.
-            </p>
-            <OnboardingHelp step="Choose an organization" />
-          </div>
-        </AuthCard>
-      ) : (
-        <EngineerOnboardingWorkflow
-          key={choice.account.userId + ":" + choice.account.organizationId}
-          account={choice.account}
-        />
-      )}
-    </>
+    <PostTrainingWorkflow
+      key={choice.account.userId + ":" + choice.account.organizationId}
+      account={choice.account}
+    />
   );
 };
 
@@ -157,8 +128,8 @@ const OrganizationPicker = ({
         <Select
           onValueChange={(organization) =>
             void navigate({
-              to: ENGINEER_ONBOARDING_PATH,
-              search: { organization },
+              to: "/onboarding",
+              search: { journey: POST_TRAINING_JOURNEY, organization },
             })
           }
         >
@@ -204,11 +175,7 @@ const githubInstallationActive = async (
   );
 };
 
-const EngineerOnboardingWorkflow = ({
-  account,
-}: {
-  account: OnboardingAccount;
-}) => {
+const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
   const queryClient = useQueryClient();
   const queryKey = engineerOnboardingKey(account.organizationId);
   const onboarding = useQuery({

@@ -339,13 +339,4 @@ describe("onboarding account", () => {
       ),
     ).toEqual({ kind: "missing" });
   });
-
-  it("sends an admin to organization setup first", () => {
-    expect(
-      chooseAccount(
-        user(membership({ id: "first", onboarding_completed: false })),
-        undefined,
-      ),
-    ).toEqual({ kind: "setup", organizationId: "first" });
-  });
 });

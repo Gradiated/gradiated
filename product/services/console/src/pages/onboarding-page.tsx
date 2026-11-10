@@ -23,18 +23,20 @@ import {
   organizationToOnboard,
   suggestedOrganizationName,
 } from "@/lib/onboarding";
+import { POST_TRAINING_JOURNEY } from "@/lib/login-search";
 import { queryKeys } from "@/lib/query-keys";
 import { LoadFailed } from "@/pages/console-page";
+import { PostTrainingOnboarding } from "@/pages/engineer-onboarding/post-training-onboarding";
 import { useWorkspaceSelection } from "@/store/workspace-selection";
 
 export const OnboardingPage = () => {
-  const { next, organization: requestedOrganization } = useSearch({
+  const { journey, organization: requestedOrganization } = useSearch({
     from: "/onboarding",
   });
+  const postTraining = journey === POST_TRAINING_JOURNEY;
   const { user, signOut } = useSession();
   const me = useCurrentUser();
   const [onboarded, setOnboarded] = useState<string>();
-  const engineerOrganization = requestedOrganization ?? onboarded;
   const organization = organizationToOnboard(user, requestedOrganization);
 
   if (me.isError && httpStatus(me.error) !== 401)
@@ -55,29 +57,26 @@ export const OnboardingPage = () => {
       </main>
     );
 
-  if (!organization)
-    return next === "engineer" ? (
-      <Navigate
-        to="/onboarding/engineer"
-        search={
-          engineerOrganization ? { organization: engineerOrganization } : {}
-        }
-      />
-    ) : (
-      <Navigate to="/models" />
-    );
+  if (!organization && !postTraining) return <Navigate to="/models" />;
 
   return (
     <>
       <ImpersonationBanner user={user} />
-      <AuthCard>
-        <OrganizationSetup
+      {organization ? (
+        <AuthCard>
+          <OrganizationSetup
+            user={user}
+            organization={organization}
+            onOnboarded={postTraining ? setOnboarded : undefined}
+            onSignOut={() => void signOut()}
+          />
+        </AuthCard>
+      ) : (
+        <PostTrainingOnboarding
           user={user}
-          organization={organization}
-          onOnboarded={next === "engineer" ? setOnboarded : undefined}
-          onSignOut={() => void signOut()}
+          organization={requestedOrganization ?? onboarded}
         />
-      </AuthCard>
+      )}
     </>
   );
 };

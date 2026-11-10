@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  ENGINEER_ONBOARDING_PATH,
+  POST_TRAINING_ONBOARDING_PATH,
   type VerifiedInstallation,
 } from "@/lib/engineer-onboarding";
 
@@ -108,7 +108,7 @@ export const GithubAppInstallation = ({
       const result = await authClient.linkSocial({
         provider: "github",
         callbackURL: new URL(
-          `${ENGINEER_ONBOARDING_PATH}?organization=${organizationId}`,
+          `${POST_TRAINING_ONBOARDING_PATH}&organization=${organizationId}`,
           window.location.origin,
         ).toString(),
         disableRedirect: true,

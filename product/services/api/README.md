@@ -5,7 +5,7 @@ described Zod schemas and generate the OpenAPI document and browser clients.
 
 ## Engineer onboarding
 
-The console's `/onboarding/engineer` page uses organization-owned routes. Each
+The console's `/onboarding?journey=post-training` steps use organization-owned routes. Each
 requires a verified active organization admin, rejects staff impersonation and
 returns `Cache-Control: no-store`. Local development calls the same providers:
 set the keys below in the repository-root `.env` and run the `api` and `console`

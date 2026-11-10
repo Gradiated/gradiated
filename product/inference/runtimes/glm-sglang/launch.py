@@ -128,6 +128,9 @@ def qualification_records(environment):
 
 def main(environment=os.environ):
     config = settings(detect_profile(environment))
+    # Startup probes must name the served model: with adapters enabled, any other
+    # model name is resolved as an adapter and fails closed.
+    base.MODEL = config['served_model_name']
     original = base.handler
     base.handler = lambda supervisor: handler(supervisor, config)
     try:

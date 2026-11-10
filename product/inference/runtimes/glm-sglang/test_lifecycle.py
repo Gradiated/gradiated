@@ -53,6 +53,19 @@ class Lifecycle(unittest.TestCase):
                 else:
                     self.assertIn(f'gradiated_runtime_startup_qualification{{mode="{mode}"}} 1', result)
 
+    def test_startup_probes_name_the_served_model(self):
+        with tempfile.TemporaryDirectory() as root:
+            environment = {'GRADIATED_RUNTIME_ROOT': root, 'NVIDIA_VISIBLE_DEVICES': 'GPU-a,GPU-b',
+                           'RUNTIME_PORT': '18080', 'WARMUP_PORT': '18083', 'GLM_SGLANG_PROFILE': 'b300-pcp2',
+                           'MODEL_ID': 'z-ai/glm-5.3-flash'}
+            original = launch.base.MODEL
+            try:
+                with patch.object(launch.Supervisor, 'run', return_value=0):
+                    self.assertEqual(launch.main(environment), 0)
+                self.assertEqual(launch.base.MODEL, 'zai-org/GLM-5.3-Flash')
+            finally:
+                launch.base.MODEL = original
+
     def test_qualification_identity_and_record_directory(self):
         config = {'root': Path('/pods/a'), 'front': 18080, 'warmup': 18083, 'backend': 18084, 'metrics': 18085,
                   'profile': 'b300-pcp2', 'active_requests': 12}

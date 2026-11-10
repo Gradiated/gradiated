@@ -64,7 +64,7 @@
     {
       "path": "sglang/srt/managers/tokenizer_manager.py",
       "original_sha256": "a284c62b5980b27d2bc5e2c13b90f702bc187ce9a69dcf33608c7c4e5e7fae8a",
-      "overlay_sha256": "5f38ba8fbafcc7706b5896e9fbf9a9fa70b8d1a39fa2c6a9871b99321e4ba0c7",
+      "overlay_sha256": "4068aa12fd45ff432b2ac83f6faa018c49bd08a7b3e58164c277e1d77ad40ca8",
       "patch": "lora_resolver_tokenizer_manager.patch"
     },
     {

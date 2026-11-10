@@ -12,7 +12,17 @@
          # Preserve the adapter ID across incomplete cleanup retries.
          self.pending_lora_unloads: Dict[str, str] = {}
          if get_lora().lora_paths is not None:
-@@ -3851,6 +3856,10 @@
+@@ -2048,7 +2053,8 @@
+         """Schedule at most one LoRA release per state, returning the new task if any."""
+         if state.lora_released:
+             return None
+-        if not (self.enable_lora and state.obj.lora_path):
++        # A request whose adapter failed to resolve never acquired one.
++        if not (self.enable_lora and state.obj.lora_path) or state.obj.lora_id is None:
+             return None
+         state.lora_released = True
+         task = asyncio.create_task(self.lora_registry.release(state.obj.lora_id))
+@@ -3851,6 +3857,10 @@
              if lora_path is None:
                  continue
  
@@ -23,7 +33,7 @@
              if lora_path not in self.lora_ref_cache:
                  raise ValueError(
                      f"Got LoRA adapter that has never been loaded: {lora_path}\n"
-@@ -3882,6 +3891,62 @@
+@@ -3882,6 +3892,62 @@
                  obj.lora_id[i] if isinstance(obj.lora_id, list) else obj.lora_id
              )
  

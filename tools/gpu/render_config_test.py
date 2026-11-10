@@ -539,7 +539,7 @@ class RenderTests(unittest.TestCase):
             self.assertEqual(document['spec']['replicas'], pool['floor'])
             self.assertEqual(document['spec']['strategy']['canary']['maxUnavailable'], pool.get('max_unavailable', 0))
             steps = document['spec']['strategy']['canary']['steps']
-            if pool['floor']:
+            if pool['maximum']:
                 self.assertEqual(steps[1]['analysis']['templates'], [{'templateName': 'sdk-qualification'}])
             else:
                 self.assertEqual(steps, [])
@@ -547,7 +547,7 @@ class RenderTests(unittest.TestCase):
 
     def test_rollout_strategy_bounds(self):
         models, runtimes, hosts = self.fleet()
-        # Strategy steps apply to a pool with a floor; one that may be at zero has none.
+        # Strategy steps apply to a pool with a floor; one without moves straight to its new revision.
         pool = {**renderer.plan(models, runtimes, hosts)['glm-dealign-sglang-h200'], 'maximum': 1, 'floor': 1}
         default = renderer.rollout('glm-dealign-sglang-h200', {**pool, 'rolling_update': False}, runtimes)
         self.assertEqual(default['spec']['strategy']['canary']['steps'][0], {'setWeight': 50})
@@ -607,13 +607,18 @@ class RenderTests(unittest.TestCase):
         self.assertLessEqual(2 * int(compact['cpu']), 85)
         self.assertLessEqual(2 * int(compact['request_memory'][:-2]), 686)
 
-    def test_scale_to_zero_pool_skips_the_analysis_it_could_not_run(self):
+    def test_scale_to_zero_pool_brings_up_its_canary_to_qualify(self):
         models, runtimes, hosts = self.fleet()
-        pool = renderer.plan(models, runtimes, hosts)['glm']
+        plan = renderer.plan(models, runtimes, hosts)
+        pool = plan['glm']
         self.assertEqual((pool['floor'], pool['maximum']), (0, 1))
-        # At zero replicas there is no canary to qualify, so a waiting analysis would
-        # abort the Rollout and leave the previous runtime stable for the next scale-up.
-        self.assertEqual(renderer.rollout('glm', pool, runtimes)['spec']['strategy']['canary']['steps'], [])
+        # A half-weight canary of one replica would restart the previous runtime too.
+        steps = renderer.rollout('glm', pool, runtimes)['spec']['strategy']['canary']['steps']
+        self.assertEqual(steps[0], {'setWeight': 100})
+        self.assertEqual(steps[1]['analysis']['templates'], [{'templateName': 'sdk-qualification'}])
+        self.assertIn('qualifying', renderer.scaling_queries('glm', pool))
+        # Pools with a floor always have a replica to qualify and keep their signals.
+        self.assertNotIn('qualifying', renderer.scaling_queries('glm-dealign-sglang', plan['glm-dealign-sglang']))
 
     def test_switched_off_pool_keeps_its_rollout_at_zero_without_an_autoscaler(self):
         models, runtimes, hosts = self.fleet()
@@ -639,7 +644,10 @@ class RenderTests(unittest.TestCase):
                                                       'progress_deadline_seconds': 60}},
                                           min_slots=0, twelve={'active_requests': 12}, three={'active_requests': 3})
         first, second = (renderer.scaling_queries(name, pools[name]) for name in ('first', 'second'))
-        self.assertEqual(set(first), {'utilization', 'refusals', 'draining'})
+        self.assertEqual(set(first), {'utilization', 'refusals', 'draining', 'qualifying'})
+        # Without a floor, an updating Rollout asks for one replica so its canary can qualify.
+        self.assertEqual(first['qualifying'], '((max(rollout_info{namespace="gpu-inference",name="first",'
+                         'phase=~"Progressing|Paused"}) * 12) or vector(0))')
         model = 'model="test/model"'
         # One sample: the per-model rule's label must not survive beside the idle zero.
         self.assertIn(f'max(gradiated:model_busy_slots{{{model}}})', first['utilization'])

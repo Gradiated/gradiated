@@ -168,11 +168,7 @@ Actual parallel startup depends on spare GPU, CPU and memory capacity.
 Rollouts have no manual pause: the default canary moves to half weight, runs
 SDK analysis and then completes. `rolling_update: true` moves directly to the
 target revision without that half-weight canary. Per-pod SDK qualification still
-gates readiness, and the rollout retains its final SDK analysis. A pool with no
-floor (`min_slots` leaves it zero replicas) has no canary steps: at zero
-replicas the analysis has nothing to qualify, would time out and abort, and the
-next scale-up would start the previous runtime. Its revisions become stable at
-once, and the worker routes only pods that pass their own SDK qualification. Do not edit
+gates readiness, and the rollout retains its final SDK analysis. Do not edit
 generated Rollouts directly. Non-inventory fields in controller and RBAC
 manifests remain editable; rendering preserves them. CI checks that generated
 fields match the inputs. Remove a retired host Service or pool Rollout
@@ -244,7 +240,7 @@ OpenRouter's own traffic to us never falls back, so it fails while a model has
 no capacity of ours.
 
 Every pool scales on the same three signals, in its own slots, and the HPA takes
-the largest:
+the largest (a pool with no floor has a fourth, below):
 
 - **Utilization.** The model's peak in-flight generations over the last minute
   (`gradiated:model_busy_slots`), divided by 0.7, less the slots the pools ahead
@@ -276,6 +272,15 @@ GPUs, so the next removal waits only as long as the actual drain. New replicas
 become available only after SDK qualification, so keep the floor large enough
 for immediate traffic. None of this provisions or resets a provider GPU, and
 scaling down releases GPUs without reducing the RunPod reservation bill.
+
+A pool with no floor may be at zero replicas when a new revision lands, so its
+canary analysis would have nothing to qualify. While its Rollout updates, a
+fourth signal, `qualifying`, asks for one replica, and the pool moves straight
+to the new revision rather than through a half-weight canary, which at one
+replica would also restart the previous runtime. That replica must pass SDK
+qualification; if no host can take it, the analysis times out and the Rollout
+aborts. Once the update completes, an idle pool returns to zero after the
+usual cooldown.
 
 ### Startup state labels
 

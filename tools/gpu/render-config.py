@@ -186,6 +186,10 @@ def rollout(name, pool, runtimes):
     rolling = pool.get('rolling_update', False)
     if type(rolling) is not bool:
         raise ValueError('rolling_update must be a boolean')
+    # A pool with no floor may hold only the replica its qualifying signal asks
+    # for. A half-weight canary of one replica would also restart the previous
+    # revision, so it moves straight to the new one and then qualifies it.
+    rolling = rolling or not pool['floor']
     if not isinstance(pool.get('gpu'), str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,62}', pool['gpu']):
         raise ValueError('gpu must be the GPU product label of the hosts the pool runs on')
     runtime = runtimes[pool['runtime']]
@@ -205,13 +209,11 @@ def rollout(name, pool, runtimes):
     ]
     if not rolling:
         steps.append({'setWeight': 100})
-    if not pool['floor']:
-        # A pool with no floor may be at zero replicas: switched off, or scaled to
-        # zero for lack of demand. With no pods to qualify, the analysis would wait
-        # out its 90 minutes and abort the Rollout, leaving the previous revision
-        # stable, so the next scale-up would start the old runtime. Its revisions
-        # become stable at once instead; the worker still routes only pods that
-        # pass their own SDK qualification.
+    if not pool['maximum']:
+        # A switched-off pool has no pods to qualify, so the analysis would wait out
+        # its 90 minutes and abort the Rollout on every template change. Its
+        # revisions become stable at once; once max_replicas is raised the worker
+        # still routes only pods that pass their own SDK qualification.
         steps = []
     selector = {'gradiated.com/provider': 'runpod', 'nvidia.com/gpu.product': pool['gpu']}
     if 'gpu_count' in pool:
@@ -335,7 +337,7 @@ def ready_replicas(name):
 
 
 def scaling_queries(name, pool):
-    """The two signals every pool scales on, in slots for this pool to supply."""
+    """The signals a pool scales on, in slots for this pool to supply."""
     model = 'model=' + json.dumps(pool['model'])
     # The model's slot need at the target utilization, less what the pools
     # ahead of this one serve. A pool ahead still growing counts at its
@@ -367,9 +369,20 @@ def scaling_queries(name, pool):
     # Each scaling signal keeps its ten-minute peak: scale-up follows at once,
     # scale-down only after ten quiet minutes. Kept here, not in the HPA window,
     # so a draining hold does not restart the wait.
-    return {'utilization': f'max_over_time(clamp_min({need}, 0)[10m:30s])',
-            'refusals': f'max_over_time((({step} and on() {refusing}{full}) or vector(0))[10m:30s])',
-            'draining': f'(({staying} * {pool["slots"]} and on() {draining}) or vector(0))'}
+    signals = {'utilization': f'max_over_time(clamp_min({need}, 0)[10m:30s])',
+               'refusals': f'max_over_time((({step} and on() {refusing}{full}) or vector(0))[10m:30s])',
+               'draining': f'(({staying} * {pool["slots"]} and on() {draining}) or vector(0))'}
+    if not pool['floor']:
+        # A pool with no floor may be at zero replicas when a new revision lands,
+        # leaving its canary analysis nothing to qualify. While the Rollout updates,
+        # ask for one replica: at zero stable replicas Argo places it on the
+        # canary, which must pass SDK qualification. If no host can take it, the
+        # analysis times out and the Rollout aborts. The usual cooldown returns an
+        # idle pool to zero afterwards.
+        updating = (f'max(rollout_info{{namespace="gpu-inference",name="{name}",'
+                    f'phase=~"Progressing|Paused"}})')
+        signals['qualifying'] = f'(({updating} * {pool["slots"]}) or vector(0))'
+    return signals
 
 
 def autoscaler(name, pool):

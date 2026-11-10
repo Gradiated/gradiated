@@ -130,6 +130,7 @@ def main():
     parser.add_argument('--port', type=int, required=True)
     parser.add_argument('--token-file', type=Path)
     args = parser.parse_args()
+    token = read_token(args.token_file) if args.token_file is not None else None
     engine = load(os.environ.get('HF_HOME', str(Path.home() / '.cache/huggingface')))
     engine.answer({'state': 'The shipment is delayed.', 'questions': {
         'delayed': {'type': 'noul', 'instructions': 'Is the shipment delayed?'},
@@ -137,7 +138,7 @@ def main():
                   'criteria': {'shipping': 'Shipping delays', 'billing': 'Payments'}},
         'urgency': {'type': 'score', 'instructions': 'Rate urgency.', 'criteria': ['routine', 'urgent']}}})
     import uvicorn
-    uvicorn.run(RuntimeApp(engine, read_token(args.token_file)), host='127.0.0.1', port=args.port,
+    uvicorn.run(RuntimeApp(engine, token), host='127.0.0.1', port=args.port,
                 workers=1, access_log=False, log_level='warning')
 
 

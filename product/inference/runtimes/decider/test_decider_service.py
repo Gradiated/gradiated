@@ -1,11 +1,12 @@
 import asyncio
+import hashlib
 import importlib.util
 import math
 from pathlib import Path
 import sys
 from types import SimpleNamespace
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('kev_http', ROOT.parent / 'kev/adapter.py')
@@ -31,6 +32,29 @@ class RuntimeTests(unittest.TestCase):
         self.engine = service.Engine(self.decider, (RequestError,), self.sync)
         self.data = {'model': service.MODEL, 'state': {'messages': [{'image_url': 'http://example.invalid'}]},
                      'questions': {'ok': {'type': 'noul', 'instructions': {'rule': 'Check'}}}}
+
+    def test_startup_without_a_token_file_uses_host_proxy_authentication(self):
+        server = Mock()
+        with patch.object(sys, 'argv', ['service.py', '--port', '8123']), \
+                patch.object(service, 'load', return_value=Mock(healthy=True)), \
+                patch.object(service, 'read_token', wraps=adapter.read_token) as read_token, \
+                patch.dict(sys.modules, {'uvicorn': SimpleNamespace(run=server)}):
+            service.main()
+        read_token.assert_not_called()
+        self.assertIsNone(server.call_args.args[0].token_digest)
+        self.assertEqual(server.call_args.kwargs['host'], '127.0.0.1')
+        self.assertEqual(server.call_args.kwargs['port'], 8123)
+
+    def test_startup_with_a_token_file_retains_adapter_authentication(self):
+        server = Mock()
+        token = b'synthetic-test-token'
+        with patch.object(sys, 'argv', ['service.py', '--port', '8123', '--token-file', '/test/token']), \
+                patch.object(service, 'load', return_value=Mock(healthy=True)), \
+                patch.object(service, 'read_token', return_value=token) as read_token, \
+                patch.dict(sys.modules, {'uvicorn': SimpleNamespace(run=server)}):
+            service.main()
+        read_token.assert_called_once_with(Path('/test/token'))
+        self.assertEqual(server.call_args.args[0].token_digest, hashlib.sha256(token).digest())
 
     def test_structured_content_stays_text_and_usage_preserves_all_prompt_tokens(self):
         result = self.engine.answer(self.data)

@@ -59,6 +59,9 @@ def models():
             'checkpoint': deepseek.MODEL, 'revision': deepseek.REVISION, 'served': deepseek.MODEL,
             'active_requests': deepseek.PROFILES['b300-tp4']['active_requests'], 'gpus': 4,
             'lora_base_revision': deepseek.REVISION,
+            # The checkpoint ships no Hugging Face chat template; the gateway's pinned
+            # DeepSeek V4.1 encoder counts tokens for it (SGLang still renders requests).
+            'tokenizer_mode': 'deepseek_v41',
             'resources': {'cpu': '32', 'memory': '400Gi', 'startup_timeout': 5400},
             'environment': {'TENSOR_PARALLEL_SIZE': '4', 'MODEL_ID': deepseek.MODEL_ID},
         },
@@ -98,7 +101,8 @@ def runtime_for(model_id, spec, release, source, base_id):
                     'tokenizer_path': spec['checkpoint'], 'tokenizer_revision': spec['revision'],
                     'runtime_revision': f'{spec["revision_prefix"]}-{digest[:12]}',
                     'runtime_model_name': spec['served'], 'lora_enabled': True,
-                    'lora_base_model_revision': spec['lora_base_revision']},
+                    'lora_base_model_revision': spec['lora_base_revision'],
+                    **({'tokenizer_mode': spec['tokenizer_mode']} if 'tokenizer_mode' in spec else {})},
         'gpus': spec['gpus'], 'active_requests': spec['active_requests'],
         'cpu': spec['resources']['cpu'], 'memory': spec['resources']['memory'],
         'startup_timeout': spec['resources']['startup_timeout'], 'warmup': True, 'adapters': True,
@@ -129,7 +133,8 @@ def pin(model_catalog, runtimes, pins, releases, source, max_replicas=1):
         previous = entry['pools'].get(spec['pool'], {})
         if 'spread' in previous:
             pool['spread'] = previous['spread']
-        updated_models[model_id] = {'min_slots': entry['min_slots'], 'pools': {spec['pool']: pool}}
+        # Only the model's SGLang pool changes; any other pool it has keeps its definition.
+        updated_models[model_id] = {'min_slots': entry['min_slots'], 'pools': {**entry['pools'], spec['pool']: pool}}
     return updated_models, updated_runtimes
 
 

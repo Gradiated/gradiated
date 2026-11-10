@@ -1,5 +1,6 @@
 import copy
 import subprocess
+import tempfile
 import importlib.util
 import json
 from pathlib import Path
@@ -79,14 +80,35 @@ class SGLangPins(unittest.TestCase):
             render.validate_active_requests(render.plan(models, runtimes, hosts), runtimes, render.glm_sglang_profiles())
 
     def test_metadata_must_come_from_the_bundles_source(self):
-        head = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=pin.ROOT, capture_output=True, text=True,
-                              check=True).stdout.strip()
-        pin.check_source(head)
-        root = subprocess.run(['git', 'rev-list', '--max-parents=0', 'HEAD'], cwd=pin.ROOT, capture_output=True,
-                              text=True, check=True).stdout.split()[0]
-        for source in [root, 'not-a-sha']:
-            with self.subTest(source=source), self.assertRaises(ValueError):
-                pin.check_source(source)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            git = lambda *args: subprocess.run(['git', '-c', 'user.name=t', '-c', 'user.email=t@t', *args], cwd=root,
+                                               check=True, capture_output=True, text=True).stdout.strip()
+            git('init', '-q')
+            for launcher in pin.LAUNCHERS:
+                (root / launcher).parent.mkdir(parents=True, exist_ok=True)
+                (root / launcher).write_text('PROFILES = {}\n')
+            git('add', '.'); git('commit', '-qm', 'launchers')
+            source = git('rev-parse', 'HEAD')
+            pin.check_source(source, root)
+            (root / pin.LAUNCHERS[1]).write_text('PROFILES = {"changed": 1}\n')
+            for bad in [source, 'not-a-sha']:
+                with self.subTest(source=bad), self.assertRaises(ValueError):
+                    pin.check_source(bad, root)
+
+    def test_other_pools_of_a_pinned_model_are_kept(self):
+        models = copy.deepcopy(self.models)
+        extra = {'runtime': next(iter(self.runtimes)), 'gpu': 'H200', 'max_replicas': 0}
+        models['z-ai/glm-5.3-flash']['pools']['glm-h200'] = extra
+        pinned, _ = self.pin(model_catalog=models)
+        self.assertEqual(pinned['z-ai/glm-5.3-flash']['pools']['glm-h200'], extra)
+
+    def test_deepseek_release_counts_with_the_pinned_v41_encoder(self):
+        models, runtimes = self.pin()
+        deepseek = runtimes[models['deepseek/deepseek-v4.1-flash-1017']['pools']['deepseek']['runtime']]
+        glm = runtimes[models['z-ai/glm-5.3-flash']['pools']['glm']['runtime']]
+        self.assertEqual(deepseek['release']['tokenizer_mode'], 'deepseek_v41')
+        self.assertNotIn('tokenizer_mode', glm['release'])
 
     def test_repinning_is_idempotent(self):
         models, runtimes = self.pin()

@@ -1,0 +1,126 @@
+{
+  "A": "opus",
+  "B": "kimi",
+  "verdicts": [
+    {
+      "judge": "opus",
+      "order": "AB",
+      "winner": "A",
+      "A": {
+        "story": 8,
+        "craft": 6,
+        "motion": 8,
+        "brand": 7,
+        "overall": 7,
+        "defects": [
+          "00:25-00:26 and 00:30: near-empty frames. 00:25-00:26 show only a small invoice card, and 00:30 has a sparse grid with no headline.",
+          "00:21 and 00:39-00:40: flying documents and checkmarks cover the folder labels (\"Rec…\", \"R…pts\", \"…racts\", \"…ayroll\"). At 00:40 an oversized grape circle collides with the toggle.",
+          "00:08-00:11: the 'Introducing' headline touches the document pile, the pile is cropped at the right edge, and 00:11 is a headline-less purple frame. The 35s undo list spills checkmarks off the bottom-right corner, and the amber 'Auto-file.' and 'Today.' accents sit outside the chalk/ink/grape palette."
+        ]
+      },
+      "B": {
+        "story": 7,
+        "craft": 4,
+        "motion": 6,
+        "brand": 5,
+        "overall": 4,
+        "defects": [
+          "00:33: transition glitch. The frame is split white and navy, with clipped fragments ('s.', partial 71% card). 00:14 has a lavender panel that stops short, leaving a cream strip on the right.",
+          "00:20-00:23: the yellow '20' and '17' date tags overlap the calendar numbers and the arrow runs through '16'. 00:05-00:07: guide rules strike through 'Drop files.' and the invoice card.",
+          "00:34 and 00:39: the invoice card overlaps the folder and settings card with clipped text ('ice', 'rwind Coffee', '84.0'). 00:24-00:32 has a dark navy plus yellow/green stats section that drifts from the chalk/ink/grape kit, along with a messy card cluster at 00:25 and a placeholder bar at 00:28."
+        ]
+      },
+      "reason": "Film 1 tells a clear problem-to-solution story with purposeful, continuous motion. Its flaws are a few empty or crowded frames rather than outright glitches. Film 2 explains more detail, but it has visible transition breaks, overlapping and clipped elements, and an off-kit dark section that would block sign-off."
+    },
+    {
+      "judge": "opus",
+      "order": "BA",
+      "winner": "A",
+      "A": {
+        "story": 8,
+        "craft": 6,
+        "motion": 8,
+        "brand": 7,
+        "overall": 6,
+        "defects": [
+          "00:39-00:42: flying check cards cover the folder labels ('R pts', 'racts', 'ayroll'), and in the purple end card the folder row is cropped by the bottom edge of the frame.",
+          "00:22-00:29 and 00:36-00:38: text is too small to read. This includes the filename line, the calendar weekday letters, the 'Pay Northwind · €384.00' tooltip and the undo-list item labels. The checkbox stack also spills off the bottom right at 00:36.",
+          "00:07, 00:11, 00:26-00:27 and 00:30: transitional frames are near-empty, with a paper pile or bare calendar/grid and no headline. At 00:08 the paper stack overlaps 'Introducing', and the amber 'Auto-file.' stretches the palette."
+        ]
+      },
+      "B": {
+        "story": 6,
+        "craft": 4,
+        "motion": 4,
+        "brand": 5,
+        "overall": 4,
+        "defects": [
+          "00:28-00:32: the dot-grid sits behind 'Average search: 9 seconds. 71% fewer missed deadlines.' and crowds it. The 71% card collides with the grid, an empty card with only a yellow bar holds at 00:29, and a hard white wipe at 00:33 cuts the headline to 's.'",
+          "00:21-00:23: the yellow '20'/'17' date badges sit on top of the '19' and '16'/'18' labels, arrows strike through the numbers, and green highlights and green subhead text fall outside the chalk/ink/grape palette.",
+          "00:04-00:19 and 00:39: the layout often looks static or messy. Long holds show near-identical frames, horizontal rules run through 'Drop files.' and under the invoice card, and the invoice card is clipped behind the settings panel at 00:39 ('ice / hwind / 84.0'). Empty placeholder panels appear at 00:38-00:42."
+        ]
+      },
+      "reason": "Film 2 tells a clear problem, solution, proof and CTA story, with purposeful motion throughout: drifting papers, a moving magnifier, a filling check-grid and a toggle reveal. Film 1 is mostly static slide holds with overlapping rules, badges and grids, plus off-palette green, and has more visible layout collisions."
+    },
+    {
+      "judge": "gpt",
+      "order": "AB",
+      "winner": "A",
+      "A": {
+        "story": 8,
+        "craft": 7,
+        "motion": 9,
+        "brand": 7,
+        "overall": 7,
+        "defects": [
+          "00:23–00:25 and 00:39–00:42: Folder graphics extend below the frame, cutting off their bottoms and making the compositions feel crowded against the lower edge.",
+          "00:24–00:29 and 00:36–00:38: Important demonstration details, including the generated filename, reminder label and Undo-list metadata, are too small relative to the headlines for comfortable viewing.",
+          "00:08–00:10 and 00:41–00:42: Yellow headline accents fall outside the specified chalk/ink/grape palette."
+        ]
+      },
+      "B": {
+        "story": 8,
+        "craft": 6,
+        "motion": 7,
+        "brand": 6,
+        "overall": 6,
+        "defects": [
+          "00:05–00:08: Horizontal dividers run through the foreground invoice, visibly crossing its content rather than respecting the card's boundary.",
+          "00:38–00:42: A large blank lavender panel occupies much of the closing product demonstration, leaving the composition looking unfinished and weakening the activation message.",
+          "00:11–00:13 and 00:21–00:32: Green validation/reminder accents and prominent yellow statistics depart from the specified chalk/ink/grape palette."
+        ]
+      },
+      "reason": "Film 1 wins through more purposeful visual choreography, turning scattered documents into organised files and checked results while maintaining a clear problem-to-benefit sequence. Film 2 provides more explicit feature detail, but its intersecting dividers, sustained blank closing panel and broader palette drift make it less ready to ship."
+    },
+    {
+      "judge": "gpt",
+      "order": "BA",
+      "winner": "A",
+      "A": {
+        "story": 8,
+        "craft": 8,
+        "motion": 8,
+        "brand": 7,
+        "overall": 8,
+        "defects": [
+          "00:23–00:25 and 00:39–00:42: The folder illustrations extend beyond the bottom edge, leaving their containers visibly cut off across multiple held compositions.",
+          "00:24–00:25 and 00:36–00:38: The long filename and filing-history details are small and dense; the Undo demonstration depends on miniature labels rather than clearly readable product actions.",
+          "00:08–00:10 and 00:41–00:42: Yellow emphasis on Auto-file and Today departs from the specified chalk/ink/grape palette."
+        ]
+      },
+      "B": {
+        "story": 8,
+        "craft": 6,
+        "motion": 7,
+        "brand": 6,
+        "overall": 6,
+        "defects": [
+          "00:38–00:42: The activation sequence leaves a large lavender panel empty beside the settings toggle, making the closing product demonstration look unfinished.",
+          "00:26–00:27: The beta qualification and chart legend are disproportionately tiny relative to the 94% headline, weakening readability of important supporting information.",
+          "00:21–00:32: Green reminder graphics and prominent yellow statistics introduce substantial colours outside the specified chalk/ink/grape palette."
+        ]
+      },
+      "reason": "Film2 establishes the problem before introducing the solution, then uses purposeful sorting, scanning and filing motion with stronger visual hierarchy. Film1 communicates more supporting detail, but its tiny annotations, empty closing panel and broader palette departures make it less ready to ship."
+    }
+  ]
+}

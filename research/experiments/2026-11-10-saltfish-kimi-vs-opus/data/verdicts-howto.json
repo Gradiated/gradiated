@@ -1,0 +1,126 @@
+{
+  "A": "opus",
+  "B": "kimi",
+  "verdicts": [
+    {
+      "judge": "opus",
+      "order": "AB",
+      "winner": "A",
+      "A": {
+        "story": 8,
+        "craft": 6,
+        "motion": 8,
+        "brand": 8,
+        "overall": 7,
+        "defects": [
+          "0:05-0:07: the zoom-in crops the UI card at the frame edges. Amounts are cut to '€38' and '€1,25', the card top is clipped, and the 'New reminder rule' button is cut off at the right.",
+          "0:42: an empty frame (a blank chalk card with no content) sits before the logo end card, so the ending feels like a dead beat.",
+          "Throughout, especially 0:28-0:41: the timeline's date labels and the stacked 'Priya' markers are tiny and crowd together around 20-21 Nov. They are unreadable at normal viewing size."
+        ]
+      },
+      "B": {
+        "story": 6,
+        "craft": 5,
+        "motion": 7,
+        "brand": 6,
+        "overall": 5,
+        "defects": [
+          "0:05, 0:09, 0:30-0:31: near-empty frames. They show only skeleton bars, a cursor or a lone icon, and many rows elsewhere stay grey placeholder lines instead of real content.",
+          "0:04 and 0:08: muddy crossfades. The title ghosts over the app UI, and the faded 'New reminder rule' button overlaps the next screen. At 0:36 a half-built panel with stray dark marks appears.",
+          "Throughout: the bottom summary chips and sidebar labels are tiny. From 0:38 to 0:41 a large empty green block dominates the frame, and the yellow bell dot and green panel fall outside the chalk/ink/grape palette."
+        ]
+      },
+      "reason": "Film 1 tells a concrete problem → five steps → outcome story using real invoice data and a purposeful animated timeline, so the feature is easy to understand. Film 2 is tidy at the start but leans on skeleton placeholders, empty frames and off-palette accents, which leaves it vaguer and less shippable."
+    },
+    {
+      "judge": "opus",
+      "order": "BA",
+      "winner": "A",
+      "A": {
+        "story": 9,
+        "craft": 7,
+        "motion": 8,
+        "brand": 8,
+        "overall": 7,
+        "defects": [
+          "0:05–0:06: the zoom-in crops the UI badly. The 'Invoices' and 'Reminders' headers are clipped at the top, amounts are cut to '€38' at the right edge, and the 'New reminde…' button is cut off.",
+          "0:42: an empty pale card frame sits between the last 'Mark it paid' scene and the logo end card, which reads as a dead beat.",
+          "0:18–0:41: the timeline labels are tiny. Date numbers and 'Priya' tags are crowded and overlap around 20–21 Nov, and the form's field labels ('Remind me about', 'Narrow it', 'When', 'Who') are too small at video size."
+        ]
+      },
+      "B": {
+        "story": 6,
+        "craft": 4,
+        "motion": 4,
+        "brand": 7,
+        "overall": 4,
+        "defects": [
+          "0:04–0:05: the title cross-dissolves straight into the app UI. 'Payment reminders in Acme' sits ghosted over the sidebar, and 0:05 is a nearly empty app frame with one small floating doc card.",
+          "0:08–0:09 and 0:30–0:31: transition frames are almost blank or messy. At 0:08 the 'New reminder rule' button is enlarged and blurred over the bottom edge. At 0:09 and 0:30 the canvas is mostly empty placeholder panels with a tiny icon.",
+          "Throughout, and worst at 0:32–0:41: there is a lot of grey placeholder-bar 'lorem' UI and text too small to read (chips, progress pills, the 'Next five reminders' rows with only one real row). The benefits section has small captions, a large empty green block, and a half-faded 'Email + Acme app' label at 0:38."
+        ]
+      },
+      "reason": "Film 2 tells a concrete story: real invoices and a due-date timeline, a form that fills step by step, reminders appearing on the timeline, and then 'mark it paid' stopping them, with large readable step headlines. Film 1 explains the same five steps but relies on placeholder UI, tiny text and near-empty transition frames that a marketing lead would send back."
+    },
+    {
+      "judge": "gpt",
+      "order": "AB",
+      "winner": "A",
+      "A": {
+        "story": 8,
+        "craft": 7,
+        "motion": 8,
+        "brand": 8,
+        "overall": 7,
+        "defects": [
+          "00:04.75–00:06: The zoom crops the UI heading and logo at the top and cuts invoice values and the new-rule button at the right edge.",
+          "00:01–00:41: The persistent timeline's dates, supplier labels and recipient tags are very small; later states become crowded and compete with the main demonstration.",
+          "00:42: The transition to the end card leaves an almost entirely empty chalk panel, visibly interrupting the finish."
+        ]
+      },
+      "B": {
+        "story": 8,
+        "craft": 6,
+        "motion": 6,
+        "brand": 7,
+        "overall": 6,
+        "defects": [
+          "00:04–00:05.75: The extended transition ghosts the opening title over the application, then leaves a largely empty interface before the first instruction appears.",
+          "00:10–00:37: Secondary labels and summary chips are tiny; the saved-reminders preview at 00:32–00:37 replaces most useful row information with placeholder lines, weakening a music-only explanation.",
+          "00:01–00:04 and 00:40–00:42: The yellow notification accent and large mint-green closing panel introduce conspicuous colours outside the specified chalk/ink/grape palette."
+        ]
+      },
+      "reason": "Film1 makes the workflow more concrete through readable step headlines, actual reminder details and a timeline that visibly responds to the selections. Film2 covers additional benefits, but its sparse holds, tiny supporting information and less informative preview make it feel less ready to ship."
+    },
+    {
+      "judge": "gpt",
+      "order": "BA",
+      "winner": "A",
+      "A": {
+        "story": 8,
+        "craft": 7,
+        "motion": 8,
+        "brand": 8,
+        "overall": 7,
+        "defects": [
+          "00:04.50–00:06: The interface zoom crops invoice amounts and due-date labels at the right edge, cuts into the top logo and headings, and later truncates the New reminder rule button.",
+          "00:18–00:41: The persistent bottom timeline packs dates, supplier labels and recipient pills into very small text; its growing density competes with the main demonstration instead of remaining readily readable.",
+          "00:42: The content disappears into an empty chalk panel before the logo end card, creating a visibly unfinished transition."
+        ]
+      },
+      "B": {
+        "story": 8,
+        "craft": 6,
+        "motion": 6,
+        "brand": 7,
+        "overall": 6,
+        "defects": [
+          "00:10–00:37: Important explanatory details, including filter criteria, accumulated rule chips and reminder-list entries, are much smaller than the surrounding interface; the music-only explanation relies on text that is difficult to read.",
+          "00:13–00:16 and 00:33–00:37: Nearly identical compositions persist for several seconds with little visible development, making the walkthrough feel like held slides rather than purposeful animation.",
+          "00:38–00:41: The closing benefit cards obscure the interface unevenly, leaving a narrow vertical fragment of the previous content between cards and faint rule chips underneath; the mint panel also departs from the specified palette."
+        ]
+      },
+      "reason": "Film2 communicates the workflow with larger instructional headlines, more purposeful interface movement and a concrete demonstration that marking an invoice paid stops its reminders. Its cropping and empty transition still need correction, but it is more legible and visually directed than Film1's smaller interface details and prolonged holds."
+    }
+  ]
+}

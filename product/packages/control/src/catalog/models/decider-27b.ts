@@ -9,7 +9,7 @@ export const createDecider27bModelConfiguration = () =>
   ({
     id: decider27bModelId,
     name: modelDisplayName(decider27bModelId),
-    status: "unavailable",
+    status: "available",
     openrouterModelId: null,
     properties: {
       description:

@@ -213,11 +213,11 @@ it("identifies Dealign weights separately from the stock training base", () => {
   });
 });
 
-it("stages text-only Decider with no external provider or training capability", () => {
+it("serves text-only Decider with no external provider or training capability", () => {
   const model = catalogModels.find(
     (item) => item.id === "perplexity-ai/pplx-decider-v1.2",
   );
-  expect(model?.status).toBe("unavailable");
+  expect(model?.status).toBe("available");
   expect(
     model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
   ).toBeNull();

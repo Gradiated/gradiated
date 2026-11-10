@@ -336,7 +336,7 @@ private PodMonitor scrapes its dedicated metrics listener on port 9464.
 The Rust service exposes the launch inference contract:
 
 - `POST /v1/chat/completions`, streaming and non-streaming;
-- `POST /v1/systemone`, non-streaming native Kev pointer inference;
+- `POST /v1/systemone`, non-streaming native typed decision inference;
 - `GET /v1/models` with only exact currently advertised model IDs;
 - `/health/live`, `/health/ready` and `/metrics`.
 

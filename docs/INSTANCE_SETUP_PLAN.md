@@ -140,9 +140,10 @@ The candidate launch settings and their unmeasured limits are in the
    ```
 
    The helper uses administrator Tailscale SSH, including its normal MFA
-   checkpoint. It requires the matching bootstrap identity, exactly two idle
-   H200 GPUs and no existing enrollment. It atomically updates only `enroll.py`
-   and the result schema, retaining `.before-h200` backups. It does not restart
+   checkpoint. It requires the matching bootstrap identity, only idle GPUs of
+   the selected product (`--gpu` accepts B200, H100, H200 or L40S) and no
+   existing enrollment. It atomically updates only `enroll.py` and the result
+   schema, retaining `.before-<gpu>` backups. It does not restart
    processes or touch provider settings. A newly built image already contains
    these files. To undo preparation before enrollment, restore those two backups
    over the same administrator SSH path. After enrollment, leave the host's

@@ -74,7 +74,7 @@ class ResultSchema(unittest.TestCase):
         self.assertEqual(schema.result(dict(RESULT)), RESULT)
 
     def test_rejects_out_of_range_inventory(self):
-        for name, value in (('gpu_count', 0), ('gpu_count', 9), ('gpu_product', 'H100'), ('cpu', 1.5),
+        for name, value in (('gpu_count', 0), ('gpu_count', 9), ('gpu_product', 'A100'), ('cpu', 1.5),
                             ('promotion', 'yes'), ('tailscale_ip', '10.0.0.1')):
             with self.subTest(name=name, value=value), self.assertRaises(ValueError):
                 schema.result({**RESULT, name: value})

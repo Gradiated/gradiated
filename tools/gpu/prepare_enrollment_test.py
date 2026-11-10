@@ -58,6 +58,13 @@ class BootstrapPreparation(unittest.TestCase):
         self.run_remote('NVIDIA B200\nNVIDIA B200\n')
         self.assertEqual((self.package / 'enroll.py.before-b200').read_text(), 'OLD = True\n')
 
+    def test_l40s_preparation_accepts_one_gpu_and_refuses_an_l40(self):
+        self.document['product'] = 'L40S'
+        with self.assertRaisesRegex(SystemExit, 'L40S'):
+            self.run_remote('NVIDIA L40\n')
+        self.run_remote('NVIDIA L40S\n')
+        self.assertEqual((self.package / 'enroll.py.before-l40s').read_text(), 'OLD = True\n')
+
     def test_refuses_unsupported_product_before_reading_source(self):
         with self.assertRaisesRegex(ValueError, 'Unsupported'):
             prepare.payload('pod', 'a' * 40, 'B300')

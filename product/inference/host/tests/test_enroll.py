@@ -156,6 +156,22 @@ class Enrollment(unittest.TestCase):
         with self.assertRaisesRegex(enroll.EnrollmentError, 'homogeneous'):
             self.enroll()
 
+    def test_enrolls_h100_gpus(self):
+        executable(self.bin / 'nvidia-smi', NVIDIA_SMI.replace(
+            'NVIDIA RTX PRO 6000 Blackwell Server Edition', 'NVIDIA H100 80GB HBM3'))
+        self.assertEqual(self.enroll()['gpu_product'], 'H100')
+
+    def test_enrolls_l40s_gpus(self):
+        executable(self.bin / 'nvidia-smi', NVIDIA_SMI.replace(
+            'NVIDIA RTX PRO 6000 Blackwell Server Edition', 'NVIDIA L40S'))
+        self.assertEqual(self.enroll()['gpu_product'], 'L40S')
+
+    def test_l40_is_not_an_l40s(self):
+        executable(self.bin / 'nvidia-smi', NVIDIA_SMI.replace(
+            'NVIDIA RTX PRO 6000 Blackwell Server Edition', 'NVIDIA L40'))
+        with self.assertRaisesRegex(enroll.EnrollmentError, 'homogeneous'):
+            self.enroll()
+
     def test_a_retry_before_promotion_takes_effect_stages_the_new_key(self):
         self.enroll()
         # Still tagged as a bootstrap device: re-authentication has not happened yet.

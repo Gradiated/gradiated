@@ -22,6 +22,26 @@ test("frontmatter provides article metadata without reading its body", () => {
   assert.equal(article.collection, "library");
   assert.equal(article.image, "/brand/png/gradiated-mark-dark-1024.png");
 });
+test("articles can name an author", () => {
+  const source = fixture().replace(
+    "title: Example\n",
+    "title: Example\nauthor: Ada Lovelace\n",
+  );
+  const article = parseArticleMetadata(source, "with-author.mdx");
+  assert.equal(article.author, "Ada Lovelace");
+  const titled = parseArticleMetadata(
+    source.replace(
+      "author: Ada Lovelace\n",
+      "author: Ada Lovelace\nauthorTitle: Mathematician\n",
+    ),
+    "with-title.mdx",
+  );
+  assert.equal(titled.authorTitle, "Mathematician");
+  assert.equal(
+    parseArticleMetadata(fixture(), "example.mdx").author,
+    undefined,
+  );
+});
 test("articles can omit the visible description", () => {
   const source = fixture().replace(
     "description: Example article description.\n",

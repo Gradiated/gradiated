@@ -1,0 +1,117 @@
+.sf-spread {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: 2.5em;
+  align-items: start;
+}
+
+.gr-root .sf-text > * {
+  margin-block: 0;
+}
+
+.gr-root .sf-text > * + * {
+  margin-block-start: 1.1em;
+}
+
+@media (max-width: 48rem) {
+  .sf-spread {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.6em;
+  }
+}
+
+.sf {
+  --sf-plot-h: 10rem;
+
+  margin-inline: 0;
+  font-size: 0.85em;
+  line-height: 1.3;
+}
+
+.gr-root .sf-title {
+  margin: 0 0 1em 3.2em;
+}
+
+.sf-plot {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3.2em 1fr;
+  height: var(--sf-plot-h);
+}
+
+.sf-ticks {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+}
+
+.sf-ticks li {
+  position: absolute;
+  right: 0.6em;
+  bottom: calc(var(--at) * 100%);
+  transform: translateY(50%);
+  font-variant-numeric: tabular-nums;
+}
+
+.sf-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 0.75em;
+  margin: 0;
+  padding: 0;
+  border-block-end: 1px solid var(--color-text-muted);
+  background: repeating-linear-gradient(
+    to top,
+    transparent 0 calc(var(--sf-plot-h) / 3 - 1px),
+    var(--color-rule) calc(var(--sf-plot-h) / 3 - 1px)
+      calc(var(--sf-plot-h) / 3)
+  );
+  list-style: none;
+}
+
+.sf-bar {
+  position: relative;
+  display: flex;
+  flex: 0 1 4.5em;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.sf-fill {
+  height: calc(var(--h) * 100%);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--color-cloud-azure);
+}
+
+.sf-bar--base .sf-fill {
+  background: var(--color-cloud-sky);
+}
+
+.sf-value {
+  margin-block-end: 0.3em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.sf-label {
+  position: absolute;
+  top: 100%;
+  width: 100%;
+  padding-block-start: 0.4em;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.gr-root .sf-axis {
+  margin: 2.2em 0 0 3.2em;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.gr-root .gr-qa > * + .sf-spread {
+  margin-block-end: 0.6em;
+}

@@ -8,6 +8,8 @@ export const siteOrigin = "https://gradiated.com";
 export type PageKind = "article" | "documentation" | "job" | "website";
 
 export type PageMetadata = {
+  author?: string;
+  authorTitle?: string;
   description: string;
   image: string;
   index: boolean;
@@ -222,6 +224,8 @@ export const getPageMetadata = (pathname: string): PageMetadata => {
       image: article.image,
       publishedAt: article.publishedAt,
       updatedAt: article.updatedAt,
+      author: article.author,
+      authorTitle: article.authorTitle,
       index: article.status === "published",
       kind: "article",
     };
@@ -388,7 +392,13 @@ export const getStructuredData = (pathname: string): object[] => {
       dateModified: metadata.updatedAt ?? metadata.publishedAt,
       image: absoluteUrl(metadata.image),
       mainEntityOfPage: url,
-      author: organization,
+      author: metadata.author
+        ? {
+            "@type": "Person",
+            name: metadata.author,
+            ...(metadata.authorTitle && { jobTitle: metadata.authorTitle }),
+          }
+        : organization,
       publisher: organization,
     });
     return data;

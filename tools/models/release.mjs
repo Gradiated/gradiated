@@ -76,10 +76,6 @@ export const bundles = {
     "product/inference/bundles/glm-5-3-flash-sglang/jit-cache-requirements.txt",
     "product/inference/lora",
   ],
-  "deepseek-v4-1-flash": [
-    "product/inference/bundles/deepseek-v4-1-flash",
-    "product/inference/images/deepseek-v4-1-flash/start.sh",
-  ],
   "kev-9b": [
     "product/inference/bundles/kev-9b",
     "product/inference/runtimes/kev/adapter.py",

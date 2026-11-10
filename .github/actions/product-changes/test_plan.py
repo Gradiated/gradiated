@@ -81,7 +81,6 @@ class ProductChangesTest(unittest.TestCase):
         self.assertTrue(result["gateway_contract"])
         self.assertFalse(result["unit"])
         self.assertFalse(result["native_cpp"])
-        self.assertFalse(result["native_vllm"])
 
     def test_root_dependency_and_workflow_changes_run_all_checks(self):
         for path in (

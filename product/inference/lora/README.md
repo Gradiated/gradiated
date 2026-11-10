@@ -213,8 +213,7 @@ Synthetic/local HTTP tests cover registration, coalescing, archive integrity,
 workspace checks, pinned-file safety, disk admission, recovery, startup and the
 absence of inference proxy routes. Resolver tests cover cold loading, disk reuse,
 workspace/version failures and the preload/resolution race. Bundle verification
-requires the pinned vLLM resolver interface, plugin discovery and native per-name
-coalescing to pass; local tests skip that native check when vLLM is absent. The NGINX fixture checks direct
+runs these tests inside the pinned SGLang bundle. The NGINX fixture checks direct
 completion routing, private control routing and blocked admin endpoints. CI also
 runs loader tests inside the pinned GLM bundle. Real-artifact/reference, native
 CPU/GPU eviction and reload, KV/cancellation isolation, latency and colocated

@@ -18,14 +18,6 @@ test("base and shared packaging changes verify every bundle", () => {
 });
 test("a bundle's own inputs verify only that bundle", () => {
   assert.deepEqual(
-    bundlesToVerify(["product/inference/bundles/deepseek-v4-1-flash/vllm"]),
-    ["deepseek-v4-1-flash"],
-  );
-  assert.deepEqual(
-    bundlesToVerify(["product/inference/images/deepseek-v4-1-flash/start.sh"]),
-    ["deepseek-v4-1-flash"],
-  );
-  assert.deepEqual(
     bundlesToVerify(["product/inference/runtimes/kev/adapter.py"]),
     ["kev-9b"],
   );
@@ -38,7 +30,6 @@ test("docs, tests, GLM and release tooling verify nothing", () => {
   assert.deepEqual(
     bundlesToVerify([
       "product/inference/images/gpu-base/README.md",
-      "product/inference/images/glm-5-3-flash/start.sh",
       "product/inference/runtimes/kev/test_http.py",
       "product/inference/bundles/kev-9b-extra/Dockerfile",
       "tools/models/release.mjs",

@@ -13,11 +13,6 @@ target "bundle" {
   }
 }
 
-target "verify-deepseek-v4-1-flash" {
-  inherits   = ["bundle"]
-  dockerfile = "bundles/deepseek-v4-1-flash/Dockerfile"
-}
-
 target "verify-kev-9b" {
   inherits   = ["bundle"]
   dockerfile = "bundles/kev-9b/Dockerfile"

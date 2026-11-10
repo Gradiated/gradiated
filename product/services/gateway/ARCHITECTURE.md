@@ -328,7 +328,7 @@ health/capacity fallbacks remain in force.
 for content-derived keys. SystemOne retains its existing state-prefix routing
 (`state_prefix`) when no session key is supplied. Source and identifier hashes
 are log fields, not Prometheus labels or durable billing fields. Session
-or content affinity does not promise a cache hit: vLLM's prefix cache still
+or content affinity does not promise a cache hit: SGLang's prefix cache still
 requires identical prefix tokens resident on that replica. The gateway does
 not synthesize a per-session `cache_salt`.
 
@@ -459,7 +459,7 @@ digest-covered release field and matching gateway/SGLang conformance.
 
 The optional, digest-covered `tokenizer_mode` release field selects a pinned
 non-Hugging-Face renderer. `deepseek_v4` uses the DeepSeek V4 message encoding
-with the release's exact tokenizer artifacts. A live vLLM token-ID conformance
+with the release's exact tokenizer artifacts. A live runtime token-ID conformance
 fixture must pass before this mode can serve a deployment.
 
 The optional, digest-covered `runtime_model_name` field maps the public model

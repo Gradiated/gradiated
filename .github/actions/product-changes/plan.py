@@ -44,7 +44,6 @@ JOB_PATHS = {
         "product/inference/desmond/*",
         "product/inference/engine/*",
     ),
-    "native_vllm": ("product/inference/runtimes/vllm/*",),
     "native_kev": ("product/inference/runtimes/kev/*",),
     "gateway_contract": (*GATEWAY, *RUNTIMES, "product/docker-compose.yml"),
     "proxy_e2e": (
@@ -206,7 +205,7 @@ def plan(paths: list[str], root: Path = ROOT, force: bool = False) -> dict:
     result["console_build"] = "@gradiated/console" in selected or "tools/deployment/console-artifact.mjs" in paths
     result["website"] |= "gradiated-com" in selected
     result["inference_native"] = any(
-        result[key] for key in ("native_cpp", "native_vllm", "native_kev")
+        result[key] for key in ("native_cpp", "native_kev")
     )
     return result
 

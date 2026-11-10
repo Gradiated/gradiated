@@ -62,6 +62,11 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     && cp /tmp/smg-lora/smg-patches.json /bundle/smg-lora-patches.json
 
 FROM smg-compiler AS package
+COPY bundles/glm-5-3-flash-sglang/jit-cache-requirements.txt /tmp/jit-cache-requirements.txt
+# The shim declares a provider for every CUDA architecture; only B300's is installed, so
+# `uv pip check` (already run on the full environment above) is not repeated here.
+RUN uv pip install --python /bundle/python/bin/python3 --break-system-packages \
+      --no-deps --require-hashes -r /tmp/jit-cache-requirements.txt
 COPY bundles/package.sh /package.sh
 COPY --chmod=755 bundles/glm-5-3-flash-sglang/entrypoint /bundle/entrypoint
 COPY bundles/glm-5-3-flash-sglang/model-config.json bundles/glm-5-3-flash-sglang/patches.json /bundle/

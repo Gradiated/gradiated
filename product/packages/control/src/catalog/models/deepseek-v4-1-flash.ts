@@ -56,6 +56,10 @@ export const createDeepseekV41FlashModelConfiguration = () =>
             tool_choice: { type: "unknown" },
             parallel_tool_calls: { type: "boolean" },
             reasoning_effort: { type: "unknown" },
+            // Still declared so a request carrying it fails explicitly (OpenRouter
+            // cannot take it and no local deployment remains) instead of having it
+            // silently dropped.
+            chat_template_kwargs: { type: "unknown" },
           },
           pricing: [
             { type: "completion", unit: "token", cost: 1_200 },
@@ -67,8 +71,7 @@ export const createDeepseekV41FlashModelConfiguration = () =>
           ],
         },
       ],
-      // No generation_config.json. Only parameters OpenRouter lists for the model
-      // are advertised (not chat_template_kwargs), so none holds a request back.
+      // No generation_config.json, so the runtime's sampling defaults apply.
       default_parameters: {
         temperature: 1,
         top_p: 1,

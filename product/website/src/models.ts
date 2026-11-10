@@ -87,8 +87,8 @@ export type ModelPageData = {
 export const models: ModelPageData[] = [
   {
     slug: "deepseek-v4-1-flash",
-    id: "deepseek/deepseek-v4.1-flash",
-    name: "DeepSeek V4.1 Flash",
+    id: "deepseek/deepseek-v4.1-flash-1017",
+    name: "DeepSeek V4.1 Flash 1017",
     maker: "DeepSeek",
     mark: "DS",
     brand: "#4D6BFE",
@@ -99,19 +99,19 @@ export const models: ModelPageData[] = [
     facts: [
       { label: "Developers", value: "DeepSeek" },
       { label: "Model family", value: "DeepSeek V4" },
-      { label: "Version", value: "4.1" },
+      { label: "Version", value: "4.1 (1017)" },
       { label: "Variant", value: "Flash" },
       { label: "Size", value: "552B – A16B" },
       { label: "License", value: "MIT" },
     ],
     overview: [
-      "DeepSeek V4.1 Flash is the efficiency cut of the V4 family: the same million-token context as its larger siblings, with aggressive KV-cache compression and speculative decoding doing the work of keeping it fast and cheap. We serve it with TP4 and DSpark speculative decoding.",
+      "DeepSeek V4.1 Flash 1017 is the October update to the efficiency cut of the V4 family: the same million-token context, stronger reasoning, coding and agentic results, and shorter outputs for the same tasks. We serve it on SGLang with TP4 and DSpark speculative decoding.",
       "It benchmarks like a frontier model on knowledge and reasoning, and holds the top of its class on agentic coding — which makes it the default choice when you want one model to cover chat, code, and long-document work before specialising it on your own traffic.",
     ],
     goodFor: [
       {
         title: "Agentic coding",
-        body: "Strong on DeepSWE v1.1 and Terminal-Bench 2.1. A capable base for coding agents before post-training sharpens it on your repository.",
+        body: "Strong on DeepSWE v1.1 and Terminal-Bench 4.0. A capable base for coding agents before post-training sharpens it on your repository.",
         glyph: "terminal",
       },
       {
@@ -121,46 +121,52 @@ export const models: ModelPageData[] = [
       },
       {
         title: "General chat and reasoning",
-        body: "Frontier-class MMLU and GPQA scores. A sensible default when a workload has not yet earned a specialist.",
+        body: "Frontier-class reasoning on Humanity's Last Exam. A sensible default when a workload has not yet earned a specialist.",
         glyph: "chat",
       },
     ],
     benchmarks: [
       {
-        name: "Terminal-Bench 2.1",
-        score: "90.6",
-        bar: 90.6,
-        note: "pass@1",
-        href: "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
-      },
-      {
-        name: "GPQA Diamond",
-        score: "90.9",
-        bar: 90.9,
-        note: "pass@1",
-        href: "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
+        name: "Terminal-Bench 4.0",
+        score: "42.3",
+        bar: 42.3,
+        note: "Claude Code harness",
+        href: "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017",
       },
       {
         name: "DeepSWE v1.1",
-        score: "74.2",
-        bar: 74.2,
-        note: "resolved",
-        href: "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
+        score: "77.0",
+        bar: 77.0,
+        note: "resolved, Mini-SWE-V2",
+        href: "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017",
       },
       {
-        name: "MMLU-Pro",
-        score: "74.1",
-        bar: 74.1,
-        note: "5-shot, base model",
-        href: "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
+        name: "NL2Repo-Bench",
+        score: "68.2",
+        bar: 68.2,
+        note: "pass rate",
+        href: "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      },
+      {
+        name: "HLE",
+        score: "42.6",
+        bar: 42.6,
+        note: "no tools",
+        href: "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017",
       },
     ],
     benchmarksNote:
-      "Figures from the DeepSeek-V4.1-Flash model card, October 2026.",
+      "Figures from the DeepSeek-V4.1-Flash-1017 model card, October 2026.",
     specs: [
-      { label: "Weights", value: "Open — deepseek-ai/DeepSeek-V4.1-Flash" },
-      { label: "Released", value: "September 2026" },
-      { label: "Quantization on Gradiated", value: "FP4" },
+      {
+        label: "Weights",
+        value: "Open — deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      },
+      { label: "Released", value: "October 2026" },
+      {
+        label: "Quantization on Gradiated",
+        value: "FP8 with MXFP4 experts (native)",
+      },
       { label: "Max output", value: "131K tokens" },
       { label: "Streaming", value: "Yes" },
       { label: "Tool calls", value: "Parallel tool calls, reasoning effort" },
@@ -168,7 +174,8 @@ export const models: ModelPageData[] = [
     hardware: [
       {
         name: "NVIDIA B200 / B300",
-        support: "What Gradiated serves on — four per replica, TP4 at FP4",
+        support:
+          "What Gradiated serves on — four per replica, TP4 with MXFP4 experts",
       },
       {
         name: "NVIDIA H100 / H200",
@@ -176,13 +183,13 @@ export const models: ModelPageData[] = [
       },
       {
         name: "Inference engines",
-        support: "vLLM and SGLang",
+        support: "SGLang (what Gradiated runs) and vLLM",
       },
     ],
     vitals: {
-      input: "$0.30",
-      cachedInput: "$0.006",
-      output: "$1.20",
+      input: "$0.006",
+      cachedInput: "$0.005",
+      output: "$0.50",
       context: "1M",
     },
     gettingStarted: {
@@ -200,7 +207,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="deepseek/deepseek-v4.1-flash",
+    model="deepseek/deepseek-v4.1-flash-1017",
     messages=[{"role": "user", "content": "Summarize this document."}],
 )`,
         },
@@ -211,7 +218,7 @@ response = client.chat.completions.create(
   -H "Authorization: Bearer $GRADIATED_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "model": "deepseek/deepseek-v4.1-flash",
+    "model": "deepseek/deepseek-v4.1-flash-1017",
     "messages": [{"role": "user", "content": "Summarize this document."}]
   }'`,
         },

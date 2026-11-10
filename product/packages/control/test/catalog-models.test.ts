@@ -188,9 +188,11 @@ it("keeps the replaced DeepSeek V4.1 Flash available through OpenRouter", () => 
   const properties = ModelPropertiesInputSchema.parse(model?.properties);
 
   expect(model?.status).toBe("available");
-  expect(
-    properties.output_modalities[0]?.supported_parameters,
-  ).not.toHaveProperty("chat_template_kwargs");
+  // Declared so requests carrying it fail for want of capacity rather than
+  // reaching OpenRouter with the setting silently dropped.
+  expect(properties.output_modalities[0]?.supported_parameters).toHaveProperty(
+    "chat_template_kwargs",
+  );
 });
 
 it("identifies Dealign weights separately from the stock training base", () => {

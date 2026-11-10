@@ -119,6 +119,12 @@ class Configuration(unittest.TestCase):
         self.assertEqual(router[router.index('--max-concurrent-requests') + 1], '6')
 
     def test_b300_hicache_spills_to_a_per_identity_per_gpu_file_tier(self):
+        # GPU hosts give replicas the host's /dev/shm tmpfs, about half their RAM.
+        mock = __import__('unittest.mock').mock
+        for name in ('tmpfs_large_enough', 'private_tmpfs_tree'):
+            patcher = mock.patch.object(config, name, return_value=True)
+            patcher.start()
+            self.addCleanup(patcher.stop)
         bundle = self.root / 'bundle'
         bundle.mkdir()
         environment = {**self.environment, 'XDG_CACHE_HOME': '/home/runtime/.cache'}
@@ -134,9 +140,10 @@ class Configuration(unittest.TestCase):
         self.assertEqual(backend[backend.index('--hicache-storage-backend') + 1], 'file')
         extra = json.loads(backend[backend.index('--hicache-storage-backend-extra-config') + 1])
         self.assertEqual(extra, {'file_storage_path': str(config.hicache_directory(environment, settings, bundle)),
-                                 'max_size': '100G', 'min_free_space': '100G'})
+                                 'max_size': '50G', 'min_free_space': '30G'})
         directory = Path(extra['file_storage_path'])
-        self.assertEqual(directory.parent.parent, Path('/home/runtime/.cache/glm-sglang/hicache'))
+        # Request-derived pages stay in tmpfs, never on disk.
+        self.assertEqual(directory.parent.parent, Path('/dev/shm/gradiated-hicache/glm-sglang'))
         self.assertEqual(directory.name, 'GPU-a_GPU-b')
 
         moved = {**environment, 'RUNTIME_PORT': '28080', 'WARMUP_PORT': '28083', 'GRADIATED_RUNTIME_ROOT': str(self.root)}
@@ -173,14 +180,53 @@ class Configuration(unittest.TestCase):
         self.assertEqual(enabled['NVIDIA_VISIBLE_DEVICES'], 'GPU-a,GPU-b')
         self.assertEqual(config.backend_environment(inherited, {**settings, 'hicache': False})[flag], '0')
 
-    def test_prune_removes_only_week_idle_hicache_leaves(self):
-        environment = {**self.environment, 'XDG_CACHE_HOME': str(self.root / 'cache')}
-        base = self.root / 'cache/glm-sglang/hicache'
-        keep, live, stale = base / 'x/GPU-a_GPU-b', base / 'y/GPU-c_GPU-d', base / 'z/GPU-c_GPU-d'
-        for leaf in [keep, live, stale]:
+    def test_file_tier_needs_a_large_tmpfs_never_disk(self):
+        mounts = self.root / 'mounts'
+        large = __import__('collections').namedtuple('usage', 'total used free')(234 << 30, 0, 234 << 30)
+        small = large._replace(total=64 << 20)
+        mock = __import__('unittest.mock').mock
+        root = Path('/dev/shm/gradiated-hicache/glm-sglang')
+        for table, usage, expected in [
+                ('overlay / overlay rw 0 0\nshm /dev/shm tmpfs rw 0 0\n', large, True),
+                ('overlay / overlay rw 0 0\nshm /dev/shm tmpfs rw 0 0\n', small, False),
+                ('overlay / overlay rw 0 0\n', large, False),  # no /dev/shm mount: would be disk
+                ('overlay / overlay rw 0 0\n/dev/sda1 /dev/shm ext4 rw 0 0\n', large, False)]:
+            mounts.write_text(table)
+            with mock.patch.object(config.shutil, 'disk_usage', return_value=usage):
+                self.assertEqual(config.tmpfs_large_enough(root, mounts), expected, table)
+        settings = config.settings(self.environment)
+        bundle = self.root / 'bundle'
+        bundle.mkdir(exist_ok=True)
+        (bundle / '.bundle-sha256').write_text('a' * 64 + '\n')
+        with mock.patch.object(config, 'tmpfs_large_enough', return_value=False):
+            self.assertIsNone(config.hicache_directory(self.environment, settings, bundle))
+            _, backend, _ = config.commands(self.environment, bundle)
+        self.assertIn('--enable-hierarchical-cache', backend)
+        self.assertNotIn('--hicache-storage-backend', backend)
+
+    def test_private_tree_refuses_links_and_shared_directories(self):
+        base = self.root / 'shm'
+        base.mkdir()
+        self.assertTrue(config.private_tmpfs_tree(base, base / 'gradiated-hicache/glm-sglang/digest'))
+        self.assertEqual((base / 'gradiated-hicache').stat().st_mode & 0o777, 0o700)
+        disk = self.root / 'disk'
+        disk.mkdir()
+        (base / 'linked').symlink_to(disk)
+        self.assertFalse(config.private_tmpfs_tree(base, base / 'linked/glm-sglang/digest'))
+        self.assertFalse((disk / 'glm-sglang').exists())
+        (base / 'open').mkdir(mode=0o755)
+        os.chmod(base / 'open', 0o755)
+        self.assertFalse(config.private_tmpfs_tree(base, base / 'open/glm-sglang'))
+
+    def test_prune_removes_only_hour_idle_hicache_leaves(self):
+        environment = {**self.environment, 'GRADIATED_HICACHE_ROOT': str(self.root / 'shm')}
+        base = self.root / 'shm/glm-sglang'
+        keep, live, stale = base / 'x/GPU-a_GPU-b', base / 'x/GPU-c_GPU-d', base / 'x/GPU-e_GPU-f'
+        other = base / 'y/GPU-c_GPU-d'
+        for leaf in [keep, live, stale, other]:
             leaf.mkdir(parents=True)
             (leaf / 'page.bin').write_bytes(b'0')
-        old = config.time.time() - 8 * 86400
+        old = config.time.time() - 2 * 3600
         for path in [stale / 'page.bin', stale, keep / 'page.bin', keep]:
             os.utime(path, (old, old))
         held = base / 'w/GPU-g_GPU-h'
@@ -190,7 +236,9 @@ class Configuration(unittest.TestCase):
         config.prune_hicache(environment, keep)
         lock.close()
         self.assertTrue(keep.is_dir() and live.is_dir() and held.is_dir())
+        # Same identity waits out the idle hour; another identity's fresh, unlocked leaf goes at once.
         self.assertFalse(stale.exists())
+        self.assertFalse(other.exists())
 
     def test_profile_validation_does_not_silently_fall_back(self):
         with self.assertRaisesRegex(ValueError, 'Unknown'):

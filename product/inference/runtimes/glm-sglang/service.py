@@ -38,9 +38,15 @@ def run(environment=os.environ):
     validate_hardware(environment)
     directory = hicache_directory(environment, config) if config.get('hicache') else None
     hicache_lock = hold_hicache(directory) if directory else None
+    stopping = threading.Event()
     if directory:
         prune_hicache(environment, directory)
-    stopping = threading.Event()
+
+        def keep_pruning():
+            # Leaves go idle after this start too (other replicas stop, rollouts finish).
+            while not stopping.wait(600):
+                prune_hicache(environment, directory)
+        threading.Thread(target=keep_pruning, daemon=True).start()
     for sig in [signal.SIGTERM, signal.SIGINT]:
         signal.signal(sig, lambda *_: stopping.set())
     children = []

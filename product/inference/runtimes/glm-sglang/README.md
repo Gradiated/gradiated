@@ -21,22 +21,25 @@ it) keeps evicted prefix KV and recurrent state in three tiers:
 - Host RAM: `--hicache-size 48` pins 48 GB per rank, split between KV and
   Mamba state, inside the 400 GiB per-replica memory limit (each rank also uses
   ~25 GiB RSS; the rest is weight page cache). The host KV pool is smaller than
-  the device pool, so SGLang warns that L2 is less effective; disk is the
-  capacity tier.
-- Local disk: SGLang's `file` backend, written through from host RAM. Each rank
-  evicts its own files LRU at 100 GB (`max_size`) and stops writing when less
-  than 100 GB of the filesystem is free (`min_free_space`). Two replicas (four
-  ranks) plus ~180 GB of weights fit on a pod's ~1 TB disk.
+  the device pool, so SGLang warns that L2 is less effective; the tmpfs file
+  tier is the capacity tier.
+- tmpfs (never disk): SGLang's `file` backend in `/dev/shm`, written through
+  from host RAM. Each rank evicts its own files LRU at 50 GB (`max_size`) and
+  stops writing when less than 30 GB of `/dev/shm` is free (`min_free_space`).
+  The pages count against the replica's 400 GiB memory limit.
 
-Files live in
-`$XDG_CACHE_HOME/<runtime directory>/hicache/<identity>/<GPU UUIDs>/`. `<identity>` is
-the SHA-256 of the qualification identity (bundle digest and profile settings
-without ports or root), because stored pages do not record their dtype or
-layout. The GPU UUID pair keeps two replicas on one host apart. A process
-restart or replacement pod on the same GPUs, bundle and settings reuses the
-directory, so the disk tier survives restarts; the host tier does not. At
-startup the service holds a shared lock on `<leaf>.lock` and deletes other
-unlocked leaves with no file change for seven days. Without
+Request-derived pages may not reach disk (data-retention policy: prompts for
+trace-off requests are processed in memory only), so the file tier lives in
+tmpfs: `/dev/shm/gradiated-hicache/<runtime directory>/<identity>/<GPU UUIDs>/`.
+GPU hosts have no swap. tmpfs pages are charged to the replica's 400 GiB limit,
+so each rank keeps at most 50G and writes stop below 30G free in `/dev/shm`.
+`<identity>` is the SHA-256 of the qualification identity (bundle digest and
+profile settings without ports or root), because stored pages do not record
+their dtype or layout. The GPU UUID pair keeps two replicas on one host apart.
+A process restart or replacement pod on the same GPUs, bundle and settings
+reuses the directory, so the tier survives restarts and rollouts; a host restart
+or re-image clears it. At startup the service holds a shared lock on
+`<leaf>.lock` and deletes other unlocked leaves idle for an hour. Without
 a bundle digest the runtime keeps only the GPU and host tiers. The default
 `rank-suffix` key scheme is used because `unified` rejects speculative
 decoding. Native `sglang:*` HiCache series are exported unchanged through the

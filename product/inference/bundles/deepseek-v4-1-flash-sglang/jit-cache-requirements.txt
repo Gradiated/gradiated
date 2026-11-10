@@ -1,5 +1,0 @@
-# Prebuilt FlashInfer 0.7.2 ops for B300 (SM103a), so the first start on a host
-# loads the TRT-LLM MXFP4 fused MoE instead of JIT-compiling it (tens of minutes).
-# The shim only discovers installed providers; it never downloads.
-flashinfer-jit-cache @ https://github.com/flashinfer-ai/flashinfer/releases/download/v0.7.2/flashinfer_jit_cache-0.7.2+cu130-cp39-abi3-manylinux_2_28_x86_64.whl --hash=sha256:9d17680be42818709696dcf8273c9f3f62e42636caf9b3b4a358e443e8216c20
-flashinfer-jit-cache-sm103a @ https://github.com/flashinfer-ai/flashinfer/releases/download/v0.7.2/flashinfer_jit_cache_sm103a-0.7.2+cu130-cp39-abi3-manylinux_2_28_x86_64.whl --hash=sha256:e05791dcadad995d2582928f2d0fb290fb6741bdc972d297503339cd9d0384e3

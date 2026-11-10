@@ -73,6 +73,7 @@ export const bundles = {
     "product/inference/bundles/glm-5-3-flash-sglang/smg-build-requirements.txt",
     "product/inference/bundles/glm-5-3-flash-sglang/smg-patches.json",
     "product/inference/bundles/glm-5-3-flash-sglang/smg-lora",
+    "product/inference/bundles/glm-5-3-flash-sglang/jit-cache-requirements.txt",
     "product/inference/lora",
   ],
   "deepseek-v4-1-flash": [

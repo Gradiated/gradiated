@@ -40,15 +40,11 @@ export const bundles = {
     "product/packages/autotrain",
     "product/packages/contracts/src/training-recipe.json",
   ],
-  "glm-5-3-flash": [
-    "product/inference/bundles/glm-5-3-flash",
-    "product/inference/runtimes/glm",
-    "product/inference/lora",
-  ],
   "glm-5-3-flash-sglang": [
     "product/inference/bundles/glm-5-3-flash-sglang",
     "product/inference/runtimes/glm-sglang",
     "product/inference/runtimes/glm/warmup-supervisor.py",
+    "product/inference/lora",
   ],
   "kimi-k31-pro": [
     "product/inference/bundles/kimi-k31-pro",

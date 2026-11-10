@@ -54,6 +54,36 @@ class Configuration(unittest.TestCase):
             with self.subTest(delta=delta), self.assertRaises(ValueError):
                 config.commands({**self.environment, **delta})
 
+    def test_plain_glm_serves_the_nvfp4_export_with_native_adapters(self):
+        environment = {**self.environment, 'MODEL_ID': 'z-ai/glm-5.3-flash', 'LORA_ENABLED': 'true',
+                       'LORA_GPU_SLOTS': '8', 'LORA_CPU_SLOTS': '64', 'LORA_MAX_RANK': '8',
+                       'LORA_DISK_CACHE_BYTES': '274877906944', 'LORA_DOWNLOAD_HOSTS': 'artifacts.s3.amazonaws.com'}
+        settings, backend, router = config.commands(environment)
+        model = config.MODELS['z-ai/glm-5.3-flash']
+        for flag, value in [('--model-path', model['model']), ('--revision', model['revision']),
+                            ('--served-model-name', 'zai-org/GLM-5.3-Flash'), ('--quantization', 'modelopt_fp4'),
+                            ('--moe-runner-backend', model['moe_runner']), ('--max-lora-rank', '8'),
+                            ('--max-loras-per-batch', '8'), ('--max-loaded-loras', '64')]:
+            self.assertEqual(backend[backend.index(flag) + 1], value)
+        self.assertNotIn('--json-model-override-args', backend)
+        self.assertNotIn('--attn-cp-size', backend)
+        self.assertEqual(backend[backend.index('--page-size') + 1], '256')
+        targets = backend[backend.index('--lora-target-modules') + 1:]
+        targets = targets[:next((i for i, a in enumerate(targets) if a.startswith('--')), len(targets))]
+        self.assertEqual(targets, model['lora_targets'])
+        self.assertTrue(settings['lora'])
+        _, plain, _ = config.commands({**environment, 'LORA_ENABLED': 'false'})
+        self.assertNotIn('--enable-lora', plain)
+
+    def test_uncensored_default_never_enables_adapters_or_unknown_models(self):
+        settings, backend, _ = config.commands(self.environment)
+        self.assertEqual(settings['served_model_name'], config.MODEL)
+        self.assertNotIn('--enable-lora', backend)
+        for delta in [{'MODEL_ID': 'dealignai/glm-5.3-flash-uncensored', 'LORA_ENABLED': 'true'},
+                      {'MODEL_ID': 'z-ai/glm-5'}, {'MODEL_ID': 'z-ai/glm-5.3-flash', 'LORA_ENABLED': 'yes'}]:
+            with self.subTest(delta=delta), self.assertRaises(ValueError):
+                config.commands({**self.environment, **delta})
+
     def test_h200_selects_hopper_attention_and_bounds_both_admission_layers(self):
         environment = {**self.environment, 'GLM_SGLANG_PROFILE': 'h200-tp2'}
         settings, backend, router = config.commands(environment)

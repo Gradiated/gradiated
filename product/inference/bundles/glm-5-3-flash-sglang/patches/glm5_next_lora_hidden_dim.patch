@@ -1,0 +1,29 @@
+--- a/sglang/srt/models/glm5_next.py
++++ b/sglang/srt/models/glm5_next.py
+@@ -1677,6 +1677,26 @@
+         else:
+             return hidden_states
+ 
++    def get_hidden_dim(self, module_name: str, layer_idx: int):
++        """LoRA buffer dims per layer: KDA linear-attention layers project to
++        num_heads * head_dim, unlike the DSA layers' MLA geometry."""
++        from sglang.srt.lora.utils import get_default_hidden_dim
++
++        text_config = self.mm_config.text_config
++        layer_types = getattr(text_config, "layer_types", None) or []
++        if (
++            layer_idx is not None
++            and layer_idx < len(layer_types)
++            and layer_types[layer_idx] == "linear_attention"
++            and module_name in ("qkv_proj", "o_proj")
++        ):
++            linear = text_config.linear_attn_config
++            projection = linear["num_heads"] * linear["head_dim"]
++            if module_name == "qkv_proj":
++                return text_config.hidden_size, 3 * projection
++            return projection, text_config.hidden_size
++        return get_default_hidden_dim(module_name, text_config, layer_idx)
++
+     def load_weights(self, weights: Iterable[Tuple[str, torch.Tensor]], is_nextn=False):
+         if is_nextn:
+             if hasattr(self.config, "num_nextn_predict_layers"):

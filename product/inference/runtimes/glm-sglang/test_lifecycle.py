@@ -53,6 +53,19 @@ class Lifecycle(unittest.TestCase):
                 else:
                     self.assertIn(f'gradiated_runtime_startup_qualification{{mode="{mode}"}} 1', result)
 
+    def test_startup_probes_name_the_served_model(self):
+        with tempfile.TemporaryDirectory() as root:
+            environment = {'GRADIATED_RUNTIME_ROOT': root, 'NVIDIA_VISIBLE_DEVICES': 'GPU-a,GPU-b',
+                           'RUNTIME_PORT': '18080', 'WARMUP_PORT': '18083', 'GLM_SGLANG_PROFILE': 'b300-pcp2',
+                           'MODEL_ID': 'z-ai/glm-5.3-flash'}
+            original = launch.base.MODEL
+            try:
+                with patch.object(launch.Supervisor, 'run', return_value=0):
+                    self.assertEqual(launch.main(environment), 0)
+                self.assertEqual(launch.base.MODEL, 'zai-org/GLM-5.3-Flash')
+            finally:
+                launch.base.MODEL = original
+
     def test_qualification_identity_and_record_directory(self):
         config = {'root': Path('/pods/a'), 'front': 18080, 'warmup': 18083, 'backend': 18084, 'metrics': 18085,
                   'profile': 'b300-pcp2', 'active_requests': 12}
@@ -84,6 +97,32 @@ class Lifecycle(unittest.TestCase):
                 Response(b'sglang:full_token_usage 0.3\n'), Response(b'smg_http_requests_total 1\n')]):
             result = launch.metrics({'backend': 18084, 'metrics': 18085, 'active_requests': 4}).decode()
         self.assertIn('gradiated_runtime_active_request_limit 4', result)
+
+    def test_adapter_watcher_treats_an_unpublished_engine_as_alive(self):
+        seen = {}
+        stopped = []
+        class Adapters:
+            def stop(self):
+                stopped.append(True)
+        def start(environment, model, revision, tp, port, alive):
+            seen['before_engine'] = alive()
+            seen['alive'] = alive
+            return Adapters(), environment
+        engine = type('Engine', (), {'poll': lambda self: 0, 'wait': lambda self, timeout=None: 0,
+                                     'terminate': lambda self: None, 'kill': lambda self: None})()
+        config = {'lora': True, 'model': 'm', 'revision': 'r', 'backend': 18084, 'served_model_name': 'm'}
+        with patch.dict(sys.modules, {'adapter_service': type(sys)('adapter_service')}), \
+             patch.object(service, 'commands', return_value=(config, ['backend'], ['router'])), \
+             patch.object(service, 'detect_profile', side_effect=lambda environment: environment), \
+             patch.object(service, 'validate_hardware'), \
+             patch.object(service.subprocess, 'Popen', return_value=engine), \
+             patch.object(service.signal, 'signal'):
+            sys.modules['adapter_service'].start = start
+            with self.assertRaises(RuntimeError):
+                service.run({})
+        self.assertTrue(seen['before_engine'])
+        self.assertFalse(seen['alive']())
+        self.assertEqual(stopped, [True])
 
     def test_wrong_hardware_never_starts_a_backend(self):
         with patch.object(service, 'commands', return_value=({}, [], [])), \

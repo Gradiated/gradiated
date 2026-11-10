@@ -576,5 +576,27 @@
     "memory": "64Gi",
     "request_memory": "64Gi",
     "startup_timeout": 1800
+  },
+  "ba619193dfba92481840ce68052c3d28c415df5d69f0ff4f864a76012a578c9c": {
+    "image": "gradiated/decider-bundle@sha256:ba619193dfba92481840ce68052c3d28c415df5d69f0ff4f864a76012a578c9c",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "ba619193dfba92481840ce68052c3d28c415df5d69f0ff4f864a76012a578c9c"
+    },
+    "model_id": "perplexity-ai/pplx-decider-v1.2",
+    "release": {
+      "protocol": "system_one",
+      "schema_version": 1,
+      "model_path": "perplexity-ai/pplx-decider-v1.2",
+      "model_revision": "cce0f3f80033e9d89d80831d5281fd72124aacce",
+      "tokenizer_path": "perplexity-ai/pplx-decider-v1.2",
+      "tokenizer_revision": "cce0f3f80033e9d89d80831d5281fd72124aacce",
+      "runtime_revision": "decider-ba619193dfba"
+    },
+    "gpus": 1,
+    "active_requests": 1,
+    "cpu": "8",
+    "memory": "64Gi",
+    "request_memory": "64Gi",
+    "startup_timeout": 1800
   }
 }

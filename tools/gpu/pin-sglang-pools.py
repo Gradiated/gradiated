@@ -137,7 +137,14 @@ def pin(model_catalog, runtimes, pins, releases, source, max_replicas=1):
         if 'spread' in previous:
             pool['spread'] = previous['spread']
         # Only the model's SGLang pool changes; any other pool it has keeps its definition.
-        updated_models[model_id] = {'min_slots': entry['min_slots'], 'pools': {**entry['pools'], spec['pool']: pool}}
+        pinned = {'min_slots': entry['min_slots'], 'pools': {**entry['pools'], spec['pool']: pool}}
+        # Keep the catalogue order, so a renamed model stays where its predecessor was.
+        order = list(model_catalog)
+        position = order.index(source_model) if source_model in order else len(order)
+        items = [(key, value) for key, value in updated_models.items() if key != model_id]
+        before = [item for item in items if item[0] in order[:position]]
+        after = [item for item in items if item not in before]
+        updated_models = dict(before + [(model_id, pinned)] + after)
     return updated_models, updated_runtimes
 
 

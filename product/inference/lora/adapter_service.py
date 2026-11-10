@@ -161,4 +161,3 @@ def start(environment, model, revision, tensor_parallel_size, engine_port, alive
     service = AdapterService(environment, settings, engine_port)
     service.start(alive)
     return service, resolver_environment(environment)
-

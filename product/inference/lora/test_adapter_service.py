@@ -4,7 +4,12 @@ import unittest
 import urllib.request
 from pathlib import Path
 
-from adapter_service import AdapterService, engine_arguments, engine_settings, resolver_environment
+from adapter_service import (
+    AdapterService,
+    engine_arguments,
+    engine_settings,
+    resolver_environment,
+)
 
 
 class LaunchTests(unittest.TestCase):

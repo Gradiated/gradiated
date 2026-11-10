@@ -54,6 +54,7 @@ This repository is the complete project state for the research and product-build
 - `$product-build`: repository-first product implementation, verification, and handoff.
 - `$experiment-run`: bounded, reproducible experiments with cleanup; routine output stays untracked.
 - `$gpu-host-lease`: lease a whole GPU host out of the serving pool for hand-run work, then hand it back to be wiped.
+- `$gpu-model-rollout`: roll a risky runtime change out to a GPU model pool one replica at a time, hold at the first, compare, then finish or roll back.
 
 ## Pull request reviews
 

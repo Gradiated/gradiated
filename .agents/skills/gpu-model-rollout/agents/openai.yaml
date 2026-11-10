@@ -1,0 +1,4 @@
+interface:
+  display_name: "GPU Model Rollout"
+  short_description: "Roll a risky runtime change out one replica at a time, hold, compare, then finish or roll back"
+  default_prompt: "Use $gpu-model-rollout to roll this runtime change out to the GPU model pool one replica at a time, pause at the first new replica, compare it with the rest, then resume or roll back."

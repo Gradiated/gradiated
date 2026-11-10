@@ -22,7 +22,10 @@ class TailnetPolicyTests(unittest.TestCase):
                          if 'tcp:22' in grant.get('ip', []) or '*' in grant.get('ip', []))
         self.assertEqual(port_22, [(('autogroup:admin',), ('tag:gpu-inference', 'tag:gpu-bootstrap')),
                                    (('autogroup:member',), ('autogroup:self',)),
+                                   (('tag:dev-machine', 'tag:dev-training', 'autogroup:admin'), ('tag:dev-training',)),
                                    (('tag:ops-mcp', 'tag:gpu-fleet'), ('tag:gpu-bootstrap',))])
+        dev = rules[('accept', ('tag:dev-machine', 'tag:dev-training', 'autogroup:admin'))]
+        self.assertEqual(dev['dst'], ['tag:dev-training'])
 
     def test_reports_failed_policy_tests(self):
         self.assertEqual(checker.failures({}), [])

@@ -119,6 +119,8 @@ stream = client.chat.completions.create(
 )
 
 for chunk in stream:
+    if not chunk.choices:
+        continue
     text = chunk.choices[0].delta.content
     if text:
         print(text, end="", flush=True)

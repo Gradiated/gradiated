@@ -10,7 +10,7 @@ Run the Gradiated wizard:
 npx -y @gradiated/wizard --agent opencode
 ```
 
-The wizard adds the provider and current model list to your user configuration. It backs up the file before making changes and leaves your default model alone.
+The wizard adds the provider and current model list to your user configuration. It backs up the file before making changes. If you already have a default model, the wizard keeps it; otherwise it sets the Gradiated model you chose as the default.
 
 Start OpenCode after the wizard finishes:
 
@@ -105,6 +105,6 @@ Run the uninstall command:
 npx -y @gradiated/wizard uninstall
 ```
 
-Select OpenCode. The wizard removes the provider and stored credential, and it keeps a timestamped backup.
+Select OpenCode. The wizard removes the provider and stored credential, and it keeps a timestamped backup of the configuration file.
 
 OpenCode's [provider documentation](https://opencode.ai/docs/providers/) covers custom provider settings and the `/models` command.

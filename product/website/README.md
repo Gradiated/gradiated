@@ -161,6 +161,11 @@ duplicate routes. Paths use `/library/<slug>/`, `/notes/<slug>/`, or `/sand-to-t
 `updatedAt` date must not precede `publishedAt`. `image` is optional and defaults
 to the site mark. Use a site-relative image path. Dates use quoted `YYYY-MM-DD`.
 
+`author` is optional. When set, the page shows it in the sidebar under the tags and the
+Article structured data names that person as the author; otherwise both use
+Gradiated. An optional `authorTitle` (for example `Technical Staff`) follows the
+name and becomes the author's job title in the structured data.
+
 The description is optional. Omit it to hide the article's introductory summary;
 search and social metadata then use the article title as a fallback.
 
@@ -185,7 +190,8 @@ A measured claim.[^method]
 [^method]: Describe the method and scope here.
 ```
 
-The MDX pipeline adds linked references and return links. Shared article styles
+The MDX pipeline adds linked references and return links. External `http(s)`
+links in articles open in a new tab. Shared article styles
 are in `article.css`.
 
 The production build renders every public page to static HTML. It also generates

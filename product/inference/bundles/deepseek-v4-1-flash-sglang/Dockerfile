@@ -72,8 +72,9 @@ COPY --chmod=755 bundles/deepseek-v4-1-flash-sglang/entrypoint /bundle/entrypoin
 COPY bundles/glm-5-3-flash-sglang/patches.json /bundle/
 COPY runtimes/glm/warmup-supervisor.py /bundle/warmup-base.py
 # The DeepSeek runtime reuses the GLM SGLang supervisor, service and FlashInfer seeding with its own config.
-COPY runtimes/glm-sglang/launch.py runtimes/glm-sglang/service.py runtimes/glm-sglang/artifact-cache.py /bundle/deepseek-sglang/
+COPY runtimes/glm-sglang/launch.py runtimes/glm-sglang/service.py runtimes/glm-sglang/artifact-cache.py runtimes/glm-sglang/autotune-seed.py /bundle/deepseek-sglang/
 COPY runtimes/deepseek-sglang/*.py /bundle/deepseek-sglang/
+COPY runtimes/deepseek-sglang/autotune /bundle/deepseek-sglang/autotune
 COPY lora/*.py /bundle/lora/
 COPY images/gpu-base/base-id /bundle/base-id
 RUN bash /package.sh

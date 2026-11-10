@@ -62,6 +62,7 @@ export const bundles = {
     "product/inference/runtimes/glm-sglang/launch.py",
     "product/inference/runtimes/glm-sglang/service.py",
     "product/inference/runtimes/glm-sglang/artifact-cache.py",
+    "product/inference/runtimes/glm-sglang/autotune-seed.py",
     "product/inference/runtimes/glm/warmup-supervisor.py",
     "product/inference/bundles/glm-5-3-flash-sglang/requirements.txt",
     "product/inference/bundles/glm-5-3-flash-sglang/patches",

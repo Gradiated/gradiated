@@ -49,7 +49,8 @@ def run(environment=os.environ):
             from adapter_service import start
             adapters, engine_environment = start(
                 environment, config['model'], config['revision'], 2, config['backend'],
-                lambda: bool(children) and children[0].poll() is None)
+                # Not started yet counts as alive: the watcher may run before the engine is published.
+                lambda: not children or children[0].poll() is None)
         children.append(subprocess.Popen(backend, env=engine_environment))
         deadline = time.monotonic() + int(environment.get('RUNTIME_STARTUP_TIMEOUT_SECONDS', '3600'))
         while not stopping.is_set():

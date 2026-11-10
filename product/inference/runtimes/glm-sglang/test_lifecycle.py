@@ -98,6 +98,32 @@ class Lifecycle(unittest.TestCase):
             result = launch.metrics({'backend': 18084, 'metrics': 18085, 'active_requests': 4}).decode()
         self.assertIn('gradiated_runtime_active_request_limit 4', result)
 
+    def test_adapter_watcher_treats_an_unpublished_engine_as_alive(self):
+        seen = {}
+        stopped = []
+        class Adapters:
+            def stop(self):
+                stopped.append(True)
+        def start(environment, model, revision, tp, port, alive):
+            seen['before_engine'] = alive()
+            seen['alive'] = alive
+            return Adapters(), environment
+        engine = type('Engine', (), {'poll': lambda self: 0, 'wait': lambda self, timeout=None: 0,
+                                     'terminate': lambda self: None, 'kill': lambda self: None})()
+        config = {'lora': True, 'model': 'm', 'revision': 'r', 'backend': 18084, 'served_model_name': 'm'}
+        with patch.dict(sys.modules, {'adapter_service': type(sys)('adapter_service')}), \
+             patch.object(service, 'commands', return_value=(config, ['backend'], ['router'])), \
+             patch.object(service, 'detect_profile', side_effect=lambda environment: environment), \
+             patch.object(service, 'validate_hardware'), \
+             patch.object(service.subprocess, 'Popen', return_value=engine), \
+             patch.object(service.signal, 'signal'):
+            sys.modules['adapter_service'].start = start
+            with self.assertRaises(RuntimeError):
+                service.run({})
+        self.assertTrue(seen['before_engine'])
+        self.assertFalse(seen['alive']())
+        self.assertEqual(stopped, [True])
+
     def test_wrong_hardware_never_starts_a_backend(self):
         with patch.object(service, 'commands', return_value=({}, [], [])), \
              patch.object(service, 'detect_profile', side_effect=lambda environment: environment), \

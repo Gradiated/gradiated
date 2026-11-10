@@ -19,6 +19,9 @@ from urllib.parse import urlencode
 EVENT = "ci_workflow_completed"
 DISTINCT_ID = "github-ci"
 HOST = "https://us.i.posthog.com"
+# Fast successful and skipped steps stay in the workflow event's jobs[].steps[];
+# a separate step event is sent only for slow or unsuccessful steps.
+MIN_STEP_EVENT_SECONDS = 5
 REQUIRED_WORKFLOWS = {
     ".github/workflows/tests.yml",
     ".github/workflows/kubernetes.yml",
@@ -141,6 +144,9 @@ def build_step_events(repository, run, jobs, pr_numbers):
         for step in job.get("steps", []):
             skipped = step["conclusion"] == "skipped" or job["conclusion"] == "skipped"
             start, end = step.get("started_at"), step.get("completed_at")
+            duration = 0 if skipped else seconds(start, end)
+            if step["conclusion"] in ("success", "skipped") and (duration or 0) < MIN_STEP_EVENT_SECONDS:
+                continue
             events.append({
                 "event": "ci_workflow_step_completed", "distinct_id": DISTINCT_ID,
                 "timestamp": end or job.get("completed_at") or run["updated_at"],
@@ -156,7 +162,7 @@ def build_step_events(repository, run, jobs, pr_numbers):
                     "runner_labels": job.get("labels", []), "step_name": step["name"],
                     "step_number": step["number"], "status": step["status"], "conclusion": step["conclusion"],
                     "started_at": start, "completed_at": end,
-                    "duration_seconds": 0 if skipped else seconds(start, end),
+                    "duration_seconds": duration,
                     "timestamp_is_fallback": end is None,
                 },
             })

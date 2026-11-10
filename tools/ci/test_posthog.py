@@ -248,13 +248,23 @@ class StepEventTest(unittest.TestCase):
             self.assertEqual(event["properties"][key], value)
         self.assertNotIn("private", json.dumps(event))
 
-    def test_unknown_skipped_step_is_zero_duration_with_labelled_fallback(self):
-        job = {**JOB, "steps": [{**JOB["steps"][0], "conclusion": "skipped", "started_at": None, "completed_at": None}]}
+    def test_unstarted_cancelled_step_has_unknown_duration_with_labelled_fallback(self):
+        job = {**JOB, "steps": [{**JOB["steps"][0], "conclusion": "cancelled", "started_at": None, "completed_at": None}]}
         event = build_step_events("owner/repo", RUN, [job], [8])[0]
-        self.assertEqual(event["properties"]["duration_seconds"], 0)
+        self.assertIsNone(event["properties"]["duration_seconds"])
         self.assertTrue(event["properties"]["timestamp_is_fallback"])
         self.assertIsNone(event["properties"]["completed_at"])
         self.assertEqual(event["timestamp"], JOB["completed_at"])
+
+    def test_fast_successful_and_skipped_steps_are_not_sent_as_step_events(self):
+        step = JOB["steps"][0]
+        fast = {**step, "number": 2, "completed_at": "2026-10-13T10:01:04Z"}
+        skipped = {**step, "number": 3, "conclusion": "skipped"}
+        fast_failure = {**fast, "number": 4, "conclusion": "failure"}
+        events = build_step_events("owner/repo", RUN, [{**JOB, "steps": [step, fast, skipped, fast_failure]}], [8])
+        self.assertEqual([event["properties"]["step_number"] for event in events], [1, 4])
+        steps = build_event("owner/repo", RUN, [{**JOB, "steps": [step, fast, skipped, fast_failure]}])["properties"]["jobs"][0]["steps"]
+        self.assertEqual([step["number"] for step in steps], [1, 2, 3, 4])
 
     def test_step_identity_is_unique_per_job_and_attempt_and_stable_on_retry(self):
         first = build_step_events("owner/repo", RUN, [JOB], [8])[0]

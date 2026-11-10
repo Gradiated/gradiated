@@ -66,6 +66,8 @@ class Configuration(unittest.TestCase):
                             ('--max-loras-per-batch', '8'), ('--max-loaded-loras', '64')]:
             self.assertEqual(backend[backend.index(flag) + 1], value)
         self.assertNotIn('--json-model-override-args', backend)
+        self.assertNotIn('--attn-cp-size', backend)
+        self.assertEqual(backend[backend.index('--page-size') + 1], '256')
         targets = backend[backend.index('--lora-target-modules') + 1:]
         targets = targets[:next((i for i, a in enumerate(targets) if a.startswith('--')), len(targets))]
         self.assertEqual(targets, model['lora_targets'])

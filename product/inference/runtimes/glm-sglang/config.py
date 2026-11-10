@@ -17,6 +17,9 @@ MODELS = {
     'z-ai/glm-5.3-flash': {'model': 'nvidia/GLM-5.3-Flash-NVFP4', 'revision': '1d00738646cbb0c6d0a9eb403dac5f366f1473a7',
                            'served_model_name': 'zai-org/GLM-5.3-Flash', 'model_config_sha256': None,
                            'moe_runner': 'flashinfer_trtllm',
+                           # SGLang's LoRA wrappers shard by the global TP, so attention context
+                           # parallelism (attention TP 1) breaks the linear-attention o_proj adapter.
+                           'profile_overrides': {'context_parallel': False},
                            'lora_targets': ['q_proj', 'k_proj', 'v_proj', 'o_proj', 'q_a_proj', 'q_b_proj',
                                             'kv_a_proj_with_mqa', 'kv_b_proj']},
 }
@@ -67,7 +70,8 @@ def settings(environment):
     if len({front, warmup, backend, metrics}) != 4 or warmup in [front + 1, front + 2]:
         raise ValueError('Runtime ports overlap reserved host services')
     return {'root': root, 'front': front, 'warmup': warmup, 'backend': backend, 'metrics': metrics,
-            'profile': profile, **PROFILES[profile], 'model_id': model_id, 'lora': lora == 'true',
+            'profile': profile, **PROFILES[profile], **model.get('profile_overrides', {}),
+            'model_id': model_id, 'lora': lora == 'true',
             **{key: model[key] for key in ('model', 'revision', 'served_model_name', 'moe_runner')}}
 
 

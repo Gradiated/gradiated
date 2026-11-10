@@ -72,6 +72,12 @@
       "original_sha256": "6bc4a06b15dfb33fab941089efdb8517b1d00b059c34a4dfa225e081cef70442",
       "overlay_sha256": "2133d5582ca39868a7568173c0d387db04fead3a218336d127968a8825a6047f",
       "patch": "lora_resolver_serving_base.patch"
+    },
+    {
+      "path": "sglang/srt/models/glm5_next.py",
+      "original_sha256": "3c71a5b522cd3d366c0fd15db04964208758763ce48d46a5659fe42a14a412bd",
+      "overlay_sha256": "97d614986a23259dd0546300c15bdb97d403aebe54c2eeef4f041337ce25805c",
+      "patch": "glm5_next_lora_hidden_dim.patch"
     }
   ]
 }

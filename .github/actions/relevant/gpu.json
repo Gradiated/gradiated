@@ -37,6 +37,8 @@
     "product/services/gpu-fleet/*",
     "product/packages/gpu-hosts/*",
     "product/packages/control/*",
+    "!product/packages/control/src/catalog/models/*",
+    "!product/packages/control/test/catalog-models.test.ts",
     "product/pnpm-lock.yaml"
   ],
   "manifests": [

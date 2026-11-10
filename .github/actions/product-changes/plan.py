@@ -33,6 +33,13 @@ STORAGE = (
     "product/packages/contracts/*",
     "product/packages/config/*",
 )
+# Model definitions and prices reach other services through the database at
+# deploy time, not through code or fixtures, so they need only the TypeScript
+# checks of control and its consumers.
+CATALOG_MODELS = (
+    "product/packages/control/src/catalog/models/*",
+    "product/packages/control/test/catalog-models.test.ts",
+)
 GATEWAY = ("product/services/gateway/*", *STORAGE)
 PROXY = ("product/services/proxy/*", *GATEWAY, "product/packages/credentials/*")
 COLLECTOR = ("product/services/collector/*", *PROXY)
@@ -137,6 +144,7 @@ def plan(paths: list[str], root: Path = ROOT, force: bool = False) -> dict:
         for path in paths
     )
     all_checks = force or removed_manifest or any(matches(path, COMMON) for path in paths)
+    cross_service = [path for path in paths if not matches(path, CATALOG_MODELS)]
     packages = workspaces(root)
     selected = {
         name
@@ -158,7 +166,7 @@ def plan(paths: list[str], root: Path = ROOT, force: bool = False) -> dict:
             ),
         ),
     ):
-        if any(matches(path, scopes) for path in paths):
+        if any(matches(path, scopes) for path in cross_service):
             selected.add(name)
     while True:
         dependents = {
@@ -185,7 +193,7 @@ def plan(paths: list[str], root: Path = ROOT, force: bool = False) -> dict:
         and name != "@gradiated/wizard"
     )
     result = {
-        job: all_checks or any(matches(path, scopes) for path in paths)
+        job: all_checks or any(matches(path, scopes) for path in cross_service)
         for job, scopes in JOB_PATHS.items()
     }
     result["format"] = formatting or all_checks

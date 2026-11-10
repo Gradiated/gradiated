@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Full fine-tune with spot safety: restore the run from S3 when the local copy is missing, keep s3-sync.sh running,
+# then train (resuming from the newest complete state). Usage: run-train.sh RUN_NAME DATA_NAME [train_full args...]
+set -euo pipefail
+source "$HOME/gdecide/env.sh"
+RUN=$1; DATA=$2; shift 2
+cd "$ROOT"
+mkdir -p "runs/$RUN" logs
+[ -f "data/$DATA/done" ] || { aws s3 sync --only-show-errors "$S3_PREFIX/data/$DATA" "data/$DATA"; touch "data/$DATA/done"; }
+if ! ls -d runs/$RUN/state-*/done >/dev/null 2>&1; then
+  latest=$(aws s3 ls "$S3_PREFIX/runs/$RUN/" | awk '{print $2}' | grep '^state-' | tr -d / | sort -t- -k2 -n | tail -1 || true)
+  [ -n "$latest" ] && aws s3 sync --only-show-errors "$S3_PREFIX/runs/$RUN/$latest" "runs/$RUN/$latest"
+fi
+pgrep -f vm/s3-sync.sh >/dev/null || (setsid nohup bash src/gradiated-decide/vm/s3-sync.sh > logs/s3-sync.log 2>&1 < /dev/null &)
+cd src/gradiated-decide
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True NCCL_NVLS_ENABLE=0
+../../${VENV:-venv}/bin/python -m torch.distributed.run --standalone --nproc-per-node 8 -m gdecide.train_full --checkpoint "$ROOT/ckpt/base" \
+  --data "$ROOT/data/$DATA" --out "$ROOT/runs/$RUN" "$@"

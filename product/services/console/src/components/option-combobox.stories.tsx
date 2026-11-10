@@ -9,7 +9,10 @@ import type { Option } from "./option-select";
 
 const models: Option<string>[] = [
   { ...modelOption("z-ai/glm-5.3-flash"), group: "Hosted models" },
-  { ...modelOption("deepseek/deepseek-v4.1-flash"), group: "Hosted models" },
+  {
+    ...modelOption("deepseek/deepseek-v4.1-flash-1017"),
+    group: "Hosted models",
+  },
   {
     value: "support-assistant",
     label: "support-assistant",
@@ -109,7 +112,7 @@ export const Searching: Story = {
       "deepseek",
     );
     await expect(
-      await body.findByRole("option", { name: "DeepSeek V4.1 Flash" }),
+      await body.findByRole("option", { name: "DeepSeek V4.1 Flash 1017" }),
     ).toBeVisible();
   },
 };

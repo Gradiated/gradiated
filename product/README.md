@@ -274,7 +274,8 @@ on one another and therefore run in parallel.
 
 ## Local model catalog
 
-The default seed lists DeepSeek V4.1 Flash and GLM-5.3 Flash. It retires the
+The default seed lists every model in `packages/control/src/catalog/models/`,
+including DeepSeek V4.1 Flash 1017 and GLM-5.3 Flash. It retires the
 old Qwen catalog entry without deleting history. Use `SEED_LOCAL_QWEN=1` to
 include Qwen for the local inference smoke check.
 
@@ -288,23 +289,30 @@ This mode does not sign in or change account credit. The new entries do not
 create inference deployments. The local SGLang process still serves Qwen;
 DeepSeek and GLM require matching deployments before they can serve requests.
 
-IDs were checked on 13 September 2026:
+DeepSeek IDs were checked on 10 November 2026; GLM IDs on 13 September 2026:
 
-- [DeepSeek catalog ID](https://openrouter.ai/deepseek/deepseek-v4.1-flash):
-  `deepseek/deepseek-v4.1-flash`.
-- [DeepSeek weights](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash):
-  `deepseek-ai/DeepSeek-V4.1-Flash`.
+- [DeepSeek catalog ID](https://openrouter.ai/deepseek/deepseek-v4.1-flash-1017):
+  `deepseek/deepseek-v4.1-flash-1017`.
+- [DeepSeek weights](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017):
+  `deepseek-ai/DeepSeek-V4.1-Flash-1017` at
+  `1bae0e1088993b9b82de08f59de5be5a34e42170`.
 - [GLM catalog ID](https://openrouter.ai/z-ai/glm-5.3-flash):
   `z-ai/glm-5.3-flash`.
 - [GLM weights](https://huggingface.co/zai-org/GLM-5.3-Flash):
   `zai-org/GLM-5.3-Flash`.
 
-DeepSeek seed prices use the common full provider rate from the cited OpenRouter
-snapshot: $0.30 input, $0.006 cached input, and $1.20 output per million tokens.
-These match Together, SiliconFlow, and several other providers on 13 September
-2026. Do not use the lowest headline rate of $0.15/$0.003/$0.60. OpenRouter has
-provider-specific prices, so this is an explicit seed pricing policy. Limits
-also use the cited snapshot. These are
+DeepSeek V4.1 Flash 1017 prices match its OpenRouter entry on 10 November 2026:
+$0.006 input, $0.005 cached input, and $0.50 output per million tokens. The
+OpenRouter fallback is capped at our price, so a lower price would stop it.
+
+DeepSeek V4.1 Flash 1017 replaced `deepseek/deepseek-v4.1-flash` on our
+capacity. The old ID stays available and is served through OpenRouter's
+`deepseek/deepseek-v4.1-flash`, so existing callers keep working. It keeps its
+13 September 2026 prices: $0.30 input, $0.006 cached input, and $1.20 output per
+million tokens, the common full provider rate then. It takes no adapters. It still
+declares `chat_template_kwargs`, which OpenRouter does not accept, so a request
+carrying it fails for want of capacity instead of losing the setting. Limits
+also use the cited snapshots. These are
 local catalog fixtures, not measured serving limits or production pricing.
 GLM reuses the existing model configuration. Both seeds expose text input.
 

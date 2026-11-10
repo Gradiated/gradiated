@@ -30,7 +30,7 @@ const usage = {
   ],
   models: [
     {
-      model_id: "deepseek/deepseek-v4.1-flash",
+      model_id: "deepseek/deepseek-v4.1-flash-1017",
       charge: "3500000000",
       input_tokens: "1000",
       output_tokens: "500",

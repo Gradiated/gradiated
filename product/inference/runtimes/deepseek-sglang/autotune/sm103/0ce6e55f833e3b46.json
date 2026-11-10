@@ -306,7 +306,51 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((1, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        8
+      ],
+      [
+        1,
+        1
+      ],
+      true,
+      false,
+      4
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((1, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        8
+      ],
+      [
+        1,
+        1
+      ],
+      true,
+      false,
+      4
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((1, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
       [
@@ -460,6 +504,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((1024, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        128
+      ],
+      [
+        2,
+        2
+      ],
+      true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((1024, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -473,6 +539,28 @@
       ],
       false,
       true,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((1024, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        64
+      ],
+      [
+        2,
+        2
+      ],
+      false,
+      false,
       1
     ],
     [
@@ -614,6 +702,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((128, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        64
+      ],
+      [
+        2,
+        1
+      ],
+      true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((128, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -623,6 +733,28 @@
       ],
       [
         1,
+        1
+      ],
+      false,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((128, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        64
+      ],
+      [
+        2,
         1
       ],
       false,
@@ -768,6 +900,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((1280, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        128
+      ],
+      [
+        2,
+        2
+      ],
+      true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((1280, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -780,6 +934,28 @@
         1
       ],
       true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((1280, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        64
+      ],
+      [
+        4,
+        2
+      ],
+      false,
       false,
       1
     ],
@@ -922,6 +1098,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((1536, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        128
+      ],
+      [
+        2,
+        2
+      ],
+      true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((1536, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -935,6 +1133,28 @@
       ],
       true,
       false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((1536, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        64
+      ],
+      [
+        1,
+        4
+      ],
+      false,
+      true,
       1
     ],
     [
@@ -1076,6 +1296,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((16, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        8
+      ],
+      [
+        1,
+        1
+      ],
+      true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((16, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -1090,6 +1332,28 @@
       true,
       false,
       2
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((16, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        16
+      ],
+      [
+        1,
+        1
+      ],
+      true,
+      false,
+      4
     ],
     [
       "cuda_graph_profile_replays",
@@ -1230,6 +1494,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((16384, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        192
+      ],
+      [
+        2,
+        1
+      ],
+      true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((16384, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -1243,6 +1529,28 @@
       ],
       true,
       false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((16384, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        256
+      ],
+      [
+        2,
+        2
+      ],
+      false,
+      true,
       1
     ],
     [
@@ -1384,6 +1692,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((1792, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        128
+      ],
+      [
+        2,
+        1
+      ],
+      false,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((1792, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -1397,6 +1727,28 @@
       ],
       false,
       false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((1792, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        64
+      ],
+      [
+        4,
+        4
+      ],
+      true,
+      true,
       1
     ],
     [
@@ -1538,7 +1890,51 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((2, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        8
+      ],
+      [
+        1,
+        1
+      ],
+      true,
+      false,
+      4
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((2, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        8
+      ],
+      [
+        1,
+        1
+      ],
+      true,
+      false,
+      4
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((2, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
       [
@@ -1680,6 +2076,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((2048, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        192
+      ],
+      [
+        2,
+        4
+      ],
+      true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((2048, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -1693,6 +2111,28 @@
       ],
       false,
       false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((2048, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        64
+      ],
+      [
+        1,
+        4
+      ],
+      false,
+      true,
       1
     ],
     [
@@ -1834,6 +2274,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((256, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        64
+      ],
+      [
+        2,
+        4
+      ],
+      true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((256, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -1846,6 +2308,28 @@
         2
       ],
       false,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((256, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        64
+      ],
+      [
+        2,
+        1
+      ],
+      true,
       false,
       1
     ],
@@ -1988,6 +2472,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((2560, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        192
+      ],
+      [
+        2,
+        1
+      ],
+      false,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((2560, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -2000,6 +2506,28 @@
         1
       ],
       true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((2560, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        128
+      ],
+      [
+        4,
+        1
+      ],
+      false,
       false,
       1
     ],
@@ -2142,6 +2670,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((3072, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        256
+      ],
+      [
+        4,
+        1
+      ],
+      false,
+      true,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((3072, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -2155,6 +2705,28 @@
       ],
       true,
       false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((3072, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        128
+      ],
+      [
+        4,
+        2
+      ],
+      false,
+      true,
       1
     ],
     [
@@ -2296,7 +2868,51 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((32, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        16
+      ],
+      [
+        2,
+        1
+      ],
+      true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((32, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        8
+      ],
+      [
+        1,
+        1
+      ],
+      true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((32, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
       [
@@ -2450,6 +3066,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((3584, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        256
+      ],
+      [
+        2,
+        1
+      ],
+      false,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((3584, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -2463,6 +3101,28 @@
       ],
       false,
       false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((3584, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        128
+      ],
+      [
+        4,
+        4
+      ],
+      false,
+      true,
       1
     ],
     [
@@ -2604,7 +3264,51 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((4, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        8
+      ],
+      [
+        1,
+        1
+      ],
+      true,
+      false,
+      4
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((4, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        8
+      ],
+      [
+        1,
+        1
+      ],
+      true,
+      false,
+      4
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((4, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
       [
@@ -2746,6 +3450,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((4096, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        192
+      ],
+      [
+        2,
+        1
+      ],
+      true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((4096, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -2758,6 +3484,28 @@
         2
       ],
       true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((4096, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        128
+      ],
+      [
+        2,
+        1
+      ],
+      false,
       false,
       1
     ],
@@ -2888,6 +3636,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((512, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        64
+      ],
+      [
+        4,
+        2
+      ],
+      false,
+      true,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((512, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -2900,6 +3670,28 @@
         1
       ],
       true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((512, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        64
+      ],
+      [
+        2,
+        1
+      ],
+      false,
       false,
       1
     ],
@@ -3042,6 +3834,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((64, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        64
+      ],
+      [
+        4,
+        1
+      ],
+      true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((64, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -3054,6 +3868,28 @@
         4
       ],
       true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((64, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        64
+      ],
+      [
+        2,
+        1
+      ],
+      false,
       false,
       1
     ],
@@ -3196,6 +4032,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((768, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        64
+      ],
+      [
+        1,
+        4
+      ],
+      false,
+      true,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((768, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -3208,6 +4066,28 @@
         2
       ],
       false,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((768, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        64
+      ],
+      [
+        4,
+        1
+      ],
+      true,
       false,
       1
     ],
@@ -3338,7 +4218,51 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((8, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        8
+      ],
+      [
+        1,
+        1
+      ],
+      true,
+      false,
+      4
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((8, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        128,
+        8
+      ],
+      [
+        1,
+        1
+      ],
+      true,
+      false,
+      4
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((8, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
       [
@@ -3480,6 +4404,28 @@
       "cold"
     ]
   ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((8192, 5120), (5120, 1280), (-1,), (204800,), (0,), (-1, 1280), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        192
+      ],
+      [
+        2,
+        1
+      ],
+      true,
+      false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
   "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((8192, 5120), (5120, 1792), (-1,), (286720,), (0,), (-1, 1792), (41943040,)), ('torch.bfloat16', True))": [
     "CuteDSLMxfp8GemmRunner",
     [
@@ -3493,6 +4439,28 @@
       ],
       true,
       false,
+      1
+    ],
+    [
+      "cuda_graph_profile_replays",
+      1,
+      "l2_cache_policy",
+      "cold"
+    ]
+  ],
+  "('mxfp8_gemm', 'CuteDSLMxfp8GemmRunner', ((8192, 5120), (5120, 512), (-1,), (81920,), (0,), (-1, 512), (41943040,)), ('torch.bfloat16', True))": [
+    "CuteDSLMxfp8GemmRunner",
+    [
+      [
+        256,
+        256
+      ],
+      [
+        4,
+        1
+      ],
+      true,
+      true,
       1
     ],
     [
@@ -3546,5 +4514,5 @@
       "cold"
     ]
   ],
-  "_generation": "84cdac93a30fd4f421d04d60e2597dde84497d2c499495dc286e9e9f2587d24a"
+  "_generation": "76479536c7eb0a7b05894097eab41b97253d5581eff3b448cd04b9c03bdcf666"
 }

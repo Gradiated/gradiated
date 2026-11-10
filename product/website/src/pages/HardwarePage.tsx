@@ -22,7 +22,7 @@ import "../styles/index.css";
    built from `Cards`, which gave it an image well the Handbook page had no
    image for. */
 const PIECES = [
-  storyAt("/library/gemma-inference-engine/"),
+  storyAt("/notes/gemma-inference-engine/"),
   storyAt("/notes/our-thesis/"),
   storyAt("/handbook/mission/"),
 ].filter((story): story is NonNullable<typeof story> => story !== undefined);

@@ -306,7 +306,9 @@
   margin: 0;
 }
 
-.sand-journey .scene-text a[href="/sand-to-thought/fabricating-a-transistor/"] {
+.sand-journey
+  .scene-text
+  a[href="/library/sand-to-thought/fabricating-a-transistor/"] {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
@@ -326,21 +328,21 @@
 
 .sand-journey
   .scene-text
-  a[href="/sand-to-thought/fabricating-a-transistor/"]::after {
+  a[href="/library/sand-to-thought/fabricating-a-transistor/"]::after {
   content: "→";
   flex-shrink: 0;
 }
 
 .sand-journey
   .scene-text
-  a[href="/sand-to-thought/fabricating-a-transistor/"]:hover {
+  a[href="/library/sand-to-thought/fabricating-a-transistor/"]:hover {
   background: #562c33;
   border-color: #562c33;
 }
 
 .sand-journey
   .scene-text
-  a[href="/sand-to-thought/fabricating-a-transistor/"]:focus-visible {
+  a[href="/library/sand-to-thought/fabricating-a-transistor/"]:focus-visible {
   outline: 2px solid #713b43;
   outline-offset: 4px;
 }

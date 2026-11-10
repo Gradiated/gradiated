@@ -57,7 +57,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description: "Create Gradiated wafer-field artwork from a motif or image.",
     index: false,
   },
-  "/sand-to-thought/library/": {
+  "/library/sand-to-thought/": {
     title: "Sand to Thought",
     description:
       "Explore the semiconductor stack through an illustrated journey from silicon to computers and deeper articles about how chips are made.",
@@ -65,7 +65,17 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/library/": {
     title: "Library",
     description:
-      "Read Gradiated research notes and learn how we work across inference software and hardware.",
+      "The Gradiated magazine: interactive journeys, essays, and films on how machine intelligence gets made, from sand to thought.",
+  },
+  "/design/": {
+    title: "Design system",
+    description:
+      "The Gradiated design system: palette, roles, spacing, layout, type, and components, rendered live from the site's own tokens.",
+    index: false,
+  },
+  "/style/": {
+    title: "Style guide",
+    description: "The Gradiated brand style guide.",
     index: false,
   },
   "/careers/": {
@@ -267,6 +277,17 @@ export const getIndexablePaths = (): string[] => [
     .filter((article) => article.status === "published")
     .map((article) => article.path),
   ...jobs.map(({ slug }) => `/careers/${slug}/`),
+];
+
+/* Every page that has metadata, indexed or not. The prerender writes a
+   static document for each so a noindex page still answers with its
+   own title instead of the 404 page. */
+export const getAllPagePaths = (): string[] => [
+  ...new Set([
+    ...Object.keys(pageMetadata),
+    ...articles.map((article) => article.path),
+    ...jobs.map(({ slug }) => `/careers/${slug}/`),
+  ]),
 ];
 
 export const absoluteUrl = (path: string): string =>

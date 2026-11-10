@@ -8,7 +8,12 @@ vi.mock("../src/articles", () => ({
       [
         ["note", "library", "notes", "/library/example/"],
         ["hardware", "library", "hardware", "/library/hardware-example/"],
-        ["guide", "sand-to-thought", "hardware", "/sand-to-thought/"],
+        [
+          "guide",
+          "sand-to-thought",
+          "hardware",
+          "/library/sand-to-thought/how-to-get-an-answer-out-of-sand/",
+        ],
       ].map(([name, collection, category, path]) => [
         `${name}.mdx`,
         `---
@@ -42,7 +47,11 @@ it("keeps published writing of every subject in Notes", () => {
 
 it("keeps the guide outside Notes and Handbook in their own collection", () => {
   expect(
-    libraryStories.some((story) => story.href === "/sand-to-thought/"),
+    libraryStories.some(
+      (story) =>
+        story.href ===
+        "/library/sand-to-thought/how-to-get-an-answer-out-of-sand/",
+    ),
   ).toBe(false);
   expect(
     libraryStories

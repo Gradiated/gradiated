@@ -71,7 +71,7 @@ class Nebius:
             if not instance or (platform and platform not in instance['platform']):
                 continue
             status = advice.get('status', {})
-            yield (f"{instance['platform']:16} {instance['preset']['name']:22} {advice['spec']['region']:12} "
+            yield (f"{instance['platform']:16} {instance['preset']['name']:22} {advice['spec'].get('fabric') or advice['spec']['region']:15} "
                    f"spot {level(status.get('preemptible')):13} {count(status.get('preemptible')):6} "
                    f"on-demand {level(status.get('on_demand')):13} {count(status.get('on_demand'))}")
 

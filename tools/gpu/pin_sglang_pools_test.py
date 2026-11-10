@@ -21,6 +21,14 @@ class SGLangPins(unittest.TestCase):
         self.models = json.loads((pin.GPU / 'models.json').read_text())
         self.runtimes = json.loads(pin.RUNTIMES.read_text())
         self.pins = json.loads((pin.GPU / 'pins.json').read_text())
+        # Pin from the pre-migration catalogue: the vLLM runtimes under the retired DeepSeek ID.
+        for model_id, pool_name, runtime in [
+                ('z-ai/glm-5.3-flash', 'glm', 'e74e88f23ba155be65fcd8830c7e3c080b5e49951eae7d9d80a77344f2b2c9d6'),
+                ('deepseek/deepseek-v4.1-flash', 'deepseek', '66deaf79bf9a27ab43a6fde9d56a98fe5c38096aba3f0d6818bac13aded05796')]:
+            self.models.pop('deepseek/deepseek-v4.1-flash-1017' if pool_name == 'deepseek' else model_id, None)
+            self.models[model_id] = {'min_slots': 0, 'pools': {pool_name: {
+                'runtime': runtime, 'gpu': 'B300', 'slots': 16, 'max_replicas': 0, 'progress_deadline_seconds': 5400,
+                **({'spread': 'required'} if pool_name == 'glm' else {'gpu_count': 8})}}}
         self.hosts = [host for host in yaml.safe_load_all((pin.GPU / 'hosts.yaml').read_text()) if host]
         self.source = 'a' * 40
         self.releases = {}

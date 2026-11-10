@@ -1,8 +1,11 @@
+import fcntl
 import json
 import hashlib
 from pathlib import Path
 import re
+import shutil
 import subprocess
+import time
 
 MODEL = 'dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4'
 REVISION = '745aac2ff0f10acf961f396df3f9418598aa7327'
@@ -11,7 +14,7 @@ UNCENSORED = 'dealignai/glm-5.3-flash-uncensored'
 MODELS = {
     UNCENSORED: {'model': MODEL, 'revision': REVISION, 'served_model_name': MODEL,
                  'model_config_sha256': '08d31c499953794bcf83669497c69c856160927ce29c7df037b8ae315f4f5bdd',
-                 'moe_runner': 'marlin', 'lora_targets': None},
+                 'moe_runner': 'marlin', 'lora_targets': None, 'hicache': True},
     # NVIDIA's NVFP4 export keeps attention, shared experts and the router in BF16 and
     # quantizes routed experts W4A4. Adapters train on the BF16 base (LORA_BASE_MODEL_REVISION).
     'z-ai/glm-5.3-flash': {'model': 'nvidia/GLM-5.3-Flash-NVFP4', 'revision': '1d00738646cbb0c6d0a9eb403dac5f366f1473a7',
@@ -28,9 +31,15 @@ SMG_VERSION = '1.13.0'
 ACTIVE_REQUESTS = 12
 QUEUED_REQUESTS = 2
 QUEUE_TIMEOUT_SECONDS = 10
+# A replica is limited to 400 GiB RAM; 2 x 48 GB pinned plus ~25 GiB RSS per rank leaves room for weight page cache.
+HICACHE_HOST_GB_PER_RANK = 48
+# Pods have ~1 TB disk: 4 ranks x 100G plus ~180 GB weights fit; the evictor stops writing below min_free_space.
+HICACHE_FILE_CONFIG = {'max_size': '100G', 'min_free_space': '100G'}
+BUNDLE_ROOT = Path(__file__).resolve().parents[1]
 PROFILES = {
     'b300-pcp2': {'gpu_product': 'B300', 'active_requests': ACTIVE_REQUESTS,
-                  'prefill_tokens': 16384, 'dsa_backend': 'trtllm', 'context_parallel': True},
+                  # HiCache also needs the model to opt in; it is unqualified with LoRA.
+                  'prefill_tokens': 16384, 'dsa_backend': 'trtllm', 'context_parallel': True, 'hicache': True},
     # Same Blackwell kernels as B300 with about two thirds of the HBM, so half the active requests.
     'b200-pcp2': {'gpu_product': 'B200', 'active_requests': 6,
                   'prefill_tokens': 16384, 'dsa_backend': 'trtllm', 'context_parallel': True},
@@ -72,6 +81,7 @@ def settings(environment):
     return {'root': root, 'front': front, 'warmup': warmup, 'backend': backend, 'metrics': metrics,
             'profile': profile, **PROFILES[profile], **model.get('profile_overrides', {}),
             'model_id': model_id, 'lora': lora == 'true',
+            'hicache': bool(PROFILES[profile].get('hicache') and model.get('hicache')) and lora != 'true',
             **{key: model[key] for key in ('model', 'revision', 'served_model_name', 'moe_runner')}}
 
 
@@ -114,7 +124,67 @@ def lora_arguments(environment, targets):
     return engine_arguments(settings, targets)
 
 
-def commands(environment):
+
+
+def qualification_identity(config, bundle_root=BUNDLE_ROOT):
+    """What a recorded qualification must match beyond the GPUs, or None outside a verified bundle."""
+    try:
+        digest = (bundle_root / '.bundle-sha256').read_text().strip()
+    except OSError:
+        return None
+    if not re.fullmatch(r'[0-9a-f]{64}', digest):
+        return None
+    # Ports and the bundle path vary between pods on one host and do not change what qualified.
+    placement = {'root', 'front', 'warmup', 'backend', 'metrics'}
+    return {'bundle': digest, 'config': {name: value for name, value in config.items() if name not in placement}}
+
+
+def cache_root(environment):
+    base = Path(environment.get('XDG_CACHE_HOME') or str(Path(environment.get('HOME', '/home/runtime')) / '.cache'))
+    # Bundles that reuse this runtime keep their caches under their own runtime directory name.
+    return base / Path(__file__).resolve().parent.name
+
+
+def hicache_directory(environment, config, bundle_root=BUNDLE_ROOT):
+    identity = qualification_identity(config, bundle_root)
+    if identity is None:
+        return None
+    # File pages carry no dtype or layout, so only one bundle and config may read a directory.
+    digest = hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+    return cache_root(environment) / 'hicache' / digest / '_'.join(environment['NVIDIA_VISIBLE_DEVICES'].split(','))
+
+
+def hold_hicache(directory):
+    """Hold a shared lock on the leaf's sibling lock file for the life of the service."""
+    directory.parent.mkdir(parents=True, exist_ok=True)
+    handle = open(directory.with_name(directory.name + '.lock'), 'a')
+    fcntl.flock(handle, fcntl.LOCK_SH)
+    return handle
+
+
+def prune_hicache(environment, keep, max_age_days=7):
+    cutoff = time.time() - max_age_days * 86400
+    for leaf in (cache_root(environment) / 'hicache').glob('*/*'):
+        if leaf == keep or not leaf.is_dir():
+            continue
+        with open(leaf.with_name(leaf.name + '.lock'), 'a') as lock:
+            try:
+                # A running replica holds its leaf's lock; another start or an evictor may delete files mid-scan.
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                newest = max([leaf.stat().st_mtime, *(f.stat().st_mtime for f in leaf.iterdir())])
+            except OSError:
+                continue
+            if newest < cutoff:
+                shutil.rmtree(leaf, ignore_errors=True)
+
+
+def backend_environment(environment, config):
+    # HiCache needs the prompt-end recurrent state on host and disk to serve a hit (live-tested
+    # together); '0' keeps an inherited value from switching the overlay on without HiCache.
+    return {**environment, 'GRADIATED_MAMBA_PROMPT_END_CHECKPOINT': '1' if config.get('hicache') else '0'}
+
+
+def commands(environment, bundle_root=BUNDLE_ROOT):
     config = settings(environment)
     root = config['root']
     python = str(root / 'python/bin/python3')
@@ -150,6 +220,14 @@ def commands(environment):
     else:
         # GLM pools four logical tokens per key; FlashMLA needs 64 physical slots per page.
         backend += ['--page-size', '256']
+    if config.get('hicache'):
+        backend += ['--enable-hierarchical-cache', '--hicache-size', str(HICACHE_HOST_GB_PER_RANK),
+                    '--hicache-write-policy', 'write_through']
+        directory = hicache_directory(environment, config, bundle_root)
+        # Without a bundle digest no identity separates file pages, so only the host tier runs.
+        if directory is not None:
+            backend += ['--hicache-storage-backend', 'file', '--hicache-storage-backend-extra-config',
+                        json.dumps({'file_storage_path': str(directory), **HICACHE_FILE_CONFIG}, separators=(',', ':'))]
     if config['lora']:
         backend += lora_arguments(environment, model['lora_targets'])
     router = [python, '-m', 'smg.launch_router', '--worker-urls',

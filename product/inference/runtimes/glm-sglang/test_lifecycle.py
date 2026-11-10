@@ -141,6 +141,16 @@ class Lifecycle(unittest.TestCase):
                 service.run({})
         start.assert_not_called()
 
+    def test_backend_starts_with_the_profile_mamba_flag(self):
+        stopped = FakeChild(0)
+        with patch.object(service, 'commands', return_value=({'backend': 1, 'lora': False, 'served_model_name': 'm'}, ['backend'], ['router'])), \
+             patch.object(service, 'detect_profile', side_effect=lambda environment: environment), \
+             patch.object(service, 'validate_hardware'), \
+             patch.object(service.subprocess, 'Popen', return_value=stopped) as start:
+            with self.assertRaisesRegex(RuntimeError, 'exited before router'):
+                service.run({'GRADIATED_MAMBA_PROMPT_END_CHECKPOINT': '1'})
+        self.assertEqual(start.call_args.kwargs['env']['GRADIATED_MAMBA_PROMPT_END_CHECKPOINT'], '0')
+
     def test_warmup_concurrency_bounded_by_front_active_capacity(self):
         self.assertEqual(max(launch.base.CONCURRENCIES), 16)
         supervisor = launch.base.Supervisor(['unused'], max_queued_requests=18)

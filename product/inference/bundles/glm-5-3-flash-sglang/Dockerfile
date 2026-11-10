@@ -62,6 +62,9 @@ RUN --mount=type=cache,id=sglang-lora-cargo-registry,target=/usr/local/cargo/reg
     && uv pip check --python /bundle/python/bin/python3 \
     && cp /tmp/sglang-patches/smg-patches.json /bundle/smg-patches.json \
     && cp /tmp/smg-lora/smg-patches.json /bundle/smg-lora-patches.json
+# HiCache hashes pages with a native extension that otherwise JIT-builds on hosts without OpenSSL headers.
+COPY bundles/glm-5-3-flash-sglang/build-native-hash.py /tmp/sglang-patches/
+RUN PATH=/bundle/python/bin:$PATH /bundle/python/bin/python3 /tmp/sglang-patches/build-native-hash.py
 
 FROM smg-compiler AS package
 COPY bundles/glm-5-3-flash-sglang/jit-cache-requirements.txt /tmp/jit-cache-requirements.txt

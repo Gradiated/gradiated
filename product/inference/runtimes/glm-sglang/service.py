@@ -7,7 +7,7 @@ import threading
 import time
 import urllib.request
 
-from config import commands, detect_profile, validate_hardware
+from config import backend_environment, commands, detect_profile, hicache_directory, hold_hicache, prune_hicache, validate_hardware
 
 
 def backend_ready(port, model):
@@ -36,6 +36,10 @@ def run(environment=os.environ):
     environment = detect_profile(environment)
     config, backend, router = commands(environment)
     validate_hardware(environment)
+    directory = hicache_directory(environment, config) if config.get('hicache') else None
+    hicache_lock = hold_hicache(directory) if directory else None
+    if directory:
+        prune_hicache(environment, directory)
     stopping = threading.Event()
     for sig in [signal.SIGTERM, signal.SIGINT]:
         signal.signal(sig, lambda *_: stopping.set())
@@ -51,7 +55,7 @@ def run(environment=os.environ):
                 environment, config['model'], config['revision'], config.get('tp', 2), config['backend'],
                 # Not started yet counts as alive: the watcher may run before the engine is published.
                 lambda: not children or children[0].poll() is None)
-        children.append(subprocess.Popen(backend, env=engine_environment))
+        children.append(subprocess.Popen(backend, env=backend_environment(engine_environment, config)))
         deadline = time.monotonic() + int(environment.get('RUNTIME_STARTUP_TIMEOUT_SECONDS', '3600'))
         while not stopping.is_set():
             if children[0].poll() is not None:

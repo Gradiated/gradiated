@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 import urllib.request
 
-from config import ACTIVE_REQUESTS, QUEUED_REQUESTS, QUEUE_TIMEOUT_SECONDS, detect_profile, settings
+from config import ACTIVE_REQUESTS, QUEUED_REQUESTS, QUEUE_TIMEOUT_SECONDS, cache_root, detect_profile, qualification_identity, settings
 
 here = Path(__file__).resolve().parent
 root = here.parent
@@ -119,23 +119,8 @@ def handler(supervisor, config):
     return Handler
 
 
-def qualification_identity(config, bundle_root=root):
-    """What a recorded qualification must match beyond the GPUs, or None outside a verified bundle."""
-    try:
-        digest = (bundle_root / '.bundle-sha256').read_text().strip()
-    except OSError:
-        return None
-    if not re.fullmatch(r'[0-9a-f]{64}', digest):
-        return None
-    # Ports and the bundle path vary between pods on one host and do not change what qualified.
-    placement = {'root', 'front', 'warmup', 'backend', 'metrics'}
-    return {'bundle': digest, 'config': {name: value for name, value in config.items() if name not in placement}}
-
-
 def qualification_records(environment):
-    cache = environment.get('XDG_CACHE_HOME') or str(Path(environment.get('HOME', '/home/runtime')) / '.cache')
-    # Bundles that reuse this supervisor keep their records under their own runtime directory name.
-    return Path(cache) / here.name / 'qualification'
+    return cache_root(environment) / 'qualification'
 
 
 def main(environment=os.environ):

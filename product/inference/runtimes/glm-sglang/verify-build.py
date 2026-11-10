@@ -59,9 +59,18 @@ def verify(root):
     for path, digest in final.items():
         if hashlib.sha256((site / path).read_bytes()).hexdigest() != digest:
             raise RuntimeError('Qualified source overlay changed: ' + path)
+    from sglang.srt.mem_cache.cpp_utils import native_hash
+    from sglang.srt.mem_cache.utils import get_hash_str
+    if Path(native_hash._load_native_hash_module().__file__) != Path(native_hash.__file__).parent / 'hicache_hash_cpp.so':
+        raise RuntimeError('Prebuilt HiCache hash extension is not used')
+    if get_hash_str([1, 2, 3, 4]) != 'cf97adeedb59e05bfd73a2b4c2a8885708c4f4f70c84c64b27120e72ab733b72':
+        raise RuntimeError('Prebuilt HiCache hash extension changed page keys')
     env = {'GRADIATED_RUNTIME_ROOT': str(root), 'NVIDIA_VISIBLE_DEVICES': 'GPU-cpu-check-a,GPU-cpu-check-b',
            'RUNTIME_PORT': '28080', 'WARMUP_PORT': '28083'}
-    _, backend, router = commands(env)
+    bundle = Path(temporary.name) / 'bundle'
+    bundle.mkdir()
+    (bundle / '.bundle-sha256').write_text('0' * 64 + '\n')
+    _, backend, router = commands(env, bundle)
     parser = argparse.ArgumentParser()
     ServerArgs.add_cli_args(parser)
     native = parser.parse_args(backend[3:])
@@ -70,6 +79,11 @@ def verify(root):
     assert native.mem_fraction_static == 0.85
     assert native.max_queued_requests is None and native.speculative_num_steps == 2
     assert native.speculative_num_draft_tokens == 3 and native.prefill_decode_interval == 64
+    assert native.enable_hierarchical_cache and native.hicache_size == 48 and native.hicache_ratio is None
+    assert native.hicache_write_policy == 'write_through' and native.hicache_storage_backend == 'file'
+    assert native.hicache_mem_layout == 'page_first' and native.hicache_io_backend == 'kernel'
+    assert native.hicache_host_memory_mode == 'cache' and native.hicache_storage_key_scheme == 'rank-suffix'
+    assert json.loads(native.hicache_storage_backend_extra_config)['max_size'] == '100G'
     front = parse_router_args(router[3:])
     assert front.max_concurrent_requests == 12 and front.queue_size == 2
     assert front.queue_timeout_secs == 10 and front.rate_limit_tokens_per_second == 0
@@ -94,6 +108,7 @@ def verify(root):
     assert b200.max_running_requests == b200.cuda_graph_max_bs_decode == 6
     assert b200.mem_fraction_static == 0.85
     assert parse_router_args(b200_router[3:]).max_concurrent_requests == 6
+    assert not hopper.enable_hierarchical_cache and not b200.enable_hierarchical_cache
     assert compileall.compile_dir(site / 'sglang', quiet=1)
     assert compileall.compile_dir(root / 'glm-sglang', quiet=1)
     temporary.cleanup()

@@ -8,9 +8,60 @@ hash-locked Linux x86_64 dependencies. It serves
 The profile uses TP2/PCP2 with interleaved context parallelism, Marlin W4A16
 experts, two MTP draft steps, FP8 KV, a 16,384-token prefill budget,
 shortest-prefill-first scheduling, and 64 decode rounds between prefill steps.
-Prefill CUDA graphs are disabled; decode graphs remain enabled. Prefix caching
-uses the native pinned SGLang configuration. Actual resolved pool geometry must
-be recorded during GPU qualification.
+Prefill CUDA graphs are disabled; decode graphs remain enabled. Actual resolved
+pool geometry must be recorded during GPU qualification.
+
+## B300 hierarchical prefix cache
+
+The `b300-pcp2` profile serving the uncensored model (`'hicache': True` on both
+in `config.py`; delete either to turn the feature off; LoRA serving never uses
+it) keeps evicted prefix KV and recurrent state in three tiers:
+
+- GPU: the native KV and Mamba pools.
+- Host RAM: `--hicache-size 48` pins 48 GB per rank, split between KV and
+  Mamba state, inside the 400 GiB per-replica memory limit (each rank also uses
+  ~25 GiB RSS; the rest is weight page cache). The host KV pool is smaller than
+  the device pool, so SGLang warns that L2 is less effective; disk is the
+  capacity tier.
+- Local disk: SGLang's `file` backend, written through from host RAM. Each rank
+  evicts its own files LRU at 100 GB (`max_size`) and stops writing when less
+  than 100 GB of the filesystem is free (`min_free_space`). Two replicas (four
+  ranks) plus ~180 GB of weights fit on a pod's ~1 TB disk.
+
+Files live in
+`$XDG_CACHE_HOME/<runtime directory>/hicache/<identity>/<GPU UUIDs>/`. `<identity>` is
+the SHA-256 of the qualification identity (bundle digest and profile settings
+without ports or root), because stored pages do not record their dtype or
+layout. The GPU UUID pair keeps two replicas on one host apart. A process
+restart or replacement pod on the same GPUs, bundle and settings reuses the
+directory, so the disk tier survives restarts; the host tier does not. At
+startup the service holds a shared lock on `<leaf>.lock` and deletes other
+unlocked leaves with no file change for seven days. Without
+a bundle digest the runtime keeps only the GPU and host tiers. The default
+`rank-suffix` key scheme is used because `unified` rejects speculative
+decoding. Native `sglang:*` HiCache series are exported unchanged through the
+warmup `/metrics` endpoint. This configuration must pass a live B300 test before
+a bundle carrying it is pinned.
+
+A prefix is reusable from host or disk only if a node at or below its end
+holds a recurrent state there. After prefill, SGLang already places the state
+at the last checkpoint-aligned prompt position on a tree node; on that node
+and on the request-end node, a guarded overlay of `unified_radix_cache.py`
+copies the state to host after any in-flight KV copy of the node acknowledges,
+then writes the node to disk. Otherwise a KV copy queued before the state was
+attached can leave host and disk with KV but no state. The overlay is on
+whenever HiCache is (SGLang starts with `GRADIATED_MAMBA_PROMPT_END_CHECKPOINT=1`),
+since HiCache serves no host or disk hit without it; it is forced off otherwise. The same overlays carry upstream
+[#48421](https://github.com/sgl-project/sglang/pull/48421) (no partial disk
+prefetch for hybrid models) and
+[#47680](https://github.com/sgl-project/sglang/pull/47680) (skip a mid-request
+state donation instead of crashing when every state slot is locked). Upstream
+lets only TP rank 0 of an MLA model write disk pages, but under attention CP
+each CP rank keys its own slice of every page, so with TP2/CP2 rank 1's slice
+was never written and every disk lookup missed; an overlay of
+`hicache_storage.py` makes the first TP rank of each CP group a writer. The
+bundle builds SGLang's HiCache page-hash extension with OpenSSL headers at
+build time; on AVX2 hosts SGLang loads that build instead of compiling one.
 
 ## H200 TP2 profile
 

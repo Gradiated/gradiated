@@ -93,9 +93,9 @@ their version remains unavailable; preparing one does not make it production.
 
 ## Cache ownership
 
-| Tier            | Owner                     | Behavior                                      |
-| --------------- | ------------------------- | --------------------------------------------- |
-| S3 archive      | Training artifact storage | Durable source                                |
+| Tier            | Owner                     | Behavior                                        |
+| --------------- | ------------------------- | ----------------------------------------------- |
+| S3 archive      | Training artifact storage | Durable source                                  |
 | Allocation disk | Loader                    | Verified paths retained once returned to SGLang |
 | CPU tensors     | SGLang                    | Native LRU, bounded by `--max-loaded-loras`     |
 | GPU slots       | SGLang                    | Native LRU, bounded by `--max-loras-per-batch`  |

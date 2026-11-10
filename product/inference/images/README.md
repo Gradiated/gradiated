@@ -44,7 +44,7 @@ The image keeps copies of the host bundle's `host_bundle.py` and `host_state.py`
 to verify the seed bundle, so changing either rebuilds the base image.
 
 Model runtimes are not images: they are verified bundle archives built from
-[`../bundles`](../bundles), and every chat model serves on SGLang. On RunPod,
+[`../bundles`](../bundles); every chat model bundle builds on SGLang. On RunPod,
 the host agent executes those archives rather than starting nested Docker
 containers. Kubernetes schedules resources and Argo Rollouts manages
 replacement. The adapter supports trusted configured runtimes, not arbitrary

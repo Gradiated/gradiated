@@ -63,3 +63,25 @@ Data decisions (mix `v1`):
 `perplexity-ai/pplx-decider-v1.2` at the pinned revision, joint requests, reference path, 8x B200: public index
 68.04 on the 0.3 panel (HLE unavailable, scored 0 as on the board), against the model card's 68.09; 67.22 on the
 11,025-request dev sample (`sample-ids.json`, 250 case groups per benchmark).
+
+## Result: gd-v1
+
+Full fine-tune on mix `v1` (617k rows, 341M tokens, one epoch, 1,652 steps of 262k padded tokens, lr 3e-6 cosine to
+10%, readout lr 1e-5, CE + 0.5 Brier) on 8x B200, about 5 hours of training. The final export is then interpolated
+with the base (`gdecide.merge`); 0.5 x fine-tuned + 0.5 x base is the candidate.
+
+| Checkpoint | Dev sample | Full panel |
+|---|---|---|
+| pplx-decider-v1.2 (base) | 67.22 | 68.04 |
+| gd-v1 step 400, unmerged | 66.56 | |
+| gd-v1 final, unmerged | 67.34 | |
+| gd-v1 final, 0.7 / 0.5 / 0.4 / 0.3 with base | 67.77 / 68.00 / 68.08 / 67.97 | 68.91 (0.5) |
+
+The 0.5 merge gains on HoVer, ChessBench, CRUXEval, BANKING77, New Yorker, ESCI, When2Call, PhishNChips and GPQA
+and loses up to 2.8 skill points on ACOS, cfcolor, RAGTruth and Home appliances, benchmarks with no licence-clean
+training data; no area falls by more than 0.2 points. Unmerged, the fine-tune drifts on those benchmarks, which is why
+the merge helps. The public index is the only score measured here; the board's private same-skill and new-domain
+tests are not available to us.
+
+Artifacts are in `s3://gradiated-dev-training-873716897517/gradiated-decide/`: `runs/merges/gd-v1-s1652-a0.5`
+(loadable checkpoint), `runs/gd-v1/` (exports, last training state, log), `runs/evals/` (scores and results).

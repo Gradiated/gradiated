@@ -2,11 +2,11 @@
 
 We'd like to produce model announcement content. To decide what our target is I have 3 main questions.
 
-1. What happened for the last 8 important model drops? Where can we fit into the timeline?
+1. When should we post?
 2. What's our plan to stay informed?
 3. What content would we like to include in our model announcement template?
 
-## 1. What happened for the last 8 important model drops?
+## 1. When should we post?
 
 ### Thoughts
 

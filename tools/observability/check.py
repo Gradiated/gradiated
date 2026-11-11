@@ -1116,7 +1116,7 @@ def main():
     scenario('AWS root missing telemetry', [], root_missing, [root_alert, root_missing], eval_time='35m')
     scenario('AWS root telemetry recovered', [root_usage('_x64 0x20')], None, [root_alert, root_missing], eval_time='35m')
 
-    for alert, metric_name, severity in [('AwsUrgentSecurityFinding', 'urgent_findings', 'critical'), ('AwsSecurityFindingNeedsReview', 'review_findings', 'warning')]:
+    for alert, metric_name, severity in [('AwsUrgentSecurityFinding', 'urgent_findings', 'warning'), ('AwsSecurityFindingNeedsReview', 'review_findings', 'warning')]:
         assert alerts[alert]['labels']['severity'] == severity
         def finding_series(values, namespace='observability'):
             return {'series': f'gradiated_security_{metric_name}_maximum{{namespace="{namespace}",job="cloudwatch-exporter",service="cloudwatch-exporter"}}', 'values': values}

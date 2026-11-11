@@ -3,7 +3,7 @@ import re
 
 
 def check_critical_persistence(rules):
-    immediate = {'AwsRootAccountUsed', 'AwsUrgentSecurityFinding',
+    immediate = {'AwsRootAccountUsed',
                  'FalcoCriticalEvents', 'GatewayFinalizationFailure'}
     for rule in rules:
         if rule.get('labels', {}).get('severity') != 'critical' or rule.get('alert') in immediate:

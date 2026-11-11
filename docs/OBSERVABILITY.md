@@ -463,9 +463,9 @@ additional root-use coverage, not a replacement for SNS email confirmation or a
 separate notification path for every GuardDuty/Inspector finding. It still depends
 on the EKS monitoring stack and its existing incident.io integration.
 
-High-severity GuardDuty finding events (7+) page immediately. Inspector High and
-Critical static vulnerability events use In-hours review, including findings for
-retained images that are not deployed. This does not disable Inspector scanning,
+High-severity GuardDuty finding events (7+) use In-hours review without paging
+on-call. Inspector High and Critical static vulnerability events also use
+In-hours review, including findings for retained images that are not deployed. This does not disable Inspector scanning,
 its evidence stream, or the running-image vulnerability remediation-SLA alerts.
 
 ### Exporting SOC 2 evidence
@@ -567,7 +567,7 @@ they do not page the responder. The independent Watchdog heartbeat remains Urgen
 Root use and CloudTrail changes also retain their independent urgent CloudWatch route.
 
 Non-security availability and error conditions must persist at least one minute.
-The explicit immediate exceptions are root-account activity, urgent AWS findings,
+The explicit immediate paging exceptions are root-account activity,
 critical Falco detections and generation-finalization failure: these events can
 require containment or billing-data recovery even after the triggering operation ends.
 A persistence timer is not an event-count filter; settlement backpressure therefore
@@ -612,7 +612,7 @@ when adding a new critical rule or upgrading the monitoring charts.
 | `ApiSevereErrors` | critical | 1m | At least half of requests/generations fail, with at least five failures, sustained one minute. |
 | `ApiTelemetryMissing` | warning | 5m | Missing telemetry alone is diagnostic; independent public availability, deployment loss and external heartbeat retain pages. |
 | `AwsRootAccountUsed` | critical | 0m | Immediate security event; required on-call response. |
-| `AwsUrgentSecurityFinding` | critical | 0m | Immediate high-severity GuardDuty finding. |
+| `AwsUrgentSecurityFinding` | warning | 0m | High-severity GuardDuty finding; In-hours review without paging. |
 | `CacheEvictions` | critical | 1m | Valkey contains unsettled charges and leases; eviction risks billing-data loss. |
 | `ConsoleProbeMissing` | warning | 5m | Missing telemetry alone is diagnostic; independent public availability, deployment loss and external heartbeat retain pages. |
 | `ConsoleUnavailable` | critical | 2m | External HTTPS request path continuously fails for two minutes. |

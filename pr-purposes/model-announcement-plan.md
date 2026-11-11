@@ -11,7 +11,7 @@ We'd like to produce model announcement content. To decide what our target is I 
 I took a look at the last 8 model drops, 
 (link in the PR description)
 
-My thouhgts:
+My thoughts:
 
 - Model announcements often happen in advance of when the weights are published. 
 - Initial announcements often don't provide an expected weight drop date and say something like "within the month".
@@ -45,17 +45,17 @@ The lab X accounts are also useful to follow. We could go this route instead but
 I'd like our announcements to be an organized TLDR style summary that positions the model in the context of the broader open-weight space. We focus on what the important and practical implications of the model release are. 
 
 - How long since the last model release from this lab or model family?
-- What differentiates it from it's model predecessors (is it bigger, smaller, specialized)
+- What differentiates it from its model predecessors (is it bigger, smaller, specialized)
 - What kinds of work or industries might it be relevant to (who should pay attention)
-- Noteworthy details, perhaps direct exerpt quotes from the lab blog announcement.
+- Noteworthy details, perhaps direct excerpt quotes from the lab blog announcement.
 
 Then handy things like 
 - Relevant licensing details or updates. 
-    - Can you use it commericially
+    - Can you use it commercially
     - Revenue caps
     - 
-- Conveninet link outs (formal model announcment blog, weights live announcement blog, hugging face, etc.)
+- Convenient link outs (formal model announcement blog, weights live announcement blog, hugging face, etc.)
 - Relevant benchmarks?
     - I wonder if we eventually we could have some kind of Gradiated benchmark?
-    - Aidan suggested this, inspired by [Fireships drawing a 3D horse metric](https://youtu.be/1FurWDiK9A4?t=150)
+    - Aidan suggested this, inspired by [Fireship's drawing a 3D horse metric](https://youtu.be/1FurWDiK9A4?t=150)
     - I wonder if ours could be some kind of cost or tokens per Joule metric.

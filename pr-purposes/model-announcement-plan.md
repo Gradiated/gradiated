@@ -42,9 +42,9 @@ The lab X accounts are also useful to follow. We could go this route instead but
 
 ## 3. What content would we like to include in our model announcement template?
 
-I'd like our announcemnts to be an organized TLDR style summary that positions the model in context of the broader open-weight space. We focus on what the important and practical implications of the model release are. 
+I'd like our announcemnts to be an organized TLDR style summary that positions the model in the context of the broader open-weight space. We focus on what the important and practical implications of the model release are. 
 
-- How long since the last model relase from this lab or model family?
+- How long since the last model release from this lab or model family?
 - What differentiates it from it's model predecessors (is it bigger, smaller, specialized)
 - What kinds of work or industries might it be relevant to (who should pay attention)
 - Noteworthy details, perhaps direct exerpt quotes from the lab blog announcement.

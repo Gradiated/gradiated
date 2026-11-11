@@ -1,13 +1,14 @@
 """Mix training sources, augment, tokenize once and write shards for ``gdecide.train_full``.
 
-    python -m gdecide.prepare --checkpoint CKPT --mix mix.json --out DATA_DIR [--workers 32]
+    python -m gdecide.prepare --checkpoint CKPT --mix mix.json --out DATA_DIR [--workers 32] [--family gemma]
 
 ``mix.json``: {"seed": int, "dev_fraction": 0.01, "max_length": 8192,
                "sources": [{"glob": "data/hub/*.jsonl.gz", "max_rows": 100000, "weight": 1.0}, ...]}
 Rows come from the hub and train-split builders (state, questions, expected, source). Each source is
 sampled deterministically (hash of the row id) down to ``max_rows``. Choice questions have their options
 permuted with probability ``shuffle`` (keys keep their descriptions, so the target is unchanged); this removes
-position shortcuts. A ``dev_fraction`` of every source is held out for per-source dev loss. Output:
+position shortcuts. ``--family gemma`` encodes for KnowLine checkpoints instead (``gdecide.prepare_knowline``: one
+example per question, KnowLine's own prompts). A ``dev_fraction`` of every source is held out for per-source dev loss. Output:
 ``train-<k>.pt`` / ``dev.pt`` lists of {"ids", "markers", "counts", "targets", "source", "weight"} and a manifest.
 """
 
@@ -102,6 +103,7 @@ def main() -> None:
     parser.add_argument("--out", required=True)
     parser.add_argument("--workers", type=int, default=32)
     parser.add_argument("--shard-rows", type=int, default=50000)
+    parser.add_argument("--family", choices=("qwen", "gemma"), default="qwen")
     args = parser.parse_args()
     import torch
 
@@ -133,13 +135,18 @@ def main() -> None:
         print(json.dumps(manifest["sources"][-1]), flush=True)
 
     dropped: dict[str, int] = {}
-    with ProcessPoolExecutor(args.workers, initializer=init, initargs=(args.checkpoint,)) as pool:
+    if args.family == "gemma":
+        from gdecide.prepare_knowline import encode as encode_job, init as init_worker
+    else:
+        encode_job, init_worker = encode, init
+    manifest["family"] = args.family
+    with ProcessPoolExecutor(args.workers, initializer=init_worker, initargs=(args.checkpoint,)) as pool:
         dev_rows = []
-        for rows, d in pool.map(encode, dev_jobs):
+        for rows, d in pool.map(encode_job, dev_jobs):
             dev_rows += [tensorize(r) for r in rows]
         torch.save(dev_rows, out / "dev.pt")
         train_rows = []
-        for rows, d in pool.map(encode, train_jobs, chunksize=4):
+        for rows, d in pool.map(encode_job, train_jobs, chunksize=4):
             train_rows += [tensorize(r) for r in rows]
             for k, v in d.items():
                 dropped[k] = dropped.get(k, 0) + v

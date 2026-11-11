@@ -31,6 +31,18 @@ not Decision Index benchmarks, and no index area may fall by more than one point
 4. **Evaluation.** `gdecide.evaluate` (batched, one process per GPU, kit result format) and `gdecide.score` (the
    kit's scorer, optionally on a fixed sample, with paired deltas against another run).
 
+## KnowLine and ensembles
+
+`gdecide.evaluate --backend knowline` runs `PelaAI/KnowLine-31B-Gen1.5` (Gemma-4-31B, Apache-2.0, pinned revision
+`8e56aa1b`) with the prompts of its own release front end (`knowline_server.py` / `knowline_layout.py` from the model
+repo: read twice up to 3,000 tokens, the question header for longer requests, label-token softmax, score questions at
+`temperatures.json`), batched on one GPU per rank in transformers instead of one SGLang prefill per question.
+`gdecide.ensemble` averages the per-option probabilities of several runs (REAX 1.3's 50/50 rule by default, `--mode
+log` for log-linear pooling; rows a run did not answer come from the others) into a run directory that
+`gdecide.score` scores as usual. `vm/run-ensemble-eval.sh` downloads KnowLine, evaluates it and scores its ensembles
+with a Gradiated Decide run and with the base. `--family gemma` in `gdecide.prepare` and `gdecide.train_full` prepares
+data with KnowLine's prompts and fine-tunes KnowLine with its label readout (not yet run on GPUs).
+
 ## Spot VMs
 
 Training runs on Nebius spot VMs from `tools/dev-training/dev_training.py`. `vm/bootstrap.sh` builds the

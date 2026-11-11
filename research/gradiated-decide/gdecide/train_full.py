@@ -13,6 +13,14 @@ Spot-safe: ``state-<step>/`` (sharded model and optimizer, torch.distributed.che
 (the base checkpoint's files with new weights and readout) written every ``--export-every`` steps and at the end.
 The launcher syncs ``RUN_DIR`` to S3; this process only writes locally and marks each directory complete with
 a ``done`` file once every rank has finished writing it.
+
+``--family gemma`` trains a KnowLine (Gemma 4) checkpoint on data from ``gdecide.prepare --family gemma`` (one causal
+prompt per question). The readout is KnowLine's: the rows of the tied output embedding for the option labels (frozen
+with the embeddings, as a buffer), then the checkpoint's final-logit soft-cap, at the last prompt token. Attention is
+Gemma's own causal / sliding-window masking; batches are right-padded, so no mask or position hook is needed.
+Trainable: every language-model layer and the final norm (which carries part of the folded readout temperature);
+the embeddings, vision tower and vision projection stay frozen. Exports keep the checkpoint's key names and its
+non-weight files (KnowLine's front end and temperatures), so they load in ``gdecide.evaluate --backend knowline``.
 """
 
 from __future__ import annotations
@@ -47,7 +55,8 @@ def batches(lengths: list[int], budget: int, seed: int, epoch: int) -> list[list
     return out
 
 
-def collate(examples, pad_id):
+def collate(examples, pad_id, right=False):
+    """Left-padded (Decider) or, with ``right``, right-padded (causal Gemma) batch."""
     import torch
 
     width = max(int(e["ids"].numel()) for e in examples)
@@ -56,13 +65,14 @@ def collate(examples, pad_id):
     rows, cols, counts, targets, weights = [], [], [], [], []
     for b, e in enumerate(examples):
         n = int(e["ids"].numel())
-        ids[b, width - n :] = e["ids"].long()
-        mask[b, width - n :] = 1
+        start = 0 if right else width - n
+        ids[b, start : start + n] = e["ids"].long()
+        mask[b, start : start + n] = 1
         for j, (count, target) in enumerate(zip(e["counts"], e["targets"], strict=True)):
             if target is None:
                 continue
             rows.append(b)
-            cols.append(int(e["markers"][j]) + width - n)
+            cols.append(int(e["markers"][j]) + start)
             counts.append(int(count))
             targets.append(target)
             weights.append(float(e["weight"]))
@@ -95,6 +105,41 @@ def complete(path: Path) -> bool:
     return (path / "done").exists()
 
 
+def gemma_label_logits(hidden, label_weight, softcap):
+    """KnowLine's readout at the selected positions: label rows of the tied output embedding in fp32, then the cap."""
+    import torch
+
+    z = hidden.float() @ label_weight.T
+    return z if softcap is None else torch.tanh(z / softcap) * softcap
+
+
+def build_gemma(checkpoint: Path, dtype, device_index: int, label_ids: list[int]):
+    """Gemma 4 backbone (no LM head) plus KnowLine's frozen label readout, as a module with the Decider signature."""
+    import torch
+    from transformers.models.gemma4.modeling_gemma4 import Gemma4Model
+
+    class GemmaDecider(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.backbone = Gemma4Model.from_pretrained(str(checkpoint), dtype=dtype, attn_implementation="sdpa", device_map={"": device_index})
+            weight = self.backbone.language_model.embed_tokens.weight
+            index = torch.tensor(label_ids, device=weight.device)
+            self.register_buffer("label_weight", weight.detach()[index].float().clone(), persistent=False)
+            self.softcap = self.backbone.config.get_text_config().final_logit_softcapping
+
+        def forward(self, ids, mask, rows, cols):
+            hidden = self.backbone.language_model(input_ids=ids, use_cache=False).last_hidden_state
+            return gemma_label_logits(hidden[rows, cols], self.label_weight, self.softcap)
+
+    return GemmaDecider()
+
+
+def freeze_gemma(backbone) -> None:
+    backbone.requires_grad_(False)
+    backbone.language_model.layers.requires_grad_(True)
+    backbone.language_model.norm.requires_grad_(True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint", required=True)
@@ -115,7 +160,9 @@ def main() -> None:
     parser.add_argument("--dev-every", type=int, default=200)
     parser.add_argument("--seed", type=int, default=20261110)
     parser.add_argument("--max-steps", type=int, default=0)
+    parser.add_argument("--family", choices=("qwen", "gemma"), default="qwen", help="qwen: Decider checkpoints; gemma: KnowLine")
     args = parser.parse_args()
+    gemma = args.family == "gemma"
 
     import torch
     import torch.distributed as dist
@@ -123,10 +170,16 @@ def main() -> None:
     from safetensors.torch import load_file, save_file
     from torch.distributed.checkpoint.state_dict import StateDictOptions, get_model_state_dict, get_optimizer_state_dict, set_optimizer_state_dict, set_model_state_dict
     from torch.distributed.fsdp import MixedPrecisionPolicy, fully_shard
-    from transformers.models.qwen3_5.modeling_qwen3_5 import Qwen3_5Model
+    if gemma:
+        from gdecide.backends.knowline import Renderer
 
-    from pplx_decider.model import enable_noncausal_full_attention
-    from pplx_decider.protocol import MAX_OPTIONS
+        label_ids = Renderer(str(args.checkpoint)).label_ids
+        MAX_OPTIONS = len(label_ids)
+    else:
+        from transformers.models.qwen3_5.modeling_qwen3_5 import Qwen3_5Model
+
+        from pplx_decider.model import enable_noncausal_full_attention
+        from pplx_decider.protocol import MAX_OPTIONS
 
     dist.init_process_group("nccl")
     rank, world = dist.get_rank(), dist.get_world_size()
@@ -160,24 +213,40 @@ def main() -> None:
             hidden = self.backbone(input_ids=ids, attention_mask=mask, use_cache=False).last_hidden_state
             return self.readout(hidden[rows, cols])
 
-    model = Model()
+    model = build_gemma(checkpoint, torch.float32, local, label_ids) if gemma else Model()
     text = model.backbone.language_model
-    enable_noncausal_full_attention(text)
-    text.embed_tokens.requires_grad_(False)
-    model.backbone.visual.requires_grad_(False)
+    if gemma:
+        freeze_gemma(model.backbone)
+    else:
+        enable_noncausal_full_attention(text)
+        text.embed_tokens.requires_grad_(False)
+        model.backbone.visual.requires_grad_(False)
     model.backbone.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
     model.backbone.config.use_cache = False
     policy = MixedPrecisionPolicy(param_dtype=torch.bfloat16, reduce_dtype=torch.float32)
     for layer in text.layers:
         fully_shard(layer, mp_policy=policy)
-    fully_shard(model.backbone.visual, mp_policy=policy)
+    for frozen_part in ([model.backbone.vision_tower, model.backbone.embed_vision] if gemma else [model.backbone.visual]):
+        if frozen_part is not None:
+            fully_shard(frozen_part, mp_policy=policy)
     fully_shard(text.embed_tokens, mp_policy=policy)
     fully_shard(model, mp_policy=policy)
     torch.cuda.empty_cache()
     model.train()
 
     teacher = None
-    if args.anchor > 0:
+    if args.anchor > 0 and gemma:
+        teacher = build_gemma(checkpoint, torch.bfloat16, local, label_ids)
+        teacher.requires_grad_(False)
+        teacher.backbone.config.use_cache = False
+        frozen = MixedPrecisionPolicy(param_dtype=torch.bfloat16, reduce_dtype=torch.bfloat16)
+        for layer in teacher.backbone.language_model.layers:
+            fully_shard(layer, mp_policy=frozen, reshard_after_forward=True)
+        fully_shard(teacher, mp_policy=frozen)
+        teacher.eval()
+        teacher_readout = torch.nn.Identity()
+        torch.cuda.empty_cache()
+    elif args.anchor > 0:
 
         class Teacher(torch.nn.Module):
             def __init__(self):
@@ -202,8 +271,9 @@ def main() -> None:
         torch.cuda.empty_cache()
 
     body = [p for n, p in model.named_parameters() if p.requires_grad and not n.startswith("readout.")]
-    head = list(model.readout.parameters())
-    optimizer = torch.optim.AdamW([{"params": body, "lr": args.lr}, {"params": head, "lr": args.readout_lr}], betas=(0.9, 0.95), eps=1e-8, weight_decay=args.weight_decay, foreach=True)
+    head = [] if gemma else list(model.readout.parameters())
+    groups = [{"params": body, "lr": args.lr}] + ([{"params": head, "lr": args.readout_lr}] if head else [])
+    optimizer = torch.optim.AdamW(groups, betas=(0.9, 0.95), eps=1e-8, weight_decay=args.weight_decay, foreach=True)
     log(event="model", trainable=sum(p.numel() for p in body + head), memory_gib=round(torch.cuda.memory_allocated() / 2**30, 1))
 
     shards = sorted(Path(args.data).glob("train-*.pt"))
@@ -270,8 +340,14 @@ def main() -> None:
             for f in checkpoint.iterdir():
                 if f.is_file() and not f.name.startswith("model-") and f.name not in ("model.safetensors.index.json", "readout.safetensors"):
                     shutil.copy2(f, path / f.name)
-            weights = {k.removeprefix("backbone."): v.to(torch.bfloat16).contiguous() for k, v in full.items() if k.startswith("backbone.")}
-            save_file({"weight": full["readout.weight"].to(torch.bfloat16).contiguous()}, str(path / "readout.safetensors"))
+            if gemma:
+                expected = set(json.loads((checkpoint / "model.safetensors.index.json").read_text())["weight_map"])
+                weights = {"model." + k.removeprefix("backbone."): v.to(torch.bfloat16).contiguous() for k, v in full.items() if k.startswith("backbone.")}
+                if set(weights) != expected:
+                    raise RuntimeError(f"export keys differ from the checkpoint: missing {sorted(expected - set(weights))[:5]}, extra {sorted(set(weights) - expected)[:5]}")
+            else:
+                weights = {k.removeprefix("backbone."): v.to(torch.bfloat16).contiguous() for k, v in full.items() if k.startswith("backbone.")}
+                save_file({"weight": full["readout.weight"].to(torch.bfloat16).contiguous()}, str(path / "readout.safetensors"))
             index, shard, size, files = {}, {}, 0, []
 
             def flush():
@@ -309,7 +385,7 @@ def main() -> None:
             for k in range(int(count.item())):
                 real = k < len(groups)
                 items = [dev[i] for i in groups[k]] if real else [dev[0]]
-                ids, mask, rows, cols, counts, targets, weights = collate(items, pad_id)
+                ids, mask, rows, cols, counts, targets, weights = collate(items, pad_id, right=gemma)
                 logits = model(ids.to(device), mask.to(device), torch.tensor(rows, device=device), torch.tensor(cols, device=device))
                 if not real:
                     continue
@@ -349,7 +425,7 @@ def main() -> None:
             optimizer.zero_grad(set_to_none=True)
             sums = torch.zeros(5, device=device, dtype=torch.float64)
             for micro in range(args.accumulate):
-                ids, mask, rows, cols, counts, targets, weights = collate([examples[i] for i in plan[position + micro]], pad_id)
+                ids, mask, rows, cols, counts, targets, weights = collate([examples[i] for i in plan[position + micro]], pad_id, right=gemma)
                 tokens += int(mask.sum())
                 ids, mask, rows, cols = ids.to(device, non_blocking=True), mask.to(device, non_blocking=True), torch.tensor(rows, device=device), torch.tensor(cols, device=device)
                 anchor = None

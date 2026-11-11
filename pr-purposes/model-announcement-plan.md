@@ -8,7 +8,7 @@ We'd like to produce model announcement content. To decide what our target is I 
 
 ## 1. What happened for the last 8 important model drops?
 
-[The last 8 model drops](recent-model-drops.html)
+[The last 8 model drops](recent-model-drops.png)
 
 ### Thoughts
 

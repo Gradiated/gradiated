@@ -19,7 +19,7 @@ if [ ! -x venv/bin/python ]; then
   VIRTUAL_ENV=$ROOT/venv uv pip install -q -e "$ROOT/src/di" -e "$ROOT/src/pplx" -e "$ROOT/src/gradiated-decide"
 fi
 # Training env: the same packages plus causal-conv1d (Triton and the build need the Python headers).
-dpkg -s python3.12-dev >/dev/null 2>&1 || sudo apt-get install -y -qq python3.12-dev >/dev/null
+dpkg -s python3.12-dev >/dev/null 2>&1 || { sudo apt-get update -qq && sudo apt-get install -y -qq python3.12-dev >/dev/null; } || echo "python3.12-dev install failed"
 if [ ! -x venv-cc/bin/python ] || ! venv-cc/bin/python -c "import causal_conv1d" 2>/dev/null; then
   rm -rf venv-cc && cp -r venv venv-cc
   CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -1) MAX_JOBS=32 VIRTUAL_ENV=$ROOT/venv-cc uv pip install -q --no-build-isolation causal-conv1d

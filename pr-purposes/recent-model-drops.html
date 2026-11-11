@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Model announcements</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one row per model drop. Each row is a name, a small timeline on a shared date scale, then four fact cells. Soft beige, one ink colour, no accents. */
+:root {
+  --bg: #f3efe6;
+  --surface: #fffdf8;
+  --fg: #1c1a17;
+  --muted: #5e574c;
+  --line: #e4ddcf;
+  --ink: #1c1a17;
+  --accent: #5e4a8c;
+  --accent-soft: #e2dbee;
+  --chip: #efe9dc;
+  --answer: #3f3a33;
+  --font: system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171512; --surface: #211e1a; --fg: #f2ede4; --muted: #b3aa9b; --line: #38332c;
+    --ink: #f2ede4; --accent: #b3a4d6; --accent-soft: #3d3550; --chip: #2e2a24; --answer: #d9d2c6; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #171512; --surface: #211e1a; --fg: #f2ede4; --muted: #b3aa9b; --line: #38332c;
+  --ink: #f2ede4; --accent: #b3a4d6; --accent-soft: #3d3550; --chip: #2e2a24; --answer: #d9d2c6; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 15px; line-height: 1.5; }
+.page {
+  max-width: 1040px; margin: 0 auto; padding-block: 48px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 26px;
+}
+h1, h2, h3 { margin: 0; line-height: 1.25; font-weight: 600; text-wrap: balance; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.1rem; }
+p { margin: 0; }
+header { display: flex; flex-direction: column; gap: 12px; max-width: 680px; font-size: 1.02rem; }
+header ol { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 4px; }
+.intro { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding-top: 26px; }
+.intro p { color: var(--muted); }
+
+/* link icon */
+a.lk { display: inline-flex; vertical-align: -2px; margin-left: 4px; color: var(--muted); border-radius: 3px; }
+a.lk svg { width: 14px; height: 14px; }
+a.lk:hover { color: var(--fg); }
+a.lk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* legend */
+.legend { display: flex; flex-wrap: wrap; gap: 6px 20px; color: var(--muted); font-size: 0.84rem; align-items: center; }
+.block { display: flex; flex-direction: column; gap: 10px; max-width: 720px; }
+.block p { margin: 0; }
+.block .idea { margin-top: 10px; color: var(--muted); }
+.block ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; }
+.scroll { overflow-x: auto; }
+.summary { display: flex; flex-direction: column; gap: 10px; max-width: 720px; margin-bottom: 18px; }
+.tldr { margin: 14px 0 0; }
+.summary ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; font-size: 1rem; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.k { display: inline-block; flex: none; }
+.k.ann { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--accent); background: var(--surface); box-sizing: border-box; }
+.k.wts { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+.k.bar { width: 22px; height: 6px; border-radius: 3px; background: var(--accent-soft); }
+.k.cht { width: 8px; height: 8px; border: 1.5px solid var(--ink); box-sizing: border-box; transform: rotate(45deg); }
+
+/* drops */
+.drops { display: flex; flex-direction: column; gap: 14px; }
+.drop { padding: 22px 22px 24px; display: flex; flex-direction: column; gap: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.top { display: grid; grid-template-columns: minmax(0, 230px) minmax(0, 1fr); gap: 10px 28px; align-items: center; }
+.lab-name { color: var(--muted); font-size: 0.84rem; }
+
+/* timeline: shared scale, Aug 10 to Nov 12 (94 days) */
+.tl { position: relative; height: 58px; min-width: 0; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.tl .axis { position: absolute; left: 0; right: 0; top: 27px; height: 2px; background: var(--line); }
+.tl .tick { position: absolute; top: 20px; height: 16px; width: 1px; background: var(--line); }
+.tl .tickl { position: absolute; top: 40px; transform: translateX(-50%); color: var(--muted); font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.tl .span { position: absolute; top: 25px; height: 6px; border-radius: 3px; background: var(--accent-soft); left: var(--a); width: calc(var(--b) - var(--a)); }
+.tl .dot { position: absolute; top: 22px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; box-sizing: border-box; left: var(--x); }
+.tl .dot.ann { border: 2px solid var(--accent); background: var(--surface); }
+.tl .dot.wts { background: var(--accent); }
+.tl .cht { position: absolute; top: 24px; width: 8px; height: 8px; margin-left: -4px; border: 1.5px solid var(--ink); background: var(--surface); box-sizing: border-box; transform: rotate(45deg); left: var(--x); }
+.tl .lbl { position: absolute; top: 0; left: var(--x); white-space: nowrap; font-weight: 500; }
+.tl .lbl.left { transform: translateX(calc(-100% + 6px)); }
+.tl .lbl.right { transform: translateX(-6px); }
+.tl .lbl.below { top: 0; color: var(--muted); font-weight: 400; }
+
+/* fact cells */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px 24px; }
+.fact { min-width: 0; display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
+.fact .h { color: var(--muted); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
+.fact .sub { color: var(--muted); font-size: 0.84rem; }
+.ans { font-weight: 650; color: var(--accent); }
+.ans.todo { font-weight: 400; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chips span { background: var(--chip); border-radius: 4px; padding: 1px 7px; font-size: 0.82rem; }
+
+.cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto; grid-auto-flow: column; gap: 22px 28px; }
+.pair { display: flex; flex-direction: column; gap: 3px; font-size: 0.92rem; min-width: 0; }
+.pair .lead, .pair .ans, .pair .desc, .pair .no { display: block; }
+.pair .h { color: var(--fg); font-size: 0.84rem; font-weight: 650; }
+.pair > span:last-child { color: var(--answer); font-weight: 400; }
+.pair .desc { color: var(--muted); font-size: 0.84rem; margin-top: 1px; }
+.pair .no { color: var(--muted); }
+.pair .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+@media (max-width: 600px) { .cols { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; } }
+
+@media (max-width: 640px) {
+  .top { grid-template-columns: minmax(0, 1fr); }
+  .drop { padding: 18px 14px 20px; }
+}
+</style>
+</head>
+<body>
+<svg style="position:absolute;width:0;height:0" aria-hidden="true">
+  <symbol id="lk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/>
+    <path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/>
+  </symbol>
+</svg>
+
+<div class="page">
+
+<header>
+  <h1>The last 8 model drops</h1>
+</header>
+
+
+<div class="legend" aria-label="Key">
+  <span><i class="k ann"></i>First announcement</span>
+  <span><i class="k wts"></i>Weights public</span>
+  <span><i class="k bar"></i>Provider API, weights not yet out</span>
+  <span><i class="k cht"></i>Early chatter</span>
+</div>
+
+<div class="drops">
+  <article class="drop">
+    <div class="top">
+      <div><h3>GLM-5.3</h3><p class="lab-name">Z.ai</p></div>
+      <div class="tl" role="img" aria-label="Announced August 14, weights public August 28">
+        <i class="axis"></i>
+        <i class="tick" style="left:23.40%"></i><span class="tickl" style="left:23.40%">Sep</span>
+        <i class="tick" style="left:55.32%"></i><span class="tickl" style="left:55.32%">Oct</span>
+        <i class="tick" style="left:88.30%"></i><span class="tickl" style="left:88.30%">Nov</span>
+        <i class="span" style="--a:4.26%;--b:19.15%"></i>
+        <i class="dot ann" style="--x:4.26%"></i>
+        <span class="lbl right" style="--x:4.26%">&nbsp;&nbsp;&nbsp;Aug 14</span>
+        <i class="dot wts" style="--x:19.15%"></i>
+        <span class="lbl right" style="--x:19.15%">&nbsp;&nbsp;&nbsp;Aug 28</span>
+      </div>
+    </div>
+    <div class="cols">
+        <div class="pair"><span class="h">First announcement</span><span><span class="lead">Z.ai's blog post<a class="lk" href="https://z.ai/blog/glm-5.3" aria-label="Open Z.ai's blog post"><svg><use href="#lk"/></svg></a></span></span></div>
+        <div class="pair"><span class="h">Weights released</span><span><span class="lead">14 days later</span><span class="desc">Promised "in about two weeks", per press reports</span></span></div>
+        <div class="pair"><span class="h">API access before weights?</span><span><span class="ans">Yes, 14 days</span><span class="desc">Z.ai's coding plan and ZCode agent</span></span></div>
+        <div class="pair"><span class="h">How long until live on OpenRouter?</span><span><span class="lead">+4 days</span></span></div>
+        <div class="pair"><span class="h">Day-zero partners</span><span><span class="no">None found</span></span></div>
+        <div class="pair"><span class="h">Early chatter</span><span><span class="no">None found</span></span></div>
+    </div>
+  </article>
+  <article class="drop">
+    <div class="top">
+      <div><h3>DeepSeek V4.1 Flash</h3><p class="lab-name">DeepSeek</p></div>
+      <div class="tl" role="img" aria-label="Early chatter September 8, test model on DeepSeek API September 9, announced and weights public September 10">
+        <i class="axis"></i>
+        <i class="tick" style="left:23.40%"></i><span class="tickl" style="left:23.40%">Sep</span>
+        <i class="tick" style="left:55.32%"></i><span class="tickl" style="left:55.32%">Oct</span>
+        <i class="tick" style="left:88.30%"></i><span class="tickl" style="left:88.30%">Nov</span>
+        <i class="span" style="--a:31.91%;--b:32.98%"></i>
+        <i class="cht" style="--x:30.85%"></i>
+        <span class="lbl left below" style="--x:30.85%">Sep 8&nbsp;&nbsp;</span>
+        <i class="dot wts" style="--x:32.98%"></i>
+        <span class="lbl right" style="--x:32.98%">&nbsp;&nbsp;&nbsp;Sep 10, same day</span>
+      </div>
+    </div>
+    <div class="cols">
+        <div class="pair"><span class="h">First announcement</span><span><span class="lead">Hugging Face repo<a class="lk" href="https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash" aria-label="Open the Hugging Face repo"><svg><use href="#lk"/></svg></a></span><span class="lead">X post 13 min later<a class="lk" href="https://x.com/deepseek_ai/status/2097930608790167907" aria-label="Open DeepSeek's X post"><svg><use href="#lk"/></svg></a></span></span></div>
+        <div class="pair"><span class="h">Weights released</span><span><span class="lead">Same day</span></span></div>
+        <div class="pair"><span class="h">API access before weights?</span><span><span class="ans">Yes, under a day</span><span class="desc">Unannounced test model on DeepSeek's API and a Vercel beta</span></span></div>
+        <div class="pair"><span class="h">How long until live on OpenRouter?</span><span><span class="lead">+24 min</span></span></div>
+        <div class="pair"><span class="h">Day-zero partners</span><span><span class="lead">3</span><span class="chips"><span>OpenRouter</span><span>SGLang</span><span>Vercel AI Gateway</span></span></span></div>
+        <div class="pair"><span class="h">Early chatter</span><span><span class="lead">Yes, 1 day early</span><span class="desc">Hacker News thread about the test model<a class="lk" href="https://news.ycombinator.com/item?id=49624603" aria-label="Open the Hacker News thread"><svg><use href="#lk"/></svg></a></span></span></div>
+    </div>
+  </article>
+  <article class="drop">
+    <div class="top">
+      <div><h3>Beam 1.0</h3><p class="lab-name">Reflection AI</p></div>
+      <div class="tl" role="img" aria-label="Launch reported October 3, announced October 5, weights public October 16">
+        <i class="axis"></i>
+        <i class="tick" style="left:23.40%"></i><span class="tickl" style="left:23.40%">Sep</span>
+        <i class="tick" style="left:55.32%"></i><span class="tickl" style="left:55.32%">Oct</span>
+        <i class="tick" style="left:88.30%"></i><span class="tickl" style="left:88.30%">Nov</span>
+        <i class="span" style="--a:59.57%;--b:71.28%"></i>
+        <i class="cht" style="--x:57.45%"></i>
+        <span class="lbl left below" style="--x:57.45%">Oct 3&nbsp;&nbsp;</span>
+        <i class="dot ann" style="--x:59.57%"></i>
+        <span class="lbl right" style="--x:59.57%">&nbsp;&nbsp;&nbsp;Oct 5</span>
+        <i class="dot wts" style="--x:71.28%"></i>
+        <span class="lbl right" style="--x:71.28%">&nbsp;&nbsp;&nbsp;Oct 16</span>
+      </div>
+    </div>
+    <div class="cols">
+        <div class="pair"><span class="h">First announcement</span><span><span class="lead">Reflection's blog post<a class="lk" href="https://reflection.ai/blog/introducing-beam" aria-label="Open Reflection's blog post"><svg><use href="#lk"/></svg></a></span></span></div>
+        <div class="pair"><span class="h">Weights released</span><span><span class="lead">11 days later</span><span class="desc">Promised "later this month"</span></span></div>
+        <div class="pair"><span class="h">API access before weights?</span><span><span class="ans">Yes, 11 days</span><span class="desc">Reflection API, waitlist only</span></span></div>
+        <div class="pair"><span class="h">How long until live on OpenRouter?</span><span><span class="lead">+11 days</span></span></div>
+        <div class="pair"><span class="h">Day-zero partners</span><span><span class="lead">16 named, 40+ claimed</span><span class="chips"><span>Baseten</span><span>Fireworks</span><span>OpenRouter</span><span>vLLM</span><span>SGLang</span><span>AWS</span><span>Google Cloud</span><span>Microsoft Foundry</span><span>NVIDIA NIM</span><span>Together</span><span>Modal</span><span>Nebius</span><span>Cloudflare</span><span>Ollama</span><span>LM Studio</span><span>llama.cpp</span></span></span></div>
+        <div class="pair"><span class="h">Early chatter</span><span><span class="lead">Yes, 2 days early</span><span class="desc">Axios reported a launch was close<a class="lk" href="https://techcrunch.com/2026/10/05/reflection-debuts-beam-a-open-weight-ai-model-to-rival-chinese-models-at-lower-compute-cost/" aria-label="Open TechCrunch's launch story, which cites the Axios report"><svg><use href="#lk"/></svg></a></span></span></div>
+    </div>
+  </article>
+  <article class="drop">
+    <div class="top">
+      <div><h3>Mistral Large 4</h3><p class="lab-name">Mistral AI</p></div>
+      <div class="tl" role="img" aria-label="Announced October 6, weights public October 29">
+        <i class="axis"></i>
+        <i class="tick" style="left:23.40%"></i><span class="tickl" style="left:23.40%">Sep</span>
+        <i class="tick" style="left:55.32%"></i><span class="tickl" style="left:55.32%">Oct</span>
+        <i class="tick" style="left:88.30%"></i><span class="tickl" style="left:88.30%">Nov</span>
+        <i class="span" style="--a:60.64%;--b:85.11%"></i>
+        <i class="dot ann" style="--x:60.64%"></i>
+        <span class="lbl left" style="--x:60.64%">Oct 6&nbsp;&nbsp;</span>
+        <i class="dot wts" style="--x:85.11%"></i>
+        <span class="lbl right" style="--x:85.11%">&nbsp;&nbsp;&nbsp;Oct 29</span>
+      </div>
+    </div>
+    <div class="cols">
+        <div class="pair"><span class="h">First announcement</span><span><span class="lead">Mistral's X post<a class="lk" href="https://twitter.com/MistralAI/status/2107456586813730854" aria-label="Open Mistral's X post"><svg><use href="#lk"/></svg></a></span><span class="lead">Blog post minutes later<a class="lk" href="https://mistral.ai/news/mistral-large-4/" aria-label="Open Mistral's blog post"><svg><use href="#lk"/></svg></a></span></span></div>
+        <div class="pair"><span class="h">Weights released</span><span><span class="lead">23 days later</span><span class="desc">Promised "by the end of the month"</span></span></div>
+        <div class="pair"><span class="h">API access before weights?</span><span><span class="ans">Yes, 23 days</span><span class="desc">Mistral API</span></span></div>
+        <div class="pair"><span class="h">How long until live on OpenRouter?</span><span><span class="lead">+40 min</span></span></div>
+        <div class="pair"><span class="h">Day-zero partners</span><span><span class="lead">6</span><span class="chips"><span>OpenRouter</span><span>vLLM</span><span>SGLang</span><span>NVIDIA NIM</span><span>Microsoft Foundry</span><span>llama.cpp</span></span></span></div>
+        <div class="pair"><span class="h">Early chatter</span><span><span class="no">None found</span></span></div>
+    </div>
+  </article>
+  <article class="drop">
+    <div class="top">
+      <div><h3>Muse Spark Open</h3><p class="lab-name">Meta</p></div>
+      <div class="tl" role="img" aria-label="Weights promised October 12, announced and weights public October 15">
+        <i class="axis"></i>
+        <i class="tick" style="left:23.40%"></i><span class="tickl" style="left:23.40%">Sep</span>
+        <i class="tick" style="left:55.32%"></i><span class="tickl" style="left:55.32%">Oct</span>
+        <i class="tick" style="left:88.30%"></i><span class="tickl" style="left:88.30%">Nov</span>
+        <i class="cht" style="--x:67.02%"></i>
+        <span class="lbl left below" style="--x:67.02%">Oct 12&nbsp;&nbsp;</span>
+        <i class="dot wts" style="--x:70.21%"></i>
+        <span class="lbl right" style="--x:70.21%">&nbsp;&nbsp;&nbsp;Oct 15, same day</span>
+      </div>
+    </div>
+    <div class="cols">
+        <div class="pair"><span class="h">First announcement</span><span><span class="lead">Meta's blog post<a class="lk" href="https://research.meta.ai/blog/muse-spark-open" aria-label="Open Meta's blog post"><svg><use href="#lk"/></svg></a></span></span></div>
+        <div class="pair"><span class="h">Weights released</span><span><span class="lead">Same day</span></span></div>
+        <div class="pair"><span class="h">API access before weights?</span><span><span class="lead">No</span><span class="desc">No Meta API</span></span></div>
+        <div class="pair"><span class="h">How long until live on OpenRouter?</span><span><span class="lead">+1 hour</span></span></div>
+        <div class="pair"><span class="h">Day-zero partners</span><span><span class="lead">9</span><span class="chips"><span>Baseten</span><span>Fireworks</span><span>OpenRouter</span><span>Together</span><span>Groq (limited)</span><span>Modal</span><span>Nebius</span><span>Ollama</span><span>Factory</span></span></span></div>
+        <div class="pair"><span class="h">Early chatter</span><span><span class="lead">Yes, 3 days early</span><span class="desc">Meta's X account said the weights were "coming soon"<a class="lk" href="https://x.com/AIatMeta/status/2109701605042032998" aria-label="Open Meta's X post"><svg><use href="#lk"/></svg></a></span></span></div>
+    </div>
+  </article>
+  <article class="drop">
+    <div class="top">
+      <div><h3>DeepSeek V4.1 Flash 1017</h3><p class="lab-name">DeepSeek</p></div>
+      <div class="tl" role="img" aria-label="Announced and weights public on October 17">
+        <i class="axis"></i>
+        <i class="tick" style="left:23.40%"></i><span class="tickl" style="left:23.40%">Sep</span>
+        <i class="tick" style="left:55.32%"></i><span class="tickl" style="left:55.32%">Oct</span>
+        <i class="tick" style="left:88.30%"></i><span class="tickl" style="left:88.30%">Nov</span>
+        <i class="dot wts" style="--x:72.34%"></i>
+        <span class="lbl right" style="--x:72.34%">&nbsp;&nbsp;&nbsp;Oct 17, same day</span>
+      </div>
+    </div>
+    <div class="cols">
+        <div class="pair"><span class="h">First announcement</span><span><span class="lead">Hugging Face repo<a class="lk" href="https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017" aria-label="Open the Hugging Face repo"><svg><use href="#lk"/></svg></a></span><span class="lead">X post 15 min later<a class="lk" href="https://twitter.com/deepseek_ai/status/2111375640717033777" aria-label="Open DeepSeek's X post"><svg><use href="#lk"/></svg></a></span></span></div>
+        <div class="pair"><span class="h">Weights released</span><span><span class="lead">Same day</span></span></div>
+        <div class="pair"><span class="h">API access before weights?</span><span><span class="lead">No</span><span class="desc">DeepSeek's API updated the same morning</span></span></div>
+        <div class="pair"><span class="h">How long until live on OpenRouter?</span><span><span class="lead">+6 min</span></span></div>
+        <div class="pair"><span class="h">Day-zero partners</span><span><span class="lead">2</span><span class="chips"><span>OpenRouter</span><span>DeepSeek API</span></span></span></div>
+        <div class="pair"><span class="h">Early chatter</span><span><span class="no">None found</span></span></div>
+    </div>
+  </article>
+  <article class="drop">
+    <div class="top">
+      <div><h3>MiniMax M3.1 Flash</h3><p class="lab-name">MiniMax</p></div>
+      <div class="tl" role="img" aria-label="Stealth model September 23, announced October 19, weights public October 23">
+        <i class="axis"></i>
+        <i class="tick" style="left:23.40%"></i><span class="tickl" style="left:23.40%">Sep</span>
+        <i class="tick" style="left:55.32%"></i><span class="tickl" style="left:55.32%">Oct</span>
+        <i class="tick" style="left:88.30%"></i><span class="tickl" style="left:88.30%">Nov</span>
+        <i class="span" style="--a:74.47%;--b:78.72%"></i>
+        <i class="cht" style="--x:46.81%"></i>
+        <span class="lbl right below" style="--x:46.81%">&nbsp;&nbsp;&nbsp;Sep 23</span>
+        <i class="dot ann" style="--x:74.47%"></i>
+        <span class="lbl left" style="--x:74.47%">Oct 19&nbsp;&nbsp;</span>
+        <i class="dot wts" style="--x:78.72%"></i>
+        <span class="lbl right" style="--x:78.72%">&nbsp;&nbsp;&nbsp;Oct 23</span>
+      </div>
+    </div>
+    <div class="cols">
+        <div class="pair"><span class="h">First announcement</span><span><span class="lead">MiniMax's X post<a class="lk" href="https://twitter.com/MiniMax_AI/status/2112150867868541221" aria-label="Open MiniMax's X post"><svg><use href="#lk"/></svg></a></span><span class="lead">Blog post the same day<a class="lk" href="https://www.minimax.io/blog/minimax-m31f" aria-label="Open MiniMax's blog post"><svg><use href="#lk"/></svg></a></span></span></div>
+        <div class="pair"><span class="h">Weights released</span><span><span class="lead">4 days later</span><span class="desc">Promised "Oct 23" in the X thread</span></span></div>
+        <div class="pair"><span class="h">API access before weights?</span><span><span class="ans">Yes, 4 days</span><span class="desc">MiniMax API</span></span></div>
+        <div class="pair"><span class="h">How long until live on OpenRouter?</span><span><span class="lead">−8.7 hours</span><span class="desc">Listed before the announcement</span></span></div>
+        <div class="pair"><span class="h">Day-zero partners</span><span><span class="lead">7</span><span class="chips"><span>Fireworks</span><span>vLLM</span><span>SGLang</span><span>Together</span><span>Runware</span><span>Inferact</span><span>Tenstorrent</span></span></span></div>
+        <div class="pair"><span class="h">Early chatter</span><span><span class="lead">Yes, 26 days early</span><span class="desc">Anonymous "Space Bunny Alpha" model on OpenRouter<a class="lk" href="https://openrouter.ai/stealth/space-bunny-alpha" aria-label="Open the Space Bunny Alpha listing"><svg><use href="#lk"/></svg></a></span></span></div>
+    </div>
+  </article>
+  <article class="drop">
+    <div class="top">
+      <div><h3>Kimi K3.1 Pro</h3><p class="lab-name">Moonshot AI</p></div>
+      <div class="tl" role="img" aria-label="Early chatter October 22, announced October 23, weights public November 4">
+        <i class="axis"></i>
+        <i class="tick" style="left:23.40%"></i><span class="tickl" style="left:23.40%">Sep</span>
+        <i class="tick" style="left:55.32%"></i><span class="tickl" style="left:55.32%">Oct</span>
+        <i class="tick" style="left:88.30%"></i><span class="tickl" style="left:88.30%">Nov</span>
+        <i class="span" style="--a:78.72%;--b:91.49%"></i>
+        <i class="cht" style="--x:77.66%"></i>
+        <i class="dot ann" style="--x:78.72%"></i>
+        <span class="lbl left" style="--x:78.72%">Oct 23&nbsp;&nbsp;</span>
+        <i class="dot wts" style="--x:91.49%"></i>
+        <span class="lbl right" style="--x:91.49%">&nbsp;&nbsp;&nbsp;Nov 4</span>
+      </div>
+    </div>
+    <div class="cols">
+        <div class="pair"><span class="h">First announcement</span><span><span class="lead">Moonshot's blog post<a class="lk" href="https://www.kimi.ai/blog/kimi-k3-1-pro" aria-label="Open Moonshot's blog post"><svg><use href="#lk"/></svg></a></span><span class="lead">X post 16 min later<a class="lk" href="https://x.com/Kimi_Moonshot/status/2113680701770068067" aria-label="Open Moonshot's X post"><svg><use href="#lk"/></svg></a></span></span></div>
+        <div class="pair"><span class="h">Weights released</span><span><span class="lead">12 days later</span><span class="desc">Promised "by Nov 4, 2026"</span></span></div>
+        <div class="pair"><span class="h">API access before weights?</span><span><span class="ans">Yes, 12 days</span><span class="desc">Kimi API</span></span></div>
+        <div class="pair"><span class="h">How long until live on OpenRouter?</span><span><span class="lead">+57 min</span></span></div>
+        <div class="pair"><span class="h">Day-zero partners</span><span><span class="lead">2 at launch, 5 at weights</span><span class="desc">At launch</span><span class="chips"><span>OpenRouter</span><span>Vercel AI Gateway</span></span><span class="desc" style="margin-top:6px">At weights</span><span class="chips"><span>Fireworks</span><span>vLLM</span><span>SGLang</span><span>Verda</span><span>Alibaba Cloud</span></span></span></div>
+        <div class="pair"><span class="h">Early chatter</span><span><span class="lead">Yes, 30 hours early</span><span class="desc">@luminabench posted a K3.1 comparison<a class="lk" href="https://twitter.com/luminabench/status/2113217029675085963" aria-label="Open the luminabench post"><svg><use href="#lk"/></svg></a></span></span></div>
+    </div>
+  </article>
+</div>
+
+</div>
+
+</body>
+</html>

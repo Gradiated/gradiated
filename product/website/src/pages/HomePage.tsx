@@ -211,7 +211,7 @@ const products = [
  * fold's sharpen-from-blur, at paragraph scale. Reduced motion renders it
  * standing.
  */
-type StreamPart = { emphasis?: boolean; href?: string; text: string };
+type StreamPart = { href?: string; text: string };
 
 const StreamedProse = ({
   className,
@@ -264,8 +264,6 @@ const StreamedProse = ({
                 <a className="gr-link" href={part.href} key={qi}>
                   {words(part.text)}
                 </a>
-              ) : part.emphasis ? (
-                <em key={qi}>{words(part.text)}</em>
               ) : (
                 <span key={qi}>{words(part.text)}</span>
               ),
@@ -322,16 +320,10 @@ const HomeProducts = (): ReactElement => (
       className="gr-products-prelude"
       paragraphs={[
         {
-          parts: [
-            {
-              text: "Frontier model companies offer the path of least resistance for powering your product. As you scale, most companies want to improve their unit costs, whilst using AI ",
-            },
-            { emphasis: true, text: "more" },
-            { text: " intensively." },
-          ],
+          text: "Frontier model companies offer the path of least resistance for powering your products. But scaling demands lower unit costs, and the more AI your product runs, the more those API bills work against you.",
         },
         {
-          text: "Yet why do most teams that try open weight models just end up switching back? Teams tend to switch their base models but don't optimize any of their other parameters, and post training is a new skillset and requires GPUs. This leads to performance regressions and the inevitable switch back.",
+          text: "Open-weight models seem like the obvious solution, so why do so many teams that try them, just end up back on frontier APIs? Usually they swap the model and leave everything else untouched like their prompts, evals and inference settings. And post-training is a new expertise that needs GPUs, that most teams don’t have.",
         },
         {
           text: "At Gradiated we proxy your current inference and collect your real production traces. We set up benchmarks or use your existing ones and test open models against them, show you before-and-afters, and tune your prompts, and the model itself to your preferences until we beat what you run now.",

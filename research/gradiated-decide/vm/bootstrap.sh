@@ -22,7 +22,7 @@ fi
 dpkg -s python3.12-dev >/dev/null 2>&1 || sudo apt-get install -y -qq python3.12-dev >/dev/null
 if [ ! -x venv-cc/bin/python ] || ! venv-cc/bin/python -c "import causal_conv1d" 2>/dev/null; then
   rm -rf venv-cc && cp -r venv venv-cc
-  CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST=10.0 MAX_JOBS=32 VIRTUAL_ENV=$ROOT/venv-cc uv pip install -q --no-build-isolation causal-conv1d
+  CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -1) MAX_JOBS=32 VIRTUAL_ENV=$ROOT/venv-cc uv pip install -q --no-build-isolation causal-conv1d
 fi
 
 if [ ! -f ckpt/base/done ]; then

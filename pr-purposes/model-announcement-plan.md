@@ -8,14 +8,14 @@ We'd like to produce model announcement content. To decide what our target is I 
 
 ## 1. What happened for the last 8 important model drops?
 
-[The last 8 model drops](recent-model-drops.png)
-
 ### Thoughts
 
 - Model announcements often happen in advance of when the weights are published. 
 - Initial announcements often don't provide an expected weight drop date and say something like "within the month".
 - The first announcement is usually a company blog followed by an X post. The model is then live on the provider's API immediately and on Open Router within minutes to hours.
 - The model weights are usually on Hugging Face for a few minutes before the lab posts on X or publishes a blog that they're live.
+
+Based on [The last 8 model drops](recent-model-drops.png)
 
 TLDR: We can publish in the window between a model's public announcement and when the weights are live, but depending on what we wish to say, we can also prepare during that time and publish shortly after the model drops.
 

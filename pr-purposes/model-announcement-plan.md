@@ -8,8 +8,6 @@ We'd like to produce model announcement content. To decide what our target is I 
 
 ## 1. When should we post?
 
-### Thoughts
-
 - Model announcements often happen in advance of when the weights are published. 
 - Initial announcements often don't provide an expected weight drop date and say something like "within the month".
 - The first announcement is usually a company blog followed by an X post. The model is then live on the provider's API immediately and on Open Router within minutes to hours.

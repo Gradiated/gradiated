@@ -13,7 +13,7 @@ We'd like to produce model announcement content. To decide what our target is I 
 - The first announcement is usually a company blog followed by an X post. The model is then live on the provider's API immediately and on Open Router within minutes to hours.
 - The model weights are usually on Hugging Face for a few minutes before the lab posts on X or publishes a blog that they're live.
 
-Based on [The last 8 model drops](recent-model-drops.png)
+Based on The last 8 model drops (link in PR description)
 
 TLDR: We can publish in the window between a model's public announcement and when the weights are live, but depending on what we wish to say, we can also prepare during that time and publish shortly after the model drops.
 

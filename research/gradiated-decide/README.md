@@ -24,7 +24,8 @@ not Decision Index benchmarks, and no index area may fall by more than one point
      word 13-gram overlap).
    - `gdecide.prepare`: deterministic per-source sampling, option-order shuffling, a held-out dev slice per source,
      one-time tokenization into shards.
-3. **Training.** `gdecide.train_full` (FSDP2 full fine-tune, fp32 master weights, soft cross entropy plus Brier) or
+3. **Training.** `gdecide.train_full` (FSDP2 full fine-tune, fp32 master weights, soft cross entropy plus Brier,
+   optionally plus `--anchor` times KL(base || model) to a frozen bf16 copy of the base on the same inputs) or
    `gdecide.train` (LoRA). Both reproduce the inference forward pass exactly (upstream non-causal mask hook and marker
    readout).
 4. **Evaluation.** `gdecide.evaluate` (batched, one process per GPU, kit result format) and `gdecide.score` (the
@@ -36,7 +37,8 @@ Training runs on Nebius spot VMs from `tools/dev-training/dev_training.py`. `vm/
 environment, downloads the pinned base revision and restores from S3; `vm/s3-sync.sh` mirrors finished
 `state-*` (sharded model and optimizer, every ~40 minutes), `export-*` (loadable bf16 checkpoints), logs and
 evaluation results to `s3://$DEV_TRAINING_S3_BUCKET/gradiated-decide/`. A replacement VM resumes from the newest
-complete state.
+complete state. `vm/campaign.sh RUN DATA "ALPHAS" [train args]` runs bootstrap, training and the merge sweep
+(`vm/after-train.sh`) unattended, and can simply be restarted on a replacement VM.
 
 ## Licence
 

@@ -18,6 +18,12 @@ if [ ! -x venv/bin/python ]; then
     mido python-chess tiktoken
   VIRTUAL_ENV=$ROOT/venv uv pip install -q -e "$ROOT/src/di" -e "$ROOT/src/pplx" -e "$ROOT/src/gradiated-decide"
 fi
+# Training env: the same packages plus causal-conv1d (Triton and the build need the Python headers).
+dpkg -s python3.12-dev >/dev/null 2>&1 || sudo apt-get install -y -qq python3.12-dev >/dev/null
+if [ ! -x venv-cc/bin/python ] || ! venv-cc/bin/python -c "import causal_conv1d" 2>/dev/null; then
+  rm -rf venv-cc && cp -r venv venv-cc
+  CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST=10.0 MAX_JOBS=32 VIRTUAL_ENV=$ROOT/venv-cc uv pip install -q --no-build-isolation causal-conv1d
+fi
 
 if [ ! -f ckpt/base/done ]; then
   HF_HUB_DISABLE_XET=1 venv/bin/python -c "
@@ -29,6 +35,7 @@ fi
 if [ -n "${S3_PREFIX:-}" ]; then
   aws s3 sync --only-show-errors "$S3_PREFIX/suite" suite || true
   aws s3 sync --only-show-errors "$S3_PREFIX/data" data || true
-  aws s3 sync --only-show-errors "$S3_PREFIX/runs" runs || true
+  # Only the baseline evals (for paired deltas); runs restore their own state in run-train.sh.
+  aws s3 sync --only-show-errors "$S3_PREFIX/runs/evals" runs/evals --exclude "*" --include "base-*" || true
 fi
 echo ready

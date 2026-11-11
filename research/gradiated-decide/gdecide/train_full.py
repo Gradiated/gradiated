@@ -4,7 +4,8 @@
 
 ``DATA_DIR`` comes from ``gdecide.prepare``. Trainable: every language-model layer, the final norm and the
 readout head; the token embeddings and the vision tower stay frozen. Loss: soft cross entropy over each scored
-question's valid options plus ``--brier`` times the multiclass Brier score. Non-causal full attention is the
+question's valid options plus ``--brier`` times the multiclass Brier score, plus ``--anchor`` times
+KL(base || model) to a frozen bf16 copy of the starting checkpoint on the same inputs. Non-causal full attention is the
 upstream forward hook, so training sees exactly the inference computation.
 
 Spot-safe: ``state-<step>/`` (sharded model and optimizer, torch.distributed.checkpoint) is written every
@@ -68,8 +69,8 @@ def collate(examples, pad_id):
     return ids, mask, rows, cols, counts, targets, weights
 
 
-def losses(logits, counts, targets, weights, brier):
-    """Per-question soft CE and Brier over valid options, padded to a dense block for speed."""
+def losses(logits, counts, targets, weights, brier, anchor=None, anchor_weight=0.0):
+    """Per-question soft CE, Brier and optional KL(anchor || model) over valid options, as a dense block."""
     import torch
 
     n, width = len(counts), max(counts)
@@ -82,8 +83,12 @@ def losses(logits, counts, targets, weights, brier):
     w = torch.tensor(weights, device=logits.device)
     ce = -(t * logp.masked_fill(~valid, 0)).sum(-1)
     br = ((logp.exp() - t) ** 2).masked_fill(~valid, 0).sum(-1)
-    total = ((ce + brier * br) * w).sum() / w.sum().clamp_min(1e-6)
-    return total, (ce * w).sum().detach(), (br * w).sum().detach(), w.sum().detach()
+    kl = torch.zeros_like(ce)
+    if anchor is not None:
+        q = torch.log_softmax(anchor[:, :width].float().masked_fill(~valid, float("-inf")), -1)
+        kl = (q.exp() * (q - logp)).masked_fill(~valid, 0).sum(-1)
+    total = ((ce + brier * br + anchor_weight * kl) * w).sum() / w.sum().clamp_min(1e-6)
+    return total, (ce * w).sum().detach(), (br * w).sum().detach(), w.sum().detach(), (kl * w).sum().detach()
 
 
 def complete(path: Path) -> bool:
@@ -101,6 +106,7 @@ def main() -> None:
     parser.add_argument("--min-lr-ratio", type=float, default=0.1)
     parser.add_argument("--weight-decay", type=float, default=0.0)
     parser.add_argument("--brier", type=float, default=0.5)
+    parser.add_argument("--anchor", type=float, default=0.0, help="weight of KL(base || model) on the training inputs")
     parser.add_argument("--tokens-per-batch", type=int, default=32768, help="padded tokens per micro-batch per GPU")
     parser.add_argument("--accumulate", type=int, default=1)
     parser.add_argument("--warmup", type=int, default=30)
@@ -169,6 +175,31 @@ def main() -> None:
     fully_shard(model, mp_policy=policy)
     torch.cuda.empty_cache()
     model.train()
+
+    teacher = None
+    if args.anchor > 0:
+
+        class Teacher(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.backbone = Qwen3_5Model.from_pretrained(str(checkpoint), dtype=torch.bfloat16, attn_implementation="sdpa", device_map={"": local})
+
+            def forward(self, ids, mask, rows, cols):
+                return self.backbone(input_ids=ids, attention_mask=mask, use_cache=False).last_hidden_state[rows, cols]
+
+        teacher = Teacher()
+        enable_noncausal_full_attention(teacher.backbone.language_model)
+        teacher.requires_grad_(False)
+        teacher.backbone.config.use_cache = False
+        frozen = MixedPrecisionPolicy(param_dtype=torch.bfloat16, reduce_dtype=torch.bfloat16)
+        for layer in teacher.backbone.language_model.layers:
+            fully_shard(layer, mp_policy=frozen, reshard_after_forward=True)
+        fully_shard(teacher, mp_policy=frozen)
+        teacher.eval()
+        teacher_readout = torch.nn.Linear(model.readout.in_features, MAX_OPTIONS, bias=False, dtype=torch.float32, device=device)
+        teacher_readout.load_state_dict({k: v.float() for k, v in load_file(str(checkpoint / "readout.safetensors")).items()})
+        teacher_readout.requires_grad_(False)
+        torch.cuda.empty_cache()
 
     body = [p for n, p in model.named_parameters() if p.requires_grad and not n.startswith("readout.")]
     head = list(model.readout.parameters())
@@ -287,7 +318,7 @@ def main() -> None:
                     m = sum(1 for t in e["targets"] if t is not None)
                     if not m:
                         continue
-                    _, ce, br, w = losses(logits[cursor : cursor + m], counts[cursor : cursor + m], targets[cursor : cursor + m], [1.0] * m, 0.0)
+                    _, ce, br, w, _ = losses(logits[cursor : cursor + m], counts[cursor : cursor + m], targets[cursor : cursor + m], [1.0] * m, 0.0)
                     acc = sum(int(int(logits[cursor + j, : counts[cursor + j]].argmax()) == max(range(counts[cursor + j]), key=targets[cursor + j].__getitem__)) for j in range(m))
                     s = sums.setdefault(e["source"], [0.0, 0.0, 0.0])
                     s[0] += float(ce)
@@ -316,14 +347,19 @@ def main() -> None:
         plan = batches(lengths, args.tokens_per_batch, args.seed, epoch)[: per_epoch * args.accumulate]
         while position < len(plan) and step < total_steps:
             optimizer.zero_grad(set_to_none=True)
-            sums = torch.zeros(4, device=device, dtype=torch.float64)
+            sums = torch.zeros(5, device=device, dtype=torch.float64)
             for micro in range(args.accumulate):
                 ids, mask, rows, cols, counts, targets, weights = collate([examples[i] for i in plan[position + micro]], pad_id)
                 tokens += int(mask.sum())
-                logits = model(ids.to(device, non_blocking=True), mask.to(device, non_blocking=True), torch.tensor(rows, device=device), torch.tensor(cols, device=device))
-                loss, ce, br, w = losses(logits, counts, targets, weights, args.brier)
+                ids, mask, rows, cols = ids.to(device, non_blocking=True), mask.to(device, non_blocking=True), torch.tensor(rows, device=device), torch.tensor(cols, device=device)
+                anchor = None
+                if teacher is not None:
+                    with torch.no_grad():
+                        anchor = teacher_readout(teacher(ids, mask, rows, cols).float())
+                logits = model(ids, mask, rows, cols)
+                loss, ce, br, w, kl = losses(logits, counts, targets, weights, args.brier, anchor, args.anchor)
                 (loss / args.accumulate).backward()
-                sums += torch.stack([ce, br, w, mask.sum().to(w)]).double()
+                sums += torch.stack([ce, br, w, mask.sum().to(w), kl]).double()
             position += args.accumulate
             norm = torch.nn.utils.clip_grad_norm_(body + head, 1.0)
             optimizer.step()
@@ -334,7 +370,7 @@ def main() -> None:
                 elapsed = time.perf_counter() - started
                 tok = torch.tensor([tokens], device=device, dtype=torch.float64)
                 dist.all_reduce(tok)
-                log(event="train", step=step, of=total_steps, ce=round(float(sums[0] / sums[2]), 4), brier=round(float(sums[1] / sums[2]), 4), grad_norm=round(float(norm.full_tensor() if hasattr(norm, "full_tensor") else norm), 3), lr=scheduler.get_last_lr()[0], tokens_per_s=round(float(tok) / elapsed), mem_gib=round(torch.cuda.max_memory_allocated() / 2**30, 1))
+                log(event="train", step=step, of=total_steps, ce=round(float(sums[0] / sums[2]), 4), brier=round(float(sums[1] / sums[2]), 4), kl=round(float(sums[4] / sums[2]), 5), grad_norm=round(float(norm.full_tensor() if hasattr(norm, "full_tensor") else norm), 3), lr=scheduler.get_last_lr()[0], tokens_per_s=round(float(tok) / elapsed), mem_gib=round(torch.cuda.max_memory_allocated() / 2**30, 1))
             if args.dev_every and step % args.dev_every == 0:
                 log(event="dev", step=step, dev=evaluate_dev())
             flag = torch.tensor([1.0 if time.time() - last_state > args.state_minutes * 60 else 0.0], device=device)

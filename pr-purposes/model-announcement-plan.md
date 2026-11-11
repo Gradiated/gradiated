@@ -2,18 +2,21 @@
 
 We'd like to produce model announcement content. To decide what our target is I have 3 main questions.
 
-1. When should we post?
+1. What happened for the last 8 important model drops? Where can we fit into the timeline?
 2. What's our plan to stay informed?
 3. What content would we like to include in our model announcement template?
 
-## 1. When should we post?
+## 1. When can we publish?
+
+I took a look at the last 8 model drops, 
+(link in the PR description)
+
+My thouhgts:
 
 - Model announcements often happen in advance of when the weights are published. 
 - Initial announcements often don't provide an expected weight drop date and say something like "within the month".
 - The first announcement is usually a company blog followed by an X post. The model is then live on the provider's API immediately and on Open Router within minutes to hours.
 - The model weights are usually on Hugging Face for a few minutes before the lab posts on X or publishes a blog that they're live.
-
-Based on The last 8 model drops (link in PR description)
 
 TLDR: We can publish in the window between a model's public announcement and when the weights are live, but depending on what we wish to say, we can also prepare during that time and publish shortly after the model drops.
 

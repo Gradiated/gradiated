@@ -38,6 +38,8 @@ describe("serving adapter dimensions", () => {
       "0/mlp.down_proj": [4, 8],
     });
   });
+  // Routed experts are not adaptable on the GLM SGLang runtime, so uploads
+  // targeting them are rejected.
   it("derives hybrid GLM attention from each layer's actual architecture", () => {
     expect(
       adapterProjectionShapes({
@@ -55,12 +57,6 @@ describe("serving adapter dimensions", () => {
         moe_intermediate_size: 8,
       }),
     ).toEqual({
-      "0/mlp.experts.gate_proj": [8, 4],
-      "0/mlp.experts.up_proj": [8, 4],
-      "0/mlp.experts.down_proj": [4, 8],
-      "1/mlp.experts.gate_proj": [8, 4],
-      "1/mlp.experts.up_proj": [8, 4],
-      "1/mlp.experts.down_proj": [4, 8],
       "0/self_attn.q_proj": [6, 4],
       "0/self_attn.k_proj": [6, 4],
       "0/self_attn.v_proj": [6, 4],

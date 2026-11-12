@@ -45,7 +45,6 @@ describe("training admission", () => {
     activeRun: vi.fn(),
     lastSuccessfulCutoff: vi.fn(),
     modelNameProblem: vi.fn(),
-    claimModelName: vi.fn(),
   };
   let row: Context;
 
@@ -93,19 +92,15 @@ describe("training admission", () => {
     },
   );
 
-  it("claims the model name only once admitted, and not when another workspace has it", async () => {
-    await prepareTraining(database, content, row.task.id, "manual", null);
-    expect(records.claimModelName).toHaveBeenCalledWith(row.task.id);
-
-    records.claimModelName.mockClear();
+  it("refuses a name another workspace in the organization uses as a model", async () => {
     records.modelNameProblem.mockResolvedValue("taken");
+
     await expect(
       prepareTraining(database, content, row.task.id, "manual", null),
     ).rejects.toMatchObject({
       code: "training_not_configured",
       message: "taken",
     });
-    expect(records.claimModelName).not.toHaveBeenCalled();
   });
 
   it("rejects an active run before reading trace storage", async () => {

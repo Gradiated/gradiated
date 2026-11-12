@@ -83,7 +83,7 @@ export const SlugSetting = ({
           !canEdit || save.isPending || invalid !== null || value === savedSlug
         }
       >
-        {save.isPending ? "Saving…" : "Save changes"}
+        {save.isPending ? "Saving…" : "Save slug"}
       </Button>
     </form>
   );

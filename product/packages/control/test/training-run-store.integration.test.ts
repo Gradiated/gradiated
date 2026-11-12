@@ -3,6 +3,7 @@ import type { RunDatasetSummary, RunEvaluation } from "@gradiated/contracts";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
+  tasks,
   trainingRuns,
   trainingRunEvents,
   taskVersions,
@@ -46,6 +47,22 @@ describe("transactional training run store", () => {
         base_model_id: qwen.id,
       }),
     ).resolves.toMatchObject({ baseModelId: qwen.id });
+  });
+
+  it("claims the task's model name when a run is created", async () => {
+    const own = await seedTrainingTask(db.database);
+    const claimed = async () =>
+      (
+        await db.database
+          .select({ organizationId: tasks.organizationId })
+          .from(tasks)
+          .where(eq(tasks.id, own.task.id))
+      )[0]!.organizationId;
+    expect(await claimed()).toBeNull();
+
+    await createTrainingRunStore(db.database).create(randomUUID(), own.input);
+
+    expect(await claimed()).toBe(own.organizationId);
   });
 
   it("validates and deduplicates trainer observations while rejecting lifecycle events", async () => {

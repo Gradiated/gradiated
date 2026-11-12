@@ -144,10 +144,7 @@ test("admins change the organization slug and see conflicts in the form", async 
   const { organization } = await setup(page);
   await page.goto("/settings/organization");
   const slugInput = page.getByRole("textbox", { name: "Organization slug" });
-  const saveSlug = page
-    .locator("form")
-    .filter({ has: slugInput })
-    .getByRole("button", { name: "Save changes" });
+  const saveSlug = page.getByRole("button", { name: "Save slug" });
   await expect(slugInput).toHaveValue("example");
   await expect(page.getByText("example/support-triage")).toBeVisible();
 

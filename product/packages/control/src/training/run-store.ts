@@ -37,6 +37,7 @@ import {
   VersionInsertSchema,
   EventInsertSchema,
 } from "./records.js";
+import { claimModelName } from "./model-names.js";
 
 type Transaction = Parameters<Parameters<ControlDatabase["transaction"]>[0]>[0];
 
@@ -109,6 +110,8 @@ export const createTrainingRunStore = (database: ControlDatabase) => ({
       if (!created) return Boolean(await lockRun(tx, runId));
 
       RunRecordSchema.parse(created);
+      // The name becomes a model name only once a run exists.
+      await claimModelName(tx, input.taskId);
 
       await insertEvents(tx, runId, [
         {

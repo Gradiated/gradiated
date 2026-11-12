@@ -41,7 +41,7 @@ import {
   EventRecordSchema,
   TaskUpdateSchema,
 } from "./records.js";
-import { claimModelName, modelNameProblem } from "./model-names.js";
+import { modelNameProblem } from "./model-names.js";
 
 const RunViewSchema = RunRecordSchema.extend({
   task: TaskSchema.shape.name,
@@ -104,8 +104,6 @@ export const createTrainingStore = (database: ControlDatabase) => {
 
     modelNameProblem: (workspaceId: string, name: string) =>
       modelNameProblem(database, workspaceId, name),
-
-    claimModelName: (taskId: string) => claimModelName(database, taskId),
 
     async getTaskById(workspaceId: string, taskId: string) {
       const [row] = await database

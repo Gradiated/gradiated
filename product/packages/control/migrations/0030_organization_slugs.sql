@@ -32,7 +32,8 @@ ALTER TABLE "tasks" ADD CONSTRAINT "tasks_organization_workspace_fk" FOREIGN KEY
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_model_name_check" CHECK ("tasks"."organization_id" is null or (strpos("tasks"."name", '/') = 0 and char_length("tasks"."name") <= 128));--> statement-breakpoint
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_organization_name_unique" UNIQUE("organization_id","name");--> statement-breakpoint
 -- Tasks that have trained or uploaded already claim their names. Where one name
--- is a model in several workspaces of an organization, the oldest keeps it.
+-- is used in several workspaces of an organization, a task with a published
+-- version wins over one that only has runs, then the oldest.
 UPDATE "tasks" SET "organization_id" = "claimed"."organization_id"
 FROM (
   SELECT DISTINCT ON ("workspaces"."organization_id", "tasks"."name") "tasks"."id", "workspaces"."organization_id"
@@ -42,7 +43,9 @@ FROM (
     AND char_length("tasks"."name") <= 128
     AND (EXISTS (SELECT 1 FROM "task_versions" WHERE "task_versions"."task_id" = "tasks"."id")
       OR EXISTS (SELECT 1 FROM "training_runs" WHERE "training_runs"."task_id" = "tasks"."id"))
-  ORDER BY "workspaces"."organization_id", "tasks"."name", "tasks"."created_at", "tasks"."id"
+  ORDER BY "workspaces"."organization_id", "tasks"."name",
+    EXISTS (SELECT 1 FROM "task_versions" WHERE "task_versions"."task_id" = "tasks"."id") DESC,
+    "tasks"."created_at", "tasks"."id"
 ) "claimed"
 WHERE "tasks"."id" = "claimed"."id";--> statement-breakpoint
 ALTER TABLE "task_versions" DROP CONSTRAINT "task_versions_workspace_name_unique";--> statement-breakpoint

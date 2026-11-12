@@ -86,7 +86,6 @@ export const prepareTraining = async (
   const problem = await records.modelNameProblem(workspace.id, task.name);
   if (problem)
     throw new TrainingAdmissionError("training_not_configured", problem);
-  await records.claimModelName(task.id);
 
   return {
     taskId,

@@ -205,7 +205,7 @@ export const ReviewStep = ({
 }) => (
   <FieldGroup>
     <StepTitle title="Let’s get to work">
-      Your engineer will pick this up async.
+      Your post-training researcher will pick this up async.
     </StepTitle>
     <div className="flex items-center justify-between gap-3">
       <h2 className="font-semibold">{account.company} × Gradiated</h2>

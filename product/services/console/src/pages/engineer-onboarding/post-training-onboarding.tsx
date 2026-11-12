@@ -370,7 +370,7 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
     return (
       <AuthCard className="max-w-xl">
         <div className="flex flex-col gap-6 p-6 md:p-9">
-          <StepTitle title="Let’s get you set up with a forward deployed engineer">
+          <StepTitle title="Let’s get you set up with a post-training researcher">
             Self-serve. No sales call.
           </StepTitle>
           <p className="text-sm leading-6">
@@ -387,7 +387,7 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
           >
             Get started <ArrowRight />
           </Button>
-          <OnboardingHelp step="Get an engineer" />
+          <OnboardingHelp step="Get a researcher" />
         </div>
       </AuthCard>
     );

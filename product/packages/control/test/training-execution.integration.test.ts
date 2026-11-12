@@ -44,7 +44,6 @@ describe("training execution", () => {
     const taskId = randomUUID();
     await db.database.insert(tasks).values({
       id: taskId,
-      organizationId: member.organizationId,
       workspaceId: member.workspaceId,
       name: "task",
       baseModelId,

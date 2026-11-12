@@ -435,7 +435,7 @@ describe("model uploads", () => {
       service.complete(member.userId, member.workspaceId, upload.id),
     ).rejects.toThrow("expired");
   });
-  it("keeps task names unique across an organization and version names within a task", async () => {
+  it("keeps model names unique across an organization and version names within a model", async () => {
     const { member, stage, service, body, objects, files } = await setup();
     await service.complete(
       member.userId,
@@ -445,6 +445,18 @@ describe("model uploads", () => {
     const workspaceId = await seedWorkspace(db.database, {
       organizationId: member.organizationId,
     });
+    const traceTask = async (name: string) =>
+      (
+        await db.database
+          .insert(tasks)
+          .values({
+            id: randomUUID(),
+            workspaceId,
+            name,
+            baseModelId: body.base_model_id,
+          })
+          .returning()
+      )[0]!;
 
     await expect(
       service.create(member.userId, workspaceId, {
@@ -452,19 +464,16 @@ describe("model uploads", () => {
         create_task: true,
       }),
     ).rejects.toMatchObject({ code: "conflict" });
-    const [task] = await db.database
-      .insert(tasks)
-      .values({
-        id: randomUUID(),
-        organizationId: member.organizationId,
-        workspaceId,
-        name: "other-task",
-        baseModelId: body.base_model_id,
-      })
-      .returning();
+    // Trace labels register tasks per workspace; only a model claims the name.
+    await traceTask(body.task);
+    await expect(
+      service.create(member.userId, workspaceId, body),
+    ).rejects.toMatchObject({ code: "conflict" });
+
+    const other = await traceTask("other-task");
     const upload = await service.create(member.userId, workspaceId, {
       ...body,
-      task: task!.name,
+      task: other.name,
     });
     objects.set(`uploads/${upload.id}/adapter_config.json`, files.config);
     objects.set(
@@ -477,6 +486,11 @@ describe("model uploads", () => {
       upload.id,
     );
     expect(version.version.name).toBe(body.name);
+    const [claimed] = await db.database
+      .select({ organizationId: tasks.modelOrganizationId })
+      .from(tasks)
+      .where(eq(tasks.id, other.id));
+    expect(claimed?.organizationId).toBe(member.organizationId);
   });
   it("rejects duplicate task and version names and cleans abandoned artifacts", async () => {
     const { member, stage, service, body, objects } = await setup();

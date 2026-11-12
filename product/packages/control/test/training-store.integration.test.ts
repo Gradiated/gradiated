@@ -115,12 +115,7 @@ describe("training record store", () => {
     });
     const [empty] = await db.database
       .insert(tasks)
-      .values({
-        id: randomUUID(),
-        organizationId: own.organizationId,
-        workspaceId: own.workspaceId,
-        name: "empty",
-      })
+      .values({ id: randomUUID(), workspaceId: own.workspaceId, name: "empty" })
       .returning();
 
     const listed = await createTrainingStore(db.database).listTasks(

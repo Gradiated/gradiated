@@ -1557,7 +1557,7 @@ export interface components {
       /** @description Whether the owner has finished first-run setup. */
       onboarding_completed: boolean;
     };
-    /** @description Unique organization handle that prefixes its private model names, as in `acme/support-triage`. It can change; requests must then use the new prefix. */
+    /** @description Unique organization handle that prefixes its private model names, as in `acme/support-triage`. It can change; names under its earlier slugs keep working. */
     OrganizationSlug: string;
     /** @enum {string} */
     OrganizationRole: "admin" | "member";

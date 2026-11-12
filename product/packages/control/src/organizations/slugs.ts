@@ -4,7 +4,7 @@ import { z } from "zod";
 import { OrganizationSlugSchema } from "@gradiated/contracts";
 import type { ControlDatabase } from "../db/client.js";
 import { models, organizationSlugs } from "../db/schema/index.js";
-import { ControlServiceError } from "../errors.js";
+import { ControlServiceError, violatesConstraint } from "../errors.js";
 
 type Transaction = Parameters<Parameters<ControlDatabase["transaction"]>[0]>[0];
 type Database = ControlDatabase | Transaction;
@@ -132,19 +132,5 @@ export const setCurrentOrganizationSlug = async (
       .values(SlugRowSchema.parse({ slug, organizationId, isCurrent: true }));
 };
 
-export const isTakenOrganizationSlug = (error: unknown): boolean => {
-  if (!error || typeof error !== "object") return false;
-  if (
-    "code" in error &&
-    error.code === "23505" &&
-    "constraint" in error &&
-    error.constraint === "organization_slugs_pkey"
-  )
-    return true;
-
-  return (
-    "cause" in error &&
-    error.cause !== error &&
-    isTakenOrganizationSlug(error.cause)
-  );
-};
+export const isTakenOrganizationSlug = (error: unknown) =>
+  violatesConstraint(error, "organization_slugs_pkey");

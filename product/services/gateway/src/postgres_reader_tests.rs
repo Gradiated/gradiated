@@ -145,7 +145,7 @@ impl Tenant {
         let version = Uuid::now_v7();
         client
             .execute(
-                "insert into tasks (id, organization_id, workspace_id, name, base_model_id) values ($1, $2, $3, $4, $5)",
+                "insert into tasks (id, model_organization_id, workspace_id, name, base_model_id) values ($1, $2, $3, $4, $5)",
                 &[&task, &self.organization_id, &self.workspace_id, &task_name, &self.model_id],
             )
             .await
@@ -670,6 +670,30 @@ async fn adapter_query_requires_the_organization_slug() {
             "{name}"
         );
     }
+    owner.remove(&reader).await;
+}
+
+#[tokio::test]
+#[ignore = "requires migrated PostgreSQL; GATEWAY_TEST_DATABASE_URL selects a disposable database"]
+async fn adapter_query_requires_a_claimed_model_name() {
+    let reader = local_reader();
+    let owner = Tenant::insert(&reader).await;
+    let (task, _) = owner.adapter(&reader, "task", "version").await;
+    let client = reader.client().await.unwrap();
+    client
+        .execute(
+            "update tasks set model_organization_id = null where id = $1",
+            &[&task],
+        )
+        .await
+        .unwrap();
+    assert_eq!(
+        reader
+            .private_adapter_json(owner.workspace_id, &owner.name("task/version"))
+            .await
+            .unwrap(),
+        None
+    );
     owner.remove(&reader).await;
 }
 

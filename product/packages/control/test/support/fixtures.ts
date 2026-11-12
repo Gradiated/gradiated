@@ -5,7 +5,7 @@ import type {
   ModelPropertiesInput,
 } from "@gradiated/contracts";
 
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 import type { CatalogService } from "../../src/catalog/service.js";
 import type { ControlDatabase } from "../../src/db/client.js";
@@ -105,10 +105,6 @@ export const ledgerRows = (database: ControlDatabase, organizationId: string) =>
     .from(balanceTransactions)
     .where(eq(balanceTransactions.organizationId, organizationId))
     .orderBy(asc(balanceTransactions.createdAt), asc(balanceTransactions.id));
-
-/** The organization of a workspace, for task and version rows in tests. */
-export const workspaceOrganization = (workspaceId: string) =>
-  sql<string>`(select ${workspaces.organizationId} from ${workspaces} where ${workspaces.id} = ${workspaceId})`;
 
 export const seedWorkspace = async (
   database: ControlDatabase,

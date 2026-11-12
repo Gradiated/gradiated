@@ -11,7 +11,7 @@ const timestamps = { createdAt: z.date(), updatedAt: z.date() };
 
 export const TaskRecordSchema = z.object({
   id: TaskSchema.shape.id,
-  organizationId: UuidSchema,
+  modelOrganizationId: UuidSchema.nullable(),
   workspaceId: UuidSchema,
   name: TaskSchema.shape.name,
   baseModelId: TaskSchema.shape.base_model_id,

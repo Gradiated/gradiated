@@ -41,6 +41,7 @@ import {
   EventRecordSchema,
   TaskUpdateSchema,
 } from "./records.js";
+import { claimModelName, modelNameProblem } from "./model-names.js";
 
 const RunViewSchema = RunRecordSchema.extend({
   task: TaskSchema.shape.name,
@@ -101,25 +102,10 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return row && TaskRecordSchema.parse(row);
     },
 
-    /** Whether any workspace of this workspace's organization has the task name. */
-    async organizationUsesTaskName(workspaceId: string, name: string) {
-      const [row] = await database
-        .select({ id: tasks.id })
-        .from(tasks)
-        .innerJoin(
-          workspaces,
-          eq(workspaces.organizationId, tasks.organizationId),
-        )
-        .where(
-          and(
-            eq(workspaces.id, UuidSchema.parse(workspaceId)),
-            eq(tasks.name, name),
-          ),
-        )
-        .limit(1);
+    modelNameProblem: (workspaceId: string, name: string) =>
+      modelNameProblem(database, workspaceId, name),
 
-      return row !== undefined;
-    },
+    claimModelName: (taskId: string) => claimModelName(database, taskId),
 
     async getTaskById(workspaceId: string, taskId: string) {
       const [row] = await database
@@ -386,6 +372,8 @@ export const createTrainingStore = (database: ControlDatabase) => {
             eq(taskVersions.status, "available"),
             sql`coalesce(nullif(${taskVersions.adapter}->>'validated_base_model_revision', ''), ${taskVersions.adapter}->>'base_model_revision', '') <> ''`,
             sql`(${taskVersions.adapter}->>'size_bytes')::bigint > 0`,
+            // Only claimed model names can be called.
+            isNotNull(tasks.modelOrganizationId),
             isNull(workspaces.archivedAt),
             eq(organizations.status, "active"),
           ),

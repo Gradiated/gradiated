@@ -19,11 +19,7 @@ import {
   taskVersions,
 } from "../src/db/schema/index.js";
 import { trainingAdapter } from "./support/training.js";
-import {
-  workspaceOrganization,
-  modelInput,
-  seedMember,
-} from "./support/fixtures.js";
+import { modelInput, seedMember } from "./support/fixtures.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 
 describe("catalog apply", () => {
@@ -136,7 +132,6 @@ describe("catalog apply", () => {
       const taskId = randomUUID();
       await testDatabase.database.insert(tasks).values({
         id: taskId,
-        organizationId: workspaceOrganization(workspaceId),
         workspaceId,
         name: "Rename migration",
         baseModelId: "z-ai/glm-5.3-flash",

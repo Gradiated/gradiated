@@ -33,12 +33,24 @@ BEGIN
     INSERT INTO organization_slugs (slug, organization_id, is_current) VALUES (candidate, organization.id, true);
   END LOOP;
 END $$;--> statement-breakpoint
-ALTER TABLE "tasks" ADD COLUMN "organization_id" uuid;--> statement-breakpoint
-UPDATE "tasks" SET "organization_id" = "workspaces"."organization_id" FROM "workspaces" WHERE "workspaces"."id" = "tasks"."workspace_id";--> statement-breakpoint
-ALTER TABLE "tasks" ALTER COLUMN "organization_id" SET NOT NULL;--> statement-breakpoint
-ALTER TABLE "tasks" ADD CONSTRAINT "tasks_organization_workspace_fk" FOREIGN KEY ("organization_id","workspace_id") REFERENCES "public"."workspaces"("organization_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
--- Fails if an organization has one task name in two workspaces; rename one first.
-ALTER TABLE "tasks" ADD CONSTRAINT "tasks_organization_name_unique" UNIQUE("organization_id","name");--> statement-breakpoint
+ALTER TABLE "tasks" ADD COLUMN "model_organization_id" uuid;--> statement-breakpoint
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_model_organization_workspace_fk" FOREIGN KEY ("model_organization_id","workspace_id") REFERENCES "public"."workspaces"("organization_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_model_name_check" CHECK ("tasks"."model_organization_id" is null or (strpos("tasks"."name", '/') = 0 and char_length("tasks"."name") <= 128));--> statement-breakpoint
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_model_name_unique" UNIQUE("model_organization_id","name");--> statement-breakpoint
+-- Tasks that have trained or uploaded already claim their names. Where one name
+-- is a model in several workspaces of an organization, the oldest keeps it.
+UPDATE "tasks" SET "model_organization_id" = "claimed"."organization_id"
+FROM (
+  SELECT DISTINCT ON ("workspaces"."organization_id", "tasks"."name") "tasks"."id", "workspaces"."organization_id"
+  FROM "tasks"
+  JOIN "workspaces" ON "workspaces"."id" = "tasks"."workspace_id"
+  WHERE strpos("tasks"."name", '/') = 0
+    AND char_length("tasks"."name") <= 128
+    AND (EXISTS (SELECT 1 FROM "task_versions" WHERE "task_versions"."task_id" = "tasks"."id")
+      OR EXISTS (SELECT 1 FROM "training_runs" WHERE "training_runs"."task_id" = "tasks"."id"))
+  ORDER BY "workspaces"."organization_id", "tasks"."name", "tasks"."created_at", "tasks"."id"
+) "claimed"
+WHERE "tasks"."id" = "claimed"."id";--> statement-breakpoint
 ALTER TABLE "task_versions" DROP CONSTRAINT "task_versions_workspace_name_unique";--> statement-breakpoint
 -- Trained versions named `<task>-<yyyymmdd>[-n]` become `<yyyy-mm-dd>[-n]` within their task.
 UPDATE "task_versions" SET "name" = regexp_replace(substr("task_versions"."name", length("tasks"."name") + 2), '^([0-9]{4})([0-9]{2})([0-9]{2})', '\1-\2-\3')
@@ -47,7 +59,4 @@ WHERE "tasks"."id" = "task_versions"."task_id"
   AND "task_versions"."training_run_id" IS NOT NULL
   AND left("task_versions"."name", length("tasks"."name") + 1) = "tasks"."name" || '-'
   AND substr("task_versions"."name", length("tasks"."name") + 2) ~ '^[0-9]{8}(-[0-9]+)?$';--> statement-breakpoint
-ALTER TABLE "task_versions" ADD CONSTRAINT "task_versions_task_name_unique" UNIQUE("task_id","name");--> statement-breakpoint
--- NOT VALID: trace-registered task names with `/` or over 128 characters may already exist.
-ALTER TABLE "task_versions" ADD CONSTRAINT "task_versions_name_segment_check" CHECK (strpos("task_versions"."name", '/') = 0 and char_length("task_versions"."name") <= 128) NOT VALID;--> statement-breakpoint
-ALTER TABLE "tasks" ADD CONSTRAINT "tasks_name_segment_check" CHECK (strpos("tasks"."name", '/') = 0 and char_length("tasks"."name") <= 128) NOT VALID;
+ALTER TABLE "task_versions" ADD CONSTRAINT "task_versions_task_name_unique" UNIQUE("task_id","name");

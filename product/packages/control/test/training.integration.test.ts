@@ -26,11 +26,7 @@ import {
 import { traceTaskKey } from "../src/traces/content.js";
 import { createTrainingService } from "../src/training/service.js";
 import { createMemoryContentStore } from "./support/content-store.js";
-import {
-  workspaceOrganization,
-  modelInput,
-  seedMember,
-} from "./support/fixtures.js";
+import { modelInput, seedMember } from "./support/fixtures.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 
 const sha = "a".repeat(64);
@@ -87,12 +83,7 @@ describe("training service", () => {
   const seedTask = async (workspaceId: string, name = "support-triage") => {
     const [task] = await db.database
       .insert(tasks)
-      .values({
-        id: uuidv7(),
-        organizationId: workspaceOrganization(workspaceId),
-        workspaceId,
-        name,
-      })
+      .values({ id: uuidv7(), workspaceId, name })
       .returning();
     return task!;
   };

@@ -18,11 +18,11 @@ const CACHE_TTL: Duration = Duration::from_secs(3600);
 const DATABASE_TIMEOUT: Duration = Duration::from_secs(2);
 const RETRY: Duration = Duration::from_secs(60);
 const INSERT_TASK: &str =
-    "INSERT INTO tasks (id, organization_id, workspace_id, name, judge_model_id, base_model_id) \
-    SELECT $1, organization_id, id, $3, default_judge_model, \
+    "INSERT INTO tasks (id, workspace_id, name, judge_model_id, base_model_id) \
+    SELECT $1, id, $3, default_judge_model, \
     (SELECT id FROM models WHERE id = 'z-ai/glm-5.3-flash') \
     FROM workspaces WHERE id = $2 \
-    ON CONFLICT DO NOTHING";
+    ON CONFLICT (workspace_id, name) DO NOTHING";
 
 #[derive(Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 struct Task {
@@ -57,12 +57,7 @@ impl TaskService {
     }
 
     pub fn enqueue(&self, workspace_id: Uuid, name: &str) -> io::Result<()> {
-        // A task name is one segment of `<organization slug>/<task>/<version>`.
-        if name.is_empty()
-            || matches!(name, "." | "..")
-            || name.contains('/')
-            || name.chars().count() > 128
-        {
+        if name.is_empty() || matches!(name, "." | "..") {
             return Ok(());
         }
 

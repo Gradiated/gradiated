@@ -32,7 +32,7 @@ describe("private adapter hosting", () => {
       .insert(tasks)
       .values({
         id: uuidv7(),
-        organizationId: owner.organizationId,
+        modelOrganizationId: owner.organizationId,
         workspaceId: owner.workspaceId,
         name: "triage",
       })
@@ -152,6 +152,21 @@ describe("private adapter hosting", () => {
       expect(sign).not.toHaveBeenCalled();
     },
   );
+
+  it("leaves tasks without a claimed model name out of startup", async () => {
+    const { task, version } = await seed();
+    await promote(task.id, version.id);
+    await db.database
+      .update(tasks)
+      .set({ modelOrganizationId: null })
+      .where(eq(tasks.id, task.id));
+
+    expect(
+      await service().hosting.productionVersions(baseModelId),
+    ).not.toContainEqual(
+      expect.objectContaining({ workspace_id: version.workspaceId }),
+    );
+  });
 
   it.each(["revision", "archive"] as const)(
     "rejects a missing %s without signing",

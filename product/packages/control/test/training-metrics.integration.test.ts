@@ -21,12 +21,9 @@ it("measures live capacity waits and completed stage duration from persisted eve
   const model = modelInput();
   await createCatalogService(db.database).upsertModel(model);
   const taskId = randomUUID();
-  await db.database.insert(tasks).values({
-    id: taskId,
-    organizationId: member.organizationId,
-    workspaceId: member.workspaceId,
-    name: "metrics",
-  });
+  await db.database
+    .insert(tasks)
+    .values({ id: taskId, workspaceId: member.workspaceId, name: "metrics" });
   const now = Date.now();
   const at = (seconds: number) => new Date(now - seconds * 1000);
   const pending = randomUUID();

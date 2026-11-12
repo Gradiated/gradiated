@@ -18,7 +18,7 @@ type Context = NonNullable<
 const context = (): Context => ({
   task: {
     id: randomUUID(),
-    organizationId: randomUUID(),
+    modelOrganizationId: null,
     workspaceId: randomUUID(),
     name: "triage",
     baseModelId: "test/base",
@@ -44,6 +44,8 @@ describe("training admission", () => {
     admissionContext: vi.fn(),
     activeRun: vi.fn(),
     lastSuccessfulCutoff: vi.fn(),
+    modelNameProblem: vi.fn(),
+    claimModelName: vi.fn(),
   };
   let row: Context;
 
@@ -90,6 +92,21 @@ describe("training admission", () => {
       expect(countTrainingTraces).not.toHaveBeenCalled();
     },
   );
+
+  it("claims the model name only once admitted, and not when another workspace has it", async () => {
+    await prepareTraining(database, content, row.task.id, "manual", null);
+    expect(records.claimModelName).toHaveBeenCalledWith(row.task.id);
+
+    records.claimModelName.mockClear();
+    records.modelNameProblem.mockResolvedValue("taken");
+    await expect(
+      prepareTraining(database, content, row.task.id, "manual", null),
+    ).rejects.toMatchObject({
+      code: "training_not_configured",
+      message: "taken",
+    });
+    expect(records.claimModelName).not.toHaveBeenCalled();
+  });
 
   it("rejects an active run before reading trace storage", async () => {
     records.activeRun.mockResolvedValue({ id: randomUUID() });

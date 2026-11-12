@@ -1,5 +1,5 @@
 {
-  "id": "d8db5649-362a-4199-9f94-14a5533f09e0",
+  "id": "f0485b5d-8029-43b2-921e-7f1ef04217bd",
   "prevId": "923e1227-faef-4afb-973f-05fe19a28ee3",
   "version": "7",
   "dialect": "postgresql",
@@ -2323,10 +2323,6 @@
         "task_versions_status_check": {
           "name": "task_versions_status_check",
           "value": "\"task_versions\".\"status\" in ('available', 'unavailable')"
-        },
-        "task_versions_name_segment_check": {
-          "name": "task_versions_name_segment_check",
-          "value": "strpos(\"task_versions\".\"name\", '/') = 0 and char_length(\"task_versions\".\"name\") <= 128"
         }
       },
       "isRLSEnabled": false
@@ -2341,11 +2337,11 @@
           "primaryKey": true,
           "notNull": true
         },
-        "organization_id": {
-          "name": "organization_id",
+        "model_organization_id": {
+          "name": "model_organization_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "workspace_id": {
           "name": "workspace_id",
@@ -2436,11 +2432,11 @@
           "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "tasks_organization_workspace_fk": {
-          "name": "tasks_organization_workspace_fk",
+        "tasks_model_organization_workspace_fk": {
+          "name": "tasks_model_organization_workspace_fk",
           "tableFrom": "tasks",
           "tableTo": "workspaces",
-          "columnsFrom": ["organization_id", "workspace_id"],
+          "columnsFrom": ["model_organization_id", "workspace_id"],
           "columnsTo": ["organization_id", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -2448,10 +2444,10 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "tasks_organization_name_unique": {
-          "name": "tasks_organization_name_unique",
+        "tasks_model_name_unique": {
+          "name": "tasks_model_name_unique",
           "nullsNotDistinct": false,
-          "columns": ["organization_id", "name"]
+          "columns": ["model_organization_id", "name"]
         },
         "tasks_workspace_name_unique": {
           "name": "tasks_workspace_name_unique",
@@ -2470,9 +2466,9 @@
           "name": "tasks_name_routable_check",
           "value": "\"tasks\".\"name\" not in ('.', '..')"
         },
-        "tasks_name_segment_check": {
-          "name": "tasks_name_segment_check",
-          "value": "strpos(\"tasks\".\"name\", '/') = 0 and char_length(\"tasks\".\"name\") <= 128"
+        "tasks_model_name_check": {
+          "name": "tasks_model_name_check",
+          "value": "\"tasks\".\"model_organization_id\" is null or (strpos(\"tasks\".\"name\", '/') = 0 and char_length(\"tasks\".\"name\") <= 128)"
         }
       },
       "isRLSEnabled": false

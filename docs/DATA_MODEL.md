@@ -827,15 +827,10 @@ URLs remain intact.
 
 ## Task training
 
-Migration 0008 adds workspace-owned `tasks`. Migration 0030 adds
-`organization_id`, with a composite foreign key to the workspace, and makes task
-names unique within the organization. Task names cannot be `.` or `..`, because
-task routes use the name as a URL path segment. New task and version names cannot
-contain `/` and are at most 128 characters, so a public name fits the gateway's
-300-character model ID. Older task names that break these rules, registered from
-trace labels, remain unvalidated and have no public model name. The collector registers a task when it accepts its first captured trace,
-using an idempotent insert keyed by workspace and task name; a label containing
-`/` or longer than 128 characters registers no task. PostgreSQL outages
+Migration 0008 adds workspace-owned `tasks`. Task names are unique within the
+workspace and cannot be `.` or `..`, because task routes use the name as a URL
+path segment. The collector registers a task when it accepts its first captured
+trace, using an idempotent insert keyed by workspace and task name. PostgreSQL outages
 do not block capture or uploads: pending registrations remain on local disk and
 retry in the background, including after process restart. A bounded one-hour
 in-memory cache avoids repeated writes for known tasks. Task listing reads
@@ -889,6 +884,19 @@ gateway resolves it within the calling key's workspace and accepts any slug the
 organization has held; responses and usage use the current slug. GPU runtimes
 name an adapter `<workspace_id>/<task>/<version>`, which does not change when the
 slug does.
+
+A task's name becomes a model name when the task first trains or takes an
+upload. Migration 0030 adds `tasks.model_organization_id`, set at that point to
+the workspace's organization, with a composite foreign key to the workspace and a
+unique `(model_organization_id, name)`. Model names are therefore unique across
+the organization, while trace labels still register tasks per workspace. A model
+name contains no `/` and has at most 128 characters, so the public name fits the
+gateway's 300-character model ID; a check enforces this only for claimed names.
+Training and uploads are refused when another workspace of the organization
+already has a model with the name. Only claimed tasks resolve at the gateway or
+load on GPU runtimes. The migration claims names for tasks that already trained
+or took an upload; where several workspaces of one organization share such a
+name, the oldest task keeps it.
 
 Private LoRA inference reuses `task_versions` for workspace ownership, immutable
 artifact URI/checksum/rank and durable serving eligibility. The existing

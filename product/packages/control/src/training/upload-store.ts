@@ -20,6 +20,7 @@ import {
   VersionInsertSchema,
   VersionRecordSchema,
 } from "./records.js";
+import { claimModelName } from "./model-names.js";
 
 const UploadSchema = z.object({
   id: UuidSchema,
@@ -104,10 +105,7 @@ export const createModelUploadStore = (database: ControlDatabase) => ({
 
       if (input.create_task) {
         const [workspace] = await tx
-          .select({
-            judge: workspaces.defaultJudgeModel,
-            organizationId: workspaces.organizationId,
-          })
+          .select({ judge: workspaces.defaultJudgeModel })
           .from(workspaces)
           .where(eq(workspaces.id, workspaceId));
         if (!workspace)
@@ -122,7 +120,7 @@ export const createModelUploadStore = (database: ControlDatabase) => ({
           .values(
             TaskRecordSchema.omit({ createdAt: true, updatedAt: true }).parse({
               id: uuidv7(),
-              organizationId: workspace.organizationId,
+              modelOrganizationId: null,
               workspaceId,
               name: input.task,
               baseModelId: input.base_model_id,
@@ -137,7 +135,7 @@ export const createModelUploadStore = (database: ControlDatabase) => ({
         if (!created)
           throw new ControlServiceError(
             "conflict",
-            "A model with this name already exists in this organization.",
+            "A task with this name already exists.",
           );
       }
       const [rawTask] = await tx
@@ -151,6 +149,7 @@ export const createModelUploadStore = (database: ControlDatabase) => ({
         throw new ControlServiceError("not_found", "The task was not found.");
 
       const task = TaskRecordSchema.parse(rawTask);
+      await claimModelName(tx, task.id);
       if (task.baseModelId !== input.base_model_id)
         throw new ControlServiceError(
           "conflict",
@@ -176,7 +175,7 @@ export const createModelUploadStore = (database: ControlDatabase) => ({
       if (!version)
         throw new ControlServiceError(
           "conflict",
-          "A model version with this name already exists in this organization. Choose another name.",
+          "This model already has a version with this name. Choose another name.",
         );
 
       await tx

@@ -1869,7 +1869,7 @@
       "OrganizationSlug": {
         "type": "string",
         "pattern": "^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$",
-        "description": "Unique organization handle that prefixes its private model names, as in `acme/support-triage`. It can change; requests must then use the new prefix."
+        "description": "Unique organization handle that prefixes its private model names, as in `acme/support-triage`. It can change; names under its earlier slugs keep working."
       },
       "OrganizationRole": {
         "type": "string",
@@ -2727,17 +2727,9 @@
         "type": "object",
         "properties": {
           "task": {
-            "allOf": [
-              {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 256
-              },
-              {
-                "type": "string",
-                "maxLength": 128
-              }
-            ]
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
           },
           "create_task": {
             "type": "boolean",

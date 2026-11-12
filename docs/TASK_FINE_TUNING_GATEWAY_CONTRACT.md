@@ -92,13 +92,13 @@ A Gradiated-only request cannot relay to a provider. Internal mode may use only 
 | Production | `<organization-slug>/<task-slug>` |
 | Exact version | `<organization-slug>/<task-slug>/<version>`; trained versions are `yyyy-mm-dd`, then `-2`, `-3`, … for further versions with that input cutoff day |
 | Organization slug | `^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$`; changeable; every slug the organization has held still resolves |
-| Task slug | No `/`, at most 128 characters; unique within the organization |
+| Task slug | No `/`, at most 128 characters; unique within the organization once the task trains or takes an upload |
 | Version name | No `/`, at most 128 characters; unique within the task |
 | Runtime name | `<workspace-id>/<task-slug>/<version>`; keys the adapter on GPU runtimes |
 
 Assign a version date and ordinal when publishing the model, under the task lock. A retry finds the model by its source run ID and returns the same name.
 
-Enforce unique `(organization_id, slug)` on tasks, unique `(task_id, name)` on versions and one published model per source run. Resolve names through these records and `organization_slugs`; there is no other name registry. A request's slug must belong to the calling workspace's organization, and the name resolves within that workspace. Responses and usage record the canonical name with the current slug. Failed runs that publish no model need no public name.
+Enforce unique `(model_organization_id, slug)` on tasks, unique `(task_id, name)` on versions and one published model per source run. Resolve names through these records and `organization_slugs`; there is no other name registry. A request's slug must belong to the calling workspace's organization, and the name resolves within that workspace. Responses and usage record the canonical name with the current slug. Failed runs that publish no model need no public name.
 
 Organization slugs may not equal the author segment of a hosted catalog id, so `<slug>/<task>` never shadows a catalog id; the gateway still rejects a name that matches both as ambiguous. Every cache, negative cache, token count, retry, listing and adapter request includes the workspace id.
 

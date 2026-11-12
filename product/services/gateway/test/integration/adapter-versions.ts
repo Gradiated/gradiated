@@ -44,7 +44,7 @@ export const version = async (
   const run = crypto.randomUUID();
   const sha256 = "a".repeat(64);
   await instance.database.query(
-    "insert into tasks (id, organization_id, workspace_id, name, base_model_id) values ($1, $2, $3, $4, $5) on conflict (id) do nothing",
+    "insert into tasks (id, model_organization_id, workspace_id, name, base_model_id) values ($1, $2, $3, $4, $5) on conflict (id) do nothing",
     [
       task,
       instance.organization,

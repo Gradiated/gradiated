@@ -1,4 +1,4 @@
-import { and, asc, eq, ne } from "drizzle-orm";
+import { and, asc, eq, ne, lt, or, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 import { v7 as uuidv7 } from "uuid";
 import {
@@ -10,6 +10,7 @@ import type { ControlDatabase } from "../db/client.js";
 import {
   TASK_VERSION_FILE_STATUSES,
   taskVersionFiles,
+  workspaces,
 } from "../db/schema/index.js";
 
 const VersionFileSchema = z.object({
@@ -80,11 +81,13 @@ export const createVersionFileStore = (database: ControlDatabase) => ({
 
     return rows.map((row) => VersionFileSchema.parse(row));
   },
-  // Publishes the file and returns any ready file it replaces under the same name.
   async complete(file: VersionFileRecord) {
     return database.transaction(async (tx) => {
       const replaced = await tx
-        .delete(taskVersionFiles)
+        .update(taskVersionFiles)
+        .set(
+          VersionFileSchema.pick({ status: true }).parse({ status: "deleted" }),
+        )
         .where(
           and(
             eq(taskVersionFiles.versionId, file.versionId),
@@ -96,7 +99,12 @@ export const createVersionFileStore = (database: ControlDatabase) => ({
         .returning();
       const [row] = await tx
         .update(taskVersionFiles)
-        .set({ status: "ready", completedAt: new Date() })
+        .set(
+          VersionFileSchema.pick({ status: true, completedAt: true }).parse({
+            status: "ready",
+            completedAt: new Date(),
+          }),
+        )
         .where(eq(taskVersionFiles.id, file.id))
         .returning();
 
@@ -105,6 +113,34 @@ export const createVersionFileStore = (database: ControlDatabase) => ({
         replaced: replaced.map((value) => VersionFileSchema.parse(value)),
       };
     });
+  },
+  async markDeleted(id: string) {
+    await database
+      .update(taskVersionFiles)
+      .set(
+        VersionFileSchema.pick({ status: true }).parse({ status: "deleted" }),
+      )
+      .where(eq(taskVersionFiles.id, UuidSchema.parse(id)));
+  },
+  async cleanupCandidate(before: Date) {
+    const [row] = await database
+      .select({ file: taskVersionFiles })
+      .from(taskVersionFiles)
+      .innerJoin(workspaces, eq(workspaces.id, taskVersionFiles.workspaceId))
+      .where(
+        and(
+          lt(taskVersionFiles.createdAt, before),
+          or(
+            isNotNull(workspaces.archivedAt),
+            eq(taskVersionFiles.status, "deleted"),
+            eq(taskVersionFiles.status, "pending"),
+          ),
+        ),
+      )
+      .orderBy(asc(taskVersionFiles.createdAt))
+      .limit(1);
+
+    return row ? VersionFileSchema.parse(row.file) : null;
   },
   async delete(id: string) {
     await database

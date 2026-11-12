@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import {
   CreateModelUploadSchema,
+  TRAINING_BASE_MODELS,
   MAX_UPLOADED_ADAPTER_RANK,
   type CreateModelUpload,
 } from "@gradiated/contracts";
@@ -10,7 +11,10 @@ import {
   catalogModel,
   type CatalogEntry,
 } from "@gradiated/contracts/model-catalog";
-import { requireWorkspaceEditor } from "../access.js";
+import {
+  requireWorkspaceEditor,
+  requireWorkspaceMembership,
+} from "../access.js";
 import type { ControlDatabase } from "../db/client.js";
 import { ControlServiceError } from "../errors.js";
 import type { ObjectStorage } from "../storage/object-storage.js";
@@ -61,6 +65,31 @@ export const createModelUploads = (
   };
 
   return {
+    async configuration(userId: string, workspaceId: string, modelId: string) {
+      const membership = await requireWorkspaceMembership(database, {
+        userId,
+        workspaceId,
+      });
+      if (membership.workspace.archivedAt)
+        throw new ControlServiceError(
+          "not_found",
+          "The workspace was not found.",
+        );
+
+      const model = await records.getModel(modelId);
+      const supported = (catalogModel(modelId) as CatalogEntry | undefined)
+        ?.training;
+      if (!model || !supported)
+        throw new ControlServiceError(
+          "not_found",
+          "No adapter validation profile exists for this model.",
+        );
+
+      return loadBaseConfiguration(
+        supported.model ?? model.properties.hugging_face_id ?? model.id,
+        supported.revision,
+      );
+    },
     async create(
       userId: string,
       workspaceId: string,
@@ -76,14 +105,35 @@ export const createModelUploads = (
           "The base model was not found.",
         );
 
+      if (
+        model.status !== "available" &&
+        !TRAINING_BASE_MODELS.some((base) => base.id === model.id)
+      )
+        throw new ControlServiceError(
+          "conflict",
+          "The base model is unavailable for training.",
+        );
+
       const task = await records.getTask(workspaceId, input.task);
       if (input.create_task && task)
         throw new ControlServiceError(
           "conflict",
           "A task with this name already exists. Upload a version from that task instead.",
         );
+      const problem = await records.modelNameProblem(workspaceId, input.task);
+      if (problem) throw new ControlServiceError("conflict", problem);
       if (!input.create_task && !task)
         throw new ControlServiceError("not_found", "The task was not found.");
+
+      if (
+        !input.create_task &&
+        task &&
+        task.baseModelId !== input.base_model_id
+      )
+        throw new ControlServiceError(
+          "conflict",
+          "The adapter base model must match the task base model.",
+        );
 
       const upload = await uploads.create(workspaceId, input);
       const prefix = `uploads/${upload.id}`;

@@ -24,6 +24,138 @@
       "original_sha256": "d6d037c09b3f1352171ac6256f9eb4788a5c8e4f949d9266502beca69f007282",
       "overlay_sha256": "3c71a5b522cd3d366c0fd15db04964208758763ce48d46a5659fe42a14a412bd",
       "patch": "glm5_next_mhc_prewarm.patch"
+    },
+    {
+      "path": "sglang/kernels/ops/attention/dsa/dequant_k_cache.py",
+      "original_sha256": "9e00dc31050c166d972660ad4955b8f8d8722b4224757bc2217338b3d5a45774",
+      "overlay_sha256": "8cc0d8026e7b289fc134ae62fa12d9fe3cc49016b7b55cb159ad57807e2be81d",
+      "patch": "h200-fp8-dequant_k_cache.patch"
+    },
+    {
+      "path": "sglang/srt/arg_groups/overrides.py",
+      "original_sha256": "ec3e99814a67dd82e9432c60e1427bfb99d95dd0c8afcdb526d3dee8ab93175a",
+      "overlay_sha256": "5e4609e0536e3dd44e587da350ad247e253585701c76ff2363781bc5be1f6eba",
+      "patch": "h200-fp8-overrides.patch"
+    },
+    {
+      "path": "sglang/srt/configs/model_config.py",
+      "original_sha256": "b3d56b879e291006028605133018506639b95f5e448871f588183cc65ad4b9f1",
+      "overlay_sha256": "f8cd02f4edf94585e47865dbc377acb930589883af559c740b14cb02eb865ae8",
+      "patch": "h200-fp8-model_config.patch"
+    },
+    {
+      "path": "sglang/srt/layers/attention/dsa/dsa_backend_kpool.py",
+      "original_sha256": "55dbd8d5fb432fb70443897cff066e4eb3a4d6b722e70ff78c5e4126272f059c",
+      "overlay_sha256": "d0738b03c0911148b3db995fe7cd7f0fb1248581cdb4098599cf21b8df138b76",
+      "patch": "h200-fp8-dsa_backend_kpool.patch"
+    },
+    {
+      "path": "sglang/srt/layers/attention/dsa_backend.py",
+      "original_sha256": "c89740cdfc2f7d32c132f3c5bec425ac5f04746aa98339b22ef1fa3c74e3169c",
+      "overlay_sha256": "25860d9546392eea2e2b948ed1ff0f706c1c76a312aee54ccb2b9e2d53dc1449",
+      "patch": "h200-fp8-dsa_backend.patch"
+    },
+    {
+      "path": "sglang/srt/mem_cache/kv_cache_configurator.py",
+      "original_sha256": "e20e551819b1fe94499d2eca85ad53ce47337ea1972f358fca230248bcb4cada",
+      "overlay_sha256": "8b6f81e31ccfc60dc06c1c33ad7314e8c5fb3d3e9508c36b8c88401927684714",
+      "patch": "h200-fp8-kv_cache_configurator.patch"
+    },
+    {
+      "path": "sglang/srt/managers/tokenizer_manager.py",
+      "original_sha256": "a284c62b5980b27d2bc5e2c13b90f702bc187ce9a69dcf33608c7c4e5e7fae8a",
+      "overlay_sha256": "4068aa12fd45ff432b2ac83f6faa018c49bd08a7b3e58164c277e1d77ad40ca8",
+      "patch": "lora_resolver_tokenizer_manager.patch"
+    },
+    {
+      "path": "sglang/srt/entrypoints/openai/serving_base.py",
+      "original_sha256": "6bc4a06b15dfb33fab941089efdb8517b1d00b059c34a4dfa225e081cef70442",
+      "overlay_sha256": "2133d5582ca39868a7568173c0d387db04fead3a218336d127968a8825a6047f",
+      "patch": "lora_resolver_serving_base.patch"
+    },
+    {
+      "path": "sglang/srt/models/glm5_next.py",
+      "original_sha256": "3c71a5b522cd3d366c0fd15db04964208758763ce48d46a5659fe42a14a412bd",
+      "overlay_sha256": "97d614986a23259dd0546300c15bdb97d403aebe54c2eeef4f041337ce25805c",
+      "patch": "glm5_next_lora_hidden_dim.patch"
+    },
+    {
+      "path": "sglang/srt/arg_groups/deepseek_v4_hook.py",
+      "original_sha256": "c9a17a64b61463317514a34274acc013f6607fc63413690e92118a8ff79420c1",
+      "overlay_sha256": "644ce1ca281386ee846c2cc8f46fb1a2d0b8aa7d817bb1d0c6b333a54098b07b",
+      "patch": "dsv4_lora_deepseek_v4_hook.patch"
+    },
+    {
+      "path": "sglang/srt/lora/backend/base_backend.py",
+      "original_sha256": "7bbc3129520988a73b0944e156a8f60606ba590542b6627f62d1a524a2a6aac8",
+      "overlay_sha256": "2ae6565b902563e83581cdb3512c84591967c1998da995efd14ecaca6ecd98bb",
+      "patch": "dsv4_lora_base_backend.patch"
+    },
+    {
+      "path": "sglang/srt/lora/backend/triton_backend.py",
+      "original_sha256": "294928ed60ea216f8f519ea3b9a64e36637cb200b0e5dfa77dfc562620f6ba67",
+      "overlay_sha256": "e640ff1c5ad66ada9ed8275025ce4e3eebd7cba42893b0cee41cd8335f3b266d",
+      "patch": "dsv4_lora_triton_backend.patch"
+    },
+    {
+      "path": "sglang/srt/lora/layers.py",
+      "original_sha256": "e99ad701df5e64f19720826a564cca4b1eff90308390123a920f347c79999a23",
+      "overlay_sha256": "515ea3b8efdb2f675a1b34432ded719700584bdaa532c59658bc86b4577c4f90",
+      "patch": "dsv4_lora_layers.patch"
+    },
+    {
+      "path": "sglang/srt/lora/lora_manager.py",
+      "original_sha256": "f98639739ee30eb2397b022b3e08d1cd8f23c3c34700d8e45cd858880e0d707d",
+      "overlay_sha256": "7850085959b4c580a0ed1f73a2bfda847ed3de05d5276760ea2a5fc150e3540b",
+      "patch": "dsv4_lora_lora_manager.patch"
+    },
+    {
+      "path": "sglang/srt/lora/mem_pool.py",
+      "original_sha256": "88ae59329cc033bd89fb9927329e1d699de2b6468e2a3b5106fb2b129cdd949a",
+      "overlay_sha256": "9e37d6ca2c20a4e1b2142167f8752533976646b6c8b96cf470c0a068953f5485",
+      "patch": "dsv4_lora_mem_pool.patch"
+    },
+    {
+      "path": "sglang/srt/lora/utils.py",
+      "original_sha256": "608b178b6762c4cfd9c1dfbc5826561de7114ee07b5e3f7964a0882558d886c8",
+      "overlay_sha256": "21442d1ea4d4b85fddf64c6ffdc69872a9a56862b5c099aacfa45d90db9ad3d8",
+      "patch": "dsv4_lora_lora_utils.patch"
+    },
+    {
+      "path": "sglang/srt/models/deepseek_v4.py",
+      "original_sha256": "8e2acf2aa143abfa76955508d5f01bb622274da9c1bee86cf228fcfb8532b73d",
+      "overlay_sha256": "dacc12ca7b9d4afeb6d3f23197a815b93333000c42e8a8bc70f5328f25f3ca72",
+      "patch": "dsv4_lora_deepseek_v4.patch"
+    },
+    {
+      "path": "sglang/srt/utils/common.py",
+      "original_sha256": "34dc280f0679c8355bbc6f0621c0ca0476c469c4bf98c9c8544c00bf54f10e54",
+      "overlay_sha256": "a102c601e006b657091e02d87ec176863bcc209f77c0ba82ca54a4b17fafff7e",
+      "patch": "dsv4_lora_common_srt.patch"
+    },
+    {
+      "path": "sglang/srt/mem_cache/unified_radix_cache.py",
+      "original_sha256": "949c17b911608f72d2748c04300f9c41cad2e9608af33f0ae1a8231ff72776e5",
+      "overlay_sha256": "56c7aff7ad2592db1268f55307f122ba0c0bbcf946c724e92fc62e1bcb341292",
+      "patch": "hicache_mamba_endpoint_backup.patch"
+    },
+    {
+      "path": "sglang/srt/mem_cache/unified_cache/components/mamba.py",
+      "original_sha256": "6f418ea23757d3e406f18f1990cb3b7b16b0dbd6c51ce80dbda5ea7ce225e08c",
+      "overlay_sha256": "6ba7af6d431c7ce13fcd9475428cbcb3ea44b9ebb1d3aa20eb2e570eedf62ea9",
+      "patch": "mamba_skip_exhausted_donation.patch"
+    },
+    {
+      "path": "sglang/srt/mem_cache/cpp_utils/native_hash.py",
+      "original_sha256": "7eb1968b63dd51fcb8952368e7be453e6cb04328651c3b0f7bf2e101777a15b1",
+      "overlay_sha256": "0e4b96a399136cb126ba42449cb2bf15f729a1ee939269ffee887c9568922edb",
+      "patch": "hicache_prebuilt_native_hash.patch"
+    },
+    {
+      "path": "sglang/srt/mem_cache/hicache_storage.py",
+      "original_sha256": "8122dcd8c12c9416f7b4329215df735f0d87809fe6065093c213df3df4744f34",
+      "overlay_sha256": "1e12d80b60b80a6b969558c2a10567b65fa5d39b63b9c16f1d8642978abc71fe",
+      "patch": "hicache_cp_slice_writer.patch"
     }
   ]
 }

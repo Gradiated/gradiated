@@ -1,0 +1,14 @@
+{
+  "tenant_id": "tenant-e00sqaj3jb9yskppq8",
+  "projects": {
+    "eu-west2": "project-e04xzzh5bc00wb1hnt2nnj",
+    "us-north1": "project-u02y4zt2ig00cszpskvt2x",
+    "us-central1": "project-u00cxzs2kc003f79bc8q92",
+    "uk-south1": "project-e03wg2jglc008fbrc2mdxf",
+    "uk-south2": "project-e05emxgdln003y9xqpge6x",
+    "eu-south1": "project-e07kkja7ma00s83h2ks0hh",
+    "eu-north1": "project-e00fawgppr00tk23765708",
+    "me-west1": "project-i00rgx42md00t25rm4kmc5",
+    "eu-west1": "project-e01tccwdpa00pdx8xc3h4v"
+  }
+}

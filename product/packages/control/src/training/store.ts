@@ -28,6 +28,7 @@ import {
   models,
   tasks,
   taskVersions,
+  taskVersionFiles,
   trainingRuns,
   trainingRunEvents,
   workspaces,
@@ -41,6 +42,7 @@ import {
   EventRecordSchema,
   TaskUpdateSchema,
 } from "./records.js";
+import { modelNameProblem } from "./model-names.js";
 
 const RunViewSchema = RunRecordSchema.extend({
   task: TaskSchema.shape.name,
@@ -100,6 +102,9 @@ export const createTrainingStore = (database: ControlDatabase) => {
 
       return row && TaskRecordSchema.parse(row);
     },
+
+    modelNameProblem: (workspaceId: string, name: string) =>
+      modelNameProblem(database, workspaceId, name),
 
     async getTaskById(workspaceId: string, taskId: string) {
       const [row] = await database
@@ -305,7 +310,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return row && VersionRecordSchema.parse(row);
     },
 
-    async getHostingVersion(workspaceId: string, versionName: string) {
+    async getHostingVersion(workspaceId: string, versionId: string) {
       const [row] = await database
         .select({ task: tasks, version: taskVersions })
         .from(taskVersions)
@@ -317,10 +322,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
         )
         .where(
           and(
-            eq(
-              taskVersions.name,
-              VersionRecordSchema.shape.name.parse(versionName),
-            ),
+            eq(taskVersions.id, UuidSchema.parse(versionId)),
             eq(tasks.workspaceId, UuidSchema.parse(workspaceId)),
             isNull(workspaces.archivedAt),
             eq(organizations.status, "active"),
@@ -358,8 +360,10 @@ export const createTrainingStore = (database: ControlDatabase) => {
               ModelSchema.shape.id.parse(baseModelId),
             ),
             eq(taskVersions.status, "available"),
-            sql`coalesce(${taskVersions.adapter}->>'base_model_revision', '') <> ''`,
+            sql`coalesce(nullif(${taskVersions.adapter}->>'validated_base_model_revision', ''), ${taskVersions.adapter}->>'base_model_revision', '') <> ''`,
             sql`(${taskVersions.adapter}->>'size_bytes')::bigint > 0`,
+            // Only claimed model names can be called.
+            isNotNull(tasks.organizationId),
             isNull(workspaces.archivedAt),
             eq(organizations.status, "active"),
           ),
@@ -493,6 +497,16 @@ export const createTrainingStore = (database: ControlDatabase) => {
         .where(
           and(
             inArray(tasks.workspaceId, archivedWorkspaceIds()),
+            notExists(
+              database
+                .select({ id: taskVersionFiles.id })
+                .from(taskVersionFiles)
+                .innerJoin(
+                  taskVersions,
+                  eq(taskVersions.id, taskVersionFiles.versionId),
+                )
+                .where(eq(taskVersions.taskId, tasks.id)),
+            ),
             or(
               lt(trainingRuns.finishedAt, finishedBefore),
               and(
@@ -520,6 +534,16 @@ export const createTrainingStore = (database: ControlDatabase) => {
         .where(
           and(
             inArray(tasks.workspaceId, archivedWorkspaceIds()),
+            notExists(
+              database
+                .select({ id: taskVersionFiles.id })
+                .from(taskVersionFiles)
+                .innerJoin(
+                  taskVersions,
+                  eq(taskVersions.id, taskVersionFiles.versionId),
+                )
+                .where(eq(taskVersions.taskId, tasks.id)),
+            ),
             notExists(
               database
                 .select({ id: trainingRuns.id })
@@ -552,6 +576,17 @@ export const createTrainingStore = (database: ControlDatabase) => {
           .where(eq(trainingRuns.taskId, taskId))
           .limit(1);
         if (run) return false;
+
+        const [file] = await tx
+          .select({ id: taskVersionFiles.id })
+          .from(taskVersionFiles)
+          .innerJoin(
+            taskVersions,
+            eq(taskVersions.id, taskVersionFiles.versionId),
+          )
+          .where(eq(taskVersions.taskId, taskId))
+          .limit(1);
+        if (file) return false;
 
         await tx.delete(tasks).where(eq(tasks.id, taskId));
         return true;

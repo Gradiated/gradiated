@@ -1,10 +1,11 @@
-import { Link } from "@tanstack/react-router";
 import { modelDisplayName } from "@gradiated/contracts/model-catalog";
 import { TrafficChart } from "./traffic-chart";
 import { ChevronDown, FlaskConical, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 
 import { UntrainedTaskState } from "@/components/fine-tuning/untrained-task-state";
+import { Link } from "@tanstack/react-router";
+import { usePrivateModelName } from "@/hooks/use-private-model-name";
 import { useTaskHistory } from "@/hooks/use-training";
 import { QueryState } from "./query-state";
 import {
@@ -154,63 +155,71 @@ const CurrentVersion = ({
   task: TaskRow;
   version: VersionView;
   onAction: (action: VersionAction) => void;
-}) => (
-  <section className="rounded-xl border bg-card shadow-sm">
-    <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="break-all font-mono text-lg font-semibold tracking-[-0.02em]">
-            {version.is_production ? task.name : version.name}
-          </h2>
-          {version.is_production ? (
-            <Badge className="bg-[#6e7f31] text-white hover:bg-[#6e7f31]">
-              Production
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="text-muted-foreground">
-              Not in production
-            </Badge>
-          )}
+}) => {
+  const modelName = usePrivateModelName();
+
+  return (
+    <section className="rounded-xl border bg-card shadow-sm">
+      <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="break-all font-mono text-lg font-semibold tracking-[-0.02em]">
+              {version.is_production
+                ? modelName(task.name)
+                : modelName(task.name, version.name)}
+            </h2>
+            {version.is_production ? (
+              <Badge className="bg-[#6e7f31] text-white hover:bg-[#6e7f31]">
+                Production
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-muted-foreground">
+                Not in production
+              </Badge>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {version.is_production ? (
+              <>
+                <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">
+                  {version.name}
+                </code>{" "}
+                ·{" "}
+              </>
+            ) : null}
+            <VersionMeta version={version} />
+          </p>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {version.is_production ? (
-            <>
-              <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">
-                {version.name}
-              </code>{" "}
-              ·{" "}
-            </>
-          ) : null}
-          <VersionMeta version={version} />
-        </p>
-      </div>
-      <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <Button size="sm" variant="outline" asChild>
-          <Link
-            to="/tasks/$taskId/versions/$versionId"
-            params={{ taskId: task.name, versionId: version.id }}
-          >
-            View report
-          </Link>
-        </Button>
-        {!version.is_production ? (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={version.status !== "available"}
-            onClick={() => onAction({ kind: "promote", versionId: version.id })}
-          >
-            Promote
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <Button size="sm" variant="outline" asChild>
+            <Link
+              to="/tasks/$taskId/versions/$versionId"
+              params={{ taskId: task.name, versionId: version.id }}
+            >
+              View report
+            </Link>
           </Button>
-        ) : null}
-        <VersionActionButtons version={version} onAction={onAction} />
+          {!version.is_production ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={version.status !== "available"}
+              onClick={() =>
+                onAction({ kind: "promote", versionId: version.id })
+              }
+            >
+              Promote
+            </Button>
+          ) : null}
+          <VersionActionButtons version={version} onAction={onAction} />
+        </div>
       </div>
-    </div>
-    <div className="border-t px-5 py-5">
-      <VersionEvaluation version={version} />
-    </div>
-  </section>
-);
+      <div className="border-t px-5 py-5">
+        <VersionEvaluation version={version} />
+      </div>
+    </section>
+  );
+};
 
 export const TaskModelTab = ({
   task,

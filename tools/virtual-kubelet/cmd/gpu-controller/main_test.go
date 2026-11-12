@@ -29,6 +29,19 @@ func testProvider(t *testing.T, handler http.HandlerFunc) *provider {
 	return &provider{host: host{Endpoint: server.URL, TokenFile: token}, fence: &hostFence{epoch: 7}, pods: map[string]*v1.Pod{}}
 }
 
+func TestStartupPartsFromARecoveryAgentAreEmptyButOutagesAreErrors(t *testing.T) {
+	status := http.StatusUnprocessableEntity
+	p := testProvider(t, func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(status) })
+	if parts, err := p.startupParts(context.Background()); err != nil || len(parts) != 0 {
+		t.Fatalf("recovery agent parts = %v, %v", parts, err)
+	}
+	for _, status = range []int{http.StatusServiceUnavailable, http.StatusForbidden, http.StatusTooManyRequests} {
+		if _, err := p.startupParts(context.Background()); err == nil {
+			t.Fatalf("a host answering %d reported no parts", status)
+		}
+	}
+}
+
 func TestOriginalPodPreventsResolvedCredentialTransfer(t *testing.T) {
 	calls := 0
 	p := testProvider(t, func(w http.ResponseWriter, r *http.Request) {

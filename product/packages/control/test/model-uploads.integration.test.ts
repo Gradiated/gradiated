@@ -1,13 +1,20 @@
+import { randomUUID } from "node:crypto";
 import { readFile, writeFile, stat } from "node:fs/promises";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { createModelUploads } from "../src/training/uploads.js";
 import { createTrainingStore } from "../src/training/store.js";
 import { createTrainingArtifactCleanup } from "../src/training/artifact-cleanup.js";
-import { modelUploads, workspaces } from "../src/db/schema/index.js";
+import {
+  modelUploads,
+  models,
+  tasks,
+  taskVersions,
+  workspaces,
+} from "../src/db/schema/index.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 import { seedTrainingTask } from "./support/training.js";
-import { seedMember } from "./support/fixtures.js";
+import { seedMember, seedWorkspace } from "./support/fixtures.js";
 import { adapterFiles } from "./support/adapter-upload.js";
 import type { BaseModelConfiguration } from "../src/training/base-model-configuration.js";
 import { createMemoryContentStore } from "./support/content-store.js";
@@ -100,6 +107,93 @@ describe("model uploads", () => {
       loadBaseConfiguration,
     };
   };
+  it("rejects a different base model when appending to a task", async () => {
+    const { member, body, service, storage } = await setup();
+    await db.database
+      .update(tasks)
+      .set({ baseModelId: null })
+      .where(eq(tasks.id, member.task.id));
+    await expect(
+      service.create(member.userId, member.workspaceId, body),
+    ).rejects.toThrow("must match");
+    expect(storage.signUpload).not.toHaveBeenCalled();
+  });
+  it.each(["unavailable", "retired"] as const)(
+    "rejects an %s non-training base before issuing grants",
+    async (status) => {
+      const { member, body, service, storage } = await setup();
+      const [original] = await db.database
+        .select()
+        .from(models)
+        .where(eq(models.id, body.base_model_id));
+      await db.database
+        .insert(models)
+        .values({ ...original!, id: `unsupported/${status}`, status })
+        .onConflictDoUpdate({ target: models.id, set: { status } });
+      await expect(
+        service.create(member.userId, member.workspaceId, {
+          ...body,
+          create_task: true,
+          task: "new-task",
+          base_model_id: `unsupported/${status}`,
+        }),
+      ).rejects.toThrow("unavailable");
+      expect(storage.signUpload).not.toHaveBeenCalled();
+    },
+  );
+  it("rejects a task base changed after granting the upload", async () => {
+    const { member, stage, service } = await setup();
+    const upload = await stage();
+    await db.database
+      .update(tasks)
+      .set({ baseModelId: null })
+      .where(eq(tasks.id, member.task.id));
+    await expect(
+      service.complete(member.userId, member.workspaceId, upload.id),
+    ).rejects.toThrow("must match");
+  });
+  it("exposes the immutable base configuration to workspace members", async () => {
+    const { member, body, service, loadBaseConfiguration } = await setup();
+    expect(
+      await service.configuration(
+        member.userId,
+        member.workspaceId,
+        body.base_model_id,
+      ),
+    ).toMatchObject({
+      layerCount: 1,
+      projectionShapes: { "0/self_attn.q_proj": [4, 4] },
+    });
+    expect(loadBaseConfiguration).toHaveBeenCalledWith(
+      body.base_model_id,
+      "c1899de289a04d12100db370d81485cdf75e47ca",
+    );
+  });
+  it("discovers promoted uploads with only a validated checkpoint revision", async () => {
+    const { member, stage, service } = await setup();
+    const upload = await stage();
+    const { version } = await service.complete(
+      member.userId,
+      member.workspaceId,
+      upload.id,
+    );
+    expect(version.adapter.base_model_revision).toBeUndefined();
+    await db.database
+      .update(taskVersions)
+      .set({ status: "available" })
+      .where(eq(taskVersions.id, version.id));
+    await db.database
+      .update(tasks)
+      .set({ productionVersionId: version.id })
+      .where(eq(tasks.id, member.task.id));
+    expect(
+      (
+        await createTrainingStore(db.database).listProductionVersions(
+          version.baseModelId,
+        )
+      ).map((v) => v.id),
+    ).toContain(version.id);
+  });
   it("publishes a private version without a training run and completes idempotently", async () => {
     const { member, stage, service, objects, storage } = await setup();
     const upload = await stage();
@@ -340,6 +434,63 @@ describe("model uploads", () => {
     await expect(
       service.complete(member.userId, member.workspaceId, upload.id),
     ).rejects.toThrow("expired");
+  });
+  it("keeps model names unique across an organization and version names within a model", async () => {
+    const { member, stage, service, body, objects, files } = await setup();
+    await service.complete(
+      member.userId,
+      member.workspaceId,
+      (await stage()).id,
+    );
+    const workspaceId = await seedWorkspace(db.database, {
+      organizationId: member.organizationId,
+    });
+    const traceTask = async (name: string) =>
+      (
+        await db.database
+          .insert(tasks)
+          .values({
+            id: randomUUID(),
+            workspaceId,
+            name,
+            baseModelId: body.base_model_id,
+          })
+          .returning()
+      )[0]!;
+
+    await expect(
+      service.create(member.userId, workspaceId, {
+        ...body,
+        create_task: true,
+      }),
+    ).rejects.toMatchObject({ code: "conflict" });
+    // Trace labels register tasks per workspace; only a model claims the name.
+    await traceTask(body.task);
+    await expect(
+      service.create(member.userId, workspaceId, body),
+    ).rejects.toMatchObject({ code: "conflict" });
+
+    const other = await traceTask("other-task");
+    const upload = await service.create(member.userId, workspaceId, {
+      ...body,
+      task: other.name,
+    });
+    objects.set(`uploads/${upload.id}/adapter_config.json`, files.config);
+    objects.set(
+      `uploads/${upload.id}/adapter_model.safetensors`,
+      files.weights,
+    );
+    const version = await service.complete(
+      member.userId,
+      workspaceId,
+      upload.id,
+    );
+    expect(version.version.name).toBe(body.name);
+    const [claimed] = await db.database
+      .select({ organizationId: tasks.organizationId })
+      .from(tasks)
+      .where(eq(tasks.id, other.id));
+    expect(claimed?.organizationId).toBe(member.organizationId);
   });
   it("rejects duplicate task and version names and cleans abandoned artifacts", async () => {
     const { member, stage, service, body, objects } = await setup();

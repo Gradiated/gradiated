@@ -1,10 +1,10 @@
-# The CPU build of the same vLLM production runs, with the test weights baked in,
-# for the gateway's real-runtime fidelity tests.
+# A CPU build of vLLM with the test weights baked in, for the gateway's
+# real-runtime fidelity tests.
 #
-# This is NOT a production image: production serves its models on GPU from the
-# RunPod scripts under infra/environments/prod/runpod. It exists so CI can exercise
-# the gateway against a real OpenAI-compatible server rather than our own mock, and
-# so a run never has to reach Hugging Face to do it.
+# This is NOT a production image: production serves every model on SGLang (and
+# Kev on its native runtime). vLLM is used here only because it ships a pinned CPU
+# build, so CI can exercise the gateway against a real OpenAI-compatible server
+# rather than our own mock, and a run never has to reach Hugging Face to do it.
 #
 # The base is pinned by digest and the weights by commit. A download pinned by
 # commit records no refs/main, and the caller serves the weights by name, so the

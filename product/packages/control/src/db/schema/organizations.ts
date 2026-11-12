@@ -80,6 +80,12 @@ export const organizations = pgTable(
     id: uuid("id").primaryKey(),
     kind: text("kind", { enum: ORGANIZATION_KINDS }).notNull(),
     name: text("name").notNull(),
+    // Prefixes private model names. New organizations start with a random
+    // placeholder and choose theirs in onboarding; it is fixed once they have a model.
+    slug: text("slug")
+      .notNull()
+      .unique("organizations_slug_unique")
+      .default(sql`left(md5(gen_random_uuid()::text), 16)`),
     status: text("status", { enum: ORGANIZATION_STATUSES }).notNull(),
     autoJoinDomain: text("auto_join_domain"),
     onboardedAt: timestamp("onboarded_at", {
@@ -104,6 +110,10 @@ export const organizations = pgTable(
     check(
       "organizations_status_check",
       sql`${table.status} in ('active', 'suspended')`,
+    ),
+    check(
+      "organizations_slug_check",
+      sql`${table.slug} ~ '^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$'`,
     ),
   ],
 );
@@ -334,6 +344,12 @@ export const models = pgTable(
     name: text("name").notNull(),
     status: text("status", { enum: MODEL_STATUSES }).notNull(),
     properties: jsonb("properties").$type<ModelProperties>().notNull(),
+    // The exact OpenRouter model that serves this one when our deployments cannot.
+    openrouterModelId: text("openrouter_model_id"),
+    // The Hugging Face tokenizer, at an immutable revision, that counts tokens
+    // when no deployment supplies one.
+    tokenizerPath: text("tokenizer_path"),
+    tokenizerRevision: text("tokenizer_revision"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -342,6 +358,14 @@ export const models = pgTable(
       .notNull(),
   },
   (table) => [
+    check(
+      "models_openrouter_model_id_check",
+      sql`${table.openrouterModelId} ~ '^[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$' and char_length(${table.openrouterModelId}) <= 200`,
+    ),
+    check(
+      "models_tokenizer_check",
+      sql`(${table.tokenizerPath} is null and ${table.tokenizerRevision} is null) or (${table.tokenizerPath} is not null and ${table.tokenizerRevision} is not null and char_length(${table.tokenizerPath}) between 1 and 300 and ${table.tokenizerRevision} ~ '^[0-9a-f]{40}$')`,
+    ),
     check(
       "models_id_length_check",
       sql`char_length(${table.id}) between 1 and 200`,

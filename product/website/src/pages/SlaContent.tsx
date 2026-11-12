@@ -3,7 +3,7 @@ import { SiteLink } from "../components/SiteLink";
 
 export const SlaContent = (): ReactElement => (
   <>
-    <p>Effective date: October 4, 2026</p>
+    <p>Effective date: November 4, 2026</p>
     <p>
       This Service Level Agreement (SLA) describes the availability commitment
       that Gradiated, a division of PostHog Inc., makes for paid inference and
@@ -13,17 +13,26 @@ export const SlaContent = (): ReactElement => (
     </p>
     <h2>Our uptime target and commitment</h2>
     <p>
-      Our general operating target is 99.99% monthly uptime for production
-      inference. The contractual commitment under this SLA is 99.9%, with usage
+      Our general operating target is 99.9% monthly uptime for production
+      inference. The contractual commitment under this SLA is 99.5%, with usage
       credits determined by the thresholds below.
     </p>
     <p>
-      We commit to 99.9% monthly uptime for each production model served through
+      We commit to 99.5% monthly uptime for each production model served through
       the Gradiated inference API. This SLA covers direct paying customers,
       including prepaid and invoiced accounts. Free services, models expressly
       marked beta or experimental, training, the website and the console are
       outside its scope. If you buy access through a reseller, claims go through
       that reseller under your agreement with them.
+    </p>
+    <p>
+      For service before November 4, 2026, the prior SLA applies: the operating
+      target was 99.99%, the contractual commitment was 99.9%, and the 5% usage
+      credit band was 99% to below 99.9%. Uptime of 99.9% or higher earned no
+      credit. All other measurement rules, credit bands and claim terms were the
+      same. For November 2026, we apply the prior 99.9% commitment and credit
+      threshold for the entire month; the 99.5% commitment and credit threshold
+      apply starting with December 2026.
     </p>
     <h2>How we measure uptime</h2>
     <p>
@@ -58,11 +67,11 @@ export const SlaContent = (): ReactElement => (
       </thead>
       <tbody>
         <tr>
-          <td>99.9% or higher</td>
+          <td>99.5% or higher</td>
           <td>None</td>
         </tr>
         <tr>
-          <td>99% to below 99.9%</td>
+          <td>99% to below 99.5%</td>
           <td>5%</td>
         </tr>
         <tr>

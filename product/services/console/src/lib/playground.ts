@@ -10,6 +10,7 @@ import type {
 import type { Model } from "@/api/queries";
 import type { components } from "@/api/schema";
 import { formatLatency, formatUsd } from "@/lib/format";
+import { privateModelName } from "@/lib/model-name";
 import type { TaskRow } from "@/store/fine-tuning-types";
 
 const API_BASE_URL = "https://api.gradiated.com";
@@ -185,11 +186,11 @@ const capabilities = (model: Model | undefined): ModelCapabilities => {
   };
 };
 
-// A task is callable by its name once it has a production version; any version
-// is callable by its own name, so a linked version is added alongside its task.
+// A task is callable as `<org-slug>/<task>` once it has a production version.
 export const playgroundModels = (
   hosted: readonly Model[],
   tasks: readonly TaskRow[],
+  organizationSlug: string,
   version?: { name: string; task: string },
 ): PlaygroundModel[] => [
   ...hosted
@@ -206,16 +207,20 @@ export const playgroundModels = (
       available: model.status === "available",
       capabilities: capabilities(model),
     })),
-  // The gateway rejects a task name that is also a hosted model id as ambiguous.
+  // The gateway rejects a name that is also a hosted model id as ambiguous.
   ...tasks
-    .filter(
-      (task) =>
-        task.production_version_id !== null &&
-        !hosted.some((model) => model.id === task.name),
-    )
     .map((task) => ({
-      id: task.name,
-      label: task.name,
+      task,
+      id: privateModelName(organizationSlug, task.name),
+    }))
+    .filter(
+      ({ task, id }) =>
+        task.production_version_id !== null &&
+        !hosted.some((model) => model.id === id),
+    )
+    .map(({ task, id }) => ({
+      id,
+      label: id,
       iconId: task.base_model_id ?? task.name,
       source: "workspace" as const,
       available: true,
@@ -227,7 +232,7 @@ export const playgroundModels = (
     .filter(
       (task) =>
         version?.task === task.name &&
-        version.name !== task.name &&
+        version.name !== privateModelName(organizationSlug, task.name) &&
         !hosted.some((model) => model.id === version.name),
     )
     .map((task) => ({

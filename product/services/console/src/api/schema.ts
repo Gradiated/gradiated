@@ -608,6 +608,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace_id}/adapter-configurations/{model_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get adapter configuration
+     * @description Gets the pinned base checkpoint dimensions used to validate an adapter.
+     */
+    get: operations["getAdapterConfiguration"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace_id}/model-uploads": {
     parameters: {
       query?: never;
@@ -1611,6 +1631,7 @@ export interface components {
        */
       id: string;
       name: string;
+      slug: components["schemas"]["OrganizationSlug"];
       /** @enum {string} */
       status: "active" | "suspended";
       role: components["schemas"]["OrganizationRole"];
@@ -1624,6 +1645,8 @@ export interface components {
       /** @description Whether the owner has finished first-run setup. */
       onboarding_completed: boolean;
     };
+    /** @description Unique organization handle that prefixes its private model names, as in `acme/support-triage`. It is fixed once the organization has a model. */
+    OrganizationSlug: string;
     /** @enum {string} */
     OrganizationRole: "admin" | "member";
     ImpersonationResult: {
@@ -1642,6 +1665,7 @@ export interface components {
     };
     UpdateOrganization: {
       name?: string;
+      slug?: string;
       /** @description Must match the caller's verified company email domain, or null to stop automatic joining. */
       auto_join_domain?: string | null;
       /** @enum {boolean} */
@@ -1656,6 +1680,7 @@ export interface components {
       /** @enum {string} */
       kind: "customer";
       name: string;
+      slug: components["schemas"]["OrganizationSlug"];
       /** @enum {string} */
       status: "active";
       /** @enum {string} */
@@ -1678,6 +1703,7 @@ export interface components {
     };
     CreateOrganization: {
       name: string;
+      slug?: string;
     };
     MemberList: {
       data: components["schemas"]["Member"][];
@@ -1915,6 +1941,16 @@ export interface components {
         [key: string]: unknown;
       } | null;
       canonical?: unknown;
+    };
+    AdapterConfiguration: {
+      /** @description Number of transformer layers. */
+      layerCount: number;
+      /** @description Routed experts per layer. */
+      expertCount: number;
+      /** @description Output and input dimensions keyed by layer and module. */
+      projectionShapes?: {
+        [key: string]: [number, number];
+      };
     };
     ModelUpload: {
       /**
@@ -3042,7 +3078,7 @@ export interface components {
         created: number;
         /** @description Human-readable model description. */
         description: string;
-        /** @description Whether a healthy deployment can currently accept inference requests. */
+        /** @description Whether the model can currently accept inference requests. */
         is_ready: boolean;
         /** @description Upstream Hugging Face model identifier, when published. */
         hugging_face_id?: string;
@@ -4014,6 +4050,15 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
+      /** @description The slug is taken or reserved. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
       /** @description The request body is invalid. */
       422: {
         headers: {
@@ -4116,6 +4161,15 @@ export interface operations {
       };
       /** @description No valid human session is present. */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The slug is taken or reserved. */
+      409: {
         headers: {
           [name: string]: unknown;
         };
@@ -5424,6 +5478,84 @@ export interface operations {
         };
       };
       /** @description Generation content unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getAdapterConfiguration: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        /** @description Exact catalog base model ID. */
+        model_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Pinned checkpoint structure. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdapterConfiguration"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
       503: {
         headers: {
           [name: string]: unknown;

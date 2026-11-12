@@ -25,7 +25,7 @@ use crate::{
     ModelTokenizer,
 };
 
-const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
+pub(super) const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 const MAX_RESPONSE_BYTES: usize = 8_000_000;
 const MAX_STREAM_EVENT_BYTES: usize = 1_000_000;
 
@@ -125,6 +125,11 @@ impl SglangClient {
     }
 }
 
+/// Kimi releases built before the runtime capped output with
+/// `SGLANG_MAX_NEW_TOKENS_LIMIT`. Without a limit they would decode toward the
+/// whole remaining context, so they keep receiving the explicit default.
+const UNCAPPED_RUNTIME_REVISIONS: [&str; 1] = ["kimi-k31-d25d7c28cd76"];
+
 pub(super) struct Call<'a> {
     pub(super) deployment: &'a GatewayModelDeployment,
     pub(super) request: InferenceRequest,
@@ -145,6 +150,9 @@ impl<'a> Call<'a> {
         streaming: bool,
     ) -> Result<(Transport, Self), RuntimeFailure> {
         let transport = Transport::select(&deployment.release, &mut request, output_tokens)?;
+        if UNCAPPED_RUNTIME_REVISIONS.contains(&deployment.release.runtime_revision.as_str()) {
+            request.open_output_limit = false;
+        }
         if request.stream != streaming {
             return Err(ProtocolViolation::Dispatch.into());
         }
@@ -206,6 +214,34 @@ impl ModelNames {
 
 #[async_trait]
 impl ModelRuntime for SglangClient {
+    async fn count_tokens(
+        &self,
+        deployment: &GatewayModelDeployment,
+        mut request: serde_json::Value,
+    ) -> Result<u64, RuntimeFailure> {
+        if let Some(model) = &deployment.release.runtime_model_name {
+            request["model"] = serde_json::Value::String(model.clone());
+        }
+
+        let body = serde_json::to_vec(&request).map_err(|_| ProtocolViolation::Json)?;
+        let response = send(self.post(deployment, "v1/messages/count_tokens", body)).await?;
+        if !response.status().is_success() {
+            return Err(RuntimeFailure::rejected(
+                response.status(),
+                crate::NormalizedUsage::zero(),
+            ));
+        }
+
+        let body = read_bounded_body(response).await?;
+        let body: serde_json::Value =
+            serde_json::from_slice(&body).map_err(|_| ProtocolViolation::Json)?;
+
+        body.get("input_tokens")
+            .and_then(serde_json::Value::as_u64)
+            .filter(|count| *count <= crate::model::MAX_SAFE_INTEGER)
+            .ok_or_else(|| ProtocolViolation::Json.into())
+    }
+
     async fn complete(
         &self,
         deployment: &GatewayModelDeployment,
@@ -251,14 +287,14 @@ impl ModelRuntime for SglangClient {
     }
 }
 
-fn remaining_until(deadline: DateTime<Utc>) -> Result<Duration, RuntimeFailure> {
+pub(super) fn remaining_until(deadline: DateTime<Utc>) -> Result<Duration, RuntimeFailure> {
     deadline
         .signed_duration_since(Utc::now())
         .to_std()
         .map_err(|_| RuntimeFailure::deadline())
 }
 
-async fn within<T>(
+pub(super) async fn within<T>(
     remaining: Duration,
     dispatch: impl Future<Output = Result<T, RuntimeFailure>>,
 ) -> Result<T, RuntimeFailure> {
@@ -317,7 +353,13 @@ pub(super) async fn send(request: RequestBuilder) -> Result<Response, RuntimeFai
     request.send().await.map_err(RuntimeFailure::from_transport)
 }
 
-pub(super) async fn rejected_response(mut response: Response) -> RuntimeFailure {
+pub(super) async fn rejected_response(response: Response) -> RuntimeFailure {
+    let status = record_rejection(response).await;
+
+    RuntimeFailure::rejected(status, crate::NormalizedUsage::zero())
+}
+
+pub(super) async fn record_rejection(mut response: Response) -> reqwest::StatusCode {
     let status = response.status();
     if tracing::enabled!(tracing::Level::INFO) {
         let read = async {
@@ -335,7 +377,7 @@ pub(super) async fn rejected_response(mut response: Response) -> RuntimeFailure 
         let _ = tokio::time::timeout(Duration::from_millis(250), read).await;
     }
 
-    RuntimeFailure::rejected(status, crate::NormalizedUsage::zero())
+    status
 }
 
 pub(super) async fn read_bounded_body(response: Response) -> Result<Vec<u8>, RuntimeFailure> {
@@ -355,7 +397,9 @@ async fn read_body(mut response: Response, allow_prefill: bool) -> Result<Vec<u8
 
     let mut body = Vec::with_capacity(declared.unwrap_or(0) as usize);
     loop {
-        let chunk = if allow_prefill && body.is_empty() {
+        // OpenRouter pads a buffered response with whitespace while it waits for
+        // the model, so the response is still in prefill until its first JSON byte.
+        let chunk = if allow_prefill && body.iter().all(u8::is_ascii_whitespace) {
             response.chunk().await
         } else {
             tokio::time::timeout(RESPONSE_IDLE_TIMEOUT, response.chunk())

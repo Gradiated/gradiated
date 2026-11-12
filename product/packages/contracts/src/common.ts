@@ -13,6 +13,11 @@ export const TimestampSchema = z.iso.datetime({ offset: true }).openapi({
 });
 
 export const ModelIdSchema = z.string().min(1).max(200);
+// An exact `author/slug`: a `:variant` or `~alias` would name a different or moving model.
+export const OpenRouterModelIdSchema = z
+  .string()
+  .max(200)
+  .regex(/^[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*$/);
 export const NameSchema = z.string().min(1).max(200);
 export const NameInputSchema = z.string().trim().min(1).max(200);
 export const TokenCountSchema = z.number().int().nonnegative();

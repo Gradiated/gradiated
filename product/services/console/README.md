@@ -148,7 +148,7 @@ disabled only for Storybook. Page stories cover sign-in, API keys, models,
 usage, logs, billing, training, and every task-detail tab: Model, Training runs,
 Data, and Settings, plus trace content, test results, and the judge selector. Tab and detail stories
 select the actual tab and open the panel through a play function.
-Uploaded LoRA adapters support ranks 1–32. The form rejects higher ranks before
+Uploaded LoRA adapters support ranks 1–8. The form rejects higher ranks before
 transfer, and server validation enforces the same cap. Serving remains subject to
 the deployment’s qualified rank limit.
 

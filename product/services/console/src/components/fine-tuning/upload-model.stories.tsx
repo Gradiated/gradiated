@@ -3,6 +3,7 @@ import { expect, userEvent, within, waitFor } from "storybook/test";
 import { delay, http, HttpResponse } from "msw";
 import type { components } from "@/api/schema";
 import { Page } from "@/stories/page-story";
+import { adapterProjectionShapes } from "@gradiated/contracts/adapter-shapes";
 import { qwen3_0_6b } from "@/stories/base-model-configs";
 import { handlers } from "@/stories/handlers";
 
@@ -59,8 +60,13 @@ const uploadHandlers = ({
         ]
       : []),
     http.get(
-      "https://huggingface.co/:owner/:repo/resolve/:revision/config.json",
-      () => HttpResponse.json(qwen3_0_6b),
+      "/api/v1/workspaces/:workspaceId/adapter-configurations/:modelId",
+      () =>
+        HttpResponse.json({
+          layerCount: qwen3_0_6b.num_hidden_layers,
+          expertCount: 0,
+          projectionShapes: adapterProjectionShapes(qwen3_0_6b),
+        }),
     ),
     http.get("/api/v1/workspaces/:workspaceId/tasks", () =>
       HttpResponse.json({

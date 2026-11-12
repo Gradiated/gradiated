@@ -32,6 +32,8 @@ const evaluation = {
 test.skip("direct task reload initializes flags, edits schedules and opens held-out results", async ({
   page,
 }) => {
+  test.setTimeout(60_000);
+
   let schedule: string | null = null;
   let judge = task.judge_model_id;
   let comparison = task.comparison_model_id;
@@ -67,6 +69,7 @@ test.skip("direct task reload initializes flags, edits schedules and opens held-
             role: "admin",
             status: "active",
             default_workspace_id: workspaceId,
+            slug: "test-org",
             auto_join_domain: null,
             onboarding_completed: true,
           },
@@ -172,6 +175,13 @@ test.skip("direct task reload initializes flags, edits schedules and opens held-
             name: "test-v1",
             base_model_id: task.base_model_id,
             training_run_id: "test-run",
+            adapter: {
+              format: "peft_lora",
+              artifact_uri: "s3://test/adapter",
+              sha256: "a".repeat(64),
+              size_bytes: 64,
+              rank: 2,
+            },
             created_at: "2026-10-01T12:00:00Z",
             status: "unavailable",
             is_production: false,
@@ -247,7 +257,7 @@ test.skip("direct task reload initializes flags, edits schedules and opens held-
   await expect(
     page.getByRole("heading", { level: 1, name: task.name }),
   ).toBeVisible();
-  const resolved = page.getByText("Resolved 100%", { exact: true });
+  const resolved = page.getByText(/^Resolved\s+100%$/);
   await expect(resolved).toBeVisible();
   await expect(resolved.locator("..")).toContainText("Speed");
   await expect(resolved.locator("..")).toContainText("Errors");
@@ -474,6 +484,7 @@ for (const initialRows of [0, 35]) {
               role: "admin",
               status: "active",
               default_workspace_id: workspaceId,
+              slug: "test-org",
               auto_join_domain: null,
               onboarding_completed: true,
             },
@@ -662,6 +673,7 @@ test("Billing loads 100 transactions at a time with skeleton rows and retry", as
             role: "admin",
             status: "active",
             default_workspace_id: workspaceId,
+            slug: "test-org",
             auto_join_domain: null,
             onboarding_completed: true,
           },

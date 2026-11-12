@@ -14,7 +14,7 @@ const regions = [
 
 const models = [
   modelOption("z-ai/glm-5.3-flash"),
-  modelOption("deepseek/deepseek-v4.1-flash"),
+  modelOption("deepseek/deepseek-v4.1-flash-1017"),
 ];
 
 const meta = { title: "Components/Select" } satisfies Meta;
@@ -101,7 +101,7 @@ export const WithIcons: Story = {
       within(canvasElement).getByRole("combobox", { name: "Model" }),
     );
     await within(document.body).findByRole("option", {
-      name: "DeepSeek V4.1 Flash",
+      name: "DeepSeek V4.1 Flash 1017",
     });
   },
 };

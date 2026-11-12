@@ -65,6 +65,15 @@ pub struct InferenceRequest {
     pub(crate) runtime_model_name: Option<String>,
     #[serde(skip)]
     pub(crate) decision: Option<crate::systemone::SystemOneRequest>,
+    /// Moonshot Partial Mode: the final assistant message is a prefix the
+    /// model continues. Set by the coordinator for models that support it.
+    #[serde(skip)]
+    pub(crate) continue_final_message: bool,
+    /// The caller set no output limit and the model lets its runtime use the
+    /// remaining context, up to the runtime's own maximum, instead of the
+    /// catalog default. Set by the coordinator.
+    #[serde(skip)]
+    pub(crate) open_output_limit: bool,
 }
 
 impl InferenceRequest {
@@ -90,6 +99,8 @@ impl InferenceRequest {
             encoded_input_ids: None,
             runtime_model_name: None,
             decision: Some(decision),
+            continue_final_message: false,
+            open_output_limit: false,
         })
     }
 
@@ -99,6 +110,36 @@ impl InferenceRequest {
         request.validate_request()?;
 
         Ok(request)
+    }
+
+    /// Whether the request asks for Moonshot Partial Mode: `partial: true` on
+    /// a final assistant message whose content is the text to continue.
+    /// `partial` anywhere else, or with any other value, is invalid.
+    pub(crate) fn partial_mode(&self) -> Result<bool, GatewayError> {
+        let invalid = || GatewayError::invalid_request(Some("messages"));
+        let last = self.messages.len().saturating_sub(1);
+        let mut partial = false;
+        for (index, message) in self.messages.iter().enumerate() {
+            let Some(value) = message.get("partial") else {
+                continue;
+            };
+            match value {
+                Value::Bool(false) => {}
+                Value::Bool(true)
+                    if index == last
+                        && message.get("role") == Some(&Value::from("assistant"))
+                        && message
+                            .get("content")
+                            .and_then(Value::as_str)
+                            .is_some_and(|content| !content.is_empty()) =>
+                {
+                    partial = true;
+                }
+                _ => return Err(invalid()),
+            }
+        }
+
+        Ok(partial)
     }
 
     pub fn output_token_limit(&self) -> Option<OutputTokenLimit> {
@@ -128,7 +169,26 @@ impl InferenceRequest {
             encoded_input_ids: _,
             runtime_model_name: _,
             decision: _,
+            continue_final_message,
+            open_output_limit,
         } = self;
+
+        let mut messages = messages;
+        for message in &mut messages {
+            if let Some(fields) = message.as_object_mut() {
+                fields.remove("partial");
+            }
+        }
+        if continue_final_message {
+            // SGLang continues the final assistant message as the response.
+            // Kimi's template would otherwise open the think channel first,
+            // and the prefix would land in the reasoning.
+            parameters.insert("continue_final_message".to_owned(), Value::Bool(true));
+            parameters.insert(
+                "chat_template_kwargs".to_owned(),
+                serde_json::json!({"thinking": false}),
+            );
+        }
 
         parameters.insert(
             "model".to_owned(),
@@ -151,9 +211,40 @@ impl InferenceRequest {
             );
         }
 
-        parameters.insert(limit_name.to_owned(), Value::from(effective_output_tokens));
+        if !open_output_limit {
+            parameters.insert(limit_name.to_owned(), Value::from(effective_output_tokens));
+        }
 
         Value::Object(parameters)
+    }
+
+    /// The OpenRouter body has no runtime priority or private usage options:
+    /// OpenRouter always reports usage once, in its final frame.
+    pub(crate) fn into_external_body(
+        self,
+        effective_output_tokens: u64,
+        model_id: &str,
+    ) -> Map<String, Value> {
+        let limit_name = self
+            .output_token_limit()
+            .map_or("max_completion_tokens", OutputTokenLimit::parameter_name);
+
+        let Self {
+            messages,
+            stream,
+            mut parameters,
+            open_output_limit,
+            ..
+        } = self;
+
+        parameters.insert("model".to_owned(), Value::String(model_id.to_owned()));
+        parameters.insert("messages".to_owned(), Value::Array(messages));
+        parameters.insert("stream".to_owned(), Value::Bool(stream));
+        if !open_output_limit {
+            parameters.insert(limit_name.to_owned(), Value::from(effective_output_tokens));
+        }
+
+        parameters
     }
 
     fn validate_request(&self) -> Result<(), GatewayError> {
@@ -365,6 +456,44 @@ mod tests {
     }
 
     #[test]
+    fn an_external_body_keeps_qualified_fields_and_drops_runtime_controls() {
+        let request = InferenceRequest::parse(
+            br#"{
+                "model":"public/model",
+                "messages":[{"role":"user","content":"hello"}],
+                "stream":true,
+                "service_tier":"fast",
+                "session_id":"customer-session",
+                "max_tokens":32,
+                "temperature":0.25
+            }"#,
+        )
+        .unwrap();
+
+        let body = request.into_external_body(32, "author/model");
+
+        assert_eq!(body["model"], "author/model");
+        assert_eq!(body["messages"][0]["content"], "hello");
+        assert_eq!(body["stream"], true);
+        assert_eq!(body["max_tokens"], 32);
+        assert_eq!(body["temperature"], 0.25);
+        for field in [
+            "priority",
+            "stream_options",
+            "service_tier",
+            "session_id",
+            "max_completion_tokens",
+        ] {
+            assert!(!body.contains_key(field), "{field}");
+        }
+
+        let defaulted = InferenceRequest::parse(br#"{"model":"m","messages":[{}]}"#)
+            .unwrap()
+            .into_external_body(1_024, "author/model");
+        assert_eq!(defaulted["max_completion_tokens"], 1_024);
+    }
+
+    #[test]
     fn streaming_always_requests_continuous_authoritative_usage() {
         let request = InferenceRequest::parse(
             br#"{
@@ -379,5 +508,75 @@ mod tests {
 
         assert_eq!(body["stream_options"]["include_usage"], true);
         assert_eq!(body["stream_options"]["continuous_usage_stats"], true);
+    }
+
+    #[test]
+    fn partial_mode_is_a_nonempty_final_assistant_prefix() {
+        let parse = |messages: &str| {
+            InferenceRequest::parse(format!(r#"{{"model":"m","messages":{messages}}}"#).as_bytes())
+                .unwrap()
+                .partial_mode()
+        };
+
+        let prefix = r#"[{"role":"user","content":"hi"},{"role":"assistant","content":"Once","partial":true}]"#;
+        assert!(parse(prefix).unwrap());
+        assert!(!parse(r#"[{"role":"user","content":"hi"}]"#).unwrap());
+        assert!(!parse(
+            r#"[{"role":"user","content":"hi"},{"role":"assistant","content":"x","partial":false}]"#
+        )
+        .unwrap());
+
+        for invalid in [
+            r#"[{"role":"assistant","content":"x","partial":true},{"role":"user","content":"hi"}]"#,
+            r#"[{"role":"user","content":"hi","partial":true}]"#,
+            r#"[{"role":"assistant","content":"","partial":true}]"#,
+            r#"[{"role":"assistant","content":[{"type":"text","text":"x"}],"partial":true}]"#,
+            r#"[{"role":"assistant","content":"x","partial":"true"}]"#,
+        ] {
+            assert!(parse(invalid).is_err(), "{invalid}");
+        }
+    }
+
+    #[test]
+    fn partial_mode_continues_the_final_message_without_thinking() {
+        let body = br#"{"model":"m","messages":[{"role":"user","content":"hi"},{"role":"assistant","content":"Once","partial":true}]}"#;
+
+        let mut request = InferenceRequest::parse(body).unwrap();
+        request.continue_final_message = true;
+        let upstream = request.into_upstream_body_for_model(32, None);
+        assert_eq!(upstream["continue_final_message"], true);
+        assert_eq!(upstream["chat_template_kwargs"]["thinking"], false);
+        assert_eq!(upstream["messages"][1]["content"], "Once");
+        assert!(upstream["messages"][1].get("partial").is_none());
+
+        let ignored = InferenceRequest::parse(body)
+            .unwrap()
+            .into_upstream_body_for_model(32, None);
+        assert!(ignored.get("continue_final_message").is_none());
+        assert!(ignored.get("chat_template_kwargs").is_none());
+        assert!(ignored["messages"][1].get("partial").is_none());
+
+        let external = InferenceRequest::parse(body)
+            .unwrap()
+            .into_external_body(32, "author/model");
+        assert_eq!(external["messages"][1]["partial"], true);
+        assert!(!external.contains_key("continue_final_message"));
+    }
+
+    #[test]
+    fn an_open_output_limit_leaves_the_limit_to_the_runtime() {
+        let mut request = InferenceRequest::parse(
+            br#"{"model":"m","messages":[{"role":"user","content":"hi"}]}"#,
+        )
+        .unwrap();
+        request.open_output_limit = true;
+
+        let upstream = request.clone().into_upstream_body_for_model(131_072, None);
+        assert!(upstream.get("max_completion_tokens").is_none());
+        assert!(upstream.get("max_tokens").is_none());
+
+        let external = request.into_external_body(131_072, "author/model");
+        assert!(!external.contains_key("max_completion_tokens"));
+        assert!(!external.contains_key("max_tokens"));
     }
 }

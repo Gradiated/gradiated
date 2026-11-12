@@ -55,10 +55,12 @@ export const catalog = {
   gateway: {
     context: "product/services/gateway",
     dockerfile: "product/services/rust-service.Dockerfile",
+    buildContexts: "credentials=product/packages/credentials",
     repository: "gradiated/prod/gateway",
     target: "gateway",
     paths: [
       "product/services/gateway/",
+      "product/packages/credentials/",
       "product/services/rust-service.Dockerfile",
     ],
   },
@@ -95,19 +97,5 @@ export const catalog = {
       "product/inference/gpu/host_state.py",
       "product/inference/host/",
     ],
-  },
-
-  "deepseek-v4-1-flash": {
-    context: "product/inference/images/deepseek-v4-1-flash",
-    repository: "gradiated/prod/inference",
-    target: "",
-    paths: ["product/inference/images/deepseek-v4-1-flash/"],
-  },
-  "glm-5-3-flash": {
-    context: "product/inference/images/glm-5-3-flash",
-    repository: "gradiated/prod/inference",
-    target: "",
-    paths: ["product/inference/images/glm-5-3-flash/"],
-    disabled: "The qualified GLM base image digest is not yet recorded.",
   },
 };

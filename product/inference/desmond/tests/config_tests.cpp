@@ -233,6 +233,22 @@ DESMOND_TEST(status_config_uses_the_https_url_before_the_host) {
   CHECK(config.status->token == "status-token");
   CHECK(config.status->deployment_id == "00000000-0000-4000-8000-000000000001");
   CHECK(config.status->runtime_revision == "release-1");
+  CHECK(!config.status->active_requests);
+}
+
+DESMOND_TEST(status_config_reads_the_runtime_active_request_limit) {
+  auto variables = observer_variables();
+  variables["DESMOND_ACTIVE_REQUESTS"] = "16";
+
+  const auto config = load(supervise_sleep, variables);
+
+  REQUIRE(config.status);
+  CHECK(config.status->active_requests == 16u);
+  for (const char *invalid : {"0", "4097", "-1", "4x", "1.5"}) {
+    variables["DESMOND_ACTIVE_REQUESTS"] = invalid;
+    CHECK(contains(config_error(supervise_sleep, variables),
+                   "DESMOND_ACTIVE_REQUESTS must be an integer from 1 to 4096"));
+  }
 }
 
 DESMOND_TEST(status_config_builds_a_private_http_url_from_host_port_and_path) {

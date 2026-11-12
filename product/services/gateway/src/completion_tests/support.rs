@@ -19,16 +19,17 @@ use crate::{
     generation::fixtures::token_prices,
     routing::fixtures::{deployment, healthy_status},
     serving_state::ServingStateError,
-    AdmissionError, DeploymentRuntimeStatus, FinalizationError, FinalizationOutcome,
-    GatewayModelDeployment, GenerationProperties, NormalizedUsage, RequestMetadata,
-    RuntimeCompletion, RuntimeEventStream, RuntimeFailure, RuntimeFailureKind, RuntimeStreamChunk,
-    RuntimeStreamEvent,
+    AdmissionError, DeploymentRuntimeStatus, ExternalCapacity, ExternalModel, ExternalRequest,
+    FinalizationError, FinalizationOutcome, GatewayModelDeployment, GenerationProperties,
+    NormalizedUsage, RequestMetadata, RuntimeCompletion, RuntimeEventStream, RuntimeFailure,
+    RuntimeFailureKind, RuntimeStreamChunk, RuntimeStreamEvent,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(super) enum Step {
     Admit,
     Dispatch(Uuid),
+    External,
     Finalize,
 }
 
@@ -52,6 +53,13 @@ impl Journal {
                 _ => None,
             })
             .collect()
+    }
+
+    pub(super) fn external_dispatches(&self) -> usize {
+        self.steps()
+            .into_iter()
+            .filter(|step| *step == Step::External)
+            .count()
     }
 
     pub(super) fn finalizations(&self) -> usize {
@@ -148,6 +156,8 @@ pub(super) enum Script {
     Complete(RuntimeCompletion),
     Stream(Vec<ScriptedEvent>),
     StreamThenHang(Vec<ScriptedEvent>, Hang),
+    /// Unlike a hang, every later read stays pending, as a silent connection does.
+    StreamThenStall(Vec<ScriptedEvent>),
     StreamThenPanic(Vec<ScriptedEvent>),
     Hang(Hang),
     Panic,
@@ -188,15 +198,7 @@ impl ModelRuntime for ScriptedRuntime {
     ) -> Result<RuntimeCompletion, RuntimeFailure> {
         assert!(!request.stream);
 
-        match self.next(deployment) {
-            Script::Fail(failure) => Err(failure),
-            Script::Complete(completion) => Ok(completion),
-            Script::Hang(hang) => hang.wait().await,
-            Script::Panic => panic!("scripted runtime panic"),
-            Script::Stream(_) | Script::StreamThenHang(..) | Script::StreamThenPanic(_) => {
-                panic!("a buffered dispatch received a stream script")
-            }
-        }
+        complete_script(self.next(deployment)).await
     }
 
     async fn stream(
@@ -208,26 +210,88 @@ impl ModelRuntime for ScriptedRuntime {
     ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
         assert!(request.stream);
 
-        let (events, then) = match self.next(deployment) {
-            Script::Fail(failure) => return Err(failure),
-            Script::Stream(events) => (events, StreamEnd::Close),
-            Script::StreamThenHang(events, hang) => (events, StreamEnd::Hang(hang)),
-            Script::StreamThenPanic(events) => (events, StreamEnd::Panic),
-            Script::Hang(hang) => return hang.wait().await,
-            Script::Panic => panic!("scripted runtime panic"),
-            Script::Complete(_) => panic!("a streaming dispatch received a buffered script"),
-        };
-
-        Ok(Box::new(ScriptedStream {
-            events: events.into(),
-            then: Some(then),
-        }))
+        stream_script(self.next(deployment)).await
     }
+}
+
+/// OpenRouter capacity with its own scripts. It records each request it receives.
+pub(super) struct ScriptedExternal {
+    scripts: Mutex<VecDeque<Script>>,
+    journal: Journal,
+    pub(super) requests: Mutex<Vec<ExternalRequest>>,
+}
+
+impl ScriptedExternal {
+    fn next(&self, request: ExternalRequest) -> Script {
+        self.journal.push(Step::External);
+        self.requests.lock().unwrap().push(request);
+
+        self.scripts
+            .lock()
+            .unwrap()
+            .pop_front()
+            .expect("every external dispatch is scripted")
+    }
+}
+
+#[async_trait]
+impl ExternalCapacity for ScriptedExternal {
+    async fn complete(
+        &self,
+        request: ExternalRequest,
+    ) -> Result<RuntimeCompletion, RuntimeFailure> {
+        assert!(!request.request.stream);
+
+        complete_script(self.next(request)).await
+    }
+
+    async fn stream(
+        &self,
+        request: ExternalRequest,
+    ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
+        assert!(request.request.stream);
+
+        stream_script(self.next(request)).await
+    }
+}
+
+async fn complete_script(script: Script) -> Result<RuntimeCompletion, RuntimeFailure> {
+    match script {
+        Script::Fail(failure) => Err(failure),
+        Script::Complete(completion) => Ok(completion),
+        Script::Hang(hang) => hang.wait().await,
+        Script::Panic => panic!("scripted runtime panic"),
+        Script::Stream(_)
+        | Script::StreamThenHang(..)
+        | Script::StreamThenStall(_)
+        | Script::StreamThenPanic(_) => {
+            panic!("a buffered dispatch received a stream script")
+        }
+    }
+}
+
+async fn stream_script(script: Script) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
+    let (events, then) = match script {
+        Script::Fail(failure) => return Err(failure),
+        Script::Stream(events) => (events, StreamEnd::Close),
+        Script::StreamThenHang(events, hang) => (events, StreamEnd::Hang(hang)),
+        Script::StreamThenStall(events) => (events, StreamEnd::Stall),
+        Script::StreamThenPanic(events) => (events, StreamEnd::Panic),
+        Script::Hang(hang) => return hang.wait().await,
+        Script::Panic => panic!("scripted runtime panic"),
+        Script::Complete(_) => panic!("a streaming dispatch received a buffered script"),
+    };
+
+    Ok(Box::new(ScriptedStream {
+        events: events.into(),
+        then: Some(then),
+    }))
 }
 
 pub(super) enum StreamEnd {
     Close,
     Hang(Hang),
+    Stall,
     Panic,
 }
 
@@ -243,10 +307,14 @@ impl RuntimeEventStream for ScriptedStream {
             return event.map(Some);
         }
 
+        if matches!(self.then, Some(StreamEnd::Stall)) {
+            return std::future::pending().await;
+        }
+
         match self.then.take() {
             Some(StreamEnd::Hang(hang)) => hang.wait().await,
             Some(StreamEnd::Panic) => panic!("scripted stream panic"),
-            Some(StreamEnd::Close) | None => Ok(None),
+            Some(StreamEnd::Close | StreamEnd::Stall) | None => Ok(None),
         }
     }
 }
@@ -259,6 +327,17 @@ pub(super) struct RecordingServingState {
     pub(super) admission_error: Mutex<Option<AdmissionError>>,
     pub(super) finalizations: Mutex<VecDeque<FinalizationResult>>,
     pub(super) finalized: Mutex<Vec<Value>>,
+    /// The candidate placement picks; the first candidate when unset.
+    pub(super) placed: Mutex<Option<Uuid>>,
+    pub(super) placement_error: Mutex<Option<ServingStateError>>,
+    pub(super) routes: Mutex<Vec<RouteStep>>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) enum RouteStep {
+    Place(Vec<Uuid>),
+    Claim(Uuid),
+    Release(Uuid),
 }
 
 impl RecordingServingState {
@@ -276,6 +355,9 @@ impl RecordingServingState {
             admission_error: Mutex::new(None),
             finalizations: Mutex::new(VecDeque::new()),
             finalized: Mutex::new(Vec::new()),
+            placed: Mutex::new(None),
+            placement_error: Mutex::new(None),
+            routes: Mutex::new(Vec::new()),
         }
     }
 }
@@ -379,6 +461,45 @@ impl ServingState for RecordingServingState {
 
         outcome
     }
+    async fn place_route(
+        &self,
+        request: &crate::session_routing::PlacementRequest<'_>,
+    ) -> Result<crate::session_routing::Placed, ServingStateError> {
+        self.routes
+            .lock()
+            .unwrap()
+            .push(RouteStep::Place(request.candidates.to_vec()));
+        if let Some(error) = self.placement_error.lock().unwrap().take() {
+            return Err(error);
+        }
+
+        Ok(crate::session_routing::Placed {
+            deployment_id: self.placed.lock().unwrap().unwrap_or(request.candidates[0]),
+            outcome: crate::session_routing::PlacementOutcome::Placed,
+        })
+    }
+
+    async fn claim_route(
+        &self,
+        lease: &crate::session_routing::RouteLease,
+    ) -> Result<(), ServingStateError> {
+        self.routes
+            .lock()
+            .unwrap()
+            .push(RouteStep::Claim(lease.deployment_id));
+        Ok(())
+    }
+
+    async fn release_route(
+        &self,
+        lease: &crate::session_routing::RouteLease,
+    ) -> Result<(), ServingStateError> {
+        self.routes
+            .lock()
+            .unwrap()
+            .push(RouteStep::Release(lease.deployment_id));
+        Ok(())
+    }
 }
 
 pub(super) fn qualified_request(deployment_count: u128) -> QualifiedRequest {
@@ -397,9 +518,14 @@ pub(super) fn qualified_request(deployment_count: u128) -> QualifiedRequest {
             organization_id: Uuid::now_v7(),
             workspace_id: Uuid::now_v7(),
         },
-        deployment: template.clone(),
-        served_release_digest: template.served_release_digest().unwrap(),
-        model_deployments,
+        local: Some(LocalCapacity {
+            release_digest: template.served_release_digest().unwrap(),
+            deployment: template,
+            deployments: model_deployments,
+        }),
+        base: None,
+        external: None,
+        tokenizer: None,
         max_context_tokens: 8_192,
         max_prompt_tokens: 7_168,
         effective_output_tokens: 1_024,
@@ -409,6 +535,19 @@ pub(super) fn qualified_request(deployment_count: u128) -> QualifiedRequest {
         )
         .unwrap(),
     }
+}
+
+pub(super) const OPENROUTER_MODEL: &str = "author/model-a";
+
+/// A mapped model with `deployment_count` local deployments.
+pub(super) fn mapped_request(deployment_count: u128) -> QualifiedRequest {
+    let mut request = qualified_request(deployment_count.max(1));
+    if deployment_count == 0 {
+        request.local = None;
+    }
+    request.external = Some(ExternalModel::openrouter(OPENROUTER_MODEL));
+
+    request
 }
 
 pub(super) fn streaming_request(deployment_count: u128) -> QualifiedRequest {
@@ -428,6 +567,18 @@ pub(super) fn completion() -> Script {
         "stop".to_owned(),
         usage(10, 4, 5),
     ))
+}
+
+/// Distinct from `completion()` so a test can tell which capacity was billed.
+pub(super) fn external_completion() -> Script {
+    Script::Complete(
+        RuntimeCompletion::from_normalized_parts(
+            json!({"id": "chatcmpl-external", "usage": {"prompt_tokens": 20}}),
+            "stop".to_owned(),
+            usage(20, 0, 7),
+        )
+        .with_upstream_cost(5_000_000),
+    )
 }
 
 pub(super) fn failure(kind: RuntimeFailureKind) -> Script {
@@ -488,6 +639,7 @@ pub(super) struct Harness {
     pub(super) state: Arc<RecordingServingState>,
     pub(super) journal: Journal,
     pub(super) request: QualifiedRequest,
+    pub(super) external: Arc<ScriptedExternal>,
 }
 
 impl Harness {
@@ -496,9 +648,13 @@ impl Harness {
         scripts: impl IntoIterator<Item = Script>,
     ) -> Self {
         let journal = Journal::default();
+        let deployments = request
+            .local
+            .as_ref()
+            .map_or_else(Vec::new, |local| local.deployments.clone());
         let state = Arc::new(RecordingServingState::serving(
             journal.clone(),
-            &request.model_deployments,
+            &deployments,
         ));
         let runtime = Arc::new(ScriptedRuntime::new(scripts, journal.clone()));
         let service = CompletionService::new(
@@ -508,12 +664,35 @@ impl Harness {
             Arc::new(GatewayConfig::for_tests()),
         );
 
+        let external = Arc::new(ScriptedExternal {
+            scripts: Mutex::new(VecDeque::new()),
+            journal: journal.clone(),
+            requests: Mutex::new(Vec::new()),
+        });
+
         Self {
-            service,
+            service: service.with_external_capacity(external.clone()),
             state,
             journal,
             request,
+            external,
         }
+    }
+
+    /// Scripts OpenRouter's responses, in the order it receives requests.
+    pub(super) fn openrouter(self, scripts: impl IntoIterator<Item = Script>) -> Self {
+        self.external.scripts.lock().unwrap().extend(scripts);
+
+        self
+    }
+
+    /// Every local deployment reports this status instead of a healthy one.
+    pub(super) fn local_status(self, change: impl Fn(&mut DeploymentRuntimeStatus)) -> Self {
+        for status in self.state.statuses.lock().unwrap().iter_mut() {
+            change(status);
+        }
+
+        self
     }
 
     pub(super) fn finalizing(self, outcomes: impl IntoIterator<Item = FinalizationResult>) -> Self {
@@ -542,7 +721,8 @@ impl Harness {
 
     pub(super) fn deployment_ids(&self) -> Vec<Uuid> {
         self.request
-            .model_deployments
+            .local_capacity()
+            .deployments
             .iter()
             .map(|deployment| deployment.id)
             .collect()
@@ -594,4 +774,12 @@ pub(super) fn logged<'a>(events: &'a [Value], phase: &str) -> Vec<&'a Value> {
         .iter()
         .filter(|event| event["fields"]["phase"] == phase)
         .collect()
+}
+
+impl QualifiedRequest {
+    pub(super) fn streamed(mut self) -> Self {
+        self.request.stream = true;
+
+        self
+    }
 }

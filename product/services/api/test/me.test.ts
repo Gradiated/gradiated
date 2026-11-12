@@ -76,6 +76,7 @@ describe("current user route", () => {
         {
           id: organizationId,
           name: "Personal",
+          slug: "personal",
           status: "active",
           role: "admin",
           default_workspace_id: workspaceId,

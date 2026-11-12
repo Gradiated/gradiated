@@ -30,6 +30,7 @@ export interface DeploymentRuntimeStatus {
   readonly received_at: string;
   readonly healthy: boolean;
   readonly accepting_requests: boolean;
+  readonly active_requests?: number;
   readonly reason_code: string | null;
 }
 
@@ -55,7 +56,16 @@ export const release = (
   tokenizer_revision: "synthetic-v1",
 });
 
-export const modelRecord = (kind: RuntimeKind): ModelRecord => ({
+/** Nano-USD per token. */
+export interface TokenPrices {
+  readonly prompt: number;
+  readonly completion: number;
+}
+
+export const modelRecord = (
+  kind: RuntimeKind,
+  prices: TokenPrices = { prompt: 10, completion: kind === "kev" ? 0 : 20 },
+): ModelRecord => ({
   name: `Synthetic ${kind}`,
   status: "available",
   properties: {
@@ -73,7 +83,7 @@ export const modelRecord = (kind: RuntimeKind): ModelRecord => ({
           max_prompt_length: { value: 4096, unit: "token" },
         },
         pricing: [
-          { type: "prompt", unit: "token", cost: 10 },
+          { type: "prompt", unit: "token", cost: prices.prompt },
           { type: "cached_prompt", unit: "token", cost: 2 },
         ],
       },
@@ -90,7 +100,7 @@ export const modelRecord = (kind: RuntimeKind): ModelRecord => ({
           tool_choice: { type: "unknown" },
         },
         pricing: [
-          { type: "completion", unit: "token", cost: kind === "kev" ? 0 : 20 },
+          { type: "completion", unit: "token", cost: prices.completion },
         ],
       },
     ],

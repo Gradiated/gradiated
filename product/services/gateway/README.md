@@ -95,12 +95,16 @@ Inference and generation records accept selectors up to 300 characters, includin
 the date/ordinal suffix on a 256-character task name. There is no selector cache or adapter
 residency state in the gateway.
 
-The base catalog supplies capabilities, tokenization and prices. Routing considers
-only LoRA-enabled chat deployments that match the recorded base revision. Each
+The base catalog supplies capabilities, tokenization and prices. Routing prefers
+LoRA-enabled chat deployments that match the recorded base revision. When none can
+serve, or its attempt fails before output, the base model serves the request
+without the adapter: first its chat deployments, then OpenRouter if the base model
+is mapped. The response keeps the version slug and base prices; settlement records
+the base release, or OpenRouter, as what served. A pinned request does not degrade. Each
 attempt sends a normal completion request through the existing authenticated ingress,
 using the immutable internal model name `<workspace_uuid>/<resolved_version_slug>`.
-The runtime client has no adapter preparation call or cache state. vLLM's native
-resolver asks the allocation-local loader for verified files on first use; vLLM
+The runtime client has no adapter preparation call or cache state. SGLang's
+adapter resolver asks the allocation-local loader for verified files on first use; SGLang
 owns registration, CPU/GPU caching and streaming. Cold loading counts against the
 existing generation deadline. Host failures use the existing inference retry rules.
 
@@ -152,10 +156,15 @@ retain verification telemetry; other workspaces retain normal production telemet
 The retired `x-gradiated-verification-deployment` header is rejected.
 
 The gateway selects an exact served release, then ranks its healthy, accepting
-deployments by rendezvous hash. Session affinity takes precedence; sessionless
+deployments by rendezvous hash, weighted by each runtime's reported
+`active_requests` (replicas that do not report keep an equal share). Session affinity takes precedence; sessionless
 chat requests hash their opening system/developer and first non-system messages,
 while SystemOne uses its opening state prefix. Keys include workspace, model,
-and release identity. Routing stores no affinity records or per-deployment concurrency leases.
+and release identity. That order is the candidate list for
+[session placement](ARCHITECTURE.md#session-placement): Valkey stores each
+session's replica for 30 minutes and a lease per in-flight generation on each
+replica, so a session stays on its replica while it has a free slot and new or
+displaced sessions go to the least-utilized replica.
 
 The gateway resolves one affinity key before protocol translation, for both
 release and replica selection. Explicit body `session_id`, header
@@ -170,8 +179,8 @@ raw identifiers are excluded. Without a usable explicit/SDK key, the gateway
 hashes the opening system/developer and first non-system messages, or the first
 8192 Unicode characters of the raw request body if the opening messages cannot
 be recognized. This fallback is infallible and does not bypass normal API
-validation. Stable placement helps reuse resident vLLM prefix blocks but does
-not guarantee cache hits or change vLLM cache configuration.
+validation. Stable placement helps reuse resident SGLang prefix blocks but does
+not guarantee cache hits or change SGLang cache configuration.
 
 Desmond sends `POST /v1/deployment-status` every second. The API checks provider
 ownership and runtime revision, timestamps the report, and writes the release's
@@ -201,11 +210,10 @@ prefill wait before response bytes begin, then retain the 30-second body-read
 idle limit. Rejection bodies retain their short idle limit. Deployment probes
 keep their own four-second total deadline.
 
-For the DeepSeek vLLM runtime, the launch script bounds admission with
-`--max-num-queued-reqs` and `--max-num-queued-tokens`. Size these for the deployment's
-batch capacity and prefill throughput; a token bound below one full-context
-prompt rejects work the engine could otherwise accept. Do not substitute
-`num_requests_running` for the engine's admission limits.
+The SGLang runtimes bound admission in SMG with `--max-concurrent-requests`
+and `--queue-size` (see `product/inference/runtimes/glm-sglang/config.py` and
+`deepseek-sglang/config.py`). Do not substitute `num_requests_running` for the
+engine's admission limits.
 
 OpenRouter's catalog omits a fixed `capacity` declaration: safe concurrency
 varies with prompt length. Temporary saturation returns `429`; it does not
@@ -214,7 +222,7 @@ keep a stopped runtime eligible for up to 15 seconds.
 
 ## Run locally
 
-For CPU-only integration tests against real Kev/vLLM HTTP mock servers and
+For CPU-only integration tests against real Kev and OpenAI-compatible HTTP mock servers and
 disposable Valkey, see [runtime integration tests](test/integration/README.md).
 The gateway is the actual built binary; the suite covers both successful
 requests and failure/cancellation/settlement boundaries without GPUs.
@@ -246,21 +254,84 @@ The local endpoints are:
 
 ## Configuration
 
-| Variable                                        | Required | Default                    |
-| ----------------------------------------------- | -------- | -------------------------- |
-| `VALKEY_URL`                                    | yes      | none                       |
-| `GATEWAY_SETTLEMENT_BACKLOG_LIMIT`              | yes      | none                       |
-| `GATEWAY_BIND_ADDRESS`                          | no       | `127.0.0.1:3002`           |
-| `GATEWAY_GENERATION_TIMEOUT_SECONDS`            | no       | `630`                      |
-| `GATEWAY_LEASE_FINALIZATION_MARGIN_SECONDS`     | no       | `60`                       |
-| `GATEWAY_EXPIRED_LEASE_CLEANUP_GRACE_SECONDS`   | no       | `300`                      |
-| `GATEWAY_ORGANIZATION_CONCURRENCY_CAP`          | no       | `500`                      |
-| `GATEWAY_BALANCE_PER_CONCURRENCY_SLOT_NANO_USD` | no       | `1000000000`               |
-| `SGLANG_API_KEY`                                | no       | no upstream authentication |
+| Variable                                        | Required | Default                           |
+| ----------------------------------------------- | -------- | --------------------------------- |
+| `VALKEY_URL`                                    | yes      | none                              |
+| `GATEWAY_SETTLEMENT_BACKLOG_LIMIT`              | yes      | none                              |
+| `GATEWAY_BIND_ADDRESS`                          | no       | `127.0.0.1:3002`                  |
+| `GATEWAY_GENERATION_TIMEOUT_SECONDS`            | no       | `630`                             |
+| `GATEWAY_LEASE_FINALIZATION_MARGIN_SECONDS`     | no       | `60`                              |
+| `GATEWAY_EXPIRED_LEASE_CLEANUP_GRACE_SECONDS`   | no       | `300`                             |
+| `GATEWAY_ORGANIZATION_CONCURRENCY_CAP`          | no       | `500`                             |
+| `GATEWAY_BALANCE_PER_CONCURRENCY_SLOT_NANO_USD` | no       | `1000000000`                      |
+| `SGLANG_API_KEY`                                | no       | no upstream authentication        |
+| `OPENROUTER_API_KEY`                            | no       | the `providers/openrouter` secret |
+| `OPENROUTER_BASE_URL`                           | no       | `https://openrouter.ai/api/v1`    |
 
 Valkey is always accessed with the cluster protocol. The local one-node
 cluster owns all 16,384 slots and therefore exercises the same hash-tag and
 `CROSSSLOT` behavior required by ElastiCache Serverless.
+
+## OpenRouter capacity
+
+With Gradiated's own OpenRouter key, the gateway serves a
+catalog model whose `models.openrouter_model_id` is set through OpenRouter when
+our deployments are absent, unhealthy, saturated or fail before output. Callers
+need no OpenRouter key, are billed at catalog prices and see no OpenRouter
+identity. The rules are in [ARCHITECTURE.md](ARCHITECTURE.md#external-capacity-openrouter).
+`OPENROUTER_BASE_URL` accepts HTTPS, or HTTP on a loopback host for tests.
+Every OpenRouter request requires zero data retention and no data collection,
+and caps the provider price at the model's own catalog price, with two exceptions:
+Kimi K3.1 Pro accepts up to 120% of it, and DeepSeek V4.1 Flash 1017 accepts up to
+$0.30 input and $1.20 output per million tokens. If OpenRouter
+cannot serve, the caller gets our own capacity's answer.
+
+The gateway uses `OPENROUTER_API_KEY` when it is set, as local runs and tests do.
+Otherwise it reads the active slot of `gradiated/prod/providers/openrouter`
+through the shared [credential loader](../../packages/credentials/README.md) on
+each OpenRouter attempt, cached for five minutes, so changing `activeSlot`
+rotates the key without a restart. A key that cannot be loaded fails that
+attempt as `runtime_unavailable` and is logged as
+`openrouter_credential_unavailable`; it never stops the gateway. A model uses
+OpenRouter only when its catalog row maps it, so the mapping and the model's
+status are the switch.
+
+Mappings live in the git-owned catalog definitions under
+`packages/control/src/catalog/models/`. Map only an OpenRouter entry for the same
+weights: check its `hugging_face_id` in `GET https://openrouter.ai/api/v1/models`.
+Verified on 2026-11-05: `z-ai/glm-5.3-flash`. Verified on 2026-11-10:
+`deepseek/deepseek-v4.1-flash-1017` and `deepseek/deepseek-v4.1-flash`. The original
+DeepSeek V4.1 Flash is retired, so its retained mapping does not permit serving.
+Callers must explicitly select `deepseek/deepseek-v4.1-flash-1017`, which is hosted
+on our capacity at $0.006 input, $0.001 cached input, and $0.20 output per million
+tokens. Its OpenRouter fallback permits up to $0.30 input and $1.20 output per
+million tokens, covering Modal and the common standard provider tier without
+requiring a local replica. Customer billing remains at catalog prices.
+OpenRouter has no Dealign uncensored GLM and no SystemOne model; those stay
+unmapped, and standard GLM must never stand in for the uncensored one.
+
+To activate in an environment:
+
+1. In OpenRouter, create a key for the gateway, allow only the providers that may
+   serve Gradiated traffic and set its credit limit. Keep zero data retention
+   enforced for the account.
+2. Write two distinct keys to `gradiated/prod/providers/openrouter` as
+   `{"activeSlot": "primary", "primaryApiKey": …, "secondaryApiKey": …}`.
+3. Apply the `registry-secrets` and `platform-iam` units. They adopt that secret
+   and let only the gateway's role read it.
+4. Roll out the gateway, then mark a mapped model `available` in its catalog
+   definition. It serves immediately, with or without deployments.
+
+OpenRouter has no signed DPA with Gradiated; the Security Officer accepted that
+as exception E-04 in `docs/security/risk-register.md`.
+
+To rotate, write the new key to the inactive slot, test it, then switch
+`activeSlot`; revoke the old key after five minutes.
+
+Watch `gradiated_gateway_capacity_fallbacks_total`,
+`gradiated_gateway_upstream_cost_nano_usd_total` against
+`gradiated_gateway_calculated_charge_nano_usd_total{deployment="openrouter"}`,
+and generations whose terminal log has `capacity="openrouter"`.
 
 ## Verify
 

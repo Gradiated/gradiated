@@ -49,6 +49,25 @@ class HostAgentTest(unittest.TestCase):
     def tearDown(self):
         self.directory.cleanup()
 
+    @unittest.skipIf("recovery" in Path(agent.__file__).parts, "the frozen recovery agent predates SGLang profiles")
+    def test_sglang_hardware_profiles_are_validated_and_allow_proxy_rebuilds(self):
+        digest = 'a' * 64
+        profile = {'image': self.pod['spec']['containers'][0]['image'], 'warmup': True,
+                   'environment': {'GLM_SGLANG_PROFILE': 'h200-tp2'}}
+        self.host.config['runtimes'] = {digest: profile}
+        for name in ('b300-pcp2', 'b200-pcp2', 'h200-tp2'):
+            with self.subTest(profile=name):
+                profile['environment']['GLM_SGLANG_PROFILE'] = name
+                self.assertEqual(agent.runtime_profile(self.host.config, self.pod)[1], profile)
+                with patch.object(self.host, 'states', return_value=[{'pod': self.pod, 'port_base': 38080}]):
+                    configuration = self.host.proxy_config()
+                self.assertIn(f'location /alloc/{self.uid}/', configuration)
+                self.assertIn('proxy_pass http://127.0.0.1:38083/health;', configuration)
+        for name in ('', 'h200', 'unknown', 'h200-tp2 extra', 4, None):
+            profile['environment']['GLM_SGLANG_PROFILE'] = name
+            with self.subTest(invalid_profile=name), self.assertRaises(ValueError):
+                agent.runtime_profile(self.host.config, self.pod)
+
     @unittest.skipIf("recovery" in Path(agent.__file__).parts, "the frozen recovery agent predates prefill budget overrides")
     def test_prefill_budget_must_allow_at_least_four_sequences(self):
         digest = 'a' * 64
@@ -173,6 +192,36 @@ class HostAgentTest(unittest.TestCase):
             self.request(request)
         self.assertEqual(self.request({'operation': 'fence'}), {'epoch': 1})
         self.assertEqual(self.request(request), {'epoch': 2})
+
+    @unittest.skipUnless(hasattr(agent, 'startup_parts'), 'the frozen recovery agent predates startup parts')
+    def test_startup_parts_follow_the_bundles_and_weights_on_disk(self):
+        digest, bundle, revision = 'c' * 64, 'd' * 64, 'e' * 40
+        home = self.root / 'hf'
+        self.host.config = {**self.config, 'hf_home': str(home), 'runtimes': {digest: {
+            'image': 'gradiated/kev-bundle@sha256:' + digest, 'bundles': {'test-base': bundle},
+            'release': {'model_path': 'org/model', 'model_revision': revision,
+                        'tokenizer_path': 'org/model', 'tokenizer_revision': revision}}}}
+        self.host.housekeep()
+        self.assertEqual(self.request({'operation': 'startup_parts'}), {'parts': []})
+        (self.root / 'bundles' / bundle).mkdir(parents=True)
+        (self.root / 'bundles' / bundle / '.bundle-sha256').write_text(bundle + '\n')
+        repo = agent.repo_directory(home / 'hub', 'org/model')
+        snapshot = repo / 'snapshots' / revision
+        snapshot.mkdir(parents=True)
+        (repo / 'blobs').mkdir()
+        (snapshot / 'config.json').write_text('{}')
+        (snapshot / 'model.safetensors.index.json').write_text(json.dumps({'weight_map': {'a': 'one.safetensors', 'b': 'two.safetensors'}}))
+        (snapshot / 'one.safetensors').write_text('1')
+        (repo / 'blobs' / 'two.incomplete').write_text('')
+        self.host.housekeep()
+        self.assertEqual(self.request({'operation': 'startup_parts'}), {'parts': ['bundle.' + 'c' * 16]})
+        (repo / 'blobs' / 'two.incomplete').unlink()
+        (snapshot / 'two.safetensors').write_text('2')
+        self.host.housekeep()
+        self.assertEqual(self.request({'operation': 'startup_parts'})['parts'], ['bundle.' + 'c' * 16, 'weights.' + 'c' * 16])
+        shutil.rmtree(repo)
+        self.host.housekeep()
+        self.assertEqual(self.request({'operation': 'startup_parts'})['parts'], ['bundle.' + 'c' * 16])
 
     def test_cleanup_protects_active_and_staging_bundles_and_recent_retirement(self):
         import os
@@ -681,6 +730,28 @@ class HostAgentTest(unittest.TestCase):
         pod['metadata']['annotations'].pop('gradiated.com/workload-kind')
         with self.assertRaises(ValueError):
             self.host.validate(pod)
+
+    @unittest.skipIf("recovery" in Path(agent.__file__).parts, "the frozen recovery agent predates weighted routing")
+    def test_reporter_environment_carries_the_runtime_active_request_limit(self):
+        profile = {'model_id': 'glm', 'release': {'runtime_revision': 'glm-a', 'model_revision': 'rev'}}
+        reporting = agent.reporter_environment(profile, self.uid, 38080, '/usr/bin')
+        self.assertNotIn('DESMOND_ACTIVE_REQUESTS', reporting)
+        self.assertEqual(reporting['DESMOND_RUNTIME_PORT'], '38080')
+        reporting = agent.reporter_environment({**profile, 'active_requests': 16, 'warmup': True}, self.uid, 38080, '/usr/bin')
+        self.assertEqual(reporting['DESMOND_ACTIVE_REQUESTS'], '16')
+        self.assertEqual(reporting['DESMOND_RUNTIME_PORT'], '38083')
+
+    @unittest.skipIf("recovery" in Path(agent.__file__).parts, "the frozen recovery agent predates weighted routing")
+    def test_runtime_active_request_limit_must_be_a_bounded_integer(self):
+        digest = 'a' * 64
+        image = self.pod['spec']['containers'][0]['image']
+        config = {**self.config, 'runtimes': {digest: {'image': image, 'active_requests': 4}}}
+        self.assertEqual(agent.runtime_profile(config, self.pod)[1]['active_requests'], 4)
+        # Desmond refuses these, and a reporter that cannot start takes its pod down.
+        for value in (0, 4097, '4', 4.0, True, None):
+            config['runtimes'][digest]['active_requests'] = value
+            with self.assertRaises(ValueError):
+                agent.runtime_profile(config, self.pod)
 
     def test_training_readiness_uses_the_trainer_without_a_reporter(self):
         self.config['runtimes'] = {'b' * 64: {'kind': 'training', 'image': 'gradiated/training-bundle@sha256:' + 'b' * 64,

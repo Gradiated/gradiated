@@ -189,11 +189,13 @@ healthy. S3 versioning keeps previous entry points for recovery.
   ID.
 - The `production` environment must permit the deployment workflow.
 - The GitHub Apps in `tools/github-apps/apps.mjs` exist and are installed on
-  only their listed repositories. `mise run github-apps:create` creates them
+  only their listed repositories. `gradctl github-apps create` creates them
   through the manifest flow, verifies each installation's repository scope, and
   writes each private key straight to its secret store:
   - Gradiated Release (contents write, `main` bypass): release commits.
   - Gradiated CI (contents write, no bypass): screenshot commits on PR branches.
+  - Gradiated Docs (contents and pull requests write, no bypass): the daily
+    developer docs pull request from `.github/workflows/docs-refresh.yml`.
   - Gradiated Autotrain Reader (contents read on `autotrain`): runtime builds.
   - Gradiated Argo CD (contents read): the
     `gradiated/prod/gitops/argocd-github-app` repository credential.

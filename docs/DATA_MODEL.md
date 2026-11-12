@@ -127,6 +127,7 @@ Direct customers and distribution channels such as OpenRouter use the same organ
 | `id`               | uuid        | no   | Primary key                                 |
 | `kind`             | text        | no   | `customer`, `distribution_channel`          |
 | `name`             | text        | no   | Bounded display name                        |
+| `slug`             | text        | no   | Unique; `^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$` |
 | `status`           | text        | no   | `active`, `suspended`                       |
 | `auto_join_domain` | text        | yes  | Lowercase email domain; unique when present |
 | `onboarded_at`     | timestamptz | yes  | When the owner finished first-run setup     |
@@ -134,6 +135,8 @@ Direct customers and distribution channels such as OpenRouter use the same organ
 | `updated_at`       | timestamptz | no   | Last mutation time                          |
 
 OpenRouter is an internal `distribution_channel` organization and is not visible in the customer organization chooser.
+
+The organization `slug` prefixes its private model names, as in `acme/support-triage`. An organization created during signup starts with a random 16-character slug, and its owner chooses the real one during onboarding; one created from the console asks for its slug up front. In both cases the console suggests a slugified form of the organization name and the owner can edit it; a slug held by another organization is refused so they can pick again. Admins can change it in settings until the organization has its first model, after which it is fixed so model names never stop resolving. Fixed platform names (`gradiated`, `openai`, `anthropic`, `api`, ...) and the author segment of every hosted catalog id (`google`, `qwen`, ...) are reserved, so a private name never shadows a catalog id. Migration 0030 gives existing organizations a slug from their name, with `-2`, `-3`, ... on collisions and an `-org` suffix for reserved or too-short names.
 
 A new user's signup organization has a null `onboarded_at`, and the console asks its owner to name it before continuing. An owner or admin may set `auto_join_domain` only to the domain of their own verified email, and only when that domain is not a free or disposable email provider. When a user signs up with a verified email at a claimed domain of an active customer organization, they join it as a `member` and no personal organization is created. One organization may claim a domain.
 
@@ -218,14 +221,20 @@ The raw format is `grad_<32 random bytes encoded as base64url>`. Authentication 
 
 Global hosted-model catalog. It is not organization-scoped. The primary key is the immutable human-readable model identifier used in direct requests and returned to OpenRouter, for example `google/gemma-4-31b-it`.
 
-| Field        | Type        | Null | Rules                                            |
-| ------------ | ----------- | ---- | ------------------------------------------------ |
-| `id`         | text        | no   | Primary key; lowercase immutable public model ID |
-| `name`       | text        | no   | Bounded customer-facing name                     |
-| `status`     | text        | no   | `available`, `unavailable`, `retired`            |
-| `properties` | jsonb       | no   | Closed Zod `ModelProperties` document            |
-| `created_at` | timestamptz | no   | Creation time                                    |
-| `updated_at` | timestamptz | no   | Last mutation time                               |
+| Field                 | Type        | Null | Rules                                                                        |
+| --------------------- | ----------- | ---- | ---------------------------------------------------------------------------- |
+| `id`                  | text        | no   | Primary key; lowercase immutable public model ID                             |
+| `name`                | text        | no   | Bounded customer-facing name                                                 |
+| `status`              | text        | no   | `available`, `unavailable`, `retired`                                        |
+| `properties`          | jsonb       | no   | Closed Zod `ModelProperties` document                                        |
+| `openrouter_model_id` | text        | yes  | Exact OpenRouter `author/slug` of the same model; no `:variant` or `~` alias |
+| `created_at`          | timestamptz | no   | Creation time                                                                |
+| `updated_at`          | timestamptz | no   | Last mutation time                                                           |
+
+`openrouter_model_id` is not part of `ModelProperties`, so it is never
+published. Catalog membership decides that Gradiated bills a request; the
+mapping only lets OpenRouter serve it, and a mapped model can serve with no
+deployment. Git-owned catalog definitions set it, and omitting it clears it.
 
 `ModelProperties` is a closed, versioned Zod document inspired by OpenRouter's
 current provider schema. It keeps model capabilities, limits, and prices in the
@@ -261,7 +270,12 @@ entries use `prompt`, `cached_prompt`, and optional `cache_write`. The launch
 text output modality contains its positive token `max_length`, positive
 `default_length`, a `streaming` flag, `supported_parameters`, and pricing
 entries for `completion` and optional `internal_reasoning`. `default_length`
-cannot exceed `max_length`. Each pricing entry has `unit = token` and a
+cannot exceed `max_length`. The gateway sends `default_length` as the limit
+when a request sets none, except for models it lists as open-limit (Kimi K3.1
+Pro): those get no limit, so the runtime stops at the remaining context or its
+own cap, which equals `max_length`. Runtime releases built before that cap
+still receive `default_length`. The 630-second generation deadline still
+applies, so an output that long needs a fast enough stream to finish. Each pricing entry has `unit = token` and a
 nonnegative integer `cost` in nano-USD. Pricing types are unique within their
 modality; `prompt`, `cached_prompt`, and `completion` are present in every
 stored document.
@@ -467,7 +481,11 @@ it must identify the pinned Kev release and cannot serve Chat Completions.
 This transport discriminator is included in the release digest, not stored in
 an additional routing record.
 Rust serializes this typed object canonically and hashes only it to produce the
-`served_release_digest` captured by each admitted generation.
+`served_release_digest` captured by each admitted generation. Settlement names
+what actually served: an adapter's own digest, the base release when the base
+model served an adapter request without it, or
+`sha256({"capacity":"openrouter","model":<openrouter_model_id>})` when
+OpenRouter served.
 
 There is no generic deployment metadata. A field that affects routing,
 availability, capacity, compliance, or cost becomes an explicit column or part
@@ -679,9 +697,12 @@ Valkey key: `deployment-status:{<served_release_digest>}`. This is a hash. The
 field is `deployment_id`. The value is one closed status document.
 
 The document contains `deployment_id`, `runtime_revision`, `received_at`,
-`healthy`, `accepting_requests`, and `reason_code`.
+`healthy`, `accepting_requests`, `reason_code` and an optional `active_requests`.
 `accepting_requests` reports runtime safety only: KV pressure and draining.
-It is not a concurrency limit. The engine owns admission.
+`active_requests` reports the concurrent request limit that the engine itself
+enforces, 1 to 4,096, from the runtime's `runtimes.json` entry. The gateway uses
+it only as a routing weight; it never admits or rejects a request by it. The
+gateway enforces no deployment concurrency limit. The engine owns admission.
 The reader ignores unknown fields so a newer producer cannot break an older
 gateway. A malformed document drops only its own deployment.
 Desmond sends it every second. The ingest service checks provider ownership and
@@ -796,10 +817,10 @@ URLs remain intact.
 
 ## Task training
 
-Migration 0008 adds workspace-owned `tasks`, named uniquely within a workspace.
-Task names cannot be `.` or `..`, because task routes use the name as a URL path
-segment. The collector registers a task when it accepts its first captured trace,
-using an idempotent insert keyed by workspace and task name. PostgreSQL outages
+Migration 0008 adds workspace-owned `tasks`. Task names are unique within the
+workspace and cannot be `.` or `..`, because task routes use the name as a URL
+path segment. The collector registers a task when it accepts its first captured
+trace, using an idempotent insert keyed by workspace and task name. PostgreSQL outages
 do not block capture or uploads: pending registrations remain on local disk and
 retry in the background, including after process restart. A bounded one-hour
 in-memory cache avoids repeated writes for known tasks. Task listing reads
@@ -832,7 +853,8 @@ workflow transitions. See [the run contract](TASK_FINE_TUNING_RUN_CONTRACT.md).
 adapters have no training run. Composite
 foreign keys require that the workspace owns the task and that the run belongs
 to that same task. Each run produces at most one version; version names are
-workspace-unique. Adapter metadata records an immutable URI, digest, byte size,
+unique within their task. A trained version is named by its input cutoff date,
+`yyyy-mm-dd`, then `-2`, `-3`, ... for further versions that day. Adapter metadata records an immutable URI, digest, byte size,
 format and rank. Large artifacts and datasets remain in object storage.
 
 The task's production-version pointer is changed explicitly by an editor, only
@@ -845,6 +867,31 @@ Executor-specific support is checked when admitting a run.
 Workspace `default_judge_model` seeds `tasks.judge_model_id` when a task is first captured. Each task can override its judge independently; changing the workspace default never rewrites existing tasks. Migration 0013 renames the workspace field and backfills existing tasks from their workspace’s current default. Training admission snapshots the saved task judge.
 
 ## Private LoRA serving
+
+A private model's public name is `<organization slug>/<task>` for the task's
+production version and `<organization slug>/<task>/<version>` for one version. The
+gateway resolves it within the calling key's workspace to one version and
+records that version's full public name in the response and usage. GPU runtimes
+never see model names: they key an adapter `<workspace_id>/<version_id>` and fetch
+its download grant by version ID.
+
+A task's name becomes a model name when its first version is written, from a
+training run or an upload. Migration 0030 adds `tasks.organization_id`, which an
+insert trigger on `task_versions` sets at that point to
+the workspace's organization, with a composite foreign key to the workspace and a
+unique `(organization_id, name)`. Model names are therefore unique across
+the organization, while trace labels still register tasks per workspace. A model
+name contains no `/` and has at most 128 characters, so the public name fits the
+gateway's 300-character model ID; a check enforces this only for claimed names,
+and the trigger leaves other names unclaimed. The trigger locks the organization
+row, as slug changes do, so a slug can't change under an organization's first
+model; running it in the database also covers versions written by older code
+during a rollout.
+Training and uploads are refused when another workspace of the organization
+already has a model with the name. Only claimed tasks resolve at the gateway or
+load on GPU runtimes. The migration claims names for tasks that already have
+versions; where several workspaces of one organization share such a name, the
+oldest task keeps it.
 
 Private LoRA inference reuses `task_versions` for workspace ownership, immutable
 artifact URI/checksum/rank and durable serving eligibility. The existing
@@ -876,10 +923,13 @@ intent is retained for artifact cleanup even after its version or task is delete
 `task_version_files` holds the files delivered with a task version: its `report.md`
 training report and any data files, images or exports the report references. Each
 row has an ID, workspace FK, version FK (cascade), a flat file name, content type,
-declared size, `pending`/`ready` status and creation and completion times. Staff
+declared size, `pending`/`ready`/`deleted` status and creation and completion times. Staff
 reserve a file and receive a one-hour signed PUT to `version-files/<version_id>/<file_id>`
 in the training artifacts bucket; completion checks the object's size, marks it
 `ready` and replaces any ready file with the same name on that version, deleting
 the replaced object. A partial unique index keeps one ready file per version and
 name. Workspace members list, read (text files up to 2 MiB, served by the API) and
-download ready files.
+download ready files. Removed and replaced rows remain as tombstones until artifact
+cleanup deletes their objects after upload grants expire. Cleanup also removes
+abandoned uploads and archived workspace files before task/version rows; S3
+expires noncurrent version-file objects after 30 days.

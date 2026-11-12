@@ -22,6 +22,14 @@ pub enum RoutePrompt<'a> {
 pub struct Route {
     pub primary: GatewayModelDeployment,
     pub fallbacks: Vec<GatewayModelDeployment>,
+    pub(crate) placement: RoutePlacement,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RoutePlacement {
+    pub(crate) release_digest: String,
+    pub(crate) route_key: [u8; 32],
+    pub(crate) limits: HashMap<Uuid, Option<u32>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -203,7 +211,7 @@ pub fn order_deployments(input: RouteInput<'_>) -> RouteAvailability {
     let mut healthy = Vec::new();
     for deployment in deployments {
         match healthy_status(deployment, &statuses, release_digest, now) {
-            Ok(status) => healthy.push((deployment, status.accepting_requests)),
+            Ok(status) => healthy.push((deployment, status)),
             Err(rejection) => diagnostics.count(rejection),
         }
     }
@@ -212,19 +220,36 @@ pub fn order_deployments(input: RouteInput<'_>) -> RouteAvailability {
         return RouteAvailability::Unavailable(diagnostics);
     }
 
-    let mut accepting: Vec<GatewayModelDeployment> = healthy
+    let accepting: Vec<_> = healthy
         .iter()
-        .filter(|(_, accepting)| *accepting)
-        .map(|(deployment, _)| (*deployment).clone())
+        .filter(|(_, status)| status.accepting_requests)
         .collect();
     diagnostics.at_capacity = healthy.len() - accepting.len();
 
+    let weights = route_weights(accepting.iter().map(|(_, status)| status.active_requests));
     let route_key = route_key(workspace_id, model_id, release_digest, session_id, prompt);
-    accepting.sort_by_cached_key(|candidate| {
-        std::cmp::Reverse(rendezvous_score(&route_key, candidate.id))
+    let mut ranked: Vec<_> = accepting
+        .iter()
+        .zip(weights)
+        .map(|((deployment, _), weight)| {
+            let hash = rendezvous_score(&route_key, deployment.id);
+            (weighted_score(&hash, weight), hash, *deployment)
+        })
+        .collect();
+    let limits = accepting
+        .iter()
+        .map(|(deployment, status)| (deployment.id, status.active_requests))
+        .collect();
+    ranked.sort_by(|left, right| {
+        right
+            .0
+            .total_cmp(&left.0)
+            .then_with(|| right.1.cmp(&left.1))
     });
 
-    let mut ordered = accepting.into_iter();
+    let mut ordered = ranked
+        .into_iter()
+        .map(|(_, _, deployment)| deployment.clone());
     let Some(primary) = ordered.next() else {
         return RouteAvailability::AtCapacity(diagnostics);
     };
@@ -232,7 +257,48 @@ pub fn order_deployments(input: RouteInput<'_>) -> RouteAvailability {
     RouteAvailability::Ready(Route {
         primary,
         fallbacks: ordered.collect(),
+        placement: RoutePlacement {
+            release_digest: release_digest.to_owned(),
+            route_key,
+            limits,
+        },
     })
+}
+
+/// Each candidate's share of first choices. A replica that does not report its
+/// active request limit keeps the equal share 1/N it has without weighting; the
+/// reporting replicas split the rest in proportion to their limits. With no
+/// reports every share is 1/N, which ranks exactly as the unweighted hash does.
+pub(crate) fn route_weights(limits: impl Iterator<Item = Option<u32>>) -> Vec<f64> {
+    let limits: Vec<_> = limits.collect();
+    let candidates = limits.len() as f64;
+    let reported: Vec<_> = limits
+        .iter()
+        .flatten()
+        .map(|limit| f64::from(*limit))
+        .collect();
+    let remainder = reported.len() as f64 / candidates;
+    let total: f64 = reported.iter().sum();
+
+    limits
+        .iter()
+        .map(|limit| match limit {
+            Some(limit) => remainder * f64::from(*limit) / total,
+            None => 1.0 / candidates,
+        })
+        .collect()
+}
+
+/// Weighted rendezvous: each replica is first choice for a share of route keys
+/// proportional to its weight, and a key moves only when the replica that served
+/// it leaves or the weights change. The leading 53 bits of the hash map to
+/// u in (0, 1), and the score w / -ln(u) increases with u, so equal weights rank
+/// exactly as the unweighted hash does.
+pub(crate) fn weighted_score(hash: &[u8; 32], weight: f64) -> f64 {
+    let leading = u64::from_be_bytes(hash[..8].try_into().expect("eight bytes"));
+    let unit = ((leading >> 11) as f64 + 0.5) / (1_u64 << 53) as f64;
+
+    weight / -unit.ln()
 }
 
 fn route_key(
@@ -336,6 +402,7 @@ pub(crate) mod fixtures {
             received_at,
             healthy: true,
             accepting_requests: true,
+            active_requests: None,
             reason_code: None,
         }
     }
@@ -599,6 +666,117 @@ mod tests {
             if before[0] != removed {
                 assert_eq!(after[0], before[0], "{session}");
             }
+        }
+    }
+
+    fn weighted_order(
+        deployments: &[GatewayModelDeployment],
+        weights: &[Option<u32>],
+        session_id: &str,
+    ) -> Vec<Uuid> {
+        let statuses = deployments
+            .iter()
+            .zip(weights)
+            .map(|(deployment, weight)| DeploymentRuntimeStatus {
+                active_requests: *weight,
+                ..status(deployment)
+            })
+            .collect::<Vec<_>>();
+
+        ready(route(
+            deployments,
+            &statuses,
+            RoutePrompt::TokenIds(&[1]),
+            Some(session_id),
+        ))
+    }
+
+    #[test]
+    fn equal_or_missing_weights_keep_the_unweighted_hash_order() {
+        let deployments = deployments(4);
+        let release_digest = deployment(0).served_release_digest().unwrap();
+
+        for session in 0..256 {
+            let session = format!("session-{session}");
+            let key = route_key(
+                Uuid::from_u128(9),
+                "model",
+                &release_digest,
+                Some(&session),
+                RoutePrompt::TokenIds(&[1]),
+            );
+            let mut unweighted = deployments.iter().map(|d| d.id).collect::<Vec<_>>();
+            unweighted.sort_by_cached_key(|id| std::cmp::Reverse(rendezvous_score(&key, *id)));
+
+            assert_eq!(order(&deployments, &session), unweighted, "{session}");
+            for weights in [[Some(4); 4], [None; 4]] {
+                assert_eq!(
+                    weighted_order(&deployments, &weights, &session),
+                    unweighted,
+                    "{session} {weights:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn first_choices_follow_the_reported_active_request_limits() {
+        let deployments = deployments(4);
+        let weights = [Some(16), Some(4), Some(4), Some(4)];
+        let sessions = 8_000;
+
+        let heavy = (0..sessions)
+            .filter(|session| {
+                weighted_order(&deployments, &weights, &format!("session-{session}"))[0]
+                    == deployments[0].id
+            })
+            .count();
+
+        // 16 / (16 + 4 + 4 + 4) = 0.571; the bound is far outside sampling noise.
+        let share = heavy as f64 / f64::from(sessions);
+        assert!((0.54..0.60).contains(&share), "{share}");
+    }
+
+    #[test]
+    fn non_reporters_keep_an_equal_share_and_reporters_split_the_rest() {
+        let shares = route_weights([Some(16), Some(4), Some(4), None].into_iter());
+        // The silent replica keeps 1/4; 3/4 splits 16:4:4.
+        for (share, expected) in shares.iter().zip([0.5, 0.125, 0.125, 0.25]) {
+            assert!((share - expected).abs() < 1e-12, "{shares:?}");
+        }
+        assert_eq!(route_weights([None, None].into_iter()), [0.5, 0.5]);
+        assert_eq!(route_weights([Some(8), Some(8)].into_iter()), [0.5, 0.5]);
+        assert!(route_weights(std::iter::empty()).is_empty());
+    }
+
+    #[test]
+    fn first_choices_give_a_non_reporter_its_equal_share() {
+        let deployments = deployments(4);
+        let weights = [Some(16), Some(4), Some(4), None];
+        let sessions = 8_000;
+        let mut primaries = [0_u32; 4];
+        for session in 0..sessions {
+            let primary = weighted_order(&deployments, &weights, &format!("session-{session}"))[0];
+            let index = deployments.iter().position(|d| d.id == primary).unwrap();
+            primaries[index] += 1;
+        }
+
+        let share = |index: usize| f64::from(primaries[index]) / f64::from(sessions);
+        assert!((0.47..0.53).contains(&share(0)), "{primaries:?}");
+        assert!((0.22..0.28).contains(&share(3)), "{primaries:?}");
+    }
+
+    #[test]
+    fn raising_one_weight_moves_keys_only_onto_that_replica() {
+        let deployments = deployments(4);
+        let before = [Some(4); 4];
+        let after = [Some(16), Some(4), Some(4), Some(4)];
+
+        for session in 0..512 {
+            let session = format!("session-{session}");
+            let old = weighted_order(&deployments, &before, &session)[0];
+            let new = weighted_order(&deployments, &after, &session)[0];
+            assert!(new == old || new == deployments[0].id, "{session}");
         }
     }
 

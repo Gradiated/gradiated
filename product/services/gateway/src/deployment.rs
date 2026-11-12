@@ -37,6 +37,11 @@ pub struct DeploymentRuntimeStatus {
     pub received_at: DateTime<Utc>,
     pub healthy: bool,
     pub accepting_requests: bool,
+    /// The runtime's concurrent request limit. Routing weights each candidate by
+    /// it, and uses equal weights when any candidate leaves it out.
+    #[validate(range(min = 1, max = 4096))]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active_requests: Option<u32>,
     #[validate(length(min = 1, max = 100))]
     pub reason_code: Option<String>,
 }
@@ -238,6 +243,25 @@ mod tests {
         }))
         .expect("a retired field must not break a running producer");
         assert_eq!(status.runtime_revision, "vllm-revision");
+        assert_eq!(status.active_requests, None);
+
+        let limited = |active_requests: u32| {
+            serde_json::from_value::<DeploymentRuntimeStatus>(serde_json::json!({
+                "schema_version": 1,
+                "deployment_id": Uuid::nil(),
+                "runtime_revision": "vllm-revision",
+                "received_at": "2026-08-27T12:00:00Z",
+                "healthy": true,
+                "accepting_requests": true,
+                "active_requests": active_requests,
+                "reason_code": null
+            }))
+            .unwrap()
+        };
+        assert_eq!(limited(16).active_requests, Some(16));
+        assert!(limited(16).validate().is_ok());
+        assert!(limited(0).validate().is_err());
+        assert!(limited(4_097).validate().is_err());
 
         let missing = serde_json::from_value::<DeploymentRuntimeStatus>(serde_json::json!({
             "schema_version": 1,
@@ -265,6 +289,7 @@ mod tests {
                 received_at: now + TimeDelta::seconds(offset),
                 healthy: true,
                 accepting_requests: true,
+                active_requests: None,
                 reason_code: None,
             };
 

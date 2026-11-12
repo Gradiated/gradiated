@@ -21,8 +21,13 @@ import {
   catalogModel,
   type CatalogEntry,
 } from "@gradiated/contracts/model-catalog";
-import { createModelUpload, completeModelUpload } from "@/api/training";
+import {
+  createModelUpload,
+  completeModelUpload,
+  getAdapterConfiguration,
+} from "@/api/training";
 import { modelsQuery } from "@/api/queries";
+import { usePrivateModelName } from "@/hooks/use-private-model-name";
 import { useProductContext } from "@/hooks/use-product-context";
 import { trainingKey } from "@/hooks/use-training";
 import { canManageOrganization } from "@/lib/roles";
@@ -42,7 +47,7 @@ import type { TaskRow } from "@/store/fine-tuning-types";
 import {
   AdapterLayerMap,
   adapterLayerModules,
-  baseModelStructure,
+  type BaseModelStructure,
   type LayerModules,
 } from "@/components/fine-tuning/adapter-layer-map";
 import { errorMessage } from "@/lib/errors";
@@ -65,9 +70,11 @@ export const UploadModelDialog = ({
   onClose: () => void;
 }) => {
   const { workspaceId, selectedOrganization } = useProductContext();
+  const modelName = usePrivateModelName();
   const client = useQueryClient();
   const navigate = useNavigate();
   const models = useQuery(modelsQuery());
+  const completedTransfer = useRef<{ input: string; id: string } | null>(null);
   const picker = useRef<HTMLInputElement>(null);
   const [taskName, setTaskName] = useState(task?.name ?? "");
   const [name, setName] = useState("");
@@ -91,6 +98,7 @@ export const UploadModelDialog = ({
   const canEdit = canManageOrganization(selectedOrganization);
 
   const selectFiles = async (incoming: File[]) => {
+    completedTransfer.current = null;
     setFileError(null);
     if (
       incoming.some(
@@ -142,14 +150,15 @@ export const UploadModelDialog = ({
           setFileError("Could not load supported base models. Try again.");
           return;
         }
-        const match = catalog.data.find(
-          (model) =>
-            model.id === metadata.base_model_name_or_path ||
-            (catalogModel(model.id) as CatalogEntry | undefined)?.training
-              ?.model === metadata.base_model_name_or_path ||
-            model.properties?.hugging_face_id ===
-              metadata.base_model_name_or_path,
-        );
+        const match = catalog.data.find((model) => {
+          const profile = (catalogModel(model.id) as CatalogEntry | undefined)
+            ?.training;
+          return (
+            profile &&
+            (profile.model ?? model.properties?.hugging_face_id ?? model.id) ===
+              metadata.base_model_name_or_path
+          );
+        });
         if (!match) {
           setFileError(
             "The adapter config does not identify a supported base model. Export it with its original Hugging Face base model repository.",
@@ -238,18 +247,31 @@ export const UploadModelDialog = ({
   const expectedRevision = training?.revision;
   const baseRepository = training?.model ?? baseModel;
   const baseStructure = useQuery({
-    queryKey: ["base-model-structure", baseRepository, expectedRevision],
+    queryKey: [
+      "base-model-structure",
+      workspaceId,
+      baseRepository,
+      expectedRevision,
+    ],
     enabled: Boolean(baseRepository && expectedRevision),
     staleTime: Infinity,
     retry: false,
-    queryFn: async ({ signal }) => {
-      const response = await fetch(
-        `https://huggingface.co/${baseRepository}/resolve/${expectedRevision}/config.json`,
-        { signal },
+    queryFn: async ({ signal }): Promise<BaseModelStructure> => {
+      const configuration = await getAdapterConfiguration(
+        workspaceId,
+        baseModel,
+        signal,
       );
-      if (!response.ok) throw new Error("Base model config is unavailable.");
-
-      return baseModelStructure(await response.json()) ?? null;
+      const modules: LayerModules = new Map();
+      for (const key of Object.keys(configuration.projectionShapes ?? {})) {
+        const [layer, module] = key.split("/");
+        if (module && layer) {
+          const layers = modules.get(module) ?? new Set<number>();
+          layers.add(Number(layer));
+          modules.set(module, layers);
+        }
+      }
+      return { layerCount: configuration.layerCount, modules };
     },
   });
   const revisionIsImmutable = /^[0-9a-f]{40}$/.test(revision);
@@ -276,6 +298,11 @@ export const UploadModelDialog = ({
         throw new Error("Choose both adapter files to continue.");
 
       setProgress("Uploading files…");
+      const inputKey = JSON.stringify(draft.data);
+      if (completedTransfer.current?.input === inputKey) {
+        setProgress("Checking adapter compatibility…");
+        return completeModelUpload(workspaceId, completedTransfer.current.id);
+      }
       const grant = await createModelUpload(workspaceId, draft.data);
       await Promise.all(
         (
@@ -293,14 +320,14 @@ export const UploadModelDialog = ({
             throw new Error("File upload failed. Please try again.");
         }),
       );
+      completedTransfer.current = { input: inputKey, id: grant.id };
       setProgress("Checking adapter compatibility…");
       return completeModelUpload(workspaceId, grant.id);
     },
     onSuccess: async (version) => {
       await client.invalidateQueries({ queryKey: trainingKey(workspaceId) });
       toast.success("Model version uploaded", {
-        description:
-          "Adapter compatibility checks passed. Your model version is saved.",
+        description: `Adapter compatibility checks passed. Model name: ${modelName(version.task, version.name)}`,
       });
       onClose();
       void navigate({ to: "/tasks/$taskId", params: { taskId: version.task } });
@@ -374,7 +401,7 @@ export const UploadModelDialog = ({
                   id="upload-version"
                   placeholder="e.g. support-triage-v1"
                   value={name}
-                  maxLength={200}
+                  maxLength={128}
                   pattern={"[a-zA-Z0-9][a-zA-Z0-9._\\-]*"}
                   onChange={(event) =>
                     setName(slugifyTaskInput(event.target.value))

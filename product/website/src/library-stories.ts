@@ -71,7 +71,7 @@ const excerptFor = (slug: string): string | undefined => {
    and the lead/pair landscape). Pieces without an entry keep their generated
    wafer cover — the maps below stay as the fallback, not a competitor. */
 const NOTE_ART: Record<string, StoryArt> = {
-  "/library/gemma-inference-engine/": {
+  "/notes/gemma-inference-engine/": {
     tall: "/brand/library/carat.webp",
     wide: "/brand/library/carat-wide.webp",
   },
@@ -83,10 +83,14 @@ const NOTE_ART: Record<string, StoryArt> = {
     tall: "/brand/library/mission.webp",
     wide: "/brand/library/mission-wide.webp",
   },
+  "/notes/0-to-1-weeks-at-gradiated/": {
+    tall: "/brand/library/zero-to-one.webp",
+    wide: "/brand/library/zero-to-one-wide.webp",
+  },
 };
 
 const NOTE_COVERS: Record<string, StoryCover> = {
-  "/library/gemma-inference-engine/": artworkPresets.carat,
+  "/notes/gemma-inference-engine/": artworkPresets.carat,
   "/notes/our-thesis/": artworkPresets.thesis,
 };
 
@@ -96,7 +100,9 @@ const writing: Story[] = articles
   .map((article) => ({
     art: NOTE_ART[article.path],
     cover: NOTE_COVERS[article.path],
-    date: article.status === "draft" ? "" : displayDate(article.publishedAt),
+    /* Drafts carry their authored date too — they only list in dev,
+       and a dateless card reads as a bug rather than a status. */
+    date: displayDate(article.publishedAt),
     dateTime: article.status === "draft" ? undefined : article.publishedAt,
     href: article.path,
     kind: "note",

@@ -52,8 +52,15 @@ describe("serving adapter dimensions", () => {
         qk_rope_head_dim: 0,
         qk_nope_head_dim: 2,
         v_head_dim: 2,
+        moe_intermediate_size: 8,
       }),
     ).toEqual({
+      "0/mlp.experts.gate_proj": [8, 4],
+      "0/mlp.experts.up_proj": [8, 4],
+      "0/mlp.experts.down_proj": [4, 8],
+      "1/mlp.experts.gate_proj": [8, 4],
+      "1/mlp.experts.up_proj": [8, 4],
+      "1/mlp.experts.down_proj": [4, 8],
       "0/self_attn.q_proj": [6, 4],
       "0/self_attn.k_proj": [6, 4],
       "0/self_attn.v_proj": [6, 4],
@@ -79,7 +86,9 @@ describe("serving adapter dimensions", () => {
       moe_intermediate_size: 2304,
     });
 
-    // Matches the tensors in deepseek-ai/DeepSeek-V4.1-Flash at dba1be0.
+    // Matches the tensors in deepseek-ai/DeepSeek-V4.1-Flash at dba1be0 and
+    // DeepSeek-V4.1-Flash-1017 at 1bae0e1. Routed experts are not adaptable on
+    // the SGLang runtime, so uploads targeting them are rejected.
     expect(shapes).toMatchObject({
       "39/attn.wq_a": [1280, 5120],
       "39/attn.wq_b": [32768, 1280],
@@ -90,6 +99,7 @@ describe("serving adapter dimensions", () => {
       "39/ffn.shared_experts.w2": [5120, 2304],
       "39/ffn.shared_experts.w3": [2304, 5120],
     });
+    expect(shapes).not.toHaveProperty("39/ffn.experts.w2");
     expect(Object.keys(shapes ?? {})).toHaveLength(320);
   });
 
@@ -136,3 +146,25 @@ describe("serving adapter dimensions", () => {
     ).rejects.toThrow();
   });
 });
+
+it.each([[0, 1], 2] as const)(
+  "accepts complete expert layout %j with mandatory projection shapes",
+  async (layout) => {
+    const files = adapterFiles("test/base", 1, layout);
+    const result = await validateAdapterFiles(
+      files.config,
+      {
+        sizeBytes: files.weights.length,
+        read: async (offset, length) =>
+          files.weights.subarray(offset, offset + length),
+      },
+      "test/base",
+      {
+        layerCount: 1,
+        expertCount: 2,
+        projectionShapes: { "0/mlp.experts.down_proj": [4, 4] },
+      },
+    );
+    expect(result.r).toBe(2);
+  },
+);

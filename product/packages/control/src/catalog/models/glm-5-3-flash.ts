@@ -9,6 +9,8 @@ export const createGlm53FlashModelConfiguration = () =>
     id: glm53FlashModelId,
     name: modelDisplayName(glm53FlashModelId),
     status: "available",
+    // Checked 2026-11-05: OpenRouter's entry has this model's Hugging Face ID.
+    openrouterModelId: "z-ai/glm-5.3-flash",
     properties: {
       description:
         "GLM-5.3 Flash is a fast reasoning and tool-use model from Z.AI",
@@ -23,11 +25,11 @@ export const createGlm53FlashModelConfiguration = () =>
             max_context_length: { value: 1_048_576, unit: "token" },
           },
           pricing: [
-            { type: "prompt", unit: "token", cost: 75 },
+            { type: "prompt", unit: "token", cost: 150 },
             {
               type: "cached_prompt",
               unit: "token",
-              cost: 15,
+              cost: 30,
             },
           ],
         },
@@ -57,11 +59,11 @@ export const createGlm53FlashModelConfiguration = () =>
             response_format: { type: "unknown" },
           },
           pricing: [
-            { type: "completion", unit: "token", cost: 250 },
+            { type: "completion", unit: "token", cost: 500 },
             {
               type: "internal_reasoning",
               unit: "token",
-              cost: 250,
+              cost: 500,
             },
           ],
         },
@@ -89,6 +91,8 @@ export const createDealignGlm53FlashModelConfiguration = () => {
     id,
     name: modelDisplayName(id),
     status: "available",
+    // OpenRouter does not serve Dealign's weights; standard GLM is a different model.
+    openrouterModelId: null,
     properties: {
       ...base.properties,
       description:

@@ -1,6 +1,7 @@
 mod chat;
 mod client;
 mod native;
+mod openrouter;
 mod progress;
 mod systemone;
 
@@ -8,15 +9,25 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use reqwest::StatusCode;
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 use thiserror::Error;
 use uuid::Uuid;
 
 use crate::{GatewayError, GatewayModelDeployment, InferenceRequest, NormalizedUsage};
 
 pub use client::{RuntimeClientError, RuntimeTlsConfig, SglangClient};
+pub use openrouter::{supports_parameter as openrouter_supports_parameter, OpenRouterClient};
 
 #[async_trait]
 pub trait ModelRuntime: Send + Sync {
+    async fn count_tokens(
+        &self,
+        _deployment: &GatewayModelDeployment,
+        _request: Value,
+    ) -> Result<u64, RuntimeFailure> {
+        Err(ProtocolViolation::Dispatch.into())
+    }
+
     async fn complete(
         &self,
         deployment: &GatewayModelDeployment,
@@ -37,6 +48,58 @@ pub trait ModelRuntime: Send + Sync {
 }
 
 #[async_trait]
+pub trait ExternalCapacity: Send + Sync {
+    async fn complete(&self, request: ExternalRequest)
+        -> Result<RuntimeCompletion, RuntimeFailure>;
+
+    async fn stream(
+        &self,
+        request: ExternalRequest,
+    ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure>;
+}
+
+pub struct ExternalRequest {
+    pub generation_id: Uuid,
+    pub workspace_id: Uuid,
+    pub model: ExternalModel,
+    pub request: InferenceRequest,
+    pub output_tokens: u64,
+    pub deadline: DateTime<Utc>,
+    pub price_cap: PriceCap,
+}
+
+/// What the caller pays us per token, in nano-USD; OpenRouter is capped at this
+/// unless the model accepts a hardcoded overpay.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct PriceCap {
+    pub prompt: u64,
+    pub completion: u64,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExternalModel {
+    id: String,
+}
+
+impl ExternalModel {
+    pub fn openrouter(id: &str) -> Self {
+        Self { id: id.to_owned() }
+    }
+
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    /// Settlement's served-release identity for generations OpenRouter serves.
+    pub fn served_release_digest(&self) -> String {
+        let identity = serde_json::json!({"capacity": "openrouter", "model": self.id});
+        let encoded = serde_json::to_vec(&identity).expect("a JSON object serializes");
+
+        format!("sha256:{:x}", Sha256::digest(encoded))
+    }
+}
+
+#[async_trait]
 pub trait RuntimeEventStream: Send {
     async fn next_event(&mut self) -> Result<Option<RuntimeStreamEvent>, RuntimeFailure>;
 }
@@ -53,6 +116,7 @@ pub struct RuntimeStreamChunk {
     finish_reason: Option<String>,
     usable_output: bool,
     usage: Option<ChunkUsage>,
+    upstream_cost_nano_usd: Option<u64>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -81,6 +145,7 @@ impl RuntimeStreamChunk {
             } else {
                 ChunkUsage::Running
             }),
+            upstream_cost_nano_usd: None,
         }
     }
 
@@ -105,6 +170,10 @@ impl RuntimeStreamChunk {
     pub fn is_terminal_usage(&self) -> bool {
         matches!(self.usage, Some(ChunkUsage::Terminal(_)))
     }
+
+    pub fn upstream_cost_nano_usd(&self) -> Option<u64> {
+        self.upstream_cost_nano_usd
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -112,6 +181,7 @@ pub struct RuntimeCompletion {
     response: Value,
     finish_reason: String,
     usage: NormalizedUsage,
+    upstream_cost_nano_usd: Option<u64>,
 }
 
 impl RuntimeCompletion {
@@ -125,7 +195,14 @@ impl RuntimeCompletion {
             response,
             finish_reason,
             usage,
+            upstream_cost_nano_usd: None,
         }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn with_upstream_cost(mut self, nano_usd: u64) -> Self {
+        self.upstream_cost_nano_usd = Some(nano_usd);
+        self
     }
 
     #[cfg(test)]
@@ -144,6 +221,10 @@ impl RuntimeCompletion {
     pub fn usage(&self) -> NormalizedUsage {
         self.usage
     }
+
+    pub fn upstream_cost_nano_usd(&self) -> Option<u64> {
+        self.upstream_cost_nano_usd
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -155,6 +236,20 @@ pub enum RuntimeFailureKind {
     ResponseTooLarge,
     ProtocolViolation,
     Interrupted,
+}
+
+impl RuntimeFailureKind {
+    pub fn public_error(self) -> GatewayError {
+        match self {
+            Self::InvalidRequest => GatewayError::invalid_request(None),
+            Self::CapacityExceeded => GatewayError::CapacityExceeded,
+            Self::Unavailable
+            | Self::TimedOut
+            | Self::ResponseTooLarge
+            | Self::ProtocolViolation
+            | Self::Interrupted => GatewayError::RuntimeUnavailable,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Error, Eq, PartialEq)]
@@ -171,6 +266,7 @@ enum FailureCause {
     Transport(TransportError),
     Protocol(ProtocolViolation),
     Tokenizer,
+    Credential,
     Deadline,
     IdleTimeout,
     DeclaredTooLarge,
@@ -187,6 +283,7 @@ impl FailureCause {
             Self::Transport(error) => error.as_str(),
             Self::Protocol(violation) => violation.as_str(),
             Self::Tokenizer => "tokenizer",
+            Self::Credential => "credential",
             Self::Deadline => "deadline",
             Self::IdleTimeout => "idle_timeout",
             Self::DeclaredTooLarge => "declared_too_large",
@@ -428,19 +525,22 @@ impl RuntimeFailure {
         self
     }
 
+    #[expect(clippy::too_many_arguments, reason = "one bounded log event")]
     pub(crate) fn log_attempt(
         &self,
         generation_id: Uuid,
         model_id: &str,
-        deployment_id: Uuid,
+        deployment_id: Option<Uuid>,
+        capacity: &'static str,
         attempt: u8,
         elapsed_ms: u64,
-        retry_selected: bool,
+        next_capacity: Option<&'static str>,
     ) {
-        crate::diagnostics::limited_warn!(%generation_id, model_id, %deployment_id, attempt, phase = "dispatch",
-            elapsed_ms, retry_selected, failure_kind = ?self.kind,
-            upstream_status = self.upstream_status(), diagnostic_code = self.diagnostic_code(),
-            "runtime attempt failed");
+        crate::diagnostics::limited_warn!(%generation_id, model_id,
+            deployment_id = deployment_id.map(tracing::field::display), capacity, attempt,
+            phase = "dispatch", elapsed_ms, retry_selected = next_capacity.is_some(), next_capacity,
+            failure_kind = ?self.kind, upstream_status = self.upstream_status(),
+            diagnostic_code = self.diagnostic_code(), "runtime attempt failed");
     }
 
     pub(crate) fn diagnostic_code(&self) -> &'static str {
@@ -479,12 +579,7 @@ impl RuntimeFailure {
     pub fn gateway_error(&self) -> GatewayError {
         match self.kind {
             RuntimeFailureKind::InvalidRequest => GatewayError::invalid_request(self.parameter()),
-            RuntimeFailureKind::CapacityExceeded => GatewayError::CapacityExceeded,
-            RuntimeFailureKind::Unavailable
-            | RuntimeFailureKind::TimedOut
-            | RuntimeFailureKind::ResponseTooLarge
-            | RuntimeFailureKind::ProtocolViolation
-            | RuntimeFailureKind::Interrupted => GatewayError::RuntimeUnavailable,
+            kind => kind.public_error(),
         }
     }
 }

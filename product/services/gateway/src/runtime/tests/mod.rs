@@ -1,7 +1,9 @@
 mod chat;
 mod client;
+mod count_tokens;
 mod diagnostics;
 mod native;
+mod openrouter;
 mod progress;
 mod support;
 mod systemone;

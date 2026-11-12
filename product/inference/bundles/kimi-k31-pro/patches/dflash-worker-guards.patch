@@ -1,0 +1,69 @@
+--- a/sglang/srt/speculative/dflash_worker_v2.py
++++ b/sglang/srt/speculative/dflash_worker_v2.py
+@@ -97,7 +97,7 @@
+ from sglang.srt.speculative.dflash_utils import (
+     _get_or_create_chain_verify_buffers,
+     apply_dflash_simulated_acceptance,
+-    apply_dflash_verify_logits_adjustments,
++    apply_dflash_output_penalties,
+     can_dflash_use_fused_qkv_proj,
+     compute_dflash_sampling_correct_drafts_and_bonus,
+     is_dense_head_weight,
+@@ -3347,34 +3347,20 @@
+         sampling_info = batch.sampling_info
+         if sampling_info is None or sampling_info.is_all_greedy:
+             return
+-
+         if self.selector is not None:
+             if self._selector_sampling_enabled:
+                 return
+-            if not self._warned_sampling_fallback and get_parallel().tp_rank == 0:
+-                logger.warning(
+-                    "DFLASH non-greedy verification is unavailable on this "
+-                    "build/device; falling back to greedy argmax verification. "
+-                    "The requested sampling distribution will not be preserved; "
+-                    "use temperature=0 and top_k=1 for lossless greedy decoding."
+-                )
+-                self._warned_sampling_fallback = True
+-            return
+-
+-        # The sampled head hands verify the q it drew from, so no fallback is needed.
++            raise RuntimeError(
++                "DFLASH non-greedy selector verification is unavailable; "
++                "refusing to fall back to greedy decoding."
++            )
+         if self.lilicorr is not None and self._lilicorr_sampling_enabled:
+             return
+-
+-        if (
+-            not is_dflash_sampling_verify_available()
+-            and not self._warned_sampling_fallback
+-            and get_parallel().tp_rank == 0
+-        ):
+-            logger.warning(
+-                "DFLASH non-greedy verification is unavailable on this build/device; "
+-                "falling back to greedy argmax verification."
+-            )
+-            self._warned_sampling_fallback = True
++        if not is_dflash_sampling_verify_available():
++            raise RuntimeError(
++                "DFLASH non-greedy verification is unavailable; "
++                "refusing to fall back to greedy decoding."
++            )
+ 
+     def _make_next_draft_input_prefill(
+         self,
+@@ -4067,10 +4053,11 @@
+             )
+ 
+         if sampling_info is not None and target_predict is None and verify_shard is None:
+-            apply_dflash_verify_logits_adjustments(
++            apply_dflash_output_penalties(
+                 next_token_logits=logits_output.next_token_logits,
++                candidates=draft_tokens,
+                 sampling_info=sampling_info,
+-                draft_token_num=int(self.block_size),
++                reqs=batch.reqs,
+             )
+ 
+         # Constrain every chain position before accept picks from it.

@@ -53,6 +53,8 @@ export const ArticleReadingPage = ({
       <Band>
         <Module className="gr-module--top" index={0}>
           <Reading
+            author={article.author}
+            authorTitle={article.authorTitle}
             byline={
               article.status === "draft" ? undefined : on(article.publishedAt)
             }

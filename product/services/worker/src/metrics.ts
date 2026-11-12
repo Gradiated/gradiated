@@ -76,8 +76,30 @@ export class WorkerMetrics {
   private readonly autoTopUpRateLimited: Counter;
   private readonly topUpChargeOldestPending: Gauge;
 
-  constructor(options: { collectProcessMetrics?: boolean } = {}) {
+  private readonly catalogModels:
+    (() => Promise<readonly { modelId: string }[]>) | undefined;
+  private readonly catalogTargets: Gauge<"model">;
+  private readonly catalogInventory: Gauge;
+
+  constructor(
+    options: {
+      collectProcessMetrics?: boolean;
+      catalogModels?: () => Promise<readonly { modelId: string }[]>;
+    } = {},
+  ) {
     this.registry.setDefaultLabels({ service: "worker" });
+    this.catalogModels = options.catalogModels;
+    this.catalogTargets = new Gauge({
+      name: "gradiated_inference_catalog_model_target",
+      help: "Available catalog model expected to have routed inference probes, independent of leadership.",
+      labelNames: ["model"],
+      registers: [this.registry],
+    });
+    this.catalogInventory = new Gauge({
+      name: "gradiated_inference_catalog_inventory_timestamp_seconds",
+      help: "Latest independent catalog discovery during a worker metrics scrape.",
+      registers: [this.registry],
+    });
     new Gauge({
       name: "gradiated_worker_service_info",
       help: "Constant service identity metric used to detect missing worker telemetry.",
@@ -311,6 +333,14 @@ export class WorkerMetrics {
   }
 
   async render(): Promise<string> {
+    if (this.catalogModels) {
+      const models = await this.catalogModels();
+      this.catalogTargets.reset();
+      for (const { modelId } of models)
+        this.catalogTargets.set({ model: modelId }, 1);
+      this.catalogInventory.set(Date.now() / 1000);
+    }
+
     return this.registry.metrics();
   }
 }

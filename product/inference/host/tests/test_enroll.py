@@ -124,6 +124,54 @@ class Enrollment(unittest.TestCase):
         self.assertEqual(self.layout.runtime_token.read_text(), token)
         self.assertEqual(json.loads(self.layout.config.read_text())['runtimes'], config['runtimes'])
 
+    def test_enrolls_two_h200_gpus(self):
+        executable(self.bin / 'nvidia-smi', NVIDIA_SMI.replace(
+            'NVIDIA RTX PRO 6000 Blackwell Server Edition', 'NVIDIA H200'))
+        result = self.enroll()
+        self.assertEqual(result['gpu_product'], 'H200')
+        self.assertEqual(result['gpu_count'], 2)
+
+    def test_rejects_mixed_gpu_products(self):
+        executable(self.bin / 'nvidia-smi', NVIDIA_SMI.replace(
+            'NVIDIA RTX PRO 6000 Blackwell Server Edition', 'NVIDIA H200', 1))
+        with self.assertRaisesRegex(enroll.EnrollmentError, 'homogeneous'):
+            self.enroll()
+
+    def test_gh200_is_not_an_h200(self):
+        executable(self.bin / 'nvidia-smi', NVIDIA_SMI.replace(
+            'NVIDIA RTX PRO 6000 Blackwell Server Edition', 'NVIDIA GH200'))
+        with self.assertRaisesRegex(enroll.EnrollmentError, 'homogeneous'):
+            self.enroll()
+
+    def test_enrolls_two_b200_gpus(self):
+        executable(self.bin / 'nvidia-smi', NVIDIA_SMI.replace(
+            'NVIDIA RTX PRO 6000 Blackwell Server Edition', 'NVIDIA B200'))
+        result = self.enroll()
+        self.assertEqual(result['gpu_product'], 'B200')
+        self.assertEqual(result['gpu_count'], 2)
+
+    def test_gb200_is_not_a_b200(self):
+        executable(self.bin / 'nvidia-smi', NVIDIA_SMI.replace(
+            'NVIDIA RTX PRO 6000 Blackwell Server Edition', 'NVIDIA GB200'))
+        with self.assertRaisesRegex(enroll.EnrollmentError, 'homogeneous'):
+            self.enroll()
+
+    def test_enrolls_h100_gpus(self):
+        executable(self.bin / 'nvidia-smi', NVIDIA_SMI.replace(
+            'NVIDIA RTX PRO 6000 Blackwell Server Edition', 'NVIDIA H100 80GB HBM3'))
+        self.assertEqual(self.enroll()['gpu_product'], 'H100')
+
+    def test_enrolls_l40s_gpus(self):
+        executable(self.bin / 'nvidia-smi', NVIDIA_SMI.replace(
+            'NVIDIA RTX PRO 6000 Blackwell Server Edition', 'NVIDIA L40S'))
+        self.assertEqual(self.enroll()['gpu_product'], 'L40S')
+
+    def test_l40_is_not_an_l40s(self):
+        executable(self.bin / 'nvidia-smi', NVIDIA_SMI.replace(
+            'NVIDIA RTX PRO 6000 Blackwell Server Edition', 'NVIDIA L40'))
+        with self.assertRaisesRegex(enroll.EnrollmentError, 'homogeneous'):
+            self.enroll()
+
     def test_a_retry_before_promotion_takes_effect_stages_the_new_key(self):
         self.enroll()
         # Still tagged as a bootstrap device: re-authentication has not happened yet.

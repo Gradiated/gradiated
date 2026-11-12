@@ -1,0 +1,21 @@
+--- a/sglang/srt/entrypoints/openai/serving_base.py
++++ b/sglang/srt/entrypoints/openai/serving_base.py
+@@ -43,10 +43,17 @@
+         Returns (base_model, adapter_name), preserving an exact served model
+         name even when it contains colons (e.g. an object-storage URI).
+         """
++        served_model_name = self.tokenizer_manager.served_model_name
+         if ":" not in model:
++            # With an adapter resolver, any other model name is an adapter to
++            # resolve, never a silent fallback to the base model.
++            if (
++                model != served_model_name
++                and self.tokenizer_manager.lora_resolver_url is not None
++            ):
++                return served_model_name, model
+             return model, None
+ 
+-        served_model_name = self.tokenizer_manager.served_model_name
+         if model == served_model_name:
+             return model, None
+ 

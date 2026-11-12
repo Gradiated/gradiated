@@ -85,6 +85,16 @@ class GpuHostCrdTest(unittest.TestCase):
     def test_committed_hosts_are_admitted(self):
         self.kubectl('apply', '--dry-run=server', '-f', str(GPU / 'hosts.yaml'))
 
+    def test_two_h200_host_is_admitted(self):
+        self.apply(self.host(**{'inventory.gpuProduct': 'H200', 'inventory.gpuCount': 2}))
+
+    def test_two_b200_host_is_admitted(self):
+        self.apply(self.host(**{'inventory.gpuProduct': 'B200', 'inventory.gpuCount': 2}))
+
+    def test_h100_and_l40s_hosts_are_admitted(self):
+        self.apply(self.host(**{'inventory.gpuProduct': 'H100', 'inventory.gpuCount': 8}))
+        self.apply(self.host(**{'inventory.gpuProduct': 'L40S', 'inventory.gpuCount': 1}))
+
     def test_name_must_match_the_instance(self):
         document = self.host()
         document['metadata']['name'] = 'gpu-' + str(uuid.uuid4())
@@ -92,7 +102,7 @@ class GpuHostCrdTest(unittest.TestCase):
 
     def test_capacity_and_product_bounds(self):
         for field, value in (('inventory.gpuCount', 9), ('inventory.gpuCount', 0), ('inventory.cpu', 513),
-                             ('inventory.memoryGiB', 4097), ('inventory.gpuProduct', 'H100'),
+                             ('inventory.memoryGiB', 4097), ('inventory.gpuProduct', 'A100'),
                              ('provider.podId', 'Not A Pod'), ('provider.machineId', 'Not A Machine'),
                              ('managementSecret', {'key': 'some/other/secret'})):
             with self.subTest(field=field, value=value):

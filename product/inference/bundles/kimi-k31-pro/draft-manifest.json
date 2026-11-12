@@ -1,0 +1,16 @@
+{
+  "repository": "RadixArk/Kimi-K3.1-Dflash2-Preview",
+  "revision": "d0d8bc2e3c6d0a195d2e00a49017e71ca8d881f1",
+  "files": [
+    {
+      "path": "config.json",
+      "size": 2050,
+      "sha256": "b59ceb231cbec61f287968de7ecdb8520c786f0a813088b7636753fd423e537a"
+    },
+    {
+      "path": "model.safetensors",
+      "size": 5569631720,
+      "sha256": "1e07d2352fc44ea3967862309abeaa670faa3cf386c37adc35b8c97396f27b3f"
+    }
+  ]
+}

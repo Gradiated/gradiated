@@ -237,7 +237,7 @@ describe("training record store", () => {
     });
     expect(
       (await reads.listTasks(own.workspaceId))[0]?.latestRun,
-    ).toMatchObject({ id, versionId, versionName: "triage-20260930" });
+    ).toMatchObject({ id, versionId, versionName: "2026-09-30" });
     expect(await reads.getVersion(other.task.id, versionId)).toBeUndefined();
     expect(
       (await reads.listVersions(own.task.id)).map((version) => version.id),

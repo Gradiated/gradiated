@@ -475,13 +475,13 @@ into whole-file buffers. The published row never points at a key
 covered by the browser's write grants. Completion retries return the same version.
 Adapters may cover any subset of layers, as vLLM and SGLang leave unadapted layers on the base
 weights. Layer range, module shapes and MoE expert coverage are checked against the selected repository's `config.json` at the
-submitted immutable revision, including `text_config` for multimodal models.
+catalog's immutable training revision, including `text_config` for multimodal models.
 Configuration reads are capped at 1 MiB with a 10-second deadline and same-origin
 Hugging Face redirects; the uploader never supplies the trusted layer or expert counts.
 Both indexed 2-D and fused 3-D expert tensors are supported; fused tensors must
 match the base expert count, and mixed expert layouts are rejected. Tensor
 dimensions follow the runtime's 1,000,000-element-per-dimension limit. Safetensors
-headers follow serving's 100,000,000-byte limit within the total 512 MiB file cap.
+headers are capped at 8 MiB to bound parsing memory within the API's 1 GiB container limit; weights retain the total 512 MiB file cap. Upload ranks are limited to 8 to match the current adapter-enabled serving runtime.
 CPU parity tests run representative fixtures through the actual Python serving
 validator as well as upload validation, including malformed JSON and expert coverage.
 Raw inputs live under `uploads/<upload_id>/` and are deleted after publication.

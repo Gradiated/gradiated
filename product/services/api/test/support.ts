@@ -79,6 +79,7 @@ export const apiKeyRecord: ApiKeyRecord = {
 export const organizationSummary: UserOrganization = {
   id: organizationId,
   name: "Personal",
+  slug: "personal",
   status: "active",
   role: "admin",
   defaultWorkspaceId: workspaceId,
@@ -90,6 +91,7 @@ export const createdOrganization: CreatedOrganization = {
   id: organizationId,
   kind: "customer",
   name: "Analytical Engines",
+  slug: "analytical-engines",
   status: "active",
   role: "admin",
   defaultWorkspaceId: workspaceId,
@@ -164,6 +166,9 @@ export const modelRecord: ModelRecord = {
   name: "Kimi K3",
   status: "available",
   properties: modelProperties,
+  openrouterModelId: null,
+  tokenizerPath: null,
+  tokenizerRevision: null,
   createdAt: now,
   updatedAt: now,
 };

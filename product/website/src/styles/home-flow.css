@@ -48,14 +48,14 @@
    ValueFold's sharpen-from-blur, as a block — each piece rises a little,
    settles, and comes into focus, staggered by --enter-delay. The section
    flips it once, by adding gr-loop--seen to the host.                       */
+/* RELAUNCH: no blur — the sharpen-from-blur read as choppy. Rise and
+   fade only. */
 .gr-enter {
   opacity: 0;
   transform: translateY(16px);
-  filter: blur(6px);
   transition:
     opacity 0.9s ease var(--enter-delay, 0s),
-    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) var(--enter-delay, 0s),
-    filter 0.9s ease var(--enter-delay, 0s);
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) var(--enter-delay, 0s);
 }
 
 .gr-loop--seen .gr-enter,
@@ -231,18 +231,18 @@
   /* --enter is driven per-frame from HomeFlow (0 → 1 over the rest beat):
      the copy rises out of a 28px offset and sharpens as it arrives */
   transform: translateY(calc(-50% + (1 - var(--enter, 1)) * 28px));
-  filter: blur(calc((1 - var(--enter, 1)) * 6px));
-  width: min(86vw, 380px);
+  /* Of the STAGE, not the viewport — vw overflowed inside the sheet. */
+  width: min(86%, 380px);
   opacity: 0;
   visibility: hidden;
 }
 
 .gr-flow-copy--engine {
-  left: 7vw;
+  left: 7%;
 }
 
 .gr-flow-copy--silicon {
-  right: 7vw;
+  right: 7%;
 }
 
 .gr-flow-copy p + p {
@@ -472,17 +472,13 @@
   display: block;
 }
 
-.gr-value-word {
-  opacity: 0.1;
-  filter: blur(5px);
-  transition:
-    opacity 0.25s ease,
-    filter 0.25s ease;
-}
-
+/* RELAUNCH: the scrubbed per-word blur reveal is retired (choppy).
+   The words stand. */
+.gr-value-word,
 .gr-value-word--on {
   opacity: 1;
-  filter: blur(0);
+  filter: none;
+  transition: none;
 }
 
 /* ---- fold 3: the loop -------------------------------------------------- */
@@ -553,8 +549,8 @@
 /* The silicon fold speaks in the loop fold's voice: same title scale,
    same body, and the block sits on the page's own content margin. */
 .gr-flow-copy--silicon {
-  width: min(86vw, 480px);
-  right: max(4vw, calc((100vw - 1240px) / 2));
+  width: min(100% - 28px, 480px);
+  right: max(4%, calc((var(--bleed-w, 100vw) - 1240px) / 2));
   /* keep the feather's negative z-index inside this block, not behind the
      board canvas */
   isolation: isolate;
@@ -1098,6 +1094,33 @@
   .gr-marquee {
     padding: 4vh 0 2vh;
   }
+
+  /* Phones: a caption, left on the module like the copy above it. The
+     marquee is a centred flex column, so the title must opt out. */
+  .gr-root .gr-marquee-title {
+    text-align: left;
+    align-self: flex-start;
+    margin: 0 0 28px;
+  }
+
+  /* Smaller tiles — the 104px desktop tile is a poster on a phone — and
+     the row starts on the module's left edge, under the caption. */
+  .gr-marquee-tile {
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
+  }
+
+  .gr-marquee-row {
+    justify-content: flex-start;
+  }
+
+  /* "Trained on your production traffic" holds TWO lines on every phone
+     module width, including the 257px of a 375 viewport. */
+  .gr-loop-title {
+    font-size: 30px;
+    max-width: none;
+  }
 }
 
 /* ---- the product mock's phone -------------------------------------------
@@ -1235,7 +1258,7 @@
   height: 46px;
   padding: 0 16px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--color-panel);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   font-family: var(--font-code);

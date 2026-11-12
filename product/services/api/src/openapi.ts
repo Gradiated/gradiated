@@ -68,6 +68,7 @@ export const unservedDependencies = (): AppDependencies => ({
     },
     training: {
       uploads: {
+        configuration: unserved("training.uploads.configuration"),
         create: unserved("training.uploads.create"),
         complete: unserved("training.uploads.complete"),
       },

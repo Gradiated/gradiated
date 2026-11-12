@@ -14,6 +14,7 @@ const list = <T>(...data: T[]) => ({ data, next_cursor: null });
 const organization = {
   id: organizationId,
   name: "Example organization",
+  slug: "example",
   status: "active",
   role: "admin",
   default_workspace_id: workspaceId,
@@ -61,11 +62,13 @@ export const onboardingPersonalUser = acmeUser("alex.example@gmail.com", null, {
 });
 export const acmeAdmin = acmeUser("alex@acme.com", "acme.com", {
   name: "Acme",
+  slug: "acme",
   auto_join_domain: "acme.com",
 });
 export const acmeMember: CurrentUser = {
   ...acmeUser("priya@acme.com", "acme.com", {
     name: "Acme",
+    slug: "acme",
     auto_join_domain: "acme.com",
     role: "member",
   }),

@@ -1,5 +1,5 @@
 import { changedFields } from "@gradiated/analytics";
-import { createRoute, type OpenAPIHono } from "@hono/zod-openapi";
+import { z, createRoute, type OpenAPIHono } from "@hono/zod-openapi";
 import {
   CreateModelUploadSchema,
   CreateTaskVersionFileSchema,
@@ -64,6 +64,46 @@ const json = <Schema>(schema: Schema, description: string) => ({
   content: { "application/json": { schema } },
 });
 
+const adapterConfiguration = createRoute({
+  method: "get",
+  path: `${base}/adapter-configurations/{model_id}`,
+  operationId: "getAdapterConfiguration",
+  summary: "Get adapter configuration",
+  description:
+    "Gets the pinned base checkpoint dimensions used to validate an adapter.",
+  tags: ["Training"],
+  request: {
+    params: WorkspacePathSchema.extend({
+      model_id: z.string().min(1).describe("Exact catalog base model ID."),
+    }),
+  },
+  responses: {
+    200: json(
+      z
+        .object({
+          layerCount: z
+            .number()
+            .int()
+            .min(1)
+            .max(4096)
+            .describe("Number of transformer layers."),
+          expertCount: z
+            .number()
+            .int()
+            .min(0)
+            .max(4096)
+            .describe("Routed experts per layer."),
+          projectionShapes: z
+            .record(z.string(), z.tuple([z.number(), z.number()]).readonly())
+            .optional()
+            .describe("Output and input dimensions keyed by layer and module."),
+        })
+        .openapi("AdapterConfiguration"),
+      "Pinned checkpoint structure.",
+    ),
+    ...errors,
+  },
+});
 const createUpload = createRoute({
   method: "post",
   path: `${base}/model-uploads`,
@@ -428,6 +468,14 @@ export const registerTrainingRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
   training: TrainingService,
 ) => {
+  app.openapi(adapterConfiguration, async (c) => {
+    const user = await requireUser(c);
+    const { workspace_id, model_id } = c.req.valid("param");
+    return c.json(
+      await training.uploads.configuration(user.id, workspace_id, model_id),
+      200,
+    );
+  });
   app.openapi(createUpload, async (c) => {
     const user = await requireUser(c);
     const { workspace_id } = c.req.valid("param");

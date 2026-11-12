@@ -106,6 +106,7 @@ HttpResult StatusReporter::upload(const DeploymentStatus status) const {
                         .field("runtime_revision", config_.runtime_revision)
                         .field("healthy", is_healthy(status))
                         .field("accepting_requests", accepts_requests(status))
+                        .field("active_requests", config_.active_requests)
                         .raw_field("reason_code", reason ? json_string(*reason) : "null")
                         .str();
 

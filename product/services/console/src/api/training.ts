@@ -149,6 +149,21 @@ export const completeModelUpload = (workspace_id: string, upload_id: string) =>
     ),
   );
 
+export const getAdapterConfiguration = (
+  workspace_id: string,
+  model_id: string,
+  signal?: AbortSignal,
+) =>
+  requireData(
+    api.GET(
+      "/api/v1/workspaces/{workspace_id}/adapter-configurations/{model_id}",
+      {
+        params: { path: { workspace_id, model_id } },
+        signal: signal ?? null,
+      },
+    ),
+  );
+
 type VersionPath = { workspace_id: string; task: string; version_id: string };
 type VersionFilePath = VersionPath & { file_id: string };
 

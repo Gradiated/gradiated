@@ -40,9 +40,14 @@ const fixture = (t) => {
       "product/inference/bundles/host/Dockerfile",
       "product/inference/gpu/runtimes.json",
       "product/inference/gpu/host-agent.py",
+      // render-config.py checks GLM SGLang runtime limits against the launcher.
+      "product/inference/runtimes/glm-sglang/config.py",
+      "product/inference/runtimes/deepseek-sglang/config.py",
       "product/inference/images/gpu-base/base-id",
       "infra/environments/prod/us-east-1/kubernetes/gpu-inference",
       "infra/environments/prod/us-east-1/kubernetes/platform/gpu-models.yaml",
+      // Rendering also writes the per-pool replica targets for the alerts.
+      "infra/environments/prod/us-east-1/kubernetes/workloads/observability/model-replica-rules.yaml",
       "infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/workload.yaml",
       "infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml",
       "infra/environments/prod/runpod/templates.json",
@@ -177,7 +182,7 @@ test("skips a stale build after newer host inputs land", (t) => {
   assert.equal(f.run().reason, "newer host build inputs on main");
 });
 
-test("workflow packaging changes invalidate cached releases and stale promotions", (t) => {
+test("workflow changes invalidate cached releases without repinning unchanged host payload", (t) => {
   const f = fixture(t);
   assert.equal(f.run().promoted, true);
   const before = releaseKey("host", f.source, f.release.baseImage, f.checkout);
@@ -201,7 +206,10 @@ test("workflow packaging changes invalidate cached releases and stale promotions
     f.releaseFile,
     JSON.stringify({ ...f.release, source, sha256: "e".repeat(64) }),
   );
-  assert.equal(f.run(source).promoted, true);
+  assert.deepEqual(f.run(source), {
+    promoted: false,
+    reason: "host payload and base inputs unchanged",
+  });
 });
 
 test("accepts cached equivalent source but rejects an artifact from different host code", (t) => {
@@ -216,6 +224,62 @@ test("accepts cached equivalent source but rejects an artifact from different ho
     "different host code\n",
   );
   assert.throws(() => f.run(changed), /artifact does not match/);
+});
+
+test("does not replace an automatic host pin for model-only rebuild inputs", (t) => {
+  for (const file of [
+    "tools/models/release.mjs",
+    "product/inference/bundles/build.hcl",
+  ]) {
+    const f = fixture(t);
+    assert.equal(f.run().promoted, true);
+    const writer = f.writer();
+    const source = f.commit(
+      writer,
+      file,
+      file.endsWith(".mjs")
+        ? readFileSync(path.join(writer, file), "utf8") +
+            "\n// Register a model bundle.\n"
+        : 'target "verify-another-model" {}\n',
+    );
+    writeFileSync(
+      f.releaseFile,
+      JSON.stringify({ ...f.release, source, sha256: "e".repeat(64) }),
+    );
+    const before = f.git(f.root, "--git-dir", f.remote, "rev-parse", "main");
+    assert.equal(f.run(source).promoted, false);
+    assert.equal(
+      f.git(f.root, "--git-dir", f.remote, "rev-parse", "main"),
+      before,
+    );
+  }
+});
+
+test("can update an automatic host pin after genuine payload or base changes", (t) => {
+  for (const file of [
+    "product/inference/gpu/host-agent.py",
+    "product/inference/images/gpu-base/Dockerfile",
+    "product/inference/bundles/host/Dockerfile",
+  ]) {
+    const f = fixture(t);
+    assert.equal(f.run().promoted, true);
+    const writer = f.writer();
+    const source = f.commit(
+      writer,
+      file,
+      file.endsWith("bundles/host/Dockerfile")
+        ? readFileSync(path.join(writer, file), "utf8").replace(
+            "FROM runtime-base AS verify",
+            "RUN /bin/true\n\nFROM runtime-base AS verify",
+          )
+        : "# Changed reviewed host or base build input.\n",
+    );
+    writeFileSync(
+      f.releaseFile,
+      JSON.stringify({ ...f.release, source, sha256: "e".repeat(64) }),
+    );
+    assert.equal(f.run(source).promoted, true);
+  }
 });
 
 test("refuses incompatible bases, invalid artifacts and source outside main", (t) => {
@@ -441,12 +505,17 @@ test("retries rejected pushes and stops after a bounded number of failures", (t)
     f.git(f.checkout, "rev-list", "--count", `${f.source}..HEAD`),
     "1",
   );
+  const source = f.commit(
+    f.writer(),
+    "product/inference/gpu/host-agent.py",
+    "next reviewed host payload\n",
+  );
   writeFileSync(
     f.releaseFile,
-    JSON.stringify({ ...f.release, sha256: "e".repeat(64) }),
+    JSON.stringify({ ...f.release, source, sha256: "e".repeat(64) }),
   );
   writeFileSync(hook, "#!/bin/sh\nexit 1\n");
-  assert.throws(() => f.run(), /after three attempts/);
+  assert.throws(() => f.run(source), /after three attempts/);
 });
 
 test("rechecks host inputs when main changes between rendering and pushing", (t) => {

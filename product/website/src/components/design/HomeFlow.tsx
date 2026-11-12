@@ -67,24 +67,37 @@ const keyStates = (
 ): Record<"chip" | "land", BlockState> => {
   const vm = Math.min(W, H);
   const wide = W > 720;
+  /* The board draws at 280 art-px (BW + 2*BM) for every 60 (SOCK.w) of
+     chip width — so an uncapped vm-sized chip pushes a ~620px board
+     through a 390px sheet. Cap the chip so the WHOLE board fits. */
+  const boardFit = ((W - 24) * 60) / 280;
+  const chipW = Math.min(vm * 0.34, boardFit);
+  const landW = Math.min(vm * 0.32, boardFit);
   return {
     /* narrow: the chip rides higher so the board's top edge meets the
        fold's start — centred, the blueprint began ~200px down the stage
        and read as dead space after the marquee */
     chip: {
-      cx: W / 2,
+      /* Narrow: the board hangs ~1.2 chip-widths right of the chip's
+         anchor (measured, not derived — the 3D pose defeats algebra);
+         shift the chip left so the BOARD centres. Wide keeps centre. */
+      cx: wide ? W / 2 : W / 2 - 1.2 * chipW,
       cy: H * (wide ? 0.5 : 0.34),
-      w: vm * 0.34,
-      h: vm * 0.34,
+      w: chipW,
+      h: chipW,
       r: 10,
       rx: 0,
       rz: 0,
     },
     land: {
-      cx: W * (wide ? 0.25 : 0.5),
+      /* Narrow: centre the BOARD, not the chip — the socket sits at
+         94 of the artwork's 280, so a centred chip throws the board's
+         long side off the right edge. Board centre is 46 art-px right
+         of the socket; shift the chip by that at the current scale. */
+      cx: wide ? W * 0.25 : W * 0.5 - 1.2 * landW,
       cy: H * (wide ? 0.52 : 0.38),
-      w: vm * 0.32,
-      h: vm * 0.32,
+      w: landW,
+      h: landW,
       r: 10,
       rx: 58,
       rz: 45,
@@ -817,7 +830,7 @@ export const HomeFlow = (): ReactElement => {
             ))}
           </h2>
           <p className="gr-muted">
-            {"Cheapest means going all the way. We’re designing our own chips to bring costs down further than software alone can."
+            {"Once you move to your own model, we make money by offering you the inference. We’re designing our own chips to drive down your costs further than anyone else can."
               .split(" ")
               .map((w, i) => (
                 <span

@@ -54,23 +54,66 @@ def verify(root):
     manifest = json.loads((root / 'patches.json').read_text())
     if manifest['upstream_sha'] != SGLANG_SOURCE:
         raise RuntimeError('Qualified source pin changed')
-    for item in manifest['files']:
-        if hashlib.sha256((site / item['path']).read_bytes()).hexdigest() != item['overlay_sha256']:
-            raise RuntimeError('Qualified source overlay changed: ' + item['path'])
+    # A path may carry stacked overlays; the installed file must match the last one.
+    final = {item['path']: item['overlay_sha256'] for item in manifest['files']}
+    for path, digest in final.items():
+        if hashlib.sha256((site / path).read_bytes()).hexdigest() != digest:
+            raise RuntimeError('Qualified source overlay changed: ' + path)
+    from sglang.srt.mem_cache.cpp_utils import native_hash
+    from sglang.srt.mem_cache.utils import get_hash_str
+    if Path(native_hash._load_native_hash_module().__file__) != Path(native_hash.__file__).parent / 'hicache_hash_cpp.so':
+        raise RuntimeError('Prebuilt HiCache hash extension is not used')
+    if get_hash_str([1, 2, 3, 4]) != 'cf97adeedb59e05bfd73a2b4c2a8885708c4f4f70c84c64b27120e72ab733b72':
+        raise RuntimeError('Prebuilt HiCache hash extension changed page keys')
     env = {'GRADIATED_RUNTIME_ROOT': str(root), 'NVIDIA_VISIBLE_DEVICES': 'GPU-cpu-check-a,GPU-cpu-check-b',
            'RUNTIME_PORT': '28080', 'WARMUP_PORT': '28083'}
-    _, backend, router = commands(env)
+    bundle = Path(temporary.name) / 'bundle'
+    bundle.mkdir()
+    (bundle / '.bundle-sha256').write_text('0' * 64 + '\n')
+    # The build has no host-sized tmpfs; the tmpfs and private-tree checks run on GPU hosts at start.
+    import config as runtime_config
+    runtime_config.tmpfs_large_enough = lambda root: True
+    runtime_config.private_tmpfs_tree = lambda base, path: True
+    _, backend, router = commands(env, bundle)
     parser = argparse.ArgumentParser()
     ServerArgs.add_cli_args(parser)
     native = parser.parse_args(backend[3:])
     assert native.tp_size == native.attn_cp_size == 2 and native.enable_prefill_cp
-    assert native.moe_runner_backend == 'marlin' and native.max_running_requests == 16
+    assert native.moe_runner_backend == 'marlin' and native.max_running_requests == 12
+    assert native.mem_fraction_static == 0.85
     assert native.max_queued_requests is None and native.speculative_num_steps == 2
     assert native.speculative_num_draft_tokens == 3 and native.prefill_decode_interval == 64
+    assert native.enable_hierarchical_cache and native.hicache_size == 48 and native.hicache_ratio is None
+    assert native.hicache_write_policy == 'write_through' and native.hicache_storage_backend == 'file'
+    assert native.hicache_mem_layout == 'page_first' and native.hicache_io_backend == 'kernel'
+    assert native.hicache_host_memory_mode == 'cache' and native.hicache_storage_key_scheme == 'rank-suffix'
+    extra = json.loads(native.hicache_storage_backend_extra_config)
+    assert extra['max_size'] == '50G' and extra['file_storage_path'].startswith('/dev/shm/gradiated-hicache/')
     front = parse_router_args(router[3:])
-    assert front.max_concurrent_requests == 16 and front.queue_size == 2
-    assert front.queue_timeout_secs == 60 and front.rate_limit_tokens_per_second == 0
+    assert front.max_concurrent_requests == 12 and front.queue_size == 2
+    assert front.queue_timeout_secs == 10 and front.rate_limit_tokens_per_second == 0
     assert front.worker_urls == ['http://127.0.0.1:28084'] and front.disable_retries
+    _, hopper_backend, hopper_router = commands({**env, 'GLM_SGLANG_PROFILE': 'h200-tp2'})
+    hopper = parser.parse_args(hopper_backend[3:])
+    assert hopper.tp_size == 2 and not hopper.enable_prefill_cp
+    assert hopper.dsa_prefill_backend == 'flashmla_sparse_q8' and hopper.dsa_decode_backend == 'tilelang'
+    assert hopper.kv_cache_dtype == 'fp8_e4m3'
+    assert hopper.speculative_algorithm == 'EAGLE'
+    assert hopper.speculative_num_steps == 3 and hopper.speculative_num_draft_tokens == 4
+    assert hopper.mem_fraction_static == 0.90 and hopper.mamba_full_memory_ratio == 1.8
+    assert hopper.page_size == 256 and hopper.moe_runner_backend == 'marlin'
+    assert hopper.max_running_requests == hopper.cuda_graph_max_bs_decode == 3
+    assert hopper.chunked_prefill_size == hopper.max_prefill_tokens == 4096
+    hopper_front = parse_router_args(hopper_router[3:])
+    assert hopper_front.max_concurrent_requests == 3 and hopper_front.queue_size == 2
+    _, b200_backend, b200_router = commands({**env, 'GLM_SGLANG_PROFILE': 'b200-pcp2'})
+    b200 = parser.parse_args(b200_backend[3:])
+    assert b200.tp_size == 2 and b200.enable_prefill_cp and b200.attn_cp_size == 2
+    assert b200.dsa_prefill_backend == b200.dsa_decode_backend == 'trtllm'
+    assert b200.max_running_requests == b200.cuda_graph_max_bs_decode == 6
+    assert b200.mem_fraction_static == 0.85
+    assert parse_router_args(b200_router[3:]).max_concurrent_requests == 6
+    assert not hopper.enable_hierarchical_cache and not b200.enable_hierarchical_cache
     assert compileall.compile_dir(site / 'sglang', quiet=1)
     assert compileall.compile_dir(root / 'glm-sglang', quiet=1)
     temporary.cleanup()

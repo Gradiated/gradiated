@@ -1,6 +1,7 @@
-import { expect, test, type Page } from "@playwright/test";
-import { qwen3_0_6b } from "../src/stories/base-model-configs";
 import { sampleReport, sampleReportData } from "../src/stories/report-fixture";
+import { expect, test, type Page } from "@playwright/test";
+import { adapterProjectionShapes } from "@gradiated/contracts/adapter-shapes";
+import { qwen3_0_6b } from "../src/stories/base-model-configs";
 
 test.setTimeout(60_000);
 test.use({ actionTimeout: 20_000 });
@@ -26,7 +27,8 @@ const version = {
   created_at: "2026-11-03T12:00:00Z",
   adapter: { rank: 2 },
 };
-const setup = async (page: Page, role = "admin") => {
+const setup = async (page: Page, role = "admin", busyOnce = false) => {
+  let completions = 0;
   let uploaded = false;
   let received: Record<string, unknown> | undefined;
   let uploads = 0;
@@ -38,11 +40,14 @@ const setup = async (page: Page, role = "admin") => {
   });
   await page.route("**/*", async (route) => {
     const url = new URL(route.request().url());
-    if (
-      url.hostname === "huggingface.co" &&
-      url.pathname.endsWith("/config.json")
-    )
-      return route.fulfill({ json: qwen3_0_6b });
+    if (url.pathname.includes("/adapter-configurations/"))
+      return route.fulfill({
+        json: {
+          layerCount: qwen3_0_6b.num_hidden_layers,
+          expertCount: 0,
+          projectionShapes: adapterProjectionShapes(qwen3_0_6b),
+        },
+      });
     if (url.hostname !== "127.0.0.1") return route.abort();
     const path = url.pathname;
     const json = (body: unknown) => route.fulfill({ json: body });
@@ -63,6 +68,7 @@ const setup = async (page: Page, role = "admin") => {
         organizations: [
           {
             id: "test-org",
+            slug: "test-org",
             name: "Test workspace",
             role,
             status: "active",
@@ -78,6 +84,7 @@ const setup = async (page: Page, role = "admin") => {
           {
             id: workspace,
             organization_id: "test-org",
+            slug: "test-org",
             name: "Test workspace",
             is_default: true,
             default_judge_model: task.judge_model_id,
@@ -107,6 +114,15 @@ const setup = async (page: Page, role = "admin") => {
       return route.fulfill({ status: 200 });
     }
     if (path.endsWith(`/model-uploads/${version.id}/version`)) {
+      completions++;
+      if (busyOnce && completions === 1)
+        return route.fulfill({
+          status: 503,
+          json: {
+            detail:
+              "Another adapter is being validated. Please try again shortly.",
+          },
+        });
       uploaded = true;
       return json(version);
     }
@@ -168,6 +184,54 @@ const selectFiles = async (page: Page, rank = 2) => {
   ]);
 };
 
+test("retries busy validation without retransmitting uploaded files", async ({
+  page,
+}) => {
+  const state = await setup(page, "admin", true);
+  await page.goto("/tasks");
+  await page.getByRole("button", { name: "Add model", exact: true }).click();
+  await page.getByLabel("Model name", { exact: true }).fill("retry-model");
+  await page.getByLabel("Version name", { exact: true }).fill(version.name);
+  await selectFiles(page);
+  const submit = page.getByRole("button", { name: "Create task & upload" });
+  await submit.click();
+  await expect(
+    page.getByText(
+      "Another adapter is being validated. Please try again shortly.",
+    ),
+  ).toBeVisible();
+  expect(state.uploads()).toBe(2);
+  await submit.click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(state.uploads()).toBe(2);
+});
+
+test("rejects a catalog alias when completion requires the canonical repository", async ({
+  page,
+}) => {
+  const state = await setup(page);
+  await page.route("**/api/v1/models", (route) =>
+    route.fulfill({
+      json: {
+        data: [{ id: "z-ai/glm-5.3-flash", name: "GLM", status: "available" }],
+      },
+    }),
+  );
+  await page.goto("/tasks");
+  await page.getByRole("button", { name: "Add model", exact: true }).click();
+  await page.getByLabel("Choose adapter files").setInputFiles({
+    name: "adapter_config.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({ base_model_name_or_path: "z-ai/glm-5.3-flash", r: 2 }),
+    ),
+  });
+  await expect(page.getByRole("alert")).toContainText(
+    "original Hugging Face base model repository",
+  );
+  expect(state.uploads()).toBe(0);
+});
+
 for (const mobile of [false, true]) {
   test(`creates a task with an uploaded model on ${mobile ? "mobile" : "desktop"}`, async ({
     page,
@@ -184,7 +248,7 @@ for (const mobile of [false, true]) {
     ).toBeDisabled();
     await page.getByLabel("Model name", { exact: true }).fill(task.name);
     await page.getByLabel("Version name", { exact: true }).fill(version.name);
-    await selectFiles(page, mobile ? 2 : 32);
+    await selectFiles(page, mobile ? 2 : 8);
     await expect(page.getByText("Adapter files ready")).toBeVisible();
     const dialog = page.getByRole("dialog");
     const box = await dialog.boundingBox();
@@ -197,6 +261,11 @@ for (const mobile of [false, true]) {
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(
       page.getByText("Awaiting serving qualification", { exact: false }),
+    ).toBeVisible();
+    const modelName = `test-org/${task.name}/${version.name}`;
+    await expect(page.getByText(`Model name: ${modelName}`)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2, name: modelName }),
     ).toBeVisible();
     expect(state.received()).toMatchObject({
       create_task: true,
@@ -309,7 +378,7 @@ for (const revision of [undefined, null, "main"]) {
   });
 }
 
-test("rejects an adapter above rank 32 before uploading", async ({ page }) => {
+test("rejects an adapter above rank 8 before uploading", async ({ page }) => {
   const state = await setup(page);
   await page.goto("/tasks");
   await page.getByRole("button", { name: "Add model", exact: true }).click();
@@ -319,12 +388,12 @@ test("rejects an adapter above rank 32 before uploading", async ({ page }) => {
     buffer: Buffer.from(
       JSON.stringify({
         base_model_name_or_path: task.base_model_id,
-        r: 33,
+        r: 9,
       }),
     ),
   });
   await expect(page.getByRole("alert")).toHaveText(
-    "Adapter rank 33 exceeds the maximum supported upload rank of 32.",
+    "Adapter rank 9 exceeds the maximum supported upload rank of 8.",
   );
   await expect(
     page.getByRole("button", { name: "Create task & upload" }),
@@ -362,7 +431,7 @@ test("shows detected adapter details without model or revision fields", async ({
   ).toHaveCount(0);
 });
 
-// The task page hides its training runs, data and settings tabs while models are delivered by hand.
+// Settings are hidden while models are delivered by the Gradiated team.
 test.skip("model dropdown scrolls with the mouse wheel", async ({ page }) => {
   await setup(page);
   await page.route("**/api/v1/models?external=true", (route) =>
@@ -445,6 +514,7 @@ const versionFiles = async (
         organizations: [
           {
             id: "test-org",
+            slug: "test-org",
             name: "Test workspace",
             role: "admin",
             status: "active",
@@ -544,7 +614,7 @@ test("version page renders the delivered report, its files and actions", async (
   await expect(page.getByRole("button", { name: "Promoted" })).toBeDisabled();
   await expect(
     page.getByRole("link", { name: "Try in playground" }),
-  ).toHaveAttribute("href", /model=support-triage/);
+  ).toHaveAttribute("href", /model=test-org%2Fsupport-triage%2F/);
   await expect(page.getByRole("button", { name: "Add files" })).toHaveCount(0);
   await expect(page.getByText(/report\.md has/)).toHaveCount(0);
 
@@ -586,3 +656,41 @@ test("version page without a report offers promotion", async ({ page }) => {
   await page.getByRole("button", { name: "Promote", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
 });
+
+for (const failure of [
+  "model",
+  "version",
+  "version files",
+  "report",
+] as const) {
+  test(`version page offers retry after ${failure} fails`, async ({ page }) => {
+    await setup(page);
+    await versionFiles(page, { "report.md": "# A delivered report" });
+    const endpoint =
+      failure === "model"
+        ? /\/tasks\/support-triage$/
+        : failure === "version"
+          ? /\/tasks\/support-triage\/versions$/
+          : failure === "version files"
+            ? /\/versions\/[^/]+\/files$/
+            : /\/files\/[^/]+\/content$/;
+    let broken = true;
+    await page.route(endpoint, (route) =>
+      broken
+        ? route.fulfill({ status: 500, json: { detail: "Temporary failure" } })
+        : route.fallback(),
+    );
+    await page.goto(`/tasks/${task.name}/versions/${version.id}`);
+    await expect(
+      page.getByRole("alert").getByText(`Could not load ${failure}.`),
+    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("No report for this version yet")).toHaveCount(
+      0,
+    );
+    broken = false;
+    await page.getByRole("button", { name: "Retry", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { name: "A delivered report" }),
+    ).toBeVisible();
+  });
+}

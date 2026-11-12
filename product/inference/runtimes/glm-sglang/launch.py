@@ -7,9 +7,10 @@ from pathlib import Path
 import sys
 import urllib.request
 
-from config import ACTIVE_REQUESTS, QUEUED_REQUESTS, QUEUE_TIMEOUT_SECONDS, settings
+from config import ACTIVE_REQUESTS, QUEUED_REQUESTS, QUEUE_TIMEOUT_SECONDS, cache_root, detect_profile, qualification_identity, settings
 
-root = Path(__file__).resolve().parents[1]
+here = Path(__file__).resolve().parent
+root = here.parent
 base_path = root / 'warmup-base.py'
 if not base_path.is_file():
     base_path = root / 'glm/warmup-supervisor.py'
@@ -17,6 +18,16 @@ spec = importlib.util.spec_from_file_location('glm_warmup_base', base_path)
 base = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(base)
 base_handler = base.handler
+base_gpu_inventory = base.gpu_inventory
+
+
+def assigned_gpu_inventory(devices):
+    # Qualification records are keyed by the assigned GPU UUIDs. The DeepSeek entrypoint gives
+    # the engine physical indices in CUDA_VISIBLE_DEVICES, so look the UUIDs up instead.
+    return base_gpu_inventory(os.environ.get('NVIDIA_VISIBLE_DEVICES') or devices)
+
+
+base.gpu_inventory = assigned_gpu_inventory
 
 
 class Supervisor(base.Supervisor):
@@ -64,7 +75,7 @@ def full_kv_pressure(text):
     return max(values)
 
 
-def metrics(config):
+def metrics(config, qualification=None):
     texts = []
     for port in [config['backend'], config['metrics']]:
         with urllib.request.urlopen(f'http://127.0.0.1:{port}/metrics', timeout=2) as response:
@@ -77,12 +88,16 @@ def metrics(config):
     pressure = full_kv_pressure(texts[0])
     chunks = [namespace_metrics(texts[0], 'sglang:'), namespace_metrics(texts[1], 'smg_')]
     for name, value, help_text in [
-        ('gradiated_runtime_active_request_limit', ACTIVE_REQUESTS, 'SMG requests holding an active permit.'),
+        ('gradiated_runtime_active_request_limit', config.get('active_requests', ACTIVE_REQUESTS), 'SMG requests holding an active permit.'),
         ('gradiated_runtime_waiting_request_limit', QUEUED_REQUESTS, 'SMG requests waiting for a permit.'),
         ('gradiated_runtime_queue_timeout_seconds', QUEUE_TIMEOUT_SECONDS, 'Native SMG maximum queue age.'),
         ('vllm:kv_cache_usage_perc', pressure, 'Compatibility alias: maximum native SGLang non-evictable full-attention KV usage ratio.'),
     ]:
         chunks.append(f'\n# HELP {name} {help_text}\n# TYPE {name} gauge\n{name} {value}\n'.encode())
+    if qualification:
+        name = 'gradiated_runtime_startup_qualification'
+        chunks.append(f'\n# HELP {name} Startup qualification this process passed: full, short or short_to_full.\n'
+                      f'# TYPE {name} gauge\n{name}{{mode="{qualification}"}} 1\n'.encode())
     return b'\n'.join(chunks)
 
 
@@ -93,7 +108,7 @@ def handler(supervisor, config):
             if self.path != '/metrics':
                 return super().do_GET()
             try:
-                body, code = metrics(config), 200
+                body, code = metrics(config, supervisor.mode), 200
             except (OSError, RuntimeError, ValueError):
                 body, code = b'native metrics unavailable\n', 503
             self.send_response(code)
@@ -104,15 +119,23 @@ def handler(supervisor, config):
     return Handler
 
 
+def qualification_records(environment):
+    return cache_root(environment) / 'qualification'
+
+
 def main(environment=os.environ):
-    config = settings(environment)
+    config = settings(detect_profile(environment))
+    # Startup probes must name the served model: with adapters enabled, any other
+    # model name is resolved as an adapter and fails closed.
+    base.MODEL = config['served_model_name']
     original = base.handler
     base.handler = lambda supervisor: handler(supervisor, config)
     try:
-        supervisor = Supervisor([sys.executable, str(root / 'glm-sglang/service.py')],
+        supervisor = Supervisor([sys.executable, str(here / 'service.py')],
             runtime_url=f"http://127.0.0.1:{config['front']}",
             timeout=int(environment.get('RUNTIME_STARTUP_TIMEOUT_SECONDS', '3600')),
-            max_queued_requests=ACTIVE_REQUESTS + QUEUED_REQUESTS)
+            max_queued_requests=config['active_requests'] + QUEUED_REQUESTS,
+            record_dir=qualification_records(environment), identity=qualification_identity(config))
         return supervisor.run(port=config['warmup'])
     finally:
         base.handler = original

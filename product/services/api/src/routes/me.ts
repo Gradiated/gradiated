@@ -65,6 +65,7 @@ export const toCurrentOrganization = (
 ): CurrentUser["organizations"][number] => ({
   id: organization.id,
   name: organization.name,
+  slug: organization.slug,
   status: organization.status,
   role: organization.role,
   default_workspace_id: organization.defaultWorkspaceId,

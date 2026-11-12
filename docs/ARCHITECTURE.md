@@ -32,9 +32,17 @@ public ALB ---> proxy ---> gateway (Rust, EKS) ---> private transport / restrict
 ```
 
 There is no general gateway, provider router, model alias layer, fallback
-graph, third-party inference adapter or fleet service. A request names one
-exact hosted model. Direct customers and OpenRouter use the same Rust gateway
-and the same Valkey-backed authentication, admission and settlement path.
+graph or fleet service. A request names one exact hosted model. Direct
+customers and OpenRouter use the same Rust gateway and the same Valkey-backed
+authentication, admission and settlement path.
+
+The gateway has one external capacity: Gradiated's own OpenRouter account. It
+serves a catalog model whose row maps the exact OpenRouter model when our
+deployments are absent, unhealthy, saturated or fail before any output. The
+caller is billed once at catalog prices and sees only Gradiated's response;
+OpenRouter's own traffic and deployment-pinned requests never use it. The
+[gateway architecture](../product/services/gateway/ARCHITECTURE.md#external-capacity-openrouter)
+owns the rules.
 
 The one exception is the customer-key proxy in `product/services/proxy`, which
 the [proxy feature plan](PROXY_FEATURE_PLAN.md) governs. It relays requests to
@@ -328,7 +336,7 @@ private PodMonitor scrapes its dedicated metrics listener on port 9464.
 The Rust service exposes the launch inference contract:
 
 - `POST /v1/chat/completions`, streaming and non-streaming;
-- `POST /v1/systemone`, non-streaming native Kev pointer inference;
+- `POST /v1/systemone`, non-streaming native typed decision inference;
 - `GET /v1/models` with only exact currently advertised model IDs;
 - `/health/live`, `/health/ready` and `/metrics`.
 
@@ -405,11 +413,15 @@ Native token-ID transports additionally validate counts against the actual input
 and output IDs crossing their boundary; those are measured payloads, not a second
 reconstruction of the runtime's prompt.
 
-The explicit Anthropic `count_tokens` endpoint still provides a local estimate;
-it does not gate generation or settlement. The DeepSeek estimator mirrors the
-pinned chat endpoint's normalization of malformed historical tool arguments to
-an empty object. Exact deployment-side counting would require a separate runtime
-counting contract; this endpoint must not be treated as billing authority.
+The explicit Anthropic `count_tokens` endpoint provides a local estimate for
+models with a gateway tokenizer. Kimi K3.1 Pro instead sends the original
+Anthropic counting request to a healthy deployment's `/v1/messages/count_tokens`
+endpoint, with a ten-second deadline, because its pinned checkpoint ships a
+tiktoken vocabulary and native renderer rather than `tokenizer.json`. Counting
+does not admit a generation, consume a concurrency lease, or settle usage.
+The DeepSeek estimator mirrors the pinned chat endpoint's normalization of
+malformed historical tool arguments to an empty object. This endpoint must not
+be treated as billing authority.
 
 Gateway-owned checks remain authentication/authorization, advertised product
 parameters and output caps, release identity, fresh deployment health, capacity,
@@ -434,9 +446,8 @@ limits, including bounded `max_running_requests` and `max_queued_requests`.
 SGLang enables priority scheduling with lower numeric values first. The native
 runtime applies the same order before cache-affinity selection. The scheduler
 can batch requests from different tiers after admission. It does not use a
-different per-request batch size for each tier. A vLLM deployment must use its
-priority scheduling policy. The gateway sends the same trusted `priority`
-field to either OpenAI-compatible runtime.
+different per-request batch size for each tier. The gateway sends the same
+trusted `priority` field to every OpenAI-compatible runtime.
 It does not implement customer authentication or billing. A second model is a
 second explicit catalog row, `model_deployments` row and SGLang deployment; it
 is not a reason to introduce a separate routing layer. Additional deployments

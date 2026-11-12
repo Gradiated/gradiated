@@ -1,10 +1,12 @@
-# vLLM adapter loading
+# SGLang adapter loading
 
-The GLM bundle includes an opt-in adapter loader. It is a control service, not an
-inference proxy. Completion requests, streaming, cancellation, batching and CPU/GPU
-adapter caching remain with vLLM. The private metadata API and gateway integration
-are implemented. `lora_enabled` defaults to false in the job template. The production GLM vars
-enable it with the independently qualified BF16-training/FP8-serving revision pair.
+The SGLang bundles (GLM-5.3 Flash and DeepSeek V4.1 Flash 1017) include an opt-in
+adapter loader. It is a control service, not an inference proxy. Completion
+requests, streaming, cancellation, batching and CPU/GPU adapter caching remain
+with SGLang. The private metadata API and gateway integration are implemented.
+`lora_enabled` defaults to false in the job template. A production release enables
+it with an independently qualified training/serving revision pair, for example
+BF16 GLM training and NVFP4 GLM serving.
 
 ## Request path
 
@@ -13,25 +15,31 @@ inference request with the internal model name
 `<workspace UUID>/<resolved version slug>`. Public requests still use the
 existing version or task production slug. The gateway does not prepare adapters.
 
-On first use, vLLM's native `LoRAResolver` plugin calls the allocation's loopback
-`POST /internal/adapters/resolve` with `{name, workspace_id}`. The loader:
+SMG forwards the unknown model name to the allocation's single SGLang worker
+(`SMG_ROUTE_UNKNOWN_MODELS=1`, a bundle patch). With `SGLANG_LORA_RESOLVER_URL`
+set, SGLang treats any model name other than its served name as an adapter, and
+on first use its resolver hook (a bundle patch to the tokenizer manager) calls
+the allocation's loopback `POST /internal/adapters/resolve` with
+`{name, workspace_id}`. The loader:
 
 1. Obtains existing task-version metadata and a short-lived download grant.
 2. Reuses verified local files or downloads the S3 archive into a staging directory.
 3. Verifies size/checksum, safe archive contents, base revision, rank, layer range
    and expert completeness.
-4. Returns the retained local path and tensor format flag, without calling vLLM.
+4. Returns the retained local path, without calling SGLang.
 
-The resolver returns a native `LoRARequest`; vLLM assigns its ID, coalesces requests
-for the same name, registers it and handles inference. Registered requests use
-vLLM's native CPU/GPU cache. The plugin uses a worker thread for the blocking local
-file request, so downloading does not block the vLLM API event loop. Errors fail
-closed with a bounded message; they never fall back to the base model.
+The hook then loads the path through SGLang's native `load_lora_adapter`, which
+assigns the adapter ID and registers it; concurrent requests for one name share a
+single resolution. Registered adapters use SGLang's native CPU/GPU slots. The hook
+runs the blocking file request on a worker thread, so downloading does not block
+the SGLang API event loop. Names that are not `<workspace UUID>/<slug>` and all
+resolution errors fail closed with a bounded message; they never fall back to the
+base model.
 
 The loader never forwards completions, reads token streams, holds inference slots,
 tracks active requests, unloads adapters or restarts the engine. Startup preload
 and qualification retain the native load API. Materialization locks are released
-before calls into vLLM, allowing concurrent native resolution without deadlock.
+before calls into SGLang, allowing concurrent native resolution without deadlock.
 Archives of at least 8 MiB use at most eight equal, non-overlapping ranges, all
 started together and written into one staging file; smaller archives use a single
 GET. Each range has at most twelve attempts, capped at five seconds and the
@@ -48,9 +56,10 @@ Cold preparations share a 60-second deadline across grants, admission,
 materialization and downloading rather than rejecting an ordinary burst
 immediately. Each network read uses the remaining budget. The HTTP server
 bounds concurrent requests; two admission slots bound preparation waiters.
-The existing host ingress blocks vLLM's administrative load/unload endpoints.
-The resolver is installed as a standard `vllm.general_plugins` entry point and
-selected by the LoRA launcher; disabled deployments do not register it.
+SGLang's administrative load/unload endpoints listen only on the private backend
+port, which the host ingress does not route; SMG does not proxy them. Disabled
+deployments set neither environment variable, so their engines never resolve
+adapter names.
 
 The metadata source is `TaskVersion`, not a separate hosting record. The private
 grant request is `{workspace_id, version_name}`; its response composes
@@ -84,19 +93,19 @@ their version remains unavailable; preparing one does not make it production.
 
 ## Cache ownership
 
-| Tier            | Owner                     | Behavior                                      |
-| --------------- | ------------------------- | --------------------------------------------- |
-| S3 archive      | Training artifact storage | Durable source                                |
-| Allocation disk | Loader                    | Verified paths retained once returned to vLLM |
-| CPU tensors     | vLLM                      | Native LRU, bounded by `--max-cpu-loras`      |
-| GPU slots       | vLLM                      | Native LRU, bounded by `--max-loras`          |
+| Tier            | Owner                     | Behavior                                        |
+| --------------- | ------------------------- | ----------------------------------------------- |
+| S3 archive      | Training artifact storage | Durable source                                  |
+| Allocation disk | Loader                    | Verified paths retained once returned to SGLang |
+| CPU tensors     | SGLang                    | Native LRU, bounded by `--max-loaded-loras`     |
+| GPU slots       | SGLang                    | Native LRU, bounded by `--max-loras-per-batch`  |
 
 There is no loader CPU byte budget or CPU/GPU residency bookkeeping. Host RAM and
 GPU memory still need qualification for the chosen native counts, ranks and TP.
 
 Returned paths stay available for the allocation's entire engine lifetime:
-vLLM may reload a CPU-evicted adapter directly from its retained path without
-calling our loader. Disk LRU therefore evicts only files not returned to vLLM, including
+SGLang reloads an evicted adapter directly from its retained path without
+calling our loader. Disk LRU therefore evicts only files not returned to SGLang, including
 recovered files after a task restart. If pinned files fill the disk budget,
 new preparations return a capacity error; base and registered-adapter serving
 continue. There is no attempt to unload adapters to free disk. Size disk storage
@@ -115,8 +124,8 @@ admitted. Additional callers wait within the shared 60-second preparation deadli
 Writes use a staging directory and atomic rename. Restart removes incomplete
 staging directories, revalidates recovered files when used and starts with no
 acknowledged registrations. Returned paths remain pinned even if native registration
-fails or a request is cancelled, because vLLM may retain them. Startup preload
-retries check vLLM's model list after an uncertain registration. Adapter failures
+fails or a request is cancelled, because SGLang may retain them. Startup preload
+retries check SGLang's model list after an uncertain registration. Adapter failures
 leave base readiness available; engine health/restarts remain with the existing
 warmup supervisor, Desmond and Kubernetes.
 
@@ -128,7 +137,7 @@ bounded preparations. There is no placement or spreading across allocations.
 
 ## Configuration
 
-TP and base revision come from the existing vLLM command; layer/expert geometry
+TP and base revision come from the runtime configuration; layer/expert geometry
 comes from the pinned model configuration, including nested `text_config`.
 A qualified deployment may set `lora_base_model_revision` in its existing release
 and `LORA_BASE_MODEL_REVISION` for the loader when training and serving use distinct
@@ -155,7 +164,7 @@ the assigned GPU UUID count must match. These are host decisions, not adapter fi
 | `ADAPTER_PORT`           | Allocation-local control port; inference stays on `RUNTIME_PORT` |
 
 Prepare/probe/status/metrics bind only to loopback and use the existing
-Tailscale host ingress for external access, like the native vLLM
+Tailscale host ingress for external access, like the native SGLang
 runtime. Prepare/probe/resolve take `{name, workspace_id}`, where `name` is the exact
 version slug. Probe checks a bounded generation's
 returned identity and usage.
@@ -180,15 +189,16 @@ allocation logs. Gateway failures remain in the central Loki diagnostics.
 `lora_operation` JSON logs report action, outcome and elapsed seconds. Successes
 are informational and failures are warnings. Failure logs omit exception text,
 prompts, adapter/workspace identifiers, signed URLs and tokens. Inspect the
-allocation's `vllm` task logs alongside gateway/runtime errors. Native inference
+allocation's runtime logs alongside gateway errors. Native inference
 failures remain covered by the existing gateway alerts; loader metrics do not
 claim to measure native CPU/GPU residency.
 
 PEFT archives may be flat or under `adapter/`, with `adapter_config.json`,
 `adapter_model.safetensors` and optional `README.md`. BF16/F16/F32 and complete
-per-expert 2D or fused 3D layouts are accepted; vLLM's format flag comes from tensors.
+per-expert 2D or fused 3D layouts are accepted by the loader.
 Links, traversal, executable files and unsupported PEFT features are rejected.
-vLLM owns model-specific module compatibility. This does not qualify vision-tower
+SGLang owns model-specific module compatibility and rejects adapters for
+modules outside the runtime's `--lora-target-modules`. This does not qualify vision-tower
 adapters or GLM numeric correctness.
 
 ## Verification
@@ -203,8 +213,7 @@ Synthetic/local HTTP tests cover registration, coalescing, archive integrity,
 workspace checks, pinned-file safety, disk admission, recovery, startup and the
 absence of inference proxy routes. Resolver tests cover cold loading, disk reuse,
 workspace/version failures and the preload/resolution race. Bundle verification
-requires the pinned vLLM resolver interface, plugin discovery and native per-name
-coalescing to pass; local tests skip that native check when vLLM is absent. The NGINX fixture checks direct
+runs these tests inside the pinned SGLang bundle. The NGINX fixture checks direct
 completion routing, private control routing and blocked admin endpoints. CI also
 runs loader tests inside the pinned GLM bundle. Real-artifact/reference, native
 CPU/GPU eviction and reload, KV/cancellation isolation, latency and colocated

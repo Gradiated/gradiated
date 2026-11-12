@@ -13,6 +13,7 @@ import {
 import { GoodForGlyph } from "../components/design/GoodForGlyphs";
 import { listModels } from "../api/queries";
 import type { ModelPageData } from "../models";
+import { useRailBack } from "../components/design/RailShell";
 import "../styles/index.css";
 
 /**
@@ -354,6 +355,8 @@ export const ModelDetailPage = ({
 }: {
   model: ModelPageData;
 }): ReactElement => {
+  /* The rail draws "back"; the page draws nothing above its content. */
+  useRailBack({ href: "/models/", label: "Models" });
   usePlateHeight();
   return (
     <Substrate>
@@ -361,9 +364,6 @@ export const ModelDetailPage = ({
 
       <Band>
         <Module bleed className="gr-module--model" index={0}>
-          <a className="gr-label gr-model-back" href="/models/">
-            &larr; All models
-          </a>
           {/* ONE grid for the whole page, so the left column is one column:
               the identity floats at the top of the viewport and the section
               nav holds its foot, the full length of the scroll. */}

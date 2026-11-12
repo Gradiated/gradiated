@@ -7,6 +7,29 @@ import { startWorkerMetricsServer, WorkerMetrics } from "../src/metrics.js";
 const createMetrics = () => new WorkerMetrics({ collectProcessMetrics: false });
 
 describe("worker metrics", () => {
+  it("discovers expected catalog targets on scrapes without probe leadership or replicas", async () => {
+    let models = [{ modelId: "test/zero-replicas" }];
+    const discover = vi.fn(async () => models);
+    const metrics = new WorkerMetrics({
+      collectProcessMetrics: false,
+      catalogModels: discover,
+    });
+
+    const body = await metrics.render();
+    expect(body).toContain(
+      'gradiated_inference_catalog_model_target{model="test/zero-replicas",service="worker"} 1',
+    );
+    expect(body).toMatch(
+      /gradiated_inference_catalog_inventory_timestamp_seconds\{service="worker"\} [1-9]/,
+    );
+    expect(discover).toHaveBeenCalledOnce();
+
+    models = [];
+    expect(await metrics.render()).not.toContain('model="test/zero-replicas"');
+    discover.mockRejectedValueOnce(new Error("synthetic catalog failure"));
+    await expect(metrics.render()).rejects.toThrow("synthetic catalog failure");
+  });
+
   it("reports loop health, pipeline progress, lag, and bounded object kinds", async () => {
     const metrics = createMetrics();
 

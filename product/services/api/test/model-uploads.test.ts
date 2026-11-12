@@ -20,10 +20,40 @@ const post = (app: ReturnType<typeof createTestApp>, body: unknown) =>
   });
 
 describe("model upload routes", () => {
+  it("authenticates and serves adapter dimensions through the API", async () => {
+    const configuration = vi.fn(async () => ({
+      layerCount: 1,
+      expertCount: 0,
+      projectionShapes: { "0/self_attn.q_proj": [4, 4] as const },
+    }));
+    const services = {
+      training: {
+        uploads: { configuration, create: vi.fn(), complete: vi.fn() },
+      },
+    };
+    const path = `/api/v1/workspaces/${workspaceId}/adapter-configurations/${encodeURIComponent(input.base_model_id)}`;
+    expect((await createTestApp({ services }).request(path)).status).toBe(401);
+    expect(configuration).not.toHaveBeenCalled();
+    const response = await createTestApp({
+      auth: authenticated,
+      services,
+    }).request(path);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ layerCount: 1 });
+    expect(configuration).toHaveBeenCalledWith(
+      user.id,
+      workspaceId,
+      input.base_model_id,
+    );
+  });
   it("requires authentication before issuing upload grants", async () => {
     const create = vi.fn();
     const app = createTestApp({
-      services: { training: { uploads: { create, complete: vi.fn() } } },
+      services: {
+        training: {
+          uploads: { configuration: vi.fn(), create, complete: vi.fn() },
+        },
+      },
     });
     expect((await post(app, input)).status).toBe(401);
     expect(create).not.toHaveBeenCalled();
@@ -37,7 +67,11 @@ describe("model upload routes", () => {
     }));
     const app = createTestApp({
       auth: authenticated,
-      services: { training: { uploads: { create, complete: vi.fn() } } },
+      services: {
+        training: {
+          uploads: { configuration: vi.fn(), create, complete: vi.fn() },
+        },
+      },
     });
     for (const patch of [
       { weights_size: 536870913 },
@@ -57,7 +91,11 @@ describe("model upload routes", () => {
   it("requires authentication for completion", async () => {
     const complete = vi.fn();
     const app = createTestApp({
-      services: { training: { uploads: { complete, create: vi.fn() } } },
+      services: {
+        training: {
+          uploads: { configuration: vi.fn(), complete, create: vi.fn() },
+        },
+      },
     });
     expect(
       (await app.request(`${path}/${id}/version`, { method: "PUT" })).status,

@@ -19,7 +19,7 @@ Infrastructure exporters and public probes keep their separate scrape cadences.
 | -------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
 | API            | private `:9464/metrics` Service port   | request rate/status/route, latency, in-flight work, sizes, exceptions, PostgreSQL/Valkey readiness, Node process/GC/event loop                                               | `Gradiated / API`              |
 | Worker         | private `:9464/metrics` PodMonitor     | loop up/ready/failures/restarts/progress, pass latency, ingestion throughput/backlog/age, settlement lag, Node process/GC/event loop                | `Gradiated / Worker`           |
-| Gateway        | private in-cluster `/metrics`          | request outcomes, admission/rejection, active and terminal generations, tokens/charges, dispatch/runtime/TTFT/TPOT/throughput, finalization, Valkey/catalog readiness | `Gradiated / Gateway`          |
+| Gateway        | private in-cluster `/metrics`          | request outcomes, admission/rejection, active and terminal generations, tokens/charges, dispatch/runtime/TTFT/TPOT/throughput, finalization, Valkey/catalog readiness, capacity fallbacks and OpenRouter upstream cost (`deployment="openrouter"`) | `Gradiated / Gateway`          |
 | Proxy          | private admin `:9003/metrics`          | responses by destination and status, upstream header latency, in-flight requests, identity lookups (fresh, loaded, stale, unavailable), database queries, hosted catalog age and refresh failures | `Gradiated / Proxy`            |
 | Collector      | private admin `:9004/metrics`          | contents accepted and rejected by reason, batches and bytes uploaded, upload failures, open streams, batch bytes on disk | `Gradiated / Collector`        |
 | SGLang runtime | gateway deployment-scoped observations | active work, terminal outcomes, runtime latency, TTFT, TPOT, per-request output throughput                                                                        | `Gradiated / SGLang Runtime`   |
@@ -192,8 +192,8 @@ requires the configured verification workspace and a valid target header after
 authentication; a caller cannot suppress failure metrics by forging that header.
 Older metrics without a traffic label remain included during mixed-version deployment.
 
-`GatewayRuntimeFailures` requires more than 1% failed completed generations per
-model and deployment over five minutes, at least five failures, sustained for
+`GatewayRuntimeFailures` requires more than 5% failed completed generations per
+model and deployment over three minutes, at least 20 failures, sustained for
 one minute. Capacity rejections (`error="capacity_exceeded"`) are excluded from
 both the failure count and denominator, including in
 `GatewaySevereGenerationFailures` and their dashboard panels. Cancelled
@@ -463,9 +463,9 @@ additional root-use coverage, not a replacement for SNS email confirmation or a
 separate notification path for every GuardDuty/Inspector finding. It still depends
 on the EKS monitoring stack and its existing incident.io integration.
 
-High-severity GuardDuty finding events (7+) page immediately. Inspector High and
-Critical static vulnerability events use In-hours review, including findings for
-retained images that are not deployed. This does not disable Inspector scanning,
+High-severity GuardDuty finding events (7+) use In-hours review without paging
+on-call. Inspector High and Critical static vulnerability events also use
+In-hours review, including findings for retained images that are not deployed. This does not disable Inspector scanning,
 its evidence stream, or the running-image vulnerability remediation-SLA alerts.
 
 ### Exporting SOC 2 evidence
@@ -567,7 +567,7 @@ they do not page the responder. The independent Watchdog heartbeat remains Urgen
 Root use and CloudTrail changes also retain their independent urgent CloudWatch route.
 
 Non-security availability and error conditions must persist at least one minute.
-The explicit immediate exceptions are root-account activity, urgent AWS findings,
+The explicit immediate paging exceptions are root-account activity,
 critical Falco detections and generation-finalization failure: these events can
 require containment or billing-data recovery even after the triggering operation ends.
 A persistence timer is not an event-count filter; settlement backpressure therefore
@@ -612,7 +612,7 @@ when adding a new critical rule or upgrading the monitoring charts.
 | `ApiSevereErrors` | critical | 1m | At least half of requests/generations fail, with at least five failures, sustained one minute. |
 | `ApiTelemetryMissing` | warning | 5m | Missing telemetry alone is diagnostic; independent public availability, deployment loss and external heartbeat retain pages. |
 | `AwsRootAccountUsed` | critical | 0m | Immediate security event; required on-call response. |
-| `AwsUrgentSecurityFinding` | critical | 0m | Immediate high-severity GuardDuty finding. |
+| `AwsUrgentSecurityFinding` | warning | 0m | High-severity GuardDuty finding; In-hours review without paging. |
 | `CacheEvictions` | critical | 1m | Valkey contains unsettled charges and leases; eviction risks billing-data loss. |
 | `ConsoleProbeMissing` | warning | 5m | Missing telemetry alone is diagnostic; independent public availability, deployment loss and external heartbeat retain pages. |
 | `ConsoleUnavailable` | critical | 2m | External HTTPS request path continuously fails for two minutes. |
@@ -624,7 +624,7 @@ when adding a new critical rule or upgrading the monitoring charts.
 | `GatewayFinalizationFailure` | critical | 0m | Immediate exception: usage, billing or lease finalization may have lost durable state. |
 | `GatewayGenerationsStuck` | critical | 5m | Active work with no terminal generation for ten minutes, sustained another five minutes. |
 | `GatewayHighErrorRate` | critical | 5m | Sustained customer HTTP error ratio with a minimum request-volume guard; severe outages have a separate faster rule. |
-| `GatewayRuntimeFailures` | critical | 1m | More than 1% failed completed generations, at least five failures per five minutes, for one minute; capacity rejections, verification and cancellations excluded. |
+| `GatewayRuntimeFailures` | critical | 1m | More than 5% failed completed generations, at least 20 failures per three minutes, for one minute; capacity rejections, verification and cancellations excluded. |
 | `GatewayCapacityRejections` | warning | 1m | More than 5% of completed or capacity-rejected inference requests encounter capacity_exceeded over five minutes, with at least five rejections; includes in-stream errors, excludes verification and other rate limits. |
 | `GatewaySevereErrors` | critical | 1m | At least half of requests/generations fail, with at least five failures, sustained one minute. |
 | `GatewaySevereGenerationFailures` | critical | 1m | At least half of generations fail, with at least five failures, sustained one minute; capacity rejections and verification excluded. |

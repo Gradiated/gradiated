@@ -54,6 +54,9 @@ export const DeploymentStatusReportSchema = z
     runtime_revision: BoundedIdentifierSchema,
     healthy: z.boolean(),
     accepting_requests: z.boolean(),
+    // The runtime's concurrent request limit. The gateway weights routing by it
+    // and routes with equal weights when any candidate leaves it out.
+    active_requests: z.number().int().min(1).max(4_096).optional(),
     reason_code: SnakeCaseCodeSchema.min(1).max(100).nullable(),
   })
   .openapi("DeploymentStatusReport");

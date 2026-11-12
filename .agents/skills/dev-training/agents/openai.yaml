@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dev Training GPUs"
+  short_description: "Get an isolated spot GPU VM for training, connect to it, and delete it"
+  default_prompt: "Use $dev-training to create a spot GPU VM for development training, connect to it over Tailscale or SSH, and delete it when done."

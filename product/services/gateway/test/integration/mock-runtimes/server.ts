@@ -14,6 +14,7 @@ import type { Socket } from "node:net";
 import { deferred, within, type Deferred } from "../eventually.js";
 import { object, type JsonObject } from "../json.js";
 import { profile as kevProfile } from "./kev.js";
+import { profile as openRouterProfile } from "./openrouter.js";
 import type { RuntimeProfile, StreamEvents } from "./profile.js";
 import { profile as vllmProfile } from "./vllm.js";
 
@@ -35,14 +36,18 @@ class UpstreamRejection extends Error {
     super(`real runtime rejected with HTTP ${status}`);
   }
 }
-const PROFILES: Record<RuntimeKind, RuntimeProfile> = {
+const PROFILES: Record<ProfileKind, RuntimeProfile> = {
   kev: kevProfile,
   vllm: vllmProfile,
+  openrouter: openRouterProfile,
 };
 
 export const RUNTIME_KINDS = ["kev", "vllm"] as const;
 
 export type RuntimeKind = (typeof RUNTIME_KINDS)[number];
+
+/** OpenRouter is external capacity rather than a runtime a case deploys. */
+export type ProfileKind = RuntimeKind | "openrouter";
 
 export const isRuntimeKind = (value: string): value is RuntimeKind =>
   RUNTIME_KINDS.some((kind) => kind === value);
@@ -176,7 +181,7 @@ export class Runtime {
   readonly #stopping = deferred();
 
   private constructor(
-    kind: RuntimeKind,
+    kind: ProfileKind,
     model: string,
     token: string,
     upstream: Upstream,
@@ -196,7 +201,7 @@ export class Runtime {
   }
 
   static async start(
-    kind: RuntimeKind,
+    kind: ProfileKind,
     model: string,
     token: string,
     upstream: Upstream = SYNTHETIC,
@@ -486,10 +491,14 @@ export class Runtime {
           await within(this.#stopping.promise, STALL_LIMIT_MS);
           return void response.socket?.destroy();
         }
-        const data = typeof event === "string" ? event : JSON.stringify(event);
+        // A string starting with a colon is an SSE comment, such as a keepalive.
+        const line =
+          typeof event === "string" && event.startsWith(":")
+            ? event
+            : `data: ${typeof event === "string" ? event : JSON.stringify(event)}`;
         await writeFragments(
           response,
-          Buffer.from(`data: ${data}\r\n\r\n`),
+          Buffer.from(`${line}\r\n\r\n`),
           plan.fragment,
         );
       }

@@ -54,7 +54,16 @@ export const adapterProjectionShapes = (
     const rope = z.number().int().nonnegative().parse(config.qk_rope_head_dim);
     const nope = DimensionSchema.parse(config.qk_nope_head_dim);
     const vHead = DimensionSchema.parse(config.v_head_dim);
+    const expert =
+      config.moe_intermediate_size === undefined
+        ? undefined
+        : DimensionSchema.parse(config.moe_intermediate_size);
     for (const [layer, kind] of types.entries()) {
+      if (expert !== undefined) {
+        add(layer, "mlp.experts.gate_proj", expert, hidden);
+        add(layer, "mlp.experts.up_proj", expert, hidden);
+        add(layer, "mlp.experts.down_proj", hidden, expert);
+      }
       if (kind === "linear_attention") {
         for (const module of ["q_proj", "k_proj", "v_proj"])
           add(
@@ -92,6 +101,8 @@ export const adapterProjectionShapes = (
       add(layer, "attn.wkv", kvHeads * head, hidden);
       add(layer, "attn.wo_a", oGroups * oRank, (heads * head) / oGroups);
       add(layer, "attn.wo_b", hidden, oGroups * oRank);
+      // Routed experts are not adaptable: the FP4 MoE kernels SGLang serves
+      // them with expose no LoRA hooks, so the runtime rejects such adapters.
       add(layer, "ffn.shared_experts.w1", expert, hidden);
       add(layer, "ffn.shared_experts.w2", hidden, expert);
       add(layer, "ffn.shared_experts.w3", expert, hidden);

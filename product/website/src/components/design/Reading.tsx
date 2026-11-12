@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactElement, ReactNode } from "react";
 import type { StoryCover } from "./Story";
 import { Arrow } from "./icons";
+import { useRailBack } from "./RailShell";
 import { SectionFab } from "./SectionFab";
 import { WaferArtwork } from "./WaferArtwork";
 
@@ -32,6 +33,8 @@ const slug = (text: string) =>
     .replace(/^-|-$/g, "");
 
 export const Reading = ({
+  author,
+  authorTitle,
   byline,
   bylineDateTime,
   children,
@@ -41,6 +44,8 @@ export const Reading = ({
   tags = [],
   title,
 }: {
+  author?: string;
+  authorTitle?: string;
   byline?: string;
   bylineDateTime?: string;
   children: ReactNode;
@@ -52,6 +57,8 @@ export const Reading = ({
   tags?: string[];
   title: string;
 }): ReactElement => {
+  /* The rail draws "back"; the page draws nothing above its content. */
+  useRailBack({ href: "/notes/", label: "Notes" });
   const proseRef = useRef<HTMLDivElement>(null);
   const [sections, setSections] = useState<Section[]>([]);
   const [active, setActive] = useState<string>();
@@ -89,15 +96,6 @@ export const Reading = ({
 
   return (
     <article className="gr-read">
-      {/* Back to the index first: the reader who wants it wants it before
-          they start, not after they finish. */}
-      <a className="gr-read-back gr-label" href="/notes/">
-        <span aria-hidden className="gr-read-back-arrow">
-          <Arrow />
-        </span>
-        Notes
-      </a>
-
       <div className="gr-read-grid">
         <aside className="gr-read-side">
           <span
@@ -108,14 +106,15 @@ export const Reading = ({
             {!art && cover ? <WaferArtwork options={cover} /> : null}
           </span>
 
-          {tags.length > 0 ? (
-            <ul className="gr-read-tags">
-              {tags.map((tag) => (
-                <li className="gr-read-tag" key={tag}>
-                  {tag}
-                </li>
-              ))}
-            </ul>
+          {author ? (
+            <p className="gr-read-author">
+              {author}
+              {authorTitle ? (
+                <span className="gr-label gr-read-author-title">
+                  {authorTitle}
+                </span>
+              ) : null}
+            </p>
           ) : null}
 
           {/* Absent rather than empty when a piece has no headings — a

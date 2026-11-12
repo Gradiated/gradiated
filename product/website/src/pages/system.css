@@ -1,0 +1,452 @@
+/* /design — the system page. Layout only: every colour, size and gap on
+   this page comes from the tokens it documents. */
+
+/* The page shell is the DocRail; the stage lives inside its main. */
+
+.gr-sys-theme {
+  display: inline-flex;
+  border: 1px solid #27272a;
+  border-radius: var(--radius);
+  overflow: hidden;
+  width: fit-content;
+}
+
+.gr-sys-theme button {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  padding: calc(0.25 * var(--u)) var(--space-2);
+  border: 0;
+  background: transparent;
+  color: #a1a1aa;
+  cursor: pointer;
+}
+
+.gr-sys-theme button[data-on] {
+  background: #fafafa;
+  color: #09090b;
+}
+
+/* -- stage ----------------------------------------------------------------- */
+
+.gr-sys-main {
+  display: grid;
+  gap: var(--space-7);
+  max-width: 980px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5) var(--space-8);
+}
+
+.gr-sys-h1 {
+  font-family: var(--font-title);
+  font-size: var(--text-section);
+  font-weight: 650;
+  margin: 0 0 var(--space-2);
+}
+
+.gr-sys-h2 {
+  font-family: var(--font-title);
+  font-size: clamp(24px, 2.2vw, 32px);
+  font-weight: 650;
+  margin: 0 0 var(--space-2);
+}
+
+.gr-sys-sub {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-2);
+}
+
+.gr-sys-note {
+  font-size: var(--text-ui);
+  line-height: 1.55;
+  color: var(--color-text-muted);
+  max-width: 56ch;
+  margin: 0 0 var(--space-3);
+}
+
+.gr-sys-section {
+  display: block;
+}
+
+/* -- marks ----------------------------------------------------------------- */
+
+.gr-sys-markplate {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-5);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  background: #ffffff;
+  margin-bottom: var(--space-2);
+}
+
+.gr-sys-markplate--ink {
+  background: #09090b;
+  border-color: #09090b;
+}
+
+.gr-sys-markplate img {
+  height: var(--space-6);
+  width: auto;
+}
+
+.gr-sys-markplate .gr-sys-wordmark {
+  height: calc(1.4 * var(--u));
+}
+
+/* -- palette --------------------------------------------------------------- */
+
+.gr-sys-ramp {
+  display: grid;
+  grid-template-columns: repeat(11, minmax(0, 1fr));
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--color-rule);
+}
+
+.gr-sys-ramp-step {
+  aspect-ratio: 1 / 1.6;
+  border: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: end center;
+  padding-bottom: var(--space-1);
+  font-family: var(--font-code);
+  font-size: 11px;
+}
+
+/* -- families -------------------------------------------------------------- */
+
+.gr-sys-family {
+  margin-bottom: var(--space-4);
+}
+
+.gr-sys-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.gr-sys-swatch {
+  display: grid;
+  gap: calc(0.15 * var(--u));
+  justify-items: start;
+}
+
+.gr-sys-tri {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  width: calc(4 * var(--u));
+  height: var(--space-6);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--color-rule);
+}
+
+.gr-sys-tri button {
+  border: 0;
+  cursor: pointer;
+}
+
+.gr-sys-swatch-name {
+  font-size: var(--text-ui);
+}
+
+.gr-sys-swatch code,
+.gr-sys-space code,
+.gr-sys-radiusbox code,
+.gr-sys-role code,
+.gr-sys-iconcell code,
+.gr-sys-typerow-meta code {
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.gr-sys-familybar {
+  height: var(--space-2);
+  border-radius: var(--radius);
+}
+
+/* -- roles ----------------------------------------------------------------- */
+
+.gr-sys-roles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-1);
+}
+
+.gr-sys-role {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  background: var(--color-panel);
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.gr-sys-role i {
+  width: var(--space-4);
+  height: var(--space-4);
+  flex: none;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-rule);
+}
+
+.gr-sys-role span {
+  margin-left: auto;
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* -- spacing --------------------------------------------------------------- */
+
+.gr-sys-spaces {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.gr-sys-space {
+  display: grid;
+  grid-template-columns: 110px 50px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.gr-sys-space-mult {
+  font-size: var(--text-ui);
+  color: var(--color-text-muted);
+}
+
+.gr-sys-space i {
+  height: var(--space-2);
+  background: var(--color-interactive-fill);
+  border-radius: var(--radius-sm);
+}
+
+/* -- radius ---------------------------------------------------------------- */
+
+.gr-sys-radii {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.gr-sys-radiusbox {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: center;
+}
+
+.gr-sys-radiusbox i {
+  width: var(--space-7);
+  height: var(--space-6);
+  background: var(--color-panel);
+  border: 1px solid var(--color-text-muted);
+}
+
+.gr-sys-radiusbox i[data-on] {
+  border: 2px solid var(--color-interactive);
+}
+
+/* -- type ------------------------------------------------------------------ */
+
+.gr-sys-typesheet {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.gr-sys-typerow {
+  display: grid;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-rule);
+  overflow-wrap: anywhere;
+}
+
+.gr-sys-typerow:last-child {
+  border-bottom: 0;
+}
+
+.gr-sys-typerow-meta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.gr-sys-typerow-meta .gr-sys-sub {
+  margin: 0;
+}
+
+.gr-sys-typerow-size {
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--color-interactive);
+}
+
+/* -- icons ----------------------------------------------------------------- */
+
+.gr-sys-icons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+}
+
+.gr-sys-iconcell {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: center;
+  padding: var(--space-3) var(--space-1);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  background: var(--color-panel);
+}
+
+.gr-sys-iconcell .gr-icon {
+  width: calc(1 * var(--u));
+  height: calc(1 * var(--u));
+}
+
+/* -- buttons / forms ------------------------------------------------------- */
+
+.gr-sys-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.gr-sys-formsheet {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  max-width: 640px;
+}
+
+.gr-sys-field {
+  display: grid;
+  gap: calc(0.3 * var(--u));
+  align-content: start;
+}
+
+.gr-sys-field--wide {
+  grid-column: 1 / -1;
+}
+
+.gr-sys-field > span {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.gr-sys-input {
+  font-family: var(--font-body);
+  font-size: var(--text-ui);
+  color: var(--color-text);
+  background: var(--color-panel);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  padding: calc(0.4 * var(--u)) var(--space-2);
+  transition: border-color var(--dur-fast) var(--ease-response);
+}
+
+.gr-sys-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.gr-sys-input:focus-visible {
+  outline: none;
+  border-color: var(--color-interactive);
+}
+
+.gr-sys-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: var(--text-ui);
+}
+
+.gr-sys-check input,
+.gr-sys-field input[type="range"] {
+  accent-color: var(--color-interactive);
+}
+
+/* -- contrast -------------------------------------------------------------- */
+
+.gr-sys-checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.gr-sys-checks li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-ui);
+}
+
+.gr-sys-check-chip {
+  display: grid;
+  place-items: center;
+  width: var(--space-6);
+  height: var(--space-5);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-rule);
+  font-weight: 600;
+}
+
+.gr-sys-checks code {
+  margin-left: auto;
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* -- toast ----------------------------------------------------------------- */
+
+.gr-sys-toast {
+  position: fixed;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-text);
+  color: var(--color-inverse);
+  font-family: var(--font-code);
+  font-size: 13px;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius);
+  z-index: 10;
+}
+
+/* -- narrow ---------------------------------------------------------------- */
+
+@media (max-width: 64rem) {
+  .gr-sys-formsheet {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gr-sys-ramp {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}

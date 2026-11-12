@@ -39,6 +39,10 @@ const createOrganizationRoute = createRoute({
       description: "No valid human session is present.",
       content: problemContent,
     },
+    409: {
+      description: "The slug is taken or reserved.",
+      content: problemContent,
+    },
     422: {
       description: "The request body is invalid.",
       content: problemContent,
@@ -260,11 +264,16 @@ export const registerOrganizationRoutes = (
         throw new ApiProblem(problems.forbidden("Staff access required."));
 
       const input = context.req.valid("json");
-      const created = await organizations.createForUser(user.id, input.name);
+      const created = await organizations.createForUser(
+        user.id,
+        input.name,
+        input.slug,
+      );
       const response: Organization = {
         id: created.id,
         kind: created.kind,
         name: created.name,
+        slug: created.slug,
         status: created.status,
         role: created.role,
         default_workspace_id: created.defaultWorkspaceId,

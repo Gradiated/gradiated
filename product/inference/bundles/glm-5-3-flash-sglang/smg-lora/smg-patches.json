@@ -1,0 +1,11 @@
+{
+  "upstream_sha": "91b3e0c440f9ab7971aa3ba48b049d951bd963de",
+  "files": [
+    {
+      "path": "model_gateway/src/worker/registry.rs",
+      "patch": "smg_route_unknown_models.patch",
+      "original_sha256": "4c1cb83dea1c35a0b540257ef19deca3e2cab36833207e053b9a69ad70ae28d8",
+      "overlay_sha256": "e4140b975947323176f521e7f39c6533a669df171c5e4a8ef924e12943836e23"
+    }
+  ]
+}

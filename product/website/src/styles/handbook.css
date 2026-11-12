@@ -265,3 +265,77 @@ img.gr-pill__avatar {
   height: 0.8em;
   border-radius: calc(var(--radius) / 4);
 }
+
+/* -- compensation calculator ----------------------------------------------- */
+
+.gr-root .gr-prose > .gr-comp-calc {
+  margin-block: 1.6em;
+}
+
+.gr-comp-calc {
+  display: grid;
+  gap: 1.2em;
+}
+
+.gr-comp-calc__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8em 1em;
+}
+
+.gr-comp-calc__fields > :first-child {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 500px) {
+  .gr-comp-calc__fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.gr-root .gr-comp-calc__label {
+  color: var(--color-text-muted);
+  font-size: 0.85em;
+}
+
+.gr-root .gr-comp-calc__formula {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-comp-calc__formula > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.2em 1em;
+  padding-block: 0.25em;
+}
+
+.gr-root .gr-comp-calc__formula dt,
+.gr-root .gr-comp-calc__formula dd {
+  margin: 0;
+}
+
+.gr-comp-calc__formula > .gr-comp-calc__total {
+  margin-top: 0.4em;
+  padding-top: 0.5em;
+  border-top: 2px solid var(--color-text);
+  font-weight: 500;
+}
+
+.gr-comp-calc__total dd {
+  display: grid;
+  justify-items: end;
+}
+
+.gr-root .gr-comp-calc__total dd span {
+  color: var(--color-text-muted);
+  font-size: 0.85em;
+  font-weight: 400;
+}
+
+.gr-root .gr-comp-calc__note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9em;
+}

@@ -1,6 +1,17 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { v7 as uuidv7 } from "uuid";
-import { organizationMembers, taskVersions } from "../src/db/schema/index.js";
+import { eq } from "drizzle-orm";
+import {
+  createTrainingArtifactCleanup,
+  deleteArchivedTasks,
+} from "../src/training/artifact-cleanup.js";
+import {
+  organizationMembers,
+  taskVersions,
+  taskVersionFiles,
+  workspaces,
+  tasks,
+} from "../src/db/schema/index.js";
 import { createVersionFiles } from "../src/training/version-files.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 import { seedUser } from "./support/fixtures.js";
@@ -170,5 +181,95 @@ describe("version files", () => {
 
     await service.remove(member.userId, ...key, file.id);
     expect(await service.list(member.userId, ...key)).toEqual([]);
+  });
+  it("returns a controlled conflict for malformed UTF-8 text", async () => {
+    const { member, service, key, upload, objects } = await setup();
+    const file = await upload("report.md", "x");
+    objects.set(
+      `version-files/${file.versionId}/${file.id}`,
+      Buffer.from([0xff]),
+    );
+
+    await expect(
+      service.content(member.userId, ...key, file.id),
+    ).rejects.toMatchObject({
+      code: "conflict",
+      message: expect.stringContaining("UTF-8"),
+    });
+  });
+
+  it("retries deleted objects and protects archived versions until file cleanup", async () => {
+    const { member, service, key, upload, objects, storage } = await setup();
+    const old = await upload("report.md", "old");
+    storage.delete.mockRejectedValueOnce(new Error("S3 outage"));
+    const current = await upload("report.md", "new");
+    expect(objects.has(`version-files/${old.versionId}/${old.id}`)).toBe(true);
+    await db.database
+      .update(workspaces)
+      .set({ archivedAt: new Date() })
+      .where(eq(workspaces.id, member.workspaceId));
+    const engine = { updateSchedule: vi.fn() };
+    await deleteArchivedTasks(db.database, engine);
+    expect(
+      await db.database
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, member.task.id)),
+    ).toHaveLength(1);
+
+    const cleanup = createTrainingArtifactCleanup(
+      db.database,
+      {
+        delete: storage.delete,
+        list: async () => ({ keys: [], prefixes: [] }),
+        read: async () => new Uint8Array(),
+      },
+      () => new Date(Date.now() + 4 * 60 * 60 * 1000),
+    );
+    storage.delete.mockRejectedValueOnce(new Error("S3 outage"));
+    await expect(cleanup()).rejects.toThrow("S3 outage");
+    expect(
+      await db.database
+        .select()
+        .from(taskVersionFiles)
+        .where(eq(taskVersionFiles.id, old.id)),
+    ).toHaveLength(1);
+    for (let pass = 0; pass < 30; pass++) await cleanup();
+    expect(objects.has(`version-files/${old.versionId}/${old.id}`)).toBe(false);
+    expect(
+      objects.has(`version-files/${current.versionId}/${current.id}`),
+    ).toBe(false);
+    await deleteArchivedTasks(db.database, engine);
+    expect(
+      await db.database
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, member.task.id)),
+    ).toHaveLength(0);
+  });
+
+  it("cleans abandoned uploads only after their grants have expired", async () => {
+    const { member, service, key, objects, storage } = await setup();
+    const grant = await service.create(member.userId, ...key, {
+      name: "notes.md",
+      size_bytes: 1,
+      content_type: "text/markdown",
+    });
+    const objectKey = new URL(grant.upload_url).pathname.slice(1);
+    objects.set(objectKey, Buffer.from("x"));
+    const store = {
+      delete: storage.delete,
+      list: async () => ({ keys: [], prefixes: [] }),
+      read: async () => new Uint8Array(),
+    };
+    await createTrainingArtifactCleanup(db.database, store)();
+    expect(objects.has(objectKey)).toBe(true);
+    const cleanup = createTrainingArtifactCleanup(
+      db.database,
+      store,
+      () => new Date(Date.now() + 4 * 60 * 60 * 1000),
+    );
+    for (let pass = 0; pass < 30; pass++) await cleanup();
+    expect(objects.has(objectKey)).toBe(false);
   });
 });

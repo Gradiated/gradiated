@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="${GRADIATED_RUNTIME_ROOT:?}"
+: "${NVIDIA_VISIBLE_DEVICES:?Host agent must assign GPU UUIDs}"
+export CUDA_HOME="$root/cuda"
+export CUDA_PATH="$CUDA_HOME"
+export PATH="$root/python/bin:$CUDA_HOME/bin:$PATH"
+export LD_LIBRARY_PATH="$root/python/lib:$CUDA_HOME/lib64:$root/python/lib/python3.12/site-packages/torch/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export CPATH="$root/python/include/python3.12${CPATH:+:$CPATH}"
+unset PYTHONPATH PYTHONHOME LD_PRELOAD FLASHINFER_CUBIN_CHECKSUM_DISABLED
+export SGLANG_ENABLE_HEALTH_ENDPOINT_GENERATION=0
+export TOKENIZERS_PARALLELISM=false
+export OMP_NUM_THREADS=8
+export MAX_JOBS=8
+export PYTHONDONTWRITEBYTECODE=1
+kimi_cuda_devices="$("$root/python/bin/python3" "$root/kimi-k31/config.py" --cuda-visible-devices)"
+export CUDA_VISIBLE_DEVICES="$kimi_cuda_devices"
+export CUDA_DEVICE_ORDER=PCI_BUS_ID
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/kimi-k31"
+export FLASHINFER_WORKSPACE_BASE="$cache/flashinfer"
+export HF_MODULES_CACHE="$cache/hf-modules"
+export SGLANG_CACHE_DIR="$cache/sglang"
+export SGLANG_JIT_CACHE_DIR="$cache/jit"
+export TORCH_EXTENSIONS_DIR="$cache/torch-extensions"
+export TORCHINDUCTOR_CACHE_DIR="$cache/torchinductor"
+export CUDA_CACHE_PATH="$cache/cuda"
+mkdir -p "$FLASHINFER_WORKSPACE_BASE" "$HF_MODULES_CACHE" "$SGLANG_CACHE_DIR" "$SGLANG_JIT_CACHE_DIR" "$TORCH_EXTENSIONS_DIR" "$TORCHINDUCTOR_CACHE_DIR" "$CUDA_CACHE_PATH"
+exec "$root/python/bin/python3" "$root/kimi-k31/launch.py"

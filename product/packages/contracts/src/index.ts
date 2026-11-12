@@ -1,4 +1,5 @@
 export {
+  OpenRouterModelIdSchema,
   OrganizationIdParamsSchema,
   TimestampSchema,
   UuidSchema,
@@ -7,7 +8,10 @@ export {
   CurrentOrganizationSchema,
   CurrentUserSchema,
   EmailDomainSchema,
+  ORGANIZATION_SLUG_PATTERN,
   OrganizationRoleSchema,
+  OrganizationSlugInputSchema,
+  OrganizationSlugSchema,
   type CurrentUser,
   type OrganizationRole,
 } from "./me.js";

@@ -128,6 +128,13 @@ export const trainingHostJob = (
               value: "true",
               effect: "NoSchedule",
             },
+            // Hosts reserved for training carry this taint so model pods stay off them.
+            {
+              key: "gradiated.com/reserved",
+              operator: "Equal",
+              value: "training",
+              effect: "NoSchedule",
+            },
           ],
           containers: [
             {

@@ -8,8 +8,8 @@ uses the existing deployment projection, not scheduler queries on the request pa
 
 Serving uses one Argo Rollout per configured base runtime. Private adapters load
 into compatible replicas rather than creating a deployment per adapter. Runtime
-pins live in `product/inference/gpu/runtimes.json`; model placement and replica
-counts live in `gpu-inference/models.json`. The renderer projects resources and
+pins live in `product/inference/gpu/runtimes.json`; each model's pools, slots
+and placement live in `gpu-inference/models.json`. The renderer projects resources and
 release metadata into the production manifests.
 
 Training creates deterministic Kubernetes Jobs from frozen run configuration.

@@ -10,12 +10,18 @@ inference/build/
 **/playwright-report/
 packages/autotrain/
 
+# Hash-pinned overlay manifests retain their recorded artifact bytes.
+inference/bundles/kimi-k31-pro/patches/*manifest.json
+
 # MSW-generated service worker.
 services/console/.storybook/public/mockServiceWorker.js
 services/console/storybook-static/
 
-# Generated Ashby data and vendored React Bits sources retain their source format.
+# Generated Ashby and PostHog compensation data and vendored React Bits sources retain their source format.
 website/src/ashby-jobs.generated.ts
 website/src/components/design/GradientASCII.tsx
 website/src/components/design/Noise.tsx
 website/src/components/design/ReflectiveCard.tsx
+# Verbatim FlashInfer autotune output, hashed in its manifest.
+inference/runtimes/glm-sglang/autotune/sm103/
+inference/runtimes/deepseek-sglang/autotune/sm103/

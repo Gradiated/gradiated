@@ -1,0 +1,98 @@
+--- a/sglang/srt/managers/tokenizer_manager.py
++++ b/sglang/srt/managers/tokenizer_manager.py
+@@ -827,6 +827,11 @@
+         # point to their latest LoRARef objects, so that they can be
+         # dynamically loaded if needed for inference
+         self.lora_ref_cache: Dict[str, LoRARef] = {}
++        # Optional loopback service that materializes an unknown adapter name
++        # and returns its local path: {"path": ..., ...}. Resolutions for one
++        # name are coalesced; resolved adapters reload from the cached path.
++        self.lora_resolver_url = os.environ.get("SGLANG_LORA_RESOLVER_URL") or None
++        self.lora_resolutions: Dict[str, asyncio.Future] = {}
+         # Preserve the adapter ID across incomplete cleanup retries.
+         self.pending_lora_unloads: Dict[str, str] = {}
+         if get_lora().lora_paths is not None:
+@@ -2048,7 +2053,8 @@
+         """Schedule at most one LoRA release per state, returning the new task if any."""
+         if state.lora_released:
+             return None
+-        if not (self.enable_lora and state.obj.lora_path):
++        # A request whose adapter failed to resolve never acquired one.
++        if not (self.enable_lora and state.obj.lora_path) or state.obj.lora_id is None:
+             return None
+         state.lora_released = True
+         task = asyncio.create_task(self.lora_registry.release(state.obj.lora_id))
+@@ -3851,6 +3857,10 @@
+             if lora_path is None:
+                 continue
+ 
++            if lora_path not in self.lora_ref_cache and self.lora_resolver_url:
++                await self._resolve_lora_adapter(lora_path)
++                continue
++
+             if lora_path not in self.lora_ref_cache:
+                 raise ValueError(
+                     f"Got LoRA adapter that has never been loaded: {lora_path}\n"
+@@ -3882,6 +3892,62 @@
+                 obj.lora_id[i] if isinstance(obj.lora_id, list) else obj.lora_id
+             )
+ 
++    def _fetch_lora_adapter_path(self, lora_name: str) -> str:
++        import urllib.request
++        import uuid
++
++        workspace, separator, name = lora_name.partition("/")
++        if not separator or not 0 < len(name) <= 300:
++            raise ValueError("Unknown model or adapter")
++        try:
++            if str(uuid.UUID(workspace)) != workspace:
++                raise ValueError
++        except ValueError:
++            raise ValueError("Unknown model or adapter") from None
++        request = urllib.request.Request(
++            self.lora_resolver_url,
++            data=json.dumps({"name": name, "workspace_id": workspace}).encode(),
++            headers={"Content-Type": "application/json"},
++            method="POST",
++        )
++        try:
++            with urllib.request.urlopen(request, timeout=180) as response:
++                data = response.read(65537)
++            if len(data) > 65536:
++                raise ValueError
++            path = json.loads(data)["path"]
++            if not isinstance(path, str) or not os.path.isabs(path):
++                raise ValueError
++        except Exception:
++            # Keep signed URLs, credentials and loader errors out of responses and logs.
++            raise ValueError("Adapter resolution unavailable") from None
++        return path
++
++    async def _resolve_lora_adapter(self, lora_name: str) -> None:
++        pending = self.lora_resolutions.get(lora_name)
++        if pending is not None:
++            await asyncio.shield(pending)
++            return
++        pending = asyncio.get_running_loop().create_future()
++        self.lora_resolutions[lora_name] = pending
++        try:
++            path = await asyncio.to_thread(self._fetch_lora_adapter_path, lora_name)
++            result = await self.load_lora_adapter(
++                LoadLoRAAdapterReqInput(lora_name=lora_name, lora_path=path)
++            )
++            if not result.success and lora_name not in self.lora_ref_cache:
++                logger.warning("Resolved LoRA adapter failed to load")
++                raise ValueError("Adapter load failed")
++            pending.set_result(None)
++        except BaseException as error:
++            pending.set_exception(
++                error if isinstance(error, ValueError) else ValueError("Adapter load failed")
++            )
++            pending.exception()
++            raise
++        finally:
++            self.lora_resolutions.pop(lora_name, None)
++
+     def _init_req_state(
+         self,
+         obj: Union[GenerateReqInput, EmbeddingReqInput],

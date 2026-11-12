@@ -50,6 +50,7 @@ type host struct {
 	MemoryGiB   int64           `json:"memory_gib"`
 	GPUProduct  string          `json:"gpu_product"`
 	FaultDomain string          `json:"fault_domain,omitempty"`
+	ExtraTaints hostTaints      `json:"extra_taints,omitempty"`
 }
 
 // Hosts and their host bundles come from GpuHost objects; the ConfigMap
@@ -357,6 +358,9 @@ func (p *provider) NotifyNodeStatus(ctx context.Context, callback func(*v1.Node)
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
+				if err := reconcileNodeTaints(ctx, p.client.Nodes(), p.host); err != nil {
+					log.Printf("reconcile node reservations %s: %v", p.host.InstanceID, err)
+				}
 				copy := p.node.DeepCopy()
 				ready := v1.ConditionTrue
 				if p.Ping(ctx) != nil {
@@ -369,6 +373,20 @@ func (p *provider) NotifyNodeStatus(ctx context.Context, callback func(*v1.Node)
 	}()
 }
 
+// startupParts reads which startup state the host has on disk, such as
+// "bundle.<runtime>"; the host agent refreshes it every minute.
+func (p *provider) startupParts(ctx context.Context) ([]string, error) {
+	var result struct {
+		Parts []string `json:"parts"`
+	}
+	err := p.callPayload(ctx, map[string]any{"operation": "startup_parts"}, &result)
+	// The frozen recovery agent rejects the operation; it reports nothing, so stale labels go.
+	if errdefs.IsInvalidInput(err) && strings.HasSuffix(err.Error(), fmt.Sprintf("returned %d", http.StatusUnprocessableEntity)) {
+		return nil, nil
+	}
+	return result.Parts, err
+}
+
 func runHost(ctx context.Context, client kubernetes.Interface, namespace string, h host, fence *hostFence) error {
 	name := "gpu-" + h.InstanceID
 	resources := v1.ResourceList{v1.ResourceCPU: *resource.NewQuantity(h.CPU, resource.DecimalSI), v1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", h.MemoryGiB)), v1.ResourcePods: resource.MustParse("16"), "nvidia.com/gpu": *resource.NewQuantity(h.GPUCount, resource.DecimalSI)}
@@ -379,8 +397,11 @@ func runHost(ctx context.Context, client kubernetes.Interface, namespace string,
 	if err := labelNode(ctx, client, h); err != nil {
 		return err
 	}
+	if err := reconcileNodeTaints(ctx, client.CoreV1().Nodes(), h); err != nil {
+		return err
+	}
 	spec := &v1.Node{ObjectMeta: metav1.ObjectMeta{Name: name, Labels: labels},
-		Spec:   v1.NodeSpec{Taints: []v1.Taint{{Key: "gradiated.com/gpu", Value: "true", Effect: v1.TaintEffectNoSchedule}}},
+		Spec:   v1.NodeSpec{Taints: nodeTaints(h)},
 		Status: v1.NodeStatus{Capacity: resources, Allocatable: resources.DeepCopy(), NodeInfo: v1.NodeSystemInfo{OperatingSystem: "linux", Architecture: "amd64", KubeletVersion: "v1.33.5"}, Conditions: []v1.NodeCondition{{Type: v1.NodeReady, Status: v1.ConditionTrue, LastHeartbeatTime: metav1.Now(), LastTransitionTime: metav1.Now()}}}}
 	factory := informers.NewSharedInformerFactoryWithOptions(client, time.Minute, informers.WithNamespace(namespace), informers.WithTweakListOptions(func(o *metav1.ListOptions) {
 		o.FieldSelector = fields.OneTermEqualSelector("spec.nodeName", name).String()
@@ -408,6 +429,7 @@ func runHost(ctx context.Context, client kubernetes.Interface, namespace string,
 	}
 	factory.Start(ctx.Done())
 	resourcesFactory.Start(ctx.Done())
+	go reconcileStartupLabelsEvery(ctx, client, name, p.startupParts, time.Minute)
 	go func() {
 		if err := pc.Run(ctx, 2); err != nil && ctx.Err() == nil {
 			log.Printf("pod controller %s failed: %v", name, err)

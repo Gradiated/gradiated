@@ -1243,3 +1243,208 @@ mod finalization {
         fixture.cleanup().await;
     }
 }
+
+mod routes {
+    use std::collections::HashMap;
+
+    use super::*;
+    use crate::{
+        routing::RoutePlacement,
+        session_routing::{Placed, PlacementOutcome, PlacementRequest, RouteLease},
+    };
+
+    struct Routes {
+        state: ValkeyServingState,
+        placement: RoutePlacement,
+        deployments: [Uuid; 3],
+        now: DateTime<Utc>,
+    }
+
+    impl Routes {
+        async fn new(limits: [Option<u32>; 3]) -> Self {
+            let deployments = [Uuid::now_v7(), Uuid::now_v7(), Uuid::now_v7()];
+
+            Self {
+                state: local_cluster().await,
+                placement: RoutePlacement {
+                    release_digest: format!("route-test-{}", Uuid::now_v7()),
+                    route_key: *Uuid::now_v7().as_bytes().repeat(2).first_chunk().unwrap(),
+                    limits: deployments
+                        .into_iter()
+                        .zip(limits)
+                        .collect::<HashMap<_, _>>(),
+                },
+                deployments,
+                now: Utc::now(),
+            }
+        }
+
+        fn for_session(&self, session: u8) -> Self {
+            let mut placement = self.placement.clone();
+            placement.route_key[0] = session;
+
+            Self {
+                state: self.state.clone(),
+                placement,
+                deployments: self.deployments,
+                now: self.now,
+            }
+        }
+
+        async fn place(&self, candidates: &[Uuid]) -> (Placed, Uuid) {
+            let generation_id = Uuid::now_v7();
+            let placed = self
+                .state
+                .place_route(&PlacementRequest {
+                    placement: &self.placement,
+                    candidates,
+                    generation_id,
+                    now: self.now,
+                    lease_expires_at: self.now + TimeDelta::minutes(10),
+                })
+                .await
+                .unwrap();
+
+            (placed, generation_id)
+        }
+
+        fn lease(&self, deployment_id: Uuid, generation_id: Uuid) -> RouteLease {
+            RouteLease {
+                release_digest: self.placement.release_digest.clone(),
+                route_key: self.placement.route_key,
+                deployment_id,
+                generation_id,
+                expires_at: self.now + TimeDelta::minutes(10),
+            }
+        }
+
+        async fn leases(&self, deployment_id: Uuid) -> i64 {
+            self.state
+                .query(redis::cmd("ZCARD").arg(self.lease(deployment_id, Uuid::nil()).lease_key()))
+                .await
+                .unwrap()
+        }
+    }
+
+    #[tokio::test]
+    #[ignore = "requires the local one-node Valkey cluster"]
+    async fn a_session_keeps_its_replica_while_it_has_a_free_slot() {
+        let routes = Routes::new([Some(2), Some(2), Some(2)]).await;
+        let [first, second, third] = routes.deployments;
+
+        let (placed, _) = routes.place(&[first, second, third]).await;
+        assert_eq!(placed.outcome, PlacementOutcome::Placed);
+        assert_eq!(placed.deployment_id, first);
+
+        // The candidate order changes, as it does when another replica joins.
+        let (kept, _) = routes.place(&[third, second, first]).await;
+        assert_eq!(kept.deployment_id, first);
+        assert_eq!(kept.outcome, PlacementOutcome::Kept);
+        assert_eq!(routes.leases(first).await, 2);
+
+        let (spilled, _) = routes.place(&[first, second, third]).await;
+        assert_eq!(spilled.outcome, PlacementOutcome::Spilled);
+        assert_eq!(spilled.deployment_id, second);
+
+        let (stays, _) = routes.place(&[first, second, third]).await;
+        assert_eq!(stays.deployment_id, second);
+        assert_eq!(stays.outcome, PlacementOutcome::Kept);
+    }
+
+    #[tokio::test]
+    #[ignore = "requires the local one-node Valkey cluster"]
+    async fn new_sessions_go_where_the_smallest_share_of_slots_is_in_use() {
+        let routes = Routes::new([Some(12), Some(12), Some(6)]).await;
+        let [large, other, small] = routes.deployments;
+
+        // Idle replicas tie, so the first candidate in rendezvous order wins.
+        for session in 1..=3 {
+            routes
+                .for_session(session)
+                .place(&[large, other, small])
+                .await;
+        }
+        assert_eq!(routes.leases(large).await, 1);
+        assert_eq!(routes.leases(other).await, 1);
+        assert_eq!(routes.leases(small).await, 1);
+
+        // One lease fills 1/6 of the small replica but only 1/12 of a large one.
+        let (placed, _) = routes.for_session(4).place(&[small, large, other]).await;
+        assert_eq!(placed.deployment_id, large);
+        assert_eq!(placed.outcome, PlacementOutcome::Placed);
+    }
+
+    #[tokio::test]
+    #[ignore = "requires the local one-node Valkey cluster"]
+    async fn a_session_whose_replica_is_gone_moves_and_unknown_limits_compare_leases() {
+        let routes = Routes::new([None, None, None]).await;
+        let [first, second, third] = routes.deployments;
+
+        routes.place(&[first, second, third]).await;
+        routes.for_session(9).place(&[second, third]).await;
+
+        let (moved, _) = routes.place(&[second, third]).await;
+        assert_eq!(moved.outcome, PlacementOutcome::Moved);
+        assert_eq!(moved.deployment_id, third);
+    }
+
+    #[tokio::test]
+    #[ignore = "requires the local one-node Valkey cluster"]
+    async fn releases_expiry_and_claims_keep_counts_true() {
+        let routes = Routes::new([Some(2), Some(2), Some(2)]).await;
+        let [first, second, _] = routes.deployments;
+
+        let (placed, generation_id) = routes.place(&[first, second]).await;
+        assert_eq!(placed.deployment_id, first);
+        routes
+            .state
+            .release_route(&routes.lease(first, generation_id))
+            .await
+            .unwrap();
+        assert_eq!(routes.leases(first).await, 0);
+
+        let (_, claimed) = routes.place(&[first, second]).await;
+        routes
+            .state
+            .claim_route(&routes.lease(second, claimed))
+            .await
+            .unwrap();
+        routes
+            .state
+            .release_route(&routes.lease(first, claimed))
+            .await
+            .unwrap();
+        let (followed, _) = routes.place(&[first, second]).await;
+        assert_eq!(followed.deployment_id, second);
+        assert_eq!(followed.outcome, PlacementOutcome::Kept);
+        assert_eq!(
+            (routes.leases(first).await, routes.leases(second).await),
+            (0, 2)
+        );
+
+        // Expired leases no longer count against the replica.
+        let later = Routes {
+            now: routes.now + TimeDelta::minutes(11),
+            ..routes.for_session(routes.placement.route_key[0])
+        };
+        let (kept, _) = later.place(&[first, second]).await;
+        assert_eq!(kept.deployment_id, second);
+        assert_eq!(later.leases(second).await, 1);
+    }
+
+    #[tokio::test]
+    #[ignore = "requires the local one-node Valkey cluster"]
+    async fn placement_rejects_mismatched_arguments() {
+        let routes = Routes::new([Some(1), Some(1), Some(1)]).await;
+        let mut script = routes.state.place_route_script.prepare_invoke();
+        script
+            .key("route-session:{x}:a")
+            .arg(Uuid::now_v7().to_string());
+
+        let result: redis::RedisResult<i64> = script
+            .invoke_async(&mut routes.state.connection.clone())
+            .await;
+
+        assert_eq!(result.unwrap_err().code(), Some("PLACE_ROUTE_V1"));
+    }
+}

@@ -138,10 +138,11 @@ export const validateAdapterFiles = async (
 
   const bytes = await weights.read(0, 8);
   const headerSize = Number(bytes.readBigUInt64LE());
+  // Bound JSON parsing within the API replica's 1 GiB memory limit.
   if (
     !Number.isSafeInteger(headerSize) ||
     headerSize < 2 ||
-    headerSize > 100_000_000 ||
+    headerSize > 8 * 1024 * 1024 ||
     headerSize + 8 >= weights.sizeBytes
   )
     throw new Error("Invalid safetensors header.");
@@ -166,6 +167,13 @@ export const validateAdapterFiles = async (
       );
     if (!tensorName)
       throw new Error("Only LoRA A/B weight tensors are supported.");
+
+    if (
+      tensorName[2]!
+        .split(".")
+        .some((part) => part === "lora_A" || part === "lora_B")
+    )
+      throw new Error("Side markers inside module paths are unsupported.");
 
     const layer = Number(tensorName[1]);
     if (layer >= layerCount)
@@ -195,15 +203,15 @@ export const validateAdapterFiles = async (
       throw new Error("Tensor target modules do not match the config.");
 
     if (baseConfiguration.projectionShapes) {
-      const key = `${layer}/${tensorName[2]}`;
+      const key = `${layer}/${tensorName[2]!.replace(/\.experts\.\d+\./, ".experts.")}`;
       const expected = baseConfiguration.projectionShapes[key];
       if (!expected)
         throw new Error(
           "Adapter target module is not supported by this serving model.",
         );
       if (
-        tensor.shape.length !== 2 ||
-        tensor.shape[isA ? 1 : 0] !== expected[isA ? 1 : 0]
+        tensor.shape[tensor.shape.length - (isA ? 1 : 2)] !==
+        expected[isA ? 1 : 0]
       )
         throw new Error(
           "Adapter tensor dimensions do not match the serving checkpoint.",

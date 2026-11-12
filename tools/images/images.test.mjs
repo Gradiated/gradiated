@@ -79,8 +79,7 @@ test("the GPU base ID invalidates the application image", () => {
     ]),
   );
 });
-test("unqualified GLM image and unknown image fail explicitly", () => {
-  assert.throws(() => fingerprint("glm-5-3-flash", []), /qualified GLM/);
+test("an unknown image fails explicitly", () => {
   assert.throws(() => fingerprint("typo", []), /Unknown image/);
 });
 
@@ -107,7 +106,7 @@ test("plans all enabled images against the actual repository tree", () => {
   const revision = execFileSync("git", ["rev-parse", "HEAD"], {
     encoding: "utf8",
   }).trim();
-  const names = ["product", "gateway", "deepseek-v4-1-flash"];
+  const names = ["product", "gateway", "gpu-base"];
   const result = plan(names, revision);
   assert.deepEqual(
     result.include.map((image) => image.name),
@@ -115,10 +114,7 @@ test("plans all enabled images against the actual repository tree", () => {
   );
   for (const image of result.include)
     assert.match(image.tag, /-inputs-[0-9a-f]{64}$/);
-  assert.deepEqual(
-    plan(["deepseek-v4-1-flash"], revision).include[0],
-    result.include[2],
-  );
+  assert.deepEqual(plan(["gpu-base"], revision).include[0], result.include[2]);
 });
 
 test("application code changes preserve the base image identity", () => {

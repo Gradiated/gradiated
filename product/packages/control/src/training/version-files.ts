@@ -74,7 +74,7 @@ export const createVersionFiles = (
     try {
       await requireStorage().delete(stale.map(versionFileKey));
     } catch {
-      // Orphaned objects are unreachable once their rows are gone.
+      // Retained tombstones let artifact cleanup retry after storage failures.
     }
   };
 
@@ -128,7 +128,7 @@ export const createVersionFiles = (
       const objects = requireStorage();
       const version = await findVersion(workspaceId, taskName, versionId);
       const file = await files.get(version.id, fileId);
-      if (!file) throw notFound("file");
+      if (!file || file.status === "deleted") throw notFound("file");
       if (file.status === "ready") return file;
 
       let sizeBytes: number | undefined;
@@ -178,11 +178,17 @@ export const createVersionFiles = (
         timeoutMs: 10_000,
       });
 
-      return {
-        name: file.name,
-        content_type: file.contentType,
-        content: new TextDecoder("utf-8", { fatal: true }).decode(bytes),
-      };
+      let content: string;
+      try {
+        content = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+      } catch {
+        throw new ControlServiceError(
+          "conflict",
+          "The file is not valid UTF-8. Download it instead.",
+        );
+      }
+
+      return { name: file.name, content_type: file.contentType, content };
     },
 
     async download(
@@ -219,9 +225,9 @@ export const createVersionFiles = (
       await requireWorkspaceEditor(database, { userId, workspaceId });
       const version = await findVersion(workspaceId, taskName, versionId);
       const file = await files.get(version.id, fileId);
-      if (!file) throw notFound("file");
+      if (!file || file.status === "deleted") throw notFound("file");
 
-      await files.delete(file.id);
+      await files.markDeleted(file.id);
       await discard([file]);
     },
   };

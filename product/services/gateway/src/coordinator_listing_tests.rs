@@ -106,6 +106,7 @@ async fn a_runtime_rollout_lists_all_ready_replicas() {
                 received_at: metadata().received_at,
                 healthy: true,
                 accepting_requests: true,
+                active_requests: None,
                 reason_code: None,
             })
             .collect(),

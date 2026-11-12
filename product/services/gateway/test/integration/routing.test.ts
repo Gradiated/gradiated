@@ -222,3 +222,83 @@ it("spreads distinct sessionless conversation openings across the fleet", async 
     true,
   );
 });
+
+// One large replica beside three small ones, each reporting its active request
+// limit, the way a B300 serves beside an H200 pool.
+describe("weighted routing by active request limit", () => {
+  const sessions = 400;
+  const large = (index: number) => (index === 0 ? 16 : 4);
+
+  const firstChoiceShare = async (
+    instance: Awaited<ReturnType<typeof makeCase>>,
+    each: (index: number) => { active_requests?: number },
+  ): Promise<number> => {
+    for (let session = 0; session < sessions; session += 1) {
+      // Statuses go stale after fifteen seconds; refresh them as Desmond would.
+      if (session % 20 === 0) await instance.status({}, each);
+      const response = await instance.post({
+        session_id: `weighted-${session}`,
+      });
+      expect(response.status).toBe(200);
+    }
+
+    const calls = instance.runtimes.map((runtime) => runtime.calls.length);
+    expect(calls.reduce((sum, count) => sum + count, 0)).toBe(sessions);
+    expect(calls.every((count) => count > 0)).toBe(true);
+    return calls[0]! / sessions;
+  };
+
+  // 16 / (16 + 4 + 4 + 4) = 0.571. With 400 sessions one standard deviation is
+  // 0.025, so these bounds are about five deviations wide.
+  it("sends replicas of one release a share proportional to their limits", async () => {
+    const instance = await makeCase("vllm", { replicas: 4 });
+
+    const share = await firstChoiceShare(instance, (index) => ({
+      active_requests: large(index),
+    }));
+
+    expect(share).toBeGreaterThan(0.45);
+    expect(share).toBeLessThan(0.7);
+  });
+
+  it("weights the choice between releases of the same model", async () => {
+    const instance = await makeCase("vllm", { replicas: 4 });
+    instance.deployments[0]!.release = {
+      ...instance.release,
+      runtime_revision: "large-runtime",
+    };
+    await instance.publish();
+
+    const share = await firstChoiceShare(instance, (index) => ({
+      active_requests: large(index),
+    }));
+
+    expect(share).toBeGreaterThan(0.45);
+    expect(share).toBeLessThan(0.7);
+  });
+
+  // The silent replica keeps 1/4; the other three split 3/4 as 16:4:4, so the
+  // large replica takes 1/2.
+  it("keeps an equal share for a replica that leaves its limit out", async () => {
+    const instance = await makeCase("vllm", { replicas: 4 });
+
+    const share = await firstChoiceShare(instance, (index) =>
+      index === 3 ? {} : { active_requests: large(index) },
+    );
+
+    expect(share).toBeGreaterThan(0.38);
+    expect(share).toBeLessThan(0.62);
+    const silent = instance.runtimes[3]!.calls.length / sessions;
+    expect(silent).toBeGreaterThan(0.15);
+    expect(silent).toBeLessThan(0.35);
+  });
+
+  it("ranks exactly as before when no replica reports a limit", async () => {
+    const instance = await makeCase("vllm", { replicas: 4 });
+
+    const share = await firstChoiceShare(instance, () => ({}));
+
+    expect(share).toBeGreaterThan(0.15);
+    expect(share).toBeLessThan(0.35);
+  });
+});

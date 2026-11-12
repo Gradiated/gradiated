@@ -1,0 +1,81 @@
+--- a/sglang/srt/lora/lora_manager.py
++++ b/sglang/srt/lora/lora_manager.py
+@@ -819,7 +819,9 @@
+             )
+             target_modules = self.target_modules
+         elif target_modules:
+-            self.target_modules = get_normalized_target_modules(target_modules)
++            self.target_modules = get_normalized_target_modules(
++                target_modules, self.base_model
++            )
+         else:
+             self.target_modules = set()
+ 
+@@ -863,7 +865,7 @@
+                 )
+ 
+             adapter_target_modules = get_normalized_target_modules(
+-                config.target_modules
++                config.target_modules, self.base_model
+             )
+ 
+             if target_modules is not None:
+@@ -934,6 +936,7 @@
+             base_model=self.base_model,
+         )
+         lora_adapter.initialize_weights()
++        self._validate_adapter_weights(lora_adapter)
+ 
+         warn_if_adapter_targets_embeddings(
+             lora_name=lora_ref.lora_name,
+@@ -943,6 +946,15 @@
+ 
+         self.loras[lora_ref.lora_id] = lora_adapter
+ 
++    def _validate_adapter_weights(self, lora_adapter: LoRAAdapter):
++        """Let the model reject adapter tensors it cannot serve, at load time
++        rather than when the adapter is first copied into the memory pool."""
++        validate = getattr(self.base_model, "validate_lora_weight_names", None)
++        if validate is not None:
++            validate(
++                [name for layer in lora_adapter.layers for name in layer.weights]
++            )
++
+     def load_lora_weights_from_tensors(
+         self, lora_ref: LoRARef, tensors: Dict[str, torch.Tensor]
+     ):
+@@ -958,6 +970,7 @@
+             base_model=self.base_model,
+         )
+         lora_adapter.initialize_weights_from_tensors(tensors)
++        self._validate_adapter_weights(lora_adapter)
+ 
+         warn_if_adapter_targets_embeddings(
+             lora_name=lora_ref.lora_name,
+@@ -1095,6 +1108,11 @@
+ 
+         from sglang.srt.models.inkling_common.dense_mlp import InklingBatchDenseMLP
+ 
++        # only models with grouped projections declare it
++        grouped_lora_modules = getattr(
++            self.base_model, "grouped_lora_modules", frozenset()
++        )
++
+         for module_name, module in self.base_model.named_modules():
+             # Handle embed_tokens and lm_head before the should_apply_lora gate,
+             # since VL models' should_apply_lora patterns only match language
+@@ -1163,6 +1181,14 @@
+                 layer_id = get_layer_id(module_name)
+                 if layer_id is None:
+                     continue
++                if (
++                    parts[-1] in grouped_lora_modules
++                    and not self.lora_backend.supports_grouped_lora
++                ):
++                    raise ValueError(
++                        f"{module_name} is a grouped projection; its LoRA needs "
++                        f"--lora-backend triton, not {type(self.lora_backend).__name__}"
++                    )
+                 self.lora_modules[layer_id][module_name] = self.set_lora_module(
+                     module_name, module
+                 )

@@ -72,6 +72,23 @@ std::uint16_t port(const Environment &environment, const std::string_view name,
   return static_cast<std::uint16_t>(parsed);
 }
 
+std::optional<std::uint32_t> active_requests(const Environment &environment) {
+  constexpr std::string_view name = "DESMOND_ACTIVE_REQUESTS";
+  const auto value = value_of(environment, name);
+  if (!value) {
+    return std::nullopt;
+  }
+
+  std::uint32_t parsed = 0;
+  const auto [end, error] = std::from_chars(value->data(), value->data() + value->size(), parsed);
+  if (error != std::errc{} || end != value->data() + value->size() || parsed == 0 ||
+      parsed > 4096) {
+    throw ConfigError(named(name, "must be an integer from 1 to 4096"));
+  }
+
+  return parsed;
+}
+
 double fraction(const Environment &environment, const std::string_view name,
                 const double fallback) {
   const auto value = value_of(environment, name);
@@ -213,6 +230,7 @@ std::optional<StatusReporterConfig> status_config(const Environment &environment
                                     "DESMOND_STATUS_TOKEN_FILE"),
       .deployment_id = required(environment, feature, "DESMOND_DEPLOYMENT_ID"),
       .runtime_revision = required(environment, feature, "DESMOND_RELEASE"),
+      .active_requests = active_requests(environment),
   };
 }
 

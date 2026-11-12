@@ -31,19 +31,33 @@ const validateAdapterFiles = (
   );
 
 describe("external adapter validation", () => {
-  it.each([1, 8, 16, 32])("accepts upload rank %i", async (rank) => {
+  it("rejects side markers embedded in module paths", async () => {
+    const files = adapterFiles(base);
+    const size = Number(files.weights.readBigUInt64LE());
+    const header = Buffer.from(
+      files.weights
+        .subarray(8, 8 + size)
+        .toString()
+        .replaceAll("self_attn.q_proj", "self_attn.lora_A.q_proj"),
+    );
+    const prefix = Buffer.alloc(8);
+    prefix.writeBigUInt64LE(BigInt(header.length));
+    await expect(
+      validateAdapterFiles(
+        files.config,
+        Buffer.concat([prefix, header, files.weights.subarray(8 + size)]),
+        base,
+      ),
+    ).rejects.toThrow("Side markers");
+  });
+  it.each([1, 2, 4, 8])("accepts upload rank %i", async (rank) => {
     const { config, weights } = adapterFiles(base, 1, undefined, rank);
     expect((await validateAdapterFiles(config, weights, base)).r).toBe(rank);
   });
-  it.each([33, 64, 256])(
-    "rejects upload rank %i above the cap",
-    async (rank) => {
-      const { config, weights } = adapterFiles(base, 1, undefined, rank);
-      await expect(
-        validateAdapterFiles(config, weights, base),
-      ).rejects.toThrow();
-    },
-  );
+  it.each([9, 16, 32])("rejects upload rank %i above the cap", async (rank) => {
+    const { config, weights } = adapterFiles(base, 1, undefined, rank);
+    await expect(validateAdapterFiles(config, weights, base)).rejects.toThrow();
+  });
   it("accepts paired LoRA tensors and constructs a deterministic two-file archive", async () => {
     const { config, weights } = adapterFiles(base);
     expect((await validateAdapterFiles(config, weights, base)).r).toBe(2);
@@ -169,9 +183,9 @@ describe("external adapter validation", () => {
       validateAdapterFiles(partial.config, partial.weights, base, 2, 0),
     ).rejects.toThrow("outside the base model");
   });
-  it("rejects headers above the serving limit before reading metadata", async () => {
+  it("rejects headers above the API memory limit before reading metadata", async () => {
     const { config } = adapterFiles(base);
-    const headerSize = 100_000_001;
+    const headerSize = 8 * 1024 * 1024 + 1;
     const prefix = Buffer.alloc(8);
     prefix.writeBigUInt64LE(BigInt(headerSize));
     const reads: number[] = [];

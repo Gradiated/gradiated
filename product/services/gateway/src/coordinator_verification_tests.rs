@@ -32,7 +32,7 @@ async fn verification_targets_one_healthy_canary_without_customer_fallbacks() {
             RequestKind::Chat,
         )
         .unwrap();
-    assert_ne!(customer.deployment.id, canary.id);
+    assert_ne!(customer.local_capacity().deployment.id, canary.id);
     assert!(!customer.is_verification);
 
     let mut targeted = regular;
@@ -58,9 +58,9 @@ async fn verification_targets_one_healthy_canary_without_customer_fallbacks() {
             RequestKind::Chat,
         )
         .unwrap();
-    assert_eq!(verified.deployment.id, canary.id);
+    assert_eq!(verified.local_capacity().deployment.id, canary.id);
     assert!(verified.is_verification);
-    assert_eq!(verified.model_deployments.len(), 1);
+    assert_eq!(verified.local_capacity().deployments.len(), 1);
 }
 
 #[tokio::test]
@@ -142,8 +142,8 @@ async fn deployment_id_targets_an_isolated_replica_as_normal_workspace_traffic()
                 RequestKind::Chat,
             )
             .unwrap();
-        assert_eq!(request.deployment.id, id);
-        assert_eq!(request.model_deployments.len(), 1);
+        assert_eq!(request.local_capacity().deployment.id, id);
+        assert_eq!(request.local_capacity().deployments.len(), 1);
         assert!(!request.is_verification);
         assert_eq!(
             state.model.as_ref().unwrap().deployments[0].status,

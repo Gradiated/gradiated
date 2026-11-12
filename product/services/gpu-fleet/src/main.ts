@@ -1,6 +1,10 @@
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
-import { createControlDatabase, syncFleetInstances } from "@gradiated/control";
+import {
+  createCatalogService,
+  createControlDatabase,
+  syncFleetInstances,
+} from "@gradiated/control";
 import type { RunPodClient } from "@gradiated/gpu-hosts";
 import { z } from "zod";
 
@@ -118,6 +122,14 @@ const rollouts = createRollouts({
   ping,
   pins,
   enrollment,
+  modelStatuses: async () => {
+    const database = credential.database();
+    if (!database)
+      throw new Error("The model catalog credential is unavailable");
+
+    const models = await createCatalogService(database).listModels();
+    return new Map(models.map((model) => [model.id, model.status]));
+  },
   mode: config.MODE,
   leading,
   identity: config.POD_NAME,

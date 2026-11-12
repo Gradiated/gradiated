@@ -1823,6 +1823,9 @@
             "minLength": 1,
             "maxLength": 200
           },
+          "slug": {
+            "$ref": "#/components/schemas/OrganizationSlug"
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -1855,12 +1858,18 @@
         "required": [
           "id",
           "name",
+          "slug",
           "status",
           "role",
           "default_workspace_id",
           "auto_join_domain",
           "onboarding_completed"
         ]
+      },
+      "OrganizationSlug": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$",
+        "description": "Unique organization handle that prefixes its private model names, as in `acme/support-triage`. It is fixed once the organization has a model."
       },
       "OrganizationRole": {
         "type": "string",
@@ -1904,6 +1913,10 @@
             "minLength": 1,
             "maxLength": 200
           },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$"
+          },
           "auto_join_domain": {
             "type": [
               "string",
@@ -1941,6 +1954,9 @@
             "minLength": 1,
             "maxLength": 200
           },
+          "slug": {
+            "$ref": "#/components/schemas/OrganizationSlug"
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -1973,6 +1989,7 @@
           "id",
           "kind",
           "name",
+          "slug",
           "status",
           "role",
           "default_workspace_id",
@@ -1987,6 +2004,10 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 200
+          },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$"
           }
         },
         "required": [
@@ -2641,6 +2662,42 @@
           "raw"
         ]
       },
+      "AdapterConfiguration": {
+        "type": "object",
+        "properties": {
+          "layerCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4096,
+            "description": "Number of transformer layers."
+          },
+          "expertCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4096,
+            "description": "Routed experts per layer."
+          },
+          "projectionShapes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "description": "Output and input dimensions keyed by layer and module."
+          }
+        },
+        "required": [
+          "layerCount",
+          "expertCount"
+        ]
+      },
       "ModelUpload": {
         "type": "object",
         "properties": {
@@ -2676,7 +2733,7 @@
           "task": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 256
+            "maxLength": 128
           },
           "create_task": {
             "type": "boolean",
@@ -2685,7 +2742,7 @@
           "name": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 200,
+            "maxLength": 128,
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
           },
           "base_model_id": {
@@ -5800,7 +5857,7 @@
                 },
                 "is_ready": {
                   "type": "boolean",
-                  "description": "Whether a healthy deployment can currently accept inference requests."
+                  "description": "Whether the model can currently accept inference requests."
                 },
                 "hugging_face_id": {
                   "type": "string",
@@ -6557,6 +6614,16 @@
           },
           "401": {
             "description": "No valid human session is present.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The slug is taken or reserved.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -8440,6 +8507,111 @@
           },
           "503": {
             "description": "Generation content unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/adapter-configurations/{model_id}": {
+      "get": {
+        "operationId": "getAdapterConfiguration",
+        "summary": "Get adapter configuration",
+        "description": "Gets the pinned base checkpoint dimensions used to validate an adapter.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Exact catalog base model ID."
+            },
+            "required": true,
+            "description": "Exact catalog base model ID.",
+            "name": "model_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pinned checkpoint structure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdapterConfiguration"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
             "content": {
               "application/problem+json": {
                 "schema": {

@@ -40,19 +40,46 @@ export const bundles = {
     "product/packages/autotrain",
     "product/packages/contracts/src/training-recipe.json",
   ],
-  "glm-5-3-flash": [
-    "product/inference/bundles/glm-5-3-flash",
-    "product/inference/runtimes/glm",
-    "product/inference/lora",
-  ],
   "glm-5-3-flash-sglang": [
     "product/inference/bundles/glm-5-3-flash-sglang",
     "product/inference/runtimes/glm-sglang",
     "product/inference/runtimes/glm/warmup-supervisor.py",
+    "product/inference/lora",
   ],
-  "deepseek-v4-1-flash": [
-    "product/inference/bundles/deepseek-v4-1-flash",
-    "product/inference/images/deepseek-v4-1-flash/start.sh",
+  "kimi-k31-pro": [
+    "product/inference/bundles/kimi-k31-pro",
+    "product/inference/runtimes/kimi-k31",
+    "product/inference/runtimes/glm/warmup-supervisor.py",
+    "product/inference/bundles/glm-5-3-flash-sglang/smg-build-requirements.txt",
+    "product/inference/bundles/glm-5-3-flash-sglang/smg-patches.json",
+    "product/inference/bundles/glm-5-3-flash-sglang/apply-patches.py",
+    "product/inference/bundles/glm-5-3-flash-sglang/patches/smg_refused_upload.patch",
+    "product/inference/bundles/glm-5-3-flash-sglang/patches/smg_build_marker.patch",
+  ],
+  "deepseek-v4-1-flash-sglang": [
+    "product/inference/bundles/deepseek-v4-1-flash-sglang",
+    "product/inference/runtimes/deepseek-sglang",
+    "product/inference/runtimes/glm-sglang/launch.py",
+    "product/inference/runtimes/glm-sglang/service.py",
+    "product/inference/runtimes/glm-sglang/artifact-cache.py",
+    "product/inference/runtimes/glm-sglang/autotune-seed.py",
+    "product/inference/runtimes/glm/warmup-supervisor.py",
+    "product/inference/bundles/glm-5-3-flash-sglang/requirements.txt",
+    "product/inference/bundles/glm-5-3-flash-sglang/patches",
+    "product/inference/bundles/glm-5-3-flash-sglang/patches.json",
+    "product/inference/bundles/glm-5-3-flash-sglang/apply-patches.py",
+    "product/inference/bundles/glm-5-3-flash-sglang/artifacts.json",
+    "product/inference/bundles/glm-5-3-flash-sglang/fetch-artifacts.py",
+    "product/inference/bundles/glm-5-3-flash-sglang/smg-build-requirements.txt",
+    "product/inference/bundles/glm-5-3-flash-sglang/smg-patches.json",
+    "product/inference/bundles/glm-5-3-flash-sglang/smg-lora",
+    "product/inference/bundles/glm-5-3-flash-sglang/jit-cache-requirements.txt",
+    "product/inference/lora",
+  ],
+  "decider-27b": [
+    "product/inference/bundles/decider-27b",
+    "product/inference/runtimes/decider",
+    "product/inference/runtimes/kev/adapter.py",
   ],
   "kev-9b": [
     "product/inference/bundles/kev-9b",
@@ -86,6 +113,13 @@ export const manifest = ({
   return {
     ...(bundle === undefined ? {} : { bundle }),
     ...(bundle === "host" ? { bootstrapVersion: 1 } : {}),
+    ...(bundle === "glm-5-3-flash-sglang"
+      ? { runtimeProfiles: ["b300-pcp2", "h200-tp2", "b200-pcp2"] }
+      : {}),
+    ...(bundle === "kimi-k31-pro" ? { runtimeProfiles: ["b300-tp8"] } : {}),
+    ...(bundle === "deepseek-v4-1-flash-sglang"
+      ? { runtimeProfiles: ["b300-tp4"] }
+      : {}),
     source,
     baseImage,
     baseId,

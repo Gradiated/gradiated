@@ -1,11 +1,14 @@
+/* RELAUNCH: the journey sits on the system's ground. Its locally
+   scoped names stay (the animation reads them), but every value is a
+   role token now; only the signal gold moved to energy yellow. */
 .sand-journey {
-  --paper: #f7f3ec;
-  --ink: #17161a;
-  --muted: #8d8781;
-  --shadow: #e3ddd2;
-  --signal-stroke: #c49b3c;
+  --paper: var(--color-substrate);
+  --ink: var(--color-text);
+  --muted: var(--color-text-muted);
+  --shadow: var(--color-zinc-200);
+  --signal-stroke: var(--color-energy-yellow);
   --signal-width: 3px;
-  --signal-glow: rgba(233, 200, 117, 0.55);
+  --signal-glow: rgba(244, 206, 86, 0.55);
 }
 
 .sand-journey * {
@@ -22,14 +25,18 @@
   color: var(--ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
-  font-size: 1.1rem;
-  line-height: 1.75;
+  /* The system's reading register — shared with the fabrication
+     journey so the two pieces read as one series. */
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
 }
 
 .sand-journey .post {
   display: grid;
   grid-template-columns: minmax(0, 46fr) minmax(0, 54fr);
-  max-width: 1280px;
+  /* THE module box — the same container every Band/Module page uses.
+     Never a bespoke width: the artwork scales down inside it. */
+  max-width: var(--module-w);
   margin: 0 auto;
 }
 
@@ -235,17 +242,18 @@
 
 .sand-journey h1 {
   font-family: var(--font-title);
-  font-size: clamp(2.4rem, 5vw, 3.6rem);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.05;
+  font-size: var(--text-hero);
+  font-weight: 650;
+  letter-spacing: var(--tracking-hero);
+  line-height: var(--leading-hero);
   margin: 0 0 1.25rem;
 }
 
 .sand-journey .lede {
-  color: var(--ink);
+  color: var(--muted);
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text-lede);
+  line-height: 1.6;
 }
 
 .sand-journey :not(pre) > code {
@@ -278,17 +286,17 @@
 
 .sand-journey .scene-text h2 {
   font-family: var(--font-title);
-  font-size: 1.7rem;
-  font-weight: 500;
+  font-size: var(--text-section);
+  font-weight: 650;
   letter-spacing: -0.01em;
-  line-height: 1.15;
+  line-height: 1.1;
   margin: 0 0 1rem;
 }
 
 .sand-journey .scene-text h3 {
   font-family: var(--font-title);
   font-size: 1.25rem;
-  font-weight: 500;
+  font-weight: 650;
   letter-spacing: -0.01em;
   line-height: 1.25;
   margin: 0 0 1rem;
@@ -298,7 +306,9 @@
   margin: 0;
 }
 
-.sand-journey .scene-text a[href="/sand-to-thought/fabricating-a-transistor/"] {
+.sand-journey
+  .scene-text
+  a[href="/library/sand-to-thought/fabricating-a-transistor/"] {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
@@ -318,21 +328,21 @@
 
 .sand-journey
   .scene-text
-  a[href="/sand-to-thought/fabricating-a-transistor/"]::after {
+  a[href="/library/sand-to-thought/fabricating-a-transistor/"]::after {
   content: "→";
   flex-shrink: 0;
 }
 
 .sand-journey
   .scene-text
-  a[href="/sand-to-thought/fabricating-a-transistor/"]:hover {
+  a[href="/library/sand-to-thought/fabricating-a-transistor/"]:hover {
   background: #562c33;
   border-color: #562c33;
 }
 
 .sand-journey
   .scene-text
-  a[href="/sand-to-thought/fabricating-a-transistor/"]:focus-visible {
+  a[href="/library/sand-to-thought/fabricating-a-transistor/"]:focus-visible {
   outline: 2px solid #713b43;
   outline-offset: 4px;
 }
@@ -437,12 +447,14 @@
   padding: calc(var(--nav-h) + 3 * var(--u)) var(--u) 0;
 }
 
+/* RELAUNCH: the contents moved into the site rail (doc mode); the
+   journey is one column now. */
 .sand-journey .sand-layout {
   display: grid;
-  grid-template-columns: minmax(0, 8rem) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--u);
   align-items: start;
-  max-width: 1440px;
+  max-width: var(--module-w);
   margin-inline: auto;
 }
 
@@ -983,4 +995,16 @@ html:has(.sand-journey) {
   stroke: var(--ink);
   stroke-width: 1.3px;
   opacity: 0.6;
+}
+
+/* RELAUNCH, PHONES ONLY: the journey starts on the page's 1.5u lead. */
+@media (max-width: 60rem) {
+  .sand-journey {
+    padding-top: calc(1.5 * var(--u));
+  }
+
+  .sand-journey .post-header {
+    min-height: 0;
+    align-content: start;
+  }
 }

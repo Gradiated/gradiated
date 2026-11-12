@@ -3,9 +3,12 @@ use std::{sync::Arc, time::Duration};
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
+use super::dispatch::RuntimeCall;
 use crate::{
     generation::FinishReason,
-    metrics::{AdmittedGenerationMetrics, FinalizationAttempt, TerminalRecord},
+    metrics::{
+        AdmittedGenerationMetrics, Capacity, FallbackReason, FinalizationAttempt, TerminalRecord,
+    },
     CancellationOwner, CapturedPricing, FinalizationOutcome, GatewayError, GenerationIdentity,
     GenerationProperties, GenerationTiming, NormalizedUsage, PricedUsage, RuntimeFailure,
     RuntimeFailureKind, ServiceTier, ServingState, TerminalOutcome,
@@ -116,6 +119,7 @@ pub(super) struct GenerationTerminal {
     pub(super) end: GenerationEnd,
     pub(super) usage: NormalizedUsage,
     pub(super) delivery: Delivery,
+    pub(super) upstream_cost_nano_usd: Option<u64>,
 }
 
 pub(super) struct FailedGeneration {
@@ -135,6 +139,13 @@ impl FailedGeneration {
         Self {
             end: Unsuccessful::from_runtime_failure(failure),
             usage: failure.usage(),
+        }
+    }
+
+    pub(super) fn failed(error: GatewayError, usage: NormalizedUsage) -> Self {
+        Self {
+            end: Unsuccessful::Failed(error),
+            usage,
         }
     }
 
@@ -161,15 +172,26 @@ pub(super) struct GenerationSettlement {
     pub(super) started_at: DateTime<Utc>,
     pub(super) streamed: bool,
     pub(super) metrics: AdmittedGenerationMetrics,
+    pub(super) capacity: Capacity,
+    pub(super) fallback_reason: Option<FallbackReason>,
 }
 
 impl GenerationSettlement {
+    pub(super) fn served_by(&mut self, call: &RuntimeCall) {
+        self.metrics.served_by(call.plan.target.metric_label());
+        self.generation_identity
+            .serve_release(call.plan.target.served_release_digest());
+        self.capacity = call.plan.target.capacity();
+        self.fallback_reason = call.plan.reason;
+    }
+
     pub(super) async fn settle_failure(self, failed: FailedGeneration) -> GatewayError {
         let error = failed.end.public_error();
         let terminal = GenerationTerminal {
             end: GenerationEnd::Unsuccessful(failed.end),
             usage: failed.usage,
             delivery: Delivery::NoOutput,
+            upstream_cost_nano_usd: None,
         };
 
         match self.settle(terminal).await {
@@ -186,6 +208,7 @@ impl GenerationSettlement {
             mut end,
             usage,
             delivery,
+            upstream_cost_nano_usd,
         } = terminal;
 
         let priced_usage = match PricedUsage::calculate(&self.pricing, usage) {
@@ -219,6 +242,9 @@ impl GenerationSettlement {
             usage,
             charge_nano_usd: priced_usage.charge(),
             timing: &timing,
+            capacity: self.capacity,
+            fallback_reason: self.fallback_reason,
+            upstream_cost_nano_usd,
         });
 
         let charge_nano_usd = priced_usage.charge();

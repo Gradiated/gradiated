@@ -99,14 +99,24 @@ select json_build_object(
     'organization_id', organization_id,
     'workspace_id', workspace_id,
     'expires_at', expires_at,
-    'revoked_at', revoked_at
+    'revoked_at', revoked_at,
+    'openrouter_channel', exists (
+      select 1 from organizations
+      where organizations.id = api_keys.organization_id
+        and organizations.kind = 'distribution_channel'
+        and organizations.name = 'OpenRouter'
+    )
   )::text
 from api_keys
 where digest = $1";
 
+/// `<slug>/<task>` names the task's production version and `<slug>/<task>/<version>`
+/// one version. Only tasks that claimed their name as a model resolve.
 const ADAPTER_QUERY: &str = "\
 select case when task_versions.id is null then 'null' else json_build_object(
     'workspace_id', tasks.workspace_id,
+    'organization_slug', organizations.slug,
+    'task_name', tasks.name,
     'version_id', task_versions.id,
     'name', task_versions.name,
     'status', task_versions.status,
@@ -115,17 +125,15 @@ select case when task_versions.id is null then 'null' else json_build_object(
     'base_model_revision', coalesce(task_versions.adapter->>'validated_base_model_revision', task_versions.adapter->>'base_model_revision', ''),
     'sha256', task_versions.adapter->>'sha256'
 )::text end
-from (
-    select task_id, id as version_id from task_versions where workspace_id = $1 and name = $2
-    union
-    select id as task_id, production_version_id as version_id from tasks where workspace_id = $1 and name = $2
-) matched
-join tasks on tasks.id = matched.task_id and tasks.workspace_id = $1
-left join task_versions on task_versions.id = matched.version_id
-    and task_versions.task_id = tasks.id and task_versions.workspace_id = tasks.workspace_id
+from tasks
 join workspaces on workspaces.id = tasks.workspace_id
-join organizations on organizations.id = workspaces.organization_id
-where workspaces.archived_at is null and organizations.status = 'active'";
+join organizations on organizations.id = tasks.organization_id and organizations.slug = $2
+left join task_versions on task_versions.task_id = tasks.id
+    and task_versions.workspace_id = tasks.workspace_id
+    and case when $4::text is null then task_versions.id = tasks.production_version_id
+        else task_versions.name = $4 end
+where tasks.workspace_id = $1 and tasks.name = $3
+    and workspaces.archived_at is null and organizations.status = 'active'";
 
 const WORKSPACE_QUERY: &str = "\
 select json_build_object(
@@ -143,6 +151,9 @@ select json_build_object(
     'name', models.name,
     'status', models.status,
     'properties', models.properties,
+    'openrouter_model_id', models.openrouter_model_id,
+    'tokenizer', case when models.tokenizer_path is null or models.tokenizer_revision is null then null
+      else json_build_object('path', models.tokenizer_path, 'revision', models.tokenizer_revision) end,
     'deployments', coalesce(
       (
         select json_agg(
@@ -267,9 +278,17 @@ impl PostgresReader {
     pub async fn private_adapter_json(
         &self,
         workspace_id: Uuid,
-        name: &str,
+        model: &str,
     ) -> Result<Option<String>, PostgresError> {
-        self.record(ADAPTER_QUERY, &[&workspace_id, &name]).await
+        let mut segments = model.splitn(3, '/');
+        let (Some(slug), Some(task)) = (segments.next(), segments.next()) else {
+            return Ok(None);
+        };
+        let slug = slug.to_ascii_lowercase();
+        let version = segments.next();
+
+        self.record(ADAPTER_QUERY, &[&workspace_id, &slug, &task, &version])
+            .await
     }
 
     pub async fn model_ids(&self) -> Result<Vec<String>, PostgresError> {

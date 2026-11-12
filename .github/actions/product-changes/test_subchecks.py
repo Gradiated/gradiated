@@ -34,6 +34,12 @@ class SubcheckSelectionTest(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertTrue(selected("gpu", [path])["rejoin"])
 
+    def test_model_catalog_changes_skip_the_rejoin_test(self):
+        paths = ["product/packages/control/src/catalog/models/kimi-k31-pro.ts",
+                 "product/packages/control/test/catalog-models.test.ts"]
+        self.assertFalse(selected("gpu", paths)["rejoin"])
+        self.assertTrue(selected("gpu", [*paths, "product/packages/control/src/index.ts"])["rejoin"])
+
     def test_gpu_schema_helper_skips_controller_and_configuration(self):
         self.assertEqual(
             selected("gpu", ["tools/security/check_gpu_inference.py"]),

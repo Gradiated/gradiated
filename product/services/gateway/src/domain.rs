@@ -20,6 +20,10 @@ pub struct GatewayCredential {
     pub workspace_id: Uuid,
     pub expires_at: Option<DateTime<Utc>>,
     pub revoked_at: Option<DateTime<Utc>>,
+    /// Whether the key belongs to OpenRouter's own distribution-channel
+    /// organization. Absent in a record cached before the field existed.
+    #[serde(default)]
+    pub openrouter_channel: Option<bool>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]

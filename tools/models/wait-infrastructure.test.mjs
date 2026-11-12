@@ -104,3 +104,38 @@ test("a missing prerequisite run has a bounded wait", async () => {
     /within 90 minutes/,
   );
 });
+
+test("a later successful apply on main that contains the prerequisite repairs a failed push apply", async () => {
+  const failed = {
+    id: 10,
+    head_sha: "prerequisite",
+    status: "completed",
+    conclusion: "failure",
+    html_url: "failed",
+  };
+  await waitForTerraform("prerequisite", {
+    fetchRuns: async () => [failed],
+    fetchLaterSuccesses: async () => [
+      { id: 9, head_sha: "older", conclusion: "success" },
+      { id: 12, head_sha: "unrelated", conclusion: "success" },
+      {
+        id: 14,
+        head_sha: "descendant",
+        conclusion: "success",
+        html_url: "repair",
+      },
+    ],
+    contains: (revision, later) =>
+      revision === "prerequisite" && later === "descendant",
+  });
+  await assert.rejects(
+    waitForTerraform("prerequisite", {
+      fetchRuns: async () => [failed],
+      fetchLaterSuccesses: async () => [
+        { id: 12, head_sha: "unrelated", conclusion: "success" },
+      ],
+      contains: () => false,
+    }),
+    /Terraform did not succeed: failed/,
+  );
+});

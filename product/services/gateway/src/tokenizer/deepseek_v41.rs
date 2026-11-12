@@ -598,7 +598,7 @@ mod tests {
             ("max", Some(100)),
         ] {
             let request: InferenceRequest = serde_json::from_value(json!({
-                "model": "deepseek/deepseek-v4.1-flash",
+                "model": "deepseek/deepseek-v4.1-flash-1017",
                 "messages": [{"role": "user", "content": "hi"}],
                 "reasoning_effort": effort,
             }))
@@ -654,7 +654,7 @@ mod tests {
     fn responses_reasoning_effort_reaches_the_model_encoder() {
         for effort in ["medium", "high"] {
             let body = json!({
-                "model": "deepseek/deepseek-v4.1-flash",
+                "model": "deepseek/deepseek-v4.1-flash-1017",
                 "input": [{"role": "user", "content": [{"type": "input_text", "text": "hi there"}]}],
                 "reasoning": {"effort": effort},
             });

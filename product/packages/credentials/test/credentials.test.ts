@@ -29,7 +29,7 @@ const setup = () => {
 };
 
 describe("CredentialLoader", () => {
-  it.each(["openai", "anthropic"] as const)(
+  it.each(["openai", "anthropic", "openrouter"] as const)(
     "loads %s and caches for five minutes before observing a manual slot change",
     async (provider) => {
       const { loader, send, advance } = setup();

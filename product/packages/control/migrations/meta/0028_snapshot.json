@@ -1,6 +1,6 @@
 {
-  "id": "ce6622c1-a70b-48cf-81cd-7e3a6b8acd12",
-  "prevId": "6b8a7697-0e54-4919-9b1d-a6dc98e9a5f9",
+  "id": "d4f8b670-51bc-406d-b58f-942313c16044",
+  "prevId": "b8ddccfa-4439-4d75-937a-6b2f36349055",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1345,6 +1345,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "openrouter_model_id": {
+          "name": "openrouter_model_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -1366,6 +1372,10 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
+        "models_openrouter_model_id_check": {
+          "name": "models_openrouter_model_id_check",
+          "value": "\"models\".\"openrouter_model_id\" ~ '^[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$' and char_length(\"models\".\"openrouter_model_id\") <= 200"
+        },
         "models_id_length_check": {
           "name": "models_id_length_check",
           "value": "char_length(\"models\".\"id\") between 1 and 200"
@@ -2061,136 +2071,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.task_version_files": {
-      "name": "task_version_files",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "version_id": {
-          "name": "version_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "content_type": {
-          "name": "content_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "size_bytes": {
-          "name": "size_bytes",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "completed_at": {
-          "name": "completed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "task_version_files_ready_name_unique": {
-          "name": "task_version_files_ready_name_unique",
-          "columns": [
-            {
-              "expression": "version_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"task_version_files\".\"status\" = 'ready'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "task_version_files_version_index": {
-          "name": "task_version_files_version_index",
-          "columns": [
-            {
-              "expression": "version_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "task_version_files_workspace_id_workspaces_id_fk": {
-          "name": "task_version_files_workspace_id_workspaces_id_fk",
-          "tableFrom": "task_version_files",
-          "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "task_version_files_version_id_task_versions_id_fk": {
-          "name": "task_version_files_version_id_task_versions_id_fk",
-          "tableFrom": "task_version_files",
-          "tableTo": "task_versions",
-          "columnsFrom": ["version_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "task_version_files_status_check": {
-          "name": "task_version_files_status_check",
-          "value": "\"task_version_files\".\"status\" in ('pending', 'ready')"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.task_versions": {

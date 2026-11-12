@@ -24,6 +24,7 @@ import {
   interviewSteps,
   payAndEquity,
 } from "../careers-copy";
+import { useRailBack } from "../components/design/RailShell";
 import "../styles/index.css";
 
 /** A remote role says so in its location, even if Ashby's location doesn't. */
@@ -544,6 +545,8 @@ const Section = ({
 );
 
 export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
+  /* The rail draws "back"; the page draws nothing above its content. */
+  useRailBack({ href: "/careers/", label: "Careers" });
   /* Built from the same list the page renders, so the contents cannot come to
      disagree with the sections — unlike the Library's reading page, a posting
      knows its own headings before it draws them. */
@@ -664,13 +667,6 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
 
       <Band>
         <Module className="gr-module--top" index={0}>
-          <a className="gr-read-back gr-label" href="/careers/">
-            <span aria-hidden className="gr-read-back-arrow">
-              <Arrow />
-            </span>
-            Careers
-          </a>
-
           <div className="gr-job-top">
             <header className="gr-job-head">
               {job.team ? (

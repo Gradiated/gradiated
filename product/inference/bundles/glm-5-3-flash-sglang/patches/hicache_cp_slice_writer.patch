@@ -1,0 +1,14 @@
+--- a/sglang/srt/mem_cache/hicache_storage.py
++++ b/sglang/srt/mem_cache/hicache_storage.py
+@@ -83,6 +83,11 @@
+         """
+         if self.unified_suffixes is not None and self.attn_cp_rank != 0:
+             return False
++        if self.unified_suffixes is None and self.attn_cp_size > 1 and self.is_mla_model:
++            # Legacy keys carry the CP rank and TP is fastest within a CP group,
++            # so the first MLA replica of each CP slice writes it.
++            attn_tp_size = max(self.tp_size // self.attn_cp_size, 1)
++            return self.tp_rank % attn_tp_size == self.dcp_rank
+         return not self.is_mla_model or self.tp_rank == self.dcp_rank
+ 
+ 

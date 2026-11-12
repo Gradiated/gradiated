@@ -50,7 +50,8 @@ import {
 } from "@/hooks/use-training";
 import { errorMessage } from "@/lib/errors";
 import { formatFileSize, formatUsd } from "@/lib/format";
-import { ConsolePage } from "@/pages/console-page";
+import { usePrivateModelName } from "@/hooks/use-private-model-name";
+import { ConsolePage, LoadFailed } from "@/pages/console-page";
 import { tierPriceRows } from "@/pages/model-pricing";
 import type { TaskRow, VersionView } from "@/store/fine-tuning-types";
 import { VERSION_REPORT_FILE } from "@gradiated/contracts";
@@ -110,6 +111,17 @@ export const VersionPage = () => {
       </ConsolePage>
     );
 
+  if (task.isError)
+    return (
+      <ConsolePage page="tasks" title="Version">
+        <LoadFailed
+          subject="model"
+          retrying={task.isFetching}
+          onRetry={() => void task.refetch()}
+        />
+      </ConsolePage>
+    );
+
   if (!task.data)
     return (
       <ConsolePage page="tasks" title="Model not found">
@@ -140,6 +152,17 @@ const VersionView = ({
       </ConsolePage>
     );
 
+  if (history.isError)
+    return (
+      <ConsolePage page="tasks" title="Version">
+        <LoadFailed
+          subject="version"
+          retrying={history.isFetching}
+          onRetry={() => void history.refetch()}
+        />
+      </ConsolePage>
+    );
+
   if (!version)
     return (
       <ConsolePage page="tasks" title="Version not found">
@@ -165,6 +188,7 @@ const VersionReport = ({
   version: VersionView;
   versions: VersionView[];
 }) => {
+  const modelName = usePrivateModelName();
   const { workspaceId, user } = useProductContext();
   const client = useQueryClient();
   const [action, setAction] = useState<VersionAction | null>(null);
@@ -315,6 +339,18 @@ const VersionReport = ({
               <Skeleton className="h-24 w-full" />
               <Skeleton className="h-64 w-full" />
             </div>
+          ) : files.isError ? (
+            <LoadFailed
+              subject="version files"
+              retrying={files.isFetching}
+              onRetry={() => void files.refetch()}
+            />
+          ) : report.isError ? (
+            <LoadFailed
+              subject="report"
+              retrying={report.isFetching}
+              onRetry={() => void report.refetch()}
+            />
           ) : report.data ? (
             <div className="flex flex-col gap-4">
               {canManageFiles && report.data.errors.length ? (
@@ -374,7 +410,7 @@ const VersionReport = ({
                 <Link
                   to="/playground"
                   search={{
-                    model: version.is_production ? task.name : version.name,
+                    model: modelName(task.name, version.name),
                     task: task.name,
                   }}
                 >

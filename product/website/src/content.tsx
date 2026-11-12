@@ -635,11 +635,20 @@ const subprocessors: Subprocessor[] = [
     location: "United States",
     security: "https://trust.anthropic.com/",
   },
+  {
+    name: "OpenRouter, Inc.",
+    purpose:
+      "Additional inference capacity. When Gradiated’s own servers cannot serve a request for a hosted model that OpenRouter also offers, we send the request to OpenRouter under Gradiated’s account. OpenRouter routes it only to model providers with zero data retention that do not collect it for training.",
+    data: "Inference requests and responses for those requests while they are processed, and request metadata such as token counts.",
+    location:
+      "United States, and the data centers of the zero-data-retention model providers that OpenRouter selects",
+    security: "https://trust.openrouter.ai/",
+  },
 ];
 
 export const SubprocessorsContent = (): ReactNode => (
   <>
-    <p>Last updated: October 19, 2026</p>
+    <p>Last updated: November 6, 2026</p>
     <p>
       A subprocessor is a third party that Gradiated, a division of PostHog
       Inc., engages to process your request content: prompts, completions,
@@ -688,8 +697,8 @@ export const SubprocessorsContent = (): ReactNode => (
     <p>
       If you sign in with Google or GitHub, that provider authenticates you
       under its own terms and shares your name and email address with us.
-      Requests that reach us through OpenRouter are processed by OpenRouter
-      under its own terms before they reach us.
+      Requests that you send through OpenRouter’s own service are processed by
+      OpenRouter under its terms with you before they reach us.
     </p>
     <h2>Other vendors</h2>
     <p>
@@ -750,6 +759,11 @@ export const SubprocessorsContent = (): ReactNode => (
     </p>
     <h2>Change log</h2>
     <ul>
+      <li>
+        <strong>November 6, 2026:</strong> Added OpenRouter, which serves
+        requests for hosted models when Gradiated’s own servers cannot, using
+        only model providers with zero data retention.
+      </li>
       <li>
         <strong>October 19, 2026:</strong> Published this list as its own page,
         with the purpose, data processed, location and security link of each

@@ -1,5 +1,5 @@
-name: Restore Rust compilation cache
-description: Restore trusted main build output without uploading targets from PR checks.
+name: Rust compilation cache
+description: Reuse trusted main build output, keyed by Rust workspace inputs.
 inputs:
   scope:
     required: true
@@ -7,33 +7,47 @@ inputs:
   mode:
     description: Restore on checks; save only after a successful main-branch check.
     default: restore
+  workspaces:
+    description: Newline-separated workspace directories whose target directories are cached.
+    default: |
+      product/packages/credentials
+      product/services/gateway
+      product/services/proxy
+      product/services/collector
 runs:
   using: composite
   steps:
+    - name: Identify Rust cache inputs
+      id: inputs
+      shell: bash
+      env:
+        WORKSPACES: ${{ inputs.workspaces }}
+        SCOPE: ${{ inputs.scope }}
+        CONFIG_HASH: ${{ hashFiles('mise.toml', '.cargo/**', '.github/actions/rust-cache/**') }}
+        MODE: ${{ inputs.mode }}
+      run: bash "$GITHUB_ACTION_PATH/prepare.sh"
     - if: inputs.mode == 'restore'
       uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          product/packages/credentials/target
-          product/services/gateway/target
-          product/services/proxy/target
-          product/services/collector/target
-        key: ${{ runner.os }}-rust-v2-${{ inputs.scope }}-${{ hashFiles('mise.toml', 'product/**/Cargo.lock') }}-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-rust-v2-${{ inputs.scope }}-${{ hashFiles('mise.toml', 'product/**/Cargo.lock') }}-
-          ${{ runner.os }}-rust-v2-${{ inputs.scope }}-
-          ${{ runner.os }}-gateway-contract-
-          ${{ runner.os }}-gateway-unit-
-    - if: inputs.mode == 'save' && github.ref == 'refs/heads/main'
+        path: ${{ steps.inputs.outputs.paths }}
+        key: ${{ steps.inputs.outputs.key }}
+        restore-keys: ${{ steps.inputs.outputs.prefix }}
+    - name: Check whether main already saved these inputs
+      id: existing
+      if: inputs.mode == 'save' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ${{ steps.inputs.outputs.paths }}
+        key: ${{ steps.inputs.outputs.key }}
+        lookup-only: true
+    - name: Remove disposable Rust cache files
+      if: inputs.mode == 'save' && github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.existing.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        WORKSPACES: ${{ inputs.workspaces }}
+      run: bash "$GITHUB_ACTION_PATH/prune.sh"
+    - if: inputs.mode == 'save' && github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.existing.outputs.cache-hit != 'true'
       uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          product/packages/credentials/target
-          product/services/gateway/target
-          product/services/proxy/target
-          product/services/collector/target
-        key: ${{ runner.os }}-rust-v2-${{ inputs.scope }}-${{ hashFiles('mise.toml', 'product/**/Cargo.lock') }}-${{ github.sha }}
+        path: ${{ steps.inputs.outputs.paths }}
+        key: ${{ steps.inputs.outputs.key }}

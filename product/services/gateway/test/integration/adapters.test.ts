@@ -146,7 +146,11 @@ describe("workspace-private adapters", () => {
     await enable(owner);
     const selected = await version(owner);
     await production(owner, selected);
-    for (const model of [selected.selector, `task-${selected.task}`]) {
+    for (const model of [
+      selected.selector,
+      `${other.organizationSlug}/task-${selected.task}`,
+      `task-${selected.task}`,
+    ]) {
       expect((await other.post({ model })).status).toBe(404);
     }
     await other.expectNotDispatched();
@@ -195,30 +199,57 @@ describe("workspace-private adapters", () => {
     await instance.expectNotDispatched();
   });
 
-  it("rejects ambiguous task and version slugs instead of choosing an adapter", async () => {
+  it("rejects ambiguous bare task and version names instead of choosing an adapter", async () => {
     const instance = await makeCase("vllm");
     await enable(instance);
     const exact = await version(instance);
     const other = await version(instance);
     await instance.database.query(
       "update tasks set name = $2, production_version_id = $3 where id = $1",
-      [other.task, exact.selector, other.id],
+      [other.task, exact.name, other.id],
     );
-    expect((await instance.post({ model: exact.selector })).status).toBe(503);
+    expect((await instance.post({ model: exact.name })).status).toBe(503);
     await instance.database.query(
       "update tasks set production_version_id = null where id = $1",
       [other.task],
     );
-    expect((await instance.post({ model: exact.selector })).status).toBe(503);
+    expect((await instance.post({ model: exact.name })).status).toBe(503);
     await instance.expectNotDispatched();
+  });
+
+  it("resolves a model by any slug its organization has held", async () => {
+    const instance = await makeCase("vllm");
+    await enable(instance);
+    const selected = await version(instance);
+    await production(instance, selected);
+    const moved = `moved-${instance.organization.replaceAll("-", "")}`;
+    await instance.database.query(
+      "update organization_slugs set is_current = false where organization_id = $1",
+      [instance.organization],
+    );
+    await instance.database.query(
+      "insert into organization_slugs (slug, organization_id, is_current) values ($1, $2, true)",
+      [moved, instance.organization],
+    );
+
+    for (const slug of [instance.organizationSlug, moved]) {
+      const response = await instance.post({
+        model: `${slug}/task-${selected.task}`,
+      });
+      expect(response.status).toBe(200);
+      expect(response.json().model).toBe(
+        `${moved}/task-${selected.task}/${selected.name}`,
+      );
+    }
   });
 
   it("serves long task/version slugs and retains them in settlement", async () => {
     const instance = await makeCase("vllm");
     await enable(instance);
     const selected = await version(instance);
-    const task = "a".repeat(256);
-    const name = `${task}-20261002-2`;
+    const task = "a".repeat(128);
+    const name = "2026-10-02-2";
+    const model = `${instance.organizationSlug}/${task}/${name}`;
     await instance.database.query(
       "update tasks set name = $2, production_version_id = $3 where id = $1",
       [selected.task, task, selected.id],
@@ -227,12 +258,12 @@ describe("workspace-private adapters", () => {
       "update task_versions set name = $2 where id = $1",
       [selected.id, name],
     );
-    for (const model of [task, name]) {
-      const response = await instance.post({ model });
+    for (const selector of [`${instance.organizationSlug}/${task}`, model]) {
+      const response = await instance.post({ model: selector });
       expect(response.status).toBe(200);
-      expect(response.json().model).toBe(name);
+      expect(response.json().model).toBe(model);
       expect(instance.runtimes[0]!.calls.at(-1)!.model).toBe(
-        `${instance.workspace}/${name}`,
+        `${instance.workspace}/${task}/${name}`,
       );
       expect(
         (
@@ -241,7 +272,7 @@ describe("workspace-private adapters", () => {
             response.headers["x-gradiated-generation-id"],
           )
         ).model_id,
-      ).toBe(name);
+      ).toBe(model);
     }
   });
 
@@ -249,9 +280,14 @@ describe("workspace-private adapters", () => {
     const instance = await makeCase("vllm");
     await enable(instance);
     const selected = await version(instance);
+    const [author, name] = instance.model.split("/");
+    await instance.database.query(
+      "insert into organization_slugs (slug, organization_id, is_current) values ($1, $2, false)",
+      [author, instance.organization],
+    );
     await instance.database.query(
       "update tasks set name = $2, production_version_id = $3 where id = $1",
-      [selected.task, instance.model, selected.id],
+      [selected.task, name, selected.id],
     );
     expect((await instance.post({ model: instance.model })).status).toBe(503);
     await instance.database.query(

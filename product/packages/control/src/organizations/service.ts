@@ -5,6 +5,11 @@ import {
   type UpdateOrganization,
 } from "@gradiated/contracts";
 import { companyEmailDomain } from "./email-domains.js";
+import {
+  availableOrganizationSlug,
+  isTakenOrganizationSlug,
+  setCurrentOrganizationSlug,
+} from "./slugs.js";
 import { createOrganizationStore } from "./store.js";
 import { createMemberStore } from "../members/store.js";
 import { ControlServiceError } from "../errors.js";
@@ -25,6 +30,7 @@ export type { OrganizationRole } from "../db/schema/index.js";
 export interface UserOrganization {
   id: string;
   name: string;
+  slug: string;
   status: OrganizationStatus;
   role: OrganizationRole;
   defaultWorkspaceId: string;
@@ -42,6 +48,7 @@ export interface CreatedOrganization {
   id: string;
   kind: "customer";
   name: string;
+  slug: string;
   status: "active";
   role: "admin";
   defaultWorkspaceId: string;
@@ -50,6 +57,17 @@ export interface CreatedOrganization {
 }
 
 export const SIGNUP_CREDIT_NANO_USD = 5_000_000_000n;
+
+/** Retries a write that lost a race for its generated slug. */
+const withSlugRetry = async <T>(write: () => Promise<T>): Promise<T> => {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await write();
+    } catch (error) {
+      if (attempt >= 3 || !isTakenOrganizationSlug(error)) throw error;
+    }
+  }
+};
 
 export const defaultWorkspaceValues = (organizationId: string, now: Date) => ({
   id: uuidv7(),
@@ -94,49 +112,55 @@ export const createOrganizationService = (
     const now = new Date();
     const defaultWorkspace = defaultWorkspaceValues(organizationId, now);
 
-    await database.transaction(async (transaction) => {
-      await transaction.insert(organizations).values({
-        id: organizationId,
-        kind: "customer",
-        name: input.name,
-        status: "active",
-        onboardedAt: input.onboarded ? now : null,
-        createdAt: now,
-        updatedAt: now,
-      });
-      await transaction.insert(organizationMembers).values({
-        organizationId,
-        userId: input.userId,
-        role: "admin",
-        status: "active",
-        createdAt: now,
-        updatedAt: now,
-      });
-      await transaction.insert(workspaces).values(defaultWorkspace);
-      await transaction.insert(billingAccounts).values({
-        organizationId,
-        mode: "prepaid",
-        balance: 0n,
-        createdAt: now,
-        updatedAt: now,
-      });
+    const slug = await withSlugRetry(() =>
+      database.transaction(async (transaction) => {
+        const slug = await availableOrganizationSlug(transaction, input.name);
+        await transaction.insert(organizations).values({
+          id: organizationId,
+          kind: "customer",
+          name: input.name,
+          status: "active",
+          onboardedAt: input.onboarded ? now : null,
+          createdAt: now,
+          updatedAt: now,
+        });
+        await setCurrentOrganizationSlug(transaction, organizationId, slug);
+        await transaction.insert(organizationMembers).values({
+          organizationId,
+          userId: input.userId,
+          role: "admin",
+          status: "active",
+          createdAt: now,
+          updatedAt: now,
+        });
+        await transaction.insert(workspaces).values(defaultWorkspace);
+        await transaction.insert(billingAccounts).values({
+          organizationId,
+          mode: "prepaid",
+          balance: 0n,
+          createdAt: now,
+          updatedAt: now,
+        });
 
-      if (!input.signupCredit) return;
+        if (input.signupCredit)
+          await postBalanceTransaction(transaction, {
+            organizationId,
+            type: "credit",
+            amount: SIGNUP_CREDIT_NANO_USD,
+            sourceType: "operator",
+            sourceId: `signup-grant:${organizationId}`,
+            createdBy: input.userId,
+          });
 
-      await postBalanceTransaction(transaction, {
-        organizationId,
-        type: "credit",
-        amount: SIGNUP_CREDIT_NANO_USD,
-        sourceType: "operator",
-        sourceId: `signup-grant:${organizationId}`,
-        createdBy: input.userId,
-      });
-    });
+        return slug;
+      }),
+    );
 
     return {
       id: organizationId,
       kind: "customer",
       name: input.name,
+      slug,
       status: "active",
       role: "admin",
       defaultWorkspaceId: defaultWorkspace.id,
@@ -166,6 +190,7 @@ export const createOrganizationService = (
     return {
       id: created.id,
       name: created.name,
+      slug: created.slug,
       status: created.status,
       role: created.role,
       defaultWorkspaceId: created.defaultWorkspaceId,
@@ -211,7 +236,21 @@ export const createOrganizationService = (
           );
       }
 
-      const organization = await records.update(userId, organizationId, update);
+      const [current] = await records.listForUser(userId, organizationId);
+      if (!current)
+        throw new ControlServiceError(
+          "not_found",
+          "The organization was not found.",
+        );
+      // Until the owner first names the organization, its slug follows the name.
+      const organization = await withSlugRetry(() =>
+        records.update(
+          userId,
+          organizationId,
+          update,
+          !current.onboardingCompleted,
+        ),
+      );
       if (!organization)
         throw new ControlServiceError(
           "not_found",

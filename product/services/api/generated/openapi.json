@@ -1823,6 +1823,9 @@
             "minLength": 1,
             "maxLength": 200
           },
+          "slug": {
+            "$ref": "#/components/schemas/OrganizationSlug"
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -1855,12 +1858,18 @@
         "required": [
           "id",
           "name",
+          "slug",
           "status",
           "role",
           "default_workspace_id",
           "auto_join_domain",
           "onboarding_completed"
         ]
+      },
+      "OrganizationSlug": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$",
+        "description": "Unique organization handle that prefixes its private model names, as in `acme/support-triage`. It can change; requests must then use the new prefix."
       },
       "OrganizationRole": {
         "type": "string",
@@ -1904,6 +1913,10 @@
             "minLength": 1,
             "maxLength": 200
           },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$"
+          },
           "auto_join_domain": {
             "type": [
               "string",
@@ -1941,6 +1954,9 @@
             "minLength": 1,
             "maxLength": 200
           },
+          "slug": {
+            "$ref": "#/components/schemas/OrganizationSlug"
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -1973,6 +1989,7 @@
           "id",
           "kind",
           "name",
+          "slug",
           "status",
           "role",
           "default_workspace_id",
@@ -2710,9 +2727,17 @@
         "type": "object",
         "properties": {
           "task": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 256
+            "allOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              {
+                "type": "string",
+                "maxLength": 128
+              }
+            ]
           },
           "create_task": {
             "type": "boolean",
@@ -2721,7 +2746,7 @@
           "name": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 200,
+            "maxLength": 128,
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
           },
           "base_model_id": {

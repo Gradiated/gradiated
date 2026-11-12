@@ -420,7 +420,7 @@ describe("transactional training run store", () => {
       (await reads.listVersions(own.task.id))
         .map((version) => version.name)
         .sort(),
-    ).toEqual(["triage-20260930", "triage-20260930-2"]);
+    ).toEqual(["2026-09-30", "2026-09-30-2"]);
   });
 
   it("rolls back a failed publication without storing an adapter or published event", async () => {

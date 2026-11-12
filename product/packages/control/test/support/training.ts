@@ -32,6 +32,7 @@ export const seedTrainingTask = async (
     .insert(tasks)
     .values({
       id: randomUUID(),
+      organizationId: member.organizationId,
       workspaceId: member.workspaceId,
       name: "triage",
       baseModelId: model.id,

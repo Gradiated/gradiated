@@ -18,6 +18,7 @@ type Context = NonNullable<
 const context = (): Context => ({
   task: {
     id: randomUUID(),
+    organizationId: randomUUID(),
     workspaceId: randomUUID(),
     name: "triage",
     baseModelId: "test/base",

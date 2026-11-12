@@ -265,6 +265,7 @@ export const registerOrganizationRoutes = (
         id: created.id,
         kind: created.kind,
         name: created.name,
+        slug: created.slug,
         status: created.status,
         role: created.role,
         default_workspace_id: created.defaultWorkspaceId,

@@ -32,6 +32,7 @@ describe("private adapter hosting", () => {
       .insert(tasks)
       .values({
         id: uuidv7(),
+        organizationId: owner.organizationId,
         workspaceId: owner.workspaceId,
         name: "triage",
       })
@@ -88,7 +89,10 @@ describe("private adapter hosting", () => {
   it("signs the exact immutable artifact, including an unavailable qualification candidate", async () => {
     const { owner, task, version } = await seed("unavailable");
     const { hosting, sign } = service();
-    const result = await hosting.grant(owner.workspaceId, version.name);
+    const result = await hosting.grant(
+      owner.workspaceId,
+      `${task.name}/${version.name}`,
+    );
     expect(result.task.id).toBe(task.id);
     expect(result.version.status).toBe("unavailable");
     expect(result.download.url).toContain("signature=test");
@@ -105,11 +109,12 @@ describe("private adapter hosting", () => {
   });
 
   it("rejects workspace and version name mismatches without signing", async () => {
-    const { owner, version } = await seed();
+    const { owner, task, version } = await seed();
     const { hosting, sign } = service();
     for (const [workspaceId, name] of [
-      [uuidv7(), version.name],
+      [uuidv7(), `${task.name}/${version.name}`],
       [owner.workspaceId, "missing-version"],
+      [owner.workspaceId, `other-task/${version.name}`],
     ]) {
       await expect(hosting.grant(workspaceId!, name!)).rejects.toMatchObject({
         code: "not_found",
@@ -140,7 +145,7 @@ describe("private adapter hosting", () => {
       expect(await hosting.productionVersions(baseModelId)).not.toContainEqual(
         expect.objectContaining({
           workspace_id: version.workspaceId,
-          version_name: version.name,
+          version_name: `${task.name}/${version.name}`,
         }),
       );
       expect(sign).not.toHaveBeenCalled();
@@ -169,7 +174,7 @@ describe("private adapter hosting", () => {
       expect(await hosting.productionVersions(baseModelId)).not.toContainEqual(
         expect.objectContaining({
           workspace_id: version.workspaceId,
-          version_name: version.name,
+          version_name: `${task.name}/${version.name}`,
         }),
       );
       expect(sign).not.toHaveBeenCalled();
@@ -186,13 +191,13 @@ describe("private adapter hosting", () => {
     const targets = await hosting.productionVersions(baseModelId);
     expect(targets).toContainEqual({
       workspace_id: selected.owner.workspaceId,
-      version_name: selected.version.name,
+      version_name: `${selected.task.name}/${selected.version.name}`,
     });
-    for (const version of [unpromoted.version, unavailable.version])
+    for (const { task, version } of [unpromoted, unavailable])
       expect(targets).not.toContainEqual(
         expect.objectContaining({
           workspace_id: version.workspaceId,
-          version_name: version.name,
+          version_name: `${task.name}/${version.name}`,
         }),
       );
     expect(await hosting.productionVersions("gradiated/no-adapters")).toEqual(
@@ -217,6 +222,7 @@ describe("private adapter hosting", () => {
     await db.database.insert(tasks).values(
       legacy.map((item) => ({
         id: item.task,
+        organizationId: selected.owner.organizationId,
         workspaceId: selected.owner.workspaceId,
         name: item.name,
       })),
@@ -254,7 +260,7 @@ describe("private adapter hosting", () => {
       await service().hosting.productionVersions(baseModelId),
     ).toContainEqual({
       workspace_id: selected.owner.workspaceId,
-      version_name: selected.version.name,
+      version_name: `${selected.task.name}/${selected.version.name}`,
     });
   });
 
@@ -266,7 +272,7 @@ describe("private adapter hosting", () => {
     expect(await hosting.productionVersions(baseModelId)).not.toContainEqual(
       expect.objectContaining({
         workspace_id: second.version.workspaceId,
-        version_name: second.version.name,
+        version_name: `${second.task.name}/${second.version.name}`,
       }),
     );
   });

@@ -4,11 +4,13 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
   organizationMembers,
+  organizationSlugs,
   organizations as organizationTable,
   billingAccounts,
   balanceTransactions,
   workspaces,
 } from "../src/db/schema/index.js";
+import { createCatalogService } from "../src/catalog/service.js";
 import {
   createOrganizationService,
   SIGNUP_CREDIT_NANO_USD,
@@ -17,6 +19,7 @@ import {
 import {
   billingAccountRow,
   ledgerRows,
+  modelInput,
   seedOrganization,
   seedMember,
   seedUser,
@@ -409,3 +412,128 @@ describe("organization onboarding and domain auto-join", () => {
     }
   });
 });
+
+describe("organization slugs", () => {
+  let db: TestDatabase;
+  let service: OrganizationService;
+  beforeAll(async () => {
+    db = await createTestDatabase();
+    service = createOrganizationService(db.database);
+  });
+  afterAll(() => db.dispose());
+
+  const name = () => `Slug ${randomUUID().slice(0, 8)}`;
+  const slugOf = (name: string) => name.toLowerCase().replace(" ", "-");
+
+  it("derives a unique slug from the name", async () => {
+    const userId = await seedUser(db.database);
+    const team = name();
+
+    const first = await service.createForUser(userId, team);
+    const second = await service.createForUser(userId, `  ${team}!  `);
+
+    expect(first.slug).toBe(slugOf(team));
+    expect(second.slug).toBe(`${slugOf(team)}-2`);
+  });
+
+  it("avoids reserved slugs and hosted-catalog authors", async () => {
+    const userId = await seedUser(db.database);
+    await upsertCatalogAuthor(db, "slugtestauthor");
+
+    expect((await service.createForUser(userId, "OpenAI")).slug).toMatch(
+      /^openai-org(-\d+)?$/,
+    );
+    expect(
+      (await service.createForUser(userId, "SlugTestAuthor")).slug,
+    ).toMatch(/^slugtestauthor-org(-\d+)?$/);
+    expect((await service.createForUser(userId, "株式会社")).slug).toMatch(
+      /^org(-\d+)?$/,
+    );
+  });
+
+  it("follows the name until onboarding, then changes only when set", async () => {
+    const userId = await seedUser(db.database);
+    const personal = await service.ensurePersonalForUser(userId);
+    expect(personal.slug).toMatch(/^personal(-\d+)?$/);
+
+    const team = name();
+    const named = await service.updateForUser(userId, personal.id, {
+      name: team,
+      onboarding_completed: true,
+    });
+    expect(named.slug).toBe(slugOf(team));
+
+    const renamed = await service.updateForUser(userId, personal.id, {
+      name: name(),
+    });
+    expect(renamed.slug).toBe(slugOf(team));
+
+    const changed = await service.updateForUser(userId, personal.id, {
+      slug: ` ${slugOf(team)}-labs `,
+    });
+    expect(changed.slug).toBe(`${slugOf(team)}-labs`);
+  });
+
+  it("keeps earlier slugs with the organization and out of reach of others", async () => {
+    const userId = await seedUser(db.database);
+    const own = await service.createForUser(userId, name());
+    const other = await service.createForUser(userId, name());
+    const original = own.slug;
+
+    await service.updateForUser(userId, own.id, { slug: `${original}-new` });
+
+    await expect(
+      service.updateForUser(userId, other.id, { slug: original }),
+    ).rejects.toMatchObject({ code: "conflict" });
+    expect(
+      (await db.database.select().from(organizationSlugs))
+        .filter((row) => row.organizationId === own.id)
+        .map(({ slug, isCurrent }) => ({ slug, isCurrent }))
+        .sort((a, b) => a.slug.localeCompare(b.slug)),
+    ).toEqual([
+      { slug: original, isCurrent: false },
+      { slug: `${original}-new`, isCurrent: true },
+    ]);
+    expect(
+      (await service.updateForUser(userId, own.id, { slug: original })).slug,
+    ).toBe(original);
+  });
+
+  it("releases a slug that only followed the default name", async () => {
+    const userId = await seedUser(db.database);
+    const personal = await service.ensurePersonalForUser(userId);
+
+    await service.updateForUser(userId, personal.id, { name: name() });
+
+    expect(
+      await db.database
+        .select()
+        .from(organizationSlugs)
+        .where(eq(organizationSlugs.slug, personal.slug)),
+    ).toEqual([]);
+  });
+
+  it("rejects a taken, reserved or malformed slug", async () => {
+    const userId = await seedUser(db.database);
+    const taken = await service.createForUser(userId, name());
+    const own = await service.createForUser(userId, name());
+
+    await expect(
+      service.updateForUser(userId, own.id, { slug: taken.slug }),
+    ).rejects.toMatchObject({ code: "conflict" });
+    await expect(
+      service.updateForUser(userId, own.id, { slug: "gradiated" }),
+    ).rejects.toMatchObject({ code: "conflict" });
+    for (const slug of ["-acme", "acme-", "a", "acme/team", "a".repeat(40)])
+      await expect(
+        service.updateForUser(userId, own.id, { slug }),
+      ).rejects.toThrow();
+    expect((await service.listForUser(userId, own.id))[0]?.slug).toBe(own.slug);
+  });
+});
+
+const upsertCatalogAuthor = async (db: TestDatabase, author: string) => {
+  await createCatalogService(db.database).upsertModel(
+    modelInput({ id: `${author}/model` }),
+  );
+};

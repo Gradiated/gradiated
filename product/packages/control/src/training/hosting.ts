@@ -4,6 +4,12 @@ import type { AdapterDownloads } from "./downloads.js";
 import type { TaskVersionRecord } from "./records.js";
 import { createTrainingStore } from "./store.js";
 
+// GPU runtimes prefix this with the workspace ID.
+export const adapterRuntimeName = (
+  task: { name: string },
+  version: { name: string },
+) => `${task.name}/${version.name}`;
+
 export const requireLoadableAdapter = (version: TaskVersionRecord) => {
   if (
     !(
@@ -25,8 +31,8 @@ export const createAdapterHostingService = (
   const records = createTrainingStore(database);
 
   return {
-    async grant(workspaceId: string, versionName: string) {
-      const row = await records.getHostingVersion(workspaceId, versionName);
+    async grant(workspaceId: string, runtimeName: string) {
+      const row = await records.getHostingVersion(workspaceId, runtimeName);
       if (!row)
         throw new ControlServiceError(
           "not_found",
@@ -48,9 +54,9 @@ export const createAdapterHostingService = (
     async productionVersions(baseModelId: string) {
       const versions = await records.listProductionVersions(baseModelId);
 
-      return versions.map((version) => ({
+      return versions.map(({ task, version }) => ({
         workspace_id: version.workspaceId,
-        version_name: version.name,
+        version_name: adapterRuntimeName(task, version),
       }));
     },
   };

@@ -44,8 +44,14 @@ export const version = async (
   const run = crypto.randomUUID();
   const sha256 = "a".repeat(64);
   await instance.database.query(
-    "insert into tasks (id, workspace_id, name, base_model_id) values ($1, $2, $3, $4) on conflict (id) do nothing",
-    [task, instance.workspace, `task-${task}`, instance.model],
+    "insert into tasks (id, organization_id, workspace_id, name, base_model_id) values ($1, $2, $3, $4, $5) on conflict (id) do nothing",
+    [
+      task,
+      instance.organization,
+      instance.workspace,
+      `task-${task}`,
+      instance.model,
+    ],
   );
   await instance.database.query(
     "insert into training_runs (id, task_id, trigger, stage, base_model_id, input_cutoff, finished_at) values ($1, $2, 'manual', 'succeeded', $3, now(), now())",
@@ -74,8 +80,9 @@ export const version = async (
     id,
     task,
     sha256,
-    selector: `version-${id}`,
-    runtimeName: `${instance.workspace}/version-${id}`,
+    name: `version-${id}`,
+    selector: `${instance.organizationSlug}/task-${task}/version-${id}`,
+    runtimeName: `${instance.workspace}/task-${task}/version-${id}`,
   };
 };
 

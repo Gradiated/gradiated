@@ -24,7 +24,7 @@ const grant = createRoute({
   path: "/api/internal/v1/adapter-downloads",
   operationId: "createPrivateAdapterDownload",
   description:
-    "Issue a versioned download grant for an exact workspace and immutable version slug. Candidates may be unavailable for serving; this route does not promote them.",
+    "Issue a versioned download grant for an exact workspace and `<task>/<version>` runtime name. Candidates may be unavailable for serving; this route does not promote them.",
   request: {
     body: {
       required: true,
@@ -91,7 +91,11 @@ export const registerAdapterHostingRoutes = (
     return context.json(
       {
         workspace_id: row.version.workspaceId,
-        version: versionResponse(row.task, row.version),
+        // Runtimes key an adapter by the name they asked for: `<task>/<version>`.
+        version: {
+          ...versionResponse(row.task, row.version),
+          name: body.version_name,
+        },
         download: AdapterDownloadSchema.parse(row.download),
       },
       200,

@@ -48,6 +48,7 @@ export const tasks = pgTable(
   "tasks",
   {
     id: uuid("id").primaryKey(),
+    organizationId: uuid("organization_id").notNull(),
     workspaceId: uuid("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
@@ -72,9 +73,25 @@ export const tasks = pgTable(
     ...timestamps,
   },
   (table) => [
+    foreignKey({
+      name: "tasks_organization_workspace_fk",
+      columns: [table.organizationId, table.workspaceId],
+      foreignColumns: [workspaces.organizationId, workspaces.id],
+    }).onDelete("cascade"),
+    // Public model names are `<organization slug>/<name>`, so names are unique
+    // across an organization's workspaces.
+    unique("tasks_organization_name_unique").on(
+      table.organizationId,
+      table.name,
+    ),
     unique("tasks_workspace_name_unique").on(table.workspaceId, table.name),
     unique("tasks_id_workspace_unique").on(table.id, table.workspaceId),
     check("tasks_name_routable_check", sql`${table.name} not in ('.', '..')`),
+    // Public names are `<organization slug>/<task>/<version>`.
+    check(
+      "tasks_name_segment_check",
+      sql`strpos(${table.name}, '/') = 0 and char_length(${table.name}) <= 128`,
+    ),
   ],
 );
 
@@ -183,9 +200,10 @@ export const taskVersions = pgTable(
       columns: [table.trainingRunId, table.taskId],
       foreignColumns: [trainingRuns.id, trainingRuns.taskId],
     }).onDelete("cascade"),
-    unique("task_versions_workspace_name_unique").on(
-      table.workspaceId,
-      table.name,
+    unique("task_versions_task_name_unique").on(table.taskId, table.name),
+    check(
+      "task_versions_name_segment_check",
+      sql`strpos(${table.name}, '/') = 0 and char_length(${table.name}) <= 128`,
     ),
     index("task_versions_task_created_index").on(table.taskId, table.createdAt),
   ],

@@ -1,4 +1,9 @@
-use std::{net::IpAddr, str::FromStr, sync::Arc, time::Duration};
+use std::{
+    net::IpAddr,
+    str::FromStr,
+    sync::{Arc, LazyLock},
+    time::Duration,
+};
 
 use chrono::{DateTime, TimeDelta, Utc};
 use deadpool_postgres::{Manager, ManagerConfig, Pool, RecyclingMethod, Runtime, Timeouts};
@@ -110,9 +115,11 @@ select json_build_object(
 from api_keys
 where digest = $1";
 
-const ADAPTER_QUERY: &str = "\
-select case when task_versions.id is null then 'null' else json_build_object(
+const ADAPTER_FIELDS: &str = "\
+case when task_versions.id is null then 'null' else json_build_object(
     'workspace_id', tasks.workspace_id,
+    'organization_slug', current_slug.slug,
+    'task_name', tasks.name,
     'version_id', task_versions.id,
     'name', task_versions.name,
     'status', task_versions.status,
@@ -120,7 +127,36 @@ select case when task_versions.id is null then 'null' else json_build_object(
     'base_model_id', task_versions.base_model_id,
     'base_model_revision', coalesce(task_versions.adapter->>'validated_base_model_revision', task_versions.adapter->>'base_model_revision', ''),
     'sha256', task_versions.adapter->>'sha256'
-)::text end
+)::text end";
+
+const ADAPTER_SCOPE: &str = "\
+join workspaces on workspaces.id = tasks.workspace_id
+join organizations on organizations.id = workspaces.organization_id
+join organization_slugs current_slug on current_slug.organization_id = organizations.id
+    and current_slug.is_current
+where workspaces.archived_at is null and organizations.status = 'active'";
+
+/// `<slug>/<task>` names the task's production version and `<slug>/<task>/<version>`
+/// one version. Any slug the organization has held resolves.
+static ADAPTER_QUERY: LazyLock<String> = LazyLock::new(|| {
+    format!(
+        "select {ADAPTER_FIELDS}
+from tasks
+join organization_slugs requested_slug on requested_slug.slug = $2
+left join task_versions on task_versions.task_id = tasks.id
+    and task_versions.workspace_id = tasks.workspace_id
+    and case when $4::text is null then task_versions.id = tasks.production_version_id
+        else task_versions.name = $4 end
+{ADAPTER_SCOPE}
+    and requested_slug.organization_id = organizations.id
+    and tasks.workspace_id = $1 and tasks.name = $3"
+    )
+});
+
+/// A bare task or version name, which predates organization slugs.
+static LEGACY_ADAPTER_QUERY: LazyLock<String> = LazyLock::new(|| {
+    format!(
+        "select {ADAPTER_FIELDS}
 from (
     select task_id, id as version_id from task_versions where workspace_id = $1 and name = $2
     union
@@ -129,9 +165,9 @@ from (
 join tasks on tasks.id = matched.task_id and tasks.workspace_id = $1
 left join task_versions on task_versions.id = matched.version_id
     and task_versions.task_id = tasks.id and task_versions.workspace_id = tasks.workspace_id
-join workspaces on workspaces.id = tasks.workspace_id
-join organizations on organizations.id = workspaces.organization_id
-where workspaces.archived_at is null and organizations.status = 'active'";
+{ADAPTER_SCOPE}"
+    )
+});
 
 const WORKSPACE_QUERY: &str = "\
 select json_build_object(
@@ -276,9 +312,22 @@ impl PostgresReader {
     pub async fn private_adapter_json(
         &self,
         workspace_id: Uuid,
-        name: &str,
+        model: &str,
     ) -> Result<Option<String>, PostgresError> {
-        self.record(ADAPTER_QUERY, &[&workspace_id, &name]).await
+        let mut segments = model.splitn(3, '/');
+        if let (Some(slug), Some(task)) = (segments.next(), segments.next()) {
+            let slug = slug.to_ascii_lowercase();
+            let version = segments.next();
+            let record = self
+                .record(&ADAPTER_QUERY, &[&workspace_id, &slug, &task, &version])
+                .await?;
+            if record.is_some() {
+                return Ok(record);
+            }
+        }
+
+        self.record(&LEGACY_ADAPTER_QUERY, &[&workspace_id, &model])
+            .await
     }
 
     pub async fn model_ids(&self) -> Result<Vec<String>, PostgresError> {

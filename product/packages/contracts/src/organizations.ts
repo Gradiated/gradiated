@@ -6,7 +6,11 @@ import {
   TimestampSchema,
   UuidSchema,
 } from "./common.js";
-import { EmailDomainSchema } from "./me.js";
+import {
+  EmailDomainSchema,
+  OrganizationSlugInputSchema,
+  OrganizationSlugSchema,
+} from "./me.js";
 
 export const CreateOrganizationSchema = z
   .strictObject({
@@ -17,6 +21,7 @@ export const CreateOrganizationSchema = z
 export const UpdateOrganizationSchema = z
   .strictObject({
     name: NameInputSchema,
+    slug: OrganizationSlugInputSchema,
     auto_join_domain: EmailDomainSchema.nullable().describe(
       "Must match the caller's verified company email domain, or null to stop automatic joining.",
     ),
@@ -35,6 +40,7 @@ export const OrganizationSchema = z
     id: UuidSchema,
     kind: z.literal("customer"),
     name: NameSchema,
+    slug: OrganizationSlugSchema,
     status: z.literal("active"),
     role: z.literal("admin"),
     default_workspace_id: UuidSchema,

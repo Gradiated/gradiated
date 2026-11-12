@@ -3,7 +3,12 @@ import {
   type AdapterHostingService,
 } from "@gradiated/control";
 import { describe, expect, it, vi } from "vitest";
-import { createTestApp, postJson, workspaceId } from "./support.js";
+import {
+  createTestApp,
+  organizationId,
+  postJson,
+  workspaceId,
+} from "./support.js";
 
 import { createGpuControlApp } from "../src/gpu-control.js";
 
@@ -18,6 +23,7 @@ const at = new Date("2026-10-02T00:00:00Z");
 const row = {
   task: {
     id: taskId,
+    organizationId,
     workspaceId,
     name: "triage",
     baseModelId: "gradiated/base",

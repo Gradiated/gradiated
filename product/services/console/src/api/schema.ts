@@ -1543,6 +1543,7 @@ export interface components {
        */
       id: string;
       name: string;
+      slug: components["schemas"]["OrganizationSlug"];
       /** @enum {string} */
       status: "active" | "suspended";
       role: components["schemas"]["OrganizationRole"];
@@ -1556,6 +1557,8 @@ export interface components {
       /** @description Whether the owner has finished first-run setup. */
       onboarding_completed: boolean;
     };
+    /** @description Unique organization handle that prefixes its private model names, as in `acme/support-triage`. It can change; requests must then use the new prefix. */
+    OrganizationSlug: string;
     /** @enum {string} */
     OrganizationRole: "admin" | "member";
     ImpersonationResult: {
@@ -1574,6 +1577,7 @@ export interface components {
     };
     UpdateOrganization: {
       name?: string;
+      slug?: string;
       /** @description Must match the caller's verified company email domain, or null to stop automatic joining. */
       auto_join_domain?: string | null;
       /** @enum {boolean} */
@@ -1588,6 +1592,7 @@ export interface components {
       /** @enum {string} */
       kind: "customer";
       name: string;
+      slug: components["schemas"]["OrganizationSlug"];
       /** @enum {string} */
       status: "active";
       /** @enum {string} */

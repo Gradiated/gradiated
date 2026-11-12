@@ -353,6 +353,13 @@ export const TaskNameSchema = z
     (name) => name !== "." && name !== "..",
     "Task names cannot be URL dot segments.",
   );
+// `<organization slug>/<task>/<version>` must fit the 300-character model ID.
+export const MAX_MODEL_NAME_SEGMENT_LENGTH = 128;
+const ModelNameSegmentSchema = z
+  .string()
+  .max(MAX_MODEL_NAME_SEGMENT_LENGTH)
+  .refine((name) => !name.includes("/"), "Names cannot contain '/'.");
+
 export const TaskPathSchema = WorkspacePathSchema.extend({
   task: TaskNameSchema,
 });
@@ -455,13 +462,13 @@ export const MAX_UPLOADED_ADAPTER_RANK = 8;
 export const MAX_ADAPTER_BYTES = 512 * 1024 * 1024;
 export const CreateModelUploadSchema = z
   .strictObject({
-    task: TaskNameSchema,
+    task: TaskNameSchema.and(ModelNameSegmentSchema),
     create_task: z.boolean().default(false),
     name: z
       .string()
       .trim()
       .min(1)
-      .max(200)
+      .max(MAX_MODEL_NAME_SEGMENT_LENGTH)
       .regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/),
     base_model_id: ModelIdSchema,
     base_model_revision: z

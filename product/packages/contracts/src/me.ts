@@ -14,10 +14,28 @@ export const EmailDomainSchema = z
   .max(253)
   .regex(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/, "Enter a domain such as acme.com.");
 
+export const ORGANIZATION_SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$/;
+export const OrganizationSlugSchema = z
+  .string()
+  .regex(ORGANIZATION_SLUG_PATTERN)
+  .describe(
+    "Unique organization handle that prefixes its private model names, as in `acme/support-triage`. It can change; requests must then use the new prefix.",
+  )
+  .openapi("OrganizationSlug");
+export const OrganizationSlugInputSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(
+    ORGANIZATION_SLUG_PATTERN,
+    "Use 2 to 39 lowercase letters, numbers or hyphens, starting and ending with a letter or number.",
+  );
+
 export const CurrentOrganizationSchema = z
   .object({
     id: UuidSchema,
     name: NameSchema,
+    slug: OrganizationSlugSchema,
     status: z.enum(["active", "suspended"]),
     role: OrganizationRoleSchema,
     default_workspace_id: UuidSchema,

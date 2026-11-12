@@ -30,6 +30,7 @@ const setup = async (
     role,
     status: "active",
     default_workspace_id: workspaceId,
+    slug: "acme",
     auto_join_domain: null,
     onboarding_completed: true,
   };

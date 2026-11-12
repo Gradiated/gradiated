@@ -27,6 +27,7 @@ import {
   getAdapterConfiguration,
 } from "@/api/training";
 import { modelsQuery } from "@/api/queries";
+import { usePrivateModelName } from "@/hooks/use-private-model-name";
 import { useProductContext } from "@/hooks/use-product-context";
 import { trainingKey } from "@/hooks/use-training";
 import { canManageOrganization } from "@/lib/roles";
@@ -69,6 +70,7 @@ export const UploadModelDialog = ({
   onClose: () => void;
 }) => {
   const { workspaceId, selectedOrganization } = useProductContext();
+  const modelName = usePrivateModelName();
   const client = useQueryClient();
   const navigate = useNavigate();
   const models = useQuery(modelsQuery());
@@ -325,8 +327,7 @@ export const UploadModelDialog = ({
     onSuccess: async (version) => {
       await client.invalidateQueries({ queryKey: trainingKey(workspaceId) });
       toast.success("Model version uploaded", {
-        description:
-          "Adapter compatibility checks passed. Your model version is saved.",
+        description: `Adapter compatibility checks passed. Model name: ${modelName(version.task, version.name)}`,
       });
       onClose();
       void navigate({ to: "/tasks/$taskId", params: { taskId: version.task } });
@@ -400,7 +401,7 @@ export const UploadModelDialog = ({
                   id="upload-version"
                   placeholder="e.g. support-triage-v1"
                   value={name}
-                  maxLength={200}
+                  maxLength={128}
                   pattern={"[a-zA-Z0-9][a-zA-Z0-9._\\-]*"}
                   onChange={(event) =>
                     setName(slugifyTaskInput(event.target.value))

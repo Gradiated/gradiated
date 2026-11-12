@@ -85,6 +85,7 @@ export class Case {
   readonly openRouterModel: string | null;
   readonly organizationKind: OrganizationKind;
   readonly organizationName: string;
+  readonly organizationSlug = `case-${this.organization.replaceAll("-", "")}`;
 
   private constructor(
     connections: Connections,
@@ -164,6 +165,11 @@ export class Case {
         instance.organizationKind,
         instance.organizationName,
       ],
+    );
+    await database.query(
+      `insert into organization_slugs (slug, organization_id, is_current)
+       values ($1, $2, true)`,
+      [instance.organizationSlug, instance.organization],
     );
     await database.query(
       `insert into billing_accounts (organization_id, mode, balance)

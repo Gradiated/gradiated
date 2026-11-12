@@ -101,6 +101,26 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return row && TaskRecordSchema.parse(row);
     },
 
+    /** Whether any workspace of this workspace's organization has the task name. */
+    async organizationUsesTaskName(workspaceId: string, name: string) {
+      const [row] = await database
+        .select({ id: tasks.id })
+        .from(tasks)
+        .innerJoin(
+          workspaces,
+          eq(workspaces.organizationId, tasks.organizationId),
+        )
+        .where(
+          and(
+            eq(workspaces.id, UuidSchema.parse(workspaceId)),
+            eq(tasks.name, name),
+          ),
+        )
+        .limit(1);
+
+      return row !== undefined;
+    },
+
     async getTaskById(workspaceId: string, taskId: string) {
       const [row] = await database
         .select()
@@ -305,8 +325,12 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return row && VersionRecordSchema.parse(row);
     },
 
-    async getHostingVersion(workspaceId: string, versionName: string) {
-      const [row] = await database
+    async getHostingVersion(workspaceId: string, runtimeName: string) {
+      const separator = runtimeName.lastIndexOf("/");
+      const taskName =
+        separator < 0 ? undefined : runtimeName.slice(0, separator);
+      const versionName = runtimeName.slice(separator + 1);
+      const rows = await database
         .select({ task: tasks, version: taskVersions })
         .from(taskVersions)
         .innerJoin(tasks, eq(tasks.id, taskVersions.taskId))
@@ -321,11 +345,15 @@ export const createTrainingStore = (database: ControlDatabase) => {
               taskVersions.name,
               VersionRecordSchema.shape.name.parse(versionName),
             ),
+            taskName === undefined ? undefined : eq(tasks.name, taskName),
             eq(tasks.workspaceId, UuidSchema.parse(workspaceId)),
             isNull(workspaces.archivedAt),
             eq(organizations.status, "active"),
           ),
-        );
+        )
+        .limit(2);
+      // A bare version name is the older runtime key; it may now be ambiguous.
+      const row = rows.length === 1 ? rows[0] : undefined;
 
       return (
         row && {
@@ -337,7 +365,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
 
     async listProductionVersions(baseModelId: string) {
       const rows = await database
-        .select({ version: taskVersions })
+        .select({ task: tasks, version: taskVersions })
         .from(tasks)
         .innerJoin(
           taskVersions,
@@ -367,7 +395,10 @@ export const createTrainingStore = (database: ControlDatabase) => {
         .orderBy(desc(tasks.updatedAt), desc(tasks.id))
         .limit(4096);
 
-      return rows.map((row) => VersionRecordSchema.parse(row.version));
+      return rows.map((row) => ({
+        task: TaskRecordSchema.parse(row.task),
+        version: VersionRecordSchema.parse(row.version),
+      }));
     },
 
     async clearTrainingScheduleForBases(taskId: string, baseIds: string[]) {

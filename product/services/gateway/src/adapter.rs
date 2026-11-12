@@ -5,6 +5,8 @@ use uuid::Uuid;
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct PrivateAdapter {
     pub workspace_id: Uuid,
+    pub organization_slug: String,
+    pub task_name: String,
     pub version_id: Uuid,
     pub name: String,
     pub status: String,
@@ -19,6 +21,8 @@ impl PrivateAdapter {
         self.status == "available"
             && self.size_bytes > 0
             && !self.name.is_empty()
+            && !self.organization_slug.is_empty()
+            && !self.task_name.is_empty()
             && !self.base_model_id.is_empty()
             && !self.base_model_revision.is_empty()
             && self.sha256.len() == 64
@@ -29,11 +33,14 @@ impl PrivateAdapter {
     }
 
     pub fn model_id(&self) -> String {
-        self.name.clone()
+        format!(
+            "{}/{}/{}",
+            self.organization_slug, self.task_name, self.name
+        )
     }
 
     pub fn runtime_name(&self) -> String {
-        format!("{}/{}", self.workspace_id, self.name)
+        format!("{}/{}/{}", self.workspace_id, self.task_name, self.name)
     }
 
     pub fn served_digest(&self, base_digest: &str) -> String {

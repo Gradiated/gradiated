@@ -20,6 +20,7 @@ const setup = async (
     role: "admin",
     status: "active",
     default_workspace_id: "00000000-0000-4000-8000-000000000002",
+    slug: "personal",
     auto_join_domain: autoJoinDomain,
     onboarding_completed: onboardingCompleted,
   };

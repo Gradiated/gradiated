@@ -7,6 +7,7 @@ const setup = async (page: Page, role = "admin") => {
     role,
     status: "active",
     default_workspace_id: "00000000-0000-4000-8000-000000000002",
+    slug: "example",
     auto_join_domain: null,
     onboarding_completed: true,
   };
@@ -40,12 +41,21 @@ const setup = async (page: Page, role = "admin") => {
     if (url.pathname.endsWith("/workspaces"))
       return route.fulfill({ json: { data: [workspace], next_cursor: null } });
     if (route.request().method() === "PATCH") {
-      const { name } = route.request().postDataJSON();
+      const { name, slug } = route.request().postDataJSON();
       if (url.pathname === `/api/v1/workspaces/${workspace.id}`) {
         workspace.name = name;
         return route.fulfill({ json: workspace });
       }
       if (url.pathname === `/api/v1/organizations/${organization.id}`) {
+        if (slug === "taken")
+          return route.fulfill({
+            status: 409,
+            json: { detail: "Another organization already uses this slug." },
+          });
+        if (slug !== undefined) {
+          organization.slug = slug;
+          return route.fulfill({ json: organization });
+        }
         if (rejectOrganization) {
           rejectOrganization = false;
           return route.fulfill({ status: 503, json: { detail: "Try again" } });
@@ -85,13 +95,17 @@ test("settings rename the selected scopes, persist on reload, and preserve input
   const organizationInput = page.getByRole("textbox", {
     name: "Organization name",
   });
+  const saveName = page
+    .locator("form")
+    .filter({ has: organizationInput })
+    .getByRole("button", { name: "Save changes" });
   await organizationInput.fill("Research");
-  await page.getByRole("button", { name: "Save changes" }).click();
+  await saveName.click();
   // Save errors are toasts.
   await expect(page.getByText(/Try again/)).toBeVisible();
   await expect(organizationInput).toHaveValue("Research");
   expect(organization.name).toBe("Example organization");
-  await page.getByRole("button", { name: "Save changes" }).click();
+  await saveName.click();
   await expect.poll(() => organization.name).toBe("Research");
   await page.reload();
   await page
@@ -119,4 +133,41 @@ test("ordinary members can view names but cannot edit them", async ({
   await expect(
     page.getByRole("textbox", { name: "Organization name" }),
   ).toBeDisabled();
+  await expect(
+    page.getByRole("textbox", { name: "Organization slug" }),
+  ).toBeDisabled();
+});
+
+test("admins change the organization slug and see conflicts in the form", async ({
+  page,
+}) => {
+  const { organization } = await setup(page);
+  await page.goto("/settings/organization");
+  const slugInput = page.getByRole("textbox", { name: "Organization slug" });
+  const saveSlug = page
+    .locator("form")
+    .filter({ has: slugInput })
+    .getByRole("button", { name: "Save changes" });
+  await expect(slugInput).toHaveValue("example");
+  await expect(page.getByText("example/support-triage")).toBeVisible();
+
+  await slugInput.fill("-bad");
+  await expect(page.getByRole("alert")).toContainText(
+    "Use 2 to 39 lowercase letters",
+  );
+  await expect(saveSlug).toBeDisabled();
+
+  await slugInput.fill("taken");
+  await saveSlug.click();
+  await expect(page.getByRole("alert")).toContainText(
+    "Another organization already uses this slug.",
+  );
+  expect(organization.slug).toBe("example");
+
+  await slugInput.fill("Research-Lab");
+  await expect(page.getByText("research-lab/support-triage")).toBeVisible();
+  await saveSlug.click();
+  await expect.poll(() => organization.slug).toBe("research-lab");
+  await page.reload();
+  await expect(slugInput).toHaveValue("research-lab");
 });

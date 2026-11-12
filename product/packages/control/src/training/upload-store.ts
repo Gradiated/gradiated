@@ -104,7 +104,10 @@ export const createModelUploadStore = (database: ControlDatabase) => ({
 
       if (input.create_task) {
         const [workspace] = await tx
-          .select({ judge: workspaces.defaultJudgeModel })
+          .select({
+            judge: workspaces.defaultJudgeModel,
+            organizationId: workspaces.organizationId,
+          })
           .from(workspaces)
           .where(eq(workspaces.id, workspaceId));
         if (!workspace)
@@ -119,6 +122,7 @@ export const createModelUploadStore = (database: ControlDatabase) => ({
           .values(
             TaskRecordSchema.omit({ createdAt: true, updatedAt: true }).parse({
               id: uuidv7(),
+              organizationId: workspace.organizationId,
               workspaceId,
               name: input.task,
               baseModelId: input.base_model_id,
@@ -133,7 +137,7 @@ export const createModelUploadStore = (database: ControlDatabase) => ({
         if (!created)
           throw new ControlServiceError(
             "conflict",
-            "A task with this name already exists.",
+            "A model with this name already exists in this organization.",
           );
       }
       const [rawTask] = await tx
@@ -172,7 +176,7 @@ export const createModelUploadStore = (database: ControlDatabase) => ({
       if (!version)
         throw new ControlServiceError(
           "conflict",
-          "A model version with this name already exists. Choose another name.",
+          "A model version with this name already exists in this organization. Choose another name.",
         );
 
       await tx

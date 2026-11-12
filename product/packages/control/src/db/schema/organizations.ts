@@ -108,6 +108,30 @@ export const organizations = pgTable(
   ],
 );
 
+// Past slugs keep their rows, so they still resolve and no one else can take them.
+export const organizationSlugs = pgTable(
+  "organization_slugs",
+  {
+    slug: text("slug").primaryKey(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    isCurrent: boolean("is_current").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("organization_slugs_one_current")
+      .on(table.organizationId)
+      .where(sql`${table.isCurrent}`),
+    check(
+      "organization_slugs_slug_check",
+      sql`${table.slug} ~ '^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$'`,
+    ),
+  ],
+);
+
 export const organizationMembers = pgTable(
   "organization_members",
   {

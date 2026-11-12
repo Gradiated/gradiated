@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { readFile, writeFile, stat } from "node:fs/promises";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
@@ -13,7 +14,7 @@ import {
 } from "../src/db/schema/index.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 import { seedTrainingTask } from "./support/training.js";
-import { seedMember } from "./support/fixtures.js";
+import { seedMember, seedWorkspace } from "./support/fixtures.js";
 import { adapterFiles } from "./support/adapter-upload.js";
 import type { BaseModelConfiguration } from "../src/training/base-model-configuration.js";
 import { createMemoryContentStore } from "./support/content-store.js";
@@ -190,7 +191,7 @@ describe("model uploads", () => {
         await createTrainingStore(db.database).listProductionVersions(
           version.baseModelId,
         )
-      ).map((v) => v.id),
+      ).map((row) => row.version.id),
     ).toContain(version.id);
   });
   it("publishes a private version without a training run and completes idempotently", async () => {
@@ -433,6 +434,49 @@ describe("model uploads", () => {
     await expect(
       service.complete(member.userId, member.workspaceId, upload.id),
     ).rejects.toThrow("expired");
+  });
+  it("keeps task names unique across an organization and version names within a task", async () => {
+    const { member, stage, service, body, objects, files } = await setup();
+    await service.complete(
+      member.userId,
+      member.workspaceId,
+      (await stage()).id,
+    );
+    const workspaceId = await seedWorkspace(db.database, {
+      organizationId: member.organizationId,
+    });
+
+    await expect(
+      service.create(member.userId, workspaceId, {
+        ...body,
+        create_task: true,
+      }),
+    ).rejects.toMatchObject({ code: "conflict" });
+    const [task] = await db.database
+      .insert(tasks)
+      .values({
+        id: randomUUID(),
+        organizationId: member.organizationId,
+        workspaceId,
+        name: "other-task",
+        baseModelId: body.base_model_id,
+      })
+      .returning();
+    const upload = await service.create(member.userId, workspaceId, {
+      ...body,
+      task: task!.name,
+    });
+    objects.set(`uploads/${upload.id}/adapter_config.json`, files.config);
+    objects.set(
+      `uploads/${upload.id}/adapter_model.safetensors`,
+      files.weights,
+    );
+    const version = await service.complete(
+      member.userId,
+      workspaceId,
+      upload.id,
+    );
+    expect(version.version.name).toBe(body.name);
   });
   it("rejects duplicate task and version names and cleans abandoned artifacts", async () => {
     const { member, stage, service, body, objects } = await setup();

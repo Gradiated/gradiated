@@ -8,6 +8,8 @@ fn state() -> TestServingState {
     model.deployments[0].release.lora_enabled = Some(true);
     state.adapter = Some(crate::PrivateAdapter {
         workspace_id: WORKSPACE_ID,
+        organization_slug: "acme".to_owned(),
+        task_name: "task-a".to_owned(),
         version_id: Uuid::from_u128(77),
         name: "task-a-v1".to_owned(),
         status: "available".to_owned(),
@@ -37,7 +39,7 @@ async fn production_and_exact_version_resolve_to_the_same_pinned_identity() {
     let exact = private_request(state.clone(), &adapter.model_id())
         .await
         .unwrap();
-    let production = private_request(state.clone(), "task-a").await.unwrap();
+    let production = private_request(state.clone(), "acme/task-a").await.unwrap();
     assert_eq!(production.request.model, adapter.model_id());
     assert_eq!(exact.adapter, production.adapter);
     assert_eq!(exact.pricing, production.pricing);
@@ -51,8 +53,32 @@ async fn production_and_exact_version_resolve_to_the_same_pinned_identity() {
     );
     assert_eq!(
         *state.requested_models.lock().unwrap(),
-        ["task-a-v1", "model-a", "task-a", "model-a"]
+        ["acme/task-a/task-a-v1", "model-a", "acme/task-a", "model-a"]
     );
+}
+
+#[tokio::test]
+async fn names_carry_the_organization_slug_and_bare_names_still_resolve() {
+    let state = Arc::new(state());
+    let canonical = state.adapter.as_ref().unwrap().model_id();
+    assert_eq!(canonical, "acme/task-a/task-a-v1");
+
+    for model in [
+        "ACME/task-a/task-a-v1",
+        "acme/task-a",
+        "task-a-v1",
+        "task-a",
+    ] {
+        let request = private_request(state.clone(), model).await.unwrap();
+        assert_eq!(request.request.model, canonical, "{model}");
+    }
+    for model in ["other/task-a/task-a-v1", "acme/task-a/v2", "acme/task-b"] {
+        assert_eq!(
+            private_request(state.clone(), model).await.err(),
+            Some(GatewayError::ModelNotFound),
+            "{model}"
+        );
+    }
 }
 
 #[tokio::test]
@@ -95,7 +121,7 @@ async fn an_adapter_without_qualified_deployments_degrades_to_its_base_model() {
                     base_deployment,
                     "{mismatch}"
                 );
-                assert_eq!(request.request.model, "task-a-v1");
+                assert_eq!(request.request.model, "acme/task-a/task-a-v1");
                 assert!(request.adapter.is_some());
             }
             // A deployment that cannot serve chat is not base capacity either.

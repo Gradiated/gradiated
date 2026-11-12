@@ -88,8 +88,8 @@ TOOLS = (
         ('git', 'diff', '--check')),
          'Format, then check formatting and HCL of the infrastructure configuration', network=False),
     Tool('infra', 'sec', (('trivy', 'config', '--quiet', '--exit-code', '1', 'infra/bootstrap'),),
-         'Report security misconfigurations in the standalone bootstrap roots with Trivy', effects='read',
-         network=False),
+         'Report security misconfigurations in the standalone bootstrap roots with Trivy (downloads its checks)',
+         effects='read'),
 
     # Security and compliance.
     Tool('security', 'drata-policies', (python('tools/security/sync_drata_policies.py'),),

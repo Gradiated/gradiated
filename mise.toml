@@ -1,10 +1,11 @@
 [tools]
 # The repository's Python tools and grad-ctl run on this Python. Installing it
-# also installs tools/python-requirements.txt into it.
-python = { version = "3.13.18", postinstall = "\"$MISE_TOOL_INSTALL_PATH/bin/python3\" -m pip install --quiet --disable-pip-version-check --root-user-action=ignore -r tools/python-requirements.txt" }
+# also installs tools/python-requirements.txt into it. Linux and macOS only: the
+# hook is POSIX shell, and Windows CI jobs (wizard e2e) keep the runner's Python.
+python = { version = "3.13.18", postinstall = "\"$MISE_TOOL_INSTALL_PATH/bin/python3\" -m pip install --quiet --disable-pip-version-check --root-user-action=ignore -r tools/python-requirements.txt", os = ["linux", "macos"] }
 # grad-ctl compute uses it for Nebius VMs. Nebius publishes no registry entry, so
-# this fetches its pinned release binary directly.
-"http:nebius" = { version = "0.12.306", url = "https://artifacts.nebius.cloud/cli/release/{{ version }}/{{ os(macos='darwin') }}/{{ arch(x64='x86_64') }}/nebius", bin = "nebius" }
+# this fetches its pinned release binary directly. Nebius builds no Windows binary.
+"http:nebius" = { version = "0.12.306", url = "https://artifacts.nebius.cloud/cli/release/{{ version }}/{{ os(macos='darwin') }}/{{ arch(x64='x86_64') }}/nebius", bin = "nebius", os = ["linux", "macos"] }
 aws = "2.36.24"
 gitleaks = "8.30.1"
 helm = "4.2.4"

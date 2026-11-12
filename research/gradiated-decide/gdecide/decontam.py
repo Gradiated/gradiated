@@ -7,6 +7,11 @@ A training row is dropped when its normalized state equals a suite state, or whe
 ones included). Suite n-grams that occur in more than ``--common`` distinct suite rows (boilerplate such as shared
 instructions) are ignored so that format alone does not count as overlap. Rows authored by models whose terms
 forbid training competing models are dropped (``--exclude-authors``).
+
+``--extra-items FILE ...`` adds evaluation items in the ``gdecide.external`` format (JSON lines with
+``{"bench", "id", "request": {"state", "questions"}, ...}``, e.g. JevBench public and the Gemini Decision 1 panel) to
+the eval side: their states and 13-grams count exactly like suite rows. Without the flag the index and output are
+unchanged.
 """
 
 from __future__ import annotations
@@ -81,6 +86,20 @@ def suite_job(lines: list[str]):
     return keys, gs
 
 
+def items_job(lines: list[str]):
+    """``suite_job`` over the ``request`` of ``gdecide.external`` items."""
+    return suite_job([json.dumps(json.loads(line).get("request") or {}) for line in lines if line.strip()])
+
+
+def index_name(extra_items: list[str]) -> str:
+    if not extra_items:
+        return "suite-ngrams.npz"
+    digest = hashlib.sha256()
+    for path in sorted(extra_items):
+        digest.update(Path(path).read_bytes())
+    return f"suite-ngrams-extra-{digest.hexdigest()[:12]}.npz"
+
+
 def init(path: str) -> None:
     global _SUITE, _STATES
     data = np.load(path)
@@ -128,7 +147,7 @@ def chunks(it, size):
         yield buf
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--suite", required=True)
     parser.add_argument("--inputs", nargs="+", required=True)
@@ -137,10 +156,12 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=64)
     parser.add_argument("--common", type=int, default=50)
     parser.add_argument("--exclude-authors", nargs="*", default=["openai", "anthropic", "google", "unknown", "mixed"])
-    args = parser.parse_args()
+    parser.add_argument("--extra-items", nargs="*", default=[],
+                        help="eval items in the gdecide.external format (JSONL with request.state/questions)")
+    args = parser.parse_args(argv)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    index = out / "suite-ngrams.npz"
+    index = out / index_name(args.extra_items)
     if not index.exists():
         suite_files = sorted(glob.glob(str(Path(args.suite) / "*rows.jsonl.gz"))) + sorted(f for p in args.pools for f in glob.glob(p))
         all_grams, states = [], []
@@ -149,11 +170,18 @@ def main() -> None:
                 for keys, gs in pool.map(suite_job, chunks(lines_of(path), 200)):
                     states += keys
                     all_grams += gs
+            for path in args.extra_items:
+                for keys, gs in pool.map(items_job, chunks(lines_of(path), 200)):
+                    states += keys
+                    all_grams += gs
         stacked = np.concatenate(all_grams) if all_grams else np.zeros(0, dtype=np.uint64)
         values, freq = np.unique(stacked, return_counts=True)
         kept = values[freq <= args.common]
         np.savez(index, grams=kept, states=np.array(sorted(set(states)), dtype=np.uint64))
-        print(json.dumps({"suite_files": suite_files, "suite_ngrams": int(values.size), "kept_ngrams": int(kept.size), "suite_states": len(set(states))}), flush=True)
+        info = {"suite_files": suite_files, "suite_ngrams": int(values.size), "kept_ngrams": int(kept.size), "suite_states": len(set(states))}
+        if args.extra_items:
+            info["extra_items"] = args.extra_items
+        print(json.dumps(info), flush=True)
     report = {}
     with ProcessPoolExecutor(args.workers, initializer=init, initargs=(str(index),)) as pool:
         for pattern in args.inputs:

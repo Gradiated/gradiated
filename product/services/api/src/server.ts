@@ -168,6 +168,10 @@ const {
 const auth = createAuthService(database, {
   ...authEmail,
   baseUrl: environment.BETTER_AUTH_URL,
+  oauth: {
+    consoleUrl: environment.CONSOLE_URL,
+    mcpResource: environment.MCP_RESOURCE_URL,
+  },
   github:
     environment.GITHUB_CLIENT_ID && environment.GITHUB_CLIENT_SECRET
       ? {

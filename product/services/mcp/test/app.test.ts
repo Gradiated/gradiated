@@ -7,6 +7,7 @@ import { buildTools } from "../src/tools/definitions.js";
 
 const workspaceId = "0198ae5a-2529-7c1a-801b-dc9d5f876a94";
 const apiKey = `grad_${"a".repeat(43)}`;
+const oauthToken = `grado_${"t".repeat(32)}`;
 const tools = buildTools(loadApiDocument());
 
 const testApp = () => {
@@ -14,11 +15,15 @@ const testApp = () => {
     async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = new URL(String(input));
       const authorization = new Headers(init?.headers).get("authorization");
-      if (authorization !== `Bearer ${apiKey}`)
+      if (
+        authorization !== `Bearer ${apiKey}` &&
+        authorization !== `Bearer ${oauthToken}`
+      )
         return Response.json({ code: "unauthenticated" }, { status: 401 });
 
-      if (url.pathname === "/api/v1/api-keys/current")
+      if (url.pathname === "/api/v1/credentials/current")
         return Response.json({
+          type: authorization.includes("grado_") ? "oauth_token" : "api_key",
           id: "0198ae6f-68b0-7644-812d-c4bf16a926e3",
           organization_id: "0198ae59-294a-73a9-9d2f-962449d34226",
           workspace_id: workspaceId,
@@ -36,6 +41,7 @@ const testApp = () => {
     tools,
     publicUrl: "https://mcp.gradiated.com",
     consoleUrl: "https://console.gradiated.com",
+    authorizationServer: "https://api.gradiated.com/api/auth",
   });
 
   return { app, fetchApi };
@@ -60,14 +66,39 @@ const rpc = (
   });
 
 describe("the MCP endpoint", () => {
-  it("asks for a key", async () => {
+  it("points a client without a credential at the OAuth metadata", async () => {
     const { app, fetchApi } = testApp();
 
     const response = await rpc(app, "tools/list", {}, {});
 
     expect(response.status).toBe(401);
-    expect(response.headers.get("www-authenticate")).toContain("Bearer");
+    expect(response.headers.get("www-authenticate")).toBe(
+      'Bearer resource_metadata="https://mcp.gradiated.com/.well-known/oauth-protected-resource/mcp", scope="mcp offline_access"',
+    );
     expect(fetchApi).not.toHaveBeenCalled();
+  });
+
+  it("accepts an OAuth access token", async () => {
+    const { app, fetchApi } = testApp();
+
+    const { result } = await (
+      await rpc(
+        app,
+        "tools/call",
+        { name: "list_tasks", arguments: {} },
+        {
+          Authorization: `Bearer ${oauthToken}`,
+        },
+      )
+    ).json();
+
+    expect(JSON.parse(result.content[0].text).path).toBe(
+      `/api/v1/workspaces/${workspaceId}/tasks`,
+    );
+    const [, init] = fetchApi.mock.calls.at(-1)!;
+    expect(new Headers(init?.headers).get("authorization")).toBe(
+      `Bearer ${oauthToken}`,
+    );
   });
 
   it("rejects a key the API does not accept", async () => {
@@ -168,6 +199,27 @@ describe("the MCP endpoint", () => {
   });
 });
 
+describe("OAuth protected resource metadata", () => {
+  it.each([
+    "/.well-known/oauth-protected-resource/mcp",
+    "/.well-known/oauth-protected-resource",
+  ])("names the resource and its authorization server at %s", async (path) => {
+    const { app } = testApp();
+
+    const response = await app.request(path);
+
+    expect(response.headers.get("access-control-allow-origin")).toBe("*");
+    expect(await response.json()).toEqual({
+      resource: "https://mcp.gradiated.com/mcp",
+      resource_name: "Gradiated",
+      resource_documentation: "https://mcp.gradiated.com/",
+      authorization_servers: ["https://api.gradiated.com/api/auth"],
+      scopes_supported: ["mcp", "offline_access"],
+      bearer_methods_supported: ["header"],
+    });
+  });
+});
+
 describe("the index page", () => {
   it("explains how to connect and lists the tools", async () => {
     const { app } = testApp();
@@ -176,6 +228,7 @@ describe("the index page", () => {
 
     expect(page).toContain("https://mcp.gradiated.com/mcp");
     expect(page).toContain("claude mcp add --transport http gradiated");
+    expect(page).toContain("add a custom connector with this URL");
     expect(page).toContain("<code>list_tasks</code>");
   });
 });

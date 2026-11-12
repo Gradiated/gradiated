@@ -239,6 +239,13 @@
       "when": 1794569443545,
       "tag": "0033_model_aliases",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794575727895,
+      "tag": "0034_oauth_provider",
+      "breakpoints": true
     }
   ]
 }

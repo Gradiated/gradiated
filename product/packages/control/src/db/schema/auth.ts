@@ -47,6 +47,8 @@ export const sessions = pgTable(
       onDelete: "cascade",
     }),
     impersonatorSessionId: uuid("impersonator_session_id"),
+    // The workspace the user last chose for an OAuth authorization in this session.
+    oauthWorkspaceId: uuid("oauth_workspace_id"),
     expiresAt: timestamp("expires_at", {
       withTimezone: true,
       mode: "date",
@@ -108,10 +110,3 @@ export const verifications = pgTable(
   },
   (table) => [index("verifications_identifier_index").on(table.identifier)],
 );
-
-export const betterAuthSchema = {
-  user: users,
-  session: sessions,
-  account: accounts,
-  verification: verifications,
-};

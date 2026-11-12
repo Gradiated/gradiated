@@ -10,6 +10,13 @@ const records = vi.hoisted(() => ({
   session: [] as Record<string, unknown>[],
   account: [] as Record<string, unknown>[],
   verification: [] as Record<string, unknown>[],
+  oauthClient: [] as Record<string, unknown>[],
+  oauthResource: [] as Record<string, unknown>[],
+  oauthClientResource: [] as Record<string, unknown>[],
+  oauthRefreshToken: [] as Record<string, unknown>[],
+  oauthAccessToken: [] as Record<string, unknown>[],
+  oauthConsent: [] as Record<string, unknown>[],
+  oauthClientAssertion: [] as Record<string, unknown>[],
 }));
 
 vi.mock("better-auth/adapters/drizzle", async () => {
@@ -28,6 +35,10 @@ const createHarness = () => {
   const auth = createAuthService({} as ControlDatabase, {
     baseUrl,
     secret: "local-only-not-secret-change-in-production-0001",
+    oauth: {
+      consoleUrl: "http://localhost:5173",
+      mcpResource: "http://localhost:3007/mcp",
+    },
     trustedOrigins: [baseUrl],
     onUserCreated: async () => undefined,
     sendMagicLink: async () => undefined,

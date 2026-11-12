@@ -225,10 +225,11 @@ export const TOOL_CONFIG: Record<string, ToolConfig> = {
     enabled: false,
     reason: "Workspace keys cannot archive their workspace.",
   },
-  getCurrentApiKey: {
+  getCurrentCredential: {
     enabled: false,
-    reason: "The server calls it to find the key's workspace.",
+    reason: "The server calls it to find the credential's workspace.",
   },
+  selectOAuthWorkspace: { enabled: false, reason: CONSOLE },
   listApiKeys: { enabled: false, reason: CREDENTIALS },
   createApiKey: { enabled: false, reason: CREDENTIALS },
   createPlaygroundCredential: { enabled: false, reason: CREDENTIALS },

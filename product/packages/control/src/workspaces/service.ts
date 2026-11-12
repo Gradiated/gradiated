@@ -1,4 +1,6 @@
-import { createWorkspaceStore, type ApiKeyOwnerRecord } from "./store.js";
+import { createHash } from "node:crypto";
+
+import { createWorkspaceStore, type CredentialOwnerRecord } from "./store.js";
 import {
   DEFAULT_EVALUATION_JUDGE,
   type UpdateWorkspace,
@@ -25,6 +27,13 @@ export type WorkspaceRecord = typeof workspaces.$inferSelect;
 export type ApiKeyRecord = Omit<typeof apiKeys.$inferSelect, "digest">;
 
 const PLAYGROUND_CREDENTIAL_NAME = "Playground";
+
+// Better Auth's OAuth provider adds this prefix to the access tokens it issues.
+export const OAUTH_ACCESS_TOKEN_PREFIX = "grado_";
+
+// The provider's default token hash: unpadded base64url SHA-256 of the unprefixed token.
+const oauthTokenHash = (token: string) =>
+  createHash("sha256").update(token).digest("base64url");
 
 const PLAYGROUND_CREDENTIAL_LIFETIME_MS = 60 * 60 * 1000;
 
@@ -71,7 +80,14 @@ export interface WorkspaceApiKeyService {
     workspaceId: string,
     apiKeyId: string,
   ): Promise<void>;
-  authenticateApiKey(secret: string): Promise<ApiKeyOwnerRecord | undefined>;
+  authenticateCredential(
+    secret: string,
+  ): Promise<CredentialOwnerRecord | undefined>;
+  selectOAuthWorkspace(
+    userId: string,
+    sessionId: string,
+    workspaceId: string,
+  ): Promise<void>;
 }
 
 const { digest: _digest, ...apiKeyColumns } = getTableColumns(apiKeys);
@@ -288,10 +304,31 @@ export const createWorkspaceApiKeyService = (
     },
 
     // Membership and workspace state are checked by each operation, as for a session.
-    async authenticateApiKey(secret) {
-      if (!secret.startsWith("grad_")) return undefined;
+    async authenticateCredential(secret) {
+      if (secret.startsWith("grad_"))
+        return records.findActiveApiKeyOwner(apiKeyDigest(secret), new Date());
+      if (secret.startsWith(OAUTH_ACCESS_TOKEN_PREFIX))
+        return records.findActiveOAuthTokenOwner(
+          oauthTokenHash(secret.slice(OAUTH_ACCESS_TOKEN_PREFIX.length)),
+          new Date(),
+        );
 
-      return records.findActiveApiKeyOwner(apiKeyDigest(secret), new Date());
+      return undefined;
+    },
+
+    async selectOAuthWorkspace(userId, sessionId, workspaceId) {
+      await requireWritableWorkspace(database, { userId, workspaceId });
+
+      const selected = await records.setSessionOAuthWorkspace(
+        sessionId,
+        userId,
+        workspaceId,
+      );
+      if (!selected)
+        throw new ControlServiceError(
+          "not_found",
+          "The session was not found.",
+        );
     },
   };
 };

@@ -6,11 +6,15 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
   apiKeys,
+  oauthAccessTokens,
+  oauthClients,
   organizationMembers,
+  sessions,
   workspaces,
 } from "../src/db/schema/index.js";
 import type { OrganizationRole } from "../src/organizations/service.js";
 import {
+  OAUTH_ACCESS_TOKEN_PREFIX,
   createWorkspaceApiKeyService,
   type WorkspaceApiKeyService,
 } from "../src/workspaces/service.js";
@@ -466,7 +470,7 @@ describe("workspaces and API keys", () => {
     });
   });
 
-  describe("authenticateApiKey", () => {
+  describe("authenticateCredential", () => {
     it("finds the creator and workspace of an active key", async () => {
       const { userId, organizationId, workspaceId } =
         await membership("member");
@@ -476,8 +480,11 @@ describe("workspaces and API keys", () => {
         { name: "MCP", expiresAt: null },
       );
 
-      await expect(service.authenticateApiKey(secret)).resolves.toMatchObject({
-        apiKeyId: apiKey.id,
+      await expect(
+        service.authenticateCredential(secret),
+      ).resolves.toMatchObject({
+        credential: "api_key",
+        credentialId: apiKey.id,
         organizationId,
         workspaceId,
         user: { id: userId },
@@ -510,8 +517,118 @@ describe("workspaces and API keys", () => {
         "other",
       ])
         await expect(
-          service.authenticateApiKey(secret),
+          service.authenticateCredential(secret),
         ).resolves.toBeUndefined();
+    });
+
+    const oauthToken = async (
+      userId: string,
+      referenceId: string | null,
+      overrides: Partial<typeof oauthAccessTokens.$inferInsert> = {},
+    ) => {
+      const clientId = randomUUID();
+      const token = randomUUID().replaceAll("-", "");
+      await testDatabase.database.insert(oauthClients).values({
+        id: randomUUID(),
+        clientId,
+        redirectUris: ["http://localhost/cb"],
+      });
+      const [row] = await testDatabase.database
+        .insert(oauthAccessTokens)
+        .values({
+          id: randomUUID(),
+          token: createHash("sha256").update(token).digest("base64url"),
+          clientId,
+          userId,
+          referenceId,
+          scopes: ["mcp", "offline_access"],
+          createdAt: new Date(),
+          expiresAt: new Date(Date.now() + 60_000),
+          ...overrides,
+        })
+        .returning({ id: oauthAccessTokens.id });
+
+      return { secret: `${OAUTH_ACCESS_TOKEN_PREFIX}${token}`, id: row!.id };
+    };
+
+    it("finds the user and consented workspace of an OAuth token", async () => {
+      const { userId, organizationId, workspaceId } =
+        await membership("member");
+      const { secret, id } = await oauthToken(userId, workspaceId);
+
+      await expect(
+        service.authenticateCredential(secret),
+      ).resolves.toMatchObject({
+        credential: "oauth_token",
+        credentialId: id,
+        organizationId,
+        workspaceId,
+        user: { id: userId },
+      });
+    });
+
+    it("rejects OAuth tokens that are expired, revoked, unscoped or without a workspace", async () => {
+      const { userId, workspaceId } = await membership("member");
+      const tokens = await Promise.all([
+        oauthToken(userId, workspaceId, {
+          createdAt: new Date(Date.now() - 120_000),
+          expiresAt: new Date(Date.now() - 1_000),
+        }),
+        oauthToken(userId, workspaceId, { revoked: new Date() }),
+        oauthToken(userId, workspaceId, { scopes: ["offline_access"] }),
+        oauthToken(userId, null),
+        oauthToken(userId, randomUUID()),
+      ]);
+
+      for (const { secret } of tokens)
+        await expect(
+          service.authenticateCredential(secret),
+        ).resolves.toBeUndefined();
+    });
+  });
+
+  describe("selectOAuthWorkspace", () => {
+    const session = async (userId: string) => {
+      const id = randomUUID();
+      await testDatabase.database.insert(sessions).values({
+        id,
+        userId,
+        token: randomUUID(),
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+
+      return id;
+    };
+
+    it("records a workspace the member can use on their session", async () => {
+      const { userId, workspaceId } = await membership("member");
+      const sessionId = await session(userId);
+
+      await service.selectOAuthWorkspace(userId, sessionId, workspaceId);
+
+      const [row] = await testDatabase.database
+        .select({ workspaceId: sessions.oauthWorkspaceId })
+        .from(sessions)
+        .where(eq(sessions.id, sessionId));
+      expect(row?.workspaceId).toBe(workspaceId);
+    });
+
+    it("refuses another member's workspace, an archived one and another user's session", async () => {
+      const { userId, workspaceId } = await membership("member");
+      const other = await membership("admin");
+      const sessionId = await session(userId);
+      const otherSession = await session(other.userId);
+
+      await expect(
+        service.selectOAuthWorkspace(userId, sessionId, other.workspaceId),
+      ).rejects.toMatchObject({ code: "not_found" });
+      await expect(
+        service.selectOAuthWorkspace(userId, otherSession, workspaceId),
+      ).rejects.toMatchObject({ code: "not_found" });
+      await archive(workspaceId);
+      await expect(
+        service.selectOAuthWorkspace(userId, sessionId, workspaceId),
+      ).rejects.toMatchObject({ code: "forbidden" });
     });
   });
 });

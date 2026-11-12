@@ -45,6 +45,24 @@ const invitationAcceptRoute = createRoute({
   ),
 });
 
+const oauthLoginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/oauth/login",
+  component: lazyRouteComponent(
+    () => import("@/pages/oauth-page"),
+    "OAuthLoginPage",
+  ),
+});
+
+const oauthConsentRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/oauth/consent",
+  component: lazyRouteComponent(
+    () => import("@/pages/oauth-page"),
+    "OAuthConsentPage",
+  ),
+});
+
 const onboardingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/onboarding",
@@ -241,6 +259,8 @@ const routeTree = rootRoute.addChildren([
   adminOrganizationRoute,
   loginRoute,
   invitationAcceptRoute,
+  oauthLoginRoute,
+  oauthConsentRoute,
   onboardingRoute,
   githubReturnRoute,
   onboardingJourneyRoute,

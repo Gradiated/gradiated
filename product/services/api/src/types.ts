@@ -17,6 +17,8 @@ import type { ApiAnalytics } from "./analytics.js";
 
 export interface SessionUser {
   id: string;
+  // Set for a browser session; absent when a workspace credential authenticates the request.
+  sessionId?: string;
   name: string;
   email: string;
   emailVerified: boolean;
@@ -41,6 +43,7 @@ export interface ApiEnvironment {
 export interface AuthService {
   githubAccessToken?(headers: Headers): Promise<string | null>;
   handler(request: Request): Promise<Response>;
+  authorizationServerMetadata(request: Request): Promise<Response>;
   resolveSession(headers: Headers): Promise<SessionUser | null>;
 }
 

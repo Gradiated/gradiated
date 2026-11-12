@@ -97,7 +97,9 @@ up queued jobs after workflow timeout or termination, when workflow cleanup cann
 `https://mcp.gradiated.com/mcp` and a generated setup page at its root. Its
 tools are generated from the API's OpenAPI document through a per-operation
 configuration, and each call is the equivalent API request made with the
-caller's workspace API key. The service holds no credentials or database access
+caller's workspace API key or OAuth access token. The API is the OAuth
+authorization server; a token is issued for the one workspace the user chooses
+at consent in the console. The service holds no credentials or database access
 of its own; the API authorizes every call. See its
 [README](../product/services/mcp/README.md).
 

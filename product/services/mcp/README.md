@@ -21,12 +21,26 @@ tools share a name. After adding an API route, run
 
 ## Authentication
 
-Clients send a workspace API key as `Authorization: Bearer` or `x-api-key`.
-The server identifies its workspace with `GET /api/v1/api-keys/current`, then
-forwards the key on each call. The API lets a key act as the member who created
-it under `/api/v1/workspaces/{its workspace}`, except credential management and
-changes to the workspace itself. The server forwards the client's address so
-the API's per-IP limits apply per client.
+Clients either sign in with OAuth or send a workspace API key. Both go in
+`Authorization: Bearer`; a key may also use `x-api-key`. The server identifies
+the credential's workspace with `GET /api/v1/credentials/current`, then
+forwards the credential on each call. The API lets either act as its member,
+the key's creator or the user who consented, under
+`/api/v1/workspaces/{its workspace}`, except credential management and changes
+to the workspace itself. The server forwards the client's address so the API's
+per-IP limits apply per client.
+
+The API is the OAuth authorization server, Better Auth's OAuth provider at
+issuer `https://api.gradiated.com/api/auth`, with its RFC 8414 metadata at
+`https://api.gradiated.com/.well-known/oauth-authorization-server/api/auth`.
+A request without a credential gets a 401 whose `WWW-Authenticate` names this
+server's RFC 9728 metadata, `/.well-known/oauth-protected-resource/mcp`, which
+points at that issuer. Clients register themselves (dynamic client
+registration, public clients with PKCE), and the user signs in and consents in
+the console at `/oauth/consent`, choosing one workspace. The consent's
+reference ID is that workspace; access tokens are opaque, prefixed `grado_`,
+last an hour, and carry the `mcp` scope and the workspace. Refresh tokens last
+30 days.
 
 The transport is stateless Streamable HTTP with JSON responses. Results are cut
 at 100,000 characters.

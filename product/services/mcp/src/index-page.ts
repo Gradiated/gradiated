@@ -1,4 +1,4 @@
-import { CLIENTS } from "./clients.js";
+import { CLIENTS, type Setup } from "./clients.js";
 import type { ToolDefinition } from "./tools/definitions.js";
 
 const escape = (text: string) =>
@@ -35,6 +35,15 @@ const toolRow = (tool: ToolDefinition) => {
 </tr>`;
 };
 
+const setup = (label: string, entry: Setup | undefined, mcpUrl: string) =>
+  entry
+    ? `<p><strong>${label}.</strong> ${escape(entry.where)}</p>${
+        entry.snippet
+          ? `\n<pre><code>${escape(entry.snippet(mcpUrl))}</code></pre>`
+          : ""
+      }`
+    : "";
+
 export const renderIndexPage = ({
   mcpUrl,
   consoleUrl,
@@ -69,13 +78,13 @@ export const renderIndexPage = ({
 <h1>Gradiated MCP server</h1>
 <p>Lets an AI client read and manage one Gradiated workspace: its models, usage, generations, tasks and training runs.</p>
 <pre><code>${escape(mcpUrl)}</code></pre>
-<p>The server uses Streamable HTTP. Authenticate with a workspace API key from <a href="${escape(consoleUrl)}/api-keys">the console</a>, sent as <code>Authorization: Bearer</code>. The key's workspace is the one the tools act on, with the permissions of the member who created the key.</p>
+<p>The server uses Streamable HTTP. Clients that support MCP authorization sign you in with your Gradiated account, and you choose the workspace the client may use; no key is needed. Other clients send a workspace API key from <a href="${escape(consoleUrl)}/api-keys">the console</a> as <code>Authorization: Bearer</code>. Either way the tools act in one workspace, with the permissions of the member who signed in or created the key.</p>
 
 <h2>Connect a client</h2>
 ${CLIENTS.map(
   (client) => `<h3>${escape(client.name)}</h3>
-<p>${escape(client.where)}</p>
-<pre><code>${escape(client.snippet(mcpUrl))}</code></pre>`,
+${setup("Sign in", client.oauth, mcpUrl)}
+${setup("API key", client.apiKey, mcpUrl)}`,
 ).join("\n")}
 
 <h2>Tools</h2>

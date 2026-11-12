@@ -33,11 +33,13 @@ export const user: SessionUser = {
 
 export const authenticated: AuthService = {
   handler: async () => new Response(null, { status: 404 }),
+  authorizationServerMetadata: async () => Response.json({}),
   resolveSession: async () => user,
 };
 
 export const anonymous: AuthService = {
   handler: authenticated.handler,
+  authorizationServerMetadata: authenticated.authorizationServerMetadata,
   resolveSession: async () => null,
 };
 
@@ -45,6 +47,7 @@ export class SessionStoreError extends Error {}
 
 export const sessionStoreDown: AuthService = {
   handler: authenticated.handler,
+  authorizationServerMetadata: authenticated.authorizationServerMetadata,
   resolveSession: async () => {
     throw new SessionStoreError("session store unreachable");
   },
@@ -222,8 +225,9 @@ export const createTestApp = ({
       // Requests without a session are anonymous unless a test accepts their key.
       workspaces: {
         ...service("workspaces"),
-        authenticateApiKey:
-          services.workspaces?.authenticateApiKey ?? (async () => undefined),
+        authenticateCredential:
+          services.workspaces?.authenticateCredential ??
+          (async () => undefined),
       },
     },
   });

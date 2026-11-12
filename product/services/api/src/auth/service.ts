@@ -1,4 +1,5 @@
 import { APIError } from "better-auth/api";
+import { oauthProviderAuthServerMetadata } from "@better-auth/oauth-provider";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP, magicLink, openAPI } from "better-auth/plugins";
@@ -12,6 +13,12 @@ import {
 } from "./impersonation.js";
 
 import {
+  mcpOAuthProvider,
+  nativeLoopbackRegistration,
+  type OAuthConfiguration,
+  type OAuthServerApi,
+} from "./oauth.js";
+import {
   STAFF_SESSION_RECOVERY_CODE,
   StaffSessionRecoveryRequired,
 } from "./errors.js";
@@ -22,6 +29,7 @@ import type { AuthService } from "../types.js";
 
 export interface AuthConfiguration {
   baseUrl: string;
+  oauth: OAuthConfiguration;
   github?: { clientId: string; clientSecret: string } | undefined;
   google?: { clientId: string; clientSecret: string } | undefined;
   onUserCreated: (user: {
@@ -104,6 +112,11 @@ export const createAuthService = (
         isStaff: { type: "boolean", defaultValue: false, input: false },
       },
     },
+    session: {
+      additionalFields: {
+        oauthWorkspaceId: { type: "string", required: false, input: false },
+      },
+    },
     account: {
       accountLinking: {
         enabled: true,
@@ -159,13 +172,22 @@ export const createAuthService = (
         storeOTP: "hashed",
       }),
       openAPI({ disableDefaultReference: true }),
+      nativeLoopbackRegistration,
+      mcpOAuthProvider(configuration.oauth),
     ],
   });
+  const authorizationServerMetadata = oauthProviderAuthServerMetadata(
+    auth as unknown as OAuthServerApi,
+    {
+      headers: { "Access-Control-Allow-Origin": "*" },
+    },
+  );
 
   return {
     githubAccessToken: async (headers) =>
       configuration.github ? readGithubAccessToken(auth.api, headers) : null,
     handler: (request) => auth.handler(request),
+    authorizationServerMetadata,
     resolveSession: async (headers) => {
       const result = await auth.api
         .getSession({ headers })
@@ -183,6 +205,7 @@ export const createAuthService = (
 
       return {
         id: result.user.id,
+        sessionId: result.session.id,
         name: result.user.name,
         email: result.user.email,
         emailVerified: result.user.emailVerified,

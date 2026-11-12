@@ -107,5 +107,24 @@ class SearchTests(unittest.TestCase):
         self.assertEqual(nebius.hourly_price('eu-north1', 'gpu-l40s-a', '1gpu-8vcpu-32gb', 'spot'), 99.0)
 
 
+class SshTests(unittest.TestCase):
+    def test_json_ssh_puts_options_before_the_destination(self):
+        from unittest import mock
+        from grad_ctl.core import UsageError
+        args = argparse.Namespace(name='exp', provider=None, vm=1, command=['--', 'nvidia-smi', '-L'])
+        base = ['ssh', '-i', 'key', '-p', '22', 'ubuntu@203.0.113.7']
+        with mock.patch.object(dev_training, 'located'), \
+                mock.patch.object(dev_training, 'ssh_command', return_value=base), \
+                mock.patch('subprocess.run') as run:
+            run.return_value = mock.Mock(returncode=0, stdout='GPU 0', stderr='')
+            result = dev_training.ssh(args, as_json=True)
+        argv = run.call_args.args[0]
+        self.assertEqual(argv, ['ssh', '-i', 'key', '-p', '22', '-o', 'BatchMode=yes', 'ubuntu@203.0.113.7',
+                                'nvidia-smi', '-L'])
+        self.assertEqual(result.data['stdout'], 'GPU 0')
+        with self.assertRaises(UsageError):
+            dev_training.ssh(argparse.Namespace(name='exp', provider=None, vm=1, command=[]), as_json=True)
+
+
 if __name__ == '__main__':
     unittest.main()

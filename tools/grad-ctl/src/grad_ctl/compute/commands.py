@@ -347,7 +347,9 @@ def ssh(args, as_json=False):
     ssh_args = ssh_command(located(args), args.name, args.vm - 1)
     if not as_json:
         os.execvp('ssh', [*ssh_args, *command])
-    result = subprocess.run([*ssh_args, '-o', 'BatchMode=yes', *command], capture_output=True, text=True)
+    # Options go before the destination, the last element; after it they would be the remote command.
+    result = subprocess.run([*ssh_args[:-1], '-o', 'BatchMode=yes', ssh_args[-1], *command],
+                            capture_output=True, text=True)
     return Result(data={'exit_code': result.returncode, 'stdout': result.stdout, 'stderr': result.stderr},
                   ok=result.returncode == 0, exit_code=0 if result.returncode == 0 else 1,
                   error=f'the remote command exited with status {result.returncode}', error_code='remote_failed')

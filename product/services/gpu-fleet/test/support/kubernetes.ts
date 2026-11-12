@@ -76,7 +76,7 @@ export const fakeKubernetes = () => {
       const params = new URLSearchParams(query);
       const node = params
         .get("fieldSelector")
-        ?.match(/^spec\.nodeName=(.+)$/)?.[1];
+        ?.match(/^spec\.nodeName=(.*)$/)?.[1];
       const [label, value] = params.get("labelSelector")?.split("=") ?? [];
       return [...objects.entries()]
         .filter(([key]) => key.slice(0, key.lastIndexOf("/")) === path)
@@ -84,8 +84,8 @@ export const fakeKubernetes = () => {
         .filter(
           (item) =>
             (node === undefined ||
-              (item.spec as { nodeName?: string } | undefined)?.nodeName ===
-                node) &&
+              ((item.spec as { nodeName?: string } | undefined)?.nodeName ??
+                "") === node) &&
             (label === undefined ||
               (item.metadata.labels as Record<string, string> | undefined)?.[
                 label

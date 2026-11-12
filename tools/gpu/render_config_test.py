@@ -297,13 +297,13 @@ class RenderTests(unittest.TestCase):
             self.assertIn({'secretKey': instance, 'remoteRef': entry['spec']['managementSecret']},
                           outputs[gpu / 'credentials.yaml'][1]['spec']['data'])
             models = json.loads((gpu / 'models.json').read_text())
-            models.pop('jaredpalmer/kev-9b')
+            models.pop('perplexity-ai/pplx-decider-v1.2')
             (gpu / 'models.json').write_text(json.dumps(models))
             stock = models['z-ai/glm-5.3-flash']
             with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu, MODELS=gpu / 'models'):
-                self.assertEqual(renderer.retired_outputs(renderer.render()), {gpu / 'models/kev/kev.yaml'})
+                self.assertEqual(renderer.retired_outputs(renderer.render()), {gpu / 'models/decider-l40s/decider-l40s.yaml'})
                 with patch('sys.argv', ['render-config.py', '--check']), \
-                        self.assertRaisesRegex(SystemExit, 'kubectl -n gpu-inference delete rollout,scaledobject kev'):
+                        self.assertRaisesRegex(SystemExit, 'kubectl -n gpu-inference delete rollout,scaledobject decider-l40s'):
                     renderer.main()
                 for invalid in ('../escape', 'a/b', 'Upper', 'x' * 54, ''):
                     renamed = {**stock, 'pools': {invalid: stock['pools']['glm']}}
@@ -336,15 +336,17 @@ class RenderTests(unittest.TestCase):
         models, runtimes, hosts = self.fleet()
         pools = renderer.plan(models, runtimes, hosts)
         floors = {name: (pool['floor'], pool['maximum'], pool['slots']) for name, pool in pools.items()}
-        # Sixty uncensored slots fill the five B300 replicas of twelve slots;
-        # the B200 and H200 pools are switched off.
-        self.assertEqual(floors['glm-dealign-sglang'], (5, 5, 12))
+        # Twenty-four uncensored slots fill two B300 replicas of twelve slots,
+        # and the pool may grow to seven; the B200 and H200 pools are off.
+        self.assertEqual(floors['glm-dealign-sglang'], (2, 7, 12))
         self.assertEqual(floors['glm-dealign-sglang-b200'][:2], (0, 0))
         self.assertEqual(floors['glm-dealign-sglang-h200'][:2], (0, 0))
-        self.assertEqual(floors['kev'], (2, 2, 1))
-        for name in ('glm', 'deepseek'):
-            self.assertEqual(floors[name][:2], (0, 0))
-        for model in ('dealignai/glm-5.3-flash-uncensored', 'jaredpalmer/kev-9b'):
+        self.assertEqual(floors['decider-l40s'], (1, 1, 1))
+        self.assertNotIn('kev', floors)
+        # Plain GLM and DeepSeek 1017 scale from zero to one SGLang replica on demand.
+        self.assertEqual(floors['glm'], (0, 1, 12))
+        self.assertEqual(floors['deepseek'], (0, 1, 32))
+        for model in ('dealignai/glm-5.3-flash-uncensored', 'perplexity-ai/pplx-decider-v1.2'):
             self.assertGreater(models[model]['min_slots'], 0)
         # Models never name hosts; reservations on hosts.yaml place pools instead.
         self.assertNotIn('instance-id', (renderer.GPU / 'models.json').read_text())
@@ -440,7 +442,7 @@ class RenderTests(unittest.TestCase):
         self.assertNotIn('PodDisruptionBudget', documents)
         rules = outputs[renderer.REPLICA_RULES][0]['spec']['groups'][0]['rules']
         staged_rules = [rule['expr'] for rule in rules if rule['labels']['rollout'] == 'staged']
-        self.assertEqual(staged_rules, ['vector(0)', 'vector(0)'])
+        self.assertEqual(staged_rules, ['vector(0)', 'vector(0)', 'vector(0)'])
         serving = renderer.rollout('serving', pools['serving'], catalogue)['spec']['template']['metadata']['annotations']
         self.assertNotIn('gradiated.com/serving-mode', serving)
         for pool, message in [
@@ -470,6 +472,9 @@ class RenderTests(unittest.TestCase):
         terms = spec['affinity']['nodeAffinity']['requiredDuringSchedulingIgnoredDuringExecution']['nodeSelectorTerms']
         self.assertEqual(terms, [{'matchExpressions': [{'key': 'gradiated.com/instance-id', 'operator': 'In',
                                                         'values': [reserved['spec']['instanceId']]}]}])
+        # A reserved pool keeps the default scheduler and has no preferences to weigh.
+        self.assertNotIn('schedulerName', spec)
+        self.assertNotIn('preferredDuringSchedulingIgnoredDuringExecution', spec['affinity']['nodeAffinity'])
         with self.assertRaisesRegex(ValueError, 'reserved for'):
             self.synthetic({'kimi': {**pool, 'reservation': 'training'}}, hosts=hosts, kimi={'active_requests': 5})
         # An unreserved pool neither tolerates reservations nor names hosts.
@@ -478,19 +483,33 @@ class RenderTests(unittest.TestCase):
         spec = renderer.rollout('plain', plain['plain'], catalogue)['spec']['template']['spec']
         self.assertEqual(spec['tolerations'], [{'key': 'gradiated.com/gpu', 'operator': 'Equal', 'value': 'true',
                                                 'effect': 'NoSchedule'}])
+        # A runtime not keyed by a digest gets no startup labels to prefer, but still bin-packs.
         self.assertNotIn('affinity', spec)
+        self.assertEqual(spec['schedulerName'], 'gradiated-gpu')
 
-    def test_hosts_reserve_training_and_kimi_capacity(self):
+    def test_an_unreserved_pool_prefers_hosts_holding_its_startup_state(self):
+        digest = '0123456789abcdef' * 4
+        pools, catalogue = self.synthetic({'pool': {'runtime': digest, 'gpu': 'B300', 'max_replicas': 2,
+                                                    'progress_deadline_seconds': 60}}, **{digest: {'active_requests': 1}})
+        spec = renderer.rollout('pool', pools['pool'], catalogue)['spec']['template']['spec']
+        self.assertEqual(spec['affinity'], {'nodeAffinity': {'preferredDuringSchedulingIgnoredDuringExecution': [
+            {'weight': 15, 'preference': {'matchExpressions': [
+                {'key': 'gradiated.com/weights.0123456789abcdef', 'operator': 'In', 'values': ['true']}]}},
+            {'weight': 7, 'preference': {'matchExpressions': [
+                {'key': 'gradiated.com/bundle.0123456789abcdef', 'operator': 'In', 'values': ['true']}]}}]}})
+        self.assertEqual(spec['schedulerName'], 'gradiated-gpu')
+
+    def test_only_kimi_reserves_capacity(self):
         hosts, _ = renderer.inventory(self.hosts)
         reserved = {}
         for host in hosts:
             for taint in host.get('extra_taints', []):
                 reserved.setdefault((taint['key'], taint['value']), []).append(host['instance_id'])
+        # No host is held for training: it runs on shared capacity, preemptible by models.
         self.assertEqual(reserved, {
-            ('gradiated.com/reserved', 'training'): ['01a0f19d-1ff3-7613-8cbf-81b693c0f0d4'],
             ('gradiated.com/reserved', 'kimi-k31'): ['01a0fbf7-5276-700b-903b-7e04da150ed6',
                                                      '01a0fbf8-06fc-7658-96e1-ae72f7dba135']})
-        # Training Jobs tolerate their reservation.
+        # Training Jobs tolerate a training reservation if a host is ever given one.
         trainer = (renderer.ROOT / 'product/services/temporal-worker/src/training/kubernetes-host.ts').read_text()
         self.assertIn('key: "gradiated.com/reserved"', trainer)
         self.assertIn('value: "training"', trainer)
@@ -502,10 +521,10 @@ class RenderTests(unittest.TestCase):
         term = {'topologyKey': 'kubernetes.io/hostname',
                 'labelSelector': {'matchLabels': {'app.kubernetes.io/name': 'pool'}}}
         required = renderer.rollout('pool', {**pool, 'spread': 'required'}, catalogue)['spec']['template']['spec']
-        self.assertEqual(required['affinity'], {'podAntiAffinity': {'requiredDuringSchedulingIgnoredDuringExecution': [term]}})
+        self.assertEqual(required['affinity']['podAntiAffinity'], {'requiredDuringSchedulingIgnoredDuringExecution': [term]})
         preferred = renderer.rollout('pool', {**pool, 'spread': 'preferred'}, catalogue)['spec']['template']['spec']
-        self.assertEqual(preferred['affinity'], {'podAntiAffinity': {'preferredDuringSchedulingIgnoredDuringExecution': [
-            {'weight': 100, 'podAffinityTerm': term}]}})
+        self.assertEqual(preferred['affinity']['podAntiAffinity'], {'preferredDuringSchedulingIgnoredDuringExecution': [
+            {'weight': 100, 'podAffinityTerm': term}]})
         with self.assertRaisesRegex(ValueError, 'spread'):
             renderer.rollout('pool', {**pool, 'spread': 'always'}, catalogue)
 
@@ -520,21 +539,25 @@ class RenderTests(unittest.TestCase):
             self.assertFalse(pod['spec']['automountServiceAccountToken'])
             self.assertEqual(document['spec']['replicas'], pool['floor'])
             self.assertEqual(document['spec']['strategy']['canary']['maxUnavailable'], pool.get('max_unavailable', 0))
-            self.assertEqual(document['spec']['strategy']['canary']['steps'][1]['analysis']['templates'],
-                             [{'templateName': 'sdk-qualification'}])
+            steps = document['spec']['strategy']['canary']['steps']
+            if pool['maximum']:
+                self.assertEqual(steps[1]['analysis']['templates'], [{'templateName': 'sdk-qualification'}])
+            else:
+                self.assertEqual(steps, [])
             self.assertNotIn('gradiated.com/canary-of', pod['metadata']['annotations'])
 
     def test_rollout_strategy_bounds(self):
         models, runtimes, hosts = self.fleet()
-        pool = renderer.plan(models, runtimes, hosts)['glm-dealign-sglang-h200']
+        # Strategy steps apply to a pool with a floor; one without moves straight to its new revision.
+        pool = {**renderer.plan(models, runtimes, hosts)['glm-dealign-sglang-h200'], 'maximum': 1, 'floor': 1}
         default = renderer.rollout('glm-dealign-sglang-h200', {**pool, 'rolling_update': False}, runtimes)
         self.assertEqual(default['spec']['strategy']['canary']['steps'][0], {'setWeight': 50})
         rolling = renderer.rollout('glm-dealign-sglang-h200', pool, runtimes)['spec']['strategy']['canary']
         self.assertEqual(rolling['steps'], [{'setWeight': 100}, default['spec']['strategy']['canary']['steps'][1]])
         self.assertEqual((rolling['maxSurge'], rolling['maxUnavailable']), (0, 1))
-        kev = renderer.plan(models, runtimes, hosts)['kev']
-        self.assertEqual({k: v for k, v in renderer.rollout('kev', kev, runtimes)['spec']['strategy']['canary'].items()
-                          if k != 'steps'}, {'maxSurge': 1, 'maxUnavailable': 0})
+        decider = renderer.plan(models, runtimes, hosts)['decider-l40s']
+        self.assertEqual({k: v for k, v in renderer.rollout('decider-l40s', decider, runtimes)['spec']['strategy']['canary'].items()
+                          if k != 'steps'}, {'maxSurge': 0, 'maxUnavailable': 1})
         for change, message in [({'rolling_update': 1}, 'rolling_update'), ({'max_surge': 0, 'max_unavailable': 0}, 'both zero'),
                                 ({'max_surge': -1}, 'max_surge'), ({'max_unavailable': '1'}, 'max_unavailable'),
                                 ({'progress_deadline_seconds': 0}, 'progress_deadline_seconds'),
@@ -542,7 +565,7 @@ class RenderTests(unittest.TestCase):
                                 ({'labels': {'app.kubernetes.io/name': 'other'}}, 'identity label is reserved'),
                                 ({'annotations': {'gradiated.com/serving-mode': 'production'}}, 'reserved')]:
             with self.subTest(change=change), self.assertRaisesRegex(ValueError, message):
-                renderer.rollout('kev', {**kev, **change}, runtimes)
+                renderer.rollout('decider-l40s', {**decider, **change}, runtimes)
 
     def test_glm_sglang_runtimes_declare_their_launcher_active_request_limit(self):
         models, runtimes, hosts = self.fleet()
@@ -585,6 +608,19 @@ class RenderTests(unittest.TestCase):
         self.assertLessEqual(2 * int(compact['cpu']), 85)
         self.assertLessEqual(2 * int(compact['request_memory'][:-2]), 686)
 
+    def test_scale_to_zero_pool_brings_up_its_canary_to_qualify(self):
+        models, runtimes, hosts = self.fleet()
+        plan = renderer.plan(models, runtimes, hosts)
+        pool = plan['glm']
+        self.assertEqual((pool['floor'], pool['maximum']), (0, 1))
+        # A half-weight canary of one replica would restart the previous runtime too.
+        steps = renderer.rollout('glm', pool, runtimes)['spec']['strategy']['canary']['steps']
+        self.assertEqual(steps[0], {'setWeight': 100})
+        self.assertEqual(steps[1]['analysis']['templates'], [{'templateName': 'sdk-qualification'}])
+        self.assertIn('qualifying', renderer.scaling_queries('glm', pool))
+        # Pools with a floor always have a replica to qualify and keep their signals.
+        self.assertNotIn('qualifying', renderer.scaling_queries('glm-dealign-sglang', plan['glm-dealign-sglang']))
+
     def test_switched_off_pool_keeps_its_rollout_at_zero_without_an_autoscaler(self):
         models, runtimes, hosts = self.fleet()
         _, outputs = renderer.model_outputs(models, runtimes, hosts)
@@ -593,11 +629,13 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(documents[0]['spec']['replicas'], 0)
         # Argo holds it at zero; restoring max_replicas hands replicas back to KEDA.
         self.assertEqual(documents[0]['metadata']['annotations'], {'gradiated.com/paused-replicas': '0'})
+        # With no pods to qualify, a new revision must not wait on the analysis and abort.
+        self.assertEqual(documents[0]['spec']['strategy']['canary']['steps'], [])
         serving = outputs[renderer.MODELS / 'glm-dealign-sglang' / 'glm-dealign-sglang.yaml']
         self.assertEqual([doc['kind'] for doc in serving], ['Rollout', 'PodDisruptionBudget', 'ScaledObject'])
         self.assertNotIn('annotations', serving[0]['metadata'])
         # A host drain takes a pool at most one replica below its floor.
-        self.assertEqual(serving[1]['spec']['minAvailable'], 4)
+        self.assertEqual(serving[1]['spec']['minAvailable'], 1)
 
     def test_every_pool_scales_on_utilization_and_refusals_in_its_own_slots(self):
         self.assertEqual((renderer.UTILIZATION, renderer.REFUSAL_SHARE), (0.7, 0.05))
@@ -607,16 +645,19 @@ class RenderTests(unittest.TestCase):
                                                       'progress_deadline_seconds': 60}},
                                           min_slots=0, twelve={'active_requests': 12}, three={'active_requests': 3})
         first, second = (renderer.scaling_queries(name, pools[name]) for name in ('first', 'second'))
-        self.assertEqual(set(first), {'utilization', 'refusals'})
+        self.assertEqual(set(first), {'utilization', 'refusals', 'draining', 'qualifying'})
+        # Without a floor, an updating Rollout asks for one replica so its canary can qualify.
+        self.assertEqual(first['qualifying'], '((max(rollout_info{namespace="gpu-inference",name="first",'
+                         'phase=~"Progressing|Paused"}) * 12) or vector(0))')
         model = 'model="test/model"'
         # One sample: the per-model rule's label must not survive beside the idle zero.
         self.assertIn(f'max(gradiated:model_busy_slots{{{model}}})', first['utilization'])
-        self.assertTrue(first['utilization'].endswith('/ 0.7, 0)'))
+        self.assertTrue(first['utilization'].endswith('/ 0.7, 0)[10m:30s])'))
         # The second pool supplies what the first cannot serve: its maximum while
         # it grows, its ready replicas once it requests its maximum.
         self.assertTrue(second['utilization'].endswith(
             '/ 0.7 - ((max(rollout_info_replicas_available{namespace="gpu-inference",name="first"}) * 12 and on() '
-            '(max(rollout_info_replicas_desired{namespace="gpu-inference",name="first"}) >= 2)) or vector(24)), 0)'))
+            '(max(rollout_info_replicas_desired{namespace="gpu-inference",name="first"}) >= 2)) or vector(24)), 0)[10m:30s])'))
         self.assertIn(f'gradiated:model_capacity_refusal_ratio{{{model}}} > 0.05', first['refusals'])
         self.assertNotIn('name="first"} >=', first['refusals'])
         # One replica more than are ready, so capacity grows as replicas finish loading.
@@ -639,15 +680,19 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(set(by_rollout), set(pools))
         self.assertEqual(by_rollout['glm-dealign-sglang'], {
             'gradiated_model_desired_replicas':
-                'max(rollout_info_replicas_desired{namespace="gpu-inference",name="glm-dealign-sglang"}) or vector(5)',
+                'max(rollout_info_replicas_desired{namespace="gpu-inference",name="glm-dealign-sglang"}) or vector(2)',
             # A one-at-a-time rollout of the five-replica floor keeps four serving.
-            'gradiated_model_minimum_replicas': 'vector(4)'})
-        self.assertEqual(by_rollout['kev']['gradiated_model_minimum_replicas'], 'vector(2)')
+            'gradiated_model_minimum_replicas': 'vector(1)',
+            'gradiated_model_ready_slots':
+                '(max(rollout_info_replicas_available{namespace="gpu-inference",name="glm-dealign-sglang"}) or vector(0)) * 12'})
+        pair = renderer.replica_rules({'pair': {**pools['decider-l40s'], 'floor': 2, 'maximum': 2}})
+        self.assertEqual(pair['spec']['groups'][0]['rules'][1]['expr'], 'vector(1)')
         # One replica of a single-replica floor must stay, even if a rollout may take it down.
         single = renderer.replica_rules({'pool': {**pools['glm-dealign-sglang'], 'floor': 1, 'max_unavailable': 1}})
         self.assertEqual(single['spec']['groups'][0]['rules'][1]['expr'], 'vector(1)')
         self.assertEqual(by_rollout['glm-dealign-sglang-h200'], {
-            'gradiated_model_desired_replicas': 'vector(0)', 'gradiated_model_minimum_replicas': 'vector(0)'})
+            'gradiated_model_desired_replicas': 'vector(0)', 'gradiated_model_minimum_replicas': 'vector(0)',
+            'gradiated_model_ready_slots': 'vector(0)'})
         rendered = yaml.safe_load(renderer.REPLICA_RULES.read_text().split('\n', 1)[1])
         self.assertEqual(rendered, renderer.replica_rules(pools))
 

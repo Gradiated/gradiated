@@ -52,7 +52,8 @@ export const LibraryPage = (): ReactElement => {
                   <article className="gr-mag-feature" key={article.path}>
                     <a className="gr-mag-feature-link" href={article.path}>
                       <div className="gr-mag-feature-art">
-                        {article.path === "/sand-to-thought/" ? (
+                        {article.path ===
+                        "/library/sand-to-thought/how-to-get-an-answer-out-of-sand/" ? (
                           <SandCircuitArtwork />
                         ) : (
                           <ChipLayersArtwork variant="chip" />

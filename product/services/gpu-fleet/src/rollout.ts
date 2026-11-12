@@ -5,16 +5,27 @@ import { ReimageNotSent, type Enrollment } from "./enroll.js";
 import {
   GPU_HOSTS,
   hostName,
+  hostState,
+  LEASE_ANNOTATION,
+  leaseEnded,
+  leaseRequest,
   parseHosts,
   RETRY_ANNOTATION,
   type GpuHost,
+  type HostLease,
   type Rollout,
 } from "./hosts.js";
 import type { Kubernetes } from "./kubernetes.js";
 import type { Metrics } from "./metrics.js";
 import type { Observation } from "./observe.js";
 import type { Pins } from "./pins.js";
-import { planHost, target, type HostFacts, type Plan } from "./plan.js";
+import {
+  leaseRefusal,
+  planHost,
+  target,
+  type HostFacts,
+  type Plan,
+} from "./plan.js";
 import { placementFits, POD_NAMESPACE, type PlacedPod } from "./placement.js";
 
 // What a pass knows of a host: the planner's facts and its GPU use.
@@ -25,6 +36,17 @@ type Facts = HostFacts & {
 };
 
 const MINUTE = 60_000;
+
+// How a finished return ended its lease: the holder handed the host back, or
+// the operator took it at the lease's end or for a model with nowhere to run.
+export const returnEvent = (rollout: Rollout) => {
+  if (!rollout.lease) return "released";
+  return Date.parse(rollout.lease.until) <= Date.parse(rollout.startedAt)
+    ? "expired"
+    : "preempted";
+};
+// The taint Kubernetes adds to a cordoned node.
+const UNSCHEDULABLE_TAINT = "node.kubernetes.io/unschedulable";
 
 export const DEFAULT_LIMITS = {
   Cordon: 10 * MINUTE,
@@ -39,6 +61,7 @@ export const DEFAULT_LIMITS = {
   BundleVerify: 35 * MINUTE,
   Soak: 30 * MINUTE,
   Uncordon: 10 * MINUTE,
+  Hold: 10 * MINUTE,
   // Apply waits for serving pods still loading, as Surge does.
   Apply: 100 * MINUTE,
   soakFor: 5 * MINUTE,
@@ -55,11 +78,9 @@ export const DEFAULT_LIMITS = {
 
 export type Limits = typeof DEFAULT_LIMITS;
 
-// Models whose replica on a host being re-imaged is retired rather than moved:
-// OpenRouter serves them while the host is down, so one replica may be
-// unavailable, as long as another is Ready elsewhere. Every other model must
-// fit on another host first.
-export const RETIRE_ON_REIMAGE: ReadonlySet<string> = new Set(["kimi-k31-pro"]);
+// Opting in permits retiring a replica without relocating it. Keep local-only
+// models out of this set so re-imaging preserves their serving capacity.
+export const RETIRE_ON_REIMAGE: ReadonlySet<string> = new Set();
 
 export type RolloutDependencies = {
   api: Kubernetes;
@@ -89,7 +110,7 @@ class Fatal extends Error {}
 type Outcome =
   | { next: string; set?: Partial<Rollout> }
   | { stay: string; set?: Partial<Rollout> }
-  | { done: true; set?: Partial<Rollout> }
+  | { done: true; set?: Partial<Rollout>; lease?: HostLease | null }
   | { block: string };
 
 type Step = (
@@ -103,16 +124,23 @@ const FIRST_STEP: Record<Rollout["kind"], string> = {
   recover: "Cordon",
   reimage: "Cordon",
   bundle: "Apply",
+  lease: "Cordon",
+  return: "Cordon",
 };
 
 // Restoring capacity comes first; then the host with the fewest serving pods,
 // so the spare host is updated, and proves the image, before any other.
 const ORDER: Record<Rollout["kind"], number> = {
   recover: 0,
+  return: 0,
   enroll: 1,
+  lease: 1,
   reimage: 2,
   bundle: 2,
 };
+
+// A lease moves the host's replicas elsewhere first, as a re-image does.
+const moves = (kind: Rollout["kind"]) => kind === "reimage" || kind === "lease";
 
 const since = (value: string | null | undefined) => {
   const time = Date.parse(value ?? "");
@@ -149,7 +177,11 @@ export const createRollouts = (deps: RolloutDependencies) => {
   // stale status cannot overwrite a newer leader's progress.
   const writeStatus = async (
     host: GpuHost,
-    status: { rollout?: Rollout | null; plan?: string | null },
+    status: {
+      rollout?: Rollout | null;
+      plan?: string | null;
+      lease?: HostLease | null;
+    },
   ) => {
     ensureLeading();
     // A merge patch keeps keys it does not name, so dropped keys are nulled.
@@ -175,11 +207,37 @@ export const createRollouts = (deps: RolloutDependencies) => {
         status: {
           ...(rollout !== undefined && { rollout }),
           ...(status.plan !== undefined && { plan: status.plan }),
+          ...(status.lease !== undefined && { lease: status.lease }),
         },
       },
     )) as GpuHost | undefined;
     host.metadata.resourceVersion = written?.metadata?.resourceVersion;
     host.status = written?.status ?? host.status;
+  };
+
+  // Removes a lease request that has had its outcome, recorded on the
+  // rollout, so the host is planned as any other again. The resourceVersion
+  // keeps a request written since the host was read; a failed removal is
+  // retried on the next pass.
+  const endRequest = async (host: GpuHost) => {
+    try {
+      const written = (await act(() =>
+        deps.api.mergePatch(`${GPU_HOSTS}/${host.metadata.name}`, {
+          metadata: {
+            resourceVersion: host.metadata.resourceVersion,
+            annotations: { [LEASE_ANNOTATION]: null },
+          },
+        }),
+      )) as GpuHost | undefined;
+      host.metadata = written?.metadata ?? host.metadata;
+    } catch (error) {
+      if (error instanceof LeadershipLost) throw error;
+      deps.log({
+        event: "gpu_lease_request_removal_failed",
+        instance_id: host.spec.instanceId,
+        error: (error as Error).message,
+      });
+    }
   };
 
   const facts = async (host: GpuHost): Promise<Facts> => {
@@ -368,20 +426,25 @@ export const createRollouts = (deps: RolloutDependencies) => {
     (rollout.kind === "bundle" ||
       ((facts.node?.ready ?? false) && imageRuns(facts, rollout)));
 
-  // An in-place update must not restart a serving process: each pod stays on
-  // the host, Ready, with the same qualified runtime. A pod that is gone also
-  // stops the update, so rescheduling cannot certify the bundle.
-  const baselineBroken = async (host: GpuHost, rollout: Rollout) => {
+  // An update that restarted, moved or requalified a serving pod is broken; one
+  // only briefly not Ready, as while the host agent restarts, is waited for.
+  const baselineState = async (host: GpuHost, rollout: Rollout) => {
     const pods = await cluster.podsOn(host.spec.instanceId);
-    return Object.entries(rollout.baseline ?? {}).some(([uid, runtime]) => {
-      const pod = pods.find((item) => item.uid === uid);
-      return (
-        !pod ||
-        pod.terminating ||
-        !pod.ready ||
-        pod.qualifiedRuntime !== runtime
-      );
-    });
+    const baseline = Object.entries(rollout.baseline ?? {}).map(
+      ([uid, runtime]) => ({
+        pod: pods.find((item) => item.uid === uid),
+        runtime,
+      }),
+    );
+    if (
+      baseline.some(
+        ({ pod, runtime }) =>
+          !pod || pod.terminating || pod.qualifiedRuntime !== runtime,
+      )
+    )
+      return "broken";
+
+    return baseline.every(({ pod }) => pod?.ready) ? "ready" : "unready";
   };
 
   const runningTraining = async (host: GpuHost, rollout: Rollout) =>
@@ -390,7 +453,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
         pod.training &&
         !pod.terminating &&
         // A host being recovered runs nothing; only a live host's job counts.
-        (rollout.kind === "reimage" || pod.ready),
+        (moves(rollout.kind) || rollout.kind === "return" || pod.ready),
     );
 
   const steps: Record<string, Step> = {
@@ -401,7 +464,14 @@ export const createRollouts = (deps: RolloutDependencies) => {
       if (await runningTraining(host, rollout))
         return { block: "A training job runs on the host" };
 
-      if (rollout.kind === "reimage") {
+      if (rollout.kind === "lease") {
+        // Another cordon may guard work Kubernetes cannot see, such as a
+        // qualification slot; a lease is only exclusive under its own.
+        if (!facts.node) return { block: "The host has no Kubernetes node" };
+        if (facts.node.unschedulable && !facts.node.cordonedByRollout)
+          return { block: "The node is cordoned by someone else" };
+      }
+      if (moves(rollout.kind)) {
         const gap = relocationGap(facts, currentFacts);
         if (gap) return { block: gap };
       }
@@ -413,9 +483,8 @@ export const createRollouts = (deps: RolloutDependencies) => {
       const serving = (await cluster.podsOn(host.spec.instanceId)).some(
         (pod) => pod.model && !pod.terminating,
       );
-      return {
-        next: rollout.kind === "reimage" && serving ? "Surge" : "Reimage",
-      };
+      if (moves(rollout.kind) && serving) return { next: "Surge" };
+      return { next: rollout.kind === "lease" ? "Hold" : "Reimage" };
     },
 
     // Replacements start elsewhere before anything on this host is removed,
@@ -505,7 +574,37 @@ export const createRollouts = (deps: RolloutDependencies) => {
 
       for (const { model } of surge)
         await act(() => cluster.pauseScaling(model, null));
-      return { next: "Reimage", set: { surge: undefined } };
+      return {
+        next: rollout.kind === "lease" ? "Hold" : "Reimage",
+        set: { surge: undefined },
+      };
+    },
+
+    // The drained host stays cordoned and out of the pool until it is returned.
+    Hold: async ({ host, node }, rollout) => {
+      if (!node?.cordonedByRollout)
+        return { block: "The lease does not hold the node's cordon" };
+      const left = (await cluster.podsOn(host.spec.instanceId)).filter(
+        (pod) => !pod.terminating,
+      );
+      if (left.some((pod) => pod.model)) return { next: "Surge" };
+      if (left.length)
+        return { block: "A pod that is not a model replica runs on the host" };
+
+      const request = rollout.lease!;
+      // A drain that outlasted the lease never hands the host over.
+      if (now().getTime() >= Date.parse(request.until))
+        return {
+          block: `The lease ended at ${request.until} before the host was drained`,
+        };
+      return {
+        done: true,
+        lease: {
+          holder: request.holder,
+          purpose: request.purpose,
+          since: now().toISOString(),
+        },
+      };
     },
 
     // The request and its key are recorded before RunPod is asked, so a
@@ -540,15 +639,19 @@ export const createRollouts = (deps: RolloutDependencies) => {
       // nothing on a live host is wiped without being moved or blocking.
       if (await runningTraining(host, rollout))
         return { block: "A training job runs on the host" };
-      if (
-        rollout.kind === "reimage" &&
-        (await cluster.podsOn(host.spec.instanceId)).some(
-          (pod) => pod.model && !pod.terminating,
-        )
-      )
-        return { next: "Surge" };
+      const live = (await cluster.podsOn(host.spec.instanceId)).filter(
+        (pod) => !pod.terminating,
+      );
+      const serving = live.some((pod) => pod.model);
+      if (serving && rollout.kind === "reimage") return { next: "Surge" };
+      // A leased host was handed over empty; any pod on it now landed while
+      // its cordon was lifted, and is not wiped with it.
+      if (serving && rollout.kind === "return")
+        return { block: "A model pod runs on the leased host" };
+      if (live.length && rollout.kind === "return")
+        return { block: "A pod runs on the leased host" };
 
-      if (rollout.kind !== "reimage") {
+      if (rollout.kind === "recover" || rollout.kind === "enroll") {
         // The plan saw no connected device; check again right before the wipe.
         const tailnet = await enroll.tailnetOf(host);
         if (tailnet.connected || facts.observation.reachable)
@@ -685,10 +788,13 @@ export const createRollouts = (deps: RolloutDependencies) => {
           ].includes(digest)
         )
           throw new Fatal(`The host rejected or rolled back bundle ${digest}`);
-        if (await baselineBroken(facts.host, rollout))
+        const baseline = await baselineState(facts.host, rollout);
+        if (baseline === "broken")
           throw new Fatal(
             "A serving pod restarted or left the host during the bundle update",
           );
+        if (baseline === "unready")
+          return { stay: "Waiting for the serving pods to be Ready again" };
       }
       return healthy(facts, rollout)
         ? { next: "Soak" }
@@ -701,14 +807,16 @@ export const createRollouts = (deps: RolloutDependencies) => {
     },
 
     Soak: async (facts, rollout) => {
-      if (
-        rollout.kind === "bundle" &&
-        (await baselineBroken(facts.host, rollout))
-      )
+      const baseline =
+        rollout.kind === "bundle"
+          ? await baselineState(facts.host, rollout)
+          : "ready";
+      if (baseline === "broken")
         throw new Fatal(
           "A serving pod restarted or left the host during the bundle update",
         );
-      if (!healthy(facts, rollout))
+      // A serving pod that stops being Ready restarts the soak.
+      if (baseline === "unready" || !healthy(facts, rollout))
         return {
           stay: "The host is not healthy",
           set: { healthySince: undefined },
@@ -795,8 +903,10 @@ export const createRollouts = (deps: RolloutDependencies) => {
       for (const { model } of rollout.surge ?? [])
         await act(() => cluster.pauseScaling(model, null));
       await revokeKeys(host, rollout);
-      // A blocked host goes back into service; a failed one stays cordoned.
-      if (result === "Blocked") await act(() => cluster.uncordon(id));
+      // A blocked host goes back into service; a failed one stays cordoned,
+      // unless it failed to be leased, which never handed it to anyone.
+      if (result === "Blocked" || rollout.kind === "lease")
+        await act(() => cluster.uncordon(id));
       deps.log({
         event: "gpu_rollout_" + result.toLowerCase(),
         instance_id: id,
@@ -813,6 +923,11 @@ export const createRollouts = (deps: RolloutDependencies) => {
           blockedCount: (rollout.blockedCount ?? 0) + 1,
         }),
       });
+      if (rollout.kind === "lease")
+        metrics.leaseEvents.inc({ event: "failed" });
+      if (rollout.kind === "return" && result === "Failed")
+        metrics.leaseEvents.inc({ event: "return_failed" });
+      if (rollout.kind === "lease") await endRequest(host);
     };
 
     const limit = deadline(rollout);
@@ -835,7 +950,16 @@ export const createRollouts = (deps: RolloutDependencies) => {
       return;
     }
 
-    if ("block" in outcome) return finish("Blocked", outcome.block);
+    // A blocked return fails instead, so a host that was not wiped stays
+    // cordoned. A blocked lease fails too: it is not retried, and the host
+    // goes back into the pool.
+    if ("block" in outcome)
+      return finish(
+        rollout.kind === "return" || rollout.kind === "lease"
+          ? "Failed"
+          : "Blocked",
+        outcome.block,
+      );
     const set = outcome.set ?? {};
     if ("stay" in outcome) {
       if (
@@ -866,7 +990,19 @@ export const createRollouts = (deps: RolloutDependencies) => {
         healthySince: undefined,
         keys: undefined,
       };
-      return writeStatus(host, { rollout, plan: null });
+      await writeStatus(host, {
+        rollout,
+        plan: null,
+        ...(outcome.lease !== undefined && { lease: outcome.lease }),
+        ...(rollout.kind === "return" && { lease: null }),
+      });
+      if (rollout.kind === "lease")
+        metrics.leaseEvents.inc({ event: "granted" });
+      if (rollout.kind === "return")
+        metrics.leaseEvents.inc({ event: returnEvent(rollout) });
+      // An expired or preempted lease's request is done with.
+      if (rollout.kind === "return" && rollout.lease) await endRequest(host);
+      return;
     }
     deps.log({
       event: "gpu_rollout_step",
@@ -884,17 +1020,30 @@ export const createRollouts = (deps: RolloutDependencies) => {
   };
 
   const start = async (
-    host: GpuHost,
+    item: Facts,
     plan: Extract<Plan, { action: "start" }>,
     pins: Pins,
+    cannot?: string,
   ) => {
+    const { host } = item;
     const time = now().toISOString();
     const retry = host.metadata.annotations?.[RETRY_ANNOTATION];
+    const parsed = leaseRequest(host);
+    const request = parsed && !("invalid" in parsed) ? parsed : undefined;
+    // A lease records its request; a return records the one it ends, when it
+    // ends the holder's own lease by expiry or preemption.
+    const ends =
+      plan.kind === "lease" ||
+      (plan.kind === "return" &&
+        request?.holder === host.status?.lease?.holder);
+    // A refused lease fails before it touches the host.
+    const refused =
+      plan.kind === "lease" ? (cannot ?? leaseRefusal(item, now())) : undefined;
     deps.log({
-      event: "gpu_rollout_started",
+      event: refused ? "gpu_rollout_failed" : "gpu_rollout_started",
       instance_id: host.spec.instanceId,
       kind: plan.kind,
-      reason: plan.reason,
+      reason: refused ? `Not leased: ${refused}` : plan.reason,
     });
     await writeStatus(host, {
       rollout: {
@@ -909,14 +1058,24 @@ export const createRollouts = (deps: RolloutDependencies) => {
         ...(host.status?.rollout?.bundle && {
           bundle: host.status.rollout.bundle,
         }),
+        ...(ends && request && { lease: request }),
         // A retry after a block keeps its count, so the waits keep growing.
         ...(host.status?.rollout?.result === "Blocked" &&
           sameTarget(host.status.rollout, pins) && {
             blockedCount: host.status.rollout.blockedCount,
           }),
+        ...(refused && {
+          result: "Failed",
+          lastError: `Not leased: ${refused}`,
+          finishedAt: time,
+        }),
       },
-      plan: plan.reason,
+      plan: refused ? null : plan.reason,
     });
+    if (refused) {
+      metrics.leaseEvents.inc({ event: "failed" });
+      await endRequest(host);
+    }
   };
 
   // The API server reorders a stored target's fields, so compare values.
@@ -924,10 +1083,15 @@ export const createRollouts = (deps: RolloutDependencies) => {
     rollout !== undefined && isDeepStrictEqual(rollout.target, target(pins));
 
   // A failed rollout stops the fleet until the pins change or a person sets
-  // the retry annotation to a new value.
+  // the retry annotation to a new value. A failed lease never took the host
+  // out of the pool, so it stops nothing.
   const holding = (host: GpuHost, pins: Pins) => {
     const rollout = host.status?.rollout;
-    if (rollout?.result !== "Failed" || !sameTarget(rollout, pins))
+    if (
+      rollout?.result !== "Failed" ||
+      rollout.kind === "lease" ||
+      !sameTarget(rollout, pins)
+    )
       return false;
 
     const retry = host.metadata.annotations?.[RETRY_ANNOTATION];
@@ -936,6 +1100,85 @@ export const createRollouts = (deps: RolloutDependencies) => {
 
   const mayAct = (kind: Rollout["kind"]) =>
     deps.mode === "act" || kind === "bundle";
+
+  // Recovering, enrolling or returning a host adds capacity, and a lease
+  // fails at once if its replicas have no room, so none of them waits behind
+  // a rollout that is waiting for capacity.
+  const skipsCapacityWait = (kind: Rollout["kind"]) =>
+    kind === "recover" ||
+    kind === "enroll" ||
+    kind === "return" ||
+    kind === "lease";
+
+  // A preemptible lease gives its host back once a model replica that fits
+  // there has found no host for `unschedulable`, counted from the last
+  // rollout to finish, whose surge replicas may still be leaving. The lease
+  // due back soonest goes first.
+  const preempt = async (all: Facts[], plans: Map<string, Plan>) => {
+    const leased = all.filter((item) => {
+      const request = leaseRequest(item.host);
+      return (
+        item.host.status?.lease &&
+        item.node &&
+        plans.get(item.host.spec.instanceId)?.action === "wait" &&
+        request &&
+        !("invalid" in request) &&
+        request.preemptible !== false
+      );
+    });
+    if (!leased.length) return;
+
+    const time = now().getTime();
+    const settled = Math.max(
+      0,
+      ...all.map((item) => since(item.host.status?.rollout?.finishedAt) ?? 0),
+    );
+    const residents: PlacedPod[] = all.flatMap((other) =>
+      other.residentWorkloads.map((pod) => ({
+        ...pod,
+        node: other.node ?? {},
+      })),
+    );
+    const until = (item: Facts) =>
+      Date.parse((leaseRequest(item.host) as { until: string }).until);
+    leased.sort((a, b) => until(a) - until(b));
+    for (const pod of await cluster.unscheduledModelPods()) {
+      const pending = since(pod.unschedulableSince);
+      if (
+        pod.terminating ||
+        pending === undefined ||
+        time - Math.max(pending, settled) < limits.unschedulable
+      )
+        continue;
+      const host = leased.find(
+        ({ host, node }) =>
+          pod.gpus <= host.spec.inventory.gpuCount &&
+          placementFits(
+            pod.placement,
+            // The lease's cordon goes with the return.
+            {
+              ...node!,
+              taints: (node!.taints ?? []).filter(
+                (taint) => taint.key !== UNSCHEDULABLE_TAINT,
+              ),
+            },
+            {
+              labels: pod.labels ?? {},
+              namespace: pod.namespace ?? POD_NAMESPACE,
+              residents,
+            },
+          ),
+      );
+      if (host) {
+        plans.set(host.host.spec.instanceId, {
+          action: "start",
+          kind: "return",
+          reason: `Preempted: a ${pod.model} replica has had no host for ${Math.round((time - Math.max(pending, settled)) / MINUTE)} minutes`,
+        });
+        return;
+      }
+    }
+  };
 
   const report = (
     all: Facts[],
@@ -952,11 +1195,65 @@ export const createRollouts = (deps: RolloutDependencies) => {
       metrics.lastSeen,
       metrics.bundleInfo,
       metrics.bundleDrift,
+      metrics.leaseUntil,
+      metrics.leaseStarted,
+      metrics.hostGpus,
+      metrics.workloadGpus,
     ])
       gauge.reset();
-    for (const { host, observation } of all) {
+    for (const { host, node, observation, residentWorkloads } of all) {
       const id = host.spec.instanceId;
       const rollout = host.status?.rollout;
+      const lease = host.status?.lease;
+      const request = leaseRequest(host);
+      metrics.hostGpus.set(
+        {
+          instance_id: id,
+          gpu_product: host.spec.inventory.gpuProduct,
+          state: hostState(host, node),
+        },
+        host.spec.inventory.gpuCount,
+      );
+      const workloads = new Map<string, { kind: string; gpus: number }>();
+      // A terminating pod holds its GPUs until it exits, which for a model
+      // replica can take its whole grace period.
+      for (const pod of residentWorkloads) {
+        if (!pod.gpus) continue;
+        const kind = pod.model
+          ? "serving"
+          : pod.training
+            ? "training"
+            : "other";
+        const name = pod.model ?? kind;
+        const entry = workloads.get(name) ?? { kind, gpus: 0 };
+        workloads.set(name, { kind, gpus: entry.gpus + pod.gpus });
+      }
+      for (const [workload, { kind, gpus }] of workloads)
+        metrics.workloadGpus.set({ instance_id: id, workload, kind }, gpus);
+      if (lease)
+        metrics.leaseStarted.set(
+          {
+            instance_id: id,
+            holder: lease.holder,
+            // Free text a person wrote; long enough to say what the host is for.
+            purpose: lease.purpose.slice(0, 120),
+            preemptible: String(
+              request && "until" in request ? request.preemptible : true,
+            ),
+          },
+          Date.parse(lease.since) / 1000,
+        );
+      // A handed-back host is due back when its return starts; until then
+      // it waits in the queue, which the gauge reports as now.
+      if (lease)
+        metrics.leaseUntil.set(
+          { instance_id: id, holder: lease.holder },
+          (request && "until" in request
+            ? Date.parse(request.until)
+            : rollout?.kind === "return"
+              ? Date.parse(rollout.startedAt)
+              : now().getTime()) / 1000,
+        );
       if (rollout?.result === "Running") {
         metrics.rolloutStep.set(
           { instance_id: id, kind: rollout.kind, step: rollout.step },
@@ -1042,7 +1339,9 @@ export const createRollouts = (deps: RolloutDependencies) => {
       if (
         rollout?.result === "Blocked" &&
         sameTarget(rollout, pins) &&
-        plan.action === "start"
+        plan.action === "start" &&
+        // A lease request on the host is refused at once instead.
+        plan.kind !== "lease"
       ) {
         blocked = item;
         const room = roomFor(item, all);
@@ -1064,6 +1363,27 @@ export const createRollouts = (deps: RolloutDependencies) => {
       } else plans.set(item.host.spec.instanceId, plan);
     }
     report(all, pins, plans, blocked);
+    for (const item of all)
+      if (leaseEnded(item.host)) await endRequest(item.host);
+    // A leased host stays cordoned even if someone lifts the cordon or its
+    // node is recreated, until its return reaches Uncordon.
+    for (const item of all) {
+      const rollout = item.host.status?.rollout;
+      if (
+        item.host.status?.lease &&
+        !(rollout?.result === "Running" && rollout.step === "Uncordon") &&
+        item.node &&
+        !item.node.unschedulable
+      ) {
+        deps.log({
+          event: "gpu_lease_recordoned",
+          level: "warn",
+          instance_id: item.host.spec.instanceId,
+          pods: item.pods,
+        });
+        await act(() => cluster.cordon(item.host.spec.instanceId));
+      }
+    }
 
     const running = all
       .filter((item) => item.host.status?.rollout?.result === "Running")
@@ -1081,6 +1401,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
         await writeStatus(first.host, { plan: paused });
       return;
     }
+    await preempt(all, plans);
 
     const halted = all.find((item) => holding(item.host, pins));
     // A new retry annotation restarts that host's rollout; the rest wait for it.
@@ -1089,13 +1410,12 @@ export const createRollouts = (deps: RolloutDependencies) => {
       const retry = item.host.metadata.annotations?.[RETRY_ANNOTATION];
       return (
         rollout?.result === "Failed" &&
+        rollout.kind !== "lease" &&
         sameTarget(rollout, pins) &&
         retry !== undefined &&
         retry !== rollout.retry
       );
     });
-    // Recovering or enrolling a host adds capacity, so a blocked rollout never
-    // holds it up.
     const waitingForCapacity = blocked && !retryBlocked;
     const holder = halted
       ? `the rollout on ${halted.host.metadata.name} failed`
@@ -1110,17 +1430,32 @@ export const createRollouts = (deps: RolloutDependencies) => {
       const restores =
         waitingForCapacity &&
         plan.action === "start" &&
-        (plan.kind === "recover" || plan.kind === "enroll");
+        skipsCapacityWait(plan.kind);
       const wanted = text(plan, own || restores ? undefined : holder);
       if (wanted !== item.host.status?.plan)
         await writeStatus(item.host, { plan: wanted ?? null });
     }
     if (halted) return;
 
+    // A lease that this operator cannot start is refused at once rather than
+    // left waiting ahead of the host's other plans.
+    const unable =
+      deps.mode !== "act"
+        ? "the operator is in observe mode"
+        : enrollment === undefined
+          ? "RunPod and Tailscale access is unavailable"
+          : undefined;
+    if (unable)
+      for (const item of all) {
+        const plan = plans.get(item.host.spec.instanceId)!;
+        if (plan.action === "start" && plan.kind === "lease")
+          await start(item, plan, pins, unable);
+      }
+
     if (retried) {
       const plan = plans.get(retried.host.spec.instanceId)!;
       if (plan.action === "start" && mayAct(plan.kind))
-        return start(retried.host, plan, pins);
+        return start(retried, plan, pins);
       if (plan.action === "none")
         return writeStatus(retried.host, {
           rollout: {
@@ -1139,8 +1474,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
       .filter(
         (entry) =>
           !waitingForCapacity ||
-          (entry.plan.action === "start" &&
-            (entry.plan.kind === "recover" || entry.plan.kind === "enroll")),
+          (entry.plan.action === "start" && skipsCapacityWait(entry.plan.kind)),
       )
       .filter(
         (
@@ -1160,7 +1494,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
           a.item.host.metadata.name.localeCompare(b.item.host.metadata.name),
       );
     if (candidates[0])
-      await start(candidates[0].item.host, candidates[0].plan, pins);
+      await start(candidates[0].item, candidates[0].plan, pins);
   };
 
   return { pass };

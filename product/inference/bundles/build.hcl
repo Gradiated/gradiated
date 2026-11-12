@@ -13,19 +13,14 @@ target "bundle" {
   }
 }
 
-target "verify-deepseek-v4-1-flash" {
+target "verify-decider-27b" {
   inherits   = ["bundle"]
-  dockerfile = "bundles/deepseek-v4-1-flash/Dockerfile"
+  dockerfile = "bundles/decider-27b/Dockerfile"
 }
 
 target "verify-kev-9b" {
   inherits   = ["bundle"]
   dockerfile = "bundles/kev-9b/Dockerfile"
-}
-
-target "verify-glm-5-3-flash" {
-  inherits = ["bundle"]
-  dockerfile = "bundles/glm-5-3-flash/Dockerfile"
 }
 
 target "verify-training" {
@@ -48,4 +43,9 @@ target "verify-glm-5-3-flash-sglang" {
 target "verify-kimi-k31-pro" {
   inherits = ["bundle"]
   dockerfile = "bundles/kimi-k31-pro/Dockerfile"
+}
+
+target "verify-deepseek-v4-1-flash-sglang" {
+  inherits = ["bundle"]
+  dockerfile = "bundles/deepseek-v4-1-flash-sglang/Dockerfile"
 }

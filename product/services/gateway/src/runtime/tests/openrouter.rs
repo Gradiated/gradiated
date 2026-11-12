@@ -618,7 +618,7 @@ async fn a_stream_without_usage_or_from_two_generations_is_rejected() {
 fn each_mapping_has_a_stable_served_release_identity_of_its_own() {
     let glm = ExternalModel::openrouter(UPSTREAM_MODEL).served_release_digest();
     let deepseek =
-        ExternalModel::openrouter("deepseek/deepseek-v4.1-flash").served_release_digest();
+        ExternalModel::openrouter("deepseek/deepseek-v4.1-flash-1017").served_release_digest();
 
     assert_eq!(
         glm,

@@ -20,7 +20,7 @@ type Schema = {
 describe("gateway API reference", () => {
   it("accepts documented integer DeepSeek efforts and rejects out-of-range values", () => {
     const body = {
-      model: "deepseek/deepseek-v4.1-flash",
+      model: "deepseek/deepseek-v4.1-flash-1017",
       messages: [{ role: "user", content: "hello" }],
     };
 

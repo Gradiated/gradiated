@@ -301,7 +301,12 @@ entries use `prompt`, `cached_prompt`, and optional `cache_write`. The launch
 text output modality contains its positive token `max_length`, positive
 `default_length`, a `streaming` flag, `supported_parameters`, and pricing
 entries for `completion` and optional `internal_reasoning`. `default_length`
-cannot exceed `max_length`. Each pricing entry has `unit = token` and a
+cannot exceed `max_length`. The gateway sends `default_length` as the limit
+when a request sets none, except for models it lists as open-limit (Kimi K3.1
+Pro): those get no limit, so the runtime stops at the remaining context or its
+own cap, which equals `max_length`. Runtime releases built before that cap
+still receive `default_length`. The 630-second generation deadline still
+applies, so an output that long needs a fast enough stream to finish. Each pricing entry has `unit = token` and a
 nonnegative integer `cost` in nano-USD. Pricing types are unique within their
 modality; `prompt`, `cached_prompt`, and `completion` are present in every
 stored document.

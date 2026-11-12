@@ -15,6 +15,9 @@ it("pins every selectable training model and preserves rank two", () => {
       rank: 2,
     });
   }
+  expect(
+    trainingRecipeForModel("deepseek/deepseek-v4.1-flash-1017"),
+  ).toBeNull();
   expect(trainingRecipeForModel("deepseek/deepseek-v4.1-flash")).toBeNull();
   expect(trainingRecipeForModel("jaredpalmer/kev-9b")).toBeNull();
 });

@@ -15,7 +15,9 @@ import "../components/sand-library/sand-library.css";
 
 export const SandLibraryPage = (): ReactElement => {
   const overview = articles.find(
-    (article) => article.path === "/sand-to-thought/",
+    (article) =>
+      article.path ===
+      "/library/sand-to-thought/how-to-get-an-answer-out-of-sand/",
   );
   const deepDives = articles.filter(
     (article) =>
@@ -67,11 +69,11 @@ export const SandLibraryPage = (): ReactElement => {
                     <article className="sand-library-card" key={article.path}>
                       <a className="sand-library-link" href={article.path}>
                         <div
-                          className={`sand-library-art sand-library-art--${article.path === "/sand-to-thought/fpga/" ? "fpga" : "fabrication"}`}
+                          className={`sand-library-art sand-library-art--${article.path === "/library/sand-to-thought/fpga/" ? "fpga" : "fabrication"}`}
                         >
                           <ChipLayersArtwork
                             variant={
-                              article.path === "/sand-to-thought/fpga/"
+                              article.path === "/library/sand-to-thought/fpga/"
                                 ? "fpga"
                                 : "chip"
                             }
@@ -79,7 +81,7 @@ export const SandLibraryPage = (): ReactElement => {
                         </div>
                         <div className="sand-library-copy">
                           <p className="gr-label">
-                            {article.path === "/sand-to-thought/fpga/"
+                            {article.path === "/library/sand-to-thought/fpga/"
                               ? "FPGAs"
                               : "Fabrication"}
                             {article.status === "draft" ? " · Draft" : ""}
@@ -90,9 +92,10 @@ export const SandLibraryPage = (): ReactElement => {
                           </h3>
                           <p className="sand-library-description">
                             {article.path ===
-                            "/sand-to-thought/fabricating-a-transistor/"
+                            "/library/sand-to-thought/fabricating-a-transistor/"
                               ? "Follow a silicon wafer through the machines that build a working NOT gate."
-                              : article.path === "/sand-to-thought/fpga/"
+                              : article.path ===
+                                  "/library/sand-to-thought/fpga/"
                                 ? "A chip you can reconfigure."
                                 : article.description}
                           </p>

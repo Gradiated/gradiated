@@ -2537,6 +2537,18 @@
   font-size: var(--text-note);
 }
 
+.gr-root .gr-read-author {
+  display: grid;
+  gap: 0.3em;
+  margin: calc(1.33 * var(--u)) 0 0;
+  font-size: var(--text-note);
+  line-height: 1.3;
+}
+
+.gr-root .gr-read-author-title {
+  line-height: 1.3;
+}
+
 .gr-read-sections {
   display: grid;
   margin-block-start: calc(1.5 * var(--u));
@@ -2713,6 +2725,11 @@
   margin-block-start: 1.1em;
 }
 
+/* Without a lede, an opening paragraph takes the gap an opening h2 would. */
+.gr-root .gr-read-title + .gr-prose > :first-child:not(h2, h3) {
+  margin-block-start: calc(2.2 * 1.15 * var(--text-heading) - 0.2em);
+}
+
 /* Space above a heading, not below it: a heading belongs to what follows it,
    and equal space on both sides leaves it floating between two sections. */
 .gr-prose h2,
@@ -2804,6 +2821,18 @@
 .gr-prose pre code {
   background: none;
   padding: 0;
+}
+
+.gr-root .gr-prose > .gr-coda {
+  margin-block-start: 5em;
+}
+
+.gr-root .gr-coda > * {
+  margin-block: 0;
+}
+
+.gr-root .gr-coda > * + * {
+  margin-block-start: 1.1em;
 }
 
 .gr-prose hr {
@@ -4998,25 +5027,22 @@
   padding-block: calc(var(--nav-h) + var(--u));
 }
 
-/* The relaunch hero: left-aligned, no stage. The title wraps to three
-   lines on its own measure and the prelude follows straight under. */
+/* The relaunch hero: left-aligned, no stage. It clears the floating nav and
+   keeps the claim high in the viewport without crowding the wordmark. */
 .gr-fold-left {
   position: relative;
   z-index: 1;
   display: grid;
   align-content: start;
   text-align: left;
-  padding-block: calc(4 * var(--u)) calc(3.5 * var(--u));
+  padding-block: calc(var(--nav-h) + 2.5 * var(--u)) calc(3.5 * var(--u));
 }
 
 .gr-fold-left .gr-home-title {
-  max-width: 13ch;
+  max-width: 14ch;
   margin: 0;
   font-weight: 700;
-}
-
-.gr-home-title-narrow {
-  display: none;
+  text-wrap: balance;
 }
 
 /* Left-aligned under the statement, like the statement. */
@@ -5028,25 +5054,17 @@
   min-height: 0;
 }
 
-/* Phones: a size at which "open-source" holds a line on the module. */
+/* Phones: large enough to lead the page while clearing the compact nav. */
 @media (max-width: 60rem) {
   .gr-root .gr-fold-left {
-    padding-block: calc(1.5 * var(--u)) calc(2.5 * var(--u));
+    padding-block: calc(3 * var(--u)) calc(2.5 * var(--u));
   }
 
-  /* Larger, ON the module — no bleed into the gutters. 3rem is the
-     size at which "open source" still holds one line at 272px. */
+  /* Large, ON the module — no bleed into the gutters. */
   .gr-root .gr-fold-left .gr-home-title {
-    font-size: 3rem;
+    font-size: clamp(2.35rem, 10vw, 3rem);
     max-width: none;
-  }
-
-  .gr-home-title-wide {
-    display: none;
-  }
-
-  .gr-home-title-narrow {
-    display: inline;
+    text-wrap: wrap;
   }
 }
 
@@ -5448,16 +5466,6 @@
   padding: calc(1.2 * var(--u));
   background: var(--color-panel);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-}
-
-.gr-example-caption {
-  font-family: var(--font-caps);
-  font-size: var(--text-caps);
-  font-weight: var(--weight-caps);
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  margin-bottom: calc(0.5 * var(--u));
 }
 
 .gr-rl-step {

@@ -9,13 +9,22 @@ test("models page shows the available model and pricing", async ({ page }) => {
     page.getByRole("heading", { level: 1, name: "Models" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "DeepSeek V4.1 Flash" }),
+    page.getByRole("heading", {
+      name: "DeepSeek V4.1 Flash 1017",
+      exact: true,
+    }),
   ).toBeVisible();
-  await expect(page.getByText("deepseek/deepseek-v4.1-flash")).toBeVisible();
+  await expect(
+    page.getByText("deepseek/deepseek-v4.1-flash-1017", { exact: true }),
+  ).toBeVisible();
+
+  await expect(
+    page.getByText("deepseek/deepseek-v4.1-flash", { exact: true }),
+  ).toHaveCount(0);
 
   const modelCard = page
     .locator("article")
-    .filter({ hasText: "deepseek/deepseek-v4.1-flash" })
+    .filter({ hasText: "deepseek/deepseek-v4.1-flash-1017" })
     .first();
   const table = modelCard.getByRole("table");
   await expect(table.getByRole("columnheader")).toHaveText([
@@ -26,13 +35,13 @@ test("models page shows the available model and pricing", async ({ page }) => {
   ]);
   await expect(
     table.getByRole("row", { name: /^Input / }).getByRole("cell"),
-  ).toHaveText(["Input", "$0.210", "$0.300", "$0.450"]);
+  ).toHaveText(["Input", "$0.00400", "$0.00600", "$0.00900"]);
   await expect(
     table.getByRole("row", { name: /^Cached input / }).getByRole("cell"),
-  ).toHaveText(["Cached input", "$0.00400", "$0.00600", "$0.00900"]);
+  ).toHaveText(["Cached input", "$0.00", "$0.00100", "$0.00100"]);
   await expect(
     table.getByRole("row", { name: /^Output / }).getByRole("cell"),
-  ).toHaveText(["Output", "$0.840", "$1.20", "$1.80"]);
+  ).toHaveText(["Output", "$0.140", "$0.200", "$0.300"]);
 
   const layout = await table.evaluate((element) => {
     const tableWidth = element.getBoundingClientRect().width;

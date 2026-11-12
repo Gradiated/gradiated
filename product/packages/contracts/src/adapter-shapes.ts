@@ -101,9 +101,8 @@ export const adapterProjectionShapes = (
       add(layer, "attn.wkv", kvHeads * head, hidden);
       add(layer, "attn.wo_a", oGroups * oRank, (heads * head) / oGroups);
       add(layer, "attn.wo_b", hidden, oGroups * oRank);
-      add(layer, "ffn.experts.w1", expert, hidden);
-      add(layer, "ffn.experts.w2", hidden, expert);
-      add(layer, "ffn.experts.w3", expert, hidden);
+      // Routed experts are not adaptable: the FP4 MoE kernels SGLang serves
+      // them with expose no LoRA hooks, so the runtime rejects such adapters.
       add(layer, "ffn.shared_experts.w1", expert, hidden);
       add(layer, "ffn.shared_experts.w2", hidden, expert);
       add(layer, "ffn.shared_experts.w3", expert, hidden);

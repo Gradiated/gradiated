@@ -1,0 +1,46 @@
+{
+  "files": [
+    {
+      "source": "sm103/96221b077c9fc690.json",
+      "directory": "flashinfer/autotune/0.7.2/sm103/96221b077c9fc690",
+      "ranks": 2,
+      "size": 9574,
+      "sha256": "743a247a52cc5b4c1845c8a7584a70096bad5f95debcea39cbab9a3eed025c5e"
+    },
+    {
+      "source": "sm103/914a2f33d0a0bcde.json",
+      "directory": "flashinfer/autotune/0.7.2/sm103/914a2f33d0a0bcde",
+      "ranks": 2,
+      "size": 18767,
+      "sha256": "13cf2a42b68839b70ed3eb76db8a0f994669f9489c479846e8dce42b4780f807"
+    },
+    {
+      "source": "sm103/799b0406bf50cae8.json",
+      "directory": "flashinfer/autotune/0.7.2/sm103/799b0406bf50cae8",
+      "ranks": 2,
+      "size": 15073,
+      "sha256": "37dc5641bacf8084e1d1d1aec34139d7aee3ffffc369bfbb79c51ef6b8ceb624"
+    },
+    {
+      "source": "sm103/7cc59b521c5a34b8.json",
+      "directory": "flashinfer/autotune/0.7.2/sm103/7cc59b521c5a34b8",
+      "ranks": 2,
+      "size": 23807,
+      "sha256": "bda9b91087efa0a34c00f1fd88e9be34aa58354243a0237e05538463b0e11e53"
+    },
+    {
+      "source": "sm103/95f36cc166dc9bf9.json",
+      "directory": "flashinfer/autotune/0.7.2/sm103/95f36cc166dc9bf9",
+      "ranks": 2,
+      "size": 24266,
+      "sha256": "14b7d8d18162361688f2fdb1609aaa5c4840e22863204af33ce2c9fedbf0f694"
+    },
+    {
+      "source": "sm103/f10ab05c5134a59f.json",
+      "directory": "flashinfer/autotune/0.7.2/sm103/f10ab05c5134a59f",
+      "ranks": 2,
+      "size": 35521,
+      "sha256": "0b31790762ade33080a2f0fb2f0016d5e9f77e2a35a4bef874267f3485149988"
+    }
+  ]
+}

@@ -524,6 +524,7 @@ mod tests {
         for valid in [
             "z-ai/glm-5.3-flash",
             "deepseek/deepseek-v4.1-flash",
+            "deepseek/deepseek-v4.1-flash-1017",
             "meta-llama/llama_4.1",
         ] {
             assert!(valid_openrouter_model_id(valid), "{valid}");

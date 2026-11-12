@@ -8,7 +8,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[2]
 PACKAGE = 'product/inference/host/gradiated_host'
 FILES = ('enroll.py', 'enrollment-result.schema.json')
-PRODUCTS = ('B200', 'H200')
+PRODUCTS = ('B200', 'H100', 'H200', 'L40S')
 
 REMOTE = r'''import json,os,pathlib,re,subprocess,sys,tempfile
 document=json.load(sys.stdin)
@@ -22,8 +22,8 @@ if pathlib.Path('/etc/gradiated/kubelet.json').exists():
 names=subprocess.check_output(['nvidia-smi','--query-gpu=name','--format=csv,noheader'],text=True,timeout=30).splitlines()
 busy=subprocess.check_output(['nvidia-smi','--query-compute-apps=pid','--format=csv,noheader'],text=True,timeout=30).strip()
 product=document['product']
-if len(names)!=2 or any(not re.search(r'\b'+product+r'\b',name) for name in names) or busy:
-    raise SystemExit('Requires an idle pair of '+product+' GPUs')
+if not names or any(not re.search(r'\b'+product+r'\b',name) for name in names) or busy:
+    raise SystemExit('Requires idle '+product+' GPUs only')
 root=pathlib.Path('/opt/gradiated/lib/gradiated_host')
 for name,content in document['files'].items():
     if name not in ('enroll.py','enrollment-result.schema.json'):

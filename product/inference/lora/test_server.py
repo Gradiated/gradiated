@@ -49,8 +49,8 @@ class ServerTests(unittest.TestCase):
         for method, path in (
             ("POST", "/v1/chat/completions"),
             ("POST", "/v1/completions"),
-            ("POST", "/v1/load_lora_adapter"),
-            ("POST", "/v1/unload_lora_adapter"),
+            ("POST", "/load_lora_adapter"),
+            ("POST", "/unload_lora_adapter"),
             ("GET", "/v1/models"),
             ("GET", "/metrics"),
         ):
@@ -77,13 +77,13 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(body)["boot_id"], self.loader.boot_id)
         self.assertEqual(
-            self.loader.engine.call_args.args[:2], ("POST", "/v1/load_lora_adapter")
+            self.loader.engine.call_args.args[:2], ("POST", "/load_lora_adapter")
         )
         _, metrics = self.request("GET", "/internal/adapters/metrics")
         self.assertIn(b"gradiated_lora_registrations_total 1", metrics)
         self.assertNotIn(self.name.encode(), metrics)
 
-    def test_resolve_returns_verified_files_without_calling_vllm(self):
+    def test_resolve_returns_verified_files_without_calling_the_engine(self):
         status, body = self.request(
             "POST",
             "/internal/adapters/resolve",

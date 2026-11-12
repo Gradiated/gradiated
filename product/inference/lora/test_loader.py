@@ -35,7 +35,7 @@ class LoaderTests(unittest.TestCase):
         self.commands.append((method, path, body))
         if path == "/v1/models":
             return json.dumps({"data": [{"id": name} for name in self.models]}).encode()
-        if path == "/v1/load_lora_adapter":
+        if path == "/load_lora_adapter":
             self.models.add(body["lora_name"])
         return b"ok"
 
@@ -216,7 +216,7 @@ class LoaderTests(unittest.TestCase):
         self.assertEqual(len(self.models), 3)
         self.assertEqual(self.config["cpu_adapter_slots"], 1)
         self.assertTrue(
-            all(path == "/v1/load_lora_adapter" for _, path, _ in self.commands)
+            all(path == "/load_lora_adapter" for _, path, _ in self.commands)
         )
         self.assertTrue(all(entry["pinned"] for entry in self.loader.entries.values()))
         self.assertFalse(hasattr(self.loader, "capacity"))
@@ -282,7 +282,7 @@ class LoaderTests(unittest.TestCase):
 
         def engine(method, path, body=None):
             nonlocal attempts
-            if path == "/v1/load_lora_adapter":
+            if path == "/load_lora_adapter":
                 attempts += 1
                 if attempts == 1:
                     raise TimeoutError

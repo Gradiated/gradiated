@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"errors"
+	"reflect"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -16,6 +18,56 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 )
+
+func TestStartupLabelsFollowTheHostAndLeaveOtherLabels(t *testing.T) {
+	ctx := context.Background()
+	rt, stale := strings.Repeat("a", 16), strings.Repeat("b", 16)
+	others := map[string]string{"gradiated.com/fault-domain": "m1", "gradiated.com/kernels." + rt: "true", "example.com/bundle." + stale: "true"}
+	initial := map[string]string{"gradiated.com/bundle." + stale: "true", "gradiated.com/weights." + rt: "true"}
+	for key, value := range others {
+		initial[key] = value
+	}
+	client := fake.NewSimpleClientset(&v1.Node{ObjectMeta: metav1.ObjectMeta{Name: "gpu-x", Labels: initial}})
+	labels := func() map[string]string {
+		node, err := client.CoreV1().Nodes().Get(ctx, "gpu-x", metav1.GetOptions{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return node.Labels
+	}
+	reported := func(parts ...string) func(context.Context) ([]string, error) {
+		return func(context.Context) ([]string, error) { return parts, nil }
+	}
+
+	if err := reconcileStartupLabels(ctx, client, "gpu-x", reported("bundle."+rt, "weights."+rt, "other."+rt, "bundle.XYZ")); err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{"gradiated.com/bundle." + rt: "true", "gradiated.com/weights." + rt: "true"}
+	for key, value := range others {
+		want[key] = value
+	}
+	if got := labels(); !reflect.DeepEqual(got, want) {
+		t.Fatalf("labels = %v, want %v", got, want)
+	}
+
+	unreachable := func(context.Context) ([]string, error) { return nil, errors.New("host unreachable") }
+	if err := reconcileStartupLabels(ctx, client, "gpu-x", unreachable); err == nil {
+		t.Fatal("a failed read was not reported")
+	}
+	if got := labels(); !reflect.DeepEqual(got, want) {
+		t.Fatalf("a failed read changed the labels to %v", got)
+	}
+
+	if err := reconcileStartupLabels(ctx, client, "gpu-x", reported()); err != nil {
+		t.Fatal(err)
+	}
+	if got := labels(); !reflect.DeepEqual(got, others) {
+		t.Fatalf("labels = %v, want %v", got, others)
+	}
+	if err := reconcileStartupLabels(ctx, client, "gpu-missing", reported()); err != nil {
+		t.Fatalf("a missing node is not an error: %v", err)
+	}
+}
 
 func gpuHostObject(id string, gpus int64) *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: map[string]any{

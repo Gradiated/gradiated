@@ -33,6 +33,13 @@ STORAGE = (
     "product/packages/contracts/*",
     "product/packages/config/*",
 )
+# Model definitions and prices reach other services through the database at
+# deploy time, not through code or fixtures, so they need only the TypeScript
+# checks of control and its consumers.
+CATALOG_MODELS = (
+    "product/packages/control/src/catalog/models/*",
+    "product/packages/control/test/catalog-models.test.ts",
+)
 GATEWAY = ("product/services/gateway/*", *STORAGE)
 PROXY = ("product/services/proxy/*", *GATEWAY, "product/packages/credentials/*")
 COLLECTOR = ("product/services/collector/*", *PROXY)
@@ -44,8 +51,7 @@ JOB_PATHS = {
         "product/inference/desmond/*",
         "product/inference/engine/*",
     ),
-    "native_vllm": ("product/inference/runtimes/vllm/*",),
-    "native_kev": ("product/inference/runtimes/kev/*",),
+    "native_kev": ("product/inference/runtimes/kev/*", "product/inference/runtimes/decider/*"),
     "gateway_contract": (*GATEWAY, *RUNTIMES, "product/docker-compose.yml"),
     "proxy_e2e": (
         *PROXY,
@@ -77,6 +83,7 @@ JOB_PATHS = {
         "product/mprocs.yaml",
         "product/tsconfig.scripts.json",
         "tools/deployment/*",
+        "tools/docs-refresh/*",
         "tools/github-apps/*",
         "tools/images/*",
         "product/packages/contracts/*",
@@ -138,6 +145,7 @@ def plan(paths: list[str], root: Path = ROOT, force: bool = False) -> dict:
         for path in paths
     )
     all_checks = force or removed_manifest or any(matches(path, COMMON) for path in paths)
+    cross_service = [path for path in paths if not matches(path, CATALOG_MODELS)]
     packages = workspaces(root)
     selected = {
         name
@@ -159,7 +167,7 @@ def plan(paths: list[str], root: Path = ROOT, force: bool = False) -> dict:
             ),
         ),
     ):
-        if any(matches(path, scopes) for path in paths):
+        if any(matches(path, scopes) for path in cross_service):
             selected.add(name)
     while True:
         dependents = {
@@ -186,7 +194,7 @@ def plan(paths: list[str], root: Path = ROOT, force: bool = False) -> dict:
         and name != "@gradiated/wizard"
     )
     result = {
-        job: all_checks or any(matches(path, scopes) for path in paths)
+        job: all_checks or any(matches(path, scopes) for path in cross_service)
         for job, scopes in JOB_PATHS.items()
     }
     result["format"] = formatting or all_checks
@@ -206,7 +214,7 @@ def plan(paths: list[str], root: Path = ROOT, force: bool = False) -> dict:
     result["console_build"] = "@gradiated/console" in selected or "tools/deployment/console-artifact.mjs" in paths
     result["website"] |= "gradiated-com" in selected
     result["inference_native"] = any(
-        result[key] for key in ("native_cpp", "native_vllm", "native_kev")
+        result[key] for key in ("native_cpp", "native_kev")
     )
     return result
 

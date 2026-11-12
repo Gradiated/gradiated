@@ -9,8 +9,7 @@ export const createKimiK31ProModelConfiguration = () =>
     id: kimiK31ProModelId,
     name: modelDisplayName(kimiK31ProModelId),
     status: "available",
-    // Checked 2026-11-06: OpenRouter's entry has this model's Hugging Face ID.
-    openrouterModelId: "moonshotai/kimi-k3.1-pro",
+    openrouterModelId: null,
     properties: {
       description:
         "Moonshot AI's Kimi K3.1 Pro with MXFP4 routed experts, reasoning and tool use.",
@@ -25,8 +24,8 @@ export const createKimiK31ProModelConfiguration = () =>
             max_context_length: { value: 1_048_576, unit: "token" },
           },
           pricing: [
-            { type: "prompt", unit: "token", cost: 1_800 },
-            { type: "cached_prompt", unit: "token", cost: 180 },
+            { type: "prompt", unit: "token", cost: 500 },
+            { type: "cached_prompt", unit: "token", cost: 50 },
           ],
         },
       ],
@@ -34,7 +33,9 @@ export const createKimiK31ProModelConfiguration = () =>
         {
           type: "text",
           max_length: { value: 131_072, unit: "token" },
-          default_length: { value: 4_096, unit: "token" },
+          // A request without a limit may use the model maximum. The gateway
+          // sends no limit, so the runtime also stops at the remaining context.
+          default_length: { value: 131_072, unit: "token" },
           streaming: true,
           supported_parameters: {
             temperature: { type: "range", min: 0, max: 2 },
@@ -46,12 +47,18 @@ export const createKimiK31ProModelConfiguration = () =>
             tools: { type: "unknown" },
             tool_choice: { type: "unknown" },
             parallel_tool_calls: { type: "boolean" },
+            // Rendered into the Kimi prompt and, for json_schema, enforced by
+            // the runtime grammar unless `strict` is false.
+            response_format: { type: "unknown" },
+            // Moonshot Partial Mode: `partial: true` on the final assistant
+            // message. The gateway continues that message without reasoning.
+            partial: { type: "boolean" },
             reasoning: { type: "unknown" },
             reasoning_effort: { type: "enum", values: ["low", "high", "max"] },
           },
           pricing: [
-            { type: "completion", unit: "token", cost: 9_000 },
-            { type: "internal_reasoning", unit: "token", cost: 9_000 },
+            { type: "completion", unit: "token", cost: 5_000 },
+            { type: "internal_reasoning", unit: "token", cost: 5_000 },
           ],
         },
       ],

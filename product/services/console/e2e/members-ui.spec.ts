@@ -13,6 +13,7 @@ const setup = async (
     email = "alex@acme.com",
     signedIn = true,
     preview = "pending",
+    now = Date.now,
   }: {
     role?: "admin" | "member";
     isStaff?: boolean;
@@ -20,6 +21,7 @@ const setup = async (
     email?: string;
     signedIn?: boolean;
     preview?: "pending" | "expired" | "invalid";
+    now?: () => number;
   } = {},
 ) => {
   const organization = {
@@ -133,14 +135,15 @@ const setup = async (
     }
     if (url.pathname === "/api/v1/admin/impersonations") {
       const target = members.find((item) => item.user_id === body.user_id)!;
-      const now = await request.frame().evaluate(() => Date.now());
       Object.assign(me, {
         id: target.user_id,
         email: target.email,
         name: "Customer",
         is_staff: false,
         impersonated_by: staffProfile.id,
-        impersonation_expires_at: new Date(now + 15 * 60 * 1000).toISOString(),
+        impersonation_expires_at: new Date(
+          now() + 15 * 60 * 1000,
+        ).toISOString(),
       });
       return route.fulfill({ json: { user_id: target.user_id } });
     }
@@ -152,8 +155,7 @@ const setup = async (
       if (
         me.impersonated_by &&
         me.impersonation_expires_at &&
-        Date.parse(me.impersonation_expires_at) <=
-          (await request.frame().evaluate(() => Date.now()))
+        Date.parse(me.impersonation_expires_at) <= now()
       )
         return route.fulfill({
           status: 401,
@@ -596,8 +598,10 @@ test("staff paginate server results and reset the page when searching", async ({
 test("impersonation countdown survives reload and automatically returns to staff at 15 minutes", async ({
   page,
 }) => {
-  await page.clock.install();
-  const { requests } = await setup(page, { isStaff: true });
+  let elapsed = 0;
+  const now = () => Date.now() + elapsed;
+  await page.clock.install({ time: now() });
+  const { requests } = await setup(page, { isStaff: true, now });
   await page.goto(`/admin/organizations/${organizationId}`);
   await page.getByRole("button", { name: "Impersonate sam@acme.com" }).click();
   await expect(page).toHaveURL(/\/api-keys$/);
@@ -608,12 +612,14 @@ test("impersonation countdown survives reload and automatically returns to staff
   };
   await expect.poll(remainingSeconds).toBeGreaterThanOrEqual(895);
   await expect.poll(remainingSeconds).toBeLessThanOrEqual(900);
+  elapsed += 60_000;
   await page.clock.fastForward(60_000);
   await expect.poll(remainingSeconds).toBeLessThanOrEqual(840);
   const beforeReload = await remainingSeconds();
   await page.reload();
   await expect.poll(remainingSeconds).toBeLessThanOrEqual(beforeReload);
   await expect.poll(remainingSeconds).toBeGreaterThanOrEqual(beforeReload - 5);
+  elapsed += 14 * 60_000;
   await page.clock.fastForward(14 * 60_000);
   await expect(page).toHaveURL(/\/admin$/);
   await expect(page.getByRole("timer")).toHaveCount(0);

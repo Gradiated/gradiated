@@ -2,6 +2,11 @@
 
 Date: 2026-08-27
 
+Historical record: this run used the vLLM GLM runtime, whose source has been
+removed. GLM-5.3 Flash moves to the SGLang bundle
+(`product/inference/bundles/glm-5-3-flash-sglang`) once its production pool is
+pinned to it; until then the GLM pool stays at zero replicas on the vLLM runtime.
+
 ## Scope
 
 - Model: `z-ai/glm-5.3-flash`

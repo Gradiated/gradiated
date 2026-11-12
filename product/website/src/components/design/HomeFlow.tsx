@@ -830,7 +830,7 @@ export const HomeFlow = (): ReactElement => {
             ))}
           </h2>
           <p className="gr-muted">
-            {"Cheapest means going all the way. We’re designing our own chips to bring costs down further than software alone can."
+            {"Once you move to your own model, we make money by offering you the inference. We’re designing our own chips to drive down your costs further than anyone else can."
               .split(" ")
               .map((w, i) => (
                 <span

@@ -278,3 +278,53 @@ describe("planning a host that does not answer", () => {
     ).toMatchObject({ action: "start", kind: "enroll" });
   });
 });
+
+describe("leases", () => {
+  const leasedHost = (until: string | undefined) => {
+    const leased = host(ago(60));
+    leased.status = {
+      ...leased.status,
+      lease: { holder: "agent", purpose: "sweep", since: ago(30) },
+    };
+    if (until)
+      leased.metadata.annotations = {
+        "fleet.gradiated.com/lease": JSON.stringify({
+          holder: "agent",
+          purpose: "sweep",
+          until,
+        }),
+      };
+    return leased;
+  };
+
+  it("leaves a leased host that stopped answering alone instead of recovering it", () => {
+    const later = new Date(NOW.getTime() + 60 * 60_000).toISOString();
+    const plan = planHost(
+      facts({
+        host: leasedHost(later),
+        pod: pod({ lastStartedAt: ago(20) }),
+      }),
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      NOW,
+    );
+
+    expect(plan).toEqual({
+      action: "wait",
+      reason: `Leased to agent until ${later}: sweep`,
+    });
+  });
+
+  it("returns a leased host once its lease is handed back or expires", () => {
+    for (const until of [undefined, ago(1)])
+      expect(
+        planHost(
+          facts({
+            host: leasedHost(until),
+            observation: answering(OLD_BUNDLE),
+          }),
+          pins(OLD_IMAGE, OLD_BUNDLE),
+          NOW,
+        ),
+      ).toMatchObject({ action: "start", kind: "return" });
+  });
+});

@@ -7,15 +7,23 @@ from fnmatch import fnmatchcase
 from pathlib import Path
 
 
+def matches(path, patterns):
+    """A path matches when a pattern selects it and no `!` pattern excludes it."""
+    excluded = any(
+        fnmatchcase(path, pattern[1:]) for pattern in patterns if pattern.startswith("!")
+    )
+    return not excluded and any(
+        fnmatchcase(path, pattern) for pattern in patterns if not pattern.startswith("!")
+    )
+
+
 def select(paths, scopes, workflow, force=False):
     common = (workflow, ".github/actions/relevant/*", "mise.toml")
     run_all = force or any(
         fnmatchcase(path, pattern) for path in paths for pattern in common
     )
     return {
-        check: run_all or any(
-            fnmatchcase(path, pattern) for path in paths for pattern in patterns
-        )
+        check: run_all or any(matches(path, patterns) for path in paths)
         for check, patterns in scopes.items()
     }
 

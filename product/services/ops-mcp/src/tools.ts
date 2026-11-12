@@ -131,6 +131,10 @@ const DASHBOARDS = [
     url: "https://grafana.gradiated.com/d/gradiated-controllers",
   },
   {
+    title: "Gradiated / GPU Fleet",
+    url: "https://grafana.gradiated.com/d/gradiated-gpu-fleet",
+  },
+  {
     title: "Gradiated / Production Logs",
     url: "https://grafana.gradiated.com/d/gradiated-logs",
   },

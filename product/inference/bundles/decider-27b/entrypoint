@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="${GRADIATED_RUNTIME_ROOT:?}"
+export CUDA_VISIBLE_DEVICES="${NVIDIA_VISIBLE_DEVICES:?Host agent must assign a GPU UUID}"
+export TOKENIZERS_PARALLELISM=false
+export OMP_NUM_THREADS=8
+export CPATH="$root/python/include/python3.12${CPATH:+:$CPATH}"
+unset PYTHONPATH PYTHONHOME LD_PRELOAD
+exec "$root/python/bin/python3" "$root/service.py" --port "${RUNTIME_PORT:?}"

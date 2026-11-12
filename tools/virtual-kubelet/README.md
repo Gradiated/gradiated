@@ -120,7 +120,7 @@ All production serving replicas and training Jobs use Kubernetes. Existing
 RunPod containers retain a suspended legacy main process only to preserve their
 reservation; it has no jobs or cluster access. New hosts use the GPU base image.
 
-Use Go 1.26.10, matching the compiler pinned in CI and the controller builder
+Use Go 1.26.11, matching the compiler pinned in CI and the controller builder
 image. Run the local adapter checks with:
 
 ```sh
@@ -207,13 +207,13 @@ To stop a pool but keep its definition, set `max_replicas: 0` instead.
 `models.json` maps each public model to `min_slots` and its pools. A pool is one
 Rollout: one runtime release on one GPU type. A slot is one concurrent request
 a replica admits: the runtime's enforced `active_requests`, or the pool's
-`slots` for a runtime that enforces none (Kev and the vLLM runtimes). The same
+`slots` for a runtime that enforces none (such as Kev). The same
 limit weights gateway routing, so pools of different GPUs share one model's
 traffic in proportion to their slots.
 
 ```json
 "dealignai/glm-5.3-flash-uncensored": {
-  "min_slots": 60,
+  "min_slots": 24,
   "pools": {
     "glm-dealign-sglang": {"runtime": "722c…", "gpu": "B300", "max_replicas": 5, "progress_deadline_seconds": 5400},
     "glm-dealign-sglang-h200": {"runtime": "130e…", "gpu": "H200", "max_replicas": 0, "progress_deadline_seconds": 5400}
@@ -239,8 +239,8 @@ renderer requires positive `min_slots` for SystemOne models such as Kev.
 OpenRouter's own traffic to us never falls back, so it fails while a model has
 no capacity of ours.
 
-Every pool scales on the same two signals, in its own slots, and the HPA takes
-the larger:
+Every pool scales on the same three signals, in its own slots, and the HPA takes
+the largest (a pool with no floor has a fourth, below):
 
 - **Utilization.** The model's peak in-flight generations over the last minute
   (`gradiated:model_busy_slots`), divided by 0.7, less the slots the pools ahead
@@ -264,11 +264,48 @@ There is no CPU, memory or GPU-memory signal. Both recording rules live in
 constants live in `tools/gpu/render-config.py`. All queries require fresh,
 complete gateway telemetry. Missing samples or a Prometheus outage trigger a
 fallback that retains the current replica count when it exceeds the floor.
-Scale-up adds at most one replica per minute; scale-down waits ten minutes and
-removes at most one per 750 seconds, longer than the runtime drain. New replicas
+Scale-up adds every replica the signals ask for at once, at least doubling or
+adding four every 15 seconds, because a start takes minutes; scale-down waits ten minutes and
+removes one at a time: a third signal, `draining`, holds the requested count
+while any of the pool's replicas is terminating, because it can still hold its
+GPUs, so the next removal waits only as long as the actual drain. New replicas
 become available only after SDK qualification, so keep the floor large enough
 for immediate traffic. None of this provisions or resets a provider GPU, and
 scaling down releases GPUs without reducing the RunPod reservation bill.
+
+A pool with no floor may be at zero replicas when a new revision lands, so its
+canary analysis would have nothing to qualify. While its Rollout updates, a
+fourth signal, `qualifying`, asks for one replica, and the pool moves straight
+to the new revision rather than through a half-weight canary, which at one
+replica would also restart the previous runtime. That replica must pass SDK
+qualification; if no host can take it, the analysis times out and the Rollout
+aborts. Once the update completes, an idle pool returns to zero after the
+usual cooldown.
+
+### Startup state labels
+
+Each GPU node carries labels saying what a runtime it already pins needs
+to start is already on the host's disk, so model pods can prefer hosts that
+start faster. `<rt>` is the first 16 hex characters of the runtime's key in
+`product/inference/gpu/runtimes.json`:
+
+- `gradiated.com/bundle.<rt>=true`: the runtime's bundle for the host's base is
+  staged under the host agent's `bundles/` directory.
+- `gradiated.com/weights.<rt>=true`: every pinned model repository of the
+  release is in the host's Hugging Face cache at the pinned revision. The host
+  checks this offline: the snapshot has `config.json` and every shard its
+  `model.safetensors.index.json` names (or a `model.safetensors`), and the
+  repository has no `.incomplete` blob. A repository without safetensors never
+  counts as present.
+
+The host agent recomputes these parts from disk at start and every 60 seconds in
+housekeeping, and returns the last result to the `startup_parts` operation. The
+gpu-controller reads them every 60 seconds per host and patches the node: it
+adds missing labels and removes `gradiated.com/bundle.*` and
+`gradiated.com/weights.*` labels the host no longer reports, leaving every other
+label alone. A frozen recovery agent rejects the operation and so reports no
+parts. If the host cannot be read, the labels stay as they are, so a
+missed pass or a manual edit is corrected by the next successful one.
 
 ### Reservations
 
@@ -276,15 +313,18 @@ A host is reserved with a `gradiated.com/reserved=<name>` `NoSchedule` taint in
 `hosts.yaml`. A pool with `"reservation": "<name>"` tolerates it and is
 confined to exactly the hosts carrying it; the renderer derives that host list,
 so adding a host to a reservation is a `hosts.yaml` change. Kimi K3.1 Pro
-reserves both eight-B300 hosts as `kimi-k31`. The four-B300 host `01a0f19d`
-is reserved for `training`, which training Jobs tolerate. A tensor-parallel
-replica needs all its GPUs on one host; `gpu_count` selects hosts by size.
+reserves both eight-B300 hosts as `kimi-k31`; every other host is shared. A
+tensor-parallel replica needs all its GPUs on one host; `gpu_count` selects
+hosts by size.
 
-Training Jobs use the `gpu-training` PriorityClass, below the default priority
-of model pods, so on a shared host a model replica or rollout pod that cannot
-fit preempts training rather than waiting. Training never preempts. A preempted
-trainer resumes in a new Job from its latest checkpoint, with up to three
-attempts per training stage.
+Training runs opportunistically on shared capacity. Training Jobs use the
+`gpu-training` PriorityClass, below the default priority of model pods, so a
+model replica that cannot fit preempts training rather than waiting; training
+never preempts. A preempted trainer resumes in a new Job from its latest S3
+checkpoint, with up to three attempts per training stage. Its pod directory is
+retired with the pod, so local disk is scratch: work since the last checkpoint
+is lost. To hold capacity for training that must not be preempted, give a host
+the `training` reservation, which training Jobs tolerate and models cannot use.
 
 ### Staging a pool
 
@@ -304,6 +344,26 @@ below the floor after thirty seconds. A pool's alert floor allows the
 `max_unavailable` replicas a rollout replaces at once, but never drops below one
 replica, so a one-at-a-time replacement does not warn. Requested capacity that stays unready for
 twenty minutes, including a scale-up from zero, has a separate warning.
+
+### GPU scheduler
+
+EKS runs `default-scheduler` in its managed control plane with a fixed profile
+that scores nodes `LeastAllocated`, so it spreads pods: a TP2 pod can take an
+empty 4-GPU host and leave no whole host for a TP4 or TP8 pod. The
+`gradiated-gpu` scheduler (`gpu-inference/gpu-scheduler.yaml`) is a second,
+upstream `kube-scheduler` in `gpu-inference`, two replicas behind a leader
+lease. Its one profile keeps the default plugins but scores `NodeResourcesFit`
+`MostAllocated` on `nvidia.com/gpu` only, so the fullest host that still fits
+wins and a TP2 pod takes a free 2-GPU host, or the free half of a 4-GPU host,
+first. `NodeAffinity` has weight 10 against packing's 5, so a preferred node
+affinity (a warm host, say) outranks packing. Two default scores that pull the
+other way are off: `NodeResourcesBalancedAllocation`, and the system default
+spread constraints of `PodTopologySpread`, which put a Deployment's replicas
+on different hosts. A pool that must spread sets anti-affinity instead.
+Packing only applies when a pod is placed: a scale-down removes whichever pod
+the ReplicaSet picks, which can leave two half-used hosts. Pods opt in with `schedulerName: gradiated-gpu`; any other pod keeps
+`default-scheduler`. `GpuSchedulerUnavailable` warns when it has no ready
+replica for ten minutes.
 
 ## Rollout alerts
 
@@ -438,8 +498,8 @@ one at a time, and records each host's progress in `status.rollout` of its
   Ready on other hosts; mark the host's pods to be removed first
   (`controller.kubernetes.io/pod-deletion-cost`) and lower the count again, so no
   model ever has fewer Ready replicas than it had. A model listed in
-  `RETIRE_ON_REIMAGE` (`product/services/gpu-fleet/src/rollout.ts`; today only
-  `kimi-k31-pro`, which OpenRouter serves meanwhile) is not moved: once its
+  `RETIRE_ON_REIMAGE` (`product/services/gpu-fleet/src/rollout.ts`; currently
+  empty) is not moved: once its
   other replicas are Ready elsewhere, its pods on the host are marked first and
   its count lowered by that many, and the host blocks if that would leave the
   model with no replica. Such a model needs no room elsewhere to proceed. Resume
@@ -540,8 +600,18 @@ registers.
 
 The operator exports host bundle versions, drift from the pin, rollout steps and
 failures under the metric names the controller used before
-(`gradiated_gpu_host_*`), so the controllers dashboard and alerts are unchanged;
-`GpuHostRolloutStuck` fires if a host stays in one step for two hours.
+(`gradiated_gpu_host_*`), so existing alerts are unchanged;
+`GpuHostRolloutStuck` fires if a host stays in one step for two hours. It also
+exports each host's GPUs labelled with its state
+(`gradiated_gpu_fleet_host_gpus`: `in_pool`, `reserved`, `cordoned` by a
+person, `leasing`, `leased`, `returning`, `updating` or `degraded`), the GPUs each workload's pods request on
+each host (`gradiated_gpu_fleet_host_workload_gpus`), each lease's holder,
+purpose and start, and lease outcomes
+(`gradiated_gpu_fleet_lease_events_total`: `granted`, `released`, `expired`,
+`preempted`, `failed`, `return_failed`). The
+[GPU Fleet dashboard](https://grafana.gradiated.com/d/gradiated-gpu-fleet)
+charts them with model slots, replicas and autoscaling signals, and the GPU host
+and fleet alerts link to its panels.
 
 Local checks use fake bundles and processes without GPUs or production access:
 
@@ -572,6 +642,73 @@ by `e2e_image.py` contains `/etc/gradiated/test-control-server`, without which
 python3 product/inference/images/gpu-base/tests/e2e_image.py /tmp/gpu-fleet-e2e
 (cd product/services/gpu-fleet && GPU_FLEET_E2E=/tmp/gpu-fleet-e2e pnpm exec vitest run --config vitest.e2e.config.ts)
 ```
+
+### Leasing a host
+
+Hand-run work, such as training on sensitive data, leases a whole host; a host
+is never shared between a lease and serving or training pods. The gpu-fleet
+operator does the work and `tools/gpu/host-lease.py` writes the request, the
+`fleet.gradiated.com/lease` annotation on the `GpuHost`
+(`{"holder", "purpose", "until", "preemptible"}`):
+
+```sh
+python3 tools/gpu/host-lease.py acquire 01a0f19d --hours 6 --purpose "SFT sweep" [--no-preempt]
+python3 tools/gpu/host-lease.py wait 01a0f19d     # until the host is leased, or the lease fails
+python3 tools/gpu/host-lease.py extend 01a0f19d --hours 2
+python3 tools/gpu/host-lease.py release 01a0f19d  # hand it back early
+python3 tools/gpu/host-lease.py status
+```
+
+- A lease rollout first checks the request and the host, and refuses reserved
+  hosts (a `gradiated.com/reserved` taint), hosts that do not answer or have
+  no node, nodes already cordoned (by a person, a qualification slot or a
+  failed rollout), hosts whose rollout is blocked waiting for room, and pods
+  with a RunPod volume, which a re-image keeps (Kev's RTX host `01a0f1bc` and
+  both Kimi hosts have one). An operator in observe mode, or without RunPod and
+  Tailscale access, refuses every lease. It then cordons the host
+  and moves its model replicas onto free GPUs on other hosts, as a re-image
+  does, drains it and records `status.lease`. It does not rearrange other
+  hosts' pods to make room. If the replicas have no room, a training job runs
+  there, or a replacement replica finds no host, the lease fails at once and
+  the host stays in the pool.
+- Each request is tried once. The operator records the outcome on
+  `status.rollout` (with the request in `rollout.lease`) and removes the
+  annotation, so the host is planned like any other again; run `acquire` again
+  to retry. A failed lease never holds up the fleet's other rollouts, and the
+  retry annotation does not apply to it. A failed lease does not mark the host
+  Degraded. A lease waits its turn behind a
+  rollout that is running, but not behind one waiting for capacity.
+- While leased, the host is cordoned, cordoned again if someone lifts it or the
+  node is recreated, and the operator does nothing else to it: no re-image,
+  bundle update or recovery. Autoscaling has one host fewer, and
+  overflow goes to OpenRouter.
+- A lease is preemptible unless requested with `--no-preempt`
+  (`"preemptible": false`). Once a model replica that would fit on a
+  preemptible leased host has found no host for ten minutes, counted from the
+  last rollout to finish, the operator returns that host, the one due back
+  soonest first, and the replica lands there after the return. The holder gets
+  no warning beyond `status`. A re-image waiting for room does not preempt a
+  lease; it waits for the lease to end.
+- Removing the annotation hands the host back; reaching `until` does the same,
+  and a request from a different holder is treated as a hand-back followed by
+  a new lease, so the host is wiped between holders.
+  A return rollout re-images the RunPod pod onto the pinned image, which
+  recreates its container disk and so removes everything the holder left, then
+  enrolls, verifies, soaks and uncordons it. A return runs even while another
+  rollout waits for capacity, since it adds a host. A return that cannot run
+  fails rather than blocks, so the host stays cordoned until it is wiped, and
+  is retried once the pins change or the retry annotation is set;
+  `GpuHostLeaseOverdue` warns an hour after an unreturned lease expires or its
+  return starts. The tool caps a lease at seven days, and writes each change
+  only if the `GpuHost` is unchanged since it was read, so two holders cannot
+  both acquire it.
+
+The host keeps its management key across the return. A holder with root could
+read it, so rotate it by hand after leasing a host that ran untrusted code;
+rotating it automatically needs `secretsmanager:PutSecretValue` for the
+operator. The `$gpu-host-lease` skill has the procedure for agents. Active
+leases, their time left and their outcomes are on the
+[GPU Fleet dashboard](https://grafana.gradiated.com/d/gradiated-gpu-fleet).
 
 ### Reserving an isolated qualification slot
 

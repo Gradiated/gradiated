@@ -117,14 +117,25 @@ def main():
         ], expected, ['LokiUnavailable', 'LokiRedundancyDegraded'],
            {'namespace': 'observability', 'statefulset': 'loki'})
 
-    for failures in [2, 5]:
+    for failures in [19, 20]:
         scenario('runtime failure sample floor: ' + str(failures), [
             {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="failed"}',
              'values': f'0 0 {failures}+0x60'},
             {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded"}',
              'values': '0 0 20+0x60'},
-        ], 'GatewayRuntimeFailures' if failures == 5 else None, ['GatewayRuntimeFailures'],
+        ], 'GatewayRuntimeFailures' if failures == 20 else None, ['GatewayRuntimeFailures'],
            {'model': 'test/model', 'deployment': 'test-deployment'}, '2m', interval='5s')
+
+    for name, eval_time, expected in [
+        ('brief burst', '30s', None),
+        ('sustained for one minute', '2m', 'GatewayRuntimeFailures'),
+        ('expired from three-minute window', '4m', None),
+    ]:
+        scenario('runtime failure persistence: ' + name, [
+            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="failed"}',
+             'values': '0 0 20+0x60'},
+        ], expected, ['GatewayRuntimeFailures'],
+           {'model': 'test/model', 'deployment': 'test-deployment'}, eval_time, interval='5s')
 
     lora_labels = {'job': 'lora-loaders', 'instance': 'test:1', 'deployment': 'test-a'}
     def lora_series(metric, values, job='lora-loaders', deployment='test-a'):
@@ -795,7 +806,7 @@ def main():
         {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="new",loop="kubernetes_deployment_reconciliation"}', 'values': '1+5x20'},
     ], 'ModelNoReadyReplicas', ['ModelNoReadyReplicas'], {'model': 'test/model'}, '90s', interval='5s')
 
-    for failed, succeeded, expected in [('0+2x60', '0+100x60', 'GatewayRuntimeFailures'),
+    for failed, succeeded, expected in [('0+6x60', '0+100x60', 'GatewayRuntimeFailures'),
                                         ('0+0x60', '0+100x60', None),
                                         ('0 1+0x59', '0+100x60', None)]:
         scenario('per-deployment runtime failures: ' + failed, [
@@ -806,12 +817,12 @@ def main():
 
     for traffic, expected in [('verification', None), ('routed', 'GatewayRuntimeFailures')]:
         scenario('verification traffic does not page: ' + traffic, [
-            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="failed",error="runtime_unavailable",traffic="' + traffic + '"}', 'values': '0+2x60'},
+            {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="failed",error="runtime_unavailable",traffic="' + traffic + '"}', 'values': '0+6x60'},
             {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded",traffic="routed"}', 'values': '0+100x60'},
         ] + ([{'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded",traffic="verification"}', 'values': '0+100000x60'}] if traffic == 'routed' else []), expected, ['GatewayRuntimeFailures'], {'model': 'test/model', 'deployment': 'test-deployment'}, '2m', interval='5s')
 
     for alert, labels, ratio, window, succeeded in [
-        ('GatewayRuntimeFailures', {'model': 'test/model', 'deployment': 'bad'}, 2, '2m', 100),
+        ('GatewayRuntimeFailures', {'model': 'test/model', 'deployment': 'bad'}, 6, '2m', 100),
         ('GatewaySevereGenerationFailures', {'deployment': 'bad'}, 3, '3m', 1),
     ]:
         prefix = 'gradiated_gateway_generations_total{model="test/model",deployment="bad",traffic="routed",'
@@ -872,8 +883,8 @@ def main():
         scenario('capacity rejection idle or missing: ' + str(values), inputs,
                  None, ['GatewayCapacityRejections'], eval_time='2m', interval='5s')
 
-    for failed, succeeded, expected in [(1, 199, None), (1, 99, None), (2, 98, 'GatewayRuntimeFailures')]:
-        scenario('one-percent runtime failure boundary: ' + str((failed, succeeded)), [
+    for failed, succeeded, expected in [(4, 96, None), (5, 95, None), (6, 94, 'GatewayRuntimeFailures')]:
+        scenario('five-percent runtime failure boundary: ' + str((failed, succeeded)), [
             {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="failed",traffic="routed"}', 'values': f'0+{failed}x60'},
             {'series': 'gradiated_gateway_generations_total{model="test/model",deployment="test-deployment",status="succeeded",traffic="routed"}', 'values': f'0+{succeeded}x60'},
         ], expected, ['GatewayRuntimeFailures'], {'model': 'test/model', 'deployment': 'test-deployment'}, '2m', interval='5s')
@@ -1105,7 +1116,7 @@ def main():
     scenario('AWS root missing telemetry', [], root_missing, [root_alert, root_missing], eval_time='35m')
     scenario('AWS root telemetry recovered', [root_usage('_x64 0x20')], None, [root_alert, root_missing], eval_time='35m')
 
-    for alert, metric_name, severity in [('AwsUrgentSecurityFinding', 'urgent_findings', 'critical'), ('AwsSecurityFindingNeedsReview', 'review_findings', 'warning')]:
+    for alert, metric_name, severity in [('AwsUrgentSecurityFinding', 'urgent_findings', 'warning'), ('AwsSecurityFindingNeedsReview', 'review_findings', 'warning')]:
         assert alerts[alert]['labels']['severity'] == severity
         def finding_series(values, namespace='observability'):
             return {'series': f'gradiated_security_{metric_name}_maximum{{namespace="{namespace}",job="cloudwatch-exporter",service="cloudwatch-exporter"}}', 'values': values}
@@ -1209,6 +1220,14 @@ def main():
         if synced is not None:
             inputs.append({'series': 'gradiated_gpu_fleet_postgres_last_sync_timestamp_seconds', 'values': synced})
         scenario(f'GPU fleet {name}', inputs, sync_failing if fires else None, [sync_failing], eval_time='45m')
+
+    # Promtool's clock starts at zero, so a lease due at 600s is overdue by 75 minutes at 85m.
+    for name, due, fires in [('lease still running', 10_000, False), ('lease due back an hour ago', 600, True)]:
+        scenario(f'GPU host {name}', [
+            {'series': 'gradiated_gpu_fleet_lease_until_timestamp_seconds{instance_id="h1",holder="agent"}',
+             'values': f'{due}+0x200'},
+        ], 'GpuHostLeaseOverdue' if fires else None, ['GpuHostLeaseOverdue'],
+           {'instance_id': 'h1', 'holder': 'agent'}, eval_time='85m')
 
     with tempfile.TemporaryDirectory(prefix='observability-check-') as directory:
         temp = Path(directory)

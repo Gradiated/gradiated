@@ -1,7 +1,13 @@
 import type { InstanceTailnet, RunPod } from "@gradiated/gpu-hosts";
 
 import type { NodeState } from "./cluster.js";
-import type { GpuHost, Rollout } from "./hosts.js";
+import {
+  leaseEnded,
+  leaseRequest,
+  RESERVED_TAINT,
+  type GpuHost,
+  type Rollout,
+} from "./hosts.js";
 import type { Observation } from "./observe.js";
 import type { Pins } from "./pins.js";
 
@@ -54,9 +60,87 @@ const notGone = ({ observation, tailnet }: HostFacts) => {
     return "Its tailnet device is connected, so the host is running";
 };
 
+// A leased host is left alone until its lease is handed back, expires or is
+// given to someone else; then a return re-images it, wiping everything the
+// holder left, before it rejoins. A return, once started, is finished first.
+const planLease = (facts: HostFacts, now: Date): Plan | undefined => {
+  const { host } = facts;
+  const request = leaseRequest(host);
+  const lease = host.status?.lease;
+  const returning = (reason: string): Plan => ({
+    action: "start",
+    kind: "return",
+    reason,
+  });
+  if (lease) {
+    if (host.status?.rollout?.kind === "return")
+      return returning("The return did not finish");
+    if (!request || "invalid" in request)
+      return returning("The lease was handed back");
+    if (request.holder !== lease.holder)
+      return returning(
+        `The lease was given to ${request.holder}, so the host is wiped first`,
+      );
+    if (now.getTime() >= Date.parse(request.until))
+      return returning(`The lease expired at ${request.until}`);
+
+    return {
+      action: "wait",
+      reason: `Leased to ${lease.holder} until ${request.until}: ${lease.purpose}${
+        facts.pods
+          ? `; ${facts.pods} pods were scheduled on it while it was uncordoned`
+          : ""
+      }`,
+    };
+  }
+  if (!request) return undefined;
+  // The rollout pass removes a request that has had its outcome.
+  if (leaseEnded(host))
+    return { action: "wait", reason: "Removing the ended lease request" };
+
+  // The rollout checks the request before it touches the host; a request it
+  // refuses fails at once, as a lease that cannot start does.
+  return {
+    action: "start",
+    kind: "lease",
+    reason:
+      "invalid" in request
+        ? "Checking the lease request"
+        : `Leasing to ${request.holder} until ${request.until}: ${request.purpose}`,
+  };
+};
+
+// Why a lease cannot start on this host, checked before anything is changed.
+export const leaseRefusal = (facts: HostFacts, now: Date) => {
+  const { host, observation, pod, node } = facts;
+  const request = leaseRequest(host);
+  if (!request) return "the lease request was removed";
+  if ("invalid" in request)
+    return `the lease annotation is invalid (${request.invalid})`;
+  if (now.getTime() >= Date.parse(request.until))
+    return `the lease ended at ${request.until} before it started`;
+  if (host.spec.extraTaints?.some((taint) => taint.key === RESERVED_TAINT))
+    return "the host is reserved";
+  // The rollout is waiting for room for this host's replicas, which a lease
+  // would need too.
+  if (host.status?.rollout?.result === "Blocked")
+    return `its ${host.status.rollout.kind} is blocked: ${host.status.rollout.lastError}`;
+  if (!observation.reachable) return "the host does not answer";
+  if (!node) return "the host has no Kubernetes node";
+  // Someone's cordon may guard work Kubernetes cannot see, and a rollout's
+  // left by a failed rollout keeps the host out of service on purpose.
+  if (node.unschedulable) return "the node is already cordoned";
+  if (!pod) return "RunPod could not be read";
+  if (pod.volumeInGb)
+    return "the pod has a RunPod volume, which a re-image would not wipe";
+};
+
 export const planHost = (facts: HostFacts, pins: Pins, now: Date): Plan => {
   const { host, observation, pod, tailnet } = facts;
   if (host.metadata.deletionTimestamp) return { action: "none" };
+
+  const lease = planLease(facts, now);
+  if (lease) return lease;
 
   if (observation.reachable) {
     if (!pod)

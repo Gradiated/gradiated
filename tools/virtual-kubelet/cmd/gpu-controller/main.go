@@ -373,6 +373,20 @@ func (p *provider) NotifyNodeStatus(ctx context.Context, callback func(*v1.Node)
 	}()
 }
 
+// startupParts reads which startup state the host has on disk, such as
+// "bundle.<runtime>"; the host agent refreshes it every minute.
+func (p *provider) startupParts(ctx context.Context) ([]string, error) {
+	var result struct {
+		Parts []string `json:"parts"`
+	}
+	err := p.callPayload(ctx, map[string]any{"operation": "startup_parts"}, &result)
+	// The frozen recovery agent rejects the operation; it reports nothing, so stale labels go.
+	if errdefs.IsInvalidInput(err) && strings.HasSuffix(err.Error(), fmt.Sprintf("returned %d", http.StatusUnprocessableEntity)) {
+		return nil, nil
+	}
+	return result.Parts, err
+}
+
 func runHost(ctx context.Context, client kubernetes.Interface, namespace string, h host, fence *hostFence) error {
 	name := "gpu-" + h.InstanceID
 	resources := v1.ResourceList{v1.ResourceCPU: *resource.NewQuantity(h.CPU, resource.DecimalSI), v1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", h.MemoryGiB)), v1.ResourcePods: resource.MustParse("16"), "nvidia.com/gpu": *resource.NewQuantity(h.GPUCount, resource.DecimalSI)}
@@ -415,6 +429,7 @@ func runHost(ctx context.Context, client kubernetes.Interface, namespace string,
 	}
 	factory.Start(ctx.Done())
 	resourcesFactory.Start(ctx.Done())
+	go reconcileStartupLabelsEvery(ctx, client, name, p.startupParts, time.Minute)
 	go func() {
 		if err := pc.Run(ctx, 2); err != nil && ctx.Err() == nil {
 			log.Printf("pod controller %s failed: %v", name, err)

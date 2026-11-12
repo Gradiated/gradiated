@@ -54,12 +54,19 @@ the complete development stack through mprocs. The launcher requires `lsof`
 (`apt-get install lsof` on Debian/Ubuntu):
 
 ```sh
+mise run env:build
 nvm use
 corepack enable
 pnpm install
 pnpm exec turbo run build --filter=@gradiated/api --filter=@gradiated/worker
 pnpm dev
 ```
+
+`mise run env:build` writes the ignored repository-root `.env` from the
+`gradiated/dev/env` secret. It uses the `gradiated-restricted` AWS profile,
+which every collaborator has through the `Restricted` group: it creates the
+profile if needed and opens an AWS sign-in when the session has expired. Rerun it when that secret changes; it keeps any
+variables only your `.env` has under a local-only section.
 
 `pnpm dev` first stops stale application listeners (3000–3004, 9003–9004,
 8233, 9464–9465, and 30000), then launches mprocs. It leaves datastore ports alone. Prefer it over
@@ -274,7 +281,8 @@ on one another and therefore run in parallel.
 
 ## Local model catalog
 
-The default seed lists DeepSeek V4.1 Flash and GLM-5.3 Flash. It retires the
+The default seed lists every model in `packages/control/src/catalog/models/`,
+including DeepSeek V4.1 Flash 1017 and GLM-5.3 Flash. It retires the
 old Qwen catalog entry without deleting history. Use `SEED_LOCAL_QWEN=1` to
 include Qwen for the local inference smoke check.
 
@@ -288,25 +296,28 @@ This mode does not sign in or change account credit. The new entries do not
 create inference deployments. The local SGLang process still serves Qwen;
 DeepSeek and GLM require matching deployments before they can serve requests.
 
-IDs were checked on 13 September 2026:
+DeepSeek IDs were checked on 10 November 2026; GLM IDs on 13 September 2026:
 
-- [DeepSeek catalog ID](https://openrouter.ai/deepseek/deepseek-v4.1-flash):
-  `deepseek/deepseek-v4.1-flash`.
-- [DeepSeek weights](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash):
-  `deepseek-ai/DeepSeek-V4.1-Flash`.
+- [DeepSeek catalog ID](https://openrouter.ai/deepseek/deepseek-v4.1-flash-1017):
+  `deepseek/deepseek-v4.1-flash-1017`.
+- [DeepSeek weights](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017):
+  `deepseek-ai/DeepSeek-V4.1-Flash-1017` at
+  `1bae0e1088993b9b82de08f59de5be5a34e42170`.
 - [GLM catalog ID](https://openrouter.ai/z-ai/glm-5.3-flash):
   `z-ai/glm-5.3-flash`.
 - [GLM weights](https://huggingface.co/zai-org/GLM-5.3-Flash):
   `zai-org/GLM-5.3-Flash`.
 
-DeepSeek seed prices use the common full provider rate from the cited OpenRouter
-snapshot: $0.30 input, $0.006 cached input, and $1.20 output per million tokens.
-These match Together, SiliconFlow, and several other providers on 13 September
-2026. Do not use the lowest headline rate of $0.15/$0.003/$0.60. OpenRouter has
-provider-specific prices, so this is an explicit seed pricing policy. Limits
-also use the cited snapshot. These are
-local catalog fixtures, not measured serving limits or production pricing.
-GLM reuses the existing model configuration. Both seeds expose text input.
+DeepSeek V4.1 Flash 1017 is hosted on our capacity at $0.006 input,
+$0.001 cached input, and $0.20 output per million tokens. Output pricing also
+applies to reasoning tokens. OpenRouter fallback is capped at our input/output
+prices; providers above either cap cannot serve fallback requests.
+
+The original `deepseek/deepseek-v4.1-flash` checkpoint is retired and is neither
+listed nor served, including through its retained OpenRouter mapping. Existing
+callers must explicitly select `deepseek/deepseek-v4.1-flash-1017`; the old ID is
+not an alias. GLM reuses the existing model configuration. Both active seeds
+expose text input.
 
 Verification: API type checks and three model configuration tests passed.
 Two catalog-only seed runs returned exactly the two requested models from the

@@ -1,3 +1,5 @@
+import { createDecider27bModelConfiguration } from "./decider-27b.js";
+import { createDeepseekV41Flash1017ModelConfiguration } from "./deepseek-v4-1-flash-1017.js";
 import { createDeepseekV41FlashModelConfiguration } from "./deepseek-v4-1-flash.js";
 import {
   createDealignGlm53FlashModelConfiguration,
@@ -8,7 +10,8 @@ import { createKev9bModelConfiguration } from "./kev-9b.js";
 import { createKimiK31ProModelConfiguration } from "./kimi-k31-pro.js";
 
 export const catalogModels = [
-  createDeepseekV41FlashModelConfiguration(),
+  createDecider27bModelConfiguration(),
+  createDeepseekV41Flash1017ModelConfiguration(),
   createGlm53FlashModelConfiguration(),
   createDealignGlm53FlashModelConfiguration(),
   createKev9bModelConfiguration(),
@@ -22,6 +25,7 @@ export const legacyModels = [
     id: "dealignai/glm-5.3-flash-uncensored-nvfp4",
     status: "retired" as const,
   },
+  createDeepseekV41FlashModelConfiguration(),
 ];
 
 export {

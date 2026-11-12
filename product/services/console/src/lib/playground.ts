@@ -232,7 +232,9 @@ export const playgroundModels = (
     .filter(
       (task) =>
         version?.task === task.name &&
-        version.name !== privateModelName(organizationSlug, task.name) &&
+        version.name.startsWith(
+          `${privateModelName(organizationSlug, task.name)}/`,
+        ) &&
         !hosted.some((model) => model.id === version.name),
     )
     .map((task) => ({

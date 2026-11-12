@@ -115,6 +115,19 @@ const conversation: PlaygroundMessage[] = [
 ];
 
 describe("playgroundModels", () => {
+  it("ignores report task context belonging to a different selected model", () => {
+    const models = playgroundModels(
+      [],
+      [task("support-assistant", true), task("billing", true)],
+      "acme",
+      { task: "support-assistant", name: "acme/billing" },
+    );
+
+    expect(models.map(({ id }) => id)).toEqual([
+      "acme/support-assistant",
+      "acme/billing",
+    ]);
+  });
   it("keeps the exact version from a report link alongside the production task", () => {
     const models = playgroundModels(
       [hosted("z-ai/glm-5.3-flash")],

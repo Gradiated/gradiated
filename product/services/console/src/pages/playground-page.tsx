@@ -71,7 +71,8 @@ export const PlaygroundPage = () => {
   }: PlaygroundSettingsPatch) => {
     if (nextModel !== undefined) {
       void navigate({
-        search: (current) => ({ ...current, model: nextModel }),
+        search: (current) =>
+          nextModel === current.model ? current : { model: nextModel },
         replace: true,
       });
     }

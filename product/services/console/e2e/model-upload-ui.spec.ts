@@ -739,3 +739,59 @@ test("report charts keep visible colors for column names with spaces and punctua
     page.locator('.recharts-line-curve[stroke="#6e7f31"]'),
   ).toHaveCount(2);
 });
+
+test("switching playground models clears the report version task context", async ({
+  page,
+}) => {
+  await setup(page);
+  await versionFiles(page, {});
+  await page.route(/\/api\/v1\/models$/, (route) =>
+    route.fulfill({ json: { data: [], service_tiers: [] } }),
+  );
+  await page.route(/\/api\/v1\/workspaces\/[^/]+\/tasks$/, (route) =>
+    route.fulfill({
+      json: {
+        data: [
+          {
+            ...task,
+            production_version_id: version.id,
+            latest_run: null,
+            latest_version: deliveredVersion,
+          },
+          {
+            ...task,
+            id: "00000000-0000-4000-8000-000000000007",
+            name: "other-model",
+            production_version_id: version.id,
+            latest_run: null,
+            latest_version: deliveredVersion,
+          },
+        ],
+      },
+    }),
+  );
+  await page.goto(`/tasks/${task.name}/versions/${version.id}`);
+  await page.getByRole("link", { name: "Try in playground" }).click();
+  await expect
+    .poll(() => new URL(page.url()).searchParams.get("task"))
+    .toBe(task.name);
+  const picker = page.getByRole("combobox", { name: "Model", exact: true });
+  await expect(picker).toContainText(`test-org/${task.name}/${version.name}`);
+  await picker.click();
+  await page
+    .getByRole("option", { name: "test-org/other-model", exact: true })
+    .click();
+  await expect
+    .poll(() => new URL(page.url()).searchParams.get("task"))
+    .toBeNull();
+  await expect
+    .poll(() => new URL(page.url()).searchParams.get("model"))
+    .toBe("test-org/other-model");
+  await picker.click();
+  await expect(
+    page.getByRole("option", { name: "test-org/other-model", exact: true }),
+  ).toHaveCount(1);
+  await page.keyboard.press("Escape");
+  await page.reload();
+  await expect(picker).toContainText("test-org/other-model");
+});

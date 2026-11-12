@@ -32,7 +32,7 @@ Both APIs are free and public, so the only secret is the Slack webhook.
    • moonshotai/Kimi-K3.1-Pro · weights live
 
    🛰️ OpenRouter · Tencent: new model
-   • Tencent: Hy4 tencent/hy4 · 1M context · served by Tencent · weights not public yet
+   • Tencent: Hy4 tencent/hy4 · served by Tencent · weights not public yet
    ```
 
 6. Saves the updated IDs to the cache for the next run.

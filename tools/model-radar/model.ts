@@ -12,7 +12,7 @@ export type Model = {
   /** What people call it, e.g. "MoonshotAI: Kimi K3.1 Pro". */
   name: string;
   url: string;
-  /** Short facts for the alert, e.g. "262k context". */
+  /** Short facts for the alert, e.g. "weights live". */
   details: string[];
   /** The Hugging Face model holding its weights, when the source names one. */
   weights?: string;

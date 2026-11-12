@@ -12,13 +12,12 @@ describe("OpenRouterSource", () => {
       {
         id: "moonshotai/kimi-k3.1-pro",
         name: "MoonshotAI: Kimi K3.1 Pro",
-        context_length: 262144,
         hugging_face_id: "moonshotai/Kimi-K3.1-Pro",
       },
       { id: "moonshotai/kimi-k3.1-pro:free", name: "free tier" },
       { id: "~moonshotai/kimi-latest", name: "alias" },
       { id: "cohere/command-a-plus", name: "not watched" },
-      { id: "Qwen/qwen3.8-27b", context_length: 1048576, hugging_face_id: "" },
+      { id: "Qwen/qwen3.8-27b", hugging_face_id: "" },
     ]);
 
     const scans = await new OpenRouterSource(send, [
@@ -37,7 +36,7 @@ describe("OpenRouterSource", () => {
             owner: "moonshotai",
             name: "MoonshotAI: Kimi K3.1 Pro",
             url: "https://openrouter.ai/moonshotai/kimi-k3.1-pro",
-            details: ["262k context"],
+            details: [],
             weights: "moonshotai/Kimi-K3.1-Pro",
           },
         ],
@@ -51,7 +50,7 @@ describe("OpenRouterSource", () => {
             owner: "qwen",
             name: "Qwen/qwen3.8-27b",
             url: "https://openrouter.ai/Qwen/qwen3.8-27b",
-            details: ["1M context"],
+            details: [],
           },
         ],
       },
@@ -83,7 +82,7 @@ describe("OpenRouterSource", () => {
       owner: "tencent",
       name: "Tencent: Hy4",
       url: "https://openrouter.ai/tencent/hy4",
-      details: ["1M context"],
+      details: [],
       weights: "tencent/Hy4",
     };
     const serving = (...names: string[]) =>
@@ -108,7 +107,7 @@ describe("OpenRouterSource", () => {
           [`${HUB}/tencent/Hy4`]: () =>
             new Response("private", { status: 401 }),
         }),
-        ["1M context", "served by Tencent", "weights not public yet"],
+        ["served by Tencent", "weights not public yet"],
       );
     });
 
@@ -123,11 +122,7 @@ describe("OpenRouterSource", () => {
           ),
           [`${HUB}/tencent/Hy4`]: json({ id: "tencent/Hy4" }),
         }),
-        [
-          "1M context",
-          "served by Tencent, Together and Fireworks",
-          "weights live",
-        ],
+        ["served by Tencent, Together and Fireworks", "weights live"],
       );
     });
 
@@ -152,7 +147,7 @@ describe("OpenRouterSource", () => {
           },
           kimi,
         ),
-        ["1M context", "served by Moonshot AI and 5 others"],
+        ["served by Moonshot AI and 5 others"],
       );
     });
 
@@ -161,7 +156,7 @@ describe("OpenRouterSource", () => {
         await details({
           [`${HUB}/tencent/Hy4`]: () => new Response("busy", { status: 503 }),
         }),
-        ["1M context"],
+        [],
       );
     });
   });

@@ -15,11 +15,7 @@ const openRouter: Alert = {
       owner: "moonshotai",
       name: "MoonshotAI: Kimi K3.1 Pro",
       url: "https://openrouter.ai/moonshotai/kimi-k3.1-pro",
-      details: [
-        "262k context",
-        "served by Moonshot AI and 16 others",
-        "weights live",
-      ],
+      details: ["served by Moonshot AI and 16 others", "weights live"],
     },
   ],
 };
@@ -42,7 +38,7 @@ describe("SlackNotifier", () => {
       SlackNotifier.format(openRouter),
       [
         "*🛰️ OpenRouter · Moonshot AI: new model*",
-        "• <https://openrouter.ai/moonshotai/kimi-k3.1-pro|MoonshotAI: Kimi K3.1 Pro> `moonshotai/kimi-k3.1-pro` · 262k context · served by Moonshot AI and 16 others · weights live",
+        "• <https://openrouter.ai/moonshotai/kimi-k3.1-pro|MoonshotAI: Kimi K3.1 Pro> `moonshotai/kimi-k3.1-pro` · served by Moonshot AI and 16 others · weights live",
       ].join("\n"),
     );
   });
@@ -93,7 +89,7 @@ describe("ConsoleNotifier", () => {
     assert.deepEqual(lines, [
       [
         "🛰️ OpenRouter · Moonshot AI: new model",
-        "  • MoonshotAI: Kimi K3.1 Pro (moonshotai/kimi-k3.1-pro) · 262k context · served by Moonshot AI and 16 others · weights live https://openrouter.ai/moonshotai/kimi-k3.1-pro",
+        "  • MoonshotAI: Kimi K3.1 Pro (moonshotai/kimi-k3.1-pro) · served by Moonshot AI and 16 others · weights live https://openrouter.ai/moonshotai/kimi-k3.1-pro",
       ].join("\n"),
     ]);
   });

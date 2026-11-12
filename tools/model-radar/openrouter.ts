@@ -7,7 +7,6 @@ import type { Model, Scan, Source } from "./model.ts";
 type RouterModel = {
   id: string;
   name?: string;
-  context_length?: number | null;
   hugging_face_id?: string | null;
 };
 
@@ -73,9 +72,7 @@ export class OpenRouterSource implements Source {
       owner: prefix,
       name: entry.name || entry.id,
       url: `https://openrouter.ai/${entry.id}`,
-      details: entry.context_length
-        ? [`${contextSize(entry.context_length)} context`]
-        : [],
+      details: [],
     };
     if (entry.hugging_face_id && MODEL_ID.test(entry.hugging_face_id))
       model.weights = entry.hugging_face_id;
@@ -154,9 +151,3 @@ const squash = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, "");
  * alias. These would double the alerts and say nothing new.
  */
 const isVariant = (id: string) => id.includes(":") || id.startsWith("~");
-
-/** 262144 -> "262k", 1048576 -> "1M", as OpenRouter's own pages show them. */
-const contextSize = (tokens: number) =>
-  tokens >= 999_500
-    ? `${Number((tokens / 1_000_000).toFixed(1))}M`
-    : `${Math.round(tokens / 1000)}k`;

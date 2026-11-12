@@ -141,8 +141,7 @@ export const SlackInvitation = ({
           </div>
           <p className="text-sm text-muted-foreground">
             Accept the invitation in Slack or your inbox. Your workspace may
-            require admin approval. You can start the project now; we’ll be in
-            the channel when you arrive.
+            require admin approval.
           </p>
         </div>
       ) : (

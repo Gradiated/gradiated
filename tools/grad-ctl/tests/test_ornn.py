@@ -1,4 +1,4 @@
-"""Ornn provider against canned API responses: python3 -m unittest discover -s tools/dev-training"""
+"""grad-ctl compute: the Ornn provider against canned API responses."""
 
 import tempfile
 import unittest
@@ -6,7 +6,8 @@ import urllib.error
 from pathlib import Path
 from unittest import mock
 
-from ornn import Ornn
+import _path  # noqa: F401
+from grad_ctl.compute.ornn import Ornn
 
 RESERVATION = '4b0f7d5e-0a8f-4f5e-9d55-5c1b6a0c2a11'
 

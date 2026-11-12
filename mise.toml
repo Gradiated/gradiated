@@ -11,15 +11,9 @@ terraform = "1.14.6"
 terragrunt = "1.1.2"
 trivy = "0.75.0"
 
-[tasks."aws:login"]
-description = "Log in to Gradiated AWS (read-only by default; override with --profile)"
-usage = 'flag "--profile <profile>" default="gradiated-readonly" help="AWS CLI profile to log in with"'
-run = 'aws sso login --profile "${usage_profile:?}"'
-
-[tasks."env:build"]
-description = "Write .env from the gradiated/dev/env secret (gradiated-restricted by default; override with --profile)"
-usage = 'flag "--profile <profile>" default="gradiated-restricted" help="AWS CLI profile to read the secret with"'
-run = 'python3 tools/env/build.py --profile "${usage_profile:?}"'
+[tasks."grad-ctl:install"]
+description = "Install grad-ctl, the developer and agent CLI, as one file at ~/.local/bin/grad-ctl"
+run = "python3 tools/grad-ctl/build.py --install"
 
 [tasks.infra-fmt]
 description = "Format Terraform and Terragrunt configuration"
@@ -41,10 +35,6 @@ run = [
 [tasks.infra-sec]
 description = "Report security misconfigurations in the standalone bootstrap roots with Trivy"
 run = "trivy config --quiet --exit-code 1 infra/bootstrap"
-
-[tasks."github-apps:create"]
-description = "Create Gradiated GitHub Apps and store their keys without printing them"
-run = "node tools/github-apps/create.mjs"
 
 [tasks.sglang-local]
 description = "Run the pinned Apple Silicon SGLang development model"

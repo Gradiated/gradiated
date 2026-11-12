@@ -79,4 +79,4 @@ fake-SGLang service.
 
 ## Verification
 
-Run the narrowest relevant checks, python3 tools/devex/check.py, and git diff --check. Preserve unrelated worktree changes and never commit credentials or customer/model payloads.
+Run the narrowest relevant checks, grad-ctl devex check, and git diff --check. Preserve unrelated worktree changes and never commit credentials or customer/model payloads.

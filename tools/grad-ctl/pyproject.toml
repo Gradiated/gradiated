@@ -1,0 +1,21 @@
+# Installable with `uv tool install --editable tools/grad-ctl`, which follows the
+# checkout. `mise run grad-ctl:install` installs the single-file build instead.
+[project]
+name = "grad-ctl"
+version = "0.1.0"
+description = "The Gradiated developer and agent CLI"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+grad-ctl = "grad_ctl.cli:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"grad_ctl.compute" = ["nebius-projects.json"]

@@ -1,10 +1,11 @@
-"""Search filters and provider choice: python3 -m unittest discover -s tools/dev-training"""
+"""grad-ctl compute: search filters and provider choice."""
 
 import argparse
 import re
 import unittest
 
-import dev_training
+import _path  # noqa: F401
+from grad_ctl.compute import commands as dev_training
 
 
 def search_args(**overrides):
@@ -97,7 +98,7 @@ class SearchTests(unittest.TestCase):
         self.assertEqual(rows, [OFFER])
 
     def test_nebius_max_price_uses_the_live_spot_price(self):
-        from nebius import Nebius
+        from grad_ctl.compute.nebius import Nebius
         nebius = Nebius(lambda name: '', None)
         nebius.spot_prices = lambda: {('eu-north1', 'gpu-h100-sxm'): 2.37}
         nebius.estimate = lambda region, platform, preset, term: 99.0

@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""Build the repository .env from the shared development secret.
+"""`grad-ctl env build`: build the repository .env from the shared development secret.
 
 Reads gradiated/dev/env from AWS Secrets Manager and writes .env with mode
 0600. Variables in the existing .env that the secret does not hold are kept
@@ -10,15 +9,17 @@ has. Creates that AWS profile when it is missing and signs in when the
 session has expired.
 """
 
-import argparse
 import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+from .core import Context, DependencyMissing, Meta, Result, group, leaf
 
 SECRET_ID = "gradiated/dev/env"
 REGION = "us-east-1"
@@ -30,7 +31,6 @@ SSO_SESSION = {
 }
 # Profiles are named after their permission sets, except the admin profile.
 PERMISSION_SETS = {"gradiated-admin": "AdministratorAccess"}
-ROOT = Path(__file__).resolve().parents[2]
 NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 LOCAL_HEADER = "# Local only: not in gradiated/dev/env"
 
@@ -135,22 +135,20 @@ def quote(value: str) -> str:
     return "'" + value.replace("'", "'\\''") + "'"
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--profile", default="gradiated-restricted")
-    arguments = parser.parse_args()
-
+def build(ctx: Context) -> Result:
+    if not shutil.which('aws'):
+        raise DependencyMissing('aws', 'install the AWS CLI v2 (`mise install`)')
     # Never follow a symlink: replacing it would overwrite the file it names.
-    target = ROOT / ".env"
+    target = ctx.repo() / ".env"
     if target.is_symlink():
         sys.exit(f"{target} is a symlink. Remove it or point mise at a regular file, and run again.")
-    values = read_secret(arguments.profile)
+    values = read_secret(ctx.args.profile)
     existing = read_existing(target)
     # Keep every local line in file order: one may refer to another before it,
     # and a repeated name changes meaning part way through the file.
     kept = [(name, line) for name, line in existing if name not in values]
 
-    lines = [f"# Built from {SECRET_ID} by `mise run env:build`; rerun to refresh."]
+    lines = [f"# Built from {SECRET_ID} by `grad-ctl env build`; rerun to refresh."]
     lines += [f"{name}={quote(values[name])}" for name in sorted(values)]
     if kept:
         lines += ["", LOCAL_HEADER, *(line for _, line in kept)]
@@ -166,12 +164,38 @@ def main() -> None:
         raise
 
     added = sorted(set(values) - {name for name, _ in existing})
-    print(f"Wrote {target} with {len(values)} variables from {SECRET_ID}.")
+    kept_names = list(dict.fromkeys(name for name, _ in kept))
+    text = [f"Wrote {target} with {len(values)} variables from {SECRET_ID}."]
     if added:
-        print("Added:", ", ".join(added))
-    if kept:
-        print("Kept local-only:", ", ".join(dict.fromkeys(name for name, _ in kept)))
+        text.append("Added: " + ", ".join(added))
+    if kept_names:
+        text.append("Kept local-only: " + ", ".join(kept_names))
+    # Names only, never values.
+    return Result(data={"path": str(target), "variables": sorted(values), "added": added,
+                        "kept_local_only": kept_names}, text="\n".join(text))
 
 
-if __name__ == "__main__":
-    main()
+def login(ctx: Context) -> Result:
+    if not shutil.which('aws'):
+        raise DependencyMissing('aws', 'install the AWS CLI v2 (`mise install`)')
+    ensure_profile(ctx.args.profile)
+    subprocess.run(["aws", "sso", "login", "--profile", ctx.args.profile], check=True)
+    return Result(data={"profile": ctx.args.profile},
+                  text=f"Signed in as {ctx.args.profile}. Set AWS_PROFILE={ctx.args.profile} to use it; "
+                       "logging in does not change the shell's AWS_PROFILE.")
+
+
+def register(commands, common) -> None:
+    # Both run off the tailnet: they are how a new machine gets the key that joins it.
+    env = group(commands, "env", "The ignored repository .env built from gradiated/dev/env")
+    parser = leaf(env, "build", build, Meta(
+        "Write .env (mode 0600) from gradiated/dev/env, keeping local-only variables; prints names, never values",
+        effects="write", repo=True, tailnet=False, interactive=True, requires=("aws",)), common)
+    parser.add_argument("--profile", default="gradiated-restricted", help="AWS profile that reads the secret")
+    aws = group(commands, "aws", "Gradiated AWS access")
+    parser = leaf(aws, "login", login, Meta(
+        "Sign in to AWS SSO, creating the profile if it is missing (opens a browser)",
+        effects="write", tailnet=False, interactive=True, requires=("aws",)), common)
+    parser.add_argument("--profile", default="gradiated-readonly",
+                        help="gradiated-readonly (default), gradiated-developer for writes, "
+                             "gradiated-admin for break-glass")

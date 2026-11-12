@@ -43,7 +43,7 @@ jobs:
         run: |
           missing=0
           [ -n "$ANTHROPIC_API_KEY" ] || { echo "::error::Set the DOCS_REFRESH_ANTHROPIC_API_KEY repository secret."; missing=1; }
-          [ "$DRY_RUN" = true ] || [ -n "$DOCS_APP_CLIENT_ID" ] || { echo "::error::Create the Gradiated Docs app with 'mise run github-apps:create -- docs'."; missing=1; }
+          [ "$DRY_RUN" = true ] || [ -n "$DOCS_APP_CLIENT_ID" ] || { echo "::error::Create the Gradiated Docs app with 'grad-ctl github-apps create docs'."; missing=1; }
           [ -n "$GRADIATED_API_KEY" ] || echo "::warning::DOCS_REFRESH_GRADIATED_API_KEY is not set, so the audits run on Claude Sonnet 5.5."
           exit "$missing"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

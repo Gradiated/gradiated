@@ -1,12 +1,9 @@
 from datetime import datetime, timezone
-import importlib.util
 import json
-from pathlib import Path
 import unittest
 
-spec = importlib.util.spec_from_file_location('host_lease', Path(__file__).with_name('host-lease.py'))
-lease = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(lease)
+import _path  # noqa: F401
+from grad_ctl import lease
 
 NOW = datetime(2026, 11, 6, 12, 0, tzinfo=timezone.utc)
 

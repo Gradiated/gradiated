@@ -28,7 +28,8 @@
     "openrouter": ["google"],
     "include": ["gemma"]
   },
-  { "lab": "NVIDIA", "huggingface": ["nvidia"], "openrouter": ["nvidia"] },
+  { "lab": "NVIDIA", "openrouter": ["nvidia"] },
+  { "lab": "NVIDIA NVFP4", "huggingface": ["nvidia"], "include": ["nvfp4"] },
   {
     "lab": "Reflection AI",
     "huggingface": ["reflection"],
@@ -49,11 +50,6 @@
     "lab": "StepFun",
     "huggingface": ["stepfun-ai"],
     "openrouter": ["stepfun"]
-  },
-  {
-    "lab": "Ant Group",
-    "huggingface": ["inclusionAI"],
-    "openrouter": ["inclusionai"]
   },
   { "lab": "Tencent", "huggingface": ["tencent"], "openrouter": ["tencent"] },
   { "lab": "OpenAI", "openrouter": ["openai"] },

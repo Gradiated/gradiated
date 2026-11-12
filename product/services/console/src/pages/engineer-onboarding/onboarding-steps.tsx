@@ -269,14 +269,9 @@ export const ProjectPanel = ({
       aria-label="Your project"
       className="flex flex-col gap-6 rounded-lg border bg-card p-6 lg:sticky lg:top-6"
     >
-      <div className="flex flex-col gap-1.5">
-        <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-          What happens next
-        </span>
-        <h2 className="text-2xl font-semibold tracking-tight">
-          {account.company} × Gradiated
-        </h2>
-      </div>
+      <h2 className="text-2xl font-semibold tracking-tight">
+        {account.company} × Gradiated
+      </h2>
       <ol className="flex flex-col gap-4">
         {steps.map(([title, detail], index) => (
           <li key={title} className="grid grid-cols-[1.75rem_1fr] gap-3">

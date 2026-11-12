@@ -11,8 +11,13 @@ terraform = "1.14.6"
 terragrunt = "1.1.2"
 trivy = "0.75.0"
 
+[env]
+# `grad-ctl` from this checkout is on PATH wherever mise is active here
+# (`mise activate`, `mise exec`, `mise run`), so it needs no install.
+_.path = ["{{config_root}}/tools/grad-ctl"]
+
 [tasks."grad-ctl:install"]
-description = "Install grad-ctl, the developer and agent CLI, as one file at ~/.local/bin/grad-ctl"
+description = "Install grad-ctl as one file at ~/.local/bin/grad-ctl, for use outside a checkout"
 run = "python3 tools/grad-ctl/build.py --install"
 
 [tasks.infra-fmt]

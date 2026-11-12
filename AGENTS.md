@@ -5,7 +5,7 @@ This repository is the complete project state for the research and product-build
 ## Start here
 
 1. Read this file.
-2. Run `grad-ctl devex start` for the context pack and standard DevEx checks. Without an install, run `tools/grad-ctl/grad-ctl devex start`; `mise run grad-ctl:install` puts `grad-ctl` on PATH.
+2. Run `grad-ctl devex start` for the context pack and standard DevEx checks. mise puts `grad-ctl` on PATH in this repository; without mise, run `tools/grad-ctl/grad-ctl devex start`.
 3. Read the nearest nested instructions before touching a workstream:
    - `research/lab/AGENTS.md` for the current Inference Foundry research lab.
 4. Read the current handoff or report before starting a new experiment.

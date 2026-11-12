@@ -8,9 +8,19 @@ no command prompts.
 
 ## Install
 
+In the repository, mise puts `grad-ctl` on PATH (`[env] _.path` in
+`mise.toml`), so it runs from the checkout with nothing to install, wherever mise
+is active: an activated shell, `mise exec` or a mise task. mise also pins `aws`,
+`kubectl`, `node` and `cargo`, which some commands use. It does not provide
+Python 3.10+ or Tailscale; those come from the machine, and `grad-ctl devex doctor` reports
+both. Python stays the system one because the GPU fleet tools import PyYAML from
+it.
+
+Outside a checkout, or without mise:
+
 ```sh
 mise run grad-ctl:install        # one file at ~/.local/bin/grad-ctl
-tools/grad-ctl/grad-ctl ...      # or run it from a checkout without installing
+tools/grad-ctl/grad-ctl ...      # run it from a checkout directly
 uv tool install --editable tools/grad-ctl   # or follow the checkout as you edit it
 ```
 

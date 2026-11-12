@@ -52,7 +52,6 @@ Tailscale and `lsof`. Connect to the Gradiated tailnet, which
 
 ```sh
 mise install
-mise run grad-ctl:install
 grad-ctl devex start
 cd product
 mise exec -- pnpm install

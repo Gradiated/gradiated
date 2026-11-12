@@ -276,8 +276,10 @@ export const ProjectPanel = ({
       ? [["Sign your mutual NDA", "Two minutes, right here."] as const]
       : []),
     ["Meet your researcher", `${where}, usually within a working day.`],
-    ["Review your codebase", "Together, in the repositories you shared."],
-    ["Pick a first test case", "Something we can measure from day one."],
+    [
+      "Pick a first test case for training",
+      "Something we can measure from day one.",
+    ],
   ];
 
   return (

@@ -2823,11 +2823,10 @@
   padding: 0;
 }
 
-/* A run of questions and answers, set in from the prose. A question is a
-   paragraph that is only bold text. */
+/* A run of questions and answers. A question is a paragraph that is only
+   bold text. */
 .gr-root .gr-prose > .gr-qa {
   margin-block-start: 2em;
-  padding-inline-start: 2em;
 }
 
 .gr-root .gr-qa > * {

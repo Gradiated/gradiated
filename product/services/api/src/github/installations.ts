@@ -1,6 +1,8 @@
 import { z } from "@hono/zod-openapi";
 import { ApiProblem, problems } from "../http/problems.js";
 
+const REPOSITORY_SAMPLE = 5;
+
 export const GithubInstallationSchema = z
   .object({
     id: z
@@ -11,6 +13,16 @@ export const GithubInstallationSchema = z
     account: z
       .string()
       .describe("The GitHub account where the customer installed Gradiated."),
+    account_type: z
+      .enum(["Organization", "User"])
+      .describe(
+        "Whether the account is an organization or a personal account.",
+      ),
+    manage_url: z
+      .url()
+      .describe(
+        "GitHub page where the customer changes the installation's repository access.",
+      ),
     repository_selection: z
       .enum(["all", "selected"])
       .describe(
@@ -19,9 +31,15 @@ export const GithubInstallationSchema = z
     repository_count: z
       .number()
       .int()
-      .positive()
+      .nonnegative()
       .describe(
-        "Repositories accessible to both this GitHub user and the app installation.",
+        "Repositories accessible to both this GitHub user and the app installation; zero until the customer selects one.",
+      ),
+    repositories: z
+      .array(z.string())
+      .max(REPOSITORY_SAMPLE)
+      .describe(
+        `Full names of up to ${REPOSITORY_SAMPLE} of those repositories, for display.`,
       ),
   })
   .openapi("GithubInstallation");
@@ -31,7 +49,7 @@ export const GithubInstallationsSchema = z
     status: z
       .enum(["authorization_required", "not_installed", "installed"])
       .describe(
-        "Installed requires an active Gradiated installation and accessible repositories.",
+        "Installed means at least one active Gradiated installation; check repository_count before starting a project.",
       ),
     installations: z.array(GithubInstallationSchema),
   })
@@ -40,7 +58,10 @@ export const GithubInstallationsSchema = z
 const installationSchema = z.object({
   id: z.number().int().positive(),
   app_slug: z.string(),
-  account: z.object({ login: z.string() }).nullable(),
+  account: z
+    .object({ login: z.string(), type: z.enum(["Organization", "User"]) })
+    .nullable(),
+  html_url: z.url(),
   suspended_at: z.string().nullable(),
   repository_selection: z.enum(["all", "selected"]),
   permissions: z.object({ contents: z.string().optional() }),
@@ -106,24 +127,29 @@ export const createGithubInstallations = (
           const repositories = z
             .object({
               total_count: z.number().int().nonnegative(),
-              repositories: z.array(
-                z.object({ id: z.number().int().positive() }),
-              ),
+              repositories: z.array(z.object({ full_name: z.string() })),
             })
             .parse(
               await call(
                 token,
-                `/user/installations/${installation.id}/repositories?per_page=1`,
+                `/user/installations/${installation.id}/repositories?per_page=${REPOSITORY_SAMPLE}`,
               ),
             );
-          if (!repositories.total_count || !repositories.repositories.length)
-            continue;
 
+          // Zero-repository installations are reported so the customer can
+          // be asked to select one; submission still requires a repository.
           installations.push({
             id: installation.id,
             account: installation.account.login,
+            account_type: installation.account.type,
+            manage_url: installation.html_url,
             repository_selection: installation.repository_selection,
-            repository_count: repositories.total_count,
+            repository_count: repositories.repositories.length
+              ? repositories.total_count
+              : 0,
+            repositories: repositories.repositories.map(
+              (repository) => repository.full_name,
+            ),
           });
         }
         if (result.installations.length < 100)

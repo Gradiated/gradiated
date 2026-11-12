@@ -13,7 +13,9 @@ import { onboardingOrganizations } from "./onboarding-support.js";
 const installation = {
   id: 42,
   app_slug: "gradiated",
-  account: { login: "example" },
+  account: { login: "example", type: "Organization" },
+  html_url:
+    "https://github.com/organizations/example/settings/installations/42",
   suspended_at: null,
   repository_selection: "selected",
   permissions: { contents: "read" },
@@ -26,7 +28,14 @@ describe("GitHub installation verification", () => {
       .fn<typeof fetch>()
       .mockResolvedValueOnce(json({ installations: [installation] }))
       .mockResolvedValueOnce(
-        json({ total_count: 3, repositories: [{ id: 9 }] }),
+        json({
+          total_count: 3,
+          repositories: [
+            { full_name: "example/trainer" },
+            { full_name: "example/evals" },
+            { full_name: "example/data" },
+          ],
+        }),
       );
     expect(
       await createGithubInstallations("gradiated", request).list(
@@ -38,13 +47,17 @@ describe("GitHub installation verification", () => {
         {
           id: 42,
           account: "example",
+          account_type: "Organization",
+          manage_url:
+            "https://github.com/organizations/example/settings/installations/42",
           repository_selection: "selected",
           repository_count: 3,
+          repositories: ["example/trainer", "example/evals", "example/data"],
         },
       ],
     });
     expect(String(request.mock.calls[1]?.[0])).toContain(
-      "/user/installations/42/repositories",
+      "/user/installations/42/repositories?per_page=5",
     );
     expect(request.mock.calls[0]?.[1]?.headers).toMatchObject({
       Authorization: "Bearer secret-user-token",
@@ -83,7 +96,7 @@ describe("GitHub installation verification", () => {
         }),
       )
       .mockResolvedValueOnce(
-        json({ total_count: 1, repositories: [{ id: 9 }] }),
+        json({ total_count: 1, repositories: [{ full_name: "example/a" }] }),
       );
     const result = await createGithubInstallations(
       "gradiated-dev",
@@ -92,7 +105,7 @@ describe("GitHub installation verification", () => {
     expect(result.installations.map(({ id }) => id)).toEqual([43]);
   });
 
-  it("keeps pending installation requests and zero-repository installations blocked", async () => {
+  it("reports zero-repository installations so the customer can select one", async () => {
     const request = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(json({ installations: [] }));
@@ -105,8 +118,8 @@ describe("GitHub installation verification", () => {
       .mockResolvedValueOnce(json({ total_count: 0, repositories: [] }));
     expect(
       (await createGithubInstallations("gradiated", request).list("token"))
-        .status,
-    ).toBe("not_installed");
+        .installations,
+    ).toMatchObject([{ id: 42, repository_count: 0, repositories: [] }]);
   });
 
   it("rejects a forged installation ID not in the user's authorized installations", async () => {

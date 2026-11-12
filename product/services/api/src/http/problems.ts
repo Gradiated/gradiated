@@ -83,7 +83,8 @@ export const problems = {
       | "slack_channel_name_taken"
       | "slack_channel_required"
       | "github_authorization_required"
-      | "github_installation_unverified",
+      | "github_installation_unverified"
+      | "github_repositories_required",
     detail: string,
   ): ProblemBody => ({
     type: problemType(code.replaceAll("_", "-")),

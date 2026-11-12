@@ -3,21 +3,21 @@ import type { EngineerOnboarding } from "@/api/engineer-onboarding";
 import type { CurrentUser } from "@/api/queries";
 import {
   changesNda,
-  channelSummary,
   chooseAccount,
+  codeSummary,
+  contactSummary,
   confirmationMessage,
   counterpartyDetails,
   draftStorageKey,
   emptyDraft,
   engineerSubmission,
+  ndaPending,
   ndaReference,
+  ndaSummary,
   proposedSlackChannel,
   restoreDraft,
-  resumeStep,
-  resumeView,
   slackInvitationProblem,
-  stepLocked,
-  submitAction,
+  startBlockers,
   submitProblem,
   type OnboardingAccount,
   type OnboardingDraft,
@@ -70,30 +70,7 @@ const activeSlack = {
 
 const installation = { id: 42, account: "acme", repository_count: 3 };
 
-describe("onboarding resume", () => {
-  it("starts with the introduction until the NDA is recorded", () => {
-    expect(resumeView(serverState())).toBe("introduction");
-    expect(resumeStep(serverState())).toBe(0);
-  });
-
-  it("resumes at Slack and GitHub once the server records the NDA", () => {
-    const server = serverState({ nda: signedNda });
-
-    expect(resumeView(server)).toBe("steps");
-    expect(resumeStep(server)).toBe(1);
-  });
-
-  it("shows the confirmation once the server records the submission", () => {
-    expect(
-      resumeView(
-        serverState({
-          nda: signedNda,
-          submitted_at: "2026-11-02T09:00:00.000Z",
-        }),
-      ),
-    ).toBe("complete");
-  });
-
+describe("onboarding draft", () => {
   it("restores only form fields from storage", () => {
     const restored = restoreDraft({
       ...exampleDraft(),
@@ -112,44 +89,38 @@ describe("onboarding resume", () => {
   });
 });
 
-describe("onboarding steps", () => {
-  it("opens signing for a requested NDA until it is recorded", () => {
-    const requested = { ndaRequested: true, installation: null };
-    expect(submitAction(0, { ...requested, ndaSigned: false })).toBe("sign");
-    expect(submitAction(0, { ...requested, ndaSigned: true })).toBe("advance");
-  });
-
-  it("skips signing when no NDA is requested", () => {
+describe("starting the project", () => {
+  it("lists what still blocks the start, in page order", () => {
+    expect(startBlockers(serverState(), exampleDraft(), null)).toEqual([
+      { section: "code", label: "Install the GitHub app" },
+      { section: "contact", label: "Send the Slack invite, or choose email" },
+    ]);
     expect(
-      submitAction(0, {
-        ndaSigned: false,
-        ndaRequested: false,
-        installation: null,
+      startBlockers(serverState(), exampleDraft({ channel: "email" }), {
+        ...installation,
+        repository_count: 0,
       }),
-    ).toBe("advance");
+    ).toEqual([{ section: "code", label: "Select a repository on GitHub" }]);
+    expect(
+      startBlockers(serverState(), exampleDraft({ channel: "email" }), null, 3),
+    ).toEqual([
+      { section: "code", label: "Choose the GitHub account for this project" },
+    ]);
+    expect(
+      startBlockers(
+        serverState({ slack: activeSlack }),
+        exampleDraft(),
+        installation,
+      ),
+    ).toEqual([]);
   });
 
-  it("requires a verified GitHub installation after the NDA", () => {
-    expect(
-      submitAction(1, {
-        ndaSigned: true,
-        ndaRequested: true,
-        installation: null,
-      }),
-    ).toBe("github_required");
-    expect(
-      submitAction(1, { ndaSigned: true, ndaRequested: true, installation }),
-    ).toBe("advance");
-    expect(
-      submitAction(2, { ndaSigned: true, ndaRequested: true, installation }),
-    ).toBe("finish");
-  });
+  it("signs a requested NDA as part of starting, until it is recorded", () => {
+    const requested = exampleDraft({ ndaRequested: true });
 
-  it("locks later steps until their prerequisites are verified", () => {
-    expect(stepLocked(1, 1, { nda: false, github: false })).toBe(true);
-    expect(stepLocked(1, 1, { nda: true, github: false })).toBe(false);
-    expect(stepLocked(2, 2, { nda: true, github: false })).toBe(true);
-    expect(stepLocked(2, 1, { nda: true, github: true })).toBe(true);
+    expect(ndaPending(serverState(), requested)).toBe(true);
+    expect(ndaPending(serverState({ nda: signedNda }), requested)).toBe(false);
+    expect(ndaPending(serverState(), exampleDraft())).toBe(false);
   });
 
   it("drops the in-progress NDA document when signer details change", () => {
@@ -223,12 +194,13 @@ describe("onboarding submission", () => {
   });
 
   it.each([
-    ["nda_required", 0],
-    ["github_authorization_required", 1],
-    ["github_installation_unverified", 1],
-    ["slack_channel_required", 1],
-  ])("returns %s conflicts to step %i", (code, step) => {
-    expect(submitProblem(code)?.step).toBe(step);
+    ["nda_required", "nda"],
+    ["github_authorization_required", "code"],
+    ["github_installation_unverified", "code"],
+    ["github_repositories_required", "code"],
+    ["slack_channel_required", "contact"],
+  ])("points %s conflicts at the %s section", (code, section) => {
+    expect(submitProblem(code)?.section).toBe(section);
   });
 
   it("leaves unknown errors to their own message", () => {
@@ -261,19 +233,34 @@ describe("onboarding Slack channel", () => {
 });
 
 describe("onboarding summary and confirmation", () => {
-  it("summarizes the channel from server state", () => {
+  it("summarizes code, contact and NDA for the project panel", () => {
+    expect(codeSummary(null)).toBe("Not connected");
+    expect(codeSummary(installation)).toBe("acme · 3 repositories");
+    expect(codeSummary({ ...installation, repository_count: 1 })).toBe(
+      "acme · 1 repository",
+    );
+    expect(codeSummary({ ...installation, repository_count: 0 })).toBe(
+      "acme · no repositories",
+    );
     expect(
-      channelSummary(serverState(), exampleDraft({ channel: "email" })),
-    ).toBe("Email fallback · Slack unavailable");
+      contactSummary(serverState(), exampleDraft({ channel: "email" })),
+    ).toBe("Email");
     expect(
-      channelSummary(
+      contactSummary(
         serverState({ slack: { ...activeSlack, status: "pending" } }),
         exampleDraft(),
       ),
-    ).toBe("Slack invitation not sent yet");
+    ).toBe("Slack · not invited");
     expect(
-      channelSummary(serverState({ slack: activeSlack }), exampleDraft()),
-    ).toBe("#ext-acme-gradiated · invitation sent");
+      contactSummary(serverState({ slack: activeSlack }), exampleDraft()),
+    ).toBe("Slack · invited");
+    expect(ndaSummary(serverState(), exampleDraft())).toBe("None");
+    expect(
+      ndaSummary(serverState(), exampleDraft({ ndaRequested: true })),
+    ).toBe("Requested");
+    expect(ndaSummary(serverState({ nda: signedNda }), exampleDraft())).toMatch(
+      /^Signed /,
+    );
   });
 
   it("points a Slack contact to the invited channel", () => {

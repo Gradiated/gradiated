@@ -132,7 +132,7 @@ const engineerProviders = (onboarding: Partial<EngineerOnboarding> = {}) => ({
     ...onboarding,
   } as EngineerOnboarding,
   ndaSigned: false,
-  githubInstalled: true,
+  githubInstallations: [githubInstallation()],
   ndaDocuments: [] as unknown[],
   signingSessions: 0,
   slackInvitations: [] as unknown[],
@@ -140,6 +140,20 @@ const engineerProviders = (onboarding: Partial<EngineerOnboarding> = {}) => ({
 });
 
 type EngineerProviders = ReturnType<typeof engineerProviders>;
+
+function githubInstallation(patch: Record<string, unknown> = {}) {
+  return {
+    id: 42,
+    account: "acme",
+    account_type: "Organization",
+    manage_url:
+      "https://github.com/organizations/acme/settings/installations/42",
+    repository_selection: "selected",
+    repository_count: 3,
+    repositories: ["acme/trainer", "acme/evals", "acme/data"],
+    ...patch,
+  };
+}
 
 const signedAt = "2026-11-09T12:00:00.000Z";
 
@@ -188,19 +202,12 @@ const engineerRoute = async (
   }
   if (path === "github-installations") {
     await route.fulfill({
-      json: engineer.githubInstalled
-        ? {
-            status: "installed",
-            installations: [
-              {
-                id: 42,
-                account: "acme",
-                repository_selection: "selected",
-                repository_count: 3,
-              },
-            ],
-          }
-        : { status: "not_installed", installations: [] },
+      json: {
+        status: engineer.githubInstallations.length
+          ? "installed"
+          : "not_installed",
+        installations: engineer.githubInstallations,
+      },
     });
     return true;
   }
@@ -212,7 +219,7 @@ const engineerRoute = async (
       channel_name: "ext-acme-gradiated",
       status: "active",
       invited_email: invitation.email,
-      invited_at: signedAt,
+      invited_at: new Date().toISOString(),
     };
     await route.fulfill({
       status: 201,
@@ -352,7 +359,10 @@ test("onboarded admins skip setup and can turn domain joining off in settings", 
   ]);
 });
 
-test("a new engineer customer sets up the organization, signs the NDA, invites Slack and starts a project", async ({
+const startButton = (page: Page) =>
+  page.getByRole("button", { name: /start project/i });
+
+test("a new engineer customer sets up the organization, invites Slack, signs the NDA and starts a project", async ({
   page,
 }) => {
   const { patches, engineer } = await setup(page, {
@@ -367,11 +377,27 @@ test("a new engineer customer sets up the organization, signs the NDA, invites S
   expect(patches).toEqual([
     { name: "Acme", auto_join_domain: "acme.com", onboarding_completed: true },
   ]);
-  await page.getByRole("button", { name: "Get started" }).click();
-
   await expect(
-    page.getByRole("heading", { name: "Do you need an NDA?" }),
+    page.getByRole("heading", { name: "Let’s start your project." }),
   ).toBeVisible();
+  await expect(page.getByText("acme/trainer")).toBeVisible();
+  await expect(startButton(page)).toBeDisabled();
+  await expect(
+    page.getByRole("button", {
+      name: "Send the Slack invite, or choose email",
+    }),
+  ).toBeVisible();
+
+  await expect(page.getByText(/We’ll open #ext-acme-gradiated/)).toBeVisible();
+  await page.getByRole("button", { name: "Send invite" }).click();
+  await expect(
+    page.getByText(/Invite sent to alex@acme.com · #ext-acme-gradiated/),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Resend in \d+s/ }),
+  ).toBeDisabled();
+  expect(engineer.slackInvitations).toEqual([{ email: "alex@acme.com" }]);
+
   await page
     .getByRole("checkbox", { name: "We’d like a mutual NDA first" })
     .click();
@@ -385,8 +411,11 @@ test("a new engineer customer sets up the organization, signs the NDA, invites S
   await page
     .getByRole("textbox", { name: "Company address" })
     .fill("1 Market Street, San Francisco, CA 94105, USA");
-  await page.getByRole("button", { name: "Review & sign NDA" }).click();
+  await page
+    .getByRole("textbox", { name: /Goals, constraints, deadlines/ })
+    .fill("  Our support agent calls the wrong tool.  ");
 
+  await page.getByRole("button", { name: "Sign NDA & start project" }).click();
   await expect(
     page.getByRole("heading", { name: "Review & sign your NDA" }),
   ).toBeVisible();
@@ -400,43 +429,13 @@ test("a new engineer customer sets up the organization, signs the NDA, invites S
       email: "alex@acme.com",
     },
   ]);
+  expect(engineer.submissions).toEqual([]);
 
+  // The dialog polls PandaDoc, so signing starts the project without a click.
   engineer.ndaSigned = true;
-  await page.getByRole("button", { name: "Check signing status" }).click();
-
   await expect(
-    page.getByRole("heading", { name: "Set up Slack & GitHub" }),
-  ).toBeVisible();
-  await expect(
-    page.getByText("Installed · acme · 3 repositories"),
-  ).toBeVisible();
-  await expect(
-    page.getByText(
-      "We’ll create #ext-acme-gradiated and invite alex@acme.com.",
-    ),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Send Slack invite" }).click();
-
-  await expect(
-    page.getByText("Invite sent · #ext-acme-gradiated"),
-  ).toBeVisible();
-  expect(engineer.slackInvitations).toEqual([{ email: "alex@acme.com" }]);
-  await page.getByRole("button", { name: "Continue" }).click();
-
-  await expect(
-    page.getByRole("heading", { name: "Let’s get to work" }),
-  ).toBeVisible();
-  await expect(
-    page.getByText("#ext-acme-gradiated · invitation sent"),
-  ).toBeVisible();
-  await page
-    .getByRole("textbox", { name: /Anything else you’d like us to know/ })
-    .fill("  Our support agent calls the wrong tool.  ");
-  await page.getByRole("button", { name: "Start project" }).click();
-
-  await expect(
-    page.getByRole("heading", { name: "You’re all set" }),
-  ).toBeVisible();
+    page.getByRole("heading", { name: "You’re all set." }),
+  ).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText(/will suggest a plan on Slack/)).toBeVisible();
   expect(engineer.submissions).toEqual([
     {
@@ -447,34 +446,28 @@ test("a new engineer customer sets up the organization, signs the NDA, invites S
   ]);
 });
 
-test("a returning customer with a signed NDA waits for GitHub, chooses email and resumes at the confirmation", async ({
+test("a returning customer waits for GitHub, chooses email and comes back to their started project", async ({
   page,
 }) => {
   const { engineer } = await setup(page, {
     email: "alex@acme.com",
     companyEmailDomain: "acme.com",
     onboardingCompleted: true,
-    engineer: engineerProviders({
-      nda: { document_id: "nda-document-1", signed_at: signedAt },
-    }),
   });
-  engineer.githubInstalled = false;
+  engineer.githubInstallations = [];
 
   await page.goto("/onboarding?journey=post-training");
-  await expect(
-    page.getByRole("heading", { name: "Set up Slack & GitHub" }),
-  ).toBeVisible();
   await page
     .getByRole("checkbox", {
       name: "Our team can’t use Slack — use email instead.",
     })
     .click();
+  await expect(page.getByRole("button", { name: "Send invite" })).toHaveCount(
+    0,
+  );
+  await expect(startButton(page)).toBeDisabled();
   await expect(
-    page.getByRole("button", { name: "Send Slack invite" }),
-  ).toHaveCount(0);
-  await page.getByRole("button", { name: "Continue" }).click();
-  await expect(
-    page.getByText(/Install the Gradiated GitHub app and select at least one/),
+    page.getByRole("button", { name: "Install the GitHub app" }),
   ).toBeVisible();
 
   await page
@@ -488,18 +481,19 @@ test("a returning customer with a signed NDA waits for GitHub, chooses email and
     .toBe(
       "https://github.com/apps/gradiated/installations/new?state=link-state",
     );
-  await expect(page.getByText(/Waiting for GitHub/)).toBeVisible();
+  await expect(page.getByText("Waiting for GitHub…")).toBeVisible();
 
-  engineer.githubInstalled = true;
-  await expect(page.getByText("Installed · acme · 3 repositories")).toBeVisible(
-    { timeout: 10_000 },
-  );
-  await page.getByRole("button", { name: "Continue" }).click();
-
+  engineer.githubInstallations = [githubInstallation()];
   await expect(
-    page.getByText("Email fallback · Slack unavailable"),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Start project" }).click();
+    page.getByText("Gradiated app installed · 3 repositories"),
+  ).toBeVisible({ timeout: 10_000 });
+  await expect(
+    page.getByRole("link", { name: "Manage on GitHub" }),
+  ).toHaveAttribute(
+    "href",
+    "https://github.com/organizations/acme/settings/installations/42",
+  );
+  await startButton(page).click();
 
   await expect(
     page.getByText(/will email a plan to alex@acme.com/),
@@ -512,13 +506,11 @@ test("a returning customer with a signed NDA waits for GitHub, chooses email and
 
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: "You’re all set" }),
+    page.getByRole("heading", { name: "Your project is underway." }),
   ).toBeVisible();
 });
 
-test("a customer who skips the NDA goes straight to Slack and GitHub", async ({
-  page,
-}) => {
+test("a customer who skips the NDA starts without one", async ({ page }) => {
   const { engineer } = await setup(page, {
     email: "alex@acme.com",
     companyEmailDomain: "acme.com",
@@ -526,33 +518,104 @@ test("a customer who skips the NDA goes straight to Slack and GitHub", async ({
   });
 
   await page.goto("/onboarding?journey=post-training");
-  await page.getByRole("button", { name: "Get started" }).click();
   await expect(
     page.getByRole("textbox", { name: "Legal company name" }),
   ).toHaveCount(0);
-  await page.getByRole("button", { name: "Continue" }).click();
-
-  await expect(
-    page.getByRole("heading", { name: "Set up Slack & GitHub" }),
-  ).toBeVisible();
   await page
     .getByRole("checkbox", {
       name: "Our team can’t use Slack — use email instead.",
     })
     .click();
-  await page.getByRole("button", { name: "Continue" }).click();
-
-  await expect(page.getByText("Not requested")).toBeVisible();
-  await page.getByRole("button", { name: "Start project" }).click();
+  await expect(
+    page.getByRole("complementary", { name: "Your project" }).getByText("None"),
+  ).toBeVisible();
+  await startButton(page).click();
 
   await expect(
-    page.getByRole("heading", { name: "You’re all set" }),
+    page.getByRole("heading", { name: "You’re all set." }),
   ).toBeVisible();
   expect(engineer.submissions).toEqual([
     { contact_channel: "email", github_installation_id: 42 },
   ]);
   expect(engineer.ndaDocuments).toEqual([]);
   expect(engineer.signingSessions).toBe(0);
+});
+
+test("an installation without repositories blocks the start until one is selected", async ({
+  page,
+}) => {
+  const { engineer } = await setup(page, {
+    email: "alex@acme.com",
+    companyEmailDomain: "acme.com",
+    onboardingCompleted: true,
+  });
+  engineer.githubInstallations = [
+    githubInstallation({ repository_count: 0, repositories: [] }),
+  ];
+
+  await page.goto("/onboarding?journey=post-training");
+  await page
+    .getByRole("checkbox", {
+      name: "Our team can’t use Slack — use email instead.",
+    })
+    .click();
+  await expect(
+    page.getByText("Gradiated app installed · no repositories selected"),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Choose repositories" }),
+  ).toBeVisible();
+  await expect(startButton(page)).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Select a repository on GitHub" }),
+  ).toBeVisible();
+
+  engineer.githubInstallations = [githubInstallation()];
+  await expect(startButton(page)).toBeEnabled({ timeout: 10_000 });
+  await expect(page.getByText("acme/trainer")).toBeVisible();
+});
+
+test("a customer with several GitHub accounts chooses which one to share", async ({
+  page,
+}) => {
+  const { engineer } = await setup(page, {
+    email: "alex@acme.com",
+    companyEmailDomain: "acme.com",
+    onboardingCompleted: true,
+  });
+  engineer.githubInstallations = [
+    githubInstallation(),
+    githubInstallation({
+      id: 43,
+      account: "acme-labs",
+      repository_count: 1,
+      repositories: ["acme-labs/rl-gym"],
+    }),
+  ];
+
+  await page.goto("/onboarding?journey=post-training");
+  await page
+    .getByRole("checkbox", {
+      name: "Our team can’t use Slack — use email instead.",
+    })
+    .click();
+  await expect(
+    page.getByRole("button", {
+      name: "Choose the GitHub account for this project",
+    }),
+  ).toBeVisible();
+  await expect(startButton(page)).toBeDisabled();
+
+  await page.getByRole("radio", { name: /acme-labs/ }).check();
+  await expect(page.getByText("acme-labs/rl-gym")).toBeVisible();
+  await startButton(page).click();
+
+  await expect(
+    page.getByRole("heading", { name: "You’re all set." }),
+  ).toBeVisible();
+  expect(engineer.submissions).toEqual([
+    { contact_channel: "email", github_installation_id: 43 },
+  ]);
 });
 
 test("a signed-out visitor is sent to sign in and kept on the post-training journey", async ({

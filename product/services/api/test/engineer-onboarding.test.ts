@@ -25,8 +25,12 @@ const path = `/api/v1/organizations/${organizationId}/engineer-onboarding`;
 const installation = {
   id: 42,
   account: "example",
+  account_type: "Organization" as const,
+  manage_url:
+    "https://github.com/organizations/example/settings/installations/42",
   repository_selection: "selected" as const,
   repository_count: 3,
+  repositories: ["example/trainer", "example/evals", "example/data"],
 };
 const submission = {
   contact_channel: "slack",
@@ -358,6 +362,14 @@ describe("engineer onboarding submission", () => {
   it.each([
     { options: { token: null }, code: "github_authorization_required" },
     { options: { installations: [] }, code: "github_installation_unverified" },
+    {
+      options: {
+        installations: [
+          { ...installation, repository_count: 0, repositories: [] },
+        ],
+      },
+      code: "github_repositories_required",
+    },
     { options: { slackChannel: false }, code: "slack_channel_required" },
   ])(
     "does not submit before every step is verified: $code",

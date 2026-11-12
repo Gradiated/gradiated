@@ -3,6 +3,7 @@ import { z } from "zod";
 import type {
   EngineerOnboarding,
   EngineerOnboardingSubmission,
+  GithubInstallation,
 } from "@/api/engineer-onboarding";
 import type { CurrentUser } from "@/api/queries";
 import {
@@ -85,11 +86,10 @@ export interface OnboardingAccount {
   company: string;
 }
 
-export interface VerifiedInstallation {
-  id: number;
-  account: string;
-  repository_count: number;
-}
+export type VerifiedInstallation = Pick<
+  GithubInstallation,
+  "id" | "account" | "repository_count"
+>;
 
 export const draftStorageKey = (account: OnboardingAccount) =>
   `gradiated-engineer-onboarding-v1:${encodeURIComponent(account.userId)}:${encodeURIComponent(account.organizationId)}`;
@@ -133,41 +133,76 @@ export const ndaReference = (
     ? undefined
     : (draft.ndaDocumentId ?? undefined);
 
-export type OnboardingView = "introduction" | "steps" | "complete";
+export type OnboardingSection = "code" | "contact" | "nda";
 
-export const resumeView = (server: EngineerOnboarding): OnboardingView =>
-  server.submitted_at ? "complete" : server.nda ? "steps" : "introduction";
+export const sectionId = (section: OnboardingSection) =>
+  `onboarding-${section}`;
 
-export const resumeStep = (server: EngineerOnboarding) => (server.nda ? 1 : 0);
+export const ndaPending = (
+  server: EngineerOnboarding,
+  draft: OnboardingDraft,
+) => draft.ndaRequested && !server.nda;
 
-export const stepLocked = (
-  index: number,
-  step: number,
-  unlocked: { nda: boolean; github: boolean },
-) =>
-  index > step ||
-  (index > 0 && !unlocked.nda) ||
-  (index > 1 && !unlocked.github);
+/* What still stops the project starting. A requested NDA is not listed: it
+   is signed as part of starting. */
+export const startBlockers = (
+  server: EngineerOnboarding,
+  draft: OnboardingDraft,
+  installation: VerifiedInstallation | null,
+  githubAccounts = 0,
+) => {
+  const blockers: { section: OnboardingSection; label: string }[] = [];
+  if (!installation)
+    blockers.push({
+      section: "code",
+      label:
+        githubAccounts > 1
+          ? "Choose the GitHub account for this project"
+          : "Install the GitHub app",
+    });
+  else if (!installation.repository_count)
+    blockers.push({
+      section: "code",
+      label: "Select a repository on GitHub",
+    });
 
-export type SubmitAction = "sign" | "github_required" | "advance" | "finish";
+  if (draft.channel === "slack" && !slackInvited(server))
+    blockers.push({
+      section: "contact",
+      label: "Send the Slack invite, or choose email",
+    });
 
-export const submitAction = (
-  step: number,
-  {
-    ndaSigned,
-    ndaRequested,
-    installation,
-  }: {
-    ndaSigned: boolean;
-    ndaRequested: boolean;
-    installation: VerifiedInstallation | null;
-  },
-): SubmitAction => {
-  if (step === 0) return ndaSigned || !ndaRequested ? "advance" : "sign";
+  return blockers;
+};
 
-  if (!installation) return "github_required";
+export const repositoryCount = (count: number) =>
+  `${count} ${count === 1 ? "repository" : "repositories"}`;
 
-  return step === 2 ? "finish" : "advance";
+export const codeSummary = (installation: VerifiedInstallation | null) => {
+  if (!installation) return "Not connected";
+
+  return installation.repository_count
+    ? `${installation.account} · ${repositoryCount(installation.repository_count)}`
+    : `${installation.account} · no repositories`;
+};
+
+export const contactSummary = (
+  server: EngineerOnboarding,
+  draft: OnboardingDraft,
+) => {
+  if (draft.channel === "email") return "Email";
+
+  return slackInvited(server) ? "Slack · invited" : "Slack · not invited";
+};
+
+export const ndaSummary = (
+  server: EngineerOnboarding,
+  draft: OnboardingDraft,
+) => {
+  if (server.nda)
+    return `Signed ${new Date(server.nda.signed_at).toLocaleDateString()}`;
+
+  return draft.ndaRequested ? "Requested" : "None";
 };
 
 export const slackInvited = (server: EngineerOnboarding) =>
@@ -189,22 +224,29 @@ export const engineerSubmission = (
   };
 };
 
-const submitProblems: Record<string, { step: number; message: string }> = {
+const submitProblems: Record<
+  string,
+  { section: OnboardingSection; message: string }
+> = {
   nda_required: {
-    step: 0,
+    section: "nda",
     message: "Your mutual NDA is not complete. Review and sign it again.",
   },
   github_authorization_required: {
-    step: 1,
-    message: "Authorize GitHub so we can verify your installation.",
+    section: "code",
+    message: "Install the GitHub app again so we can verify it.",
   },
   github_installation_unverified: {
-    step: 1,
+    section: "code",
     message:
       "GitHub did not confirm the selected installation. Check its repository access and try again.",
   },
+  github_repositories_required: {
+    section: "code",
+    message: "Select at least one repository for the Gradiated app on GitHub.",
+  },
   slack_channel_required: {
-    step: 1,
+    section: "contact",
     message: "Send the Slack invitation, or choose email instead.",
   },
 };
@@ -243,18 +285,6 @@ export const proposedSlackChannel = (company: string) => {
       .replace(/-$/g, "") || "customer";
 
   return `ext-${slug}-gradiated`;
-};
-
-export const channelSummary = (
-  server: EngineerOnboarding,
-  draft: OnboardingDraft,
-) => {
-  if (draft.channel === "email") return "Email fallback · Slack unavailable";
-
-  if (!server.slack || !slackInvited(server))
-    return "Slack invitation not sent yet";
-
-  return `#${server.slack.channel_name} · invitation sent`;
 };
 
 export const confirmationMessage = (

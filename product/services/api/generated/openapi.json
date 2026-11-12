@@ -2103,7 +2103,7 @@
               "not_installed",
               "installed"
             ],
-            "description": "Installed requires an active Gradiated installation and accessible repositories."
+            "description": "Installed means at least one active Gradiated installation; check repository_count before starting a project."
           },
           "installations": {
             "type": "array",
@@ -2129,6 +2129,19 @@
             "type": "string",
             "description": "The GitHub account where the customer installed Gradiated."
           },
+          "account_type": {
+            "type": "string",
+            "enum": [
+              "Organization",
+              "User"
+            ],
+            "description": "Whether the account is an organization or a personal account."
+          },
+          "manage_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "GitHub page where the customer changes the installation's repository access."
+          },
           "repository_selection": {
             "type": "string",
             "enum": [
@@ -2139,15 +2152,26 @@
           },
           "repository_count": {
             "type": "integer",
-            "exclusiveMinimum": 0,
-            "description": "Repositories accessible to both this GitHub user and the app installation."
+            "minimum": 0,
+            "description": "Repositories accessible to both this GitHub user and the app installation; zero until the customer selects one."
+          },
+          "repositories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "description": "Full names of up to 5 of those repositories, for display."
           }
         },
         "required": [
           "id",
           "account",
+          "account_type",
+          "manage_url",
           "repository_selection",
-          "repository_count"
+          "repository_count",
+          "repositories"
         ]
       },
       "SlackInvitation": {

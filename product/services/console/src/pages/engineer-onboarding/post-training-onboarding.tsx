@@ -1,18 +1,24 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Check, LoaderCircle } from "lucide-react";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { ApiError } from "@/api/client";
 import {
   getEngineerOnboarding,
-  getGithubInstallations,
   submitEngineerOnboarding,
   type EngineerOnboarding,
+  type GithubInstallation,
 } from "@/api/engineer-onboarding";
 import type { CurrentUser } from "@/api/queries";
 import { AuthCard } from "@/components/auth-card";
+import { Brand } from "@/components/brand";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { FieldError } from "@/components/ui/field";
 import {
   Select,
@@ -24,37 +30,32 @@ import {
 import {
   changesNda,
   chooseAccount,
-  confirmationMessage,
   counterpartyDetails,
   draftStorageKey,
   emptyDraft,
   engineerSubmission,
+  ndaPending as isNdaPending,
   restoreDraft,
-  resumeStep,
-  resumeView,
-  stepLocked,
-  submitAction,
+  sectionId,
+  startBlockers,
   submitProblem,
   type OnboardingAccount,
   type OnboardingDraft,
-  type OnboardingView,
-  type VerifiedInstallation,
+  type OnboardingSection,
 } from "@/lib/engineer-onboarding";
 import { POST_TRAINING_JOURNEY } from "@/lib/login-search";
-import { cn } from "@/lib/utils";
+import { GithubAppInstallation } from "@/pages/engineer-onboarding/github-installation";
 import { NdaSigning } from "@/pages/engineer-onboarding/nda-signing";
 import {
-  NdaStep,
-  ReviewStep,
-  StepTitle,
-  TeamStep,
+  ContextSection,
+  NdaSection,
+  PageHeader,
+  ProjectPanel,
+  ProjectStarted,
+  Section,
   type UpdateDraft,
 } from "@/pages/engineer-onboarding/onboarding-steps";
-
-const steps = ["NDA (optional)", "Slack & GitHub", "Get to work"];
-
-const githubRequiredMessage =
-  "Install the Gradiated GitHub app and select at least one repository before continuing. If installation needs approval, ask your GitHub organization owner to approve it.";
+import { SlackInvitation } from "@/pages/engineer-onboarding/slack-invitation";
 
 const errorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
@@ -63,7 +64,6 @@ const engineerOnboardingKey = (organizationId: string) => [
   "engineer-onboarding",
   organizationId,
 ];
-
 export const PostTrainingOnboarding = ({
   user,
   organization,
@@ -121,9 +121,14 @@ const OrganizationPicker = ({
   return (
     <AuthCard>
       <div className="flex flex-col gap-6 p-6 md:p-9">
-        <StepTitle title="Choose your organization">
-          Which team is this engineer for?
-        </StepTitle>
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-bold tracking-tight">
+            Choose your organization
+          </h1>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Which team is this project for?
+          </p>
+        </div>
         <Select
           onValueChange={(organization) =>
             void navigate({
@@ -159,18 +164,16 @@ const loadDraft = (account: OnboardingAccount): OnboardingDraft => {
   }
 };
 
-const githubInstallationActive = async (
-  organizationId: string,
-  installationId: number,
-) => {
-  const result = await getGithubInstallations(organizationId, {
-    installationId,
-  });
-
-  return result.installations.some(
-    (installation) => installation.id === installationId,
-  );
-};
+const PageShell = ({ children }: { children: ReactNode }) => (
+  <main className="min-h-svh bg-background">
+    <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pt-8 pb-24 md:px-6 md:pt-10">
+      <div className="self-start">
+        <Brand />
+      </div>
+      {children}
+    </div>
+  </main>
+);
 
 const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
   const queryClient = useQueryClient();
@@ -182,25 +185,19 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
   const server = onboarding.data;
   const [draft, setDraft] = useState(() => loadDraft(account));
   const [saved, setSaved] = useState(true);
-  const [view, setView] = useState<OnboardingView>("introduction");
-  const [step, setStep] = useState(0);
-  const [installation, setInstallation] = useState<VerifiedInstallation | null>(
+  const [installation, setInstallation] = useState<GithubInstallation | null>(
     null,
   );
+  const [githubAccounts, setGithubAccounts] = useState(0);
   const [signingOpen, setSigningOpen] = useState(false);
-  const [checkingGithub, setCheckingGithub] = useState(false);
-  const [githubError, setGithubError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState("");
-  const resumed = useRef(false);
-
-  useEffect(() => {
-    if (!server || resumed.current) return;
-
-    resumed.current = true;
-    setView(resumeView(server));
-    setStep(resumeStep(server));
-  }, [server]);
+  const [problem, setProblem] = useState<{
+    message: string;
+    section?: OnboardingSection;
+  } | null>(null);
+  const [justStarted, setJustStarted] = useState(false);
+  const installationRef = useRef(installation);
+  installationRef.current = installation;
 
   useEffect(() => {
     try {
@@ -210,10 +207,6 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
       setSaved(false);
     }
   }, [draft, account]);
-
-  useEffect(() => {
-    window.scrollTo({ top: 0 });
-  }, [step, view, signingOpen]);
 
   const patch: UpdateDraft = (values) =>
     setDraft((current) => ({
@@ -253,183 +246,173 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
       </AuthCard>
     );
 
-  const ndaSigned = server.nda !== null;
-  const ndaPending = draft.ndaRequested && !ndaSigned;
+  if (server.submitted_at)
+    return (
+      <PageShell>
+        <ProjectStarted
+          account={account}
+          server={server}
+          installation={installation}
+          justStarted={justStarted}
+        />
+      </PageShell>
+    );
 
-  const recheckGithub = async (current: VerifiedInstallation) => {
-    setCheckingGithub(true);
-    setGithubError("");
-    try {
-      if (await githubInstallationActive(account.organizationId, current.id))
-        return true;
+  const ndaPending = isNdaPending(server, draft);
+  const blockers = startBlockers(server, draft, installation, githubAccounts);
 
-      setInstallation(null);
-      setGithubError(
-        "GitHub access changed. Return to the installation step and check again.",
-      );
-      return false;
-    } catch (error) {
-      setGithubError(errorMessage(error, "Could not verify GitHub."));
-      return false;
-    } finally {
-      setCheckingGithub(false);
-    }
+  const goTo = (section: OnboardingSection) => {
+    const element = document.getElementById(sectionId(section));
+    element?.scrollIntoView({ behavior: "smooth", block: "start" });
+    element?.focus({ preventScroll: true });
   };
 
-  const finish = async (current: VerifiedInstallation) => {
+  const finish = async (current: OnboardingEngineerState) => {
     setSubmitting(true);
-    setSubmitError("");
+    setProblem(null);
     try {
       const result = await submitEngineerOnboarding(
         account.organizationId,
-        engineerSubmission(server, draft, current),
+        engineerSubmission(current.server, current.draft, current.installation),
       );
       queryClient.setQueryData<EngineerOnboarding>(queryKey, result);
-      if (result.submitted_at) setView("complete");
+      if (result.submitted_at) setJustStarted(true);
     } catch (error) {
-      const problem = submitProblem(
+      const known = submitProblem(
         error instanceof ApiError ? error.code : undefined,
       );
-      if (problem) setStep(problem.step);
-
-      setSubmitError(
-        problem?.message ??
+      setProblem({
+        message:
+          known?.message ??
           errorMessage(error, "Could not start your project. Please retry."),
-      );
+        ...(known ? { section: known.section } : {}),
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (checkingGithub || submitting) return;
+  const start = () => {
+    if (submitting || !installation || blockers.length) return;
 
-    const action = submitAction(step, {
-      ndaSigned,
-      ndaRequested: draft.ndaRequested,
-      installation,
-    });
-    if (action === "sign") {
+    if (ndaPending) {
+      setProblem(null);
       setSigningOpen(true);
       return;
     }
 
-    if (action === "github_required") {
-      setGithubError(githubRequiredMessage);
-      return;
-    }
-
-    if (step === 0) {
-      setStep(1);
-      return;
-    }
-
-    if (!installation || !(await recheckGithub(installation))) return;
-
-    if (action === "finish") await finish(installation);
-    else setStep(step + 1);
-  };
-
-  const githubChecked = (verified: VerifiedInstallation | null) => {
-    setInstallation(verified);
-    if (verified) setGithubError("");
+    void finish({ server, draft, installation });
   };
 
   const ndaCompleted = async (documentId: string) => {
-    patch({ ndaDocumentId: documentId });
+    const signedDraft = { ...draft, ndaDocumentId: documentId };
+    setDraft(signedDraft);
     setSigningOpen(false);
     try {
-      await refresh();
-      setStep(1);
+      const { data } = await refresh();
+      const current = installationRef.current;
+      if (data && current)
+        await finish({
+          server: data,
+          draft: signedDraft,
+          installation: current,
+        });
     } catch (error) {
-      setSubmitError(
-        errorMessage(error, "Could not confirm your NDA. Please retry."),
-      );
+      setProblem({
+        message: errorMessage(
+          error,
+          "Could not confirm your NDA. Please retry.",
+        ),
+        section: "nda",
+      });
     }
   };
 
-  if (view === "complete") {
-    const confirmation = confirmationMessage(server, account.email);
-
-    return (
-      <AuthCard className="max-w-xl">
-        <section
-          aria-label="Setup complete"
-          className="flex flex-col gap-4 p-6 text-sm leading-6 md:p-9"
-        >
-          <h1 className="text-2xl font-bold tracking-tight">You’re all set</h1>
-          <p>{confirmation.plan}</p>
-          <p className="text-muted-foreground">{confirmation.followUp}</p>
-        </section>
-      </AuthCard>
-    );
-  }
-
-  if (view === "introduction")
-    return (
-      <AuthCard className="max-w-xl">
-        <div className="flex flex-col gap-6 p-6 md:p-9">
-          <StepTitle title="Let’s get you set up with a post-training researcher">
-            Self-serve. No sales call.
-          </StepTitle>
-          <p className="text-sm leading-6">
-            A real human from our team will join you in Slack and work with your
-            codebase to get more out of your models.
-          </p>
-          <Button
-            type="button"
-            className="self-start"
-            onClick={() => {
-              setStep(0);
-              setView("steps");
-            }}
-          >
-            Get started <ArrowRight />
-          </Button>
-          <OnboardingHelp step="Get a researcher" />
-        </div>
-      </AuthCard>
-    );
-
   return (
-    <AuthCard className={signingOpen ? "max-w-5xl" : "max-w-2xl"}>
-      <div className="flex flex-col gap-7 p-6 md:p-9">
-        <nav aria-label="Setup steps">
-          <ol className="flex flex-wrap gap-2">
-            {steps.map((label, index) => (
-              <li key={label}>
-                <button
-                  type="button"
-                  className={cn(
-                    "flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium disabled:opacity-50",
-                    index === step && "border-primary bg-primary/5",
-                  )}
-                  disabled={
-                    signingOpen ||
-                    stepLocked(index, step, {
-                      nda: !ndaPending,
-                      github: installation !== null,
-                    })
-                  }
-                  onClick={() => setStep(index)}
-                  aria-current={index === step ? "step" : undefined}
-                >
-                  <span className="grid size-4 place-items-center">
-                    {index < step ? <Check className="size-3" /> : index + 1}
-                  </span>
-                  {label}
-                </button>
-              </li>
-            ))}
-          </ol>
-        </nav>
-        {saved ? null : (
-          <p role="status" className="text-sm text-muted-foreground">
-            Progress won’t be saved
-          </p>
-        )}
-        {signingOpen ? (
+    <PageShell>
+      <PageHeader
+        eyebrow={`Post-training · ${account.company}`}
+        title="Let’s start your project."
+      >
+        Connect your code, tell us where to reach you, and a post-training
+        researcher picks it up within a working day.
+      </PageHeader>
+      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="flex min-w-0 flex-col gap-4">
+          <Section
+            section="code"
+            title="Repository access"
+            invalid={problem?.section === "code"}
+          >
+            <GithubAppInstallation
+              organizationId={account.organizationId}
+              selectedId={installation?.id ?? null}
+              onChange={(next, accounts) => {
+                setInstallation(next);
+                setGithubAccounts(accounts);
+                if (problem?.section === "code") setProblem(null);
+              }}
+            />
+          </Section>
+          <Section
+            section="contact"
+            title="Where we’ll talk"
+            invalid={problem?.section === "contact"}
+          >
+            <SlackInvitation
+              account={account}
+              server={server}
+              draft={draft}
+              patch={patch}
+              onInvited={refresh}
+            />
+          </Section>
+          <NdaSection
+            account={account}
+            server={server}
+            draft={draft}
+            patch={patch}
+          />
+          <ContextSection server={server} draft={draft} patch={patch} />
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-sm text-muted-foreground">
+            <p>
+              Signed in as {account.email}
+              {saved
+                ? null
+                : " · Progress won’t be saved on this device"} ·{" "}
+              <button
+                type="button"
+                className="text-foreground underline underline-offset-4"
+                onClick={() => setDraft(emptyDraft())}
+              >
+                Clear form
+              </button>
+            </p>
+            <OnboardingHelp step="Project setup" />
+          </div>
+        </div>
+        <ProjectPanel
+          account={account}
+          server={server}
+          draft={draft}
+          installation={installation}
+          blockers={blockers}
+          ndaPending={ndaPending}
+          submitting={submitting}
+          error={problem}
+          onStart={start}
+          onGoTo={goTo}
+        />
+      </div>
+      <Dialog open={signingOpen} onOpenChange={setSigningOpen}>
+        <DialogContent className="max-h-[92svh] max-w-5xl overflow-y-auto">
+          <DialogTitle className="sr-only">
+            Review and sign your NDA
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Mutual NDA between {draft.legalName || account.company} and PostHog
+            Inc.
+          </DialogDescription>
           <NdaSigning
             organizationId={account.organizationId}
             details={counterpartyDetails(draft, account)}
@@ -438,86 +421,14 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
             onComplete={(id) => void ndaCompleted(id)}
             onBack={() => setSigningOpen(false)}
           />
-        ) : (
-          <form
-            className="flex flex-col gap-7"
-            onSubmit={(event) => void submit(event)}
-          >
-            {step === 0 ? (
-              server.nda ? (
-                <StepTitle title="Your mutual NDA is signed">
-                  Signed {new Date(server.nda.signed_at).toLocaleDateString()}.
-                </StepTitle>
-              ) : (
-                <NdaStep account={account} draft={draft} patch={patch} />
-              )
-            ) : null}
-            {step === 1 ? (
-              <TeamStep
-                account={account}
-                server={server}
-                draft={draft}
-                patch={patch}
-                installation={installation}
-                onRefresh={refresh}
-                onGithubVerified={githubChecked}
-              />
-            ) : null}
-            {step === 2 ? (
-              <ReviewStep
-                account={account}
-                server={server}
-                draft={draft}
-                installation={installation}
-                patch={patch}
-                onEdit={() => setStep(0)}
-              />
-            ) : null}
-            {githubError ? <FieldError>{githubError}</FieldError> : null}
-            {submitError ? <FieldError>{submitError}</FieldError> : null}
-            <div className="flex flex-row-reverse items-center justify-between gap-3">
-              <Button type="submit" disabled={checkingGithub || submitting}>
-                {submitting ? <LoaderCircle className="animate-spin" /> : null}
-                {submitting
-                  ? "Starting project…"
-                  : checkingGithub
-                    ? "Checking GitHub…"
-                    : step === 0 && ndaPending
-                      ? "Review & sign NDA"
-                      : step === 2
-                        ? "Start project"
-                        : "Continue"}
-                {submitting ? null : <ArrowRight />}
-              </Button>
-              {step > 0 ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setStep(step - 1)}
-                >
-                  <ArrowLeft /> Back
-                </Button>
-              ) : null}
-            </div>
-          </form>
-        )}
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
-          <p>
-            Signed in as {account.email} ·{" "}
-            <button
-              type="button"
-              className="text-foreground underline underline-offset-4"
-              onClick={() => {
-                setSigningOpen(false);
-                setDraft(emptyDraft());
-              }}
-            >
-              Clear form
-            </button>
-          </p>
-          <OnboardingHelp step={steps[step] ?? "Project setup"} />
-        </div>
-      </div>
-    </AuthCard>
+        </DialogContent>
+      </Dialog>
+    </PageShell>
   );
 };
+
+interface OnboardingEngineerState {
+  server: EngineerOnboarding;
+  draft: OnboardingDraft;
+  installation: GithubInstallation;
+}

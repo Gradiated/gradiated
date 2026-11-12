@@ -1786,7 +1786,7 @@ export interface components {
     };
     GithubInstallations: {
       /**
-       * @description Installed requires an active Gradiated installation and accessible repositories.
+       * @description Installed means at least one active Gradiated installation; check repository_count before starting a project.
        * @enum {string}
        */
       status: "authorization_required" | "not_installed" | "installed";
@@ -1798,12 +1798,24 @@ export interface components {
       /** @description The GitHub account where the customer installed Gradiated. */
       account: string;
       /**
+       * @description Whether the account is an organization or a personal account.
+       * @enum {string}
+       */
+      account_type: "Organization" | "User";
+      /**
+       * Format: uri
+       * @description GitHub page where the customer changes the installation's repository access.
+       */
+      manage_url: string;
+      /**
        * @description Whether the installation covers all or selected repositories.
        * @enum {string}
        */
       repository_selection: "all" | "selected";
-      /** @description Repositories accessible to both this GitHub user and the app installation. */
+      /** @description Repositories accessible to both this GitHub user and the app installation; zero until the customer selects one. */
       repository_count: number;
+      /** @description Full names of up to 5 of those repositories, for display. */
+      repositories: string[];
     };
     SlackInvitation: {
       /** @description The dedicated channel in Gradiated's workspace. */
@@ -4794,7 +4806,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description nda_required, github_authorization_required, github_installation_unverified or slack_channel_required; conflict when the installation belongs to another organization. */
+      /** @description nda_required, github_authorization_required, github_installation_unverified, github_repositories_required or slack_channel_required; conflict when the installation belongs to another organization. */
       409: {
         headers: {
           [name: string]: unknown;

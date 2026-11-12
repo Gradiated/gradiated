@@ -147,7 +147,7 @@ const submit = createRoute({
     },
     409: {
       description:
-        "nda_required, github_authorization_required, github_installation_unverified or slack_channel_required; conflict when the installation belongs to another organization.",
+        "nda_required, github_authorization_required, github_installation_unverified, github_repositories_required or slack_channel_required; conflict when the installation belongs to another organization.",
       content: problemContent,
     },
     422: { description: "Invalid submission.", content: problemContent },
@@ -249,6 +249,14 @@ export const registerEngineerOnboardingRoutes = (
         problems.onboardingConflict(
           "github_installation_unverified",
           "GitHub did not confirm the selected installation. Check its repository access and try again.",
+        ),
+      );
+
+    if (!installation.repository_count)
+      throw new ApiProblem(
+        problems.onboardingConflict(
+          "github_repositories_required",
+          "Select at least one repository for the Gradiated app on GitHub, then try again.",
         ),
       );
 

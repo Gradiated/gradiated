@@ -1,5 +1,5 @@
 import { CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 
 import {
@@ -23,6 +23,23 @@ import {
   type OnboardingAccount,
   type OnboardingDraft,
 } from "@/lib/engineer-onboarding";
+
+const RESEND_AFTER_MS = 30_000;
+
+const useResendCountdown = (invitedAt: string | null | undefined) => {
+  const [now, setNow] = useState(() => Date.now());
+  const availableAt = invitedAt ? Date.parse(invitedAt) + RESEND_AFTER_MS : 0;
+  const seconds = Math.max(0, Math.ceil((availableAt - now) / 1000));
+
+  useEffect(() => {
+    if (seconds === 0) return;
+
+    const timer = window.setTimeout(() => setNow(Date.now()), 1000);
+    return () => window.clearTimeout(timer);
+  }, [seconds, now]);
+
+  return seconds;
+};
 
 export const SlackInvitation = ({
   account,
@@ -52,6 +69,7 @@ export const SlackInvitation = ({
   const sent =
     slackInvited(server) &&
     server.slack?.invited_email?.toLowerCase() === recipient;
+  const resendIn = useResendCountdown(server.slack?.invited_at);
 
   const send = async () => {
     if (busy || !validRecipient || !validChannel) return;
@@ -100,10 +118,25 @@ export const SlackInvitation = ({
         />
       </Field>
       {sent ? (
-        <p role="status" className="flex items-center gap-2 text-sm">
-          <CheckCircle2 className="size-4 text-emerald-600" /> Invite sent · #
-          {channel}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p role="status" className="flex items-center gap-2 text-sm">
+            <CheckCircle2 className="size-4 text-emerald-600" /> Invite sent · #
+            {channel}
+          </p>
+          <Button
+            type="button"
+            variant="link"
+            className="h-auto p-0"
+            disabled={busy || resendIn > 0}
+            onClick={() => void send()}
+          >
+            {busy
+              ? "Resending…"
+              : resendIn > 0
+                ? `Resend in ${resendIn}s`
+                : "Resend invite"}
+          </Button>
+        </div>
       ) : (
         <>
           {renaming ? (

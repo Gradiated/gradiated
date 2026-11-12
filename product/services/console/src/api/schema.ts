@@ -383,7 +383,7 @@ export interface paths {
     put?: never;
     /**
      * Invite the customer's chosen email to the organization's Slack Connect channel
-     * @description Requires an active verified organization admin. Each organization has one channel: the first request creates it, and later requests re-invite into the stored channel and ignore channel_name. The Slack email may differ from the signed-in account. One invitation is sent per organization every 10 minutes. Customer acceptance and workspace approval may still be required.
+     * @description Requires an active verified organization admin. Each organization has one channel: the first request creates it, and later requests re-invite into the stored channel and ignore channel_name. The Slack email may differ from the signed-in account. One invitation is sent per organization every 30 seconds. Customer acceptance and workspace approval may still be required.
      */
     post: operations["createSlackInvitation"];
     delete?: never;

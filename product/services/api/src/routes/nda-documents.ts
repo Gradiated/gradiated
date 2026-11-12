@@ -132,7 +132,7 @@ export const registerNdaDocumentRoutes = (
     if (!provider)
       throw new ApiProblem(
         problems.unavailable(
-          "On-page NDA signing has not been configured yet.",
+          "NDA signing isn’t available right now. Email us the details instead and we’ll send over the NDA.",
         ),
       );
 

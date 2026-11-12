@@ -84,7 +84,7 @@ owner.
 per organization, adds the engineers and emails a Slack Connect invitation.
 Later invitations reuse the organization's channel and ignore `channel_name`.
 A taken name returns 409 `slack_channel_name_taken`. An organization may send
-one invitation per 10 minutes; sooner returns 429 `slack_invitation_cooldown`
+one invitation per 30 seconds; sooner returns 429 `slack_invitation_cooldown`
 with `Retry-After`. Submission notes are posted as plain-text blocks. Mutating
 Slack calls are not retried automatically.
 

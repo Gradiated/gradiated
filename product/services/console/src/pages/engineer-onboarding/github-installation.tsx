@@ -16,12 +16,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  POST_TRAINING_ONBOARDING_PATH,
+  GITHUB_RETURN_PATH,
+  githubInstallUrl,
   type VerifiedInstallation,
 } from "@/lib/engineer-onboarding";
 
-export const GITHUB_APP_INSTALL_URL =
-  "https://github.com/apps/gradiated/installations/new";
+const POLL_MS = 5000;
 
 export const GithubAppInstallation = ({
   organizationId,
@@ -38,7 +38,7 @@ export const GithubAppInstallation = ({
   const [installations, setInstallations] = useState<GithubInstallation[]>([]);
   const [selected, setSelected] = useState<VerifiedInstallation | null>(saved);
   const [error, setError] = useState("");
-  const [authorizationUrl, setAuthorizationUrl] = useState("");
+  const [installUrl, setInstallUrl] = useState("");
   const callback = useRef(onVerified);
   callback.current = onVerified;
   const savedInstallation = useRef(saved);
@@ -46,7 +46,6 @@ export const GithubAppInstallation = ({
 
   const check = useCallback(
     async (id?: number) => {
-      setBusy(true);
       setError("");
       try {
         const result = await getGithubInstallations(organizationId, {
@@ -68,8 +67,6 @@ export const GithubAppInstallation = ({
             error instanceof Error ? error.message : "Could not check GitHub.",
           );
         }
-      } finally {
-        if (active.current) setBusy(false);
       }
     },
     [organizationId],
@@ -84,45 +81,55 @@ export const GithubAppInstallation = ({
     };
   }, [check]);
 
+  const waiting = opened && !selected && installations.length < 2;
+
   useEffect(() => {
-    if (!opened) return;
+    if (!waiting) return;
 
-    const focus = () => {
-      void check();
+    const poll = () => {
+      if (document.visibilityState === "visible") void check();
     };
-    window.addEventListener("focus", focus);
-    return () => window.removeEventListener("focus", focus);
-  }, [opened, check]);
+    const timer = window.setInterval(poll, POLL_MS);
+    window.addEventListener("focus", poll);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", poll);
+    };
+  }, [waiting, check]);
 
-  const authorize = async () => {
+  const install = async () => {
     const popup = window.open("about:blank", "_blank");
     if (popup) popup.opener = null;
 
     setBusy(true);
     setError("");
-    setOpened(true);
+    setInstallUrl("");
+    setSelected(null);
+    callback.current(null);
     try {
       const result = await authClient.linkSocial({
         provider: "github",
         callbackURL: new URL(
-          `${POST_TRAINING_ONBOARDING_PATH}&organization=${organizationId}`,
+          GITHUB_RETURN_PATH,
           window.location.origin,
         ).toString(),
         disableRedirect: true,
       });
       if (result.error || !result.data?.url)
-        throw new Error(result.error?.message ?? "Could not authorize GitHub.");
+        throw new Error(
+          result.error?.message ?? "Could not start the GitHub installation.",
+        );
 
-      const url = new URL(result.data.url);
-      if (url.protocol !== "https:" || url.hostname !== "github.com")
-        throw new Error("Unexpected GitHub authorization URL.");
-
-      if (popup) popup.location.href = url.href;
-      else setAuthorizationUrl(url.href);
+      const url = githubInstallUrl(result.data.url);
+      setOpened(true);
+      if (popup) popup.location.href = url;
+      else setInstallUrl(url);
     } catch (error) {
       popup?.close();
       setError(
-        error instanceof Error ? error.message : "Could not authorize GitHub.",
+        error instanceof Error
+          ? error.message
+          : "Could not start the GitHub installation.",
       );
     } finally {
       setBusy(false);
@@ -137,20 +144,6 @@ export const GithubAppInstallation = ({
           Choose which repositories we can access in GitHub.
         </p>
       </div>
-      <Button asChild variant="outline" className="self-start">
-        <a
-          href={GITHUB_APP_INSTALL_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => {
-            setOpened(true);
-            callback.current(null);
-            setSelected(null);
-          }}
-        >
-          Install GitHub app <ExternalLink />
-        </a>
-      </Button>
       {selected ? (
         <p role="status" className="flex items-center gap-2 text-sm">
           <CheckCircle2 className="size-4 text-emerald-600" /> Installed ·{" "}
@@ -159,25 +152,23 @@ export const GithubAppInstallation = ({
         </p>
       ) : (
         <div className="flex flex-col items-start gap-2">
-          {status === "authorization_required" ? (
-            <Button
-              type="button"
-              variant="link"
-              className="h-auto p-0"
-              disabled={busy}
-              onClick={() => void authorize()}
-            >
-              Authorize GitHub to verify installation
-            </Button>
-          ) : null}
-          {authorizationUrl ? (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={() => void install()}
+          >
+            {opened ? "Open GitHub again" : "Install GitHub app"}{" "}
+            <ExternalLink />
+          </Button>
+          {installUrl ? (
             <a
               className="text-sm underline underline-offset-4"
-              href={authorizationUrl}
+              href={installUrl}
               target="_blank"
               rel="noopener noreferrer"
             >
-              Open GitHub authorization
+              Continue to GitHub
             </a>
           ) : null}
           {installations.length > 1 ? (
@@ -197,18 +188,11 @@ export const GithubAppInstallation = ({
               </SelectContent>
             </Select>
           ) : null}
-          <Button
-            type="button"
-            variant="link"
-            className="h-auto p-0"
-            disabled={busy}
-            onClick={() => void check()}
-          >
-            {busy ? "Checking installation…" : "Check installation"}
-          </Button>
-          {opened && status === "not_installed" && !busy && !error ? (
+          {waiting && !error ? (
             <p role="status" className="text-sm text-muted-foreground">
-              Waiting for installation or organization-owner approval.
+              {status === "authorization_required"
+                ? "Waiting for GitHub…"
+                : "Waiting for GitHub. If an organization owner must approve the install, this updates once they do."}
             </p>
           ) : null}
         </div>

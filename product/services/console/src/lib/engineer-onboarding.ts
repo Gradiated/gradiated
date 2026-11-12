@@ -215,14 +215,14 @@ export const submitProblem = (code: string | undefined) =>
 export const slackInvitationProblem = (code: string | undefined) => {
   if (code === "slack_channel_name_taken")
     return {
-      message: "That channel name is already in use. Choose another name.",
+      message: "That channel name is already in use.",
       renameChannel: true,
     };
 
   if (code === "slack_invitation_cooldown")
     return {
       message:
-        "We just sent a Slack invitation. You can send another in about 10 minutes.",
+        "We just sent a Slack invitation. You can send another in 30 seconds.",
       renameChannel: false,
     };
 
@@ -313,4 +313,26 @@ export const chooseAccount = (
       company: organization.name,
     },
   };
+};
+
+export const GITHUB_APP_INSTALL_URL =
+  "https://github.com/apps/gradiated/installations/new";
+
+export const GITHUB_RETURN_PATH = "/onboarding/github-connected";
+
+/* One trip to GitHub: the app requests user authorization during
+   installation, so GitHub returns to Better Auth's GitHub callback with an
+   OAuth code. Reusing the state Better Auth issued for linkSocial lets that
+   callback link the user's GitHub account, which the API then uses to verify
+   the installation. */
+export const githubInstallUrl = (authorizationUrl: string) => {
+  const url = new URL(authorizationUrl);
+  const state = url.searchParams.get("state");
+  if (url.protocol !== "https:" || url.hostname !== "github.com" || !state)
+    throw new Error("Unexpected GitHub authorization URL.");
+
+  const install = new URL(GITHUB_APP_INSTALL_URL);
+  install.searchParams.set("state", state);
+
+  return install.toString();
 };

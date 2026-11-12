@@ -28,7 +28,7 @@ const create = createRoute({
   summary:
     "Invite the customer's chosen email to the organization's Slack Connect channel",
   description:
-    "Requires an active verified organization admin. Each organization has one channel: the first request creates it, and later requests re-invite into the stored channel and ignore channel_name. The Slack email may differ from the signed-in account. One invitation is sent per organization every 10 minutes. Customer acceptance and workspace approval may still be required.",
+    "Requires an active verified organization admin. Each organization has one channel: the first request creates it, and later requests re-invite into the stored channel and ignore channel_name. The Slack email may differ from the signed-in account. One invitation is sent per organization every 30 seconds. Customer acceptance and workspace approval may still be required.",
   request: {
     params: z.object({
       organization_id: z.uuid().describe("The customer organization."),
@@ -128,7 +128,7 @@ export const registerSlackInvitationRoutes = (
       context.header("Retry-After", String(seconds));
       throw new ApiProblem(
         problems.slackInvitationCooldown(
-          "A Slack invitation was sent recently. Check your email, or try again in a few minutes.",
+          `A Slack invitation was sent recently. Check your email, or try again in ${seconds} seconds.`,
         ),
       );
     });

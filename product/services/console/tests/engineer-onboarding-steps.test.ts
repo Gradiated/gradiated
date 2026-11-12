@@ -21,6 +21,7 @@ import {
   submitProblem,
   type OnboardingAccount,
   type OnboardingDraft,
+  githubInstallUrl,
 } from "@/lib/engineer-onboarding";
 
 const account: OnboardingAccount = {
@@ -241,7 +242,7 @@ describe("onboarding submission", () => {
     });
     expect(
       slackInvitationProblem("slack_invitation_cooldown")?.message,
-    ).toMatch(/10 minutes/);
+    ).toMatch(/30 seconds/);
     expect(slackInvitationProblem("nda_required")).toBeUndefined();
   });
 });
@@ -360,5 +361,24 @@ describe("onboarding account", () => {
         "first",
       ),
     ).toEqual({ kind: "missing" });
+  });
+});
+
+describe("GitHub installation link", () => {
+  it("carries the linking state onto the app installation", () => {
+    expect(
+      githubInstallUrl(
+        "https://github.com/login/oauth/authorize?client_id=x&state=abc&code_challenge=y",
+      ),
+    ).toBe("https://github.com/apps/gradiated/installations/new?state=abc");
+  });
+
+  it("rejects an authorization URL that is not GitHub's or has no state", () => {
+    expect(() =>
+      githubInstallUrl("https://evil.example/login/oauth/authorize?state=abc"),
+    ).toThrow();
+    expect(() =>
+      githubInstallUrl("https://github.com/login/oauth/authorize"),
+    ).toThrow();
   });
 });

@@ -46,6 +46,13 @@ const setup = async (
     if (url.hostname !== "127.0.0.1") return route.abort();
     if (url.pathname.startsWith("/flags") || url.pathname.startsWith("/decide"))
       return route.fulfill({ json: { featureFlags: {}, flags: {} } });
+    if (url.pathname === "/api/auth/link-social")
+      return route.fulfill({
+        json: {
+          url: "https://github.com/login/oauth/authorize?client_id=test&state=link-state",
+          redirect: false,
+        },
+      });
     if (url.pathname === "/api/v1/me" && !signedIn)
       return route.fulfill({
         status: 401,
@@ -470,11 +477,23 @@ test("a returning customer with a signed NDA waits for GitHub, chooses email and
     page.getByText(/Install the Gradiated GitHub app and select at least one/),
   ).toBeVisible();
 
+  await page
+    .context()
+    .route("https://github.com/**", (route) => route.fulfill({ body: "" }));
+  const github = page.waitForEvent("popup");
+  await page.getByRole("button", { name: "Install GitHub app" }).click();
+  const popup = await github;
+  await expect
+    .poll(() => popup.url())
+    .toBe(
+      "https://github.com/apps/gradiated/installations/new?state=link-state",
+    );
+  await expect(page.getByText(/Waiting for GitHub/)).toBeVisible();
+
   engineer.githubInstalled = true;
-  await page.getByRole("button", { name: "Check installation" }).click();
-  await expect(
-    page.getByText("Installed · acme · 3 repositories"),
-  ).toBeVisible();
+  await expect(page.getByText("Installed · acme · 3 repositories")).toBeVisible(
+    { timeout: 10_000 },
+  );
   await page.getByRole("button", { name: "Continue" }).click();
 
   await expect(

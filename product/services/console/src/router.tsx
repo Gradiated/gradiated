@@ -52,6 +52,18 @@ const onboardingRoute = createRoute({
   component: OnboardingPage,
 });
 
+const githubReturnRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/onboarding/github-connected",
+  validateSearch: (search: Record<string, unknown>) => ({
+    ...(typeof search.error === "string" ? { error: search.error } : {}),
+  }),
+  component: lazyRouteComponent(
+    () => import("@/pages/engineer-onboarding/github-return"),
+    "GithubReturnPage",
+  ),
+});
+
 const onboardingJourneyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/onboarding/$journey",
@@ -218,6 +230,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   invitationAcceptRoute,
   onboardingRoute,
+  githubReturnRoute,
   onboardingJourneyRoute,
   apiKeysRoute,
   modelsRoute,

@@ -7,7 +7,7 @@ import {
   type SlackConnect,
 } from "./connect.js";
 
-export const SLACK_INVITATION_COOLDOWN_MS = 10 * 60_000;
+export const SLACK_INVITATION_COOLDOWN_MS = 30_000;
 
 export class SlackInvitationCooldown extends Error {
   constructor(readonly availableAt: Date) {

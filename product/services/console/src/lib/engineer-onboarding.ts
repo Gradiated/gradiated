@@ -178,14 +178,6 @@ export const startBlockers = (
 export const repositoryCount = (count: number) =>
   `${count} ${count === 1 ? "repository" : "repositories"}`;
 
-export const codeSummary = (installation: VerifiedInstallation | null) => {
-  if (!installation) return "Not connected";
-
-  return installation.repository_count
-    ? `${installation.account} · ${repositoryCount(installation.repository_count)}`
-    : `${installation.account} · no repositories`;
-};
-
 export const slackInvited = (server: EngineerOnboarding) =>
   server.slack?.status === "active";
 
@@ -272,23 +264,19 @@ export const confirmationMessage = (
   server: EngineerOnboarding,
   email: string,
 ) => {
-  const meantime = "If in the meantime you want to chat or tell us anything, ";
-
   if (
     server.contact_channel !== "slack" ||
     !server.slack ||
     !slackInvited(server)
   )
     return {
-      plan: `Thank you, we've got everything we need. One of our researchers will have a look into your project now and will email a plan to ${email} as soon as possible, likely within a working day!`,
-      followUp: meantime + "email us at help@gradiated.com.",
+      plan: `Your researcher will email a plan to ${email}, usually within a working day.`,
+      followUp: "Anything to add? Email help@gradiated.com.",
     };
 
   return {
-    plan: "Thank you, we've got everything we need. One of our researchers will have a look into your project now and will suggest a plan on Slack with you as soon as possible, likely within a working day!",
-    followUp:
-      meantime +
-      `hop into #${server.slack.channel_name} and invite some colleagues to it. If you haven't joined yet, accept the Slack invitation we sent to ${server.slack.invited_email ?? email}.`,
+    plan: `Your researcher will post a plan in #${server.slack.channel_name}, usually within a working day.`,
+    followUp: `Invite your colleagues there too. If you haven’t joined yet, accept the invite we sent to ${server.slack.invited_email ?? email}.`,
   };
 };
 

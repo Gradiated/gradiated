@@ -436,7 +436,9 @@ test("a new engineer customer sets up the organization, invites Slack, signs the
   await expect(
     page.getByRole("heading", { name: "You’re all set." }),
   ).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByText(/will suggest a plan on Slack/)).toBeVisible();
+  await expect(
+    page.getByText(/will post a plan in #ext-acme-gradiated/),
+  ).toBeVisible();
   expect(engineer.submissions).toEqual([
     {
       contact_channel: "slack",

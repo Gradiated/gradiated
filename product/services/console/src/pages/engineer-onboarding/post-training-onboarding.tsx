@@ -268,7 +268,6 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
         <ProjectStarted
           account={account}
           server={server}
-          installation={installation}
           justStarted={justStarted}
         />
       </PageShell>

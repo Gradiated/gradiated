@@ -8,7 +8,6 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  codeSummary,
   confirmationMessage,
   proposedSlackChannel,
   sectionId,
@@ -20,12 +19,6 @@ import {
 } from "@/lib/engineer-onboarding";
 
 export type UpdateDraft = (values: Partial<OnboardingDraft>) => void;
-
-export const Eyebrow = ({ children }: { children: ReactNode }) => (
-  <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-    {children}
-  </span>
-);
 
 export const PageHeader = ({
   title,
@@ -235,17 +228,6 @@ export const ContextSection = ({
   </Section>
 );
 
-const Summary = ({ rows }: { rows: [string, ReactNode][] }) => (
-  <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm">
-    {rows.map(([label, value]) => (
-      <div key={label} className="contents">
-        <dt className="text-muted-foreground">{label}</dt>
-        <dd className="text-right">{value}</dd>
-      </div>
-    ))}
-  </dl>
-);
-
 export const ProjectPanel = ({
   account,
   server,
@@ -388,69 +370,32 @@ const sectionNames: Record<OnboardingSection, string> = {
 export const ProjectStarted = ({
   account,
   server,
-  installation,
   justStarted,
 }: {
   account: OnboardingAccount;
   server: EngineerOnboarding;
-  installation: VerifiedInstallation | null;
   justStarted: boolean;
 }) => {
   const confirmation = confirmationMessage(server, account.email);
-  const slackChannel =
-    server.contact_channel === "slack" && server.slack
-      ? `#${server.slack.channel_name}`
-      : null;
-  const recorded = server.github_installations[0];
 
   return (
-    <div className="flex flex-col gap-12">
+    <div className="flex flex-col gap-10">
       <PageHeader
         title={justStarted ? "You’re all set." : "Your project is underway."}
       >
         {justStarted
-          ? "A post-training researcher picks it up from here."
-          : "Your post-training researcher is working with you. Here’s what you shared."}
+          ? "One of our researchers will pick it up from here."
+          : "Your researcher is working with you."}
       </PageHeader>
-      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <section
-          aria-label="What happens now"
-          className="flex flex-col gap-4 rounded-lg border bg-card p-6 md:p-8"
-        >
-          <p className="max-w-2xl text-lg leading-8">{confirmation.plan}</p>
-          <p className="text-sm leading-6 text-muted-foreground">
-            {confirmation.followUp}
-          </p>
-        </section>
-        <aside
-          aria-label="Your project"
-          className="flex flex-col gap-5 rounded-lg border bg-card p-6"
-        >
-          <div className="flex flex-col gap-1.5">
-            <Eyebrow>Your project</Eyebrow>
-            <h2 className="text-2xl font-semibold tracking-tight">
-              {account.company} × Gradiated
-            </h2>
-          </div>
-          <Summary
-            rows={[
-              [
-                "Code",
-                installation
-                  ? codeSummary(installation)
-                  : (recorded?.account ?? "GitHub"),
-              ],
-              ["Contact", slackChannel ?? account.email],
-              [
-                "NDA",
-                server.nda
-                  ? `Signed ${new Date(server.nda.signed_at).toLocaleDateString()}`
-                  : "None",
-              ],
-            ]}
-          />
-        </aside>
-      </div>
+      <section
+        aria-label="What happens now"
+        className="flex max-w-2xl flex-col gap-3 rounded-lg border bg-card p-6 md:p-8"
+      >
+        <p className="text-lg leading-8">{confirmation.plan}</p>
+        <p className="text-sm leading-6 text-muted-foreground">
+          {confirmation.followUp}
+        </p>
+      </section>
     </div>
   );
 };

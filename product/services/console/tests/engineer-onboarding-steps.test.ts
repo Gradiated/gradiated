@@ -4,7 +4,6 @@ import type { CurrentUser } from "@/api/queries";
 import {
   changesNda,
   chooseAccount,
-  codeSummary,
   confirmationMessage,
   counterpartyDetails,
   draftStorageKey,
@@ -231,25 +230,13 @@ describe("onboarding Slack channel", () => {
 });
 
 describe("onboarding summary and confirmation", () => {
-  it("summarizes the shared code for the started project", () => {
-    expect(codeSummary(null)).toBe("Not connected");
-    expect(codeSummary(installation)).toBe("acme · 3 repositories");
-    expect(codeSummary({ ...installation, repository_count: 1 })).toBe(
-      "acme · 1 repository",
-    );
-    expect(codeSummary({ ...installation, repository_count: 0 })).toBe(
-      "acme · no repositories",
-    );
-  });
-
   it("points a Slack contact to the invited channel", () => {
     const message = confirmationMessage(
       serverState({ contact_channel: "slack", slack: activeSlack }),
       account.email,
     );
 
-    expect(message.plan).toContain("on Slack");
-    expect(message.followUp).toContain("#ext-acme-gradiated");
+    expect(message.plan).toContain("in #ext-acme-gradiated");
     expect(message.followUp).toContain("team@acme.example");
   });
 

@@ -96,7 +96,7 @@ const setup = (
     role?: "admin" | "member";
     nda?: boolean;
     ndaDocument?: string;
-    slackChannel?: boolean;
+    slackChannel?: boolean | "pending";
     token?: string | null;
     installations?: (typeof installation)[];
     testMode?: boolean;
@@ -111,6 +111,9 @@ const setup = (
       ? []
       : [
           slackRecord({
+            ...(options.slackChannel === "pending"
+              ? { status: "pending" as const }
+              : {}),
             settings: {
               schema_version: 1,
               channel_name: "ext-example-gradiated",
@@ -436,6 +439,10 @@ describe("engineer onboarding submission", () => {
       code: "github_repositories_required",
     },
     { options: { slackChannel: false }, code: "slack_channel_required" },
+    {
+      options: { slackChannel: "pending" as const },
+      code: "slack_channel_required",
+    },
   ])(
     "does not submit before every step is verified: $code",
     async ({ options, code }) => {

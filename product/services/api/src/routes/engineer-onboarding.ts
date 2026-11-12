@@ -380,16 +380,16 @@ export const registerEngineerOnboardingRoutes = (
           problems.unavailable("Slack has not been configured yet."),
         );
 
-      if (
-        !(await integrations.findSlackChannel(
-          owner.userId,
-          owner.organizationId,
-        ))
-      )
+      // A pending channel's invitation never went out.
+      const channel = await integrations.findSlackChannel(
+        owner.userId,
+        owner.organizationId,
+      );
+      if (channel?.status !== "active")
         throw new ApiProblem(
           problems.onboardingConflict(
             "slack_channel_required",
-            "Request the Slack invitation before choosing Slack for contact.",
+            "Send the Slack invitation before choosing Slack for contact.",
           ),
         );
     }

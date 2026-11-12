@@ -123,8 +123,10 @@ export const createAdapterQualifier = ({
       );
     }
 
-    let rejected = false;
-    let reason = "probe_failed";
+    // A rejection is reported over later allocation failures: it describes the
+    // adapter, while a timeout or 503 describes only that allocation.
+    let rejection: { deploymentId: string; reason: string } | undefined;
+    let last = { deploymentId: candidates[0]!.id, reason: "probe_failed" };
     let attempts = 0;
     for (const target of candidates) {
       attempts += 1;
@@ -136,14 +138,18 @@ export const createAdapterQualifier = ({
         finish("passed", attempts, target.id);
         return;
       }
-      rejected ||= result.rejected;
-      reason = result.reason;
-      if (attempts === candidates.length) {
-        finish(rejected ? "rejected" : "failed", attempts, target.id, reason);
-      }
+      last = { deploymentId: target.id, reason: result.reason };
+      if (result.rejected) rejection ??= last;
     }
+    const failure = rejection ?? last;
+    finish(
+      rejection ? "rejected" : "failed",
+      attempts,
+      failure.deploymentId,
+      failure.reason,
+    );
 
-    throw rejected
+    throw rejection
       ? new ControlServiceError(
           "conflict",
           "The serving runtime could not load this adapter. Check that it targets modules this base model supports. The version was not promoted.",

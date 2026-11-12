@@ -162,7 +162,12 @@ describe("createAdapterQualifier", () => {
 
     await expect(qualify(version)).rejects.toMatchObject({ code: "conflict" });
     expect(reports).toMatchObject([
-      { outcome: "rejected", attempts: 2, reason: "probe_timeout" },
+      {
+        outcome: "rejected",
+        attempts: 2,
+        deploymentId: "a",
+        reason: "invalid_adapter",
+      },
     ]);
   });
 

@@ -123,7 +123,7 @@ const completeUpload = createRoute({
   operationId: "completeModelUpload",
   summary: "Complete model upload",
   description:
-    "Validates adapter files and creates a model version. Retries return the same version. Serving remains disabled until qualification.",
+    "Validates adapter files and creates an unavailable model version. Retries return the same version. Promoting the version tests it on serving capacity and enables serving when that passes.",
   tags: ["Training"],
   request: { params: ModelUploadPathSchema },
   responses: {

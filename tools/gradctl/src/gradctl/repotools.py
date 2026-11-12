@@ -29,6 +29,8 @@ class Tool:
     interactive: bool = False
     # Binaries the script itself runs, beyond the ones that launch it.
     requires: tuple[str, ...] = ()
+    # Binaries the script finds on PATH unless a flag names one: (binary, flag).
+    requires_unless: tuple[tuple[str, str], ...] = ()
 
 
 def python(path: str) -> tuple[str, ...]:
@@ -116,10 +118,12 @@ TOOLS = (
     # Observability checks over the rendered monitoring configuration.
     Tool('observability', 'check', (python('tools/observability/check.py'),),
          'Check alert and dashboard links, PromQL, and probe and stall behaviour (--promtool PATH)',
-         effects='read', network=False),
+         effects='read', network=False,
+         requires_unless=(('promtool', '--promtool'),)),
     Tool('observability', 'platform', (python('tools/observability/check_platform.py'),),
          'Render the pinned monitoring chart and exercise its incident routing (--amtool, --alertmanager)',
-         effects='read', requires=('helm',)),
+         effects='read', requires=('helm',),
+         requires_unless=(('amtool', '--amtool'), ('alertmanager', '--alertmanager'))),
     Tool('observability', 'controller-requests', (python('tools/observability/check_controller_requests.py'),),
          'Render the pinned controller charts and require their scheduler reservations', effects='read',
          requires=('helm',)),
@@ -143,7 +147,7 @@ TOOLS = (
     # Local product development.
     Tool('product', 'sglang-local', (('bash', 'product/scripts/run-sglang-local.sh'),),
          'Run the pinned Apple Silicon SGLang development model; the first run fetches SGLang and the model',
-         effects='read', interactive=True, requires=('git', 'uv')),
+         effects='read', interactive=True, requires=('git', 'uv', 'xcrun')),
     Tool('product', 'temporal-ui-local', (('bash', 'product/scripts/run-temporal-ui-local.sh'),),
          'Run the Temporal UI locally against the development Temporal server; the first run downloads it',
          effects='read', interactive=True, requires=('curl', 'tar')),
@@ -182,7 +186,10 @@ def runner(tool: Tool):
         steps = [[sys.executable if part == '{python}' else part for part in step] for step in tool.steps]
         # Extra arguments go to the last step, the tool itself.
         steps[-1] += ctx.args.forwarded
-        for binary in (*(step[0] for step in steps), *tool.requires):
+        given = ctx.args.forwarded
+        located = [binary for binary, flag in tool.requires_unless
+                   if not any(arg == flag or arg.startswith(flag + '=') for arg in given)]
+        for binary in (*(step[0] for step in steps), *tool.requires, *located):
             if not shutil.which(binary):
                 raise DependencyMissing(binary)
         runs = []
@@ -213,6 +220,7 @@ def register(commands, common, groups: dict) -> None:
         meta = Meta(tool.summary, effects=tool.effects, network=tool.network, repo=True, forwards_args=True,
                     interactive=tool.interactive,
                     requires=tuple(dict.fromkeys((*(step[0] for step in tool.steps if step[0] != '{python}'),
-                                                  *tool.requires))))
+                                                  *tool.requires,
+                                                  *(binary for binary, _ in tool.requires_unless)))))
         leaf(groups[tool.group], tool.name, runner(tool), meta, common,
              epilog='Arguments after the command go to the tool; use `-- --help` for its own help.')

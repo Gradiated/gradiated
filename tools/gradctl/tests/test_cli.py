@@ -78,6 +78,20 @@ class CatalogTests(unittest.TestCase):
             code, out, _ = run('--json', 'security', 'temporal-ui', env={'GRADCTL_REPO': str(LAUNCHER.parents[2])})
         self.assertEqual((code, json.loads(out)['error']['code']), (5, 'dependency_missing'))
 
+    def test_a_flag_can_name_a_binary_instead_of_path(self):
+        from gradctl import repotools
+        tool = next(t for t in repotools.TOOLS if (t.group, t.name) == ('observability', 'check'))
+        real = __import__('shutil').which
+        repo = {'GRADCTL_REPO': str(LAUNCHER.parents[2])}
+        with mock.patch('gradctl.repotools.shutil.which', side_effect=lambda b: None if b == 'promtool' else real(b)):
+            code, out, _ = run('--json', 'observability', 'check', env=repo)
+            self.assertEqual((code, json.loads(out)['error']['code']), (5, 'dependency_missing'))
+            with mock.patch('gradctl.repotools.subprocess.run') as ran:
+                ran.return_value = mock.Mock(returncode=0, stdout='', stderr='')
+                code, _, _ = run('--json', 'observability', 'check', '--promtool=/opt/promtool', env=repo)
+        self.assertEqual(code, 0)
+        self.assertIn(('promtool', '--promtool'), tool.requires_unless)
+
     def test_commands_json_is_one_document(self):
         code, out, _ = run('commands', '--json', state=OFFLINE)
         self.assertEqual(code, 0)

@@ -567,6 +567,8 @@ async fn the_wait_for_final_usage_is_bounded() {
 fn adapter() -> crate::PrivateAdapter {
     crate::PrivateAdapter {
         workspace_id: Uuid::now_v7(),
+        organization_slug: "acme".to_owned(),
+        task_name: "task-a".to_owned(),
         version_id: Uuid::from_u128(77),
         name: "task-a-v1".to_owned(),
         status: "available".to_owned(),
@@ -646,7 +648,7 @@ async fn an_adapter_is_served_with_its_adapter_when_it_can_be() {
             .unwrap()
             .served_digest(&request.local_capacity().release_digest)
     );
-    assert_eq!(finalized["model_id"], "task-a-v1");
+    assert_eq!(finalized["model_id"], "acme/task-a/task-a-v1");
 }
 
 #[tokio::test]
@@ -666,7 +668,7 @@ async fn an_adapter_without_capacity_degrades_to_its_base_model() {
             "{adapters}"
         );
         let finalized = harness.only_finalized();
-        assert_eq!(finalized["model_id"], "task-a-v1");
+        assert_eq!(finalized["model_id"], "acme/task-a/task-a-v1");
         assert_eq!(finalized["usage"]["charge"], 31);
         assert_eq!(
             finalized["served_release_digest"],
@@ -705,7 +707,7 @@ async fn a_failed_adapter_attempt_moves_to_base_capacity_then_openrouter() {
         ]
     );
     let sent = harness.external.requests.lock().unwrap();
-    assert_eq!(sent[0].request.model, "task-a-v1");
+    assert_eq!(sent[0].request.model, "acme/task-a/task-a-v1");
     assert_eq!(
         harness.only_finalized()["served_release_digest"],
         openrouter_digest()
@@ -786,7 +788,7 @@ async fn an_adapter_whose_base_is_mapped_degrades_to_openrouter() {
     harness.complete().await.unwrap();
 
     let finalized = harness.only_finalized();
-    assert_eq!(finalized["model_id"], "task-a-v1");
+    assert_eq!(finalized["model_id"], "acme/task-a/task-a-v1");
     assert_eq!(finalized["served_release_digest"], openrouter_digest());
     assert_eq!(finalized["usage"]["charge"], EXTERNAL_CHARGE);
 }

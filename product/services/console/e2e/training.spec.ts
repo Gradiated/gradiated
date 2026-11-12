@@ -26,7 +26,12 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
     const taskId = randomUUID();
     const runId = randomUUID();
     const versionId = randomUUID();
-    const versionName = `${taskName}-20260929`;
+    const versionName = "2026-09-29";
+    const me = await (await context.request.get(`${apiUrl}/api/v1/me`)).json();
+    const slug = me.organizations.find(
+      (organization: { id: string }) =>
+        organization.id === account.organizationId,
+    ).slug;
 
     try {
       const {
@@ -146,7 +151,10 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       ]);
       await page.goto(`/tasks/${encodeURIComponent(taskName)}`);
       await expect(
-        page.getByRole("heading", { name: versionName, exact: true }),
+        page.getByRole("heading", {
+          name: `${slug}/${taskName}/${versionName}`,
+          exact: true,
+        }),
       ).toBeVisible();
       await expect(page.getByText(/70 training examples/)).toBeVisible();
       await expect(
@@ -177,7 +185,7 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       await page.getByRole("tab", { name: "Model", exact: true }).click();
       await page.getByRole("button", { name: "Use", exact: true }).click();
       await expect(page.getByRole("dialog").getByRole("heading")).toHaveText(
-        versionName,
+        `${slug}/${taskName}/${versionName}`,
       );
       await page.keyboard.press("Escape");
       await page.getByRole("button", { name: "Promote", exact: true }).click();
@@ -196,7 +204,7 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       await expect(page.getByText("Production", { exact: true })).toBeVisible();
       await page.getByRole("button", { name: "Use", exact: true }).click();
       await expect(page.getByRole("dialog").getByRole("heading")).toHaveText(
-        taskName,
+        `${slug}/${taskName}`,
       );
       await page.keyboard.press("Escape");
       expect(

@@ -11,6 +11,7 @@ const organization = (
 ): CurrentUser["organizations"][number] => ({
   id: "00000000-0000-4000-8000-000000000001",
   name: "Personal",
+  slug: "personal",
   status: "active",
   role: "admin",
   default_workspace_id: "00000000-0000-4000-8000-000000000002",

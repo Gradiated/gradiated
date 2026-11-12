@@ -120,6 +120,8 @@ export const createModelUploads = (
           "conflict",
           "A task with this name already exists. Upload a version from that task instead.",
         );
+      const problem = await records.modelNameProblem(workspaceId, input.task);
+      if (problem) throw new ControlServiceError("conflict", problem);
       if (!input.create_task && !task)
         throw new ControlServiceError("not_found", "The task was not found.");
 

@@ -9,16 +9,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { copyLabel, useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { usePrivateModelName } from "@/hooks/use-private-model-name";
 import type { TaskRow, VersionView } from "@/store/fine-tuning-types";
-
-const modelToReplace = (
-  task: TaskRow,
-  version: VersionView,
-  production: VersionView | undefined,
-) =>
-  production && production.id !== version.id
-    ? production.name
-    : task.comparison_model_id;
 
 export const UseModelDialog = ({
   task,
@@ -31,8 +23,14 @@ export const UseModelDialog = ({
   production: VersionView | undefined;
   onClose: () => void;
 }) => {
-  const id = version.is_production ? task.name : version.name;
-  const currentModel = modelToReplace(task, version, production);
+  const modelName = usePrivateModelName();
+  const id = version.is_production
+    ? modelName(task.name)
+    : modelName(task.name, version.name);
+  const currentModel =
+    production && production.id !== version.id
+      ? modelName(task.name)
+      : task.comparison_model_id;
   const { state: copyState, copy } = useCopyToClipboard();
 
   return (

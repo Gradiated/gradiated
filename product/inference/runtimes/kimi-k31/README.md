@@ -145,9 +145,11 @@ million output tokens. There is no separate
 cache-write price: the gateway adds a cache-write price on top of input, so
 cache writes are charged at the input rate. Its initial
 release uses the existing Chat transport and omits `tokenizer_mode`; SGLang owns
-prompt rendering, tokenization and usage, so this deployment needs no gateway
-tokenizer change. The checkpoint ships a tiktoken vocabulary rather than a
-Hugging Face chat template or `tokenizer.json`; a future token-ID transport
+prompt rendering, tokenization and usage. For the public Anthropic token-count
+endpoint, the gateway forwards the original counting request to a healthy Kimi
+deployment's `/v1/messages/count_tokens`, with a ten-second deadline and no
+generation admission or billing. The checkpoint ships a tiktoken vocabulary
+rather than a Hugging Face chat template or `tokenizer.json`; a future token-ID transport
 would need a qualified native encoder. Image support must be qualified before
 expanding the catalog.
 

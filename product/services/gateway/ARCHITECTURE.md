@@ -1016,13 +1016,18 @@ and `user` and `session_id` as per-workspace SHA-256 values that carry no
 Gradiated identifier. `max_price` is the request's captured catalog prompt and completion
 prices in USD per million tokens (completion is the lower of the completion and
 reasoning prices, which OpenRouter bills alike), so OpenRouter routes only to
-providers that cost no more than the caller pays. The one exception is
-`openrouter::MODEL_MAX_PRICE_PERCENT`, a hardcoded operator-approved overpay:
+providers that cost no more than the caller pays, except for hardcoded
+operator-approved allowances.
+`openrouter::MODEL_MAX_PRICE_PERCENT` controls percentage allowances:
 `moonshotai/kimi-k3.1-pro` uses 120% of the captured prices, because no allowed
 zero-retention provider serves it at catalog price. Its fallback can therefore
 cost up to 20% more than the request pays us. The percentage applies to the
 request's service-tier price, so flex requests stay below every provider and
-get no fallback. `max_price` has no
+get no fallback. `openrouter::MODEL_MAX_PRICE` sets an absolute ceiling for
+`deepseek/deepseek-v4.1-flash-1017`: $0.30 input and $1.20 output per million
+tokens, covering Modal and the common standard provider tier. This ceiling is
+independent of the captured catalog prices; Gradiated absorbs the difference
+and does not require a local replica for fallback. `max_price` has no
 cached-input field and OpenRouter ignores unknown ones, so a provider's
 cache-read rate can exceed the catalog's cached price; Gradiated accepts that
 difference rather than restricting providers further. It carries no runtime priority

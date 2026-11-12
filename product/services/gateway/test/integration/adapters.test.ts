@@ -78,7 +78,7 @@ describe("workspace-private adapters", () => {
     const next = await version(instance, first.task);
     await production(instance, first);
     const warm = await instance.post({
-      model: `task-${first.task}`,
+      model: `${instance.organizationSlug}/task-${first.task}`,
       session_id: "same",
     });
     expect(warm.json().model).toBe(first.selector);
@@ -88,7 +88,7 @@ describe("workspace-private adapters", () => {
     const gate = deferred();
     const attempt = selected.enqueue({ status: 503, gate });
     const retrying = instance.post({
-      model: `task-${first.task}`,
+      model: `${instance.organizationSlug}/task-${first.task}`,
       session_id: "same",
     });
     await attempt.entered.promise;
@@ -103,7 +103,7 @@ describe("workspace-private adapters", () => {
       ).toBe(true);
     }
     const promoted = await instance.post({
-      model: `task-${first.task}`,
+      model: `${instance.organizationSlug}/task-${first.task}`,
     });
     expect(promoted.json().model).toBe(next.selector);
     await settlement(instance, promoted.headers["x-gradiated-generation-id"]);
@@ -118,7 +118,7 @@ describe("workspace-private adapters", () => {
     const response = await instance.http.stream(instance.path, {
       headers: instance.headers,
       json: instance.body({
-        model: `task-${first.task}`,
+        model: `${instance.organizationSlug}/task-${first.task}`,
         stream: true,
       }),
     });
@@ -146,7 +146,12 @@ describe("workspace-private adapters", () => {
     await enable(owner);
     const selected = await version(owner);
     await production(owner, selected);
-    for (const model of [selected.selector, `task-${selected.task}`]) {
+    for (const model of [
+      selected.selector,
+      `${other.organizationSlug}/task-${selected.task}`,
+      `task-${selected.task}`,
+      selected.name,
+    ]) {
       expect((await other.post({ model })).status).toBe(404);
     }
     await other.expectNotDispatched();
@@ -195,30 +200,40 @@ describe("workspace-private adapters", () => {
     await instance.expectNotDispatched();
   });
 
-  it("rejects ambiguous task and version slugs instead of choosing an adapter", async () => {
+  it("resolves a model only under its organization's current slug", async () => {
     const instance = await makeCase("vllm");
     await enable(instance);
-    const exact = await version(instance);
-    const other = await version(instance);
+    const selected = await version(instance);
+    await production(instance, selected);
+    const moved = `moved-${instance.organization.replaceAll("-", "")}`;
     await instance.database.query(
-      "update tasks set name = $2, production_version_id = $3 where id = $1",
-      [other.task, exact.selector, other.id],
+      "update organizations set slug = $2 where id = $1",
+      [instance.organization, moved],
     );
-    expect((await instance.post({ model: exact.selector })).status).toBe(503);
-    await instance.database.query(
-      "update tasks set production_version_id = null where id = $1",
-      [other.task],
+
+    const response = await instance.post({
+      model: `${moved}/task-${selected.task}`,
+    });
+    expect(response.status).toBe(200);
+    expect(response.json().model).toBe(
+      `${moved}/task-${selected.task}/${selected.name}`,
     );
-    expect((await instance.post({ model: exact.selector })).status).toBe(503);
-    await instance.expectNotDispatched();
+    expect(
+      (
+        await instance.post({
+          model: `${instance.organizationSlug}/task-${selected.task}`,
+        })
+      ).status,
+    ).toBe(404);
   });
 
   it("serves long task/version slugs and retains them in settlement", async () => {
     const instance = await makeCase("vllm");
     await enable(instance);
     const selected = await version(instance);
-    const task = "a".repeat(256);
-    const name = `${task}-20261002-2`;
+    const task = "a".repeat(128);
+    const name = "2026-10-02-2";
+    const model = `${instance.organizationSlug}/${task}/${name}`;
     await instance.database.query(
       "update tasks set name = $2, production_version_id = $3 where id = $1",
       [selected.task, task, selected.id],
@@ -227,12 +242,12 @@ describe("workspace-private adapters", () => {
       "update task_versions set name = $2 where id = $1",
       [selected.id, name],
     );
-    for (const model of [task, name]) {
-      const response = await instance.post({ model });
+    for (const selector of [`${instance.organizationSlug}/${task}`, model]) {
+      const response = await instance.post({ model: selector });
       expect(response.status).toBe(200);
-      expect(response.json().model).toBe(name);
+      expect(response.json().model).toBe(model);
       expect(instance.runtimes[0]!.calls.at(-1)!.model).toBe(
-        `${instance.workspace}/${name}`,
+        selected.runtimeName,
       );
       expect(
         (
@@ -241,7 +256,7 @@ describe("workspace-private adapters", () => {
             response.headers["x-gradiated-generation-id"],
           )
         ).model_id,
-      ).toBe(name);
+      ).toBe(model);
     }
   });
 
@@ -249,9 +264,14 @@ describe("workspace-private adapters", () => {
     const instance = await makeCase("vllm");
     await enable(instance);
     const selected = await version(instance);
+    const [author, name] = instance.model.split("/");
+    await instance.database.query(
+      "update organizations set slug = $2 where id = $1",
+      [instance.organization, author],
+    );
     await instance.database.query(
       "update tasks set name = $2, production_version_id = $3 where id = $1",
-      [selected.task, instance.model, selected.id],
+      [selected.task, name, selected.id],
     );
     expect((await instance.post({ model: instance.model })).status).toBe(503);
     await instance.database.query(

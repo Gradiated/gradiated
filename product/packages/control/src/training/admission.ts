@@ -83,6 +83,10 @@ export const prepareTraining = async (
       `Training needs at least ${threshold} new traces since the last successful run; found ${count}.`,
     );
 
+  const problem = await records.modelNameProblem(workspace.id, task.name);
+  if (problem)
+    throw new TrainingAdmissionError("training_not_configured", problem);
+
   return {
     taskId,
     workspaceId: workspace.id,

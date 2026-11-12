@@ -1,0 +1,12 @@
+{
+  "extends": "../../product/tsconfig.base.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "lib": ["ES2023", "DOM"],
+    "noEmit": true,
+    "typeRoots": ["../../product/node_modules/@types"],
+    "types": ["node"]
+  },
+  "include": ["*.ts"]
+}

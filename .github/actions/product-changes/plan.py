@@ -86,6 +86,7 @@ JOB_PATHS = {
         "tools/docs-refresh/*",
         "tools/github-apps/*",
         "tools/images/*",
+        "tools/model-radar/*",
         "product/packages/contracts/*",
         ".github/workflows/application-deployment.yml",
         ".github/workflows/build-images.yml",

@@ -1,0 +1,63 @@
+[
+  {
+    "lab": "DeepSeek",
+    "huggingface": ["deepseek-ai"],
+    "openrouter": ["deepseek"]
+  },
+  {
+    "lab": "Mistral",
+    "huggingface": ["mistralai"],
+    "openrouter": ["mistralai"]
+  },
+  {
+    "lab": "Meta",
+    "huggingface": ["meta-models", "meta-llama", "facebook"],
+    "openrouter": ["meta", "meta-llama"]
+  },
+  { "lab": "MiniMax", "huggingface": ["MiniMaxAI"], "openrouter": ["minimax"] },
+  {
+    "lab": "Moonshot AI",
+    "huggingface": ["moonshotai"],
+    "openrouter": ["moonshotai"]
+  },
+  { "lab": "Z.ai", "huggingface": ["zai-org"], "openrouter": ["z-ai"] },
+  { "lab": "Qwen", "huggingface": ["Qwen"], "openrouter": ["qwen"] },
+  {
+    "lab": "Google Gemma",
+    "huggingface": ["google"],
+    "openrouter": ["google"],
+    "include": ["gemma"]
+  },
+  { "lab": "NVIDIA", "huggingface": ["nvidia"], "openrouter": ["nvidia"] },
+  {
+    "lab": "Reflection AI",
+    "huggingface": ["reflection"],
+    "openrouter": ["reflection"]
+  },
+  {
+    "lab": "Thinking Machines",
+    "huggingface": ["thinkingmachines"],
+    "openrouter": ["thinkingmachines"]
+  },
+  { "lab": "Xiaomi", "huggingface": ["XiaomiMiMo"], "openrouter": ["xiaomi"] },
+  {
+    "lab": "Meituan",
+    "huggingface": ["meituan-longcat"],
+    "openrouter": ["meituan"]
+  },
+  {
+    "lab": "StepFun",
+    "huggingface": ["stepfun-ai"],
+    "openrouter": ["stepfun"]
+  },
+  {
+    "lab": "Ant Group",
+    "huggingface": ["inclusionAI"],
+    "openrouter": ["inclusionai"]
+  },
+  { "lab": "Tencent", "huggingface": ["tencent"], "openrouter": ["tencent"] },
+  { "lab": "OpenAI", "openrouter": ["openai"] },
+  { "lab": "Anthropic", "openrouter": ["anthropic"] },
+  { "lab": "Google Gemini", "openrouter": ["google"], "include": ["gemini"] },
+  { "lab": "xAI", "openrouter": ["x-ai"] }
+]

@@ -108,14 +108,38 @@ Run `gradctl commands` for the current list.
 | `compute` | `search`, `platforms`, `up`, `ls`, `ssh`, `s3`, `start`, `stop`, `down`, `setup`; see `$dev-training` |
 | `gpu lease` | `acquire`, `wait`, `extend`, `release`, `status`; see `$gpu-host-lease` |
 | `gpu` | `render-config`, `stage-glm-pool`, `stage-kimi-pool`, `pin-host`, `pin-sglang-pools`, `prepare-enrollment`, `mint-bootstrap-key`, `create-runpod-template`, `qualification-slot` |
+| `repos` | `list`, `clone` a customer organization's repositories; see below |
 | `github-apps`, `browser`, `lab` | `create`; `sync`, `install`; `check` |
+
+### Customer repositories
+
+A customer shares repositories by installing the Gradiated GitHub app during
+post-training onboarding. `gradctl repos` finds that installation and works as
+the app, with a one-hour installation token:
+
+```sh
+gradctl repos list  --organization acme                # or the organization ID
+gradctl repos clone --organization acme --repo trainer # default: every shared repository, into ./acme
+gradctl repos list  --organization example --environment dev  # local database, Gradiated [DEV] app
+```
+
+It needs the readonly AWS level or above. The production lookup reads the
+database over the tailnet as the read-only `metabase_reader` role
+(`gradiated/prod/analytics/metabase-postgres`); dev reads `DATABASE_URL`, or the
+local stack's database. The app keys are `GITHUB_APP_ID` and
+`GITHUB_APP_PRIVATE_KEY` in `gradiated/github-app/prod` and
+`gradiated/github-app/dev`, outside `gradiated/dev/` so the restricted level
+cannot read them; `GITHUB_APP_ID` with `GITHUB_APP_PRIVATE_KEY_PATH` (a downloaded
+`.pem`) overrides the secret. The token is never printed or stored: git gets it
+as a header for the clone, so the clone's remote has no credential. mise pins
+`psql`.
 
 ## Layout
 
 - `src/gradctl/cli.py`: the parser, the catalog, the envelope and the dispatcher.
 - `src/gradctl/core.py`: command metadata, results, errors and exit codes.
 - `src/gradctl/tailnet.py`: the tailnet requirement and `tailnet join`.
-- `src/gradctl/devex.py`, `envfile.py`, `lease.py`, `compute/`: the commands
+- `src/gradctl/devex.py`, `envfile.py`, `lease.py`, `repos.py`, `compute/`: the commands
   gradctl implements itself. They run from the single file, without a checkout.
 - `src/gradctl/repotools.py`: the repository tools gradctl runs from the
   checkout. These (`tools/gpu/*.py` and others) change files beside them and CI

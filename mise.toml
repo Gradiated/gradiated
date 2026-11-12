@@ -7,6 +7,8 @@ python = { version = "3.13.18", postinstall = "\"$MISE_TOOL_INSTALL_PATH/bin/pyt
 # this fetches its pinned release binary directly. Nebius builds no Windows binary.
 "http:nebius" = { version = "0.12.306", url = "https://artifacts.nebius.cloud/cli/release/{{ version }}/{{ os(macos='darwin') }}/{{ arch(x64='x86_64') }}/nebius", bin = "nebius", os = ["linux", "macos"] }
 aws = "2.36.24"
+# psql, for `gradctl repos` reading the product database (prebuilt, no compile).
+"conda:postgresql" = "17.12"
 gitleaks = "8.30.1"
 helm = "4.2.4"
 kubectl = "1.36.3"

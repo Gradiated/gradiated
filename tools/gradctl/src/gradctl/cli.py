@@ -14,7 +14,7 @@ import subprocess
 import sys
 import traceback
 
-from . import BUILD, VERSION, devex, envfile, lease, repotools, tailnet
+from . import BUILD, VERSION, devex, envfile, lease, repos, repotools, tailnet
 from .compute import commands as compute
 from .core import (EXIT_CODES, CliError, Context, Meta, Parser, Result, UsageError, emit_json, envelope,
                    error_envelope, leaf, stdout_to_stderr, system_exit_error)
@@ -119,6 +119,7 @@ def build_parser() -> Parser:
     devex.register(commands, common)
     envfile.register(commands, common)
     compute.register(commands, common)
+    repos.register(commands, common)
     gpu = repotools.group(commands, 'gpu', repotools.GROUPS['gpu'])
     lease.register(gpu, common)
     repotools.register(commands, common, {'gpu': gpu})

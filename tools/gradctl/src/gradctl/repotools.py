@@ -40,6 +40,7 @@ def python(path: str) -> tuple[str, ...]:
 INFRA_TG = 'infra/environments/prod/us-east-1/terraform'
 FMT = (('terraform', 'fmt', '-recursive', 'infra'),
        ('terragrunt', 'hcl', 'fmt', '--working-dir', INFRA_TG))
+# uv installs the locked environment on first use, so these commands are networked.
 BROWSER = ('uv', 'run', '--locked', '--project', 'tools/browser', 'python')
 
 TOOLS = (
@@ -137,12 +138,12 @@ TOOLS = (
 
     # Browser automation.
     Tool('browser', 'website-screenshots', (BROWSER + ('tools/browser/website_screenshots.py',),),
-         'Capture the built website pages and interactions for PR image diffs', network=False),
+         'Capture the built website pages and interactions for PR image diffs'),
     Tool('browser', 'storybook-screenshots', (BROWSER + ('tools/browser/storybook_screenshots.py',),),
-         'Capture every built console story as a PNG (--story-prefix, --output)', network=False),
+         'Capture every built console story as a PNG (--story-prefix, --output)'),
     Tool('browser', 'temporal-ui', (BROWSER + ('tools/browser/check_temporal_ui.py',),),
          'Render the production Temporal Cloud frontend against a synthetic namespace reader (IMAGE)',
-         effects='read', network=False, requires=('docker',)),
+         effects='read', requires=('docker',)),
 
     # Local product development.
     Tool('product', 'sglang-local', (('bash', 'product/scripts/run-sglang-local.sh'),),

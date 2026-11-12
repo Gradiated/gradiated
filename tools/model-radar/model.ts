@@ -14,6 +14,8 @@ export type Model = {
   url: string;
   /** Short facts for the alert, e.g. "262k context". */
   details: string[];
+  /** The Hugging Face model holding its weights, when the source names one. */
+  weights?: string;
 };
 
 /** Everything a source lists under one org or prefix. */
@@ -29,6 +31,11 @@ export interface Source {
   readonly name: SourceName;
   /** Lists the models under each owner it was given, one scan per owner. */
   scan(): Promise<Scan[]>;
+  /**
+   * Adds facts that cost a request per model. The radar calls it only for new
+   * models, just before alerting.
+   */
+  describe?(models: Model[]): Promise<Model[]>;
 }
 
 /** New models from one lab on one source, sent as one message. */

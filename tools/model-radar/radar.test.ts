@@ -5,7 +5,12 @@ import { join } from "node:path";
 import { after, describe, it } from "node:test";
 import { Radar } from "./radar.ts";
 import { SeenStore } from "./seen-store.ts";
-import { FakeSource, RecordingNotifier, model } from "./testing.ts";
+import {
+  DescribingSource,
+  FakeSource,
+  RecordingNotifier,
+  model,
+} from "./testing.ts";
 import { Watchlist } from "./watchlist.ts";
 
 const dir = await mkdtemp(join(tmpdir(), "model-radar-"));
@@ -172,5 +177,38 @@ describe("Radar", () => {
     hub.next = [qwen("A")];
     await radar(false).run();
     assert.deepEqual(await store.load(), {});
+  });
+
+  it("describes only the new models, and alerts anyway if that fails", async () => {
+    const source = new DescribingSource("OpenRouter");
+    const notifier = new RecordingNotifier();
+    const scan = (...ids: string[]) => [
+      {
+        scope: "openrouter:qwen",
+        owner: "qwen",
+        models: ids.map((id) => model(id)),
+      },
+    ];
+    const store = new SeenStore(join(dir, `seen-${++runs}.json`));
+    const run = () =>
+      new Radar({
+        sources: [source],
+        watchlist,
+        store,
+        notifiers: [notifier],
+        log: () => {},
+      }).run();
+
+    source.next = scan("qwen/a");
+    await run();
+    source.next = scan("qwen/a", "qwen/b");
+    const { alerts } = await run();
+    assert.deepEqual(source.asked, [["qwen/b"]]);
+    assert.deepEqual(alerts[0]!.models[0]!.details, ["described"]);
+
+    source.fail = true;
+    source.next = scan("qwen/a", "qwen/b", "qwen/c");
+    const fallback = await run();
+    assert.deepEqual(fallback.alerts[0]!.models, [model("qwen/c")]);
   });
 });

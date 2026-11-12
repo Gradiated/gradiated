@@ -75,8 +75,16 @@ export class Radar {
           }
         }
       }
-      for (const [lab, models] of byLab)
-        alerts.push({ source: source.name, lab, models });
+      const fresh = [...new Set([...byLab.values()].flat())];
+      const described = new Map(
+        (source.describe ? await describe(source, fresh, log) : fresh).map(
+          (model) => [model.id, model],
+        ),
+      );
+      for (const [lab, models] of byLab) {
+        const full = models.map((model) => described.get(model.id) ?? model);
+        alerts.push({ source: source.name, lab, models: full });
+      }
     }
 
     log(
@@ -90,3 +98,18 @@ export class Radar {
     return { alerts, failures };
   }
 }
+
+/** The source's extra facts, or the models as they are if that fails. */
+const describe = async (
+  source: Source,
+  models: Model[],
+  log: (line: string) => void,
+): Promise<Model[]> => {
+  if (!models.length) return models;
+  try {
+    return await source.describe!(models);
+  } catch (error) {
+    log(`${source.name}: could not add details: ${(error as Error).message}`);
+    return models;
+  }
+};

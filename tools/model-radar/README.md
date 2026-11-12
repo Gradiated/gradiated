@@ -22,8 +22,19 @@ Both APIs are free and public, so the only secret is the Slack webhook.
    its original creation date.
 3. Keeps the models not seen before. It skips OpenRouter's `:free` and `:batch`
    listings and `~lab/...-latest` aliases, which repeat a model already listed.
-4. Posts one Slack message per lab per source, with a line per model.
-5. Saves the updated IDs to the cache for the next run.
+4. For each new OpenRouter model, looks up who serves it (named up to five,
+   otherwise "Tencent and 5 others", the lab first) and, if OpenRouter names
+   its Hugging Face model, whether the weights are public yet.
+5. Posts one Slack message per lab per source, with a line per model:
+
+   ```text
+   🤗 Hugging Face · Moonshot AI
+   • moonshotai/Kimi-K3.1-Pro · weights live
+
+   🛰️ OpenRouter · Tencent: new model
+   • Tencent: Hy4 tencent/hy4 · 1M context · served by Tencent · weights not public yet
+   ```
+6. Saves the updated IDs to the cache for the next run.
 
 An org or prefix seen for the first time is recorded without posting, so the
 first run, and the first run after a lab is added, post nothing. A model that

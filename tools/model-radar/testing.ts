@@ -56,6 +56,18 @@ export class FakeSource implements Source {
   }
 }
 
+/** A fake source that also describes models, recording what it was asked. */
+export class DescribingSource extends FakeSource {
+  readonly asked: string[][] = [];
+  fail = false;
+
+  async describe(models: Model[]): Promise<Model[]> {
+    this.asked.push(models.map(({ id }) => id));
+    if (this.fail) throw new Error("lookups down");
+    return models.map((m) => ({ ...m, details: [...m.details, "described"] }));
+  }
+}
+
 /** Keeps every batch of alerts it is sent, or fails if told to. */
 export class RecordingNotifier implements Notifier {
   readonly sent: Alert[][] = [];

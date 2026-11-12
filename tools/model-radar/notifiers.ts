@@ -8,16 +8,13 @@ const ICON: Record<SourceName, string> = {
   OpenRouter: "🛰️",
 };
 
+/** "🤗 Hugging Face · Moonshot AI", or "🛰️ OpenRouter · Tencent: new model". */
 const headline = ({ source, lab, models }: Alert) => {
+  const title = `${ICON[source]} ${source} · ${lab}`;
+  if (source === "Hugging Face") return title;
   const what =
-    source === "Hugging Face"
-      ? models.length === 1
-        ? "new public model"
-        : `${models.length} new public models`
-      : models.length === 1
-        ? "new model"
-        : `${models.length} new models`;
-  return `${ICON[source]} ${source} · ${lab}: ${what}`;
+    models.length === 1 ? "new model" : `${models.length} new models`;
+  return `${title}: ${what}`;
 };
 
 /** Posts one message per alert to a Slack incoming webhook. */

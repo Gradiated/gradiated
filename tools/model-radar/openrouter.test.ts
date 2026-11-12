@@ -37,7 +37,8 @@ describe("OpenRouterSource", () => {
             owner: "moonshotai",
             name: "MoonshotAI: Kimi K3.1 Pro",
             url: "https://openrouter.ai/moonshotai/kimi-k3.1-pro",
-            details: ["262k context", "weights: moonshotai/Kimi-K3.1-Pro"],
+            details: ["262k context"],
+            weights: "moonshotai/Kimi-K3.1-Pro",
           },
         ],
       },
@@ -72,5 +73,96 @@ describe("OpenRouterSource", () => {
       new OpenRouterSource(send, ["qwen"]).scan(),
       /had no model list/,
     );
+  });
+
+  describe("describe", () => {
+    const API = OpenRouterSource.API;
+    const HUB = OpenRouterSource.HUB_API;
+    const hy4 = {
+      id: "tencent/hy4",
+      owner: "tencent",
+      name: "Tencent: Hy4",
+      url: "https://openrouter.ai/tencent/hy4",
+      details: ["1M context"],
+      weights: "tencent/Hy4",
+    };
+    const serving = (...names: string[]) =>
+      json({
+        data: { endpoints: names.map((provider_name) => ({ provider_name })) },
+      });
+    const details = async (
+      routes: Record<string, () => Response>,
+      model = hy4,
+    ) => {
+      const [described] = await new OpenRouterSource(
+        fakeFetch(routes).send,
+        [],
+      ).describe([model]);
+      return described!.details;
+    };
+
+    it("names the providers and says the weights are not public yet", async () => {
+      assert.deepEqual(
+        await details({
+          [`${API}/tencent/hy4/endpoints`]: serving("Tencent"),
+          [`${HUB}/tencent/Hy4`]: () =>
+            new Response("private", { status: 401 }),
+        }),
+        ["1M context", "served by Tencent", "weights not public yet"],
+      );
+    });
+
+    it("lists up to five providers, the lab's own first, once each", async () => {
+      assert.deepEqual(
+        await details({
+          [`${API}/tencent/hy4/endpoints`]: serving(
+            "Together",
+            "Fireworks",
+            "Tencent",
+            "Fireworks",
+          ),
+          [`${HUB}/tencent/Hy4`]: json({ id: "tencent/Hy4" }),
+        }),
+        [
+          "1M context",
+          "served by Tencent, Together and Fireworks",
+          "weights live",
+        ],
+      );
+    });
+
+    it("counts the providers when there are more than five", async () => {
+      const kimi = {
+        ...hy4,
+        id: "moonshotai/kimi-k3.1-pro",
+        name: "MoonshotAI: Kimi K3.1 Pro",
+      };
+      delete (kimi as { weights?: string }).weights;
+      assert.deepEqual(
+        await details(
+          {
+            [`${API}/moonshotai/kimi-k3.1-pro/endpoints`]: serving(
+              "Together",
+              "Fireworks",
+              "DeepInfra",
+              "Nebius",
+              "Parasail",
+              "Moonshot AI",
+            ),
+          },
+          kimi,
+        ),
+        ["1M context", "served by Moonshot AI and 5 others"],
+      );
+    });
+
+    it("leaves out what it could not look up", async () => {
+      assert.deepEqual(
+        await details({
+          [`${HUB}/tencent/Hy4`]: () => new Response("busy", { status: 503 }),
+        }),
+        ["1M context"],
+      );
+    });
   });
 });

@@ -37,7 +37,6 @@ import {
   VersionInsertSchema,
   EventInsertSchema,
 } from "./records.js";
-import { claimModelName } from "./model-names.js";
 
 type Transaction = Parameters<Parameters<ControlDatabase["transaction"]>[0]>[0];
 
@@ -91,10 +90,6 @@ export const createTrainingRunStore = (database: ControlDatabase) => ({
     input = TrainingInputSchema.parse(input);
 
     return database.transaction(async (tx) => {
-      // A run that lost its model name to another workspace is not created, so
-      // its workflow ends instead of retrying.
-      if (!(await claimModelName(tx, input.taskId))) return false;
-
       const [created] = await tx
         .insert(trainingRuns)
         .values(

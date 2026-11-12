@@ -92,7 +92,7 @@ A Gradiated-only request cannot relay to a provider. Internal mode may use only 
 | Production | `<organization-slug>/<task-slug>` |
 | Exact version | `<organization-slug>/<task-slug>/<version>`; trained versions are `yyyy-mm-dd`, then `-2`, `-3`, … for further versions with that input cutoff day |
 | Organization slug | `^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$`; unique; fixed once the organization has a model |
-| Task slug | No `/`, at most 128 characters; unique within the organization once the task trains or takes an upload |
+| Task slug | No `/`, at most 128 characters; unique within the organization once the task has a version |
 | Version name | No `/`, at most 128 characters; unique within the task |
 | Runtime name | `<workspace-id>/<version-id>`; keys the adapter on GPU runtimes, which never see model names |
 

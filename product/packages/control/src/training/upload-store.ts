@@ -20,7 +20,7 @@ import {
   VersionInsertSchema,
   VersionRecordSchema,
 } from "./records.js";
-import { claimModelName } from "./model-names.js";
+import { isTakenModelName, TAKEN_MODEL_NAME } from "./model-names.js";
 
 const UploadSchema = z.object({
   id: UuidSchema,
@@ -77,120 +77,123 @@ export const createModelUploadStore = (database: ControlDatabase) => ({
     return row ? UploadSchema.parse(row) : null;
   },
   async publish(workspaceId: string, id: string, adapter: TaskVersionAdapter) {
-    return database.transaction(async (tx) => {
-      const [raw] = await tx
-        .select()
-        .from(modelUploads)
-        .where(
-          and(
-            eq(modelUploads.workspaceId, UuidSchema.parse(workspaceId)),
-            eq(modelUploads.id, UuidSchema.parse(id)),
-          ),
-        )
-        .for("update");
-      const upload = UploadSchema.parse(raw);
-      const input = upload.input;
-      if (upload.versionId) {
-        const [version] = await tx
+    return database
+      .transaction(async (tx) => {
+        const [raw] = await tx
           .select()
-          .from(taskVersions)
-          .where(eq(taskVersions.id, upload.versionId));
-        return VersionRecordSchema.parse(version);
-      }
-      if (Date.now() - upload.createdAt.getTime() > 3600_000)
-        throw new ControlServiceError(
-          "conflict",
-          "This upload has expired. Start a new upload.",
-        );
-
-      if (input.create_task) {
-        const [workspace] = await tx
-          .select({ judge: workspaces.defaultJudgeModel })
-          .from(workspaces)
-          .where(eq(workspaces.id, workspaceId));
-        if (!workspace)
+          .from(modelUploads)
+          .where(
+            and(
+              eq(modelUploads.workspaceId, UuidSchema.parse(workspaceId)),
+              eq(modelUploads.id, UuidSchema.parse(id)),
+            ),
+          )
+          .for("update");
+        const upload = UploadSchema.parse(raw);
+        const input = upload.input;
+        if (upload.versionId) {
+          const [version] = await tx
+            .select()
+            .from(taskVersions)
+            .where(eq(taskVersions.id, upload.versionId));
+          return VersionRecordSchema.parse(version);
+        }
+        if (Date.now() - upload.createdAt.getTime() > 3600_000)
           throw new ControlServiceError(
-            "not_found",
-            "The workspace was not found.",
+            "conflict",
+            "This upload has expired. Start a new upload.",
           );
 
-        const judgeModelId = EvaluationJudgeSchema.parse(workspace.judge);
-        const [created] = await tx
-          .insert(tasks)
+        if (input.create_task) {
+          const [workspace] = await tx
+            .select({ judge: workspaces.defaultJudgeModel })
+            .from(workspaces)
+            .where(eq(workspaces.id, workspaceId));
+          if (!workspace)
+            throw new ControlServiceError(
+              "not_found",
+              "The workspace was not found.",
+            );
+
+          const judgeModelId = EvaluationJudgeSchema.parse(workspace.judge);
+          const [created] = await tx
+            .insert(tasks)
+            .values(
+              TaskRecordSchema.omit({ createdAt: true, updatedAt: true }).parse(
+                {
+                  id: uuidv7(),
+                  organizationId: null,
+                  workspaceId,
+                  name: input.task,
+                  baseModelId: input.base_model_id,
+                  comparisonModelId: null,
+                  judgeModelId,
+                  productionVersionId: null,
+                  trainingSchedule: null,
+                },
+              ),
+            )
+            .onConflictDoNothing()
+            .returning();
+          if (!created)
+            throw new ControlServiceError(
+              "conflict",
+              "A task with this name already exists.",
+            );
+        }
+        const [rawTask] = await tx
+          .select()
+          .from(tasks)
+          .where(
+            and(eq(tasks.workspaceId, workspaceId), eq(tasks.name, input.task)),
+          )
+          .for("update");
+        if (!rawTask)
+          throw new ControlServiceError("not_found", "The task was not found.");
+
+        const task = TaskRecordSchema.parse(rawTask);
+        if (task.baseModelId !== input.base_model_id)
+          throw new ControlServiceError(
+            "conflict",
+            "The adapter base model must match the task base model.",
+          );
+
+        const [version] = await tx
+          .insert(taskVersions)
           .values(
-            TaskRecordSchema.omit({ createdAt: true, updatedAt: true }).parse({
-              id: uuidv7(),
-              organizationId: null,
+            VersionInsertSchema.parse({
+              id: upload.id,
               workspaceId,
-              name: input.task,
+              taskId: task.id,
+              trainingRunId: null,
+              name: input.name,
               baseModelId: input.base_model_id,
-              comparisonModelId: null,
-              judgeModelId,
-              productionVersionId: null,
-              trainingSchedule: null,
+              adapter,
+              status: "unavailable",
             }),
           )
           .onConflictDoNothing()
           .returning();
-        if (!created)
+        if (!version)
           throw new ControlServiceError(
             "conflict",
-            "A task with this name already exists.",
+            "This model already has a version with this name. Choose another name.",
           );
-      }
-      const [rawTask] = await tx
-        .select()
-        .from(tasks)
-        .where(
-          and(eq(tasks.workspaceId, workspaceId), eq(tasks.name, input.task)),
-        )
-        .for("update");
-      if (!rawTask)
-        throw new ControlServiceError("not_found", "The task was not found.");
 
-      const task = TaskRecordSchema.parse(rawTask);
-      if (!(await claimModelName(tx, task.id)))
-        throw new ControlServiceError(
-          "conflict",
-          "Another workspace in this organization has a model with this name.",
-        );
-      if (task.baseModelId !== input.base_model_id)
-        throw new ControlServiceError(
-          "conflict",
-          "The adapter base model must match the task base model.",
-        );
-
-      const [version] = await tx
-        .insert(taskVersions)
-        .values(
-          VersionInsertSchema.parse({
-            id: upload.id,
-            workspaceId,
-            taskId: task.id,
-            trainingRunId: null,
-            name: input.name,
-            baseModelId: input.base_model_id,
-            adapter,
-            status: "unavailable",
-          }),
-        )
-        .onConflictDoNothing()
-        .returning();
-      if (!version)
-        throw new ControlServiceError(
-          "conflict",
-          "This model already has a version with this name. Choose another name.",
-        );
-
-      await tx
-        .update(modelUploads)
-        .set(
-          UploadSchema.pick({ versionId: true }).parse({
-            versionId: upload.id,
-          }),
-        )
-        .where(eq(modelUploads.id, upload.id));
-      return VersionRecordSchema.parse(version);
-    });
+        await tx
+          .update(modelUploads)
+          .set(
+            UploadSchema.pick({ versionId: true }).parse({
+              versionId: upload.id,
+            }),
+          )
+          .where(eq(modelUploads.id, upload.id));
+        return VersionRecordSchema.parse(version);
+      })
+      .catch((error: unknown) => {
+        if (isTakenModelName(error))
+          throw new ControlServiceError("conflict", TAKEN_MODEL_NAME, error);
+        throw error;
+      });
   },
 });

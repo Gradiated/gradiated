@@ -31,9 +31,27 @@ ALTER TABLE "tasks" ADD COLUMN "organization_id" uuid;--> statement-breakpoint
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_organization_workspace_fk" FOREIGN KEY ("organization_id","workspace_id") REFERENCES "public"."workspaces"("organization_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_model_name_check" CHECK ("tasks"."organization_id" is null or (strpos("tasks"."name", '/') = 0 and char_length("tasks"."name") <= 128));--> statement-breakpoint
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_organization_name_unique" UNIQUE("organization_id","name");--> statement-breakpoint
--- Tasks that have trained or uploaded already claim their names. Where one name
--- is used in several workspaces of an organization, a task with a published
--- version wins over one that only has runs, then the oldest.
+-- A task's name becomes its model name when its first version is written, from
+-- any code version. Names that can't be model names stay unclaimed. Taking the organization lock serializes this with slug
+-- changes, which lock that row first; callers already hold the task row.
+CREATE FUNCTION claim_model_name() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  PERFORM 1 FROM organizations
+  JOIN workspaces ON workspaces.organization_id = organizations.id
+  WHERE workspaces.id = NEW.workspace_id
+  FOR UPDATE OF organizations;
+  UPDATE tasks SET organization_id = workspaces.organization_id
+  FROM workspaces
+  WHERE tasks.id = NEW.task_id
+    AND tasks.organization_id IS NULL
+    AND strpos(tasks.name, '/') = 0
+    AND char_length(tasks.name) <= 128
+    AND workspaces.id = tasks.workspace_id;
+  RETURN NEW;
+END $$;--> statement-breakpoint
+CREATE TRIGGER task_versions_claim_model_name AFTER INSERT ON task_versions FOR EACH ROW EXECUTE FUNCTION claim_model_name();--> statement-breakpoint
+-- Tasks with versions claim their names now. Where one name has versions in
+-- several workspaces of an organization, the oldest task keeps it.
 UPDATE "tasks" SET "organization_id" = "claimed"."organization_id"
 FROM (
   SELECT DISTINCT ON ("workspaces"."organization_id", "tasks"."name") "tasks"."id", "workspaces"."organization_id"
@@ -41,11 +59,8 @@ FROM (
   JOIN "workspaces" ON "workspaces"."id" = "tasks"."workspace_id"
   WHERE strpos("tasks"."name", '/') = 0
     AND char_length("tasks"."name") <= 128
-    AND (EXISTS (SELECT 1 FROM "task_versions" WHERE "task_versions"."task_id" = "tasks"."id")
-      OR EXISTS (SELECT 1 FROM "training_runs" WHERE "training_runs"."task_id" = "tasks"."id"))
-  ORDER BY "workspaces"."organization_id", "tasks"."name",
-    EXISTS (SELECT 1 FROM "task_versions" WHERE "task_versions"."task_id" = "tasks"."id") DESC,
-    "tasks"."created_at", "tasks"."id"
+    AND EXISTS (SELECT 1 FROM "task_versions" WHERE "task_versions"."task_id" = "tasks"."id")
+  ORDER BY "workspaces"."organization_id", "tasks"."name", "tasks"."created_at", "tasks"."id"
 ) "claimed"
 WHERE "tasks"."id" = "claimed"."id";--> statement-breakpoint
 ALTER TABLE "task_versions" DROP CONSTRAINT "task_versions_workspace_name_unique";--> statement-breakpoint

@@ -50,43 +50,45 @@ describe("transactional training run store", () => {
     ).resolves.toMatchObject({ baseModelId: qwen.id });
   });
 
-  it("claims the task's model name when a run is created", async () => {
+  it("claims a task's model name with its first version, not when a run starts", async () => {
     const own = await seedTrainingTask(db.database);
-    const claimed = async () =>
+    const claimed = async (taskId: string) =>
       (
         await db.database
           .select({ organizationId: tasks.organizationId })
           .from(tasks)
-          .where(eq(tasks.id, own.task.id))
+          .where(eq(tasks.id, taskId))
       )[0]!.organizationId;
-    expect(await claimed()).toBeNull();
-
+    const addVersion = (task: { id: string; workspaceId: string }) =>
+      db.database.insert(taskVersions).values({
+        id: randomUUID(),
+        workspaceId: task.workspaceId,
+        taskId: task.id,
+        name: randomUUID(),
+        baseModelId: own.input.baseModelId,
+        adapter: trainingAdapter,
+        status: "unavailable",
+      });
     await createTrainingRunStore(db.database).create(randomUUID(), own.input);
+    expect(await claimed(own.task.id)).toBeNull();
 
-    expect(await claimed()).toBe(own.organizationId);
-  });
+    await addVersion(own.task);
+    expect(await claimed(own.task.id)).toBe(own.organizationId);
 
-  it("does not create a run whose model name another workspace holds", async () => {
-    const own = await seedTrainingTask(db.database);
-    const writes = createTrainingRunStore(db.database);
-    await writes.create(randomUUID(), own.input);
     const workspaceId = await seedWorkspace(db.database, {
       organizationId: own.organizationId,
     });
-    const [rival] = await db.database
-      .insert(tasks)
-      .values({ id: randomUUID(), workspaceId, name: own.task.name })
-      .returning();
-    const runId = randomUUID();
-
-    expect(
-      await writes.create(runId, {
-        ...own.input,
-        taskId: rival!.id,
-        workspaceId,
-      }),
-    ).toBe(false);
-    expect(await writes.get(runId)).toBeUndefined();
+    const traceTask = async (name: string) =>
+      (
+        await db.database
+          .insert(tasks)
+          .values({ id: randomUUID(), workspaceId, name })
+          .returning()
+      )[0]!;
+    await expect(addVersion(await traceTask(own.task.name))).rejects.toThrow();
+    const unroutable = await traceTask("support/triage");
+    await addVersion(unroutable);
+    expect(await claimed(unroutable.id)).toBeNull();
   });
 
   it("validates and deduplicates trainer observations while rejecting lifecycle events", async () => {

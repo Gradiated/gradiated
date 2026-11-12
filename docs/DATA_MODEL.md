@@ -875,18 +875,23 @@ records that version's full public name in the response and usage. GPU runtimes
 never see model names: they key an adapter `<workspace_id>/<version_id>` and fetch
 its download grant by version ID.
 
-A task's name becomes a model name when the task first trains or takes an
-upload. Migration 0030 adds `tasks.organization_id`, set at that point to
+A task's name becomes a model name when its first version is written, from a
+training run or an upload. Migration 0030 adds `tasks.organization_id`, which an
+insert trigger on `task_versions` sets at that point to
 the workspace's organization, with a composite foreign key to the workspace and a
 unique `(organization_id, name)`. Model names are therefore unique across
 the organization, while trace labels still register tasks per workspace. A model
 name contains no `/` and has at most 128 characters, so the public name fits the
-gateway's 300-character model ID; a check enforces this only for claimed names.
+gateway's 300-character model ID; a check enforces this only for claimed names,
+and the trigger leaves other names unclaimed. The trigger locks the organization
+row, as slug changes do, so a slug can't change under an organization's first
+model; running it in the database also covers versions written by older code
+during a rollout.
 Training and uploads are refused when another workspace of the organization
 already has a model with the name. Only claimed tasks resolve at the gateway or
-load on GPU runtimes. The migration claims names for tasks that already trained
-or took an upload; where several workspaces of one organization share such a
-name, the oldest task keeps it.
+load on GPU runtimes. The migration claims names for tasks that already have
+versions; where several workspaces of one organization share such a name, the
+oldest task keeps it.
 
 Private LoRA inference reuses `task_versions` for workspace ownership, immutable
 artifact URI/checksum/rank and durable serving eligibility. The existing

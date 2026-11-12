@@ -98,12 +98,11 @@ export const createTrainingService = (
 
       const id = await executor.start(input);
       const created = await createTrainingRunStore(database).create(id, input);
-      if (!created) {
-        const problem = await records.modelNameProblem(workspaceId, task.name);
-        throw problem
-          ? new TrainingAdmissionError("training_not_configured", problem)
-          : new TrainingAdmissionError("already_training", "Already training.");
-      }
+      if (!created)
+        throw new TrainingAdmissionError(
+          "already_training",
+          "Already training.",
+        );
 
       return { id };
     },

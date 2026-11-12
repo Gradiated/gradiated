@@ -48,8 +48,8 @@ export const tasks = pgTable(
   "tasks",
   {
     id: uuid("id").primaryKey(),
-    // Null for trace-only tasks. Set when the task first trains or takes an
-    // upload, which makes its name a model name, unique across the organization.
+    // Null until the task's first version is written; a trigger in migration
+    // 0030 then claims its name as a model name, unique across the organization.
     organizationId: uuid("organization_id"),
     workspaceId: uuid("workspace_id")
       .notNull()

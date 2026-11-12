@@ -162,15 +162,18 @@ const Figure = ({
   </figure>
 );
 
-const Legend = ({ keys, config }: { keys: string[]; config: ChartConfig }) =>
+const seriesColor = (index: number) =>
+  SERIES_COLORS[index % SERIES_COLORS.length]!;
+
+const Legend = ({ keys }: { keys: string[] }) =>
   keys.length > 1 ? (
     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-      {keys.map((key) => (
+      {keys.map((key, index) => (
         <span key={key} className="flex items-center gap-1.5">
           <span
             aria-hidden
             className="size-2 rounded-[2px]"
-            style={{ background: config[key]?.color }}
+            style={{ background: seriesColor(index) }}
           />
           {columnLabel(key)}
         </span>
@@ -180,13 +183,7 @@ const Legend = ({ keys, config }: { keys: string[]; config: ChartConfig }) =>
 
 const seriesConfig = (keys: string[]) =>
   Object.fromEntries(
-    keys.map((key, index) => [
-      key,
-      {
-        label: columnLabel(key),
-        color: SERIES_COLORS[index % SERIES_COLORS.length]!,
-      },
-    ]),
+    keys.map((key) => [key, { label: columnLabel(key) }]),
   ) satisfies ChartConfig;
 
 export const MetricGrid = ({ children }: { children: ReactNode }) => (
@@ -200,14 +197,14 @@ const Sparkline = ({ data, y }: { data: unknown; y: unknown }) => {
   const key = String(y);
   return (
     <ChartContainer
-      config={{ [key]: { label: key, color: SERIES_COLORS[0]! } }}
+      config={{ [key]: { label: key } }}
       className="-mx-1 mt-1 aspect-auto h-8 w-[calc(100%+0.5rem)]"
     >
       <LineChart data={dataset.rows}>
         <Line
           dataKey={key}
           type="monotone"
-          stroke={`var(--color-${key})`}
+          stroke={seriesColor(0)}
           strokeWidth={1.5}
           dot={false}
           isAnimationActive={false}
@@ -456,7 +453,7 @@ export const ReportChart = ({
 
   return (
     <Figure title={title} caption={caption}>
-      <Legend keys={series} config={config} />
+      <Legend keys={series} />
       {dataset.status === "ready" ? (
         <ChartContainer config={config} className="aspect-auto h-60 w-full">
           {type === "bar" ? (
@@ -466,7 +463,7 @@ export const ReportChart = ({
                 <Bar
                   key={key}
                   dataKey={key}
-                  fill={`var(--color-${key})`}
+                  fill={seriesColor(index)}
                   radius={
                     stacked && index < series.length - 1 ? 0 : [4, 4, 0, 0]
                   }
@@ -477,13 +474,13 @@ export const ReportChart = ({
           ) : type === "area" ? (
             <AreaChart data={dataset.rows}>
               {axes}
-              {series.map((key) => (
+              {series.map((key, index) => (
                 <Area
                   key={key}
                   dataKey={key}
                   type="monotone"
-                  stroke={`var(--color-${key})`}
-                  fill={`var(--color-${key})`}
+                  stroke={seriesColor(index)}
+                  fill={seriesColor(index)}
                   fillOpacity={stacked ? 0.5 : 0.15}
                   {...(stacked ? { stackId: "stack" } : {})}
                 />
@@ -492,12 +489,12 @@ export const ReportChart = ({
           ) : (
             <LineChart data={dataset.rows}>
               {axes}
-              {series.map((key) => (
+              {series.map((key, index) => (
                 <Line
                   key={key}
                   dataKey={key}
                   type="monotone"
-                  stroke={`var(--color-${key})`}
+                  stroke={seriesColor(index)}
                   strokeWidth={2}
                   dot={false}
                 />

@@ -694,3 +694,48 @@ for (const failure of [
     ).toBeVisible();
   });
 }
+
+test("report charts keep visible colors for column names with spaces and punctuation", async ({
+  page,
+}) => {
+  await setup(page);
+  await versionFiles(page, {
+    "report.md": `## Series colors
+
+{% metrics %}
+{% metric label="Loss sparkline" value="0.2" data="colors.csv" y="eval loss (%)" /%}
+{% /metrics %}
+
+{% chart type="line" data="colors.csv" x="step" y=["eval loss (%)", "train.loss"] title="Line colors" /%}
+
+{% chart type="area" data="colors.csv" x="step" y=["eval loss (%)", "train.loss"] title="Area colors" /%}
+
+{% chart type="bar" data="colors.csv" x="step" y=["eval loss (%)", "train.loss"] title="Bar colors" /%}
+`,
+    "colors.csv":
+      "step,eval loss (%),train.loss\n1,0.6,0.5\n2,0.4,0.3\n3,0.2,0.1",
+  });
+  await page.goto(`/tasks/${task.name}/versions/${version.id}`);
+  for (const [title, selector, attribute] of [
+    ["Line colors", ".recharts-line-curve", "stroke"],
+    ["Area colors", ".recharts-area-area", "fill"],
+  ] as const) {
+    const curves = page
+      .locator("figure")
+      .filter({ hasText: title })
+      .locator(selector);
+    await expect(curves).toHaveCount(2);
+    await expect(curves.nth(0)).toHaveAttribute(attribute, "#6e7f31");
+    await expect(curves.nth(1)).toHaveAttribute(attribute, "#3f6d8f");
+  }
+  const bars = page.locator("figure").filter({ hasText: "Bar colors" });
+  await expect(
+    bars.locator('.recharts-bar-rectangle path[fill="#6e7f31"]'),
+  ).toHaveCount(3);
+  await expect(
+    bars.locator('.recharts-bar-rectangle path[fill="#3f6d8f"]'),
+  ).toHaveCount(3);
+  await expect(
+    page.locator('.recharts-line-curve[stroke="#6e7f31"]'),
+  ).toHaveCount(2);
+});

@@ -156,6 +156,14 @@ def main():
 
     scenario('lora discovery failure', [{'series': 'prometheus_sd_http_failures_total', 'values': '0+1x40'}], 'LoraTargetDiscoveryFailures', ['LoraTargetDiscoveryFailures'])
 
+    def qualifications(outcome, values):
+        return {'series': f'gradiated_api_adapter_qualifications_total{{instance="a",model="z-ai/glm-5.3-flash",outcome="{outcome}",service="api"}}', 'values': values}
+    for outcome in ['failed', 'no_capacity']:
+        scenario(f'adapter qualification {outcome}', [qualifications(outcome, '0+0x7 1+0x33')], 'AdapterQualificationFailing', ['AdapterQualificationFailing'], {'model': 'z-ai/glm-5.3-flash', 'outcome': outcome})
+        scenario(f'adapter qualification {outcome} ages out', [qualifications(outcome, '0+0x7 1+0x33')], None, ['AdapterQualificationFailing'], eval_time='25m')
+    for outcome in ['passed', 'rejected']:
+        scenario(f'adapter qualification {outcome} is not an incident', [qualifications(outcome, '0+0x7 1+0x33')], None, ['AdapterQualificationFailing'])
+
     for name, available, snapshots, expected in [
         ('fresh snapshot', 2, [(1, '0+30x40')], None),
         ('one fresh worker suffices', 2, [(0, '0+0x40'), (1, '0+30x40')], None),

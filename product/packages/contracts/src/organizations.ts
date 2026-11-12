@@ -69,6 +69,8 @@ export const OrganizationOnboardingSchema = z.strictObject({
   nda: OrganizationNdaSchema.optional(),
   submitted_at: TimestampSchema.optional(),
   submitted_by: UuidSchema.optional(),
+  /** A submission in flight; it expires so an abandoned one cannot block. */
+  submission_claimed_at: TimestampSchema.optional(),
   contact_channel: ContactChannelSchema.optional(),
 });
 export type OrganizationOnboarding = z.infer<

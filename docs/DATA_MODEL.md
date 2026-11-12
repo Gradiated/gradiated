@@ -143,14 +143,15 @@ A new user's signup organization has a null `onboarded_at`, and the console asks
 
 `metadata` defaults to `{"schema_version": 1}` and is parsed with `OrganizationMetadataSchema` from `@gradiated/contracts` on every read and write; unknown keys are rejected. Its only key is `training_onboarding`, the post-training onboarding record:
 
-| Key                                        | Type     | Rules                                                  |
-| ------------------------------------------ | -------- | ------------------------------------------------------ |
-| `training_onboarding.nda.document_id`      | text     | PandaDoc document that PandaDoc confirmed as completed |
-| `training_onboarding.nda.template_version` | text     | NDA template version it was signed against             |
-| `training_onboarding.nda.signed_at`        | ISO time | PandaDoc completion time                               |
-| `training_onboarding.submitted_at`         | ISO time | Set once when an admin starts the project              |
-| `training_onboarding.submitted_by`         | uuid     | The admin who submitted                                |
-| `training_onboarding.contact_channel`      | text     | `slack`, `email`                                       |
+| Key                                         | Type     | Rules                                                  |
+| ------------------------------------------- | -------- | ------------------------------------------------------ |
+| `training_onboarding.nda.document_id`       | text     | PandaDoc document that PandaDoc confirmed as completed |
+| `training_onboarding.nda.template_version`  | text     | NDA template version it was signed against             |
+| `training_onboarding.nda.signed_at`         | ISO time | PandaDoc completion time                               |
+| `training_onboarding.submitted_at`          | ISO time | Set once when an admin starts the project              |
+| `training_onboarding.submitted_by`          | uuid     | The admin who submitted                                |
+| `training_onboarding.submission_claimed_at` | ISO time | A submission in flight; expires after two minutes      |
+| `training_onboarding.contact_channel`       | text     | `slack`, `email`                                       |
 
 The organizations store merges changes into `metadata.training_onboarding` only. The NDA is recorded when the API reads a completed, organization-bound PandaDoc document, and replaced only for a new template version. A submission is recorded at most once. Onboarding notes are delivered to Slack or the Gradiated team email at submission and are not stored. `onboarded_at` is unrelated: it still means the owner finished first-run console setup.
 

@@ -78,6 +78,20 @@ export const onboardingOrganizations = (
         return { submitted: true, onboarding };
       },
     ),
+    claimOnboardingSubmission: vi.fn(async () => {
+      if (onboarding.submitted_at || onboarding.submission_claimed_at)
+        return null;
+      onboarding = {
+        ...onboarding,
+        submission_claimed_at: now.toISOString(),
+      };
+
+      return now.toISOString();
+    }),
+    releaseOnboardingSubmission: vi.fn(async () => {
+      const { submission_claimed_at: _claimedAt, ...rest } = onboarding;
+      onboarding = rest;
+    }),
     resetOnboardingSubmission: vi.fn(async () => {
       const {
         submitted_at: _submittedAt,

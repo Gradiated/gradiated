@@ -341,6 +341,7 @@ describe("engineer onboarding submission", () => {
     const failed = await postJson(app, `${path}/submission`, submission);
     expect(failed.status).toBe(503);
     expect(organizations.submitOnboarding).not.toHaveBeenCalled();
+    expect(organizations.releaseOnboardingSubmission).toHaveBeenCalledOnce();
     expect(slack.postNotes).not.toHaveBeenCalled();
 
     // The retry picks another account; only that one is announced.
@@ -355,6 +356,34 @@ describe("engineer onboarding submission", () => {
     );
     expect(organizations.submitOnboarding).toHaveBeenCalledOnce();
     expect(slack.postNotes).toHaveBeenCalledOnce();
+  });
+
+  it("lets only one overlapping submission notify the team", async () => {
+    const { app, notify, organizations } = setup();
+    let finish = () => {};
+    notify.mockImplementationOnce(
+      () =>
+        new Promise<undefined>(
+          (resolve) => (finish = () => resolve(undefined)),
+        ),
+    );
+
+    const first = postJson(app, `${path}/submission`, submission);
+    await vi.waitFor(() => expect(notify).toHaveBeenCalledOnce());
+    const second = await postJson(app, `${path}/submission`, submission);
+    expect(second.status).toBe(409);
+    expect(await second.json()).toMatchObject({
+      code: "submission_in_progress",
+    });
+
+    finish();
+    expect((await first).status).toBe(201);
+    expect(notify).toHaveBeenCalledOnce();
+    expect(organizations.submitOnboarding).toHaveBeenCalledOnce();
+
+    const repeated = await postJson(app, `${path}/submission`, submission);
+    expect(repeated.status).toBe(200);
+    expect(notify).toHaveBeenCalledOnce();
   });
 
   it("starts the project without an NDA when none was requested", async () => {

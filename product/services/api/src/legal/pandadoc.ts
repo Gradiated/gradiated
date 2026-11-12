@@ -376,18 +376,17 @@ export const createPandaDocNda = (
             ? "ready"
             : "unavailable";
 
+    // The completion time is a legal record: never stand in our own clock.
     const completedAt = Date.parse(document.date_completed ?? "");
+    if (status === "completed" && Number.isNaN(completedAt))
+      throw unavailable(`/documents/${id}`, "missing_completion_date");
 
     return NdaDocumentSchema.parse({
       id: document.id,
       status,
       details,
       completed_at:
-        status === "completed"
-          ? new Date(
-              Number.isNaN(completedAt) ? Date.now() : completedAt,
-            ).toISOString()
-          : null,
+        status === "completed" ? new Date(completedAt).toISOString() : null,
       customer_completed: customerCompleted,
     });
   };

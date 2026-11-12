@@ -281,6 +281,24 @@ describe("PandaDoc NDA", () => {
     });
   });
 
+  it.each([undefined, null, "not a date"])(
+    "refuses a completed NDA without a provider completion time (%s)",
+    async (date_completed) => {
+      vi.spyOn(console, "log").mockImplementation(() => undefined);
+      const request = vi.fn<typeof fetch>().mockResolvedValue(
+        json(
+          providerDocument("document.completed", {
+            recipients: [{ email: user.email, has_completed: true }],
+            date_completed,
+          }),
+        ),
+      );
+      await expect(
+        createPandaDocNda(configuration, request).read(owner, "test-document"),
+      ).rejects.toMatchObject({ problem: { status: 503 } });
+    },
+  );
+
   it.each([
     { owner: { ...owner, organizationId: "another-organization" } },
     { owner: { ...owner, userId: "another-user" } },

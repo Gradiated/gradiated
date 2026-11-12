@@ -268,9 +268,10 @@ export const registerEngineerOnboardingRoutes = (
   };
 
   /* The team email is the only record of a new project and its notes, so it
-     is sent before the submission is recorded: if it fails, nothing is
-     recorded and the customer can retry. A retry after a failed write may
-     email the team twice, which is preferable to never. */
+     is sent before the submission is recorded, under a claim that keeps
+     overlapping requests from sending their own. If it fails, the claim is
+     released and nothing is recorded, so the customer can retry. A retry
+     after a failed write may email the team twice, which beats never. */
   const notifyTeam = async (
     owner: OnboardingOwner,
     organizationName: string,
@@ -403,7 +404,34 @@ export const registerEngineerOnboardingRoutes = (
       },
     );
 
-    await notifyTeam(owner, organization.name, input, installation);
+    const claimedAt = await organizations.claimOnboardingSubmission(
+      owner.userId,
+      owner.organizationId,
+    );
+    if (!claimedAt) {
+      const current = await organizations.getOnboarding(
+        owner.userId,
+        owner.organizationId,
+      );
+      if (current.submitted_at) return context.json(await state(owner), 200);
+      throw new ApiProblem(
+        problems.onboardingConflict(
+          "submission_in_progress",
+          "Your project is already being started. Refresh in a moment.",
+        ),
+      );
+    }
+
+    try {
+      await notifyTeam(owner, organization.name, input, installation);
+    } catch (error) {
+      await organizations.releaseOnboardingSubmission(
+        owner.userId,
+        owner.organizationId,
+        claimedAt,
+      );
+      throw error;
+    }
     const { submitted } = await organizations.submitOnboarding(
       owner.userId,
       owner.organizationId,

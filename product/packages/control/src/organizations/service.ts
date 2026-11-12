@@ -103,12 +103,24 @@ export interface OrganizationService {
     organizationId: string,
     contactChannel: ContactChannel,
   ): Promise<{ submitted: boolean; onboarding: OrganizationOnboarding }>;
+  /** Reserves the submission for two minutes; returns the claim or null. */
+  claimOnboardingSubmission(
+    userId: string,
+    organizationId: string,
+  ): Promise<string | null>;
+  releaseOnboardingSubmission(
+    userId: string,
+    organizationId: string,
+    claimedAt: string,
+  ): Promise<void>;
   /** Local test mode only; never wired in production. */
   resetOnboardingSubmission(
     userId: string,
     organizationId: string,
   ): Promise<void>;
 }
+
+const SUBMISSION_CLAIM_MS = 2 * 60 * 1000;
 
 const organizationNotFound = () =>
   new ControlServiceError("not_found", "The organization was not found.");
@@ -317,6 +329,25 @@ export const createOrganizationService = (
       if (!result) throw organizationNotFound();
 
       return result;
+    },
+
+    async claimOnboardingSubmission(userId, organizationId) {
+      await requireOrganizationAdmin(database, { userId, organizationId });
+
+      const now = Date.now();
+      const claimedAt = new Date(now).toISOString();
+      const claimed = await records.claimOnboardingSubmission(
+        organizationId,
+        claimedAt,
+        new Date(now - SUBMISSION_CLAIM_MS).toISOString(),
+      );
+
+      return claimed ? claimedAt : null;
+    },
+
+    async releaseOnboardingSubmission(userId, organizationId, claimedAt) {
+      await requireOrganizationAdmin(database, { userId, organizationId });
+      await records.releaseOnboardingSubmission(organizationId, claimedAt);
     },
 
     async resetOnboardingSubmission(userId, organizationId) {

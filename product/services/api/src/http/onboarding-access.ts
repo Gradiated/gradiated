@@ -5,7 +5,12 @@ import { ApiProblem, problems, requireUser } from "./problems.js";
 
 export type OnboardingOrganizations = Pick<
   OrganizationService,
-  "listForUser" | "getOnboarding" | "recordOnboardingNda" | "submitOnboarding"
+  | "listForUser"
+  | "getOnboarding"
+  | "recordOnboardingNda"
+  | "submitOnboarding"
+  | "claimOnboardingSubmission"
+  | "releaseOnboardingSubmission"
 >;
 
 export type OnboardingOwner = Parameters<PandaDocNda["read"]>[0];

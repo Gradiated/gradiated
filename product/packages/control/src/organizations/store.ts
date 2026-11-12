@@ -177,13 +177,47 @@ export const createOrganizationStore = (database: ControlDatabase) => {
       return onboarding && { submitted: false, onboarding };
     },
 
+    /* Reserve the submission for one request while it notifies the team.
+       Fails while another unexpired claim exists or once submitted. */
+    async claimOnboardingSubmission(
+      organizationId: string,
+      claimedAt: string,
+      staleBefore: string,
+    ) {
+      return Boolean(
+        await mergeOnboarding(
+          organizationId,
+          { submission_claimed_at: claimedAt },
+          sql`(${onboardingPath} ->> 'submitted_at') is null and ((${onboardingPath} ->> 'submission_claimed_at') is null or (${onboardingPath} ->> 'submission_claimed_at')::timestamptz < ${staleBefore}::timestamptz)`,
+        ),
+      );
+    },
+
+    async releaseOnboardingSubmission(
+      organizationId: string,
+      claimedAt: string,
+    ) {
+      await database
+        .update(organizations)
+        .set({
+          metadata: sql`jsonb_set(${organizations.metadata}, '{training_onboarding}', (${onboardingPath}) - 'submission_claimed_at'::text)`,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(organizations.id, organizationId),
+            sql`(${onboardingPath} ->> 'submission_claimed_at') = ${claimedAt}`,
+          ),
+        );
+    },
+
     /* Local test mode only: forget the submission so the journey can be
        walked again. Keeps the recorded NDA. */
     async resetOnboardingSubmission(organizationId: string) {
       await database
         .update(organizations)
         .set({
-          metadata: sql`jsonb_set(${organizations.metadata}, '{training_onboarding}', coalesce(${onboardingPath}, '{}'::jsonb) - 'submitted_at' - 'submitted_by' - 'contact_channel')`,
+          metadata: sql`jsonb_set(${organizations.metadata}, '{training_onboarding}', coalesce(${onboardingPath}, '{}'::jsonb) - 'submitted_at' - 'submitted_by' - 'contact_channel' - 'submission_claimed_at')`,
           updatedAt: new Date(),
         })
         .where(eq(organizations.id, organizationId));

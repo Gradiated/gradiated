@@ -94,6 +94,33 @@ describe("organization onboarding metadata", () => {
     });
   });
 
+  it("lets one claim at a time reserve the submission until it expires", async () => {
+    const { userId, organizationId } = await seedMember(db.database, {
+      role: "admin",
+    });
+    const claim = () =>
+      service.claimOnboardingSubmission(userId, organizationId);
+
+    const first = await claim();
+    expect(first).toEqual(expect.any(String));
+    expect(await claim()).toBeNull();
+
+    await service.releaseOnboardingSubmission(userId, organizationId, "stale");
+    expect(await claim()).toBeNull();
+    await service.releaseOnboardingSubmission(userId, organizationId, first!);
+    const second = await claim();
+    expect(second).toEqual(expect.any(String));
+
+    // An abandoned claim expires.
+    await db.database.execute(
+      sql`update organizations set metadata = jsonb_set(metadata, '{training_onboarding,submission_claimed_at}', to_jsonb(to_char((now() - interval '3 minutes') at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'))) where id = ${organizationId}`,
+    );
+    expect(await claim()).toEqual(expect.any(String));
+
+    await service.submitOnboarding(userId, organizationId, "email");
+    expect(await claim()).toBeNull();
+  });
+
   it("merges a new NDA without clearing the submission", async () => {
     const { userId, organizationId } = await seedMember(db.database, {
       role: "admin",

@@ -370,11 +370,9 @@ export const ProjectPanel = ({
               : "Start project"}
         </Button>
         <p role="status" className="text-center text-sm text-muted-foreground">
-          {submitting
-            ? "Checking GitHub one last time and notifying your researcher."
-            : blockers.length
-              ? null
-              : "You can change any of this later."}
+          {submitting || blockers.length
+            ? null
+            : "You can change any of this later."}
         </p>
       </div>
     </aside>

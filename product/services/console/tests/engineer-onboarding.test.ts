@@ -22,6 +22,21 @@ describe("post-training onboarding journey", () => {
     ).toEqual({ journey: "post-training" });
   });
 
+  it("keeps a console path to return to and drops anything else", () => {
+    expect(
+      parseOnboardingSearch({ journey: "post-training", from: "/tasks?tab=1" }),
+    ).toEqual({ journey: "post-training", from: "/tasks?tab=1" });
+    for (const from of [
+      "https://evil.example/tasks",
+      "//evil.example/tasks",
+      "/\\evil.example",
+      "tasks",
+      "/onboarding?journey=post-training",
+      "/" + "a".repeat(600),
+    ])
+      expect(parseOnboardingSearch({ from })).toEqual({});
+  });
+
   it("only accepts the known journey", () => {
     expect(parseLoginSearch({ journey: "post-training" })).toEqual({
       journey: "post-training",

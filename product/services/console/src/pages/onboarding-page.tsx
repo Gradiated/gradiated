@@ -26,13 +26,18 @@ import {
 import { POST_TRAINING_JOURNEY } from "@/lib/login-search";
 import { queryKeys } from "@/lib/query-keys";
 import { LoadFailed } from "@/pages/console-page";
+import { parseOnboardingSearch } from "@/lib/engineer-onboarding";
 import { PostTrainingOnboarding } from "@/pages/engineer-onboarding/post-training-onboarding";
 import { useWorkspaceSelection } from "@/store/workspace-selection";
 
 export const OnboardingPage = () => {
-  const { journey, organization: requestedOrganization } = useSearch({
-    from: "/onboarding",
-  });
+  // Search params the route does not validate still reach useSearch from the
+  // root, so parse again rather than trust them.
+  const {
+    journey,
+    organization: requestedOrganization,
+    from,
+  } = parseOnboardingSearch(useSearch({ from: "/onboarding" }));
   const postTraining = journey === POST_TRAINING_JOURNEY;
   const { user, signOut } = useSession();
   const me = useCurrentUser();
@@ -75,6 +80,7 @@ export const OnboardingPage = () => {
         <PostTrainingOnboarding
           user={user}
           organization={requestedOrganization ?? onboarded}
+          from={from}
         />
       )}
     </>

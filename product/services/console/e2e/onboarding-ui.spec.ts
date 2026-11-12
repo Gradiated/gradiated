@@ -540,6 +540,49 @@ test("a customer who skips the NDA starts without one", async ({ page }) => {
   expect(engineer.signingSessions).toBe(0);
 });
 
+test("onboarding opened from the console leads back to it", async ({
+  page,
+}) => {
+  await setup(page, {
+    email: "alex@acme.com",
+    companyEmailDomain: "acme.com",
+    onboardingCompleted: true,
+  });
+
+  await page.goto("/onboarding?journey=post-training&from=%2Fapi-keys");
+  await page.getByRole("button", { name: "Back to console" }).click();
+  await expect(page).toHaveURL(/\/api-keys$/);
+
+  await page.goto("/onboarding?journey=post-training&from=%2Fapi-keys");
+  await page
+    .getByRole("checkbox", {
+      name: "Our team can’t use Slack, so use email instead.",
+    })
+    .click();
+  await startButton(page).click();
+  await expect(
+    page.getByRole("button", { name: "Back to console" }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Go to console" }).click();
+  await expect(page).toHaveURL(/\/api-keys$/);
+});
+
+test("onboarding without a return path has no way back", async ({ page }) => {
+  await setup(page, {
+    email: "alex@acme.com",
+    companyEmailDomain: "acme.com",
+    onboardingCompleted: true,
+  });
+
+  await page.goto(
+    "/onboarding?journey=post-training&from=https%3A%2F%2Fevil.example",
+  );
+  await expect(startButton(page)).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Back to console" }),
+  ).toHaveCount(0);
+});
+
 test("an installation without repositories blocks the start until one is selected", async ({
   page,
 }) => {

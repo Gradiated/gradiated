@@ -15,7 +15,21 @@ import {
 export interface OnboardingSearch {
   journey?: typeof POST_TRAINING_JOURNEY;
   organization?: string;
+  /** The console page that opened onboarding, for its way back. */
+  from?: string;
 }
+
+const ORIGIN_PROBE = "https://console.invalid";
+
+/* Only a path on the console itself, outside onboarding, is a way back. */
+export const consoleReturnPath = (value: unknown) => {
+  if (typeof value !== "string" || !value.startsWith("/") || value.length > 512)
+    return undefined;
+  const url = new URL(value, ORIGIN_PROBE);
+  if (url.origin !== ORIGIN_PROBE || url.pathname.startsWith("/onboarding"))
+    return undefined;
+  return url.pathname + url.search + url.hash;
+};
 
 export const POST_TRAINING_ONBOARDING_PATH = `/onboarding?journey=${POST_TRAINING_JOURNEY}`;
 
@@ -28,8 +42,10 @@ export const parseOnboardingSearch = (
   search: Record<string, unknown>,
 ): OnboardingSearch => {
   const organization = z.uuid().safeParse(search.organization);
+  const from = consoleReturnPath(search.from);
 
   return {
+    ...(from ? { from } : {}),
     ...(search.journey === POST_TRAINING_JOURNEY
       ? { journey: POST_TRAINING_JOURNEY }
       : {}),

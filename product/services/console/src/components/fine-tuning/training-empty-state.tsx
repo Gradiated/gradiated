@@ -29,6 +29,7 @@ export const TrainingEmptyState = ({
   const started = Boolean(onboarding.data?.submitted_at);
   const search: OnboardingSearch = {
     journey: POST_TRAINING_JOURNEY,
+    from: "/tasks",
     ...(organizationId ? { organization: organizationId } : {}),
   };
 

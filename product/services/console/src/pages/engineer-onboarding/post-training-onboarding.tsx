@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { ApiError } from "@/api/client";
@@ -45,6 +46,7 @@ import {
   type OnboardingSection,
 } from "@/lib/engineer-onboarding";
 import { POST_TRAINING_JOURNEY } from "@/lib/login-search";
+import { cn } from "@/lib/utils";
 import { GithubAppInstallation } from "@/pages/engineer-onboarding/github-installation";
 import { NdaSigning } from "@/pages/engineer-onboarding/nda-signing";
 import {
@@ -65,9 +67,11 @@ const errorMessage = (error: unknown, fallback: string) =>
 export const PostTrainingOnboarding = ({
   user,
   organization,
+  from,
 }: {
   user: CurrentUser;
   organization: string | undefined;
+  from?: string | undefined;
 }) => {
   const choice = chooseAccount(user, organization);
 
@@ -101,6 +105,7 @@ export const PostTrainingOnboarding = ({
             project. Ask one to sign in and start it, or to make you an admin.
           </p>
           <OnboardingHelp step="Organization admin" />
+          {from ? <BackToConsole from={from} className="mt-2" /> : null}
         </div>
       </AuthCard>
     );
@@ -109,6 +114,7 @@ export const PostTrainingOnboarding = ({
     <PostTrainingWorkflow
       key={choice.account.userId + ":" + choice.account.organizationId}
       account={choice.account}
+      from={from}
     />
   );
 };
@@ -178,20 +184,56 @@ const loadDraft = (account: OnboardingAccount): OnboardingDraft => {
   }
 };
 
-const PageShell = ({ children }: { children: ReactNode }) => (
+const BackToConsole = ({
+  from,
+  className,
+}: {
+  from: string;
+  className?: string;
+}) => {
+  const router = useRouter();
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className={cn("self-start", className)}
+      onClick={() => router.history.push(from)}
+    >
+      <ArrowLeft />
+      Back to console
+    </Button>
+  );
+};
+
+const PageShell = ({
+  from,
+  children,
+}: {
+  from?: string | undefined;
+  children: ReactNode;
+}) => (
   <main className="min-h-svh bg-background">
     <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pt-8 pb-24 md:px-6 md:pt-10">
-      <div className="self-start">
+      <div className="flex items-center justify-between gap-4">
         <Brand />
+        {from ? <BackToConsole from={from} /> : null}
       </div>
       {children}
     </div>
   </main>
 );
 
-const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
+const PostTrainingWorkflow = ({
+  account,
+  from,
+}: {
+  account: OnboardingAccount;
+  from?: string | undefined;
+}) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const router = useRouter();
   const selectOrganization = useWorkspaceSelection(
     (state) => state.selectOrganization,
   );
@@ -269,7 +311,8 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
         <ProjectStarted
           onConsole={() => {
             selectOrganization(account.organizationId);
-            void navigate({ to: "/playground" });
+            if (from) router.history.push(from);
+            else void navigate({ to: "/playground" });
           }}
           onReset={
             import.meta.env.DEV
@@ -356,7 +399,7 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
   };
 
   return (
-    <PageShell>
+    <PageShell from={from}>
       <PageHeader title="Let’s start your project.">
         Connect your code, tell us where to reach you, and a post-training
         researcher picks it up within a working day.

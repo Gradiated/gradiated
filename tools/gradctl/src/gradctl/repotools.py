@@ -27,6 +27,8 @@ class Tool:
     effects: str = 'write'
     network: bool = True
     interactive: bool = False
+    # Binaries the script itself runs, beyond the ones that launch it.
+    requires: tuple[str, ...] = ()
 
 
 def python(path: str) -> tuple[str, ...]:
@@ -89,33 +91,38 @@ TOOLS = (
          'Reconcile docs/security/risks.yml with the Drata risk register; offline check, --plan to compare, '
          '--apply-risks to write'),
     Tool('security', 'argocd-auth', (python('tools/security/check_argocd_auth.py'),),
-         'Exercise the pinned Argo CD login gate with signed, synthetic OIDC identities', effects='read'),
+         'Exercise the pinned Argo CD login gate with signed, synthetic OIDC identities', effects='read',
+         requires=('docker',)),
     Tool('security', 'temporal-ui', (python('tools/security/check_temporal_ui.py'),),
          'Validate the pinned Temporal UI and OAuth proxy offline with fixture credentials (needs Docker)',
-         effects='read'),
+         effects='read', requires=('docker',)),
     Tool('security', 'audit-controls', (python('tools/security/validate_audit_controls.py'),),
          'Validate rendered audit policies and event patterns with read-only AWS APIs; sends no events',
-         effects='read', interactive=False),
+         effects='read', requires=('aws',)),
     Tool('security', 'unauthorized-calls', (python('tools/security/validate_unauthorized_calls.py'),),
-         "Test the rendered unauthorized-call filter with AWS's read-only filter engine", effects='read'),
+         "Test the rendered unauthorized-call filter with AWS's read-only filter engine", effects='read',
+         requires=('aws',)),
     Tool('security', 'ci-boundaries', (python('tools/security/simulate_ci_boundaries.py'),),
-         'Simulate the CI IAM boundaries rendered by `terraform test -json -verbose`, read-only', effects='read'),
+         'Simulate the CI IAM boundaries rendered by `terraform test -json -verbose`, read-only', effects='read',
+         requires=('aws',)),
 
     # Observability checks over the rendered monitoring configuration.
     Tool('observability', 'check', (python('tools/observability/check.py'),),
          'Check alert and dashboard links, PromQL, and probe and stall behaviour (--promtool PATH)',
-         effects='read', network=False),
+         effects='read', network=False, requires=('helm',)),
     Tool('observability', 'platform', (python('tools/observability/check_platform.py'),),
          'Render the pinned monitoring chart and exercise its incident routing (--amtool, --alertmanager)',
-         effects='read', network=False),
+         effects='read', network=False, requires=('helm',)),
     Tool('observability', 'controller-requests', (python('tools/observability/check_controller_requests.py'),),
-         'Render the pinned controller charts and require their scheduler reservations', effects='read'),
+         'Render the pinned controller charts and require their scheduler reservations', effects='read',
+         requires=('helm',)),
 
     # Production model operations.
     Tool('models', 'monitoring-billing', (('node', 'tools/models/monitoring-billing.mjs'),),
-         'Preview the internal monitoring billing reserve; --apply-credit posts the approved credit'),
+         'Preview the internal monitoring billing reserve; --apply-credit posts the approved credit',
+         requires=('kubectl',)),
     Tool('models', 'probe-readiness', (('node', 'tools/deployment/inference-probe-readiness.mjs'),),
-         'Check every deployment has fresh successful inference probes', effects='read'),
+         'Check every deployment has fresh successful inference probes', effects='read', requires=('kubectl',)),
 
     # Browser automation.
     Tool('browser', 'website-screenshots', (BROWSER + ('tools/browser/website_screenshots.py',),),
@@ -124,7 +131,7 @@ TOOLS = (
          'Capture every built console story as a PNG (--story-prefix, --output)', network=False),
     Tool('browser', 'temporal-ui', (BROWSER + ('tools/browser/check_temporal_ui.py',),),
          'Render the production Temporal Cloud frontend against a synthetic namespace reader (IMAGE)',
-         effects='read', network=False),
+         effects='read', network=False, requires=('docker',)),
 
     # Local product development.
     Tool('product', 'sglang-local', (('bash', 'product/scripts/run-sglang-local.sh'),),
@@ -134,12 +141,14 @@ TOOLS = (
          'Run the Temporal UI locally against the development Temporal server', effects='read', network=False,
          interactive=True),
     Tool('product', 'opencode', (('bash', 'product/scripts/opencode-gradiated.sh'),),
-         'Run opencode against Gradiated inference', effects='read', interactive=True),
+         'Run opencode against Gradiated inference', effects='read', interactive=True,
+         requires=('aws', 'jq', 'opencode')),
     Tool('product', 'desmond-build-image', (('bash', 'product/scripts/desmond-build-image.sh'),),
          'Build the desmond SGLang image locally (DESMOND_IMAGE, default gradiated/desmond-sglang:dev)',
-         network=False),
+         network=False, requires=('docker',)),
     Tool('product', 'desmond-test', (('bash', 'product/scripts/desmond-test.sh'),),
-         'Build desmondd and run its native tests with CMake', effects='read', network=False),
+         'Build desmondd and run its native tests with CMake', effects='read', network=False,
+         requires=('cmake', 'git')),
 
     # Agent skills.
     Tool('research', 'efficiency', (python('.agents/skills/experiment-run/scripts/research_efficiency.py'),),
@@ -166,9 +175,9 @@ def runner(tool: Tool):
         steps = [[sys.executable if part == '{python}' else part for part in step] for step in tool.steps]
         # Extra arguments go to the last step, the tool itself.
         steps[-1] += ctx.args.forwarded
-        for step in steps:
-            if not shutil.which(step[0]):
-                raise DependencyMissing(step[0])
+        for binary in (*(step[0] for step in steps), *tool.requires):
+            if not shutil.which(binary):
+                raise DependencyMissing(binary)
         runs = []
         for step in steps:
             # An interactive tool shows a URL or prompt as it runs; under --json its stdout is stderr.
@@ -196,6 +205,7 @@ def register(commands, common, groups: dict) -> None:
             groups[tool.group] = group(commands, tool.group, GROUPS[tool.group])
         meta = Meta(tool.summary, effects=tool.effects, network=tool.network, repo=True, forwards_args=True,
                     interactive=tool.interactive,
-                    requires=tuple(dict.fromkeys(step[0] for step in tool.steps if step[0] != '{python}')))
+                    requires=tuple(dict.fromkeys((*(step[0] for step in tool.steps if step[0] != '{python}'),
+                                                  *tool.requires))))
         leaf(groups[tool.group], tool.name, runner(tool), meta, common,
              epilog='Arguments after the command go to the tool; use `-- --help` for its own help.')

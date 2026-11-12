@@ -67,6 +67,17 @@ class CatalogTests(unittest.TestCase):
                     with self.subTest(command=f'{tool.group} {tool.name}', path=path):
                         self.assertTrue((root / path).is_file())
 
+    def test_commands_declare_what_their_scripts_run(self):
+        requires = {e['command']: e['requires'] for e in self.entries}
+        self.assertIn('docker', requires['security temporal-ui'])
+        self.assertEqual(requires['models probe-readiness'], ['node', 'kubectl'])
+
+    def test_a_missing_requirement_is_exit_5(self):
+        real = __import__('shutil').which
+        with mock.patch('gradctl.repotools.shutil.which', side_effect=lambda b: None if b == 'docker' else real(b)):
+            code, out, _ = run('--json', 'security', 'temporal-ui', env={'GRADCTL_REPO': str(LAUNCHER.parents[2])})
+        self.assertEqual((code, json.loads(out)['error']['code']), (5, 'dependency_missing'))
+
     def test_commands_json_is_one_document(self):
         code, out, _ = run('commands', '--json', state=OFFLINE)
         self.assertEqual(code, 0)

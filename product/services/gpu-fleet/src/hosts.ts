@@ -160,7 +160,7 @@ export type HostLease = z.infer<typeof hostLeaseSchema>;
 
 // Set by a person (kubectl annotate) to restart a failed rollout.
 export const RETRY_ANNOTATION = "fleet.gradiated.com/retry";
-// A lease request as JSON (grad-ctl gpu lease); removing it hands the host back.
+// A lease request as JSON (gradctl gpu lease); removing it hands the host back.
 export const LEASE_ANNOTATION = "fleet.gradiated.com/lease";
 export const RESERVED_TAINT = "gradiated.com/reserved";
 

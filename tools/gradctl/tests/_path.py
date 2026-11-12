@@ -1,4 +1,4 @@
-"""Put the grad_ctl source on sys.path for `python3 -m unittest discover -s tools/grad-ctl/tests`."""
+"""Put the gradctl source on sys.path for `python3 -m unittest discover -s tools/gradctl/tests`."""
 import sys
 from pathlib import Path
 

@@ -1,9 +1,9 @@
 [tools]
-# The repository's Python tools and grad-ctl run on this Python. Installing it
+# The repository's Python tools and gradctl run on this Python. Installing it
 # also installs tools/python-requirements.txt into it. Linux and macOS only: the
 # hook is POSIX shell, and Windows CI jobs (wizard e2e) keep the runner's Python.
 python = { version = "3.13.18", postinstall = "\"$MISE_TOOL_INSTALL_PATH/bin/python3\" -m pip install --quiet --disable-pip-version-check --root-user-action=ignore -r tools/python-requirements.txt", os = ["linux", "macos"] }
-# grad-ctl compute uses it for Nebius VMs. Nebius publishes no registry entry, so
+# gradctl compute uses it for Nebius VMs. Nebius publishes no registry entry, so
 # this fetches its pinned release binary directly. Nebius builds no Windows binary.
 "http:nebius" = { version = "0.12.306", url = "https://artifacts.nebius.cloud/cli/release/{{ version }}/{{ os(macos='darwin') }}/{{ arch(x64='x86_64') }}/nebius", bin = "nebius", os = ["linux", "macos"] }
 aws = "2.36.24"
@@ -19,17 +19,17 @@ terragrunt = "1.1.2"
 trivy = "0.75.0"
 
 [env]
-# `grad-ctl` from this checkout is on PATH wherever mise is active here
+# `gradctl` from this checkout is on PATH wherever mise is active here
 # (`mise activate`, `mise exec`, `mise run`), so it needs no install.
-_.path = ["{{config_root}}/tools/grad-ctl"]
+_.path = ["{{config_root}}/tools/gradctl"]
 
 [tasks."python:deps"]
 description = "Install tools/python-requirements.txt into the mise Python (after changing it)"
 run = "python3 -m pip install --quiet --disable-pip-version-check --root-user-action=ignore -r tools/python-requirements.txt"
 
-[tasks."grad-ctl:install"]
-description = "Install grad-ctl as one file at ~/.local/bin/grad-ctl, for use outside a checkout"
-run = "python3 tools/grad-ctl/build.py --install"
+[tasks."gradctl:install"]
+description = "Install gradctl as one file at ~/.local/bin/gradctl, for use outside a checkout"
+run = "python3 tools/gradctl/build.py --install"
 
 [tasks.infra-fmt]
 description = "Format Terraform and Terragrunt configuration"

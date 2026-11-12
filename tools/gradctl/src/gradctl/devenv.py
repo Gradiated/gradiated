@@ -35,5 +35,5 @@ def secret(name: str) -> str:
     value = os.environ.get(name) or dev_env().get(name)
     if not value:
         raise CliError(f'{name} is not set and {SECRET_ID} could not be read', 'credentials_missing',
-                       'run `grad-ctl env build` or `grad-ctl aws login`, then retry')
+                       'run `gradctl env build` or `gradctl aws login`, then retry')
     return base64.b64decode(value).decode() if name.endswith('_B64') else value

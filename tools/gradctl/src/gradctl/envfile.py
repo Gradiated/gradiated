@@ -1,4 +1,4 @@
-"""`grad-ctl env build`: build the repository .env from the shared development secret.
+"""`gradctl env build`: build the repository .env from the shared development secret.
 
 Reads gradiated/dev/env from AWS Secrets Manager and writes .env with mode
 0600. Variables in the existing .env that the secret does not hold are kept
@@ -148,7 +148,7 @@ def build(ctx: Context) -> Result:
     # and a repeated name changes meaning part way through the file.
     kept = [(name, line) for name, line in existing if name not in values]
 
-    lines = [f"# Built from {SECRET_ID} by `grad-ctl env build`; rerun to refresh."]
+    lines = [f"# Built from {SECRET_ID} by `gradctl env build`; rerun to refresh."]
     lines += [f"{name}={quote(values[name])}" for name in sorted(values)]
     if kept:
         lines += ["", LOCAL_HEADER, *(line for _, line in kept)]

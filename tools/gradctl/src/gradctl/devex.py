@@ -25,7 +25,7 @@ WORKSTREAMS = {
 }
 READ_FIRST = ('AGENTS.md', 'README.md', 'docs/ARCHITECTURE.md', 'docs/DATA_MODEL.md')
 REPO_PATHS = ('AGENTS.md', 'README.md', 'docs/DATA_MODEL.md', 'docs/ARCHITECTURE.md', 'research/README.md',
-              '.agents/skills', 'tools/grad-ctl', 'tools/browser/pyproject.toml', 'research/lab')
+              '.agents/skills', 'tools/gradctl', 'tools/browser/pyproject.toml', 'research/lab')
 COMMANDS = ('git', 'docker', 'uv', 'cargo', 'rustc', 'gh', 'node', 'mise', 'aws', 'kubectl', 'tailscale', 'nebius')
 BROWSER_MODULES = ('playwright', 'browser_use', 'pytest')
 # tools/python-requirements.txt, by import name.
@@ -112,7 +112,7 @@ def browser_module(root: Path, name: str) -> str:
 def doctor_report(root: Path) -> dict:
     return {
         'repo': str(root),
-        'grad_ctl': VERSION,
+        'gradctl': VERSION,
         'python': sys.executable,
         'tailnet': tailnet.check(),
         'commands': {name: shutil.which(name) for name in COMMANDS},
@@ -126,7 +126,7 @@ def doctor_report(root: Path) -> dict:
 
 def doctor_text(report: dict) -> str:
     net = report['tailnet']
-    lines = [f"repo: {report['repo']}", f"grad-ctl: {report['grad_ctl']}", f"python: {report['python']}",
+    lines = [f"repo: {report['repo']}", f"gradctl: {report['gradctl']}", f"python: {report['python']}",
              f"tailnet: {'connected as ' + str(net.get('dns_name')) if net['connected'] else net['reason']}",
              '', 'Commands:']
     lines += [f"  {name:10} {'ok (' + path + ')' if path else 'missing'}" for name, path in report['commands'].items()]
@@ -171,7 +171,7 @@ def context_report(root: Path, workstream: str | None) -> dict:
             "reserve directory/artifact scope; do not edit another agent's files",
             'state the acceptance check and any test budget or timeout',
         ],
-        'cli': 'run `grad-ctl commands --json` for every command, its effects and requirements',
+        'cli': 'run `gradctl commands --json` for every command, its effects and requirements',
     }
 
 

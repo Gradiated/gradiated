@@ -1,7 +1,7 @@
-"""grad-ctl: the Gradiated developer and agent CLI.
+"""gradctl: the Gradiated developer and agent CLI.
 
 Every command needs this machine on the Gradiated tailnet. Run
-`grad-ctl commands --json` for the full catalog: each command's arguments,
+`gradctl commands --json` for the full catalog: each command's arguments,
 effects (read, write, destructive), requirements and whether it needs a person.
 Pass --json for one machine-readable envelope on stdout.
 """
@@ -20,7 +20,7 @@ from .core import (EXIT_CODES, CliError, Context, Meta, Parser, Result, UsageErr
                    error_envelope, leaf, stdout_to_stderr, system_exit_error)
 
 EPILOG = """\
-Agents: start with `grad-ctl commands --json`. With --json, stdout is exactly
+Agents: start with `gradctl commands --json`. With --json, stdout is exactly
 one JSON document {"ok", "command", "data", "error"} and progress goes to
 stderr. Exit codes: 0 ok, 1 failed, 2 usage, 3 not on the tailnet, 4 not in a
 checkout, 5 missing dependency. No command prompts; interactive=true in the
@@ -73,7 +73,7 @@ def commands_command(ctx: Context) -> Result:
     entries = [entry for entry in catalog(ctx.args.parser)
                if not ctx.args.prefix or entry['command'].startswith(' '.join(ctx.args.prefix))]
     if ctx.args.prefix and not entries:
-        raise UsageError(f"no command starts with {' '.join(ctx.args.prefix)}", hint='run `grad-ctl commands`')
+        raise UsageError(f"no command starts with {' '.join(ctx.args.prefix)}", hint='run `gradctl commands`')
     width = max(len(entry['command']) for entry in entries)
     lines = []
     for entry in entries:
@@ -95,25 +95,25 @@ def commands_command(ctx: Context) -> Result:
 def version_command(ctx: Context) -> Result:
     data = {'version': VERSION, 'build': BUILD, 'python': sys.version.split()[0],
             'source': os.path.dirname(os.path.abspath(__file__))}
-    return Result(data=data, text=f"grad-ctl {VERSION}{' (' + BUILD + ')' if BUILD else ''}")
+    return Result(data=data, text=f"gradctl {VERSION}{' (' + BUILD + ')' if BUILD else ''}")
 
 
 def build_parser() -> Parser:
     common = Parser(add_help=False)
     common.add_argument('--json', action='store_true', default=argparse.SUPPRESS,
-                        help='print one JSON envelope on stdout (also GRAD_CTL_JSON=1)')
-    parser = Parser(prog='grad-ctl', description=__doc__, epilog=EPILOG,
+                        help='print one JSON envelope on stdout (also GRADCTL_JSON=1)')
+    parser = Parser(prog='gradctl', description=__doc__, epilog=EPILOG,
                     formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--json', action='store_true', default=False,
-                        help='print one JSON envelope on stdout (also GRAD_CTL_JSON=1)')
-    parser.add_argument('--version', action='version', version=f'grad-ctl {VERSION}')
+                        help='print one JSON envelope on stdout (also GRADCTL_JSON=1)')
+    parser.add_argument('--version', action='version', version=f'gradctl {VERSION}')
     commands = parser.add_subparsers(dest='command', metavar='COMMAND')
 
     sub = leaf(commands, 'commands', commands_command, Meta(
         'List every command with its arguments, effects and requirements', network=False, tailnet=False), common)
     sub.add_argument('prefix', nargs='*', help='only commands under this path, for example `compute`')
     sub.set_defaults(parser=parser)
-    leaf(commands, 'version', version_command, Meta('Print the grad-ctl version', network=False, tailnet=False),
+    leaf(commands, 'version', version_command, Meta('Print the gradctl version', network=False, tailnet=False),
          common)
     tailnet.register(commands, common)
     devex.register(commands, common)
@@ -126,7 +126,7 @@ def build_parser() -> Parser:
 
 
 def env_json() -> bool:
-    return os.environ.get('GRAD_CTL_JSON', '').lower() in ('1', 'true', 'yes')
+    return os.environ.get('GRADCTL_JSON', '').lower() in ('1', 'true', 'yes')
 
 
 def wants_json(argv: list[str]) -> bool:
@@ -139,7 +139,7 @@ def report_error(command: str, error: CliError, as_json: bool) -> int:
     if as_json:
         emit_json(error_envelope(command, error))
     else:
-        print(f'grad-ctl: {error.message}', file=sys.stderr)
+        print(f'gradctl: {error.message}', file=sys.stderr)
         if error.hint:
             print(f'hint: {error.hint}', file=sys.stderr)
     return error.exit_code
@@ -155,13 +155,13 @@ def report(command: str, result: Result, as_json: bool) -> int:
             import json
             print(json.dumps(result.data, indent=1, default=str))
         if not result.ok:
-            print(f"grad-ctl: {result.error or 'failed'}", file=sys.stderr)
+            print(f"gradctl: {result.error or 'failed'}", file=sys.stderr)
     return result.exit_code if not result.ok else 0
 
 
 def run(argv: list[str]) -> int:
     as_json = wants_json(argv)
-    command = 'grad-ctl'
+    command = 'gradctl'
     try:
         parser = build_parser()
         try:
@@ -175,13 +175,13 @@ def run(argv: list[str]) -> int:
             target = getattr(args, 'group_parser', parser)
             if not as_json:
                 target.print_help(sys.stderr)
-            raise UsageError('choose a command', hint=f'run `{target.prog} --help` or `grad-ctl commands`')
+            raise UsageError('choose a command', hint=f'run `{target.prog} --help` or `gradctl commands`')
         command = args.command_path
         meta: Meta = args.meta
         if extra and extra[0] == '--':
             extra = extra[1:]
         if extra and not meta.forwards_args:
-            raise UsageError(f"unrecognized arguments: {' '.join(extra)}", hint=f'run `grad-ctl {command} --help`')
+            raise UsageError(f"unrecognized arguments: {' '.join(extra)}", hint=f'run `gradctl {command} --help`')
         args.forwarded = extra
         if tailnet.needed(meta):
             tailnet.require()
@@ -205,13 +205,13 @@ def run(argv: list[str]) -> int:
     except KeyboardInterrupt:
         return report_error(command, CliError('interrupted', 'interrupted', exit_code=130), as_json)
     except Exception as error:  # noqa: BLE001 - every failure gets an envelope
-        if os.environ.get('GRAD_CTL_DEBUG'):
+        if os.environ.get('GRADCTL_DEBUG'):
             traceback.print_exc()
         return report_error(command, CliError(f'{type(error).__name__}: {error}', 'internal',
-                                              'rerun with GRAD_CTL_DEBUG=1 for a traceback'), as_json)
+                                              'rerun with GRADCTL_DEBUG=1 for a traceback'), as_json)
 
 
 def main(argv: list[str] | None = None) -> None:
     if sys.version_info < (3, 10):
-        raise SystemExit('grad-ctl needs Python 3.10 or newer')
+        raise SystemExit('gradctl needs Python 3.10 or newer')
     raise SystemExit(run(list(sys.argv[1:] if argv is None else argv)))

@@ -45,7 +45,7 @@ Commit the prepared host as a `GpuHost` in
 `infra/environments/prod/us-east-1/kubernetes/gpu-inference/hosts.yaml`: its
 instance ID, RunPod account and pod ID, measured inventory and management secret
 reference. Run `python3 -m pip install PyYAML==6.0.2` once, then
-`grad-ctl gpu render-config` from the repository root, which projects the
+`gradctl gpu render-config` from the repository root, which projects the
 controller's host list, secret reference and named Node/Lease permissions. Let
 Argo sync, then verify the Node is Ready with measured GPU, CPU and memory budgets
 before scheduling work. Merge the `GpuHost` within a day of registering: the
@@ -62,13 +62,13 @@ enrollment.
 
 To retire a host:
 
-1. Remove it from `hosts.yaml`, run `grad-ctl gpu render-config` and
+1. Remove it from `hosts.yaml`, run `gradctl gpu render-config` and
    merge. Argo then stops wanting the `GpuHost`, and does not prune it; the
    renderer keeps the host's node permissions and management key.
 2. `kubectl delete gpuhost gpu-<instance id>`. The operator cordons the node and
    holds the deletion until no pods run on it, so drain its workloads.
 3. Once the `GpuHost` is gone, run
-   `grad-ctl gpu render-config --retire <instance id>` and merge, which
+   `gradctl gpu render-config --retire <instance id>` and merge, which
    drops the host's access.
 4. Delete its Service in `tailscale-inference` by hand; the operator never
    deletes Services. Its PostgreSQL row is retired a day later.
@@ -135,8 +135,8 @@ The candidate launch settings and their unmeasured limits are in the
 
    ```sh
    git fetch origin main
-   grad-ctl gpu prepare-enrollment --gpu H200 --pod s0j3lwoqorm674 --source "$MERGED_SOURCE_SHA"
-   grad-ctl gpu prepare-enrollment --gpu H200 --pod s0j3lwoqorm674 --source "$MERGED_SOURCE_SHA" --apply
+   gradctl gpu prepare-enrollment --gpu H200 --pod s0j3lwoqorm674 --source "$MERGED_SOURCE_SHA"
+   gradctl gpu prepare-enrollment --gpu H200 --pod s0j3lwoqorm674 --source "$MERGED_SOURCE_SHA" --apply
    ```
 
    The helper uses administrator Tailscale SSH, including its normal MFA
@@ -156,9 +156,9 @@ The candidate launch settings and their unmeasured limits are in the
    profile; an existing B300-only archive is rejected. Stage one H200 replica:
 
    ```sh
-   grad-ctl gpu stage-glm-pool --gpu h200 "$RELEASE_JSON" "$BUNDLE_SOURCE_SHA"
-   grad-ctl gpu stage-glm-pool --gpu h200 "$RELEASE_JSON" "$BUNDLE_SOURCE_SHA" --write
-   grad-ctl gpu render-config
+   gradctl gpu stage-glm-pool --gpu h200 "$RELEASE_JSON" "$BUNDLE_SOURCE_SHA"
+   gradctl gpu stage-glm-pool --gpu h200 "$RELEASE_JSON" "$BUNDLE_SOURCE_SHA" --write
+   gradctl gpu render-config
    ```
 
    Review and merge the generated runtime catalogue, model catalogue, H200
@@ -210,7 +210,7 @@ that limit.
 
 Update its pinned bundle and release metadata in the GPU runtime catalogue and
 select it in `infra/environments/prod/us-east-1/kubernetes/gpu-inference/models.json`.
-Run `grad-ctl gpu render-config` to project the catalogue into the
+Run `gradctl gpu render-config` to project the catalogue into the
 controller ConfigMap. The controller stages and verifies bundles through private
 download grants before accepting the new runtime. The
 scheduler places replicas using resources, GPU-product labels and affinity.

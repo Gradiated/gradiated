@@ -1,10 +1,10 @@
-"""Repository tools grad-ctl runs from the checkout.
+"""Repository tools gradctl runs from the checkout.
 
 These render or edit files in the repository, and CI runs some of them by path,
-so their code stays beside what they change. grad-ctl is their one entry point
+so their code stays beside what they change. gradctl is their one entry point
 for people and agents: it finds the checkout, applies the tailnet requirement
 and wraps the result in the --json envelope. Arguments after the command name
-are passed through unchanged; `grad-ctl gpu render-config -- --help` shows the
+are passed through unchanged; `gradctl gpu render-config -- --help` shows the
 tool's own help.
 """
 
@@ -92,7 +92,7 @@ def runner(tool: Tool):
                 result = subprocess.run(step, cwd=root)
                 runs.append({'argv': step, 'exit_code': result.returncode})
             if result.returncode:
-                # Exit 1: the tool's own code could collide with grad-ctl's (2 usage, 3 tailnet, ...).
+                # Exit 1: the tool's own code could collide with gradctl's (2 usage, 3 tailnet, ...).
                 return Result(data={'steps': runs}, text='', ok=False, exit_code=1,
                               error=f'{tool.group} {tool.name}: {step[1] if step[0] == sys.executable else step[0]} '
                                     f'exited with status {result.returncode}')

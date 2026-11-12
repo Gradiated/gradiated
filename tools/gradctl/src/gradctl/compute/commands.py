@@ -1,17 +1,17 @@
-"""`grad-ctl compute`: run development training work on spot or on-demand GPU VMs from any supported provider.
+"""`gradctl compute`: run development training work on spot or on-demand GPU VMs from any supported provider.
 
-  grad-ctl compute search [--provider P[,P]] [--gpu G] [--term T] [--region R] [--min-gpus N]
+  gradctl compute search [--provider P[,P]] [--gpu G] [--term T] [--region R] [--min-gpus N]
                          [--max-gpus N] [--max-price USD_PER_GPU_HOUR] [--all] [--json]
                                                          compute available now, cheapest per GPU-hour first
                                                          (alias: prices)
-  grad-ctl compute platforms --provider P [--region R]    GPU platforms and presets
-  grad-ctl compute up NAME --platform X [--preset Y] [--provider P] [--region R] [--term spot|on-demand]
+  gradctl compute platforms --provider P [--region R]    GPU platforms and presets
+  gradctl compute up NAME --platform X [--preset Y] [--provider P] [--region R] [--term spot|on-demand]
                          [--max-price USD_PER_GPU_HOUR] [--disk-gib N]
-  grad-ctl compute ls [--provider P[,P]]
-  grad-ctl compute ssh [--vm N] NAME [command...]       N picks one of the VMs Ornn splits a node into
-  grad-ctl compute s3 NAME                                give the VM the development bucket key
-  grad-ctl compute start NAME | stop NAME                 preemption stops a VM, it is not deleted
-  grad-ctl compute down NAME                              delete the VM, its disk and its tailnet device
+  gradctl compute ls [--provider P[,P]]
+  gradctl compute ssh [--vm N] NAME [command...]       N picks one of the VMs Ornn splits a node into
+  gradctl compute s3 NAME                                give the VM the development bucket key
+  gradctl compute start NAME | stop NAME                 preemption stops a VM, it is not deleted
+  gradctl compute down NAME                              delete the VM, its disk and its tailnet device
 
 Providers: nebius and ornn, both virtual machines. --provider picks one or more
 (repeat it or separate with commas); without it, search and ls cover every
@@ -27,7 +27,7 @@ multi-node training, and nothing else on the tailnet: not production, EKS, peopl
 devices, or another provider's VMs. tag:dev-machine devices and administrators can reach it, including
 with `tailscale ssh root@<provider>-<NAME>`. A machine that is not on the tailnet
 joins as tag:dev-machine with
-`grad-ctl tailnet join` (ephemeral; userspace networking works).
+`gradctl tailnet join` (ephemeral; userspace networking works).
 
 Credentials come from gradiated/dev/env: from the environment (an ignored .env
 loaded as AGENTS.md describes) or, if unset, read with the AWS profile in
@@ -190,7 +190,7 @@ def join_machine(cloud, name, host, index):
         if result.returncode == 0:
             return
         time.sleep(15)
-    sys.exit(f'Could not join {name} to the tailnet over SSH; run `grad-ctl compute down {name}` and try again')
+    sys.exit(f'Could not join {name} to the tailnet over SSH; run `gradctl compute down {name}` and try again')
 
 
 def cloud_init(cloud, host):
@@ -287,7 +287,7 @@ def up(args):
         vm = cloud.find(args.name)
         if not vm and time.time() > started + 120:
             # Ornn ends a reservation whose VMs cannot start.
-            sys.exit(f'{args.name} disappeared before it ran; check `grad-ctl compute ls` and the provider console')
+            sys.exit(f'{args.name} disappeared before it ran; check `gradctl compute ls` and the provider console')
         if vm and vm['state'] == 'RUNNING' and vm['address']:
             data = {'name': args.name, 'provider': cloud.name, 'region': vm['region'], 'term': args.term,
                     'address': vm['address'], 'tailnet_hosts': hosts(host, vm)}
@@ -301,10 +301,10 @@ def up(args):
                           text=f"{args.name} is running at {vm['address']} and joined the tailnet as "
                                f"{', '.join(hosts(host, vm))}")
         if vm and vm['state'] in ('ERROR', 'COMPLETED', 'CANCELLED'):
-            sys.exit(f"{args.name} is {vm['state']}; check `grad-ctl compute ls` and run `grad-ctl compute down`")
+            sys.exit(f"{args.name} is {vm['state']}; check `gradctl compute ls` and run `gradctl compute down`")
         time.sleep(15)
-    sys.exit(f'{args.name} did not start within 30 minutes; check `grad-ctl compute ls` and run '
-             '`grad-ctl compute down`')
+    sys.exit(f'{args.name} did not start within 30 minutes; check `gradctl compute ls` and run '
+             '`gradctl compute down`')
 
 
 def ls(args):
@@ -321,7 +321,7 @@ def ls(args):
 def ssh_command(cloud, name, index=0):
     vm = find(cloud, name)
     if index >= len(vm['machines']):
-        sys.exit(f'{name} has no running VM {index + 1}; is it running? (`grad-ctl compute ls` shows how many '
+        sys.exit(f'{name} has no running VM {index + 1}; is it running? (`gradctl compute ls` shows how many '
                  'VMs it has)')
     machine = vm['machines'][index]
     key = state() / f'{cloud.name}-ssh-key'
@@ -338,12 +338,12 @@ def ssh(args, as_json=False):
     command = [*args.command]
     if command[:1] == ['--json']:
         raise UsageError('put --json before NAME; everything after NAME runs on the VM',
-                         hint='grad-ctl --json compute ssh NAME -- nvidia-smi')
+                         hint='gradctl --json compute ssh NAME -- nvidia-smi')
     if command[:1] == ['--']:
         command = command[1:]
     if as_json and not command:
         raise UsageError('--json needs a command to run; an interactive shell has no JSON result',
-                         hint='grad-ctl --json compute ssh NAME -- nvidia-smi')
+                         hint='gradctl --json compute ssh NAME -- nvidia-smi')
     ssh_args = ssh_command(located(args), args.name, args.vm - 1)
     if not as_json:
         os.execvp('ssh', [*ssh_args, *command])
@@ -363,7 +363,7 @@ def s3(args):
     vm = find(cloud, args.name)
     if vm['state'] != 'RUNNING':
         # A split Ornn node lists only its running VMs; configure them all at once.
-        sys.exit(f"{args.name} is {vm['state']}; run `grad-ctl compute s3` once every VM runs")
+        sys.exit(f"{args.name} is {vm['state']}; run `gradctl compute s3` once every VM runs")
     for index in range(len(vm['machines'])):
         subprocess.run([*ssh_command(cloud, args.name, index), 'umask 077 && mkdir -p ~/.aws && '
                         'cat > ~/.aws/credentials && printf "[default]\\nregion = us-east-1\\n" > ~/.aws/config'],

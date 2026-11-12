@@ -1,13 +1,13 @@
-"""The command model every grad-ctl command shares: metadata, results, errors and output.
+"""The command model every gradctl command shares: metadata, results, errors and output.
 
 Agents rely on three guarantees:
 
-- With --json (or GRAD_CTL_JSON=1), stdout holds exactly one JSON document, the
+- With --json (or GRADCTL_JSON=1), stdout holds exactly one JSON document, the
   envelope below, and everything else (progress, subprocess output) goes to
   stderr.
 - Exit codes are stable: see EXIT_CODES.
 - No command prompts. A command that needs a person (a browser sign-in) says so
-  with interactive=true in `grad-ctl commands`.
+  with interactive=true in `gradctl commands`.
 
 Envelope:
 
@@ -119,7 +119,7 @@ class Parser(argparse.ArgumentParser):
     """Raises UsageError instead of printing usage and exiting, so --json can report it.
 
     Abbreviations are off so an option meant for a forwarded repository tool is
-    never taken as a prefix of one of grad-ctl's own (`--j` for `--json`).
+    never taken as a prefix of one of gradctl's own (`--j` for `--json`).
     """
 
     def __init__(self, *args, **kwargs):
@@ -135,7 +135,7 @@ def leaf(subparsers, name: str, run: Handler, meta: Meta, common: argparse.Argum
     parser = subparsers.add_parser(name, help=meta.summary, description=kwargs.pop('description', meta.summary),
                                    parents=[common], formatter_class=argparse.RawDescriptionHelpFormatter,
                                    **kwargs)
-    parser.set_defaults(run=run, meta=meta, command_path=parser.prog.removeprefix('grad-ctl '))
+    parser.set_defaults(run=run, meta=meta, command_path=parser.prog.removeprefix('gradctl '))
     return parser
 
 

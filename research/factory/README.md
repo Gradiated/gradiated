@@ -203,5 +203,5 @@ journalctl --user -u gradiated-research-notifier@glm47.service -f
 PYTHONPATH=research/factory/src:research/factory/tests \
   python3 -m unittest research/factory/tests/test_lab_harness.py \
     research/factory/tests/test_result_notifier.py -v
-grad-ctl devex check
+gradctl devex check
 ```

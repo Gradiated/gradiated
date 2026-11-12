@@ -214,6 +214,34 @@ impl ModelNames {
 
 #[async_trait]
 impl ModelRuntime for SglangClient {
+    async fn count_tokens(
+        &self,
+        deployment: &GatewayModelDeployment,
+        mut request: serde_json::Value,
+    ) -> Result<u64, RuntimeFailure> {
+        if let Some(model) = &deployment.release.runtime_model_name {
+            request["model"] = serde_json::Value::String(model.clone());
+        }
+
+        let body = serde_json::to_vec(&request).map_err(|_| ProtocolViolation::Json)?;
+        let response = send(self.post(deployment, "v1/messages/count_tokens", body)).await?;
+        if !response.status().is_success() {
+            return Err(RuntimeFailure::rejected(
+                response.status(),
+                crate::NormalizedUsage::zero(),
+            ));
+        }
+
+        let body = read_bounded_body(response).await?;
+        let body: serde_json::Value =
+            serde_json::from_slice(&body).map_err(|_| ProtocolViolation::Json)?;
+
+        body.get("input_tokens")
+            .and_then(serde_json::Value::as_u64)
+            .filter(|count| *count <= crate::model::MAX_SAFE_INTEGER)
+            .ok_or_else(|| ProtocolViolation::Json.into())
+    }
+
     async fn complete(
         &self,
         deployment: &GatewayModelDeployment,

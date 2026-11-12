@@ -20,6 +20,14 @@ pub use openrouter::{supports_parameter as openrouter_supports_parameter, OpenRo
 
 #[async_trait]
 pub trait ModelRuntime: Send + Sync {
+    async fn count_tokens(
+        &self,
+        _deployment: &GatewayModelDeployment,
+        _request: Value,
+    ) -> Result<u64, RuntimeFailure> {
+        Err(ProtocolViolation::Dispatch.into())
+    }
+
     async fn complete(
         &self,
         deployment: &GatewayModelDeployment,

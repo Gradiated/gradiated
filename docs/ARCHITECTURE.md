@@ -413,11 +413,15 @@ Native token-ID transports additionally validate counts against the actual input
 and output IDs crossing their boundary; those are measured payloads, not a second
 reconstruction of the runtime's prompt.
 
-The explicit Anthropic `count_tokens` endpoint still provides a local estimate;
-it does not gate generation or settlement. The DeepSeek estimator mirrors the
-pinned chat endpoint's normalization of malformed historical tool arguments to
-an empty object. Exact deployment-side counting would require a separate runtime
-counting contract; this endpoint must not be treated as billing authority.
+The explicit Anthropic `count_tokens` endpoint provides a local estimate for
+models with a gateway tokenizer. Kimi K3.1 Pro instead sends the original
+Anthropic counting request to a healthy deployment's `/v1/messages/count_tokens`
+endpoint, with a ten-second deadline, because its pinned checkpoint ships a
+tiktoken vocabulary and native renderer rather than `tokenizer.json`. Counting
+does not admit a generation, consume a concurrency lease, or settle usage.
+The DeepSeek estimator mirrors the pinned chat endpoint's normalization of
+malformed historical tool arguments to an empty object. This endpoint must not
+be treated as billing authority.
 
 Gateway-owned checks remain authentication/authorization, advertised product
 parameters and output caps, release identity, fresh deployment health, capacity,

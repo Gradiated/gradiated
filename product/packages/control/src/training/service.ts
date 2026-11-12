@@ -17,6 +17,7 @@ import { reconcileTrainingRun } from "./engine.js";
 import { prepareTraining } from "./admission.js";
 import type { AdapterDownloads } from "./downloads.js";
 import { requireLoadableAdapter } from "./hosting.js";
+import type { AdapterQualifier } from "./qualification.js";
 import { createTrainingRunStore } from "./run-store.js";
 import { createTrainingStore } from "./store.js";
 import { TrainingAdmissionError, type TrainingEngine } from "./types.js";
@@ -39,6 +40,7 @@ export const createTrainingService = (
   engine?: TrainingEngine,
   validateEvaluationModel?: (id: string) => Promise<void>,
   uploadStorage?: ObjectStorage,
+  qualifyAdapter?: AdapterQualifier,
 ) => {
   const records = createTrainingStore(database);
 
@@ -309,15 +311,26 @@ export const createTrainingService = (
       const task = await findTask(workspaceId, name);
       const version = await records.getVersion(task.id, versionId);
       if (!version) throw notFound("version");
-      if (version.status !== "available")
+      requireLoadableAdapter(version);
+      if (version.status === "available")
+        return records.setProductionVersion(task.id, version.id);
+
+      // An unqualified version, such as an upload, serves only after a
+      // LoRA-enabled allocation of its base model loads it and generates.
+      if (!qualifyAdapter)
         throw new ControlServiceError(
           "unavailable",
-          "Serving is not enabled for this version.",
+          "Serving qualification is unavailable. The version was not promoted.",
         );
 
-      requireLoadableAdapter(version);
+      await qualifyAdapter(version);
+      const promoted = await records.promoteQualifiedVersion(
+        task.id,
+        version.id,
+      );
+      if (!promoted) throw notFound("version");
 
-      return records.setProductionVersion(task.id, version.id);
+      return promoted;
     },
   };
 };

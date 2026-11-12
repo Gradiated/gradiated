@@ -2,7 +2,12 @@ import { createExternalModelCatalog } from "./catalog/external-models.js";
 import { createPostHogServer } from "@gradiated/analytics/server";
 import { createApiAnalytics, createSignupHandler } from "./analytics.js";
 import { createEvaluationModelValidator } from "./catalog/evaluation-models.js";
+import { MODEL_CATALOG } from "@gradiated/contracts/model-catalog";
 import { createTrainingEngine } from "./training/engine.js";
+import {
+  createAdapterProbe,
+  reportAdapterQualification,
+} from "./training/adapter-probe.js";
 import { serve } from "@hono/node-server";
 import { createGpuControlApp } from "./gpu-control.js";
 import {
@@ -17,6 +22,8 @@ import {
   createTrainingService,
   createAdapterDownloads,
   createAdapterHostingService,
+  createAdapterQualifier,
+  createDeploymentStore,
   ObjectStorage,
   createDeploymentStatusService,
   createMemberService,
@@ -172,12 +179,25 @@ const auth = createAuthService(database, {
   trustedOrigins,
 });
 const metrics = new ApiMetrics();
+// Uploads are validated, and so qualified, only for bases with a training profile.
+metrics.initializeAdapterQualifications(
+  MODEL_CATALOG.flatMap((model) =>
+    "training" in model && model.training ? [model.id] : [],
+  ),
+);
 
 const trainingEngine = createTrainingEngine(process.env);
 const artifactStorage = environment.TRAINING_ARTIFACTS_BUCKET
   ? new ObjectStorage(environment.TRAINING_ARTIFACTS_BUCKET)
   : undefined;
 const adapterDownloads = createAdapterDownloads(artifactStorage);
+
+const deploymentStore = createDeploymentStore(database);
+const qualifyAdapter = createAdapterQualifier({
+  targets: (modelId) => deploymentStore.adapterProbeTargets(modelId),
+  probe: createAdapterProbe(),
+  report: reportAdapterQualification(metrics),
+});
 
 const externalModels = createExternalModelCatalog();
 const validateEvaluationModel = createEvaluationModelValidator(
@@ -226,6 +246,7 @@ const app = createApp({
       trainingEngine.engine,
       validateEvaluationModel,
       artifactStorage,
+      qualifyAdapter,
     ),
   },
 });

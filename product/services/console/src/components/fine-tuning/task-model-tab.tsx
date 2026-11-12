@@ -58,9 +58,7 @@ const VersionMeta = ({ version }: { version: VersionView }) => (
             version.adapter.validated_base_model_revision
         ? " · Different training checkpoint"
         : ""}
-    {version.status === "unavailable"
-      ? " · Awaiting serving qualification"
-      : ""}
+    {version.status === "unavailable" ? " · Not yet served" : ""}
   </>
 );
 
@@ -108,10 +106,7 @@ const VersionRow = ({
           {VERSION_MENU.map((item) => (
             <DropdownMenuItem
               key={item.kind}
-              disabled={
-                (item.kind === "use" || item.kind === "promote") &&
-                version.status !== "available"
-              }
+              disabled={item.kind === "use" && version.status !== "available"}
               onSelect={() =>
                 onAction({ kind: item.kind, versionId: version.id })
               }
@@ -186,7 +181,6 @@ const CurrentVersion = ({
             <Button
               size="sm"
               variant="outline"
-              disabled={version.status !== "available"}
               onClick={() =>
                 onAction({ kind: "promote", versionId: version.id })
               }

@@ -176,6 +176,16 @@ export {
   type AdapterHostingService,
 } from "./training/hosting.js";
 export {
+  createAdapterQualifier,
+  servesAdapter,
+  type AdapterProbe,
+  type AdapterProbeOutcome,
+  type AdapterProbeTarget,
+  type AdapterQualificationOutcome,
+  type AdapterQualificationResult,
+  type AdapterQualifier,
+} from "./training/qualification.js";
+export {
   TrainingAdmissionError,
   type TrainingEngine,
   type TrainingInput,

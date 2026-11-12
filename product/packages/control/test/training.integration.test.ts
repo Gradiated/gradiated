@@ -663,7 +663,13 @@ describe("training service", () => {
     });
 
     it.each([
-      ["an unavailable version", "admin", "unavailable", false, "unavailable"],
+      [
+        "an unavailable version without serving qualification",
+        "admin",
+        "unavailable",
+        false,
+        "unavailable",
+      ],
       ["another task's version", "admin", "available", true, "not_found"],
       ["a member", "member", "available", false, "forbidden"],
     ] as const)("rejects %s", async (_, role, status, otherTask, code) => {

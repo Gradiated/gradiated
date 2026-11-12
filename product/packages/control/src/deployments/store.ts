@@ -17,6 +17,15 @@ export interface DeploymentStore {
   adapterMetricsTargets(): Promise<
     { id: string; modelId: string; serviceUrl: string }[]
   >;
+  /** Available LoRA-enabled allocations of one model, behind their host proxy. */
+  adapterProbeTargets(modelId: string): Promise<
+    {
+      id: string;
+      modelId: string;
+      serviceUrl: string;
+      release: ModelDeploymentRelease;
+    }[]
+  >;
   verificationReplicas(
     modelId: string,
     deploymentIds: readonly string[],
@@ -26,42 +35,62 @@ export interface DeploymentStore {
 }
 const hostProxyUrl = (instance: typeof instances.$inferSelect) =>
   privateServingUrl(instance.id);
+
+// LoRA-enabled allocations whose service URL is their host proxy route.
+const adapterAllocations = async (
+  database: ControlDatabase,
+  modelId?: string,
+) => {
+  const rows = await database
+    .select({
+      id: modelDeployments.id,
+      modelId: modelDeployments.modelId,
+      serviceUrl: modelDeployments.serviceUrl,
+      release: modelDeployments.release,
+      instance: instances,
+    })
+    .from(modelDeployments)
+    .innerJoin(instances, eq(modelDeployments.instanceId, instances.id))
+    .where(
+      and(
+        sql`${modelDeployments.release}->>'lora_enabled' = 'true'`,
+        eq(modelDeployments.status, "available"),
+        isNull(instances.retiredAt),
+        modelId === undefined
+          ? undefined
+          : eq(modelDeployments.modelId, modelId),
+      ),
+    );
+
+  return ModelDeploymentRecordSchema.pick({
+    id: true,
+    modelId: true,
+    serviceUrl: true,
+    release: true,
+  })
+    .array()
+    .parse(
+      rows.filter((row) => {
+        const proxy = hostProxyUrl(row.instance);
+        return proxy !== null && row.serviceUrl === `${proxy}/alloc/${row.id}`;
+      }),
+    );
+};
 export const createDeploymentStore = (
   database: ControlDatabase,
 ): DeploymentStore => ({
-  adapterMetricsTargets: async () => {
-    const rows = await database
-      .select({
-        id: modelDeployments.id,
-        modelId: modelDeployments.modelId,
-        serviceUrl: modelDeployments.serviceUrl,
-        instance: instances,
-      })
-      .from(modelDeployments)
-      .innerJoin(instances, eq(modelDeployments.instanceId, instances.id))
-      .where(
-        and(
-          sql`${modelDeployments.release}->>'lora_enabled' = 'true'`,
-          eq(modelDeployments.status, "available"),
-          isNull(instances.retiredAt),
-        ),
-      );
+  adapterMetricsTargets: async () =>
+    (await adapterAllocations(database)).map(({ id, modelId, serviceUrl }) => ({
+      id,
+      modelId,
+      serviceUrl,
+    })),
 
-    return ModelDeploymentRecordSchema.pick({
-      id: true,
-      modelId: true,
-      serviceUrl: true,
-    })
-      .array()
-      .parse(
-        rows.filter((row) => {
-          const proxy = hostProxyUrl(row.instance);
-          return (
-            proxy !== null && row.serviceUrl === `${proxy}/alloc/${row.id}`
-          );
-        }),
-      );
-  },
+  adapterProbeTargets: async (modelId) =>
+    adapterAllocations(
+      database,
+      ModelDeploymentRecordSchema.shape.modelId.parse(modelId),
+    ),
 
   replicas: async () => {
     const rows = await database

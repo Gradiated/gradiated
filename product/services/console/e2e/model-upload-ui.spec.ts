@@ -26,9 +26,22 @@ const version = {
   created_at: "2026-11-03T12:00:00Z",
   adapter: { rank: 2 },
 };
-const setup = async (page: Page, role = "admin", busyOnce = false) => {
+const setup = async (
+  page: Page,
+  role = "admin",
+  busyOnce = false,
+  promotion: "pass" | "reject" = "pass",
+) => {
   let completions = 0;
   let uploaded = false;
+  let promoted = false;
+  let promotions = 0;
+  const currentVersion = () =>
+    promoted
+      ? { ...version, status: "available", is_production: true }
+      : version;
+  const currentTask = () =>
+    promoted ? { ...task, production_version_id: version.id } : task;
   let received: Record<string, unknown> | undefined;
   let uploads = 0;
   const errors: string[] = [];
@@ -124,25 +137,46 @@ const setup = async (page: Page, role = "admin", busyOnce = false) => {
       uploaded = true;
       return json(version);
     }
+    if (
+      path.endsWith(`/tasks/${task.name}/production`) &&
+      route.request().method() === "PUT"
+    ) {
+      promotions++;
+      if (promotion === "reject")
+        return route.fulfill({
+          status: 409,
+          json: {
+            detail:
+              "The serving runtime could not load this adapter. Check that it targets modules this base model supports. The version was not promoted.",
+          },
+        });
+      promoted = true;
+      return json(currentTask());
+    }
     if (path.endsWith("/tasks"))
       return json({
         data: [
           {
-            ...task,
+            ...currentTask(),
             latest_run: null,
-            latest_version: uploaded ? version : null,
+            latest_version: uploaded ? currentVersion() : null,
           },
         ],
       });
-    if (path.endsWith(`/tasks/${task.name}`)) return json(task);
+    if (path.endsWith(`/tasks/${task.name}`)) return json(currentTask());
     if (path.endsWith("/versions"))
-      return json({ data: uploaded ? [version] : [] });
+      return json({ data: uploaded ? [currentVersion()] : [] });
     if (path.endsWith("/training-runs") || path.endsWith("/generations"))
       return json({ data: [], next_cursor: null });
     if (path.startsWith("/api/")) return json({ data: [] });
     return route.continue();
   });
-  return { received: () => received, uploads: () => uploads, errors };
+  return {
+    received: () => received,
+    uploads: () => uploads,
+    promotions: () => promotions,
+    errors,
+  };
 };
 const selectFiles = async (page: Page, rank = 2) => {
   const bytes = rank * 4 * 2;
@@ -204,6 +238,59 @@ test("retries busy validation without retransmitting uploaded files", async ({
   expect(state.uploads()).toBe(2);
 });
 
+const uploadThenPromote = async (page: Page) => {
+  await page.goto("/tasks");
+  await page.getByRole("button", { name: "Add model", exact: true }).click();
+  await page.getByLabel("Model name", { exact: true }).fill(task.name);
+  await page.getByLabel("Version name", { exact: true }).fill(version.name);
+  await selectFiles(page);
+  await page.getByRole("button", { name: "Create task & upload" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(
+    page.getByText("Not yet served", { exact: false }).first(),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Use" })).toBeDisabled();
+  await page.getByRole("button", { name: "Promote" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText(
+    "Promoting first loads it on serving capacity",
+  );
+  await dialog.getByRole("button", { name: "Promote" }).click();
+};
+
+test("promotes an uploaded version once serving accepts it", async ({
+  page,
+}) => {
+  const state = await setup(page);
+  await uploadThenPromote(page);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByText("Production", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Use" })).toBeEnabled();
+  await expect(page.getByText("Not yet served", { exact: false })).toHaveCount(
+    0,
+  );
+  expect(state.promotions()).toBe(1);
+});
+
+test("keeps an uploaded version out of production when serving rejects it", async ({
+  page,
+}) => {
+  const state = await setup(page, "admin", false, "reject");
+  await uploadThenPromote(page);
+  await expect(
+    page.getByText("The serving runtime could not load this adapter.", {
+      exact: false,
+    }),
+  ).toBeVisible();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  expect(state.promotions()).toBe(1);
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(
+    page.getByText("Not yet served", { exact: false }).first(),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Use" })).toBeDisabled();
+});
+
 test("rejects a catalog alias when completion requires the canonical repository", async ({
   page,
 }) => {
@@ -258,7 +345,7 @@ for (const mobile of [false, true]) {
     await page.getByRole("button", { name: "Create task & upload" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(
-      page.getByText("Awaiting serving qualification", { exact: false }),
+      page.getByText("Not yet served", { exact: false }),
     ).toBeVisible();
     const modelName = `test-org/${task.name}/${version.name}`;
     await expect(page.getByText(`Model name: ${modelName}`)).toBeVisible();

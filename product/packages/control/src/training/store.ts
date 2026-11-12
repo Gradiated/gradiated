@@ -158,6 +158,35 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return TaskRecordSchema.parse(row);
     },
 
+    /** Marks a qualified version available and makes it the production version. */
+    async promoteQualifiedVersion(taskId: string, versionId: string) {
+      return database.transaction(async (tx) => {
+        const [version] = await tx
+          .update(taskVersions)
+          .set({ status: "available", updatedAt: new Date() })
+          .where(
+            and(
+              eq(taskVersions.id, UuidSchema.parse(versionId)),
+              eq(taskVersions.taskId, UuidSchema.parse(taskId)),
+            ),
+          )
+          .returning({ id: taskVersions.id });
+        if (!version) return null;
+
+        const [row] = await tx
+          .update(tasks)
+          .set(
+            TaskUpdateSchema.parse({
+              productionVersionId: version.id,
+              updatedAt: new Date(),
+            }),
+          )
+          .where(eq(tasks.id, UuidSchema.parse(taskId)))
+          .returning();
+        return row ? TaskRecordSchema.parse(row) : null;
+      });
+    },
+
     async setProductionVersion(taskId: string, versionId: string) {
       const [row] = await database
         .update(tasks)

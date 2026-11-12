@@ -20,6 +20,7 @@ export type ServiceLogFields = {
   signal?: string;
   allocation_id?: string;
   deployment_id?: string;
+  version_id?: string;
   model_id?: string;
   reason?: string;
   error?: unknown;
@@ -92,6 +93,7 @@ export const createServiceLogger = (
       "actor_user_id",
       "allocation_id",
       "deployment_id",
+      "version_id",
     ] as const) {
       const value = fields[key];
       if (

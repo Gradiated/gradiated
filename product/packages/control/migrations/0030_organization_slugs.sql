@@ -52,11 +52,17 @@ FROM (
 ) "claimed"
 WHERE "tasks"."id" = "claimed"."id";--> statement-breakpoint
 ALTER TABLE "task_versions" DROP CONSTRAINT "task_versions_workspace_name_unique";--> statement-breakpoint
--- Trained versions named `<task>-<yyyymmdd>[-n]` become `<yyyy-mm-dd>[-n]` within their task.
-UPDATE "task_versions" SET "name" = regexp_replace(substr("task_versions"."name", length("tasks"."name") + 2), '^([0-9]{4})([0-9]{2})([0-9]{2})', '\1-\2-\3')
-FROM "tasks"
-WHERE "tasks"."id" = "task_versions"."task_id"
-  AND "task_versions"."training_run_id" IS NOT NULL
-  AND left("task_versions"."name", length("tasks"."name") + 1) = "tasks"."name" || '-'
-  AND substr("task_versions"."name", length("tasks"."name") + 2) ~ '^[0-9]{8}(-[0-9]+)?$';--> statement-breakpoint
+-- Trained versions named `<task>-<yyyymmdd>[-n]` become `<yyyy-mm-dd>[-n]` within
+-- their task, unless another version of the task already has that name.
+UPDATE "task_versions" SET "name" = "renamed"."name"
+FROM (
+  SELECT "task_versions"."id", "task_versions"."task_id", regexp_replace(substr("task_versions"."name", length("tasks"."name") + 2), '^([0-9]{4})([0-9]{2})([0-9]{2})', '\1-\2-\3') AS "name"
+  FROM "task_versions"
+  JOIN "tasks" ON "tasks"."id" = "task_versions"."task_id"
+  WHERE "task_versions"."training_run_id" IS NOT NULL
+    AND left("task_versions"."name", length("tasks"."name") + 1) = "tasks"."name" || '-'
+    AND substr("task_versions"."name", length("tasks"."name") + 2) ~ '^[0-9]{8}(-[0-9]+)?$'
+) "renamed"
+WHERE "task_versions"."id" = "renamed"."id"
+  AND NOT EXISTS (SELECT 1 FROM "task_versions" "taken" WHERE "taken"."task_id" = "renamed"."task_id" AND "taken"."name" = "renamed"."name");--> statement-breakpoint
 ALTER TABLE "task_versions" ADD CONSTRAINT "task_versions_task_name_unique" UNIQUE("task_id","name");

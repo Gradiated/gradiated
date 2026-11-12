@@ -91,6 +91,22 @@ export const PostTrainingOnboarding = ({
       </AuthCard>
     );
 
+  if (choice.kind === "not_admin")
+    return (
+      <AuthCard>
+        <div className="flex flex-col gap-2 p-6 md:p-9">
+          <h1 className="text-2xl font-bold tracking-tight">
+            Ask an admin to start your project
+          </h1>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Only an admin of {choice.organization} can set up a post-training
+            project. Ask one to sign in and start it, or to make you an admin.
+          </p>
+          <OnboardingHelp step="Organization admin" />
+        </div>
+      </AuthCard>
+    );
+
   return (
     <PostTrainingWorkflow
       key={choice.account.userId + ":" + choice.account.organizationId}
@@ -374,16 +390,7 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
           <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-sm text-muted-foreground">
             <p>
               Signed in as {account.email}
-              {saved
-                ? null
-                : " · Progress won’t be saved on this device"} ·{" "}
-              <button
-                type="button"
-                className="text-foreground underline underline-offset-4"
-                onClick={() => setDraft(emptyDraft())}
-              >
-                Clear form
-              </button>
+              {saved ? null : " · Progress won’t be saved on this device"}
             </p>
             <OnboardingHelp step="Project setup" />
           </div>

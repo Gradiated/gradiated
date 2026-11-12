@@ -328,6 +328,29 @@ describe("onboarding account", () => {
       ),
     ).toEqual({ kind: "missing" });
   });
+
+  it("offers only organizations the user administers", () => {
+    const admin = membership({ id: "admin" });
+    const member = membership({ id: "member", role: "member" });
+
+    expect(chooseAccount(user(member, admin), undefined)).toMatchObject({
+      kind: "ready",
+      account: { organizationId: "admin" },
+    });
+  });
+
+  it("tells a member to ask an admin rather than failing part way", () => {
+    const member = membership({ id: "member", name: "Acme", role: "member" });
+
+    expect(chooseAccount(user(member), undefined)).toEqual({
+      kind: "not_admin",
+      organization: "Acme",
+    });
+    expect(chooseAccount(user(member), "member")).toEqual({
+      kind: "not_admin",
+      organization: "Acme",
+    });
+  });
 });
 
 describe("GitHub installation link", () => {

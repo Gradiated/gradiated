@@ -297,22 +297,30 @@ type Membership = CurrentUser["organizations"][number];
 export type AccountChoice =
   | { kind: "pick"; organizations: Membership[] }
   | { kind: "missing" }
+  | { kind: "not_admin"; organization: string }
   | { kind: "ready"; account: OnboardingAccount };
 
 export const chooseAccount = (
   user: CurrentUser,
   requestedOrganizationId: string | undefined,
 ): AccountChoice => {
-  const memberships = user.organizations.filter(
-    (row) => row.status === "active",
-  );
+  // Only organization admins can start a project; the API enforces it too.
+  const active = user.organizations.filter((row) => row.status === "active");
+  const memberships = active.filter((row) => row.role === "admin");
   if (!requestedOrganizationId && memberships.length > 1)
     return { kind: "pick", organizations: memberships };
 
   const organization = requestedOrganizationId
     ? memberships.find((row) => row.id === requestedOrganizationId)
     : memberships[0];
-  if (!organization) return { kind: "missing" };
+  if (!organization) {
+    const member = requestedOrganizationId
+      ? active.find((row) => row.id === requestedOrganizationId)
+      : active[0];
+    return member
+      ? { kind: "not_admin", organization: member.name }
+      : { kind: "missing" };
+  }
 
   return {
     kind: "ready",

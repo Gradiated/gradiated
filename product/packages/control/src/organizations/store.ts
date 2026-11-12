@@ -60,9 +60,9 @@ const organizationColumns = (userId: string) => ({
 
 const MetadataRowSchema = z
   .object({ metadata: OrganizationMetadataSchema })
-  .transform(({ metadata }) => metadata.onboarding ?? {});
+  .transform(({ metadata }) => metadata.training_onboarding ?? {});
 
-const onboardingPath = sql`${organizations.metadata} -> 'onboarding'`;
+const onboardingPath = sql`${organizations.metadata} -> 'training_onboarding'`;
 
 export const createOrganizationStore = (database: ControlDatabase) => {
   const readOnboarding = async (organizationId: string) => {
@@ -83,7 +83,7 @@ export const createOrganizationStore = (database: ControlDatabase) => {
     const rows = await database
       .update(organizations)
       .set({
-        metadata: sql`jsonb_set(${organizations.metadata}, '{onboarding}', coalesce(${onboardingPath}, '{}'::jsonb) || ${value}::jsonb)`,
+        metadata: sql`jsonb_set(${organizations.metadata}, '{training_onboarding}', coalesce(${onboardingPath}, '{}'::jsonb) || ${value}::jsonb)`,
         updatedAt: new Date(),
       })
       .where(and(eq(organizations.id, organizationId), condition))
@@ -180,7 +180,7 @@ export const createOrganizationStore = (database: ControlDatabase) => {
       await database
         .update(organizations)
         .set({
-          metadata: sql`jsonb_set(${organizations.metadata}, '{onboarding}', coalesce(${onboardingPath}, '{}'::jsonb) - 'submitted_at' - 'submitted_by' - 'contact_channel')`,
+          metadata: sql`jsonb_set(${organizations.metadata}, '{training_onboarding}', coalesce(${onboardingPath}, '{}'::jsonb) - 'submitted_at' - 'submitted_by' - 'contact_channel')`,
           updatedAt: new Date(),
         })
         .where(eq(organizations.id, organizationId));

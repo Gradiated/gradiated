@@ -31,7 +31,7 @@ whether an NDA was signed. Notes are not stored. Conflicts carry a `code`:
 `nda_required`, `github_authorization_required`, `github_installation_unverified`
 or `slack_channel_required`.
 
-Progress is stored in `organizations.metadata.onboarding` (NDA, submission,
+Progress is stored in `organizations.metadata.training_onboarding` (NDA, submission,
 contact channel) and the `integrations` table (Slack channel, GitHub
 installations); see [DATA_MODEL.md](../../../docs/DATA_MODEL.md).
 

@@ -90,7 +90,7 @@ describe("organization onboarding metadata", () => {
     });
     expect(await metadata(organizationId)).toEqual({
       schema_version: 1,
-      onboarding: first.onboarding,
+      training_onboarding: first.onboarding,
     });
   });
 

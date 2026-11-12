@@ -70,6 +70,6 @@ export type OrganizationOnboarding = z.infer<
 
 export const OrganizationMetadataSchema = z.strictObject({
   schema_version: z.literal(1),
-  onboarding: OrganizationOnboardingSchema.optional(),
+  training_onboarding: OrganizationOnboardingSchema.optional(),
 });
 export type OrganizationMetadata = z.infer<typeof OrganizationMetadataSchema>;

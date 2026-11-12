@@ -57,33 +57,33 @@ The first four tables are generated and owned by Better Auth. We map its logical
 
 ### 1. `users`
 
-| Field            | Type        | Null | Rules                                 |
-| ---------------- | ----------- | ---- | ------------------------------------- |
-| `id`             | uuid        | no   | Primary key                           |
-| `name`           | text        | no   | Bounded display name                  |
-| `email`          | text        | no   | Normalized; unique case-insensitively |
-| `email_verified` | boolean     | no   | Default false                         |
+| Field            | Type        | Null | Rules                                         |
+| ---------------- | ----------- | ---- | --------------------------------------------- |
+| `id`             | uuid        | no   | Primary key                                   |
+| `name`           | text        | no   | Bounded display name                          |
+| `email`          | text        | no   | Normalized; unique case-insensitively         |
+| `email_verified` | boolean     | no   | Default false                                 |
 | `is_staff`       | boolean     | no   | Default false; controlled staff portal access |
-| `image_url`      | text        | yes  | Profile image URL                     |
-| `created_at`     | timestamptz | no   | Creation time                         |
-| `updated_at`     | timestamptz | no   | Last mutation time                    |
+| `image_url`      | text        | yes  | Profile image URL                             |
+| `created_at`     | timestamptz | no   | Creation time                                 |
+| `updated_at`     | timestamptz | no   | Last mutation time                            |
 
 Verified `is_staff` users can administer all customer organizations without membership rows. Other users require active organization membership to access its workspaces. Staff status is not writable through public authentication or profile APIs. Impersonation uses the target user’s memberships and records its staff actor separately.
 
 ### 2. `sessions`
 
-| Field        | Type        | Null | Rules                       |
-| ------------ | ----------- | ---- | --------------------------- |
-| `id`         | uuid        | no   | Primary key                 |
-| `user_id`    | uuid        | no   | FK `users.id`               |
-| `token`      | text        | no   | Unique; Better Auth-managed |
-| `expires_at` | timestamptz | no   | Session expiry              |
-| `impersonated_by` | uuid | yes | Staff actor; FK `users.id`, cascade on deletion |
-| `impersonator_session_id` | uuid | yes | Original staff session; revalidated during impersonation |
-| `ip_address` | inet        | yes  | Better Auth-managed         |
-| `user_agent` | text        | yes  | Bounded                     |
-| `created_at` | timestamptz | no   | Creation time               |
-| `updated_at` | timestamptz | no   | Last mutation time          |
+| Field                     | Type        | Null | Rules                                                    |
+| ------------------------- | ----------- | ---- | -------------------------------------------------------- |
+| `id`                      | uuid        | no   | Primary key                                              |
+| `user_id`                 | uuid        | no   | FK `users.id`                                            |
+| `token`                   | text        | no   | Unique; Better Auth-managed                              |
+| `expires_at`              | timestamptz | no   | Session expiry                                           |
+| `impersonated_by`         | uuid        | yes  | Staff actor; FK `users.id`, cascade on deletion          |
+| `impersonator_session_id` | uuid        | yes  | Original staff session; revalidated during impersonation |
+| `ip_address`              | inet        | yes  | Better Auth-managed                                      |
+| `user_agent`              | text        | yes  | Bounded                                                  |
+| `created_at`              | timestamptz | no   | Creation time                                            |
+| `updated_at`              | timestamptz | no   | Last mutation time                                       |
 
 ### 3. `accounts`
 
@@ -138,18 +138,18 @@ OpenRouter is an internal `distribution_channel` organization and is not visible
 
 A new user's signup organization has a null `onboarded_at`, and the console asks its owner to name it before continuing. An owner or admin may set `auto_join_domain` only to the domain of their own verified email, and only when that domain is not a free or disposable email provider. When a user signs up with a verified email at a claimed domain of an active customer organization, they join it as a `member` and no personal organization is created. One organization may claim a domain.
 
-`metadata` defaults to `{"schema_version": 1}` and is parsed with `OrganizationMetadataSchema` from `@gradiated/contracts` on every read and write; unknown keys are rejected. Its only key is `onboarding`, the self-serve engineer onboarding record:
+`metadata` defaults to `{"schema_version": 1}` and is parsed with `OrganizationMetadataSchema` from `@gradiated/contracts` on every read and write; unknown keys are rejected. Its only key is `training_onboarding`, the post-training onboarding record:
 
-| Key                               | Type     | Rules                                                  |
-| --------------------------------- | -------- | ------------------------------------------------------ |
-| `onboarding.nda.document_id`      | text     | PandaDoc document that PandaDoc confirmed as completed |
-| `onboarding.nda.template_version` | text     | NDA template version it was signed against             |
-| `onboarding.nda.signed_at`        | ISO time | PandaDoc completion time                               |
-| `onboarding.submitted_at`         | ISO time | Set once when an admin starts the project              |
-| `onboarding.submitted_by`         | uuid     | The admin who submitted                                |
-| `onboarding.contact_channel`      | text     | `slack`, `email`                                       |
+| Key                                        | Type     | Rules                                                  |
+| ------------------------------------------ | -------- | ------------------------------------------------------ |
+| `training_onboarding.nda.document_id`      | text     | PandaDoc document that PandaDoc confirmed as completed |
+| `training_onboarding.nda.template_version` | text     | NDA template version it was signed against             |
+| `training_onboarding.nda.signed_at`        | ISO time | PandaDoc completion time                               |
+| `training_onboarding.submitted_at`         | ISO time | Set once when an admin starts the project              |
+| `training_onboarding.submitted_by`         | uuid     | The admin who submitted                                |
+| `training_onboarding.contact_channel`      | text     | `slack`, `email`                                       |
 
-The organizations store merges changes into `metadata.onboarding` only. The NDA is recorded when the API reads a completed, organization-bound PandaDoc document, and replaced only for a new template version. A submission is recorded at most once. Onboarding notes are delivered to Slack or the Gradiated team email at submission and are not stored. `onboarded_at` is unrelated: it still means the owner finished first-run console setup.
+The organizations store merges changes into `metadata.training_onboarding` only. The NDA is recorded when the API reads a completed, organization-bound PandaDoc document, and replaced only for a new template version. A submission is recorded at most once. Onboarding notes are delivered to Slack or the Gradiated team email at submission and are not stored. `onboarded_at` is unrelated: it still means the owner finished first-run console setup.
 
 ### 6. `organization_members`
 

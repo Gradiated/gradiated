@@ -19,6 +19,11 @@ export interface OnboardingSearch {
 
 export const POST_TRAINING_ONBOARDING_PATH = `/onboarding?journey=${POST_TRAINING_JOURNEY}`;
 
+export const engineerOnboardingKey = (organizationId: string) => [
+  "engineer-onboarding",
+  organizationId,
+];
+
 export const parseOnboardingSearch = (
   search: Record<string, unknown>,
 ): OnboardingSearch => {

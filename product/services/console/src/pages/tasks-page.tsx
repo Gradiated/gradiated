@@ -5,7 +5,6 @@ import { Plus } from "lucide-react";
 import { ModelLabel } from "@/components/model-label";
 import { modelDisplayName } from "@gradiated/contracts/model-catalog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2 } from "lucide-react";
 import {
   OutcomeBar,
   RatioLabel,
@@ -29,7 +28,7 @@ import { useState, type ReactNode } from "react";
 
 import { TrainingGate } from "@/components/fine-tuning/training-gate";
 import { ConnectDialog } from "@/components/fine-tuning/connect-dialog";
-import { ConnectSnippet } from "@/components/fine-tuning/connect-snippet";
+import { TrainingEmptyState } from "@/components/fine-tuning/training-empty-state";
 import { SettingsCard } from "@/components/fine-tuning/settings-card";
 import { Button } from "@/components/ui/button";
 import { TraceCaptureSettings } from "@/components/fine-tuning/trace-capture-settings";
@@ -119,21 +118,7 @@ const TasksPageBody = () => {
               ))}
             </TasksTable>
           ) : (
-            <div className="rounded-xl border bg-card p-6 shadow-sm">
-              <h3 className="text-base font-semibold">No tasks yet</h3>
-              <p className="mt-1 mb-5 max-w-xl text-sm leading-6 text-muted-foreground">
-                Add two headers to your OpenAI or Anthropic client. A task
-                appears here with its first request, and you keep your provider
-                key.
-              </p>
-              <ConnectSnippet />
-              <div className="mt-5 flex items-center gap-2 border-t pt-4 text-sm">
-                <Loader2 className="size-4 animate-spin text-muted-foreground" />
-                <span className="text-muted-foreground">
-                  Waiting for your first request…
-                </span>
-              </div>
-            </div>
+            <TrainingEmptyState onConnect={() => setConnectOpen(true)} />
           )}
         </TabsContent>
 

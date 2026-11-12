@@ -763,6 +763,23 @@ export const newOrganizationHandlers = [
   ),
   ...handlersFor(acmeAdmin),
 ];
+// Training before any task exists, with post-training onboarding not started
+// or already submitted.
+export const noTasksHandlers = (submitted = false) => [
+  http.get("/api/v1/workspaces/:workspaceId/tasks", () =>
+    HttpResponse.json(list()),
+  ),
+  http.get("/api/v1/organizations/:organizationId/engineer-onboarding", () =>
+    HttpResponse.json({
+      nda: null,
+      slack: null,
+      github_installations: [],
+      contact_channel: submitted ? "slack" : null,
+      submitted_at: submitted ? "2026-11-12T10:30:00.000Z" : null,
+    }),
+  ),
+  ...handlers,
+];
 export const playgroundHandlers = [
   http.get("/api/v1/workspaces/:workspaceId/tasks", () =>
     HttpResponse.json(list({ ...task, production_version_id: version.id })),

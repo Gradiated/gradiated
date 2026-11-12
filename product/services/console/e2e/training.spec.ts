@@ -339,10 +339,12 @@ test("task discovery distinguishes errors from an empty workspace and can retry"
     "Trace storage unavailable",
     { timeout: 15_000 },
   );
-  await expect(page.getByText("No tasks yet", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Start project" })).toHaveCount(
+    0,
+  );
   fail = false;
   await page.getByRole("button", { name: "Retry", exact: true }).click();
-  await expect(page.getByText("No tasks yet", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Start project" })).toBeVisible();
   await expect(page.getByText(/First request received|500 traces/)).toHaveCount(
     0,
   );

@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  engineerOnboardingKey,
   changesNda,
   chooseAccount,
   counterpartyDetails,
@@ -61,10 +62,6 @@ import { useWorkspaceSelection } from "@/store/workspace-selection";
 const errorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
-const engineerOnboardingKey = (organizationId: string) => [
-  "engineer-onboarding",
-  organizationId,
-];
 export const PostTrainingOnboarding = ({
   user,
   organization,

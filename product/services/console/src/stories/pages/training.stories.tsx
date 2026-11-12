@@ -1,5 +1,6 @@
 import type { Meta } from "@storybook/react-vite";
 
+import { noTasksHandlers } from "@/stories/handlers";
 import { Page, pageMeta, type PageStory } from "@/stories/page-story";
 
 const meta = { ...pageMeta, title: "Pages/Training" } satisfies Meta<
@@ -9,6 +10,14 @@ const meta = { ...pageMeta, title: "Pages/Training" } satisfies Meta<
 export default meta;
 
 export const Tasks: PageStory = { args: { path: "/tasks" } };
+export const NoTasks: PageStory = {
+  args: { path: "/tasks" },
+  parameters: { msw: noTasksHandlers() },
+};
+export const NoTasksProjectStarted: PageStory = {
+  args: { path: "/tasks" },
+  parameters: { msw: noTasksHandlers(true) },
+};
 export const TaskModel: PageStory = {
   args: { path: "/tasks/support-assistant" },
   parameters: { taskTab: "Model" },

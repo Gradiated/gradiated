@@ -6,7 +6,7 @@
 
 import type { Model, Scan, Source } from "./model.ts";
 
-type HubModel = { id: string; pipeline_tag?: string };
+type HubModel = { id: string };
 
 export class HuggingFaceSource implements Source {
   static readonly API = "https://huggingface.co/api/models";
@@ -62,7 +62,8 @@ export class HuggingFaceSource implements Source {
       owner: org,
       name: repo.id,
       url: `https://huggingface.co/${repo.id}`,
-      details: repo.pipeline_tag ? [repo.pipeline_tag] : [],
+      // The listing only shows public models, so a new one means its weights are live.
+      details: ["weights live"],
     };
   }
 }

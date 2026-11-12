@@ -44,6 +44,7 @@ import { runGenerationSettlementLoop } from "./settlement-loop.js";
 import { probeModel } from "./inference-probe.js";
 import {
   InferenceProbeMetrics,
+  catalogProbeTargets,
   runInferenceProbes,
 } from "./inference-probes.js";
 import { sleep } from "./sleep.js";
@@ -52,7 +53,16 @@ import { supervise } from "./supervisor.js";
 const environment = parseWorkerEnvironment(process.env);
 const abortController = new AbortController();
 const { signal } = abortController;
-const metrics = new WorkerMetrics();
+const metrics = new WorkerMetrics({
+  ...(environment.INFERENCE_PROBE_BASE_URL
+    ? {
+        catalogModels: async () =>
+          catalogProbeTargets(
+            await createCatalogService(database).listModels(),
+          ),
+      }
+    : {}),
+});
 const metricsServer = startWorkerMetricsServer(
   metrics,
   "0.0.0.0",
@@ -358,6 +368,7 @@ if (environment.INFERENCE_PROBE_BASE_URL) {
   const workspaceId = environment.MODEL_VERIFICATION_WORKSPACE_ID!;
   const keys = createWorkspaceApiKeyService(database);
   const store = createDeploymentStore(database);
+  const catalog = createCatalogService(database);
   const probeMetrics = new InferenceProbeMetrics(metrics.registry);
   supervisors.push(
     supervise({
@@ -372,6 +383,7 @@ if (environment.INFERENCE_PROBE_BASE_URL) {
           await runInferenceProbes({
             eval: (script, options) => settlementValkey.eval(script, options),
             replicas: () => store.replicas(),
+            models: async () => catalogProbeTargets(await catalog.listModels()),
             beforePass: async () => {
               if (issued && Date.now() < refreshAt) return;
 
@@ -393,8 +405,13 @@ if (environment.INFERENCE_PROBE_BASE_URL) {
                 apiKey: issued!.secret,
                 baseURL,
                 modelId: replica.modelId,
-                ...(scope === "deployment" ? { deploymentId: replica.id } : {}),
-                protocol: replica.release.protocol,
+                ...(scope === "deployment" && "id" in replica
+                  ? { deploymentId: replica.id }
+                  : {}),
+                protocol:
+                  "release" in replica
+                    ? replica.release.protocol
+                    : replica.protocol,
                 signal: probeSignal,
               }),
             metrics: probeMetrics,

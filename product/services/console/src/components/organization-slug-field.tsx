@@ -47,7 +47,6 @@ export const OrganizationSlugField = ({
       value={slug.input}
       onChange={(event) => slug.edit(event.target.value)}
       maxLength={39}
-      required
       spellCheck={false}
       autoComplete="off"
       data-1p-ignore="true"

@@ -32,7 +32,8 @@ class ProductChangesTest(unittest.TestCase):
 
     def test_email_change_checks_api_and_browser_without_rust(self):
         result = plan(["product/services/api/src/email/waitlist-welcome.ts"])
-        self.assertEqual(result["packages"], ["@gradiated/api"])
+        # The MCP server builds its tools from the API's OpenAPI document.
+        self.assertEqual(result["packages"], ["@gradiated/api", "@gradiated/mcp"])
         self.assertTrue(result["playwright"])
         self.assertFalse(result["gateway_contract"])
         self.assertFalse(result["inference_e2e"])

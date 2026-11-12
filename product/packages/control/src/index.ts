@@ -234,7 +234,10 @@ export {
   type ObjectWriteOptions,
 } from "./storage/object-storage.js";
 
-export { createWorkspaceStore } from "./workspaces/store.js";
+export {
+  createWorkspaceStore,
+  type ApiKeyOwnerRecord,
+} from "./workspaces/store.js";
 
 export { createKubernetesRequest } from "./deployments/kubernetes-client.js";
 

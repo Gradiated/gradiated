@@ -34,6 +34,9 @@ The public HTTP API: browser sessions, the management API, the Stripe webhook an
 - workspaces: a member manages an organization's workspaces and their API keys
   handler: registerWorkspaceRoutes in src/routes/workspaces.ts
   trust: customer-session
+- workspace keys: a client with a workspace API key, such as the MCP server, identifies the key or calls that workspace's routes as the key's creator
+  handler: resolveApiKeyUser in src/auth/api-key-principal.ts
+  trust: customer-api-key
 - usage: a member reads a workspace's usage
   handler: registerUsageRoutes in src/routes/usage.ts
   trust: customer-session
@@ -107,3 +110,13 @@ The public HTTP API: browser sessions, the management API, the Stripe webhook an
   checklist: capability-authorization dismissed: a session names a user, not a bounded capability; membership boundary decides what that user may reach
   checklist: canonical-encoding dismissed: Better Auth resolves the session cookie; nothing here normalizes an identity
   checklist: identity-continuity dismissed: there is no anonymous-to-identified succession; a request either carries a session or is refused
+- key confinement: A workspace API key authorizes only its own workspace's routes, as its creator, and never credential management or changes to the workspace.
+  over: every request with a key: another workspace's routes, API keys, playground credentials, the workspace resource itself, and routes outside workspaces such as /api/v1/me
+  via: workspace API keys on management routes
+  because: a leaked inference key must not reach other workspaces, mint longer-lived credentials or archive its workspace
+  crossing: customer-api-key -> control-plane
+  kinds: credential, identity
+  checklist: capability-authorization declared as key confinement
+  checklist: revalidated-permission dismissed: each request re-reads the key's revocation and expiry and the creator's membership
+  checklist: encrypted-storage dismissed: keys are stored as SHA-256 digests
+  checklist: identity-continuity dismissed: a key always acts as the member who created it

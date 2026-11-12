@@ -133,6 +133,7 @@ export const unservedDependencies = (): AppDependencies => ({
         "workspaces.createPlaygroundCredential",
       ),
       revokeApiKey: unserved("workspaces.revokeApiKey"),
+      authenticateApiKey: unserved("workspaces.authenticateApiKey"),
     },
   },
 });

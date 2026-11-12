@@ -14,6 +14,7 @@ import { requestLogFields, serviceLog } from "./logging.js";
 import { routeLabel, type ApiMetrics } from "./metrics.js";
 import type { DependencyCheck } from "./readiness.js";
 import { isConsoleOnly } from "./http/audience.js";
+import { resolveApiKeyUser } from "./auth/api-key-principal.js";
 import { registerBillingRoutes } from "./routes/billing.js";
 import { registerGatewayContract } from "./routes/gateway-contract.js";
 import { registerHealthRoutes } from "./routes/health.js";
@@ -151,11 +152,21 @@ export const createApp = ({
   app.use("*", async (context, next) => {
     let session: Promise<SessionUser | null> | undefined;
     context.set("resolveUser", () => {
-      session ??= auth.resolveSession(context.req.raw.headers).then((user) => {
-        if (user) context.set("sessionUser", user);
+      session ??= auth
+        .resolveSession(context.req.raw.headers)
+        .then(
+          (user) =>
+            user ??
+            resolveApiKeyUser(services.workspaces, {
+              headers: context.req.raw.headers,
+              path: context.req.path,
+            }),
+        )
+        .then((user) => {
+          if (user) context.set("sessionUser", user);
 
-        return user;
-      });
+          return user;
+        });
 
       return session;
     });
@@ -285,7 +296,7 @@ export const openApiDocument = {
     title: "Gradiated API",
     version: "0.1.0",
     description:
-      "The Gradiated API covers inference, model discovery, workspaces, billing, API keys and usage. Inference endpoints use workspace API keys (Authorization: Bearer or x-api-key). These keys do not authorize workspace administration. Protected management endpoints require a signed-in user session and the appropriate organization role; management API keys are not currently supported. Management request bodies are limited to 1 MiB (413 if exceeded). Management per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Engineer onboarding routes have lower per-route limits. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits.",
+      "The Gradiated API covers inference, model discovery, workspaces, billing, API keys and usage. Inference endpoints use workspace API keys (Authorization: Bearer or x-api-key). Protected management endpoints require a signed-in user session and the appropriate organization role. A workspace API key also authorizes the workspace endpoints under /api/v1/workspaces/{workspace_id} for its own workspace, acting as the member who created it, except API key and playground credential management and changes to the workspace itself. Management request bodies are limited to 1 MiB (413 if exceeded). Management per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Engineer onboarding routes have lower per-route limits. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits.",
   },
   servers: [{ url: "/", description: "Current origin" }],
   tags: [

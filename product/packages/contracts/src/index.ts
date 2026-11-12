@@ -124,7 +124,9 @@ export {
   type GenerationSettled,
 } from "./generations.js";
 export {
+  ApiKeyIdentitySchema,
   ApiKeyListSchema,
+  type ApiKeyIdentity,
   ApiKeyPathSchema,
   ApiKeySchema,
   CreateApiKeySchema,

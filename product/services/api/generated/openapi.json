@@ -3,7 +3,7 @@
   "info": {
     "title": "Gradiated API",
     "version": "0.1.0",
-    "description": "The Gradiated API covers inference, model discovery, workspaces, billing, API keys and usage. Inference endpoints use workspace API keys (Authorization: Bearer or x-api-key). These keys do not authorize workspace administration. Protected management endpoints require a signed-in user session and the appropriate organization role; management API keys are not currently supported. Management request bodies are limited to 1 MiB (413 if exceeded). Management per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Engineer onboarding routes have lower per-route limits. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits."
+    "description": "The Gradiated API covers inference, model discovery, workspaces, billing, API keys and usage. Inference endpoints use workspace API keys (Authorization: Bearer or x-api-key). Protected management endpoints require a signed-in user session and the appropriate organization role. A workspace API key also authorizes the workspace endpoints under /api/v1/workspaces/{workspace_id} for its own workspace, acting as the member who created it, except API key and playground credential management and changes to the workspace itself. Management request bodies are limited to 1 MiB (413 if exceeded). Management per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Engineer onboarding routes have lower per-route limits. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits."
   },
   "servers": [
     {
@@ -2764,6 +2764,31 @@
           "name"
         ],
         "additionalProperties": false
+      },
+      "ApiKeyIdentity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          }
+        },
+        "required": [
+          "id",
+          "organization_id",
+          "workspace_id"
+        ]
       },
       "ApiKeyList": {
         "type": "object",
@@ -8120,6 +8145,46 @@
           },
           "503": {
             "description": "Application state is unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api-keys/current": {
+      "get": {
+        "operationId": "getCurrentApiKey",
+        "summary": "Get current API key",
+        "description": "Identifies the workspace API key in the Authorization or x-api-key header.",
+        "tags": [
+          "API keys"
+        ],
+        "security": [
+          {
+            "InferenceBearer": []
+          },
+          {
+            "InferenceApiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The key's organization and workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyIdentity"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The key is missing, unknown, expired or revoked.",
             "content": {
               "application/problem+json": {
                 "schema": {

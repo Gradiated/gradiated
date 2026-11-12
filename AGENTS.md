@@ -5,7 +5,7 @@ This repository is the complete project state for the research and product-build
 ## Start here
 
 1. Read this file.
-2. Run `python3 tools/devex/start.py` for the context pack and standard DevEx checks.
+2. Run `grad-ctl devex start` for the context pack and standard DevEx checks. mise puts `grad-ctl` on PATH in this repository; without mise, run `tools/grad-ctl/grad-ctl devex start`.
 3. Read the nearest nested instructions before touching a workstream:
    - `research/lab/AGENTS.md` for the current Inference Foundry research lab.
 4. Read the current handoff or report before starting a new experiment.
@@ -13,6 +13,7 @@ This repository is the complete project state for the research and product-build
 
 ## Repo-native state
 
+- Use `grad-ctl` (`tools/grad-ctl/`) for repository and developer operations: DevEx checks, `.env` and AWS sign-in, development GPUs, host leases and the GPU fleet tools. It needs this machine on the Gradiated tailnet (`grad-ctl tailnet status`; `grad-ctl tailnet join` for a headless machine). Run `grad-ctl commands --json` for every command with its arguments, effects (read, write or destructive) and requirements, and pass `--json` for one result envelope on stdout. Add a new developer or agent command to `grad-ctl` instead of a standalone script, mise task or Makefile target.
 - Put reusable agent procedures in `.agents/skills/`.
 - Use the repository as the canonical source for implementation state, plans, prompts, measurements, reports, and generated decision artifacts.
 - Use `README.md`, `docs/ARCHITECTURE.md` and `research/README.md` as the orientation map.
@@ -24,9 +25,9 @@ This repository is the complete project state for the research and product-build
 - Routine product, infrastructure, and CI work must not create evidence folders, dated reports, task packets, ledgers, or handoff files. Summarize checks in the PR or response. Update an existing README or plan only when behavior, operation, or a useful decision changes. Keep research deliverables only when the research task requires them.
 - Put decision-relevant browser captures and research outputs in the relevant `research/<workstream>/docs/` or `research/<workstream>/evidence/` directory.
 - Use `.env.example` for variable names and external secret storage for values.
-- Shared development keys (model provider, OAuth, Stripe test and similar) live as one JSON object in the AWS Secrets Manager secret `gradiated/dev/env` (us-east-1), readable by the `gradiated-restricted`, `gradiated-readonly` and `gradiated-developer` profiles. Build the ignored `.env` with `mise run env:build`, or read single keys with `aws --profile gradiated-readonly secretsmanager get-secret-value`. Never print the values or commit the file. Ask a maintainer to add new shared dev keys there; do not put production credentials in it.
-- Development training GPUs are spot or on-demand VMs from Nebius or Ornn, created with `tools/dev-training/dev_training.py` (`search` finds available compute across them by price) using keys in `gradiated/dev/env`; see `$dev-training`. They join the tailnet as `tag:dev-training` and reach only VMs from the same provider. Keep customer data and production credentials off them, and copy results to S3 before `down`.
-- Use the read-only `gradiated-readonly` profile for day-to-day AWS access and `mise run aws:login` when its credentials expire. Opt in explicitly with `mise run aws:login --profile gradiated-developer` only when a task needs developer writes, or `mise run aws:login --profile gradiated-admin` for break-glass administrative work such as bootstrap applies. Match the login task to the profile used by the command; logging in does not change the shell's `AWS_PROFILE`.
+- Shared development keys (model provider, OAuth, Stripe test and similar) live as one JSON object in the AWS Secrets Manager secret `gradiated/dev/env` (us-east-1), readable by the `gradiated-restricted`, `gradiated-readonly` and `gradiated-developer` profiles. Build the ignored `.env` with `grad-ctl env build`, or read single keys with `aws --profile gradiated-readonly secretsmanager get-secret-value`. Never print the values or commit the file. Ask a maintainer to add new shared dev keys there; do not put production credentials in it.
+- Development training GPUs are spot or on-demand VMs from Nebius or Ornn, created with `grad-ctl compute` (`search` finds available compute across them by price) using keys in `gradiated/dev/env`; see `$dev-training`. They join the tailnet as `tag:dev-training` and reach only VMs from the same provider. Keep customer data and production credentials off them, and copy results to S3 before `down`.
+- Use the read-only `gradiated-readonly` profile for day-to-day AWS access and `grad-ctl aws login` when its credentials expire. Opt in explicitly with `grad-ctl aws login --profile gradiated-developer` only when a task needs developer writes, or `grad-ctl aws login --profile gradiated-admin` for break-glass administrative work such as bootstrap applies. Match the login task to the profile used by the command; logging in does not change the shell's `AWS_PROFILE`.
 - Preserve existing on-demand GPU reservations. Repurpose running pods by changing processes over SSH, not by stopping, restarting, resetting, terminating, or changing provider image/environment settings. Those actions require explicit authorization to risk losing capacity; a file backup does not preserve the reservation. The one standing exception is the `gpu-fleet` operator's rollout in act mode, which re-images one drained host at a time onto a pinned image after its pods run elsewhere; a pin change merged to `main` authorizes it.
 - Do not make issue trackers, Notion, Drive, Jira, or Slack a required source of truth. The repository owns code, research, prompts, and artifacts.
 - Harness-launched `$research-director`, `$researcher`, and `$research-supervisor` turns are already claimed by their lab and project assignment. They update the lab/project logs directly and do not create a GitHub issue for every internal turn.
@@ -74,6 +75,6 @@ When addressing a review comment, resolve its thread after the fix is pushed. Wh
 
 ## Verification
 
-Run `python3 tools/devex/check.py` first (`make devex-check` is an optional shorthand), then the narrowest relevant checks and workstream checks. GitHub Actions runs the same DevEx checks plus Rust formatting and tests for the current research workspace after pushes. For research changes, the required checks are documented in `research/lab/AGENTS.md`.
+Run `grad-ctl devex check` first, then the narrowest relevant checks and workstream checks. GitHub Actions runs the same DevEx checks plus Rust formatting and tests for the current research workspace after pushes. For research changes, the required checks are documented in `research/lab/AGENTS.md`.
 
 Never stage or publish unrelated worktree changes, and always summarize the exact paths included. By default, create a scoped branch, commit the changes, push it, and open a pull request without asking for confirmation. Follow any different workflow requested by the user. Merging and production deployment require separate authorization unless already requested.

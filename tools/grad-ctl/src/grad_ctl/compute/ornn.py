@@ -1,9 +1,9 @@
-"""Ornn hourly VMs (Spot and On-demand) for dev_training.py.
+"""Ornn hourly VMs (Spot and On-demand) for `grad-ctl compute`.
 
 Credentials come from ORNN_API_KEY, a read and write key of the Gradiated Ornn
 organization, and ORNN_SSH_*_KEY_B64, an SSH key used only for Ornn VMs and
 registered as the organization's account key, which Ornn installs on every VM
-it starts. setup.py ornn writes them to gradiated/dev/env.
+it starts. `grad-ctl compute setup ornn` writes them to gradiated/dev/env.
 
 Ornn sells whole machines from an order book: `up` buys one node at the lowest
 asking price with a market bid, so its platform is a GPU slug such as
@@ -11,7 +11,7 @@ nvidia_h100_sxm and it has no preset. The bid becomes a reservation; ending it
 (`down`) stops and deletes its VMs. Ornn cannot stop and restart a VM, and
 reservations have no names, so this machine records which reservation each name
 bought; a reservation bought elsewhere shows by its ID, which every command
-also accepts. Ornn VMs have no cloud-init input: dev_training.py joins them to
+also accepts. Ornn VMs have no cloud-init input: `grad-ctl compute` joins them to
 the tailnet over SSH once they run.
 """
 

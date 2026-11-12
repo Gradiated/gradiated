@@ -54,7 +54,7 @@ the complete development stack through mprocs. The launcher requires `lsof`
 (`apt-get install lsof` on Debian/Ubuntu):
 
 ```sh
-mise run env:build
+grad-ctl env build
 nvm use
 corepack enable
 pnpm install
@@ -62,7 +62,7 @@ pnpm exec turbo run build --filter=@gradiated/api --filter=@gradiated/worker
 pnpm dev
 ```
 
-`mise run env:build` writes the ignored repository-root `.env` from the
+`grad-ctl env build` writes the ignored repository-root `.env` from the
 `gradiated/dev/env` secret. It uses the `gradiated-restricted` AWS profile,
 which every collaborator has through the `Restricted` group: it creates the
 profile if needed and opens an AWS sign-in when the session has expired. Rerun it when that secret changes; it keeps any

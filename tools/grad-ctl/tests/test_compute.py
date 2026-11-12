@@ -1,10 +1,11 @@
-"""Search filters and provider choice: python3 -m unittest discover -s tools/dev-training"""
+"""grad-ctl compute: search filters and provider choice."""
 
 import argparse
 import re
 import unittest
 
-import dev_training
+import _path  # noqa: F401
+from grad_ctl.compute import commands as dev_training
 
 
 def search_args(**overrides):
@@ -97,13 +98,32 @@ class SearchTests(unittest.TestCase):
         self.assertEqual(rows, [OFFER])
 
     def test_nebius_max_price_uses_the_live_spot_price(self):
-        from nebius import Nebius
+        from grad_ctl.compute.nebius import Nebius
         nebius = Nebius(lambda name: '', None)
         nebius.spot_prices = lambda: {('eu-north1', 'gpu-h100-sxm'): 2.37}
         nebius.estimate = lambda region, platform, preset, term: 99.0
         self.assertAlmostEqual(nebius.hourly_price('eu-north1', 'gpu-h100-sxm', '8gpu-128vcpu-1600gb', 'spot'), 18.96)
         self.assertEqual(nebius.hourly_price('eu-north1', 'gpu-h100-sxm', '1gpu-16vcpu-200gb', 'on-demand'), 99.0)
         self.assertEqual(nebius.hourly_price('eu-north1', 'gpu-l40s-a', '1gpu-8vcpu-32gb', 'spot'), 99.0)
+
+
+class SshTests(unittest.TestCase):
+    def test_json_ssh_puts_options_before_the_destination(self):
+        from unittest import mock
+        from grad_ctl.core import UsageError
+        args = argparse.Namespace(name='exp', provider=None, vm=1, command=['--', 'nvidia-smi', '-L'])
+        base = ['ssh', '-i', 'key', '-p', '22', 'ubuntu@203.0.113.7']
+        with mock.patch.object(dev_training, 'located'), \
+                mock.patch.object(dev_training, 'ssh_command', return_value=base), \
+                mock.patch('subprocess.run') as run:
+            run.return_value = mock.Mock(returncode=0, stdout='GPU 0', stderr='')
+            result = dev_training.ssh(args, as_json=True)
+        argv = run.call_args.args[0]
+        self.assertEqual(argv, ['ssh', '-i', 'key', '-p', '22', '-o', 'BatchMode=yes', 'ubuntu@203.0.113.7',
+                                'nvidia-smi', '-L'])
+        self.assertEqual(result.data['stdout'], 'GPU 0')
+        with self.assertRaises(UsageError):
+            dev_training.ssh(argparse.Namespace(name='exp', provider=None, vm=1, command=[]), as_json=True)
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ description: Search available GPU compute and prices across providers, get a spo
 
 # Development training GPUs
 
-`tools/dev-training/dev_training.py` creates GPU VMs from Nebius or Ornn for
+`grad-ctl compute` creates GPU VMs from Nebius or Ornn for
 training runs and experiments. Use it instead of leasing a serving host when the
 work does not need production hardware.
 
@@ -55,20 +55,21 @@ only what you copy to them, and `gradiated/dev/env` holds only development keys.
 - Credentials come from `gradiated/dev/env`. Load it into an ignored `.env` as
   AGENTS.md describes, or let the tool read it with the `gradiated-readonly`
   AWS profile.
-- Install the provider CLI the tool asks for (Nebius:
-  `curl -sSL https://storage.eu-north1.nebius.cloud/cli/install.sh | bash`;
-  Ornn needs none).
-- To use Tailscale from a machine that is not on the tailnet, join it as an
-  ephemeral `tag:dev-machine` device:
-  `tailscale up --auth-key="$TAILSCALE_DEV_MACHINE_AUTH_KEY" --advertise-tags=tag:dev-machine`.
+- `mise install` provides the Nebius CLI, pinned in `mise.toml`; Ornn needs none.
+- `grad-ctl` runs only on the Gradiated tailnet (`grad-ctl tailnet status`).
+  Join a machine that is not on it as an ephemeral `tag:dev-machine` device
+  with `grad-ctl tailnet join`, which reads `TAILSCALE_DEV_MACHINE_AUTH_KEY`.
   In a container without TUN, start `tailscaled --tun=userspace-networking` first.
-  Without Tailscale, `dev_training.py ssh` still works over the VM's public IP.
+- Pass `--json` for a result an agent can parse: `search` rows carry `up_args`,
+  the exact arguments for `up`, and `up` returns the VM's address and tailnet
+  names. `grad-ctl --json compute ssh <name> -- <command>` returns the remote
+  command's exit code and output.
 - State the hypothesis, GPU, expected hours and cost before `up`, as for any
   experiment.
 
 ## Use
 
-1. Find compute: `dev_training.py search [--provider nebius,ornn] [--gpu h100]
+1. Find compute: `grad-ctl compute search [--provider nebius,ornn] [--gpu h100]
    [--term spot] [--region us-] [--max-gpus 8] [--max-price 3]` lists what is
    available now, cheapest per GPU-hour first, with the provider,
    virtualization, GPUs per VM, how many such VMs can start now (`AVAIL`) and
@@ -77,33 +78,34 @@ only what you copy to them, and `gradiated/dev/env` holds only development keys.
    report; Ornn counts are whole nodes for sale. Without `--provider` it
    searches every provider. `platforms --provider nebius --region <region>`
    lists every Nebius preset. Try the next offer if `up` fails.
-2. Create: `dev_training.py up <name> <arguments from search> --max-price <USD per GPU-hour>`.
+2. Create: `grad-ctl compute up <name> <arguments from search> --max-price <USD per GPU-hour>`.
    Names are unique across providers, so `ssh`, `s3`, `start`, `stop` and `down`
    find the VM without `--provider`; `up` takes the provider from the platform
    name. `--max-price` refuses to buy if the price has
    moved above your limit; Ornn prepays each hour and refunds unused time.
    Ornn reservations have no names: the machine that ran `up` remembers the
    name, and `ls` elsewhere shows the reservation ID, which every command accepts.
-3. Give the VM bucket access: `dev_training.py s3 <name>` installs a key that can
+3. Give the VM bucket access: `grad-ctl compute s3 <name>` installs a key that can
    only use the development training bucket as the VM's default AWS profile.
    VMs start with no credentials; do not copy any other key to them.
-4. Connect: `dev_training.py ssh <name> [command]`, or
+4. Connect: `grad-ctl compute ssh <name> [command]`, or
    `tailscale ssh root@<provider>-<name>` once it has joined the tailnet.
    Nodes of a multi-node job reach each other by MagicDNS name.
 5. Sync checkpoints, results and logs to S3 on a schedule as the job runs (see
    above). Nothing on the VM is backed up.
-6. `dev_training.py ls` shows every VM. A preempted Nebius VM shows as stopped and
+6. `grad-ctl compute ls` shows every VM. A preempted Nebius VM shows as stopped and
    still pays for its disk. Resume on a new VM from S3; `start` the old one only
    if the new one cannot be created, and `down` whichever you no longer need. An
    ended Ornn VM is gone with its disk.
-7. Delete as soon as you are done: `dev_training.py down <name>` deletes the VM,
+7. Delete as soon as you are done: `grad-ctl compute down <name>` deletes the VM,
    its disk and its tailnet device. If it fails part way, run it again.
 
 Report the VM, its hours and where the results are in your response or PR.
 
 ## Adding a provider
 
-Add a module beside `nebius.py` and `ornn.py` with the same attributes
+Add a module beside `nebius.py` and `ornn.py` in
+`tools/grad-ctl/src/grad_ctl/compute/` with the same attributes
 (`virtualization`, `cloud_init`, `ephemeral`) and methods (`regions`,
 `platforms`, `offers`, `find`, `list`, `create`, `start`, `stop`, `delete`) and
 register it in `PROVIDERS`. `create` must run the cloud-init the tool passes; a

@@ -173,7 +173,7 @@ a second copy. A re-imaged host loses that directory, so the weights must be
 staged again before its replica can start.
 
 After GPU qualification and immutable release publication, preview the placement
-with `python3 tools/gpu/stage-kimi-pool.py RELEASE_JSON QUALIFIED_SOURCE_SHA`.
+with `grad-ctl gpu stage-kimi-pool RELEASE_JSON QUALIFIED_SOURCE_SHA`.
 The helper requires exactly two hosts carrying the reservation, each with
 committed 8xB300 inventory, and preserves every existing model and runtime. It
 keeps both replicas warm with ten `min_slots`. Add `--write`, render the GPU

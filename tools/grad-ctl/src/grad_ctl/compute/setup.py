@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""Write the credentials dev_training.py needs to gradiated/dev/env.
+"""`grad-ctl compute setup`: write the credentials `grad-ctl compute` needs to gradiated/dev/env.
 
 Run as a Nebius tenant admin (a federated `nebius` profile) with the
 gradiated-admin AWS profile, after the tailscale and dev-storage Terraform units
@@ -8,7 +7,7 @@ have applied. It is idempotent and doubles as rotation:
 Shared by every provider:
 - copies the development Tailscale credentials from
   gradiated/prod/platform/tailscale-dev-training, including each provider's
-  key-issuing client (`setup.py tailscale` copies only these, after the
+  key-issuing client (`grad-ctl compute setup tailscale` copies only these, after the
   tailscale Terraform unit replaces a client);
 - issues a new access key for the gradiated-dev-training IAM user, whose only
   permissions are on the development training bucket. The previous key stays
@@ -25,9 +24,9 @@ Nebius:
 
 It merges everything into gradiated/dev/env.
 
-`setup.py ornn` sets up Ornn alone and changes nothing else. Ornn API keys can
+`grad-ctl compute setup ornn` sets up Ornn alone and changes nothing else. Ornn API keys can
 only be created in its console (Account Settings > Developer > Create key, read
-and write), so pass a new key on stdin, for example `pbpaste | setup.py ornn`. It
+and write), so pass a new key on stdin, for example `pbpaste | grad-ctl compute setup ornn`. It
 checks the key, generates an ed25519 SSH key used only for Ornn VMs (once, as
 for Nebius), registers it as an Ornn account key, which Ornn installs on every
 VM it starts, and writes ORNN_API_KEY, ORNN_ORGANIZATION_ID and ORNN_SSH_* to
@@ -37,7 +36,6 @@ rotate just the SSH key.
 It prints key names and resource IDs, never secret values.
 """
 
-import argparse
 import base64
 import json
 import os
@@ -47,10 +45,8 @@ import subprocess
 import sys
 import tempfile
 
-from ornn import Ornn
-
-HERE = Path(__file__).resolve().parent
-CONFIG = json.loads((HERE / 'nebius-projects.json').read_text())
+from .nebius import CONFIG
+from .ornn import Ornn
 NAME = 'dev-training'
 HOME_REGION = 'eu-north1'
 DEV_SECRET = 'gradiated/dev/env'
@@ -152,7 +148,7 @@ def setup_ornn(args):
     key = '' if sys.stdin.isatty() else sys.stdin.read().strip()
     key = key or environment.get('ORNN_API_KEY')
     if not key:
-        sys.exit('Pass a read and write Ornn API key on stdin, for example `pbpaste | setup.py ornn`')
+        sys.exit('Pass a read and write Ornn API key on stdin, for example `pbpaste | grad-ctl compute setup ornn`')
     ornn = Ornn(lambda name: key, None)
     session = ornn.api('GET', '/v1/auth/session')
     if (session.get('api_key') or {}).get('access') != 'read_write':
@@ -191,18 +187,11 @@ def setup_ornn(args):
         print(f"revoked previous SSH key {old['id']}")
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('provider', nargs='?', choices=['nebius', 'ornn', 'tailscale'], default='nebius',
-                        help='nebius (the default) also sets up the shared Tailscale and bucket keys; '
-                             'tailscale copies only the Tailscale credentials')
-    parser.add_argument('--aws-profile', default='gradiated-admin')
-    parser.add_argument('--rotate-ssh-key', action='store_true',
-                        help='replace the SSH key; existing VMs keep trusting only the old one')
-    args = parser.parse_args()
-    if args.provider == 'ornn':
+def run(args):
+    """Set up args.target: nebius (default, with the shared keys), ornn or tailscale."""
+    if args.target == 'ornn':
         return setup_ornn(args)
-    if args.provider == 'tailscale':
+    if args.target == 'tailscale':
         environment = json.loads(aws(args.aws_profile, 'secretsmanager', 'get-secret-value', '--secret-id',
                                      DEV_SECRET, '--query', 'SecretString', '--output', 'text'))
         return put_environment(args.aws_profile, environment, tailscale_environment(args.aws_profile))
@@ -258,7 +247,3 @@ def main():
     for key_id in old_keys:
         nebius('iam', 'auth-public-key', 'delete', '--id', key_id)
         print(f'removed old service account key {key_id}')
-
-
-if __name__ == '__main__':
-    main()

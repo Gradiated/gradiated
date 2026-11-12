@@ -20,7 +20,8 @@ import {
   SLACK_CHANNEL_PATTERN,
   proposedSlackChannel,
   slackInvitationProblem,
-  slackInvited,
+  slackInvitedTo,
+  slackRecipient,
   type OnboardingAccount,
   type OnboardingDraft,
 } from "@/lib/engineer-onboarding";
@@ -58,7 +59,7 @@ export const SlackInvitation = ({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const recipient = (draft.slackEmail ?? account.email).trim().toLowerCase();
+  const recipient = slackRecipient(draft, account.email);
   const validRecipient = z.email().safeParse(recipient).success;
   const renaming = !server.slack && draft.slackChannelName !== null;
   const channel =
@@ -67,9 +68,7 @@ export const SlackInvitation = ({
     proposedSlackChannel(account.company);
   const validChannel =
     SLACK_CHANNEL_PATTERN.test(channel) && channel.length <= 80;
-  const sent =
-    slackInvited(server) &&
-    server.slack?.invited_email?.toLowerCase() === recipient;
+  const sent = slackInvitedTo(server, recipient);
   const resendIn = useResendCountdown(server.slack?.invited_at);
 
   const send = async () => {

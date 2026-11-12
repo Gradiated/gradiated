@@ -104,6 +104,8 @@ describe("starting the project", () => {
         serverState(),
         exampleDraft({ channel: "email", ndaRequested: true, ...patch }),
         installation,
+        1,
+        account.email,
       );
 
     expect(blockersFor({ signerTitle: "", legalAddress: "1 Main St" })).toEqual(
@@ -125,28 +127,61 @@ describe("starting the project", () => {
   });
 
   it("lists what still blocks the start, in page order", () => {
-    expect(startBlockers(serverState(), exampleDraft(), null)).toEqual([
+    expect(
+      startBlockers(serverState(), exampleDraft(), null, 0, account.email),
+    ).toEqual([
       { section: "code", label: "Install the GitHub app" },
       { section: "contact", label: "Send the Slack invite, or choose email" },
     ]);
     expect(
-      startBlockers(serverState(), exampleDraft({ channel: "email" }), {
-        ...installation,
-        repository_count: 0,
-      }),
+      startBlockers(
+        serverState(),
+        exampleDraft({ channel: "email" }),
+        { ...installation, repository_count: 0 },
+        1,
+        account.email,
+      ),
     ).toEqual([{ section: "code", label: "Select a repository on GitHub" }]);
     expect(
-      startBlockers(serverState(), exampleDraft({ channel: "email" }), null, 3),
+      startBlockers(
+        serverState(),
+        exampleDraft({ channel: "email" }),
+        null,
+        3,
+        account.email,
+      ),
     ).toEqual([
       { section: "code", label: "Choose the GitHub account for this project" },
     ]);
     expect(
       startBlockers(
         serverState({ slack: activeSlack }),
-        exampleDraft(),
+        exampleDraft({ slackEmail: "team@acme.example" }),
         installation,
+        1,
+        account.email,
       ),
     ).toEqual([]);
+  });
+
+  it("blocks the start again when the Slack recipient changes after an invite", () => {
+    const blockers = (slackEmail: string | null) =>
+      startBlockers(
+        serverState({ slack: activeSlack }),
+        exampleDraft({ slackEmail }),
+        installation,
+        1,
+        account.email,
+      );
+
+    expect(blockers(" Team@Acme.example ")).toEqual([]);
+    expect(blockers("someone@acme.example")).toEqual([
+      { section: "contact", label: "Send the Slack invite, or choose email" },
+    ]);
+    // No edited address means the account's own email, which was not invited.
+    expect(blockers(null)).toEqual([
+      { section: "contact", label: "Send the Slack invite, or choose email" },
+    ]);
   });
 
   it("signs a requested NDA as part of starting, until it is recorded", () => {

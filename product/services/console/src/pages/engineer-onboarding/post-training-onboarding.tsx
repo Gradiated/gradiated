@@ -339,7 +339,13 @@ const PostTrainingWorkflow = ({
     );
 
   const ndaPending = isNdaPending(server, draft);
-  const blockers = startBlockers(server, draft, installation, githubAccounts);
+  const blockers = startBlockers(
+    server,
+    draft,
+    installation,
+    githubAccounts,
+    account.email,
+  );
 
   const goTo = (section: OnboardingSection) => {
     const element = document.getElementById(sectionId(section));

@@ -170,7 +170,8 @@ export const startBlockers = (
   server: EngineerOnboarding,
   draft: OnboardingDraft,
   installation: VerifiedInstallation | null,
-  githubAccounts = 0,
+  githubAccounts: number,
+  accountEmail: string,
 ) => {
   const blockers: { section: OnboardingSection; label: string }[] = [];
   if (!installation)
@@ -199,7 +200,10 @@ export const startBlockers = (
       label: "Add the NDA signer and company address",
     });
 
-  if (draft.channel === "slack" && !slackInvited(server))
+  if (
+    draft.channel === "slack" &&
+    !slackInvitedTo(server, slackRecipient(draft, accountEmail))
+  )
     blockers.push({
       section: "contact",
       label: "Send the Slack invite, or choose email",
@@ -213,6 +217,14 @@ export const repositoryCount = (count: number) =>
 
 export const slackInvited = (server: EngineerOnboarding) =>
   server.slack?.status === "active";
+
+export const slackRecipient = (draft: OnboardingDraft, accountEmail: string) =>
+  (draft.slackEmail ?? accountEmail).trim().toLowerCase();
+
+// Invited, and to the address the form now names.
+export const slackInvitedTo = (server: EngineerOnboarding, recipient: string) =>
+  slackInvited(server) &&
+  server.slack?.invited_email?.toLowerCase() === recipient;
 
 export const engineerSubmission = (
   server: EngineerOnboarding,

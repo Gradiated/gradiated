@@ -34,6 +34,7 @@ Both APIs are free and public, so the only secret is the Slack webhook.
    🛰️ OpenRouter · Tencent: new model
    • Tencent: Hy4 tencent/hy4 · 1M context · served by Tencent · weights not public yet
    ```
+
 6. Saves the updated IDs to the cache for the next run.
 
 An org or prefix seen for the first time is recorded without posting, so the

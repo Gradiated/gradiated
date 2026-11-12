@@ -149,7 +149,11 @@ export const createModelUploadStore = (database: ControlDatabase) => ({
         throw new ControlServiceError("not_found", "The task was not found.");
 
       const task = TaskRecordSchema.parse(rawTask);
-      await claimModelName(tx, task.id);
+      if (!(await claimModelName(tx, task.id)))
+        throw new ControlServiceError(
+          "conflict",
+          "Another workspace in this organization has a model with this name.",
+        );
       if (task.baseModelId !== input.base_model_id)
         throw new ControlServiceError(
           "conflict",

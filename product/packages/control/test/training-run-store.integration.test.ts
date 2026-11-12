@@ -15,6 +15,7 @@ import { createTrainingService } from "../src/training/service.js";
 import { createMemoryContentStore } from "./support/content-store.js";
 import { createTrainingRunStore } from "../src/training/run-store.js";
 import { createTrainingStore } from "../src/training/store.js";
+import { seedWorkspace } from "./support/fixtures.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 import { seedTrainingTask, trainingAdapter } from "./support/training.js";
 
@@ -63,6 +64,29 @@ describe("transactional training run store", () => {
     await createTrainingRunStore(db.database).create(randomUUID(), own.input);
 
     expect(await claimed()).toBe(own.organizationId);
+  });
+
+  it("does not create a run whose model name another workspace holds", async () => {
+    const own = await seedTrainingTask(db.database);
+    const writes = createTrainingRunStore(db.database);
+    await writes.create(randomUUID(), own.input);
+    const workspaceId = await seedWorkspace(db.database, {
+      organizationId: own.organizationId,
+    });
+    const [rival] = await db.database
+      .insert(tasks)
+      .values({ id: randomUUID(), workspaceId, name: own.task.name })
+      .returning();
+    const runId = randomUUID();
+
+    expect(
+      await writes.create(runId, {
+        ...own.input,
+        taskId: rival!.id,
+        workspaceId,
+      }),
+    ).toBe(false);
+    expect(await writes.get(runId)).toBeUndefined();
   });
 
   it("validates and deduplicates trainer observations while rejecting lifecycle events", async () => {

@@ -91,6 +91,10 @@ export const createTrainingRunStore = (database: ControlDatabase) => ({
     input = TrainingInputSchema.parse(input);
 
     return database.transaction(async (tx) => {
+      // A run that lost its model name to another workspace is not created, so
+      // its workflow ends instead of retrying.
+      if (!(await claimModelName(tx, input.taskId))) return false;
+
       const [created] = await tx
         .insert(trainingRuns)
         .values(
@@ -110,8 +114,6 @@ export const createTrainingRunStore = (database: ControlDatabase) => ({
       if (!created) return Boolean(await lockRun(tx, runId));
 
       RunRecordSchema.parse(created);
-      // The name becomes a model name only once a run exists.
-      await claimModelName(tx, input.taskId);
 
       await insertEvents(tx, runId, [
         {

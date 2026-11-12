@@ -1,13 +1,10 @@
-import { and, eq, isNull, ne, sql } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 
 import { ModelNameSegmentSchema, UuidSchema } from "@gradiated/contracts";
 import type { ControlDatabase } from "../db/client.js";
-import { tasks, workspaces } from "../db/schema/index.js";
-import { ControlServiceError, violatesConstraint } from "../errors.js";
+import { organizations, tasks, workspaces } from "../db/schema/index.js";
 
 type Transaction = Parameters<Parameters<ControlDatabase["transaction"]>[0]>[0];
-
-const workspaceOrganization = sql`(select ${workspaces.organizationId} from ${workspaces} where ${workspaces.id} = ${tasks.workspaceId})`;
 
 /** Why a task's name can't become `<organization slug>/<task>`, if it can't. */
 export const modelNameProblem = async (
@@ -39,25 +36,47 @@ export const modelNameProblem = async (
 
 /**
  * A task's name becomes a model name once it trains or takes an upload, and
- * model names are unique across the organization. Check `modelNameProblem` first.
+ * model names are unique across the organization. Returns false when another
+ * workspace's task already holds the name.
  */
 export const claimModelName = async (
-  database: ControlDatabase | Transaction,
+  transaction: Transaction,
   taskId: string,
 ) => {
-  await database
-    .update(tasks)
-    .set({ organizationId: workspaceOrganization })
+  const [task] = await transaction
+    .select({
+      name: tasks.name,
+      claimed: tasks.organizationId,
+      organizationId: workspaces.organizationId,
+    })
+    .from(tasks)
+    .innerJoin(workspaces, eq(workspaces.id, tasks.workspaceId))
+    .where(eq(tasks.id, UuidSchema.parse(taskId)));
+  if (!task) return false;
+  if (task.claimed) return true;
+
+  // Slug changes take the same lock, so the slug can't change under a first model.
+  await transaction
+    .select({ id: organizations.id })
+    .from(organizations)
+    .where(eq(organizations.id, task.organizationId))
+    .for("update");
+  const [taken] = await transaction
+    .select({ id: tasks.id })
+    .from(tasks)
     .where(
-      and(eq(tasks.id, UuidSchema.parse(taskId)), isNull(tasks.organizationId)),
+      and(
+        eq(tasks.organizationId, task.organizationId),
+        eq(tasks.name, task.name),
+      ),
     )
-    .catch((error: unknown) => {
-      if (violatesConstraint(error, "tasks_organization_name_unique"))
-        throw new ControlServiceError(
-          "conflict",
-          "Another workspace in this organization has a model with this name.",
-          error,
-        );
-      throw error;
-    });
+    .limit(1);
+  if (taken) return false;
+
+  await transaction
+    .update(tasks)
+    .set({ organizationId: task.organizationId })
+    .where(eq(tasks.id, taskId));
+
+  return true;
 };

@@ -66,6 +66,36 @@ describe("training report rendering", () => {
 });
 
 describe("report data", () => {
+  it("discards blank records without materializing a file worth of row arrays", () => {
+    expect(parseReportData("blank.csv", "\n".repeat(2 * 1024 * 1024))).toEqual(
+      [],
+    );
+    expect(
+      parseReportData("blank.jsonl", "\n".repeat(2 * 1024 * 1024)),
+    ).toEqual([]);
+    expect(parseReportData("data.csv", "\n \nvalue\n\n1\n \n2\n")).toEqual([
+      { value: 1 },
+      { value: 2 },
+    ]);
+  });
+
+  it("stops at row and column limits before parsing any subsequent content", () => {
+    expect(() =>
+      parseReportData("data.csv", `value\n${"1\n".repeat(10001)}"unterminated`),
+    ).toThrow("10,000 rows");
+    expect(() =>
+      parseReportData(
+        "data.csv",
+        `${Array.from({ length: 101 }, (_, i) => `c${i}`).join(",")}\n"unterminated`,
+      ),
+    ).toThrow("100 columns");
+    expect(() =>
+      parseReportData("data.jsonl", `${'{"value":1}\n'.repeat(10001)}{invalid`),
+    ).toThrow("10,000 rows");
+    expect(
+      parseReportData("data.csv", `value\n${"1\n\n".repeat(10000)}`),
+    ).toHaveLength(10000);
+  });
   it("rejects oversized datasets and bounds heatmap dimensions", () => {
     expect(() =>
       parseReportData("data.csv", `value\n${"1\n".repeat(10001)}`),

@@ -89,10 +89,7 @@ describe("private adapter hosting", () => {
   it("signs the exact immutable artifact, including an unavailable qualification candidate", async () => {
     const { owner, task, version } = await seed("unavailable");
     const { hosting, sign } = service();
-    const result = await hosting.grant(
-      owner.workspaceId,
-      `${task.name}/${version.name}`,
-    );
+    const result = await hosting.grant(owner.workspaceId, version.id);
     expect(result.task.id).toBe(task.id);
     expect(result.version.status).toBe("unavailable");
     expect(result.download.url).toContain("signature=test");
@@ -108,14 +105,12 @@ describe("private adapter hosting", () => {
     ).toBeNull();
   });
 
-  it("rejects workspace and version name mismatches without signing", async () => {
+  it("rejects workspace and version mismatches without signing", async () => {
     const { owner, task, version } = await seed();
     const { hosting, sign } = service();
     for (const [workspaceId, name] of [
-      [uuidv7(), `${task.name}/${version.name}`],
-      [owner.workspaceId, "missing-version"],
-      [owner.workspaceId, version.name],
-      [owner.workspaceId, `other-task/${version.name}`],
+      [uuidv7(), version.id],
+      [owner.workspaceId, uuidv7()],
     ]) {
       await expect(hosting.grant(workspaceId!, name!)).rejects.toMatchObject({
         code: "not_found",
@@ -141,12 +136,12 @@ describe("private adapter hosting", () => {
           .where(eq(organizations.id, owner.organizationId));
       const { hosting, sign } = service();
       await expect(
-        hosting.grant(owner.workspaceId, `${task.name}/${version.name}`),
+        hosting.grant(owner.workspaceId, version.id),
       ).rejects.toMatchObject({ code: "not_found" });
       expect(await hosting.productionVersions(baseModelId)).not.toContainEqual(
         expect.objectContaining({
           workspace_id: version.workspaceId,
-          version_name: `${task.name}/${version.name}`,
+          version_name: version.id,
         }),
       );
       expect(sign).not.toHaveBeenCalled();
@@ -185,12 +180,12 @@ describe("private adapter hosting", () => {
       await promote(task.id, version.id);
       const { hosting, sign } = service();
       await expect(
-        hosting.grant(owner.workspaceId, `${task.name}/${version.name}`),
+        hosting.grant(owner.workspaceId, version.id),
       ).rejects.toMatchObject({ code: "unavailable" });
       expect(await hosting.productionVersions(baseModelId)).not.toContainEqual(
         expect.objectContaining({
           workspace_id: version.workspaceId,
-          version_name: `${task.name}/${version.name}`,
+          version_name: version.id,
         }),
       );
       expect(sign).not.toHaveBeenCalled();
@@ -207,13 +202,13 @@ describe("private adapter hosting", () => {
     const targets = await hosting.productionVersions(baseModelId);
     expect(targets).toContainEqual({
       workspace_id: selected.owner.workspaceId,
-      version_name: `${selected.task.name}/${selected.version.name}`,
+      version_name: selected.version.id,
     });
     for (const { task, version } of [unpromoted, unavailable])
       expect(targets).not.toContainEqual(
         expect.objectContaining({
           workspace_id: version.workspaceId,
-          version_name: `${task.name}/${version.name}`,
+          version_name: version.id,
         }),
       );
     expect(await hosting.productionVersions("gradiated/no-adapters")).toEqual(
@@ -276,7 +271,7 @@ describe("private adapter hosting", () => {
       await service().hosting.productionVersions(baseModelId),
     ).toContainEqual({
       workspace_id: selected.owner.workspaceId,
-      version_name: `${selected.task.name}/${selected.version.name}`,
+      version_name: selected.version.id,
     });
   });
 
@@ -288,7 +283,7 @@ describe("private adapter hosting", () => {
     expect(await hosting.productionVersions(baseModelId)).not.toContainEqual(
       expect.objectContaining({
         workspace_id: second.version.workspaceId,
-        version_name: `${second.task.name}/${second.version.name}`,
+        version_name: second.version.id,
       }),
     );
   });
@@ -297,9 +292,9 @@ describe("private adapter hosting", () => {
     const { owner, task, version } = await seed();
     const { hosting, sign } = service();
     sign.mockRejectedValueOnce(new Error("storage unavailable"));
-    await expect(
-      hosting.grant(owner.workspaceId, `${task.name}/${version.name}`),
-    ).rejects.toThrow("storage unavailable");
+    await expect(hosting.grant(owner.workspaceId, version.id)).rejects.toThrow(
+      "storage unavailable",
+    );
     expect(
       (await db.database.select().from(tasks).where(eq(tasks.id, task.id)))[0]!
         .productionVersionId,

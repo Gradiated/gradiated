@@ -870,9 +870,10 @@ Workspace `default_judge_model` seeds `tasks.judge_model_id` when a task is firs
 
 A private model's public name is `<organization slug>/<task>` for the task's
 production version and `<organization slug>/<task>/<version>` for one version. The
-gateway resolves it within the calling key's workspace. GPU runtimes
-name an adapter `<workspace_id>/<task>/<version>`, which does not change when the
-slug does.
+gateway resolves it within the calling key's workspace to one version and
+records that version's full public name in the response and usage. GPU runtimes
+never see model names: they key an adapter `<workspace_id>/<version_id>` and fetch
+its download grant by version ID.
 
 A task's name becomes a model name when the task first trains or takes an
 upload. Migration 0030 adds `tasks.organization_id`, set at that point to

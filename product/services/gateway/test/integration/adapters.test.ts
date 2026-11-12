@@ -247,7 +247,7 @@ describe("workspace-private adapters", () => {
       expect(response.status).toBe(200);
       expect(response.json().model).toBe(model);
       expect(instance.runtimes[0]!.calls.at(-1)!.model).toBe(
-        `${instance.workspace}/${task}/${name}`,
+        selected.runtimeName,
       );
       expect(
         (

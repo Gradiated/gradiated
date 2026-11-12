@@ -40,7 +40,7 @@ impl PrivateAdapter {
     }
 
     pub fn runtime_name(&self) -> String {
-        format!("{}/{}/{}", self.workspace_id, self.task_name, self.name)
+        format!("{}/{}", self.workspace_id, self.version_id)
     }
 
     pub fn served_digest(&self, base_digest: &str) -> String {

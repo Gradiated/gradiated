@@ -11,7 +11,8 @@ import { versionResponse } from "./training.js";
 
 const target = z.strictObject({
   workspace_id: UuidSchema,
-  version_name: TaskVersionSchema.shape.name.min(1).max(300),
+  // The runtime's adapter key; it carries the version ID.
+  version_name: UuidSchema,
 });
 const errors = {
   404: { description: "Version not found.", content: problemContent },
@@ -24,7 +25,7 @@ const grant = createRoute({
   path: "/api/internal/v1/adapter-downloads",
   operationId: "createPrivateAdapterDownload",
   description:
-    "Issue a versioned download grant for an exact workspace and `<task>/<version>` runtime name. Candidates may be unavailable for serving; this route does not promote them.",
+    "Issue a versioned download grant for an exact workspace and version ID. Candidates may be unavailable for serving; this route does not promote them.",
   request: {
     body: {
       required: true,
@@ -91,10 +92,10 @@ export const registerAdapterHostingRoutes = (
     return context.json(
       {
         workspace_id: row.version.workspaceId,
-        // Runtimes key an adapter by the name they asked for: `<task>/<version>`.
+        // Runtimes key an adapter by `version.name`, which for them is the ID.
         version: {
           ...versionResponse(row.task, row.version),
-          name: body.version_name,
+          name: row.version.id,
         },
         download: AdapterDownloadSchema.parse(row.download),
       },

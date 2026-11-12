@@ -191,7 +191,7 @@ describe("model uploads", () => {
         await createTrainingStore(db.database).listProductionVersions(
           version.baseModelId,
         )
-      ).map((row) => row.version.id),
+      ).map((v) => v.id),
     ).toContain(version.id);
   });
   it("publishes a private version without a training run and completes idempotently", async () => {

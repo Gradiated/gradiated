@@ -311,12 +311,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return row && VersionRecordSchema.parse(row);
     },
 
-    async getHostingVersion(workspaceId: string, runtimeName: string) {
-      const separator = runtimeName.lastIndexOf("/");
-      if (separator < 0) return undefined;
-
-      const taskName = runtimeName.slice(0, separator);
-      const versionName = runtimeName.slice(separator + 1);
+    async getHostingVersion(workspaceId: string, versionId: string) {
       const [row] = await database
         .select({ task: tasks, version: taskVersions })
         .from(taskVersions)
@@ -328,11 +323,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
         )
         .where(
           and(
-            eq(
-              taskVersions.name,
-              VersionRecordSchema.shape.name.parse(versionName),
-            ),
-            eq(tasks.name, taskName),
+            eq(taskVersions.id, UuidSchema.parse(versionId)),
             eq(tasks.workspaceId, UuidSchema.parse(workspaceId)),
             isNull(workspaces.archivedAt),
             eq(organizations.status, "active"),
@@ -349,7 +340,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
 
     async listProductionVersions(baseModelId: string) {
       const rows = await database
-        .select({ task: tasks, version: taskVersions })
+        .select({ version: taskVersions })
         .from(tasks)
         .innerJoin(
           taskVersions,
@@ -381,10 +372,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
         .orderBy(desc(tasks.updatedAt), desc(tasks.id))
         .limit(4096);
 
-      return rows.map((row) => ({
-        task: TaskRecordSchema.parse(row.task),
-        version: VersionRecordSchema.parse(row.version),
-      }));
+      return rows.map((row) => VersionRecordSchema.parse(row.version));
     },
 
     async clearTrainingScheduleForBases(taskId: string, baseIds: string[]) {

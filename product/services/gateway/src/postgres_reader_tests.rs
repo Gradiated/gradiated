@@ -613,7 +613,7 @@ async fn adapter_query_resolves_names_under_the_workspace_organization_slug() {
         assert_eq!(adapter.model_id(), format!("{slug}/triage/v1"));
         assert_eq!(
             adapter.runtime_name(),
-            format!("{}/triage/v1", owner.workspace_id)
+            format!("{}/{version}", owner.workspace_id)
         );
     }
     let other_slug = format!("reader-{}", other.organization_id.simple());

@@ -82,7 +82,7 @@ export const version = async (
     sha256,
     name: `version-${id}`,
     selector: `${instance.organizationSlug}/task-${task}/version-${id}`,
-    runtimeName: `${instance.workspace}/task-${task}/version-${id}`,
+    runtimeName: `${instance.workspace}/${id}`,
   };
 };
 

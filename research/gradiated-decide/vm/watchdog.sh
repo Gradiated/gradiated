@@ -14,21 +14,23 @@
 # Env: MATCH (pgrep pattern that also counts as "job running", for jobs not started by the watchdog; bracket one
 #      letter, e.g. '[r]un-ensemble-eval.sh', so the check does not match its own shell),
 #      INTERVAL=120, RESTART_TRIES=2, SPECS (one line of `dev_training.py up` arguments per fallback, tried in order;
-#      the defaults end with Ornn on-demand nodes, capped at ORNN_MAX_PRICE USD per GPU-hour, default 6).
+#      the defaults end with an Ornn on-demand B300 node, capped at ORNN_MAX_PRICE USD per GPU-hour, default 7.5).
 # Ornn VMs cannot be stopped: when the job ends there the watchdog waits for one more s3-sync.sh round, then deletes it.
 # Start it detached, with the dev-training secrets loaded once so an expired AWS SSO session does not stop it:
 #   setsid nohup bash vm/watchdog.sh gdecide-2 logs/ensemble-finished '...' > watchdog.log 2>&1 < /dev/null &
 set -uo pipefail
 NAME=$1; DONE=$2; JOB=$3
 MATCH=${MATCH:-}; INTERVAL=${INTERVAL:-120}; RESTART_TRIES=${RESTART_TRIES:-2}
-SPECS=${SPECS:-"--region us-north1 --platform gpu-b300-sxm --preset 8gpu-192vcpu-2768gb --disk-gib 2000
+SPECS=${SPECS:-"--region eu-west2 --platform gpu-b300-sxm --preset 8gpu-192vcpu-2768gb --disk-gib 2000
+--region eu-south1 --platform gpu-b300-sxm --preset 8gpu-192vcpu-2768gb --disk-gib 2000
+--region uk-south1 --platform gpu-b300-sxm --preset 8gpu-192vcpu-2768gb --disk-gib 2000
+--region us-north1 --platform gpu-b300-sxm --preset 8gpu-192vcpu-2768gb --disk-gib 2000
 --region me-west1 --platform gpu-b200-sxm-a --preset 8gpu-160vcpu-1792gb --disk-gib 2000
 --region us-central1 --platform gpu-b200-sxm --preset 8gpu-160vcpu-1792gb --disk-gib 2000
 --region us-central1 --platform gpu-h200-sxm --preset 8gpu-128vcpu-1600gb --disk-gib 2000
 --region eu-west1 --platform gpu-h200-sxm --preset 8gpu-128vcpu-1600gb --disk-gib 2000
 --region eu-north1 --platform gpu-h200-sxm --preset 8gpu-128vcpu-1600gb --disk-gib 2000
---provider ornn --platform nvidia_b300 --term on-demand --max-price ${ORNN_MAX_PRICE:-6}
---provider ornn --platform nvidia_h200_sxm --term on-demand --max-price ${ORNN_MAX_PRICE:-6}"}
+--provider ornn --platform nvidia_b300 --term on-demand --max-price ${ORNN_MAX_PRICE:-7.5}"}
 REPO=$(git -C "$(dirname "$0")" rev-parse --show-toplevel); cd "$REPO" || exit 1
 export PATH=$HOME/.nebius/bin:$PATH
 DT=(python3 tools/dev-training/dev_training.py)

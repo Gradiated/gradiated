@@ -9,6 +9,7 @@ const setup = async (
     autoJoinDomain = null,
     signedIn = true,
     engineer = engineerProviders(),
+    otherOrganizations = [],
   }: {
     email: string;
     companyEmailDomain: string | null;
@@ -16,6 +17,7 @@ const setup = async (
     autoJoinDomain?: string | null;
     signedIn?: boolean;
     engineer?: EngineerProviders;
+    otherOrganizations?: object[];
   },
 ) => {
   const organization = {
@@ -72,7 +74,7 @@ const setup = async (
           company_email_domain: companyEmailDomain,
           image_url: null,
           created_at: "2026-10-02T12:00:00Z",
-          organizations: [organization],
+          organizations: [organization, ...otherOrganizations],
         },
       });
     if (
@@ -639,6 +641,42 @@ test("onboarding without a return path has no way back", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Back to console" }),
   ).toHaveCount(0);
+});
+
+test("an admin of several organizations chooses one before any setup", async ({
+  page,
+}) => {
+  await setup(page, {
+    email: "alex@acme.com",
+    companyEmailDomain: "acme.com",
+    otherOrganizations: [
+      {
+        id: "00000000-0000-4000-8000-000000000003",
+        name: "Acme",
+        role: "admin",
+        status: "active",
+        default_workspace_id: "00000000-0000-4000-8000-000000000004",
+        slug: "acme",
+        auto_join_domain: null,
+        onboarding_completed: true,
+      },
+    ],
+  });
+
+  await page.goto("/onboarding?journey=post-training&from=%2Ftasks");
+  await expect(
+    page.getByRole("heading", { name: "Choose your organization" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("textbox", { name: "Organization name" }),
+  ).toHaveCount(0);
+
+  await page.getByRole("combobox", { name: "Organization" }).click();
+  await page.getByRole("option", { name: "Personal" }).click();
+  await expect(
+    page.getByRole("textbox", { name: "Organization name" }),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/from=%2Ftasks/);
 });
 
 test("an installation without repositories blocks the start until one is selected", async ({

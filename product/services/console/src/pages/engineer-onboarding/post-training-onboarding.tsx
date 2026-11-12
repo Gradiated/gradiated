@@ -76,7 +76,9 @@ export const PostTrainingOnboarding = ({
   const choice = chooseAccount(user, organization);
 
   if (choice.kind === "pick")
-    return <OrganizationPicker organizations={choice.organizations} />;
+    return (
+      <OrganizationPicker organizations={choice.organizations} from={from} />
+    );
 
   if (choice.kind === "missing")
     return (
@@ -133,8 +135,10 @@ const OnboardingHelp = ({ step }: { step: string }) => (
 
 const OrganizationPicker = ({
   organizations,
+  from,
 }: {
   organizations: CurrentUser["organizations"];
+  from?: string | undefined;
 }) => {
   const navigate = useNavigate();
 
@@ -153,7 +157,11 @@ const OrganizationPicker = ({
           onValueChange={(organization) =>
             void navigate({
               to: "/onboarding",
-              search: { journey: POST_TRAINING_JOURNEY, organization },
+              search: {
+                journey: POST_TRAINING_JOURNEY,
+                organization,
+                ...(from ? { from } : {}),
+              },
             })
           }
         >

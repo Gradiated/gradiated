@@ -30,7 +30,10 @@ import {
 import { POST_TRAINING_JOURNEY } from "@/lib/login-search";
 import { queryKeys } from "@/lib/query-keys";
 import { LoadFailed } from "@/pages/console-page";
-import { parseOnboardingSearch } from "@/lib/engineer-onboarding";
+import {
+  chooseAccount,
+  parseOnboardingSearch,
+} from "@/lib/engineer-onboarding";
 import { PostTrainingOnboarding } from "@/pages/engineer-onboarding/post-training-onboarding";
 import { useWorkspaceSelection } from "@/store/workspace-selection";
 
@@ -46,7 +49,14 @@ export const OnboardingPage = () => {
   const { user, signOut } = useSession();
   const me = useCurrentUser();
   const [onboarded, setOnboarded] = useState<string>();
-  const organization = organizationToOnboard(user, requestedOrganization);
+  /* With several organizations to choose from, the post-training picker comes
+     first; setup then runs for the chosen one if it still needs it. */
+  const organization =
+    postTraining &&
+    user &&
+    chooseAccount(user, requestedOrganization).kind === "pick"
+      ? undefined
+      : organizationToOnboard(user, requestedOrganization);
 
   if (me.isError && httpStatus(me.error) !== 401)
     return (

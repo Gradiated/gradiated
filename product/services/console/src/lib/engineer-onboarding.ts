@@ -270,13 +270,13 @@ export const confirmationMessage = (
     !slackInvited(server)
   )
     return {
-      plan: `Your researcher will email a plan to ${email}, usually within a working day.`,
+      plan: `Your researcher emails a plan to ${email}`,
       followUp: "Anything to add? Email help@gradiated.com.",
     };
 
   return {
-    plan: `Your researcher will post a plan in #${server.slack.channel_name}, usually within a working day.`,
-    followUp: `Invite your colleagues there too. If you haven’t joined yet, accept the invite we sent to ${server.slack.invited_email ?? email}.`,
+    plan: `Your researcher posts a plan in #${server.slack.channel_name}`,
+    followUp: `Accept the Slack invite we sent to ${server.slack.invited_email ?? email}, and invite your colleagues to the channel.`,
   };
 };
 

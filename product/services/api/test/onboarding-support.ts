@@ -78,6 +78,15 @@ export const onboardingOrganizations = (
         return { submitted: true, onboarding };
       },
     ),
+    resetOnboardingSubmission: vi.fn(async () => {
+      const {
+        submitted_at: _submittedAt,
+        submitted_by: _submittedBy,
+        contact_channel: _contactChannel,
+        ...rest
+      } = onboarding;
+      onboarding = rest;
+    }),
   };
 };
 

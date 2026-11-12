@@ -25,6 +25,7 @@ import { registerImpersonationRoutes } from "./routes/impersonation.js";
 import { registerOrganizationRoutes } from "./routes/organizations.js";
 import { registerNdaDocumentRoutes } from "./routes/nda-documents.js";
 import { registerEngineerOnboardingRoutes } from "./routes/engineer-onboarding.js";
+import { requireOnboardingAdmin } from "./http/onboarding-access.js";
 import type { PandaDocNda } from "./legal/pandadoc.js";
 import { registerSlackInvitationRoutes } from "./routes/slack-invitations.js";
 import type { SlackConnect } from "./slack/connect.js";
@@ -195,6 +196,24 @@ export const createApp = ({
     slack: slackConnect,
     github: githubInstallations,
   });
+  // Local test mode only, like the auth test routes: walk onboarding again.
+  if (authTestMailbox)
+    app.delete(
+      "/api/v1/organizations/:organization_id/engineer-onboarding/submission",
+      async (context) => {
+        const organizationId = context.req.param("organization_id");
+        const { owner } = await requireOnboardingAdmin(
+          context,
+          services.organizations,
+          organizationId,
+        );
+        await services.organizations.resetOnboardingSubmission(
+          owner.userId,
+          organizationId,
+        );
+        return context.body(null, 204);
+      },
+    );
   registerMemberRoutes(app, {
     members: services.members,
     organizations: services.organizations,

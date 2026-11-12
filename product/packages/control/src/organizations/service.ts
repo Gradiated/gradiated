@@ -95,6 +95,11 @@ export interface OrganizationService {
     organizationId: string,
     contactChannel: ContactChannel,
   ): Promise<{ submitted: boolean; onboarding: OrganizationOnboarding }>;
+  /** Local test mode only; never wired in production. */
+  resetOnboardingSubmission(
+    userId: string,
+    organizationId: string,
+  ): Promise<void>;
 }
 
 const organizationNotFound = () =>
@@ -282,6 +287,11 @@ export const createOrganizationService = (
       if (!result) throw organizationNotFound();
 
       return result;
+    },
+
+    async resetOnboardingSubmission(userId, organizationId) {
+      await requireOrganizationAdmin(database, { userId, organizationId });
+      await records.resetOnboardingSubmission(organizationId);
     },
 
     async ensureForNewUser(user) {

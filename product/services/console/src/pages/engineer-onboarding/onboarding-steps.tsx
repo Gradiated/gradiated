@@ -1,4 +1,4 @@
-import { Check, CircleAlert, LoaderCircle } from "lucide-react";
+import { ArrowRight, Check, CircleAlert, LoaderCircle } from "lucide-react";
 import type { ReactNode } from "react";
 
 import type { EngineerOnboarding } from "@/api/engineer-onboarding";
@@ -367,29 +367,105 @@ const sectionNames: Record<OnboardingSection, string> = {
   nda: "the mutual NDA",
 };
 
+const TimelineStep = ({
+  done,
+  title,
+  meta,
+  children,
+}: {
+  done?: boolean;
+  title: string;
+  meta?: string | undefined;
+  children?: ReactNode;
+}) => (
+  <li className="grid grid-cols-[1.5rem_1fr] gap-3 py-4 first:pt-0 last:pb-0">
+    <span
+      aria-hidden="true"
+      className={
+        done
+          ? "mt-0.5 grid size-5 place-items-center rounded-full bg-emerald-600 text-white"
+          : "mt-0.5 size-5 rounded-full border-[1.5px] border-muted-foreground/50"
+      }
+    >
+      {done ? <Check className="size-3" strokeWidth={3} /> : null}
+    </span>
+    <span className="flex flex-col gap-1">
+      <span className="flex flex-wrap items-baseline justify-between gap-x-4">
+        <span className="font-medium">{title}</span>
+        {meta ? (
+          <span className="text-sm text-muted-foreground">{meta}</span>
+        ) : null}
+      </span>
+      {children ? (
+        <span className="text-sm leading-6 text-muted-foreground">
+          {children}
+        </span>
+      ) : null}
+    </span>
+  </li>
+);
+
 export const ProjectStarted = ({
   account,
   server,
+  onConsole,
+  onReset,
 }: {
   account: OnboardingAccount;
   server: EngineerOnboarding;
+  onConsole: () => void;
+  onReset?: (() => void) | undefined;
 }) => {
   const confirmation = confirmationMessage(server, account.email);
 
   return (
-    <div className="flex flex-col gap-10">
-      <PageHeader title="You’re all set.">
-        One of our researchers will pick it up from here.
-      </PageHeader>
-      <section
-        aria-label="What happens now"
-        className="flex max-w-2xl flex-col gap-3 rounded-lg border bg-card p-6 md:p-8"
-      >
-        <p className="text-lg leading-8">{confirmation.plan}</p>
-        <p className="text-sm leading-6 text-muted-foreground">
-          {confirmation.followUp}
+    <div className="flex max-w-xl flex-col gap-8">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+          You’re all set.
+        </h1>
+        <p className="text-muted-foreground">
+          One of our researchers will pick it up from here.
         </p>
-      </section>
+      </div>
+      <ol
+        aria-label="Your project"
+        className="divide-y rounded-lg border bg-card px-5 py-4"
+      >
+        <TimelineStep
+          done
+          title="Project started"
+          meta={
+            server.submitted_at
+              ? new Date(server.submitted_at).toLocaleDateString(undefined, {
+                  day: "numeric",
+                  month: "short",
+                })
+              : undefined
+          }
+        />
+        <TimelineStep title={confirmation.plan} meta="Within a working day">
+          {confirmation.followUp}
+        </TimelineStep>
+        <TimelineStep title="Pick a first test case for training" />
+      </ol>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <Button type="button" onClick={onConsole}>
+          Go to console <ArrowRight />
+        </Button>
+        <p className="text-sm text-muted-foreground">
+          Try our hosted models in the playground while you wait.
+        </p>
+      </div>
+      {onReset ? (
+        <button
+          type="button"
+          className="self-start text-sm text-muted-foreground underline underline-offset-4"
+          onClick={onReset}
+        >
+          Reset onboarding (local only)
+        </button>
+      ) : null}
     </div>
   );
 };

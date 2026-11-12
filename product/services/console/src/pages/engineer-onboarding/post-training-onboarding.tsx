@@ -56,6 +56,7 @@ import {
   type UpdateDraft,
 } from "@/pages/engineer-onboarding/onboarding-steps";
 import { SlackInvitation } from "@/pages/engineer-onboarding/slack-invitation";
+import { useWorkspaceSelection } from "@/store/workspace-selection";
 
 const errorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
@@ -193,6 +194,10 @@ const PageShell = ({ children }: { children: ReactNode }) => (
 
 const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const selectOrganization = useWorkspaceSelection(
+    (state) => state.selectOrganization,
+  );
   const queryKey = engineerOnboardingKey(account.organizationId);
   const onboarding = useQuery({
     queryKey,
@@ -264,7 +269,23 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
   if (server.submitted_at)
     return (
       <PageShell>
-        <ProjectStarted account={account} server={server} />
+        <ProjectStarted
+          onConsole={() => {
+            selectOrganization(account.organizationId);
+            void navigate({ to: "/playground" });
+          }}
+          onReset={
+            import.meta.env.DEV
+              ? () =>
+                  void fetch(
+                    `/api/v1/organizations/${account.organizationId}/engineer-onboarding/submission`,
+                    { method: "DELETE" },
+                  ).then(() => onboarding.refetch())
+              : undefined
+          }
+          account={account}
+          server={server}
+        />
       </PageShell>
     );
 

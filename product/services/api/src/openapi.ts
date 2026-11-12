@@ -65,6 +65,9 @@ export const unservedDependencies = (): AppDependencies => ({
       getOnboarding: unserved("organizations.getOnboarding"),
       recordOnboardingNda: unserved("organizations.recordOnboardingNda"),
       submitOnboarding: unserved("organizations.submitOnboarding"),
+      resetOnboardingSubmission: unserved(
+        "organizations.resetOnboardingSubmission",
+      ),
     },
     integrations: {
       list: unserved("integrations.list"),

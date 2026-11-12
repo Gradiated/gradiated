@@ -99,6 +99,7 @@ const setup = (
     slackChannel?: boolean;
     token?: string | null;
     installations?: (typeof installation)[];
+    testMode?: boolean;
   } = {},
 ) => {
   const organizations = onboardingOrganizations(
@@ -138,6 +139,15 @@ const setup = (
     githubInstallations: github,
     notifyEngineerOnboarding: notify,
     services: { organizations, integrations },
+    ...(options.testMode
+      ? {
+          authTestMailbox: {
+            takeMagicLink: () => null,
+            takeOtp: () => null,
+            takeInvitation: () => null,
+          },
+        }
+      : {}),
   });
 
   return { app, organizations, integrations, rows, slack, github, notify };
@@ -403,5 +413,33 @@ describe("engineer onboarding submission", () => {
     const { app } = setup();
 
     expect((await postJson(app, `${path}/submission`, body)).status).toBe(422);
+  });
+});
+
+describe("local onboarding reset", () => {
+  const reset = (app: ReturnType<typeof setup>["app"]) =>
+    app.request(`${path}/submission`, { method: "DELETE" });
+
+  it("does not exist outside local test mode", async () => {
+    const { app, organizations } = setup();
+
+    expect((await reset(app)).status).toBe(404);
+    expect(organizations.resetOnboardingSubmission).not.toHaveBeenCalled();
+  });
+
+  it("lets an admin walk the journey again in test mode", async () => {
+    const { app, organizations } = setup({ testMode: true });
+    await postJson(app, `${path}/submission`, submission);
+
+    expect((await reset(app)).status).toBe(204);
+    expect((await (await app.request(path)).json()).submitted_at).toBeNull();
+    expect(organizations.resetOnboardingSubmission).toHaveBeenCalledOnce();
+  });
+
+  it("requires an organization admin", async () => {
+    const { app, organizations } = setup({ testMode: true, role: "member" });
+
+    expect((await reset(app)).status).toBe(403);
+    expect(organizations.resetOnboardingSubmission).not.toHaveBeenCalled();
   });
 });

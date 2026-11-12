@@ -437,7 +437,7 @@ test("a new engineer customer sets up the organization, invites Slack, signs the
     page.getByRole("heading", { name: "You’re all set." }),
   ).toBeVisible({ timeout: 10_000 });
   await expect(
-    page.getByText(/will post a plan in #ext-acme-gradiated/),
+    page.getByText("Your researcher posts a plan in #ext-acme-gradiated"),
   ).toBeVisible();
   expect(engineer.submissions).toEqual([
     {
@@ -498,7 +498,7 @@ test("a returning customer waits for GitHub, chooses email and comes back to the
   await startButton(page).click();
 
   await expect(
-    page.getByText(/will email a plan to alex@acme.com/),
+    page.getByText("Your researcher emails a plan to alex@acme.com"),
   ).toBeVisible();
   expect(engineer.submissions).toEqual([
     { contact_channel: "email", github_installation_id: 42 },

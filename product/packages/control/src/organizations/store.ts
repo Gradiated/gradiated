@@ -174,6 +174,18 @@ export const createOrganizationStore = (database: ControlDatabase) => {
       return onboarding && { submitted: false, onboarding };
     },
 
+    /* Local test mode only: forget the submission so the journey can be
+       walked again. Keeps the recorded NDA. */
+    async resetOnboardingSubmission(organizationId: string) {
+      await database
+        .update(organizations)
+        .set({
+          metadata: sql`jsonb_set(${organizations.metadata}, '{onboarding}', coalesce(${onboardingPath}, '{}'::jsonb) - 'submitted_at' - 'submitted_by' - 'contact_channel')`,
+          updatedAt: new Date(),
+        })
+        .where(eq(organizations.id, organizationId));
+    },
+
     async findUser(userId: string) {
       const [user] = await database
         .select({ email: users.email, emailVerified: users.emailVerified })

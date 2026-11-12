@@ -64,6 +64,7 @@ export interface ApiServices {
     | "getOnboarding"
     | "recordOnboardingNda"
     | "submitOnboarding"
+    | "resetOnboardingSubmission"
   >;
   integrations: IntegrationService;
   members: MemberService;

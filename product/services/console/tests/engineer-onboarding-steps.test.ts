@@ -255,7 +255,7 @@ describe("onboarding summary and confirmation", () => {
   ])("does not mention Slack for %s", (_label, server) => {
     const message = confirmationMessage(server, account.email);
 
-    expect(message.plan).toContain("email a plan to alex@acme.example");
+    expect(message.plan).toContain("emails a plan to alex@acme.example");
     expect(message.plan + message.followUp).not.toMatch(/slack/i);
   });
 });

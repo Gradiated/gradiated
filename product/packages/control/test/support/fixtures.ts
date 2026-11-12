@@ -13,7 +13,6 @@ import {
   balanceTransactions,
   billingAccounts,
   organizationMembers,
-  organizationSlugs,
   organizations,
   users,
   workspaces,
@@ -62,11 +61,6 @@ export const seedOrganization = async (
     kind: seed.kind ?? "customer",
     name: `Organization ${id}`,
     status: seed.status ?? "active",
-  });
-  await database.insert(organizationSlugs).values({
-    slug: `org-${id.replaceAll("-", "")}`,
-    organizationId: id,
-    isCurrent: true,
   });
 
   for (const member of seed.members ?? []) {

@@ -12,7 +12,6 @@ import type { ControlDatabase } from "../db/client.js";
 import {
   organizations,
   organizationMembers,
-  organizationSlugs,
   users,
   workspaces,
 } from "../db/schema/index.js";
@@ -22,10 +21,7 @@ import {
   activeCustomerOrganization,
 } from "../access.js";
 import { ControlServiceError } from "../errors.js";
-import {
-  isTakenOrganizationSlug,
-  setCurrentOrganizationSlug,
-} from "./slugs.js";
+import { isTakenOrganizationSlug, requireChangeableSlug } from "./slugs.js";
 
 const OrganizationRecordSchema = CurrentOrganizationSchema.pick({
   id: true,
@@ -52,7 +48,7 @@ const SignupEmailSchema = z.object({
 const organizationColumns = (userId: string) => ({
   id: organizations.id,
   name: organizations.name,
-  slug: organizationSlugs.slug,
+  slug: organizations.slug,
   status: organizations.status,
   role: customerRole(userId),
   defaultWorkspaceId: workspaces.id,
@@ -69,13 +65,6 @@ export const createOrganizationStore = (database: ControlDatabase) => {
     const query = database
       .select(organizationColumns(userId))
       .from(organizations)
-      .innerJoin(
-        organizationSlugs,
-        and(
-          eq(organizationSlugs.organizationId, organizations.id),
-          eq(organizationSlugs.isCurrent, true),
-        ),
-      )
       .leftJoin(
         organizationMembers,
         and(
@@ -166,10 +155,23 @@ export const createOrganizationStore = (database: ControlDatabase) => {
 
       await database
         .transaction(async (transaction) => {
+          const [current] = await transaction
+            .select({ slug: organizations.slug })
+            .from(organizations)
+            .where(eq(organizations.id, organizationId))
+            .for("update");
+          if (update.slug !== undefined && update.slug !== current?.slug)
+            await requireChangeableSlug(
+              transaction,
+              organizationId,
+              update.slug,
+            );
+
           await transaction
             .update(organizations)
             .set({
               name: update.name,
+              slug: update.slug,
               autoJoinDomain: update.auto_join_domain,
               onboardedAt: update.onboarding_completed
                 ? sql`coalesce(${organizations.onboardedAt}, now())`
@@ -177,13 +179,6 @@ export const createOrganizationStore = (database: ControlDatabase) => {
               updatedAt: new Date(),
             })
             .where(eq(organizations.id, organizationId));
-
-          if (update.slug !== undefined)
-            await setCurrentOrganizationSlug(
-              transaction,
-              organizationId,
-              update.slug,
-            );
         })
         .catch((error: unknown) => {
           if (isTakenOrganizationSlug(error))

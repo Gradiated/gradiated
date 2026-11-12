@@ -9,10 +9,6 @@ import {
   workspaces,
 } from "../db/schema/index.js";
 import { defaultWorkspaceValues } from "../organizations/service.js";
-import {
-  randomOrganizationSlug,
-  setCurrentOrganizationSlug,
-} from "../organizations/slugs.js";
 import { requireRow } from "../require-row.js";
 import { apiKeyDigest } from "../workspaces/api-key-secret.js";
 
@@ -55,11 +51,6 @@ export const configureOpenRouterDistributionChannel = async (
           })
           .returning(),
         "The OpenRouter organization was not created.",
-      );
-      await setCurrentOrganizationSlug(
-        transaction,
-        organization.id,
-        randomOrganizationSlug(),
       );
     } else if (organization.status !== "active") {
       organization = requireRow(

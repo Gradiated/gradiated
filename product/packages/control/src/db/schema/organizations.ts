@@ -80,6 +80,12 @@ export const organizations = pgTable(
     id: uuid("id").primaryKey(),
     kind: text("kind", { enum: ORGANIZATION_KINDS }).notNull(),
     name: text("name").notNull(),
+    // Prefixes private model names. New organizations start with a random
+    // placeholder and choose theirs in onboarding; it is fixed once they have a model.
+    slug: text("slug")
+      .notNull()
+      .unique("organizations_slug_unique")
+      .default(sql`left(md5(gen_random_uuid()::text), 16)`),
     status: text("status", { enum: ORGANIZATION_STATUSES }).notNull(),
     autoJoinDomain: text("auto_join_domain"),
     onboardedAt: timestamp("onboarded_at", {
@@ -105,28 +111,8 @@ export const organizations = pgTable(
       "organizations_status_check",
       sql`${table.status} in ('active', 'suspended')`,
     ),
-  ],
-);
-
-// Past slugs keep their rows, so they still resolve and no one else can take them.
-export const organizationSlugs = pgTable(
-  "organization_slugs",
-  {
-    slug: text("slug").primaryKey(),
-    organizationId: uuid("organization_id")
-      .notNull()
-      .references(() => organizations.id, { onDelete: "cascade" }),
-    isCurrent: boolean("is_current").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => [
-    uniqueIndex("organization_slugs_one_current")
-      .on(table.organizationId)
-      .where(sql`${table.isCurrent}`),
     check(
-      "organization_slugs_slug_check",
+      "organizations_slug_check",
       sql`${table.slug} ~ '^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$'`,
     ),
   ],

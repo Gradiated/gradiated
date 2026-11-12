@@ -19,7 +19,7 @@ export const OrganizationSlugSchema = z
   .string()
   .regex(ORGANIZATION_SLUG_PATTERN)
   .describe(
-    "Unique organization handle that prefixes its private model names, as in `acme/support-triage`. It can change; names under its earlier slugs keep working.",
+    "Unique organization handle that prefixes its private model names, as in `acme/support-triage`. It is fixed once the organization has a model.",
   )
   .openapi("OrganizationSlug");
 export const OrganizationSlugInputSchema = z

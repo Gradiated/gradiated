@@ -5,8 +5,8 @@ import {
   type UpdateOrganization,
 } from "@gradiated/contracts";
 import { companyEmailDomain } from "./email-domains.js";
-import { randomOrganizationSlug, setCurrentOrganizationSlug } from "./slugs.js";
 import { createOrganizationStore } from "./store.js";
+import { requireRow } from "../require-row.js";
 import { createMemberStore } from "../members/store.js";
 import { ControlServiceError } from "../errors.js";
 import { requireOrganizationAdmin } from "../access.js";
@@ -97,18 +97,19 @@ export const createOrganizationService = (
     const now = new Date();
     const defaultWorkspace = defaultWorkspaceValues(organizationId, now);
 
-    const slug = randomOrganizationSlug();
-    await database.transaction(async (transaction) => {
-      await transaction.insert(organizations).values({
-        id: organizationId,
-        kind: "customer",
-        name: input.name,
-        status: "active",
-        onboardedAt: input.onboarded ? now : null,
-        createdAt: now,
-        updatedAt: now,
-      });
-      await setCurrentOrganizationSlug(transaction, organizationId, slug);
+    const slug = await database.transaction(async (transaction) => {
+      const created = await transaction
+        .insert(organizations)
+        .values({
+          id: organizationId,
+          kind: "customer",
+          name: input.name,
+          status: "active",
+          onboardedAt: input.onboarded ? now : null,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning({ slug: organizations.slug });
       await transaction.insert(organizationMembers).values({
         organizationId,
         userId: input.userId,
@@ -126,16 +127,18 @@ export const createOrganizationService = (
         updatedAt: now,
       });
 
-      if (!input.signupCredit) return;
+      if (input.signupCredit)
+        await postBalanceTransaction(transaction, {
+          organizationId,
+          type: "credit",
+          amount: SIGNUP_CREDIT_NANO_USD,
+          sourceType: "operator",
+          sourceId: `signup-grant:${organizationId}`,
+          createdBy: input.userId,
+        });
 
-      await postBalanceTransaction(transaction, {
-        organizationId,
-        type: "credit",
-        amount: SIGNUP_CREDIT_NANO_USD,
-        sourceType: "operator",
-        sourceId: `signup-grant:${organizationId}`,
-        createdBy: input.userId,
-      });
+      // The database assigns a random placeholder until onboarding.
+      return requireRow(created, "The organization was not created.").slug;
     });
 
     return {

@@ -1,15 +1,6 @@
-CREATE TABLE "organization_slugs" (
-	"slug" text PRIMARY KEY NOT NULL,
-	"organization_id" uuid NOT NULL,
-	"is_current" boolean NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "organization_slugs_slug_check" CHECK ("organization_slugs"."slug" ~ '^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$')
-);
---> statement-breakpoint
-ALTER TABLE "organization_slugs" ADD CONSTRAINT "organization_slugs_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE UNIQUE INDEX "organization_slugs_one_current" ON "organization_slugs" USING btree ("organization_id") WHERE "organization_slugs"."is_current";--> statement-breakpoint
+ALTER TABLE "organizations" ADD COLUMN "slug" text DEFAULT left(md5(gen_random_uuid()::text), 16) NOT NULL;--> statement-breakpoint
 -- Existing organizations get a slug from their name, in creation order. New ones
--- start with a random slug and choose theirs during onboarding.
+-- start with the random default and choose theirs during onboarding.
 DO $$
 DECLARE
   organization record;
@@ -27,13 +18,15 @@ BEGIN
     END IF;
     candidate := base;
     ordinal := 1;
-    WHILE EXISTS (SELECT 1 FROM organization_slugs WHERE slug = candidate) LOOP
+    WHILE EXISTS (SELECT 1 FROM organizations WHERE slug = candidate AND id <> organization.id) LOOP
       ordinal := ordinal + 1;
       candidate := base || '-' || ordinal;
     END LOOP;
-    INSERT INTO organization_slugs (slug, organization_id, is_current) VALUES (candidate, organization.id, true);
+    UPDATE organizations SET slug = candidate WHERE id = organization.id;
   END LOOP;
 END $$;--> statement-breakpoint
+ALTER TABLE "organizations" ADD CONSTRAINT "organizations_slug_unique" UNIQUE("slug");--> statement-breakpoint
+ALTER TABLE "organizations" ADD CONSTRAINT "organizations_slug_check" CHECK ("organizations"."slug" ~ '^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$');--> statement-breakpoint
 ALTER TABLE "tasks" ADD COLUMN "organization_id" uuid;--> statement-breakpoint
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_organization_workspace_fk" FOREIGN KEY ("organization_id","workspace_id") REFERENCES "public"."workspaces"("organization_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_model_name_check" CHECK ("tasks"."organization_id" is null or (strpos("tasks"."name", '/') = 0 and char_length("tasks"."name") <= 128));--> statement-breakpoint

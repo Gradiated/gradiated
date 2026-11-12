@@ -72,10 +72,8 @@ impl Tenant {
 
         client
             .batch_execute(&format!(
-                "insert into organizations (id, kind, name, status)
-                 values ('{organization_id}', 'customer', 'reader-test', 'active');
-                 insert into organization_slugs (slug, organization_id, is_current)
-                 values ('reader-{}', '{organization_id}', true);
+                "insert into organizations (id, kind, name, status, slug)
+                 values ('{organization_id}', 'customer', 'reader-test', 'active', 'reader-{}');
                  insert into billing_accounts (organization_id, mode, balance)
                  values ('{organization_id}', 'prepaid', 1000);
                  insert into workspaces (id, organization_id, name, is_default)
@@ -629,25 +627,19 @@ async fn adapter_query_resolves_names_under_the_workspace_organization_slug() {
         assert_eq!(resolve(model.clone()).await, None, "{model}");
     }
 
-    let client = reader.client().await.unwrap();
-    client
+    reader
+        .client()
+        .await
+        .unwrap()
         .execute(
-            "update organization_slugs set is_current = false where organization_id = $1",
-            &[&owner.organization_id],
+            "update organizations set slug = $2 where id = $1",
+            &[&owner.organization_id, &moved],
         )
         .await
         .unwrap();
-    client
-        .execute(
-            "insert into organization_slugs (slug, organization_id, is_current) values ($1, $2, true)",
-            &[&moved, &owner.organization_id],
-        )
-        .await
-        .unwrap();
-    for model in [format!("{slug}/triage/v1"), format!("{moved}/triage/v1")] {
-        let adapter = resolve(model.clone()).await.expect(&model);
-        assert_eq!(adapter.model_id(), format!("{moved}/triage/v1"), "{model}");
-    }
+    let adapter = resolve(format!("{moved}/triage/v1")).await.unwrap();
+    assert_eq!(adapter.model_id(), format!("{moved}/triage/v1"));
+    assert_eq!(resolve(format!("{slug}/triage/v1")).await, None);
 
     owner.remove(&reader).await;
     other.remove(&reader).await;

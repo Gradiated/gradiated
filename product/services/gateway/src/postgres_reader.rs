@@ -111,12 +111,11 @@ from api_keys
 where digest = $1";
 
 /// `<slug>/<task>` names the task's production version and `<slug>/<task>/<version>`
-/// one version. Only tasks that claimed their name as a model resolve, under any
-/// slug the organization has held.
+/// one version. Only tasks that claimed their name as a model resolve.
 const ADAPTER_QUERY: &str = "\
 select case when task_versions.id is null then 'null' else json_build_object(
     'workspace_id', tasks.workspace_id,
-    'organization_slug', current_slug.slug,
+    'organization_slug', organizations.slug,
     'task_name', tasks.name,
     'version_id', task_versions.id,
     'name', task_versions.name,
@@ -128,11 +127,7 @@ select case when task_versions.id is null then 'null' else json_build_object(
 )::text end
 from tasks
 join workspaces on workspaces.id = tasks.workspace_id
-join organizations on organizations.id = workspaces.organization_id
-join organization_slugs requested_slug on requested_slug.organization_id = tasks.organization_id
-    and requested_slug.slug = $2
-join organization_slugs current_slug on current_slug.organization_id = tasks.organization_id
-    and current_slug.is_current
+join organizations on organizations.id = tasks.organization_id and organizations.slug = $2
 left join task_versions on task_versions.task_id = tasks.id
     and task_versions.workspace_id = tasks.workspace_id
     and case when $4::text is null then task_versions.id = tasks.production_version_id

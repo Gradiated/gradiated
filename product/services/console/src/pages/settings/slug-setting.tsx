@@ -73,7 +73,7 @@ export const SlugSetting = ({
               "support-triage",
             )}
           </code>
-          . Previous slugs keep working.
+          . It can&apos;t change once your organization has a model.
         </FieldDescription>
         {error ? <FieldError>{error}</FieldError> : null}
       </Field>

@@ -158,18 +158,14 @@ export class Case {
     // The tenant exists in PostgreSQL. The gateway caches what it reads, so no
     // test seeds Valkey: that would hide a query this suite is here to exercise.
     await database.query(
-      `insert into organizations (id, kind, name, status)
-       values ($1, $2, $3, 'active')`,
+      `insert into organizations (id, kind, name, status, slug)
+       values ($1, $2, $3, 'active', $4)`,
       [
         instance.organization,
         instance.organizationKind,
         instance.organizationName,
+        instance.organizationSlug,
       ],
-    );
-    await database.query(
-      `insert into organization_slugs (slug, organization_id, is_current)
-       values ($1, $2, true)`,
-      [instance.organizationSlug, instance.organization],
     );
     await database.query(
       `insert into billing_accounts (organization_id, mode, balance)

@@ -4,10 +4,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
   organizationMembers,
-  organizationSlugs,
   organizations as organizationTable,
   billingAccounts,
   balanceTransactions,
+  tasks,
   workspaces,
 } from "../src/db/schema/index.js";
 import { createCatalogService } from "../src/catalog/service.js";
@@ -431,7 +431,7 @@ describe("organization slugs", () => {
     const team = await service.createForUser(userId, name());
 
     for (const { slug } of [personal, team])
-      expect(slug).toMatch(/^[a-z0-9]{16}$/);
+      expect(slug).toMatch(/^[0-9a-f]{16}$/);
     expect(personal.slug).not.toBe(team.slug);
 
     const renamed = await service.updateForUser(userId, team.id, {
@@ -457,32 +457,33 @@ describe("organization slugs", () => {
     });
   });
 
-  it("keeps earlier slugs with the organization and out of reach of others", async () => {
+  it("fixes the slug once the organization has a model", async () => {
     const userId = await seedUser(db.database);
     const own = await service.createForUser(userId, name());
-    const other = await service.createForUser(userId, name());
-    const original = slug();
-    await service.updateForUser(userId, own.id, { slug: original });
-    await service.updateForUser(userId, own.id, { slug: `${original}-new` });
+    const first = slug();
+    const chosen = slug();
+    await service.updateForUser(userId, own.id, { slug: first });
+    await service.updateForUser(userId, own.id, { slug: chosen });
+    await db.database.insert(tasks).values({
+      id: randomUUID(),
+      organizationId: own.id,
+      workspaceId: own.defaultWorkspaceId,
+      name: "support-triage",
+    });
 
     await expect(
-      service.updateForUser(userId, other.id, { slug: original }),
+      service.updateForUser(userId, own.id, { slug: first }),
     ).rejects.toMatchObject({ code: "conflict" });
+    const renamed = await service.updateForUser(userId, own.id, {
+      name: name(),
+      slug: chosen,
+    });
+    expect(renamed.slug).toBe(chosen);
+
+    const other = await service.createForUser(userId, name());
     expect(
-      (await db.database.select().from(organizationSlugs))
-        .filter((row) => row.organizationId === own.id)
-        .map(({ slug, isCurrent }) => ({ slug, isCurrent }))
-        .sort((a, b) => a.slug.localeCompare(b.slug)),
-    ).toEqual(
-      [
-        { slug: own.slug, isCurrent: false },
-        { slug: original, isCurrent: false },
-        { slug: `${original}-new`, isCurrent: true },
-      ].sort((a, b) => a.slug.localeCompare(b.slug)),
-    );
-    expect(
-      (await service.updateForUser(userId, own.id, { slug: original })).slug,
-    ).toBe(original);
+      (await service.updateForUser(userId, other.id, { slug: first })).slug,
+    ).toBe(first);
   });
 
   it("rejects a taken, reserved or malformed slug", async () => {

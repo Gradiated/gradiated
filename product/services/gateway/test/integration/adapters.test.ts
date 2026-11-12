@@ -200,30 +200,31 @@ describe("workspace-private adapters", () => {
     await instance.expectNotDispatched();
   });
 
-  it("resolves a model by any slug its organization has held", async () => {
+  it("resolves a model only under its organization's current slug", async () => {
     const instance = await makeCase("vllm");
     await enable(instance);
     const selected = await version(instance);
     await production(instance, selected);
     const moved = `moved-${instance.organization.replaceAll("-", "")}`;
     await instance.database.query(
-      "update organization_slugs set is_current = false where organization_id = $1",
-      [instance.organization],
-    );
-    await instance.database.query(
-      "insert into organization_slugs (slug, organization_id, is_current) values ($1, $2, true)",
-      [moved, instance.organization],
+      "update organizations set slug = $2 where id = $1",
+      [instance.organization, moved],
     );
 
-    for (const slug of [instance.organizationSlug, moved]) {
-      const response = await instance.post({
-        model: `${slug}/task-${selected.task}`,
-      });
-      expect(response.status).toBe(200);
-      expect(response.json().model).toBe(
-        `${moved}/task-${selected.task}/${selected.name}`,
-      );
-    }
+    const response = await instance.post({
+      model: `${moved}/task-${selected.task}`,
+    });
+    expect(response.status).toBe(200);
+    expect(response.json().model).toBe(
+      `${moved}/task-${selected.task}/${selected.name}`,
+    );
+    expect(
+      (
+        await instance.post({
+          model: `${instance.organizationSlug}/task-${selected.task}`,
+        })
+      ).status,
+    ).toBe(404);
   });
 
   it("serves long task/version slugs and retains them in settlement", async () => {
@@ -265,8 +266,8 @@ describe("workspace-private adapters", () => {
     const selected = await version(instance);
     const [author, name] = instance.model.split("/");
     await instance.database.query(
-      "insert into organization_slugs (slug, organization_id, is_current) values ($1, $2, false)",
-      [author, instance.organization],
+      "update organizations set slug = $2 where id = $1",
+      [instance.organization, author],
     );
     await instance.database.query(
       "update tasks set name = $2, production_version_id = $3 where id = $1",

@@ -1,5 +1,5 @@
 {
-  "id": "bad7faec-ffd2-49de-9a13-f5d13a4603f6",
+  "id": "9a5d7a09-df33-4758-8497-f80d58ca2c22",
   "prevId": "923e1227-faef-4afb-973f-05fe19a28ee3",
   "version": "7",
   "dialect": "postgresql",
@@ -1507,76 +1507,6 @@
       },
       "isRLSEnabled": false
     },
-    "public.organization_slugs": {
-      "name": "organization_slugs",
-      "schema": "",
-      "columns": {
-        "slug": {
-          "name": "slug",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "organization_id": {
-          "name": "organization_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "is_current": {
-          "name": "is_current",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "organization_slugs_one_current": {
-          "name": "organization_slugs_one_current",
-          "columns": [
-            {
-              "expression": "organization_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"organization_slugs\".\"is_current\"",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "organization_slugs_organization_id_organizations_id_fk": {
-          "name": "organization_slugs_organization_id_organizations_id_fk",
-          "tableFrom": "organization_slugs",
-          "tableTo": "organizations",
-          "columnsFrom": ["organization_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "organization_slugs_slug_check": {
-          "name": "organization_slugs_slug_check",
-          "value": "\"organization_slugs\".\"slug\" ~ '^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$'"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.organizations": {
       "name": "organizations",
       "schema": "",
@@ -1598,6 +1528,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "left(md5(gen_random_uuid()::text), 16)"
         },
         "status": {
           "name": "status",
@@ -1651,7 +1588,13 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "organizations_slug_unique": {
+          "name": "organizations_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": ["slug"]
+        }
+      },
       "policies": {},
       "checkConstraints": {
         "organizations_kind_check": {
@@ -1661,6 +1604,10 @@
         "organizations_status_check": {
           "name": "organizations_status_check",
           "value": "\"organizations\".\"status\" in ('active', 'suspended')"
+        },
+        "organizations_slug_check": {
+          "name": "organizations_slug_check",
+          "value": "\"organizations\".\"slug\" ~ '^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$'"
         }
       },
       "isRLSEnabled": false

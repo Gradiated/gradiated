@@ -127,6 +127,7 @@ Direct customers and distribution channels such as OpenRouter use the same organ
 | `id`               | uuid        | no   | Primary key                                 |
 | `kind`             | text        | no   | `customer`, `distribution_channel`          |
 | `name`             | text        | no   | Bounded display name                        |
+| `slug`             | text        | no   | Unique; `^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$` |
 | `status`           | text        | no   | `active`, `suspended`                       |
 | `auto_join_domain` | text        | yes  | Lowercase email domain; unique when present |
 | `onboarded_at`     | timestamptz | yes  | When the owner finished first-run setup     |
@@ -135,18 +136,7 @@ Direct customers and distribution channels such as OpenRouter use the same organ
 
 OpenRouter is an internal `distribution_channel` organization and is not visible in the customer organization chooser.
 
-### 5a. `organization_slugs`
-
-Every slug an organization has held. The current one prefixes the organization's private model names, as in `acme/support-triage`.
-
-| Field             | Type        | Null | Rules                                                      |
-| ----------------- | ----------- | ---- | ---------------------------------------------------------- |
-| `slug`            | text        | no   | Primary key; `^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$`           |
-| `organization_id` | uuid        | no   | FK `organizations.id`, cascade                             |
-| `is_current`      | boolean     | no   | Exactly one current slug per organization (partial unique) |
-| `created_at`      | timestamptz | no   | When the organization took the slug                        |
-
-Current and past slugs share one primary key, so a slug belongs to one organization for as long as the row exists. A new organization starts with a random 16-character slug. During onboarding the owner chooses the real one: the console suggests a slugified form of the organization name and the owner can edit it; a slug held by another organization is refused so they can pick again. Admins can change it later in settings. Fixed platform names (`gradiated`, `openai`, `anthropic`, `api`, ...) and the author segment of every hosted catalog id (`google`, `qwen`, ...) are reserved, so a private name never shadows a catalog id. A changed slug stays with the organization, so requests that use it keep resolving; returning to an earlier slug reuses its row. Only deleting the row, or the organization, releases a slug. Migration 0030 gives existing organizations a slug from their name, with `-2`, `-3`, ... on collisions and an `-org` suffix for reserved or too-short names.
+The organization `slug` prefixes its private model names, as in `acme/support-triage`. A new organization starts with a random 16-character slug. During onboarding the owner chooses the real one: the console suggests a slugified form of the organization name and the owner can edit it; a slug held by another organization is refused so they can pick again. Admins can change it in settings until the organization has its first model, after which it is fixed so model names never stop resolving. Fixed platform names (`gradiated`, `openai`, `anthropic`, `api`, ...) and the author segment of every hosted catalog id (`google`, `qwen`, ...) are reserved, so a private name never shadows a catalog id. Migration 0030 gives existing organizations a slug from their name, with `-2`, `-3`, ... on collisions and an `-org` suffix for reserved or too-short names.
 
 A new user's signup organization has a null `onboarded_at`, and the console asks its owner to name it before continuing. An owner or admin may set `auto_join_domain` only to the domain of their own verified email, and only when that domain is not a free or disposable email provider. When a user signs up with a verified email at a claimed domain of an active customer organization, they join it as a `member` and no personal organization is created. One organization may claim a domain.
 
@@ -880,8 +870,7 @@ Workspace `default_judge_model` seeds `tasks.judge_model_id` when a task is firs
 
 A private model's public name is `<organization slug>/<task>` for the task's
 production version and `<organization slug>/<task>/<version>` for one version. The
-gateway resolves it within the calling key's workspace and accepts any slug the
-organization has held; responses and usage use the current slug. GPU runtimes
+gateway resolves it within the calling key's workspace. GPU runtimes
 name an adapter `<workspace_id>/<task>/<version>`, which does not change when the
 slug does.
 

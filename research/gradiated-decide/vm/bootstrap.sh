@@ -10,6 +10,8 @@ cd "$ROOT"
 command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
 export PATH=$HOME/.local/bin:$PATH
 command -v aws >/dev/null || { apt-get update -qq && apt-get install -y -qq awscli >/dev/null || uv tool install awscli; }
+# Upload 280 GB training states in minutes rather than an hour.
+aws configure set default.s3.max_concurrent_requests 64; aws configure set default.s3.multipart_chunksize 64MB
 
 if [ ! -x venv/bin/python ]; then
   uv venv -q -p 3.12 venv

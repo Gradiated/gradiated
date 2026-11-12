@@ -47,10 +47,16 @@ data with KnowLine's prompts and fine-tunes KnowLine with its label readout (not
 
 Training runs on Nebius spot VMs from `tools/dev-training/dev_training.py`. `vm/bootstrap.sh` builds the
 environment, downloads the pinned base revision and restores from S3; `vm/s3-sync.sh` mirrors finished
-`state-*` (sharded model and optimizer, every ~40 minutes), `export-*` (loadable bf16 checkpoints), logs and
+`state-*` (sharded model and optimizer, every `--state-minutes`), `export-*` (loadable bf16 checkpoints), logs and
 evaluation results to `s3://$DEV_TRAINING_S3_BUCKET/gradiated-decide/`. A replacement VM resumes from the newest
 complete state. `vm/campaign.sh RUN DATA "ALPHAS" [train args]` runs bootstrap, training and the merge sweep
 (`vm/after-train.sh`) unattended, and can simply be restarted on a replacement VM.
+
+`vm/watchdog.sh NAME DONE_MARKER 'JOB'` runs on the workstation and keeps one job alive across preemptions: it
+restarts a stopped VM on its own disk, moves the job to a new VM in another region when that fails, relaunches a job
+that died (up to three times), and stops the VM once the job finishes. `s3-sync.sh` uploads results and logs every
+5 minutes, including unfinished evaluation shards, so `run-eval.sh` and `run-external.sh` resume on a replacement VM.
+Training states (280 GB for the Qwen decider) upload only once complete.
 
 ## Licence
 
@@ -97,5 +103,39 @@ training data; no area falls by more than 0.2 points. Unmerged, the fine-tune dr
 the merge helps. The public index is the only score measured here; the board's private same-skill and new-domain
 tests are not available to us.
 
-Artifacts are in `s3://gradiated-dev-training-873716897517/gradiated-decide/`: `runs/merges/gd-v1-s1652-a0.5`
-(loadable checkpoint), `runs/gd-v1/` (exports, last training state, log), `runs/evals/` (scores and results).
+Artifacts are in `s3://gradiated-dev-training-873716897517/gradiated-decide/`: `runs/gd-v1/` (exports, last training
+state, log; rebuild the 0.5 blend with `gdecide.merge` from `export-1652`), `runs/evals/` (scores and results).
+
+## Result: gd-v2 (KL anchor)
+
+gd-v1's recipe and data plus `--anchor 1.0` (KL to the frozen base). The anchor kept the unmerged model closer to the
+base (dev 67.33 unmerged, 67.81 at 0.7, 67.80 at 0.5) but the best blend scored 68.65 on the full panel, 0.26 below
+gd-v1. gd-v1 stays the Qwen candidate.
+
+## Result: KnowLine ensembles (dev sample)
+
+| Model | Dev sample |
+|---|---|
+| pplx-decider-v1.2 (base) | 67.22 |
+| gd-v1 0.5 | 68.00 |
+| KnowLine-31B-Gen1.5 | 69.76 |
+| 50/50 KnowLine + base | 70.69 |
+| 50/50 KnowLine + gd-v1 0.5 | 71.12 |
+
+## Gemini Decision 1 launch panel
+
+`gdecide.external` runs the text benchmarks of Google's Gemini Decision 1 table (2026-11-11) and reports top-1
+accuracy (ESCI: macro-F1) and top-1 ECE, counting unanswered requests as wrong: JevBench public (Benchmark Heaven,
+231 decisions), PubMedQA (pqa_labeled), Global-MMLU-Lite (non-English test), and our Decision Index rows for Amazon
+ESCI, When2Call and New Yorker (text descriptions). Google did not publish prompts, subsets or harness and its ECE
+pools seven evals, so the comparison is indicative. We train on the ESCI and When2Call train splits.
+
+| Benchmark | Base | gd-v1 0.5 | KnowLine | KnowLine + gd-v1 | Gemini Decision 1 | Jev 1.14 |
+|---|---|---|---|---|---|---|
+| JevBench public | 89.18 | 90.04 | 90.48 | 92.21 | 92.2 | 90.0 |
+| Amazon ESCI (macro-F1) | 62.45 | 64.64 | 60.95 | 63.38 | 58.7 | 56.7 |
+| New Yorker | 78.79 | 81.44 | 84.66 | 86.17 | 79.7 | 72.0 |
+| PubMedQA | 80.20 | 81.20 | 82.20 | 81.90 | 79.8 | 78.2 |
+| Global-MMLU-Lite | 79.69 | 79.83 | 84.05 | 84.94 | 86.0 | 85.0 |
+| When2Call | 90.33 | 92.06 | 91.13 | 91.84 | 79.9 | 82.0 |
+| Top-1 ECE (mean of six) | 0.045 | 0.040 | 0.037 | 0.035 | 0.025 (7) | 0.049 (7) |

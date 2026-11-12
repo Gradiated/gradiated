@@ -7,6 +7,10 @@ NAME=$1; CKPT=$2; WHICH=${3:-sample}; shift 3 || true
 cd "$ROOT"
 OUT=runs/evals/$NAME-$WHICH
 mkdir -p "$OUT"
+# On a replacement VM, resume from the shards s3-sync.sh uploaded (evaluate.py skips ids already answered).
+[ -f "$OUT/done" ] || ls "$OUT"/results-*.jsonl >/dev/null 2>&1 || \
+  aws s3 sync --only-show-errors "$S3_PREFIX/$OUT" "$OUT" --exclude "*" --include "results-*.jsonl" || true
+pgrep -f vm/s3-sync.sh >/dev/null || (setsid nohup bash src/gradiated-decide/vm/s3-sync.sh > logs/s3-sync.log 2>&1 < /dev/null &)
 cd src/gradiated-decide
 ../../venv/bin/torchrun --standalone --nproc-per-node 8 -m gdecide.evaluate --suite "$ROOT/suite/suite-0.3" \
   --checkpoint "$CKPT" --out "$ROOT/$OUT" --sample "$ROOT/suite/$WHICH-ids.json" "$@" > "$ROOT/$OUT/eval.log" 2>&1

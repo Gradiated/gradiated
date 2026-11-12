@@ -4,7 +4,17 @@
 set -uo pipefail
 source "$HOME/gdecide/env.sh"
 RUN=$1; ALPHAS=${2:-"1.0 0.7 0.5"}
-cd "$ROOT"
+cd "$ROOT" || exit 1
+# FAMILY=gemma: a KnowLine run, blended with ckpt/knowline and evaluated through the release SGLang servers.
+if [ "${FAMILY:-qwen}" = gemma ]; then
+  BASE_CKPT=$ROOT/ckpt/knowline; EVAL_ARGS=(--backend knowline-http); BASE_NAME=knowline-sgl
+else
+  BASE_CKPT=$ROOT/ckpt/base; EVAL_ARGS=(); BASE_NAME=base
+fi
+evaluate() {  # NAME CKPT sample|panel
+  [ "${FAMILY:-qwen}" = gemma ] && bash src/gradiated-decide/vm/serve-knowline.sh "$2"
+  COMPARE=runs/evals/$BASE_NAME-$3 bash src/gradiated-decide/vm/run-eval.sh "$1" "$2" "$3" "${EVAL_ARGS[@]}"
+}
 until grep -q '"event": "finished"' "runs/$RUN/train.log.jsonl" 2>/dev/null; do sleep 60; done
 FINAL=$(ls -d runs/$RUN/export-*/ | sort -t- -k3 -n | tail -1); FINAL=${FINAL%/}
 STEP=${FINAL##*-}
@@ -14,14 +24,14 @@ for a in $ALPHAS; do
   ckpt=$ROOT/$FINAL
   if [ "$a" != "1.0" ]; then
     ckpt=$ROOT/runs/merges/$name
-    [ -f "$ckpt/done" ] || (cd src/gradiated-decide && ../../venv/bin/python -m gdecide.merge --base "$ROOT/ckpt/base" --models "$ROOT/$FINAL" --weights "$a" --out "$ckpt")
+    [ -f "$ckpt/done" ] || (cd src/gradiated-decide && ../../venv/bin/python -m gdecide.merge --base "$BASE_CKPT" --models "$ROOT/$FINAL" --weights "$a" --out "$ckpt")
   fi
-  COMPARE=runs/evals/base-sample bash src/gradiated-decide/vm/run-eval.sh "$name" "$ckpt" sample
+  evaluate "$name" "$ckpt" sample
   idx=$(python3 -c "import json;print(json.load(open('runs/evals/$name-sample/gdecide-score.json'))['index'])")
   echo "{\"candidate\": \"$name\", \"sample_index\": $idx}" >> "runs/$RUN/candidates.jsonl"
   if python3 -c "import sys;sys.exit(0 if $idx > $best_index else 1)"; then best=$name; best_index=$idx; best_ckpt=$ckpt; fi
 done
 echo "{\"best\": \"$best\", \"sample_index\": $best_index}" >> "runs/$RUN/candidates.jsonl"
-COMPARE=runs/evals/base-panel bash src/gradiated-decide/vm/run-eval.sh "$best" "$best_ckpt" panel
+evaluate "$best" "$best_ckpt" panel
 touch "runs/$RUN/after-train-done"
 aws s3 cp --only-show-errors "runs/$RUN/candidates.jsonl" "$S3_PREFIX/runs/$RUN/candidates.jsonl"

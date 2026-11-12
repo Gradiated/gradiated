@@ -3,7 +3,8 @@
     python -m gdecide.prepare --checkpoint CKPT --mix mix.json --out DATA_DIR [--workers 32] [--family gemma]
 
 ``mix.json``: {"seed": int, "dev_fraction": 0.01, "max_length": 8192,
-               "sources": [{"glob": "data/hub/*.jsonl.gz", "max_rows": 100000, "weight": 1.0}, ...]}
+               "sources": [{"glob": "data/hub/*.jsonl.gz", "max_rows": 100000, "weight": 1.0,
+                            "exclude": ["substring of the row's source, id or metadata", ...]}, ...]}
 Rows come from the hub and train-split builders (state, questions, expected, source). Each source is
 sampled deterministically (hash of the row id) down to ``max_rows``. Choice questions have their options
 permuted with probability ``shuffle`` (keys keep their descriptions, so the target is unchanged); this removes
@@ -114,8 +115,12 @@ def main() -> None:
     train_jobs, dev_jobs, manifest = [], [], {"mix": mix, "sources": []}
     for src in mix["sources"]:
         rows = []
+        exclude = src.get("exclude", [])
         for line in read_lines(src["glob"]):
             row = json.loads(line)
+            origin = f"{row.get('source')} {row.get('id')} {json.dumps(row.get('metadata', {}))}"
+            if any(x in origin for x in exclude):
+                continue
             rows.append((h(f"{seed}:{row.get('source')}:{row.get('id')}:{line[:200]}"), line))
         rows.sort()
         cap = src.get("max_rows")

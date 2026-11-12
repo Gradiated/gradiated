@@ -34,7 +34,7 @@ def main() -> None:
     base, models, out = Path(args.base), [Path(m) for m in args.models], Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     for f in models[0].iterdir():
-        if f.is_file() and not f.name.startswith("model-") and f.name not in ("model.safetensors.index.json", "readout.safetensors", "done"):
+        if f.is_file() and not f.name.startswith("model-") and f.name not in ("model.safetensors.index.json", "readout.safetensors", "done", "SHA256SUMS"):
             shutil.copy2(f, out / f.name)
     rest = 1.0 - sum(args.weights)
     maps = [index(m) for m in models]
@@ -73,8 +73,9 @@ def main() -> None:
             flush()
     flush()
     (out / "model.safetensors.index.json").write_text(json.dumps({"metadata": {"total_size": total}, "weight_map": weight_map}, indent=1))
-    readout = mix(lambda: tensor(base, "readout.safetensors", "weight"), [lambda m=m: tensor(m, "readout.safetensors", "weight") for m in models])
-    save_file({"weight": readout}, str(out / "readout.safetensors"))
+    if (base / "readout.safetensors").exists():  # Decider checkpoints; KnowLine reads labels from the tied embedding
+        readout = mix(lambda: tensor(base, "readout.safetensors", "weight"), [lambda m=m: tensor(m, "readout.safetensors", "weight") for m in models])
+        save_file({"weight": readout}, str(out / "readout.safetensors"))
     (out / "MODIFICATIONS").write_text("Gradiated Decide: weight interpolation " + json.dumps({"base": str(base), "models": [str(m) for m in models], "weights": args.weights}) + "\n")
     (out / "done").write_text("ok\n")
     print(json.dumps({"out": str(out), "tensors": len(weight_map), "files": len(files)}))

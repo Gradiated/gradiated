@@ -82,7 +82,7 @@ def main() -> None:
     parser.add_argument("--max-length", type=int, default=131072)
     parser.add_argument("--batch-tokens", type=int, default=32768)
     parser.add_argument("--temperature", type=float)
-    parser.add_argument("--backend", choices=("pplx", "knowline"), default="pplx")
+    parser.add_argument("--backend", choices=("pplx", "knowline", "knowline-http"), default="pplx")
     parser.add_argument("--option", action="append", default=[], help="backend option KEY=VALUE (knowline)")
     args = parser.parse_args()
 
@@ -115,7 +115,18 @@ def main() -> None:
 
     device = f"cuda:{local}"
     torch.cuda.set_device(local)
-    if args.backend == "knowline":
+    if args.backend == "knowline-http":
+        from gdecide.backends.knowline_http import KnowLineHTTP
+
+        options = backend_options(args.option)
+        port = int(options.pop("base_port", 8080)) + local
+        decider = KnowLineHTTP(f"http://127.0.0.1:{port}", **options)
+        unsupported = decider.unsupported
+        temperature = None
+        engine = f"knowline-http:{Path(args.checkpoint).name}"
+        settings = decider.settings
+        decider.temperature = 1.0
+    elif args.backend == "knowline":
         from gdecide.backends.knowline import KnowLineDecider
 
         if args.adapter:

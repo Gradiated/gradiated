@@ -4,7 +4,13 @@ import {
   TrainingAdmissionError,
 } from "@gradiated/control";
 import { describe, expect, it, vi } from "vitest";
-import { authenticated, createTestApp, user, workspaceId } from "./support.js";
+import {
+  authenticated,
+  createTestApp,
+  organizationId,
+  user,
+  workspaceId,
+} from "./support.js";
 
 const path = `/api/v1/workspaces/${workspaceId}`;
 const runId = "0198ae50-94d8-7d4d-a8be-9f9b44b8c774";
@@ -12,6 +18,7 @@ const at = new Date("2026-09-29T10:00:00.000Z");
 
 const task = {
   id: runId,
+  organizationId,
   workspaceId,
   name: "Billing Questions",
   baseModelId: "gradiated/base",

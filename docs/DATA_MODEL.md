@@ -127,6 +127,7 @@ Direct customers and distribution channels such as OpenRouter use the same organ
 | `id`               | uuid        | no   | Primary key                                 |
 | `kind`             | text        | no   | `customer`, `distribution_channel`          |
 | `name`             | text        | no   | Bounded display name                        |
+| `slug`             | text        | no   | Unique; `^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$` |
 | `status`           | text        | no   | `active`, `suspended`                       |
 | `auto_join_domain` | text        | yes  | Lowercase email domain; unique when present |
 | `onboarded_at`     | timestamptz | yes  | When the owner finished first-run setup     |
@@ -134,6 +135,8 @@ Direct customers and distribution channels such as OpenRouter use the same organ
 | `updated_at`       | timestamptz | no   | Last mutation time                          |
 
 OpenRouter is an internal `distribution_channel` organization and is not visible in the customer organization chooser.
+
+The organization `slug` prefixes its private model names, as in `acme/support-triage`. An organization created during signup starts with a random 16-character slug, and its owner chooses the real one during onboarding; one created from the console asks for its slug up front. In both cases the console suggests a slugified form of the organization name and the owner can edit it; a slug held by another organization is refused so they can pick again. Admins can change it in settings until the organization has its first model, after which it is fixed so model names never stop resolving. Fixed platform names (`gradiated`, `openai`, `anthropic`, `api`, ...) and the author segment of every hosted catalog id (`google`, `qwen`, ...) are reserved, so a private name never shadows a catalog id. Migration 0030 gives existing organizations a slug from their name, with `-2`, `-3`, ... on collisions and an `-org` suffix for reserved or too-short names.
 
 A new user's signup organization has a null `onboarded_at`, and the console asks its owner to name it before continuing. An owner or admin may set `auto_join_domain` only to the domain of their own verified email, and only when that domain is not a free or disposable email provider. When a user signs up with a verified email at a claimed domain of an active customer organization, they join it as a `member` and no personal organization is created. One organization may claim a domain.
 
@@ -814,10 +817,10 @@ URLs remain intact.
 
 ## Task training
 
-Migration 0008 adds workspace-owned `tasks`, named uniquely within a workspace.
-Task names cannot be `.` or `..`, because task routes use the name as a URL path
-segment. The collector registers a task when it accepts its first captured trace,
-using an idempotent insert keyed by workspace and task name. PostgreSQL outages
+Migration 0008 adds workspace-owned `tasks`. Task names are unique within the
+workspace and cannot be `.` or `..`, because task routes use the name as a URL
+path segment. The collector registers a task when it accepts its first captured
+trace, using an idempotent insert keyed by workspace and task name. PostgreSQL outages
 do not block capture or uploads: pending registrations remain on local disk and
 retry in the background, including after process restart. A bounded one-hour
 in-memory cache avoids repeated writes for known tasks. Task listing reads
@@ -850,7 +853,8 @@ workflow transitions. See [the run contract](TASK_FINE_TUNING_RUN_CONTRACT.md).
 adapters have no training run. Composite
 foreign keys require that the workspace owns the task and that the run belongs
 to that same task. Each run produces at most one version; version names are
-workspace-unique. Adapter metadata records an immutable URI, digest, byte size,
+unique within their task. A trained version is named by its input cutoff date,
+`yyyy-mm-dd`, then `-2`, `-3`, ... for further versions that day. Adapter metadata records an immutable URI, digest, byte size,
 format and rank. Large artifacts and datasets remain in object storage.
 
 The task's production-version pointer is changed explicitly by an editor, only
@@ -863,6 +867,31 @@ Executor-specific support is checked when admitting a run.
 Workspace `default_judge_model` seeds `tasks.judge_model_id` when a task is first captured. Each task can override its judge independently; changing the workspace default never rewrites existing tasks. Migration 0013 renames the workspace field and backfills existing tasks from their workspace’s current default. Training admission snapshots the saved task judge.
 
 ## Private LoRA serving
+
+A private model's public name is `<organization slug>/<task>` for the task's
+production version and `<organization slug>/<task>/<version>` for one version. The
+gateway resolves it within the calling key's workspace to one version and
+records that version's full public name in the response and usage. GPU runtimes
+never see model names: they key an adapter `<workspace_id>/<version_id>` and fetch
+its download grant by version ID.
+
+A task's name becomes a model name when its first version is written, from a
+training run or an upload. Migration 0030 adds `tasks.organization_id`, which an
+insert trigger on `task_versions` sets at that point to
+the workspace's organization, with a composite foreign key to the workspace and a
+unique `(organization_id, name)`. Model names are therefore unique across
+the organization, while trace labels still register tasks per workspace. A model
+name contains no `/` and has at most 128 characters, so the public name fits the
+gateway's 300-character model ID; a check enforces this only for claimed names,
+and the trigger leaves other names unclaimed. The trigger locks the organization
+row, as slug changes do, so a slug can't change under an organization's first
+model; running it in the database also covers versions written by older code
+during a rollout.
+Training and uploads are refused when another workspace of the organization
+already has a model with the name. Only claimed tasks resolve at the gateway or
+load on GPU runtimes. The migration claims names for tasks that already have
+versions; where several workspaces of one organization share such a name, the
+oldest task keeps it.
 
 Private LoRA inference reuses `task_versions` for workspace ownership, immutable
 artifact URI/checksum/rank and durable serving eligibility. The existing

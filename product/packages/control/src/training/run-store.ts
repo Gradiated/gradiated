@@ -255,7 +255,8 @@ export const createTrainingRunStore = (database: ControlDatabase) => ({
         .from(tasks)
         .where(eq(tasks.id, input.taskId))
         .for("update");
-      if (rawTask) TaskRecordSchema.parse(rawTask);
+      if (!rawTask) throw new Error("The task was not found.");
+      const task = TaskRecordSchema.parse(rawTask);
 
       const [rawExisting] = await tx
         .select()
@@ -275,12 +276,11 @@ export const createTrainingRunStore = (database: ControlDatabase) => ({
       if (!run || run.stage !== "publishing")
         throw new Error("Run is not publishing.");
 
-      const day = input.inputCutoff.slice(0, 10).replaceAll("-", "");
-      const prefix = `${input.name}-${day}`;
+      const prefix = input.inputCutoff.slice(0, 10);
       const versions = await tx
         .select({ name: taskVersions.name })
         .from(taskVersions)
-        .where(eq(taskVersions.workspaceId, input.workspaceId));
+        .where(eq(taskVersions.taskId, task.id));
       const names = new Set(
         VersionRecordSchema.pick({ name: true })
           .array()

@@ -79,6 +79,7 @@ export const apiKeyRecord: ApiKeyRecord = {
 export const organizationSummary: UserOrganization = {
   id: organizationId,
   name: "Personal",
+  slug: "personal",
   status: "active",
   role: "admin",
   defaultWorkspaceId: workspaceId,
@@ -90,6 +91,7 @@ export const createdOrganization: CreatedOrganization = {
   id: organizationId,
   kind: "customer",
   name: "Analytical Engines",
+  slug: "analytical-engines",
   status: "active",
   role: "admin",
   defaultWorkspaceId: workspaceId,

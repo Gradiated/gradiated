@@ -1543,6 +1543,7 @@ export interface components {
        */
       id: string;
       name: string;
+      slug: components["schemas"]["OrganizationSlug"];
       /** @enum {string} */
       status: "active" | "suspended";
       role: components["schemas"]["OrganizationRole"];
@@ -1556,6 +1557,8 @@ export interface components {
       /** @description Whether the owner has finished first-run setup. */
       onboarding_completed: boolean;
     };
+    /** @description Unique organization handle that prefixes its private model names, as in `acme/support-triage`. It is fixed once the organization has a model. */
+    OrganizationSlug: string;
     /** @enum {string} */
     OrganizationRole: "admin" | "member";
     ImpersonationResult: {
@@ -1574,6 +1577,7 @@ export interface components {
     };
     UpdateOrganization: {
       name?: string;
+      slug?: string;
       /** @description Must match the caller's verified company email domain, or null to stop automatic joining. */
       auto_join_domain?: string | null;
       /** @enum {boolean} */
@@ -1588,6 +1592,7 @@ export interface components {
       /** @enum {string} */
       kind: "customer";
       name: string;
+      slug: components["schemas"]["OrganizationSlug"];
       /** @enum {string} */
       status: "active";
       /** @enum {string} */
@@ -1610,6 +1615,7 @@ export interface components {
     };
     CreateOrganization: {
       name: string;
+      slug?: string;
     };
     MemberList: {
       data: components["schemas"]["Member"][];
@@ -3894,6 +3900,15 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
+      /** @description The slug is taken or reserved. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
       /** @description The request body is invalid. */
       422: {
         headers: {
@@ -3996,6 +4011,15 @@ export interface operations {
       };
       /** @description No valid human session is present. */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The slug is taken or reserved. */
+      409: {
         headers: {
           [name: string]: unknown;
         };

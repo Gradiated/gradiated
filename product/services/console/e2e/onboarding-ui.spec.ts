@@ -20,6 +20,7 @@ const setup = async (
     role: "admin",
     status: "active",
     default_workspace_id: "00000000-0000-4000-8000-000000000002",
+    slug: "k3v9q2m8x7p4w1z6",
     auto_join_domain: autoJoinDomain,
     onboarding_completed: onboardingCompleted,
   };
@@ -64,6 +65,11 @@ const setup = async (
     ) {
       const patch = route.request().postDataJSON();
       patches.push(patch);
+      if (patch.slug === "taken")
+        return route.fulfill({
+          status: 409,
+          json: { detail: "Another organization already uses this slug." },
+        });
       Object.assign(organization, patch);
       return route.fulfill({ json: organization });
     }
@@ -105,13 +111,18 @@ test("a company-email owner names the organization and turns on domain joining",
     }),
   ).toBeChecked();
 
+  const slug = page.getByRole("textbox", { name: "Organization slug" });
+  await expect(slug).toHaveValue("acme");
   await name.fill("  Acme Corp ");
+  await expect(slug).toHaveValue("acme-corp");
+  await expect(page.getByText("acme-corp/support-triage")).toBeVisible();
   await page.getByRole("button", { name: "Continue" }).click();
 
   await expect(page).toHaveURL(/\/models\?welcome=true$/);
   expect(patches).toEqual([
     {
       name: "Acme Corp",
+      slug: "acme-corp",
       auto_join_domain: "acme.com",
       onboarding_completed: true,
     },
@@ -144,7 +155,12 @@ test("a company-email owner can leave domain joining off", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/models\?welcome=true$/);
   expect(patches).toEqual([
-    { name: "Acme", auto_join_domain: null, onboarding_completed: true },
+    {
+      name: "Acme",
+      slug: "acme",
+      auto_join_domain: null,
+      onboarding_completed: true,
+    },
   ]);
 });
 
@@ -166,7 +182,44 @@ test("a personal-email owner only names the organization", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/models\?welcome=true$/);
   expect(patches).toEqual([
-    { name: "Side project", onboarding_completed: true },
+    { name: "Side project", slug: "side-project", onboarding_completed: true },
+  ]);
+});
+
+test("an edited slug stops following the name and a taken one can be changed", async ({
+  page,
+}) => {
+  const { patches } = await setup(page, {
+    email: "alex@acme.com",
+    companyEmailDomain: "acme.com",
+  });
+
+  await page.goto("/onboarding");
+  const slug = page.getByRole("textbox", { name: "Organization slug" });
+  await slug.fill("Acme_");
+  await expect(
+    page.getByText("Use 2 to 39 lowercase letters", { exact: false }),
+  ).toBeVisible();
+  const continueButton = page.getByRole("button", { name: "Continue" });
+  await expect(continueButton).toBeDisabled();
+
+  await slug.fill("taken");
+  await page
+    .getByRole("textbox", { name: "Organization name" })
+    .fill("Acme Labs");
+  await expect(slug).toHaveValue("taken");
+  await continueButton.click();
+  await expect(
+    page.getByText("Another organization already uses this slug."),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/\/onboarding$/);
+
+  await slug.fill("acme-labs");
+  await continueButton.click();
+  await expect(page).toHaveURL(/\/models\?welcome=true$/);
+  expect(patches).toMatchObject([
+    { name: "Acme Labs", slug: "taken" },
+    { name: "Acme Labs", slug: "acme-labs" },
   ]);
 });
 

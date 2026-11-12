@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { TaskRow, VersionView } from "@/store/fine-tuning-types";
+import { usePrivateModelName } from "@/hooks/use-private-model-name";
 import { useTrainingMutation } from "@/hooks/use-training";
 
 export const PromoteDialog = ({
@@ -26,6 +27,7 @@ export const PromoteDialog = ({
   onClose: () => void;
 }) => {
   const { promote, canEdit } = useTrainingMutation(task.name);
+  const modelName = usePrivateModelName();
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -33,14 +35,16 @@ export const PromoteDialog = ({
         <DialogHeader>
           <DialogTitle>Promote to production</DialogTitle>
           <DialogDescription>
-            <span className="font-mono">{task.name}</span> will point at{" "}
-            <span className="font-mono">{version.name}</span>. Requests using
-            the task name switch once it is loaded.
+            <span className="font-mono">{modelName(task.name)}</span> will point
+            at <span className="font-mono">{version.name}</span>. Requests using
+            it switch once the version is loaded.
             {production ? (
               <>
                 {" "}
-                <span className="font-mono">{production.name}</span> stays
-                callable by its exact id.
+                <span className="font-mono">
+                  {modelName(task.name, production.name)}
+                </span>{" "}
+                stays callable by its exact name.
               </>
             ) : null}
           </DialogDescription>

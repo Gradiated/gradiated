@@ -3,6 +3,7 @@ import type { RunDatasetSummary, RunEvaluation } from "@gradiated/contracts";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
+  tasks,
   trainingRuns,
   trainingRunEvents,
   taskVersions,
@@ -14,6 +15,7 @@ import { createTrainingService } from "../src/training/service.js";
 import { createMemoryContentStore } from "./support/content-store.js";
 import { createTrainingRunStore } from "../src/training/run-store.js";
 import { createTrainingStore } from "../src/training/store.js";
+import { seedWorkspace } from "./support/fixtures.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 import { seedTrainingTask, trainingAdapter } from "./support/training.js";
 
@@ -46,6 +48,47 @@ describe("transactional training run store", () => {
         base_model_id: qwen.id,
       }),
     ).resolves.toMatchObject({ baseModelId: qwen.id });
+  });
+
+  it("claims a task's model name with its first version, not when a run starts", async () => {
+    const own = await seedTrainingTask(db.database);
+    const claimed = async (taskId: string) =>
+      (
+        await db.database
+          .select({ organizationId: tasks.organizationId })
+          .from(tasks)
+          .where(eq(tasks.id, taskId))
+      )[0]!.organizationId;
+    const addVersion = (task: { id: string; workspaceId: string }) =>
+      db.database.insert(taskVersions).values({
+        id: randomUUID(),
+        workspaceId: task.workspaceId,
+        taskId: task.id,
+        name: randomUUID(),
+        baseModelId: own.input.baseModelId,
+        adapter: trainingAdapter,
+        status: "unavailable",
+      });
+    await createTrainingRunStore(db.database).create(randomUUID(), own.input);
+    expect(await claimed(own.task.id)).toBeNull();
+
+    await addVersion(own.task);
+    expect(await claimed(own.task.id)).toBe(own.organizationId);
+
+    const workspaceId = await seedWorkspace(db.database, {
+      organizationId: own.organizationId,
+    });
+    const traceTask = async (name: string) =>
+      (
+        await db.database
+          .insert(tasks)
+          .values({ id: randomUUID(), workspaceId, name })
+          .returning()
+      )[0]!;
+    await expect(addVersion(await traceTask(own.task.name))).rejects.toThrow();
+    const unroutable = await traceTask("support/triage");
+    await addVersion(unroutable);
+    expect(await claimed(unroutable.id)).toBeNull();
   });
 
   it("validates and deduplicates trainer observations while rejecting lifecycle events", async () => {
@@ -420,7 +463,7 @@ describe("transactional training run store", () => {
       (await reads.listVersions(own.task.id))
         .map((version) => version.name)
         .sort(),
-    ).toEqual(["triage-20260930", "triage-20260930-2"]);
+    ).toEqual(["2026-09-30", "2026-09-30-2"]);
   });
 
   it("rolls back a failed publication without storing an adapter or published event", async () => {

@@ -72,12 +72,13 @@ impl Tenant {
 
         client
             .batch_execute(&format!(
-                "insert into organizations (id, kind, name, status)
-                 values ('{organization_id}', 'customer', 'reader-test', 'active');
+                "insert into organizations (id, kind, name, status, slug)
+                 values ('{organization_id}', 'customer', 'reader-test', 'active', 'reader-{}');
                  insert into billing_accounts (organization_id, mode, balance)
                  values ('{organization_id}', 'prepaid', 1000);
                  insert into workspaces (id, organization_id, name, is_default)
-                 values ('{workspace_id}', '{organization_id}', 'Default', true);"
+                 values ('{workspace_id}', '{organization_id}', 'Default', true);",
+                organization_id.simple()
             ))
             .await
             .unwrap();
@@ -123,6 +124,13 @@ impl Tenant {
         }
     }
 
+    fn name(&self, task_and_version: &str) -> String {
+        format!(
+            "reader-{}/{task_and_version}",
+            self.organization_id.simple()
+        )
+    }
+
     async fn adapter(
         &self,
         reader: &PostgresReader,
@@ -135,8 +143,8 @@ impl Tenant {
         let version = Uuid::now_v7();
         client
             .execute(
-                "insert into tasks (id, workspace_id, name, base_model_id) values ($1, $2, $3, $4)",
-                &[&task, &self.workspace_id, &task_name, &self.model_id],
+                "insert into tasks (id, organization_id, workspace_id, name, base_model_id) values ($1, $2, $3, $4, $5)",
+                &[&task, &self.organization_id, &self.workspace_id, &task_name, &self.model_id],
             )
             .await
             .unwrap();
@@ -522,16 +530,12 @@ async fn adapter_query_reads_exact_versions_and_production_with_workspace_isolat
     let reader = local_reader();
     let owner = Tenant::insert(&reader).await;
     let other = Tenant::insert(&reader).await;
-    let (task, version) = owner
-        .adapter(&reader, "support", "support/triage-日本語-v1")
-        .await;
-    let (_, other_version) = other
-        .adapter(&reader, "support", "support/triage-日本語-v1")
-        .await;
+    let (task, version) = owner.adapter(&reader, "support", "triage-日本語-v1").await;
+    let (_, other_version) = other.adapter(&reader, "support", "triage-日本語-v1").await;
     production(&reader, task, Some(version)).await;
 
     let exact = reader
-        .private_adapter_json(owner.workspace_id, "support/triage-日本語-v1")
+        .private_adapter_json(owner.workspace_id, &owner.name("support/triage-日本語-v1"))
         .await
         .unwrap()
         .unwrap();
@@ -545,13 +549,13 @@ async fn adapter_query_reads_exact_versions_and_production_with_workspace_isolat
     assert_eq!(adapter.sha256, "a".repeat(64));
     assert_eq!(
         reader
-            .private_adapter_json(owner.workspace_id, "support")
+            .private_adapter_json(owner.workspace_id, &owner.name("support"))
             .await
             .unwrap(),
         Some(exact)
     );
     let other_record = reader
-        .private_adapter_json(other.workspace_id, "support/triage-日本語-v1")
+        .private_adapter_json(other.workspace_id, &other.name("support/triage-日本語-v1"))
         .await
         .unwrap()
         .unwrap();
@@ -559,14 +563,14 @@ async fn adapter_query_reads_exact_versions_and_production_with_workspace_isolat
     assert_eq!(other_adapter.version_id, other_version);
     assert_eq!(
         reader
-            .private_adapter_json(Uuid::nil(), "support/triage-日本語-v1")
+            .private_adapter_json(Uuid::nil(), &owner.name("support/triage-日本語-v1"))
             .await
             .unwrap(),
         None
     );
     assert_eq!(
         reader
-            .private_adapter_json(owner.workspace_id, "missing")
+            .private_adapter_json(owner.workspace_id, &owner.name("missing"))
             .await
             .unwrap(),
         None
@@ -578,36 +582,110 @@ async fn adapter_query_reads_exact_versions_and_production_with_workspace_isolat
 
 #[tokio::test]
 #[ignore = "requires migrated PostgreSQL; GATEWAY_TEST_DATABASE_URL selects a disposable database"]
-async fn adapter_query_deduplicates_the_same_version_and_rejects_ambiguous_names() {
+async fn adapter_query_resolves_names_under_the_workspace_organization_slug() {
     let reader = local_reader();
     let owner = Tenant::insert(&reader).await;
-    let (same_task, same_version) = owner.adapter(&reader, "same", "same").await;
-    production(&reader, same_task, Some(same_version)).await;
-    assert!(reader
-        .private_adapter_json(owner.workspace_id, "same")
+    let other = Tenant::insert(&reader).await;
+    let (task, version) = owner.adapter(&reader, "triage", "v1").await;
+    production(&reader, task, Some(version)).await;
+    other.adapter(&reader, "triage", "v1").await;
+    let slug = format!("reader-{}", owner.organization_id.simple());
+    let moved = format!("moved-{}", owner.organization_id.simple());
+    let resolve = |model: String| {
+        let reader = &reader;
+        async move {
+            reader
+                .private_adapter_json(owner.workspace_id, &model)
+                .await
+                .unwrap()
+                .and_then(|record| {
+                    serde_json::from_str::<Option<crate::PrivateAdapter>>(&record).unwrap()
+                })
+        }
+    };
+
+    for model in [
+        format!("{slug}/triage/v1"),
+        format!("{}/triage", slug.to_uppercase()),
+    ] {
+        let adapter = resolve(model.clone()).await.expect(&model);
+        assert_eq!(adapter.version_id, version, "{model}");
+        assert_eq!(adapter.model_id(), format!("{slug}/triage/v1"));
+        assert_eq!(
+            adapter.runtime_name(),
+            format!("{}/{version}", owner.workspace_id)
+        );
+    }
+    let other_slug = format!("reader-{}", other.organization_id.simple());
+    for model in [
+        format!("{other_slug}/triage/v1"),
+        format!("{slug}/triage/v2"),
+        format!("{slug}/other"),
+        "v1".to_owned(),
+        "triage".to_owned(),
+    ] {
+        assert_eq!(resolve(model.clone()).await, None, "{model}");
+    }
+
+    reader
+        .client()
         .await
         .unwrap()
-        .is_some());
-    let (collision, first) = owner
-        .adapter(&reader, "second-version", "first-version")
-        .await;
-    owner
-        .adapter(&reader, "second-task", "second-version")
-        .await;
-    production(&reader, collision, Some(first)).await;
-    assert!(matches!(
+        .execute(
+            "update organizations set slug = $2 where id = $1",
+            &[&owner.organization_id, &moved],
+        )
+        .await
+        .unwrap();
+    let adapter = resolve(format!("{moved}/triage/v1")).await.unwrap();
+    assert_eq!(adapter.model_id(), format!("{moved}/triage/v1"));
+    assert_eq!(resolve(format!("{slug}/triage/v1")).await, None);
+
+    owner.remove(&reader).await;
+    other.remove(&reader).await;
+}
+
+#[tokio::test]
+#[ignore = "requires migrated PostgreSQL; GATEWAY_TEST_DATABASE_URL selects a disposable database"]
+async fn adapter_query_requires_the_organization_slug() {
+    let reader = local_reader();
+    let owner = Tenant::insert(&reader).await;
+    let (task, version) = owner.adapter(&reader, "task", "version").await;
+    production(&reader, task, Some(version)).await;
+    for name in ["task", "version", "task/version"] {
+        assert_eq!(
+            reader
+                .private_adapter_json(owner.workspace_id, name)
+                .await
+                .unwrap(),
+            None,
+            "{name}"
+        );
+    }
+    owner.remove(&reader).await;
+}
+
+#[tokio::test]
+#[ignore = "requires migrated PostgreSQL; GATEWAY_TEST_DATABASE_URL selects a disposable database"]
+async fn adapter_query_requires_a_claimed_model_name() {
+    let reader = local_reader();
+    let owner = Tenant::insert(&reader).await;
+    let (task, _) = owner.adapter(&reader, "task", "version").await;
+    let client = reader.client().await.unwrap();
+    client
+        .execute(
+            "update tasks set organization_id = null where id = $1",
+            &[&task],
+        )
+        .await
+        .unwrap();
+    assert_eq!(
         reader
-            .private_adapter_json(owner.workspace_id, "second-version")
-            .await,
-        Err(PostgresError::Query(_))
-    ));
-    production(&reader, collision, None).await;
-    assert!(matches!(
-        reader
-            .private_adapter_json(owner.workspace_id, "second-version")
-            .await,
-        Err(PostgresError::Query(_))
-    ));
+            .private_adapter_json(owner.workspace_id, &owner.name("task/version"))
+            .await
+            .unwrap(),
+        None
+    );
     owner.remove(&reader).await;
 }
 
@@ -619,7 +697,7 @@ async fn adapter_query_distinguishes_missing_pointers_and_projects_legacy_metada
     let (task, version) = owner.adapter(&reader, "task", "version").await;
     assert_eq!(
         reader
-            .private_adapter_json(owner.workspace_id, "task")
+            .private_adapter_json(owner.workspace_id, &owner.name("task"))
             .await
             .unwrap(),
         Some("null".to_owned())
@@ -628,7 +706,7 @@ async fn adapter_query_distinguishes_missing_pointers_and_projects_legacy_metada
     production(&reader, task, Some(other_version)).await;
     assert_eq!(
         reader
-            .private_adapter_json(owner.workspace_id, "task")
+            .private_adapter_json(owner.workspace_id, &owner.name("task"))
             .await
             .unwrap(),
         Some("null".to_owned())
@@ -636,7 +714,7 @@ async fn adapter_query_distinguishes_missing_pointers_and_projects_legacy_metada
     production(&reader, other_task, None).await;
     reader.client().await.unwrap().execute("update task_versions set adapter = adapter - 'base_model_revision', status = 'unavailable' where id = $1", &[&version]).await.unwrap();
     let record = reader
-        .private_adapter_json(owner.workspace_id, "version")
+        .private_adapter_json(owner.workspace_id, &owner.name("task/version"))
         .await
         .unwrap()
         .unwrap();
@@ -662,10 +740,10 @@ async fn adapter_query_excludes_archived_workspaces_and_suspended_organizations(
         )
         .await
         .unwrap();
-    for name in ["task", "version"] {
+    for name in [owner.name("task"), owner.name("task/version")] {
         assert_eq!(
             reader
-                .private_adapter_json(owner.workspace_id, name)
+                .private_adapter_json(owner.workspace_id, &name)
                 .await
                 .unwrap(),
             None
@@ -685,10 +763,10 @@ async fn adapter_query_excludes_archived_workspaces_and_suspended_organizations(
         )
         .await
         .unwrap();
-    for name in ["task", "version"] {
+    for name in [owner.name("task"), owner.name("task/version")] {
         assert_eq!(
             reader
-                .private_adapter_json(owner.workspace_id, name)
+                .private_adapter_json(owner.workspace_id, &name)
                 .await
                 .unwrap(),
             None

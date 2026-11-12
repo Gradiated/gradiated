@@ -10,6 +10,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { canManageOrganization } from "@/lib/roles";
 import { NameSetting } from "./name-setting";
 import { SettingsHeader } from "./settings-layout";
+import { SlugSetting } from "./slug-setting";
 
 export const OrganizationSettingsPage = () => {
   const { user, organizationId, selectedOrganization } = useProductContext();
@@ -45,6 +46,12 @@ export const OrganizationSettingsPage = () => {
             canEdit={canEdit}
             onSave={(name) => save({ name })}
             successMessage="Organization renamed."
+          />
+          <SlugSetting
+            key={`${selectedOrganization.id}:${selectedOrganization.slug}`}
+            savedSlug={selectedOrganization.slug}
+            canEdit={canEdit}
+            onSave={(slug) => save({ slug })}
           />
           <AutoJoinSetting
             organizationName={selectedOrganization.name}

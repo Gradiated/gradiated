@@ -89,17 +89,18 @@ A Gradiated-only request cannot relay to a provider. Internal mode may use only 
 
 | Name | Form |
 | --- | --- |
-| Production | The bare task slug |
-| Exact version | `<task-slug>/yyyy-mm-dd`, then `-2`, `-3`, … for further versions that UTC day |
-| Task slug | `^[a-z0-9][a-z0-9-]{0,63}$`; immutable; display name may change |
-| Version string | At most 200 ASCII characters; checked integer ordinal; explicit failure on overflow |
-| Internal model id | Globally unique; separate from the public name; keys artifacts and caches |
+| Production | `<organization-slug>/<task-slug>` |
+| Exact version | `<organization-slug>/<task-slug>/<version>`; trained versions are `yyyy-mm-dd`, then `-2`, `-3`, … for further versions with that input cutoff day |
+| Organization slug | `^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$`; unique; fixed once the organization has a model |
+| Task slug | No `/`, at most 128 characters; unique within the organization once the task has a version |
+| Version name | No `/`, at most 128 characters; unique within the task |
+| Runtime name | `<workspace-id>/<version-id>`; keys the adapter on GPU runtimes, which never see model names |
 
-Assign a version date and ordinal when publishing the model, under the task lock. Use the UTC publication date in `yyyy-mm-dd` format; further versions that day use `-2`, `-3`, and so on. Store these fields on the model record. A retry finds the model by its source run ID and returns the same name. Retained model identity records prevent name reuse.
+Assign a version date and ordinal when publishing the model, under the task lock. A retry finds the model by its source run ID and returns the same name.
 
-Task slugs cannot contain `/`. Enforce unique `(workspace_id, slug)` on tasks, unique `(task_id, version_string)` on private models and one published model per source run. Resolve names through these records; there is no name registry table. Failed runs that publish no model need no public name.
+Enforce unique `(organization_id, slug)` on tasks, unique `(task_id, name)` on versions and one published model per source run. Resolve names through these records and `organizations.slug`; there is no other name registry. A request's slug must belong to the calling workspace's organization, and the name resolves within that workspace. Responses and usage record the canonical name. Failed runs that publish no model need no public name.
 
-Global catalog ids must not use the task/version format. Task creation and catalog registration reject collisions between bare task slugs and exact catalog ids. The same private name may exist in different workspaces. Every cache, negative cache, token count, retry, listing and adapter request includes the workspace id.
+Organization slugs may not equal the author segment of a hosted catalog id, so `<slug>/<task>` never shadows a catalog id; the gateway still rejects a name that matches both as ambiguous. Every cache, negative cache, token count, retry, listing and adapter request includes the workspace id.
 
 **Reserved roots.** A task slug may not be `gpt`, `chatgpt`, `o1`, `o3`, `o4` or `claude`, nor one of those followed by `-` or a digit, nor an exact hosted catalog id, compared ASCII case-insensitively. Adding a root requires a collision audit and a migration of existing slugs. Reservation never enables provider routing.
 

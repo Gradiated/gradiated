@@ -309,6 +309,8 @@ async fn adapter_capacity_pressure_is_counted_against_its_base_model() {
     request.request.model = "private-adapter".to_owned();
     request.adapter = Some(crate::PrivateAdapter {
         workspace_id: request.identity.workspace_id,
+        organization_slug: "acme".to_owned(),
+        task_name: "task-a".to_owned(),
         version_id: uuid::Uuid::nil(),
         name: "private-adapter".to_owned(),
         status: "available".to_owned(),

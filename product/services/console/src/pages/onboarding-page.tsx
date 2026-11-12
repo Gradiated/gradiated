@@ -18,6 +18,10 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useCurrentUser, useSession } from "@/hooks/use-session";
+import {
+  OrganizationSlugField,
+  useFollowingSlug,
+} from "@/components/organization-slug-field";
 import { httpStatus } from "@/lib/errors";
 import {
   organizationToOnboard,
@@ -77,6 +81,7 @@ const OrganizationSetup = ({
 }) => {
   const domain = user.company_email_domain;
   const [name, setName] = useState(suggestedOrganizationName(domain));
+  const slug = useFollowingSlug(name);
   const [autoJoin, setAutoJoin] = useState(true);
   const client = useQueryClient();
   const navigate = useNavigate();
@@ -87,6 +92,7 @@ const OrganizationSetup = ({
     mutationFn: () =>
       updateOrganization(organization.id, {
         name: name.trim(),
+        slug: slug.slug,
         ...(domain ? { auto_join_domain: autoJoin ? domain : null } : {}),
         onboarding_completed: true,
       }),
@@ -109,7 +115,7 @@ const OrganizationSetup = ({
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (name.trim() && !save.isPending) save.mutate();
+    if (name.trim() && !slug.error && !save.isPending) save.mutate();
   };
 
   return (
@@ -145,6 +151,11 @@ const OrganizationSetup = ({
             </FieldDescription>
           )}
         </Field>
+        <OrganizationSlugField
+          id="organization-slug"
+          slug={slug}
+          disabled={save.isPending}
+        />
         {domain ? (
           <Field
             orientation="horizontal"
@@ -176,7 +187,7 @@ const OrganizationSetup = ({
           <Button
             type="submit"
             className="w-full"
-            disabled={!name.trim() || save.isPending}
+            disabled={!name.trim() || slug.error !== null || save.isPending}
           >
             {save.isPending ? (
               <LoaderCircle className="size-4 animate-spin" />

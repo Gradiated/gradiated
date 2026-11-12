@@ -25,8 +25,8 @@ export const createAdapterHostingService = (
   const records = createTrainingStore(database);
 
   return {
-    async grant(workspaceId: string, versionName: string) {
-      const row = await records.getHostingVersion(workspaceId, versionName);
+    async grant(workspaceId: string, versionId: string) {
+      const row = await records.getHostingVersion(workspaceId, versionId);
       if (!row)
         throw new ControlServiceError(
           "not_found",
@@ -48,9 +48,11 @@ export const createAdapterHostingService = (
     async productionVersions(baseModelId: string) {
       const versions = await records.listProductionVersions(baseModelId);
 
+      // GPU runtimes name an adapter `<workspace_id>/<version_id>` and never see
+      // model names, so `version_name` carries the version ID.
       return versions.map((version) => ({
         workspace_id: version.workspaceId,
-        version_name: version.name,
+        version_name: version.id,
       }));
     },
   };

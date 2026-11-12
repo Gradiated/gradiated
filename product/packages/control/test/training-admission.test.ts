@@ -18,6 +18,7 @@ type Context = NonNullable<
 const context = (): Context => ({
   task: {
     id: randomUUID(),
+    organizationId: null,
     workspaceId: randomUUID(),
     name: "triage",
     baseModelId: "test/base",
@@ -43,6 +44,7 @@ describe("training admission", () => {
     admissionContext: vi.fn(),
     activeRun: vi.fn(),
     lastSuccessfulCutoff: vi.fn(),
+    modelNameProblem: vi.fn(),
   };
   let row: Context;
 
@@ -89,6 +91,17 @@ describe("training admission", () => {
       expect(countTrainingTraces).not.toHaveBeenCalled();
     },
   );
+
+  it("refuses a name another workspace in the organization uses as a model", async () => {
+    records.modelNameProblem.mockResolvedValue("taken");
+
+    await expect(
+      prepareTraining(database, content, row.task.id, "manual", null),
+    ).rejects.toMatchObject({
+      code: "training_not_configured",
+      message: "taken",
+    });
+  });
 
   it("rejects an active run before reading trace storage", async () => {
     records.activeRun.mockResolvedValue({ id: randomUUID() });

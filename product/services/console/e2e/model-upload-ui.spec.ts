@@ -626,7 +626,7 @@ test("staff add files and see report problems", async ({ page }) => {
   await setup(page);
   const calls = await versionFiles(
     page,
-    { "report.md": '{% callout type="tip" %}Hi{% /callout %}' },
+    { "report.md": '{% callout type="tip" %}\nHi\n{% /callout %}' },
     { staff: true },
   );
   await page.goto(`/tasks/${task.name}/versions/${version.id}`);

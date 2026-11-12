@@ -32,7 +32,7 @@ describe("private adapter hosting", () => {
       .insert(tasks)
       .values({
         id: uuidv7(),
-        modelOrganizationId: owner.organizationId,
+        organizationId: owner.organizationId,
         workspaceId: owner.workspaceId,
         name: "triage",
       })
@@ -158,7 +158,7 @@ describe("private adapter hosting", () => {
     await promote(task.id, version.id);
     await db.database
       .update(tasks)
-      .set({ modelOrganizationId: null })
+      .set({ organizationId: null })
       .where(eq(tasks.id, task.id));
 
     expect(

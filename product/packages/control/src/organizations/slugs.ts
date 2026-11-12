@@ -1,4 +1,5 @@
-import { and, eq, like, or, sql } from "drizzle-orm";
+import { randomInt } from "node:crypto";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { OrganizationSlugSchema } from "@gradiated/contracts";
@@ -36,13 +37,11 @@ const SlugRowSchema = z.object({
   isCurrent: z.boolean(),
 });
 
-export const slugFromName = (name: string) =>
-  name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 30)
-    .replace(/-+$/, "");
+const SLUG_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+/** A placeholder slug for a new organization; owners choose theirs in onboarding. */
+export const randomOrganizationSlug = () =>
+  Array.from({ length: 16 }, () => SLUG_ALPHABET[randomInt(36)]).join("");
 
 // Hosted-catalog authors are reserved so `acme/...` never shadows a catalog id.
 const isReserved = async (database: Database, slug: string) => {
@@ -57,39 +56,11 @@ const isReserved = async (database: Database, slug: string) => {
   return row !== undefined;
 };
 
-export const availableOrganizationSlug = async (
-  database: Database,
-  name: string,
-) => {
-  let base = slugFromName(name);
-  if (base.length < 2 || (await isReserved(database, base)))
-    base = `${base}-org`.replace(/^-+/, "");
-
-  const held = new Set(
-    (
-      await database
-        .select({ slug: organizationSlugs.slug })
-        .from(organizationSlugs)
-        .where(
-          or(
-            eq(organizationSlugs.slug, base),
-            like(organizationSlugs.slug, `${base}-%`),
-          ),
-        )
-    ).map(({ slug }) => slug),
-  );
-  let slug = base;
-  for (let ordinal = 2; held.has(slug); ordinal++) slug = `${base}-${ordinal}`;
-
-  return slug;
-};
-
-// The outgoing slug stays with the organization unless `releasePrevious`.
+// The outgoing slug stays with the organization, so names under it keep resolving.
 export const setCurrentOrganizationSlug = async (
   transaction: Transaction,
   organizationId: string,
   slug: string,
-  options: { releasePrevious?: boolean } = {},
 ) => {
   const [existing] = await transaction
     .select()
@@ -109,17 +80,15 @@ export const setCurrentOrganizationSlug = async (
       "This organization slug is reserved. Choose another.",
     );
 
-  const current = and(
-    eq(organizationSlugs.organizationId, organizationId),
-    eq(organizationSlugs.isCurrent, true),
-  );
-  if (options.releasePrevious)
-    await transaction.delete(organizationSlugs).where(current);
-  else
-    await transaction
-      .update(organizationSlugs)
-      .set({ isCurrent: false })
-      .where(current);
+  await transaction
+    .update(organizationSlugs)
+    .set({ isCurrent: false })
+    .where(
+      and(
+        eq(organizationSlugs.organizationId, organizationId),
+        eq(organizationSlugs.isCurrent, true),
+      ),
+    );
 
   if (held)
     await transaction

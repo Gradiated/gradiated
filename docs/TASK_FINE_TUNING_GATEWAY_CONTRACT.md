@@ -98,7 +98,7 @@ A Gradiated-only request cannot relay to a provider. Internal mode may use only 
 
 Assign a version date and ordinal when publishing the model, under the task lock. A retry finds the model by its source run ID and returns the same name.
 
-Enforce unique `(model_organization_id, slug)` on tasks, unique `(task_id, name)` on versions and one published model per source run. Resolve names through these records and `organization_slugs`; there is no other name registry. A request's slug must belong to the calling workspace's organization, and the name resolves within that workspace. Responses and usage record the canonical name with the current slug. Failed runs that publish no model need no public name.
+Enforce unique `(organization_id, slug)` on tasks, unique `(task_id, name)` on versions and one published model per source run. Resolve names through these records and `organization_slugs`; there is no other name registry. A request's slug must belong to the calling workspace's organization, and the name resolves within that workspace. Responses and usage record the canonical name with the current slug. Failed runs that publish no model need no public name.
 
 Organization slugs may not equal the author segment of a hosted catalog id, so `<slug>/<task>` never shadows a catalog id; the gateway still rejects a name that matches both as ambiguous. Every cache, negative cache, token count, retry, listing and adapter request includes the workspace id.
 

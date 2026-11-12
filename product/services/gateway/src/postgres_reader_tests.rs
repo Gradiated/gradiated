@@ -145,7 +145,7 @@ impl Tenant {
         let version = Uuid::now_v7();
         client
             .execute(
-                "insert into tasks (id, model_organization_id, workspace_id, name, base_model_id) values ($1, $2, $3, $4, $5)",
+                "insert into tasks (id, organization_id, workspace_id, name, base_model_id) values ($1, $2, $3, $4, $5)",
                 &[&task, &self.organization_id, &self.workspace_id, &task_name, &self.model_id],
             )
             .await
@@ -682,7 +682,7 @@ async fn adapter_query_requires_a_claimed_model_name() {
     let client = reader.client().await.unwrap();
     client
         .execute(
-            "update tasks set model_organization_id = null where id = $1",
+            "update tasks set organization_id = null where id = $1",
             &[&task],
         )
         .await

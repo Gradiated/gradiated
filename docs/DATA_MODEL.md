@@ -146,7 +146,7 @@ Every slug an organization has held. The current one prefixes the organization's
 | `is_current`      | boolean     | no   | Exactly one current slug per organization (partial unique) |
 | `created_at`      | timestamptz | no   | When the organization took the slug                        |
 
-Current and past slugs share one primary key, so a slug belongs to one organization for as long as the row exists. A new organization's slug comes from its name, with `-2`, `-3`, ... when that slug is held. Fixed platform names (`gradiated`, `openai`, `anthropic`, `api`, ...) and the author segment of every hosted catalog id (`google`, `qwen`, ...) are reserved, so a private name never shadows a catalog id; those slugs get an `-org` suffix. Until an organization finishes onboarding its slug follows its name and the outgoing slug is released. After that an admin changes it explicitly: the new slug becomes current and the old one stays with the organization, so requests that use it keep resolving. Returning to an earlier slug reuses its row. Only deleting the row, or the organization, releases a slug.
+Current and past slugs share one primary key, so a slug belongs to one organization for as long as the row exists. A new organization starts with a random 16-character slug. During onboarding the owner chooses the real one: the console suggests a slugified form of the organization name and the owner can edit it; a slug held by another organization is refused so they can pick again. Admins can change it later in settings. Fixed platform names (`gradiated`, `openai`, `anthropic`, `api`, ...) and the author segment of every hosted catalog id (`google`, `qwen`, ...) are reserved, so a private name never shadows a catalog id. A changed slug stays with the organization, so requests that use it keep resolving; returning to an earlier slug reuses its row. Only deleting the row, or the organization, releases a slug. Migration 0030 gives existing organizations a slug from their name, with `-2`, `-3`, ... on collisions and an `-org` suffix for reserved or too-short names.
 
 A new user's signup organization has a null `onboarded_at`, and the console asks its owner to name it before continuing. An owner or admin may set `auto_join_domain` only to the domain of their own verified email, and only when that domain is not a free or disposable email provider. When a user signs up with a verified email at a claimed domain of an active customer organization, they join it as a `member` and no personal organization is created. One organization may claim a domain.
 
@@ -886,9 +886,9 @@ name an adapter `<workspace_id>/<task>/<version>`, which does not change when th
 slug does.
 
 A task's name becomes a model name when the task first trains or takes an
-upload. Migration 0030 adds `tasks.model_organization_id`, set at that point to
+upload. Migration 0030 adds `tasks.organization_id`, set at that point to
 the workspace's organization, with a composite foreign key to the workspace and a
-unique `(model_organization_id, name)`. Model names are therefore unique across
+unique `(organization_id, name)`. Model names are therefore unique across
 the organization, while trace labels still register tasks per workspace. A model
 name contains no `/` and has at most 128 characters, so the public name fits the
 gateway's 300-character model ID; a check enforces this only for claimed names.

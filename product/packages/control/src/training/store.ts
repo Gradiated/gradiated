@@ -373,7 +373,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
             sql`coalesce(nullif(${taskVersions.adapter}->>'validated_base_model_revision', ''), ${taskVersions.adapter}->>'base_model_revision', '') <> ''`,
             sql`(${taskVersions.adapter}->>'size_bytes')::bigint > 0`,
             // Only claimed model names can be called.
-            isNotNull(tasks.modelOrganizationId),
+            isNotNull(tasks.organizationId),
             isNull(workspaces.archivedAt),
             eq(organizations.status, "active"),
           ),

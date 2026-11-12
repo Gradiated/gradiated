@@ -120,7 +120,7 @@ export const createModelUploadStore = (database: ControlDatabase) => ({
           .values(
             TaskRecordSchema.omit({ createdAt: true, updatedAt: true }).parse({
               id: uuidv7(),
-              modelOrganizationId: null,
+              organizationId: null,
               workspaceId,
               name: input.task,
               baseModelId: input.base_model_id,

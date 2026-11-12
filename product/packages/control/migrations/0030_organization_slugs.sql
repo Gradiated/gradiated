@@ -8,7 +8,8 @@ CREATE TABLE "organization_slugs" (
 --> statement-breakpoint
 ALTER TABLE "organization_slugs" ADD CONSTRAINT "organization_slugs_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "organization_slugs_one_current" ON "organization_slugs" USING btree ("organization_id") WHERE "organization_slugs"."is_current";--> statement-breakpoint
--- Same rules as availableOrganizationSlug, applied in creation order.
+-- Existing organizations get a slug from their name, in creation order. New ones
+-- start with a random slug and choose theirs during onboarding.
 DO $$
 DECLARE
   organization record;
@@ -33,13 +34,13 @@ BEGIN
     INSERT INTO organization_slugs (slug, organization_id, is_current) VALUES (candidate, organization.id, true);
   END LOOP;
 END $$;--> statement-breakpoint
-ALTER TABLE "tasks" ADD COLUMN "model_organization_id" uuid;--> statement-breakpoint
-ALTER TABLE "tasks" ADD CONSTRAINT "tasks_model_organization_workspace_fk" FOREIGN KEY ("model_organization_id","workspace_id") REFERENCES "public"."workspaces"("organization_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "tasks" ADD CONSTRAINT "tasks_model_name_check" CHECK ("tasks"."model_organization_id" is null or (strpos("tasks"."name", '/') = 0 and char_length("tasks"."name") <= 128));--> statement-breakpoint
-ALTER TABLE "tasks" ADD CONSTRAINT "tasks_model_name_unique" UNIQUE("model_organization_id","name");--> statement-breakpoint
+ALTER TABLE "tasks" ADD COLUMN "organization_id" uuid;--> statement-breakpoint
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_organization_workspace_fk" FOREIGN KEY ("organization_id","workspace_id") REFERENCES "public"."workspaces"("organization_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_model_name_check" CHECK ("tasks"."organization_id" is null or (strpos("tasks"."name", '/') = 0 and char_length("tasks"."name") <= 128));--> statement-breakpoint
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_organization_name_unique" UNIQUE("organization_id","name");--> statement-breakpoint
 -- Tasks that have trained or uploaded already claim their names. Where one name
 -- is a model in several workspaces of an organization, the oldest keeps it.
-UPDATE "tasks" SET "model_organization_id" = "claimed"."organization_id"
+UPDATE "tasks" SET "organization_id" = "claimed"."organization_id"
 FROM (
   SELECT DISTINCT ON ("workspaces"."organization_id", "tasks"."name") "tasks"."id", "workspaces"."organization_id"
   FROM "tasks"

@@ -129,9 +129,9 @@ select case when task_versions.id is null then 'null' else json_build_object(
 from tasks
 join workspaces on workspaces.id = tasks.workspace_id
 join organizations on organizations.id = workspaces.organization_id
-join organization_slugs requested_slug on requested_slug.organization_id = tasks.model_organization_id
+join organization_slugs requested_slug on requested_slug.organization_id = tasks.organization_id
     and requested_slug.slug = $2
-join organization_slugs current_slug on current_slug.organization_id = tasks.model_organization_id
+join organization_slugs current_slug on current_slug.organization_id = tasks.organization_id
     and current_slug.is_current
 left join task_versions on task_versions.task_id = tasks.id
     and task_versions.workspace_id = tasks.workspace_id

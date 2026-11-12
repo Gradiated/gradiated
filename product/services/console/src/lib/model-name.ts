@@ -9,6 +9,16 @@ export const privateModelName = (
     ? `${organizationSlug}/${task}`
     : `${organizationSlug}/${task}/${version}`;
 
+export const slugFromName = (name: string) =>
+  name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+/, "")
+    .slice(0, 39)
+    .replace(/-+$/, "");
+
 export const organizationSlugError = (value: string): string | null => {
   if (!value) return "Enter a slug.";
 

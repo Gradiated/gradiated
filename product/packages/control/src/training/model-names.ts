@@ -24,7 +24,7 @@ export const modelNameProblem = async (
     .innerJoin(workspaces, eq(workspaces.id, UuidSchema.parse(workspaceId)))
     .where(
       and(
-        eq(tasks.modelOrganizationId, workspaces.organizationId),
+        eq(tasks.organizationId, workspaces.organizationId),
         eq(tasks.name, name),
         ne(tasks.workspaceId, workspaces.id),
       ),
@@ -47,15 +47,12 @@ export const claimModelName = async (
 ) => {
   await database
     .update(tasks)
-    .set({ modelOrganizationId: workspaceOrganization })
+    .set({ organizationId: workspaceOrganization })
     .where(
-      and(
-        eq(tasks.id, UuidSchema.parse(taskId)),
-        isNull(tasks.modelOrganizationId),
-      ),
+      and(eq(tasks.id, UuidSchema.parse(taskId)), isNull(tasks.organizationId)),
     )
     .catch((error: unknown) => {
-      if (violatesConstraint(error, "tasks_model_name_unique"))
+      if (violatesConstraint(error, "tasks_organization_name_unique"))
         throw new ControlServiceError(
           "conflict",
           "Another workspace in this organization has a model with this name.",

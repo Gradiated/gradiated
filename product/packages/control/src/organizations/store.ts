@@ -23,7 +23,6 @@ import {
 } from "../access.js";
 import { ControlServiceError } from "../errors.js";
 import {
-  availableOrganizationSlug,
   isTakenOrganizationSlug,
   setCurrentOrganizationSlug,
 } from "./slugs.js";
@@ -162,7 +161,6 @@ export const createOrganizationStore = (database: ControlDatabase) => {
       userId: string,
       organizationId: string,
       input: UpdateOrganization,
-      slugFollowsName = false,
     ) {
       const update = UpdateOrganizationSchema.parse(input);
 
@@ -185,13 +183,6 @@ export const createOrganizationStore = (database: ControlDatabase) => {
               transaction,
               organizationId,
               update.slug,
-            );
-          else if (slugFollowsName && update.name !== undefined)
-            await setCurrentOrganizationSlug(
-              transaction,
-              organizationId,
-              await availableOrganizationSlug(transaction, update.name),
-              { releasePrevious: true },
             );
         })
         .catch((error: unknown) => {

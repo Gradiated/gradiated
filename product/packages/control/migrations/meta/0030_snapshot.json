@@ -1,5 +1,5 @@
 {
-  "id": "f0485b5d-8029-43b2-921e-7f1ef04217bd",
+  "id": "bad7faec-ffd2-49de-9a13-f5d13a4603f6",
   "prevId": "923e1227-faef-4afb-973f-05fe19a28ee3",
   "version": "7",
   "dialect": "postgresql",
@@ -2337,8 +2337,8 @@
           "primaryKey": true,
           "notNull": true
         },
-        "model_organization_id": {
-          "name": "model_organization_id",
+        "organization_id": {
+          "name": "organization_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -2432,11 +2432,11 @@
           "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "tasks_model_organization_workspace_fk": {
-          "name": "tasks_model_organization_workspace_fk",
+        "tasks_organization_workspace_fk": {
+          "name": "tasks_organization_workspace_fk",
           "tableFrom": "tasks",
           "tableTo": "workspaces",
-          "columnsFrom": ["model_organization_id", "workspace_id"],
+          "columnsFrom": ["organization_id", "workspace_id"],
           "columnsTo": ["organization_id", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -2444,10 +2444,10 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "tasks_model_name_unique": {
-          "name": "tasks_model_name_unique",
+        "tasks_organization_name_unique": {
+          "name": "tasks_organization_name_unique",
           "nullsNotDistinct": false,
-          "columns": ["model_organization_id", "name"]
+          "columns": ["organization_id", "name"]
         },
         "tasks_workspace_name_unique": {
           "name": "tasks_workspace_name_unique",
@@ -2468,7 +2468,7 @@
         },
         "tasks_model_name_check": {
           "name": "tasks_model_name_check",
-          "value": "\"tasks\".\"model_organization_id\" is null or (strpos(\"tasks\".\"name\", '/') = 0 and char_length(\"tasks\".\"name\") <= 128)"
+          "value": "\"tasks\".\"organization_id\" is null or (strpos(\"tasks\".\"name\", '/') = 0 and char_length(\"tasks\".\"name\") <= 128)"
         }
       },
       "isRLSEnabled": false

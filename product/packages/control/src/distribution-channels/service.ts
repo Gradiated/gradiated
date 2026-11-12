@@ -10,7 +10,7 @@ import {
 } from "../db/schema/index.js";
 import { defaultWorkspaceValues } from "../organizations/service.js";
 import {
-  availableOrganizationSlug,
+  randomOrganizationSlug,
   setCurrentOrganizationSlug,
 } from "../organizations/slugs.js";
 import { requireRow } from "../require-row.js";
@@ -59,7 +59,7 @@ export const configureOpenRouterDistributionChannel = async (
       await setCurrentOrganizationSlug(
         transaction,
         organization.id,
-        await availableOrganizationSlug(transaction, organization.name),
+        randomOrganizationSlug(),
       );
     } else if (organization.status !== "active") {
       organization = requireRow(

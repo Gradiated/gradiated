@@ -48,8 +48,9 @@ export const tasks = pgTable(
   "tasks",
   {
     id: uuid("id").primaryKey(),
-    // Set once the task has a model: it claims the name across the organization.
-    modelOrganizationId: uuid("model_organization_id"),
+    // Null for trace-only tasks. Set when the task first trains or takes an
+    // upload, which makes its name a model name, unique across the organization.
+    organizationId: uuid("organization_id"),
     workspaceId: uuid("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
@@ -75,18 +76,21 @@ export const tasks = pgTable(
   },
   (table) => [
     foreignKey({
-      name: "tasks_model_organization_workspace_fk",
-      columns: [table.modelOrganizationId, table.workspaceId],
+      name: "tasks_organization_workspace_fk",
+      columns: [table.organizationId, table.workspaceId],
       foreignColumns: [workspaces.organizationId, workspaces.id],
     }).onDelete("cascade"),
     // Models are named `<organization slug>/<task>/<version>`.
-    unique("tasks_model_name_unique").on(table.modelOrganizationId, table.name),
+    unique("tasks_organization_name_unique").on(
+      table.organizationId,
+      table.name,
+    ),
     unique("tasks_workspace_name_unique").on(table.workspaceId, table.name),
     unique("tasks_id_workspace_unique").on(table.id, table.workspaceId),
     check("tasks_name_routable_check", sql`${table.name} not in ('.', '..')`),
     check(
       "tasks_model_name_check",
-      sql`${table.modelOrganizationId} is null or (strpos(${table.name}, '/') = 0 and char_length(${table.name}) <= 128)`,
+      sql`${table.organizationId} is null or (strpos(${table.name}, '/') = 0 and char_length(${table.name}) <= 128)`,
     ),
   ],
 );

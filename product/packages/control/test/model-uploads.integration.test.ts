@@ -487,7 +487,7 @@ describe("model uploads", () => {
     );
     expect(version.version.name).toBe(body.name);
     const [claimed] = await db.database
-      .select({ organizationId: tasks.modelOrganizationId })
+      .select({ organizationId: tasks.organizationId })
       .from(tasks)
       .where(eq(tasks.id, other.id));
     expect(claimed?.organizationId).toBe(member.organizationId);

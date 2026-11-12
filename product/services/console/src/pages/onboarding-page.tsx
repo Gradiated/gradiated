@@ -20,6 +20,11 @@ import { Input } from "@/components/ui/input";
 import { useCurrentUser, useSession } from "@/hooks/use-session";
 import { httpStatus } from "@/lib/errors";
 import {
+  organizationSlugError,
+  privateModelName,
+  slugFromName,
+} from "@/lib/model-name";
+import {
   organizationToOnboard,
   suggestedOrganizationName,
 } from "@/lib/onboarding";
@@ -77,6 +82,11 @@ const OrganizationSetup = ({
 }) => {
   const domain = user.company_email_domain;
   const [name, setName] = useState(suggestedOrganizationName(domain));
+  // The slug follows the name until the owner edits it.
+  const [editedSlug, setEditedSlug] = useState<string | null>(null);
+  const slug = (editedSlug ?? slugFromName(name)).trim().toLowerCase();
+  const slugError = organizationSlugError(slug);
+  const showSlugError = editedSlug !== null || name.trim() !== "";
   const [autoJoin, setAutoJoin] = useState(true);
   const client = useQueryClient();
   const navigate = useNavigate();
@@ -87,6 +97,7 @@ const OrganizationSetup = ({
     mutationFn: () =>
       updateOrganization(organization.id, {
         name: name.trim(),
+        slug,
         ...(domain ? { auto_join_domain: autoJoin ? domain : null } : {}),
         onboarding_completed: true,
       }),
@@ -109,7 +120,7 @@ const OrganizationSetup = ({
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (name.trim() && !save.isPending) save.mutate();
+    if (name.trim() && !slugError && !save.isPending) save.mutate();
   };
 
   return (
@@ -145,6 +156,32 @@ const OrganizationSetup = ({
             </FieldDescription>
           )}
         </Field>
+        <Field data-invalid={showSlugError && slugError !== null}>
+          <FieldLabel htmlFor="organization-slug">Organization slug</FieldLabel>
+          <Input
+            id="organization-slug"
+            name="organizationSlug"
+            value={editedSlug ?? slugFromName(name)}
+            onChange={(event) => setEditedSlug(event.target.value)}
+            maxLength={39}
+            required
+            spellCheck={false}
+            autoComplete="off"
+            data-1p-ignore="true"
+            aria-invalid={showSlugError && slugError !== null}
+            disabled={save.isPending}
+          />
+          <FieldDescription>
+            Prefixes your model names, as in{" "}
+            <code className="font-mono text-xs">
+              {privateModelName(slug || "acme", "support-triage")}
+            </code>
+            .
+          </FieldDescription>
+          {showSlugError && slugError ? (
+            <FieldError>{slugError}</FieldError>
+          ) : null}
+        </Field>
         {domain ? (
           <Field
             orientation="horizontal"
@@ -176,7 +213,7 @@ const OrganizationSetup = ({
           <Button
             type="submit"
             className="w-full"
-            disabled={!name.trim() || save.isPending}
+            disabled={!name.trim() || slugError !== null || save.isPending}
           >
             {save.isPending ? (
               <LoaderCircle className="size-4 animate-spin" />

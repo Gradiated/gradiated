@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { organizationSlugError, privateModelName } from "@/lib/model-name";
+import {
+  organizationSlugError,
+  privateModelName,
+  slugFromName,
+} from "@/lib/model-name";
 
 describe("privateModelName", () => {
   it("names the production version by organization and task", () => {
@@ -34,4 +38,16 @@ describe("organizationSlugError", () => {
       expect(organizationSlugError(value)).toMatch(/^Use 2 to 39/);
     },
   );
+});
+
+describe("slugFromName", () => {
+  it.each([
+    ["Acme", "acme"],
+    ["  Acme Labs, Inc. ", "acme-labs-inc"],
+    ["Café Ünïcode", "cafe-unicode"],
+    ["株式会社", ""],
+    ["a".repeat(38) + " b", "a".repeat(38)],
+  ])("slugifies %j", (name, slug) => {
+    expect(slugFromName(name)).toBe(slug);
+  });
 });

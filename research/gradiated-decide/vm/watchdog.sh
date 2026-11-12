@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Keep one unattended job alive across spot preemptions. Runs on the workstation, not the VM.
 #
-# Every INTERVAL seconds it checks the VM. If the job is finished (DONE marker on the VM) it stops the VM and exits.
+# Every INTERVAL seconds it checks the VM. If the job is finished (DONE marker on the VM) it uploads the VM's runs and
+# logs to S3 once more, deletes the VM and exits (if the upload fails it only stops it).
 # If the VM is running but the job is not, it relaunches the job. If the VM was preempted (STOPPED) it tries to
 # start it again, keeping its disk. If that fails RESTART_TRIES times, or the VM is gone, it creates a replacement
 # VM from SPECS, installs the bucket key and the S3 bundle, and launches the job there.
@@ -15,7 +16,7 @@
 #      letter, e.g. '[r]un-ensemble-eval.sh', so the check does not match its own shell),
 #      INTERVAL=120, RESTART_TRIES=2, SPECS (one line of `dev_training.py up` arguments per fallback, tried in order;
 #      the defaults end with an Ornn on-demand B300 node, capped at ORNN_MAX_PRICE USD per GPU-hour, default 7.5).
-# Ornn VMs cannot be stopped: when the job ends there the watchdog waits for one more s3-sync.sh round, then deletes it.
+# A failed job's VM is stopped for inspection; an Ornn VM cannot stop, so it gets one more s3-sync.sh round and is deleted.
 # Start it detached, with the dev-training secrets loaded once so an expired AWS SSO session does not stop it:
 #   setsid nohup bash vm/watchdog.sh gdecide-2 logs/ensemble-finished '...' > watchdog.log 2>&1 < /dev/null &
 set -uo pipefail
@@ -55,9 +56,19 @@ remote() { timeout "${T:-120}" "${DT[@]}" ssh "$VM" "$@" 2>/dev/null; }
 vm_state() { local out; out=$(timeout 300 "${DT[@]}" ls 2>/dev/null) || { echo UNKNOWN; return; }
   # Columns: NAME PROVIDER TERM REGION STATE ...
   awk -v n="$VM" '$1==n {print $5; f=1} END {if (!f) print "MISSING"}' <<<"$out"; }
-# Stop a Nebius VM (keeping its disk); an Ornn VM cannot stop, so let s3-sync.sh upload once more and delete it.
-park() { if timeout 300 "${DT[@]}" ls 2>/dev/null | awk -v n="$VM" '$1==n && $2=="ornn" {f=1} END {exit !f}'; then
-    sleep 360; timeout 600 "${DT[@]}" down "$VM"; else timeout 600 "${DT[@]}" stop "$VM"; fi; }
+# After a finished job: upload everything the VM produced (runs without training states, and logs) once more, then
+# delete the VM, and the one it replaced if still stopped. If that upload fails, or the job failed, keep it: stop a
+# Nebius VM (its disk survives), and give an Ornn VM, which cannot stop, one more s3-sync.sh round before deleting it.
+park() {
+  if [ "${1:-}" = finished ] && T=3600 remote "source ~/gdecide/env.sh; cd ~/gdecide && \
+      aws s3 sync --only-show-errors runs \$S3_PREFIX/runs --exclude '*/state-*' --exclude '*.pt' && \
+      aws s3 sync --only-show-errors logs \$S3_PREFIX/logs && echo uploaded" | grep -q uploaded; then
+    log "results uploaded; deleting $VM"; timeout 600 "${DT[@]}" down "$VM"
+    # The VM this watchdog replaced after a preemption, left stopped then; the job finished without it.
+    if [ "$VM" != "$NAME" ] && [ "$(VM=$NAME vm_state)" = STOPPED ]; then log "deleting the replaced $NAME"; timeout 600 "${DT[@]}" down "$NAME"; fi
+    return; fi
+  if timeout 300 "${DT[@]}" ls 2>/dev/null | awk -v n="$VM" '$1==n && $2=="ornn" {f=1} END {exit !f}'; then
+    sleep 360; timeout 600 "${DT[@]}" down "$VM"; else log "keeping $VM stopped"; timeout 600 "${DT[@]}" stop "$VM"; fi; }
 
 launch() {
   local job; job=$(printf '%s' "($JOB) && touch $DONE" | base64 -w0)
@@ -97,8 +108,7 @@ while true; do
     RUNNING)
       status=$(remote "cd ~/gdecide; if [ -f '$DONE' ]; then echo DONE; elif pgrep -f 'logs/[w]atchdog-job.sh${MATCH:+|$MATCH}' >/dev/null; then echo RUNNING; else echo IDLE; fi")
       case $status in
-        DONE) log "job finished; stopping $VM (results are in S3; delete it with dev_training.py down)"
-              park; exit 0;;
+        DONE) log "job finished"; park finished; exit 0;;
         RUNNING) unreachable=0;;
         IDLE) failures=$((failures + 1))
               if [ "$failures" -gt 3 ]; then log "job exited without finishing 3 times; stopping $VM, see logs/watchdog-job.log"

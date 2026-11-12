@@ -42,7 +42,7 @@ bundle for its own base, so re-imaging a host onto a new base never strands the
 releases it serves. The renderer refuses a base pin in `pins.json` until every
 release has a bundle for that base. Keep an older base's bundles until no host
 runs that base.
-Run `grad-ctl gpu render-config`, review the generated manifests and
+Run `gradctl gpu render-config`, review the generated manifests and
 merge them. Argo owns the deployment. Install the new host release before
 selecting model bundles that no longer carry their own `runtime-launch`.
 
@@ -74,9 +74,9 @@ Stage an uncensored GLM pool for H200 or B200 from its runtime release record;
 the command previews by default:
 
 ```sh
-grad-ctl gpu stage-glm-pool --gpu h200 RELEASE_JSON SOURCE_SHA --replicas 1
-grad-ctl gpu stage-glm-pool --gpu h200 RELEASE_JSON SOURCE_SHA --replicas 1 --write
-grad-ctl gpu render-config
+gradctl gpu stage-glm-pool --gpu h200 RELEASE_JSON SOURCE_SHA --replicas 1
+gradctl gpu stage-glm-pool --gpu h200 RELEASE_JSON SOURCE_SHA --replicas 1 --write
+gradctl gpu render-config
 ```
 
 Review and merge the catalog and manifests through a PR. Test the staged pod

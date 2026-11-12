@@ -1,4 +1,4 @@
-"""grad-ctl's agent contract: the catalog, the --json envelope, exit codes and the tailnet gate."""
+"""gradctl's agent contract: the catalog, the --json envelope, exit codes and the tailnet gate."""
 
 import io
 import json
@@ -11,16 +11,16 @@ from pathlib import Path
 from unittest import mock
 
 import _path  # noqa: F401
-from grad_ctl import cli, tailnet
-from grad_ctl.core import Meta
+from gradctl import cli, tailnet
+from gradctl.core import Meta
 
-LAUNCHER = Path(__file__).resolve().parents[1] / 'grad-ctl'
+LAUNCHER = Path(__file__).resolve().parents[1] / 'gradctl'
 CONNECTED = {'connected': True, 'reason': None, 'dns_name': 'test.tail186117.ts.net'}
 OFFLINE = {'connected': False, 'reason': 'tailscaled is not running or did not answer'}
 
 
 def run(*argv, state=CONNECTED, env=None):
-    """Run grad-ctl in-process; returns (exit code, stdout, stderr)."""
+    """Run gradctl in-process; returns (exit code, stdout, stderr)."""
     out, err = io.StringIO(), io.StringIO()
     with mock.patch.object(tailnet, 'check', return_value=state), \
             mock.patch.dict(os.environ, env or {}, clear=False), redirect_stdout(out), redirect_stderr(err):
@@ -88,13 +88,13 @@ class EnvelopeTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(json.loads(out)['command'], 'devex skills')
 
-    def test_json_inside_a_remote_command_is_not_grad_ctls(self):
+    def test_json_inside_a_remote_command_is_not_gradctls(self):
         args, _ = cli.build_parser().parse_known_args(['compute', 'ssh', 'box', 'gh', 'pr', 'list', '--json', 'x'])
         self.assertFalse(getattr(args, 'json', False))
         self.assertEqual(args.command, ['gh', 'pr', 'list', '--json', 'x'])
 
     def test_a_failing_repository_tool_exits_1(self):
-        code, out, _ = run('--json', 'gpu', 'render-config', '--no-such-flag', env={'GRAD_CTL_REPO': str(LAUNCHER.parents[2])})
+        code, out, _ = run('--json', 'gpu', 'render-config', '--no-such-flag', env={'GRADCTL_REPO': str(LAUNCHER.parents[2])})
         body = json.loads(out)
         self.assertEqual((code, body['ok']), (1, False))
         # The tool's own code (2 here, or 1 without PyYAML) stays in data.
@@ -110,7 +110,7 @@ class EnvelopeTests(unittest.TestCase):
         self.assertEqual((code, json.loads(out)['error']['code']), (2, 'usage'))
 
     def test_sys_exit_messages_become_failures(self):
-        with mock.patch('grad_ctl.devex.skills_report', side_effect=SystemExit('broken')):
+        with mock.patch('gradctl.devex.skills_report', side_effect=SystemExit('broken')):
             code, out, _ = run('--json', 'devex', 'skills')
         self.assertEqual(code, 1)
         self.assertEqual(json.loads(out)['error'], {'code': 'failed', 'message': 'broken', 'hint': None})
@@ -122,7 +122,7 @@ class GateTests(unittest.TestCase):
         self.assertEqual(code, 3)
         body = json.loads(out)
         self.assertEqual(body['error']['code'], 'tailnet_required')
-        self.assertIn('grad-ctl tailnet join', body['error']['hint'])
+        self.assertIn('gradctl tailnet join', body['error']['hint'])
 
     def test_github_actions_runs_only_offline_commands(self):
         code, _, _ = run('devex', 'skills', state=OFFLINE, env={'GITHUB_ACTIONS': 'true'})
@@ -155,7 +155,7 @@ class ProcessTests(unittest.TestCase):
     def test_json_stdout_stays_clean_when_a_command_prints(self):
         script = (
             'import subprocess, sys; sys.path.insert(0, sys.argv[1]);'
-            'from grad_ctl import core;'
+            'from gradctl import core;'
             'with_ = core.stdout_to_stderr();'
             'with_.__enter__(); print("python noise"); subprocess.run(["echo", "child noise"]); with_.__exit__(None, None, None);'
             'core.emit_json({"ok": True})'

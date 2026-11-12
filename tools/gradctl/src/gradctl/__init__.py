@@ -1,4 +1,4 @@
-"""grad-ctl: the Gradiated developer and agent CLI. See tools/grad-ctl/README.md."""
+"""gradctl: the Gradiated developer and agent CLI. See tools/gradctl/README.md."""
 
 VERSION = '0.1.0'
 

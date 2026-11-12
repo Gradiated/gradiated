@@ -1,6 +1,6 @@
-"""The Gradiated tailnet: the connection every grad-ctl command requires, and joining it.
+"""The Gradiated tailnet: the connection every gradctl command requires, and joining it.
 
-grad-ctl runs only on a machine connected to the Gradiated tailnet. Access is
+gradctl runs only on a machine connected to the Gradiated tailnet. Access is
 still enforced by the tailnet policy and AWS IAM; this check makes every caller
 work from the same network position, so a command never half-runs on a machine
 that cannot reach the fleet, the dev-training VMs or the cluster.
@@ -26,7 +26,7 @@ MAGIC_DNS_SUFFIX = 'tail186117.ts.net'
 DEV_MACHINE_TAG = 'tag:dev-machine'
 MAC_BINARY = '/Applications/Tailscale.app/Contents/MacOS/Tailscale'
 JOIN_HINT = ('sign in with the Tailscale app as a person (`tailscale up`), or join a headless machine with '
-             '`grad-ctl tailnet join` (needs TAILSCALE_DEV_MACHINE_AUTH_KEY or AWS access to gradiated/dev/env); '
+             '`gradctl tailnet join` (needs TAILSCALE_DEV_MACHINE_AUTH_KEY or AWS access to gradiated/dev/env); '
              'in a container without TUN, start `tailscaled --tun=userspace-networking` first and set '
              'TAILSCALE_SOCKET if it uses a non-default socket')
 
@@ -84,7 +84,7 @@ def check() -> dict:
 def require() -> dict:
     state = check()
     if not state['connected']:
-        raise CliError(f"grad-ctl needs the {TAILNET} tailnet: {state['reason']}", 'tailnet_required',
+        raise CliError(f"gradctl needs the {TAILNET} tailnet: {state['reason']}", 'tailnet_required',
                        JOIN_HINT, 3, data={'tailnet': state})
     return state
 
@@ -137,7 +137,7 @@ def join_command(ctx: Context) -> Result:
 
 
 def register(commands, common) -> None:
-    sub = group(commands, 'tailnet', 'Check or establish the Gradiated tailnet connection grad-ctl requires')
+    sub = group(commands, 'tailnet', 'Check or establish the Gradiated tailnet connection gradctl requires')
     leaf(sub, 'status', status_command, Meta('Report whether this machine is on the Gradiated tailnet; exits 3 '
                                              'when it is not', tailnet=False), common)
     join = leaf(sub, 'join', join_command,

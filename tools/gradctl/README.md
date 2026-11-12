@@ -1,6 +1,6 @@
-# grad-ctl
+# gradctl
 
-`grad-ctl` is the one CLI for developer and agent operations at Gradiated:
+`gradctl` is the one CLI for developer and agent operations at Gradiated:
 DevEx checks, the `.env` and AWS sign-in, development training GPUs, GPU host
 leases and the GPU fleet tools. It is written for agents first: every command
 describes itself, `--json` gives one parseable result, exit codes are stable and
@@ -8,8 +8,8 @@ no command prompts.
 
 ## Install
 
-In the repository, `mise install` provides everything grad-ctl runs on, and mise
-puts `grad-ctl` on PATH (`[env] _.path` in `mise.toml`). It runs from the
+In the repository, `mise install` provides everything gradctl runs on, and mise
+puts `gradctl` on PATH (`[env] _.path` in `mise.toml`). It runs from the
 checkout with nothing else to install, wherever mise is active: an activated
 shell, `mise exec` or a mise task. mise pins:
 
@@ -20,30 +20,30 @@ shell, `mise exec` or a mise task. mise pins:
 - `aws`, `kubectl`, `node` and `cargo`, which other commands use.
 
 Only Tailscale comes from the machine, because it is a system service.
-`grad-ctl devex doctor` reports every tool and package.
+`gradctl devex doctor` reports every tool and package.
 
 Outside a checkout, or without mise:
 
 ```sh
-mise run grad-ctl:install        # one file at ~/.local/bin/grad-ctl
-tools/grad-ctl/grad-ctl ...      # run it from a checkout directly
-uv tool install --editable tools/grad-ctl   # or follow the checkout as you edit it
+mise run gradctl:install        # one file at ~/.local/bin/gradctl
+tools/gradctl/gradctl ...      # run it from a checkout directly
+uv tool install --editable tools/gradctl   # or follow the checkout as you edit it
 ```
 
 The installed file is a Python zipapp that needs only `python3` 3.10 or newer
 and the standard library, so it runs on any developer machine, VM or CI runner.
 Copy it anywhere: it needs no checkout. Commands that work on the repository
-find the checkout from the working directory, or from `GRAD_CTL_REPO`. Rerun the
-install after pulling to pick up changes; `grad-ctl version` shows the commit
+find the checkout from the working directory, or from `GRADCTL_REPO`. Rerun the
+install after pulling to pick up changes; `gradctl version` shows the commit
 it was built from.
 
 ## The tailnet
 
 Every command needs the machine on the Gradiated tailnet (`gradiated.com`).
-`grad-ctl tailnet status` reports the connection and exits 3 when it is down.
+`gradctl tailnet status` reports the connection and exits 3 when it is down.
 A person signs in with the Tailscale app. A headless machine, such as a cloud
 VM or an agent sandbox, joins as an ephemeral `tag:dev-machine` device with
-`grad-ctl tailnet join`, which reads `TAILSCALE_DEV_MACHINE_AUTH_KEY` from the
+`gradctl tailnet join`, which reads `TAILSCALE_DEV_MACHINE_AUTH_KEY` from the
 environment or `gradiated/dev/env`. In a container without TUN, start
 `tailscaled --tun=userspace-networking` first, and set `TAILSCALE_SOCKET` if it
 listens somewhere other than the default socket.
@@ -62,11 +62,11 @@ and every other command still refuses.
 ## For agents
 
 ```sh
-grad-ctl commands --json                  # every command, its arguments, effects and requirements
-grad-ctl --json compute search --gpu h100 # one envelope on stdout
+gradctl commands --json                  # every command, its arguments, effects and requirements
+gradctl --json compute search --gpu h100 # one envelope on stdout
 ```
 
-With `--json` (anywhere on the command line, or `GRAD_CTL_JSON=1`), stdout holds
+With `--json` (anywhere on the command line, or `GRADCTL_JSON=1`), stdout holds
 exactly one JSON document, and progress and subprocess output go to stderr:
 
 ```json
@@ -93,12 +93,12 @@ Each catalog entry says what a command does before you run it:
   shell (`compute ssh` without a command). Under `--json`, `compute ssh` needs a
   command and returns its exit code and output.
 - `forwards_args`: arguments after the command go unchanged to a repository
-  tool. Use `--` before them when one could be mistaken for grad-ctl's own, for
-  example `grad-ctl gpu render-config -- --help`.
+  tool. Use `--` before them when one could be mistaken for gradctl's own, for
+  example `gradctl gpu render-config -- --help`.
 
 ## Commands
 
-Run `grad-ctl commands` for the current list.
+Run `gradctl commands` for the current list.
 
 | Group | Commands |
 | --- | --- |
@@ -112,18 +112,18 @@ Run `grad-ctl commands` for the current list.
 
 ## Layout
 
-- `src/grad_ctl/cli.py`: the parser, the catalog, the envelope and the dispatcher.
-- `src/grad_ctl/core.py`: command metadata, results, errors and exit codes.
-- `src/grad_ctl/tailnet.py`: the tailnet requirement and `tailnet join`.
-- `src/grad_ctl/devex.py`, `envfile.py`, `lease.py`, `compute/`: the commands
-  grad-ctl implements itself. They run from the single file, without a checkout.
-- `src/grad_ctl/repotools.py`: the repository tools grad-ctl runs from the
+- `src/gradctl/cli.py`: the parser, the catalog, the envelope and the dispatcher.
+- `src/gradctl/core.py`: command metadata, results, errors and exit codes.
+- `src/gradctl/tailnet.py`: the tailnet requirement and `tailnet join`.
+- `src/gradctl/devex.py`, `envfile.py`, `lease.py`, `compute/`: the commands
+  gradctl implements itself. They run from the single file, without a checkout.
+- `src/gradctl/repotools.py`: the repository tools gradctl runs from the
   checkout. These (`tools/gpu/*.py` and others) change files beside them and CI
-  runs some by path, so they stay where they are and grad-ctl is their front door.
+  runs some by path, so they stay where they are and gradctl is their front door.
 
 ## Adding a command
 
-Add it to grad-ctl, not as a standalone script, mise task or Makefile target.
+Add it to gradctl, not as a standalone script, mise task or Makefile target.
 Register it with `leaf(...)` and a `Meta` that states its effects and needs, and
 return a `Result` whose `data` is JSON-serializable and whose `text` is the
 human output. Raise `CliError`, or call `sys.exit("message")`, to fail. Keep it
@@ -131,7 +131,7 @@ to the standard library so the single file keeps working everywhere. A tool
 that must stay in the repository goes in `repotools.TOOLS`.
 
 ```sh
-python3 -m unittest discover -s tools/grad-ctl/tests
-tools/grad-ctl/grad-ctl devex check
-python3 tools/grad-ctl/build.py && .agents/runtime/grad-ctl/grad-ctl commands
+python3 -m unittest discover -s tools/gradctl/tests
+tools/gradctl/gradctl devex check
+python3 tools/gradctl/build.py && .agents/runtime/gradctl/gradctl commands
 ```

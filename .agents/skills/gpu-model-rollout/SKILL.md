@@ -24,7 +24,7 @@ the first new replica, compare, then decide.
 
 1. Open the pin PR that moves the pool to the new runtime
    (`product/inference/gpu/runtimes.json` / `models.json`, then
-   `grad-ctl gpu render-config`). Merge it.
+   `gradctl gpu render-config`). Merge it.
 2. Watch the Rollout. As soon as the first new pod is Ready, pause it:
    `kubectl -n gpu-inference patch rollout <pool> --type merge -p '{"spec":{"paused":true}}'`.
    Argo CD ignores `/spec/paused`, so the pause survives syncs.

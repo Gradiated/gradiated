@@ -1,4 +1,4 @@
-"""`grad-ctl compute setup`: write the credentials `grad-ctl compute` needs to gradiated/dev/env.
+"""`gradctl compute setup`: write the credentials `gradctl compute` needs to gradiated/dev/env.
 
 Run as a Nebius tenant admin (a federated `nebius` profile) with the
 gradiated-admin AWS profile, after the tailscale and dev-storage Terraform units
@@ -7,7 +7,7 @@ have applied. It is idempotent and doubles as rotation:
 Shared by every provider:
 - copies the development Tailscale credentials from
   gradiated/prod/platform/tailscale-dev-training, including each provider's
-  key-issuing client (`grad-ctl compute setup tailscale` copies only these, after the
+  key-issuing client (`gradctl compute setup tailscale` copies only these, after the
   tailscale Terraform unit replaces a client);
 - issues a new access key for the gradiated-dev-training IAM user, whose only
   permissions are on the development training bucket. The previous key stays
@@ -24,9 +24,9 @@ Nebius:
 
 It merges everything into gradiated/dev/env.
 
-`grad-ctl compute setup ornn` sets up Ornn alone and changes nothing else. Ornn API keys can
+`gradctl compute setup ornn` sets up Ornn alone and changes nothing else. Ornn API keys can
 only be created in its console (Account Settings > Developer > Create key, read
-and write), so pass a new key on stdin, for example `pbpaste | grad-ctl compute setup ornn`. It
+and write), so pass a new key on stdin, for example `pbpaste | gradctl compute setup ornn`. It
 checks the key, generates an ed25519 SSH key used only for Ornn VMs (once, as
 for Nebius), registers it as an Ornn account key, which Ornn installs on every
 VM it starts, and writes ORNN_API_KEY, ORNN_ORGANIZATION_ID and ORNN_SSH_* to
@@ -148,7 +148,7 @@ def setup_ornn(args):
     key = '' if sys.stdin.isatty() else sys.stdin.read().strip()
     key = key or environment.get('ORNN_API_KEY')
     if not key:
-        sys.exit('Pass a read and write Ornn API key on stdin, for example `pbpaste | grad-ctl compute setup ornn`')
+        sys.exit('Pass a read and write Ornn API key on stdin, for example `pbpaste | gradctl compute setup ornn`')
     ornn = Ornn(lambda name: key, None)
     session = ornn.api('GET', '/v1/auth/session')
     if (session.get('api_key') or {}).get('access') != 'read_write':

@@ -1,8 +1,8 @@
-"""Nebius VMs (spot or on-demand) for `grad-ctl compute`.
+"""Nebius VMs (spot or on-demand) for `gradctl compute`.
 
 Credentials come from NEBIUS_SERVICE_ACCOUNT_CREDENTIALS_B64 (the dev-training
 service account, editor on the regional projects in nebius-projects.json).
-`grad-ctl compute setup` creates the account and writes its keys to gradiated/dev/env.
+`gradctl compute setup` creates the account and writes its keys to gradiated/dev/env.
 """
 
 from concurrent.futures import ThreadPoolExecutor
@@ -14,7 +14,7 @@ import subprocess
 import sys
 import tempfile
 
-# Read as package data so the single-file grad-ctl build carries it.
+# Read as package data so the single-file gradctl build carries it.
 CONFIG = json.loads(resources.files(__package__).joinpath('nebius-projects.json').read_text())
 PROJECTS = CONFIG['projects']
 
@@ -41,7 +41,7 @@ class Nebius:
         config = self.state / 'nebius.yaml'
         credentials = self.state / 'nebius-service-account.json'
         current = self.secret('NEBIUS_SERVICE_ACCOUNT_CREDENTIALS_B64')
-        # Rebuild the profile after `grad-ctl compute setup` rotates the key; the old one is revoked.
+        # Rebuild the profile after `gradctl compute setup` rotates the key; the old one is revoked.
         if not config.exists() or not credentials.exists() or credentials.read_text() != current:
             config.unlink(missing_ok=True)
             credentials.touch(mode=0o600)

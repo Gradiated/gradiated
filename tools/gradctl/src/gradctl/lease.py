@@ -1,4 +1,4 @@
-"""`grad-ctl gpu lease`: lease a whole GPU host out of the serving pool, and hand it back.
+"""`gradctl gpu lease`: lease a whole GPU host out of the serving pool, and hand it back.
 
 The gpu-fleet operator does the work: on acquire it moves the host's model
 replicas elsewhere, drains and cordons it; on release or expiry it re-images the
@@ -8,11 +8,11 @@ acquired with --no-preempt: the operator takes the host back when a model
 replica has nowhere else to run. This tool only writes the request (the
 fleet.gradiated.com/lease annotation) and reports state.
 
-  grad-ctl gpu lease acquire 01a0f19d --hours 6 --purpose "SFT sweep" [--holder me] [--no-preempt]
-  grad-ctl gpu lease wait 01a0f19d
-  grad-ctl gpu lease extend 01a0f19d --hours 2
-  grad-ctl gpu lease release 01a0f19d
-  grad-ctl gpu lease status [01a0f19d]
+  gradctl gpu lease acquire 01a0f19d --hours 6 --purpose "SFT sweep" [--holder me] [--no-preempt]
+  gradctl gpu lease wait 01a0f19d
+  gradctl gpu lease extend 01a0f19d --hours 2
+  gradctl gpu lease release 01a0f19d
+  gradctl gpu lease status [01a0f19d]
 """
 from datetime import datetime, timedelta, timezone
 import getpass
@@ -232,7 +232,7 @@ def acquire_command(ctx: Context) -> Result:
         annotate(host, build_request(args.holder, args.purpose, args.hours, now, not args.no_preempt))
     change(args.host, acquire_host)
     return shown(find(hosts(), args.host),
-                 'Requested. The operator drains the host first; run `grad-ctl gpu lease wait` until it is leased.')
+                 'Requested. The operator drains the host first; run `gradctl gpu lease wait` until it is leased.')
 
 
 def extend_command(ctx: Context) -> Result:

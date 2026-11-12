@@ -48,11 +48,11 @@ history, and S3 stores captured content and artifacts.
 
 Install the toolchain pinned in [`mise.toml`](mise.toml), plus Docker, Python 3,
 Tailscale and `lsof`. Connect to the Gradiated tailnet, which
-[`grad-ctl`](tools/grad-ctl/README.md) requires. From the repository root:
+[`gradctl`](tools/gradctl/README.md) requires. From the repository root:
 
 ```sh
 mise install
-grad-ctl devex start
+gradctl devex start
 cd product
 mise exec -- pnpm install
 mise exec -- pnpm exec turbo run build --filter=@gradiated/api --filter=@gradiated/worker
@@ -72,7 +72,7 @@ setup, service ports, optional integrations, and smoke checks.
 ## Working in the repository
 
 Read [AGENTS.md](AGENTS.md) and the instructions in the area you are changing.
-Run `grad-ctl devex check` from the root, followed by the relevant
+Run `gradctl devex check` from the root, followed by the relevant
 workstream checks (`pnpm check` from `product/` for product changes).
 Keep credentials and local run output out of version control.
 

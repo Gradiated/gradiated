@@ -7,7 +7,7 @@ on:
       - ".github/actions/relevant/**"
       - ".agents/**"
       - ".github/workflows/agent-quality.yml"
-      - "tools/grad-ctl/**"
+      - "tools/gradctl/**"
       - "tools/ci/**"
       - ".github/workflows/ci-analytics.yml"
       - "AGENTS.md"
@@ -51,14 +51,14 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.13"
-      - run: tools/grad-ctl/grad-ctl devex check
-      - run: python3 -m unittest discover -s tools/grad-ctl/tests -v
-      - name: Build the single-file grad-ctl and run it outside the checkout
+      - run: tools/gradctl/gradctl devex check
+      - run: python3 -m unittest discover -s tools/gradctl/tests -v
+      - name: Build the single-file gradctl and run it outside the checkout
         working-directory: ${{ runner.temp }}
         run: |
-          python3 "$GITHUB_WORKSPACE/tools/grad-ctl/build.py" --output "$RUNNER_TEMP/grad-ctl"
-          "$RUNNER_TEMP/grad-ctl" --json commands > /dev/null
-          GRAD_CTL_REPO="$GITHUB_WORKSPACE" "$RUNNER_TEMP/grad-ctl" devex skills
+          python3 "$GITHUB_WORKSPACE/tools/gradctl/build.py" --output "$RUNNER_TEMP/gradctl"
+          "$RUNNER_TEMP/gradctl" --json commands > /dev/null
+          GRADCTL_REPO="$GITHUB_WORKSPACE" "$RUNNER_TEMP/gradctl" devex skills
       - run: python3 -m unittest discover -s tools/ci -v
 
   passed:

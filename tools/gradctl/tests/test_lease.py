@@ -3,7 +3,7 @@ import json
 import unittest
 
 import _path  # noqa: F401
-from grad_ctl import lease
+from gradctl import lease
 
 NOW = datetime(2026, 11, 6, 12, 0, tzinfo=timezone.utc)
 

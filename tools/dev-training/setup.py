@@ -7,7 +7,9 @@ have applied. It is idempotent and doubles as rotation:
 
 Shared by every provider:
 - copies the development Tailscale credentials from
-  gradiated/prod/platform/tailscale-dev-training;
+  gradiated/prod/platform/tailscale-dev-training, including each provider's
+  key-issuing client (`setup.py tailscale` copies only these, after the
+  tailscale Terraform unit replaces a client);
 - issues a new access key for the gradiated-dev-training IAM user, whose only
   permissions are on the development training bucket. The previous key stays
   valid, so running jobs keep uploading, until the next rotation removes it.
@@ -23,6 +25,15 @@ Nebius:
 
 It merges everything into gradiated/dev/env.
 
+`setup.py ornn` sets up Ornn alone and changes nothing else. Ornn API keys can
+only be created in its console (Account Settings > Developer > Create key, read
+and write), so pass a new key on stdin, for example `pbpaste | setup.py ornn`. It
+checks the key, generates an ed25519 SSH key used only for Ornn VMs (once, as
+for Nebius), registers it as an Ornn account key, which Ornn installs on every
+VM it starts, and writes ORNN_API_KEY, ORNN_ORGANIZATION_ID and ORNN_SSH_* to
+gradiated/dev/env. Without a key on stdin it reuses the stored one, so it can
+rotate just the SSH key.
+
 It prints key names and resource IDs, never secret values.
 """
 
@@ -33,7 +44,10 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
+
+from ornn import Ornn
 
 HERE = Path(__file__).resolve().parent
 CONFIG = json.loads((HERE / 'nebius-projects.json').read_text())
@@ -101,12 +115,97 @@ def ensure_access():
     return account_id
 
 
+def ssh_key(directory, comment):
+    path = Path(directory) / comment
+    subprocess.run(['ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-C', comment, '-f', str(path)],
+                   check=True, timeout=30)
+    return encode(path.read_text()), encode(Path(f'{path}.pub').read_text().strip())
+
+
+def put_environment(profile, environment, added):
+    with tempfile.TemporaryDirectory() as directory:
+        os.chmod(directory, 0o700)
+        value = Path(directory) / 'env.json'
+        value.write_text(json.dumps({**environment, **added}))
+        aws(profile, 'secretsmanager', 'put-secret-value', '--secret-id', DEV_SECRET,
+            '--secret-string', f'file://{value}')
+    print(f'wrote {", ".join(sorted(added))} to {DEV_SECRET}')
+
+
+def tailscale_environment(profile, tailscale=None):
+    tailscale = tailscale or json.loads(aws(profile, 'secretsmanager', 'get-secret-value', '--secret-id',
+                                            TAILSCALE_SECRET, '--query', 'SecretString', '--output', 'text'))
+    found = {
+        'TAILSCALE_DEV_TRAINING_CLIENT_ID': tailscale['client_id'],
+        'TAILSCALE_DEV_TRAINING_CLIENT_SECRET': tailscale['client_secret'],
+        'TAILSCALE_DEV_MACHINE_AUTH_KEY': tailscale['machine_auth_key'],
+    }
+    for name, client in tailscale.get('provider_clients', {}).items():
+        found[f'TAILSCALE_DEV_TRAINING_{name.upper()}_CLIENT_ID'] = client['client_id']
+        found[f'TAILSCALE_DEV_TRAINING_{name.upper()}_CLIENT_SECRET'] = client['client_secret']
+    return found
+
+
+def setup_ornn(args):
+    environment = json.loads(aws(args.aws_profile, 'secretsmanager', 'get-secret-value', '--secret-id',
+                                 DEV_SECRET, '--query', 'SecretString', '--output', 'text'))
+    key = '' if sys.stdin.isatty() else sys.stdin.read().strip()
+    key = key or environment.get('ORNN_API_KEY')
+    if not key:
+        sys.exit('Pass a read and write Ornn API key on stdin, for example `pbpaste | setup.py ornn`')
+    ornn = Ornn(lambda name: key, None)
+    session = ornn.api('GET', '/v1/auth/session')
+    if (session.get('api_key') or {}).get('access') != 'read_write':
+        sys.exit('The Ornn key must be an API key with read and write access')
+    organization = session['organizations'][0]
+    print(f"Ornn API key {session['api_key']['id']} for organization {organization['name']} ({organization['id']})")
+    added = {'ORNN_API_KEY': key, 'ORNN_ORGANIZATION_ID': organization['id']}
+    ssh = {name: environment[name] for name in ('ORNN_SSH_PRIVATE_KEY_B64', 'ORNN_SSH_PUBLIC_KEY_B64')
+           if name in environment}
+    if args.rotate_ssh_key or len(ssh) != 2:
+        with tempfile.TemporaryDirectory() as directory:
+            os.chmod(directory, 0o700)
+            private, public = ssh_key(directory, 'gradiated-ornn-dev')
+        ssh = {'ORNN_SSH_PRIVATE_KEY_B64': private, 'ORNN_SSH_PUBLIC_KEY_B64': public}
+    added.update(ssh)
+    public_key = base64.b64decode(ssh['ORNN_SSH_PUBLIC_KEY_B64']).decode().strip()
+    keys_path = f"/v1/organizations/{organization['id']}/ssh-keys"
+    registered = ornn.api('POST', keys_path, body={'public_key': public_key, 'label': 'gradiated-dev-training'})
+    print(f"SSH key {registered['id']} {registered['fingerprint']}: {registered['outcome']}")
+    old_keys = [k for k in ornn.api('GET', keys_path, {'status': 'active'})['ssh_keys']
+                if k.get('label') == 'gradiated-dev-training' and k['id'] != registered['id']]
+    if old_keys:
+        # A new organization key reaches only future VMs. Add it to running ones before
+        # publishing it, so a failure here leaves gradiated/dev/env on the old key, which
+        # every VM still accepts; rerunning reuses the stored new key only once published.
+        for status in ('confirmed', 'active'):
+            for reservation in ornn.reservations(status=status):
+                if reservation.get('kind') in ('spot', 'on-demand'):
+                    ornn.api('POST', f"/v1/orchestrator/nodes/reservations/{reservation['reservationId']}/ssh-keys",
+                             body={'ssh_key_id': registered['id']})
+                    print(f"assigned the new SSH key to reservation {reservation['reservationId']}")
+    # Publish before revoking the previous key, so a failure cannot leave none usable.
+    put_environment(args.aws_profile, environment, added)
+    for old in old_keys:
+        ornn.api('DELETE', f"{keys_path}/{old['id']}")
+        print(f"revoked previous SSH key {old['id']}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('provider', nargs='?', choices=['nebius', 'ornn', 'tailscale'], default='nebius',
+                        help='nebius (the default) also sets up the shared Tailscale and bucket keys; '
+                             'tailscale copies only the Tailscale credentials')
     parser.add_argument('--aws-profile', default='gradiated-admin')
     parser.add_argument('--rotate-ssh-key', action='store_true',
                         help='replace the SSH key; existing VMs keep trusting only the old one')
     args = parser.parse_args()
+    if args.provider == 'ornn':
+        return setup_ornn(args)
+    if args.provider == 'tailscale':
+        environment = json.loads(aws(args.aws_profile, 'secretsmanager', 'get-secret-value', '--secret-id',
+                                     DEV_SECRET, '--query', 'SecretString', '--output', 'text'))
+        return put_environment(args.aws_profile, environment, tailscale_environment(args.aws_profile))
     # Read both secrets first so a missing one fails before any key is issued.
     tailscale = json.loads(aws(args.aws_profile, 'secretsmanager', 'get-secret-value', '--secret-id',
                                TAILSCALE_SECRET, '--query', 'SecretString', '--output', 'text'))
@@ -140,11 +239,8 @@ def main():
         ssh = {name: environment[name] for name in ('NEBIUS_SSH_PRIVATE_KEY_B64', 'NEBIUS_SSH_PUBLIC_KEY_B64')
                if name in environment}
         if args.rotate_ssh_key or len(ssh) != 2:
-            ssh_key = Path(directory) / 'nebius-dev'
-            subprocess.run(['ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-C', 'gradiated-nebius-dev',
-                            '-f', str(ssh_key)], check=True, timeout=30)
-            ssh = {'NEBIUS_SSH_PRIVATE_KEY_B64': encode(ssh_key.read_text()),
-                   'NEBIUS_SSH_PUBLIC_KEY_B64': encode(Path(f'{ssh_key}.pub').read_text().strip())}
+            private, public = ssh_key(directory, 'gradiated-nebius-dev')
+            ssh = {'NEBIUS_SSH_PRIVATE_KEY_B64': private, 'NEBIUS_SSH_PUBLIC_KEY_B64': public}
         bucket = {'DEV_TRAINING_S3_BUCKET': BUCKET}
         if bucket_user:
             key = json.loads(aws(args.aws_profile, 'iam', 'create-access-key', '--user-name', BUCKET_USER))['AccessKey']
@@ -156,15 +252,9 @@ def main():
             'NEBIUS_TENANT_ID': CONFIG['tenant_id'],
             'NEBIUS_SERVICE_ACCOUNT_CREDENTIALS_B64': encode(credentials.read_text()),
             **ssh,
-            'TAILSCALE_DEV_TRAINING_CLIENT_ID': tailscale['client_id'],
-            'TAILSCALE_DEV_TRAINING_CLIENT_SECRET': tailscale['client_secret'],
-            'TAILSCALE_DEV_MACHINE_AUTH_KEY': tailscale['machine_auth_key'],
+            **tailscale_environment(args.aws_profile, tailscale),
         }
-        value = Path(directory) / 'env.json'
-        value.write_text(json.dumps({**environment, **added}))
-        aws(args.aws_profile, 'secretsmanager', 'put-secret-value', '--secret-id', DEV_SECRET,
-            '--secret-string', f'file://{value}')
-    print(f'wrote {", ".join(sorted(added))} to {DEV_SECRET}')
+    put_environment(args.aws_profile, environment, added)
     for key_id in old_keys:
         nebius('iam', 'auth-public-key', 'delete', '--id', key_id)
         print(f'removed old service account key {key_id}')

@@ -297,13 +297,13 @@ class RenderTests(unittest.TestCase):
             self.assertIn({'secretKey': instance, 'remoteRef': entry['spec']['managementSecret']},
                           outputs[gpu / 'credentials.yaml'][1]['spec']['data'])
             models = json.loads((gpu / 'models.json').read_text())
-            models.pop('jaredpalmer/kev-9b')
+            models.pop('perplexity-ai/pplx-decider-v1.2')
             (gpu / 'models.json').write_text(json.dumps(models))
             stock = models['z-ai/glm-5.3-flash']
             with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu, MODELS=gpu / 'models'):
-                self.assertEqual(renderer.retired_outputs(renderer.render()), {gpu / 'models/kev/kev.yaml'})
+                self.assertEqual(renderer.retired_outputs(renderer.render()), {gpu / 'models/decider-l40s/decider-l40s.yaml'})
                 with patch('sys.argv', ['render-config.py', '--check']), \
-                        self.assertRaisesRegex(SystemExit, 'kubectl -n gpu-inference delete rollout,scaledobject kev'):
+                        self.assertRaisesRegex(SystemExit, 'kubectl -n gpu-inference delete rollout,scaledobject decider-l40s'):
                     renderer.main()
                 for invalid in ('../escape', 'a/b', 'Upper', 'x' * 54, ''):
                     renamed = {**stock, 'pools': {invalid: stock['pools']['glm']}}
@@ -341,11 +341,12 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(floors['glm-dealign-sglang'], (2, 7, 12))
         self.assertEqual(floors['glm-dealign-sglang-b200'][:2], (0, 0))
         self.assertEqual(floors['glm-dealign-sglang-h200'][:2], (0, 0))
-        self.assertEqual(floors['kev'], (2, 2, 1))
+        self.assertEqual(floors['decider-l40s'], (1, 1, 1))
+        self.assertNotIn('kev', floors)
         # Plain GLM and DeepSeek 1017 scale from zero to one SGLang replica on demand.
         self.assertEqual(floors['glm'], (0, 1, 12))
         self.assertEqual(floors['deepseek'], (0, 1, 32))
-        for model in ('dealignai/glm-5.3-flash-uncensored', 'jaredpalmer/kev-9b'):
+        for model in ('dealignai/glm-5.3-flash-uncensored', 'perplexity-ai/pplx-decider-v1.2'):
             self.assertGreater(models[model]['min_slots'], 0)
         # Models never name hosts; reservations on hosts.yaml place pools instead.
         self.assertNotIn('instance-id', (renderer.GPU / 'models.json').read_text())
@@ -554,8 +555,8 @@ class RenderTests(unittest.TestCase):
         rolling = renderer.rollout('glm-dealign-sglang-h200', pool, runtimes)['spec']['strategy']['canary']
         self.assertEqual(rolling['steps'], [{'setWeight': 100}, default['spec']['strategy']['canary']['steps'][1]])
         self.assertEqual((rolling['maxSurge'], rolling['maxUnavailable']), (0, 1))
-        kev = renderer.plan(models, runtimes, hosts)['kev']
-        self.assertEqual({k: v for k, v in renderer.rollout('kev', kev, runtimes)['spec']['strategy']['canary'].items()
+        decider = renderer.plan(models, runtimes, hosts)['decider-l40s']
+        self.assertEqual({k: v for k, v in renderer.rollout('decider-l40s', decider, runtimes)['spec']['strategy']['canary'].items()
                           if k != 'steps'}, {'maxSurge': 0, 'maxUnavailable': 1})
         for change, message in [({'rolling_update': 1}, 'rolling_update'), ({'max_surge': 0, 'max_unavailable': 0}, 'both zero'),
                                 ({'max_surge': -1}, 'max_surge'), ({'max_unavailable': '1'}, 'max_unavailable'),
@@ -564,7 +565,7 @@ class RenderTests(unittest.TestCase):
                                 ({'labels': {'app.kubernetes.io/name': 'other'}}, 'identity label is reserved'),
                                 ({'annotations': {'gradiated.com/serving-mode': 'production'}}, 'reserved')]:
             with self.subTest(change=change), self.assertRaisesRegex(ValueError, message):
-                renderer.rollout('kev', {**kev, **change}, runtimes)
+                renderer.rollout('decider-l40s', {**decider, **change}, runtimes)
 
     def test_glm_sglang_runtimes_declare_their_launcher_active_request_limit(self):
         models, runtimes, hosts = self.fleet()
@@ -684,8 +685,8 @@ class RenderTests(unittest.TestCase):
             'gradiated_model_minimum_replicas': 'vector(1)',
             'gradiated_model_ready_slots':
                 '(max(rollout_info_replicas_available{namespace="gpu-inference",name="glm-dealign-sglang"}) or vector(0)) * 12'})
-        # Kev replaces one of its two replicas at a time: no third host to surge onto.
-        self.assertEqual(by_rollout['kev']['gradiated_model_minimum_replicas'], 'vector(1)')
+        pair = renderer.replica_rules({'pair': {**pools['decider-l40s'], 'floor': 2, 'maximum': 2}})
+        self.assertEqual(pair['spec']['groups'][0]['rules'][1]['expr'], 'vector(1)')
         # One replica of a single-replica floor must stay, even if a rollout may take it down.
         single = renderer.replica_rules({'pool': {**pools['glm-dealign-sglang'], 'floor': 1, 'max_unavailable': 1}})
         self.assertEqual(single['spec']['groups'][0]['rules'][1]['expr'], 'vector(1)')

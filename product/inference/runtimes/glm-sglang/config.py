@@ -1,9 +1,11 @@
 import fcntl
 import json
+import os
 import hashlib
 from pathlib import Path
 import re
 import shutil
+import stat
 import subprocess
 import time
 
@@ -33,8 +35,13 @@ QUEUED_REQUESTS = 2
 QUEUE_TIMEOUT_SECONDS = 10
 # A replica is limited to 400 GiB RAM; 2 x 48 GB pinned plus ~25 GiB RSS per rank leaves room for weight page cache.
 HICACHE_HOST_GB_PER_RANK = 48
-# Pods have ~1 TB disk: 4 ranks x 100G plus ~180 GB weights fit; the evictor stops writing below min_free_space.
-HICACHE_FILE_CONFIG = {'max_size': '100G', 'min_free_space': '100G'}
+# Request-derived pages must stay in memory (data-retention policy), so the file tier is tmpfs, charged
+# to the replica's 400 GiB limit: 2 x 50G per replica; writes stop below 30G free in /dev/shm.
+HICACHE_FILE_CONFIG = {'max_size': '50G', 'min_free_space': '30G'}
+HICACHE_ROOT = Path('/dev/shm/gradiated-hicache')
+HICACHE_IDLE_SECONDS = 3600
+# The host agent runs replicas on the host's /dev/shm (~half its RAM); a smaller one gets no file tier.
+HICACHE_MIN_TMPFS_BYTES = 64 << 30
 BUNDLE_ROOT = Path(__file__).resolve().parents[1]
 PROFILES = {
     'b300-pcp2': {'gpu_product': 'B300', 'active_requests': ACTIVE_REQUESTS,
@@ -147,34 +154,98 @@ def cache_root(environment):
 
 def hicache_directory(environment, config, bundle_root=BUNDLE_ROOT):
     identity = qualification_identity(config, bundle_root)
-    if identity is None:
+    root = hicache_root(environment)
+    if identity is None or not tmpfs_large_enough(root):
         return None
     # File pages carry no dtype or layout, so only one bundle and config may read a directory.
     digest = hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
-    return cache_root(environment) / 'hicache' / digest / '_'.join(environment['NVIDIA_VISIBLE_DEVICES'].split(','))
+    base = Path(environment.get('GRADIATED_HICACHE_ROOT', str(HICACHE_ROOT))).parent
+    if not private_tmpfs_tree(base, root / digest):
+        return None
+    return root / digest / '_'.join(environment['NVIDIA_VISIBLE_DEVICES'].split(','))
+
+
+def private_tmpfs_tree(base, path):
+    """Create path below base one level at a time; refuse links, other owners or other devices."""
+    try:
+        device = os.stat(base).st_dev
+    except OSError:
+        return False
+    current = base
+    for part in path.relative_to(base).parts:
+        current = current / part
+        try:
+            os.mkdir(current, 0o700)
+        except FileExistsError:
+            pass
+        except OSError:
+            return False
+        try:
+            status = os.lstat(current)
+        except OSError:
+            return False
+        # /dev/shm is world-writable: a pre-created link could send request pages to disk.
+        if (not stat.S_ISDIR(status.st_mode) or status.st_uid != os.getuid()
+                or status.st_dev != device or status.st_mode & 0o077):
+            return False
+    return True
+
+
+def tmpfs_large_enough(root, mounts=Path('/proc/self/mounts')):
+    """True only when root sits on a tmpfs of at least HICACHE_MIN_TMPFS_BYTES; pages must never reach disk."""
+    try:
+        entries = [line.split()[1:3] for line in mounts.read_text().splitlines()]
+    except OSError:
+        return False
+    path = str(root)
+    covering = [(point, kind) for point, kind in entries
+                if path == point or path.startswith(point.rstrip('/') + '/')]
+    if not covering or max(covering, key=lambda item: len(item[0]))[1] != 'tmpfs':
+        return False
+    point = max(covering, key=lambda item: len(item[0]))[0]
+    try:
+        return shutil.disk_usage(point).total >= HICACHE_MIN_TMPFS_BYTES
+    except OSError:
+        return False
+
+
+def hicache_root(environment):
+    # tmpfs survives a process restart on the host but never reaches disk; one tree per runtime directory.
+    return Path(environment.get('GRADIATED_HICACHE_ROOT', str(HICACHE_ROOT))) / Path(__file__).resolve().parent.name
 
 
 def hold_hicache(directory):
     """Hold a shared lock on the leaf's sibling lock file for the life of the service."""
-    directory.parent.mkdir(parents=True, exist_ok=True)
-    handle = open(directory.with_name(directory.name + '.lock'), 'a')
+    # hicache_directory created and checked the private tree; never follow a link to the lock.
+    descriptor = os.open(directory.with_name(directory.name + '.lock'), os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW, 0o600)
+    handle = os.fdopen(descriptor, 'a')
     fcntl.flock(handle, fcntl.LOCK_SH)
     return handle
 
 
-def prune_hicache(environment, keep, max_age_days=7):
-    cutoff = time.time() - max_age_days * 86400
-    for leaf in (cache_root(environment) / 'hicache').glob('*/*'):
+def prune_hicache(environment, keep, idle_seconds=HICACHE_IDLE_SECONDS):
+    """Delete unlocked leaves of other identities at once and this identity's after idle_seconds."""
+    cutoff = time.time() - idle_seconds
+    for leaf in hicache_root(environment).glob('*/*'):
         if leaf == keep or not leaf.is_dir():
             continue
-        with open(leaf.with_name(leaf.name + '.lock'), 'a') as lock:
+        # Another bundle or setting can never read these pages again.
+        if leaf.parent != keep.parent:
+            cutoff_for_leaf = float('inf')
+        else:
+            cutoff_for_leaf = cutoff
+        try:
+            descriptor = os.open(leaf.with_name(leaf.name + '.lock'), os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW, 0o600)
+        except OSError:
+            continue
+        with os.fdopen(descriptor, 'a') as lock:
             try:
                 # A running replica holds its leaf's lock; another start or an evictor may delete files mid-scan.
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 newest = max([leaf.stat().st_mtime, *(f.stat().st_mtime for f in leaf.iterdir())])
             except OSError:
                 continue
-            if newest < cutoff:
+            if newest < cutoff_for_leaf:
                 shutil.rmtree(leaf, ignore_errors=True)
 
 

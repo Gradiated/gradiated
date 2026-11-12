@@ -70,6 +70,10 @@ def verify(root):
     bundle = Path(temporary.name) / 'bundle'
     bundle.mkdir()
     (bundle / '.bundle-sha256').write_text('0' * 64 + '\n')
+    # The build has no host-sized tmpfs; the tmpfs and private-tree checks run on GPU hosts at start.
+    import config as runtime_config
+    runtime_config.tmpfs_large_enough = lambda root: True
+    runtime_config.private_tmpfs_tree = lambda base, path: True
     _, backend, router = commands(env, bundle)
     parser = argparse.ArgumentParser()
     ServerArgs.add_cli_args(parser)
@@ -83,7 +87,8 @@ def verify(root):
     assert native.hicache_write_policy == 'write_through' and native.hicache_storage_backend == 'file'
     assert native.hicache_mem_layout == 'page_first' and native.hicache_io_backend == 'kernel'
     assert native.hicache_host_memory_mode == 'cache' and native.hicache_storage_key_scheme == 'rank-suffix'
-    assert json.loads(native.hicache_storage_backend_extra_config)['max_size'] == '100G'
+    extra = json.loads(native.hicache_storage_backend_extra_config)
+    assert extra['max_size'] == '50G' and extra['file_storage_path'].startswith('/dev/shm/gradiated-hicache/')
     front = parse_router_args(router[3:])
     assert front.max_concurrent_requests == 12 and front.queue_size == 2
     assert front.queue_timeout_secs == 10 and front.rate_limit_tokens_per_second == 0

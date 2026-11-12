@@ -56,8 +56,8 @@ describe("model configurations", () => {
     "jaredpalmer/kev-9b": { input: [30, 6], output: [0] },
     "perplexity-ai/pplx-decider-v1.2": { input: [20, 20], output: [0] },
     "moonshotai/kimi-k3.1-pro": {
-      input: [1_000, 100],
-      output: [9_000, 9_000],
+      input: [500, 50],
+      output: [5_000, 5_000],
     },
     "z-ai/glm-5.3": { input: [1_400, 260], output: [4_400, 4_400] },
   };
@@ -109,8 +109,8 @@ describe("model configurations", () => {
     }
   });
 
-  it("advertises Kev 9B as a decision model that cannot generate", () => {
-    expect(createKev9bModelConfiguration().status).toBe("available");
+  it("retains Kev 9B history while retiring it from published catalogs", () => {
+    expect(createKev9bModelConfiguration().status).toBe("retired");
     expect(modelType(createKev9bModelConfiguration().id)).toBe("decision");
     const [output] =
       createKev9bModelConfiguration().properties.output_modalities;

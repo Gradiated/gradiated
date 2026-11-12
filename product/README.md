@@ -54,12 +54,19 @@ the complete development stack through mprocs. The launcher requires `lsof`
 (`apt-get install lsof` on Debian/Ubuntu):
 
 ```sh
+mise run env:build
 nvm use
 corepack enable
 pnpm install
 pnpm exec turbo run build --filter=@gradiated/api --filter=@gradiated/worker
 pnpm dev
 ```
+
+`mise run env:build` writes the ignored repository-root `.env` from the
+`gradiated/dev/env` secret. It uses the `gradiated-restricted` AWS profile,
+which every collaborator has through the `Restricted` group: it creates the
+profile if needed and opens an AWS sign-in when the session has expired. Rerun it when that secret changes; it keeps any
+variables only your `.env` has under a local-only section.
 
 `pnpm dev` first stops stale application listeners (3000–3004, 9003–9004,
 8233, 9464–9465, and 30000), then launches mprocs. It leaves datastore ports alone. Prefer it over

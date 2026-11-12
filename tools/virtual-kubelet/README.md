@@ -120,7 +120,7 @@ All production serving replicas and training Jobs use Kubernetes. Existing
 RunPod containers retain a suspended legacy main process only to preserve their
 reservation; it has no jobs or cluster access. New hosts use the GPU base image.
 
-Use Go 1.26.10, matching the compiler pinned in CI and the controller builder
+Use Go 1.26.11, matching the compiler pinned in CI and the controller builder
 image. Run the local adapter checks with:
 
 ```sh
@@ -354,9 +354,14 @@ empty 4-GPU host and leave no whole host for a TP4 or TP8 pod. The
 upstream `kube-scheduler` in `gpu-inference`, two replicas behind a leader
 lease. Its one profile keeps the default plugins but scores `NodeResourcesFit`
 `MostAllocated` on `nvidia.com/gpu` only, so the fullest host that still fits
-wins and a TP2 pod takes a free 2-GPU host first. `NodeAffinity` has weight 10
-against packing's 1, so a preferred node affinity (a warm host, say) outranks
-packing. Pods opt in with `schedulerName: gradiated-gpu`; any other pod keeps
+wins and a TP2 pod takes a free 2-GPU host, or the free half of a 4-GPU host,
+first. `NodeAffinity` has weight 10 against packing's 5, so a preferred node
+affinity (a warm host, say) outranks packing. Two default scores that pull the
+other way are off: `NodeResourcesBalancedAllocation`, and the system default
+spread constraints of `PodTopologySpread`, which put a Deployment's replicas
+on different hosts. A pool that must spread sets anti-affinity instead.
+Packing only applies when a pod is placed: a scale-down removes whichever pod
+the ReplicaSet picks, which can leave two half-used hosts. Pods opt in with `schedulerName: gradiated-gpu`; any other pod keeps
 `default-scheduler`. `GpuSchedulerUnavailable` warns when it has no ready
 replica for ten minutes.
 

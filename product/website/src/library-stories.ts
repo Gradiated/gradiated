@@ -71,7 +71,7 @@ const excerptFor = (slug: string): string | undefined => {
    and the lead/pair landscape). Pieces without an entry keep their generated
    wafer cover — the maps below stay as the fallback, not a competitor. */
 const NOTE_ART: Record<string, StoryArt> = {
-  "/library/gemma-inference-engine/": {
+  "/notes/gemma-inference-engine/": {
     tall: "/brand/library/carat.webp",
     wide: "/brand/library/carat-wide.webp",
   },
@@ -90,7 +90,7 @@ const NOTE_ART: Record<string, StoryArt> = {
 };
 
 const NOTE_COVERS: Record<string, StoryCover> = {
-  "/library/gemma-inference-engine/": artworkPresets.carat,
+  "/notes/gemma-inference-engine/": artworkPresets.carat,
   "/notes/our-thesis/": artworkPresets.thesis,
 };
 

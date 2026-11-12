@@ -24,7 +24,9 @@ export const eventSchemas = {
   organization_settings_updated: z.strictObject({
     ...organization,
     changed_fields: z
-      .array(z.enum(["name", "auto_join_domain", "onboarding_completed"]))
+      .array(
+        z.enum(["name", "slug", "auto_join_domain", "onboarding_completed"]),
+      )
       .min(1),
   }),
   organization_members_invited: z.strictObject({

@@ -71,6 +71,7 @@ const setup = async (page: Page, role = "admin", busyOnce = false) => {
             role,
             status: "active",
             default_workspace_id: workspace,
+            slug: "test-org",
             auto_join_domain: null,
             onboarding_completed: true,
           },
@@ -258,6 +259,11 @@ for (const mobile of [false, true]) {
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(
       page.getByText("Awaiting serving qualification", { exact: false }),
+    ).toBeVisible();
+    const modelName = `test-org/${task.name}/${version.name}`;
+    await expect(page.getByText(`Model name: ${modelName}`)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2, name: modelName }),
     ).toBeVisible();
     expect(state.received()).toMatchObject({
       create_task: true,

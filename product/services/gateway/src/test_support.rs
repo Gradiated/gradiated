@@ -137,9 +137,10 @@ impl ServingState for TestServingState {
         workspace_id: Uuid,
         name: &str,
     ) -> Result<bool, ServingStateError> {
-        Ok(self.adapter.as_ref().is_some_and(|adapter| {
-            adapter.workspace_id == workspace_id && (adapter.name == name || name == "task-a")
-        }))
+        Ok(self
+            .adapter
+            .as_ref()
+            .is_some_and(|adapter| adapter.workspace_id == workspace_id && resolves(adapter, name)))
     }
 
     async fn private_adapter(
@@ -149,9 +150,7 @@ impl ServingState for TestServingState {
     ) -> Result<Option<crate::PrivateAdapter>, ServingStateError> {
         self.record("private_adapter");
         Ok(self.adapter.clone().filter(|adapter| {
-            adapter.workspace_id == workspace_id
-                && adapter.is_valid()
-                && (adapter.name == name || name == "task-a")
+            adapter.workspace_id == workspace_id && adapter.is_valid() && resolves(adapter, name)
         }))
     }
 
@@ -313,5 +312,18 @@ pub(crate) fn metadata() -> RequestMetadata {
     RequestMetadata {
         generation_id: GENERATION_ID,
         received_at: Utc.with_ymd_and_hms(2026, 8, 19, 12, 0, 0).unwrap(),
+    }
+}
+
+/// Mirrors PostgreSQL resolution of `<slug>/<task>[/<version>]`.
+fn resolves(adapter: &crate::PrivateAdapter, model: &str) -> bool {
+    let segments: Vec<&str> = model.splitn(3, '/').collect();
+    match segments.as_slice() {
+        [slug, task, rest @ ..] => {
+            slug.eq_ignore_ascii_case(&adapter.organization_slug)
+                && *task == adapter.task_name
+                && rest.iter().all(|version| *version == adapter.name)
+        }
+        _ => false,
     }
 }

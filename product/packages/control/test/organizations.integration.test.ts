@@ -7,8 +7,10 @@ import {
   organizations as organizationTable,
   billingAccounts,
   balanceTransactions,
+  tasks,
   workspaces,
 } from "../src/db/schema/index.js";
+import { createCatalogService } from "../src/catalog/service.js";
 import {
   createOrganizationService,
   SIGNUP_CREDIT_NANO_USD,
@@ -17,6 +19,7 @@ import {
 import {
   billingAccountRow,
   ledgerRows,
+  modelInput,
   seedOrganization,
   seedMember,
   seedUser,
@@ -409,3 +412,113 @@ describe("organization onboarding and domain auto-join", () => {
     }
   });
 });
+
+describe("organization slugs", () => {
+  let db: TestDatabase;
+  let service: OrganizationService;
+  beforeAll(async () => {
+    db = await createTestDatabase();
+    service = createOrganizationService(db.database);
+  });
+  afterAll(() => db.dispose());
+
+  const name = () => `Slug ${randomUUID().slice(0, 8)}`;
+  const slug = () => `slug-${randomUUID().slice(0, 8)}`;
+
+  it("starts every organization with a random slug that renames keep", async () => {
+    const userId = await seedUser(db.database);
+    const personal = await service.ensurePersonalForUser(userId);
+    const team = await service.createForUser(userId, name());
+
+    for (const { slug } of [personal, team])
+      expect(slug).toMatch(/^[0-9a-f]{16}$/);
+    expect(personal.slug).not.toBe(team.slug);
+
+    const renamed = await service.updateForUser(userId, team.id, {
+      name: name(),
+    });
+    expect(renamed.slug).toBe(team.slug);
+  });
+
+  it("creates an organization with a chosen slug", async () => {
+    const userId = await seedUser(db.database);
+    const chosen = slug();
+
+    expect((await service.createForUser(userId, name(), chosen)).slug).toBe(
+      chosen,
+    );
+    for (const taken of [chosen, "gradiated"])
+      await expect(
+        service.createForUser(userId, name(), taken),
+      ).rejects.toMatchObject({ code: "conflict" });
+  });
+
+  it("sets the slug chosen in onboarding", async () => {
+    const userId = await seedUser(db.database);
+    const personal = await service.ensurePersonalForUser(userId);
+    const chosen = slug();
+
+    const onboarded = await service.updateForUser(userId, personal.id, {
+      name: name(),
+      slug: ` ${chosen.toUpperCase()} `,
+      onboarding_completed: true,
+    });
+
+    expect(onboarded).toMatchObject({
+      slug: chosen,
+      onboardingCompleted: true,
+    });
+  });
+
+  it("fixes the slug once the organization has a model", async () => {
+    const userId = await seedUser(db.database);
+    const own = await service.createForUser(userId, name());
+    const first = slug();
+    const chosen = slug();
+    await service.updateForUser(userId, own.id, { slug: first });
+    await service.updateForUser(userId, own.id, { slug: chosen });
+    await db.database.insert(tasks).values({
+      id: randomUUID(),
+      organizationId: own.id,
+      workspaceId: own.defaultWorkspaceId,
+      name: "support-triage",
+    });
+
+    await expect(
+      service.updateForUser(userId, own.id, { slug: first }),
+    ).rejects.toMatchObject({ code: "conflict" });
+    const renamed = await service.updateForUser(userId, own.id, {
+      name: name(),
+      slug: chosen,
+    });
+    expect(renamed.slug).toBe(chosen);
+
+    const other = await service.createForUser(userId, name());
+    expect(
+      (await service.updateForUser(userId, other.id, { slug: first })).slug,
+    ).toBe(first);
+  });
+
+  it("rejects a taken, reserved or malformed slug", async () => {
+    const userId = await seedUser(db.database);
+    const taken = await service.createForUser(userId, name());
+    const own = await service.createForUser(userId, name());
+    await upsertCatalogAuthor(db, "slugtestauthor");
+
+    for (const slug of [taken.slug, "gradiated", "slugtestauthor"])
+      await expect(
+        service.updateForUser(userId, own.id, { slug }),
+      ).rejects.toMatchObject({ code: "conflict" });
+    for (const slug of ["-acme", "acme-", "a", "acme/team", "a".repeat(40)])
+      await expect(
+        service.updateForUser(userId, own.id, { slug }),
+      ).rejects.toThrow();
+    expect((await service.listForUser(userId, own.id))[0]?.slug).toBe(own.slug);
+  });
+});
+
+const upsertCatalogAuthor = async (db: TestDatabase, author: string) => {
+  await createCatalogService(db.database).upsertModel(
+    modelInput({ id: `${author}/model` }),
+  );
+};

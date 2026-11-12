@@ -209,6 +209,12 @@ work schedule, interview process, and application link are in
 `src/pages/JobPage.tsx`. Applications use `team@gradiated.com` and do not need
 an external service.
 
+The handbook compensation calculator reads `src/compensation-data.ts`, which
+Gradiated edits by hand. Take each role's San Francisco benchmark from Pave
+Market Data (90th percentile for engineering and research, 50th percentile plus
+20% otherwise) and update the file at each pay review. A role with a `null`
+benchmark stays hidden from the calculator.
+
 The home page service-tier section keeps tier names, discount values, and
 descriptions in `src/components/ServiceTierSection.tsx`. Update that table when
 the service-tier pricing changes.

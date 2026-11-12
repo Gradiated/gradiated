@@ -3,7 +3,12 @@ import {
   type AdapterHostingService,
 } from "@gradiated/control";
 import { describe, expect, it, vi } from "vitest";
-import { createTestApp, postJson, workspaceId } from "./support.js";
+import {
+  createTestApp,
+  organizationId,
+  postJson,
+  workspaceId,
+} from "./support.js";
 
 import { createGpuControlApp } from "../src/gpu-control.js";
 
@@ -13,11 +18,12 @@ const taskId = "0198ae50-94d8-7d4d-a8be-9f9b44b8c775";
 const sha256 = "a".repeat(64);
 const grantsPath = "/api/internal/v1/adapter-downloads";
 const listPath = "/api/internal/v1/task-versions/production";
-const target = { workspace_id: workspaceId, version_name: "triage-v1" };
+const target = { workspace_id: workspaceId, version_name: versionId };
 const at = new Date("2026-10-02T00:00:00Z");
 const row = {
   task: {
     id: taskId,
+    organizationId,
     workspaceId,
     name: "triage",
     baseModelId: "gradiated/base",
@@ -93,7 +99,8 @@ describe("private adapter routes", () => {
       workspace_id: workspaceId,
       version: {
         id: versionId,
-        name: "triage-v1",
+        // The loader keys the adapter by this name, so it carries the ID.
+        name: versionId,
         task: "triage",
         training_run_id: versionId,
         base_model_id: "gradiated/base",
@@ -104,7 +111,7 @@ describe("private adapter routes", () => {
       },
       download: row.download,
     });
-    expect(service.grant).toHaveBeenCalledWith(workspaceId, "triage-v1");
+    expect(service.grant).toHaveBeenCalledWith(workspaceId, versionId);
   });
 
   it("returns bounded production identities and empty lists", async () => {
@@ -127,6 +134,7 @@ describe("private adapter routes", () => {
     for (const body of [
       { ...target, version_name: "" },
       { ...target, version_name: "a".repeat(301) },
+      { ...target, version_name: "triage/triage-v1" },
       { ...target, workspace_id: "bad" },
       { ...target, url: "https://arbitrary.example" },
     ]) {

@@ -21,10 +21,12 @@ import {
   activeCustomerOrganization,
 } from "../access.js";
 import { ControlServiceError } from "../errors.js";
+import { isTakenOrganizationSlug, requireChangeableSlug } from "./slugs.js";
 
 const OrganizationRecordSchema = CurrentOrganizationSchema.pick({
   id: true,
   name: true,
+  slug: true,
   status: true,
   role: true,
 })
@@ -46,6 +48,7 @@ const SignupEmailSchema = z.object({
 const organizationColumns = (userId: string) => ({
   id: organizations.id,
   name: organizations.name,
+  slug: organizations.slug,
   status: organizations.status,
   role: customerRole(userId),
   defaultWorkspaceId: workspaces.id,
@@ -151,17 +154,39 @@ export const createOrganizationStore = (database: ControlDatabase) => {
       const update = UpdateOrganizationSchema.parse(input);
 
       await database
-        .update(organizations)
-        .set({
-          name: update.name,
-          autoJoinDomain: update.auto_join_domain,
-          onboardedAt: update.onboarding_completed
-            ? sql`coalesce(${organizations.onboardedAt}, now())`
-            : undefined,
-          updatedAt: new Date(),
+        .transaction(async (transaction) => {
+          const [current] = await transaction
+            .select({ slug: organizations.slug })
+            .from(organizations)
+            .where(eq(organizations.id, organizationId))
+            .for("update");
+          if (update.slug !== undefined && update.slug !== current?.slug)
+            await requireChangeableSlug(
+              transaction,
+              organizationId,
+              update.slug,
+            );
+
+          await transaction
+            .update(organizations)
+            .set({
+              name: update.name,
+              slug: update.slug,
+              autoJoinDomain: update.auto_join_domain,
+              onboardedAt: update.onboarding_completed
+                ? sql`coalesce(${organizations.onboardedAt}, now())`
+                : undefined,
+              updatedAt: new Date(),
+            })
+            .where(eq(organizations.id, organizationId));
         })
-        .where(eq(organizations.id, organizationId))
         .catch((error: unknown) => {
+          if (isTakenOrganizationSlug(error))
+            throw new ControlServiceError(
+              "conflict",
+              "Another organization already uses this slug.",
+              error,
+            );
           if (isClaimedDomain(error))
             throw new ControlServiceError(
               "conflict",

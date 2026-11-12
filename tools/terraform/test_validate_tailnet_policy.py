@@ -22,10 +22,18 @@ class TailnetPolicyTests(unittest.TestCase):
                          if 'tcp:22' in grant.get('ip', []) or '*' in grant.get('ip', []))
         self.assertEqual(port_22, [(('autogroup:admin',), ('tag:gpu-inference', 'tag:gpu-bootstrap')),
                                    (('autogroup:member',), ('autogroup:self',)),
-                                   (('tag:dev-machine', 'tag:dev-training', 'autogroup:admin'), ('tag:dev-training',)),
+                                   (('tag:dev-machine', 'autogroup:admin'), ('tag:dev-training',)),
+                                   (('tag:dev-training-nebius',), ('tag:dev-training-nebius',)),
+                                   (('tag:dev-training-ornn',), ('tag:dev-training-ornn',)),
                                    (('tag:ops-mcp', 'tag:gpu-fleet'), ('tag:gpu-bootstrap',))])
-        dev = rules[('accept', ('tag:dev-machine', 'tag:dev-training', 'autogroup:admin'))]
-        self.assertEqual(dev['dst'], ['tag:dev-training'])
+        self.assertEqual(rules[('accept', ('tag:dev-machine', 'autogroup:admin'))]['dst'], ['tag:dev-training'])
+        # A development training node reaches only nodes on its own provider, and
+        # no node tag owns a provider tag, so a node cannot re-tag itself as another.
+        node_tags = {'tag:dev-training', 'tag:dev-training-nebius', 'tag:dev-training-ornn'}
+        for tag in node_tags - {'tag:dev-training'}:
+            self.assertEqual(rules[('accept', (tag,))]['dst'], [tag])
+            self.assertEqual(policy['tagOwners'][tag], ['tag:terraform'])
+        self.assertFalse(node_tags & {owner for owners in policy['tagOwners'].values() for owner in owners})
 
     def test_reports_failed_policy_tests(self):
         self.assertEqual(checker.failures({}), [])

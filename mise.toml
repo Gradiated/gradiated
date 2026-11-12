@@ -16,6 +16,11 @@ description = "Log in to Gradiated AWS (read-only by default; override with --pr
 usage = 'flag "--profile <profile>" default="gradiated-readonly" help="AWS CLI profile to log in with"'
 run = 'aws sso login --profile "${usage_profile:?}"'
 
+[tasks."env:build"]
+description = "Write .env from the gradiated/dev/env secret (gradiated-restricted by default; override with --profile)"
+usage = 'flag "--profile <profile>" default="gradiated-restricted" help="AWS CLI profile to read the secret with"'
+run = 'python3 tools/env/build.py --profile "${usage_profile:?}"'
+
 [tasks.infra-fmt]
 description = "Format Terraform and Terragrunt configuration"
 run = [

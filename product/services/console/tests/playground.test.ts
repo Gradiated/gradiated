@@ -124,6 +124,7 @@ describe("playgroundModels", () => {
         hosted("Qwen/Qwen3-8B"),
       ],
       [task("support-assistant", true), task("untrained", false)],
+      "acme",
     );
 
     expect(
@@ -131,21 +132,23 @@ describe("playgroundModels", () => {
     ).toEqual([
       ["z-ai/glm-5.3-flash", "hosted", true],
       ["deepseek/deepseek-v4.1-flash-1017", "hosted", false],
-      ["support-assistant", "workspace", true],
+      ["acme/support-assistant", "workspace", true],
     ]);
     expect(models[0]?.label).toBe("GLM-5.3 Flash");
+    expect(models[2]?.label).toBe("acme/support-assistant");
     expect(models[2]?.iconId).toBe("z-ai/glm-5.3-flash");
   });
 
   it("leaves out a task whose name is also a hosted model id", () => {
     const models = playgroundModels(
       [hosted("z-ai/glm-5.3-flash")],
-      [task("z-ai/glm-5.3-flash", true), task("support-assistant", true)],
+      [task("glm-5.3-flash", true), task("support-assistant", true)],
+      "z-ai",
     );
 
     expect(models.map(({ id, source }) => [id, source])).toEqual([
       ["z-ai/glm-5.3-flash", "hosted"],
-      ["support-assistant", "workspace"],
+      ["z-ai/support-assistant", "workspace"],
     ]);
   });
 
@@ -161,6 +164,7 @@ describe("playgroundModels", () => {
         }),
       ],
       [task("support-assistant", true)],
+      "acme",
     );
 
     expect(task_?.capabilities).toEqual(model?.capabilities);

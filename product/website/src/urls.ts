@@ -4,4 +4,4 @@ export const CONSOLE_BASE_URL =
     ? "http://localhost:3000"
     : "https://console.gradiated.com");
 
-export const SAND_TO_THOUGHT_URL = "/sand-to-thought/library/";
+export const SAND_TO_THOUGHT_URL = "/library/sand-to-thought/";

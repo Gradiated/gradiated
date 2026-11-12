@@ -29,7 +29,7 @@
   /* -- hero ----------------------------------------------------------------
         page lead, then title -> CTAs (element), then the argument (sub) */
   .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-fold-left {
-    padding-block: calc(1.5 * var(--u)) var(--rhythm-sub);
+    padding-block: calc(3 * var(--u)) var(--rhythm-sub);
   }
 
   .gr-rail-sheet

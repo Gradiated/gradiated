@@ -83,6 +83,7 @@ JOB_PATHS = {
         "product/mprocs.yaml",
         "product/tsconfig.scripts.json",
         "tools/deployment/*",
+        "tools/docs-refresh/*",
         "tools/github-apps/*",
         "tools/images/*",
         "product/packages/contracts/*",

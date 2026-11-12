@@ -111,7 +111,3 @@
   color: var(--color-text-muted);
   text-align: center;
 }
-
-.gr-root .gr-qa > * + .sf-spread {
-  margin-block-end: 0.6em;
-}

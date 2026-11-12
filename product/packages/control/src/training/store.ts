@@ -41,6 +41,7 @@ import {
   EventRecordSchema,
   TaskUpdateSchema,
 } from "./records.js";
+import { modelNameProblem } from "./model-names.js";
 
 const RunViewSchema = RunRecordSchema.extend({
   task: TaskSchema.shape.name,
@@ -100,6 +101,9 @@ export const createTrainingStore = (database: ControlDatabase) => {
 
       return row && TaskRecordSchema.parse(row);
     },
+
+    modelNameProblem: (workspaceId: string, name: string) =>
+      modelNameProblem(database, workspaceId, name),
 
     async getTaskById(workspaceId: string, taskId: string) {
       const [row] = await database
@@ -305,7 +309,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return row && VersionRecordSchema.parse(row);
     },
 
-    async getHostingVersion(workspaceId: string, versionName: string) {
+    async getHostingVersion(workspaceId: string, versionId: string) {
       const [row] = await database
         .select({ task: tasks, version: taskVersions })
         .from(taskVersions)
@@ -317,10 +321,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
         )
         .where(
           and(
-            eq(
-              taskVersions.name,
-              VersionRecordSchema.shape.name.parse(versionName),
-            ),
+            eq(taskVersions.id, UuidSchema.parse(versionId)),
             eq(tasks.workspaceId, UuidSchema.parse(workspaceId)),
             isNull(workspaces.archivedAt),
             eq(organizations.status, "active"),
@@ -360,6 +361,8 @@ export const createTrainingStore = (database: ControlDatabase) => {
             eq(taskVersions.status, "available"),
             sql`coalesce(nullif(${taskVersions.adapter}->>'validated_base_model_revision', ''), ${taskVersions.adapter}->>'base_model_revision', '') <> ''`,
             sql`(${taskVersions.adapter}->>'size_bytes')::bigint > 0`,
+            // Only claimed model names can be called.
+            isNotNull(tasks.organizationId),
             isNull(workspaces.archivedAt),
             eq(organizations.status, "active"),
           ),

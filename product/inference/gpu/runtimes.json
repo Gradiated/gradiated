@@ -454,6 +454,32 @@
     },
     "request_memory": "256Gi"
   },
+  "73fd92571c36161b12996a72dae215fd507babfbfb7c1d4cd35ed4d1d30fd733": {
+    "image": "gradiated/glm-sglang-bundle@sha256:73fd92571c36161b12996a72dae215fd507babfbfb7c1d4cd35ed4d1d30fd733",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "9ecbe97972664a5fe88a42dab8d9dbdd9f9a9a571ee1bf26c1d9ddeaac05cd06"
+    },
+    "model_id": "dealignai/glm-5.3-flash-uncensored-sglang-canary",
+    "release": {
+      "schema_version": 1,
+      "model_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "model_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "tokenizer_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "tokenizer_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "runtime_revision": "glm-dealign-sglang-9ecbe9797266",
+      "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
+    },
+    "gpus": 2,
+    "active_requests": 12,
+    "cpu": "32",
+    "memory": "400Gi",
+    "startup_timeout": 3600,
+    "warmup": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "2"
+    },
+    "request_memory": "256Gi"
+  },
   "386c7278e34d7ebcab1cbc4bc739451bf7f6c6c3b2ddea386779958c3bb23c7b": {
     "image": "gradiated/kimi-k31-bundle@sha256:386c7278e34d7ebcab1cbc4bc739451bf7f6c6c3b2ddea386779958c3bb23c7b",
     "bundles": {
@@ -569,6 +595,28 @@
       "tokenizer_path": "perplexity-ai/pplx-decider-v1.2",
       "tokenizer_revision": "cce0f3f80033e9d89d80831d5281fd72124aacce",
       "runtime_revision": "decider-1ae2d02a4cf2"
+    },
+    "gpus": 1,
+    "active_requests": 1,
+    "cpu": "8",
+    "memory": "64Gi",
+    "request_memory": "64Gi",
+    "startup_timeout": 1800
+  },
+  "ba619193dfba92481840ce68052c3d28c415df5d69f0ff4f864a76012a578c9c": {
+    "image": "gradiated/decider-bundle@sha256:ba619193dfba92481840ce68052c3d28c415df5d69f0ff4f864a76012a578c9c",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "ba619193dfba92481840ce68052c3d28c415df5d69f0ff4f864a76012a578c9c"
+    },
+    "model_id": "perplexity-ai/pplx-decider-v1.2",
+    "release": {
+      "protocol": "system_one",
+      "schema_version": 1,
+      "model_path": "perplexity-ai/pplx-decider-v1.2",
+      "model_revision": "cce0f3f80033e9d89d80831d5281fd72124aacce",
+      "tokenizer_path": "perplexity-ai/pplx-decider-v1.2",
+      "tokenizer_revision": "cce0f3f80033e9d89d80831d5281fd72124aacce",
+      "runtime_revision": "decider-ba619193dfba"
     },
     "gpus": 1,
     "active_requests": 1,

@@ -184,6 +184,9 @@ export const LoginPage = () => {
                     <p className="mt-1 text-sm text-muted-foreground">
                       We sent a sign-in link to {sentTo}.
                     </p>
+                    {import.meta.env.DEV ? (
+                      <LocalSignInLink email={sentTo} />
+                    ) : null}
                     <Button
                       className="mt-3"
                       onClick={() => setSentTo(null)}
@@ -236,5 +239,37 @@ export const LoginPage = () => {
         </Card>
       </div>
     </main>
+  );
+};
+
+/* Local development only: the API in AUTH_TEST_MODE keeps sign-in links in a
+   test mailbox instead of emailing them. Taking a link uses it up, so fetch it
+   on request rather than on render. */
+const LocalSignInLink = ({ email }: { email: string }) => {
+  const [error, setError] = useState("");
+
+  const open = async () => {
+    setError("");
+    const response = await fetch(
+      `/api/auth/test/magic-link?email=${encodeURIComponent(email)}`,
+    ).catch(() => null);
+    const body = (await response?.json().catch(() => null)) as {
+      url?: string;
+    } | null;
+    if (!body?.url)
+      return setError(
+        "No sign-in link found. The local API must run with AUTH_TEST_MODE=true.",
+      );
+
+    window.location.assign(body.url.replaceAll("&amp;", "&"));
+  };
+
+  return (
+    <div className="mt-3 flex flex-col items-center gap-1">
+      <Button type="button" variant="outline" onClick={() => void open()}>
+        Open sign-in link (local only)
+      </Button>
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+    </div>
   );
 };

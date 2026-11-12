@@ -107,7 +107,11 @@ export const createAuthService = (
     account: {
       accountLinking: {
         enabled: true,
-        allowDifferentEmails: false,
+        /* Only linking the signed-in user starts (linkSocial), bound to their
+           session by the OAuth state. Customers connect GitHub to verify app
+           installations, and their GitHub email often differs from their work
+           email. Sign-in still links implicitly only on a verified match. */
+        allowDifferentEmails: true,
       },
     },
     socialProviders: {

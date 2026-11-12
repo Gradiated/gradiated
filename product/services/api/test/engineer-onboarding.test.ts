@@ -332,7 +332,10 @@ describe("engineer onboarding submission", () => {
 
   it("records nothing when the team email fails, so a retry delivers it", async () => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
-    const { app, slack, notify, organizations } = setup();
+    const other = { ...installation, id: 43, account: "other" };
+    const { app, slack, notify, organizations } = setup({
+      installations: [installation, other],
+    });
     notify.mockRejectedValueOnce(new Error("Resend down"));
 
     const failed = await postJson(app, `${path}/submission`, submission);
@@ -340,9 +343,16 @@ describe("engineer onboarding submission", () => {
     expect(organizations.submitOnboarding).not.toHaveBeenCalled();
     expect(slack.postNotes).not.toHaveBeenCalled();
 
-    const retried = await postJson(app, `${path}/submission`, submission);
+    // The retry picks another account; only that one is announced.
+    const retried = await postJson(app, `${path}/submission`, {
+      ...submission,
+      github_installation_id: 43,
+    });
     expect(retried.status).toBe(201);
     expect(notify).toHaveBeenCalledTimes(2);
+    expect(notify).toHaveBeenLastCalledWith(
+      expect.objectContaining({ githubAccounts: ["other"] }),
+    );
     expect(organizations.submitOnboarding).toHaveBeenCalledOnce();
     expect(slack.postNotes).toHaveBeenCalledOnce();
   });

@@ -88,6 +88,42 @@ describe("onboarding draft", () => {
 });
 
 describe("starting the project", () => {
+  it("asks for the NDA signer and address before signing a requested NDA", () => {
+    const installation = {
+      id: 42,
+      account: "example",
+      repository_selection: "selected" as const,
+      repository_count: 1,
+    };
+    const nda = {
+      section: "nda",
+      label: "Add the NDA signer and company address",
+    };
+    const blockersFor = (patch: Partial<OnboardingDraft>) =>
+      startBlockers(
+        serverState(),
+        exampleDraft({ channel: "email", ndaRequested: true, ...patch }),
+        installation,
+      );
+
+    expect(blockersFor({ signerTitle: "", legalAddress: "1 Main St" })).toEqual(
+      [nda],
+    );
+    expect(blockersFor({ signerTitle: "CTO", legalAddress: " " })).toEqual([
+      nda,
+    ]);
+    expect(
+      blockersFor({
+        signerTitle: "CTO",
+        legalAddress: "1 Main St",
+        signerName: "",
+      }),
+    ).toEqual([nda]);
+    expect(
+      blockersFor({ signerTitle: "CTO", legalAddress: "1 Main St" }),
+    ).toEqual([]);
+  });
+
   it("lists what still blocks the start, in page order", () => {
     expect(startBlockers(serverState(), exampleDraft(), null)).toEqual([
       { section: "code", label: "Install the GitHub app" },

@@ -187,6 +187,18 @@ export const startBlockers = (
       label: "Select a repository on GitHub",
     });
 
+  // The API rejects an NDA without these, so ask before opening signing.
+  if (
+    ndaPending(server, draft) &&
+    (!draft.signerTitle.trim() ||
+      !draft.legalAddress.trim() ||
+      draft.signerName?.trim() === "")
+  )
+    blockers.push({
+      section: "nda",
+      label: "Add the NDA signer and company address",
+    });
+
   if (draft.channel === "slack" && !slackInvited(server))
     blockers.push({
       section: "contact",

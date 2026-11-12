@@ -275,6 +275,7 @@ export const registerEngineerOnboardingRoutes = (
     owner: OnboardingOwner,
     organizationName: string,
     input: z.infer<typeof SubmissionSchema>,
+    installation: { account: string },
   ) => {
     const current = await state(owner);
     await dependencies
@@ -283,9 +284,9 @@ export const registerEngineerOnboardingRoutes = (
         organizationName,
         submittedByEmail: owner.email,
         contactChannel: input.contact_channel,
-        githubAccounts: current.github_installations.map(
-          (installation) => installation.account,
-        ),
+        // Only the account this request verified; an earlier attempt may
+        // have recorded another.
+        githubAccounts: [installation.account],
         slackChannel: current.slack?.channel_name ?? null,
         ndaSignedAt: current.nda?.signed_at ?? null,
         notes: input.notes || null,
@@ -402,7 +403,7 @@ export const registerEngineerOnboardingRoutes = (
       },
     );
 
-    await notifyTeam(owner, organization.name, input);
+    await notifyTeam(owner, organization.name, input, installation);
     const { submitted } = await organizations.submitOnboarding(
       owner.userId,
       owner.organizationId,

@@ -234,6 +234,38 @@ async fn sends_the_mapped_model_with_privacy_routing_and_only_the_platform_key()
 }
 
 #[tokio::test]
+async fn deepseek_fallback_covers_standard_provider_prices_for_buffered_and_streaming_requests() {
+    for streaming in [false, true] {
+        let mock = mock_json(StatusCode::OK, json!({})).await;
+        let mut deepseek = if streaming { streaming_chat() } else { chat() };
+        deepseek.model = ExternalModel::openrouter("deepseek/deepseek-v4.1-flash-1017");
+        deepseek.price_cap = PriceCap {
+            prompt: 6,
+            completion: 200,
+        };
+
+        let client = client(&mock).await;
+        if streaming {
+            let _ = client.stream(deepseek).await;
+        } else {
+            let _ = client.complete(deepseek).await;
+        }
+
+        let recorded = mock.requests();
+        assert_eq!(recorded.len(), 1);
+        assert_eq!(
+            recorded[0].body["provider"],
+            json!({
+                "data_collection": "deny",
+                "require_parameters": true,
+                "zdr": true,
+                "max_price": {"prompt": 0.30, "completion": 1.20}
+            })
+        );
+    }
+}
+
+#[tokio::test]
 async fn kimi_may_pay_openrouter_up_to_a_fifth_more_than_we_charge() {
     let mock = mock_json(StatusCode::OK, json!({})).await;
     let mut kimi = chat();

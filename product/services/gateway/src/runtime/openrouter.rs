@@ -39,11 +39,24 @@ const MODEL_UNSUPPORTED_PARAMETERS: [(&str, &[&str]); 1] =
     [("moonshotai/kimi-k3.1-pro", &["parallel_tool_calls"])];
 
 /// Models for which we accept paying OpenRouter more than the caller pays us, as a
-/// percentage of our price. Every other model caps OpenRouter at our price.
+/// percentage of our price. Absolute allowances are in MODEL_MAX_PRICE.
 const MODEL_MAX_PRICE_PERCENT: [(&str, u64); 1] = [("moonshotai/kimi-k3.1-pro", 120)];
+
+// DeepSeek's catalog prices exclude every eligible OpenRouter provider.
+const MODEL_MAX_PRICE: [(&str, PriceCap); 1] = [(
+    "deepseek/deepseek-v4.1-flash-1017",
+    PriceCap {
+        prompt: 300,
+        completion: 1_200,
+    },
+)];
 
 /// The most OpenRouter may charge per token for this model.
 fn max_price(model_id: &str, cap: PriceCap) -> PriceCap {
+    if let Some((_, price)) = MODEL_MAX_PRICE.iter().find(|(model, _)| *model == model_id) {
+        return *price;
+    }
+
     let percent = MODEL_MAX_PRICE_PERCENT
         .iter()
         .find(|(model, _)| *model == model_id)

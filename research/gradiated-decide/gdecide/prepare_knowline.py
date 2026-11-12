@@ -44,9 +44,10 @@ def target(keys: list[str], question: dict, expected) -> list[float] | None:
 
 def encode(job: tuple[list[str], int, float, float]):
     from gdecide.backends.knowline import Unsupported
-    from gdecide.prepare import shuffled
+    from gdecide.prepare import augmented
 
-    lines, max_length, shuffle_p, weight = job
+    lines, max_length, shuffle_p, weight, *rest = job
+    aug = rest[0] if rest else {}
     out, dropped = [], {}
 
     def drop(reason):
@@ -55,7 +56,7 @@ def encode(job: tuple[list[str], int, float, float]):
     for line in lines:
         row = json.loads(line)
         rng = random.Random(str(row.get("id")) + row.get("source", ""))
-        row = shuffled(row, rng, shuffle_p)
+        row = augmented(row, rng, shuffle_p, aug)
         request = {"state": row["state"], "questions": row["questions"]}
         try:
             prompts = _RENDERER.prompts(request)

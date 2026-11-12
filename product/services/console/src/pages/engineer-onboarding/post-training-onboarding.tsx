@@ -330,10 +330,7 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
 
   return (
     <PageShell>
-      <PageHeader
-        eyebrow={`Post-training · ${account.company}`}
-        title="Let’s start your project."
-      >
+      <PageHeader title="Let’s start your project.">
         Connect your code, tell us where to reach you, and a post-training
         researcher picks it up within a working day.
       </PageHeader>
@@ -395,7 +392,6 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
           account={account}
           server={server}
           draft={draft}
-          installation={installation}
           blockers={blockers}
           ndaPending={ndaPending}
           submitting={submitting}

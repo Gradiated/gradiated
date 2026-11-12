@@ -5,7 +5,6 @@ import {
   changesNda,
   chooseAccount,
   codeSummary,
-  contactSummary,
   confirmationMessage,
   counterpartyDetails,
   draftStorageKey,
@@ -13,7 +12,6 @@ import {
   engineerSubmission,
   ndaPending,
   ndaReference,
-  ndaSummary,
   proposedSlackChannel,
   restoreDraft,
   slackInvitationProblem,
@@ -233,7 +231,7 @@ describe("onboarding Slack channel", () => {
 });
 
 describe("onboarding summary and confirmation", () => {
-  it("summarizes code, contact and NDA for the project panel", () => {
+  it("summarizes the shared code for the started project", () => {
     expect(codeSummary(null)).toBe("Not connected");
     expect(codeSummary(installation)).toBe("acme · 3 repositories");
     expect(codeSummary({ ...installation, repository_count: 1 })).toBe(
@@ -241,25 +239,6 @@ describe("onboarding summary and confirmation", () => {
     );
     expect(codeSummary({ ...installation, repository_count: 0 })).toBe(
       "acme · no repositories",
-    );
-    expect(
-      contactSummary(serverState(), exampleDraft({ channel: "email" })),
-    ).toBe("Email");
-    expect(
-      contactSummary(
-        serverState({ slack: { ...activeSlack, status: "pending" } }),
-        exampleDraft(),
-      ),
-    ).toBe("Slack · not invited");
-    expect(
-      contactSummary(serverState({ slack: activeSlack }), exampleDraft()),
-    ).toBe("Slack · invited");
-    expect(ndaSummary(serverState(), exampleDraft())).toBe("None");
-    expect(
-      ndaSummary(serverState(), exampleDraft({ ndaRequested: true })),
-    ).toBe("Requested");
-    expect(ndaSummary(serverState({ nda: signedNda }), exampleDraft())).toMatch(
-      /^Signed /,
     );
   });
 

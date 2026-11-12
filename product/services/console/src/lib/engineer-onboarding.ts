@@ -186,25 +186,6 @@ export const codeSummary = (installation: VerifiedInstallation | null) => {
     : `${installation.account} · no repositories`;
 };
 
-export const contactSummary = (
-  server: EngineerOnboarding,
-  draft: OnboardingDraft,
-) => {
-  if (draft.channel === "email") return "Email";
-
-  return slackInvited(server) ? "Slack · invited" : "Slack · not invited";
-};
-
-export const ndaSummary = (
-  server: EngineerOnboarding,
-  draft: OnboardingDraft,
-) => {
-  if (server.nda)
-    return `Signed ${new Date(server.nda.signed_at).toLocaleDateString()}`;
-
-  return draft.ndaRequested ? "Requested" : "None";
-};
-
 export const slackInvited = (server: EngineerOnboarding) =>
   server.slack?.status === "active";
 

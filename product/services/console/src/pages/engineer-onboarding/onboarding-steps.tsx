@@ -10,8 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   codeSummary,
   confirmationMessage,
-  contactSummary,
-  ndaSummary,
   proposedSlackChannel,
   sectionId,
   slackInvited,
@@ -30,16 +28,13 @@ export const Eyebrow = ({ children }: { children: ReactNode }) => (
 );
 
 export const PageHeader = ({
-  eyebrow,
   title,
   children,
 }: {
-  eyebrow: ReactNode;
   title: string;
   children?: ReactNode;
 }) => (
   <header className="flex max-w-3xl flex-col gap-4">
-    <Eyebrow>{eyebrow}</Eyebrow>
     <h1 className="text-4xl font-semibold tracking-tight text-balance md:text-6xl">
       {title}
     </h1>
@@ -255,7 +250,6 @@ export const ProjectPanel = ({
   account,
   server,
   draft,
-  installation,
   blockers,
   ndaPending,
   submitting,
@@ -266,7 +260,6 @@ export const ProjectPanel = ({
   account: OnboardingAccount;
   server: EngineerOnboarding;
   draft: OnboardingDraft;
-  installation: VerifiedInstallation | null;
   blockers: { section: OnboardingSection; label: string }[];
   ndaPending: boolean;
   submitting: boolean;
@@ -317,15 +310,6 @@ export const ProjectPanel = ({
           </li>
         ))}
       </ol>
-      <div className="border-t pt-5">
-        <Summary
-          rows={[
-            ["Code", codeSummary(installation)],
-            ["Contact", contactSummary(server, draft)],
-            ["NDA", ndaSummary(server, draft)],
-          ]}
-        />
-      </div>
       {error ? (
         <div
           role="alert"
@@ -386,11 +370,9 @@ export const ProjectPanel = ({
         <p role="status" className="text-center text-sm text-muted-foreground">
           {submitting
             ? "Checking GitHub one last time and notifying your researcher."
-            : ndaPending && !blockers.length
-              ? "We start your project as soon as the NDA is signed."
-              : blockers.length
-                ? null
-                : "You can change any of this later."}
+            : blockers.length
+              ? null
+              : "You can change any of this later."}
         </p>
       </div>
     </aside>
@@ -424,15 +406,6 @@ export const ProjectStarted = ({
   return (
     <div className="flex flex-col gap-12">
       <PageHeader
-        eyebrow={
-          <span className="flex items-center gap-2">
-            <Check className="size-3.5 text-emerald-600" />
-            Project started
-            {server.submitted_at
-              ? ` ${new Date(server.submitted_at).toLocaleDateString()}`
-              : ""}
-          </span>
-        }
         title={justStarted ? "You’re all set." : "Your project is underway."}
       >
         {justStarted

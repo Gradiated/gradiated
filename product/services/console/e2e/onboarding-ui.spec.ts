@@ -526,9 +526,6 @@ test("a customer who skips the NDA starts without one", async ({ page }) => {
       name: "Our team can’t use Slack, so use email instead.",
     })
     .click();
-  await expect(
-    page.getByRole("complementary", { name: "Your project" }).getByText("None"),
-  ).toBeVisible();
   await startButton(page).click();
 
   await expect(

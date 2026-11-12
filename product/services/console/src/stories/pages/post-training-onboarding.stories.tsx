@@ -173,7 +173,7 @@ export const NdaRequested: Story = {
       installations: [acmeInstallation()],
     }),
     steps: ["requestNda"],
-    expectText: "We start your project as soon as the NDA is signed.",
+    expectText: "Sign your mutual NDA",
   },
 };
 

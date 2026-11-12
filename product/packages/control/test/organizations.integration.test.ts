@@ -440,6 +440,19 @@ describe("organization slugs", () => {
     expect(renamed.slug).toBe(team.slug);
   });
 
+  it("creates an organization with a chosen slug", async () => {
+    const userId = await seedUser(db.database);
+    const chosen = slug();
+
+    expect((await service.createForUser(userId, name(), chosen)).slug).toBe(
+      chosen,
+    );
+    for (const taken of [chosen, "gradiated"])
+      await expect(
+        service.createForUser(userId, name(), taken),
+      ).rejects.toMatchObject({ code: "conflict" });
+  });
+
   it("sets the slug chosen in onboarding", async () => {
     const userId = await seedUser(db.database);
     const personal = await service.ensurePersonalForUser(userId);

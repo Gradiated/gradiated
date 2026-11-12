@@ -5,7 +5,7 @@ import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { createStaffOrganization, listStaffOrganizations } from "@/api/queries";
-import { CreateNameDialog } from "@/components/create-name-dialog";
+import { CreateOrganizationDialog } from "@/components/create-organization-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -50,14 +50,10 @@ export const AdminPage = () => {
 
   const organizations = results.data?.data ?? [];
   const create = () =>
-    void NiceModal.show(CreateNameDialog, {
+    void NiceModal.show(CreateOrganizationDialog, {
       title: "Prepare a customer organization",
-      label: "Organization name",
-      placeholder: "Acme Inc",
-      submitLabel: "Create organization",
-      emptyMessage: "Enter an organization name.",
-      submit: async (name) => {
-        await organizationCreated(await createStaffOrganization({ name }));
+      submit: async (organization) => {
+        await organizationCreated(await createStaffOrganization(organization));
         await results.refetch();
       },
     });

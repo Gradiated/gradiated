@@ -5,6 +5,7 @@ import {
   type UpdateOrganization,
 } from "@gradiated/contracts";
 import { companyEmailDomain } from "./email-domains.js";
+import { isTakenOrganizationSlug, requireChangeableSlug } from "./slugs.js";
 import { createOrganizationStore } from "./store.js";
 import { requireRow } from "../require-row.js";
 import { createMemberStore } from "../members/store.js";
@@ -74,7 +75,11 @@ export interface OrganizationService {
     organizationId?: string,
     page?: { search: string; limit: number; offset: number },
   ): Promise<UserOrganization[]>;
-  createForUser(userId: string, name: string): Promise<CreatedOrganization>;
+  createForUser(
+    userId: string,
+    name: string,
+    slug?: string,
+  ): Promise<CreatedOrganization>;
   ensurePersonalForUser(
     userId: string,
     name?: string | undefined,
@@ -92,54 +97,68 @@ export const createOrganizationService = (
     onboarded: boolean;
     userId: string;
     name: string;
+    slug?: string | undefined;
   }): Promise<CreatedOrganization> => {
     const organizationId = uuidv7();
     const now = new Date();
     const defaultWorkspace = defaultWorkspaceValues(organizationId, now);
 
-    const slug = await database.transaction(async (transaction) => {
-      const created = await transaction
-        .insert(organizations)
-        .values({
-          id: organizationId,
-          kind: "customer",
-          name: input.name,
+    const slug = await database
+      .transaction(async (transaction) => {
+        if (input.slug)
+          await requireChangeableSlug(transaction, organizationId, input.slug);
+        const created = await transaction
+          .insert(organizations)
+          .values({
+            id: organizationId,
+            kind: "customer",
+            name: input.name,
+            slug: input.slug,
+            status: "active",
+            onboardedAt: input.onboarded ? now : null,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .returning({ slug: organizations.slug });
+        await transaction.insert(organizationMembers).values({
+          organizationId,
+          userId: input.userId,
+          role: "admin",
           status: "active",
-          onboardedAt: input.onboarded ? now : null,
           createdAt: now,
           updatedAt: now,
-        })
-        .returning({ slug: organizations.slug });
-      await transaction.insert(organizationMembers).values({
-        organizationId,
-        userId: input.userId,
-        role: "admin",
-        status: "active",
-        createdAt: now,
-        updatedAt: now,
-      });
-      await transaction.insert(workspaces).values(defaultWorkspace);
-      await transaction.insert(billingAccounts).values({
-        organizationId,
-        mode: "prepaid",
-        balance: 0n,
-        createdAt: now,
-        updatedAt: now,
-      });
-
-      if (input.signupCredit)
-        await postBalanceTransaction(transaction, {
+        });
+        await transaction.insert(workspaces).values(defaultWorkspace);
+        await transaction.insert(billingAccounts).values({
           organizationId,
-          type: "credit",
-          amount: SIGNUP_CREDIT_NANO_USD,
-          sourceType: "operator",
-          sourceId: `signup-grant:${organizationId}`,
-          createdBy: input.userId,
+          mode: "prepaid",
+          balance: 0n,
+          createdAt: now,
+          updatedAt: now,
         });
 
-      // The database assigns a random placeholder until onboarding.
-      return requireRow(created, "The organization was not created.").slug;
-    });
+        if (input.signupCredit)
+          await postBalanceTransaction(transaction, {
+            organizationId,
+            type: "credit",
+            amount: SIGNUP_CREDIT_NANO_USD,
+            sourceType: "operator",
+            sourceId: `signup-grant:${organizationId}`,
+            createdBy: input.userId,
+          });
+
+        // The database assigns a random placeholder until onboarding.
+        return requireRow(created, "The organization was not created.").slug;
+      })
+      .catch((error: unknown) => {
+        if (isTakenOrganizationSlug(error))
+          throw new ControlServiceError(
+            "conflict",
+            "Another organization already uses this slug.",
+            error,
+          );
+        throw error;
+      });
 
     return {
       id: organizationId,
@@ -231,8 +250,9 @@ export const createOrganizationService = (
       return organization;
     },
 
-    async createForUser(userId, name) {
+    async createForUser(userId, name, slug) {
       return createOrganization({
+        slug,
         signupCredit: false,
         onboarded: true,
         userId,

@@ -15,6 +15,7 @@ import {
 export const CreateOrganizationSchema = z
   .strictObject({
     name: NameInputSchema,
+    slug: OrganizationSlugInputSchema.optional(),
   })
   .openapi("CreateOrganization");
 

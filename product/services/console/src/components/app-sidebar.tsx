@@ -26,6 +26,7 @@ import {
   type Workspace,
 } from "@/api/queries";
 import { CreateNameDialog } from "@/components/create-name-dialog";
+import { CreateOrganizationDialog } from "@/components/create-organization-dialog";
 import { Logo } from "@/components/logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -129,14 +130,10 @@ export const AppSidebar = ({
   };
 
   const addOrganization = () =>
-    void NiceModal.show(CreateNameDialog, {
+    void NiceModal.show(CreateOrganizationDialog, {
       title: "Create an organization",
-      label: "Organization name",
-      placeholder: "Acme Inc",
-      submitLabel: "Create organization",
-      emptyMessage: "Enter an organization name.",
-      submit: async (name) => {
-        await organizationCreated(await createOrganization({ name }));
+      submit: async (organization) => {
+        await organizationCreated(await createOrganization(organization));
       },
     });
 

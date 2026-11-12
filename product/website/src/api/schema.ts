@@ -1615,6 +1615,7 @@ export interface components {
     };
     CreateOrganization: {
       name: string;
+      slug?: string;
     };
     MemberList: {
       data: components["schemas"]["Member"][];
@@ -3899,6 +3900,15 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
+      /** @description The slug is taken or reserved. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
       /** @description The request body is invalid. */
       422: {
         headers: {
@@ -4001,6 +4011,15 @@ export interface operations {
       };
       /** @description No valid human session is present. */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The slug is taken or reserved. */
+      409: {
         headers: {
           [name: string]: unknown;
         };

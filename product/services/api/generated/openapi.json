@@ -2004,6 +2004,10 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 200
+          },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$"
           }
         },
         "required": [
@@ -6469,6 +6473,16 @@
           },
           "401": {
             "description": "No valid human session is present.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The slug is taken or reserved.",
             "content": {
               "application/problem+json": {
                 "schema": {

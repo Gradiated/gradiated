@@ -444,7 +444,7 @@ test("staff keep the new organization selected during a slow account refresh", a
     {
       method: "POST",
       path: "/api/v1/admin/organizations",
-      body: { name: "Prepared Customer" },
+      body: { name: "Prepared Customer", slug: "prepared-customer" },
     },
   ]);
   const selectedOrganization = () =>

@@ -8,6 +8,7 @@ import {
 } from "../http/onboarding-access.js";
 import { ApiProblem, problems } from "../http/problems.js";
 import {
+  NDA_SIGNING_UNAVAILABLE,
   NdaDetailsSchema,
   NdaDocumentIdSchema,
   NdaDocumentSchema,
@@ -130,11 +131,7 @@ export const registerNdaDocumentRoutes = (
       organizationId,
     );
     if (!provider)
-      throw new ApiProblem(
-        problems.unavailable(
-          "NDA signing isn’t available right now. Email us the details instead and we’ll send over the NDA.",
-        ),
-      );
+      throw new ApiProblem(problems.unavailable(NDA_SIGNING_UNAVAILABLE));
 
     return { owner, provider };
   };

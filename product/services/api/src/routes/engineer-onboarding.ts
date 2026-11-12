@@ -19,7 +19,11 @@ import {
   type OnboardingOwner,
 } from "../http/onboarding-access.js";
 import { ApiProblem, problems } from "../http/problems.js";
-import { NdaDocumentIdSchema, type PandaDocNda } from "../legal/pandadoc.js";
+import {
+  NDA_SIGNING_UNAVAILABLE,
+  NdaDocumentIdSchema,
+  type PandaDocNda,
+} from "../legal/pandadoc.js";
 import { serviceLog } from "../logging.js";
 import type { SlackConnect } from "../slack/connect.js";
 import type { ApiEnvironment, AuthService } from "../types.js";
@@ -332,11 +336,7 @@ export const registerEngineerOnboardingRoutes = (
 
     if (input.nda_document_id) {
       if (!dependencies.nda)
-        throw new ApiProblem(
-          problems.unavailable(
-            "NDA signing isn’t available right now. Email us the details instead and we’ll send over the NDA.",
-          ),
-        );
+        throw new ApiProblem(problems.unavailable(NDA_SIGNING_UNAVAILABLE));
 
       await requireRecordedNda(
         organizations,

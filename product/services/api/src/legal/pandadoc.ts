@@ -155,6 +155,9 @@ export interface PandaDocConfiguration {
   countersigner: { company: string; name: string; title: string };
 }
 
+export const NDA_SIGNING_UNAVAILABLE =
+  "NDA signing isn’t available right now. Email us the details instead and we’ll send over the NDA.";
+
 const PREPARING_DEADLINE_MS = 10_000;
 const PREPARING_RETRY_MS = 500;
 const preparing = Symbol("preparing");
@@ -169,16 +172,21 @@ export const createPandaDocNda = (
   configuration: PandaDocConfiguration,
   request: typeof fetch = fetch,
 ) => {
-  const unavailable = (reason: string, status?: number) => {
+  /* Log which call failed without document IDs. A refused request (401,
+     403) will not succeed on retry, so it gets the email fallback instead. */
+  const unavailable = (path: string, reason: string, status?: number) => {
     serviceLog("warn", "provider_request_failed", {
       dependency: "pandadoc",
+      route: path.replace(/\/documents\/[^/]+/, "/documents/:id"),
       reason,
       ...(status === undefined ? {} : { status }),
     });
 
     return new ApiProblem(
       problems.unavailable(
-        "NDA signing is temporarily unavailable. Please retry.",
+        status === 401 || status === 403
+          ? NDA_SIGNING_UNAVAILABLE
+          : "NDA signing is temporarily unavailable. Please retry.",
       ),
     );
   };
@@ -198,6 +206,7 @@ export const createPandaDocNda = (
       });
     } catch (error) {
       throw unavailable(
+        path,
         error instanceof Error && error.name === "TimeoutError"
           ? "timeout"
           : "network",
@@ -218,7 +227,7 @@ export const createPandaDocNda = (
       const text = await response.text();
       result = text ? (JSON.parse(text) as unknown) : {};
     } catch {
-      throw unavailable("invalid_response", response.status);
+      throw unavailable(path, "invalid_response", response.status);
     }
 
     return { status: response.status, ok: response.ok, result };
@@ -226,7 +235,7 @@ export const createPandaDocNda = (
 
   const call = async (path: string, body: unknown) => {
     const response = await send(path, body);
-    if (!response.ok) throw unavailable("http_error", response.status);
+    if (!response.ok) throw unavailable(path, "http_error", response.status);
 
     return response.result;
   };
@@ -244,7 +253,7 @@ export const createPandaDocNda = (
       if (response.ok) return response.result;
 
       if (response.status !== 409 || !isUploading(response.result))
-        throw unavailable("http_error", response.status);
+        throw unavailable(path, "http_error", response.status);
 
       if (Date.now() + PREPARING_RETRY_MS >= deadline) return preparing;
 

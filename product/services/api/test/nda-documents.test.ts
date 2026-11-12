@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createPandaDocNda } from "../src/legal/pandadoc.js";
+import {
+  createPandaDocNda,
+  NDA_SIGNING_UNAVAILABLE,
+} from "../src/legal/pandadoc.js";
 import { onboardingOrganizations, recordedNda } from "./onboarding-support.js";
 import {
   authenticated,
@@ -354,10 +357,7 @@ describe("PandaDoc NDA", () => {
     await expect(
       createPandaDocNda(configuration, request).create(owner, details),
     ).rejects.toMatchObject({
-      problem: {
-        status: 503,
-        detail: "NDA signing is temporarily unavailable. Please retry.",
-      },
+      problem: { status: 503, detail: NDA_SIGNING_UNAVAILABLE },
     });
 
     const lines = log.mock.calls.map(([line]) => JSON.parse(String(line)));
@@ -366,11 +366,47 @@ describe("PandaDoc NDA", () => {
         level: "warn",
         event: "provider_request_failed",
         dependency: "pandadoc",
+        route: "/documents",
         status: 401,
       }),
     );
     expect(JSON.stringify(lines)).not.toContain("sensitive provider response");
     expect(JSON.stringify(lines)).not.toContain(configuration.apiKey);
+  });
+
+  it("asks a customer to retry only provider failures that can recover", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const failing = (status: number) =>
+      vi.fn<typeof fetch>().mockResolvedValue(new Response("{}", { status }));
+
+    await expect(
+      createPandaDocNda(configuration, failing(503)).create(owner, details),
+    ).rejects.toMatchObject({
+      problem: {
+        detail: "NDA signing is temporarily unavailable. Please retry.",
+      },
+    });
+    await expect(
+      createPandaDocNda(configuration, failing(403)).session(owner, "doc-1"),
+    ).rejects.toMatchObject({ problem: { detail: NDA_SIGNING_UNAVAILABLE } });
+  });
+
+  it("logs which PandaDoc call failed without the document ID", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    await expect(
+      createPandaDocNda(
+        configuration,
+        vi
+          .fn<typeof fetch>()
+          .mockResolvedValue(new Response("{}", { status: 403 })),
+      ).session(owner, "secret-document-id"),
+    ).rejects.toBeDefined();
+
+    const lines = log.mock.calls.map(([line]) => JSON.parse(String(line)));
+    expect(lines).toContainEqual(
+      expect.objectContaining({ route: "/documents/:id/details", status: 403 }),
+    );
+    expect(JSON.stringify(lines)).not.toContain("secret-document-id");
   });
 });
 

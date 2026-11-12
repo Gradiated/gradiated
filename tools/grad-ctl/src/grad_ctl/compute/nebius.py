@@ -37,7 +37,7 @@ class Nebius:
     def cli(self, *args, missing_ok=False, unpriced_ok=False):
         binary = shutil.which('nebius') or str(Path.home() / '.nebius/bin/nebius')
         if not Path(binary).exists():
-            sys.exit('Install the nebius CLI: curl -sSL https://storage.eu-north1.nebius.cloud/cli/install.sh | bash')
+            sys.exit('Install the nebius CLI: `mise install` in the repository (it is pinned in mise.toml)')
         config = self.state / 'nebius.yaml'
         credentials = self.state / 'nebius-service-account.json'
         current = self.secret('NEBIUS_SERVICE_ACCOUNT_CREDENTIALS_B64')

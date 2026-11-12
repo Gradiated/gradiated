@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import re
 import shutil
@@ -27,6 +28,8 @@ REPO_PATHS = ('AGENTS.md', 'README.md', 'docs/DATA_MODEL.md', 'docs/ARCHITECTURE
               '.agents/skills', 'tools/grad-ctl', 'tools/browser/pyproject.toml', 'research/lab')
 COMMANDS = ('git', 'docker', 'uv', 'cargo', 'rustc', 'gh', 'node', 'mise', 'aws', 'kubectl', 'tailscale', 'nebius')
 BROWSER_MODULES = ('playwright', 'browser_use', 'pytest')
+# tools/python-requirements.txt, by import name.
+REPO_MODULES = ('yaml', 'jsonschema', 'cryptography', 'requests')
 CREDENTIAL_TOKENS = ('API_KEY', 'TOKEN', 'SECRET', 'PASSWORD')
 
 
@@ -97,7 +100,6 @@ def skills(ctx: Context) -> Result:
 # Doctor
 
 def browser_module(root: Path, name: str) -> str:
-    import importlib.util
     if importlib.util.find_spec(name):
         return 'ok'
     if shutil.which('uv') is None:
@@ -115,6 +117,7 @@ def doctor_report(root: Path) -> dict:
         'tailnet': tailnet.check(),
         'commands': {name: shutil.which(name) for name in COMMANDS},
         'python_modules': {name: browser_module(root, name) for name in BROWSER_MODULES},
+        'repo_python_packages': {name: importlib.util.find_spec(name) is not None for name in REPO_MODULES},
         'repo_paths': {path: (root / path).exists() for path in REPO_PATHS},
         # Names only: values never leave the environment.
         'credential_variables': sorted(name for name in os.environ if any(t in name for t in CREDENTIAL_TOKENS)),
@@ -129,6 +132,8 @@ def doctor_text(report: dict) -> str:
     lines += [f"  {name:10} {'ok (' + path + ')' if path else 'missing'}" for name, path in report['commands'].items()]
     lines += ['', 'Python modules:']
     lines += [f'  {name:16} {state}' for name, state in report['python_modules'].items()]
+    lines += ['', 'Repo Python packages (tools/python-requirements.txt; `mise run python:deps`):']
+    lines += [f"  {name:16} {'ok' if ok else 'missing'}" for name, ok in report['repo_python_packages'].items()]
     lines += ['', 'Repo paths:']
     lines += [f"  {path:32} {'present' if ok else 'missing'}" for path, ok in report['repo_paths'].items()]
     lines += ['', 'Credential variables present (values hidden):',

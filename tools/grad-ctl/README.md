@@ -8,13 +8,19 @@ no command prompts.
 
 ## Install
 
-In the repository, mise puts `grad-ctl` on PATH (`[env] _.path` in
-`mise.toml`), so it runs from the checkout with nothing to install, wherever mise
-is active: an activated shell, `mise exec` or a mise task. mise also pins `aws`,
-`kubectl`, `node` and `cargo`, which some commands use. It does not provide
-Python 3.10+ or Tailscale; those come from the machine, and `grad-ctl devex doctor` reports
-both. Python stays the system one because the GPU fleet tools import PyYAML from
-it.
+In the repository, `mise install` provides everything grad-ctl runs on, and mise
+puts `grad-ctl` on PATH (`[env] _.path` in `mise.toml`). It runs from the
+checkout with nothing else to install, wherever mise is active: an activated
+shell, `mise exec` or a mise task. mise pins:
+
+- Python 3.13. Installing it also installs `tools/python-requirements.txt` (PyYAML
+  and the other packages the repository's Python tools import). After changing
+  that file, run `mise run python:deps`.
+- The Nebius CLI, for `compute`.
+- `aws`, `kubectl`, `node` and `cargo`, which other commands use.
+
+Only Tailscale comes from the machine, because it is a system service.
+`grad-ctl devex doctor` reports every tool and package.
 
 Outside a checkout, or without mise:
 

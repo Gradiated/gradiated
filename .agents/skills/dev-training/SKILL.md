@@ -55,9 +55,7 @@ only what you copy to them, and `gradiated/dev/env` holds only development keys.
 - Credentials come from `gradiated/dev/env`. Load it into an ignored `.env` as
   AGENTS.md describes, or let the tool read it with the `gradiated-readonly`
   AWS profile.
-- Install the provider CLI the tool asks for (Nebius:
-  `curl -sSL https://storage.eu-north1.nebius.cloud/cli/install.sh | bash`;
-  Ornn needs none).
+- `mise install` provides the Nebius CLI, pinned in `mise.toml`; Ornn needs none.
 - `grad-ctl` runs only on the Gradiated tailnet (`grad-ctl tailnet status`).
   Join a machine that is not on it as an ephemeral `tag:dev-machine` device
   with `grad-ctl tailnet join`, which reads `TAILSCALE_DEV_MACHINE_AUTH_KEY`.

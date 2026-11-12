@@ -179,7 +179,6 @@ const auth = createAuthService(database, {
   trustedOrigins,
 });
 const metrics = new ApiMetrics();
-// Uploads are validated, and so qualified, only for bases with a training profile.
 metrics.initializeAdapterQualifications(
   MODEL_CATALOG.flatMap((model) =>
     "training" in model && model.training ? [model.id] : [],

@@ -2,7 +2,6 @@ import type { ModelDeploymentRelease } from "@gradiated/contracts";
 import { ControlServiceError } from "../errors.js";
 import type { TaskVersionRecord } from "./records.js";
 
-/** A LoRA-enabled serving allocation whose loader can probe an adapter. */
 export interface AdapterProbeTarget {
   readonly id: string;
   readonly modelId: string;
@@ -10,11 +9,7 @@ export interface AdapterProbeTarget {
   readonly release: ModelDeploymentRelease;
 }
 
-/**
- * One loader probe: prepare the adapter on the allocation, then run a bounded
- * generation through its engine. `rejected` means the loader or runtime refused
- * the adapter itself; any other failure is about that allocation.
- */
+// `rejected`: the loader or runtime refused the adapter, not just this allocation.
 export type AdapterProbeOutcome =
   | { readonly ok: true }
   | { readonly ok: false; readonly rejected: boolean; readonly reason: string };
@@ -33,7 +28,6 @@ export interface AdapterQualificationResult {
   readonly modelId: string;
   readonly workspaceId: string;
   readonly versionId: string;
-  /** The allocation that passed, or the last one tried. */
   readonly deploymentId?: string;
   readonly attempts: number;
   readonly durationMs: number;
@@ -41,12 +35,11 @@ export interface AdapterQualificationResult {
 
 export type AdapterQualifier = (version: TaskVersionRecord) => Promise<void>;
 
-/** The revision the gateway compares with each deployment's LoRA base revision. */
 export const adapterBaseRevision = (version: TaskVersionRecord) =>
   version.adapter.validated_base_model_revision ??
   version.adapter.base_model_revision;
 
-/** Mirrors the gateway's rule for which deployments may serve an adapter. */
+// Must match the gateway's rule for deployments that may serve an adapter.
 export const servesAdapter = (
   release: ModelDeploymentRelease,
   revision: string | undefined,
@@ -66,12 +59,6 @@ const shuffled = <T>(items: readonly T[]) => {
   return copy;
 };
 
-/**
- * Qualifies an adapter for serving by probing it on one LoRA-enabled allocation
- * of its base model. A failed allocation moves on to the next, up to
- * `maxAttempts`; the first success qualifies the version. Other allocations load
- * the adapter on their first request.
- */
 export const createAdapterQualifier = ({
   targets,
   probe,
@@ -123,8 +110,7 @@ export const createAdapterQualifier = ({
       );
     }
 
-    // A rejection is reported over later allocation failures: it describes the
-    // adapter, while a timeout or 503 describes only that allocation.
+    // A rejection describes the adapter, so it outranks later allocation failures.
     let rejection: { deploymentId: string; reason: string } | undefined;
     let last = { deploymentId: candidates[0]!.id, reason: "probe_failed" };
     let attempts = 0;

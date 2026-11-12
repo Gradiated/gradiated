@@ -315,8 +315,6 @@ export const createTrainingService = (
       if (version.status === "available")
         return records.setProductionVersion(task.id, version.id);
 
-      // An unqualified version, such as an upload, serves only after a
-      // LoRA-enabled allocation of its base model loads it and generates.
       if (!qualifyAdapter)
         throw new ControlServiceError(
           "unavailable",

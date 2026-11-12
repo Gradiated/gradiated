@@ -17,7 +17,6 @@ export interface DeploymentStore {
   adapterMetricsTargets(): Promise<
     { id: string; modelId: string; serviceUrl: string }[]
   >;
-  /** Available LoRA-enabled allocations of one model, behind their host proxy. */
   adapterProbeTargets(modelId: string): Promise<
     {
       id: string;
@@ -36,7 +35,6 @@ export interface DeploymentStore {
 const hostProxyUrl = (instance: typeof instances.$inferSelect) =>
   privateServingUrl(instance.id);
 
-// LoRA-enabled allocations whose service URL is their host proxy route.
 const adapterAllocations = async (
   database: ControlDatabase,
   modelId?: string,

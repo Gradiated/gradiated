@@ -158,7 +158,6 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return TaskRecordSchema.parse(row);
     },
 
-    /** Marks a qualified version available and makes it the production version. */
     async promoteQualifiedVersion(taskId: string, versionId: string) {
       return database.transaction(async (tx) => {
         const [version] = await tx

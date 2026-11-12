@@ -317,12 +317,13 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       await expect(
         page.getByRole("menuitem", { name: "Use this version", exact: true }),
       ).toBeDisabled();
+      // Promoting an unserved version qualifies it on serving capacity first.
       await expect(
         page.getByRole("menuitem", {
           name: "Promote",
           exact: true,
         }),
-      ).toBeDisabled();
+      ).toBeEnabled();
       await expect(
         page.getByRole("menuitem", { name: "Download adapter", exact: true }),
       ).toBeEnabled();

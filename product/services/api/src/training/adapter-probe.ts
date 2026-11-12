@@ -33,11 +33,6 @@ const probeUrl = (serviceUrl: string) => {
   return url;
 };
 
-/**
- * Calls the allocation loader's `POST /internal/adapters/probe` through the
- * host proxy. The loader prepares the adapter (grant, download, verification),
- * then generates through its engine and checks the returned identity and usage.
- */
 export const createAdapterProbe = ({
   fetch = globalThis.fetch,
   timeoutMs = ADAPTER_PROBE_TIMEOUT_MS,
@@ -102,7 +97,6 @@ export const createAdapterProbe = ({
   };
 };
 
-/** Logs and counts every qualification without adapter or prompt contents. */
 export const reportAdapterQualification =
   (metrics: Pick<ApiMetrics, "recordAdapterQualification">) =>
   (result: AdapterQualificationResult) => {

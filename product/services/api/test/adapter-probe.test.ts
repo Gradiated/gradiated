@@ -30,15 +30,20 @@ const body = async (request: IncomingMessage) => {
   return text;
 };
 
-/** A loopback host proxy that serves one allocation's loader routes. */
+type SeenRequest = {
+  method: string | undefined;
+  url: string | undefined;
+  body: string;
+};
+
 const loader = async (
-  respond: (request: { method?: string; url?: string; body: string }) => {
+  respond: (request: SeenRequest) => {
     status: number;
     body?: string;
     delayMs?: number;
   },
 ) => {
-  const requests: { method?: string; url?: string; body: string }[] = [];
+  const requests: SeenRequest[] = [];
   const server = createServer(async (request, response) => {
     const seen = {
       method: request.method,

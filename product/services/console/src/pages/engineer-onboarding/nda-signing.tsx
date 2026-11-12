@@ -10,6 +10,7 @@ import {
 } from "@/api/engineer-onboarding";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
+import { httpStatus } from "@/lib/errors";
 
 const detailsChanged = (bound: NdaDetails | null, expected: NdaDetails) =>
   bound !== null &&
@@ -154,9 +155,21 @@ export const NdaSigning = ({
     setError("");
 
     try {
-      let current = documentId
-        ? await getNdaDocument(organizationId, documentId)
-        : await createNdaDocument(organizationId, details);
+      // A stored copy that is gone or can no longer be signed (voided,
+      // declined) is replaced rather than retried forever.
+      const stored = documentId
+        ? await getNdaDocument(organizationId, documentId).catch(
+            (error: unknown) => {
+              if (httpStatus(error) === 404) return null;
+              throw error;
+            },
+          )
+        : null;
+      if (!active.current) return;
+      let current =
+        stored && stored.status !== "unavailable"
+          ? stored
+          : await createNdaDocument(organizationId, details);
       if (!active.current) return;
       if (detailsChanged(current.details, details))
         throw new Error("The NDA details have changed. Prepare a new copy.");

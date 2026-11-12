@@ -203,6 +203,18 @@ const engineerRoute = async (
     await route.fulfill({ json: ndaDocument(engineer.ndaDocuments.at(-1)) });
     return true;
   }
+  if (path === "nda-documents/voided-document" && method === "GET") {
+    await route.fulfill({
+      json: {
+        id: "voided-document",
+        status: "unavailable",
+        details: null,
+        completed_at: null,
+        customer_completed: false,
+      },
+    });
+    return true;
+  }
   if (path === "nda-documents/nda-document-1/signing-sessions") {
     engineer.signingSessions += 1;
     await route.fulfill({ status: 201, json: { session_id: "session-1" } });
@@ -707,6 +719,33 @@ test("a suspended organization awaiting setup does not block the active one", as
   await expect(
     page.getByRole("textbox", { name: "Organization name" }),
   ).toHaveCount(0);
+});
+
+test("a voided NDA from an earlier visit is replaced by a fresh copy", async ({
+  page,
+}) => {
+  const { engineer } = await setup(page, {
+    email: "alex@acme.com",
+    companyEmailDomain: "acme.com",
+    onboardingCompleted: true,
+  });
+  await page.addInitScript(() =>
+    localStorage.setItem(
+      "gradiated-engineer-onboarding-v1:test-user:00000000-0000-4000-8000-000000000001",
+      JSON.stringify({
+        ndaRequested: true,
+        signerTitle: "CTO",
+        legalAddress: "1 Market Street, San Francisco, CA 94105, USA",
+        ndaDocumentId: "voided-document",
+        channel: "email",
+      }),
+    ),
+  );
+
+  await page.goto("/onboarding?journey=post-training");
+  await page.getByRole("button", { name: "Sign NDA & start project" }).click();
+  await expect.poll(() => engineer.signingSessions).toBe(1);
+  expect(engineer.ndaDocuments).toHaveLength(1);
 });
 
 test("an installation without repositories blocks the start until one is selected", async ({

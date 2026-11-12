@@ -45,9 +45,6 @@ export const AboutPage = (): ReactElement => (
         <Columns count={3}>
           <div>
             <h3 className="gr-heading">James Hawkins</h3>
-            <p className="gr-label gr-muted">
-              Cofounder of Gradiated and PostHog
-            </p>
             <p className="gr-body gr-muted">
               Co-built PostHog into a unicorn and a beloved developer brand.
               Strengths are product, brand and early go to market.
@@ -55,7 +52,6 @@ export const AboutPage = (): ReactElement => (
           </div>
           <div>
             <h3 className="gr-heading">Josh Snyder</h3>
-            <p className="gr-label gr-muted">Cofounder of Gradiated</p>
             <p className="gr-body gr-muted">
               Led AI engineering at PostHog. Specialized in the mathematics of
               graph neural networks, with a master&apos;s degree from Cambridge.
@@ -63,9 +59,29 @@ export const AboutPage = (): ReactElement => (
           </div>
           <div>
             <h3 className="gr-heading">Dr Aidan McConnell</h3>
-            <p className="gr-label gr-muted">Technical Staff</p>
             <p className="gr-body gr-muted">
               PhD in quantum computing and semiconductors.
+            </p>
+          </div>
+          <div>
+            <h3 className="gr-heading">Charley Carriero</h3>
+            <p className="gr-body gr-muted">
+              Data scientist, engineer and journalist, covering our work, the AI
+              model, inference and chip industries in technical depth.
+            </p>
+          </div>
+          <div>
+            <h3 className="gr-heading">Samudra Gupta</h3>
+            <p className="gr-body gr-muted">
+              Leads brand design, turning Gradiated&apos;s technical ambition
+              into a clear, distinctive experience.
+            </p>
+          </div>
+          <div>
+            <h3 className="gr-heading">Scott Lewis</h3>
+            <p className="gr-body gr-muted">
+              Keeps the people and operations around the founding team moving,
+              creating room for focused work and fast decisions.
             </p>
           </div>
         </Columns>

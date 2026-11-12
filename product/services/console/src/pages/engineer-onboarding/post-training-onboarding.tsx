@@ -211,7 +211,6 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
     message: string;
     section?: OnboardingSection;
   } | null>(null);
-  const [justStarted, setJustStarted] = useState(false);
   const installationRef = useRef(installation);
   installationRef.current = installation;
 
@@ -265,11 +264,7 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
   if (server.submitted_at)
     return (
       <PageShell>
-        <ProjectStarted
-          account={account}
-          server={server}
-          justStarted={justStarted}
-        />
+        <ProjectStarted account={account} server={server} />
       </PageShell>
     );
 
@@ -291,7 +286,6 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
         engineerSubmission(current.server, current.draft, current.installation),
       );
       queryClient.setQueryData<EngineerOnboarding>(queryKey, result);
-      if (result.submitted_at) setJustStarted(true);
     } catch (error) {
       const known = submitProblem(
         error instanceof ApiError ? error.code : undefined,

@@ -508,7 +508,7 @@ test("a returning customer waits for GitHub, chooses email and comes back to the
 
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: "Your project is underway." }),
+    page.getByRole("heading", { name: "You’re all set." }),
   ).toBeVisible();
 });
 

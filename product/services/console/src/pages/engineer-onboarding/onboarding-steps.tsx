@@ -370,22 +370,16 @@ const sectionNames: Record<OnboardingSection, string> = {
 export const ProjectStarted = ({
   account,
   server,
-  justStarted,
 }: {
   account: OnboardingAccount;
   server: EngineerOnboarding;
-  justStarted: boolean;
 }) => {
   const confirmation = confirmationMessage(server, account.email);
 
   return (
     <div className="flex flex-col gap-10">
-      <PageHeader
-        title={justStarted ? "You’re all set." : "Your project is underway."}
-      >
-        {justStarted
-          ? "One of our researchers will pick it up from here."
-          : "Your researcher is working with you."}
+      <PageHeader title="You’re all set.">
+        One of our researchers will pick it up from here.
       </PageHeader>
       <section
         aria-label="What happens now"

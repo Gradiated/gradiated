@@ -247,7 +247,7 @@ export const AlreadyStarted: Story = {
       },
       installations: [acmeInstallation()],
     }),
-    expectText: "Your project is underway.",
+    expectText: "You’re all set.",
   },
 };
 

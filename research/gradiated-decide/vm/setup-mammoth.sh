@@ -30,7 +30,9 @@ if ! venv-mm/bin/python -c "import qev.engine" 2>/dev/null; then
     flash-linear-attention httpx setuptools wheel ninja packaging
   CUDA_HOME=/usr/local/cuda TORCH_CUDA_ARCH_LIST=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -1) \
     MAX_JOBS=32 uv pip install -q --no-build-isolation -c "$CK/constraints.txt" -c venv-mm/image-torch.txt causal-conv1d
-  uv pip install -q --no-deps -e src/di -e src/gradiated-decide
-  uv pip install -q pyarrow pandas numpy requests
 fi
+VIRTUAL_ENV=$ROOT/venv-mm uv pip install -q pyarrow pandas numpy requests
+# Our packages declare Python >= 3.12 while the release runtime is 3.11, so put them on the path instead of installing.
+site=$(venv-mm/bin/python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")
+printf '%s\n' "$ROOT/src/di" "$ROOT/src/gradiated-decide" > "$site/gdecide-src.pth"
 venv-mm/bin/python -c "import qev.engine, decision_index, gdecide; print('venv-mm ready')"

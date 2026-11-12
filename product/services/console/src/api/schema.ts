@@ -361,7 +361,7 @@ export interface paths {
     };
     /**
      * Verify the customer's Gradiated GitHub App installation
-     * @description Uses the signed-in customer's linked GitHub App user authorization to check active installations, Contents access and accessible repositories. Requires a recorded NDA and organization admin membership. Callback IDs and browser state are never proof of installation.
+     * @description Uses the signed-in customer's linked GitHub App user authorization to check active installations, Contents access and accessible repositories. Requires organization admin membership. Callback IDs and browser state are never proof of installation.
      */
     get: operations["getGithubInstallations"];
     put?: never;
@@ -383,7 +383,7 @@ export interface paths {
     put?: never;
     /**
      * Invite the customer's chosen email to the organization's Slack Connect channel
-     * @description Requires an active verified organization admin and a recorded NDA. Each organization has one channel: the first request creates it, and later requests re-invite into the stored channel and ignore channel_name. The Slack email may differ from the NDA signer. One invitation is sent per organization every 10 minutes. Customer acceptance and workspace approval may still be required.
+     * @description Requires an active verified organization admin. Each organization has one channel: the first request creates it, and later requests re-invite into the stored channel and ignore channel_name. The Slack email may differ from the signed-in account. One invitation is sent per organization every 10 minutes. Customer acceptance and workspace approval may still be required.
      */
     post: operations["createSlackInvitation"];
     delete?: never;
@@ -420,7 +420,7 @@ export interface paths {
     put?: never;
     /**
      * Start the organization's engineering project
-     * @description Requires a recorded NDA and rechecks the GitHub installation. Records the submission once per organization, posts nonempty notes to the organization's Slack channel when contact_channel is slack, and notifies Gradiated. A repeated submission returns the existing state with 200 and sends nothing.
+     * @description Rechecks the GitHub installation and, when nda_document_id is present, requires that NDA to be completed. Records the submission once per organization, posts nonempty notes to the organization's Slack channel when contact_channel is slack, and notifies Gradiated. A repeated submission returns the existing state with 200 and sends nothing.
      */
     post: operations["submitEngineerOnboarding"];
     delete?: never;
@@ -1822,7 +1822,7 @@ export interface components {
       status: "invited" | "joined";
     };
     EngineerOnboarding: {
-      /** @description The organization's completed NDA, once PandaDoc confirms it. */
+      /** @description The organization's completed NDA, once PandaDoc confirms it. The NDA is optional. */
       nda: {
         /** @description The completed PandaDoc document. */
         document_id: string;
@@ -1878,7 +1878,7 @@ export interface components {
       github_installation_id: number;
       /** @description Optional context for Gradiated engineers. Delivered with the submission and not stored. */
       notes?: string;
-      /** @description A completed NDA for this organization and signed-in user. Needed only until the organization's NDA is recorded. */
+      /** @description The customer's optional NDA; when present it must be completed before submitting. */
       nda_document_id?: string;
     };
     MemberList: {
@@ -4535,8 +4535,6 @@ export interface operations {
   getGithubInstallations: {
     parameters: {
       query?: {
-        /** @description A completed NDA for this organization and signed-in user. Needed only until the organization's NDA is recorded. */
-        nda_document_id?: string;
         /** @description An installation to recheck; never trusted without GitHub verification. */
         installation_id?: number;
       };
@@ -4622,11 +4620,9 @@ export interface operations {
           channel_name?: string;
           /**
            * Format: email
-           * @description The Slack invitation recipient; defaults to the signed-in account email, independently of the NDA signer.
+           * @description The Slack invitation recipient; defaults to the signed-in account email
            */
           email?: string;
-          /** @description A completed NDA for this organization and signed-in user. Needed only until the organization's NDA is recorded. */
-          nda_document_id?: string;
         };
       };
     };
@@ -4658,7 +4654,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description nda_required: the NDA is not recorded. slack_channel_name_taken: a new channel name is already in use. */
+      /** @description slack_channel_name_taken: a new channel name is already in use. */
       409: {
         headers: {
           [name: string]: unknown;

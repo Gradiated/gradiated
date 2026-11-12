@@ -29,7 +29,6 @@ import {
   draftStorageKey,
   emptyDraft,
   engineerSubmission,
-  ndaReference,
   restoreDraft,
   resumeStep,
   resumeView,
@@ -52,7 +51,7 @@ import {
   type UpdateDraft,
 } from "@/pages/engineer-onboarding/onboarding-steps";
 
-const steps = ["Mutual NDA", "Slack & GitHub", "Get to work"];
+const steps = ["NDA (optional)", "Slack & GitHub", "Get to work"];
 
 const githubRequiredMessage =
   "Install the Gradiated GitHub app and select at least one repository before continuing. If installation needs approval, ask your GitHub organization owner to approve it.";
@@ -163,10 +162,8 @@ const loadDraft = (account: OnboardingAccount): OnboardingDraft => {
 const githubInstallationActive = async (
   organizationId: string,
   installationId: number,
-  ndaDocumentId?: string,
 ) => {
   const result = await getGithubInstallations(organizationId, {
-    ndaDocumentId,
     installationId,
   });
 
@@ -257,18 +254,13 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
     );
 
   const ndaSigned = server.nda !== null;
+  const ndaPending = draft.ndaRequested && !ndaSigned;
 
   const recheckGithub = async (current: VerifiedInstallation) => {
     setCheckingGithub(true);
     setGithubError("");
     try {
-      if (
-        await githubInstallationActive(
-          account.organizationId,
-          current.id,
-          ndaReference(server, draft),
-        )
-      )
+      if (await githubInstallationActive(account.organizationId, current.id))
         return true;
 
       setInstallation(null);
@@ -313,7 +305,11 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
     event.preventDefault();
     if (checkingGithub || submitting) return;
 
-    const action = submitAction(step, { ndaSigned, installation });
+    const action = submitAction(step, {
+      ndaSigned,
+      ndaRequested: draft.ndaRequested,
+      installation,
+    });
     if (action === "sign") {
       setSigningOpen(true);
       return;
@@ -412,7 +408,7 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
                   disabled={
                     signingOpen ||
                     stepLocked(index, step, {
-                      nda: ndaSigned,
+                      nda: !ndaPending,
                       github: installation !== null,
                     })
                   }
@@ -486,7 +482,7 @@ const PostTrainingWorkflow = ({ account }: { account: OnboardingAccount }) => {
                   ? "Starting project…"
                   : checkingGithub
                     ? "Checking GitHub…"
-                    : step === 0 && !ndaSigned
+                    : step === 0 && ndaPending
                       ? "Review & sign NDA"
                       : step === 2
                         ? "Start project"

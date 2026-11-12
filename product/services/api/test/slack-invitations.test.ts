@@ -7,9 +7,7 @@ import {
 } from "../src/slack/invitations.js";
 import {
   memoryIntegrations,
-  ndaProvider,
   onboardingOrganizations,
-  recordedNda,
   slackRecord,
 } from "./onboarding-support.js";
 import {
@@ -452,17 +450,13 @@ const collection = `/api/v1/organizations/${organizationId}/slack-invitations`;
 const setup = (
   options: {
     role?: "admin" | "member";
-    nda?: "recorded" | "completed" | "ready";
     configured?: boolean;
     impersonated?: boolean;
   } = {},
 ) => {
   const organizations = onboardingOrganizations(
-    (options.nda ?? "recorded") === "recorded" ? { nda: recordedNda } : {},
+    {},
     { ...organizationSummary, role: options.role ?? "admin" },
-  );
-  const ndaDocuments = ndaProvider(
-    options.nda === "ready" ? "ready" : "completed",
   );
   const slackConnect = {
     findChannel: vi.fn(async () => channel),
@@ -484,16 +478,15 @@ const setup = (
       : authenticated,
     slackConnect:
       options.configured === false ? undefined : (slackConnect as never),
-    ndaDocuments,
     services: { organizations, integrations },
   });
 
-  return { app, slackConnect, ndaDocuments, organizations, integrations };
+  return { app, slackConnect, organizations, integrations };
 };
 
 describe("Slack invitation route", () => {
-  it("derives the company and email from the session and the recorded NDA", async () => {
-    const { app, slackConnect, ndaDocuments } = setup();
+  it("derives the company and email from the session without an NDA", async () => {
+    const { app, slackConnect } = setup();
     const result = await postJson(app, collection, {});
 
     expect(result.status).toBe(201);
@@ -509,25 +502,6 @@ describe("Slack invitation route", () => {
     expect(slackConnect.inviteMembers).toHaveBeenCalledWith(
       channel.id,
       user.email,
-    );
-    expect(ndaDocuments.read).not.toHaveBeenCalled();
-  });
-
-  it("confirms and records a completed NDA that is not recorded yet", async () => {
-    const { app, organizations, ndaDocuments } = setup({ nda: "completed" });
-
-    expect(
-      (await postJson(app, collection, { nda_document_id: "test-document" }))
-        .status,
-    ).toBe(201);
-    expect(ndaDocuments.read).toHaveBeenCalledWith(
-      { organizationId, userId: user.id, email: user.email },
-      "test-document",
-    );
-    expect(organizations.recordOnboardingNda).toHaveBeenCalledWith(
-      user.id,
-      organizationId,
-      recordedNda,
     );
   });
 
@@ -554,15 +528,12 @@ describe("Slack invitation route", () => {
   it.each([
     { options: { role: "member" as const }, status: 403, code: "forbidden" },
     { options: { impersonated: true }, status: 403, code: "forbidden" },
-    { options: { nda: "ready" as const }, status: 409, code: "nda_required" },
     { options: { configured: false }, status: 503, code: "unavailable" },
   ])(
     "does not send without authorization or setup: $code",
     async ({ options, status, code }) => {
       const { app, slackConnect } = setup(options);
-      const result = await postJson(app, collection, {
-        nda_document_id: "test-document",
-      });
+      const result = await postJson(app, collection, {});
 
       expect(result.status).toBe(status);
       expect((await result.json()).code).toBe(code);

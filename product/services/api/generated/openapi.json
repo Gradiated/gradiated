@@ -2205,7 +2205,7 @@
               "document_id",
               "signed_at"
             ],
-            "description": "The organization's completed NDA, once PandaDoc confirms it."
+            "description": "The organization's completed NDA, once PandaDoc confirms it. The NDA is optional."
           },
           "slack": {
             "type": [
@@ -2334,7 +2334,7 @@
           "nda_document_id": {
             "type": "string",
             "pattern": "^[a-zA-Z0-9_-]{1,100}$",
-            "description": "A completed NDA for this organization and signed-in user. Needed only until the organization's NDA is recorded."
+            "description": "The customer's optional NDA; when present it must be completed before submitting."
           }
         },
         "required": [

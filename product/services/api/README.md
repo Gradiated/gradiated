@@ -21,11 +21,13 @@ use a `VITE_` variable.
 | `POST slack-invitations`                                | Creates the channel and sends a Slack Connect invite                                | 5                |
 | `GET github-installations`                              | Lists the user's verified Gradiated installations                                   | 30               |
 
-The submission requires a recorded NDA, rechecks the chosen GitHub installation
-with the user's token, and requires a Slack channel when `contact_channel` is
-`slack`. It records the submission once; a repeat returns the current state with
-200 and sends nothing. The first submission posts nonempty notes to the Slack
-channel and emails the team. Notes are not stored. Conflicts carry a `code`:
+The NDA is optional: the customer opts in, and only a submission that names an
+`nda_document_id` requires that document to be completed. The submission
+rechecks the chosen GitHub installation with the user's token and requires a
+Slack channel when `contact_channel` is `slack`. It records the submission once;
+a repeat returns the current state with 200 and sends nothing. The first
+submission posts nonempty notes to the Slack channel and emails the team, noting
+whether an NDA was signed. Notes are not stored. Conflicts carry a `code`:
 `nda_required`, `github_authorization_required`, `github_installation_unverified`
 or `slack_channel_required`.
 

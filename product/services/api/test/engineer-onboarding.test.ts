@@ -52,6 +52,7 @@ describe("engineer onboarding notification", () => {
       contactChannel: "email",
       githubAccounts: ["example"],
       slackChannel: null,
+      ndaSignedAt: null,
       notes: "<script>alert(1)</script>",
     });
 
@@ -60,6 +61,7 @@ describe("engineer onboarding notification", () => {
     expect(body.subject).toBe("Engineer onboarding submitted: <Example>");
     expect(body.html).not.toContain("<script>");
     expect(body.text).toContain("<script>alert(1)</script>");
+    expect(body.text).toContain("Mutual NDA: Not requested");
   });
 
   it("logs instead of emailing in test mail mode", async () => {
@@ -71,6 +73,7 @@ describe("engineer onboarding notification", () => {
       contactChannel: "email",
       githubAccounts: [],
       slackChannel: null,
+      ndaSignedAt: null,
       notes: "Private notes",
     });
 
@@ -88,6 +91,7 @@ const setup = (
   options: {
     role?: "admin" | "member";
     nda?: boolean;
+    ndaDocument?: string;
     slackChannel?: boolean;
     token?: string | null;
     installations?: (typeof installation)[];
@@ -125,7 +129,7 @@ const setup = (
       githubAccessToken: async () =>
         options.token === undefined ? "user-token" : options.token,
     },
-    ndaDocuments: ndaProvider(),
+    ndaDocuments: ndaProvider(options.ndaDocument),
     slackConnect: slack as never,
     githubInstallations: github,
     notifyEngineerOnboarding: notify,
@@ -244,6 +248,7 @@ describe("engineer onboarding submission", () => {
       contactChannel: "slack",
       githubAccounts: ["example"],
       slackChannel: "ext-example-gradiated",
+      ndaSignedAt: recordedNda.signed_at,
       notes: "We need help with our retrieval pipeline.",
     });
 
@@ -312,8 +317,45 @@ describe("engineer onboarding submission", () => {
     ).toEqual(["slack", "email"]);
   });
 
+  it("starts the project without an NDA when none was requested", async () => {
+    const { app, notify } = setup({ nda: false });
+    const response = await postJson(app, `${path}/submission`, submission);
+
+    expect(response.status).toBe(201);
+    expect((await response.json()).nda).toBeNull();
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({ ndaSignedAt: null }),
+    );
+  });
+
+  it("records a requested NDA that PandaDoc completed", async () => {
+    const { app, organizations } = setup({ nda: false });
+    const response = await postJson(app, `${path}/submission`, {
+      ...submission,
+      nda_document_id: "test-document",
+    });
+
+    expect(response.status).toBe(201);
+    expect(organizations.recordOnboardingNda).toHaveBeenCalledOnce();
+  });
+
+  it("does not start the project before a requested NDA is completed", async () => {
+    const { app, organizations, notify } = setup({
+      nda: false,
+      ndaDocument: "ready",
+    });
+    const response = await postJson(app, `${path}/submission`, {
+      ...submission,
+      nda_document_id: "test-document",
+    });
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).code).toBe("nda_required");
+    expect(organizations.submitOnboarding).not.toHaveBeenCalled();
+    expect(notify).not.toHaveBeenCalled();
+  });
+
   it.each([
-    { options: { nda: false }, code: "nda_required" },
     { options: { token: null }, code: "github_authorization_required" },
     { options: { installations: [] }, code: "github_installation_unverified" },
     { options: { slackChannel: false }, code: "slack_channel_required" },

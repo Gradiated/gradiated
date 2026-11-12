@@ -30,20 +30,13 @@ export const submitEngineerOnboarding = (
 
 export const getGithubInstallations = (
   organizationId: string,
-  {
-    ndaDocumentId,
-    installationId,
-  }: {
-    ndaDocumentId?: string | undefined;
-    installationId?: number | undefined;
-  } = {},
+  { installationId }: { installationId?: number | undefined } = {},
 ) =>
   requireData(
     api.GET("/api/v1/organizations/{organization_id}/github-installations", {
       params: {
         path: organization(organizationId),
         query: {
-          ...(ndaDocumentId ? { nda_document_id: ndaDocumentId } : {}),
           ...(installationId ? { installation_id: installationId } : {}),
         },
       },
@@ -55,7 +48,6 @@ export const createSlackInvitation = (
   invitation: {
     email: string;
     channelName?: string | undefined;
-    ndaDocumentId?: string | undefined;
   },
 ) =>
   requireData(
@@ -65,9 +57,6 @@ export const createSlackInvitation = (
         email: invitation.email,
         ...(invitation.channelName
           ? { channel_name: invitation.channelName }
-          : {}),
-        ...(invitation.ndaDocumentId
-          ? { nda_document_id: invitation.ndaDocumentId }
           : {}),
       },
     }),

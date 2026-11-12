@@ -8,11 +8,7 @@ import {
   organizationSummary,
   user,
 } from "./support.js";
-import {
-  ndaProvider,
-  onboardingOrganizations,
-  recordedNda,
-} from "./onboarding-support.js";
+import { onboardingOrganizations } from "./onboarding-support.js";
 
 const installation = {
   id: 42,
@@ -167,7 +163,6 @@ describe("GitHub access token", () => {
 const url = `/api/v1/organizations/${organizationId}/github-installations?`;
 const setup = (
   role: "admin" | "member" = "admin",
-  ndaStatus = "recorded",
   token: string | null = "token",
 ) => {
   const list = vi.fn().mockResolvedValue({
@@ -175,19 +170,17 @@ const setup = (
     installations: [{ id: 42, account: "example", repository_count: 1 }],
   });
   const githubAccessToken = vi.fn().mockResolvedValue(token);
-  const nda = ndaProvider(ndaStatus === "recorded" ? "completed" : ndaStatus);
   const app = createTestApp({
     auth: { ...authenticated, githubAccessToken },
     githubInstallations: { list },
-    ndaDocuments: nda,
     services: {
       organizations: onboardingOrganizations(
-        ndaStatus === "recorded" ? { nda: recordedNda } : {},
+        {},
         { ...organizationSummary, role },
       ),
     },
   });
-  return { app, list, githubAccessToken, read: nda.read };
+  return { app, list, githubAccessToken };
 };
 
 describe("GitHub installation route", () => {
@@ -203,26 +196,14 @@ describe("GitHub installation route", () => {
     expect((await app.request(url)).status).toBe(403);
     expect(githubAccessToken).not.toHaveBeenCalled();
   });
-  it("uses the organization's recorded NDA", async () => {
-    const { app, list, read } = setup();
+  it("verifies an installation without an NDA", async () => {
+    const { app, list } = setup();
     expect((await app.request(url + "&installation_id=42")).status).toBe(200);
-    expect(read).not.toHaveBeenCalled();
     expect(list).toHaveBeenCalledWith("token", 42);
   });
 
-  it("binds an unrecorded NDA to the signed-in organization admin", async () => {
-    const { app, read } = setup("admin", "completed");
-    expect(
-      (await app.request(url + "&nda_document_id=test-document")).status,
-    ).toBe(200);
-    expect(read).toHaveBeenCalledWith(
-      { userId: user.id, email: user.email, organizationId },
-      "test-document",
-    );
-  });
-
   it("requires GitHub authorization without exposing a token to the browser", async () => {
-    const { app, list } = setup("admin", "recorded", null);
+    const { app, list } = setup("admin", null);
     const result = await app.request(url);
     expect(await result.json()).toEqual({
       status: "authorization_required",
@@ -231,12 +212,9 @@ describe("GitHub installation route", () => {
     expect(list).not.toHaveBeenCalled();
   });
 
-  it.each([
-    { role: "member" as const, nda: "recorded", status: 403 },
-    { role: "admin" as const, nda: "ready", status: 409 },
-  ])("does not call GitHub before admin and NDA checks pass", async (input) => {
-    const { app, list, githubAccessToken } = setup(input.role, input.nda);
-    expect((await app.request(url)).status).toBe(input.status);
+  it("does not call GitHub before the admin check passes", async () => {
+    const { app, list, githubAccessToken } = setup("member");
+    expect((await app.request(url)).status).toBe(403);
     expect(list).not.toHaveBeenCalled();
     expect(githubAccessToken).not.toHaveBeenCalled();
   });

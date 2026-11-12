@@ -25,12 +25,10 @@ export const GITHUB_APP_INSTALL_URL =
 
 export const GithubAppInstallation = ({
   organizationId,
-  ndaDocumentId,
   saved,
   onVerified,
 }: {
   organizationId: string;
-  ndaDocumentId?: string | undefined;
   saved: VerifiedInstallation | null;
   onVerified: (installation: VerifiedInstallation | null) => void;
 }) => {
@@ -52,7 +50,6 @@ export const GithubAppInstallation = ({
       setError("");
       try {
         const result = await getGithubInstallations(organizationId, {
-          ndaDocumentId,
           installationId: id,
         });
         if (!active.current) return;
@@ -75,7 +72,7 @@ export const GithubAppInstallation = ({
         if (active.current) setBusy(false);
       }
     },
-    [organizationId, ndaDocumentId],
+    [organizationId],
   );
 
   useEffect(() => {

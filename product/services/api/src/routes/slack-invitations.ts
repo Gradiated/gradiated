@@ -5,11 +5,9 @@ import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi";
 import { consoleOnly } from "../http/audience.js";
 import {
   requireOnboardingAdmin,
-  requireRecordedNda,
   type OnboardingOrganizations,
 } from "../http/onboarding-access.js";
 import { ApiProblem, problems } from "../http/problems.js";
-import { NdaDocumentIdSchema, type PandaDocNda } from "../legal/pandadoc.js";
 import {
   SlackChannelNameSchema,
   SlackInvitationSchema,
@@ -30,7 +28,7 @@ const create = createRoute({
   summary:
     "Invite the customer's chosen email to the organization's Slack Connect channel",
   description:
-    "Requires an active verified organization admin and a recorded NDA. Each organization has one channel: the first request creates it, and later requests re-invite into the stored channel and ignore channel_name. The Slack email may differ from the NDA signer. One invitation is sent per organization every 10 minutes. Customer acceptance and workspace approval may still be required.",
+    "Requires an active verified organization admin. Each organization has one channel: the first request creates it, and later requests re-invite into the stored channel and ignore channel_name. The Slack email may differ from the signed-in account. One invitation is sent per organization every 10 minutes. Customer acceptance and workspace approval may still be required.",
   request: {
     params: z.object({
       organization_id: z.uuid().describe("The customer organization."),
@@ -51,9 +49,8 @@ const create = createRoute({
               .max(200)
               .optional()
               .describe(
-                "The Slack invitation recipient; defaults to the signed-in account email, independently of the NDA signer.",
+                "The Slack invitation recipient; defaults to the signed-in account email",
               ),
-            nda_document_id: NdaDocumentIdSchema.optional(),
           }),
         },
       },
@@ -74,7 +71,7 @@ const create = createRoute({
     },
     409: {
       description:
-        "nda_required: the NDA is not recorded. slack_channel_name_taken: a new channel name is already in use.",
+        "slack_channel_name_taken: a new channel name is already in use.",
       content: problemContent,
     },
     422: { description: "Invalid request.", content: problemContent },
@@ -97,7 +94,6 @@ export const registerSlackInvitationRoutes = (
     integrations: IntegrationService;
   },
   provider?: SlackConnect,
-  nda?: PandaDocNda,
 ) => {
   app.openapi(create, async (context) => {
     context.header("Cache-Control", "no-store");
@@ -107,7 +103,7 @@ export const registerSlackInvitationRoutes = (
       services.organizations,
       organization_id,
     );
-    if (!provider || !nda)
+    if (!provider)
       throw new ApiProblem(
         problems.unavailable(
           "Automatic Slack invitations have not been configured yet. You can continue with setup.",
@@ -115,13 +111,6 @@ export const registerSlackInvitationRoutes = (
       );
 
     const input = context.req.valid("json");
-    await requireRecordedNda(
-      services.organizations,
-      nda,
-      owner,
-      "requesting the Slack invitation",
-      input.nda_document_id,
-    );
 
     const invitation = await inviteToSlack(provider, services.integrations, {
       userId: owner.userId,

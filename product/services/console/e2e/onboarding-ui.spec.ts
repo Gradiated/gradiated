@@ -363,6 +363,12 @@ test("a new engineer customer sets up the organization, signs the NDA, invites S
   await page.getByRole("button", { name: "Get started" }).click();
 
   await expect(
+    page.getByRole("heading", { name: "Do you need an NDA?" }),
+  ).toBeVisible();
+  await page
+    .getByRole("checkbox", { name: "We’d like a mutual NDA first" })
+    .click();
+  await expect(
     page.getByRole("textbox", { name: "Legal company name" }),
   ).toHaveValue("Acme");
   await page
@@ -489,6 +495,45 @@ test("a returning customer with a signed NDA waits for GitHub, chooses email and
   await expect(
     page.getByRole("heading", { name: "You’re all set" }),
   ).toBeVisible();
+});
+
+test("a customer who skips the NDA goes straight to Slack and GitHub", async ({
+  page,
+}) => {
+  const { engineer } = await setup(page, {
+    email: "alex@acme.com",
+    companyEmailDomain: "acme.com",
+    onboardingCompleted: true,
+  });
+
+  await page.goto("/onboarding?journey=post-training");
+  await page.getByRole("button", { name: "Get started" }).click();
+  await expect(
+    page.getByRole("textbox", { name: "Legal company name" }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "Set up Slack & GitHub" }),
+  ).toBeVisible();
+  await page
+    .getByRole("checkbox", {
+      name: "Our team can’t use Slack — use email instead.",
+    })
+    .click();
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  await expect(page.getByText("Not requested")).toBeVisible();
+  await page.getByRole("button", { name: "Start project" }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "You’re all set" }),
+  ).toBeVisible();
+  expect(engineer.submissions).toEqual([
+    { contact_channel: "email", github_installation_id: 42 },
+  ]);
+  expect(engineer.ndaDocuments).toEqual([]);
+  expect(engineer.signingSessions).toBe(0);
 });
 
 test("a signed-out visitor is sent to sign in and kept on the post-training journey", async ({

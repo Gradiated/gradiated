@@ -67,6 +67,7 @@ const draftSchema = z.object({
   legalAddress: z.string().max(1000).default(""),
   signerName: z.string().max(100).nullable().default(null),
   signerTitle: z.string().max(100).default(""),
+  ndaRequested: z.boolean().default(false),
   ndaDocumentId: z.string().max(100).nullable().default(null),
   channel: z.enum(["slack", "email"]).default("slack"),
   slackEmail: z.string().max(200).nullable().default(null),
@@ -127,7 +128,10 @@ export const changesNda = (
 export const ndaReference = (
   server: EngineerOnboarding,
   draft: OnboardingDraft,
-) => (server.nda ? undefined : (draft.ndaDocumentId ?? undefined));
+) =>
+  server.nda || !draft.ndaRequested
+    ? undefined
+    : (draft.ndaDocumentId ?? undefined);
 
 export type OnboardingView = "introduction" | "steps" | "complete";
 
@@ -151,10 +155,15 @@ export const submitAction = (
   step: number,
   {
     ndaSigned,
+    ndaRequested,
     installation,
-  }: { ndaSigned: boolean; installation: VerifiedInstallation | null },
+  }: {
+    ndaSigned: boolean;
+    ndaRequested: boolean;
+    installation: VerifiedInstallation | null;
+  },
 ): SubmitAction => {
-  if (step === 0) return ndaSigned ? "advance" : "sign";
+  if (step === 0) return ndaSigned || !ndaRequested ? "advance" : "sign";
 
   if (!installation) return "github_required";
 

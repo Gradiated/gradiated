@@ -112,21 +112,36 @@ describe("onboarding resume", () => {
 });
 
 describe("onboarding steps", () => {
-  it("opens signing until the NDA is recorded, then advances", () => {
-    expect(submitAction(0, { ndaSigned: false, installation: null })).toBe(
-      "sign",
-    );
-    expect(submitAction(0, { ndaSigned: true, installation: null })).toBe(
-      "advance",
-    );
+  it("opens signing for a requested NDA until it is recorded", () => {
+    const requested = { ndaRequested: true, installation: null };
+    expect(submitAction(0, { ...requested, ndaSigned: false })).toBe("sign");
+    expect(submitAction(0, { ...requested, ndaSigned: true })).toBe("advance");
+  });
+
+  it("skips signing when no NDA is requested", () => {
+    expect(
+      submitAction(0, {
+        ndaSigned: false,
+        ndaRequested: false,
+        installation: null,
+      }),
+    ).toBe("advance");
   });
 
   it("requires a verified GitHub installation after the NDA", () => {
-    expect(submitAction(1, { ndaSigned: true, installation: null })).toBe(
-      "github_required",
-    );
-    expect(submitAction(1, { ndaSigned: true, installation })).toBe("advance");
-    expect(submitAction(2, { ndaSigned: true, installation })).toBe("finish");
+    expect(
+      submitAction(1, {
+        ndaSigned: true,
+        ndaRequested: true,
+        installation: null,
+      }),
+    ).toBe("github_required");
+    expect(
+      submitAction(1, { ndaSigned: true, ndaRequested: true, installation }),
+    ).toBe("advance");
+    expect(
+      submitAction(2, { ndaSigned: true, ndaRequested: true, installation }),
+    ).toBe("finish");
   });
 
   it("locks later steps until their prerequisites are verified", () => {
@@ -157,11 +172,17 @@ describe("onboarding steps", () => {
   });
 
   it("sends the local NDA document only until the server records one", () => {
-    const draft = exampleDraft({ ndaDocumentId: "document-2" });
+    const draft = exampleDraft({
+      ndaRequested: true,
+      ndaDocumentId: "document-2",
+    });
 
     expect(ndaReference(serverState(), draft)).toBe("document-2");
     expect(
       ndaReference(serverState({ nda: signedNda }), draft),
+    ).toBeUndefined();
+    expect(
+      ndaReference(serverState(), { ...draft, ndaRequested: false }),
     ).toBeUndefined();
   });
 });
@@ -188,6 +209,7 @@ describe("onboarding submission", () => {
         exampleDraft({
           channel: "email",
           context: " ",
+          ndaRequested: true,
           ndaDocumentId: "document-2",
         }),
         installation,

@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   channelSummary,
-  ndaReference,
   slackInvited,
   type OnboardingAccount,
   type OnboardingDraft,
@@ -47,9 +46,35 @@ export const NdaStep = ({
   patch: UpdateDraft;
 }) => (
   <FieldGroup>
-    <StepTitle title="Your mutual NDA">
-      Confirm your company details and who will sign.
+    <StepTitle title="Do you need an NDA?">
+      Optional. We can sign a mutual NDA before you share your code.
     </StepTitle>
+    <Field orientation="horizontal">
+      <Checkbox
+        id="nda-requested"
+        checked={draft.ndaRequested}
+        onCheckedChange={(checked) => patch({ ndaRequested: checked === true })}
+      />
+      <FieldLabel htmlFor="nda-requested">
+        We’d like a mutual NDA first
+      </FieldLabel>
+    </Field>
+    {draft.ndaRequested ? (
+      <NdaFields account={account} draft={draft} patch={patch} />
+    ) : null}
+  </FieldGroup>
+);
+
+const NdaFields = ({
+  account,
+  draft,
+  patch,
+}: {
+  account: OnboardingAccount;
+  draft: OnboardingDraft;
+  patch: UpdateDraft;
+}) => (
+  <>
     <Field>
       <FieldLabel htmlFor="nda-company">Legal company name</FieldLabel>
       <Input
@@ -110,7 +135,7 @@ export const NdaStep = ({
         placeholder="Street address, city, state / region, postal code, country"
       />
     </Field>
-  </FieldGroup>
+  </>
 );
 
 export const TeamStep = ({
@@ -136,7 +161,6 @@ export const TeamStep = ({
     </StepTitle>
     <GithubAppInstallation
       organizationId={account.organizationId}
-      ndaDocumentId={ndaReference(server, draft)}
       saved={installation}
       onVerified={onGithubVerified}
     />
@@ -200,7 +224,7 @@ export const ReviewStep = ({
       <dt className="text-muted-foreground">Channel</dt>
       <dd>{channelSummary(server, draft)}</dd>
       <dt className="text-muted-foreground">NDA</dt>
-      <dd>Mutual NDA with PostHog Inc.</dd>
+      <dd>{server.nda ? "Mutual NDA with PostHog Inc." : "Not requested"}</dd>
       <dt className="text-muted-foreground">Access</dt>
       <dd>
         {installation

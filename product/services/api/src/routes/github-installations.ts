@@ -7,11 +7,9 @@ import {
 import { consoleOnly } from "../http/audience.js";
 import {
   requireOnboardingAdmin,
-  requireRecordedNda,
   type OnboardingOrganizations,
 } from "../http/onboarding-access.js";
 import { ApiProblem, problems } from "../http/problems.js";
-import { NdaDocumentIdSchema, type PandaDocNda } from "../legal/pandadoc.js";
 import type { ApiEnvironment, AuthService } from "../types.js";
 
 const read = createRoute({
@@ -22,7 +20,7 @@ const read = createRoute({
   tags: ["GitHub installations"],
   summary: "Verify the customer's Gradiated GitHub App installation",
   description:
-    "Uses the signed-in customer's linked GitHub App user authorization to check active installations, Contents access and accessible repositories. Requires a recorded NDA and organization admin membership. Callback IDs and browser state are never proof of installation.",
+    "Uses the signed-in customer's linked GitHub App user authorization to check active installations, Contents access and accessible repositories. Requires organization admin membership. Callback IDs and browser state are never proof of installation.",
   request: {
     params: z.object({
       organization_id: z
@@ -30,7 +28,6 @@ const read = createRoute({
         .describe("The authorized Gradiated organization."),
     }),
     query: z.object({
-      nda_document_id: NdaDocumentIdSchema.optional(),
       installation_id: z.coerce
         .number()
         .int()
@@ -64,17 +61,12 @@ export const registerGithubInstallationRoutes = (
   organizations: OnboardingOrganizations,
   auth: AuthService,
   provider?: GithubInstallations,
-  nda?: PandaDocNda,
 ) => {
   app.openapi(read, async (context) => {
     context.header("Cache-Control", "no-store");
     const { organization_id } = context.req.valid("param");
-    const { owner } = await requireOnboardingAdmin(
-      context,
-      organizations,
-      organization_id,
-    );
-    if (!provider || !nda || !auth.githubAccessToken)
+    await requireOnboardingAdmin(context, organizations, organization_id);
+    if (!provider || !auth.githubAccessToken)
       throw new ApiProblem(
         problems.unavailable(
           "GitHub installation verification has not been configured yet.",
@@ -82,13 +74,6 @@ export const registerGithubInstallationRoutes = (
       );
 
     const query = context.req.valid("query");
-    await requireRecordedNda(
-      organizations,
-      nda,
-      owner,
-      "connecting GitHub",
-      query.nda_document_id,
-    );
 
     const token = await auth
       .githubAccessToken(context.req.raw.headers)

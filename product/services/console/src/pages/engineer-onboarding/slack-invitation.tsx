@@ -17,7 +17,6 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   SLACK_CHANNEL_PATTERN,
-  ndaReference,
   proposedSlackChannel,
   slackInvitationProblem,
   slackInvited,
@@ -63,7 +62,6 @@ export const SlackInvitation = ({
       await createSlackInvitation(account.organizationId, {
         email: recipient,
         channelName: renaming ? channel : undefined,
-        ndaDocumentId: ndaReference(server, draft),
       });
       await onInvited();
     } catch (cause) {

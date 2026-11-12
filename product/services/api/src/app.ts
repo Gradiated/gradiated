@@ -184,9 +184,8 @@ export const createApp = ({
     services.organizations,
     auth,
     githubInstallations,
-    ndaDocuments,
   );
-  registerSlackInvitationRoutes(app, services, slackConnect, ndaDocuments);
+  registerSlackInvitationRoutes(app, services, slackConnect);
   registerEngineerOnboardingRoutes(app, {
     organizations: services.organizations,
     integrations: services.integrations,

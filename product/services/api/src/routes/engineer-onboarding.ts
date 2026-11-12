@@ -32,7 +32,9 @@ export const EngineerOnboardingSchema = z
         signed_at: TimestampSchema,
       })
       .nullable()
-      .describe("The organization's completed NDA, once PandaDoc confirms it."),
+      .describe(
+        "The organization's completed NDA, once PandaDoc confirms it. The NDA is optional.",
+      ),
     slack: z
       .object({
         channel_id: z.string(),
@@ -77,7 +79,9 @@ const SubmissionSchema = z
       .describe(
         "Optional context for Gradiated engineers. Delivered with the submission and not stored.",
       ),
-    nda_document_id: NdaDocumentIdSchema.optional(),
+    nda_document_id: NdaDocumentIdSchema.optional().describe(
+      "The customer's optional NDA; when present it must be completed before submitting.",
+    ),
   })
   .openapi("EngineerOnboardingSubmission");
 
@@ -124,7 +128,7 @@ const submit = createRoute({
   tags: ["Engineer onboarding"],
   summary: "Start the organization's engineering project",
   description:
-    "Requires a recorded NDA and rechecks the GitHub installation. Records the submission once per organization, posts nonempty notes to the organization's Slack channel when contact_channel is slack, and notifies Gradiated. A repeated submission returns the existing state with 200 and sends nothing.",
+    "Rechecks the GitHub installation and, when nda_document_id is present, requires that NDA to be completed. Records the submission once per organization, posts nonempty notes to the organization's Slack channel when contact_channel is slack, and notifies Gradiated. A repeated submission returns the existing state with 200 and sends nothing.",
   request: {
     params,
     body: {
@@ -285,6 +289,7 @@ export const registerEngineerOnboardingRoutes = (
           (installation) => installation.account,
         ),
         slackChannel: current.slack?.channel_name ?? null,
+        ndaSignedAt: current.nda?.signed_at ?? null,
         notes,
       })
       .catch(failed("email"));
@@ -317,20 +322,22 @@ export const registerEngineerOnboardingRoutes = (
     );
     if (existing.submitted_at) return context.json(await state(owner), 200);
 
-    if (!dependencies.nda)
-      throw new ApiProblem(
-        problems.unavailable(
-          "On-page NDA signing has not been configured yet.",
-        ),
-      );
+    if (input.nda_document_id) {
+      if (!dependencies.nda)
+        throw new ApiProblem(
+          problems.unavailable(
+            "On-page NDA signing has not been configured yet.",
+          ),
+        );
 
-    await requireRecordedNda(
-      organizations,
-      dependencies.nda,
-      owner,
-      "starting the project",
-      input.nda_document_id,
-    );
+      await requireRecordedNda(
+        organizations,
+        dependencies.nda,
+        owner,
+        "starting the project",
+        input.nda_document_id,
+      );
+    }
 
     const installation = await verifyInstallation(
       context.req.raw.headers,

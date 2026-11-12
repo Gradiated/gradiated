@@ -16,6 +16,7 @@ export interface EngineerOnboardingNotice {
   contactChannel: ContactChannel;
   githubAccounts: string[];
   slackChannel: string | null;
+  ndaSignedAt: string | null;
   notes: string | null;
 }
 
@@ -29,6 +30,10 @@ const noticeLines = (notice: EngineerOnboardingNotice): [string, string][] => [
   ["Preferred contact", notice.contactChannel],
   ["GitHub", notice.githubAccounts.join(", ") || "None"],
   ["Slack channel", notice.slackChannel ?? "None"],
+  [
+    "Mutual NDA",
+    notice.ndaSignedAt ? `Signed ${notice.ndaSignedAt}` : "Not requested",
+  ],
 ];
 
 const noticeContent = (notice: EngineerOnboardingNotice): EmailContent => {

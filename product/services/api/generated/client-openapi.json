@@ -2205,7 +2205,7 @@
               "document_id",
               "signed_at"
             ],
-            "description": "The organization's completed NDA, once PandaDoc confirms it."
+            "description": "The organization's completed NDA, once PandaDoc confirms it. The NDA is optional."
           },
           "slack": {
             "type": [
@@ -2334,7 +2334,7 @@
           "nda_document_id": {
             "type": "string",
             "pattern": "^[a-zA-Z0-9_-]{1,100}$",
-            "description": "A completed NDA for this organization and signed-in user. Needed only until the organization's NDA is recorded."
+            "description": "The customer's optional NDA; when present it must be completed before submitting."
           }
         },
         "required": [
@@ -8021,7 +8021,7 @@
           "GitHub installations"
         ],
         "summary": "Verify the customer's Gradiated GitHub App installation",
-        "description": "Uses the signed-in customer's linked GitHub App user authorization to check active installations, Contents access and accessible repositories. Requires a recorded NDA and organization admin membership. Callback IDs and browser state are never proof of installation.",
+        "description": "Uses the signed-in customer's linked GitHub App user authorization to check active installations, Contents access and accessible repositories. Requires organization admin membership. Callback IDs and browser state are never proof of installation.",
         "parameters": [
           {
             "schema": {
@@ -8033,17 +8033,6 @@
             "description": "The authorized Gradiated organization.",
             "name": "organization_id",
             "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^[a-zA-Z0-9_-]{1,100}$",
-              "description": "A completed NDA for this organization and signed-in user. Needed only until the organization's NDA is recorded."
-            },
-            "required": false,
-            "description": "A completed NDA for this organization and signed-in user. Needed only until the organization's NDA is recorded.",
-            "name": "nda_document_id",
-            "in": "query"
           },
           {
             "schema": {
@@ -8129,7 +8118,7 @@
           "Slack invitations"
         ],
         "summary": "Invite the customer's chosen email to the organization's Slack Connect channel",
-        "description": "Requires an active verified organization admin and a recorded NDA. Each organization has one channel: the first request creates it, and later requests re-invite into the stored channel and ignore channel_name. The Slack email may differ from the NDA signer. One invitation is sent per organization every 10 minutes. Customer acceptance and workspace approval may still be required.",
+        "description": "Requires an active verified organization admin. Each organization has one channel: the first request creates it, and later requests re-invite into the stored channel and ignore channel_name. The Slack email may differ from the signed-in account. One invitation is sent per organization every 10 minutes. Customer acceptance and workspace approval may still be required.",
         "parameters": [
           {
             "schema": {
@@ -8160,12 +8149,7 @@
                     "type": "string",
                     "maxLength": 200,
                     "format": "email",
-                    "description": "The Slack invitation recipient; defaults to the signed-in account email, independently of the NDA signer."
-                  },
-                  "nda_document_id": {
-                    "type": "string",
-                    "pattern": "^[a-zA-Z0-9_-]{1,100}$",
-                    "description": "A completed NDA for this organization and signed-in user. Needed only until the organization's NDA is recorded."
+                    "description": "The Slack invitation recipient; defaults to the signed-in account email"
                   }
                 },
                 "additionalProperties": false
@@ -8205,7 +8189,7 @@
             }
           },
           "409": {
-            "description": "nda_required: the NDA is not recorded. slack_channel_name_taken: a new channel name is already in use.",
+            "description": "slack_channel_name_taken: a new channel name is already in use.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -8320,7 +8304,7 @@
           "Engineer onboarding"
         ],
         "summary": "Start the organization's engineering project",
-        "description": "Requires a recorded NDA and rechecks the GitHub installation. Records the submission once per organization, posts nonempty notes to the organization's Slack channel when contact_channel is slack, and notifies Gradiated. A repeated submission returns the existing state with 200 and sends nothing.",
+        "description": "Rechecks the GitHub installation and, when nda_document_id is present, requires that NDA to be completed. Records the submission once per organization, posts nonempty notes to the organization's Slack channel when contact_channel is slack, and notifies Gradiated. A repeated submission returns the existing state with 200 and sends nothing.",
         "parameters": [
           {
             "schema": {

@@ -33,6 +33,11 @@ def python(path: str) -> tuple[str, ...]:
     return ('{python}', path)
 
 
+INFRA_TG = 'infra/environments/prod/us-east-1/terraform'
+FMT = (('terraform', 'fmt', '-recursive', 'infra'),
+       ('terragrunt', 'hcl', 'fmt', '--working-dir', INFRA_TG))
+BROWSER = ('uv', 'run', '--locked', '--project', 'tools/browser', 'python')
+
 TOOLS = (
     Tool('gpu', 'render-config', (python('tools/gpu/render-config.py'),),
          'Render GPU controller inventory and model Rollouts from hosts.yaml and models.json (--check verifies)',
@@ -63,12 +68,95 @@ TOOLS = (
     Tool('lab', 'check', (('cargo', 'fmt', '--manifest-path', 'research/lab/Cargo.toml', '--all', '--', '--check'),
                           ('cargo', 'test', '--manifest-path', 'research/lab/Cargo.toml', '--workspace')),
          'Check formatting and run the tests of the research lab workspace', effects='read', network=False),
+
+    # Infrastructure. Credential-free: these read no state and reach no account.
+    Tool('infra', 'fmt', FMT, 'Format Terraform and Terragrunt configuration', network=False),
+    Tool('infra', 'check', FMT + (
+        ('terraform', 'fmt', '-check', '-recursive', 'infra'),
+        ('terragrunt', 'hcl', 'fmt', '--check', '--working-dir', INFRA_TG),
+        ('terragrunt', 'hcl', 'validate', '--working-dir', INFRA_TG),
+        ('git', 'diff', '--check')),
+         'Format, then check formatting and HCL of the infrastructure configuration', network=False),
+    Tool('infra', 'sec', (('trivy', 'config', '--quiet', '--exit-code', '1', 'infra/bootstrap'),),
+         'Report security misconfigurations in the standalone bootstrap roots with Trivy', effects='read',
+         network=False),
+
+    # Security and compliance.
+    Tool('security', 'drata-policies', (python('tools/security/sync_drata_policies.py'),),
+         'Reconcile the policy drafts and compliance records in Git with Drata; a dry run unless --apply '
+         'or --apply-evidence'),
+    Tool('security', 'drata-risks', (python('tools/security/sync_drata_risks.py'),),
+         'Reconcile docs/security/risks.yml with the Drata risk register; offline check, --plan to compare, '
+         '--apply-risks to write'),
+    Tool('security', 'argocd-auth', (python('tools/security/check_argocd_auth.py'),),
+         'Exercise the pinned Argo CD login gate with signed, synthetic OIDC identities', effects='read'),
+    Tool('security', 'temporal-ui', (python('tools/security/check_temporal_ui.py'),),
+         'Validate the pinned Temporal UI and OAuth proxy offline with fixture credentials (needs Docker)',
+         effects='read'),
+    Tool('security', 'audit-controls', (python('tools/security/validate_audit_controls.py'),),
+         'Validate rendered audit policies and event patterns with read-only AWS APIs; sends no events',
+         effects='read', interactive=False),
+    Tool('security', 'unauthorized-calls', (python('tools/security/validate_unauthorized_calls.py'),),
+         "Test the rendered unauthorized-call filter with AWS's read-only filter engine", effects='read'),
+    Tool('security', 'ci-boundaries', (python('tools/security/simulate_ci_boundaries.py'),),
+         'Simulate the CI IAM boundaries rendered by `terraform test -json -verbose`, read-only', effects='read'),
+
+    # Observability checks over the rendered monitoring configuration.
+    Tool('observability', 'check', (python('tools/observability/check.py'),),
+         'Check alert and dashboard links, PromQL, and probe and stall behaviour (--promtool PATH)',
+         effects='read', network=False),
+    Tool('observability', 'platform', (python('tools/observability/check_platform.py'),),
+         'Render the pinned monitoring chart and exercise its incident routing (--amtool, --alertmanager)',
+         effects='read', network=False),
+    Tool('observability', 'controller-requests', (python('tools/observability/check_controller_requests.py'),),
+         'Render the pinned controller charts and require their scheduler reservations', effects='read'),
+
+    # Production model operations.
+    Tool('models', 'monitoring-billing', (('node', 'tools/models/monitoring-billing.mjs'),),
+         'Preview the internal monitoring billing reserve; --apply-credit posts the approved credit'),
+    Tool('models', 'probe-readiness', (('node', 'tools/deployment/inference-probe-readiness.mjs'),),
+         'Check every deployment has fresh successful inference probes', effects='read'),
+
+    # Browser automation.
+    Tool('browser', 'website-screenshots', (BROWSER + ('tools/browser/website_screenshots.py',),),
+         'Capture the built website pages and interactions for PR image diffs', network=False),
+    Tool('browser', 'storybook-screenshots', (BROWSER + ('tools/browser/storybook_screenshots.py',),),
+         'Capture every built console story as a PNG (--story-prefix, --output)', network=False),
+    Tool('browser', 'temporal-ui', (BROWSER + ('tools/browser/check_temporal_ui.py',),),
+         'Render the production Temporal Cloud frontend against a synthetic namespace reader (IMAGE)',
+         effects='read', network=False),
+
+    # Local product development.
+    Tool('product', 'sglang-local', (('bash', 'product/scripts/run-sglang-local.sh'),),
+         'Run the pinned Apple Silicon SGLang development model', effects='read', network=False,
+         interactive=True),
+    Tool('product', 'temporal-ui-local', (('bash', 'product/scripts/run-temporal-ui-local.sh'),),
+         'Run the Temporal UI locally against the development Temporal server', effects='read', network=False,
+         interactive=True),
+    Tool('product', 'opencode', (('bash', 'product/scripts/opencode-gradiated.sh'),),
+         'Run opencode against Gradiated inference', effects='read', interactive=True),
+    Tool('product', 'desmond-build-image', (('bash', 'product/scripts/desmond-build-image.sh'),),
+         'Build the desmond SGLang image locally (DESMOND_IMAGE, default gradiated/desmond-sglang:dev)',
+         network=False),
+    Tool('product', 'desmond-test', (('bash', 'product/scripts/desmond-test.sh'),),
+         'Build desmondd and run its native tests with CMake', effects='read', network=False),
+
+    # Agent skills.
+    Tool('research', 'efficiency', (python('.agents/skills/experiment-run/scripts/research_efficiency.py'),),
+         'Account Codex and provider throughput for $experiment-run from event timing, not reasoning text',
+         network=False),
 )
 GROUPS = {
     'gpu': 'GPU fleet: host leases and the repository tools that render, pin and stage the fleet',
     'github-apps': 'Gradiated GitHub Apps',
     'browser': 'Browser automation environment for $browser-research',
     'lab': 'The research lab Rust workspace',
+    'infra': 'Credential-free infrastructure formatting and checks',
+    'security': 'Security and compliance checks, and the Drata sync',
+    'observability': 'Checks over the rendered monitoring configuration',
+    'models': 'Production model operations',
+    'product': 'Local product development',
+    'research': 'Research tooling for the agent skills',
 }
 
 

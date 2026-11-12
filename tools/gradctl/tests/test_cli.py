@@ -56,6 +56,17 @@ class CatalogTests(unittest.TestCase):
                         'compute down', 'gpu lease acquire', 'gpu render-config', 'github-apps create'):
             self.assertIn(command, names)
 
+    def test_every_repository_tool_exists(self):
+        from gradctl import repotools
+        root = LAUNCHER.parents[2]
+        for tool in repotools.TOOLS:
+            for step in tool.steps:
+                paths = [part for part in step if '/' in part and not part.startswith('-')
+                         and part.endswith(('.py', '.mjs', '.sh'))]
+                for path in paths:
+                    with self.subTest(command=f'{tool.group} {tool.name}', path=path):
+                        self.assertTrue((root / path).is_file())
+
     def test_commands_json_is_one_document(self):
         code, out, _ = run('commands', '--json', state=OFFLINE)
         self.assertEqual(code, 0)

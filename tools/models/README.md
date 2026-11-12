@@ -109,7 +109,7 @@ prepaid balance makes every deployment fail with HTTP 402. An operator-approved
 $10,000 internal reserve credit uses the existing billing ledger without changing
 billing mode, charging a payment method or overwriting the operational balance.
 
-Run `node tools/models/monitoring-billing.mjs` for a read-only production preview.
+Run `gradctl models monitoring-billing` for a read-only production preview.
 The separately approved `--apply-credit` operation uses the fixed operator source
 ID `gradiated-inference-monitoring-reserve-v1`; retries return the same posting
 rather than issuing another credit. The command verifies the fixed production
@@ -119,4 +119,4 @@ or recurring funding. Never use this internal reserve for customer accounts.
 
 The gateway applies the immutable credit through its normal ledger replay; do not
 write the Valkey balance directly. Verify fresh successes for every deployment
-with `node tools/deployment/inference-probe-readiness.mjs` afterward.
+with `gradctl models probe-readiness` afterward.

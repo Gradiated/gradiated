@@ -66,7 +66,7 @@ cd product
 mise exec -- pnpm --filter gradiated-com build
 cd ..
 uv run --locked --project tools/browser playwright install chromium
-uv run --locked --project tools/browser python tools/browser/website_screenshots.py
+gradctl browser website-screenshots
 ```
 
 The capture set covers the desktop homepage, mobile menu, docs, inference,

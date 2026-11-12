@@ -30,29 +30,3 @@ run = "python3 -m pip install --quiet --disable-pip-version-check --root-user-ac
 [tasks."gradctl:install"]
 description = "Install gradctl as one file at ~/.local/bin/gradctl, for use outside a checkout"
 run = "python3 tools/gradctl/build.py --install"
-
-[tasks.infra-fmt]
-description = "Format Terraform and Terragrunt configuration"
-run = [
-  "terraform fmt -recursive infra",
-  "terragrunt hcl fmt --working-dir infra/environments/prod/us-east-1/terraform",
-]
-
-[tasks.infra-check]
-description = "Run credential-free infrastructure formatting and HCL checks"
-depends = ["infra-fmt"]
-run = [
-  "terraform fmt -check -recursive infra",
-  "terragrunt hcl fmt --check --working-dir infra/environments/prod/us-east-1/terraform",
-  "terragrunt hcl validate --working-dir infra/environments/prod/us-east-1/terraform",
-  "git diff --check",
-]
-
-[tasks.infra-sec]
-description = "Report security misconfigurations in the standalone bootstrap roots with Trivy"
-run = "trivy config --quiet --exit-code 1 infra/bootstrap"
-
-[tasks.sglang-local]
-description = "Run the pinned Apple Silicon SGLang development model"
-dir = "product"
-run = "./scripts/run-sglang-local.sh"

@@ -353,7 +353,7 @@ queue wait (schedule-to-start), execution latency and failure metrics independen
 of the existing worker. The ordinary worker needs no Temporal credentials.
 
 The dev server runs headless. Start the **temporal-ui** pane manually in mprocs
-(or run `./scripts/run-temporal-ui-local.sh`) to open
+(or run `gradctl product temporal-ui-local`) to open
 [Temporal UI](http://localhost:8233). It is off by default and binds only to
 loopback. The launcher downloads the pinned UI Server 2.54.1 native release,
 checks its SHA-256 and caches it under `.agents/runtime/temporal-ui`; macOS and

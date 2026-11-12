@@ -522,7 +522,7 @@ production outage merely to test routing.
 Run the alert/dashboard checks (requires PyYAML and `promtool`):
 
 ```sh
-python3 tools/observability/check.py
+gradctl observability check
 ```
 
 Prometheus rule fixtures run in parallel suites containing their asserted alerts
@@ -536,7 +536,7 @@ Render the pinned monitoring chart and test notification routing with Helm,
 PyYAML, and `amtool`:
 
 ```sh
-python3 tools/observability/check_platform.py
+gradctl observability platform
 ```
 
 This validates panel links and PromQL, and exercises healthy, failed, recovered,

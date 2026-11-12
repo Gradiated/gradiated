@@ -94,12 +94,14 @@ export const GithubAppInstallation = ({
     setError("");
     setInstallUrl("");
     try {
+      const returnUrl = new URL(
+        GITHUB_RETURN_PATH,
+        window.location.origin,
+      ).toString();
       const result = await authClient.linkSocial({
         provider: "github",
-        callbackURL: new URL(
-          GITHUB_RETURN_PATH,
-          window.location.origin,
-        ).toString(),
+        callbackURL: returnUrl,
+        errorCallbackURL: returnUrl,
         disableRedirect: true,
       });
       if (result.error || !result.data?.url)

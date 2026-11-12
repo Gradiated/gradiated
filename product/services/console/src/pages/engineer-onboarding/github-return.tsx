@@ -2,6 +2,7 @@ import { useSearch } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { AuthCard } from "@/components/auth-card";
+import { githubLinkProblem } from "@/lib/engineer-onboarding";
 
 /* GitHub returns here in the tab the setup page opened. The setup page is
    already polling for the installation, so this tab only needs to close. */
@@ -20,7 +21,7 @@ export const GithubReturnPage = () => {
         </h1>
         <p className="text-sm leading-6 text-muted-foreground">
           {error
-            ? "Close this tab and choose Install GitHub app again on the setup page."
+            ? githubLinkProblem(error)
             : "You can close this tab and return to your setup."}
         </p>
       </div>

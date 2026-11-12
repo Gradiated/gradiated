@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { EngineerOnboarding } from "@/api/engineer-onboarding";
 import type { CurrentUser } from "@/api/queries";
 import {
+  githubLinkProblem,
   changesNda,
   chooseAccount,
   confirmationMessage,
@@ -356,5 +357,16 @@ describe("GitHub installation link", () => {
     expect(() =>
       githubInstallUrl("https://github.com/login/oauth/authorize"),
     ).toThrow();
+  });
+});
+
+describe("GitHub link problems", () => {
+  it("explains a GitHub account that belongs to another user", () => {
+    expect(
+      githubLinkProblem("account_already_linked_to_different_user"),
+    ).toMatch(/already connected to a different Gradiated account/);
+    expect(githubLinkProblem("access_denied")).toMatch(
+      /Install GitHub app again/,
+    );
   });
 });

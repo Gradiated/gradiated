@@ -332,6 +332,13 @@ export const GITHUB_APP_INSTALL_URL = `https://github.com/apps/${import.meta.env
 
 export const GITHUB_RETURN_PATH = "/onboarding/github-connected";
 
+/* Linking a GitHub account that already belongs to another Gradiated user is
+   refused; anything else is worth one more try. */
+export const githubLinkProblem = (error: string) =>
+  error === "account_already_linked_to_different_user"
+    ? "That GitHub account is already connected to a different Gradiated account. Sign in to that account to continue, or use a different GitHub account."
+    : "Close this tab and choose Install GitHub app again on the setup page.";
+
 /* One trip to GitHub: the app requests user authorization during
    installation, so GitHub returns to Better Auth's GitHub callback with an
    OAuth code. Reusing the state Better Auth issued for linkSocial lets that

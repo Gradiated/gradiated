@@ -82,7 +82,7 @@ def main() -> None:
     parser.add_argument("--max-length", type=int, default=131072)
     parser.add_argument("--batch-tokens", type=int, default=32768)
     parser.add_argument("--temperature", type=float)
-    parser.add_argument("--backend", choices=("pplx", "knowline", "knowline-http"), default="pplx")
+    parser.add_argument("--backend", choices=("pplx", "knowline", "knowline-http", "mammoth"), default="pplx")
     parser.add_argument("--option", action="append", default=[], help="backend option KEY=VALUE (knowline)")
     args = parser.parse_args()
 
@@ -115,7 +115,15 @@ def main() -> None:
 
     device = f"cuda:{local}"
     torch.cuda.set_device(local)
-    if args.backend == "knowline-http":
+    if args.backend == "mammoth":
+        from gdecide.backends.mammoth import MammothDecider
+
+        decider = MammothDecider(args.checkpoint, device)
+        unsupported = decider.unsupported
+        temperature = None
+        engine = f"mammoth:{Path(args.checkpoint).name}"
+        settings = decider.settings
+    elif args.backend == "knowline-http":
         from gdecide.backends.knowline_http import KnowLineHTTP
 
         options = backend_options(args.option)

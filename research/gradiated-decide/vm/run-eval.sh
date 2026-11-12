@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Evaluate a checkpoint (optionally a LoRA adapter) on the Decision Index panel or the dev sample, then score it.
 # Usage: run-eval.sh NAME CHECKPOINT_DIR [sample|panel] [extra evaluate args...]
+# Env: EVAL_VENV (default venv; venv-mm for --backend mammoth, from vm/setup-mammoth.sh), COMPARE.
 set -euo pipefail
 source "$HOME/gdecide/env.sh"
 NAME=$1; CKPT=$2; WHICH=${3:-sample}; shift 3 || true
@@ -12,7 +13,7 @@ mkdir -p "$OUT"
   aws s3 sync --only-show-errors "$S3_PREFIX/$OUT" "$OUT" --exclude "*" --include "results-*.jsonl" || true
 pgrep -f vm/s3-sync.sh >/dev/null || (setsid nohup bash src/gradiated-decide/vm/s3-sync.sh > logs/s3-sync.log 2>&1 < /dev/null &)
 cd src/gradiated-decide
-../../venv/bin/torchrun --standalone --nproc-per-node 8 -m gdecide.evaluate --suite "$ROOT/suite/suite-0.3" \
+../../${EVAL_VENV:-venv}/bin/torchrun --standalone --nproc-per-node 8 -m gdecide.evaluate --suite "$ROOT/suite/suite-0.3" \
   --checkpoint "$CKPT" --out "$ROOT/$OUT" --sample "$ROOT/suite/$WHICH-ids.json" "$@" > "$ROOT/$OUT/eval.log" 2>&1
 ../../venv/bin/python -m gdecide.score --suite "$ROOT/suite/suite-0.3" --run "$ROOT/$OUT" --sample "$ROOT/suite/$WHICH-ids.json" \
   ${COMPARE:+--compare "$ROOT/$COMPARE"} > "$ROOT/$OUT/score.log" 2>&1

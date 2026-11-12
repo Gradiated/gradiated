@@ -94,6 +94,25 @@ def build(args):
     print(json.dumps(counts))
 
 
+def items_from_rows(args):
+    """Training-format rows (e.g. gdecide.data.reasoning_gen's test split) -> items, one per question, bench = family."""
+    from gdecide.gate import gold_key
+
+    n = 0
+    with open(args.out, "w") as out:
+        for path in args.rows:
+            for line in (gzip.open(path, "rt") if path.endswith(".gz") else open(path)):
+                row = json.loads(line)
+                bench = (row.get("meta") or {}).get("family") or row.get("source") or Path(path).name
+                for qid, q in row["questions"].items():
+                    gold = gold_key(q, row["expected"].get(qid))
+                    if gold is not None:
+                        out.write(json.dumps(item(f"{args.prefix}{bench}", f"{row['id']}:{qid}", row["state"], q, gold),
+                                             ensure_ascii=False) + "\n")
+                        n += 1
+    print(json.dumps({"items": n}))
+
+
 def top(answer):
     """(predicted label, its probability, label -> probability) from a Decider answer."""
     if answer["type"] == "noul":
@@ -119,7 +138,13 @@ def run(args):
     done = {json.loads(line)["id"] for line in open(path)} if path.exists() else set()
     items = [json.loads(line) for i, line in enumerate(open(args.items)) if i % world == rank]
     items = [it for it in items if it["id"] not in done]
-    if args.backend == "knowline":
+    if args.backend == "mammoth":
+        from gdecide.backends.mammoth import MammothDecider
+        decider = MammothDecider(args.checkpoint, f"cuda:{local}")
+    elif args.backend == "knowline-http":
+        from gdecide.backends.knowline_http import KnowLineHTTP
+        decider = KnowLineHTTP(f"http://127.0.0.1:{8080 + local}")
+    elif args.backend == "knowline":
         from gdecide.backends.knowline import KnowLineDecider
         decider = KnowLineDecider.from_pretrained(args.checkpoint, device=f"cuda:{local}", max_length=args.max_length,
                                                   batch_tokens=args.batch_tokens, temperature=1.0)
@@ -143,8 +168,11 @@ def run(args):
                 if "error" in response:
                     record["error"] = response["error"]
                 else:
-                    label, p, probs = top(response["answers"]["q"])
-                    record.update(pred=label, p=p, probs=probs)
+                    # Every question's distribution (gdecide.gate uses multi-question rows); "q" is the panel's question.
+                    record["answers"] = {qid: top(a)[2] for qid, a in response["answers"].items()}
+                    if "q" in response["answers"]:
+                        label, p, probs = top(response["answers"]["q"])
+                        record.update(pred=label, p=p, probs=probs)
                 f.write(json.dumps(record) + "\n")
             f.flush()
             if rank == 0:
@@ -174,7 +202,8 @@ def score(args):
     gold = {}
     for line in open(args.items):
         it = json.loads(line)
-        gold[it["id"]] = (it["bench"], it["gold"])
+        if "gold" in it:  # gdecide.gate items carry per-question golds instead and are scored by gdecide.gate
+            gold[it["id"]] = (it["bench"], it["gold"])
     preds = {}
     for path in sorted(Path(args.run).glob("predictions-*.jsonl")):
         for line in open(path):
@@ -188,7 +217,7 @@ def score(args):
         per[bench].append((g, pred, p))
     result = {"run": args.run, "benchmarks": {}}
     shared = []
-    for bench in ORDER:
+    for bench in ORDER + sorted(b for b in per if b not in ORDER):
         rows = per.get(bench, [])
         if not rows:
             continue
@@ -216,15 +245,19 @@ def main() -> None:
     r.add_argument("--items", required=True)
     r.add_argument("--checkpoint", required=True)
     r.add_argument("--out", required=True)
-    r.add_argument("--backend", choices=["pplx", "knowline"], default="pplx")
+    r.add_argument("--backend", choices=["pplx", "knowline", "knowline-http", "mammoth"], default="pplx")
     r.add_argument("--max-length", type=int, default=131072)
     r.add_argument("--batch-tokens", type=int, default=32768)
     r.add_argument("--chunk", type=int, default=64)
+    i = sub.add_parser("items-from-rows")
+    i.add_argument("--rows", nargs="+", required=True)
+    i.add_argument("--prefix", default="gen/")
+    i.add_argument("--out", required=True)
     s = sub.add_parser("score")
     s.add_argument("--items", required=True)
     s.add_argument("--run", required=True)
     args = parser.parse_args()
-    {"build": build, "run": run, "score": score}[args.command](args)
+    {"build": build, "run": run, "score": score, "items-from-rows": items_from_rows}[args.command](args)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,27 @@
+{
+ "seed": 20261112,
+ "dev_fraction": 0.01,
+ "max_length": 8192,
+ "shuffle": 0.5,
+ "note": "Probe: does code-labelled multi-step date/number reasoning data (gdecide.data.reasoning_gen) transfer to a single-pass decider? Generated rows plus replay of the v1 mix's largest sources.",
+ "sources": [
+  {
+   "glob": "/home/ubuntu/gdecide/data/reasoning/reasoning-gen.jsonl.gz"
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/clean/procedural-typed-decisions.jsonl.gz",
+   "max_rows": 20000
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/clean/tasksource-jev-typed-decisions.jsonl.gz",
+   "max_rows": 20000,
+   "exclude": [
+    "x-stance"
+   ]
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/clean/sn92-generalist-train-v1.jsonl.gz",
+   "max_rows": 10000
+  }
+ ]
+}

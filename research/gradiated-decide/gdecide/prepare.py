@@ -118,7 +118,7 @@ def main() -> None:
         exclude = src.get("exclude", [])
         for line in read_lines(src["glob"]):
             row = json.loads(line)
-            origin = f"{row.get('source')} {row.get('id')} {json.dumps(row.get('metadata', {}))}"
+            origin = f"{row.get('source')} {row.get('id')} {json.dumps(row.get('metadata', row.get('meta', {})))}"
             if any(x in origin for x in exclude):
                 continue
             rows.append((h(f"{seed}:{row.get('source')}:{row.get('id')}:{line[:200]}"), line))

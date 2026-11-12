@@ -22,6 +22,10 @@ not Decision Index benchmarks, and no index area may fall by more than one point
    - `gdecide.data.train_splits`: official train splits of Decision Index benchmarks, rendered with the kit's own
      normalizers so the format matches evaluation exactly, and decontaminated against every suite row (exact match and
      word 13-gram overlap).
+   - `gdecide.data.reasoning_gen`: synthetic, code-labelled multi-step date/time and numeric decisions (deadline
+     windows across business days and DST, rest rules, running limits, corrected thresholds, day-count interest,
+     warranty periods, answer verification, amended policies); `--n 60000 --seed 1` writes train and a disjoint test
+     split. Facts are kept in `meta.facts` and `tests/test_reasoning_gen.py` recomputes labels independently.
    - `gdecide.prepare`: deterministic per-source sampling, option-order shuffling, a held-out dev slice per source,
      one-time tokenization into shards.
 3. **Training.** `gdecide.train_full` (FSDP2 full fine-tune, fp32 master weights, soft cross entropy plus Brier,
@@ -121,6 +125,21 @@ gd-v1. gd-v1 stays the Qwen candidate.
 | KnowLine-31B-Gen1.5 | 69.76 |
 | 50/50 KnowLine + base | 70.69 |
 | 50/50 KnowLine + gd-v1 0.5 | 71.12 |
+
+Full panel, KnowLine through its release SGLang servers (`--backend knowline-http`, `vm/serve-knowline.sh`; dev
+69.83 vs 69.76 through transformers, 40x faster): KnowLine 70.54, 50/50 KnowLine + base 71.50, **50/50 KnowLine +
+gd-v1 0.5 71.93**.
+
+## Learned gate (negative result)
+
+`gdecide.gate` fits a per-question weight w (KnowLine) / 1 - w (gd-v1) and a temperature from features of the two
+answers and the request, on 22,169 held-out gold requests (66k questions) from 44 sources: the held-out rows of every
+v1 source and seven extra sources no run trained on; Decision Index rows are only the test. Leave-sources-out CV
+(log-loss / accuracy): gd-v1 0.333 / 88.6, KnowLine 0.381 / 87.2, 50/50 0.323 / 89.5, logistic gate 0.326 / 89.0,
+MLP gate 0.326 / 88.8. Applied to the Decision Index the MLP gate scores 70.73 on the full panel, 1.2 below the
+50/50 average. Most gold sources are distributions gd-v1 was trained on, so the gate learns to favour gd-v1 (mean w
+0.32 on the panel), and per-source differences between the models are not predictable from answer features. The
+50/50 average stays.
 
 ## Gemini Decision 1 launch panel
 

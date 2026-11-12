@@ -94,7 +94,7 @@ procs:
       COLLECTOR_MAX_BATCH_SECONDS: "2"
       AWS_ALLOW_HTTP: "true"
   sglang:
-    shell: "mise run sglang-local"
+    shell: "../tools/gradctl/gradctl product sglang-local"
     autostart: false
     stop: SIGINT
   console:

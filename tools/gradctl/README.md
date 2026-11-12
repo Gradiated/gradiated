@@ -108,7 +108,13 @@ Run `gradctl commands` for the current list.
 | `compute` | `search`, `platforms`, `up`, `ls`, `ssh`, `s3`, `start`, `stop`, `down`, `setup`; see `$dev-training` |
 | `gpu lease` | `acquire`, `wait`, `extend`, `release`, `status`; see `$gpu-host-lease` |
 | `gpu` | `render-config`, `stage-glm-pool`, `stage-kimi-pool`, `pin-host`, `pin-sglang-pools`, `prepare-enrollment`, `mint-bootstrap-key`, `create-runpod-template`, `qualification-slot` |
-| `github-apps`, `browser`, `lab` | `create`; `sync`, `install`; `check` |
+| `infra` | `fmt`, `check`, `sec` |
+| `security` | `drata-policies`, `drata-risks`, `argocd-auth`, `temporal-ui`, `audit-controls`, `unauthorized-calls`, `ci-boundaries` |
+| `observability` | `check`, `platform`, `controller-requests` |
+| `models` | `monitoring-billing`, `probe-readiness` |
+| `browser` | `sync`, `install`, `website-screenshots`, `storybook-screenshots`, `temporal-ui` |
+| `product` | `sglang-local`, `temporal-ui-local`, `opencode`, `desmond-build-image`, `desmond-test` |
+| `github-apps`, `lab`, `research` | `create`; `check`; `efficiency` |
 
 ## Layout
 

@@ -13,7 +13,7 @@ This repository is the complete project state for the research and product-build
 
 ## Repo-native state
 
-- Use `gradctl` (`tools/gradctl/`) for repository and developer operations: DevEx checks, `.env` and AWS sign-in, development GPUs, host leases and the GPU fleet tools. It needs this machine on the Gradiated tailnet (`gradctl tailnet status`; `gradctl tailnet join` for a headless machine). Run `gradctl commands --json` for every command with its arguments, effects (read, write or destructive) and requirements, and pass `--json` for one result envelope on stdout. Add a new developer or agent command to `gradctl` instead of a standalone script, mise task or Makefile target.
+- Use `gradctl` (`tools/gradctl/`) for repository and developer operations: DevEx checks, `.env` and AWS sign-in, development GPUs, host leases, the GPU fleet tools, infrastructure, security, observability and model checks, browser captures and local product runs. It needs this machine on the Gradiated tailnet (`gradctl tailnet status`; `gradctl tailnet join` for a headless machine). Run `gradctl commands --json` for every command with its arguments, effects (read, write or destructive) and requirements, and pass `--json` for one result envelope on stdout. Add a new developer or agent command to `gradctl` instead of a standalone script, mise task or Makefile target.
 - Put reusable agent procedures in `.agents/skills/`.
 - Use the repository as the canonical source for implementation state, plans, prompts, measurements, reports, and generated decision artifacts.
 - Use `README.md`, `docs/ARCHITECTURE.md` and `research/README.md` as the orientation map.

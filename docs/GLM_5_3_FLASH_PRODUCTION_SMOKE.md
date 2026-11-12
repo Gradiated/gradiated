@@ -40,7 +40,7 @@ API for custom providers. The Gradiated Responses route currently returns 404.
 From the repository root, run:
 
 ```sh
-./product/scripts/opencode-gradiated.sh
+gradctl product opencode
 ```
 
 The launcher reads `OPENROUTER_API_KEY` from the approved AWS secret. It does

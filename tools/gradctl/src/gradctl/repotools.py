@@ -27,11 +27,21 @@ class Tool:
     effects: str = 'write'
     network: bool = True
     interactive: bool = False
+    # Binaries the script itself runs, beyond the ones that launch it.
+    requires: tuple[str, ...] = ()
+    # Binaries the script finds on PATH unless a flag names one: (binary, flag).
+    requires_unless: tuple[tuple[str, str], ...] = ()
 
 
 def python(path: str) -> tuple[str, ...]:
     return ('{python}', path)
 
+
+INFRA_TG = 'infra/environments/prod/us-east-1/terraform'
+FMT = (('terraform', 'fmt', '-recursive', 'infra'),
+       ('terragrunt', 'hcl', 'fmt', '--working-dir', INFRA_TG))
+# uv installs the locked environment on first use, so these commands are networked.
+BROWSER = ('uv', 'run', '--locked', '--project', 'tools/browser', 'python')
 
 TOOLS = (
     Tool('gpu', 'render-config', (python('tools/gpu/render-config.py'),),
@@ -44,18 +54,23 @@ TOOLS = (
     Tool('gpu', 'pin-host', (python('tools/gpu/pin-host.py'),),
          'Pin a published host bundle and render the fleet configuration', network=False),
     Tool('gpu', 'pin-sglang-pools', (python('tools/gpu/pin-sglang-pools.py'),),
-         'Pin the GLM and DeepSeek SGLang pools to their published bundles', network=False),
+         'Pin the GLM and DeepSeek SGLang pools to their published bundles', network=False,
+         requires=('git',)),
     Tool('gpu', 'prepare-enrollment', (python('tools/gpu/prepare-enrollment.py'),),
-         'Prepare idle bootstrap enrollment in place over admin Tailscale SSH'),
+         'Prepare idle bootstrap enrollment in place over admin Tailscale SSH',
+         requires=('git', 'tailscale')),
     Tool('gpu', 'mint-bootstrap-key', (python('tools/gpu/mint-bootstrap-key.py'),),
-         'Mint the single-use Tailscale key a new or re-imaged GPU pod uses on first start'),
+         'Mint the single-use Tailscale key a new or re-imaged GPU pod uses on first start',
+         requires=('aws',)),
     Tool('gpu', 'create-runpod-template', (python('tools/gpu/create-runpod-template.py'),),
          'Create one private RunPod template from the repository catalog, without allocating GPUs'),
     Tool('gpu', 'qualification-slot', (python('tools/gpu/qualification-slot.py'),),
-         'Reserve spare node capacity for isolated GPU qualification without draining pods'),
+         'Reserve spare node capacity for isolated GPU qualification without draining pods',
+         requires=('kubectl',)),
     Tool('github-apps', 'create', (('node', 'tools/github-apps/create.mjs'),),
          'Create Gradiated GitHub Apps and store their keys without printing them (opens a browser)',
-         interactive=True),
+         interactive=True,
+         requires=('aws', 'gh')),
     Tool('browser', 'sync', (('uv', 'sync', '--project', 'tools/browser'),),
          'Install the browser automation environment in tools/browser'),
     Tool('browser', 'install', (('uv', 'run', '--project', 'tools/browser', 'playwright', 'install', 'chromium'),),
@@ -63,12 +78,106 @@ TOOLS = (
     Tool('lab', 'check', (('cargo', 'fmt', '--manifest-path', 'research/lab/Cargo.toml', '--all', '--', '--check'),
                           ('cargo', 'test', '--manifest-path', 'research/lab/Cargo.toml', '--workspace')),
          'Check formatting and run the tests of the research lab workspace', effects='read', network=False),
+
+    # Infrastructure. Credential-free: these read no state and reach no account.
+    Tool('infra', 'fmt', FMT, 'Format Terraform and Terragrunt configuration', network=False),
+    Tool('infra', 'check', FMT + (
+        ('terraform', 'fmt', '-check', '-recursive', 'infra'),
+        ('terragrunt', 'hcl', 'fmt', '--check', '--working-dir', INFRA_TG),
+        ('terragrunt', 'hcl', 'validate', '--working-dir', INFRA_TG),
+        ('git', 'diff', '--check')),
+         'Format, then check formatting and HCL of the infrastructure configuration', network=False),
+    Tool('infra', 'sec', (('trivy', 'config', '--quiet', '--exit-code', '1', 'infra/bootstrap'),),
+         'Report security misconfigurations in the standalone bootstrap roots with Trivy (downloads its checks)',
+         effects='read'),
+
+    # Security and compliance.
+    Tool('security', 'drata-policies', (python('tools/security/sync_drata_policies.py'),),
+         'Reconcile the policy drafts and compliance records in Git with Drata; a dry run unless --apply '
+         'or --apply-evidence',
+         requires=('git',)),
+    Tool('security', 'drata-risks', (python('tools/security/sync_drata_risks.py'),),
+         'Reconcile docs/security/risks.yml with the Drata risk register; offline check, --plan to compare, '
+         '--apply-risks to write',
+         requires=('git',)),
+    Tool('security', 'argocd-auth', (python('tools/security/check_argocd_auth.py'),),
+         'Exercise the pinned Argo CD login gate with signed, synthetic OIDC identities', effects='read',
+         requires=('docker',)),
+    Tool('security', 'temporal-ui', (python('tools/security/check_temporal_ui.py'),),
+         'Validate the pinned Temporal UI and OAuth proxy offline with fixture credentials (needs Docker)',
+         effects='read', requires=('docker',)),
+    Tool('security', 'audit-controls', (python('tools/security/validate_audit_controls.py'),),
+         'Validate rendered audit policies and event patterns with read-only AWS APIs; sends no events',
+         effects='read', requires=('aws',)),
+    Tool('security', 'unauthorized-calls', (python('tools/security/validate_unauthorized_calls.py'),),
+         "Test the rendered unauthorized-call filter with AWS's read-only filter engine", effects='read',
+         requires=('aws',)),
+    Tool('security', 'ci-boundaries', (python('tools/security/simulate_ci_boundaries.py'),),
+         'Simulate the CI IAM boundaries rendered by `terraform test -json -verbose`, read-only', effects='read',
+         requires=('aws',)),
+
+    # Observability checks over the rendered monitoring configuration.
+    Tool('observability', 'check', (python('tools/observability/check.py'),),
+         'Check alert and dashboard links, PromQL, and probe and stall behaviour (--promtool PATH)',
+         effects='read', network=False,
+         requires_unless=(('promtool', '--promtool'),)),
+    Tool('observability', 'platform', (python('tools/observability/check_platform.py'),),
+         'Render the pinned monitoring chart and exercise its incident routing (--amtool, --alertmanager)',
+         effects='read', requires=('helm',),
+         requires_unless=(('amtool', '--amtool'), ('alertmanager', '--alertmanager'))),
+    Tool('observability', 'controller-requests', (python('tools/observability/check_controller_requests.py'),),
+         'Render the pinned controller charts and require their scheduler reservations', effects='read',
+         requires=('helm',)),
+
+    # Production model operations.
+    Tool('models', 'monitoring-billing', (('node', 'tools/models/monitoring-billing.mjs'),),
+         'Preview the internal monitoring billing reserve; --apply-credit posts the approved credit',
+         requires=('kubectl',)),
+    Tool('models', 'probe-readiness', (('node', 'tools/deployment/inference-probe-readiness.mjs'),),
+         'Check every deployment has fresh successful inference probes', effects='read', requires=('kubectl',)),
+
+    # Browser automation.
+    Tool('browser', 'website-screenshots', (BROWSER + ('tools/browser/website_screenshots.py',),),
+         'Capture the built website pages and interactions for PR image diffs'),
+    Tool('browser', 'storybook-screenshots', (BROWSER + ('tools/browser/storybook_screenshots.py',),),
+         'Capture every built console story as a PNG (--story-prefix, --output)'),
+    Tool('browser', 'temporal-ui', (BROWSER + ('tools/browser/check_temporal_ui.py',),),
+         'Render the production Temporal Cloud frontend against a synthetic namespace reader (IMAGE)',
+         effects='read', requires=('docker',)),
+
+    # Local product development.
+    Tool('product', 'sglang-local', (('bash', 'product/scripts/run-sglang-local.sh'),),
+         'Run the pinned Apple Silicon SGLang development model; the first run fetches SGLang and the model',
+         effects='read', interactive=True, requires=('git', 'uv', 'xcrun')),
+    Tool('product', 'temporal-ui-local', (('bash', 'product/scripts/run-temporal-ui-local.sh'),),
+         'Run the Temporal UI locally against the development Temporal server; the first run downloads it',
+         effects='read', interactive=True, requires=('curl', 'tar')),
+    Tool('product', 'opencode', (('bash', 'product/scripts/opencode-gradiated.sh'),),
+         'Run opencode against Gradiated inference; the session can edit files and run commands', interactive=True,
+         requires=('aws', 'jq', 'opencode')),
+    Tool('product', 'desmond-build-image', (('bash', 'product/scripts/desmond-build-image.sh'),),
+         'Build the desmond SGLang image locally (DESMOND_IMAGE, default gradiated/desmond-sglang:dev)',
+         requires=('docker', 'git')),
+    Tool('product', 'desmond-test', (('bash', 'product/scripts/desmond-test.sh'),),
+         'Build desmondd and run its native tests with CMake', effects='read', network=False,
+         requires=('cmake', 'git')),
+
+    # Agent skills.
+    Tool('research', 'efficiency', (python('.agents/skills/experiment-run/scripts/research_efficiency.py'),),
+         'Account Codex and provider throughput for $experiment-run from event timing, not reasoning text',
+         network=False),
 )
 GROUPS = {
     'gpu': 'GPU fleet: host leases and the repository tools that render, pin and stage the fleet',
     'github-apps': 'Gradiated GitHub Apps',
     'browser': 'Browser automation environment for $browser-research',
     'lab': 'The research lab Rust workspace',
+    'infra': 'Credential-free infrastructure formatting and checks',
+    'security': 'Security and compliance checks, and the Drata sync',
+    'observability': 'Checks over the rendered monitoring configuration',
+    'models': 'Production model operations',
+    'product': 'Local product development',
+    'research': 'Research tooling for the agent skills',
 }
 
 
@@ -78,9 +187,12 @@ def runner(tool: Tool):
         steps = [[sys.executable if part == '{python}' else part for part in step] for step in tool.steps]
         # Extra arguments go to the last step, the tool itself.
         steps[-1] += ctx.args.forwarded
-        for step in steps:
-            if not shutil.which(step[0]):
-                raise DependencyMissing(step[0])
+        given = ctx.args.forwarded
+        located = [binary for binary, flag in tool.requires_unless
+                   if not any(arg == flag or arg.startswith(flag + '=') for arg in given)]
+        for binary in (*(step[0] for step in steps), *tool.requires, *located):
+            if not shutil.which(binary):
+                raise DependencyMissing(binary)
         runs = []
         for step in steps:
             # An interactive tool shows a URL or prompt as it runs; under --json its stdout is stderr.
@@ -108,6 +220,8 @@ def register(commands, common, groups: dict) -> None:
             groups[tool.group] = group(commands, tool.group, GROUPS[tool.group])
         meta = Meta(tool.summary, effects=tool.effects, network=tool.network, repo=True, forwards_args=True,
                     interactive=tool.interactive,
-                    requires=tuple(dict.fromkeys(step[0] for step in tool.steps if step[0] != '{python}')))
+                    requires=tuple(dict.fromkeys((*(step[0] for step in tool.steps if step[0] != '{python}'),
+                                                  *tool.requires,
+                                                  *(binary for binary, _ in tool.requires_unless)))))
         leaf(groups[tool.group], tool.name, runner(tool), meta, common,
              epilog='Arguments after the command go to the tool; use `-- --help` for its own help.')

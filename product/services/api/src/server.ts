@@ -206,7 +206,7 @@ const validateEvaluationModel = createEvaluationModelValidator(
 const app = createApp({
   githubInstallations:
     environment.GITHUB_CLIENT_ID && environment.GITHUB_CLIENT_SECRET
-      ? createGithubInstallations()
+      ? createGithubInstallations(environment.GITHUB_APP_SLUG)
       : undefined,
   slackConnect: environment.SLACK_BOT_TOKEN
     ? createSlackConnect({

@@ -29,7 +29,9 @@ describe("GitHub installation verification", () => {
         json({ total_count: 3, repositories: [{ id: 9 }] }),
       );
     expect(
-      await createGithubInstallations(request).list("secret-user-token"),
+      await createGithubInstallations("gradiated", request).list(
+        "secret-user-token",
+      ),
     ).toEqual({
       status: "installed",
       installations: [
@@ -59,7 +61,9 @@ describe("GitHub installation verification", () => {
       const request = vi
         .fn<typeof fetch>()
         .mockResolvedValue(json({ installations: [candidate] }));
-      expect(await createGithubInstallations(request).list("token")).toEqual({
+      expect(
+        await createGithubInstallations("gradiated", request).list("token"),
+      ).toEqual({
         status: "not_installed",
         installations: [],
       });
@@ -67,18 +71,41 @@ describe("GitHub installation verification", () => {
     },
   );
 
+  it("accepts only the configured app", async () => {
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        json({
+          installations: [
+            installation,
+            { ...installation, id: 43, app_slug: "gradiated-dev" },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        json({ total_count: 1, repositories: [{ id: 9 }] }),
+      );
+    const result = await createGithubInstallations(
+      "gradiated-dev",
+      request,
+    ).list("token");
+    expect(result.installations.map(({ id }) => id)).toEqual([43]);
+  });
+
   it("keeps pending installation requests and zero-repository installations blocked", async () => {
     const request = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(json({ installations: [] }));
     expect(
-      (await createGithubInstallations(request).list("token")).status,
+      (await createGithubInstallations("gradiated", request).list("token"))
+        .status,
     ).toBe("not_installed");
     request
       .mockResolvedValueOnce(json({ installations: [installation] }))
       .mockResolvedValueOnce(json({ total_count: 0, repositories: [] }));
     expect(
-      (await createGithubInstallations(request).list("token")).status,
+      (await createGithubInstallations("gradiated", request).list("token"))
+        .status,
     ).toBe("not_installed");
   });
 
@@ -87,7 +114,8 @@ describe("GitHub installation verification", () => {
       .fn<typeof fetch>()
       .mockResolvedValue(json({ installations: [installation] }));
     expect(
-      (await createGithubInstallations(request).list("token", 999)).status,
+      (await createGithubInstallations("gradiated", request).list("token", 999))
+        .status,
     ).toBe("not_installed");
     expect(request).toHaveBeenCalledOnce();
   });
@@ -98,10 +126,10 @@ describe("GitHub installation verification", () => {
       .mockResolvedValueOnce(new Response("secret", { status: 401 }))
       .mockRejectedValueOnce(new Error("secret"));
     await expect(
-      createGithubInstallations(request).list("secret"),
+      createGithubInstallations("gradiated", request).list("secret"),
     ).rejects.toMatchObject({ problem: { status: 403 } });
     await expect(
-      createGithubInstallations(request).list("secret"),
+      createGithubInstallations("gradiated", request).list("secret"),
     ).rejects.toMatchObject({ problem: { status: 503 } });
   });
 });

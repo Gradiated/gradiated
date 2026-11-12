@@ -98,6 +98,11 @@ Verification reuses the **Gradiated**
 GitHub App (`gradiated`) OAuth credentials in `gradiated/prod/product/github-auth`;
 confirm they belong to that app. The app needs read-only Contents permission.
 Customers install it from `https://github.com/apps/gradiated/installations/new`.
+The app requests user authorization during installation, so GitHub returns to
+its first callback URL. Development therefore uses the separate **Gradiated
+[DEV]** app (`gradiated-dev`, callback `http://localhost:3000`) through
+`gradiated/dev/env`: `GITHUB_APP_SLUG` and `VITE_GITHUB_APP_SLUG` select it, and
+both default to `gradiated`.
 
 `GET …/github-installations` uses the signed-in user's linked GitHub token to
 list installations of the app, rejects suspended installations or those

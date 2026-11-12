@@ -10,6 +10,13 @@ const OptionalSecret = z.preprocess(
 const ApiOnlyEnvironmentSchema = z.object({
   SLACK_BOT_TOKEN: OptionalSecret,
   PANDADOC_API_KEY: OptionalSecret,
+  GITHUB_APP_SLUG: z.preprocess(
+    (value) => value || undefined,
+    z
+      .string()
+      .regex(/^[a-z0-9][a-z0-9-]{0,99}$/)
+      .default("gradiated"),
+  ),
   POSTHOG_KEY: z
     .string()
     .optional()

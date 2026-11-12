@@ -315,8 +315,8 @@ export const chooseAccount = (
   };
 };
 
-export const GITHUB_APP_INSTALL_URL =
-  "https://github.com/apps/gradiated/installations/new";
+/* Development uses the Gradiated [DEV] app, whose callback is localhost. */
+export const GITHUB_APP_INSTALL_URL = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_SLUG || "gradiated"}/installations/new`;
 
 export const GITHUB_RETURN_PATH = "/onboarding/github-connected";
 

@@ -46,7 +46,10 @@ const installationSchema = z.object({
   permissions: z.object({ contents: z.string().optional() }),
 });
 
-export const createGithubInstallations = (request: typeof fetch = fetch) => {
+export const createGithubInstallations = (
+  appSlug = "gradiated",
+  request: typeof fetch = fetch,
+) => {
   const call = async (token: string, path: string) => {
     try {
       const response = await request(`https://api.github.com${path}`, {
@@ -90,7 +93,7 @@ export const createGithubInstallations = (request: typeof fetch = fetch) => {
           );
         for (const installation of result.installations) {
           if (
-            installation.app_slug !== "gradiated" ||
+            installation.app_slug !== appSlug ||
             installation.suspended_at !== null ||
             !installation.account ||
             !["read", "write"].includes(

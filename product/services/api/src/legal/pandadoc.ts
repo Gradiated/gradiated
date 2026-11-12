@@ -407,7 +407,7 @@ export const createPandaDocNda = (
       };
       const result = ProviderDocumentSchema.safeParse(
         await call("/documents", {
-          name: `Mutual NDA — ${details.company}`,
+          name: `Mutual NDA with ${details.company}`,
           template_uuid: configuration.templateId,
           recipients: [
             {

@@ -225,7 +225,7 @@ const EmailFallback = ({
       }
     />
     <FieldLabel htmlFor="email-fallback" className="font-normal">
-      Our team can’t use Slack — use email instead.
+      Our team can’t use Slack, so use email instead.
     </FieldLabel>
   </Field>
 );

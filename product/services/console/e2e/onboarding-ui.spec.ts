@@ -459,7 +459,7 @@ test("a returning customer waits for GitHub, chooses email and comes back to the
   await page.goto("/onboarding?journey=post-training");
   await page
     .getByRole("checkbox", {
-      name: "Our team can’t use Slack — use email instead.",
+      name: "Our team can’t use Slack, so use email instead.",
     })
     .click();
   await expect(page.getByRole("button", { name: "Send invite" })).toHaveCount(
@@ -523,7 +523,7 @@ test("a customer who skips the NDA starts without one", async ({ page }) => {
   ).toHaveCount(0);
   await page
     .getByRole("checkbox", {
-      name: "Our team can’t use Slack — use email instead.",
+      name: "Our team can’t use Slack, so use email instead.",
     })
     .click();
   await expect(
@@ -556,7 +556,7 @@ test("an installation without repositories blocks the start until one is selecte
   await page.goto("/onboarding?journey=post-training");
   await page
     .getByRole("checkbox", {
-      name: "Our team can’t use Slack — use email instead.",
+      name: "Our team can’t use Slack, so use email instead.",
     })
     .click();
   await expect(
@@ -596,7 +596,7 @@ test("a customer with several GitHub accounts chooses which one to share", async
   await page.goto("/onboarding?journey=post-training");
   await page
     .getByRole("checkbox", {
-      name: "Our team can’t use Slack — use email instead.",
+      name: "Our team can’t use Slack, so use email instead.",
     })
     .click();
   await expect(

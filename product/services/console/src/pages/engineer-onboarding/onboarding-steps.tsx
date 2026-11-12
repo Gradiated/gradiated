@@ -221,7 +221,7 @@ export const ContextSection = ({
         htmlFor="onboarding-notes"
         className="font-normal text-muted-foreground"
       >
-        Goals, constraints, deadlines — anything your researcher should know.
+        Goals, constraints, deadlines: anything your researcher should know.
       </FieldLabel>
       <Textarea
         id="onboarding-notes"

@@ -604,6 +604,19 @@ export const Heatmap = ({
       : [];
   const rows = [...new Set(cells.map((cell) => cell.row))];
   const columns = [...new Set(cells.map((cell) => cell.column))];
+  if (rows.length > 50 || columns.length > 50)
+    return (
+      <Figure title={title} caption={caption}>
+        <DatasetState
+          dataset={{
+            status: "error",
+            message: "Heatmaps are limited to 50 rows and 50 columns.",
+          }}
+          name={data}
+        />
+      </Figure>
+    );
+
   const peak = Math.max(
     ...cells.map((cell) => (Number.isFinite(cell.value) ? cell.value : 0)),
     1,
@@ -687,7 +700,10 @@ export const DataTable = ({
   const keys = Array.isArray(columns)
     ? columns.map(String)
     : Object.keys(rows[0] ?? {});
-  const shown = typeof limit === "number" && limit > 0 ? limit : 50;
+  const shown =
+    typeof limit === "number" && limit > 0
+      ? Math.min(Math.floor(limit), 500)
+      : 50;
 
   return (
     <Figure title={title} caption={caption}>

@@ -924,8 +924,11 @@ intent is retained for artifact cleanup even after its version or task is delete
 training report and any data files, images or exports the report references. Each
 row has an ID, workspace FK, version FK (cascade), a flat file name, content type,
 declared size, `pending`/`ready`/`deleted` status and creation and completion times. Staff
-reserve a file and receive a one-hour signed PUT to `version-files/<version_id>/<file_id>`
-in the training artifacts bucket; completion checks the object's size, marks it
+reserve a file and receive a one-hour signed PUT to `uploads/version-files/<file_id>`
+in the versioned training artifacts bucket. Completion checks size and copies that
+exact S3 object version to `version-files/<version_id>/<file_id>`, so replaying the
+upload grant cannot change published bytes. Completion and deletion serialize on
+the task version; expired uploads cannot complete. Publication marks the file
 `ready` and replaces any ready file with the same name on that version, deleting
 the replaced object. A partial unique index keeps one ready file per version and
 name. Workspace members list, read (text files up to 2 MiB, served by the API) and

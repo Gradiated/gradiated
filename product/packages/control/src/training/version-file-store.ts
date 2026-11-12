@@ -6,10 +6,12 @@ import {
   VersionFileNameSchema,
   type CreateTaskVersionFile,
 } from "@gradiated/contracts";
+import { ControlServiceError } from "../errors.js";
 import type { ControlDatabase } from "../db/client.js";
 import {
   TASK_VERSION_FILE_STATUSES,
   taskVersionFiles,
+  taskVersions,
   workspaces,
 } from "../db/schema/index.js";
 
@@ -29,6 +31,9 @@ export type VersionFileRecord = z.infer<typeof VersionFileSchema>;
 export const versionFileKey = (
   file: Pick<VersionFileRecord, "versionId" | "id">,
 ) => `version-files/${file.versionId}/${file.id}`;
+
+export const versionFileUploadKey = (file: Pick<VersionFileRecord, "id">) =>
+  `uploads/version-files/${file.id}`;
 
 export const createVersionFileStore = (database: ControlDatabase) => ({
   async create(
@@ -81,8 +86,30 @@ export const createVersionFileStore = (database: ControlDatabase) => ({
 
     return rows.map((row) => VersionFileSchema.parse(row));
   },
-  async complete(file: VersionFileRecord) {
+  async complete(file: VersionFileRecord, publish: () => Promise<void>) {
     return database.transaction(async (tx) => {
+      await tx
+        .select({ id: taskVersions.id })
+        .from(taskVersions)
+        .where(eq(taskVersions.id, file.versionId))
+        .for("update");
+      const [current] = await tx
+        .select()
+        .from(taskVersionFiles)
+        .where(
+          and(
+            eq(taskVersionFiles.id, file.id),
+            eq(taskVersionFiles.versionId, file.versionId),
+          ),
+        )
+        .for("update");
+      if (!current || current.status === "deleted")
+        throw new ControlServiceError("not_found", "The file was not found.");
+
+      const saved = VersionFileSchema.parse(current);
+      if (saved.status === "ready") return { file: saved, replaced: [] };
+
+      await publish();
       const replaced = await tx
         .update(taskVersionFiles)
         .set(
@@ -114,13 +141,25 @@ export const createVersionFileStore = (database: ControlDatabase) => ({
       };
     });
   },
-  async markDeleted(id: string) {
-    await database
-      .update(taskVersionFiles)
-      .set(
-        VersionFileSchema.pick({ status: true }).parse({ status: "deleted" }),
-      )
-      .where(eq(taskVersionFiles.id, UuidSchema.parse(id)));
+  async markDeleted(file: VersionFileRecord) {
+    await database.transaction(async (tx) => {
+      await tx
+        .select({ id: taskVersions.id })
+        .from(taskVersions)
+        .where(eq(taskVersions.id, file.versionId))
+        .for("update");
+      await tx
+        .update(taskVersionFiles)
+        .set(
+          VersionFileSchema.pick({ status: true }).parse({ status: "deleted" }),
+        )
+        .where(
+          and(
+            eq(taskVersionFiles.id, file.id),
+            eq(taskVersionFiles.versionId, file.versionId),
+          ),
+        );
+    });
   },
   async cleanupCandidate(before: Date) {
     const [row] = await database

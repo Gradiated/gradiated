@@ -8,6 +8,7 @@ import { createModelUploadStore } from "./upload-store.js";
 import {
   createVersionFileStore,
   versionFileKey,
+  versionFileUploadKey,
 } from "./version-file-store.js";
 import { createTrainingStore } from "./store.js";
 import type { TrainingEngine } from "./types.js";
@@ -30,7 +31,7 @@ export const createTrainingArtifactCleanup = (
       new Date(at - FINISHED_GRACE_MILLISECONDS),
     );
     if (file) {
-      await objects.delete([versionFileKey(file)]);
+      await objects.delete([versionFileKey(file), versionFileUploadKey(file)]);
       await files.delete(file.id);
       return;
     }

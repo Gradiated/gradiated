@@ -40,6 +40,7 @@ describe("version files", () => {
       })
       .returning();
     const objects = new Map<string, Buffer>();
+    const snapshots = new Map<string, Buffer>();
     const storage = {
       signUpload: vi.fn(
         async (key: string) => `https://storage.invalid/${key}`,
@@ -52,9 +53,11 @@ describe("version files", () => {
         if (!bytes)
           throw Object.assign(new Error("Missing"), { name: "NotFound" });
 
+        const versionId = uuidv7();
+        snapshots.set(versionId, Buffer.from(bytes));
         return {
           sizeBytes: bytes.length,
-          versionId: undefined,
+          versionId,
           sha256: undefined,
         };
       }),
@@ -65,6 +68,11 @@ describe("version files", () => {
 
         return bytes;
       },
+      copy: vi.fn(
+        async (_source: string, destination: string, versionId: string) => {
+          objects.set(destination, Buffer.from(snapshots.get(versionId)!));
+        },
+      ),
       delete: vi.fn(async (keys: string[]) => {
         for (const key of keys) objects.delete(key);
       }),
@@ -120,6 +128,7 @@ describe("version files", () => {
     const files = await service.list(member.userId, ...key);
     expect(files.map((value) => value.id)).toEqual([second.id]);
     expect(storage.delete).toHaveBeenCalledWith([
+      expect.stringContaining(first.id),
       expect.stringContaining(first.id),
     ]);
     expect(
@@ -271,5 +280,157 @@ describe("version files", () => {
     );
     for (let pass = 0; pass < 30; pass++) await cleanup();
     expect(objects.has(objectKey)).toBe(false);
+  });
+  it("publishes a stable copy and ignores subsequent writes through the upload grant", async () => {
+    const { member, service, key, objects } = await setup();
+    const grant = await service.create(member.userId, ...key, {
+      name: "report.md",
+      size_bytes: 3,
+      content_type: "text/markdown",
+    });
+    const staging = new URL(grant.upload_url).pathname.slice(1);
+    objects.set(staging, Buffer.from("old"));
+    const file = await service.complete(member.userId, ...key, grant.id);
+    objects.set(staging, Buffer.from("new"));
+    await service.complete(member.userId, ...key, grant.id);
+
+    expect(
+      (await service.content(member.userId, ...key, file.id)).content,
+    ).toBe("old");
+  });
+
+  it("serializes concurrent publications and makes repeated completion idempotent", async () => {
+    const { member, service, key, objects, storage } = await setup();
+    const grants = await Promise.all(
+      ["one", "two"].map(async (content) => {
+        const grant = await service.create(member.userId, ...key, {
+          name: "report.md",
+          size_bytes: 3,
+          content_type: "text/markdown",
+        });
+        objects.set(
+          new URL(grant.upload_url).pathname.slice(1),
+          Buffer.from(content),
+        );
+        return grant;
+      }),
+    );
+    const results = await Promise.all(
+      grants.map((grant) => service.complete(member.userId, ...key, grant.id)),
+    );
+    const ready = await service.list(member.userId, ...key);
+    expect(ready).toHaveLength(1);
+    const stale = results.find((file) => file.id !== ready[0]!.id)!;
+    await expect(
+      service.complete(member.userId, ...key, stale.id),
+    ).rejects.toMatchObject({ code: "not_found" });
+    const copyCount = storage.copy.mock.calls.length;
+    await Promise.all([
+      service.complete(member.userId, ...key, ready[0]!.id),
+      service.complete(member.userId, ...key, ready[0]!.id),
+    ]);
+    expect(storage.copy.mock.calls).toHaveLength(copyCount);
+  });
+
+  it("rejects expired grants and reports storage outages without claiming an upload is missing", async () => {
+    const { member, service, key, storage } = await setup();
+    const grant = await service.create(member.userId, ...key, {
+      name: "report.md",
+      size_bytes: 3,
+      content_type: "text/markdown",
+    });
+    storage.head.mockRejectedValueOnce(new Error("Access denied"));
+    await expect(
+      service.complete(member.userId, ...key, grant.id),
+    ).rejects.toMatchObject({ code: "unavailable" });
+    await db.database
+      .update(taskVersionFiles)
+      .set({ createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) })
+      .where(eq(taskVersionFiles.id, grant.id));
+    await expect(
+      service.complete(member.userId, ...key, grant.id),
+    ).rejects.toMatchObject({
+      code: "conflict",
+      message: expect.stringContaining("expired"),
+    });
+  });
+
+  it("never revives a removed upload", async () => {
+    const { member, service, key, objects } = await setup();
+    const grant = await service.create(member.userId, ...key, {
+      name: "report.md",
+      size_bytes: 3,
+      content_type: "text/markdown",
+    });
+    objects.set(
+      new URL(grant.upload_url).pathname.slice(1),
+      Buffer.from("new"),
+    );
+    await service.remove(member.userId, ...key, grant.id);
+
+    await expect(
+      service.complete(member.userId, ...key, grant.id),
+    ).rejects.toMatchObject({ code: "not_found" });
+    expect(await service.list(member.userId, ...key)).toEqual([]);
+  });
+  it("keeps deletion ordered after an in-flight publication", async () => {
+    const { member, service, key, objects, storage } = await setup();
+    const grant = await service.create(member.userId, ...key, {
+      name: "report.md",
+      size_bytes: 3,
+      content_type: "text/markdown",
+    });
+    objects.set(
+      new URL(grant.upload_url).pathname.slice(1),
+      Buffer.from("new"),
+    );
+    let copying!: () => void;
+    let release!: () => void;
+    const started = new Promise<void>((resolve) => {
+      copying = resolve;
+    });
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const copy = storage.copy.getMockImplementation()!;
+    storage.copy.mockImplementationOnce(async (...args) => {
+      copying();
+      await gate;
+      await copy(...args);
+    });
+    const publication = service.complete(member.userId, ...key, grant.id);
+    await started;
+    const deletion = service.remove(member.userId, ...key, grant.id);
+    release();
+    await Promise.all([publication, deletion]);
+
+    expect(await service.list(member.userId, ...key)).toEqual([]);
+    expect(objects.has(`version-files/${key[2]}/${grant.id}`)).toBe(false);
+    await expect(
+      service.complete(member.userId, ...key, grant.id),
+    ).rejects.toMatchObject({ code: "not_found" });
+  });
+
+  it("rejects reads across workspace, version and file boundaries", async () => {
+    const own = await setup();
+    const other = await setup();
+    const file = await own.upload("report.md", "private");
+    const foreign = await other.upload("report.md", "other");
+
+    await expect(
+      own.service.content(other.member.userId, ...own.key, file.id),
+    ).rejects.toMatchObject({ code: "not_found" });
+    await expect(
+      own.service.content(
+        own.member.userId,
+        own.key[0],
+        own.key[1],
+        other.version.id,
+        foreign.id,
+      ),
+    ).rejects.toMatchObject({ code: "not_found" });
+    await expect(
+      own.service.content(own.member.userId, ...own.key, foreign.id),
+    ).rejects.toMatchObject({ code: "not_found" });
   });
 });

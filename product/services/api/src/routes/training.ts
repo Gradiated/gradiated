@@ -456,9 +456,10 @@ const fileResponse = (file: {
 
 const requireStaff = (user: {
   isStaff: boolean;
+  emailVerified: boolean;
   impersonatedBy?: string | null;
 }) => {
-  if (!user.isStaff && !user.impersonatedBy)
+  if (!(user.isStaff && user.emailVerified) && !user.impersonatedBy)
     throw new ApiProblem(
       problems.forbidden("Only Gradiated staff can manage version files."),
     );

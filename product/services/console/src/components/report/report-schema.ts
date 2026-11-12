@@ -40,7 +40,7 @@ export const reportConfig: Config = {
 
         return new Markdoc.Tag(
           "Heading",
-          { level, id: headingId(textOf(node)) },
+          { level, id: node.attributes.id ?? headingId(textOf(node)) },
           node.transformChildren(config),
         );
       },
@@ -202,12 +202,52 @@ export const parseReport = (source: string): ParsedReport => {
     String(ast.attributes.frontmatter ?? ""),
   );
 
+  for (const node of nodes) {
+    const definition =
+      node.type === "tag"
+        ? reportConfig.tags?.[node.tag ?? ""]
+        : reportConfig.nodes?.[node.type];
+    for (const [name, attribute] of Object.entries(
+      definition?.attributes ?? {},
+    )) {
+      const value = node.attributes[name];
+      if (value === undefined) continue;
+
+      const type = attribute.type;
+      const validType =
+        type === String
+          ? typeof value === "string"
+          : type === Number
+            ? typeof value === "number" && Number.isFinite(value)
+            : type === Boolean
+              ? typeof value === "boolean"
+              : type === Array
+                ? Array.isArray(value)
+                : true;
+      const validChoice =
+        !Array.isArray(attribute.matches) || attribute.matches.includes(value);
+      if (!validType || !validChoice) {
+        if (attribute.default === undefined) delete node.attributes[name];
+        else node.attributes[name] = attribute.default;
+      }
+    }
+  }
+
+  const usedIds = new Set<string>();
+  for (const node of nodes.filter((node) => node.type === "heading")) {
+    const base = headingId(textOf(node)) || "section";
+    let id = base;
+    for (let suffix = 2; usedIds.has(id); suffix++) id = `${base}-${suffix}`;
+    usedIds.add(id);
+    node.attributes.id = id;
+  }
+
   return {
     content: Markdoc.transform(ast, reportConfig),
     errors,
     headings: nodes
       .filter((node) => node.type === "heading" && node.attributes.level === 2)
-      .map((node) => ({ id: headingId(textOf(node)), title: textOf(node) })),
+      .map((node) => ({ id: String(node.attributes.id), title: textOf(node) })),
     dataFiles: [
       ...new Set(
         nodes

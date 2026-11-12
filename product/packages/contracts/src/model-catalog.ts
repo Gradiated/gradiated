@@ -48,10 +48,6 @@ export const MODEL_CATALOG = [
     displayName: "DeepSeek V4.1 Flash",
     icon: "/model-providers/deepseek.svg",
     supportedUses: ["judge", "comparison", "serving"],
-    training: {
-      model: "deepseek-ai/DeepSeek-V4.1-Flash",
-      revision: "dba1be0a40aa45a94ad051997016db3960a90277",
-    },
   },
   {
     id: "z-ai/glm-5.3-flash",

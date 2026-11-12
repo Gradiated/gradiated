@@ -198,3 +198,18 @@ it("deletes only the requested staging keys and rejects partial deletion failure
   });
   await expect(storage.delete(keys)).rejects.toThrow("Object deletion failed");
 });
+
+it("copies the exact uploaded version without retaining staging tags", async () => {
+  send.mockResolvedValue({});
+  await new ObjectStorage("objects").copy(
+    "uploads/a b/report.md",
+    "version-files/version/file",
+    "v+1/2",
+  );
+  expect(send.mock.calls[0]![0].input).toEqual({
+    Bucket: "objects",
+    Key: "version-files/version/file",
+    CopySource: "objects/uploads/a%20b/report.md?versionId=v%2B1%2F2",
+    TaggingDirective: "REPLACE",
+  });
+});

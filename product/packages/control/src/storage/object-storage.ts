@@ -2,6 +2,7 @@ import { createReadStream } from "node:fs";
 import { open } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import {
+  CopyObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
@@ -229,6 +230,18 @@ export class ObjectStorage {
       }),
       { expiresIn },
     );
+
+  copy = async (source: string, destination: string, versionId: string) => {
+    await this.client.send(
+      new CopyObjectCommand({
+        Bucket: this.bucket,
+        Key: destination,
+        CopySource: `${encodeURIComponent(this.bucket)}/${source.split("/").map(encodeURIComponent).join("/")}?versionId=${encodeURIComponent(versionId)}`,
+        TaggingDirective: "REPLACE",
+      }),
+      { abortSignal: AbortSignal.timeout(10_000) },
+    );
+  };
 
   uri = (key: string) => `s3://${this.bucket}/${key}`;
 }

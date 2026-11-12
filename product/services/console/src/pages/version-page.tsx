@@ -190,11 +190,13 @@ const VersionReport = ({
 }) => {
   const modelName = usePrivateModelName();
   const { workspaceId, user } = useProductContext();
+  const { canEdit } = useTrainingMutation(task.name);
   const client = useQueryClient();
   const [action, setAction] = useState<VersionAction | null>(null);
   const picker = useRef<HTMLInputElement>(null);
   const canManageFiles = Boolean(
-    (user?.is_staff && user.email_verified) || user?.impersonated_by,
+    canEdit &&
+    ((user?.is_staff && user.email_verified) || user?.impersonated_by),
   );
   const path = {
     workspace_id: workspaceId,
@@ -248,7 +250,9 @@ const VersionReport = ({
       : [];
   const repository =
     (catalogModel(version.base_model_id) as CatalogEntry | undefined)?.training
-      ?.model ?? version.base_model_id;
+      ?.model ??
+    baseModel?.properties?.hugging_face_id ??
+    version.base_model_id;
   const revision =
     version.adapter.validated_base_model_revision ??
     version.adapter.base_model_revision;
@@ -306,7 +310,6 @@ const VersionReport = ({
   });
 
   const servable = version.status === "available";
-  const { canEdit } = useTrainingMutation(task.name);
   const promoteBlocked = !canEdit
     ? "Only organization admins can promote a version."
     : !servable

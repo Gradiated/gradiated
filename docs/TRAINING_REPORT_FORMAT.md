@@ -2,7 +2,9 @@
 
 Each delivered task version can carry a `report.md` training report plus the data
 files it references. Staff attach them from the version page (Files › Add files);
-customers read the report on that page and download every file. Files are stored as
+customers read the report on that page and download every file. While impersonating,
+staff retain the customer's workspace permissions: attaching or removing files
+requires an administrator target. Files are stored as
 version files (see [DATA_MODEL.md](DATA_MODEL.md#version-files)).
 
 `report.md` is [Markdoc](https://markdoc.dev): Markdown plus the tags below. The
@@ -32,7 +34,9 @@ page's "On this page" contents. Images reference an attached file by name:
 ## Data files
 
 Charts and tables read an attached `.csv` (header row required), `.json` (array of
-objects) or `.jsonl` file of at most 2 MiB, referenced by its file name. A missing or
+objects) or `.jsonl` file of at most 2 MiB, 10,000 rows and 100 columns, referenced
+by its file name. CSV headers must be unique and nonempty, with the same number
+of fields on each row. A missing or
 unreadable file shows a quiet placeholder instead of the block.
 
 ## Tags
@@ -45,8 +49,8 @@ unreadable file shows a quiet placeholder instead of the block.
 | `{% badge %}` | Inline status in prose | `tone` = `neutral` (default), `positive`, `negative`, `info` |
 | `{% chart /%}` | Bar, line, area or donut chart | `type`, `data`, `x`, `y` (list, e.g. `y=["train_loss","eval_loss"]`) required; `stacked=true`; `format` = `number`, `percent`, `usd`; `title`, `caption` |
 | `{% bar-list /%}` | Ranked breakdown | `data`, `label`, `value` required; `format`; `max`; `title`, `caption` |
-| `{% heatmap /%}` | Confusion matrix or grid | `data`, `row`, `column`, `value` required; `title`, `caption` |
-| `{% data-table /%}` | Rows from a file | `data` required; `columns` (list); `limit` (default 50); `title`, `caption` |
+| `{% heatmap /%}` | Confusion matrix or grid | `data`, `row`, `column`, `value` required; `title`, `caption`; maximum 50 rows × 50 columns |
+| `{% data-table /%}` | Rows from a file | `data` required; `columns` (list); `limit` (default 50, maximum 500); `title`, `caption` |
 | `{% comparison %}` with `{% side %}` | Two outputs for one input | comparison: `title`, `verdict` = `better`, `same`, `worse`; side: `title` |
 | `{% facts %}` with `{% fact /%}` | Label and value pairs | `label`, `value` required |
 | `{% timeline %}` with `{% event %}` | Dated history | `title` required; `date` |

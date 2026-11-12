@@ -14,6 +14,7 @@ import { createTrainingStore } from "./store.js";
 import {
   createVersionFileStore,
   versionFileKey,
+  versionFileUploadKey,
   type VersionFileRecord,
 } from "./version-file-store.js";
 
@@ -28,7 +29,7 @@ export const createVersionFiles = (
   database: ControlDatabase,
   storage?: Pick<
     ObjectStorage,
-    "signUpload" | "signDownload" | "head" | "read" | "delete"
+    "signUpload" | "signDownload" | "head" | "read" | "delete" | "copy"
   >,
 ) => {
   const files = createVersionFileStore(database);
@@ -72,7 +73,12 @@ export const createVersionFiles = (
     if (!stale.length) return;
 
     try {
-      await requireStorage().delete(stale.map(versionFileKey));
+      await requireStorage().delete(
+        stale.flatMap((file) => [
+          versionFileKey(file),
+          versionFileUploadKey(file),
+        ]),
+      );
     } catch {
       // Retained tombstones let artifact cleanup retry after storage failures.
     }
@@ -107,7 +113,7 @@ export const createVersionFiles = (
       return {
         id: file.id,
         upload_url: await objects.signUpload(
-          versionFileKey(file),
+          versionFileUploadKey(file),
           UPLOAD_SECONDS,
           file.sizeBytes,
         ),
@@ -131,22 +137,59 @@ export const createVersionFiles = (
       if (!file || file.status === "deleted") throw notFound("file");
       if (file.status === "ready") return file;
 
-      let sizeBytes: number | undefined;
-      try {
-        sizeBytes = (await objects.head(versionFileKey(file))).sizeBytes;
-      } catch {
-        throw new ControlServiceError(
-          "conflict",
-          "The file has not been uploaded yet.",
-        );
-      }
-      if (sizeBytes !== file.sizeBytes)
-        throw new ControlServiceError(
-          "conflict",
-          "The uploaded file size does not match the declared size.",
-        );
+      const { file: ready, replaced } = await files.complete(file, async () => {
+        if (Date.now() - file.createdAt.getTime() >= UPLOAD_SECONDS * 1000)
+          throw new ControlServiceError(
+            "conflict",
+            "This upload has expired. Start a new upload.",
+          );
 
-      const { file: ready, replaced } = await files.complete(file);
+        let object: Awaited<ReturnType<ObjectStorage["head"]>>;
+        try {
+          object = await objects.head(versionFileUploadKey(file));
+        } catch (error) {
+          if (
+            error &&
+            typeof error === "object" &&
+            "name" in error &&
+            error.name === "NotFound"
+          )
+            throw new ControlServiceError(
+              "conflict",
+              "The file has not been uploaded yet.",
+            );
+
+          throw new ControlServiceError(
+            "unavailable",
+            "Version file storage is unavailable. Try again shortly.",
+            error,
+          );
+        }
+        if (object.sizeBytes !== file.sizeBytes)
+          throw new ControlServiceError(
+            "conflict",
+            "The uploaded file size does not match the declared size.",
+          );
+        if (!object.versionId || object.versionId === "null")
+          throw new ControlServiceError(
+            "unavailable",
+            "Version file storage must have bucket versioning enabled.",
+          );
+
+        try {
+          await objects.copy(
+            versionFileUploadKey(file),
+            versionFileKey(file),
+            object.versionId,
+          );
+        } catch (error) {
+          throw new ControlServiceError(
+            "unavailable",
+            "The file could not be published. Try again shortly.",
+            error,
+          );
+        }
+      });
       await discard(replaced);
 
       return ready;
@@ -173,10 +216,19 @@ export const createVersionFiles = (
           "The file is too large to read inline. Download it instead.",
         );
 
-      const bytes = await requireStorage().read(versionFileKey(file), {
-        maxBytes: MAX_VERSION_FILE_CONTENT_BYTES,
-        timeoutMs: 10_000,
-      });
+      let bytes: Uint8Array;
+      try {
+        bytes = await requireStorage().read(versionFileKey(file), {
+          maxBytes: MAX_VERSION_FILE_CONTENT_BYTES,
+          timeoutMs: 10_000,
+        });
+      } catch (error) {
+        throw new ControlServiceError(
+          "unavailable",
+          "The file could not be read. Try again shortly.",
+          error,
+        );
+      }
 
       let content: string;
       try {
@@ -227,7 +279,7 @@ export const createVersionFiles = (
       const file = await files.get(version.id, fileId);
       if (!file || file.status === "deleted") throw notFound("file");
 
-      await files.markDeleted(file.id);
+      await files.markDeleted(file);
       await discard([file]);
     },
   };

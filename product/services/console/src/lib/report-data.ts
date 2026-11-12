@@ -1,3 +1,6 @@
+const MAX_ROWS = 10_000;
+const MAX_COLUMNS = 100;
+
 export type ReportRow = Record<string, string | number | null>;
 
 const cell = (value: string): string | number | null => {
@@ -16,6 +19,7 @@ const parseCsv = (text: string): ReportRow[] => {
   let record: string[] = [];
   let field = "";
   let quoted = false;
+  let closedQuote = false;
 
   for (let index = 0; index < text.length; index++) {
     const char = text[index];
@@ -23,21 +27,32 @@ const parseCsv = (text: string): ReportRow[] => {
       if (char === '"' && text[index + 1] === '"') {
         field += '"';
         index++;
-      } else if (char === '"') quoted = false;
-      else field += char;
-    } else if (char === '"') quoted = true;
-    else if (char === ",") {
+      } else if (char === '"') {
+        quoted = false;
+        closedQuote = true;
+      } else field += char;
+    } else if (char === '"') {
+      if (field !== "" || closedQuote) throw new Error("Invalid CSV quoting.");
+      quoted = true;
+    } else if (char === ",") {
       record.push(field);
       field = "";
+      closedQuote = false;
     } else if (char === "\n" || char === "\r") {
       if (char === "\r" && text[index + 1] === "\n") index++;
       record.push(field);
       records.push(record);
       record = [];
       field = "";
-    } else field += char;
+      closedQuote = false;
+    } else {
+      if (closedQuote) throw new Error("Invalid CSV quoting.");
+      field += char;
+    }
   }
-  if (field !== "" || record.length) {
+  if (quoted) throw new Error("Unterminated CSV field.");
+
+  if (field !== "" || record.length || closedQuote) {
     record.push(field);
     records.push(record);
   }
@@ -47,11 +62,20 @@ const parseCsv = (text: string): ReportRow[] => {
   );
   if (!header) return [];
 
-  return rows.map((row) =>
-    Object.fromEntries(
-      header.map((name, column) => [name.trim(), cell(row[column] ?? "")]),
-    ),
+  const names = header.map((name, index) =>
+    (index === 0 ? name.replace(/^\uFEFF/, "") : name).trim(),
   );
+  if (names.some((name) => !name) || new Set(names).size !== names.length)
+    throw new Error("CSV headers must be nonempty and unique.");
+
+  return rows.map((row) => {
+    if (row.length !== names.length)
+      throw new Error("CSV row does not match its headers.");
+
+    return Object.fromEntries(
+      names.map((name, column) => [name, cell(row[column]!)]),
+    );
+  });
 };
 
 const objectRows = (value: unknown): ReportRow[] => {
@@ -75,15 +99,24 @@ const objectRows = (value: unknown): ReportRow[] => {
 };
 
 export const parseReportData = (name: string, text: string): ReportRow[] => {
-  if (/\.csv$/i.test(name)) return parseCsv(text);
-  if (/\.jsonl$/i.test(name))
-    return objectRows(
+  let rows: ReportRow[];
+  if (/\.csv$/i.test(name)) rows = parseCsv(text);
+  else if (/\.jsonl$/i.test(name))
+    rows = objectRows(
       text
         .split("\n")
         .filter((line) => line.trim())
         .map((line) => JSON.parse(line) as unknown),
     );
-  if (/\.json$/i.test(name)) return objectRows(JSON.parse(text) as unknown);
+  else if (/\.json$/i.test(name))
+    rows = objectRows(JSON.parse(text) as unknown);
+  else throw new Error("Report data must be a .csv, .json or .jsonl file.");
 
-  throw new Error("Report data must be a .csv, .json or .jsonl file.");
+  if (
+    rows.length > MAX_ROWS ||
+    rows.some((row) => Object.keys(row).length > MAX_COLUMNS)
+  )
+    throw new Error("Report data is limited to 10,000 rows and 100 columns.");
+
+  return rows;
 };

@@ -63,6 +63,9 @@ FROM (
   ORDER BY "workspaces"."organization_id", "tasks"."name", "tasks"."created_at", "tasks"."id"
 ) "claimed"
 WHERE "tasks"."id" = "claimed"."id";--> statement-breakpoint
+-- Tasks left unclaimed can't be called, so they stop advertising a production model.
+UPDATE "tasks" SET "production_version_id" = NULL
+WHERE "organization_id" IS NULL AND "production_version_id" IS NOT NULL;--> statement-breakpoint
 ALTER TABLE "task_versions" DROP CONSTRAINT "task_versions_workspace_name_unique";--> statement-breakpoint
 -- Trained versions named `<task>-<yyyymmdd>[-n]` become `<yyyy-mm-dd>[-n]` within
 -- their task, unless another version of the task already has that name.

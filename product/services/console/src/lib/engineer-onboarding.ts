@@ -292,7 +292,7 @@ export const confirmationMessage = (
   )
     return {
       plan: `Your researcher emails a plan to ${email}`,
-      followUp: "Anything to add? Email help@gradiated.com.",
+      followUp: "Anything to add? Email team@gradiated.com.",
     };
 
   return {

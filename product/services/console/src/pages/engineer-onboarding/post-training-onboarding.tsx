@@ -124,7 +124,7 @@ const OnboardingHelp = ({ step }: { step: string }) => (
     Stuck?{" "}
     <a
       className="text-foreground underline underline-offset-4"
-      href={`mailto:help@gradiated.com?subject=${encodeURIComponent(`Help with Gradiated setup: ${step}`)}`}
+      href={`mailto:team@gradiated.com?subject=${encodeURIComponent(`Help with Gradiated setup: ${step}`)}`}
     >
       Email us
     </a>
@@ -443,10 +443,7 @@ const PostTrainingWorkflow = ({
           />
           <ContextSection server={server} draft={draft} patch={patch} />
           <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-sm text-muted-foreground">
-            <p>
-              Signed in as {account.email}
-              {saved ? null : " · Progress won’t be saved on this device"}
-            </p>
+            {saved ? null : <p>Progress won’t be saved on this device.</p>}
             <OnboardingHelp step="Project setup" />
           </div>
         </div>

@@ -215,10 +215,11 @@ const PageShell = ({
 }) => (
   <main className="min-h-svh bg-background">
     <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pt-8 pb-24 md:px-6 md:pt-10">
-      <div className="flex items-center justify-between gap-4">
+      <div className="self-start">
         <Brand />
-        {from ? <BackToConsole from={from} /> : null}
       </div>
+      {/* Sits just above the page's h1, its arrow in line with the text. */}
+      {from ? <BackToConsole from={from} className="-mb-6 -ml-3" /> : null}
       {children}
     </div>
   </main>

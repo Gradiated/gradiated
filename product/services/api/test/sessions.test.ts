@@ -95,6 +95,12 @@ const validInputs: Record<string, { query?: string; body?: unknown }> = {
   "PUT /api/v1/me/oauth-workspace": {
     body: { workspace_id: "0198ae5a-2529-7c1a-801b-dc9d5f876a94" },
   },
+  "POST /api/v1/workspaces/:workspace_id/playground/mcp-tool-lists": {
+    body: { server: { url: "https://mcp.example.com/mcp" } },
+  },
+  "POST /api/v1/workspaces/:workspace_id/playground/mcp-tool-calls": {
+    body: { server: { url: "https://mcp.example.com/mcp" }, name: "search" },
+  },
   "GET /api/v1/workspaces/:workspace_id/usage": {
     query: "from=2026-09-01T00:00:00.000Z&to=2026-09-02T00:00:00.000Z",
   },

@@ -47,6 +47,22 @@ describe("API environment", () => {
     });
   });
 
+  it("keeps the playground MCP proxy off private networks in production", () => {
+    expect(
+      parseApiEnvironment({
+        ...baseEnvironment,
+        MCP_PROXY_ALLOW_PRIVATE_NETWORKS: "true",
+      }).MCP_PROXY_ALLOW_PRIVATE_NETWORKS,
+    ).toBe(true);
+    expect(() =>
+      parseApiEnvironment({
+        ...baseEnvironment,
+        NODE_ENV: "production",
+        MCP_PROXY_ALLOW_PRIVATE_NETWORKS: "true",
+      }),
+    ).toThrow("cannot be enabled in production");
+  });
+
   it("rejects a profiling token shorter than 32 characters", () => {
     expect(() =>
       parseApiEnvironment({

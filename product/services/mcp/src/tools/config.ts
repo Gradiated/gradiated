@@ -230,6 +230,8 @@ export const TOOL_CONFIG: Record<string, ToolConfig> = {
     reason: "The server calls it to find the credential's workspace.",
   },
   selectOAuthWorkspace: { enabled: false, reason: CONSOLE },
+  listPlaygroundMcpTools: { enabled: false, reason: CONSOLE },
+  callPlaygroundMcpTool: { enabled: false, reason: CONSOLE },
   listApiKeys: { enabled: false, reason: CREDENTIALS },
   createApiKey: { enabled: false, reason: CREDENTIALS },
   createPlaygroundCredential: { enabled: false, reason: CREDENTIALS },

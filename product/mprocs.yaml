@@ -24,6 +24,8 @@ procs:
       GPU_CONTROL_HOST: "127.0.0.1"
       GPU_CONTROL_PROVIDER: runpod
       GPU_CONTROL_PORT: "3005"
+      # The playground reaches the local MCP server on loopback.
+      MCP_PROXY_ALLOW_PRIVATE_NETWORKS: "true"
       TRAINING_EXECUTOR: mock
       MCP_RESOURCE_URL: http://127.0.0.1:3007/mcp
       TEMPORAL_ADDRESS: localhost:7233
@@ -110,6 +112,7 @@ procs:
     env:
       # PostHog "Development" project (a public client token); the root .env can override it.
       VITE_POSTHOG_KEY: phc_umjFzXmQDsCr89BAGzpegeqe64WgrLuvEH9tvKB3qA2H
+      VITE_MCP_URL: http://127.0.0.1:3007/mcp
   website:
     shell: "mise exec -- pnpm --dir website dev"
     autostart: false

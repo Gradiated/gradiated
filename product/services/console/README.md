@@ -45,6 +45,19 @@ sent. Locally, Vite proxies `/v1/` to the
 gateway on port 3002. Storybook mocks the stream; `Pages/Playground*` and
 `Playground/Chat message` stories cover the page and reply states.
 
+The composer's MCP picker gives the model tools from remote MCP servers when
+the selected model accepts `tools`. The Gradiated MCP server is installed and
+on by default, authenticated with the playground key. Members can add servers
+from a list of well-known servers that need no OAuth sign-in, or any
+Streamable HTTP URL with one header. Servers, their headers and on/off state
+persist per workspace in local storage with the conversation, and sign-out
+clears them. The API connects to each server for the browser
+(`/playground/mcp-tool-lists` and `/playground/mcp-tool-calls`): it reaches only
+public HTTPS addresses, refuses redirects, bounds responses and stores nothing.
+Each tool call shows its arguments and result in the reply, and a reply that
+calls tools continues for up to ten rounds. Locally, mprocs points the console
+at the MCP server on port 3007 and lets the API reach loopback.
+
 Assistant replies render Markdown, including lists, fenced code, quotes and GFM
 tables/task lists. Prompts and reasoning stay literal. Raw HTML is skipped, unsafe
 link protocols are filtered, and images display their alt text without fetching

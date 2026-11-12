@@ -38,6 +38,9 @@ import { registerWizardRoutes } from "./routes/wizard.js";
 import { registerGenerationRoutes } from "./routes/generations.js";
 import { registerTrainingRoutes } from "./routes/training.js";
 import { registerWorkspaceRoutes } from "./routes/workspaces.js";
+import { registerPlaygroundMcpRoutes } from "./routes/playground-mcp.js";
+import { createOutboundFetch } from "./mcp/outbound.js";
+import { createMcpProxy, type McpProxy } from "./mcp/proxy.js";
 import type {
   ApiEnvironment,
   ApiServices,
@@ -64,6 +67,7 @@ export interface AppDependencies {
   notifyEngineerOnboarding: EngineerOnboardingNotifier;
   services: ApiServices;
   externalModels?: ReturnType<typeof createExternalModelCatalog>;
+  mcpProxy?: McpProxy;
 }
 
 const ONBOARDING_RATE_LIMITS = [
@@ -89,6 +93,9 @@ export const createApp = ({
   notifyEngineerOnboarding,
   services,
   externalModels = createExternalModelCatalog(),
+  mcpProxy = createMcpProxy(
+    createOutboundFetch({ allowPrivateNetworks: false }),
+  ),
 }: AppDependencies) => {
   const app = new OpenAPIHono<ApiEnvironment>({
     defaultHook: (result, context) => {
@@ -242,6 +249,7 @@ export const createApp = ({
     apiKeys: services.workspaces,
   });
   registerWorkspaceRoutes(app, services.workspaces);
+  registerPlaygroundMcpRoutes(app, services.workspaces, mcpProxy);
   registerGenerationRoutes(app, services.usage, services.traces);
   registerTrainingRoutes(app, services.training);
   registerGatewayContract(app);

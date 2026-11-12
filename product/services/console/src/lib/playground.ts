@@ -68,6 +68,17 @@ export interface ResponseStats {
   usage: ChatCompletionUsage | undefined;
 }
 
+export interface PlaygroundToolCall {
+  id: string;
+  // The function name the model called, and the server tool it maps to.
+  name: string;
+  server: string;
+  tool: string;
+  arguments: string;
+  status: "running" | "complete" | "failed";
+  result?: string;
+}
+
 export type PlaygroundMessage =
   | { id: string; role: "user"; content: string }
   | {
@@ -78,7 +89,10 @@ export type PlaygroundMessage =
       status: "streaming" | "complete" | "stopped" | "failed";
       error?: string;
       stats?: ResponseStats;
+      toolCalls?: PlaygroundToolCall[];
     };
+
+const UNFINISHED_TOOL_RESULT = "The tool call did not complete.";
 
 export type AssistantMessage = Extract<
   PlaygroundMessage,
@@ -251,18 +265,47 @@ export const playgroundModels = (
 
 export type PlaygroundRequest = Omit<ChatCompletionParameters, "session_id">;
 
+export const supportsTools = ({ parameters }: ModelCapabilities) =>
+  supports(parameters, "tools");
+
+// A reply that called tools is followed by one tool message per call, as Chat Completions requires.
+const historyMessages = (
+  message: PlaygroundMessage,
+): PlaygroundRequest["messages"] => {
+  if (message.role === "user")
+    return [{ role: "user", content: message.content }];
+
+  const calls = message.toolCalls ?? [];
+  if (!calls.length)
+    return message.status === "failed" || message.content === ""
+      ? []
+      : [{ role: "assistant", content: message.content }];
+
+  return [
+    {
+      role: "assistant",
+      content: message.content || null,
+      tool_calls: calls.map(({ id, name, arguments: input }) => ({
+        id,
+        type: "function",
+        function: { name, arguments: input },
+      })),
+    },
+    ...calls.map(({ id, result }) => ({
+      role: "tool",
+      tool_call_id: id,
+      content: result ?? UNFINISHED_TOOL_RESULT,
+    })),
+  ];
+};
+
 export const chatRequest = (
   settings: PlaygroundSettings,
   messages: readonly PlaygroundMessage[],
+  tools: readonly Record<string, unknown>[] = [],
 ): PlaygroundRequest => {
   const system = settings.systemPrompt.trim();
-  const history: PlaygroundRequest["messages"] = messages
-    .filter(
-      (message) =>
-        message.role === "user" ||
-        (message.status !== "failed" && message.content !== ""),
-    )
-    .map(({ role, content }) => ({ role, content }));
+  const history = messages.flatMap(historyMessages);
   const effective = effectiveSettings(settings);
 
   return {
@@ -286,6 +329,7 @@ export const chatRequest = (
       "response_format",
       settings.jsonOutput ? { type: "json_object" } : undefined,
     ),
+    ...optional(settings, "tools", tools.length ? [...tools] : undefined),
   };
 };
 

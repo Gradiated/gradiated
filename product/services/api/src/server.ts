@@ -46,6 +46,8 @@ import {
 import { createValkeyClient } from "@gradiated/valkey";
 
 import { createApp } from "./app.js";
+import { createOutboundFetch } from "./mcp/outbound.js";
+import { createMcpProxy } from "./mcp/proxy.js";
 import {
   createAuthService,
   resolveAuthTrustedOrigins,
@@ -246,6 +248,11 @@ const app = createApp({
     : undefined,
   analytics,
   externalModels,
+  mcpProxy: createMcpProxy(
+    createOutboundFetch({
+      allowPrivateNetworks: environment.MCP_PROXY_ALLOW_PRIVATE_NETWORKS,
+    }),
+  ),
   allowedOrigins: trustedOrigins,
   auth,
   authTestMailbox,

@@ -2962,6 +2962,153 @@
           "expires_at"
         ]
       },
+      "McpToolList": {
+        "type": "object",
+        "properties": {
+          "server": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "instructions": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "version",
+              "instructions"
+            ]
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/McpTool"
+            }
+          }
+        },
+        "required": [
+          "server",
+          "tools"
+        ]
+      },
+      "McpTool": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "input_schema": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "read_only": {
+            "type": "boolean",
+            "description": "Whether the server marks the tool read-only."
+          }
+        },
+        "required": [
+          "name",
+          "title",
+          "description",
+          "input_schema",
+          "read_only"
+        ]
+      },
+      "ListMcpTools": {
+        "type": "object",
+        "properties": {
+          "server": {
+            "$ref": "#/components/schemas/McpServerConnection"
+          }
+        },
+        "required": [
+          "server"
+        ],
+        "additionalProperties": false
+      },
+      "McpServerConnection": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2048,
+            "format": "uri",
+            "description": "Streamable HTTP endpoint of a remote MCP server."
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 8192
+            },
+            "default": {},
+            "description": "Headers sent to the server on every request, such as Authorization. They are not stored."
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "McpToolResult": {
+        "type": "object",
+        "properties": {
+          "is_error": {
+            "type": "boolean"
+          },
+          "text": {
+            "type": "string",
+            "description": "The result's text content; other content types are summarized."
+          }
+        },
+        "required": [
+          "is_error",
+          "text"
+        ]
+      },
+      "CallMcpTool": {
+        "type": "object",
+        "properties": {
+          "server": {
+            "$ref": "#/components/schemas/McpServerConnection"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "arguments": {
+            "type": "object",
+            "additionalProperties": {},
+            "default": {}
+          }
+        },
+        "required": [
+          "server",
+          "name"
+        ],
+        "additionalProperties": false
+      },
       "TraceGenerationList": {
         "type": "object",
         "properties": {
@@ -10303,6 +10450,196 @@
           },
           "503": {
             "description": "Serving state is unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/playground/mcp-tool-lists": {
+      "post": {
+        "x-gradiated-audience": "console",
+        "operationId": "listPlaygroundMcpTools",
+        "summary": "List MCP server tools",
+        "description": "Connects to a remote MCP server for the playground and lists its tools. The connection's headers are used for this request only.",
+        "tags": [
+          "Playground"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListMcpTools"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The server and its tools.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpToolList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The playground is unavailable in this workspace.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The workspace was not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The server URL or headers are invalid.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The MCP server could not be reached or failed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/playground/mcp-tool-calls": {
+      "post": {
+        "x-gradiated-audience": "console",
+        "operationId": "callPlaygroundMcpTool",
+        "summary": "Call MCP server tool",
+        "description": "Calls one tool on a remote MCP server for a playground model's tool call. A failed tool is a result with is_error, not an error response.",
+        "tags": [
+          "Playground"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CallMcpTool"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The tool's result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpToolResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The playground is unavailable in this workspace.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The workspace was not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The server URL or headers are invalid.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The MCP server could not be reached or failed.",
             "content": {
               "application/problem+json": {
                 "schema": {

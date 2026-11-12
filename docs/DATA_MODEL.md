@@ -832,7 +832,8 @@ Migration 0008 adds workspace-owned `tasks`. Migration 0030 adds
 names unique within the organization. Task names cannot be `.` or `..`, because
 task routes use the name as a URL path segment. New task and version names cannot
 contain `/` and are at most 128 characters, so a public name fits the gateway's
-300-character model ID; older names that break these rules remain, unvalidated. The collector registers a task when it accepts its first captured trace,
+300-character model ID. Older task names that break these rules, registered from
+trace labels, remain unvalidated and have no public model name. The collector registers a task when it accepts its first captured trace,
 using an idempotent insert keyed by workspace and task name; a label containing
 `/` or longer than 128 characters registers no task. PostgreSQL outages
 do not block capture or uploads: pending registrations remain on local disk and
@@ -885,9 +886,9 @@ Workspace `default_judge_model` seeds `tasks.judge_model_id` when a task is firs
 A private model's public name is `<organization slug>/<task>` for the task's
 production version and `<organization slug>/<task>/<version>` for one version. The
 gateway resolves it within the calling key's workspace and accepts any slug the
-organization has held; responses and usage use the current slug. A bare task or
-version name, the older form, still resolves within the workspace. GPU runtimes
-name an adapter `<workspace_id>/<task>/<version>`.
+organization has held; responses and usage use the current slug. GPU runtimes
+name an adapter `<workspace_id>/<task>/<version>`, which does not change when the
+slug does.
 
 Private LoRA inference reuses `task_versions` for workspace ownership, immutable
 artifact URI/checksum/rank and durable serving eligibility. The existing

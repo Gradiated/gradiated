@@ -94,7 +94,6 @@ A Gradiated-only request cannot relay to a provider. Internal mode may use only 
 | Organization slug | `^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$`; changeable; every slug the organization has held still resolves |
 | Task slug | No `/`, at most 128 characters; unique within the organization |
 | Version name | No `/`, at most 128 characters; unique within the task |
-| Legacy name | A bare task or version name still resolves within the workspace |
 | Runtime name | `<workspace-id>/<task-slug>/<version>`; keys the adapter on GPU runtimes |
 
 Assign a version date and ordinal when publishing the model, under the task lock. A retry finds the model by its source run ID and returns the same name.

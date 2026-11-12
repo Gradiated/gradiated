@@ -315,14 +315,15 @@ pub(crate) fn metadata() -> RequestMetadata {
     }
 }
 
-/// Mirrors PostgreSQL resolution of `<slug>/<task>[/<version>]` and of the
-/// legacy bare task or version name.
+/// Mirrors PostgreSQL resolution of `<slug>/<task>[/<version>]`.
 fn resolves(adapter: &crate::PrivateAdapter, model: &str) -> bool {
     let segments: Vec<&str> = model.splitn(3, '/').collect();
     match segments.as_slice() {
-        [slug, task, rest @ ..] if slug.eq_ignore_ascii_case(&adapter.organization_slug) => {
-            *task == adapter.task_name && rest.iter().all(|version| *version == adapter.name)
+        [slug, task, rest @ ..] => {
+            slug.eq_ignore_ascii_case(&adapter.organization_slug)
+                && *task == adapter.task_name
+                && rest.iter().all(|version| *version == adapter.name)
         }
-        _ => model == adapter.name || model == adapter.task_name,
+        _ => false,
     }
 }

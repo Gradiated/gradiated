@@ -78,7 +78,7 @@ describe("workspace-private adapters", () => {
     const next = await version(instance, first.task);
     await production(instance, first);
     const warm = await instance.post({
-      model: `task-${first.task}`,
+      model: `${instance.organizationSlug}/task-${first.task}`,
       session_id: "same",
     });
     expect(warm.json().model).toBe(first.selector);
@@ -88,7 +88,7 @@ describe("workspace-private adapters", () => {
     const gate = deferred();
     const attempt = selected.enqueue({ status: 503, gate });
     const retrying = instance.post({
-      model: `task-${first.task}`,
+      model: `${instance.organizationSlug}/task-${first.task}`,
       session_id: "same",
     });
     await attempt.entered.promise;
@@ -103,7 +103,7 @@ describe("workspace-private adapters", () => {
       ).toBe(true);
     }
     const promoted = await instance.post({
-      model: `task-${first.task}`,
+      model: `${instance.organizationSlug}/task-${first.task}`,
     });
     expect(promoted.json().model).toBe(next.selector);
     await settlement(instance, promoted.headers["x-gradiated-generation-id"]);
@@ -118,7 +118,7 @@ describe("workspace-private adapters", () => {
     const response = await instance.http.stream(instance.path, {
       headers: instance.headers,
       json: instance.body({
-        model: `task-${first.task}`,
+        model: `${instance.organizationSlug}/task-${first.task}`,
         stream: true,
       }),
     });
@@ -150,6 +150,7 @@ describe("workspace-private adapters", () => {
       selected.selector,
       `${other.organizationSlug}/task-${selected.task}`,
       `task-${selected.task}`,
+      selected.name,
     ]) {
       expect((await other.post({ model })).status).toBe(404);
     }
@@ -196,24 +197,6 @@ describe("workspace-private adapters", () => {
     expect((await instance.post({ model: selected.selector })).status).toBe(
       404,
     );
-    await instance.expectNotDispatched();
-  });
-
-  it("rejects ambiguous bare task and version names instead of choosing an adapter", async () => {
-    const instance = await makeCase("vllm");
-    await enable(instance);
-    const exact = await version(instance);
-    const other = await version(instance);
-    await instance.database.query(
-      "update tasks set name = $2, production_version_id = $3 where id = $1",
-      [other.task, exact.name, other.id],
-    );
-    expect((await instance.post({ model: exact.name })).status).toBe(503);
-    await instance.database.query(
-      "update tasks set production_version_id = null where id = $1",
-      [other.task],
-    );
-    expect((await instance.post({ model: exact.name })).status).toBe(503);
     await instance.expectNotDispatched();
   });
 

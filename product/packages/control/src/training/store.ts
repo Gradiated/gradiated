@@ -327,10 +327,11 @@ export const createTrainingStore = (database: ControlDatabase) => {
 
     async getHostingVersion(workspaceId: string, runtimeName: string) {
       const separator = runtimeName.lastIndexOf("/");
-      const taskName =
-        separator < 0 ? undefined : runtimeName.slice(0, separator);
+      if (separator < 0) return undefined;
+
+      const taskName = runtimeName.slice(0, separator);
       const versionName = runtimeName.slice(separator + 1);
-      const rows = await database
+      const [row] = await database
         .select({ task: tasks, version: taskVersions })
         .from(taskVersions)
         .innerJoin(tasks, eq(tasks.id, taskVersions.taskId))
@@ -345,15 +346,12 @@ export const createTrainingStore = (database: ControlDatabase) => {
               taskVersions.name,
               VersionRecordSchema.shape.name.parse(versionName),
             ),
-            taskName === undefined ? undefined : eq(tasks.name, taskName),
+            eq(tasks.name, taskName),
             eq(tasks.workspaceId, UuidSchema.parse(workspaceId)),
             isNull(workspaces.archivedAt),
             eq(organizations.status, "active"),
           ),
-        )
-        .limit(2);
-      // A bare version name is the older runtime key; it may now be ambiguous.
-      const row = rows.length === 1 ? rows[0] : undefined;
+        );
 
       return (
         row && {

@@ -48,6 +48,6 @@ WHERE "tasks"."id" = "task_versions"."task_id"
   AND left("task_versions"."name", length("tasks"."name") + 1) = "tasks"."name" || '-'
   AND substr("task_versions"."name", length("tasks"."name") + 2) ~ '^[0-9]{8}(-[0-9]+)?$';--> statement-breakpoint
 ALTER TABLE "task_versions" ADD CONSTRAINT "task_versions_task_name_unique" UNIQUE("task_id","name");--> statement-breakpoint
--- NOT VALID: older names with `/` or over 128 characters stay and resolve only by their bare name.
+-- NOT VALID: trace-registered task names with `/` or over 128 characters may already exist.
 ALTER TABLE "task_versions" ADD CONSTRAINT "task_versions_name_segment_check" CHECK (strpos("task_versions"."name", '/') = 0 and char_length("task_versions"."name") <= 128) NOT VALID;--> statement-breakpoint
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_name_segment_check" CHECK (strpos("tasks"."name", '/') = 0 and char_length("tasks"."name") <= 128) NOT VALID;

@@ -114,6 +114,7 @@ describe("private adapter hosting", () => {
     for (const [workspaceId, name] of [
       [uuidv7(), `${task.name}/${version.name}`],
       [owner.workspaceId, "missing-version"],
+      [owner.workspaceId, version.name],
       [owner.workspaceId, `other-task/${version.name}`],
     ]) {
       await expect(hosting.grant(workspaceId!, name!)).rejects.toMatchObject({
@@ -140,7 +141,7 @@ describe("private adapter hosting", () => {
           .where(eq(organizations.id, owner.organizationId));
       const { hosting, sign } = service();
       await expect(
-        hosting.grant(owner.workspaceId, version.name),
+        hosting.grant(owner.workspaceId, `${task.name}/${version.name}`),
       ).rejects.toMatchObject({ code: "not_found" });
       expect(await hosting.productionVersions(baseModelId)).not.toContainEqual(
         expect.objectContaining({
@@ -169,7 +170,7 @@ describe("private adapter hosting", () => {
       await promote(task.id, version.id);
       const { hosting, sign } = service();
       await expect(
-        hosting.grant(owner.workspaceId, version.name),
+        hosting.grant(owner.workspaceId, `${task.name}/${version.name}`),
       ).rejects.toMatchObject({ code: "unavailable" });
       expect(await hosting.productionVersions(baseModelId)).not.toContainEqual(
         expect.objectContaining({
@@ -282,7 +283,7 @@ describe("private adapter hosting", () => {
     const { hosting, sign } = service();
     sign.mockRejectedValueOnce(new Error("storage unavailable"));
     await expect(
-      hosting.grant(owner.workspaceId, version.name),
+      hosting.grant(owner.workspaceId, `${task.name}/${version.name}`),
     ).rejects.toThrow("storage unavailable");
     expect(
       (await db.database.select().from(tasks).where(eq(tasks.id, task.id)))[0]!

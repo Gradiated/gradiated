@@ -313,11 +313,10 @@ describe("engineer onboarding submission", () => {
     );
   });
 
-  it("keeps the submission when Slack or email delivery fails", async () => {
+  it("keeps the submission when only the Slack post fails", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
-    const { app, slack, notify, organizations } = setup();
+    const { app, slack, organizations } = setup();
     slack.postNotes.mockRejectedValueOnce(new Error("Slack down"));
-    notify.mockRejectedValueOnce(new Error("Resend down"));
 
     expect((await postJson(app, `${path}/submission`, submission)).status).toBe(
       201,
@@ -328,7 +327,24 @@ describe("engineer onboarding submission", () => {
         .map(([line]) => JSON.parse(String(line)))
         .filter((line) => line.event === "engineer_onboarding_delivery_failed")
         .map((line) => line.dependency),
-    ).toEqual(["slack", "email"]);
+    ).toEqual(["slack"]);
+  });
+
+  it("records nothing when the team email fails, so a retry delivers it", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const { app, slack, notify, organizations } = setup();
+    notify.mockRejectedValueOnce(new Error("Resend down"));
+
+    const failed = await postJson(app, `${path}/submission`, submission);
+    expect(failed.status).toBe(503);
+    expect(organizations.submitOnboarding).not.toHaveBeenCalled();
+    expect(slack.postNotes).not.toHaveBeenCalled();
+
+    const retried = await postJson(app, `${path}/submission`, submission);
+    expect(retried.status).toBe(201);
+    expect(notify).toHaveBeenCalledTimes(2);
+    expect(organizations.submitOnboarding).toHaveBeenCalledOnce();
+    expect(slack.postNotes).toHaveBeenCalledOnce();
   });
 
   it("starts the project without an NDA when none was requested", async () => {

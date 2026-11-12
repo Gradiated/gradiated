@@ -267,30 +267,16 @@ export const registerEngineerOnboardingRoutes = (
     return installation;
   };
 
-  const deliver = async (
+  /* The team email is the only record of a new project and its notes, so it
+     is sent before the submission is recorded: if it fails, nothing is
+     recorded and the customer can retry. A retry after a failed write may
+     email the team twice, which is preferable to never. */
+  const notifyTeam = async (
     owner: OnboardingOwner,
     organizationName: string,
     input: z.infer<typeof SubmissionSchema>,
   ) => {
     const current = await state(owner);
-    const notes = input.notes || null;
-    const failed = (dependency: string) => (error: unknown) =>
-      serviceLog("warn", "engineer_onboarding_delivery_failed", {
-        organization_id: owner.organizationId,
-        dependency,
-        error,
-      });
-
-    if (input.contact_channel === "slack" && notes && current.slack)
-      await dependencies.slack
-        ?.postNotes({
-          channelId: current.slack.channel_id,
-          email: owner.email,
-          notes,
-          requestId: owner.organizationId,
-        })
-        .catch(failed("slack"));
-
     await dependencies
       .notify({
         organizationId: owner.organizationId,
@@ -302,9 +288,43 @@ export const registerEngineerOnboardingRoutes = (
         ),
         slackChannel: current.slack?.channel_name ?? null,
         ndaSignedAt: current.nda?.signed_at ?? null,
-        notes,
+        notes: input.notes || null,
       })
-      .catch(failed("email"));
+      .catch((error: unknown) => {
+        serviceLog("warn", "engineer_onboarding_delivery_failed", {
+          organization_id: owner.organizationId,
+          dependency: "email",
+          error,
+        });
+        throw new ApiProblem(
+          problems.unavailable(
+            "We couldn’t start your project just now. Please try again.",
+          ),
+        );
+      });
+  };
+
+  // The notes also reach the team by email, so the Slack post is best-effort.
+  const postSlackNotes = async (
+    owner: OnboardingOwner,
+    input: z.infer<typeof SubmissionSchema>,
+  ) => {
+    const current = await state(owner);
+    if (input.contact_channel === "slack" && input.notes && current.slack)
+      await dependencies.slack
+        ?.postNotes({
+          channelId: current.slack.channel_id,
+          email: owner.email,
+          notes: input.notes,
+          requestId: owner.organizationId,
+        })
+        .catch((error: unknown) =>
+          serviceLog("warn", "engineer_onboarding_delivery_failed", {
+            organization_id: owner.organizationId,
+            dependency: "slack",
+            error,
+          }),
+        );
 
     return current;
   };
@@ -382,6 +402,7 @@ export const registerEngineerOnboardingRoutes = (
       },
     );
 
+    await notifyTeam(owner, organization.name, input);
     const { submitted } = await organizations.submitOnboarding(
       owner.userId,
       owner.organizationId,
@@ -389,6 +410,6 @@ export const registerEngineerOnboardingRoutes = (
     );
     if (!submitted) return context.json(await state(owner), 200);
 
-    return context.json(await deliver(owner, organization.name, input), 201);
+    return context.json(await postSlackNotes(owner, input), 201);
   });
 };

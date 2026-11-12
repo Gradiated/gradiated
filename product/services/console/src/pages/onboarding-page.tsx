@@ -49,14 +49,15 @@ export const OnboardingPage = () => {
   const { user, signOut } = useSession();
   const me = useCurrentUser();
   const [onboarded, setOnboarded] = useState<string>();
-  /* With several organizations to choose from, the post-training picker comes
-     first; setup then runs for the chosen one if it still needs it. */
-  const organization =
-    postTraining &&
-    user &&
-    chooseAccount(user, requestedOrganization).kind === "pick"
-      ? undefined
-      : organizationToOnboard(user, requestedOrganization);
+  /* Post-training sets up only the organization it will use: none until one
+     is picked from several, and only an active one the user administers. */
+  const choice =
+    postTraining && user ? chooseAccount(user, requestedOrganization) : null;
+  const organization = !choice
+    ? organizationToOnboard(user, requestedOrganization)
+    : choice.kind === "ready"
+      ? organizationToOnboard(user, choice.account.organizationId)
+      : undefined;
 
   if (me.isError && httpStatus(me.error) !== 401)
     return (

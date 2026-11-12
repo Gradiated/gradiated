@@ -26,8 +26,9 @@ The NDA is optional: the customer opts in, and only a submission that names an
 rechecks the chosen GitHub installation with the user's token and requires a
 Slack channel when `contact_channel` is `slack`. It records the submission once;
 a repeat returns the current state with 200 and sends nothing. The first
-submission posts nonempty notes to the Slack channel and emails the team, noting
-whether an NDA was signed. Notes are not stored. Conflicts carry a `code`:
+submission emails the team, noting whether an NDA was signed, and posts nonempty
+notes to the Slack channel. The email is sent before the submission is recorded;
+if it fails the API answers 503 and records nothing, so a retry delivers it. Notes are not stored. Conflicts carry a `code`:
 `nda_required`, `github_authorization_required`, `github_installation_unverified`
 or `slack_channel_required`.
 

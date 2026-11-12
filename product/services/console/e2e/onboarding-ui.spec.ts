@@ -679,6 +679,36 @@ test("an admin of several organizations chooses one before any setup", async ({
   await expect(page).toHaveURL(/from=%2Ftasks/);
 });
 
+test("a suspended organization awaiting setup does not block the active one", async ({
+  page,
+}) => {
+  await setup(page, {
+    email: "alex@acme.com",
+    companyEmailDomain: "acme.com",
+    onboardingCompleted: true,
+    otherOrganizations: [
+      {
+        id: "00000000-0000-4000-8000-000000000003",
+        name: "Old team",
+        role: "admin",
+        status: "suspended",
+        default_workspace_id: "00000000-0000-4000-8000-000000000004",
+        slug: "old-team",
+        auto_join_domain: null,
+        onboarding_completed: false,
+      },
+    ],
+  });
+
+  await page.goto("/onboarding?journey=post-training");
+  await expect(
+    page.getByRole("heading", { name: "Let’s start your project." }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("textbox", { name: "Organization name" }),
+  ).toHaveCount(0);
+});
+
 test("an installation without repositories blocks the start until one is selected", async ({
   page,
 }) => {

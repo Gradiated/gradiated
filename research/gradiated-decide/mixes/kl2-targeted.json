@@ -1,0 +1,39 @@
+{
+  "seed": 20261113,
+  "dev_fraction": 0.01,
+  "max_length": 8192,
+  "shuffle": 0.5,
+  "note": "Continuation mix for gd-kl2 (gd-kl1's final export trained further, KnowLine encoding). It targets gd-kl1's measured misses: JevBench temporal_numeric and long_policy items, judge_hard items, and the Decision Index benchmarks where the pplx family beats it (Home appliance simulator, ContractNLI, BANKING77, iSarcasmEval, Amazon ESCI, Habermas Machine, CLadder). Every source is licence-checked public data already decontaminated against the suite, JevBench public and the Gemini panel items (data/broad, data/clean, data/splits; data/extra-clean is data/extra after gdecide.decontam). About a sixth is v1 replay so gd-kl1 does not forget. No augmentation: it raised calibration error in the v3 pilot.",
+  "sources": [
+    {"glob": "/home/ubuntu/gdecide/data/broad/tatqa.jsonl.gz"},
+    {"glob": "/home/ubuntu/gdecide/data/broad/finqa.jsonl.gz"},
+    {"glob": "/home/ubuntu/gdecide/data/broad/convfinqa.jsonl.gz"},
+    {"glob": "/home/ubuntu/gdecide/data/broad/drop.jsonl.gz", "max_rows": 30000},
+    {"glob": "/home/ubuntu/gdecide/data/broad/timeqa.jsonl.gz"},
+    {"glob": "/home/ubuntu/gdecide/data/broad/tempreason.jsonl.gz"},
+    {"glob": "/home/ubuntu/gdecide/data/splits/30-GSM8K.jsonl.gz"},
+
+    {"glob": "/home/ubuntu/gdecide/data/broad/sharc.jsonl.gz"},
+    {"glob": "/home/ubuntu/gdecide/data/broad/cuad.jsonl.gz"},
+    {"glob": "/home/ubuntu/gdecide/data/broad/maud.jsonl.gz"},
+    {"glob": "/home/ubuntu/gdecide/data/broad/lexglue.jsonl.gz", "max_rows": 20000},
+    {"glob": "/home/ubuntu/gdecide/data/broad/condaqa.jsonl.gz"},
+    {"glob": "/home/ubuntu/gdecide/data/clean/sn92-specialists.jsonl.gz", "max_rows": 30000},
+
+    {"glob": "/home/ubuntu/gdecide/data/broad/helpsteer2.jsonl.gz"},
+    {"glob": "/home/ubuntu/gdecide/data/broad/helpsteer3.jsonl.gz"},
+    {"glob": "/home/ubuntu/gdecide/data/broad/oasst2.jsonl.gz", "max_rows": 15000},
+    {"glob": "/home/ubuntu/gdecide/data/broad/stack-exchange-prefs.jsonl.gz", "max_rows": 15000},
+
+    {"glob": "/home/ubuntu/gdecide/data/splits/4-BANKING77.jsonl.gz"},
+    {"glob": "/home/ubuntu/gdecide/data/splits/37-Amazon-ESCI.jsonl.gz", "max_rows": 30000},
+    {"glob": "/home/ubuntu/gdecide/data/extra-clean/massive-intents.jsonl.gz", "max_rows": 20000},
+    {"glob": "/home/ubuntu/gdecide/data/extra-clean/sarcasm-headlines.jsonl.gz", "max_rows": 20000},
+    {"glob": "/home/ubuntu/gdecide/data/extra-clean/ibm-claim-stance.jsonl.gz"},
+    {"glob": "/home/ubuntu/gdecide/data/broad/multiwoz22.jsonl.gz"},
+    {"glob": "/home/ubuntu/gdecide/data/clean/procedural-typed-decisions.jsonl.gz", "max_rows": 20000},
+
+    {"glob": "/home/ubuntu/gdecide/data/clean/tasksource-jev-typed-decisions.jsonl.gz", "max_rows": 40000, "exclude": ["x-stance"]},
+    {"glob": "/home/ubuntu/gdecide/data/clean/sn92-generalist-train-v1.jsonl.gz"}
+  ]
+}

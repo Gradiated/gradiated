@@ -45,13 +45,7 @@ fi
   $PY - logs/bench-gemma.tsv "$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits | head -1)" > logs/bench-gemma.args <<'EOF2'
 import csv, sys
 rows = [r for r in csv.DictReader(open(sys.argv[1]), delimiter="\t") if r["status"] == "ok" and float(r["mem_gib"]) < 0.85 * float(sys.argv[2]) / 1024]
-flags = {"base": "", "noreshard": "--no-reshard", "compile": "--compile", "flex": "--attn flex_attention"}
-best = max(rows, key=lambda r: float(r["tokens_per_s"]), default={"config": "base"})
-name = best["config"]
-if name == "combo":
-    print(open("logs/bench-gemma-combo.args").read().strip())
-else:
-    print(flags.get(name, f"--keep-activations {name[4:]}" if name.startswith("keep") else ""))
+print(max(rows, key=lambda r: float(r["tokens_per_s"]))["args"] if rows else "")
 EOF2
 }
 TRAIN=(--family gemma --epochs 1 --max-steps "$STEPS" --lr 2e-6 --readout-lr 1e-5 --brier 0.5 --warmup 30 --state-minutes 30 --dev-every 250 --seed 20261113)

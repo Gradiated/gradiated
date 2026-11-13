@@ -55,6 +55,61 @@ def batches(lengths: list[int], budget: int, seed: int, epoch: int) -> list[list
     return out
 
 
+def balanced_batches(lengths: list[int], budget: int, seed: int, epoch: int, world: int) -> list[list[list[int]]]:
+    """Steps of ``world`` micro-batches cut from the same length-sorted window, so every rank's batch at a step has a
+    similar width (attention cost grows with width; one long-sequence rank makes the others wait at each collective)."""
+    rng = random.Random(seed * 1000 + epoch)
+    order = list(range(len(lengths)))
+    rng.shuffle(order)
+    steps = []
+    for w in range(0, len(order), 512 * world):
+        window = sorted(order[w : w + 512 * world], key=lengths.__getitem__)
+        group, width, cut = [], 0, []
+        for i in window:
+            if group and max(width, lengths[i]) * (len(group) + 1) > budget:
+                cut.append(group)
+                group, width = [], 0
+            group.append(i)
+            width = max(width, lengths[i])
+        if group:
+            cut.append(group)
+        steps += [cut[k : k + world] for k in range(0, len(cut) - world + 1, world)]
+    rng.shuffle(steps)
+    return steps
+
+
+def register_fast_gemma_attention() -> str:
+    """``gd_fast``: Gemma 4 text attention without a materialised mask. Sliding layers run flex attention with a causal
+    window block mask (``kv > q - window``, as transformers' sliding_window_overlay); full layers run SDPA with
+    ``is_causal``. Exact for right-padded batches of a causal text model (padding sits after every real token)."""
+    import torch
+    from torch.nn.attention.flex_attention import create_block_mask, flex_attention
+    from transformers import AttentionInterface
+
+    torch._dynamo.config.cache_size_limit = max(64, torch._dynamo.config.cache_size_limit)
+    flex = torch.compile(flex_attention, dynamic=True)
+    masks = {}
+
+    def block_mask(length, window, device):
+        key = (length, window)
+        if key not in masks:
+            def mask_mod(b, h, q, kv):
+                return (kv <= q) & (kv > q - window)
+            masks[key] = create_block_mask(mask_mod, None, None, length, length, device=device)
+        return masks[key]
+
+    def attention(module, query, key, value, attention_mask, dropout=0.0, scaling=None, sliding_window=None, **kwargs):
+        gqa = query.shape[1] != key.shape[1]
+        if sliding_window:
+            out = flex(query, key, value, block_mask=block_mask(query.shape[2], sliding_window, query.device), scale=scaling, enable_gqa=gqa)
+        else:
+            out = torch.nn.functional.scaled_dot_product_attention(query, key, value, is_causal=True, scale=scaling, enable_gqa=gqa)
+        return out.transpose(1, 2).contiguous(), None
+
+    AttentionInterface.register("gd_fast", attention)
+    return "gd_fast"
+
+
 def collate(examples, pad_id, right=False):
     """Left-padded (Decider) or, with ``right``, right-padded (causal Gemma) batch."""
     import torch
@@ -126,9 +181,11 @@ def build_gemma(checkpoint: Path, dtype, device_index: int, label_ids: list[int]
             index = torch.tensor(label_ids, device=weight.device)
             self.register_buffer("label_weight", weight.detach()[index].float().clone(), persistent=False)
             self.softcap = self.backbone.config.get_text_config().final_logit_softcapping
+            self.no_masks = attn == "gd_fast"
 
         def forward(self, ids, mask, rows, cols):
-            hidden = self.backbone.language_model(input_ids=ids, use_cache=False).last_hidden_state
+            masks = {"full_attention": None, "sliding_attention": None} if self.no_masks else None
+            hidden = self.backbone.language_model(input_ids=ids, attention_mask=masks, use_cache=False).last_hidden_state
             return gemma_label_logits(hidden[rows, cols], self.label_weight, self.softcap)
 
     return GemmaDecider()
@@ -165,7 +222,8 @@ def main() -> None:
     parser.add_argument("--keep-activations", type=int, default=0, help="layers (spread evenly) that store activations instead of recomputing them")
     parser.add_argument("--no-reshard", action="store_true", help="keep each layer's gathered bf16 weights from forward to backward")
     parser.add_argument("--compile", action="store_true", help="torch.compile each decoder layer")
-    parser.add_argument("--attn", default="sdpa", help="gemma only: transformers attn_implementation (sdpa, flex_attention, ...)")
+    parser.add_argument("--attn", default="sdpa", help="gemma only: sdpa, gd_fast (flex sliding window + causal SDPA, no masks) or another transformers attn_implementation")
+    parser.add_argument("--balance", action="store_true", help="give every rank a similar-width batch at each step (global length-sorted plan)")
     parser.add_argument("--profile", action="store_true", help="write a torch.profiler table for steps 4-6 (rank 0) to OUT/profile.txt")
     parser.add_argument("--bench", action="store_true", help="throughput run: no dev evaluation, state or export")
     args = parser.parse_args()
@@ -182,6 +240,8 @@ def main() -> None:
 
         label_ids = Renderer(str(args.checkpoint)).label_ids
         MAX_OPTIONS = len(label_ids)
+        if args.attn == "gd_fast":
+            register_fast_gemma_attention()
     else:
         from transformers.models.qwen3_5.modeling_qwen3_5 import Qwen3_5Model
 
@@ -295,7 +355,7 @@ def main() -> None:
     examples = []
     for i, shard in enumerate(shards):
         rows = torch.load(shard, weights_only=False)
-        examples += rows[rank::world]
+        examples += rows if args.balance else rows[rank::world]
     dev = torch.load(Path(args.data) / "dev.pt", weights_only=False)[rank::world] if (Path(args.data) / "dev.pt").exists() else []
     pad_id = json.loads((checkpoint / "tokenizer_config.json").read_text()).get("pad_token_id")
     if pad_id is None:
@@ -303,13 +363,19 @@ def main() -> None:
 
         pad_id = AutoTokenizer.from_pretrained(str(checkpoint)).pad_token_id
     lengths = [int(e["ids"].numel()) for e in examples]
-    n = torch.tensor([len(batches(lengths, args.tokens_per_batch, args.seed, 0))], device=device)
+
+    def plan_for(epoch):
+        if args.balance:
+            return [step[rank] for step in balanced_batches(lengths, args.tokens_per_batch, args.seed, epoch, world)]
+        return batches(lengths, args.tokens_per_batch, args.seed, epoch)
+
+    n = torch.tensor([len(plan_for(0))], device=device)
     dist.all_reduce(n, op=dist.ReduceOp.MIN)
     per_epoch = int(n.item()) // args.accumulate
     total_steps = max(1, int(per_epoch * args.epochs))
     if args.max_steps:
         total_steps = min(total_steps, args.max_steps)
-    log(event="data", examples_rank0=len(examples), dev_rank0=len(dev), steps_per_epoch=per_epoch, total_steps=total_steps, tokens_rank0=sum(lengths))
+    log(event="data", examples_rank0=len(examples) // (world if args.balance else 1), dev_rank0=len(dev), steps_per_epoch=per_epoch, total_steps=total_steps, tokens_rank0=sum(lengths) // (world if args.balance else 1))
 
     def schedule(step):
         if step < args.warmup:
@@ -442,7 +508,7 @@ def main() -> None:
     epoch = step // max(1, per_epoch)
     position = (step % max(1, per_epoch)) * args.accumulate
     while step < total_steps:
-        plan = batches(lengths, args.tokens_per_batch, args.seed, epoch)[: per_epoch * args.accumulate]
+        plan = plan_for(epoch)[: per_epoch * args.accumulate]
         while position < len(plan) and step < total_steps:
             optimizer.zero_grad(set_to_none=True)
             sums = torch.zeros(5, device=device, dtype=torch.float64)

@@ -20,6 +20,8 @@ const publicRoutes = new Set([
   "POST /api/v1/waitlist",
   "POST /api/v1/invitations/preview",
   "POST /api/webhooks/stripe",
+  "GET /.well-known/oauth-authorization-server",
+  "GET /.well-known/oauth-authorization-server/api/auth",
 ]);
 
 const validInputs: Record<string, { query?: string; body?: unknown }> = {
@@ -90,6 +92,9 @@ const validInputs: Record<string, { query?: string; body?: unknown }> = {
     body: { trace_capture_enabled: false },
   },
   "POST /api/v1/workspaces/:workspace_id/api-keys": { body: { name: "CI" } },
+  "PUT /api/v1/me/oauth-workspace": {
+    body: { workspace_id: "0198ae5a-2529-7c1a-801b-dc9d5f876a94" },
+  },
   "GET /api/v1/workspaces/:workspace_id/usage": {
     query: "from=2026-09-01T00:00:00.000Z&to=2026-09-02T00:00:00.000Z",
   },

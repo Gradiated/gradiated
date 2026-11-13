@@ -12,6 +12,7 @@ const app = createApp({
   tools: buildTools(loadApiDocument()),
   publicUrl: environment.MCP_PUBLIC_URL,
   consoleUrl: environment.CONSOLE_URL,
+  authorizationServer: environment.AUTHORIZATION_SERVER_URL,
 });
 
 const server = serve({

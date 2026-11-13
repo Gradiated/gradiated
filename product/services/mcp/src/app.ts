@@ -16,9 +16,13 @@ export interface AppOptions {
   tools: readonly ToolDefinition[];
   publicUrl: string;
   consoleUrl: string;
+  authorizationServer: string;
 }
 
-const API_KEY = /^grad_\S+$/;
+const SCOPES = ["mcp", "offline_access"];
+
+// A workspace API key or an OAuth access token from the API's authorization server.
+const CREDENTIAL = /^grado?_\S+$/;
 
 const credential = (context: Context): string | undefined => {
   const bearer = context.req
@@ -26,7 +30,7 @@ const credential = (context: Context): string | undefined => {
     ?.match(/^Bearer\s+(\S+)$/i)?.[1];
   const key = bearer ?? context.req.header("x-api-key");
 
-  return key && API_KEY.test(key) ? key : undefined;
+  return key && CREDENTIAL.test(key) ? key : undefined;
 };
 
 // The load balancer appends the address it saw after any client-supplied ones.
@@ -34,11 +38,17 @@ const clientAddress = (context: Context<Environment>) =>
   context.req.header("x-forwarded-for")?.split(",").at(-1)?.trim() ||
   context.env?.incoming?.socket?.remoteAddress;
 
-const unauthorized = (context: Context, message: string) =>
+const unauthorized = (
+  context: Context,
+  resourceMetadata: string,
+  message: string,
+) =>
   context.json(
     { jsonrpc: "2.0", error: { code: -32001, message }, id: null },
     401,
-    { "WWW-Authenticate": 'Bearer realm="gradiated"' },
+    {
+      "WWW-Authenticate": `Bearer resource_metadata="${resourceMetadata}", scope="${SCOPES.join(" ")}"`,
+    },
   );
 
 export const createApp = ({
@@ -46,15 +56,36 @@ export const createApp = ({
   tools,
   publicUrl,
   consoleUrl,
+  authorizationServer,
 }: AppOptions) => {
   const app = new Hono<Environment>();
   const mcpUrl = new URL("/mcp", publicUrl).href;
+  const resourceMetadataUrl = new URL(
+    "/.well-known/oauth-protected-resource/mcp",
+    publicUrl,
+  ).href;
   const indexPage = renderIndexPage({ mcpUrl, consoleUrl, tools });
+  const resourceMetadata = {
+    resource: mcpUrl,
+    resource_name: "Gradiated",
+    resource_documentation: new URL("/", publicUrl).href,
+    authorization_servers: [authorizationServer],
+    scopes_supported: SCOPES,
+    bearer_methods_supported: ["header"],
+  };
 
   app.get("/", (context) => context.html(indexPage));
   app.get("/health/live", (context) => context.text("ok"));
 
-  // Callers authenticate with a bearer key, never cookies, so any origin may call.
+  // RFC 9728 metadata, at the path-suffixed location and the root one clients also try.
+  app.use("/.well-known/*", cors({ origin: "*", allowMethods: ["GET"] }));
+  for (const path of [
+    "/.well-known/oauth-protected-resource/mcp",
+    "/.well-known/oauth-protected-resource",
+  ])
+    app.get(path, (context) => context.json(resourceMetadata));
+
+  // Callers authenticate with a bearer credential, never cookies, so any origin may call.
   app.use(
     "/mcp",
     cors({
@@ -77,7 +108,8 @@ export const createApp = ({
     if (!key)
       return unauthorized(
         context,
-        "Send a workspace API key as a bearer token.",
+        resourceMetadataUrl,
+        "Sign in with OAuth or send a workspace API key as a bearer token.",
       );
 
     const caller: Caller = {
@@ -88,7 +120,8 @@ export const createApp = ({
     if (!principal)
       return unauthorized(
         context,
-        "The API key is unknown, expired or revoked.",
+        resourceMetadataUrl,
+        "The credential is unknown, expired or revoked.",
       );
 
     const server = createMcpServer(tools, api, principal);

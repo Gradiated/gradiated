@@ -2765,9 +2765,17 @@
         ],
         "additionalProperties": false
       },
-      "ApiKeyIdentity": {
+      "CredentialIdentity": {
         "type": "object",
         "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "api_key",
+              "oauth_token"
+            ],
+            "description": "A workspace API key or an OAuth access token."
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -2781,14 +2789,31 @@
           "workspace_id": {
             "type": "string",
             "format": "uuid",
-            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774",
+            "description": "The only workspace the credential can act in."
           }
         },
         "required": [
+          "type",
           "id",
           "organization_id",
           "workspace_id"
         ]
+      },
+      "OAuthWorkspaceSelection": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774",
+            "description": "The workspace the next OAuth consent in this session grants access to."
+          }
+        },
+        "required": [
+          "workspace_id"
+        ],
+        "additionalProperties": false
       },
       "ApiKeyList": {
         "type": "object",
@@ -9862,11 +9887,11 @@
         }
       }
     },
-    "/api/v1/api-keys/current": {
+    "/api/v1/credentials/current": {
       "get": {
-        "operationId": "getCurrentApiKey",
-        "summary": "Get current API key",
-        "description": "Identifies the workspace API key in the Authorization or x-api-key header.",
+        "operationId": "getCurrentCredential",
+        "summary": "Get current credential",
+        "description": "Identifies the workspace API key or OAuth access token in the Authorization or x-api-key header.",
         "tags": [
           "API keys"
         ],
@@ -9880,17 +9905,73 @@
         ],
         "responses": {
           "200": {
-            "description": "The key's organization and workspace.",
+            "description": "The credential's organization and workspace.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiKeyIdentity"
+                  "$ref": "#/components/schemas/CredentialIdentity"
                 }
               }
             }
           },
           "401": {
-            "description": "The key is missing, unknown, expired or revoked.",
+            "description": "The credential is missing, unknown, expired or revoked.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/oauth-workspace": {
+      "put": {
+        "x-gradiated-audience": "console",
+        "operationId": "selectOAuthWorkspace",
+        "summary": "Select OAuth workspace",
+        "description": "Chooses the workspace that the OAuth consent being given in this browser session grants a client.",
+        "tags": [
+          "Session"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthWorkspaceSelection"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "The workspace is selected for this session."
+          },
+          "401": {
+            "description": "No browser session is present.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The workspace is archived or its organization suspended.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The workspace was not found.",
             "content": {
               "application/problem+json": {
                 "schema": {

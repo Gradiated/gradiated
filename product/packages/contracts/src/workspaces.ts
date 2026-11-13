@@ -70,15 +70,28 @@ export const ApiKeySchema = z
   })
   .openapi("ApiKey");
 
-export const ApiKeyIdentitySchema = z
+export const CredentialIdentitySchema = z
   .object({
+    type: z
+      .enum(["api_key", "oauth_token"])
+      .describe("A workspace API key or an OAuth access token."),
     id: UuidSchema,
     organization_id: UuidSchema,
-    workspace_id: UuidSchema,
+    workspace_id: UuidSchema.describe(
+      "The only workspace the credential can act in.",
+    ),
   })
-  .openapi("ApiKeyIdentity");
+  .openapi("CredentialIdentity");
 
-export type ApiKeyIdentity = z.infer<typeof ApiKeyIdentitySchema>;
+export type CredentialIdentity = z.infer<typeof CredentialIdentitySchema>;
+
+export const OAuthWorkspaceSelectionSchema = z
+  .strictObject({
+    workspace_id: UuidSchema.describe(
+      "The workspace the next OAuth consent in this session grants access to.",
+    ),
+  })
+  .openapi("OAuthWorkspaceSelection");
 
 export const ApiKeyListSchema = z
   .object(pageFields(ApiKeySchema))

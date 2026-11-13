@@ -63,9 +63,10 @@ export const loginSearchFor = (location: {
     : {};
 
 export const signInCallbacks = (search: LoginSearch, consoleOrigin: string) => {
+  // An invitation, then an OAuth authorization, comes before the journey.
   const invitation = search.invitation
     ? invitationPath(search.invitation)
-    : undefined;
+    : search.next;
   const postTraining = !invitation && search.journey === POST_TRAINING_JOURNEY;
   const callbackUrl = (path: string) => new URL(path, consoleOrigin).toString();
 

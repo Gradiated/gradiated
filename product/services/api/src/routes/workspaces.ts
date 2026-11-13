@@ -1,7 +1,8 @@
 import { changedFields } from "@gradiated/analytics";
 import {
-  ApiKeyIdentitySchema,
   ApiKeyListSchema,
+  CredentialIdentitySchema,
+  OAuthWorkspaceSelectionSchema,
   ApiKeyPathSchema,
   ApiKeySchema,
   CreateApiKeySchema,
@@ -23,7 +24,8 @@ import type {
 } from "@gradiated/control";
 import { createRoute, type OpenAPIHono } from "@hono/zod-openapi";
 
-import { bearerSecret } from "../auth/api-key-principal.js";
+import { bearerCredential } from "../auth/workspace-credential.js";
+import { consoleOnly } from "../http/audience.js";
 import { ApiProblem, problems, requireUser } from "../http/problems.js";
 import type { ApiEnvironment } from "../types.js";
 import { apiKeyResponse } from "./api-key-response.js";
@@ -152,22 +154,56 @@ const createWorkspaceRoute = createRoute({
   },
 });
 
-const getCurrentApiKeyRoute = createRoute({
+const getCurrentCredentialRoute = createRoute({
   method: "get",
-  path: "/api/v1/api-keys/current",
-  operationId: "getCurrentApiKey",
-  summary: "Get current API key",
+  path: "/api/v1/credentials/current",
+  operationId: "getCurrentCredential",
+  summary: "Get current credential",
   description:
-    "Identifies the workspace API key in the Authorization or x-api-key header.",
+    "Identifies the workspace API key or OAuth access token in the Authorization or x-api-key header.",
   tags: ["API keys"],
   security: [{ InferenceBearer: [] }, { InferenceApiKey: [] }],
   responses: {
     200: {
-      description: "The key's organization and workspace.",
-      content: { "application/json": { schema: ApiKeyIdentitySchema } },
+      description: "The credential's organization and workspace.",
+      content: { "application/json": { schema: CredentialIdentitySchema } },
     },
     401: {
-      description: "The key is missing, unknown, expired or revoked.",
+      description: "The credential is missing, unknown, expired or revoked.",
+      content: problemContent,
+    },
+  },
+});
+
+const selectOAuthWorkspaceRoute = createRoute({
+  ...consoleOnly,
+  method: "put",
+  path: "/api/v1/me/oauth-workspace",
+  operationId: "selectOAuthWorkspace",
+  summary: "Select OAuth workspace",
+  description:
+    "Chooses the workspace that the OAuth consent being given in this browser session grants a client.",
+  tags: ["Session"],
+  request: {
+    body: {
+      required: true,
+      content: {
+        "application/json": { schema: OAuthWorkspaceSelectionSchema },
+      },
+    },
+  },
+  responses: {
+    204: { description: "The workspace is selected for this session." },
+    401: {
+      description: "No browser session is present.",
+      content: problemContent,
+    },
+    403: {
+      description: "The workspace is archived or its organization suspended.",
+      content: problemContent,
+    },
+    404: {
+      description: "The workspace was not found.",
       content: problemContent,
     },
   },
@@ -395,19 +431,34 @@ export const registerWorkspaceRoutes = (
     return context.json(workspaceResponse(workspace), 201);
   });
 
-  app.openapi(getCurrentApiKeyRoute, async (context) => {
-    const secret = bearerSecret(context.req.raw.headers);
-    const owner = secret && (await workspaces.authenticateApiKey(secret));
+  app.openapi(getCurrentCredentialRoute, async (context) => {
+    const secret = bearerCredential(context.req.raw.headers);
+    const owner = secret && (await workspaces.authenticateCredential(secret));
     if (!owner) throw new ApiProblem(problems.unauthenticated);
 
     return context.json(
       {
-        id: owner.apiKeyId,
+        type: owner.credential,
+        id: owner.credentialId,
         organization_id: owner.organizationId,
         workspace_id: owner.workspaceId,
       },
       200,
     );
+  });
+
+  app.openapi(selectOAuthWorkspaceRoute, async (context) => {
+    const user = await requireUser(context);
+    if (!user.sessionId) throw new ApiProblem(problems.unauthenticated);
+
+    const { workspace_id } = context.req.valid("json");
+    await workspaces.selectOAuthWorkspace(
+      user.id,
+      user.sessionId,
+      workspace_id,
+    );
+
+    return context.body(null, 204);
   });
 
   app.openapi(listApiKeysRoute, async (context) => {

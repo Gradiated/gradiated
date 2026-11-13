@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { ControlDatabase } from "@gradiated/control";
 import { z } from "@hono/zod-openapi";
@@ -8,34 +8,49 @@ import {
   resolveAuthTrustedOrigins,
 } from "../src/auth/service.js";
 
+const records = vi.hoisted(() => ({
+  user: [] as Record<string, unknown>[],
+  session: [] as Record<string, unknown>[],
+  account: [] as Record<string, unknown>[],
+  verification: [] as Record<string, unknown>[],
+  oauthClient: [] as Record<string, unknown>[],
+  oauthResource: [] as Record<string, unknown>[],
+  oauthClientResource: [] as Record<string, unknown>[],
+  oauthRefreshToken: [] as Record<string, unknown>[],
+  oauthAccessToken: [] as Record<string, unknown>[],
+  oauthConsent: [] as Record<string, unknown>[],
+  oauthClientAssertion: [] as Record<string, unknown>[],
+}));
+
+vi.mock("better-auth/adapters/drizzle", async () => {
+  const { memoryAdapter } = await import("better-auth/adapters/memory");
+
+  return { drizzleAdapter: () => memoryAdapter(records) };
+});
+
 const createSocialAuth = (
   trustedOrigins: string[] = ["http://localhost:3000"],
 ) =>
-  createAuthService(
-    {
-      insert: () => ({
-        values: (values: Record<string, unknown>) => ({
-          returning: async () => [values],
-        }),
-      }),
-    } as unknown as ControlDatabase,
-    {
-      baseUrl: "http://localhost:3000",
-      github: {
-        clientId: "github-client-id",
-        clientSecret: "github-client-secret",
-      },
-      google: {
-        clientId: "google-client-id",
-        clientSecret: "google-client-secret",
-      },
-      onUserCreated: async () => undefined,
-      secret: "local-only-not-secret-change-in-production-0001",
-      sendMagicLink: async () => undefined,
-      sendOtp: async () => undefined,
-      trustedOrigins,
+  createAuthService({} as ControlDatabase, {
+    baseUrl: "http://localhost:3000",
+    github: {
+      clientId: "github-client-id",
+      clientSecret: "github-client-secret",
     },
-  );
+    google: {
+      clientId: "google-client-id",
+      clientSecret: "google-client-secret",
+    },
+    onUserCreated: async () => undefined,
+    secret: "local-only-not-secret-change-in-production-0001",
+    oauth: {
+      consoleUrl: "http://localhost:5173",
+      mcpResource: "http://localhost:3007/mcp",
+    },
+    sendMagicLink: async () => undefined,
+    sendOtp: async () => undefined,
+    trustedOrigins,
+  });
 
 const SocialSignInSchema = z.object({
   url: z.string(),

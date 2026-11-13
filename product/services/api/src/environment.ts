@@ -25,6 +25,7 @@ const ApiOnlyEnvironmentSchema = z.object({
   TRAINING_ARTIFACTS_BUCKET: z.string().min(1).optional(),
   CONTENTS_BUCKET: z.string().min(1).optional(),
   METRICS_PORT: PortSchema.default(9_464),
+  MCP_RESOURCE_URL: z.url().default("https://mcp.gradiated.com/mcp"),
   PROFILING_INGEST_TOKEN: z.string().min(32).optional(),
   PROFILING_HOST: z.string().min(1).default("0.0.0.0"),
   PROFILING_PORT: PortSchema.default(3_003),

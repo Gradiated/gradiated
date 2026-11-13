@@ -14,7 +14,7 @@ import { requestLogFields, serviceLog } from "./logging.js";
 import { routeLabel, type ApiMetrics } from "./metrics.js";
 import type { DependencyCheck } from "./readiness.js";
 import { isConsoleOnly } from "./http/audience.js";
-import { resolveApiKeyUser } from "./auth/api-key-principal.js";
+import { resolveCredentialUser } from "./auth/workspace-credential.js";
 import { registerBillingRoutes } from "./routes/billing.js";
 import { registerGatewayContract } from "./routes/gateway-contract.js";
 import { registerHealthRoutes } from "./routes/health.js";
@@ -157,7 +157,7 @@ export const createApp = ({
         .then(
           (user) =>
             user ??
-            resolveApiKeyUser(services.workspaces, {
+            resolveCredentialUser(services.workspaces, {
               headers: context.req.raw.headers,
               path: context.req.path,
             }),
@@ -245,6 +245,15 @@ export const createApp = ({
   registerGenerationRoutes(app, services.usage, services.traces);
   registerTrainingRoutes(app, services.training);
   registerGatewayContract(app);
+
+  // RFC 8414 places the metadata of the /api/auth issuer under this path on the origin.
+  for (const path of [
+    "/.well-known/oauth-authorization-server/api/auth",
+    "/.well-known/oauth-authorization-server",
+  ])
+    app.get(path, (context) =>
+      auth.authorizationServerMetadata(context.req.raw),
+    );
 
   app.get("/api/openapi.json", (context) =>
     context.json(publicOpenApiDocument(app)),

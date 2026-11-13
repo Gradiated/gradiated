@@ -645,7 +645,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/api/v1/api-keys/current": {
+  "/api/v1/credentials/current": {
     parameters: {
       query?: never;
       header?: never;
@@ -653,11 +653,31 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Get current API key
-     * @description Identifies the workspace API key in the Authorization or x-api-key header.
+     * Get current credential
+     * @description Identifies the workspace API key or OAuth access token in the Authorization or x-api-key header.
      */
-    get: operations["getCurrentApiKey"];
+    get: operations["getCurrentCredential"];
     put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/oauth-workspace": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Select OAuth workspace
+     * @description Chooses the workspace that the OAuth consent being given in this browser session grants a client.
+     */
+    put: operations["selectOAuthWorkspace"];
     post?: never;
     delete?: never;
     options?: never;
@@ -2132,7 +2152,12 @@ export interface components {
     CreateWorkspace: {
       name: string;
     };
-    ApiKeyIdentity: {
+    CredentialIdentity: {
+      /**
+       * @description A workspace API key or an OAuth access token.
+       * @enum {string}
+       */
+      type: "api_key" | "oauth_token";
       /**
        * Format: uuid
        * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
@@ -2145,6 +2170,15 @@ export interface components {
       organization_id: string;
       /**
        * Format: uuid
+       * @description The only workspace the credential can act in.
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      workspace_id: string;
+    };
+    OAuthWorkspaceSelection: {
+      /**
+       * Format: uuid
+       * @description The workspace the next OAuth consent in this session grants access to.
        * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
        */
       workspace_id: string;
@@ -5911,7 +5945,7 @@ export interface operations {
       };
     };
   };
-  getCurrentApiKey: {
+  getCurrentCredential: {
     parameters: {
       query?: never;
       header?: never;
@@ -5920,17 +5954,66 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      /** @description The key's organization and workspace. */
+      /** @description The credential's organization and workspace. */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["ApiKeyIdentity"];
+          "application/json": components["schemas"]["CredentialIdentity"];
         };
       };
-      /** @description The key is missing, unknown, expired or revoked. */
+      /** @description The credential is missing, unknown, expired or revoked. */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  selectOAuthWorkspace: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["OAuthWorkspaceSelection"];
+      };
+    };
+    responses: {
+      /** @description The workspace is selected for this session. */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description No browser session is present. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The workspace is archived or its organization suspended. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The workspace was not found. */
+      404: {
         headers: {
           [name: string]: unknown;
         };

@@ -45,7 +45,7 @@ export {
   type SettlementLeadership,
   type SettlementPosting,
 } from "./settlement/postgres-store.js";
-export { betterAuthSchema } from "./db/schema/auth.js";
+export { betterAuthSchema } from "./db/schema/better-auth.js";
 export {
   createInstanceService,
   privateServingUrl,
@@ -139,6 +139,7 @@ export {
 } from "./distribution-channels/service.js";
 export { ControlServiceError } from "./errors.js";
 export {
+  OAUTH_ACCESS_TOKEN_PREFIX,
   createWorkspaceApiKeyService,
   type ApiKeyRecord,
   type CreatedApiKey,
@@ -236,7 +237,8 @@ export {
 
 export {
   createWorkspaceStore,
-  type ApiKeyOwnerRecord,
+  OAUTH_WORKSPACE_SCOPE,
+  type CredentialOwnerRecord,
 } from "./workspaces/store.js";
 
 export { createKubernetesRequest } from "./deployments/kubernetes-client.js";

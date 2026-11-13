@@ -200,6 +200,13 @@ export const previewInvitation = (token: string): Promise<InvitationPreview> =>
 export const acceptInvitation = (token: string) =>
   requireData(api.POST("/api/v1/invitations/accept", { body: { token } }));
 
+export const selectOAuthWorkspace = (workspaceId: string) =>
+  requireOk(
+    api.PUT("/api/v1/me/oauth-workspace", {
+      body: { workspace_id: workspaceId },
+    }),
+  );
+
 export const listWorkspaces = (organizationId: string) =>
   requireData(
     api.GET("/api/v1/organizations/{organization_id}/workspaces", {

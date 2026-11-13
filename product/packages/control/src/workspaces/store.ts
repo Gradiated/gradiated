@@ -1,4 +1,4 @@
-import { and, eq, gt, isNull, or } from "drizzle-orm";
+import { and, arrayContains, eq, gt, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   WorkspaceSchema,
@@ -9,7 +9,13 @@ import {
 } from "@gradiated/contracts";
 import type { ControlDatabase } from "../db/client.js";
 import { ControlServiceError } from "../errors.js";
-import { apiKeys, users, workspaces } from "../db/schema/index.js";
+import {
+  apiKeys,
+  oauthAccessTokens,
+  sessions,
+  users,
+  workspaces,
+} from "../db/schema/index.js";
 
 const WorkspaceRecordSchema = z.object({
   id: UuidSchema,
@@ -24,8 +30,11 @@ const WorkspaceRecordSchema = z.object({
   defaultJudgeModel: EvaluationJudgeSchema,
 });
 
-const ApiKeyOwnerRecordSchema = z.object({
-  apiKeyId: UuidSchema,
+export const OAUTH_WORKSPACE_SCOPE = "mcp";
+
+const CredentialOwnerRecordSchema = z.object({
+  credential: z.enum(["api_key", "oauth_token"]),
+  credentialId: UuidSchema,
   organizationId: UuidSchema,
   workspaceId: UuidSchema,
   user: z.object({
@@ -39,7 +48,17 @@ const ApiKeyOwnerRecordSchema = z.object({
   }),
 });
 
-export type ApiKeyOwnerRecord = z.infer<typeof ApiKeyOwnerRecordSchema>;
+export type CredentialOwnerRecord = z.infer<typeof CredentialOwnerRecordSchema>;
+
+const ownerColumns = {
+  id: users.id,
+  name: users.name,
+  email: users.email,
+  emailVerified: users.emailVerified,
+  isStaff: users.isStaff,
+  image: users.image,
+  createdAt: users.createdAt,
+};
 
 export const createWorkspaceStore = (database: ControlDatabase) => ({
   async get(workspaceId: string) {
@@ -53,18 +72,10 @@ export const createWorkspaceStore = (database: ControlDatabase) => ({
   async findActiveApiKeyOwner(digest: Buffer, now: Date) {
     const [record] = await database
       .select({
-        apiKeyId: apiKeys.id,
+        credentialId: apiKeys.id,
         organizationId: apiKeys.organizationId,
         workspaceId: apiKeys.workspaceId,
-        user: {
-          id: users.id,
-          name: users.name,
-          email: users.email,
-          emailVerified: users.emailVerified,
-          isStaff: users.isStaff,
-          image: users.image,
-          createdAt: users.createdAt,
-        },
+        user: ownerColumns,
       })
       .from(apiKeys)
       .innerJoin(users, eq(users.id, apiKeys.createdBy))
@@ -77,7 +88,54 @@ export const createWorkspaceStore = (database: ControlDatabase) => ({
       )
       .limit(1);
 
-    return record ? ApiKeyOwnerRecordSchema.parse(record) : undefined;
+    return record
+      ? CredentialOwnerRecordSchema.parse({ ...record, credential: "api_key" })
+      : undefined;
+  },
+  // The OAuth provider stores a hash of the token and the consented workspace as its reference ID.
+  async findActiveOAuthTokenOwner(tokenHash: string, now: Date) {
+    const [record] = await database
+      .select({
+        credentialId: oauthAccessTokens.id,
+        organizationId: workspaces.organizationId,
+        workspaceId: workspaces.id,
+        user: ownerColumns,
+      })
+      .from(oauthAccessTokens)
+      .innerJoin(users, eq(users.id, oauthAccessTokens.userId))
+      .innerJoin(
+        workspaces,
+        eq(sql`${workspaces.id}::text`, oauthAccessTokens.referenceId),
+      )
+      .where(
+        and(
+          eq(oauthAccessTokens.token, tokenHash),
+          isNull(oauthAccessTokens.revoked),
+          gt(oauthAccessTokens.expiresAt, now),
+          arrayContains(oauthAccessTokens.scopes, [OAUTH_WORKSPACE_SCOPE]),
+        ),
+      )
+      .limit(1);
+
+    return record
+      ? CredentialOwnerRecordSchema.parse({
+          ...record,
+          credential: "oauth_token",
+        })
+      : undefined;
+  },
+  async setSessionOAuthWorkspace(
+    sessionId: string,
+    userId: string,
+    workspaceId: string,
+  ) {
+    const updated = await database
+      .update(sessions)
+      .set({ oauthWorkspaceId: UuidSchema.parse(workspaceId) })
+      .where(and(eq(sessions.id, sessionId), eq(sessions.userId, userId)))
+      .returning({ id: sessions.id });
+
+    return updated.length > 0;
   },
   async update(workspaceId: string, input: UpdateWorkspace) {
     const patch = UpdateWorkspaceSchema.parse(input);

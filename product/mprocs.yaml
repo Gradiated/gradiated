@@ -25,6 +25,7 @@ procs:
       GPU_CONTROL_PROVIDER: runpod
       GPU_CONTROL_PORT: "3005"
       TRAINING_EXECUTOR: mock
+      MCP_RESOURCE_URL: http://127.0.0.1:3007/mcp
       TEMPORAL_ADDRESS: localhost:7233
       TEMPORAL_NAMESPACE: default
       VALKEY_URL: &valkey_url redis://127.0.0.1:6379
@@ -54,6 +55,7 @@ procs:
       GRADIATED_API_URL: http://127.0.0.1:3001
       MCP_PUBLIC_URL: http://127.0.0.1:3007
       CONSOLE_URL: http://127.0.0.1:5173
+      AUTHORIZATION_SERVER_URL: http://localhost:3000/api/auth
   temporal-ui:
     shell: "./scripts/run-temporal-ui-local.sh"
     autostart: false

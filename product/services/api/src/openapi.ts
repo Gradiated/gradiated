@@ -15,6 +15,7 @@ export const unservedDependencies = (): AppDependencies => ({
   allowedOrigins: [],
   auth: {
     handler: unserved("auth.handler"),
+    authorizationServerMetadata: unserved("auth.authorizationServerMetadata"),
     resolveSession: unserved("auth.resolveSession"),
   },
   checkDependencies: unserved("checkDependencies"),
@@ -133,7 +134,8 @@ export const unservedDependencies = (): AppDependencies => ({
         "workspaces.createPlaygroundCredential",
       ),
       revokeApiKey: unserved("workspaces.revokeApiKey"),
-      authenticateApiKey: unserved("workspaces.authenticateApiKey"),
+      authenticateCredential: unserved("workspaces.authenticateCredential"),
+      selectOAuthWorkspace: unserved("workspaces.selectOAuthWorkspace"),
     },
   },
 });

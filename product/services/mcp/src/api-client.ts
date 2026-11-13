@@ -1,6 +1,6 @@
 import {
-  ApiKeyIdentitySchema,
-  type ApiKeyIdentity,
+  CredentialIdentitySchema,
+  type CredentialIdentity,
 } from "@gradiated/contracts";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
@@ -17,7 +17,7 @@ export interface Caller {
 
 export interface Principal {
   caller: Caller;
-  identity: ApiKeyIdentity;
+  identity: CredentialIdentity;
 }
 
 export type ApiClient = ReturnType<typeof createApiClient>;
@@ -42,14 +42,16 @@ export const createApiClient = (
     });
 
   const authenticate = async (caller: Caller): Promise<Principal | null> => {
-    const response = await request(caller, "/api/v1/api-keys/current");
+    const response = await request(caller, "/api/v1/credentials/current");
     if (response.status === 401) return null;
     if (!response.ok)
-      throw new Error(`The API answered ${response.status} for the key.`);
+      throw new Error(
+        `The API answered ${response.status} for the credential.`,
+      );
 
     return {
       caller,
-      identity: ApiKeyIdentitySchema.parse(await response.json()),
+      identity: CredentialIdentitySchema.parse(await response.json()),
     };
   };
 

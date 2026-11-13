@@ -5,7 +5,7 @@ Gradiated serves exact hosted models to customers through its gateway and proxy,
 ## trust levels
 - anonymous (outside): Any HTTP request from the internet with no session: sign-in and sign-up, the waitlist, health and the public model list.
 - customer-session (outside): A browser request with a Better Auth session cookie. The user is known; the organizations and workspaces it may reach are not, until membership is checked.
-- customer-api-key (outside): A request that presents a workspace API key as a bearer token or x-api-key header. The key names one workspace and the member who created it; that member's access is still checked.
+- workspace-credential (outside): A request that presents a workspace API key, or an OAuth access token issued for one workspace, as a bearer token or x-api-key header. The credential names one workspace and one member, the key's creator or the user who consented; that member's access is still checked.
 - stripe (outside): A webhook request that claims to come from Stripe. It is trusted only after its signature verifies against the webhook secret.
 - service-token (outside): A request from a Gradiated host process, such as a readiness or profiling report, that presents a bearer token. The token names the reporter; the body is still unvalidated input.
 - operator (outside): An agent or staff member that calls the ops MCP over the internet. It is trusted only after a verified Gradiated Google login and a scoped MCP token.

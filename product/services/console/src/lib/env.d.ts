@@ -3,4 +3,5 @@ interface ImportMetaEnv {
   readonly VITE_POSTHOG_KEY?: string;
   readonly VITE_POSTHOG_HOST?: string;
   readonly VITE_FEATURE_FLAGS?: string;
+  readonly VITE_GITHUB_APP_SLUG?: string;
 }

@@ -28,7 +28,8 @@ const evaluation = {
   error_rate: 0,
 };
 
-test("direct task reload initializes flags, edits schedules and opens held-out results", async ({
+// The task page hides its training runs, data and settings tabs while models are delivered by hand.
+test.skip("direct task reload initializes flags, edits schedules and opens held-out results", async ({
   page,
 }) => {
   test.setTimeout(60_000);
@@ -68,6 +69,7 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
             role: "admin",
             status: "active",
             default_workspace_id: workspaceId,
+            slug: "test-org",
             auto_join_domain: null,
             onboarding_completed: true,
           },
@@ -419,7 +421,9 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
   await expect.poll(() => Boolean(releaseTasks)).toBe(true);
   releaseTasks!();
   await expect(
-    page.getByRole("heading", { name: "No tasks yet" }),
+    page.getByRole("heading", {
+      name: "Train your first model with a post-training researcher",
+    }),
   ).toBeVisible();
   await page.getByRole("tab", { name: "Settings", exact: true }).click();
   await expect(
@@ -435,7 +439,8 @@ test("direct task reload initializes flags, edits schedules and opens held-out r
 });
 
 for (const initialRows of [0, 35]) {
-  test(`Data automatically loads older traces with ${initialRows} initial rows and retries failures`, async ({
+  // The task page hides its training runs, data and settings tabs while models are delivered by hand.
+  test.skip(`Data automatically loads older traces with ${initialRows} initial rows and retries failures`, async ({
     page,
   }) => {
     const requests: (string | null)[] = [];
@@ -481,6 +486,7 @@ for (const initialRows of [0, 35]) {
               role: "admin",
               status: "active",
               default_workspace_id: workspaceId,
+              slug: "test-org",
               auto_join_domain: null,
               onboarding_completed: true,
             },
@@ -669,6 +675,7 @@ test("Billing loads 100 transactions at a time with skeleton rows and retry", as
             role: "admin",
             status: "active",
             default_workspace_id: workspaceId,
+            slug: "test-org",
             auto_join_domain: null,
             onboarding_completed: true,
           },

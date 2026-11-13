@@ -183,6 +183,7 @@ class ProductChangesTest(unittest.TestCase):
     def test_tooling_changes_run_script_checks(self):
         self.assertTrue(plan(["tools/deployment/update-release.mjs"])["tooling"])
         self.assertFalse(plan(["tools/deployment/update-release.mjs"])["unit"])
+        self.assertTrue(plan(["tools/model-radar/radar.ts"])["tooling"])
 
     def test_gateway_fixtures_and_ingress_run_api_contract_tests(self):
         for path in (

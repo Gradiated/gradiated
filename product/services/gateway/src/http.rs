@@ -17,6 +17,7 @@ use axum::{
 use chrono::Utc;
 use futures_util::{Stream, StreamExt};
 use serde::Serialize;
+use serde_json::Value;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tracing::Instrument;
 use uuid::Uuid;
@@ -257,7 +258,7 @@ async fn serve(
         .flatten();
     let mut response = match endpoint.operation {
         Operation::Complete => complete(state, endpoint.protocol, qualified).await,
-        Operation::CountTokens => count_tokens(state, &qualified).await,
+        Operation::CountTokens => count_tokens(state, &qualified, &request).await,
     }?;
 
     if let Some(deployment_id) = pinned {
@@ -369,8 +370,9 @@ async fn complete(
 async fn count_tokens(
     state: &GatewayState,
     qualified: &QualifiedRequest,
+    request: &Value,
 ) -> Result<Response, GatewayError> {
-    let count = state.completions.count_tokens(qualified).await?;
+    let count = state.completions.count_tokens(qualified, request).await?;
 
     let body = serde_json::json!({ "input_tokens": count });
     crate::diagnostics::body::record_value("client_response", &body, Some(200));

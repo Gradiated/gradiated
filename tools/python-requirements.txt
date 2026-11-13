@@ -1,0 +1,7 @@
+# Third-party packages the repository's Python tools import, installed into the
+# mise-pinned Python when mise installs it (see mise.toml). Rerun with
+# `mise run python:deps` after changing this file.
+PyYAML==6.0.3
+jsonschema==4.26.0
+cryptography==46.0.5
+requests==2.32.5

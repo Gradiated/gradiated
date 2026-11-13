@@ -22,6 +22,7 @@ import {
   type EvaluationJudge,
   type ModelDeploymentRelease,
   type ModelProperties,
+  type OrganizationMetadata,
 } from "@gradiated/contracts";
 
 import { users } from "./auth.js";
@@ -80,12 +81,22 @@ export const organizations = pgTable(
     id: uuid("id").primaryKey(),
     kind: text("kind", { enum: ORGANIZATION_KINDS }).notNull(),
     name: text("name").notNull(),
+    // Prefixes private model names. New organizations start with a random
+    // placeholder and choose theirs in onboarding; it is fixed once they have a model.
+    slug: text("slug")
+      .notNull()
+      .unique("organizations_slug_unique")
+      .default(sql`left(md5(gen_random_uuid()::text), 16)`),
     status: text("status", { enum: ORGANIZATION_STATUSES }).notNull(),
     autoJoinDomain: text("auto_join_domain"),
     onboardedAt: timestamp("onboarded_at", {
       withTimezone: true,
       mode: "date",
     }),
+    metadata: jsonb("metadata")
+      .$type<OrganizationMetadata>()
+      .default({ schema_version: 1 })
+      .notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -104,6 +115,10 @@ export const organizations = pgTable(
     check(
       "organizations_status_check",
       sql`${table.status} in ('active', 'suspended')`,
+    ),
+    check(
+      "organizations_slug_check",
+      sql`${table.slug} ~ '^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$'`,
     ),
   ],
 );

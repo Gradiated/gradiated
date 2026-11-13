@@ -36,17 +36,15 @@ Open-weight models, by nature of having their weights published, allow you to co
 
 You can try at least. Josh has been running an initial experiment where we post-train [Qwen](https://huggingface.co/Qwen/Qwen3.8-27B), a smaller open-source model to learn from production traces where Sonnet performed well. The details below.
 
-<div className="gr-qa">
-
-**How did we post-train?**
+### How did we post-train?
 
 We did Supervised Fine-Tuning (SFT), a common first-try approach. We built a dataset that started with 5000 production traces, anonymized the data (this was hard, if you're curious let me know) and filtered that down to around 1000 conversations where the differences between Sonnet and Qwen would be most observable.
 
-**Expectations**
+### Expectations
 
 There is [literature](https://arxiv.org/abs/2305.15717) suggesting using SFT in a situation like this probably won't work and might actually degrade model performance, but that's not a guarantee, so it's worth trying anyways.
 
-**Results**
+### Results
 
 <SftFigure>
 
@@ -54,7 +52,7 @@ We did actually observe this. After our SFT experiment, the resulting model perf
 
 </SftFigure>
 
-**Why might it not be working?**
+### Why might it not be working?
 
 The data used in post-training was a paired list where each pair is a user's question and Sonnet's reply. SFT trains Qwen to answer like the frontier model. Ideally Qwen learns the functionality that made Sonnet's answers useful, but this isn't always the case.
 
@@ -62,11 +60,9 @@ For example, Sonnet often replies with confidence, which makes sense given it's 
 
 Qwen may be able to solve the problem, but if it tries to solve the problem like Sonnet it might end up just sounding like Sonnet.
 
-**How sure are we that this is what's happening?**
+### How sure are we that this is what's happening?
 
 Medium confidence. It makes sense that this is what could be happening. It's a concern with "off-policy" training. "Off" because it's learning from another model and not itself. We could try to probe at why it's performing poorly, but that's a new experiment.
-
-</div>
 
 Josh is now working on "on-policy" post-training methods. "On" meaning Qwen can learn from its own good and bad attempts at responding to a question. Results pending.
 

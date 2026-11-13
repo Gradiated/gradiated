@@ -12,6 +12,18 @@ const baseEnvironment = {
 };
 
 describe("API environment", () => {
+  it("treats blank provider secrets as unset", () => {
+    expect(
+      parseApiEnvironment({
+        ...baseEnvironment,
+        PANDADOC_API_KEY: "",
+        SLACK_BOT_TOKEN: " ",
+      }),
+    ).toMatchObject({
+      PANDADOC_API_KEY: undefined,
+      SLACK_BOT_TOKEN: undefined,
+    });
+  });
   it("applies the API-only defaults", () => {
     expect(parseApiEnvironment(baseEnvironment)).toMatchObject({
       METRICS_PORT: 9_464,

@@ -53,7 +53,7 @@ fails. Merge `main` into the branch, or close the pull request.
 ## Setup
 
 - Create the Gradiated Docs GitHub App:
-  `mise run github-apps:create -- docs`. It stores `DOCS_APP_CLIENT_ID` and
+  `gradctl github-apps create docs`. It stores `DOCS_APP_CLIENT_ID` and
   `DOCS_APP_PRIVATE_KEY` in this repository.
 - Add an Anthropic API key as the `DOCS_REFRESH_ANTHROPIC_API_KEY` repository
   secret.

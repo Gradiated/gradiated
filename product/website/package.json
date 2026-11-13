@@ -10,10 +10,9 @@
   "scripts": {
     "api:generate": "openapi-typescript ../services/api/generated/client-openapi.json -o src/api/schema.ts && prettier --write src/api/schema.ts",
     "dev": "mise exec -- vite",
-    "build": "pnpm sync:ashby-jobs && pnpm sync:compensation && tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist/server && node scripts/prerender.mjs && node scripts/check-seo.mjs",
+    "build": "pnpm sync:ashby-jobs && tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist/server && node scripts/prerender.mjs && node scripts/check-seo.mjs",
     "preview": "mise exec -- vite preview",
     "sync:ashby-jobs": "node scripts/sync-ashby-jobs.ts",
-    "sync:compensation": "node scripts/sync-posthog-compensation.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config tests/vitest.config.ts && tsx --test scripts/article-metadata.test.ts && node --test scripts/sand-*.test.mjs scripts/article-citations.test.mjs scripts/article-links.test.mjs"
   },

@@ -3,6 +3,9 @@ import tempfile
 import unittest
 import urllib.request
 from pathlib import Path
+from unittest.mock import patch
+
+import adapter_service
 
 from adapter_service import (
     AdapterService,
@@ -13,6 +16,14 @@ from adapter_service import (
 
 
 class LaunchTests(unittest.TestCase):
+    def test_service_passes_explicit_host_targets_to_loader_settings(self):
+        with patch.object(adapter_service, "model_config", return_value={"num_hidden_layers": 2}), \
+             patch.object(adapter_service, "AdapterService") as service:
+            adapter_service.start({**self.environment(2), "ADAPTER_PORT": "18082"}, "model", "revision", 2, 18084,
+                                  lambda: True, target_modules=["lm_head"])
+        settings = service.call_args.args[1]
+        self.assertEqual(settings["allowed_target_modules"], ("lm_head",))
+
     def environment(self, tp):
         return {
             "MODEL_ID": "base",

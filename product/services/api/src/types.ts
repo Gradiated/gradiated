@@ -2,6 +2,7 @@ import type { HttpBindings } from "@hono/node-server";
 
 import type {
   CatalogBillingService,
+  IntegrationService,
   MemberService,
   OrganizationService,
   UsageService,
@@ -38,6 +39,7 @@ export interface ApiEnvironment {
 }
 
 export interface AuthService {
+  githubAccessToken?(headers: Headers): Promise<string | null>;
   handler(request: Request): Promise<Response>;
   resolveSession(headers: Headers): Promise<SessionUser | null>;
 }
@@ -56,8 +58,17 @@ export interface ApiServices {
   >;
   organizations: Pick<
     OrganizationService,
-    "listForUser" | "createForUser" | "updateForUser"
+    | "listForUser"
+    | "createForUser"
+    | "updateForUser"
+    | "getOnboarding"
+    | "recordOnboardingNda"
+    | "submitOnboarding"
+    | "claimOnboardingSubmission"
+    | "releaseOnboardingSubmission"
+    | "resetOnboardingSubmission"
   >;
+  integrations: IntegrationService;
   members: MemberService;
   usage: UsageService;
   traces: TraceService;

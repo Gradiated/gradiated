@@ -281,8 +281,9 @@ need no OpenRouter key, are billed at catalog prices and see no OpenRouter
 identity. The rules are in [ARCHITECTURE.md](ARCHITECTURE.md#external-capacity-openrouter).
 `OPENROUTER_BASE_URL` accepts HTTPS, or HTTP on a loopback host for tests.
 Every OpenRouter request requires zero data retention and no data collection,
-and caps the provider price at the model's own catalog price (Kimi K3.1 Pro
-alone accepts up to 120% of it); if OpenRouter
+and caps the provider price at the model's own catalog price, with two exceptions:
+Kimi K3.1 Pro accepts up to 120% of it, and DeepSeek V4.1 Flash 1017 accepts up to
+$0.30 input and $1.20 output per million tokens. If OpenRouter
 cannot serve, the caller gets our own capacity's answer.
 
 The gateway uses `OPENROUTER_API_KEY` when it is set, as local runs and tests do.
@@ -303,7 +304,9 @@ Verified on 2026-11-05: `z-ai/glm-5.3-flash`. Verified on 2026-11-10:
 DeepSeek V4.1 Flash is retired, so its retained mapping does not permit serving.
 Callers must explicitly select `deepseek/deepseek-v4.1-flash-1017`, which is hosted
 on our capacity at $0.006 input, $0.001 cached input, and $0.20 output per million
-tokens. Its OpenRouter fallback remains subject to those input/output price caps.
+tokens. Its OpenRouter fallback permits up to $0.30 input and $1.20 output per
+million tokens, covering Modal and the common standard provider tier without
+requiring a local replica. Customer billing remains at catalog prices.
 OpenRouter has no Dealign uncensored GLM and no SystemOne model; those stay
 unmapped, and standard GLM must never stand in for the uncensored one.
 

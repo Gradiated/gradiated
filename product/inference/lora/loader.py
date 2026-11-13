@@ -340,6 +340,7 @@ class Loader:
                 fetch=fetch,
                 reserve=reserve,
                 deadline=deadline,
+                allowed_target_modules=self.config.get("allowed_target_modules"),
             )
         finally:
             with self.lock:

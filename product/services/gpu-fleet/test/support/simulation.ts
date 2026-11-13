@@ -660,7 +660,7 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
   };
 
   // Writes or, given undefined, removes a host's lease annotation, as
-  // tools/gpu/host-lease.py does.
+  // gradctl gpu lease does.
   const annotateLease = (instanceId: string, request?: object) => {
     const host = kube.objects.get(`${GPU_HOSTS}/gpu-${instanceId}`)! as {
       metadata: { annotations?: Record<string, string> };

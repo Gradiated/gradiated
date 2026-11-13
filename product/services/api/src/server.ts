@@ -2,8 +2,20 @@ import { createExternalModelCatalog } from "./catalog/external-models.js";
 import { createPostHogServer } from "@gradiated/analytics/server";
 import { createApiAnalytics, createSignupHandler } from "./analytics.js";
 import { createEvaluationModelValidator } from "./catalog/evaluation-models.js";
+import { MODEL_CATALOG } from "@gradiated/contracts/model-catalog";
 import { createTrainingEngine } from "./training/engine.js";
+import {
+  createAdapterProbe,
+  createQualificationLock,
+  reportAdapterQualification,
+} from "./training/adapter-probe.js";
 import { serve } from "@hono/node-server";
+import { createPandaDocNda, GRADIATED_NDA_TEMPLATE } from "./legal/pandadoc.js";
+import {
+  createSlackConnect,
+  GRADIATED_ENGINEER_SLACK_USER_IDS,
+} from "./slack/connect.js";
+import { createGithubInstallations } from "./github/installations.js";
 import { createGpuControlApp } from "./gpu-control.js";
 import {
   createTopUpChargeStore,
@@ -17,8 +29,11 @@ import {
   createTrainingService,
   createAdapterDownloads,
   createAdapterHostingService,
+  createAdapterQualifier,
+  createDeploymentStore,
   ObjectStorage,
   createDeploymentStatusService,
+  createIntegrationService,
   createMemberService,
   createOrganizationService,
   createProfilingWriter,
@@ -50,6 +65,10 @@ import {
   createResendInvitationSender,
   type InvitationMessage,
 } from "./email/invitation.js";
+import {
+  createLoggingEngineerOnboardingNotifier,
+  createResendEngineerOnboardingNotifier,
+} from "./email/engineer-onboarding.js";
 import { createTestMailbox } from "./email/test-mailbox.js";
 import {
   createLoggingWaitlistWelcomeSender,
@@ -115,6 +134,7 @@ const createEmailSenders = () => {
       sendInvitation: async ({ email, url }: InvitationMessage) =>
         invitationLinks.send(email, url),
       sendWaitlistWelcome: createLoggingWaitlistWelcomeSender(),
+      notifyEngineerOnboarding: createLoggingEngineerOnboardingNotifier(),
       authTestMailbox: {
         takeMagicLink: magicLinks.take,
         takeOtp: otpCodes.take,
@@ -133,11 +153,17 @@ const createEmailSenders = () => {
       ...resend,
       consoleUrl: environment.CONSOLE_URL,
     }),
+    notifyEngineerOnboarding: createResendEngineerOnboardingNotifier(resend),
   };
 };
 
-const { sendInvitation, sendWaitlistWelcome, authTestMailbox, ...authEmail } =
-  createEmailSenders();
+const {
+  sendInvitation,
+  sendWaitlistWelcome,
+  notifyEngineerOnboarding,
+  authTestMailbox,
+  ...authEmail
+} = createEmailSenders();
 
 const auth = createAuthService(database, {
   ...authEmail,
@@ -172,12 +198,24 @@ const auth = createAuthService(database, {
   trustedOrigins,
 });
 const metrics = new ApiMetrics();
+metrics.initializeAdapterQualifications(
+  MODEL_CATALOG.flatMap((model) =>
+    "training" in model && model.training ? [model.id] : [],
+  ),
+);
 
 const trainingEngine = createTrainingEngine(process.env);
 const artifactStorage = environment.TRAINING_ARTIFACTS_BUCKET
   ? new ObjectStorage(environment.TRAINING_ARTIFACTS_BUCKET)
   : undefined;
 const adapterDownloads = createAdapterDownloads(artifactStorage);
+
+const deploymentStore = createDeploymentStore(database);
+const qualifyAdapter = createAdapterQualifier({
+  targets: (modelId) => deploymentStore.adapterProbeTargets(modelId),
+  probe: createAdapterProbe(),
+  report: reportAdapterQualification(metrics),
+});
 
 const externalModels = createExternalModelCatalog();
 const validateEvaluationModel = createEvaluationModelValidator(
@@ -186,6 +224,22 @@ const validateEvaluationModel = createEvaluationModelValidator(
 );
 
 const app = createApp({
+  githubInstallations:
+    environment.GITHUB_CLIENT_ID && environment.GITHUB_CLIENT_SECRET
+      ? createGithubInstallations(environment.GITHUB_APP_SLUG)
+      : undefined,
+  slackConnect: environment.SLACK_BOT_TOKEN
+    ? createSlackConnect({
+        token: environment.SLACK_BOT_TOKEN,
+        engineerUserIds: GRADIATED_ENGINEER_SLACK_USER_IDS,
+      })
+    : undefined,
+  ndaDocuments: environment.PANDADOC_API_KEY
+    ? createPandaDocNda({
+        apiKey: environment.PANDADOC_API_KEY,
+        ...GRADIATED_NDA_TEMPLATE,
+      })
+    : undefined,
   analytics,
   externalModels,
   allowedOrigins: trustedOrigins,
@@ -196,6 +250,7 @@ const app = createApp({
   metrics,
   sendInvitation,
   sendWaitlistWelcome,
+  notifyEngineerOnboarding,
   services: {
     billingPayments:
       stripe && environment.STRIPE_WEBHOOK_SECRET
@@ -214,6 +269,7 @@ const app = createApp({
         : unavailableBillingPaymentsService(),
     catalogBilling,
     members: createMemberService(database),
+    integrations: createIntegrationService(database),
     organizations,
     usage: createUsageService(database, clickhouse),
     waitlist: createWaitlistService(database),
@@ -226,6 +282,8 @@ const app = createApp({
       trainingEngine.engine,
       validateEvaluationModel,
       artifactStorage,
+      qualifyAdapter,
+      createQualificationLock(valkey),
     ),
   },
 });

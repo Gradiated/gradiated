@@ -1,4 +1,5 @@
 import type { ObjectStorage } from "../storage/object-storage.js";
+import { createVersionFiles } from "./version-files.js";
 import { createModelUploads } from "./uploads.js";
 import { catalogModel } from "@gradiated/contracts/model-catalog";
 import {
@@ -17,6 +18,7 @@ import { reconcileTrainingRun } from "./engine.js";
 import { prepareTraining } from "./admission.js";
 import type { AdapterDownloads } from "./downloads.js";
 import { requireLoadableAdapter } from "./hosting.js";
+import type { AdapterQualifier, QualificationLock } from "./qualification.js";
 import { createTrainingRunStore } from "./run-store.js";
 import { createTrainingStore } from "./store.js";
 import { TrainingAdmissionError, type TrainingEngine } from "./types.js";
@@ -39,6 +41,8 @@ export const createTrainingService = (
   engine?: TrainingEngine,
   validateEvaluationModel?: (id: string) => Promise<void>,
   uploadStorage?: ObjectStorage,
+  qualifyAdapter?: AdapterQualifier,
+  lockQualification?: QualificationLock,
 ) => {
   const records = createTrainingStore(database);
 
@@ -81,6 +85,7 @@ export const createTrainingService = (
 
   return {
     uploads: createModelUploads(database, uploadStorage),
+    files: createVersionFiles(database, uploadStorage),
     async startRun(userId: string, workspaceId: string, taskId: string) {
       await requireWorkspaceEditor(database, { userId, workspaceId });
       const task = await records.getTaskById(workspaceId, taskId);
@@ -309,15 +314,43 @@ export const createTrainingService = (
       const task = await findTask(workspaceId, name);
       const version = await records.getVersion(task.id, versionId);
       if (!version) throw notFound("version");
-      if (version.status !== "available")
+      requireLoadableAdapter(version);
+      if (version.status === "available")
+        return records.setProductionVersion(task.id, version.id);
+
+      if (!qualifyAdapter)
         throw new ControlServiceError(
           "unavailable",
-          "Serving is not enabled for this version.",
+          "Serving qualification is unavailable. The version was not promoted.",
         );
 
-      requireLoadableAdapter(version);
+      const release = lockQualification
+        ? await lockQualification(version.id)
+        : async () => undefined;
+      if (!release)
+        throw new ControlServiceError(
+          "conflict",
+          "This version is already being tested for serving. Try again in a few minutes.",
+        );
 
-      return records.setProductionVersion(task.id, version.id);
+      let promoted: Awaited<ReturnType<typeof records.promoteQualifiedVersion>>;
+      try {
+        await qualifyAdapter(version);
+        promoted = await records.promoteQualifiedVersion(task.id, version.id, {
+          productionVersionId: task.productionVersionId,
+          updatedAt: task.updatedAt,
+        });
+      } finally {
+        await release().catch(() => undefined);
+      }
+      if (promoted === "not_found") throw notFound("version");
+      if (promoted === "stale")
+        throw new ControlServiceError(
+          "conflict",
+          "This model changed while the version was being tested. The version can now serve; promote it again to make it production.",
+        );
+
+      return promoted;
     },
   };
 };

@@ -478,7 +478,10 @@ weights. Layer range, module shapes and MoE expert coverage are checked against 
 catalog's immutable training revision, including `text_config` for multimodal models.
 Configuration reads are capped at 1 MiB with a 10-second deadline and same-origin
 Hugging Face redirects; the uploader never supplies the trusted layer or expert counts.
-Both indexed 2-D and fused 3-D expert tensors are supported; fused tensors must
+Accepted modules are those the serving runtime adapts: GLM-5.3 Flash attention
+projections only, and DeepSeek V4.1 Flash attention plus shared experts. Routed
+experts run on FP4 MoE kernels without LoRA hooks, so adapters targeting them are
+rejected at upload. Where a base supports expert adapters, both indexed 2-D and fused 3-D expert tensors are supported; fused tensors must
 match the base expert count, and mixed expert layouts are rejected. Tensor
 dimensions follow the runtime's 1,000,000-element-per-dimension limit. Safetensors
 headers are capped at 8 MiB to bound parsing memory within the API's 1 GiB container limit; weights retain the total 512 MiB file cap. Upload ranks are limited to 8 to match the current adapter-enabled serving runtime.
@@ -494,8 +497,9 @@ the existing worker cleanup loop.
 
 Externally uploaded versions have no training_run_id. They appear in task lists
 and version history as Uploaded, without synthetic training runs or evaluations.
-The initial version status is unavailable, matching trained versions; uploading
-alone does not qualify serving. The existing serving qualification boundary,
-private hosting grants and exact base revision checks apply before use/promotion.
+The initial version status is unavailable; uploading alone does not qualify
+serving. Promoting an uploaded version probes it through the loader on a
+LoRA-enabled allocation of its base and marks it available only when that passes;
+private hosting grants and exact base revision checks apply as for trained versions.
 The API needs S3 upload/read/write permissions and KMS encryption permissions;
 the artifacts bucket permits signed browser PUTs from the hosted and local console.

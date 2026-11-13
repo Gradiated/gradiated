@@ -7,6 +7,7 @@ import math
 import socket
 import ssl
 import struct
+import tarfile
 import tempfile
 import threading
 import time
@@ -997,6 +998,105 @@ class ArtifactTests(unittest.TestCase):
             self.root, self.spec, {"num_hidden_layers": 2, "n_routed_experts": 3}
         )
         self.assertEqual(full, 2 * half)
+
+    def write_head(self, shapes=None, target="lm_head", prefix="base_model.model.lm_head"):
+        config = {"peft_type": "LORA", "r": 2, "lora_alpha": 4,
+                  "target_modules": [target]}
+        (self.root / "adapter_config.json").write_text(json.dumps(config))
+        tensors, payload = {}, bytearray()
+        for side, shape in (shapes or {"A": [2, 4], "B": [7, 2]}).items():
+            size = 4 * math.prod(shape)
+            tensors[f"{prefix}.lora_{side}.weight"] = {
+                "dtype": "F32", "shape": shape,
+                "data_offsets": [len(payload), len(payload) + size],
+            }
+            payload.extend(bytes(size))
+        header = json.dumps(tensors).encode()
+        (self.root / "adapter_model.safetensors").write_bytes(
+            struct.pack("<Q", len(header)) + header + payload
+        )
+
+    def test_top_level_head_requires_declared_and_host_allowed_target(self):
+        model = {"num_hidden_layers": 2, "hidden_size": 4, "vocab_size": 7}
+        self.write_head()
+        for allowed in (None, [], ["q_proj"], "not_lm_head"):
+            with self.subTest(allowed=allowed), self.assertRaises(ValueError):
+                validate_tensors(self.root, self.spec, model,
+                                 allowed_target_modules=allowed)
+        self.assertEqual(validate_tensors(self.root, self.spec, model,
+                                         allowed_target_modules=["lm_head"]), 88)
+        self.write_head(prefix="lm_head")
+        self.assertEqual(validate_tensors(self.root, self.spec, {"text_config": model},
+                                         allowed_target_modules=["lm_head"]), 88)
+        self.write_head(target="q_proj")
+        with self.assertRaises(ValueError):
+            validate_tensors(self.root, self.spec, model,
+                             allowed_target_modules=["lm_head"])
+
+    def test_head_host_allowlist_is_rechecked_on_cached_artifacts(self):
+        self.write_head()
+        data = io.BytesIO()
+        with tarfile.open(fileobj=data, mode="w:gz") as bundle:
+            for name in ("adapter_config.json", "adapter_model.safetensors"):
+                body = (self.root / name).read_bytes()
+                member = tarfile.TarInfo(name)
+                member.size = len(body)
+                bundle.addfile(member, io.BytesIO(body))
+        payload = data.getvalue()
+        self.spec["version"]["adapter"].update(
+            sha256=hashlib.sha256(payload).hexdigest(), size_bytes=len(payload)
+        )
+        cache = self.root / "cache"
+        cache.mkdir()
+        model = {"num_hidden_layers": 2, "hidden_size": 4, "vocab_size": 7}
+        fetch = mock.Mock(side_effect=lambda spec, path, hosts: path.write_bytes(payload))
+        materialize(self.spec, cache, 1024 * 1024, set(), model, fetch=fetch,
+                    allowed_target_modules=["lm_head"])
+        materialize(self.spec, cache, 1024 * 1024, set(), model, fetch=fetch,
+                    allowed_target_modules=["lm_head"])
+        self.assertEqual(fetch.call_count, 1)
+        with self.assertRaises(ValueError):
+            materialize(self.spec, cache, 1024 * 1024, set(), model, fetch=fetch,
+                        allowed_target_modules=["q_proj"])
+
+    def test_head_rejects_transposed_or_rank_stabilized_parameterization(self):
+        model = {"num_hidden_layers": 2, "hidden_size": 4, "vocab_size": 7}
+        for key in ("fan_in_fan_out", "use_rslora"):
+            self.write_head()
+            path = self.root / "adapter_config.json"
+            config = json.loads(path.read_text())
+            path.write_text(json.dumps({**config, key: True}))
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                validate_tensors(self.root, self.spec, model,
+                                 allowed_target_modules=["lm_head"])
+
+    def test_head_rejects_wrong_shapes_global_names_and_missing_pairs(self):
+        model = {"text_config": {"num_hidden_layers": 2, "hidden_size": 4,
+                                 "vocab_size": 7}}
+        cases = [
+            ({"A": [2, 5], "B": [7, 2]}, "base_model.model.lm_head"),
+            ({"A": [2, 4], "B": [8, 2]}, "base_model.model.lm_head"),
+            ({"A": [3, 4], "B": [7, 3]}, "base_model.model.lm_head"),
+            ({"A": [1, 2, 4], "B": [1, 7, 2]}, "base_model.model.lm_head"),
+            ({"A": [2, 4]}, "base_model.model.lm_head"),
+            ({"B": [7, 2]}, "base_model.model.lm_head"),
+            (None, "base_model.model.layers.0.lm_head"),
+            (None, "base_model.model.embed_tokens"),
+            (None, "base_model.model.unknown.lm_head"),
+        ]
+        for shapes, prefix in cases:
+            with self.subTest(shapes=shapes, prefix=prefix):
+                self.write_head(shapes=shapes, prefix=prefix)
+                with self.assertRaises(ValueError):
+                    validate_tensors(self.root, self.spec, model,
+                                     allowed_target_modules=["lm_head"])
+        self.write_head()
+        for dimensions in ({}, {"hidden_size": True, "vocab_size": 7},
+                           {"hidden_size": 4, "vocab_size": 0}):
+            with self.subTest(dimensions=dimensions), self.assertRaises(ValueError):
+                validate_tensors(self.root, self.spec,
+                                 {"num_hidden_layers": 2, **dimensions},
+                                 allowed_target_modules=["lm_head"])
 
     def test_header_length_is_bounded_before_reading(self):
         self.write_experts(True)

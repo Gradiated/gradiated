@@ -152,12 +152,15 @@ def model_config(model, revision):
     )
 
 
-def start(environment, model, revision, tensor_parallel_size, engine_port, alive):
+def start(
+    environment, model, revision, tensor_parallel_size, engine_port, alive, *, target_modules=()
+):
     """Start the adapter service; returns it and the engine environment."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     settings = engine_settings(
         environment, revision, tensor_parallel_size, model_config(model, revision)
     )
+    settings["allowed_target_modules"] = tuple(target_modules)
     service = AdapterService(environment, settings, engine_port)
     service.start(alive)
     return service, resolver_environment(environment)

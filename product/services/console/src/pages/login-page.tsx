@@ -8,7 +8,7 @@ import { z } from "zod";
 
 import { previewInvitation } from "@/api/queries";
 import { authClient } from "@/auth";
-import { invitationPath } from "@/lib/login-search";
+import { signInCallbacks } from "@/lib/engineer-onboarding";
 import { analytics } from "@/lib/analytics";
 import { Brand } from "@/components/brand";
 import { GitHubIcon, GoogleIcon } from "@/components/icons";
@@ -39,21 +39,9 @@ const SOCIAL_PROVIDERS = [
 
 type SocialProvider = (typeof SOCIAL_PROVIDERS)[number]["provider"];
 
-const callbackUrl = (path: string) =>
-  new URL(path, window.location.origin).toString();
-
-const signInCallbacks = (invitation: string | undefined) => {
-  const next = invitation ? invitationPath(invitation) : undefined;
-
-  return {
-    callbackURL: callbackUrl(next ?? "/api-keys"),
-    newUserCallbackURL: callbackUrl(next ?? "/onboarding"),
-    errorCallbackURL: callbackUrl("/login"),
-  };
-};
-
 export const LoginPage = () => {
-  const { invitation } = useSearch({ from: "/login" });
+  const search = useSearch({ from: "/login" });
+  const { invitation } = search;
   const preview = useQuery({
     queryKey: ["invitation", invitation],
     queryFn: () => previewInvitation(invitation ?? ""),
@@ -92,7 +80,7 @@ export const LoginPage = () => {
     try {
       const result = await authClient.signIn.magicLink({
         email: values.email,
-        ...signInCallbacks(invitation),
+        ...signInCallbacks(search, window.location.origin),
       });
       if (result.error) {
         logSignInFailure("magic_link", result.error);
@@ -121,7 +109,7 @@ export const LoginPage = () => {
     try {
       const result = await authClient.signIn.social({
         provider,
-        ...signInCallbacks(invitation),
+        ...signInCallbacks(search, window.location.origin),
       });
       if (result?.error) {
         logSignInFailure(provider, result.error);
@@ -196,6 +184,9 @@ export const LoginPage = () => {
                     <p className="mt-1 text-sm text-muted-foreground">
                       We sent a sign-in link to {sentTo}.
                     </p>
+                    {import.meta.env.DEV ? (
+                      <LocalSignInLink email={sentTo} />
+                    ) : null}
                     <Button
                       className="mt-3"
                       onClick={() => setSentTo(null)}
@@ -248,5 +239,37 @@ export const LoginPage = () => {
         </Card>
       </div>
     </main>
+  );
+};
+
+/* Local development only: the API in AUTH_TEST_MODE keeps sign-in links in a
+   test mailbox instead of emailing them. Taking a link uses it up, so fetch it
+   on request rather than on render. */
+const LocalSignInLink = ({ email }: { email: string }) => {
+  const [error, setError] = useState("");
+
+  const open = async () => {
+    setError("");
+    const response = await fetch(
+      `/api/auth/test/magic-link?email=${encodeURIComponent(email)}`,
+    ).catch(() => null);
+    const body = (await response?.json().catch(() => null)) as {
+      url?: string;
+    } | null;
+    if (!body?.url)
+      return setError(
+        "No sign-in link found. The local API must run with AUTH_TEST_MODE=true.",
+      );
+
+    window.location.assign(body.url.replaceAll("&amp;", "&"));
+  };
+
+  return (
+    <div className="mt-3 flex flex-col items-center gap-1">
+      <Button type="button" variant="outline" onClick={() => void open()}>
+        Open sign-in link (local only)
+      </Button>
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+    </div>
   );
 };

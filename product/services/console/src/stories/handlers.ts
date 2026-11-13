@@ -14,6 +14,7 @@ const list = <T>(...data: T[]) => ({ data, next_cursor: null });
 const organization = {
   id: organizationId,
   name: "Example organization",
+  slug: "example",
   status: "active",
   role: "admin",
   default_workspace_id: workspaceId,
@@ -36,6 +37,8 @@ const user = {
 } satisfies components["schemas"]["CurrentUser"];
 
 type CurrentUser = components["schemas"]["CurrentUser"];
+
+export const staffUser = { ...user, is_staff: true } satisfies CurrentUser;
 type CurrentOrganization = CurrentUser["organizations"][number];
 
 const acmeUser = (
@@ -59,11 +62,13 @@ export const onboardingPersonalUser = acmeUser("alex.example@gmail.com", null, {
 });
 export const acmeAdmin = acmeUser("alex@acme.com", "acme.com", {
   name: "Acme",
+  slug: "acme",
   auto_join_domain: "acme.com",
 });
 export const acmeMember: CurrentUser = {
   ...acmeUser("priya@acme.com", "acme.com", {
     name: "Acme",
+    slug: "acme",
     auto_join_domain: "acme.com",
     role: "member",
   }),
@@ -762,6 +767,23 @@ export const newOrganizationHandlers = [
     HttpResponse.json({ ...billing, balance: "5000000000" }),
   ),
   ...handlersFor(acmeAdmin),
+];
+// Training before any task exists, with post-training onboarding not started
+// or already submitted.
+export const noTasksHandlers = (submitted = false) => [
+  http.get("/api/v1/workspaces/:workspaceId/tasks", () =>
+    HttpResponse.json(list()),
+  ),
+  http.get("/api/v1/organizations/:organizationId/engineer-onboarding", () =>
+    HttpResponse.json({
+      nda: null,
+      slack: null,
+      github_installations: [],
+      contact_channel: submitted ? "slack" : null,
+      submitted_at: submitted ? "2026-11-12T10:30:00.000Z" : null,
+    }),
+  ),
+  ...handlers,
 ];
 export const playgroundHandlers = [
   http.get("/api/v1/workspaces/:workspaceId/tasks", () =>

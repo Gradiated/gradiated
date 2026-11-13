@@ -11,6 +11,7 @@ import {
 import { ApiKeysPage } from "@/pages/api-keys-page";
 import { BillingPage } from "@/pages/billing-page";
 import { parseLoginSearch } from "@/lib/login-search";
+import { parseOnboardingSearch } from "@/lib/engineer-onboarding";
 import { LoginPage } from "@/pages/login-page";
 import { ModelsPage } from "@/pages/models-page";
 import { OnboardingPage } from "@/pages/onboarding-page";
@@ -47,7 +48,31 @@ const invitationAcceptRoute = createRoute({
 const onboardingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/onboarding",
+  validateSearch: parseOnboardingSearch,
   component: OnboardingPage,
+});
+
+const githubReturnRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/onboarding/github-connected",
+  validateSearch: (search: Record<string, unknown>) => ({
+    ...(typeof search.error === "string" ? { error: search.error } : {}),
+  }),
+  component: lazyRouteComponent(
+    () => import("@/pages/engineer-onboarding/github-return"),
+    "GithubReturnPage",
+  ),
+});
+
+const onboardingJourneyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/onboarding/$journey",
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: "/onboarding",
+      search: parseOnboardingSearch({ journey: params.journey }),
+    });
+  },
 });
 
 const apiKeysRoute = createRoute({
@@ -74,6 +99,9 @@ const playgroundRoute = createRoute({
     ...(typeof search.model === "string" && search.model
       ? { model: search.model }
       : {}),
+    ...(typeof search.task === "string" && search.task
+      ? { task: search.task }
+      : {}),
   }),
   component: lazyRouteComponent(
     () => import("@/pages/playground-page"),
@@ -99,6 +127,15 @@ const taskRoute = createRoute({
       : {}),
   }),
   component: lazyRouteComponent(() => import("@/pages/task-page"), "TaskPage"),
+});
+
+const versionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/tasks/$taskId/versions/$versionId",
+  component: lazyRouteComponent(
+    () => import("@/pages/version-page"),
+    "VersionPage",
+  ),
 });
 
 const billingRoute = createRoute({
@@ -205,11 +242,14 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   invitationAcceptRoute,
   onboardingRoute,
+  githubReturnRoute,
+  onboardingJourneyRoute,
   apiKeysRoute,
   modelsRoute,
   playgroundRoute,
   tasksRoute,
   taskRoute,
+  versionRoute,
   billingRoute,
   usageRoute,
   logsRoute,

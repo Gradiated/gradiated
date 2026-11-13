@@ -109,18 +109,31 @@ rotated automatically and revoked on shutdown. Keys and response bodies are not
 logged. One worker holds a fifteen-second Valkey lease; standby workers take over
 when it expires. This runs independently of settlement leadership.
 
-Every five seconds the leader discovers available deployment rows, then probes
-each in parallel using the exact-deployment verification header. Chat requests
-use eight output tokens; System One requests use a small classification. A valid
-response must acknowledge the deployment, identify a generation, and contain a
-completed inference result. Each pass has a four-second request deadline and no
-retries. Canary and draining replicas are excluded; rollout qualification still
-uses its separate, more extensive SDK checks. Retired targets are removed from
-probe metrics automatically.
+Every five seconds the leader discovers available catalog models and deployment
+rows independently. Every available catalog model gets a request through normal
+gateway routing, including OpenRouter fallback when it has no local replicas.
+Decision models use System One based on their catalog type. Models marked
+unavailable or retired are excluded. Scaling to zero removes deployment targets
+while retaining model requests and their alert metrics.
+Every worker also reads the available catalog during metrics scrapes, independently
+of probe leadership. The monitoring watchdog compares that inventory with the
+leader's routed targets and success gauges, so an older leader cannot silently
+omit zero-replica models. Missing catalog telemetry also alerts during a rollback.
+
+After the routed model requests complete, the leader probes each available
+deployment once per minute, staggered across passes, using the exact-deployment
+verification header with fallback disabled. Chat requests use eight output tokens;
+System One requests use a small classification. Valid responses identify a
+generation and contain a completed inference result; targeted responses must
+also acknowledge the deployment. Each phase has a four-second request deadline
+and no retries. Canary and draining replicas are excluded from targeted probes;
+rollout qualification still uses its separate SDK checks.
 
 Prometheus scrapes workers and evaluates availability rules every five seconds.
-An active deployment without a successful probe for fifteen seconds alerts after
-another ten seconds; stopped monitoring alerts separately. Alertmanager waits
+An available model without successful routed inference for fifteen seconds alerts
+after another minute. Targeted deployment failures alert after seventy-five
+seconds without success, sustained for one minute. Stopped monitoring alerts
+separately. Alertmanager waits
 five seconds before notifying and groups notifications by model and deployment.
 Incident.io then groups all occurrences of the same alert type in a fixed
 30-minute window, regardless of deployment. This probes

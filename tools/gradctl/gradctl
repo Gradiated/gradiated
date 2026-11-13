@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+"""Run gradctl from this checkout without installing it.
+
+`mise run gradctl:install` installs the single-file build on PATH instead.
+"""
+import os
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+if sys.version_info < (3, 10):
+    sys.exit('gradctl needs Python 3.10 or newer')
+sys.path.insert(0, str(HERE / 'src'))
+# Commands that work on the repository use this checkout wherever they run from.
+os.environ.setdefault('GRADCTL_REPO', str(HERE.parents[1]))
+
+from gradctl.cli import main  # noqa: E402
+
+main()

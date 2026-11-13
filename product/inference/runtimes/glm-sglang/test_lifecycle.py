@@ -112,15 +112,16 @@ class Lifecycle(unittest.TestCase):
         class Adapters:
             def stop(self):
                 stopped.append(True)
-        def start(environment, model, revision, tp, port, alive):
+        def start(environment, model, revision, tp, port, alive, *, target_modules):
             seen['before_engine'] = alive()
             seen['alive'] = alive
+            seen['targets'] = target_modules
             return Adapters(), environment
         engine = type('Engine', (), {'poll': lambda self: 0, 'wait': lambda self, timeout=None: 0,
                                      'terminate': lambda self: None, 'kill': lambda self: None})()
         config = {'lora': True, 'model': 'm', 'revision': 'r', 'backend': 18084, 'served_model_name': 'm'}
         with patch.dict(sys.modules, {'adapter_service': type(sys)('adapter_service')}), \
-             patch.object(service, 'commands', return_value=(config, ['backend'], ['router'])), \
+             patch.object(service, 'commands', return_value=(config, ['backend', '--lora-target-modules', 'q_proj', 'lm_head', '--served-model-name', 'other-model'], ['router'])), \
              patch.object(service, 'detect_profile', side_effect=lambda environment: environment), \
              patch.object(service, 'validate_hardware'), \
              patch.object(service.subprocess, 'Popen', return_value=engine), \
@@ -131,6 +132,16 @@ class Lifecycle(unittest.TestCase):
         self.assertTrue(seen['before_engine'])
         self.assertFalse(seen['alive']())
         self.assertEqual(stopped, [True])
+        self.assertEqual(seen['targets'], ['q_proj', 'lm_head'])
+
+    def test_trailing_option_values_cannot_grant_head_admission(self):
+        backend = ['backend', '--lora-target-modules', 'q_proj',
+                   '--served-model-name', 'lm_head']
+        self.assertEqual(service.lora_target_modules(backend), ['q_proj'])
+        backend.insert(3, 'lm_head')
+        self.assertEqual(service.lora_target_modules(backend), ['q_proj', 'lm_head'])
+        with self.assertRaises(ValueError):
+            service.lora_target_modules(['backend', '--lora-target-modules', '--port', '1234'])
 
     def test_wrong_hardware_never_starts_a_backend(self):
         with patch.object(service, 'commands', return_value=({}, [], [])), \

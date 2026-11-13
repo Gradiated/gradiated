@@ -23,6 +23,30 @@ const publicRoutes = new Set([
 ]);
 
 const validInputs: Record<string, { query?: string; body?: unknown }> = {
+  "POST /api/v1/organizations/:organization_id/slack-invitations": {
+    body: {},
+  },
+  "POST /api/v1/organizations/:organization_id/engineer-onboarding/submission":
+    {
+      body: { contact_channel: "email", github_installation_id: 42 },
+    },
+  "POST /api/v1/organizations/:organization_id/nda-documents": {
+    body: {
+      company: "Example Inc.",
+      address: "123 Example Street",
+      name: "Ada Lovelace",
+      title: "CEO",
+      email: "ada@example.com",
+    },
+  },
+  "POST /api/v1/workspaces/:workspace_id/tasks/:task/versions/:version_id/files":
+    {
+      body: {
+        name: "report.md",
+        size_bytes: 100,
+        content_type: "text/markdown",
+      },
+    },
   "POST /api/v1/workspaces/:workspace_id/model-uploads": {
     body: {
       task: "triage",
@@ -76,11 +100,13 @@ const validInputs: Record<string, { query?: string; body?: unknown }> = {
 };
 
 const pathParameters: Record<string, string> = {
+  document_id: "example-nda",
   organization_id: organizationId,
   workspace_id: workspaceId,
   api_key_id: apiKeyId,
   generation_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8c",
   upload_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8c",
+  file_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b91",
   version_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8e",
   run_id: "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8d",
   task: "support-triage",

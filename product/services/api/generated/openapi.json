@@ -3,7 +3,7 @@
   "info": {
     "title": "Gradiated API",
     "version": "0.1.0",
-    "description": "The Gradiated API covers inference, model discovery, workspaces, billing, API keys and usage. Inference endpoints use workspace API keys (Authorization: Bearer or x-api-key). These keys do not authorize workspace administration. Protected management endpoints require a signed-in user session and the appropriate organization role; management API keys are not currently supported. Management request bodies are limited to 1 MiB (413 if exceeded). Management per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits."
+    "description": "The Gradiated API covers inference, model discovery, workspaces, billing, API keys and usage. Inference endpoints use workspace API keys (Authorization: Bearer or x-api-key). These keys do not authorize workspace administration. Protected management endpoints require a signed-in user session and the appropriate organization role; management API keys are not currently supported. Management request bodies are limited to 1 MiB (413 if exceeded). Management per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Engineer onboarding routes have lower per-route limits. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits."
   },
   "servers": [
     {
@@ -1823,6 +1823,9 @@
             "minLength": 1,
             "maxLength": 200
           },
+          "slug": {
+            "$ref": "#/components/schemas/OrganizationSlug"
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -1855,12 +1858,18 @@
         "required": [
           "id",
           "name",
+          "slug",
           "status",
           "role",
           "default_workspace_id",
           "auto_join_domain",
           "onboarding_completed"
         ]
+      },
+      "OrganizationSlug": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$",
+        "description": "Unique organization handle that prefixes its private model names, as in `acme/support-triage`. It is fixed once the organization has a model."
       },
       "OrganizationRole": {
         "type": "string",
@@ -1904,6 +1913,10 @@
             "minLength": 1,
             "maxLength": 200
           },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$"
+          },
           "auto_join_domain": {
             "type": [
               "string",
@@ -1941,6 +1954,9 @@
             "minLength": 1,
             "maxLength": 200
           },
+          "slug": {
+            "$ref": "#/components/schemas/OrganizationSlug"
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -1973,6 +1989,7 @@
           "id",
           "kind",
           "name",
+          "slug",
           "status",
           "role",
           "default_workspace_id",
@@ -1987,10 +2004,387 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 200
+          },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$"
           }
         },
         "required": [
           "name"
+        ],
+        "additionalProperties": false
+      },
+      "NdaDocument": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The PandaDoc document ID, not a signing-session credential."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "preparing",
+              "ready",
+              "completed",
+              "unavailable"
+            ],
+            "description": "Authoritative provider status; completed requires all required participants."
+          },
+          "details": {
+            "$ref": "#/components/schemas/NdaDetails"
+          },
+          "completed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When PandaDoc recorded every required signature."
+          },
+          "customer_completed": {
+            "type": "boolean",
+            "description": "Whether the customer recipient has finished; this alone does not complete a two-party NDA."
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "details",
+          "completed_at",
+          "customer_completed"
+        ]
+      },
+      "NdaDetails": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "company": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The counterparty's legal company name."
+          },
+          "address": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "description": "The counterparty's company address."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The authorized customer signer's full name."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The customer signer's title."
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 200,
+            "format": "email",
+            "description": "The signer email, which must match the authenticated verified account."
+          }
+        },
+        "required": [
+          "company",
+          "address",
+          "name",
+          "title",
+          "email"
+        ],
+        "additionalProperties": false,
+        "description": "The signer details bound to the document; null while PandaDoc is still preparing it."
+      },
+      "NdaSigningSession": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id"
+        ]
+      },
+      "GithubInstallations": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "authorization_required",
+              "not_installed",
+              "installed"
+            ],
+            "description": "Installed means at least one active Gradiated installation; check repository_count before starting a project."
+          },
+          "installations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GithubInstallation"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "installations"
+        ]
+      },
+      "GithubInstallation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The verified Gradiated GitHub App installation ID."
+          },
+          "account": {
+            "type": "string",
+            "description": "The GitHub account where the customer installed Gradiated."
+          },
+          "account_type": {
+            "type": "string",
+            "enum": [
+              "Organization",
+              "User"
+            ],
+            "description": "Whether the account is an organization or a personal account."
+          },
+          "manage_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "GitHub page where the customer changes the installation's repository access."
+          },
+          "repository_selection": {
+            "type": "string",
+            "enum": [
+              "all",
+              "selected"
+            ],
+            "description": "Whether the installation covers all or selected repositories."
+          },
+          "repository_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Repositories accessible to both this GitHub user and the app installation; zero until the customer selects one."
+          },
+          "repositories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "description": "Full names of up to 5 of those repositories, for display."
+          }
+        },
+        "required": [
+          "id",
+          "account",
+          "account_type",
+          "manage_url",
+          "repository_selection",
+          "repository_count",
+          "repositories"
+        ]
+      },
+      "SlackInvitation": {
+        "type": "object",
+        "properties": {
+          "channel_id": {
+            "type": "string",
+            "description": "The dedicated channel in Gradiated's workspace."
+          },
+          "channel_name": {
+            "type": "string",
+            "description": "The shared customer channel name."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "The recipient email selected by the organization admin for Slack Connect."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "invited",
+              "joined"
+            ],
+            "description": "Invited remains pending customer acceptance and any workspace approvals."
+          }
+        },
+        "required": [
+          "channel_id",
+          "channel_name",
+          "email",
+          "status"
+        ]
+      },
+      "EngineerOnboarding": {
+        "type": "object",
+        "properties": {
+          "nda": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "document_id": {
+                "type": "string",
+                "description": "The completed PandaDoc document."
+              },
+              "signed_at": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2026-08-16T12:00:00.000Z"
+              }
+            },
+            "required": [
+              "document_id",
+              "signed_at"
+            ],
+            "description": "The organization's completed NDA, once PandaDoc confirms it. The NDA is optional."
+          },
+          "slack": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "channel_id": {
+                "type": "string"
+              },
+              "channel_name": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "active"
+                ],
+                "description": "Active once Slack confirmed an invitation."
+              },
+              "invited_email": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "email"
+              },
+              "invited_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "example": "2026-08-16T12:00:00.000Z"
+              }
+            },
+            "required": [
+              "channel_id",
+              "channel_name",
+              "status",
+              "invited_email",
+              "invited_at"
+            ],
+            "description": "The organization's Slack Connect channel."
+          },
+          "github_installations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                "account": {
+                  "type": "string"
+                },
+                "repository_selection": {
+                  "type": "string",
+                  "enum": [
+                    "all",
+                    "selected"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "account",
+                "repository_selection"
+              ]
+            },
+            "description": "GitHub App installations recorded at submission."
+          },
+          "contact_channel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "slack",
+              "email",
+              null
+            ],
+            "description": "How the customer prefers Gradiated engineers to contact them."
+          },
+          "submitted_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z",
+            "description": "When the organization started its project; null until submitted."
+          }
+        },
+        "required": [
+          "nda",
+          "slack",
+          "github_installations",
+          "contact_channel",
+          "submitted_at"
+        ]
+      },
+      "EngineerOnboardingSubmission": {
+        "type": "object",
+        "properties": {
+          "contact_channel": {
+            "type": "string",
+            "enum": [
+              "slack",
+              "email"
+            ],
+            "description": "How the customer prefers Gradiated engineers to contact them."
+          },
+          "github_installation_id": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The installation to verify with GitHub before submitting."
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 3000,
+            "description": "Optional context for Gradiated engineers. Delivered with the submission and not stored."
+          },
+          "nda_document_id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]{1,100}$",
+            "description": "The customer's optional NDA; when present it must be completed before submitting."
+          }
+        },
+        "required": [
+          "contact_channel",
+          "github_installation_id"
         ],
         "additionalProperties": false
       },
@@ -2712,7 +3106,7 @@
           "task": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 256
+            "maxLength": 128
           },
           "create_task": {
             "type": "boolean",
@@ -2721,7 +3115,7 @@
           "name": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 200,
+            "maxLength": 128,
             "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
           },
           "base_model_id": {
@@ -4315,6 +4709,147 @@
           "version_id"
         ],
         "additionalProperties": false
+      },
+      "TaskVersionFileList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskVersionFile"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "TaskVersionFile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "description": "File name within the version, such as report.md or eval-samples.csv. Reports reference data files by this name."
+          },
+          "content_type": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "content_type",
+          "size_bytes",
+          "created_at"
+        ]
+      },
+      "TaskVersionFileUpload": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "upload_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Signed URL to PUT the file's bytes to."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "upload_url",
+          "expires_at"
+        ]
+      },
+      "CreateTaskVersionFile": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "description": "File name within the version, such as report.md or eval-samples.csv. Reports reference data files by this name."
+          },
+          "size_bytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 104857600
+          },
+          "content_type": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "default": "application/octet-stream"
+          }
+        },
+        "required": [
+          "name",
+          "size_bytes"
+        ]
+      },
+      "TaskVersionFileContent": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "description": "File name within the version, such as report.md or eval-samples.csv. Reports reference data files by this name."
+          },
+          "content_type": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string",
+            "description": "UTF-8 text of the file."
+          }
+        },
+        "required": [
+          "name",
+          "content_type",
+          "content"
+        ]
+      },
+      "TaskVersionFileDownload": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Short-lived signed URL for the file."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "url",
+          "expires_at"
+        ]
       },
       "SystemOneResponse": {
         "type": "object",
@@ -6460,6 +6995,16 @@
               }
             }
           },
+          "409": {
+            "description": "The slug is taken or reserved.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "422": {
             "description": "The request body is invalid.",
             "content": {
@@ -8559,7 +9104,7 @@
       "put": {
         "operationId": "completeModelUpload",
         "summary": "Complete model upload",
-        "description": "Validates adapter files and creates a model version. Retries return the same version. Serving remains disabled until qualification.",
+        "description": "Validates adapter files and creates an unavailable model version. Retries return the same version. Promoting the version tests it on serving capacity and enables serving when that passes.",
         "tags": [
           "Training"
         ],
@@ -9838,7 +10383,7 @@
       "put": {
         "operationId": "promoteTaskVersion",
         "summary": "Promote task version",
-        "description": "Sets which task version serves requests.",
+        "description": "Sets which task version serves requests. A version that is not yet available, such as an uploaded adapter, is first loaded and tested on a LoRA-enabled serving allocation of its base model and becomes available only when that succeeds; this can take up to a few minutes. 409 means the serving runtime rejected the adapter; 503 means no allocation could test it.",
         "tags": [
           "Training"
         ],
@@ -9880,6 +10425,729 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/files": {
+      "get": {
+        "operationId": "listTaskVersionFiles",
+        "summary": "List version files",
+        "description": "Lists the files delivered with a task version, such as its report.md and the data files the report references.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "required": true,
+            "name": "task",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "version_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The version's files.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskVersionFileList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createTaskVersionFile",
+        "summary": "Create version file upload",
+        "description": "Staff only. Reserves a file on a task version and returns a signed upload URL that expires after one hour.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "required": true,
+            "name": "task",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "version_id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskVersionFile"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "A signed file upload URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskVersionFileUpload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/files/{file_id}": {
+      "put": {
+        "operationId": "completeTaskVersionFile",
+        "summary": "Complete version file upload",
+        "description": "Staff only. Publishes an uploaded file, replacing any file with the same name on the version.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "required": true,
+            "name": "task",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "version_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "file_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The published file.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskVersionFile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTaskVersionFile",
+        "summary": "Delete version file",
+        "description": "Staff only. Removes a file from a task version.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "required": true,
+            "name": "task",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "version_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "file_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The file was deleted."
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/files/{file_id}/content": {
+      "get": {
+        "operationId": "getTaskVersionFileContent",
+        "summary": "Read version file",
+        "description": "Returns the text of a Markdown, CSV, JSON or plain-text file of at most 2 MiB.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "required": true,
+            "name": "task",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "version_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "file_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file's text.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskVersionFileContent"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/files/{file_id}/download": {
+      "get": {
+        "operationId": "getTaskVersionFileDownload",
+        "summary": "Download version file",
+        "description": "Gets a short-lived download link for a version file.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "required": true,
+            "name": "task",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "version_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "file_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A short-lived download link.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskVersionFileDownload"
                 }
               }
             }

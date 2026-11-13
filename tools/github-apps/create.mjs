@@ -2,7 +2,7 @@
 // each private key directly in its consumer's secret store. Keys never reach
 // stdout, files in the repository, or command-line arguments.
 //
-// Usage: mise run github-apps:create -- [app-key ...]
+// Usage: gradctl github-apps create [app-key ...]
 import { spawnSync } from "node:child_process";
 import { createSign, randomBytes } from "node:crypto";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";

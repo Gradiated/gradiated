@@ -6,10 +6,12 @@ import type { ModelReplica } from "@gradiated/control";
 import { probeModel } from "../src/inference-probe.js";
 import {
   InferenceProbeMetrics,
+  catalogProbeTargets,
   runInferenceProbes,
 } from "../src/inference-probes.js";
 
 const deploymentId = randomUUID();
+const model = { modelId: "test/model" };
 const options = {
   apiKey: "synthetic-key",
   baseURL: "https://gateway.test",
@@ -41,6 +43,80 @@ const replica = {
 afterEach(() => vi.useRealTimers());
 
 describe("public inference probes", () => {
+  it("discovers every available catalog model, including decisions, without consulting replicas", () => {
+    expect(
+      catalogProbeTargets([
+        { id: "deepseek/deepseek-v4.1-flash-1017", status: "available" },
+        { id: "perplexity-ai/pplx-decider-v1.2", status: "available" },
+        { id: "test/unavailable", status: "unavailable" },
+        { id: "test/retired", status: "retired" },
+      ]),
+    ).toEqual([
+      { modelId: "deepseek/deepseek-v4.1-flash-1017" },
+      { modelId: "perplexity-ai/pplx-decider-v1.2", protocol: "system_one" },
+    ]);
+  });
+
+  it("probes and reports failures for a catalog model with no replicas", async () => {
+    const abort = new AbortController();
+    const registry = new Registry();
+    const beforePass = vi.fn(async () => {});
+    const probe = vi.fn(async () => {
+      throw new Error("synthetic OpenRouter rejection");
+    });
+    let rendered = "";
+    await runInferenceProbes({
+      eval: async () => 1,
+      replicas: async () => [],
+      models: async () => [model],
+      beforePass,
+      probe,
+      metrics: new InferenceProbeMetrics(registry),
+      signal: abort.signal,
+      onReady: async () => {
+        rendered = await registry.metrics();
+        abort.abort();
+      },
+    });
+
+    expect(beforePass).toHaveBeenCalledOnce();
+    expect(probe).toHaveBeenCalledExactlyOnceWith(
+      model,
+      expect.any(AbortSignal),
+      "model",
+    );
+    expect(rendered).toContain(
+      'gradiated_inference_routed_probe_target{model="test/model"} 1',
+    );
+    expect(rendered).toContain(
+      'gradiated_inference_routed_probe_requests_total{model="test/model",result="failure"} 1',
+    );
+    expect(rendered).toContain(
+      'gradiated_inference_routed_probe_last_success_timestamp_seconds{model="test/model"} 0',
+    );
+    expect(rendered).not.toContain('deployment="');
+  });
+
+  it("retains routed availability across scale-to-zero and removes it when the model leaves the catalog", async () => {
+    const registry = new Registry();
+    const metrics = new InferenceProbeMetrics(registry);
+    metrics.discover([replica], [model]);
+    metrics.recordRouted(model, true, 0.1);
+    metrics.discover([], [model]);
+
+    const rendered = await registry.metrics();
+    expect(rendered).toContain(
+      'gradiated_inference_routed_probe_target{model="test/model"} 1',
+    );
+    expect(rendered).toContain(
+      'gradiated_inference_routed_probe_requests_total{model="test/model",result="success"} 1',
+    );
+    expect(rendered).not.toContain('deployment="');
+
+    metrics.discover([], []);
+    expect(await registry.metrics()).not.toContain('model="test/model"');
+  });
+
   it("makes one capped completion through the public API and accepts bounded reasoning output", async () => {
     const fetch = vi.fn(async (input: unknown) => {
       const request = input as Request;
@@ -177,6 +253,7 @@ describe("public inference probes", () => {
       runInferenceProbes({
         eval: evaluate,
         replicas: async () => [],
+        models: async () => [],
         probe: async () => {},
         metrics: new InferenceProbeMetrics(new Registry()),
         signal: abort.signal,
@@ -248,6 +325,7 @@ describe("public inference probes", () => {
     const run = runInferenceProbes({
       eval: evaluate,
       replicas: async () => [replica],
+      models: async () => [model],
       probe,
       metrics,
       signal: abort.signal,
@@ -289,11 +367,12 @@ describe("public inference probes", () => {
     const run = runInferenceProbes({
       eval: async () => 1,
       replicas: async () => [replica, { ...replica, id: randomUUID() }],
+      models: async () => [model],
       probe: async (replica, _signal, scope) => {
         if (scope === "model") {
           started();
           await routedComplete;
-        } else targeted(replica.id);
+        } else if ("id" in replica) targeted(replica.id);
       },
       metrics: new InferenceProbeMetrics(new Registry()),
       signal: abort.signal,
@@ -314,6 +393,7 @@ describe("public inference probes", () => {
     const run = runInferenceProbes({
       eval: async () => 1,
       replicas: async () => [replica],
+      models: async () => [model],
       probe: async (_replica, signal) => {
         await new Promise((resolve) => setTimeout(resolve, 3000));
         signal.throwIfAborted();
@@ -358,6 +438,7 @@ describe("public inference probes", () => {
     const run = runInferenceProbes({
       eval: async () => 1,
       replicas: async () => replicas,
+      models: async () => [model, { modelId: "other/model" }],
       probe,
       metrics,
       signal: abort.signal,
@@ -398,9 +479,11 @@ describe("public inference probes", () => {
     const run = runInferenceProbes({
       eval: async () => 1,
       replicas: async () => [...inventory].reverse(),
+      models: async () => [model],
       probe: async (replica, _signal, scope) => {
         const time = performance.now() - started;
-        if (scope === "deployment") attempts.push({ id: replica.id, time });
+        if (scope === "deployment" && "id" in replica)
+          attempts.push({ id: replica.id, time });
         else models.push(time);
       },
       metrics: new InferenceProbeMetrics(new Registry()),
@@ -448,6 +531,7 @@ describe("public inference probes", () => {
           return 1;
         },
         replicas,
+        models: async () => [model],
         probe,
         metrics: new InferenceProbeMetrics(new Registry()),
         signal: abort.signal,
@@ -463,9 +547,9 @@ describe("public inference probes", () => {
     vi.setSystemTime(1_000_000);
     const registry = new Registry();
     const metrics = new InferenceProbeMetrics(registry);
-    metrics.discover([replica]);
+    metrics.discover([replica], [model]);
     await vi.advanceTimersByTimeAsync(60_000);
-    metrics.discover([replica]);
+    metrics.discover([replica], [model]);
     const label = `{model="${replica.modelId}",deployment="${replica.id}"}`;
     expect(await registry.metrics()).toContain(
       `gradiated_inference_probe_discovered_timestamp_seconds${label} 1000`,
@@ -473,9 +557,9 @@ describe("public inference probes", () => {
     expect(await registry.metrics()).toContain(
       `gradiated_inference_probe_last_success_timestamp_seconds${label} 0`,
     );
-    metrics.discover([]);
+    metrics.discover([], []);
     expect(await registry.metrics()).not.toContain(label);
-    metrics.discover([replica]);
+    metrics.discover([replica], [model]);
     expect(await registry.metrics()).toContain(
       `gradiated_inference_probe_discovered_timestamp_seconds${label} 1060`,
     );
@@ -490,6 +574,7 @@ describe("public inference probes", () => {
     const run = runInferenceProbes({
       eval: async () => 0,
       replicas,
+      models: async () => [model],
       probe,
       metrics: new InferenceProbeMetrics(registry),
       signal: abort.signal,

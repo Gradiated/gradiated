@@ -2,8 +2,21 @@ import { parseEnvironment, type Environment } from "@gradiated/config";
 import { z } from "@hono/zod-openapi";
 
 const PortSchema = z.coerce.number().int().min(1).max(65_535);
+const OptionalSecret = z.preprocess(
+  (value) => (typeof value === "string" && !value.trim() ? undefined : value),
+  z.string().trim().min(1).optional(),
+);
 
 const ApiOnlyEnvironmentSchema = z.object({
+  SLACK_BOT_TOKEN: OptionalSecret,
+  PANDADOC_API_KEY: OptionalSecret,
+  GITHUB_APP_SLUG: z.preprocess(
+    (value) => value || undefined,
+    z
+      .string()
+      .regex(/^[a-z0-9][a-z0-9-]{0,99}$/)
+      .default("gradiated"),
+  ),
   POSTHOG_KEY: z
     .string()
     .optional()

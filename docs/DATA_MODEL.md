@@ -43,7 +43,7 @@ research, alias and third-party-provider concepts.
 - Enums are constrained `text`, not PostgreSQL enum types.
 - API keys contain 256 random bits and are stored only as SHA-256 `bytea` digests; raw secrets are shown once and never persisted.
 - Mutable PostgreSQL records have `updated_at`; immutable PostgreSQL and ClickHouse records do not.
-- No generic `metadata`, arbitrary tags or universal soft-delete fields.
+- No generic `metadata`, arbitrary tags or universal soft-delete fields. `organizations.metadata` is the one exception: a closed, versioned Zod document with no arbitrary keys.
 - JSON is allowed only where a versioned Zod schema defines a closed shape.
 - Every tenant query includes `organization_id` and, where applicable, `workspace_id`.
 - The TypeScript application owns PostgreSQL and queries ClickHouse for product analytics. Rust consumes serving projections and emits versioned generation events; it does not contain product repositories.
@@ -57,33 +57,33 @@ The first four tables are generated and owned by Better Auth. We map its logical
 
 ### 1. `users`
 
-| Field            | Type        | Null | Rules                                 |
-| ---------------- | ----------- | ---- | ------------------------------------- |
-| `id`             | uuid        | no   | Primary key                           |
-| `name`           | text        | no   | Bounded display name                  |
-| `email`          | text        | no   | Normalized; unique case-insensitively |
-| `email_verified` | boolean     | no   | Default false                         |
+| Field            | Type        | Null | Rules                                         |
+| ---------------- | ----------- | ---- | --------------------------------------------- |
+| `id`             | uuid        | no   | Primary key                                   |
+| `name`           | text        | no   | Bounded display name                          |
+| `email`          | text        | no   | Normalized; unique case-insensitively         |
+| `email_verified` | boolean     | no   | Default false                                 |
 | `is_staff`       | boolean     | no   | Default false; controlled staff portal access |
-| `image_url`      | text        | yes  | Profile image URL                     |
-| `created_at`     | timestamptz | no   | Creation time                         |
-| `updated_at`     | timestamptz | no   | Last mutation time                    |
+| `image_url`      | text        | yes  | Profile image URL                             |
+| `created_at`     | timestamptz | no   | Creation time                                 |
+| `updated_at`     | timestamptz | no   | Last mutation time                            |
 
 Verified `is_staff` users can administer all customer organizations without membership rows. Other users require active organization membership to access its workspaces. Staff status is not writable through public authentication or profile APIs. Impersonation uses the target user’s memberships and records its staff actor separately.
 
 ### 2. `sessions`
 
-| Field        | Type        | Null | Rules                       |
-| ------------ | ----------- | ---- | --------------------------- |
-| `id`         | uuid        | no   | Primary key                 |
-| `user_id`    | uuid        | no   | FK `users.id`               |
-| `token`      | text        | no   | Unique; Better Auth-managed |
-| `expires_at` | timestamptz | no   | Session expiry              |
-| `impersonated_by` | uuid | yes | Staff actor; FK `users.id`, cascade on deletion |
-| `impersonator_session_id` | uuid | yes | Original staff session; revalidated during impersonation |
-| `ip_address` | inet        | yes  | Better Auth-managed         |
-| `user_agent` | text        | yes  | Bounded                     |
-| `created_at` | timestamptz | no   | Creation time               |
-| `updated_at` | timestamptz | no   | Last mutation time          |
+| Field                     | Type        | Null | Rules                                                    |
+| ------------------------- | ----------- | ---- | -------------------------------------------------------- |
+| `id`                      | uuid        | no   | Primary key                                              |
+| `user_id`                 | uuid        | no   | FK `users.id`                                            |
+| `token`                   | text        | no   | Unique; Better Auth-managed                              |
+| `expires_at`              | timestamptz | no   | Session expiry                                           |
+| `impersonated_by`         | uuid        | yes  | Staff actor; FK `users.id`, cascade on deletion          |
+| `impersonator_session_id` | uuid        | yes  | Original staff session; revalidated during impersonation |
+| `ip_address`              | inet        | yes  | Better Auth-managed                                      |
+| `user_agent`              | text        | yes  | Bounded                                                  |
+| `created_at`              | timestamptz | no   | Creation time                                            |
+| `updated_at`              | timestamptz | no   | Last mutation time                                       |
 
 ### 3. `accounts`
 
@@ -127,15 +127,33 @@ Direct customers and distribution channels such as OpenRouter use the same organ
 | `id`               | uuid        | no   | Primary key                                 |
 | `kind`             | text        | no   | `customer`, `distribution_channel`          |
 | `name`             | text        | no   | Bounded display name                        |
+| `slug`             | text        | no   | Unique; `^[a-z0-9][a-z0-9-]{0,37}[a-z0-9]$` |
 | `status`           | text        | no   | `active`, `suspended`                       |
 | `auto_join_domain` | text        | yes  | Lowercase email domain; unique when present |
 | `onboarded_at`     | timestamptz | yes  | When the owner finished first-run setup     |
+| `metadata`         | jsonb       | no   | Closed versioned document; see below        |
 | `created_at`       | timestamptz | no   | Creation time                               |
 | `updated_at`       | timestamptz | no   | Last mutation time                          |
 
 OpenRouter is an internal `distribution_channel` organization and is not visible in the customer organization chooser.
 
+The organization `slug` prefixes its private model names, as in `acme/support-triage`. An organization created during signup starts with a random 16-character slug, and its owner chooses the real one during onboarding; one created from the console asks for its slug up front. In both cases the console suggests a slugified form of the organization name and the owner can edit it; a slug held by another organization is refused so they can pick again. Admins can change it in settings until the organization has its first model, after which it is fixed so model names never stop resolving. Fixed platform names (`gradiated`, `openai`, `anthropic`, `api`, ...) and the author segment of every hosted catalog id (`google`, `qwen`, ...) are reserved, so a private name never shadows a catalog id. Migration 0030 gives existing organizations a slug from their name, with `-2`, `-3`, ... on collisions and an `-org` suffix for reserved or too-short names.
+
 A new user's signup organization has a null `onboarded_at`, and the console asks its owner to name it before continuing. An owner or admin may set `auto_join_domain` only to the domain of their own verified email, and only when that domain is not a free or disposable email provider. When a user signs up with a verified email at a claimed domain of an active customer organization, they join it as a `member` and no personal organization is created. One organization may claim a domain.
+
+`metadata` defaults to `{"schema_version": 1}` and is parsed with `OrganizationMetadataSchema` from `@gradiated/contracts` on every read and write; unknown keys are rejected. Its only key is `training_onboarding`, the post-training onboarding record:
+
+| Key                                         | Type     | Rules                                                  |
+| ------------------------------------------- | -------- | ------------------------------------------------------ |
+| `training_onboarding.nda.document_id`       | text     | PandaDoc document that PandaDoc confirmed as completed |
+| `training_onboarding.nda.template_version`  | text     | NDA template version it was signed against             |
+| `training_onboarding.nda.signed_at`         | ISO time | PandaDoc completion time                               |
+| `training_onboarding.submitted_at`          | ISO time | Set once when an admin starts the project              |
+| `training_onboarding.submitted_by`          | uuid     | The admin who submitted                                |
+| `training_onboarding.submission_claimed_at` | ISO time | A submission in flight; expires after two minutes      |
+| `training_onboarding.contact_channel`       | text     | `slack`, `email`                                       |
+
+The organizations store merges changes into `metadata.training_onboarding` only. The NDA is recorded when the API reads a completed, organization-bound PandaDoc document, and replaced only for a new template version. A submission is recorded at most once. Onboarding notes are delivered to Slack or the Gradiated team email at submission and are not stored. `onboarded_at` is unrelated: it still means the owner finished first-run console setup.
 
 ### 6. `organization_members`
 
@@ -169,6 +187,26 @@ Admins manage members, invitations, workspaces, organization settings, training 
 | `updated_at`      | timestamptz | no   | Last mutation time                    |
 
 An invitation is pending until it is accepted or revoked; expiry is derived from `expires_at`. There is at most one pending invitation per organization and normalized email, so inviting the same address again or resending replaces its token and expiry instead of adding a row. Accepting requires a signed-in user whose verified email matches and inserts the membership in the same transaction. A user who signs up with a verified email that has pending invitations joins those organizations instead of receiving a personal organization.
+
+### 7a. `integrations`
+
+Organization-level connections to external providers. No credentials are stored: Slack uses Gradiated's bot token from configuration and GitHub App tokens are minted on demand.
+
+| Field             | Type        | Null | Rules                                                 |
+| ----------------- | ----------- | ---- | ----------------------------------------------------- |
+| `id`              | uuid        | no   | Primary key                                           |
+| `organization_id` | uuid        | no   | FK `organizations.id`                                 |
+| `provider`        | text        | no   | `github`, `slack`                                     |
+| `external_id`     | text        | no   | GitHub installation ID or Slack channel ID            |
+| `status`          | text        | no   | `pending`, `active`, `revoked`                        |
+| `settings`        | jsonb       | no   | Closed versioned per-provider Zod document; see below |
+| `created_by`      | uuid        | no   | FK `users.id`                                         |
+| `created_at`      | timestamptz | no   | Creation time                                         |
+| `updated_at`      | timestamptz | no   | Last mutation time                                    |
+
+`(provider, external_id)` is unique among unrevoked rows, so one installation or channel belongs to one organization. An organization has at most one unrevoked Slack row; it may have several GitHub rows. Slack `settings` hold `channel_name`, `invited_email` and `invited_at`; GitHub `settings` hold `account_login` and `repository_selection`. Both carry `schema_version: 1`.
+
+The stored Slack row, not the channel purpose, is the proof that a channel belongs to an organization. The row is inserted as `pending` as soon as Slack creates the channel and before its purpose is set, becomes `active` once Slack confirms an invitation, and is revoked when Slack reports the channel archived or missing. Each organization may send one Slack invitation per 10 minutes, claimed atomically through `invited_at`. A GitHub row is upserted as `active` when the submission rechecks the installation with GitHub.
 
 ### 8. `workspaces`
 
@@ -814,10 +852,10 @@ URLs remain intact.
 
 ## Task training
 
-Migration 0008 adds workspace-owned `tasks`, named uniquely within a workspace.
-Task names cannot be `.` or `..`, because task routes use the name as a URL path
-segment. The collector registers a task when it accepts its first captured trace,
-using an idempotent insert keyed by workspace and task name. PostgreSQL outages
+Migration 0008 adds workspace-owned `tasks`. Task names are unique within the
+workspace and cannot be `.` or `..`, because task routes use the name as a URL
+path segment. The collector registers a task when it accepts its first captured
+trace, using an idempotent insert keyed by workspace and task name. PostgreSQL outages
 do not block capture or uploads: pending registrations remain on local disk and
 retry in the background, including after process restart. A bounded one-hour
 in-memory cache avoids repeated writes for known tasks. Task listing reads
@@ -850,11 +888,14 @@ workflow transitions. See [the run contract](TASK_FINE_TUNING_RUN_CONTRACT.md).
 adapters have no training run. Composite
 foreign keys require that the workspace owns the task and that the run belongs
 to that same task. Each run produces at most one version; version names are
-workspace-unique. Adapter metadata records an immutable URI, digest, byte size,
+unique within their task. A trained version is named by its input cutoff date,
+`yyyy-mm-dd`, then `-2`, `-3`, ... for further versions that day. Adapter metadata records an immutable URI, digest, byte size,
 format and rank. Large artifacts and datasets remain in object storage.
 
 The task's production-version pointer is changed explicitly by an editor, only
-to an available version of the same task. Promotion uses last-write-wins semantics
+to a version of the same task. An unavailable version, such as an upload, must
+first pass a serving probe on a LoRA-enabled allocation; the same transaction then
+marks it available and sets the pointer. Promotion uses last-write-wins semantics
 for concurrent authorized requests. Availability means durable serving eligibility,
 not residency in an inference runtime's adapter cache. Comparison model IDs may
 name external providers; they are not restricted to the hosted-model table.
@@ -863,6 +904,31 @@ Executor-specific support is checked when admitting a run.
 Workspace `default_judge_model` seeds `tasks.judge_model_id` when a task is first captured. Each task can override its judge independently; changing the workspace default never rewrites existing tasks. Migration 0013 renames the workspace field and backfills existing tasks from their workspace’s current default. Training admission snapshots the saved task judge.
 
 ## Private LoRA serving
+
+A private model's public name is `<organization slug>/<task>` for the task's
+production version and `<organization slug>/<task>/<version>` for one version. The
+gateway resolves it within the calling key's workspace to one version and
+records that version's full public name in the response and usage. GPU runtimes
+never see model names: they key an adapter `<workspace_id>/<version_id>` and fetch
+its download grant by version ID.
+
+A task's name becomes a model name when its first version is written, from a
+training run or an upload. Migration 0030 adds `tasks.organization_id`, which an
+insert trigger on `task_versions` sets at that point to
+the workspace's organization, with a composite foreign key to the workspace and a
+unique `(organization_id, name)`. Model names are therefore unique across
+the organization, while trace labels still register tasks per workspace. A model
+name contains no `/` and has at most 128 characters, so the public name fits the
+gateway's 300-character model ID; a check enforces this only for claimed names,
+and the trigger leaves other names unclaimed. The trigger locks the organization
+row, as slug changes do, so a slug can't change under an organization's first
+model; running it in the database also covers versions written by older code
+during a rollout.
+Training and uploads are refused when another workspace of the organization
+already has a model with the name. Only claimed tasks resolve at the gateway or
+load on GPU runtimes. The migration claims names for tasks that already have
+versions; where several workspaces of one organization share such a name, the
+oldest task keeps it.
 
 Private LoRA inference reuses `task_versions` for workspace ownership, immutable
 artifact URI/checksum/rank and durable serving eligibility. The existing
@@ -886,5 +952,25 @@ download URLs are temporary grants and are not persisted on versions. See
 time and nullable published version FK. Grants last one hour. Publication locks
 the upload row and is idempotent. `task_versions.training_run_id` is nullable for
 external adapters; those versions use `runs/<version_id>/output/<sha256>/adapter.tar.gz`
-and have no evaluation. Their initial serving status is `unavailable`. The upload
+and have no evaluation. Their initial serving status is `unavailable` until
+promotion qualifies them on a LoRA-enabled allocation. The upload
 intent is retained for artifact cleanup even after its version or task is deleted.
+
+### Version files
+
+`task_version_files` holds the files delivered with a task version: its `report.md`
+training report and any data files, images or exports the report references. Each
+row has an ID, workspace FK, version FK (cascade), a flat file name, content type,
+declared size, `pending`/`ready`/`deleted` status and creation and completion times. Staff
+reserve a file and receive a one-hour signed PUT to `uploads/version-files/<file_id>`
+in the versioned training artifacts bucket. Completion checks size and copies that
+exact S3 object version to `version-files/<version_id>/<file_id>`, so replaying the
+upload grant cannot change published bytes. Completion and deletion serialize on
+the task version; expired uploads cannot complete. Publication marks the file
+`ready` and replaces any ready file with the same name on that version, deleting
+the replaced object. A partial unique index keeps one ready file per version and
+name. Workspace members list, read (text files up to 2 MiB, served by the API) and
+download ready files. Removed and replaced rows remain as tombstones until artifact
+cleanup deletes their objects after upload grants expire. Cleanup also removes
+abandoned uploads and archived workspace files before task/version rows; S3
+expires noncurrent version-file objects after 30 days.

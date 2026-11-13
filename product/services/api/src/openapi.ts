@@ -22,6 +22,7 @@ export const unservedDependencies = (): AppDependencies => ({
   metrics: new ApiMetrics({ collectProcessMetrics: false }),
   sendInvitation: unserved("sendInvitation"),
   sendWaitlistWelcome: unserved("sendWaitlistWelcome"),
+  notifyEngineerOnboarding: unserved("notifyEngineerOnboarding"),
   services: {
     waitlist: { join: unserved("waitlist.join") },
     billingPayments: {
@@ -61,6 +62,30 @@ export const unservedDependencies = (): AppDependencies => ({
       listForUser: unserved("organizations.listForUser"),
       updateForUser: unserved("organizations.updateForUser"),
       createForUser: unserved("organizations.createForUser"),
+      getOnboarding: unserved("organizations.getOnboarding"),
+      recordOnboardingNda: unserved("organizations.recordOnboardingNda"),
+      submitOnboarding: unserved("organizations.submitOnboarding"),
+      claimOnboardingSubmission: unserved(
+        "organizations.claimOnboardingSubmission",
+      ),
+      releaseOnboardingSubmission: unserved(
+        "organizations.releaseOnboardingSubmission",
+      ),
+      resetOnboardingSubmission: unserved(
+        "organizations.resetOnboardingSubmission",
+      ),
+    },
+    integrations: {
+      list: unserved("integrations.list"),
+      findSlackChannel: unserved("integrations.findSlackChannel"),
+      recordSlackChannel: unserved("integrations.recordSlackChannel"),
+      claimSlackInvitation: unserved("integrations.claimSlackInvitation"),
+      releaseSlackInvitation: unserved("integrations.releaseSlackInvitation"),
+      activate: unserved("integrations.activate"),
+      revoke: unserved("integrations.revoke"),
+      recordGithubInstallation: unserved(
+        "integrations.recordGithubInstallation",
+      ),
     },
     traces: {
       list: unserved("traces.list"),
@@ -71,6 +96,14 @@ export const unservedDependencies = (): AppDependencies => ({
         configuration: unserved("training.uploads.configuration"),
         create: unserved("training.uploads.create"),
         complete: unserved("training.uploads.complete"),
+      },
+      files: {
+        list: unserved("training.files.list"),
+        create: unserved("training.files.create"),
+        complete: unserved("training.files.complete"),
+        content: unserved("training.files.content"),
+        download: unserved("training.files.download"),
+        remove: unserved("training.files.remove"),
       },
       startRun: unserved("training.startRun"),
       cancelRun: unserved("training.cancelRun"),

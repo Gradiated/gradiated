@@ -11,6 +11,7 @@ const organization = (
 ): CurrentUser["organizations"][number] => ({
   id: "00000000-0000-4000-8000-000000000001",
   name: "Personal",
+  slug: "personal",
   status: "active",
   role: "admin",
   default_workspace_id: "00000000-0000-4000-8000-000000000002",
@@ -51,6 +52,28 @@ describe("onboarding", () => {
       organizationToOnboard(userWith(organization({ role: "member" }))),
     ).toBeUndefined();
     expect(organizationToOnboard(undefined)).toBeUndefined();
+  });
+
+  it("never onboards staff, even for an explicitly requested organization", () => {
+    const pending = organization({ id: "pending" });
+    const staff = { ...userWith(pending), is_staff: true };
+
+    expect(organizationToOnboard(staff)).toBeUndefined();
+    expect(organizationToOnboard(staff, "pending")).toBeUndefined();
+  });
+
+  it("onboards only the requested active organization", () => {
+    const first = organization({ id: "first" });
+    const requested = organization({ id: "requested" });
+    const inactive = organization({ id: "inactive", status: "suspended" });
+
+    expect(organizationToOnboard(userWith(first, requested), "requested")).toBe(
+      requested,
+    );
+    expect(
+      organizationToOnboard(userWith(first, inactive), "inactive"),
+    ).toBeUndefined();
+    expect(organizationToOnboard(userWith(first), "missing")).toBeUndefined();
   });
 
   it.each([

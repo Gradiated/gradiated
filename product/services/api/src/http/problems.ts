@@ -77,6 +77,30 @@ export const problems = {
     detail,
     code: "unavailable",
   }),
+  onboardingConflict: (
+    code:
+      | "nda_required"
+      | "slack_channel_name_taken"
+      | "slack_channel_required"
+      | "github_authorization_required"
+      | "github_installation_unverified"
+      | "github_repositories_required"
+      | "submission_in_progress",
+    detail: string,
+  ): ProblemBody => ({
+    type: problemType(code.replaceAll("_", "-")),
+    title: "Engineer onboarding step incomplete",
+    status: 409,
+    detail,
+    code,
+  }),
+  slackInvitationCooldown: (detail: string): ProblemBody => ({
+    type: problemType("slack-invitation-cooldown"),
+    title: "Slack invitation recently sent",
+    status: 429,
+    detail,
+    code: "slack_invitation_cooldown",
+  }),
   notPrepaid: (detail: string): ProblemBody => ({
     type: problemType("not-prepaid"),
     title: "Prepaid billing required",

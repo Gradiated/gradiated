@@ -54,12 +54,19 @@ the complete development stack through mprocs. The launcher requires `lsof`
 (`apt-get install lsof` on Debian/Ubuntu):
 
 ```sh
+gradctl env build
 nvm use
 corepack enable
 pnpm install
 pnpm exec turbo run build --filter=@gradiated/api --filter=@gradiated/worker
 pnpm dev
 ```
+
+`gradctl env build` writes the ignored repository-root `.env` from the
+`gradiated/dev/env` secret. It uses the `gradiated-restricted` AWS profile,
+which every collaborator has through the `Restricted` group: it creates the
+profile if needed and opens an AWS sign-in when the session has expired. Rerun it when that secret changes; it keeps any
+variables only your `.env` has under a local-only section.
 
 `pnpm dev` first stops stale application listeners (3000–3004, 9003–9004,
 8233, 9464–9465, and 30000), then launches mprocs. It leaves datastore ports alone. Prefer it over
@@ -303,8 +310,9 @@ DeepSeek IDs were checked on 10 November 2026; GLM IDs on 13 September 2026:
 
 DeepSeek V4.1 Flash 1017 is hosted on our capacity at $0.006 input,
 $0.001 cached input, and $0.20 output per million tokens. Output pricing also
-applies to reasoning tokens. OpenRouter fallback is capped at our input/output
-prices; providers above either cap cannot serve fallback requests.
+applies to reasoning tokens. Its OpenRouter fallback permits up to $0.30 input
+and $1.20 output per million tokens, covering Modal and the common standard
+provider tier. Customer billing still uses the catalog prices above.
 
 The original `deepseek/deepseek-v4.1-flash` checkpoint is retired and is neither
 listed nor served, including through its retained OpenRouter mapping. Existing
@@ -345,7 +353,7 @@ queue wait (schedule-to-start), execution latency and failure metrics independen
 of the existing worker. The ordinary worker needs no Temporal credentials.
 
 The dev server runs headless. Start the **temporal-ui** pane manually in mprocs
-(or run `./scripts/run-temporal-ui-local.sh`) to open
+(or run `gradctl product temporal-ui-local`) to open
 [Temporal UI](http://localhost:8233). It is off by default and binds only to
 loopback. The launcher downloads the pinned UI Server 2.54.1 native release,
 checks its SHA-256 and caches it under `.agents/runtime/temporal-ui`; macOS and

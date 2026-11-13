@@ -171,7 +171,8 @@ export const handbookPages: HandbookPageDefinition[] = [
     section: "Foundations",
     title: "Values",
     pageTitle: "Values",
-    description: "The values of Gradiated.",
+    description:
+      "Figure it out yourself, do the hard thing, and reason from first principles.",
     Content: ValuesContent,
   },
   {

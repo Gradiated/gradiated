@@ -53,6 +53,7 @@ it("standby shutdown preserves the leader lease and a new worker takes over afte
     eval: (script: string, options: { keys: string[]; arguments: string[] }) =>
       client.eval(script, options),
     replicas: async () => [replica],
+    models: async () => [{ modelId: replica.modelId }],
     probe: async () => {
       requests++;
     },

@@ -111,6 +111,14 @@ export {
 } from "./organizations/service.js";
 export { companyEmailDomain } from "./organizations/email-domains.js";
 export {
+  createIntegrationService,
+  type GithubIntegrationRecord,
+  type IntegrationRecord,
+  type IntegrationService,
+  type SlackIntegrationRecord,
+  type SlackInvitationClaim,
+} from "./integrations/service.js";
+export {
   createMemberService,
   type InvitationAcceptor,
   type InvitationRecord,
@@ -175,6 +183,17 @@ export {
   createAdapterHostingService,
   type AdapterHostingService,
 } from "./training/hosting.js";
+export {
+  createAdapterQualifier,
+  servesAdapter,
+  type AdapterProbe,
+  type AdapterProbeOutcome,
+  type AdapterProbeTarget,
+  type AdapterQualificationOutcome,
+  type AdapterQualificationResult,
+  type AdapterQualifier,
+  type QualificationLock,
+} from "./training/qualification.js";
 export {
   TrainingAdmissionError,
   type TrainingEngine,

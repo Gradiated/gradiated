@@ -48,6 +48,9 @@ export const tasks = pgTable(
   "tasks",
   {
     id: uuid("id").primaryKey(),
+    // Null until the task's first version is written; a trigger in migration
+    // 0030 then claims its name as a model name, unique across the organization.
+    organizationId: uuid("organization_id"),
     workspaceId: uuid("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
@@ -72,9 +75,23 @@ export const tasks = pgTable(
     ...timestamps,
   },
   (table) => [
+    foreignKey({
+      name: "tasks_organization_workspace_fk",
+      columns: [table.organizationId, table.workspaceId],
+      foreignColumns: [workspaces.organizationId, workspaces.id],
+    }).onDelete("cascade"),
+    // Models are named `<organization slug>/<task>/<version>`.
+    unique("tasks_organization_name_unique").on(
+      table.organizationId,
+      table.name,
+    ),
     unique("tasks_workspace_name_unique").on(table.workspaceId, table.name),
     unique("tasks_id_workspace_unique").on(table.id, table.workspaceId),
     check("tasks_name_routable_check", sql`${table.name} not in ('.', '..')`),
+    check(
+      "tasks_model_name_check",
+      sql`${table.organizationId} is null or (strpos(${table.name}, '/') = 0 and char_length(${table.name}) <= 128)`,
+    ),
   ],
 );
 
@@ -183,10 +200,7 @@ export const taskVersions = pgTable(
       columns: [table.trainingRunId, table.taskId],
       foreignColumns: [trainingRuns.id, trainingRuns.taskId],
     }).onDelete("cascade"),
-    unique("task_versions_workspace_name_unique").on(
-      table.workspaceId,
-      table.name,
-    ),
+    unique("task_versions_task_name_unique").on(table.taskId, table.name),
     index("task_versions_task_created_index").on(table.taskId, table.createdAt),
   ],
 );
@@ -206,3 +220,43 @@ export const modelUploads = pgTable("model_uploads", {
     onDelete: "set null",
   }),
 });
+
+export const TASK_VERSION_FILE_STATUSES = [
+  "pending",
+  "ready",
+  "deleted",
+] as const;
+
+export const taskVersionFiles = pgTable(
+  "task_version_files",
+  {
+    id: uuid("id").primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    versionId: uuid("version_id")
+      .notNull()
+      .references(() => taskVersions.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    contentType: text("content_type").notNull(),
+    sizeBytes: bigint("size_bytes", { mode: "number" }).notNull(),
+    status: text("status", { enum: TASK_VERSION_FILE_STATUSES }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    completedAt: timestamp("completed_at", {
+      withTimezone: true,
+      mode: "date",
+    }),
+  },
+  (table) => [
+    check(
+      "task_version_files_status_check",
+      sql`${table.status} in (${inList(TASK_VERSION_FILE_STATUSES)})`,
+    ),
+    uniqueIndex("task_version_files_ready_name_unique")
+      .on(table.versionId, table.name)
+      .where(sql`${table.status} = 'ready'`),
+    index("task_version_files_version_index").on(table.versionId),
+  ],
+);

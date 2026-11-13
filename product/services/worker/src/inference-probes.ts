@@ -1,8 +1,26 @@
 import { randomUUID } from "node:crypto";
-import type { ModelReplica } from "@gradiated/control";
+import type { ModelRecord, ModelReplica } from "@gradiated/control";
+import { modelType } from "@gradiated/contracts/model-catalog";
 import { Counter, Gauge, Histogram, type Registry } from "prom-client";
 import { sleep } from "./sleep.js";
 import { createProbeDeadline } from "./probe-deadline.js";
+
+export interface ModelProbeTarget {
+  readonly modelId: string;
+  readonly protocol?: "system_one";
+}
+
+export const catalogProbeTargets = (
+  models: readonly Pick<ModelRecord, "id" | "status">[],
+): ModelProbeTarget[] =>
+  models
+    .filter((model) => model.status === "available")
+    .map((model) => ({
+      modelId: model.id,
+      ...(modelType(model.id) === "decision"
+        ? { protocol: "system_one" as const }
+        : {}),
+    }));
 
 const labels = ["model", "deployment"] as const;
 type Labels = (typeof labels)[number];
@@ -27,7 +45,7 @@ export class InferenceProbeMetrics {
   constructor(registry: Registry) {
     this.inventory = new Gauge({
       name: "gradiated_inference_probe_inventory_timestamp_seconds",
-      help: "Latest discovery of serving deployments by the probe leader.",
+      help: "Latest discovery of catalog models and serving deployments by the probe leader.",
       registers: [registry],
     });
     this.targets = new Gauge({
@@ -88,8 +106,11 @@ export class InferenceProbeMetrics {
     });
   }
 
-  discover(replicas: readonly ModelReplica[]) {
-    const models = new Set(replicas.map((replica) => replica.modelId));
+  discover(
+    replicas: readonly ModelReplica[],
+    targets: readonly ModelProbeTarget[],
+  ) {
+    const models = new Set(targets.map((target) => target.modelId));
     for (const model of this.models) {
       if (models.has(model)) continue;
 
@@ -137,7 +158,11 @@ export class InferenceProbeMetrics {
     if (succeeded) this.success.set(label, Date.now() / 1000);
   }
 
-  recordRouted(replica: ModelReplica, succeeded: boolean, duration: number) {
+  recordRouted(
+    replica: ModelProbeTarget,
+    succeeded: boolean,
+    duration: number,
+  ) {
     const label = { model: replica.modelId };
     this.routedAttempts.inc({
       ...label,
@@ -164,8 +189,9 @@ export const runInferenceProbes = async (options: {
     options: { keys: string[]; arguments: string[] },
   ) => Promise<unknown>;
   replicas: () => Promise<readonly ModelReplica[]>;
+  models: () => Promise<readonly ModelProbeTarget[]>;
   probe: (
-    replica: ModelReplica,
+    target: ModelReplica | ModelProbeTarget,
     signal: AbortSignal,
     scope: "deployment" | "model",
   ) => Promise<void>;
@@ -192,11 +218,14 @@ export const runInferenceProbes = async (options: {
       try {
         if (Number(await options.eval(probeLeaseScript, lease)) === 1) {
           signal.throwIfAborted();
-          const replicas = await options.replicas();
+          const [replicas, models] = await Promise.all([
+            options.replicas(),
+            options.models(),
+          ]);
           signal.throwIfAborted();
-          if (replicas.length) await options.beforePass?.();
+          if (replicas.length || models.length) await options.beforePass?.();
           signal.throwIfAborted();
-          options.metrics.discover(replicas);
+          options.metrics.discover(replicas, models);
           const now = performance.now();
           const active = new Set(replicas.map((replica) => replica.id));
           for (const id of deploymentSchedule.keys()) {
@@ -229,11 +258,6 @@ export const runInferenceProbes = async (options: {
             );
           }
 
-          const models = [
-            ...new Map(
-              replicas.map((replica) => [replica.modelId, replica]),
-            ).values(),
-          ];
           for (const [scope, targets] of [
             ["model", models],
             ["deployment", due],
@@ -255,13 +279,14 @@ export const runInferenceProbes = async (options: {
                 const duration = (performance.now() - started) / 1000;
                 if (scope === "model")
                   options.metrics.recordRouted(replica, succeeded, duration);
-                else options.metrics.record(replica, succeeded, duration);
+                else if ("id" in replica)
+                  options.metrics.record(replica, succeeded, duration);
               }),
             );
           }
         } else {
           deploymentSchedule.clear();
-          options.metrics.discover([]);
+          options.metrics.discover([], []);
           options.metrics.inventory.set(0);
         }
         await options.onReady((performance.now() - start) / 1000);
@@ -274,7 +299,7 @@ export const runInferenceProbes = async (options: {
       );
     }
   } finally {
-    options.metrics.discover([]);
+    options.metrics.discover([], []);
     options.metrics.inventory.set(0);
     await options.eval(releaseLeaseScript, lease);
   }

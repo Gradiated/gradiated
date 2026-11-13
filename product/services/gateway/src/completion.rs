@@ -126,7 +126,40 @@ impl CompletionService {
         }
     }
 
-    pub async fn count_tokens(&self, qualified: &QualifiedRequest) -> Result<u64, GatewayError> {
+    pub async fn count_tokens(
+        &self,
+        qualified: &QualifiedRequest,
+        request: &Value,
+    ) -> Result<u64, GatewayError> {
+        if let Some(local) = qualified
+            .local
+            .as_ref()
+            .filter(|local| local.deployment.release.model_path == "moonshotai/Kimi-K3.1-Pro")
+        {
+            // Kimi ships tiktoken and a native renderer, not tokenizer.json.
+            let route = self
+                .route(qualified, local)
+                .await?
+                .map_err(|error| error.error)?;
+
+            return tokio::time::timeout(
+                Duration::from_secs(10),
+                self.runtime.count_tokens(&route.primary, request.clone()),
+            )
+            .await
+            .map_err(|_| GatewayError::RuntimeUnavailable)?
+            .map_err(|failure| {
+                crate::diagnostics::limited_warn!(
+                    model_id = %qualified.request.model,
+                    deployment_id = %route.primary.id,
+                    diagnostic_code = failure.diagnostic_code(),
+                    "runtime token counting failed"
+                );
+
+                failure.gateway_error()
+            });
+        }
+
         self.tokenizer.count(qualified).await
     }
 

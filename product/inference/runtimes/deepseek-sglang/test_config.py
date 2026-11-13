@@ -43,6 +43,8 @@ class Configuration(unittest.TestCase):
         for flag, value in [('--max-lora-rank', '8'), ('--max-loras-per-batch', '8'), ('--max-loaded-loras', '64')]:
             self.assertEqual(backend[backend.index(flag) + 1], value)
         self.assertEqual(backend[backend.index('--lora-target-modules') + 1:], config.LORA_TARGETS)
+        self.assertEqual(config.LORA_TARGETS, ['wq_a', 'wq_b', 'wkv', 'wo_a', 'wo_b',
+                                              'w1', 'w2', 'w3', 'lm_head'])
 
     def test_wrong_model_tp_devices_ports_or_queue_contract_fail(self):
         for delta in [{'MODEL_ID': 'deepseek/deepseek-v4.1-flash'}, {'TENSOR_PARALLEL_SIZE': '8'},

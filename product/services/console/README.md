@@ -176,7 +176,7 @@ To verify only upload stories without replacing other screenshots, build Storybo
 and run from the repository root:
 
 ```sh
-uv run --locked --project tools/browser python tools/browser/storybook_screenshots.py \
+gradctl browser storybook-screenshots \
   --story-prefix training-model-upload-- --output .agents/runtime/model-upload-stories
 ```
 

@@ -1,11 +1,16 @@
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 
 import {
   CurrentOrganizationSchema,
   EmailDomainSchema,
+  OrganizationMetadataSchema,
+  OrganizationNdaSchema,
+  OrganizationOnboardingSchema,
   UpdateOrganizationSchema,
   UuidSchema,
+  type OrganizationNda,
+  type OrganizationOnboarding,
   type UpdateOrganization,
 } from "@gradiated/contracts";
 import type { ControlDatabase } from "../db/client.js";
@@ -21,10 +26,12 @@ import {
   activeCustomerOrganization,
 } from "../access.js";
 import { ControlServiceError } from "../errors.js";
+import { isTakenOrganizationSlug, requireChangeableSlug } from "./slugs.js";
 
 const OrganizationRecordSchema = CurrentOrganizationSchema.pick({
   id: true,
   name: true,
+  slug: true,
   status: true,
   role: true,
 })
@@ -46,6 +53,7 @@ const SignupEmailSchema = z.object({
 const organizationColumns = (userId: string) => ({
   id: organizations.id,
   name: organizations.name,
+  slug: organizations.slug,
   status: organizations.status,
   role: customerRole(userId),
   defaultWorkspaceId: workspaces.id,
@@ -53,7 +61,40 @@ const organizationColumns = (userId: string) => ({
   onboardedAt: organizations.onboardedAt,
 });
 
+const MetadataRowSchema = z
+  .object({ metadata: OrganizationMetadataSchema })
+  .transform(({ metadata }) => metadata.training_onboarding ?? {});
+
+const onboardingPath = sql`${organizations.metadata} -> 'training_onboarding'`;
+
 export const createOrganizationStore = (database: ControlDatabase) => {
+  const readOnboarding = async (organizationId: string) => {
+    const [row] = await database
+      .select({ metadata: organizations.metadata })
+      .from(organizations)
+      .where(eq(organizations.id, organizationId));
+
+    return row ? MetadataRowSchema.parse(row) : undefined;
+  };
+
+  const mergeOnboarding = async (
+    organizationId: string,
+    patch: OrganizationOnboarding,
+    condition: SQL,
+  ) => {
+    const value = JSON.stringify(OrganizationOnboardingSchema.parse(patch));
+    const rows = await database
+      .update(organizations)
+      .set({
+        metadata: sql`jsonb_set(${organizations.metadata}, '{training_onboarding}', coalesce(${onboardingPath}, '{}'::jsonb) || ${value}::jsonb)`,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(organizations.id, organizationId), condition))
+      .returning({ metadata: organizations.metadata });
+
+    return rows[0] ? MetadataRowSchema.parse(rows[0]) : undefined;
+  };
+
   const listForUser = async (
     userId: string,
     organizationId?: string,
@@ -102,6 +143,85 @@ export const createOrganizationStore = (database: ControlDatabase) => {
 
   return {
     listForUser,
+    readOnboarding,
+
+    async recordOnboardingNda(organizationId: string, nda: OrganizationNda) {
+      const parsed = OrganizationNdaSchema.parse(nda);
+      const recorded = await mergeOnboarding(
+        organizationId,
+        { nda: parsed },
+        sql`(${onboardingPath} -> 'nda' ->> 'template_version') is distinct from ${parsed.template_version}`,
+      );
+
+      return recorded ?? readOnboarding(organizationId);
+    },
+
+    async submitOnboarding(
+      organizationId: string,
+      submission: Required<
+        Pick<
+          OrganizationOnboarding,
+          "submitted_at" | "submitted_by" | "contact_channel"
+        >
+      >,
+    ) {
+      const submitted = await mergeOnboarding(
+        organizationId,
+        submission,
+        sql`(${onboardingPath} ->> 'submitted_at') is null`,
+      );
+      if (submitted) return { submitted: true, onboarding: submitted };
+
+      const onboarding = await readOnboarding(organizationId);
+
+      return onboarding && { submitted: false, onboarding };
+    },
+
+    /* Reserve the submission for one request while it notifies the team.
+       Fails while another unexpired claim exists or once submitted. */
+    async claimOnboardingSubmission(
+      organizationId: string,
+      claimedAt: string,
+      staleBefore: string,
+    ) {
+      return Boolean(
+        await mergeOnboarding(
+          organizationId,
+          { submission_claimed_at: claimedAt },
+          sql`(${onboardingPath} ->> 'submitted_at') is null and ((${onboardingPath} ->> 'submission_claimed_at') is null or (${onboardingPath} ->> 'submission_claimed_at')::timestamptz < ${staleBefore}::timestamptz)`,
+        ),
+      );
+    },
+
+    async releaseOnboardingSubmission(
+      organizationId: string,
+      claimedAt: string,
+    ) {
+      await database
+        .update(organizations)
+        .set({
+          metadata: sql`jsonb_set(${organizations.metadata}, '{training_onboarding}', (${onboardingPath}) - 'submission_claimed_at'::text)`,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(organizations.id, organizationId),
+            sql`(${onboardingPath} ->> 'submission_claimed_at') = ${claimedAt}`,
+          ),
+        );
+    },
+
+    /* Local test mode only: forget the submission so the journey can be
+       walked again. Keeps the recorded NDA. */
+    async resetOnboardingSubmission(organizationId: string) {
+      await database
+        .update(organizations)
+        .set({
+          metadata: sql`jsonb_set(${organizations.metadata}, '{training_onboarding}', coalesce(${onboardingPath}, '{}'::jsonb) - 'submitted_at' - 'submitted_by' - 'contact_channel' - 'submission_claimed_at')`,
+          updatedAt: new Date(),
+        })
+        .where(eq(organizations.id, organizationId));
+    },
 
     async findUser(userId: string) {
       const [user] = await database
@@ -151,17 +271,39 @@ export const createOrganizationStore = (database: ControlDatabase) => {
       const update = UpdateOrganizationSchema.parse(input);
 
       await database
-        .update(organizations)
-        .set({
-          name: update.name,
-          autoJoinDomain: update.auto_join_domain,
-          onboardedAt: update.onboarding_completed
-            ? sql`coalesce(${organizations.onboardedAt}, now())`
-            : undefined,
-          updatedAt: new Date(),
+        .transaction(async (transaction) => {
+          const [current] = await transaction
+            .select({ slug: organizations.slug })
+            .from(organizations)
+            .where(eq(organizations.id, organizationId))
+            .for("update");
+          if (update.slug !== undefined && update.slug !== current?.slug)
+            await requireChangeableSlug(
+              transaction,
+              organizationId,
+              update.slug,
+            );
+
+          await transaction
+            .update(organizations)
+            .set({
+              name: update.name,
+              slug: update.slug,
+              autoJoinDomain: update.auto_join_domain,
+              onboardedAt: update.onboarding_completed
+                ? sql`coalesce(${organizations.onboardedAt}, now())`
+                : undefined,
+              updatedAt: new Date(),
+            })
+            .where(eq(organizations.id, organizationId));
         })
-        .where(eq(organizations.id, organizationId))
         .catch((error: unknown) => {
+          if (isTakenOrganizationSlug(error))
+            throw new ControlServiceError(
+              "conflict",
+              "Another organization already uses this slug.",
+              error,
+            );
           if (isClaimedDomain(error))
             throw new ControlServiceError(
               "conflict",

@@ -10,7 +10,8 @@ test.skip(
 );
 
 for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
-  test(`settings, versions, promotion and paged events persist for ${taskName}`, async ({
+  // The task page hides its training runs, data and settings tabs while models are delivered by hand.
+  test.skip(`settings, versions, promotion and paged events persist for ${taskName}`, async ({
     page,
     context,
     account,
@@ -26,7 +27,12 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
     const taskId = randomUUID();
     const runId = randomUUID();
     const versionId = randomUUID();
-    const versionName = `${taskName}-20260929`;
+    const versionName = "2026-09-29";
+    const me = await (await context.request.get(`${apiUrl}/api/v1/me`)).json();
+    const slug = me.organizations.find(
+      (organization: { id: string }) =>
+        organization.id === account.organizationId,
+    ).slug;
 
     try {
       const {
@@ -146,7 +152,10 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       ]);
       await page.goto(`/tasks/${encodeURIComponent(taskName)}`);
       await expect(
-        page.getByRole("heading", { name: versionName, exact: true }),
+        page.getByRole("heading", {
+          name: `${slug}/${taskName}/${versionName}`,
+          exact: true,
+        }),
       ).toBeVisible();
       await expect(page.getByText(/70 training examples/)).toBeVisible();
       await expect(
@@ -177,7 +186,7 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       await page.getByRole("tab", { name: "Model", exact: true }).click();
       await page.getByRole("button", { name: "Use", exact: true }).click();
       await expect(page.getByRole("dialog").getByRole("heading")).toHaveText(
-        versionName,
+        `${slug}/${taskName}/${versionName}`,
       );
       await page.keyboard.press("Escape");
       await page.getByRole("button", { name: "Promote", exact: true }).click();
@@ -196,7 +205,7 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       await expect(page.getByText("Production", { exact: true })).toBeVisible();
       await page.getByRole("button", { name: "Use", exact: true }).click();
       await expect(page.getByRole("dialog").getByRole("heading")).toHaveText(
-        taskName,
+        `${slug}/${taskName}`,
       );
       await page.keyboard.press("Escape");
       expect(
@@ -309,12 +318,13 @@ for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
       await expect(
         page.getByRole("menuitem", { name: "Use this version", exact: true }),
       ).toBeDisabled();
+      // Promoting an unserved version qualifies it on serving capacity first.
       await expect(
         page.getByRole("menuitem", {
           name: "Promote",
           exact: true,
         }),
-      ).toBeDisabled();
+      ).toBeEnabled();
       await expect(
         page.getByRole("menuitem", { name: "Download adapter", exact: true }),
       ).toBeEnabled();
@@ -339,10 +349,12 @@ test("task discovery distinguishes errors from an empty workspace and can retry"
     "Trace storage unavailable",
     { timeout: 15_000 },
   );
-  await expect(page.getByText("No tasks yet", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Start project" })).toHaveCount(
+    0,
+  );
   fail = false;
   await page.getByRole("button", { name: "Retry", exact: true }).click();
-  await expect(page.getByText("No tasks yet", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Start project" })).toBeVisible();
   await expect(page.getByText(/First request received|500 traces/)).toHaveCount(
     0,
   );
@@ -376,7 +388,8 @@ test("the task list does not request per-task histories", async ({ page }) => {
   expect(historyRequests).toBe(0);
 });
 
-test("Train shows admission errors and Cancel uses the selected run", async ({
+// The task page hides its training runs, data and settings tabs while models are delivered by hand.
+test.skip("Train shows admission errors and Cancel uses the selected run", async ({
   page,
 }) => {
   const runId = randomUUID();
@@ -464,7 +477,8 @@ test("Train shows admission errors and Cancel uses the selected run", async ({
 });
 
 for (const failed of [false, true]) {
-  test(`stage logs show orchestrator and verification ${failed ? "failure" : "completion"}`, async ({
+  // The task page hides its training runs, data and settings tabs while models are delivered by hand.
+  test.skip(`stage logs show orchestrator and verification ${failed ? "failure" : "completion"}`, async ({
     page,
   }) => {
     const task = {

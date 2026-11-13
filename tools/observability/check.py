@@ -33,7 +33,7 @@ def main():
         assert 0 < security_export['range_seconds'] <= security_export['period_seconds'] - 60, 'CloudWatch rounding must not create a second period whose newer zero masks security events'
     dashboards = {d['uid']: d for p in OBS.glob('*.json')
                   if (d := json.loads(p.read_text()))}
-    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml', 'data-store-prometheus-rules.yaml', 'security-prometheus-rules.yaml', 'recovery-prometheus-rules.yaml')
+    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'resource-pool-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml', 'data-store-prometheus-rules.yaml', 'security-prometheus-rules.yaml', 'recovery-prometheus-rules.yaml')
               for g in yaml.safe_load((OBS / name).read_text())['spec']['groups']]
     alerts = {rule['alert']: rule for group in groups for rule in group['rules'] if 'alert' in rule}
     from paging_checks import check_critical_persistence
@@ -83,6 +83,9 @@ def main():
     rollout_rules, rollout_tests = check_rollouts(ROOT)
     groups.append({'name': 'rollout_analysis_syntax', 'rules': rollout_rules})
     tests = check_autoscaling(ROOT) + check_gpu_autoscaling(ROOT) + rollout_tests
+    from resource_pool_checks import check_resource_pools
+
+    tests += check_resource_pools(ROOT, alerts)
     def scenario(name, inputs, expected, checks, labels=None, eval_time="8m", interval="30s"):
         cases = []
         for alert in checks:
@@ -155,6 +158,14 @@ def main():
     scenario('lora pinned disk pressure', [lora_series('gradiated_lora_pinned_disk_bytes', '95+0x40'), lora_series('gradiated_lora_disk_cache_limit_bytes', '100+0x40')], 'LoraPinnedDiskNearlyFull', ['LoraPinnedDiskNearlyFull'], lora_labels, '16m')
 
     scenario('lora discovery failure', [{'series': 'prometheus_sd_http_failures_total', 'values': '0+1x40'}], 'LoraTargetDiscoveryFailures', ['LoraTargetDiscoveryFailures'])
+
+    def qualifications(outcome, values):
+        return {'series': f'gradiated_api_adapter_qualifications_total{{instance="a",model="z-ai/glm-5.3-flash",outcome="{outcome}",service="api"}}', 'values': values}
+    for outcome in ['failed', 'no_capacity']:
+        scenario(f'adapter qualification {outcome}', [qualifications(outcome, '0+0x7 1+0x33')], 'AdapterQualificationFailing', ['AdapterQualificationFailing'], {'model': 'z-ai/glm-5.3-flash', 'outcome': outcome})
+        scenario(f'adapter qualification {outcome} ages out', [qualifications(outcome, '0+0x7 1+0x33')], None, ['AdapterQualificationFailing'], eval_time='25m')
+    for outcome in ['passed', 'rejected']:
+        scenario(f'adapter qualification {outcome} is not an incident', [qualifications(outcome, '0+0x7 1+0x33')], None, ['AdapterQualificationFailing'])
 
     for name, available, snapshots, expected in [
         ('fresh snapshot', 2, [(1, '0+30x40')], None),
@@ -684,6 +695,7 @@ def main():
             probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', success),
             probe_series('gradiated_inference_routed_probe_target', target),
             probe_series('gradiated_inference_probe_inventory_timestamp_seconds', inventory, '{instance="a"}'),
+            probe_series('gradiated_inference_catalog_inventory_timestamp_seconds', '1+5x200', '{instance="a"}'),
         ], expected, probe_alerts,
         {'model': 'test/model'} if expected == 'InferenceModelProbeFailed' else {},
         duration, interval='5s')
@@ -698,6 +710,7 @@ def main():
             probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', recovery_success),
             probe_series('gradiated_inference_routed_probe_target', '1+0x103'),
             probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x103', '{instance="a"}'),
+            probe_series('gradiated_inference_catalog_inventory_timestamp_seconds', '1+5x200', '{instance="a"}'),
             probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x103',
                          probe_labels.replace('test/model', 'healthy/model')),
             probe_series('gradiated_inference_routed_probe_target', '1+0x103',
@@ -711,9 +724,11 @@ def main():
         probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '0+0x30'),
         probe_series('gradiated_inference_routed_probe_target', '1+0x30'),
         probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+0x30', '{instance="a"}'),
+        probe_series('gradiated_inference_catalog_inventory_timestamp_seconds', '1+5x200', '{instance="a"}'),
         probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x30', probe_labels.replace('"a"', '"b"')),
         probe_series('gradiated_inference_routed_probe_target', '1+0x30', probe_labels.replace('"a"', '"b"')),
         probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x30', '{instance="b"}'),
+        probe_series('gradiated_inference_catalog_inventory_timestamp_seconds', '1+5x200', '{instance="b"}'),
     ], None, probe_alerts, eval_time='60s', interval='5s')
 
     for name, include_target, include_success in [
@@ -727,6 +742,7 @@ def main():
             probe_series('gradiated_inference_probe_last_success_timestamp_seconds', '1+5x30',
                          '{instance="a",model="test/model",deployment="test-deployment"}'),
             probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x30', '{instance="a"}'),
+            probe_series('gradiated_inference_catalog_inventory_timestamp_seconds', '1+5x200', '{instance="a"}'),
         ]
         if include_target:
             inputs.append(probe_series('gradiated_inference_routed_probe_target', '1+0x30'))
@@ -739,10 +755,32 @@ def main():
         probe_series('gradiated_inference_routed_probe_target', '1+0x30'),
         probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x30'),
         probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+0x30', '{instance="a"}'),
+        probe_series('gradiated_inference_catalog_inventory_timestamp_seconds', '1+5x200', '{instance="a"}'),
         probe_series('gradiated_inference_probe_target', '1+0x30',
                      '{instance="b",model="test/model",deployment="test-deployment"}'),
         probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x30', '{instance="b"}'),
+        probe_series('gradiated_inference_catalog_inventory_timestamp_seconds', '1+5x200', '{instance="b"}'),
     ], 'InferenceProbeMonitoringStalled', probe_alerts, {'model': 'test/model'}, '90s', interval='5s')
+
+    for healthy in (False, True):
+        inputs = [
+            probe_series('gradiated_inference_catalog_model_target', '1+0x30',
+                         '{instance="catalog",model="test/model"}'),
+            probe_series('gradiated_inference_catalog_inventory_timestamp_seconds', '1+5x30', '{instance="catalog"}'),
+            probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x30', '{instance="a"}'),
+        ]
+        if healthy:
+            inputs.extend([
+                probe_series('gradiated_inference_routed_probe_target', '1+0x30'),
+                probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x30'),
+            ])
+        scenario('zero-replica routed watchdog: ' + str(healthy), inputs,
+                 None if healthy else 'InferenceProbeMonitoringStalled',
+                 probe_alerts, {'model': 'test/model'}, '65s', interval='5s')
+
+    scenario('catalog watchdog: all workers rolled back to older instrumentation', [
+        probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x30', '{instance="a"}'),
+    ], 'InferenceProbeMonitoringStalled', probe_alerts, eval_time='65s', interval='5s')
 
     assert alerts['InferenceDeploymentProbeFailed']['labels']['severity'] == 'warning'
     assert alerts['InferenceDeploymentProbeFailed']['for'] == '1m'
@@ -758,6 +796,7 @@ def main():
             probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x80'),
             probe_series('gradiated_inference_routed_probe_target', '1+0x80'),
             probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x80', '{instance="a"}'),
+            probe_series('gradiated_inference_catalog_inventory_timestamp_seconds', '1+5x200', '{instance="a"}'),
         ], expected, ['InferenceDeploymentProbeFailed', 'InferenceModelProbeFailed'],
            {'model': 'test/model', 'deployment': 'test-deployment'}, duration, interval='5s')
 
@@ -772,6 +811,7 @@ def main():
         probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x160'),
         probe_series('gradiated_inference_routed_probe_target', '1+0x160'),
         probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x160', '{instance="a"}'),
+        probe_series('gradiated_inference_catalog_inventory_timestamp_seconds', '1+5x200', '{instance="a"}'),
     ], None, ['InferenceDeploymentProbeFailed', 'InferenceModelProbeFailed'],
        eval_time='13m', interval='5s')
 
@@ -786,6 +826,7 @@ def main():
             probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds', '1+5x80'),
             probe_series('gradiated_inference_routed_probe_target', '1+0x80'),
             probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x80', '{instance="a"}'),
+            probe_series('gradiated_inference_catalog_inventory_timestamp_seconds', '1+5x200', '{instance="a"}'),
         ], expected, ['InferenceDeploymentProbeFailed', 'InferenceModelProbeFailed'],
            {'model': 'test/model', 'deployment': 'test-deployment'}, duration, interval='5s')
 
@@ -1116,7 +1157,7 @@ def main():
     scenario('AWS root missing telemetry', [], root_missing, [root_alert, root_missing], eval_time='35m')
     scenario('AWS root telemetry recovered', [root_usage('_x64 0x20')], None, [root_alert, root_missing], eval_time='35m')
 
-    for alert, metric_name, severity in [('AwsUrgentSecurityFinding', 'urgent_findings', 'critical'), ('AwsSecurityFindingNeedsReview', 'review_findings', 'warning')]:
+    for alert, metric_name, severity in [('AwsUrgentSecurityFinding', 'urgent_findings', 'warning'), ('AwsSecurityFindingNeedsReview', 'review_findings', 'warning')]:
         assert alerts[alert]['labels']['severity'] == severity
         def finding_series(values, namespace='observability'):
             return {'series': f'gradiated_security_{metric_name}_maximum{{namespace="{namespace}",job="cloudwatch-exporter",service="cloudwatch-exporter"}}', 'values': values}

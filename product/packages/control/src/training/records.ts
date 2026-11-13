@@ -11,6 +11,7 @@ const timestamps = { createdAt: z.date(), updatedAt: z.date() };
 
 export const TaskRecordSchema = z.object({
   id: TaskSchema.shape.id,
+  organizationId: UuidSchema.nullable(),
   workspaceId: UuidSchema,
   name: TaskSchema.shape.name,
   baseModelId: TaskSchema.shape.base_model_id,
@@ -80,6 +81,10 @@ export const RunResultFieldSchema = RunRecordSchema.pick({
 }).keyof();
 export const VersionInsertSchema = VersionRecordSchema.omit({
   createdAt: true,
+  updatedAt: true,
+});
+export const VersionUpdateSchema = VersionRecordSchema.pick({
+  status: true,
   updatedAt: true,
 });
 export const EventInsertSchema = EventRecordSchema.omit({ id: true });

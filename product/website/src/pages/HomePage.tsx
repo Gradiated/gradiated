@@ -48,22 +48,11 @@ export const HomePage = (): ReactElement => (
       <Module bleed className="gr-module--fold" index={0}>
         <div className="gr-fold-left">
           <h1 className="gr-display gr-home-title">
-            {/* Two readings of one line: desktop keeps the hyphen, the phone
-                drops it so the words wrap on the module without a split. */}
-            <span className="gr-home-title-wide">
-              <Reveal by="word">
-                The cheapest way to run open-source models.
-              </Reveal>
-            </span>
-            <span className="gr-home-title-narrow">
-              <Reveal by="word">
-                The cheapest way to run open source models.
-              </Reveal>
-            </span>
+            <Reveal by="word">Drop your reliance on frontier models</Reveal>
           </h1>
           <div className="gr-home-actions">
             <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
-              Get API Key <Arrow />
+              Start Research <Arrow />
             </a>
             <Link className="gr-button gr-button--secondary" to="/docs/">
               View Docs <Arrow />
@@ -119,7 +108,7 @@ export const HomePage = (): ReactElement => (
           </h2>
           <div className="gr-home-actions">
             <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
-              Get API Key
+              Start Research
               <Arrow />
             </a>
           </div>
@@ -190,29 +179,29 @@ const MachineFold = (): ReactElement => {
 const products = [
   {
     id: "inference",
-    title: "Open Model Inference",
+    title: "Proxy your Model Inference...",
     description:
-      "Bring your existing code, change your base URL, and start sending requests to the latest open models.",
+      "Bring your existing code, change your base URL, and start sending requests to the latest frontier or open models.",
     features: [
-      "Usage-based pricing",
+      "Usage-based pricing or bring your own key",
       "No infrastructure to manage",
-      "Plug n Play",
+      "Trivial to start",
     ],
-    action: "Get API Key",
+    action: "Start Research",
     href: CONSOLE_BASE_URL,
   },
   {
     id: "post-training",
-    title: "Automated RL",
+    title: "... to get your own Model.",
     description:
-      "Automated reinforcement learning turns your production traces into a model trained for your workload.",
+      "We'll improve and run your benchmarks, move you to open source and run automated reinforcement learning to turn your production traces into a model trained for your workload.",
     features: [
       "Learn from real production traces",
       "Evaluations built around your tasks",
-      "Served through the same API",
+      "Own your own model weights. Served through the same API",
     ],
-    action: "Contact us to set up",
-    href: "https://cal.com/jsgradiated/30min",
+    action: "Start Research",
+    href: `${CONSOLE_BASE_URL}/onboarding/post-training`,
   },
 ] as const;
 
@@ -331,26 +320,19 @@ const HomeProducts = (): ReactElement => (
       className="gr-products-prelude"
       paragraphs={[
         {
-          text: "It is undeniable that the frontier model companies offer the path of least resistance for your most important work. It is however also true that it comes at a cost ~10\u201315x higher than using open models. That's a significant dent on your cash flows and consequently, runway.",
+          text: "Frontier model companies offer the path of least resistance for powering your products. But scaling demands lower unit costs, and the more AI your product runs, the more those API bills work against you.",
         },
         {
-          text: "So then, why do most teams that try open weight models just end up switching back? In our experience we've seen that teams tend to switch their base models but don't optimize any of their other parameters. And models can be temperamental, to say the least. This leads to performance regressions and the inevitable switch back.",
+          text: "Open-weight models seem like the obvious solution, so why do so many teams that try them, just end up back on frontier APIs? Usually they swap the model and leave everything else untouched like their prompts, evals and inference settings. And post-training is a new expertise that needs GPUs, that most teams don’t have.",
         },
         {
-          text: "At Gradiated we start with your real production traces. We benchmark open models against them, show you before-and-afters, and tune your prompts to your preferences until the open model matches or beats what you run now. All that with significant cost savings.",
+          text: "At Gradiated we proxy your current inference and collect your real production traces. We set up benchmarks or use your existing ones and test open models against them, show you before-and-afters, and tune your prompts, and the model itself to your preferences until we beat what you run now.",
         },
         {
           text: "We then continue the cycle and ensure an automated RL loop keeps your models getting better over time.",
         },
         {
-          parts: [
-            { text: "We'd be " },
-            {
-              href: "https://cal.com/jsgradiated/30min",
-              text: "happy to help",
-            },
-            { text: " you figure this out." },
-          ],
+          text: "Today, we do this by giving you a self-serve (!) forward deployed researcher. We make money on the inference if you move to your own model, and we aim to be the cheapest in the world at that too...",
         },
       ]}
     />
@@ -564,7 +546,7 @@ const InferenceExample = (): ReactElement => {
 const RL_STEPS = [
   "Production traces",
   "Evaluations + RL",
-  "Your post-trained model",
+  "Own the weights to your own post-trained model",
 ];
 
 /** A 3x3 field of square dies; `lit` of them are on. The matrix fills as
@@ -585,9 +567,6 @@ const RlExample = (): ReactElement => {
   const active = useCycle(RL_STEPS.length, 1800);
   return (
     <div className="gr-rl-example">
-      <span className="gr-example-caption">
-        Your workload is the training data
-      </span>
       {RL_STEPS.map((step, stepIndex) => (
         <div
           className="gr-rl-step"

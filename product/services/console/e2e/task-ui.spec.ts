@@ -421,7 +421,9 @@ test.skip("direct task reload initializes flags, edits schedules and opens held-
   await expect.poll(() => Boolean(releaseTasks)).toBe(true);
   releaseTasks!();
   await expect(
-    page.getByRole("heading", { name: "No tasks yet" }),
+    page.getByRole("heading", {
+      name: "Train your first model with a post-training researcher",
+    }),
   ).toBeVisible();
   await page.getByRole("tab", { name: "Settings", exact: true }).click();
   await expect(

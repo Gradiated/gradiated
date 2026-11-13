@@ -23,6 +23,22 @@ const publicRoutes = new Set([
 ]);
 
 const validInputs: Record<string, { query?: string; body?: unknown }> = {
+  "POST /api/v1/organizations/:organization_id/slack-invitations": {
+    body: {},
+  },
+  "POST /api/v1/organizations/:organization_id/engineer-onboarding/submission":
+    {
+      body: { contact_channel: "email", github_installation_id: 42 },
+    },
+  "POST /api/v1/organizations/:organization_id/nda-documents": {
+    body: {
+      company: "Example Inc.",
+      address: "123 Example Street",
+      name: "Ada Lovelace",
+      title: "CEO",
+      email: "ada@example.com",
+    },
+  },
   "POST /api/v1/workspaces/:workspace_id/tasks/:task/versions/:version_id/files":
     {
       body: {
@@ -84,6 +100,7 @@ const validInputs: Record<string, { query?: string; body?: unknown }> = {
 };
 
 const pathParameters: Record<string, string> = {
+  document_id: "example-nda",
   organization_id: organizationId,
   workspace_id: workspaceId,
   api_key_id: apiKeyId,

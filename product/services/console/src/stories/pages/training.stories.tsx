@@ -2,7 +2,13 @@ import type { Meta } from "@storybook/react-vite";
 import { http, HttpResponse } from "msw";
 
 import type { components } from "@/api/schema";
-import { handlers, handlersFor, staffUser, version } from "@/stories/handlers";
+import {
+  noTasksHandlers,
+  handlers,
+  handlersFor,
+  staffUser,
+  version,
+} from "@/stories/handlers";
 import { Page, pageMeta, type PageStory } from "@/stories/page-story";
 import { sampleReport, sampleReportData } from "@/stories/report-fixture";
 
@@ -62,6 +68,14 @@ const versionFiles = (
 };
 
 export const Tasks: PageStory = { args: { path: "/tasks" } };
+export const NoTasks: PageStory = {
+  args: { path: "/tasks" },
+  parameters: { msw: noTasksHandlers() },
+};
+export const NoTasksProjectStarted: PageStory = {
+  args: { path: "/tasks" },
+  parameters: { msw: noTasksHandlers(true) },
+};
 export const Task: PageStory = {
   args: { path: "/tasks/support-assistant" },
 };

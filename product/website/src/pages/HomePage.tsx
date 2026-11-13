@@ -201,7 +201,7 @@ const products = [
       "Own your own model weights. Served through the same API",
     ],
     action: "Start Research",
-    href: "https://cal.com/jsgradiated/30min",
+    href: `${CONSOLE_BASE_URL}/onboarding/post-training`,
   },
 ] as const;
 

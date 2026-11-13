@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Navigate, useNavigate } from "@tanstack/react-router";
+import { Navigate, useNavigate, useSearch } from "@tanstack/react-router";
 import { ArrowRight, LoaderCircle } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
@@ -27,14 +27,37 @@ import {
   organizationToOnboard,
   suggestedOrganizationName,
 } from "@/lib/onboarding";
+import { POST_TRAINING_JOURNEY } from "@/lib/login-search";
 import { queryKeys } from "@/lib/query-keys";
 import { LoadFailed } from "@/pages/console-page";
+import {
+  chooseAccount,
+  parseOnboardingSearch,
+} from "@/lib/engineer-onboarding";
+import { PostTrainingOnboarding } from "@/pages/engineer-onboarding/post-training-onboarding";
 import { useWorkspaceSelection } from "@/store/workspace-selection";
 
 export const OnboardingPage = () => {
+  // Search params the route does not validate still reach useSearch from the
+  // root, so parse again rather than trust them.
+  const {
+    journey,
+    organization: requestedOrganization,
+    from,
+  } = parseOnboardingSearch(useSearch({ from: "/onboarding" }));
+  const postTraining = journey === POST_TRAINING_JOURNEY;
   const { user, signOut } = useSession();
   const me = useCurrentUser();
-  const organization = organizationToOnboard(user);
+  const [onboarded, setOnboarded] = useState<string>();
+  /* Post-training sets up only the organization it will use: none until one
+     is picked from several, and only an active one the user administers. */
+  const choice =
+    postTraining && user ? chooseAccount(user, requestedOrganization) : null;
+  const organization = !choice
+    ? organizationToOnboard(user, requestedOrganization)
+    : choice.kind === "ready"
+      ? organizationToOnboard(user, choice.account.organizationId)
+      : undefined;
 
   if (me.isError && httpStatus(me.error) !== 401)
     return (
@@ -54,18 +77,27 @@ export const OnboardingPage = () => {
       </main>
     );
 
-  if (!organization) return <Navigate to="/models" />;
+  if (!organization && !postTraining) return <Navigate to="/models" />;
 
   return (
     <>
       <ImpersonationBanner user={user} />
-      <AuthCard>
-        <OrganizationSetup
+      {organization ? (
+        <AuthCard>
+          <OrganizationSetup
+            user={user}
+            organization={organization}
+            onOnboarded={postTraining ? setOnboarded : undefined}
+            onSignOut={() => void signOut()}
+          />
+        </AuthCard>
+      ) : (
+        <PostTrainingOnboarding
           user={user}
-          organization={organization}
-          onSignOut={() => void signOut()}
+          organization={requestedOrganization ?? onboarded}
+          from={from}
         />
-      </AuthCard>
+      )}
     </>
   );
 };
@@ -74,10 +106,12 @@ const OrganizationSetup = ({
   user,
   organization,
   onSignOut,
+  onOnboarded,
 }: {
   user: CurrentUser;
   organization: CurrentUser["organizations"][number];
   onSignOut: () => void;
+  onOnboarded: ((organizationId: string) => void) | undefined;
 }) => {
   const domain = user.company_email_domain;
   const [name, setName] = useState(suggestedOrganizationName(domain));
@@ -97,6 +131,7 @@ const OrganizationSetup = ({
         onboarding_completed: true,
       }),
     onSuccess: async (updated) => {
+      onOnboarded?.(updated.id);
       client.setQueryData<CurrentUser>(
         queryKeys.me,
         (current) =>
@@ -109,6 +144,8 @@ const OrganizationSetup = ({
       );
       selectOrganization(updated.id);
       selectWorkspace(updated.default_workspace_id);
+      if (onOnboarded) return;
+
       await navigate({ to: "/models", search: { welcome: true } });
     },
   });

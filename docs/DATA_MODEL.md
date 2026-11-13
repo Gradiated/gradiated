@@ -43,7 +43,7 @@ research, alias and third-party-provider concepts.
 - Enums are constrained `text`, not PostgreSQL enum types.
 - API keys contain 256 random bits and are stored only as SHA-256 `bytea` digests; raw secrets are shown once and never persisted.
 - Mutable PostgreSQL records have `updated_at`; immutable PostgreSQL and ClickHouse records do not.
-- No generic `metadata`, arbitrary tags or universal soft-delete fields.
+- No generic `metadata`, arbitrary tags or universal soft-delete fields. `organizations.metadata` is the one exception: a closed, versioned Zod document with no arbitrary keys.
 - JSON is allowed only where a versioned Zod schema defines a closed shape.
 - Every tenant query includes `organization_id` and, where applicable, `workspace_id`.
 - The TypeScript application owns PostgreSQL and queries ClickHouse for product analytics. Rust consumes serving projections and emits versioned generation events; it does not contain product repositories.
@@ -57,33 +57,33 @@ The first four tables are generated and owned by Better Auth. We map its logical
 
 ### 1. `users`
 
-| Field            | Type        | Null | Rules                                 |
-| ---------------- | ----------- | ---- | ------------------------------------- |
-| `id`             | uuid        | no   | Primary key                           |
-| `name`           | text        | no   | Bounded display name                  |
-| `email`          | text        | no   | Normalized; unique case-insensitively |
-| `email_verified` | boolean     | no   | Default false                         |
+| Field            | Type        | Null | Rules                                         |
+| ---------------- | ----------- | ---- | --------------------------------------------- |
+| `id`             | uuid        | no   | Primary key                                   |
+| `name`           | text        | no   | Bounded display name                          |
+| `email`          | text        | no   | Normalized; unique case-insensitively         |
+| `email_verified` | boolean     | no   | Default false                                 |
 | `is_staff`       | boolean     | no   | Default false; controlled staff portal access |
-| `image_url`      | text        | yes  | Profile image URL                     |
-| `created_at`     | timestamptz | no   | Creation time                         |
-| `updated_at`     | timestamptz | no   | Last mutation time                    |
+| `image_url`      | text        | yes  | Profile image URL                             |
+| `created_at`     | timestamptz | no   | Creation time                                 |
+| `updated_at`     | timestamptz | no   | Last mutation time                            |
 
 Verified `is_staff` users can administer all customer organizations without membership rows. Other users require active organization membership to access its workspaces. Staff status is not writable through public authentication or profile APIs. Impersonation uses the target user’s memberships and records its staff actor separately.
 
 ### 2. `sessions`
 
-| Field        | Type        | Null | Rules                       |
-| ------------ | ----------- | ---- | --------------------------- |
-| `id`         | uuid        | no   | Primary key                 |
-| `user_id`    | uuid        | no   | FK `users.id`               |
-| `token`      | text        | no   | Unique; Better Auth-managed |
-| `expires_at` | timestamptz | no   | Session expiry              |
-| `impersonated_by` | uuid | yes | Staff actor; FK `users.id`, cascade on deletion |
-| `impersonator_session_id` | uuid | yes | Original staff session; revalidated during impersonation |
-| `ip_address` | inet        | yes  | Better Auth-managed         |
-| `user_agent` | text        | yes  | Bounded                     |
-| `created_at` | timestamptz | no   | Creation time               |
-| `updated_at` | timestamptz | no   | Last mutation time          |
+| Field                     | Type        | Null | Rules                                                    |
+| ------------------------- | ----------- | ---- | -------------------------------------------------------- |
+| `id`                      | uuid        | no   | Primary key                                              |
+| `user_id`                 | uuid        | no   | FK `users.id`                                            |
+| `token`                   | text        | no   | Unique; Better Auth-managed                              |
+| `expires_at`              | timestamptz | no   | Session expiry                                           |
+| `impersonated_by`         | uuid        | yes  | Staff actor; FK `users.id`, cascade on deletion          |
+| `impersonator_session_id` | uuid        | yes  | Original staff session; revalidated during impersonation |
+| `ip_address`              | inet        | yes  | Better Auth-managed                                      |
+| `user_agent`              | text        | yes  | Bounded                                                  |
+| `created_at`              | timestamptz | no   | Creation time                                            |
+| `updated_at`              | timestamptz | no   | Last mutation time                                       |
 
 ### 3. `accounts`
 
@@ -131,6 +131,7 @@ Direct customers and distribution channels such as OpenRouter use the same organ
 | `status`           | text        | no   | `active`, `suspended`                       |
 | `auto_join_domain` | text        | yes  | Lowercase email domain; unique when present |
 | `onboarded_at`     | timestamptz | yes  | When the owner finished first-run setup     |
+| `metadata`         | jsonb       | no   | Closed versioned document; see below        |
 | `created_at`       | timestamptz | no   | Creation time                               |
 | `updated_at`       | timestamptz | no   | Last mutation time                          |
 
@@ -139,6 +140,20 @@ OpenRouter is an internal `distribution_channel` organization and is not visible
 The organization `slug` prefixes its private model names, as in `acme/support-triage`. An organization created during signup starts with a random 16-character slug, and its owner chooses the real one during onboarding; one created from the console asks for its slug up front. In both cases the console suggests a slugified form of the organization name and the owner can edit it; a slug held by another organization is refused so they can pick again. Admins can change it in settings until the organization has its first model, after which it is fixed so model names never stop resolving. Fixed platform names (`gradiated`, `openai`, `anthropic`, `api`, ...) and the author segment of every hosted catalog id (`google`, `qwen`, ...) are reserved, so a private name never shadows a catalog id. Migration 0030 gives existing organizations a slug from their name, with `-2`, `-3`, ... on collisions and an `-org` suffix for reserved or too-short names.
 
 A new user's signup organization has a null `onboarded_at`, and the console asks its owner to name it before continuing. An owner or admin may set `auto_join_domain` only to the domain of their own verified email, and only when that domain is not a free or disposable email provider. When a user signs up with a verified email at a claimed domain of an active customer organization, they join it as a `member` and no personal organization is created. One organization may claim a domain.
+
+`metadata` defaults to `{"schema_version": 1}` and is parsed with `OrganizationMetadataSchema` from `@gradiated/contracts` on every read and write; unknown keys are rejected. Its only key is `training_onboarding`, the post-training onboarding record:
+
+| Key                                         | Type     | Rules                                                  |
+| ------------------------------------------- | -------- | ------------------------------------------------------ |
+| `training_onboarding.nda.document_id`       | text     | PandaDoc document that PandaDoc confirmed as completed |
+| `training_onboarding.nda.template_version`  | text     | NDA template version it was signed against             |
+| `training_onboarding.nda.signed_at`         | ISO time | PandaDoc completion time                               |
+| `training_onboarding.submitted_at`          | ISO time | Set once when an admin starts the project              |
+| `training_onboarding.submitted_by`          | uuid     | The admin who submitted                                |
+| `training_onboarding.submission_claimed_at` | ISO time | A submission in flight; expires after two minutes      |
+| `training_onboarding.contact_channel`       | text     | `slack`, `email`                                       |
+
+The organizations store merges changes into `metadata.training_onboarding` only. The NDA is recorded when the API reads a completed, organization-bound PandaDoc document, and replaced only for a new template version. A submission is recorded at most once. Onboarding notes are delivered to Slack or the Gradiated team email at submission and are not stored. `onboarded_at` is unrelated: it still means the owner finished first-run console setup.
 
 ### 6. `organization_members`
 
@@ -172,6 +187,26 @@ Admins manage members, invitations, workspaces, organization settings, training 
 | `updated_at`      | timestamptz | no   | Last mutation time                    |
 
 An invitation is pending until it is accepted or revoked; expiry is derived from `expires_at`. There is at most one pending invitation per organization and normalized email, so inviting the same address again or resending replaces its token and expiry instead of adding a row. Accepting requires a signed-in user whose verified email matches and inserts the membership in the same transaction. A user who signs up with a verified email that has pending invitations joins those organizations instead of receiving a personal organization.
+
+### 7a. `integrations`
+
+Organization-level connections to external providers. No credentials are stored: Slack uses Gradiated's bot token from configuration and GitHub App tokens are minted on demand.
+
+| Field             | Type        | Null | Rules                                                 |
+| ----------------- | ----------- | ---- | ----------------------------------------------------- |
+| `id`              | uuid        | no   | Primary key                                           |
+| `organization_id` | uuid        | no   | FK `organizations.id`                                 |
+| `provider`        | text        | no   | `github`, `slack`                                     |
+| `external_id`     | text        | no   | GitHub installation ID or Slack channel ID            |
+| `status`          | text        | no   | `pending`, `active`, `revoked`                        |
+| `settings`        | jsonb       | no   | Closed versioned per-provider Zod document; see below |
+| `created_by`      | uuid        | no   | FK `users.id`                                         |
+| `created_at`      | timestamptz | no   | Creation time                                         |
+| `updated_at`      | timestamptz | no   | Last mutation time                                    |
+
+`(provider, external_id)` is unique among unrevoked rows, so one installation or channel belongs to one organization. An organization has at most one unrevoked Slack row; it may have several GitHub rows. Slack `settings` hold `channel_name`, `invited_email` and `invited_at`; GitHub `settings` hold `account_login` and `repository_selection`. Both carry `schema_version: 1`.
+
+The stored Slack row, not the channel purpose, is the proof that a channel belongs to an organization. The row is inserted as `pending` as soon as Slack creates the channel and before its purpose is set, becomes `active` once Slack confirms an invitation, and is revoked when Slack reports the channel archived or missing. Each organization may send one Slack invitation per 10 minutes, claimed atomically through `invited_at`. A GitHub row is upserted as `active` when the submission rechecks the installation with GitHub.
 
 ### 8. `workspaces`
 

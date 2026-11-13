@@ -16,13 +16,33 @@ export {
   type OrganizationRole,
 } from "./me.js";
 export {
+  ContactChannelSchema,
   CreateOrganizationSchema,
+  OrganizationMetadataSchema,
+  OrganizationNdaSchema,
+  OrganizationOnboardingSchema,
   UpdateOrganizationSchema,
+  type ContactChannel,
+  type OrganizationMetadata,
+  type OrganizationNda,
+  type OrganizationOnboarding,
   type UpdateOrganization,
   OrganizationSchema,
   type CreateOrganization,
   type Organization,
 } from "./organizations.js";
+export {
+  GithubInstallationIdSchema,
+  GithubIntegrationSettingsSchema,
+  INTEGRATION_PROVIDERS,
+  INTEGRATION_STATUSES,
+  IntegrationStatusSchema,
+  SlackChannelIdSchema,
+  SlackIntegrationSettingsSchema,
+  type GithubIntegrationSettings,
+  type IntegrationStatus,
+  type SlackIntegrationSettings,
+} from "./integrations.js";
 export {
   CreateInvitationsSchema,
   EmailInputSchema,

@@ -19,10 +19,13 @@ through the host proxy at the deployment's `service_url`. The loader obtains a
 grant, downloads and verifies the archive, and generates a few tokens through
 the engine, checking the returned adapter identity and usage. Up to three
 allocations are tried in random order. The first pass marks the version
-`available` and sets the production pointer in one transaction. A 422 from the
-loader (the loader or runtime rejected the adapter) answers 409; other
-failures, including no compatible allocation, answer 503. Either leaves the
-version and pointer unchanged. Other allocations load the adapter on its first
+`available` and sets the production pointer in one transaction, but only if the
+pointer still holds the value seen before the probe (or already names this
+version); otherwise the version stays available and the request answers 409 so
+a slow probe never reverses a newer promotion. A 422 from the loader (the loader
+or runtime rejected the adapter) stops qualification and answers 409, even if
+another allocation might pass; other failures, including no compatible
+allocation, answer 503. Failures leave the version and pointer unchanged. Other allocations load the adapter on its first
 request; there is no per-replica pinning. The API logs each attempt as
 `adapter_qualification` and counts outcomes in
 `gradiated_api_adapter_qualifications_total{model,outcome}`;

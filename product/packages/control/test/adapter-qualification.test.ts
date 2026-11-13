@@ -145,7 +145,7 @@ describe("createAdapterQualifier", () => {
     ]);
   });
 
-  it("reports a rejection even when a later allocation fails differently", async () => {
+  it("stops at a rejection so a later allocation cannot override it", async () => {
     const probe = vi
       .fn<AdapterProbe>()
       .mockResolvedValueOnce({
@@ -153,18 +153,15 @@ describe("createAdapterQualifier", () => {
         rejected: true,
         reason: "invalid_adapter",
       })
-      .mockResolvedValueOnce({
-        ok: false,
-        rejected: false,
-        reason: "probe_timeout",
-      });
+      .mockResolvedValueOnce({ ok: true });
     const { qualify, reports } = qualifier([target("a"), target("b")], probe);
 
     await expect(qualify(version)).rejects.toMatchObject({ code: "conflict" });
+    expect(probe).toHaveBeenCalledOnce();
     expect(reports).toMatchObject([
       {
         outcome: "rejected",
-        attempts: 2,
+        attempts: 1,
         deploymentId: "a",
         reason: "invalid_adapter",
       },

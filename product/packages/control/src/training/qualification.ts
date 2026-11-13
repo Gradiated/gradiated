@@ -110,8 +110,7 @@ export const createAdapterQualifier = ({
       );
     }
 
-    // A rejection describes the adapter, so it outranks later allocation failures.
-    let rejection: { deploymentId: string; reason: string } | undefined;
+    // A rejection describes the adapter, so no later allocation can override it.
     let last = { deploymentId: candidates[0]!.id, reason: "probe_failed" };
     let attempts = 0;
     for (const target of candidates) {
@@ -124,25 +123,21 @@ export const createAdapterQualifier = ({
         finish("passed", attempts, target.id);
         return;
       }
-      last = { deploymentId: target.id, reason: result.reason };
-      if (result.rejected) rejection ??= last;
-    }
-    const failure = rejection ?? last;
-    finish(
-      rejection ? "rejected" : "failed",
-      attempts,
-      failure.deploymentId,
-      failure.reason,
-    );
-
-    throw rejection
-      ? new ControlServiceError(
+      if (result.rejected) {
+        finish("rejected", attempts, target.id, result.reason);
+        throw new ControlServiceError(
           "conflict",
           "The serving runtime could not load this adapter. Check that it targets modules this base model supports. The version was not promoted.",
-        )
-      : new ControlServiceError(
-          "unavailable",
-          "The adapter could not be tested on serving capacity. Try again shortly. The version was not promoted.",
         );
+      }
+
+      last = { deploymentId: target.id, reason: result.reason };
+    }
+    finish("failed", attempts, last.deploymentId, last.reason);
+
+    throw new ControlServiceError(
+      "unavailable",
+      "The adapter could not be tested on serving capacity. Try again shortly. The version was not promoted.",
+    );
   };
 };

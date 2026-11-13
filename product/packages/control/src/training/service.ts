@@ -325,8 +325,14 @@ export const createTrainingService = (
       const promoted = await records.promoteQualifiedVersion(
         task.id,
         version.id,
+        task.productionVersionId,
       );
-      if (!promoted) throw notFound("version");
+      if (promoted === "not_found") throw notFound("version");
+      if (promoted === "stale")
+        throw new ControlServiceError(
+          "conflict",
+          "Another version was promoted while this one was being tested. This version can now serve; promote it again to make it production.",
+        );
 
       return promoted;
     },

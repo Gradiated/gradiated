@@ -241,11 +241,11 @@ describe("adapter qualification on promotion", () => {
   });
 
   it.each([
-    ["rejected", true, "invalid_adapter", "conflict"],
-    ["failed", false, "preparation_failed", "unavailable"],
+    ["rejected", true, "invalid_adapter", "conflict", 1],
+    ["failed", false, "preparation_failed", "unavailable", 2],
   ] as const)(
     "leaves a %s adapter unavailable and production unchanged",
-    async (outcome, rejected, reason, code) => {
+    async (outcome, rejected, reason, code, attempts) => {
       const { owner, task, version } = await seedUpload();
       const probe = vi.fn<AdapterProbe>(async () => ({
         ok: false,
@@ -258,13 +258,63 @@ describe("adapter qualification on promotion", () => {
         service.promote(owner.userId, owner.workspaceId, task.name, version.id),
       ).rejects.toMatchObject({ code });
 
-      expect(probe).toHaveBeenCalledTimes(2);
+      expect(probe).toHaveBeenCalledTimes(attempts);
       const after = await stored(task.id, version.id);
       expect(after.version.status).toBe("unavailable");
       expect(after.task.productionVersionId).toBeNull();
-      expect(reports).toMatchObject([{ outcome, attempts: 2, reason }]);
+      expect(reports).toMatchObject([{ outcome, attempts, reason }]);
     },
   );
+
+  it("does not overwrite a promotion made while the adapter was being tested", async () => {
+    const { owner, task, version } = await seedUpload();
+    const [other] = await db.database
+      .insert(taskVersions)
+      .values({
+        ...version,
+        id: uuidv7(),
+        name: "already-serving",
+        status: "available",
+      })
+      .returning();
+    const probe = vi.fn<AdapterProbe>(async () => {
+      await db.database
+        .update(tasks)
+        .set({ productionVersionId: other!.id })
+        .where(eq(tasks.id, task.id));
+      return { ok: true };
+    });
+    const { service } = setup(probe);
+
+    await expect(
+      service.promote(owner.userId, owner.workspaceId, task.name, version.id),
+    ).rejects.toMatchObject({ code: "conflict" });
+
+    const after = await stored(task.id, version.id);
+    expect(after.task.productionVersionId).toBe(other!.id);
+    expect(after.version.status).toBe("available");
+  });
+
+  it("succeeds when a concurrent promotion of the same version already won", async () => {
+    const { owner, task, version } = await seedUpload();
+    const probe = vi.fn<AdapterProbe>(async () => {
+      await db.database
+        .update(tasks)
+        .set({ productionVersionId: version.id })
+        .where(eq(tasks.id, task.id));
+      return { ok: true };
+    });
+    const { service } = setup(probe);
+
+    const promoted = await service.promote(
+      owner.userId,
+      owner.workspaceId,
+      task.name,
+      version.id,
+    );
+
+    expect(promoted.productionVersionId).toBe(version.id);
+  });
 
   it("reports missing capacity without probing", async () => {
     const { owner, task, version } = await seedUpload();

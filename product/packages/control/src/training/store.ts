@@ -159,7 +159,12 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return TaskRecordSchema.parse(row);
     },
 
-    async promoteQualifiedVersion(taskId: string, versionId: string) {
+    // The pointer moves only if it still holds the value seen before qualification.
+    async promoteQualifiedVersion(
+      taskId: string,
+      versionId: string,
+      expectedProductionVersionId: string | null,
+    ) {
       return database.transaction(async (tx) => {
         const [version] = await tx
           .update(taskVersions)
@@ -176,7 +181,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
             ),
           )
           .returning({ id: taskVersions.id });
-        if (!version) return null;
+        if (!version) return "not_found" as const;
 
         const [row] = await tx
           .update(tasks)
@@ -186,9 +191,22 @@ export const createTrainingStore = (database: ControlDatabase) => {
               updatedAt: new Date(),
             }),
           )
-          .where(eq(tasks.id, UuidSchema.parse(taskId)))
+          .where(
+            and(
+              eq(tasks.id, UuidSchema.parse(taskId)),
+              or(
+                expectedProductionVersionId === null
+                  ? isNull(tasks.productionVersionId)
+                  : eq(
+                      tasks.productionVersionId,
+                      UuidSchema.parse(expectedProductionVersionId),
+                    ),
+                eq(tasks.productionVersionId, version.id),
+              ),
+            ),
+          )
           .returning();
-        return row ? TaskRecordSchema.parse(row) : null;
+        return row ? TaskRecordSchema.parse(row) : ("stale" as const);
       });
     },
 

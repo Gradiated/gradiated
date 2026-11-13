@@ -148,6 +148,7 @@ where id = $1";
 const MODEL_QUERY: &str = "\
 select json_build_object(
     'id', models.id,
+    'aliases', models.aliases,
     'name', models.name,
     'status', models.status,
     'properties', models.properties,
@@ -175,7 +176,10 @@ select json_build_object(
     )
   )::text
 from models
-where models.id = $1";
+where $1 = any(models.aliases)
+   or (models.id = $1 and (models.status <> 'retired' or not exists (
+       select 1 from models aliased where $1 = any(aliased.aliases)
+   )))";
 
 const MODEL_IDS_QUERY: &str = "select id from models order by id";
 

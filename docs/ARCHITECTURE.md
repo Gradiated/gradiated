@@ -31,8 +31,9 @@ public ALB ---> proxy ---> gateway (Rust, EKS) ---> private transport / restrict
                                            external provider cluster
 ```
 
-There is no general gateway, provider router, model alias layer, fallback
-graph or fleet service. A request names one exact hosted model. Direct
+There is no general provider router, fallback graph or fleet service. A request
+names a hosted model ID or one of its catalog aliases. The gateway resolves
+aliases to the canonical model before routing and billing. Direct
 customers and OpenRouter use the same Rust gateway and the same Valkey-backed
 authentication, admission and settlement path.
 

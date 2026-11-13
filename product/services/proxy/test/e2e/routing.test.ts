@@ -301,6 +301,55 @@ describe("with a provider key", () => {
     await instance.settled(response);
   });
 
+  it("loads aliases from the catalog and serves their canonical model", async () => {
+    const instance = await fixture.hostedCase();
+    const aliases = [
+      `alias-${crypto.randomUUID()}`,
+      `alias-${crypto.randomUUID()}`,
+    ];
+    await instance.database.query(
+      "update models set aliases = $2 where id = $1",
+      [instance.model, aliases],
+    );
+    await instance.database.query(
+      "insert into models (id, name, status, properties) select $2, name, 'retired', properties from models where id = $1",
+      [instance.model, aliases[0]],
+    );
+    await fixture.proxy.catalogRefreshedAfter(Date.now());
+
+    try {
+      for (const alias of [
+        aliases[0]!,
+        aliases[1]!.toUpperCase(),
+        aliases[0]!,
+      ]) {
+        const response = await fixture.proxy.client.post(CHAT.path, {
+          headers: relayHeaders(instance, "openai"),
+          json: CHAT.body(alias),
+        });
+
+        expect(response.status, response.text).toBe(200);
+        expect(response.json().model).toBe(instance.model);
+        await instance.settled(response);
+      }
+
+      expect(fixture.provider.requests).toEqual([]);
+      const listed = await fixture.proxy.client.get("/v1/models", {
+        headers: instance.headers,
+      });
+      expect(listed.status, listed.text).toBe(200);
+      const ids = (listed.json().data as { id: string }[]).map(
+        (model) => model.id,
+      );
+      expect(ids.filter((id) => id === instance.model)).toHaveLength(1);
+      expect(ids).not.toContain(aliases[0]);
+    } finally {
+      await instance.database.query("delete from models where id = $1", [
+        aliases[0],
+      ]);
+    }
+  });
+
   it.each<{
     name: string;
     headers: (instance: Case) => Headers;

@@ -556,6 +556,13 @@ impl RequestCoordinator {
                 .model(&resolved.base_model_id)
                 .await
                 .map_err(state_unavailable("model_read"))?;
+            if model
+                .as_ref()
+                .is_some_and(|model| model.id != resolved.base_model_id)
+            {
+                return Err(GatewayError::ModelUnavailable);
+            }
+
             adapter = Some(resolved);
         }
         let mut model = model.ok_or(GatewayError::ModelNotFound)?;

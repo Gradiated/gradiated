@@ -301,14 +301,20 @@ Mappings live in the git-owned catalog definitions under
 weights: check its `hugging_face_id` in `GET https://openrouter.ai/api/v1/models`.
 Verified on 2026-11-05: `z-ai/glm-5.3-flash`. Verified on 2026-11-10:
 `deepseek/deepseek-v4.1-flash-1017` and `deepseek/deepseek-v4.1-flash`. The original
-DeepSeek V4.1 Flash is retired, so its retained mapping does not permit serving.
-Callers must explicitly select `deepseek/deepseek-v4.1-flash-1017`, which is hosted
+DeepSeek V4.1 Flash row is retired; its names now resolve through the `aliases`
+field on the `deepseek/deepseek-v4.1-flash-1017` catalog definition, which is hosted
 on our capacity at $0.006 input, $0.001 cached input, and $0.20 output per million
 tokens. Its OpenRouter fallback permits up to $0.30 input and $1.20 output per
 million tokens, covering Modal and the common standard provider tier without
 requiring a local replica. Customer billing remains at catalog prices.
 OpenRouter has no Dealign uncensored GLM and no SystemOne model; those stay
 unmapped, and standard GLM must never stand in for the uncensored one.
+
+Add alternate request names to a model definition's `aliases` array in
+`packages/control/src/catalog/models/`. Catalog apply validates and persists
+these names; the proxy and gateway pick them up through their existing catalog
+refreshes and caches. Aliases use the target model's status, pricing and capacity.
+They do not add entries to `/v1/models` or require gateway/proxy rebuilds for later edits.
 
 To activate in an environment:
 

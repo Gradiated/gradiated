@@ -56,7 +56,7 @@ join workspaces
 join organizations on organizations.id = api_keys.organization_id
 where api_keys.digest = $1";
 
-const HOSTED_MODELS_QUERY: &str = "select id from models";
+const HOSTED_MODELS_QUERY: &str = "select id from models union select unnest(aliases) from models";
 
 // Every replica holds up to this many connections, so the proxy's share of RDS
 // max_connections is POOL_SIZE times maxReplicaCount.

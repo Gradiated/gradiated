@@ -15,11 +15,11 @@ const { instanceId: _instanceId, ...deploymentColumns } =
 export const createCatalogStore = (
   database: ControlDatabase,
 ): CatalogService => ({
-  async listModels() {
+  async listModels(options = {}) {
     const rows = await database
       .select()
       .from(models)
-      .where(ne(models.status, "retired"))
+      .where(options.includeRetired ? undefined : ne(models.status, "retired"))
       .orderBy(models.createdAt, models.id);
 
     return ModelRecordSchema.array().parse(rows);
@@ -47,6 +47,7 @@ export const createCatalogStore = (
         target: models.id,
         set: {
           name: record.name,
+          aliases: record.aliases,
           status: record.status,
           properties: record.properties,
           openrouterModelId: record.openrouterModelId,

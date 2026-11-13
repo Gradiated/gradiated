@@ -129,7 +129,9 @@ impl ServingState for TestServingState {
             .lock()
             .unwrap()
             .push(model_id.to_owned());
-        Ok(self.model.clone().filter(|model| model.id == model_id))
+        Ok(self.model.clone().filter(|model| {
+            model.id == model_id || model.aliases.iter().any(|alias| alias == model_id)
+        }))
     }
 
     async fn private_model_exists(

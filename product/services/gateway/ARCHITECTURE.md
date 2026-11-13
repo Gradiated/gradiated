@@ -47,7 +47,7 @@ The gateway does not contain:
 - Stripe or OpenRouter onboarding workflows;
 - cross-model routing or provider discovery; OpenRouter serves only the exact
   model a catalog row maps;
-- model aliases or silent parameter translation;
+- dynamic cross-model routing or silent parameter translation;
 - GPU provisioning or a fleet controller;
 - parallel or post-output request retries;
 - raw prompt, completion, unredacted request-body, or credential persistence;
@@ -77,8 +77,10 @@ Credentials, accounts, and workspaces are read directly from Valkey.
 
 ### Exact identifiers, minimal routing
 
-The gateway converts the request model ID to ASCII lowercase. The normalized
-ID and `GatewayModel.id` must then match byte-for-byte.
+The gateway converts the request model ID to ASCII lowercase and looks up its
+catalog ID or an entry in `models.aliases`. Aliases may replace retired IDs.
+The returned model must contain the requested ID as its canonical ID or alias;
+routing, responses and billing then use `GatewayModel.id`.
 `GatewayModel.deployments` may contain multiple `available` deployments. The
 gateway intersects them with fresh status. It uses a session ID when present.
 Otherwise, it hashes the first 4,096 actual input token IDs for token transports,
@@ -428,7 +430,7 @@ admission; other omitted parameters retain the pinned runtime/model defaults.
 The `GatewayModel` is the complete current PostgreSQL record of the model and its
 deployments, read through Valkey. Nothing projects it: a cache miss reads
 PostgreSQL and caches the row for `GATEWAY_RECORD_CACHE_TTL_SECONDS`, and a model
-PostgreSQL does not have is never cached. The launch lookup has no scoring, alias expansion,
+PostgreSQL does not have is never cached. Apart from explicit catalog aliases, lookup has no scoring,
 fallback, provider selection, or network discovery. The descriptor map is the
 public capability list. It does not claim that every model supports the same
 parameters. Adding a parameter normally changes

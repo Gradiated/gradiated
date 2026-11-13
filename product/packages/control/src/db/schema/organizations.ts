@@ -346,6 +346,10 @@ export const models = pgTable(
   "models",
   {
     id: text("id").primaryKey(),
+    aliases: text("aliases")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     name: text("name").notNull(),
     status: text("status", { enum: MODEL_STATUSES }).notNull(),
     properties: jsonb("properties").$type<ModelProperties>().notNull(),

@@ -8,6 +8,11 @@ export const deepseekV41Flash1017ArtifactModelPath =
 export const createDeepseekV41Flash1017ModelConfiguration = () =>
   ({
     id: deepseekV41Flash1017ModelId,
+    aliases: [
+      "deepseek/deepseek-v4.1-flash",
+      "deepseek-v4.1-flash",
+      "deepseek-v4.1-flash-1017",
+    ],
     name: modelDisplayName(deepseekV41Flash1017ModelId),
     status: "available",
     // Checked 2026-11-10: OpenRouter's entry has this model's Hugging Face ID.

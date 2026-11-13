@@ -232,6 +232,13 @@
       "when": 1794561552792,
       "tag": "0032_organization_integrations",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794569443545,
+      "tag": "0033_model_aliases",
+      "breakpoints": true
     }
   ]
 }

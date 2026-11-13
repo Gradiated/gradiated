@@ -83,6 +83,19 @@ async fn names_carry_the_organization_slug() {
 }
 
 #[tokio::test]
+async fn an_alias_cannot_replace_an_adapters_pinned_base_model() {
+    let mut state = state();
+    let model = state.model.as_mut().unwrap();
+    model.aliases = vec![model.id.clone()];
+    model.id = "replacement-model".to_owned();
+
+    assert_eq!(
+        private_request(Arc::new(state), "acme/task-a").await.err(),
+        Some(GatewayError::ModelUnavailable)
+    );
+}
+
+#[tokio::test]
 async fn rejects_other_workspaces_and_missing_versions() {
     let mut state = state();
     state.adapter.as_mut().unwrap().workspace_id = Uuid::from_u128(123);

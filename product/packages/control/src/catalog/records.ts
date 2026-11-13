@@ -10,6 +10,9 @@ import { MODEL_STATUSES } from "../db/schema/index.js";
 
 export const ModelRecordSchema = z.object({
   id: ModelSchema.shape.id,
+  aliases: z
+    .array(ModelSchema.shape.id.regex(/^[a-z0-9][a-z0-9._/-]*$/))
+    .default([]),
   name: ModelSchema.shape.name,
   status: z.enum(MODEL_STATUSES),
   properties: ModelPropertiesSchema,

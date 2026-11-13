@@ -10,9 +10,10 @@ export type { ModelRecord, ModelDeploymentRecord } from "./records.js";
 export type CatalogModelInput = Parameters<CatalogService["upsertModel"]>[0];
 
 export interface CatalogService {
-  listModels(): Promise<ModelRecord[]>;
+  listModels(options?: { includeRetired?: boolean }): Promise<ModelRecord[]>;
   upsertModel(input: {
     id: string;
+    aliases?: string[];
     name: string;
     status: ModelRecord["status"];
     properties: ModelPropertiesInput;

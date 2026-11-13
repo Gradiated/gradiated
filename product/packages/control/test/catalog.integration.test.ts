@@ -55,6 +55,21 @@ describe("model catalog", () => {
     expect((await storedModel(input.id))?.properties).toEqual(normalized);
   });
 
+  it("stores and clears model aliases", async () => {
+    const input = modelInput();
+    const aliases = ["short-model", "vendor/short-model"];
+    const created = await catalog.upsertModel({
+      ...input,
+      aliases,
+    });
+    expect(created.aliases).toEqual(aliases);
+    expect((await storedModel(input.id))?.aliases).toEqual(aliases);
+
+    const cleared = await catalog.upsertModel(input);
+    expect(cleared.aliases).toEqual([]);
+    expect((await storedModel(input.id))?.aliases).toEqual([]);
+  });
+
   it("stores, replaces and clears an OpenRouter mapping", async () => {
     const input = modelInput();
 

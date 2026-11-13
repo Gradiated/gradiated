@@ -14,6 +14,8 @@ pub(crate) const MAX_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 pub struct GatewayModel {
     pub id: String,
+    #[serde(default)]
+    pub aliases: Vec<String>,
     pub name: String,
     pub status: ModelStatus,
     pub properties: GatewayModelProperties,

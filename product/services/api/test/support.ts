@@ -163,6 +163,7 @@ const modelProperties: ModelProperties = {
 
 export const modelRecord: ModelRecord = {
   id: "moonshotai/kimi-k3",
+  aliases: [],
   name: "Kimi K3",
   status: "available",
   properties: modelProperties,

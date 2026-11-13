@@ -579,7 +579,7 @@ impl ServingState for ValkeyServingState {
             .properties
             .validate_for_serving()
             .map_err(ServingStateError::InvalidModelProperties)?;
-        if model.id != model_id {
+        if model.id != model_id && !model.aliases.iter().any(|alias| alias == model_id) {
             return Err(ServingStateError::MismatchedModelId);
         }
 
@@ -622,8 +622,8 @@ impl ServingState for ValkeyServingState {
         let mut models = Vec::with_capacity(model_ids.len());
         for model_id in model_ids {
             match self.model(&model_id).await {
-                Ok(Some(model)) => models.push(model),
-                Ok(None) => {}
+                Ok(Some(model)) if model.id == model_id => models.push(model),
+                Ok(_) => {}
                 Err(error) if error.is_unusable_record() => {
                     crate::diagnostics::limited_warn!(%model_id, phase = "catalog_read",
                         error_code = error.diagnostic_code(), "leaving out an unusable model");

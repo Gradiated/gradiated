@@ -1,3 +1,4 @@
+import { WorkloadBenchmarkCard } from "@/components/fine-tuning/workload-benchmark";
 import {
   catalogModel,
   type CatalogEntry,
@@ -335,6 +336,7 @@ const VersionReport = ({
         </Link>
       }
     >
+      <WorkloadBenchmarkCard task={task.name} versionId={version.id} />
       <div className="flex flex-wrap items-start gap-10">
         <div className="min-w-0 flex-[999_1_32rem]">
           {files.isPending || (reportFile && report.isPending) ? (

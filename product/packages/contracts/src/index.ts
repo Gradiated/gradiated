@@ -223,3 +223,8 @@ export {
   type McpToolList,
   type McpToolResult,
 } from "./mcp.js";
+export {
+  WORKLOAD_BENCHMARK_FILE,
+  WorkloadBenchmarkSchema,
+  type WorkloadBenchmark,
+} from "./workload-benchmark.js";

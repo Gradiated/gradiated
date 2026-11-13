@@ -1,6 +1,7 @@
 import {
   CreateTaskVersionFileSchema,
   MAX_VERSION_FILE_CONTENT_BYTES,
+  WORKLOAD_BENCHMARK_FILE,
   type CreateTaskVersionFile,
 } from "@gradiated/contracts";
 import {
@@ -17,10 +18,51 @@ import {
   versionFileUploadKey,
   type VersionFileRecord,
 } from "./version-file-store.js";
+import {
+  MAX_BENCHMARK_BYTES,
+  parseWorkloadBenchmark,
+} from "./workload-benchmarks.js";
 
 const UPLOAD_SECONDS = 3600;
 const DOWNLOAD_SECONDS = 300;
 const TEXT_FILE = /\.(md|markdown|csv|tsv|json|jsonl|txt)$/i;
+
+// The task list shows a benchmark in place of automatic stats, so an
+// unreadable one is refused here instead of silently ignored later. It reads
+// the exact object version that complete() then publishes.
+const requireValidBenchmark = async (
+  objects: Pick<ObjectStorage, "read">,
+  file: VersionFileRecord,
+  versionId: string,
+) => {
+  const invalid = () =>
+    new ControlServiceError(
+      "conflict",
+      `${WORKLOAD_BENCHMARK_FILE} must be a valid workload benchmark.`,
+    );
+  if (file.sizeBytes > MAX_BENCHMARK_BYTES) throw invalid();
+  let bytes: Uint8Array;
+  try {
+    bytes = await objects.read(versionFileUploadKey(file), {
+      maxBytes: MAX_BENCHMARK_BYTES,
+      timeoutMs: 5_000,
+      versionId,
+    });
+  } catch (error) {
+    throw new ControlServiceError(
+      "unavailable",
+      "The benchmark could not be checked. Try again shortly.",
+      error,
+    );
+  }
+  let parsed: ReturnType<typeof parseWorkloadBenchmark> | undefined;
+  try {
+    parsed = parseWorkloadBenchmark(bytes);
+  } catch {
+    parsed = undefined;
+  }
+  if (!parsed?.success) throw invalid();
+};
 
 const notFound = (thing: string) =>
   new ControlServiceError("not_found", `The ${thing} was not found.`);
@@ -178,6 +220,8 @@ export const createVersionFiles = (
             "unavailable",
             "Version file storage must have bucket versioning enabled.",
           );
+        if (file.name === WORKLOAD_BENCHMARK_FILE)
+          await requireValidBenchmark(objects, file, object.versionId);
 
         try {
           await objects.copy(

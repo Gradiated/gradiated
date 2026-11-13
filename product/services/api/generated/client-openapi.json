@@ -3537,6 +3537,170 @@
           {
             "type": "object",
             "properties": {
+              "workload_benchmark": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "schema_version": {
+                    "type": "number",
+                    "enum": [
+                      1
+                    ]
+                  },
+                  "comparison_model_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "workload": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 4000
+                  },
+                  "cost": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "unit": {
+                        "type": "string",
+                        "enum": [
+                          "task",
+                          "1k_tokens"
+                        ]
+                      },
+                      "fine_tuned": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "comparison": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "basis": {
+                        "type": "string",
+                        "enum": [
+                          "measured",
+                          "estimated"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "unit",
+                      "fine_tuned",
+                      "comparison",
+                      "basis"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "speed": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "unit": {
+                        "type": "string",
+                        "enum": [
+                          "output_tokens_per_second",
+                          "latency_seconds"
+                        ]
+                      },
+                      "fine_tuned": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      "comparison": {
+                        "type": [
+                          "number",
+                          "null"
+                        ],
+                        "exclusiveMinimum": 0
+                      },
+                      "statistic": {
+                        "type": "string",
+                        "enum": [
+                          "mean",
+                          "median"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "unit",
+                      "fine_tuned",
+                      "comparison",
+                      "statistic"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "quality": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "metric": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      },
+                      "fine_tuned": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      "comparison": {
+                        "type": [
+                          "number",
+                          "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      "sample_size": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "exclusiveMinimum": 0
+                      }
+                    },
+                    "required": [
+                      "metric",
+                      "fine_tuned",
+                      "comparison",
+                      "sample_size"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "schema_version",
+                  "comparison_model_id",
+                  "workload",
+                  "notes",
+                  "cost",
+                  "speed",
+                  "quality"
+                ],
+                "additionalProperties": false,
+                "description": "Manual workload benchmark for the latest version, if available."
+              },
               "latest_version": {
                 "type": [
                   "object",

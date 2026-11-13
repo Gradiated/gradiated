@@ -2533,6 +2533,36 @@ export interface components {
       data: components["schemas"]["TaskListItem"][];
     };
     TaskListItem: components["schemas"]["Task"] & {
+      /** @description Manual workload benchmark for the latest version, if available. */
+      workload_benchmark?: {
+        /** @enum {number} */
+        schema_version: 1;
+        comparison_model_id: string | null;
+        workload: string;
+        notes: string;
+        cost: {
+          /** @enum {string} */
+          unit: "task" | "1k_tokens";
+          fine_tuned: number;
+          comparison: number | null;
+          /** @enum {string} */
+          basis: "measured" | "estimated";
+        } | null;
+        speed: {
+          /** @enum {string} */
+          unit: "output_tokens_per_second" | "latency_seconds";
+          fine_tuned: number;
+          comparison: number | null;
+          /** @enum {string} */
+          statistic: "mean" | "median";
+        } | null;
+        quality: {
+          metric: string;
+          fine_tuned: number;
+          comparison: number | null;
+          sample_size: number | null;
+        } | null;
+      } | null;
       /** @description Latest model version, including externally uploaded adapters. */
       latest_version?: {
         /**

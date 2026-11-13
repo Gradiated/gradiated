@@ -1,3 +1,4 @@
+import { WorkloadBenchmarkCard } from "./workload-benchmark";
 import { useState } from "react";
 import { EvaluationResultsDialog } from "./evaluation-results-dialog";
 import { EvaluationPanel } from "@/components/fine-tuning/evaluation-panel";
@@ -46,25 +47,28 @@ export const VersionActionButtons = ({
 export const VersionEvaluation = ({ version }: { version: VersionView }) => {
   const [showResults, setShowResults] = useState(false);
 
-  return version.summary ? (
+  return (
     <>
-      <EvaluationPanel
-        summary={version.summary}
-        onViewResults={() => setShowResults(true)}
-      />
-      {showResults ? (
-        <EvaluationResultsDialog
-          version={version}
-          onClose={() => setShowResults(false)}
-        />
+      <WorkloadBenchmarkCard task={version.task} versionId={version.id} />
+      {version.summary ? (
+        <>
+          <EvaluationPanel
+            summary={version.summary}
+            onViewResults={() => setShowResults(true)}
+          />
+          {showResults ? (
+            <EvaluationResultsDialog
+              version={version}
+              onClose={() => setShowResults(false)}
+            />
+          ) : null}
+        </>
+      ) : version.training_run_id ? (
+        <p className="text-sm text-muted-foreground">
+          Automated evaluation not available yet.
+        </p>
       ) : null}
     </>
-  ) : (
-    <p className="text-sm text-muted-foreground">
-      {version.training_run_id
-        ? "Evaluation not available yet."
-        : "This adapter was uploaded externally. Evaluation results are not available."}
-    </p>
   );
 };
 

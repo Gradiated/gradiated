@@ -1,3 +1,4 @@
+import { WorkloadBenchmarkSchema } from "./workload-benchmark.js";
 import { CronExpressionParser } from "cron-parser";
 import { z } from "@hono/zod-openapi";
 
@@ -393,6 +394,11 @@ export const TrainingRunEventsQuerySchema = z.object({
 });
 
 export const TaskListItemSchema = TaskSchema.extend({
+  workload_benchmark: WorkloadBenchmarkSchema.nullable()
+    .optional()
+    .describe(
+      "Manual workload benchmark for the latest version, if available.",
+    ),
   latest_version: TaskVersionSchema.nullable()
     .optional()
     .describe("Latest model version, including externally uploaded adapters."),

@@ -1,3 +1,6 @@
+import { createVersionFileStore } from "./version-file-store.js";
+import { readWorkloadBenchmarks } from "./workload-benchmarks.js";
+import { WORKLOAD_BENCHMARK_FILE } from "@gradiated/contracts";
 import type { ObjectStorage } from "../storage/object-storage.js";
 import { createVersionFiles } from "./version-files.js";
 import { createModelUploads } from "./uploads.js";
@@ -141,7 +144,24 @@ export const createTrainingService = (
           latestRun ? reconcileTrainingRun(database, engine, latestRun) : false,
         ),
       );
-      return changed.some(Boolean) ? records.listTasks(workspaceId) : tasks;
+      const current = changed.some(Boolean)
+        ? await records.listTasks(workspaceId)
+        : tasks;
+      const files = await createVersionFileStore(database).listReadyNamed(
+        workspaceId,
+        current.flatMap((task) =>
+          task.latestVersion ? [task.latestVersion.id] : [],
+        ),
+        WORKLOAD_BENCHMARK_FILE,
+      );
+      const benchmarks = await readWorkloadBenchmarks(files, uploadStorage);
+
+      return current.map((task) => ({
+        ...task,
+        workloadBenchmark: task.latestVersion
+          ? (benchmarks.get(task.latestVersion.id) ?? null)
+          : null,
+      }));
     },
 
     async getTask(userId: string, workspaceId: string, name: string) {

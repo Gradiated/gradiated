@@ -1,5 +1,5 @@
 import type { Meta } from "@storybook/react-vite";
-import { http, HttpResponse } from "msw";
+import { delay, http, HttpResponse } from "msw";
 
 import type { components } from "@/api/schema";
 import {
@@ -27,7 +27,10 @@ type TaskVersion = components["schemas"]["TaskVersion"];
 
 const versionFiles = (
   files: Record<string, string>,
-  { versions = [version] }: { versions?: TaskVersion[] } = {},
+  {
+    versions = [version],
+    listDelayMs = 0,
+  }: { versions?: TaskVersion[]; listDelayMs?: number } = {},
 ) => {
   const entries = Object.entries(files).map(([name, content], index) => ({
     id: `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
@@ -43,11 +46,13 @@ const versionFiles = (
     http.get("/api/v1/workspaces/:workspaceId/tasks/:task/versions", () =>
       HttpResponse.json({ data: versions, next_cursor: null }),
     ),
-    http.get(filesPath, () =>
-      HttpResponse.json({
+    http.get(filesPath, async () => {
+      if (listDelayMs) await delay(listDelayMs);
+
+      return HttpResponse.json({
         data: entries.map(({ content: _content, ...file }) => file),
-      }),
-    ),
+      });
+    }),
     http.get(`${filesPath}/:fileId/content`, ({ params }) => {
       const file = find(params.fileId);
       return file
@@ -58,6 +63,31 @@ const versionFiles = (
           })
         : HttpResponse.json({ detail: "Not found" }, { status: 404 });
     }),
+    http.post(filesPath, () => {
+      return HttpResponse.json({
+        id: "benchmark-upload",
+        upload_url: `${location.origin}/storybook-benchmark-upload`,
+        expires_at: version.created_at,
+      });
+    }),
+    http.put("/storybook-benchmark-upload", async ({ request }) => {
+      const content = await request.text();
+      const index = entries.findIndex((file) => file.name === "benchmark.json");
+      const next = {
+        id: "benchmark-upload",
+        name: "benchmark.json",
+        content_type: "application/json",
+        size_bytes: content.length,
+        created_at: version.created_at,
+        content,
+      };
+      if (index < 0) entries.push(next);
+      else entries[index] = next;
+      return new HttpResponse(null, { status: 200 });
+    }),
+    http.put(`${filesPath}/:fileId`, () =>
+      HttpResponse.json(entries.find((file) => file.id === "benchmark-upload")),
+    ),
     http.get(`${filesPath}/:fileId/download`, () =>
       HttpResponse.json({
         url: "https://example.invalid/download",
@@ -117,4 +147,91 @@ export const VersionAsStaff: PageStory = {
 export const VersionMobile: PageStory = {
   ...VersionReport,
   tags: ["mobile"],
+};
+
+const manualBenchmark = JSON.stringify({
+  schema_version: 1,
+  comparison_model_id: "anthropic/claude-sonnet-5-5",
+  workload: "Support tool selection",
+  notes: "64 task checks; separate 96-request latency benchmark.",
+  cost: {
+    unit: "task",
+    fine_tuned: 266433,
+    comparison: null,
+    basis: "estimated",
+  },
+  speed: {
+    unit: "latency_seconds",
+    fine_tuned: 2.58,
+    comparison: null,
+    statistic: "median",
+  },
+  quality: {
+    metric: "Task success",
+    fine_tuned: 76.5625,
+    comparison: null,
+    sample_size: 64,
+  },
+});
+export const ManualBenchmarks: PageStory = {
+  args: { path: versionPath },
+  parameters: {
+    msw: [
+      ...versionFiles({ ...reportFiles, "benchmark.json": manualBenchmark }),
+      ...handlersFor(staffUser),
+    ],
+  },
+};
+export const ManualBenchmarksSlowList: PageStory = {
+  args: { path: versionPath },
+  parameters: {
+    msw: [
+      ...versionFiles(
+        { "benchmark.json": manualBenchmark },
+        { listDelayMs: 1500 },
+      ),
+      ...handlersFor(staffUser),
+    ],
+  },
+};
+export const ManualBenchmarksListRetry: PageStory = {
+  args: { path: versionPath },
+  parameters: {
+    msw: [
+      http.get(
+        filesPath,
+        () =>
+          HttpResponse.json(
+            { detail: "Temporary listing failure" },
+            { status: 503 },
+          ),
+        { once: true },
+      ),
+      ...versionFiles({ "benchmark.json": manualBenchmark }),
+      ...handlersFor(staffUser),
+    ],
+  },
+};
+export const ManualBenchmarksTable: PageStory = {
+  args: { path: "/tasks" },
+  parameters: {
+    msw: [
+      http.get("/api/v1/workspaces/:workspaceId/tasks", () =>
+        HttpResponse.json({
+          data: [
+            {
+              id: "00000000-0000-4000-8000-000000000003",
+              name: version.task,
+              comparison_model_id: "anthropic/claude-sonnet-5-5",
+              base_model_id: version.base_model_id,
+              latest_version: version,
+              latest_run: null,
+              workload_benchmark: JSON.parse(manualBenchmark),
+            },
+          ],
+        }),
+      ),
+      ...handlers,
+    ],
+  },
 };

@@ -548,6 +548,7 @@ export const registerTrainingRoutes = (
       {
         data: tasks.map((task) => ({
           ...taskResponse(task),
+          workload_benchmark: task.workloadBenchmark ?? null,
           latest_version: task.latestVersion
             ? versionResponse(task, task.latestVersion)
             : null,

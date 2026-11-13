@@ -130,13 +130,23 @@ describe("training routes", () => {
       createdAt: at,
       finishedAt: at,
     };
+    const workloadBenchmark = {
+      schema_version: 1 as const,
+      comparison_model_id: null,
+      workload: "Tool selection",
+      notes: "",
+      cost: null,
+      speed: null,
+      quality: null,
+    };
     const listTasks = vi.fn(async () => [
-      { ...task, latestRun, latestVersion: null },
+      { ...task, latestRun, latestVersion: null, workloadBenchmark },
       {
         ...task,
         id: "0198ae50-94d8-7d4d-a8be-9f9b44b8c775",
         latestRun: null,
         latestVersion: null,
+        workloadBenchmark: null,
       },
     ]);
     const app = createTestApp({
@@ -153,6 +163,8 @@ describe("training routes", () => {
       evaluation: null,
     });
     expect(result.data[1].latest_run).toBeNull();
+    expect(result.data[0].workload_benchmark).toEqual(workloadBenchmark);
+    expect(result.data[1].workload_benchmark).toBeNull();
   });
 
   it("requires a session", async () => {

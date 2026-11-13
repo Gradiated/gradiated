@@ -1,3 +1,4 @@
+import { benchmarkLabels } from "@/lib/workload-benchmark";
 import { latestVersionEvaluation } from "@/store/fine-tuning-views";
 import { UploadModelDialog } from "@/components/fine-tuning/upload-model-dialog";
 import { useTrainingMutation } from "@/hooks/use-training";
@@ -188,6 +189,8 @@ const TaskRowView = ({
   task: components["schemas"]["TaskListItem"];
   onOpen: () => void;
 }) => {
+  const benchmark = task.workload_benchmark;
+  const labels = benchmark ? benchmarkLabels(benchmark) : null;
   const run = task.latest_run;
   const summary = latestVersionEvaluation(task);
   const version = task.latest_version?.name ?? run?.version_name;
@@ -219,12 +222,18 @@ const TaskRowView = ({
       </TableCell>
       <TableCell className="px-4">
         <ModelLabel
-          id={summary?.comparison_model_id ?? task.comparison_model_id}
+          id={
+            benchmark
+              ? benchmark.comparison_model_id
+              : (summary?.comparison_model_id ?? task.comparison_model_id)
+          }
           className="text-muted-foreground"
         />
       </TableCell>
       <TableCell className="px-4 tabular-nums">
-        {summary ? (
+        {labels?.cost ? (
+          <span title={benchmark?.workload}>{labels.cost}</span>
+        ) : summary ? (
           <RatioLabel
             ratio={costAdvantage(summary)}
             detail={costPer1kRequests(summary)}
@@ -234,7 +243,9 @@ const TaskRowView = ({
         )}
       </TableCell>
       <TableCell className="px-4 tabular-nums">
-        {summary ? (
+        {labels?.speed ? (
+          <span title={benchmark?.workload}>{labels.speed}</span>
+        ) : summary ? (
           <RatioLabel
             ratio={speedAdvantage(summary)}
             detail={outputSpeed(summary)}
@@ -244,7 +255,11 @@ const TaskRowView = ({
         )}
       </TableCell>
       <TableCell className="px-4">
-        {summary ? (
+        {labels?.quality ? (
+          <span className="text-sm" title={benchmark?.workload}>
+            {labels.quality}
+          </span>
+        ) : summary ? (
           <QualityBar result={summary.vs_comparison} />
         ) : (
           <span className="text-muted-foreground tabular-nums">—</span>

@@ -62,3 +62,19 @@ Example:
 ```markdown
 {% chart type="line" data="metrics.csv" x="step" y=["train_loss", "eval_loss"] title="Training loss" /%}
 ```
+
+## Editable workload benchmarks
+
+Staff can edit a version's **Workload benchmarks** on its model or report page.
+These values take precedence over training-run evaluations in the Models table;
+**Use automatic stats** removes the override. Billing prices are unaffected.
+
+The editor saves a version-owned `benchmark.json`, validated by
+`WorkloadBenchmarkSchema` in `packages/contracts/src/workload-benchmark.ts`.
+Schema version 1 records the replacement model, workload, notes, and nullable cost,
+speed and quality metrics. Cost is an integer in nanoUSD per task or per 1k tokens,
+marked measured or estimated. Speed is mean/median latency in seconds or output
+tokens per second. Quality is a named percentage metric with an optional sample
+count. Each metric can include a replacement-model value; leave unknown values
+null. A missing file preserves the automatic evaluation display. An invalid file
+shows an error in the benchmark card and does not replace automatic table stats.

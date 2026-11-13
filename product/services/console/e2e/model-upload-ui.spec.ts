@@ -808,7 +808,11 @@ for (const failure of [
       0,
     );
     broken = false;
-    await page.getByRole("button", { name: "Retry", exact: true }).click();
+    await page
+      .getByRole("alert")
+      .filter({ hasText: `Could not load ${failure}.` })
+      .getByRole("button", { name: "Retry", exact: true })
+      .click();
     await expect(
       page.getByRole("heading", { name: "A delivered report" }),
     ).toBeVisible();

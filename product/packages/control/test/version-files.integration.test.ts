@@ -1,3 +1,4 @@
+import { createVersionFileStore } from "../src/training/version-file-store.js";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { v7 as uuidv7 } from "uuid";
 import { eq } from "drizzle-orm";
@@ -16,6 +17,16 @@ import { createVersionFiles } from "../src/training/version-files.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 import { seedUser } from "./support/fixtures.js";
 import { seedTrainingTask, trainingAdapter } from "./support/training.js";
+
+const benchmark = JSON.stringify({
+  schema_version: 1,
+  comparison_model_id: null,
+  workload: "Synthetic workload",
+  notes: "",
+  cost: null,
+  speed: null,
+  quality: null,
+});
 
 describe("version files", () => {
   let db: TestDatabase;
@@ -61,8 +72,13 @@ describe("version files", () => {
           sha256: undefined,
         };
       }),
-      read: async (key: string, options: { maxBytes: number }) => {
-        const bytes = objects.get(key);
+      read: async (
+        key: string,
+        options: { maxBytes: number; versionId?: string },
+      ) => {
+        const bytes = options.versionId
+          ? snapshots.get(options.versionId)
+          : objects.get(key);
         if (!bytes || bytes.length > options.maxBytes)
           throw new Error("Read failed");
 
@@ -101,6 +117,38 @@ describe("version files", () => {
       objects,
     };
   };
+
+  it("batches named ready files within the workspace and requested versions", async () => {
+    const first = await setup();
+    const second = await setup();
+    const named = await first.upload("benchmark.json", benchmark);
+    await first.upload("report.md", "Report");
+    await second.upload("benchmark.json", benchmark);
+    const files = createVersionFileStore(db.database);
+    expect(
+      (
+        await files.listReadyNamed(
+          first.member.workspaceId,
+          [first.version.id, second.version.id],
+          "benchmark.json",
+        )
+      ).map((file) => file.id),
+    ).toEqual([named.id]);
+    expect(
+      await files.listReadyNamed(
+        first.member.workspaceId,
+        [],
+        "benchmark.json",
+      ),
+    ).toEqual([]);
+    expect(
+      await files.listReadyNamed(
+        first.member.workspaceId,
+        [second.version.id],
+        "benchmark.json",
+      ),
+    ).toEqual([]);
+  });
 
   it("publishes, lists, reads and downloads a report", async () => {
     const { member, service, key, upload } = await setup();
@@ -157,6 +205,19 @@ describe("version files", () => {
     expect(
       (await service.content(member.userId, ...key, second.id)).content,
     ).toBe("# v2");
+  });
+
+  it("refuses a workload benchmark that does not match its schema", async () => {
+    const { member, service, key, upload } = await setup();
+    for (const content of ["{}", "not json", '{"schema_version":2}'])
+      await expect(upload("benchmark.json", content)).rejects.toMatchObject({
+        code: "conflict",
+      });
+    expect(await service.list(member.userId, ...key)).toEqual([]);
+    await expect(upload("benchmark.json", benchmark)).resolves.toMatchObject({
+      name: "benchmark.json",
+      status: "ready",
+    });
   });
 
   it("rejects a completion before the bytes arrive or with the wrong size", async () => {

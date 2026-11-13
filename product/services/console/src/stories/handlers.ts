@@ -773,7 +773,11 @@ const sharedHandlers = [
   ),
   http.get("/api/v1/workspaces/:workspaceId/tasks", () =>
     HttpResponse.json(
-      list({ ...task, latest_run: { ...run, version_name: version.name } }),
+      list({
+        ...task,
+        latest_version: version,
+        latest_run: { ...run, version_name: version.name },
+      }),
     ),
   ),
   http.get("/api/v1/workspaces/:workspaceId/tasks/:task", () =>

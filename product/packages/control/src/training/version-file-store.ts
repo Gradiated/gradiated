@@ -1,4 +1,4 @@
-import { and, asc, eq, ne, lt, or, isNotNull } from "drizzle-orm";
+import { and, asc, eq, ne, lt, or, isNotNull, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { v7 as uuidv7 } from "uuid";
 import {
@@ -87,6 +87,28 @@ export const createVersionFileStore = (database: ControlDatabase) => ({
       );
 
     return row ? VersionFileSchema.parse(row) : null;
+  },
+  async listReadyNamed(
+    workspaceId: string,
+    versionIds: string[],
+    name: string,
+  ) {
+    const ids = UuidSchema.array().parse(versionIds);
+    if (!ids.length) return [];
+
+    const rows = await database
+      .select()
+      .from(taskVersionFiles)
+      .where(
+        and(
+          eq(taskVersionFiles.workspaceId, UuidSchema.parse(workspaceId)),
+          inArray(taskVersionFiles.versionId, ids),
+          eq(taskVersionFiles.name, VersionFileNameSchema.parse(name)),
+          eq(taskVersionFiles.status, "ready"),
+        ),
+      );
+
+    return VersionFileSchema.array().parse(rows);
   },
   async listReady(versionId: string) {
     const rows = await database

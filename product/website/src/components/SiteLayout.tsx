@@ -82,7 +82,7 @@ const SiteHeader = (): ReactElement => {
         <div className="ml-auto flex items-center justify-end gap-7 max-site:gap-3">
           <a
             className="border-b border-current pb-0.5 text-muted transition-colors hover:text-accent max-[850px]:hidden"
-            href="https://cal.com/jsgradiated/30min"
+            href="https://cal.com/team/gradiated/chat-with-gradiated"
             rel="noreferrer"
           >
             Book a call
@@ -134,7 +134,7 @@ const SiteHeader = (): ReactElement => {
           ))}
           <a
             className={mobileMenuLinkClass}
-            href="https://cal.com/jsgradiated/30min"
+            href="https://cal.com/team/gradiated/chat-with-gradiated"
             rel="noreferrer"
           >
             Book a demo

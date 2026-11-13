@@ -35,7 +35,7 @@ import "../../styles/railshell.css";
  * sheet.
  */
 
-const BOOKING_URL = "https://cal.com/jsgradiated/30min";
+const BOOKING_URL = "https://cal.com/team/gradiated/chat-with-gradiated";
 
 /* -- doc mode ---------------------------------------------------------------
    The rail's second state: a doc-style page (handbook, docs) registers

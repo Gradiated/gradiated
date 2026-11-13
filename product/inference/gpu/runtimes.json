@@ -738,5 +738,94 @@
       "GRADIATED_API_BASE_URL": "http://127.0.0.1:3004",
       "LORA_BASE_MODEL_REVISION": "1bae0e1088993b9b82de08f59de5be5a34e42170"
     }
+  },
+  "9dce9a422f448eefe45bd4976c04d72382eae8a683abe8b9cfe551135cebca85": {
+    "image": "gradiated/glm-sglang-bundle@sha256:9dce9a422f448eefe45bd4976c04d72382eae8a683abe8b9cfe551135cebca85",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "a14c4660f17f4bc454c10379635cc6e852047282970e0e7cb33ae293981c78e6"
+    },
+    "model_id": "z-ai/glm-5.3-flash",
+    "release": {
+      "schema_version": 1,
+      "model_path": "nvidia/GLM-5.3-Flash-NVFP4",
+      "model_revision": "1d00738646cbb0c6d0a9eb403dac5f366f1473a7",
+      "tokenizer_path": "nvidia/GLM-5.3-Flash-NVFP4",
+      "tokenizer_revision": "1d00738646cbb0c6d0a9eb403dac5f366f1473a7",
+      "runtime_revision": "glm-sglang-energy-a14c4660f17f",
+      "runtime_model_name": "zai-org/GLM-5.3-Flash",
+      "lora_enabled": true,
+      "lora_base_model_revision": "a5b45eb41df6402735dedc900be14a42e8d5e538"
+    },
+    "gpus": 2,
+    "active_requests": 12,
+    "cpu": "32",
+    "memory": "400Gi",
+    "startup_timeout": 3600,
+    "warmup": true,
+    "adapters": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "2",
+      "MODEL_ID": "z-ai/glm-5.3-flash",
+      "LORA_ENABLED": "true",
+      "LORA_GPU_SLOTS": "8",
+      "LORA_CPU_SLOTS": "64",
+      "LORA_MAX_RANK": "8",
+      "LORA_DISK_CACHE_BYTES": "274877906944",
+      "LORA_DOWNLOAD_HOSTS": "gradiated-prod-model-artifacts-873716897517.s3.us-east-1.amazonaws.com",
+      "GRADIATED_API_BASE_URL": "http://127.0.0.1:3004",
+      "LORA_BASE_MODEL_REVISION": "a5b45eb41df6402735dedc900be14a42e8d5e538"
+    }
+  },
+  "0086913ab757afbddb1159c6b8fe9072867b07d2d4ff51746da393c8dee4e934": {
+    "image": "gradiated/glm-sglang-bundle@sha256:0086913ab757afbddb1159c6b8fe9072867b07d2d4ff51746da393c8dee4e934",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "a14c4660f17f4bc454c10379635cc6e852047282970e0e7cb33ae293981c78e6"
+    },
+    "model_id": "dealignai/glm-5.3-flash-uncensored-sglang-canary",
+    "release": {
+      "schema_version": 1,
+      "model_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "model_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "tokenizer_path": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
+      "tokenizer_revision": "745aac2ff0f10acf961f396df3f9418598aa7327",
+      "runtime_revision": "glm-dealign-sglang-energy-a14c4660f17f",
+      "runtime_model_name": "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4"
+    },
+    "gpus": 2,
+    "active_requests": 12,
+    "cpu": "32",
+    "memory": "400Gi",
+    "startup_timeout": 3600,
+    "warmup": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "2"
+    },
+    "request_memory": "256Gi"
+  },
+  "15bf8e9b447dc79b48cc84269cfee5e0a3a930373a2e60ac427cdf078baf1864": {
+    "image": "gradiated/kimi-k31-bundle@sha256:15bf8e9b447dc79b48cc84269cfee5e0a3a930373a2e60ac427cdf078baf1864",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "d44644eb82506138434ec09050b3393ebb46bfcadaaba9edcdd3b384db48b206"
+    },
+    "model_id": "moonshotai/kimi-k3.1-pro",
+    "release": {
+      "schema_version": 1,
+      "model_path": "moonshotai/Kimi-K3.1-Pro",
+      "model_revision": "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e",
+      "tokenizer_path": "moonshotai/Kimi-K3.1-Pro",
+      "tokenizer_revision": "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e",
+      "runtime_revision": "kimi-k31-energy-d44644eb8250",
+      "runtime_model_name": "moonshotai/Kimi-K3.1-Pro"
+    },
+    "gpus": 8,
+    "cpu": "80",
+    "memory": "1000Gi",
+    "active_requests": 5,
+    "hf_home": "/var/lib/kimi-k31/hf",
+    "startup_timeout": 7200,
+    "warmup": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "8"
+    }
   }
 }

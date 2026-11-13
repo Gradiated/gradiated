@@ -530,15 +530,17 @@ class RenderTests(unittest.TestCase):
         self.assertIn('key: "gradiated.com/reserved"', trainer)
         self.assertIn('value: "training"', trainer)
 
-    def test_deepseek_head_pool_serves_publicly_beside_the_base_pool(self):
+    def test_both_deepseek_pools_serve_head_adapters_publicly(self):
         models, runtimes, hosts = self.fleet()
         pools = renderer.plan(models, runtimes, hosts)
         staged = pools['deepseek-head-qualification']
         base = pools['deepseek']
         self.assertEqual((staged['mode'], staged['floor'], staged['maximum']), ('production', 1, 1))
         self.assertEqual((base['floor'], base['maximum']), (1, 1))
+        # Adapter qualification probes every serving allocation, so both pools
+        # must run the runtime that admits lm_head adapters.
+        self.assertEqual(base['runtime'], staged['runtime'])
         before, after = runtimes[base['runtime']], runtimes[staged['runtime']]
-        self.assertNotEqual(before['model_id'], after['model_id'])
         for key in ('gpus', 'cpu', 'memory', 'environment'):
             self.assertEqual(before[key], after[key])
         for key in ('model_path', 'model_revision', 'tokenizer_revision', 'lora_base_model_revision'):

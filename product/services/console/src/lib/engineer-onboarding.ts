@@ -189,17 +189,19 @@ export const startBlockers = (
       label: "Select a repository on GitHub",
     });
 
-  // The API rejects an NDA without these, so ask before opening signing.
-  if (
-    ndaPending(server, draft) &&
-    (!draft.signerTitle.trim() ||
-      !draft.legalAddress.trim() ||
-      draft.signerName?.trim() === "")
-  )
-    blockers.push({
-      section: "nda",
-      label: "Add the NDA signer and company address",
-    });
+  // The API rejects an NDA without these, so name each one before signing.
+  if (ndaPending(server, draft)) {
+    const missing = [
+      draft.signerName?.trim() === "" ? "signer’s name" : null,
+      draft.signerTitle.trim() ? null : "signer’s title",
+      draft.legalAddress.trim() ? null : "company address",
+    ].filter((field) => field !== null);
+    if (missing.length)
+      blockers.push({
+        section: "nda",
+        label: `Add the NDA ${missing.length > 1 ? `${missing.slice(0, -1).join(", ")} and ${missing.at(-1)}` : missing[0]}`,
+      });
+  }
 
   if (
     draft.channel === "slack" &&

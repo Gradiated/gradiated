@@ -140,7 +140,7 @@ const NdaFields = ({
         value={draft.legalName || account.company}
         maxLength={200}
         onChange={(event) => patch({ legalName: event.target.value })}
-        placeholder="Acme, Inc."
+        placeholder="e.g. Acme, Inc."
       />
     </Field>
     <Field>
@@ -151,7 +151,7 @@ const NdaFields = ({
         value={draft.signerName ?? account.name}
         maxLength={100}
         onChange={(event) => patch({ signerName: event.target.value })}
-        placeholder="Alex Morgan"
+        placeholder="e.g. Alex Morgan"
       />
     </Field>
     <Field>
@@ -162,7 +162,7 @@ const NdaFields = ({
         value={draft.signerTitle}
         maxLength={100}
         onChange={(event) => patch({ signerTitle: event.target.value })}
-        placeholder="CTO"
+        placeholder="e.g. CTO"
       />
     </Field>
     <Field className="sm:col-span-2">

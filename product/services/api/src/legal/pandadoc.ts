@@ -144,6 +144,8 @@ export const GRADIATED_NDA_TEMPLATE = {
     company: "PostHog Inc.",
     name: "James Hawkins",
     title: "Co-CEO",
+    // A PandaDoc workspace member: the NDA comes from them, not the API key's owner.
+    email: "james@posthog.com",
   },
 };
 
@@ -152,7 +154,12 @@ export interface PandaDocConfiguration {
   templateId: string;
   templateVersion: string;
   dateField?: string | undefined;
-  countersigner: { company: string; name: string; title: string };
+  countersigner: {
+    company: string;
+    name: string;
+    title: string;
+    email: string;
+  };
 }
 
 export const NDA_SIGNING_UNAVAILABLE =
@@ -161,6 +168,21 @@ export const NDA_SIGNING_UNAVAILABLE =
 const PREPARING_DEADLINE_MS = 10_000;
 const PREPARING_RETRY_MS = 500;
 const preparing = Symbol("preparing");
+
+/* PandaDoc's error type is a stable code; its free-text messages are not
+   logged, except a refusal we recognise, mapped to a code of our own. */
+const providerErrorType = (result: unknown) => {
+  const body = z
+    .object({
+      type: z.string().optional(),
+      info_message: z.string().optional(),
+    })
+    .safeParse(result).data;
+  if (body?.info_message?.includes("outside of your organization"))
+    return "recipient_outside_organization";
+
+  return body?.type && /^[a-z_]{1,64}$/.test(body.type) ? body.type : undefined;
+};
 
 const isUploading = (result: unknown) =>
   typeof result === "object" &&
@@ -174,11 +196,16 @@ export const createPandaDocNda = (
 ) => {
   /* Log which call failed without document IDs. A refused request (401,
      403) will not succeed on retry, so it gets the email fallback instead. */
-  const unavailable = (path: string, reason: string, status?: number) => {
+  const unavailable = (
+    path: string,
+    reason: string,
+    status?: number,
+    result?: unknown,
+  ) => {
     serviceLog("warn", "provider_request_failed", {
       dependency: "pandadoc",
       route: path.replace(/\/documents\/[^/]+/, "/documents/:id"),
-      reason,
+      reason: [reason, providerErrorType(result)].filter(Boolean).join(":"),
       ...(status === undefined ? {} : { status }),
     });
 
@@ -235,9 +262,33 @@ export const createPandaDocNda = (
 
   const call = async (path: string, body: unknown) => {
     const response = await send(path, body);
-    if (!response.ok) throw unavailable(path, "http_error", response.status);
+    if (!response.ok)
+      throw unavailable(path, "http_error", response.status, response.result);
 
     return response.result;
+  };
+
+  // A ready draft can still refuse the send with 409 for a moment; PandaDoc
+  // asks callers to retry, and a refused send changes nothing.
+  const sendDraft = async (id: string) => {
+    const deadline = Date.now() + PREPARING_DEADLINE_MS;
+    const path = `/documents/${encodeURIComponent(id)}/send`;
+
+    for (;;) {
+      const response = await send(path, {
+        silent: false,
+        sender: { email: configuration.countersigner.email },
+      });
+      if (response.ok) return;
+
+      if (
+        response.status !== 409 ||
+        Date.now() + PREPARING_RETRY_MS >= deadline
+      )
+        throw unavailable(path, "http_error", response.status, response.result);
+
+      await new Promise((resolve) => setTimeout(resolve, PREPARING_RETRY_MS));
+    }
   };
 
   const readDetails = async (id: string) => {
@@ -253,7 +304,7 @@ export const createPandaDocNda = (
       if (response.ok) return response.result;
 
       if (response.status !== 409 || !isUploading(response.result))
-        throw unavailable(path, "http_error", response.status);
+        throw unavailable(path, "http_error", response.status, response.result);
 
       if (Date.now() + PREPARING_RETRY_MS >= deadline) return preparing;
 
@@ -417,6 +468,7 @@ export const createPandaDocNda = (
         await call("/documents", {
           name: `Mutual NDA with ${details.company}`,
           template_uuid: configuration.templateId,
+          owner: { email: configuration.countersigner.email },
           recipients: [
             {
               email: details.email,
@@ -479,10 +531,7 @@ export const createPandaDocNda = (
         );
 
       const { document } = inspected;
-      if (document.status === "document.draft")
-        await call(`/documents/${encodeURIComponent(id)}/send`, {
-          silent: false,
-        });
+      if (document.status === "document.draft") await sendDraft(id);
       else if (!["document.sent", "document.viewed"].includes(document.status))
         throw new ApiProblem(
           problems.conflict(

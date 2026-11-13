@@ -47,7 +47,8 @@ The template ID, approved version (`GRADIATED_NDA_TEMPLATE` in
 `src/legal/pandadoc.ts`) and the `Agreement.Date` field are constants; bump the
 version when the legal text changes.
 
-The API creates the document, waits for draft readiness, sends it and opens a
+The API creates the document, owned by and sent from the countersigner's PandaDoc
+account (not the API key's owner), waits for draft readiness, sends it and opens a
 15-minute embedded signing session for the signed-in signer. `details` is null
 while PandaDoc prepares the document. Reading a completed document records it
 as the organization's NDA, replaced only for a new template version. The

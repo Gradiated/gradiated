@@ -20,11 +20,36 @@ const detailsChanged = (bound: NdaDetails | null, expected: NdaDetails) =>
     bound.title.trim() !== expected.title.trim() ||
     bound.email.trim().toLowerCase() !== expected.email.trim().toLowerCase());
 
+const ndaEmail = (details: NdaDetails) =>
+  `mailto:team@gradiated.com?subject=${encodeURIComponent(
+    `Mutual NDA for ${details.company}`,
+  )}&body=${encodeURIComponent(
+    [
+      "Please send us the mutual NDA to sign.",
+      "",
+      `Company: ${details.company}`,
+      `Address: ${details.address}`,
+      `Signer: ${details.name}, ${details.title}`,
+      `Email: ${details.email}`,
+    ].join("\n"),
+  )}`;
+
+const EmailFallback = ({ details }: { details: NdaDetails }) => (
+  <a
+    className="font-medium underline underline-offset-4"
+    href={ndaEmail(details)}
+  >
+    Email us your NDA details
+  </a>
+);
+
 const PandaDocEmbed = ({
   sessionId,
+  details,
   onVerify,
 }: {
   sessionId: string;
+  details: NdaDetails;
   onVerify: () => void;
 }) => {
   const id = useId();
@@ -62,7 +87,7 @@ const PandaDocEmbed = ({
       {error ? (
         <FieldError>
           The signing window could not load. Close it and reopen to get a fresh
-          session.
+          session, or <EmailFallback details={details} />.
         </FieldError>
       ) : null}
       <div className="min-h-[650px] overflow-hidden rounded-lg border">
@@ -92,6 +117,8 @@ export const NdaSigning = ({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [pollError, setPollError] = useState("");
+  const [checked, setChecked] = useState(false);
   const openedAutomatically = useRef(false);
   const active = useRef(true);
   const callbacks = useRef({ onComplete, onDocument, details });
@@ -131,9 +158,10 @@ export const NdaSigning = ({
     const poll = async () => {
       try {
         await verify();
+        if (!cancelled) setPollError("");
       } catch (error) {
         if (!cancelled)
-          setError(
+          setPollError(
             error instanceof Error
               ? error.message
               : "Could not check signing status.",
@@ -153,6 +181,7 @@ export const NdaSigning = ({
     if (busy) return;
     setBusy(true);
     setError("");
+    setChecked(false);
 
     try {
       // A stored copy that is gone or can no longer be signed (voided,
@@ -221,6 +250,13 @@ export const NdaSigning = ({
     void open();
   }, [open]);
 
+  const checkStatus = useCallback(() => {
+    setChecked(false);
+    void verify()
+      .then(() => setChecked(true))
+      .catch((error: Error) => setPollError(error.message));
+  }, [verify]);
+
   const verifyCompletion = useCallback(() => {
     void verify().catch(() =>
       setError("Could not confirm completion. Try checking again."),
@@ -241,7 +277,11 @@ export const NdaSigning = ({
           You’ve signed. Waiting for PostHog’s signature.
         </p>
       ) : sessionId ? (
-        <PandaDocEmbed sessionId={sessionId} onVerify={verifyCompletion} />
+        <PandaDocEmbed
+          sessionId={sessionId}
+          details={details}
+          onVerify={verifyCompletion}
+        />
       ) : error ? (
         <Button
           type="button"
@@ -257,19 +297,29 @@ export const NdaSigning = ({
           Preparing your NDA…
         </p>
       )}
-      {error ? <FieldError>{error}</FieldError> : null}
+      {error ? (
+        <FieldError>
+          {error} <EmailFallback details={details} />
+        </FieldError>
+      ) : pollError ? (
+        <FieldError>{pollError}</FieldError>
+      ) : null}
+      {checked &&
+      document &&
+      document.status !== "completed" &&
+      !document.customer_completed ? (
+        <p role="status" className="text-sm text-muted-foreground">
+          {sessionId
+            ? "Not signed yet. Sign in the window above."
+            : "Not signed yet. Open the NDA to sign it."}
+        </p>
+      ) : null}
       <div className="flex items-center justify-between gap-3">
         <Button type="button" variant="ghost" onClick={onBack}>
           <ArrowLeft /> Back to details
         </Button>
         {documentId ? (
-          <Button
-            type="button"
-            variant="link"
-            onClick={() => {
-              void verify().catch((error: Error) => setError(error.message));
-            }}
-          >
+          <Button type="button" variant="link" onClick={checkStatus}>
             Check signing status
           </Button>
         ) : null}

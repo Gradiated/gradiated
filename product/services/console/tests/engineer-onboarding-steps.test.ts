@@ -88,17 +88,14 @@ describe("onboarding draft", () => {
 });
 
 describe("starting the project", () => {
-  it("asks for the NDA signer and address before signing a requested NDA", () => {
+  it("names each missing NDA detail before signing a requested NDA", () => {
     const installation = {
       id: 42,
       account: "example",
       repository_selection: "selected" as const,
       repository_count: 1,
     };
-    const nda = {
-      section: "nda",
-      label: "Add the NDA signer and company address",
-    };
+    const nda = (label: string) => ({ section: "nda", label });
     const blockersFor = (patch: Partial<OnboardingDraft>) =>
       startBlockers(
         serverState(),
@@ -109,18 +106,16 @@ describe("starting the project", () => {
       );
 
     expect(blockersFor({ signerTitle: "", legalAddress: "1 Main St" })).toEqual(
-      [nda],
+      [nda("Add the NDA signer’s title")],
     );
     expect(blockersFor({ signerTitle: "CTO", legalAddress: " " })).toEqual([
-      nda,
+      nda("Add the NDA company address"),
     ]);
     expect(
-      blockersFor({
-        signerTitle: "CTO",
-        legalAddress: "1 Main St",
-        signerName: "",
-      }),
-    ).toEqual([nda]);
+      blockersFor({ signerTitle: "", legalAddress: "", signerName: "" }),
+    ).toEqual([
+      nda("Add the NDA signer’s name, signer’s title and company address"),
+    ]);
     expect(
       blockersFor({ signerTitle: "CTO", legalAddress: "1 Main St" }),
     ).toEqual([]);

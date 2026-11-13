@@ -30,6 +30,7 @@ const configuration = {
     company: "Example Countersigner Inc.",
     name: "Grace Hopper",
     title: "Rear Admiral",
+    email: "grace@example.com",
   },
 };
 const owner = { organizationId, userId: user.id, email: user.email };
@@ -173,6 +174,7 @@ describe("PandaDoc NDA", () => {
     expect(request).toHaveBeenCalledOnce();
     expect(body).toMatchObject({
       template_uuid: "test-template",
+      owner: { email: "grace@example.com" },
       recipients: [{ email: user.email, role: "Customer" }],
     });
     expect(body.metadata.gradiated_organization_id).toBe(organizationId);
@@ -209,6 +211,7 @@ describe("PandaDoc NDA", () => {
     ).toBe(true);
     expect(JSON.parse(String(request.mock.calls[1]?.[1]?.body))).toEqual({
       silent: false,
+      sender: { email: "grace@example.com" },
     });
     expect(JSON.parse(String(request.mock.calls[2]?.[1]?.body))).toEqual({
       recipient: user.email,
@@ -390,6 +393,87 @@ describe("PandaDoc NDA", () => {
     );
     expect(JSON.stringify(lines)).not.toContain("sensitive provider response");
     expect(JSON.stringify(lines)).not.toContain(configuration.apiKey);
+  });
+
+  it("logs PandaDoc's error type for a refusal, never its detail", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const request = vi.fn<typeof fetch>().mockImplementation(async (url) =>
+      String(url).endsWith("/send")
+        ? new Response(
+            JSON.stringify({
+              type: "permission_error",
+              detail: `Cannot send to ${user.email} on this plan.`,
+            }),
+            { status: 403 },
+          )
+        : json(providerDocument("document.draft")),
+    );
+    await expect(
+      createPandaDocNda(configuration, request).session(owner, "test-document"),
+    ).rejects.toMatchObject({ problem: { detail: NDA_SIGNING_UNAVAILABLE } });
+
+    const lines = log.mock.calls.map(([line]) => JSON.parse(String(line)));
+    expect(lines).toContainEqual(
+      expect.objectContaining({
+        event: "provider_request_failed",
+        route: "/documents/:id/send",
+        status: 403,
+        reason: "http_error:permission_error",
+      }),
+    );
+    expect(JSON.stringify(lines)).not.toContain("on this plan");
+    expect(JSON.stringify(lines)).not.toContain(user.email);
+  });
+
+  it("retries a send PandaDoc refuses while the draft settles", async () => {
+    let sends = 0;
+    const request = vi.fn<typeof fetch>().mockImplementation(async (url) => {
+      if (String(url).endsWith("/send"))
+        return ++sends < 3
+          ? new Response(
+              JSON.stringify({
+                info_message:
+                  "The document isn't ready for a status transition yet.",
+              }),
+              { status: 409 },
+            )
+          : json({});
+      if (String(url).endsWith("/session")) return json({ id: "session-1" });
+      return json(providerDocument("document.draft"));
+    });
+
+    await expect(
+      createPandaDocNda(configuration, request).session(owner, "test-document"),
+    ).resolves.toEqual({ session_id: "session-1" });
+    expect(sends).toBe(3);
+  });
+
+  it("names PandaDoc's refusal to send outside its organization", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const request = vi.fn<typeof fetch>().mockImplementation(async (url) =>
+      String(url).endsWith("/send")
+        ? new Response(
+            JSON.stringify({
+              info_message:
+                "You are not allowed to send documents outside of your organization",
+            }),
+            { status: 403 },
+          )
+        : json(providerDocument("document.draft")),
+    );
+    await expect(
+      createPandaDocNda(configuration, request).session(owner, "test-document"),
+    ).rejects.toMatchObject({ problem: { detail: NDA_SIGNING_UNAVAILABLE } });
+
+    expect(
+      log.mock.calls.map(([line]) => JSON.parse(String(line))),
+    ).toContainEqual(
+      expect.objectContaining({
+        route: "/documents/:id/send",
+        status: 403,
+        reason: "http_error:recipient_outside_organization",
+      }),
+    );
   });
 
   it("asks a customer to retry only provider failures that can recover", async () => {

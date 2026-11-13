@@ -67,6 +67,8 @@ def main():
         upstream_alerts = [rule for resource in resources if resource['kind'] == 'PrometheusRule'
                            for group in resource['spec']['groups'] for rule in group['rules']
                            if 'alert' in rule]
+        for name in ('KubeCPUOvercommit', 'KubeMemoryOvercommit'):
+            assert not any(rule['alert'] == name for rule in upstream_alerts), name
         for name, override in source['helm']['valuesObject']['customRules'].items():
             matching = [rule for rule in upstream_alerts if rule['alert'] == name]
             assert matching, f'Paging override does not match a rendered alert: {name}'
@@ -99,6 +101,7 @@ def main():
                       and 'alertmanager.yaml' in resource.get('data', {}))
         configuration = temporary / 'alertmanager.yaml'
         configuration.write_bytes(base64.b64decode(secret['data']['alertmanager.yaml']))
+        assert 'pool' in yaml.safe_load(configuration.read_text())['route']['group_by']
         check_notification_intervals(yaml.safe_load(configuration.read_text()))
         cases = [
             ('null', name, 'gradiated', 'warning')

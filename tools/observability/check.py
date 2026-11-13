@@ -33,7 +33,7 @@ def main():
         assert 0 < security_export['range_seconds'] <= security_export['period_seconds'] - 60, 'CloudWatch rounding must not create a second period whose newer zero masks security events'
     dashboards = {d['uid']: d for p in OBS.glob('*.json')
                   if (d := json.loads(p.read_text()))}
-    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml', 'data-store-prometheus-rules.yaml', 'security-prometheus-rules.yaml', 'recovery-prometheus-rules.yaml')
+    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'resource-pool-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml', 'data-store-prometheus-rules.yaml', 'security-prometheus-rules.yaml', 'recovery-prometheus-rules.yaml')
               for g in yaml.safe_load((OBS / name).read_text())['spec']['groups']]
     alerts = {rule['alert']: rule for group in groups for rule in group['rules'] if 'alert' in rule}
     from paging_checks import check_critical_persistence
@@ -83,6 +83,9 @@ def main():
     rollout_rules, rollout_tests = check_rollouts(ROOT)
     groups.append({'name': 'rollout_analysis_syntax', 'rules': rollout_rules})
     tests = check_autoscaling(ROOT) + check_gpu_autoscaling(ROOT) + rollout_tests
+    from resource_pool_checks import check_resource_pools
+
+    tests += check_resource_pools(ROOT, alerts)
     def scenario(name, inputs, expected, checks, labels=None, eval_time="8m", interval="30s"):
         cases = []
         for alert in checks:

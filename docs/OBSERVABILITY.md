@@ -251,6 +251,20 @@ receiver. Reaching a replica ceiling alone is capacity information, not evidence
 alerts remain visible in Prometheus and Grafana. Autoscaling failures, service
 errors/latency, worker backlog/stalls, and unavailable replicas still create
 incidents; capacity warnings in other namespaces retain their normal routing.
+`KubeCPUOvercommit` and `KubeMemoryOvercommit` replace the upstream cluster-wide
+rules with independent `system` and `gpu` pools. Positive NVIDIA GPU requests
+identify GPU pods, including pending pods; other pods (including controllers
+in `gpu-inference`) count against the system pool. Positive NVIDIA GPU
+allocatable resources identify GPU nodes. Only Ready, uncordoned nodes supply
+capacity. Requests include Pending and Running pods, exclude completed pods,
+and use the same container-request accounting as the upstream rules.
+Each pool reserves its largest available node when it has multiple available
+nodes; a single-node pool checks total capacity, and a pool with requests but
+no available nodes has zero capacity. A shortage sustained for ten minutes
+creates a warning grouped by `pool`. The Controllers dashboard shows requests,
+available capacity and the failover threshold for both resources. These are
+aggregate capacity checks within each pool; GPU model, hardware, reservation
+and placement constraints remain covered by the model and scheduling alerts.
 `ApplicationReconciliationFailed` excludes `Missing` health for manually managed
 applications, which can be staged before their first deployment. Degraded or
 unknown health still creates incidents, as do missing resources or stalled sync

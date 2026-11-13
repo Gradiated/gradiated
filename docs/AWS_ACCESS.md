@@ -70,7 +70,7 @@ For administrators. Review the plan before applying; it should only add or
 change the people in the pull request.
 
 ```sh
-mise run aws:login --profile gradiated-admin
+gradctl aws login --profile gradiated-admin
 export AWS_PROFILE=gradiated-admin
 ```
 

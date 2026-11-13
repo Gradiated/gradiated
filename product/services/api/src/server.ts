@@ -6,6 +6,7 @@ import { MODEL_CATALOG } from "@gradiated/contracts/model-catalog";
 import { createTrainingEngine } from "./training/engine.js";
 import {
   createAdapterProbe,
+  createQualificationLock,
   reportAdapterQualification,
 } from "./training/adapter-probe.js";
 import { serve } from "@hono/node-server";
@@ -246,6 +247,7 @@ const app = createApp({
       validateEvaluationModel,
       artifactStorage,
       qualifyAdapter,
+      createQualificationLock(valkey),
     ),
   },
 });

@@ -13,6 +13,7 @@ import {
   createAdapterQualifier,
   type AdapterProbe,
   type AdapterQualificationResult,
+  type QualificationLock,
 } from "../src/training/qualification.js";
 import { createTrainingService } from "../src/training/service.js";
 import { createMemoryContentStore } from "./support/content-store.js";
@@ -116,7 +117,7 @@ describe("adapter qualification on promotion", () => {
     return { owner, task: task!, version: version! };
   };
 
-  const setup = (probe: AdapterProbe) => {
+  const setup = (probe: AdapterProbe, lock?: QualificationLock) => {
     const reports: AdapterQualificationResult[] = [];
     const store = createDeploymentStore(db.database);
     const qualify = createAdapterQualifier({
@@ -133,6 +134,7 @@ describe("adapter qualification on promotion", () => {
       undefined,
       undefined,
       qualify,
+      lock,
     );
     return { reports, service };
   };
@@ -315,6 +317,61 @@ describe("adapter qualification on promotion", () => {
 
     expect(promoted.productionVersionId).toBe(version.id);
   });
+
+  it("refuses a version another request is already qualifying", async () => {
+    const { owner, task, version } = await seedUpload();
+    const probe = vi.fn<AdapterProbe>(async () => ({ ok: true }));
+    const { service } = setup(probe, async () => undefined);
+
+    await expect(
+      service.promote(owner.userId, owner.workspaceId, task.name, version.id),
+    ).rejects.toMatchObject({ code: "conflict" });
+
+    expect(probe).not.toHaveBeenCalled();
+    expect((await stored(task.id, version.id)).version.status).toBe(
+      "unavailable",
+    );
+  });
+
+  it.each([
+    ["passes", { ok: true } as const, 200],
+    [
+      "fails",
+      { ok: false, rejected: false, reason: "probe_timeout" } as const,
+      503,
+    ],
+  ])(
+    "holds the version lock until the promotion %s",
+    async (_, outcome, status) => {
+      const { owner, task, version } = await seedUpload();
+      const events: string[] = [];
+      const probe = vi.fn<AdapterProbe>(async () => {
+        events.push("probe");
+        return outcome;
+      });
+      const { service } = setup(probe, async (versionId) => {
+        events.push(`lock:${versionId}`);
+        return async () => {
+          events.push(
+            `release:${(await stored(task.id, version.id)).version.status}`,
+          );
+        };
+      });
+
+      const result = await service
+        .promote(owner.userId, owner.workspaceId, task.name, version.id)
+        .then(
+          () => 200,
+          () => 503,
+        );
+
+      expect(result).toBe(status);
+      expect(events[0]).toBe(`lock:${version.id}`);
+      expect(events.at(-1)).toBe(
+        status === 200 ? "release:available" : "release:unavailable",
+      );
+    },
+  );
 
   it("reports missing capacity without probing", async () => {
     const { owner, task, version } = await seedUpload();

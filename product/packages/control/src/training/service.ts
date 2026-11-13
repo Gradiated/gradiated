@@ -17,7 +17,7 @@ import { reconcileTrainingRun } from "./engine.js";
 import { prepareTraining } from "./admission.js";
 import type { AdapterDownloads } from "./downloads.js";
 import { requireLoadableAdapter } from "./hosting.js";
-import type { AdapterQualifier } from "./qualification.js";
+import type { AdapterQualifier, QualificationLock } from "./qualification.js";
 import { createTrainingRunStore } from "./run-store.js";
 import { createTrainingStore } from "./store.js";
 import { TrainingAdmissionError, type TrainingEngine } from "./types.js";
@@ -41,6 +41,7 @@ export const createTrainingService = (
   validateEvaluationModel?: (id: string) => Promise<void>,
   uploadStorage?: ObjectStorage,
   qualifyAdapter?: AdapterQualifier,
+  lockQualification?: QualificationLock,
 ) => {
   const records = createTrainingStore(database);
 
@@ -321,12 +322,26 @@ export const createTrainingService = (
           "Serving qualification is unavailable. The version was not promoted.",
         );
 
-      await qualifyAdapter(version);
-      const promoted = await records.promoteQualifiedVersion(
-        task.id,
-        version.id,
-        task.productionVersionId,
-      );
+      const release = lockQualification
+        ? await lockQualification(version.id)
+        : async () => undefined;
+      if (!release)
+        throw new ControlServiceError(
+          "conflict",
+          "This version is already being tested for serving. Try again in a few minutes.",
+        );
+
+      let promoted: Awaited<ReturnType<typeof records.promoteQualifiedVersion>>;
+      try {
+        await qualifyAdapter(version);
+        promoted = await records.promoteQualifiedVersion(
+          task.id,
+          version.id,
+          task.productionVersionId,
+        );
+      } finally {
+        await release().catch(() => undefined);
+      }
       if (promoted === "not_found") throw notFound("version");
       if (promoted === "stale")
         throw new ControlServiceError(

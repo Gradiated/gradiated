@@ -35,6 +35,11 @@ export interface AdapterQualificationResult {
 
 export type AdapterQualifier = (version: TaskVersionRecord) => Promise<void>;
 
+// Resolves to a release function, or undefined when another request holds the version.
+export type QualificationLock = (
+  versionId: string,
+) => Promise<(() => Promise<void>) | undefined>;
+
 export const adapterBaseRevision = (version: TaskVersionRecord) =>
   version.adapter.validated_base_model_revision ??
   version.adapter.base_model_revision;

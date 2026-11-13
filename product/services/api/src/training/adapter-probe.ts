@@ -1,7 +1,10 @@
-import type {
-  AdapterProbe,
-  AdapterProbeOutcome,
-  AdapterQualificationResult,
+import { randomUUID } from "node:crypto";
+import {
+  ControlServiceError,
+  type AdapterProbe,
+  type AdapterProbeOutcome,
+  type AdapterQualificationResult,
+  type QualificationLock,
 } from "@gradiated/control";
 import { serviceLog } from "../logging.js";
 import type { ApiMetrics } from "../metrics.js";
@@ -120,4 +123,39 @@ export const reportAdapterQualification =
         duration_ms: result.durationMs,
       },
     );
+  };
+
+// Longer than every allowed probe attempt together, so a crashed holder expires.
+const QUALIFICATION_LOCK_MS = 600_000;
+const RELEASE_LOCK = `if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) end return 0`;
+
+export const createQualificationLock =
+  (valkey: {
+    set(
+      key: string,
+      value: string,
+      options: { NX: true; PX: number },
+    ): Promise<string | null>;
+    eval(
+      script: string,
+      options: { keys: string[]; arguments: string[] },
+    ): Promise<unknown>;
+  }): QualificationLock =>
+  async (versionId) => {
+    const key = `adapter-qualification:{${versionId}}`;
+    const token = randomUUID();
+    const acquired = await valkey
+      .set(key, token, { NX: true, PX: QUALIFICATION_LOCK_MS })
+      .catch((error: unknown) => {
+        throw new ControlServiceError(
+          "unavailable",
+          "Serving qualification is temporarily unavailable. The version was not promoted.",
+          error,
+        );
+      });
+    if (acquired !== "OK") return undefined;
+
+    return async () => {
+      await valkey.eval(RELEASE_LOCK, { keys: [key], arguments: [token] });
+    };
   };

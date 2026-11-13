@@ -184,6 +184,7 @@ export {
   type AdapterQualificationOutcome,
   type AdapterQualificationResult,
   type AdapterQualifier,
+  type QualificationLock,
 } from "./training/qualification.js";
 export {
   TrainingAdmissionError,

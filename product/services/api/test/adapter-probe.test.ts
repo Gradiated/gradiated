@@ -6,6 +6,7 @@ import type { AdapterProbeTarget } from "@gradiated/control";
 import { ApiMetrics } from "../src/metrics.js";
 import {
   createAdapterProbe,
+  createQualificationLock,
   reportAdapterQualification,
 } from "../src/training/adapter-probe.js";
 import { captureServiceLogs } from "./support.js";
@@ -228,5 +229,75 @@ describe("adapter qualification reports", () => {
     expect(text).toContain(
       'gradiated_api_adapter_qualification_duration_seconds_count{service="api",outcome="passed"} 1',
     );
+  });
+});
+
+describe("adapter qualification lock", () => {
+  const store = () => {
+    const values = new Map<string, { value: string; expires: number }>();
+    return {
+      values,
+      set: vi.fn(
+        async (key: string, value: string, options: { PX: number }) => {
+          const current = values.get(key);
+          if (current && current.expires > Date.now()) return null;
+          values.set(key, { value, expires: Date.now() + options.PX });
+          return "OK";
+        },
+      ),
+      eval: vi.fn(
+        async (_: string, options: { keys: string[]; arguments: string[] }) => {
+          const [key] = options.keys;
+          if (values.get(key!)?.value !== options.arguments[0]) return 0;
+          values.delete(key!);
+          return 1;
+        },
+      ),
+    };
+  };
+
+  it("lets one request hold a version until it releases it", async () => {
+    const valkey = store();
+    const lock = createQualificationLock(valkey);
+
+    const release = await lock(versionId);
+    expect(release).toBeTypeOf("function");
+    expect(await lock(versionId)).toBeUndefined();
+    expect(await lock("0195f2a0-0000-7000-8000-00000000000a")).toBeTypeOf(
+      "function",
+    );
+
+    await release!();
+    expect(await lock(versionId)).toBeTypeOf("function");
+    expect(valkey.set).toHaveBeenCalledWith(
+      `adapter-qualification:{${versionId}}`,
+      expect.any(String),
+      { NX: true, PX: 600_000 },
+    );
+  });
+
+  it("does not release a lock that expired and was taken by another request", async () => {
+    const valkey = store();
+    const lock = createQualificationLock(valkey);
+    const stale = await lock(versionId);
+    valkey.values.get(`adapter-qualification:{${versionId}}`)!.expires = 0;
+    await lock(versionId);
+
+    await stale!();
+
+    expect(await lock(versionId)).toBeUndefined();
+  });
+
+  it("answers unavailable when Valkey cannot be reached", async () => {
+    const lock = createQualificationLock({
+      set: async () => {
+        throw new Error("connection refused");
+      },
+      eval: async () => 0,
+    });
+
+    await expect(lock(versionId)).rejects.toMatchObject({
+      code: "unavailable",
+    });
   });
 });

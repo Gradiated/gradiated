@@ -18,7 +18,10 @@ whose LoRA base revision matches the adapter's (the gateway's routing rule),
 through the host proxy at the deployment's `service_url`. The loader obtains a
 grant, downloads and verifies the archive, and generates a few tokens through
 the engine, checking the returned adapter identity and usage. Up to three
-allocations are tried in random order. The first pass marks the version
+allocations are tried in random order. One request at a time qualifies a
+version: a Valkey lock (`adapter-qualification:{<version ID>}`, 10-minute TTL,
+token-checked release) is held from the first probe through the final
+transaction, and a concurrent promotion of the same version answers 409. The first pass marks the version
 `available` and sets the production pointer in one transaction, but only if the
 pointer still holds the value seen before the probe (or already names this
 version); otherwise the version stays available and the request answers 409 so

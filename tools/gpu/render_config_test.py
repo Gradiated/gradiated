@@ -530,12 +530,12 @@ class RenderTests(unittest.TestCase):
         self.assertIn('key: "gradiated.com/reserved"', trainer)
         self.assertIn('value: "training"', trainer)
 
-    def test_deepseek_head_qualification_preserves_base_and_is_not_public_capacity(self):
+    def test_deepseek_head_pool_serves_publicly_beside_the_base_pool(self):
         models, runtimes, hosts = self.fleet()
         pools = renderer.plan(models, runtimes, hosts)
         staged = pools['deepseek-head-qualification']
         base = pools['deepseek']
-        self.assertEqual((staged['mode'], staged['floor'], staged['maximum']), ('qualification', 1, 1))
+        self.assertEqual((staged['mode'], staged['floor'], staged['maximum']), ('production', 1, 1))
         self.assertEqual((base['floor'], base['maximum']), (1, 1))
         before, after = runtimes[base['runtime']], runtimes[staged['runtime']]
         self.assertNotEqual(before['model_id'], after['model_id'])
@@ -545,7 +545,7 @@ class RenderTests(unittest.TestCase):
             self.assertEqual(before['release'][key], after['release'][key])
         annotations = renderer.rollout('deepseek-head-qualification', staged, runtimes)[
             'spec']['template']['metadata']['annotations']
-        self.assertEqual(annotations['gradiated.com/serving-mode'], 'qualification')
+        self.assertEqual(annotations['gradiated.com/serving-mode'], 'production')
         self.assertEqual(annotations['gradiated.com/serving-model-id'], 'deepseek/deepseek-v4.1-flash-1017')
         self.assertNotEqual(annotations['gradiated.com/model-id'], annotations['gradiated.com/serving-model-id'])
 

@@ -127,7 +127,7 @@ const NAV_ITEMS: NavItem[] = [
 /** Where "Book a call" goes. One constant, because the bar and the drawer
  *  both offer it and a booking link in two places is a booking link that can
  *  disagree with itself. */
-const BOOKING_URL = "https://cal.com/jsgradiated/30min";
+const BOOKING_URL = "https://cal.com/team/gradiated/chat-with-gradiated";
 
 /** Grace period before the panel closes, so the pointer can travel into it. */
 const CLOSE_DELAY_MS = 120;

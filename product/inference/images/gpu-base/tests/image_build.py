@@ -5,6 +5,7 @@ from pathlib import Path
 import shlex
 import subprocess
 import tempfile
+from urllib.parse import urlsplit
 
 # CI sets these: a builder with a persistent layer cache (depot build --load), and an
 # Ubuntu mirror, so a cold build does not depend on archive.ubuntu.com's throughput.
@@ -29,18 +30,29 @@ def with_mirror(lines):
 def build_image(tag, lines, context, timeout=1200):
     with tempfile.TemporaryDirectory() as directory:
         dockerfile = Path(directory) / 'Dockerfile'
-        dockerfile.write_text('\n'.join(with_mirror(lines)) + '\n')
         try:
             deadline = time.monotonic() + timeout
-            for attempt in range(2):
-                flags = ['--no-cache'] if attempt else []
+            mirror = bool(APT_MIRROR)
+            mirror_url = urlsplit(APT_MIRROR)
+            mirror_fetch = r'Failed to fetch https?://' + re.escape(mirror_url.netloc + mirror_url.path.rstrip('/')) + r'(?:/|\s)'
+            uncached = False
+            for attempt in range(3):
+                dockerfile.write_text('\n'.join(with_mirror(lines) if mirror else lines) + '\n')
+                flags = ['--no-cache'] if uncached else []
                 result = subprocess.run([*BUILD, *flags, '--progress=plain', '--platform', 'linux/amd64', '-t', tag,
                                          '-f', str(dockerfile), str(context)],
                                         text=True, capture_output=True, timeout=max(0.001, deadline - time.monotonic()))
-                if not result.returncode or not re.search(r'snapshot .+ does not exist: not found', result.stderr):
+                if not result.returncode:
                     break
-                if attempt == 0:
+                if not uncached and re.search(r'snapshot .+ does not exist: not found', result.stderr):
+                    uncached = True
                     print('Builder cache snapshot is missing; retrying once without cached layers.', flush=True)
+                elif mirror and re.search(mirror_fetch, result.stderr) and re.search(
+                        r'connection timed out|Network is unreachable|Temporary failure resolving', result.stderr, re.I):
+                    mirror = False
+                    print('The CI apt mirror is unreachable; retrying once with the original Ubuntu sources.', flush=True)
+                else:
+                    break
         except subprocess.TimeoutExpired as error:
             output = error.stderr.decode(errors='replace') if isinstance(error.stderr, bytes) else error.stderr or ''
             raise AssertionError(f'Building {tag} timed out:\n{output[-5000:]}') from None

@@ -526,13 +526,16 @@ describe("workspaces and API keys", () => {
       referenceId: string | null,
       overrides: Partial<typeof oauthAccessTokens.$inferInsert> = {},
     ) => {
-      const clientId = randomUUID();
+      const clientId = overrides.clientId ?? randomUUID();
       const token = randomUUID().replaceAll("-", "");
-      await testDatabase.database.insert(oauthClients).values({
-        id: randomUUID(),
-        clientId,
-        redirectUris: ["http://localhost/cb"],
-      });
+      await testDatabase.database
+        .insert(oauthClients)
+        .values({
+          id: randomUUID(),
+          clientId,
+          redirectUris: ["http://localhost/cb"],
+        })
+        .onConflictDoNothing();
       const [row] = await testDatabase.database
         .insert(oauthAccessTokens)
         .values({
@@ -601,30 +604,39 @@ describe("workspaces and API keys", () => {
       ).resolves.toBeUndefined();
     });
 
-    it("gives an OAuth token a hidden inference key beside the playground key", async () => {
+    it("gives each OAuth client its own hidden inference key beside the playground key", async () => {
       const { userId, workspaceId } = await membership("member");
-      const { secret } = await oauthToken(userId, workspaceId);
+      const clientId = randomUUID();
+      const { secret } = await oauthToken(userId, workspaceId, { clientId });
+      // A refreshed token for the same client.
+      const { secret: refreshed } = await oauthToken(userId, workspaceId, {
+        clientId,
+      });
+      const { secret: otherClient } = await oauthToken(userId, workspaceId);
       const playground = await service.createPlaygroundCredential(
         userId,
         workspaceId,
       );
 
       const first = await service.createOAuthInferenceCredential(secret);
-      const second = await service.createOAuthInferenceCredential(secret);
+      const other = await service.createOAuthInferenceCredential(otherClient);
+      const second = await service.createOAuthInferenceCredential(refreshed);
 
       expect(first).toBeDefined();
       expect(second?.apiKeyId).toBe(first?.apiKeyId);
+      expect(other?.apiKeyId).not.toBe(first?.apiKeyId);
       expect(second?.apiKeyId).not.toBe(playground.apiKeyId);
       await expect(
         service.authenticateCredential(second!.secret),
       ).resolves.toMatchObject({ workspaceId, user: { id: userId } });
-      // Minting rotates the key, and leaves the playground key working.
+      // Minting rotates the client's own key, and leaves other clients and the playground working.
       await expect(
         service.authenticateCredential(first!.secret),
       ).resolves.toBeUndefined();
-      await expect(
-        service.authenticateCredential(playground.secret),
-      ).resolves.toBeDefined();
+      for (const key of [other!.secret, playground.secret])
+        await expect(
+          service.authenticateCredential(key),
+        ).resolves.toBeDefined();
       await expect(
         service.listApiKeys(userId, workspaceId),
       ).resolves.toHaveLength(0);

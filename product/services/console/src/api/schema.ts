@@ -676,7 +676,7 @@ export interface paths {
     put?: never;
     /**
      * Create inference key for OAuth token
-     * @description Exchanges the OAuth access token in the Authorization header for a one-hour inference key of its member's in its workspace. Inference takes only API keys. Each call rotates the member's single key for OAuth clients, which is not listed with the workspace keys.
+     * @description Exchanges the OAuth access token in the Authorization header for a one-hour inference key of its member's in its workspace. Inference takes only API keys. Each call rotates the member's key for that OAuth client, which is not listed with the workspace keys; other clients' keys are unaffected.
      */
     post: operations["createCredentialInferenceKey"];
     delete?: never;

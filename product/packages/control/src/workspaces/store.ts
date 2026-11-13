@@ -38,6 +38,8 @@ const CredentialOwnerRecordSchema = z.object({
   credentialId: UuidSchema,
   organizationId: UuidSchema,
   workspaceId: UuidSchema,
+  // The OAuth client a token was issued to; API keys have none.
+  oauthClientId: z.string().optional(),
   user: z.object({
     id: UuidSchema,
     name: z.string(),
@@ -98,6 +100,7 @@ export const createWorkspaceStore = (database: ControlDatabase) => ({
     const [record] = await database
       .select({
         credentialId: oauthAccessTokens.id,
+        oauthClientId: oauthAccessTokens.clientId,
         organizationId: workspaces.organizationId,
         workspaceId: workspaces.id,
         user: ownerColumns,

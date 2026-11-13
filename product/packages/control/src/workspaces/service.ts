@@ -27,7 +27,7 @@ export type WorkspaceRecord = typeof workspaces.$inferSelect;
 export type ApiKeyRecord = Omit<typeof apiKeys.$inferSelect, "digest">;
 
 const PLAYGROUND_CREDENTIAL_NAME = "Playground";
-const MCP_CREDENTIAL_NAME = "MCP";
+const mcpCredentialName = (clientId: string) => `MCP ${clientId}`;
 
 // Better Auth's OAuth provider adds this prefix to the access tokens it issues.
 export const OAUTH_ACCESS_TOKEN_PREFIX = "grado_";
@@ -311,15 +311,16 @@ export const createWorkspaceApiKeyService = (
     createPlaygroundCredential: (userId, workspaceId) =>
       createHiddenCredential(userId, workspaceId, PLAYGROUND_CREDENTIAL_NAME),
 
-    // The gateway takes only API keys, so an OAuth client gets a hidden key of its member's.
+    // The gateway takes only API keys, so an OAuth client gets a hidden key of its member's for itself.
     async createOAuthInferenceCredential(secret) {
       const owner = await authenticateCredential(secret);
-      if (owner?.credential !== "oauth_token") return undefined;
+      if (owner?.credential !== "oauth_token" || !owner.oauthClientId)
+        return undefined;
 
       return createHiddenCredential(
         owner.user.id,
         owner.workspaceId,
-        MCP_CREDENTIAL_NAME,
+        mcpCredentialName(owner.oauthClientId),
       );
     },
 

@@ -1,20 +1,17 @@
-We write about new open-weight models as they come out: an organized, TLDR-style summary that positions the model in the context of the broader open-weight space. We focus on what the important and practical implications of the model release are.
+With new models released several times a month staying truly up to date is challenging.
+By producing curated model announcements, our team and your team can stay succinctly up to date.
+
+We aim to produce an organized, TLDR-style summary that positions the model in the context of the broader open-weight space. 
+We focus on what the important and practical implications of the model release are.
 
 ## When we publish
 
-We looked at [the last 8 important model drops](https://claude.ai/artifact/FbvE5G2QsEYFw714C6oA47) to see where we can fit into the timeline.
+Model announcements often happen in advance of when the model weights are published. 
+Sometimes the full technical report comes out with the announcement, other times it comes out with the weights.
 
-- Model announcements often happen in advance of when the weights are published. Five of the eight were announced 4 to 23 days before their weights. The other three were announced the same day the weights went live.
-- Initial announcements often don't give an exact date for the weights, and say something like "within the month".
-- The first announcement is usually a company blog or an X post, with the other minutes later. Four of the eight started with a blog, two with an X post, and DeepSeek's two put the weights on Hugging Face first.
-- The model is usually live on the lab's own API straight away, and on OpenRouter within minutes to hours.
-- The model weights are usually on Hugging Face for a few minutes before the lab posts on X or publishes a blog that they're live.
-- The technical report usually comes out before the weights. DeepSeek is the exception.
+We aim to publish shortly after the technical report is out. 
+If we publish before the weights are public, any content relying on the weights (for example, our own benchmark) can be updated once the weights are public.
 
-So we publish in two steps:
-
-1. **When the model is announced**, if the technical report is out, we publish as fast as we can. We deliberately leave space for the things that need the weights, such as our own benchmark, and say they'll come when the weights drop.
-2. **When the weights go live**, we publish the full post, and time it with the model being available on Gradiated. The announcement usually gives us a heads-up.
 
 ## How we stay informed
 
@@ -24,30 +21,27 @@ So we publish in two steps:
 
 The [model radar](https://github.com/Gradiated/gradiated/tree/main/tools/model-radar) checks both every 15 minutes and posts to `#model-radar` in Slack when a lab on our watch list publishes a new model.
 
-To watch a new lab, add a line to [`watchlist.json`](https://github.com/Gradiated/gradiated/blob/main/tools/model-radar/watchlist.json) in a pull request:
+To watch a new lab, add a line to [`watchlist.json`](https://github.com/Gradiated/gradiated/blob/main/tools/model-radar/watchlist.json) in a pull request. The lab's model page on OpenRouter links to its Hugging Face model, which gives you both names.
 
 ```json
 { "lab": "Tencent", "huggingface": ["tencent"], "openrouter": ["tencent"] }
 ```
 
-The lab's model page on OpenRouter links to its Hugging Face model, which gives you both names.
-
-We also follow the labs' X accounts by hand. They're often first with early chatter, like a stealth model or a "coming soon" post.
+We also follow the labs' X accounts by hand to catch early chatter or a "coming soon" post.
 
 ## What goes in a post
 
 - How long since the last model release from this lab or model family?
 - What differentiates it from its predecessors? Is it bigger, smaller, specialized?
-- What changed under the hood, such as the attention architecture or training strategy. We point an agent at the lab's announcements and technical report to pull out the high-level changes, and draw diagrams where they help.
-- What kinds of work or industries it might be relevant to: who should pay attention?
-- Noteworthy details, including direct quotes from the lab's announcement.
+- What the announcement and technical report emphasize.
+- What kinds of work or industries this model might be relevant to: who should pay attention?
+- Interesting or important changes, such as an update to the attention architecture or training strategy. 
 
-Then the handy things:
-
-- Licensing details or updates: can you use it commercially, and are there revenue caps?
+Also anything handy:
+- Licensing details or updates: can you use it commercially, are there revenue caps?
 - Links to the announcement, the weights, the technical report and the model on Hugging Face.
 - Relevant benchmarks.
 
-## Our own benchmark
+## Gradiated benchmarks
 
-We'd like a Gradiated benchmark of our own, inspired by [Fireship's drawing a 3D horse test](https://youtu.be/1FurWDiK9A4?t=150). It could be a cost or tokens-per-joule measure. It needs the weights, so it goes in the second post.
+Coming soon.

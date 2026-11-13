@@ -19,6 +19,25 @@ class Configuration(unittest.TestCase):
     def tearDown(self):
         self.directory.cleanup()
 
+    def test_qualification_identity_ignores_placement_but_tracks_runtime_settings(self):
+        bundle = Path(self.directory.name)
+        settings = config.settings(self.environment)
+        self.assertIsNone(config.qualification_identity(settings, bundle))
+        (bundle / '.bundle-sha256').write_text('invalid')
+        self.assertIsNone(config.qualification_identity(settings, bundle))
+        (bundle / '.bundle-sha256').write_text('a' * 64)
+        identity = config.qualification_identity(settings, bundle)
+        moved = {**settings, 'root': Path('/another/bundle'), 'front': 28080,
+                 'warmup': 28083, 'backend': 28084, 'metrics': 28085}
+        self.assertEqual(config.qualification_identity(moved, bundle), identity)
+        self.assertNotEqual(config.qualification_identity({**settings, 'lora': True}, bundle), identity)
+        self.assertEqual(identity['bundle'], 'a' * 64)
+
+    def test_backend_environment_preserves_deepseek_settings(self):
+        environment = {**self.environment, 'CUDA_VISIBLE_DEVICES': '4,5,6,7'}
+        self.assertEqual(config.backend_environment(environment, config.settings(environment)), environment)
+        self.assertIsNot(config.backend_environment(environment, config.settings(environment)), environment)
+
     def test_tp4_dspark_with_native_parsers_and_bounded_front(self):
         settings, backend, router = config.commands(self.environment)
         for flag, value in [('--model-path', config.MODEL), ('--revision', config.REVISION),

@@ -7,7 +7,7 @@ import threading
 import time
 import urllib.request
 
-from config import backend_environment, commands, detect_profile, hicache_directory, hold_hicache, prune_hicache, validate_hardware
+from config import backend_environment, commands, detect_profile, validate_hardware
 
 
 def backend_ready(port, model):
@@ -47,8 +47,12 @@ def run(environment=os.environ):
     environment = detect_profile(environment)
     config, backend, router = commands(environment)
     validate_hardware(environment)
-    directory = hicache_directory(environment, config) if config.get('hicache') else None
-    hicache_lock = hold_hicache(directory) if directory else None
+    directory = None
+    hicache_lock = None
+    if config.get('hicache'):
+        from config import hicache_directory, hold_hicache, prune_hicache
+        directory = hicache_directory(environment, config)
+        hicache_lock = hold_hicache(directory) if directory else None
     stopping = threading.Event()
     if directory:
         prune_hicache(environment, directory)

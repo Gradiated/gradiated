@@ -13,6 +13,7 @@ TENSOR_PARALLEL_SIZE = 4
 ACTIVE_REQUESTS = 32
 QUEUED_REQUESTS = 2
 QUEUE_TIMEOUT_SECONDS = 10
+BUNDLE_ROOT = Path(__file__).resolve().parents[1]
 # The bundle's port of sgl-project/sglang#45231 adapts the five attention projections and the shared
 # expert (w1/w2/w3); routed-expert adapters are rejected at load because neither FP4 MoE kernel exposes
 # LoRA hooks. Names are the checkpoint's module leaves.
@@ -22,6 +23,26 @@ PROFILES = {
                  'memory_fraction': 0.80, 'dspark_block_size': 5},
 }
 GPU_PROFILES = {'B300': 'b300-tp4'}
+
+
+def cache_root(environment):
+    base = Path(environment.get('XDG_CACHE_HOME') or str(Path(environment.get('HOME', '/home/runtime')) / '.cache'))
+    return base / Path(__file__).resolve().parent.name
+
+
+def qualification_identity(config, bundle_root=BUNDLE_ROOT):
+    try:
+        digest = (bundle_root / '.bundle-sha256').read_text().strip()
+    except OSError:
+        return None
+    if not re.fullmatch(r'[0-9a-f]{64}', digest):
+        return None
+    placement = {'root', 'front', 'warmup', 'backend', 'metrics'}
+    return {'bundle': digest, 'config': {key: value for key, value in config.items() if key not in placement}}
+
+
+def backend_environment(environment, config):
+    return dict(environment)
 
 
 def settings(environment):

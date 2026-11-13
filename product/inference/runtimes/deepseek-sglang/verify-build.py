@@ -1,6 +1,7 @@
 import argparse
 import compileall
 import hashlib
+import importlib
 import importlib.metadata
 import json
 import os
@@ -16,6 +17,10 @@ def verify(root):
     import torch
     if torch.cuda.is_available() or torch.cuda.device_count():
         raise RuntimeError('Build verification must not construct GPU state')
+    for name in ['launch', 'service']:
+        module = importlib.import_module(name)
+        if Path(module.__file__).resolve().parent != root / 'deepseek-sglang':
+            raise RuntimeError('Packaged launcher import resolved outside the runtime: ' + name)
     expected = {'torch': '2.14.1', 'transformers': '5.19.0', 'flashinfer-python': '0.7.2',
                 'sglang': '0.0.0.dev0+gf171859219b54', 'smg': '1.13.0'}
     for name, version in expected.items():

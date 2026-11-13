@@ -123,7 +123,7 @@ const completeUpload = createRoute({
   operationId: "completeModelUpload",
   summary: "Complete model upload",
   description:
-    "Validates adapter files and creates a model version. Retries return the same version. Serving remains disabled until qualification.",
+    "Validates adapter files and creates an unavailable model version. Retries return the same version. Promoting the version tests it on serving capacity and enables serving when that passes.",
   tags: ["Training"],
   request: { params: ModelUploadPathSchema },
   responses: {
@@ -291,7 +291,8 @@ const promote = createRoute({
   path: `${base}/tasks/{task}/production`,
   operationId: "promoteTaskVersion",
   summary: "Promote task version",
-  description: "Sets which task version serves requests.",
+  description:
+    "Sets which task version serves requests. A version that is not yet available, such as an uploaded adapter, is first loaded and tested on a LoRA-enabled serving allocation of its base model and becomes available only when that succeeds; this can take up to a few minutes. 409 means the serving runtime rejected the adapter; 503 means no allocation could test it.",
   tags: ["Training"],
   request: {
     params: TaskPathSchema,

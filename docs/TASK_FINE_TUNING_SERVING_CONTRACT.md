@@ -10,12 +10,32 @@ serving integration is qualified; `unavailable` disables them. Training success
 and evaluation quality are separate. Do not flip this field on cache eviction,
 a replica restart, temporary capacity loss or a cold-load timeout.
 
-The current SFT worker publishes versions as `unavailable`. It verifies training
-artifacts, but does not yet qualify them through the inference loader or project
-private versions into gateway routing. Current promotion only updates
-`tasks.production_version_id`; loader preparation, revision checks and routing
-projection described below remain unimplemented. Setting a row to `available`
-alone cannot make an adapter callable.
+The SGLang SFT executor publishes verified versions as `available`. Uploaded
+adapters start `unavailable`. Promoting an unavailable version qualifies it
+first: the API posts `{name: <version ID>, workspace_id}` to
+`/internal/adapters/probe` on an available LoRA-enabled allocation of its base
+whose LoRA base revision matches the adapter's (the gateway's routing rule),
+through the host proxy at the deployment's `service_url`. The loader obtains a
+grant, downloads and verifies the archive, and generates a few tokens through
+the engine, checking the returned adapter identity and usage. Every such
+allocation (up to eight) is probed in parallel, so one that refuses the adapter,
+for example during a mixed-revision rollout, is never skipped; at least one must
+pass. One request at a time qualifies a version: a Valkey lock
+(`adapter-qualification:{<version ID>}`, TTL just over one probe timeout,
+token-checked release) is held from the probes through the final transaction,
+and a concurrent promotion of the same version answers 409. A pass marks the version
+`available` and sets the production pointer in one transaction, but only if the
+task is unchanged since the probe began (same pointer and `updated_at`, so an
+X → Y → X sequence also counts as a change) or the pointer already names this
+version; otherwise the version stays available and the request answers 409 so
+a slow probe never reverses a newer promotion. A 422 from any loader (the loader
+or runtime rejected the adapter) answers 409, even if another allocation
+passed; other failures, including no compatible allocation, answer 503. Failures leave the version and pointer unchanged.
+Allocations that start later preload production versions or load them on first
+request; there is no per-replica pinning. The API logs each qualification as
+`adapter_qualification` and counts outcomes in
+`gradiated_api_adapter_qualifications_total{model,outcome}`;
+`AdapterQualificationFailing` warns on `failed` and `no_capacity`.
 
 The serving implementation must:
 
@@ -120,7 +140,7 @@ Base serving jobs and scaling policies remain in Git, referencing PostgreSQL bas
 
 Promotion sets `tasks.production_version_id`. There is no promotion table, background promotion workflow or per-model production boolean. The task's production revision detects concurrent changes. The audit log records actor, previous model, target model and time.
 
-1. Check membership and that the target is an available version of the same task.
+1. Check membership and that the target is a version of the same task. An unavailable target is qualified by the loader probe described above before any change.
 2. Prepare the target through the normal private adapter loader within a bounded request deadline. Preparation checks exact-adapter execution on a compatible host while at least two base replicas are ready. It does not pin the adapter across replicas.
 3. In one short transaction, lock the task and target model. Recheck lifecycle, current readiness and the expected production revision. Set the pointer, increment its revision, and write the existing projection outbox entry.
 4. Project the updated task to Valkey through the existing projector. The host handles subsequent cold loads and local eviction. In-flight requests keep their local adapter references.

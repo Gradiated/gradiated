@@ -42,12 +42,26 @@ type Phase =
   | "upload-error"
   | "validation-error"
   | "models-error";
+type Promotion = "pass" | "reject" | "testing";
 const uploadHandlers = ({
   phase = "ready",
   existing = false,
   published = false,
-}: { phase?: Phase; existing?: boolean; published?: boolean } = {}) => {
+  promotion = "pass",
+}: {
+  phase?: Phase;
+  existing?: boolean;
+  published?: boolean;
+  promotion?: Promotion;
+} = {}) => {
   let completed = published;
+  let promoted = false;
+  const current = () =>
+    promoted
+      ? { ...version, status: "available" as const, is_production: true }
+      : version;
+  const currentTask = () =>
+    promoted ? { ...task, production_version_id: version.id } : task;
   return [
     ...(phase === "models-error"
       ? [
@@ -74,19 +88,36 @@ const uploadHandlers = ({
           existing || completed
             ? [
                 {
-                  ...task,
+                  ...currentTask(),
                   latest_run: null,
-                  latest_version: completed ? version : null,
+                  latest_version: completed ? current() : null,
                 },
               ]
             : [],
       }),
     ),
     http.get("/api/v1/workspaces/:workspaceId/tasks/:task", () =>
-      HttpResponse.json(task),
+      HttpResponse.json(currentTask()),
     ),
     http.get("/api/v1/workspaces/:workspaceId/tasks/:task/versions", () =>
-      HttpResponse.json({ data: completed ? [version] : [] }),
+      HttpResponse.json({ data: completed ? [current()] : [] }),
+    ),
+    http.put(
+      "/api/v1/workspaces/:workspaceId/tasks/:task/production",
+      async () => {
+        if (promotion === "testing") await delay("infinite");
+        if (promotion === "reject")
+          return HttpResponse.json(
+            {
+              detail:
+                "The serving runtime could not load this adapter. Check that it targets modules this base model supports. The version was not promoted.",
+            },
+            { status: 409 },
+          );
+
+        promoted = true;
+        return HttpResponse.json(currentTask());
+      },
     ),
     http.get("/api/v1/workspaces/:workspaceId/training-runs", () =>
       HttpResponse.json({ data: [] }),
@@ -373,7 +404,7 @@ export const ModelCatalogError: Story = {
     ).toBeVisible();
   },
 };
-export const UploadedAwaitingQualification: Story = {
+export const UploadedNotYetServed: Story = {
   play: async ({ canvasElement }) => {
     const dialog = await fillUpload(canvasElement);
     await userEvent.click(
@@ -382,13 +413,77 @@ export const UploadedAwaitingQualification: Story = {
     const body = within(canvasElement.ownerDocument.body);
     await waitFor(() => expect(body.queryByRole("dialog")).toBeNull());
     const canvas = within(canvasElement);
-    await expect(
-      await canvas.findByText(/Awaiting serving qualification/),
-    ).toBeVisible();
+    await expect(await canvas.findByText(/Not yet served/)).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Use" })).toBeDisabled();
+    await expect(canvas.getByRole("button", { name: "Promote" })).toBeEnabled();
+  },
+};
+
+const openPromotion = async (canvasElement: HTMLElement) => {
+  const canvas = within(canvasElement);
+  await userEvent.click(await canvas.findByRole("button", { name: "Promote" }));
+  const dialog = within(
+    await within(canvasElement.ownerDocument.body).findByRole("dialog"),
+  );
+  await expect(
+    dialog.getByText(/Promoting first loads it on serving capacity/),
+  ).toBeVisible();
+  await userEvent.click(dialog.getByRole("button", { name: "Promote" }));
+  return dialog;
+};
+
+export const PromoteUploadedVersion: Story = {
+  args: { path: `/tasks/${task.name}` },
+  parameters: { msw: uploadHandlers({ existing: true, published: true }) },
+  play: async ({ canvasElement }) => {
+    await openPromotion(canvasElement);
+    const body = within(canvasElement.ownerDocument.body);
+    await waitFor(() => expect(body.queryByRole("dialog")).toBeNull());
+    const canvas = within(canvasElement);
+    await expect(await canvas.findByText("Production")).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Use" })).toBeEnabled();
+    await expect(canvas.queryByText(/Not yet served/)).toBeNull();
+  },
+};
+
+export const PromoteUploadedVersionTesting: Story = {
+  args: { path: `/tasks/${task.name}` },
+  parameters: {
+    msw: uploadHandlers({
+      existing: true,
+      published: true,
+      promotion: "testing",
+    }),
+  },
+  play: async ({ canvasElement }) => {
+    const dialog = await openPromotion(canvasElement);
     await expect(
-      canvas.getByRole("button", { name: "Promote" }),
+      await dialog.findByRole("button", { name: "Testing…" }),
     ).toBeDisabled();
+    await expect(
+      dialog.getByText(/Loading the adapter on serving capacity/),
+    ).toBeVisible();
+  },
+};
+
+export const PromoteUploadedVersionRejected: Story = {
+  args: { path: `/tasks/${task.name}` },
+  parameters: {
+    msw: uploadHandlers({
+      existing: true,
+      published: true,
+      promotion: "reject",
+    }),
+  },
+  play: async ({ canvasElement }) => {
+    await openPromotion(canvasElement);
+    const body = within(canvasElement.ownerDocument.body);
+    await expect(
+      await body.findByText(/serving runtime could not load this adapter/),
+    ).toBeVisible();
+    await expect(
+      within(canvasElement).getByText(/Not yet served/),
+    ).toBeVisible();
   },
 };
 export const FilesSelectedMobile: Story = {
@@ -403,7 +498,7 @@ export const UploadedMobile: Story = {
   globals: { viewport: { value: "mobile1", isRotated: false } },
   play: async ({ canvasElement }) => {
     await expect(
-      await within(canvasElement).findByText(/Awaiting serving qualification/),
+      await within(canvasElement).findByText(/Not yet served/),
     ).toBeVisible();
   },
 };

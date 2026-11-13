@@ -12,7 +12,7 @@ BF16 GLM training and NVFP4 GLM serving.
 
 The gateway authorizes an exact task version in its workspace and sends a normal
 inference request with the internal model name
-`<workspace UUID>/<resolved version slug>`. Public requests still use the
+`<workspace UUID>/<version UUID>`. Public requests still use the
 existing version or task production slug. The gateway does not prepare adapters.
 
 SMG forwards the unknown model name to the allocation's single SGLang worker
@@ -32,7 +32,7 @@ The hook then loads the path through SGLang's native `load_lora_adapter`, which
 assigns the adapter ID and registers it; concurrent requests for one name share a
 single resolution. Registered adapters use SGLang's native CPU/GPU slots. The hook
 runs the blocking file request on a worker thread, so downloading does not block
-the SGLang API event loop. Names that are not `<workspace UUID>/<slug>` and all
+the SGLang API event loop. Names that are not `<workspace UUID>/<version UUID>` and all
 resolution errors fail closed with a bounded message; they never fall back to the
 base model.
 
@@ -165,9 +165,12 @@ the assigned GPU UUID count must match. These are host decisions, not adapter fi
 
 Prepare/probe/status/metrics bind only to loopback and use the existing
 Tailscale host ingress for external access, like the native SGLang
-runtime. Prepare/probe/resolve take `{name, workspace_id}`, where `name` is the exact
-version slug. Probe checks a bounded generation's
-returned identity and usage.
+runtime. Prepare/probe/resolve take `{name, workspace_id}`, where `name` is the
+version ID. Probe checks a bounded generation's returned identity and usage. The
+API calls probe through the host proxy (`<service_url>/internal/adapters/probe`)
+when an editor promotes an unavailable version, such as an upload; a pass makes
+the version available and production (see the
+[serving contract](../../../docs/TASK_FINE_TUNING_SERVING_CONTRACT.md)).
 Metrics live at `/internal/adapters/metrics`; they report file hits, downloads,
 startup registrations, failures, disk evictions and preparation duration with no adapter or
 workspace labels. Prometheus discovers enabled allocations from the worker's internal

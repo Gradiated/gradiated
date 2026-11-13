@@ -858,7 +858,9 @@ unique within their task. A trained version is named by its input cutoff date,
 format and rank. Large artifacts and datasets remain in object storage.
 
 The task's production-version pointer is changed explicitly by an editor, only
-to an available version of the same task. Promotion uses last-write-wins semantics
+to a version of the same task. An unavailable version, such as an upload, must
+first pass a serving probe on a LoRA-enabled allocation; the same transaction then
+marks it available and sets the pointer. Promotion uses last-write-wins semantics
 for concurrent authorized requests. Availability means durable serving eligibility,
 not residency in an inference runtime's adapter cache. Comparison model IDs may
 name external providers; they are not restricted to the hosted-model table.
@@ -915,5 +917,6 @@ download URLs are temporary grants and are not persisted on versions. See
 time and nullable published version FK. Grants last one hour. Publication locks
 the upload row and is idempotent. `task_versions.training_run_id` is nullable for
 external adapters; those versions use `runs/<version_id>/output/<sha256>/adapter.tar.gz`
-and have no evaluation. Their initial serving status is `unavailable`. The upload
+and have no evaluation. Their initial serving status is `unavailable` until
+promotion qualifies them on a LoRA-enabled allocation. The upload
 intent is retained for artifact cleanup even after its version or task is deleted.

@@ -54,15 +54,11 @@ RUN apt-get update && apt-get upgrade -y \
     /usr/local/lib/node_modules /opt/yarn-v* \
     /usr/local/bin/corepack /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/yarn /usr/local/bin/yarnpkg
 
-ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/aws-rds-us-east-1-bundle.pem
-
 RUN mkdir -p /etc/ssl/certs \
-  && chmod 0755 /etc/ssl /etc/ssl/certs
+  && chmod 0755 /etc/ssl /etc/ssl/certs \
+  && node --input-type=module -e 'import { writeFile } from "node:fs/promises"; const response = await fetch("https://truststore.pki.rds.amazonaws.com/us-east-1/us-east-1-bundle.pem", { signal: AbortSignal.timeout(30000) }); if (!response.ok) throw new Error(`RDS certificate download failed: ${response.status}`); await writeFile("/etc/ssl/certs/aws-rds-us-east-1-bundle.pem", Buffer.from(await response.arrayBuffer()), { mode: 0o444 });'
 
-ADD --chmod=0444 https://truststore.pki.rds.amazonaws.com/us-east-1/us-east-1-bundle.pem /etc/ssl/certs/aws-rds-us-east-1-bundle.pem
-
-RUN chmod 0755 /etc/ssl /etc/ssl/certs \
-  && chmod 0444 /etc/ssl/certs/aws-rds-us-east-1-bundle.pem
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/aws-rds-us-east-1-bundle.pem
 
 WORKDIR /app
 

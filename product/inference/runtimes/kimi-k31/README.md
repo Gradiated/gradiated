@@ -127,21 +127,25 @@ this complete five-request profile. The optimization target is
 maximum measured aggregate throughput while the median admitted stream decodes
 at least 65 generated tokens/s under the qualified prompt and concurrency mix.
 Record TTFT and queueing separately; do not count cached prompt tokens as decode
-throughput. Tuning used the reserved 8xB300 host
-`01a0fbf8-06fc-7658-96e1-ae72f7dba135` (RunPod `dv31b4wrd2yc8n`). The pool runs
-one replica on each of the two 8xB300 hosts, `01a0fbf8` and
-`01a0fbf7-5276-700b-903b-7e04da150ed6`. Both carry the `kimi-k31` host
-reservation. `01a0fbf7` previously served GLM uncensored, so merge this
-placement only after GLM uncensored has enough capacity on other B300
-deployments and its pods have drained from `01a0fbf7`. The taint only blocks new
-pods and does not evict running ones.
+throughput. Tuning used the then-reserved 8xB300 host
+`01a0fbf8-06fc-7658-96e1-ae72f7dba135` (RunPod `dv31b4wrd2yc8n`). The pool now
+runs one replica on `01a0fbf7-5276-700b-903b-7e04da150ed6`, the only host retaining
+the `kimi-k31` reservation. Host `01a0fbf8` returns to shared capacity for
+DeepSeek replicas and other unreserved pools. DeepSeek has no required same-host
+affinity. Changing host reservations does not stop or replace provider instances;
+the taint blocks new pods and does not evict running ones.
 
-The public model is available and advertises text input only. OpenRouter capacity
-is disabled in its catalog configuration (`openrouterModelId: null`), so the
-gateway serves Kimi only through qualified local deployments. If local capacity
-is unavailable, requests receive the existing capacity errors. Prices are $1.60
-per million input tokens, $0.16 per million cached input tokens and $9.00 per
-million output tokens. There is no separate
+The public model is available and advertises text input only. Its exact
+OpenRouter mapping is `moonshotai/kimi-k3.1-pro`. The gateway prefers qualified
+local deployments and uses OpenRouter when local capacity is absent, saturated
+or fails before output, subject to the [external-capacity rules](../../../services/gateway/ARCHITECTURE.md#external-capacity-openrouter).
+Requests originating from OpenRouter, deployment-pinned requests, and requests
+with unsupported external parameters stay local. Fallback requires zero retention,
+no data collection and support for every forwarded parameter. Its fixed provider
+ceilings are $2 input and $10 output per million tokens, the separate endpoint
+medians observed on 2026-11-13, independent of service tier. These ceilings do not
+change customer billing: standard prices are $0.25 per million input tokens,
+$0.025 cached input and $2.50 output/internal reasoning. There is no separate
 cache-write price: the gateway adds a cache-write price on top of input, so
 cache writes are charged at the input rate. Its initial
 release uses the existing Chat transport and omits `tokenizer_mode`; SGLang owns

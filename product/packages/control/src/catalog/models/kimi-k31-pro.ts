@@ -9,7 +9,7 @@ export const createKimiK31ProModelConfiguration = () =>
     id: kimiK31ProModelId,
     name: modelDisplayName(kimiK31ProModelId),
     status: "available",
-    openrouterModelId: null,
+    openrouterModelId: kimiK31ProModelId,
     properties: {
       description:
         "Moonshot AI's Kimi K3.1 Pro with MXFP4 routed experts, reasoning and tool use.",

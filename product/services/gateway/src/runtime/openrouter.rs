@@ -38,36 +38,29 @@ const UNSUPPORTED_PARAMETERS: [&str; 1] = ["chat_template_kwargs"];
 const MODEL_UNSUPPORTED_PARAMETERS: [(&str, &[&str]); 1] =
     [("moonshotai/kimi-k3.1-pro", &["parallel_tool_calls"])];
 
-/// Models for which we accept paying OpenRouter more than the caller pays us, as a
-/// percentage of our price. Absolute allowances are in MODEL_MAX_PRICE.
-const MODEL_MAX_PRICE_PERCENT: [(&str, u64); 1] = [("moonshotai/kimi-k3.1-pro", 120)];
+// Kimi's ceilings are the per-endpoint medians listed by OpenRouter on 2026-11-13.
+const MODEL_MAX_PRICE: [(&str, PriceCap); 2] = [
+    (
+        "moonshotai/kimi-k3.1-pro",
+        PriceCap {
+            prompt: 2_000,
+            completion: 10_000,
+        },
+    ),
+    (
+        "deepseek/deepseek-v4.1-flash-1017",
+        PriceCap {
+            prompt: 300,
+            completion: 1_200,
+        },
+    ),
+];
 
-// DeepSeek's catalog prices exclude every eligible OpenRouter provider.
-const MODEL_MAX_PRICE: [(&str, PriceCap); 1] = [(
-    "deepseek/deepseek-v4.1-flash-1017",
-    PriceCap {
-        prompt: 300,
-        completion: 1_200,
-    },
-)];
-
-/// The most OpenRouter may charge per token for this model.
 fn max_price(model_id: &str, cap: PriceCap) -> PriceCap {
-    if let Some((_, price)) = MODEL_MAX_PRICE.iter().find(|(model, _)| *model == model_id) {
-        return *price;
-    }
-
-    let percent = MODEL_MAX_PRICE_PERCENT
+    MODEL_MAX_PRICE
         .iter()
         .find(|(model, _)| *model == model_id)
-        .map_or(100, |(_, percent)| *percent);
-    let scale = |price: u64| {
-        u64::try_from(u128::from(price) * u128::from(percent) / 100).unwrap_or(u64::MAX)
-    };
-    PriceCap {
-        prompt: scale(cap.prompt),
-        completion: scale(cap.completion),
-    }
+        .map_or(cap, |(_, price)| *price)
 }
 
 pub fn supports_parameter(model_id: &str, name: &str) -> bool {

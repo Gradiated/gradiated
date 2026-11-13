@@ -23,7 +23,7 @@ class KimiStageTests(unittest.TestCase):
         self.hosts = [{'spec': {'instanceId': instance, 'provider': {'name': 'runpod'},
                                 'extraTaints': [dict(staging.RESERVATION)],
                                'inventory': {'gpuProduct': 'B300', 'gpuCount': 8, 'cpu': 97, 'memoryGiB': 1389}}}
-                      for instance in ('01a0fbf7-5276-700b-903b-7e04da150ed6', '01a0fbf8-06fc-7658-96e1-ae72f7dba135')]
+                      for instance in ('01a0fbf7-5276-700b-903b-7e04da150ed6',)]
         # Unreserved hosts, even matching ones, never take Kimi.
         self.hosts.append({'spec': {'instanceId': '019d5a4a-0000-7000-8000-000000000001', 'provider': {'name': 'runpod'},
                                     'inventory': {'gpuProduct': 'B300', 'gpuCount': 8, 'cpu': 97, 'memoryGiB': 1389}}})
@@ -40,10 +40,10 @@ class KimiStageTests(unittest.TestCase):
         self.assertEqual(models['other/model'], self.models['other/model'])
         self.assertEqual(runtimes['existing'], self.runtimes['existing'])
         model, runtime = models[staging.MODEL], runtimes[self.digest]
-        # Both replicas stay warm: ten slots fill the two reserved hosts.
-        self.assertEqual(model['min_slots'], 10)
+        # Five active slots keep the single reserved host warm.
+        self.assertEqual(model['min_slots'], 5)
         pool = model['pools']['kimi-k31-pro']
-        self.assertEqual((pool['max_replicas'], pool['max_surge'], pool['max_unavailable']), (2, 1, 1))
+        self.assertEqual((pool['max_replicas'], pool['max_surge'], pool['max_unavailable']), (1, 0, 1))
         # The host reservation places Kimi; the pool names no hosts.
         self.assertEqual((pool['gpu'], pool['gpu_count'], pool['reservation']), ('B300', 8, 'kimi-k31'))
         self.assertNotIn('affinity', pool)
@@ -66,13 +66,17 @@ class KimiStageTests(unittest.TestCase):
                 self.stage(release={**self.release, **update})
         with self.assertRaises(ValueError):
             self.stage(hosts=[])
-        for index in range(2):
+        for index in range(staging.REPLICAS):
             with self.subTest(missing=index), self.assertRaises(ValueError):
                 self.stage(hosts=self.hosts[:index] + self.hosts[index + 1:])
             hosts = copy.deepcopy(self.hosts)
             hosts[index]['spec']['extraTaints'] = []
             with self.subTest(untainted=index), self.assertRaisesRegex(ValueError, 'reservation taint'):
                 self.stage(hosts=hosts)
+        extra = copy.deepcopy(self.hosts[0])
+        extra['spec']['instanceId'] = '01a0fbf8-06fc-7658-96e1-ae72f7dba135'
+        with self.assertRaisesRegex(ValueError, 'reservation taint'):
+            self.stage(hosts=[*self.hosts, extra])
         for field, value in [('gpuProduct', 'H200'), ('gpuCount', 4), ('cpu', 79), ('memoryGiB', 1023)]:
             hosts = copy.deepcopy(self.hosts)
             hosts[0]['spec']['inventory'][field] = value
@@ -87,10 +91,10 @@ class KimiStageTests(unittest.TestCase):
         models, runtimes = self.stage(hosts=documents, models={}, runtimes={})
         hosts, _ = renderer.inventory(documents)
         pool = renderer.plan(models, runtimes, hosts)['kimi-k31-pro']
-        self.assertEqual((pool['floor'], pool['maximum'], pool['slots']), (2, 2, 5))
+        self.assertEqual((pool['floor'], pool['maximum'], pool['slots']), (1, 1, 5))
         affinity = renderer.rollout('kimi-k31-pro', pool, runtimes)['spec']['template']['spec']['affinity']
         expression, = affinity['nodeAffinity']['requiredDuringSchedulingIgnoredDuringExecution']['nodeSelectorTerms'][0]['matchExpressions']
-        self.assertEqual(expression['values'], ['01a0fbf7-5276-700b-903b-7e04da150ed6', '01a0fbf8-06fc-7658-96e1-ae72f7dba135'])
+        self.assertEqual(expression['values'], ['01a0fbf7-5276-700b-903b-7e04da150ed6'])
 
     def test_existing_definitions_cannot_be_silently_replaced(self):
         models, runtimes = self.stage()

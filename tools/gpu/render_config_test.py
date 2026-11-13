@@ -343,9 +343,10 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(floors['glm-dealign-sglang-h200'][:2], (0, 0))
         self.assertEqual(floors['decider-l40s'], (1, 1, 1))
         self.assertNotIn('kev', floors)
-        # Plain GLM and DeepSeek 1017 scale from zero to one SGLang replica on demand.
+        # Plain GLM scales on demand; Kimi and DeepSeek retain fixed capacity.
         self.assertEqual(floors['glm'], (0, 1, 12))
-        self.assertEqual(floors['deepseek'], (0, 1, 32))
+        self.assertEqual(floors['deepseek'], (2, 2, 32))
+        self.assertEqual(floors['kimi-k31-pro'], (1, 1, 5))
         for model in ('dealignai/glm-5.3-flash-uncensored', 'perplexity-ai/pplx-decider-v1.2'):
             self.assertGreater(models[model]['min_slots'], 0)
         # Models never name hosts; reservations on hosts.yaml place pools instead.
@@ -499,7 +500,7 @@ class RenderTests(unittest.TestCase):
                 {'key': 'gradiated.com/bundle.0123456789abcdef', 'operator': 'In', 'values': ['true']}]}}]}})
         self.assertEqual(spec['schedulerName'], 'gradiated-gpu')
 
-    def test_only_kimi_reserves_capacity(self):
+    def test_kimi_retains_one_whole_host_and_deepseek_uses_shared_capacity(self):
         hosts, _ = renderer.inventory(self.hosts)
         reserved = {}
         for host in hosts:
@@ -507,8 +508,22 @@ class RenderTests(unittest.TestCase):
                 reserved.setdefault((taint['key'], taint['value']), []).append(host['instance_id'])
         # No host is held for training: it runs on shared capacity, preemptible by models.
         self.assertEqual(reserved, {
-            ('gradiated.com/reserved', 'kimi-k31'): ['01a0fbf7-5276-700b-903b-7e04da150ed6',
-                                                     '01a0fbf8-06fc-7658-96e1-ae72f7dba135']})
+            ('gradiated.com/reserved', 'kimi-k31'): ['01a0fbf7-5276-700b-903b-7e04da150ed6']})
+        models, runtimes, inventory = self.fleet()
+        pools = renderer.plan(models, runtimes, inventory)
+        templates = {name: renderer.rollout(name, pools[name], runtimes)['spec']['template']['spec']
+                     for name in ('kimi-k31-pro', 'deepseek')}
+        self.assertEqual(pools['kimi-k31-pro']['hosts'], ['01a0fbf7-5276-700b-903b-7e04da150ed6'])
+        self.assertEqual(pools['deepseek']['hosts'], [])
+        deepseek = templates['deepseek']
+        self.assertEqual(deepseek['schedulerName'], 'gradiated-gpu')
+        self.assertNotIn('podAffinity', deepseek.get('affinity', {}))
+        self.assertNotIn('requiredDuringSchedulingIgnoredDuringExecution',
+                         deepseek.get('affinity', {}).get('nodeAffinity', {}))
+        self.assertFalse(any(t['key'] == 'gradiated.com/reserved' for t in deepseek['tolerations']))
+        requested = sum(int(templates[name]['containers'][0]['resources']['requests']['nvidia.com/gpu'])
+                        * pools[name]['floor'] for name in templates)
+        self.assertEqual(requested, 16)
         # Training Jobs tolerate a training reservation if a host is ever given one.
         trainer = (renderer.ROOT / 'product/services/temporal-worker/src/training/kubernetes-host.ts').read_text()
         self.assertIn('key: "gradiated.com/reserved"', trainer)

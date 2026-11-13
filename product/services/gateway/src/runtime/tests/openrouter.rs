@@ -266,21 +266,28 @@ async fn deepseek_fallback_covers_standard_provider_prices_for_buffered_and_stre
 }
 
 #[tokio::test]
-async fn kimi_may_pay_openrouter_up_to_a_fifth_more_than_we_charge() {
-    let mock = mock_json(StatusCode::OK, json!({})).await;
-    let mut kimi = chat();
-    kimi.model = ExternalModel::openrouter("moonshotai/kimi-k3.1-pro");
-    kimi.price_cap = PriceCap {
-        prompt: 1_800,
-        completion: 9_000,
-    };
+async fn kimi_fallback_uses_fixed_endpoint_medians_for_every_tier_and_transport() {
+    for stream in [false, true] {
+        for (prompt, completion) in [(1_800, 9_000), (1_260, 6_300), (2_700, 13_500)] {
+            let mock = mock_json(StatusCode::OK, json!({})).await;
+            let mut kimi = if stream { streaming_chat() } else { chat() };
+            kimi.model = ExternalModel::openrouter("moonshotai/kimi-k3.1-pro");
+            kimi.price_cap = PriceCap { prompt, completion };
 
-    let _ = client(&mock).await.complete(kimi).await;
+            if stream {
+                let _ = client(&mock).await.stream(kimi).await;
+            } else {
+                let _ = client(&mock).await.complete(kimi).await;
+            }
 
-    let recorded = mock.requests();
-    let price = &recorded[0].body["provider"]["max_price"];
-    assert!((price["prompt"].as_f64().unwrap() - 2.16).abs() < 1e-9);
-    assert!((price["completion"].as_f64().unwrap() - 10.8).abs() < 1e-9);
+            let recorded = mock.requests();
+            assert_eq!(recorded.len(), 1);
+            assert_eq!(
+                recorded[0].body["provider"]["max_price"],
+                json!({"prompt": 2.0, "completion": 10.0})
+            );
+        }
+    }
 }
 
 #[tokio::test]

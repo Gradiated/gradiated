@@ -1018,16 +1018,16 @@ prices in USD per million tokens (completion is the lower of the completion and
 reasoning prices, which OpenRouter bills alike), so OpenRouter routes only to
 providers that cost no more than the caller pays, except for hardcoded
 operator-approved allowances.
-`openrouter::MODEL_MAX_PRICE_PERCENT` controls percentage allowances:
-`moonshotai/kimi-k3.1-pro` uses 120% of the captured prices, because no allowed
-zero-retention provider serves it at catalog price. Its fallback can therefore
-cost up to 20% more than the request pays us. The percentage applies to the
-request's service-tier price, so flex requests stay below every provider and
-get no fallback. `openrouter::MODEL_MAX_PRICE` sets an absolute ceiling for
-`deepseek/deepseek-v4.1-flash-1017`: $0.30 input and $1.20 output per million
-tokens, covering Modal and the common standard provider tier. This ceiling is
-independent of the captured catalog prices; Gradiated absorbs the difference
-and does not require a local replica for fallback. `max_price` has no
+`openrouter::MODEL_MAX_PRICE` sets absolute ceilings independent of the
+request's service-tier price. For `moonshotai/kimi-k3.1-pro`, these are $2 input
+and $10 output per million tokens: the separate prompt and completion medians
+across the 24 listed [OpenRouter endpoints](https://openrouter.ai/api/v1/models/moonshotai/kimi-k3.1-pro/endpoints)
+on 2026-11-13. These are fixed operator-approved values, with no runtime price
+lookup or percentage adjustment. Flex and other service tiers use the same ceilings.
+For `deepseek/deepseek-v4.1-flash-1017`, the ceilings are $0.30 input and $1.20
+output per million tokens, covering Modal and the common standard provider tier.
+Gradiated absorbs any difference from the captured catalog prices and does not
+require a local replica for fallback. `max_price` has no
 cached-input field and OpenRouter ignores unknown ones, so a provider's
 cache-read rate can exceed the catalog's cached price; Gradiated accepts that
 difference rather than restricting providers further. It carries no runtime priority

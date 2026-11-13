@@ -12,8 +12,8 @@ GPU = ROOT / 'infra/environments/prod/us-east-1/kubernetes/gpu-inference'
 MODEL = 'moonshotai/kimi-k3.1-pro'
 CHECKPOINT = 'moonshotai/Kimi-K3.1-Pro'
 REVISION = 'd9e99b0792a5e93b78ea9bea62a68167e36ddd9e'
-# Kimi runs one TP8 replica on each 8xB300 host reserved for it in hosts.yaml.
-REPLICAS = 2
+# Kimi retains one TP8 replica on its sole reserved 8xB300 host.
+REPLICAS = 1
 RESERVATION = {'key': 'gradiated.com/reserved', 'value': 'kimi-k31', 'effect': 'NoSchedule'}
 BUCKET = 'gradiated-prod-model-artifacts-873716897517'
 ACTIVE_REQUESTS = 5
@@ -53,13 +53,12 @@ def stage(models, runtimes, pins, hosts, release, source):
         'hf_home': '/var/lib/kimi-k31/hf', 'startup_timeout': 7200, 'warmup': True,
         'environment': {'TENSOR_PARALLEL_SIZE': '8'},
     }
-    # One replica per reserved host, both kept warm. A rollout replaces one host
-    # at a time and the surge pod waits for a free host, so one keeps serving.
+    # With one reserved host, runtime replacements drain before starting.
     candidate = {
         'min_slots': REPLICAS * ACTIVE_REQUESTS,
         'pools': {'kimi-k31-pro': {
             'runtime': digest, 'gpu': 'B300', 'gpu_count': 8, 'reservation': RESERVATION['value'],
-            'max_replicas': REPLICAS, 'progress_deadline_seconds': 10800, 'max_surge': 1, 'max_unavailable': 1}},
+            'max_replicas': REPLICAS, 'progress_deadline_seconds': 10800, 'max_surge': 0, 'max_unavailable': 1}},
     }
     if MODEL in models and models[MODEL] != candidate:
         raise ValueError('Existing Kimi deployment differs; review replacement explicitly')

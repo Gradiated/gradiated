@@ -292,6 +292,14 @@ scripts remain available under `tools/browser/`. The old AWS Storybook custom
 domain is retained as a legacy build until a reviewed DNS/hosting migration;
 use `https://gradiated-storybook-gradiated.vercel.app` and PR preview links for current builds.
 
+Storybook's AWS retirement uses two ordered Terraform releases. The preparation
+release removes the legacy AAAA alias and sets the Storybook bucket's
+`force_destroy` to true, allowing the AWS provider to remove all object versions
+and delete markers during the following release. It also removes obsolete AWS
+Storybook deployment permissions. Wait for that production apply to succeed
+before merging the cutover release. Until cutover, the legacy domain continues
+serving through its A alias.
+
 Before observability reconciliation, populate the externally managed
 `gradiated/prod/platform/alertmanager-notifications` secret with a
 `webhook-url` key and a `webhook-token` key. Alert definitions and dashboards

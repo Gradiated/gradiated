@@ -89,9 +89,9 @@ The worker publishes conversational prompt/completion JSONL train/validation/tes
 artifacts and a portable dataset manifest, then coordinates training, verification
 and infrastructure evaluation. Host replacement requires confirmed process death
 and resumes verified optimizer checkpoints. See the run contract and
-`infra/environments/prod/runpod/training/README.md` for deployment order and manual
-pool assignment. Live H100 training and rolling-deployment recovery still require
-production qualification.
+[training capacity guide](../infra/environments/prod/runpod/README.md#training-capacity)
+for deployment order and manual pool assignment. Live H100 training and
+rolling-deployment recovery still require production qualification.
 
 ## Proposed hosting and production promotion
 

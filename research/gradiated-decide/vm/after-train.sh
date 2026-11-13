@@ -27,7 +27,8 @@ for a in $ALPHAS; do
     [ -f "$ckpt/done" ] || (cd src/gradiated-decide && ../../venv/bin/python -m gdecide.merge --base "$BASE_CKPT" --models "$ROOT/$FINAL" --weights "$a" --out "$ckpt")
   fi
   evaluate "$name" "$ckpt" sample
-  idx=$(python3 -c "import json;print(json.load(open('runs/evals/$name-sample/gdecide-score.json'))['index'])")
+  idx=$(python3 -c "import json;print(json.load(open('runs/evals/$name-sample/gdecide-score.json'))['index'])") || {
+    echo "no score for $name; see runs/evals/$name-sample/score.log" >&2; exit 1; }
   echo "{\"candidate\": \"$name\", \"sample_index\": $idx}" >> "runs/$RUN/candidates.jsonl"
   if python3 -c "import sys;sys.exit(0 if $idx > $best_index else 1)"; then best=$name; best_index=$idx; best_ckpt=$ckpt; fi
 done

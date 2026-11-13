@@ -11,6 +11,10 @@ mkdir -p "$OUT"
 # On a replacement VM, resume from the shards s3-sync.sh uploaded (evaluate.py skips ids already answered).
 [ -f "$OUT/done" ] || ls "$OUT"/results-*.jsonl >/dev/null 2>&1 || \
   aws s3 sync --only-show-errors "$S3_PREFIX/$OUT" "$OUT" --exclude "*" --include "results-*.jsonl" || true
+# The comparison run usually comes from another VM: fetch its merged results (score.py reads results.jsonl).
+if [ -n "${COMPARE:-}" ] && [ ! -f "$COMPARE/results.jsonl" ]; then
+  aws s3 cp --only-show-errors "$S3_PREFIX/$COMPARE/results.jsonl" "$COMPARE/results.jsonl"
+fi
 pgrep -f vm/s3-sync.sh >/dev/null || (setsid nohup bash src/gradiated-decide/vm/s3-sync.sh > logs/s3-sync.log 2>&1 < /dev/null &)
 cd src/gradiated-decide
 ../../${EVAL_VENV:-venv}/bin/torchrun --standalone --nproc-per-node 8 -m gdecide.evaluate --suite "$ROOT/suite/suite-0.3" \

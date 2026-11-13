@@ -57,6 +57,12 @@ const COLUMNS: FooterColumn[] = [
       { href: "/careers/", label: "Careers" },
       { href: "/notes/", label: "Notes" },
       { href: "/handbook/", label: "Handbook" },
+      {
+        external: true,
+        href: "https://www.linkedin.com/company/gradiated",
+        label: "LinkedIn",
+      },
+      { external: true, href: "https://x.com/gradiated", label: "X" },
     ],
   },
   {

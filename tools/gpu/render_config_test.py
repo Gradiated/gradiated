@@ -537,11 +537,11 @@ class RenderTests(unittest.TestCase):
         base = pools['deepseek']
         self.assertEqual((staged['mode'], staged['floor'], staged['maximum']), ('production', 1, 1))
         self.assertEqual((base['floor'], base['maximum']), (1, 1))
-        # Adapter qualification probes every serving allocation, so both pools
-        # must run the runtime that admits lm_head adapters.
-        self.assertEqual(base['runtime'], staged['runtime'])
         before, after = runtimes[base['runtime']], runtimes[staged['runtime']]
-        for key in ('gpus', 'cpu', 'memory', 'environment'):
+        for runtime in (before, after):
+            self.assertTrue(runtime['adapters'])
+            self.assertTrue(runtime['release']['lora_enabled'])
+        for key in ('gpus', 'cpu', 'memory', 'environment', 'active_requests'):
             self.assertEqual(before[key], after[key])
         for key in ('model_path', 'model_revision', 'tokenizer_revision', 'lora_base_model_revision'):
             self.assertEqual(before['release'][key], after['release'][key])

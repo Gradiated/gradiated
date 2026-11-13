@@ -700,5 +700,43 @@
       "GRADIATED_API_BASE_URL": "http://127.0.0.1:3004",
       "LORA_BASE_MODEL_REVISION": "1bae0e1088993b9b82de08f59de5be5a34e42170"
     }
+  },
+  "3b64ff0f5a2b95287e522f2351d0c652d0376aa390b9d46c2de011f23a5d07d5": {
+    "image": "gradiated/deepseek-sglang-bundle@sha256:3b64ff0f5a2b95287e522f2351d0c652d0376aa390b9d46c2de011f23a5d07d5",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "5c8ae53c872222489fd2f03a350f1d179257dedeee925cce5b766e50f1101435"
+    },
+    "model_id": "deepseek/deepseek-v4.1-flash-1017-head-qualification",
+    "release": {
+      "schema_version": 1,
+      "model_path": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "model_revision": "1bae0e1088993b9b82de08f59de5be5a34e42170",
+      "tokenizer_path": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "tokenizer_revision": "1bae0e1088993b9b82de08f59de5be5a34e42170",
+      "runtime_revision": "deepseek-sglang-energy-5c8ae53c8722",
+      "runtime_model_name": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "lora_enabled": true,
+      "lora_base_model_revision": "1bae0e1088993b9b82de08f59de5be5a34e42170",
+      "tokenizer_mode": "deepseek_v41"
+    },
+    "gpus": 4,
+    "active_requests": 32,
+    "cpu": "32",
+    "memory": "400Gi",
+    "startup_timeout": 5400,
+    "warmup": true,
+    "adapters": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "4",
+      "MODEL_ID": "deepseek/deepseek-v4.1-flash-1017",
+      "LORA_ENABLED": "true",
+      "LORA_GPU_SLOTS": "8",
+      "LORA_CPU_SLOTS": "64",
+      "LORA_MAX_RANK": "8",
+      "LORA_DISK_CACHE_BYTES": "274877906944",
+      "LORA_DOWNLOAD_HOSTS": "gradiated-prod-model-artifacts-873716897517.s3.us-east-1.amazonaws.com",
+      "GRADIATED_API_BASE_URL": "http://127.0.0.1:3004",
+      "LORA_BASE_MODEL_REVISION": "1bae0e1088993b9b82de08f59de5be5a34e42170"
+    }
   }
 }

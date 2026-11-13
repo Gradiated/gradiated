@@ -40,6 +40,7 @@ import {
   VersionRecordSchema,
   EventRecordSchema,
   TaskUpdateSchema,
+  VersionUpdateSchema,
 } from "./records.js";
 import { modelNameProblem } from "./model-names.js";
 
@@ -162,7 +163,12 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return database.transaction(async (tx) => {
         const [version] = await tx
           .update(taskVersions)
-          .set({ status: "available", updatedAt: new Date() })
+          .set(
+            VersionUpdateSchema.parse({
+              status: "available",
+              updatedAt: new Date(),
+            }),
+          )
           .where(
             and(
               eq(taskVersions.id, UuidSchema.parse(versionId)),

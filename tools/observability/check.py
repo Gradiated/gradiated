@@ -343,10 +343,10 @@ def main():
                      alert if fires else None, [alert],
                      {'namespace': namespace, 'deployment': deployment}, duration)
 
-    for missing in (None, 'api', 'gateway', 'proxy', 'worker'):
+    for missing in (None, 'api', 'gateway', 'proxy', 'worker', 'mcp'):
         inputs = [{'series': 'kube_horizontalpodautoscaler_spec_max_replicas'
                    + f'{{namespace="gradiated",horizontalpodautoscaler="keda-hpa-{service}"}}',
-                   'values': '20+0x8'} for service in ('api', 'gateway', 'proxy', 'worker') if service != missing]
+                   'values': '20+0x8'} for service in ('api', 'gateway', 'proxy', 'worker', 'mcp') if service != missing]
         alert = 'AutoscalerMissing'
         scenario(f'missing HPA {missing}', inputs, alert if missing else None, [alert],
                  {'namespace': 'gradiated', 'horizontalpodautoscaler': f'keda-hpa-{missing}'}, '2m')
@@ -364,6 +364,7 @@ def main():
 
     for service, title, down in [('api', 'Api', 'ApiPublicUnavailable'),
                                  ('console', 'Console', 'ConsoleUnavailable'),
+                                 ('mcp', 'Mcp', 'McpPublicUnavailable'),
                                  ('metabase', 'Metabase', 'MetabaseUnavailable'),
                                  ('proxy', 'Proxy', 'ProxyPublicUnavailable')]:
         missing = f'{title}ProbeMissing'
@@ -411,6 +412,14 @@ def main():
         scenario(name, inputs, replica_alert if fires else None, [replica_alert],
                  {'namespace': 'gradiated', 'deployment': 'api'})
 
+    for name, available, fires in [('mcp outage', 0, True), ('mcp serving', 1, False)]:
+        inputs = [{'series': metric + '{namespace="gradiated",deployment="mcp"}',
+                   'values': f'{value}+0x30'} for metric, value in [
+                       ('kube_deployment_status_replicas_available', available),
+                       ('kube_deployment_spec_replicas', 2)]]
+        scenario(name, inputs, replica_alert if fires else None, [replica_alert],
+                 {'namespace': 'gradiated', 'deployment': 'mcp'})
+
     for name, old, candidate, fires in [('migration old serves', 3, 0, False),
                                         ('rollout serves', 0, 3, False),
                                         ('rollout outage', 0, 0, True)]:
@@ -425,6 +434,7 @@ def main():
 
     for service, alert in [('api', 'ApiPublicUnavailable'),
                            ('console', 'ConsoleUnavailable'),
+                           ('mcp', 'McpPublicUnavailable'),
                            ('proxy', 'ProxyPublicUnavailable')]:
         inputs = [{'series': f'probe_success{{service="{service}"}}',
                    'values': '1+0x5 0+0x30'}]
@@ -1269,6 +1279,57 @@ def main():
              'values': f'{due}+0x200'},
         ], 'GpuHostLeaseOverdue' if fires else None, ['GpuHostLeaseOverdue'],
            {'instance_id': 'h1', 'holder': 'agent'}, eval_time='85m')
+
+    mcp_alerts = ['McpHighErrorRate', 'McpToolFailures', 'McpSlow', 'McpAuthenticationErrors',
+                  'McpCredentialCacheDown', 'McpTelemetryMissing']
+    mcp_info = {'series': 'gradiated_mcp_service_info{instance="a"}', 'values': '1+0x60'}
+    def mcp_requests(status, values, route='/mcp'):
+        return {'series': f'gradiated_mcp_http_requests_total{{route="{route}",status="{status}"}}', 'values': values}
+    for name, failed, ok, fires in [
+        ('9% server errors', '0+3x40', '0+30x40', True),
+        ('3% server errors', '0+1x40', '0+30x40', False),
+        ('low traffic stays quiet', '0+1x40', '0+0x40', False),
+    ]:
+        scenario('MCP errors: ' + name, [mcp_info, mcp_requests('500', failed), mcp_requests('200', ok),
+                                         mcp_requests('500', '0+100x40', '/health/live')],
+                 'McpHighErrorRate' if fires else None, mcp_alerts, eval_time='11m')
+
+    def mcp_tools(outcome, values):
+        return {'series': f'gradiated_mcp_tool_calls_total{{tool="list_models",outcome="{outcome}"}}', 'values': values}
+    for name, inputs, fires in [
+        ('sustained failures', [mcp_tools('failed', '0+2x60'), mcp_tools('success', '0+10x60')], True),
+        ('caller rejections are excluded', [mcp_tools('rejected', '0+5x60'), mcp_tools('success', '0+5x60')], False),
+        ('below the failure floor', [mcp_tools('failed', '0+0.2x60')], False),
+        ('one failure then recovery', [mcp_tools('failed', '0 1+0x59'), mcp_tools('success', '0+10x60')], False),
+    ]:
+        scenario('MCP tools: ' + name, [mcp_info] + inputs, 'McpToolFailures' if fires else None,
+                 mcp_alerts, eval_time='21m')
+
+    for name, fast, samples, fires in [('slow', 0, 1, True), ('fast', 1, 1, False), ('slow but sparse', 0, 0.2, False)]:
+        metric = 'gradiated_mcp_http_request_duration_seconds'
+        selector = 'route="/mcp",method="POST",status_class="2xx"'
+        scenario('MCP latency: ' + name, [mcp_info,
+            {'series': f'{metric}_bucket{{{selector},le="5"}}', 'values': f'0+{fast}x60'},
+            {'series': f'{metric}_bucket{{{selector},le="10"}}', 'values': f'0+{samples}x60'},
+            {'series': f'{metric}_bucket{{{selector},le="+Inf"}}', 'values': f'0+{samples}x60'},
+            {'series': f'{metric}_count{{{selector}}}', 'values': f'0+{samples}x60'},
+        ], 'McpSlow' if fires else None, mcp_alerts, eval_time='21m')
+
+    for name, values, fires in [('API unreachable', '0+1x60', True), ('brief API error', '0+1x4 4+0x56', False)]:
+        scenario('MCP authentication: ' + name, [mcp_info,
+            {'series': 'gradiated_mcp_authentications_total{result="error"}', 'values': values},
+            {'series': 'gradiated_mcp_authentications_total{result="rejected"}', 'values': '0+5x60'},
+        ], 'McpAuthenticationErrors' if fires else None, mcp_alerts, eval_time='12m')
+
+    for healthy in [0, 1]:
+        scenario(f'MCP credential cache: healthy neighbor {healthy}', [mcp_info,
+            {'series': 'gradiated_mcp_dependency_ready{instance="a",dependency="valkey"}', 'values': '0+0x40'},
+            {'series': 'gradiated_mcp_dependency_ready{instance="b",dependency="valkey"}', 'values': f'{healthy}+0x40'},
+        ], None if healthy else 'McpCredentialCacheDown', mcp_alerts, {'dependency': 'valkey'}, '11m')
+
+    scenario('MCP telemetry present', [mcp_info], None, mcp_alerts, eval_time='8m')
+    scenario('MCP telemetry missing', [{'series': 'gradiated_api_service_info{instance="a"}', 'values': '1+0x30'}],
+             'McpTelemetryMissing', mcp_alerts, eval_time='8m')
 
     with tempfile.TemporaryDirectory(prefix='observability-check-') as directory:
         temp = Path(directory)

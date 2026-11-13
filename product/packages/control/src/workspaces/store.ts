@@ -12,6 +12,7 @@ import { ControlServiceError } from "../errors.js";
 import {
   apiKeys,
   oauthAccessTokens,
+  organizations,
   sessions,
   users,
   workspaces,
@@ -123,6 +124,20 @@ export const createWorkspaceStore = (database: ControlDatabase) => ({
           credential: "oauth_token",
         })
       : undefined;
+  },
+  async findWorkspaceNames(workspaceId: string) {
+    const [record] = await database
+      .select({
+        workspaceName: workspaces.name,
+        organizationName: organizations.name,
+        organizationSlug: organizations.slug,
+      })
+      .from(workspaces)
+      .innerJoin(organizations, eq(organizations.id, workspaces.organizationId))
+      .where(eq(workspaces.id, UuidSchema.parse(workspaceId)))
+      .limit(1);
+
+    return record;
   },
   async setSessionOAuthWorkspace(
     sessionId: string,

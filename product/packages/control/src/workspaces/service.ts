@@ -27,6 +27,7 @@ export type WorkspaceRecord = typeof workspaces.$inferSelect;
 export type ApiKeyRecord = Omit<typeof apiKeys.$inferSelect, "digest">;
 
 const PLAYGROUND_CREDENTIAL_NAME = "Playground";
+const MCP_CREDENTIAL_NAME = "MCP";
 
 // Better Auth's OAuth provider adds this prefix to the access tokens it issues.
 export const OAUTH_ACCESS_TOKEN_PREFIX = "grado_";
@@ -75,6 +76,9 @@ export interface WorkspaceApiKeyService {
     userId: string,
     workspaceId: string,
   ): Promise<PlaygroundCredentialRecord>;
+  createOAuthInferenceCredential(
+    secret: string,
+  ): Promise<PlaygroundCredentialRecord | undefined>;
   revokeApiKey(
     userId: string,
     workspaceId: string,
@@ -83,6 +87,14 @@ export interface WorkspaceApiKeyService {
   authenticateCredential(
     secret: string,
   ): Promise<CredentialOwnerRecord | undefined>;
+  describeCredential(secret: string): Promise<
+    | (CredentialOwnerRecord & {
+        workspaceName: string;
+        organizationName: string;
+        organizationSlug: string;
+      })
+    | undefined
+  >;
   selectOAuthWorkspace(
     userId: string,
     sessionId: string,
@@ -118,6 +130,61 @@ export const createWorkspaceApiKeyService = (
   validateEvaluationModel?: (id: string) => Promise<void>,
 ): WorkspaceApiKeyService => {
   const records = createWorkspaceStore(database);
+
+  // A member's hidden key for one purpose; every call rotates its secret and expiry.
+  const createHiddenCredential = async (
+    userId: string,
+    workspaceId: string,
+    name: string,
+  ): Promise<PlaygroundCredentialRecord> => {
+    const workspace = await requirePlayground(database, userId, workspaceId);
+
+    const now = new Date();
+    const expiresAt = new Date(
+      now.getTime() + PLAYGROUND_CREDENTIAL_LIFETIME_MS,
+    );
+    const secret = generateApiKeySecret();
+    const digest = apiKeyDigest(secret);
+
+    const apiKey = requireRow(
+      await database
+        .insert(apiKeys)
+        .values({
+          id: uuidv7(),
+          organizationId: workspace.organizationId,
+          workspaceId,
+          name,
+          digest,
+          expiresAt,
+          hidden: true,
+          createdBy: userId,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: [apiKeys.workspaceId, apiKeys.createdBy, apiKeys.name],
+          targetWhere: sql`${apiKeys.hidden}`,
+          set: { digest, expiresAt, revokedAt: null, updatedAt: now },
+        })
+        .returning({ id: apiKeys.id }),
+      "The hidden key was not saved.",
+    );
+
+    return { apiKeyId: apiKey.id, secret, expiresAt };
+  };
+
+  // Membership and workspace state are checked by each operation, as for a session.
+  const authenticateCredential = async (secret: string) => {
+    if (secret.startsWith("grad_"))
+      return records.findActiveApiKeyOwner(apiKeyDigest(secret), new Date());
+    if (secret.startsWith(OAUTH_ACCESS_TOKEN_PREFIX))
+      return records.findActiveOAuthTokenOwner(
+        oauthTokenHash(secret.slice(OAUTH_ACCESS_TOKEN_PREFIX.length)),
+        new Date(),
+      );
+
+    return undefined;
+  };
 
   return {
     async listWorkspaces(userId, organizationId, includeArchived) {
@@ -241,41 +308,19 @@ export const createWorkspaceApiKeyService = (
 
     // Signed-in members try models without managing keys. Each member has one
     // hidden key per workspace; every call rotates its secret and expiry.
-    async createPlaygroundCredential(userId, workspaceId) {
-      const workspace = await requirePlayground(database, userId, workspaceId);
+    createPlaygroundCredential: (userId, workspaceId) =>
+      createHiddenCredential(userId, workspaceId, PLAYGROUND_CREDENTIAL_NAME),
 
-      const now = new Date();
-      const expiresAt = new Date(
-        now.getTime() + PLAYGROUND_CREDENTIAL_LIFETIME_MS,
+    // The gateway takes only API keys, so an OAuth client gets a hidden key of its member's.
+    async createOAuthInferenceCredential(secret) {
+      const owner = await authenticateCredential(secret);
+      if (owner?.credential !== "oauth_token") return undefined;
+
+      return createHiddenCredential(
+        owner.user.id,
+        owner.workspaceId,
+        MCP_CREDENTIAL_NAME,
       );
-      const secret = generateApiKeySecret();
-      const digest = apiKeyDigest(secret);
-
-      const apiKey = requireRow(
-        await database
-          .insert(apiKeys)
-          .values({
-            id: uuidv7(),
-            organizationId: workspace.organizationId,
-            workspaceId,
-            name: PLAYGROUND_CREDENTIAL_NAME,
-            digest,
-            expiresAt,
-            hidden: true,
-            createdBy: userId,
-            createdAt: now,
-            updatedAt: now,
-          })
-          .onConflictDoUpdate({
-            target: [apiKeys.workspaceId, apiKeys.createdBy],
-            targetWhere: sql`${apiKeys.hidden}`,
-            set: { digest, expiresAt, revokedAt: null, updatedAt: now },
-          })
-          .returning({ id: apiKeys.id }),
-        "The playground key was not saved.",
-      );
-
-      return { apiKeyId: apiKey.id, secret, expiresAt };
     },
 
     async revokeApiKey(userId, workspaceId, apiKeyId) {
@@ -318,17 +363,14 @@ export const createWorkspaceApiKeyService = (
       await requirePlayground(database, userId, workspaceId);
     },
 
-    // Membership and workspace state are checked by each operation, as for a session.
-    async authenticateCredential(secret) {
-      if (secret.startsWith("grad_"))
-        return records.findActiveApiKeyOwner(apiKeyDigest(secret), new Date());
-      if (secret.startsWith(OAUTH_ACCESS_TOKEN_PREFIX))
-        return records.findActiveOAuthTokenOwner(
-          oauthTokenHash(secret.slice(OAUTH_ACCESS_TOKEN_PREFIX.length)),
-          new Date(),
-        );
+    authenticateCredential,
 
-      return undefined;
+    async describeCredential(secret) {
+      const owner = await authenticateCredential(secret);
+      const names =
+        owner && (await records.findWorkspaceNames(owner.workspaceId));
+
+      return owner && names && { ...owner, ...names };
     },
 
     async selectOAuthWorkspace(userId, sessionId, workspaceId) {

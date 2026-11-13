@@ -55,6 +55,9 @@ procs:
     shell: "mise exec -- pnpm --filter @gradiated/mcp dev"
     env:
       GRADIATED_API_URL: http://127.0.0.1:3001
+      GRADIATED_INFERENCE_URL: http://127.0.0.1:3003
+      VALKEY_URL: *valkey_url
+      METRICS_PORT: "9467"
       MCP_PUBLIC_URL: http://127.0.0.1:3007
       CONSOLE_URL: http://127.0.0.1:5173
       AUTHORIZATION_SERVER_URL: http://localhost:3000/api/auth

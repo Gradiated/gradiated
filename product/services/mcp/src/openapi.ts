@@ -20,6 +20,10 @@ export interface Operation {
     required?: boolean;
     content?: Record<string, { schema?: JsonSchema }>;
   };
+  responses?: Record<
+    string,
+    { content?: Record<string, { schema?: JsonSchema }> }
+  >;
 }
 
 export const METHODS = ["get", "post", "put", "patch", "delete"] as const;
@@ -78,10 +82,35 @@ export const inlineReferences = (
     };
   }
 
-  return Object.fromEntries(
-    Object.entries(rest).map(([key, value]) => [
-      key,
-      inlineReferences(value, document, resolving),
-    ]),
+  return foldAnnotations(
+    Object.fromEntries(
+      Object.entries(rest).map(([key, value]) => [
+        key,
+        inlineReferences(value, document, resolving),
+      ]),
+    ),
   );
+};
+
+const ANNOTATIONS = new Set(["description", "default", "example", "title"]);
+
+const isAnnotation = (schema: unknown) =>
+  typeof schema === "object" &&
+  schema !== null &&
+  Object.keys(schema).every((key) => ANNOTATIONS.has(key));
+
+// A described reference is generated as allOf: [schema, { description }]; clients read it better merged.
+const foldAnnotations = (schema: JsonSchema): JsonSchema => {
+  const { allOf, ...rest } = schema;
+  if (!Array.isArray(allOf)) return schema;
+
+  const schemas = allOf.filter((member) => !isAnnotation(member));
+  if (schemas.length !== 1) return schema;
+
+  return Object.assign(
+    {},
+    schemas[0] as JsonSchema,
+    ...allOf.filter(isAnnotation),
+    rest,
+  ) as JsonSchema;
 };

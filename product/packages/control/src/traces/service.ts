@@ -1,7 +1,11 @@
 import { requireWorkspaceMembership } from "../access.js";
 import type { ControlDatabase } from "../db/client.js";
 import { listTraceGenerations } from "./browse.js";
-import { contentNotFound, readTraceContent } from "./content.js";
+import {
+  contentNotFound,
+  findTraceContent,
+  readTraceContent,
+} from "./content.js";
 import type { ContentStore } from "./storage.js";
 
 export type TraceService = ReturnType<typeof createTraceService>;
@@ -34,11 +38,14 @@ export const createTraceService = (
       user: string,
       workspace: string,
       generation: string,
-      reference: string,
+      // A content_ref from a listed generation, or the generation's task name.
+      locator: { content_ref: string } | { task: string },
     ) {
       await access(user, workspace);
 
-      return readTraceContent(store, workspace, generation, reference);
+      return "content_ref" in locator
+        ? readTraceContent(store, workspace, generation, locator.content_ref)
+        : findTraceContent(store, workspace, locator.task, generation);
     },
   };
 };

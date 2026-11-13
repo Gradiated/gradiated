@@ -60,6 +60,8 @@ export const createVersionFileStore = (database: ControlDatabase) => ({
     return VersionFileSchema.parse(row);
   },
   async get(versionId: string, id: string) {
+    if (!UuidSchema.safeParse(id).success) return null;
+
     const [row] = await database
       .select()
       .from(taskVersionFiles)
@@ -67,6 +69,20 @@ export const createVersionFileStore = (database: ControlDatabase) => ({
         and(
           eq(taskVersionFiles.versionId, UuidSchema.parse(versionId)),
           eq(taskVersionFiles.id, UuidSchema.parse(id)),
+        ),
+      );
+
+    return row ? VersionFileSchema.parse(row) : null;
+  },
+  async getReadyByName(versionId: string, name: string) {
+    const [row] = await database
+      .select()
+      .from(taskVersionFiles)
+      .where(
+        and(
+          eq(taskVersionFiles.versionId, UuidSchema.parse(versionId)),
+          eq(taskVersionFiles.name, name),
+          eq(taskVersionFiles.status, "ready"),
         ),
       );
 

@@ -585,6 +585,62 @@ describe("workspaces and API keys", () => {
           service.authenticateCredential(secret),
         ).resolves.toBeUndefined();
     });
+
+    it("describes a credential with its workspace and organization names", async () => {
+      const { userId, workspaceId } = await membership("member");
+      const { secret } = await oauthToken(userId, workspaceId);
+
+      await expect(service.describeCredential(secret)).resolves.toMatchObject({
+        credential: "oauth_token",
+        workspaceId,
+        workspaceName: expect.any(String),
+        organizationName: expect.any(String),
+      });
+      await expect(
+        service.describeCredential(`grad_${"x".repeat(43)}`),
+      ).resolves.toBeUndefined();
+    });
+
+    it("gives an OAuth token a hidden inference key beside the playground key", async () => {
+      const { userId, workspaceId } = await membership("member");
+      const { secret } = await oauthToken(userId, workspaceId);
+      const playground = await service.createPlaygroundCredential(
+        userId,
+        workspaceId,
+      );
+
+      const first = await service.createOAuthInferenceCredential(secret);
+      const second = await service.createOAuthInferenceCredential(secret);
+
+      expect(first).toBeDefined();
+      expect(second?.apiKeyId).toBe(first?.apiKeyId);
+      expect(second?.apiKeyId).not.toBe(playground.apiKeyId);
+      await expect(
+        service.authenticateCredential(second!.secret),
+      ).resolves.toMatchObject({ workspaceId, user: { id: userId } });
+      // Minting rotates the key, and leaves the playground key working.
+      await expect(
+        service.authenticateCredential(first!.secret),
+      ).resolves.toBeUndefined();
+      await expect(
+        service.authenticateCredential(playground.secret),
+      ).resolves.toBeDefined();
+      await expect(
+        service.listApiKeys(userId, workspaceId),
+      ).resolves.toHaveLength(0);
+    });
+
+    it("gives API keys no inference key, since they call inference themselves", async () => {
+      const { userId, workspaceId } = await membership("member");
+      const { secret } = await service.createApiKey(userId, workspaceId, {
+        name: "Key",
+        expiresAt: null,
+      });
+
+      await expect(
+        service.createOAuthInferenceCredential(secret),
+      ).resolves.toBeUndefined();
+    });
   });
 
   describe("selectOAuthWorkspace", () => {

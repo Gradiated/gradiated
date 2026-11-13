@@ -353,6 +353,27 @@ export const createTrainingStore = (database: ControlDatabase) => {
       );
     },
 
+    // Names are unique within a task, and an ID matches before a name.
+    async findVersion(taskId: string, reference: string) {
+      const rows = await database
+        .select()
+        .from(taskVersions)
+        .where(
+          and(
+            eq(taskVersions.taskId, UuidSchema.parse(taskId)),
+            UuidSchema.safeParse(reference).success
+              ? or(
+                  eq(taskVersions.id, reference),
+                  eq(taskVersions.name, reference),
+                )
+              : eq(taskVersions.name, reference),
+          ),
+        );
+      const row = rows.find((version) => version.id === reference) ?? rows[0];
+
+      return row && VersionRecordSchema.parse(row);
+    },
+
     async getVersion(taskId: string, versionId: string) {
       const [row] = await database
         .select()

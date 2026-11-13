@@ -120,6 +120,29 @@ describe("version files", () => {
     ).toContain(file.id);
   });
 
+  it("finds a version and a ready file by name", async () => {
+    const { member, version, service, upload } = await setup();
+    await upload("report.md", "# Training report");
+    const byName = [
+      member.workspaceId,
+      member.task.name,
+      version.name,
+    ] as const;
+
+    expect(
+      (await service.list(member.userId, ...byName)).map((file) => file.name),
+    ).toEqual(["report.md"]);
+    await expect(
+      service.content(member.userId, ...byName, "report.md"),
+    ).resolves.toMatchObject({ content: "# Training report" });
+    await expect(
+      service.content(member.userId, ...byName, "missing.md"),
+    ).rejects.toMatchObject({ code: "not_found" });
+    await expect(
+      service.list(member.userId, member.workspaceId, member.task.name, "v9"),
+    ).rejects.toMatchObject({ code: "not_found" });
+  });
+
   it("replaces a file with the same name and deletes the old object", async () => {
     const { member, service, storage, key, upload } = await setup();
     const first = await upload("report.md", "# v1");

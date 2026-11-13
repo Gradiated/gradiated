@@ -80,6 +80,16 @@ export const CredentialIdentitySchema = z
     workspace_id: UuidSchema.describe(
       "The only workspace the credential can act in.",
     ),
+    workspace_name: z.string(),
+    organization_name: z.string(),
+    organization_slug: z
+      .string()
+      .describe(
+        "Prefixes the organization's private model names: <slug>/<task> for a task's production version and <slug>/<task>/<version> for one version.",
+      ),
+    user: z
+      .object({ id: UuidSchema, name: z.string(), email: z.string() })
+      .describe("The member the credential acts as."),
   })
   .openapi("CredentialIdentity");
 

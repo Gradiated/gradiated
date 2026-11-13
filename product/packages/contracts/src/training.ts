@@ -323,12 +323,18 @@ export type Task = z.infer<typeof TaskSchema>;
 
 export const UpdateTaskSchema = z
   .strictObject({
-    base_model_id: ModelIdSchema,
+    base_model_id: ModelIdSchema.describe(
+      "The catalog model ID that new versions are trained from.",
+    ),
     comparison_model_id: ModelIdSchema.refine(
       isEvaluationModelId,
       "Choose a supported comparison model.",
+    ).describe(
+      "The catalog model ID that evaluations compare trained versions against.",
     ),
-    judge_model_id: EvaluationJudgeSchema,
+    judge_model_id: EvaluationJudgeSchema.describe(
+      "The catalog model ID that judges evaluations.",
+    ),
     training_schedule: TaskTrainingScheduleSchema,
   })
   .partial()
@@ -339,8 +345,15 @@ export const UpdateTaskSchema = z
   .openapi("UpdateTask");
 export type UpdateTask = z.infer<typeof UpdateTaskSchema>;
 
+// Versions are named uniquely within their task, so either the name or the ID finds one.
+export const VersionReferenceSchema = z
+  .string()
+  .min(1)
+  .max(256)
+  .describe("The version's name or ID.");
+
 export const PromoteVersionSchema = z
-  .strictObject({ version_id: UuidSchema })
+  .strictObject({ version_id: VersionReferenceSchema })
   .openapi("PromoteVersion");
 
 const WorkspacePathSchema = z.object({ workspace_id: UuidSchema });
@@ -360,7 +373,9 @@ export const ModelNameSegmentSchema = TaskNameSchema.max(
 ).refine((name) => !name.includes("/"), "Names cannot contain '/'.");
 
 export const TaskPathSchema = WorkspacePathSchema.extend({
-  task: TaskNameSchema,
+  task: TaskNameSchema.describe(
+    "The task's name, as sent in the capture header and shown in the console.",
+  ),
 });
 export const TrainingRunPathSchema = WorkspacePathSchema.extend({
   run_id: UuidSchema,
@@ -401,7 +416,7 @@ export const TrainingRunEventListSchema = z
   .openapi("TrainingRunEventList");
 
 export const TaskVersionPathSchema = TaskPathSchema.extend({
-  version_id: UuidSchema,
+  version_id: VersionReferenceSchema,
 });
 export const AdapterDownloadSchema = z
   .object({
@@ -535,7 +550,11 @@ export const TaskVersionFileUploadSchema = z
   })
   .openapi("TaskVersionFileUpload");
 export const TaskVersionFilePathSchema = TaskVersionPathSchema.extend({
-  file_id: UuidSchema,
+  file_id: z
+    .string()
+    .min(1)
+    .max(256)
+    .describe("The file's name, such as report.md, or its ID."),
 });
 export const TaskVersionFileContentSchema = z
   .object({

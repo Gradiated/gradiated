@@ -4,16 +4,13 @@ import { Hono, type Context } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 
-import type { ApiClient, Caller } from "./api-client.js";
+import type { Caller } from "./api-client.js";
 import { renderIndexPage } from "./index-page.js";
-import { createMcpServer } from "./server.js";
-import type { ToolDefinition } from "./tools/definitions.js";
+import { createMcpServer, type ServerContext } from "./server.js";
 
 type Environment = { Bindings: Partial<HttpBindings> };
 
-export interface AppOptions {
-  api: ApiClient;
-  tools: readonly ToolDefinition[];
+export interface AppOptions extends ServerContext {
   publicUrl: string;
   consoleUrl: string;
   authorizationServer: string;
@@ -52,13 +49,15 @@ const unauthorized = (
   );
 
 export const createApp = ({
-  api,
-  tools,
   publicUrl,
   consoleUrl,
   authorizationServer,
+  ...serverContext
 }: AppOptions) => {
+  const { tools, credentials, metrics } = serverContext;
   const app = new Hono<Environment>();
+  if (metrics) app.use("*", metrics.middleware);
+
   const mcpUrl = new URL("/mcp", publicUrl).href;
   const resourceMetadataUrl = new URL(
     "/.well-known/oauth-protected-resource/mcp",
@@ -105,18 +104,34 @@ export const createApp = ({
 
   app.all("/mcp", async (context) => {
     const key = credential(context);
-    if (!key)
+    if (!key) {
+      metrics?.authentication("missing");
       return unauthorized(
         context,
         resourceMetadataUrl,
         "Sign in with OAuth or send a workspace API key as a bearer token.",
       );
+    }
 
     const caller: Caller = {
-      authorization: `Bearer ${key}`,
+      credential: key,
       forwardedFor: clientAddress(context),
     };
-    const principal = await api.authenticate(caller);
+    const principal = await credentials
+      .authenticate(caller)
+      .catch(() => undefined);
+    if (principal === undefined)
+      return context.json(
+        {
+          jsonrpc: "2.0",
+          error: {
+            code: -32603,
+            message: "The credential could not be checked. Try again shortly.",
+          },
+          id: null,
+        },
+        503,
+      );
     if (!principal)
       return unauthorized(
         context,
@@ -124,7 +139,7 @@ export const createApp = ({
         "The credential is unknown, expired or revoked.",
       );
 
-    const server = createMcpServer(tools, api, principal);
+    const server = createMcpServer(serverContext, principal);
     // Without a session ID generator the transport is stateless, one request at a time.
     const transport = new WebStandardStreamableHTTPServerTransport({
       enableJsonResponse: true,

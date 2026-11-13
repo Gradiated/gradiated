@@ -1,4 +1,5 @@
 import { CLIENTS, type Setup } from "./clients.js";
+import { PROMPTS } from "./prompts.js";
 import type { ToolDefinition } from "./tools/definitions.js";
 
 const escape = (text: string) =>
@@ -11,11 +12,13 @@ const escape = (text: string) =>
   );
 
 const toolBehaviour = ({ annotations }: ToolDefinition) =>
-  annotations.readOnlyHint
-    ? "Reads"
-    : annotations.destructiveHint
-      ? "Deletes"
-      : "Changes";
+  annotations.openWorldHint
+    ? "Calls a model"
+    : annotations.readOnlyHint
+      ? "Reads"
+      : annotations.destructiveHint
+        ? "Deletes"
+        : "Changes";
 
 const toolRow = (tool: ToolDefinition) => {
   const properties = tool.inputSchema.properties;
@@ -76,7 +79,7 @@ export const renderIndexPage = ({
 </head>
 <body>
 <h1>Gradiated MCP server</h1>
-<p>Lets an AI client read and manage one Gradiated workspace: its models, usage, generations, tasks and training runs.</p>
+<p>Lets an AI client read and manage one Gradiated workspace: its models, usage, generations, tasks, trained versions and their reports, and call its models.</p>
 <pre><code>${escape(mcpUrl)}</code></pre>
 <p>The server uses Streamable HTTP. Clients that support MCP authorization sign you in with your Gradiated account, and you choose the workspace the client may use; no key is needed. Other clients send a workspace API key from <a href="${escape(consoleUrl)}/api-keys">the console</a> as <code>Authorization: Bearer</code>. Either way the tools act in one workspace, with the permissions of the member who signed in or created the key.</p>
 
@@ -90,6 +93,22 @@ ${setup("API key", client.apiKey, mcpUrl)}`,
 <h2>Tools</h2>
 <table>
 ${tools.map(toolRow).join("\n")}
+</table>
+
+<h2>Prompts</h2>
+<p>Clients that support MCP prompts offer these as commands.</p>
+<table>
+${PROMPTS.map(
+  (prompt) => `<tr>
+  <td><code>${escape(prompt.name)}</code></td>
+  <td>${escape(prompt.description)}<ul>${prompt.arguments
+    .map(
+      (argument) =>
+        `<li><code>${escape(argument.name)}</code>${argument.required ? "" : " <span class=muted>optional</span>"} — ${escape(argument.description)}</li>`,
+    )
+    .join("")}</ul></td>
+</tr>`,
+).join("\n")}
 </table>
 </body>
 </html>

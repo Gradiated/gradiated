@@ -175,6 +175,38 @@ const getCurrentCredentialRoute = createRoute({
   },
 });
 
+const createCredentialInferenceKeyRoute = createRoute({
+  method: "post",
+  path: "/api/v1/credentials/current/inference-keys",
+  operationId: "createCredentialInferenceKey",
+  summary: "Create inference key for OAuth token",
+  description:
+    "Exchanges the OAuth access token in the Authorization header for a one-hour inference key of its member's in its workspace. Inference takes only API keys. Each call rotates the member's single key for OAuth clients, which is not listed with the workspace keys.",
+  tags: ["API keys"],
+  security: [{ InferenceBearer: [] }],
+  responses: {
+    201: {
+      description: "A one-hour inference key.",
+      headers: {
+        "Cache-Control": {
+          description: "Prevents storage of the one-time secret.",
+          schema: { type: "string" },
+        },
+      },
+      content: { "application/json": { schema: PlaygroundCredentialSchema } },
+    },
+    401: {
+      description: "The credential is missing, unknown, expired or revoked.",
+      content: problemContent,
+    },
+    403: {
+      description:
+        "The credential is an API key, or the workspace cannot be used.",
+      content: problemContent,
+    },
+  },
+});
+
 const selectOAuthWorkspaceRoute = createRoute({
   ...consoleOnly,
   method: "put",
@@ -433,7 +465,7 @@ export const registerWorkspaceRoutes = (
 
   app.openapi(getCurrentCredentialRoute, async (context) => {
     const secret = bearerCredential(context.req.raw.headers);
-    const owner = secret && (await workspaces.authenticateCredential(secret));
+    const owner = secret && (await workspaces.describeCredential(secret));
     if (!owner) throw new ApiProblem(problems.unauthenticated);
 
     return context.json(
@@ -442,8 +474,39 @@ export const registerWorkspaceRoutes = (
         id: owner.credentialId,
         organization_id: owner.organizationId,
         workspace_id: owner.workspaceId,
+        workspace_name: owner.workspaceName,
+        organization_name: owner.organizationName,
+        organization_slug: owner.organizationSlug,
+        user: {
+          id: owner.user.id,
+          name: owner.user.name,
+          email: owner.user.email,
+        },
       },
       200,
+    );
+  });
+
+  app.openapi(createCredentialInferenceKeyRoute, async (context) => {
+    const secret = bearerCredential(context.req.raw.headers);
+    const owner = secret && (await workspaces.authenticateCredential(secret));
+    if (!secret || !owner) throw new ApiProblem(problems.unauthenticated);
+    if (owner.credential !== "oauth_token")
+      throw new ApiProblem(
+        problems.forbidden("API keys call inference with themselves."),
+      );
+
+    const credential = await workspaces.createOAuthInferenceCredential(secret);
+    if (!credential) throw new ApiProblem(problems.unauthenticated);
+
+    context.set("logResourceIds", { api_key_id: credential.apiKeyId });
+    context.header("Cache-Control", "no-store");
+    return context.json(
+      {
+        secret: credential.secret,
+        expires_at: credential.expiresAt.toISOString(),
+      },
+      201,
     );
   });
 

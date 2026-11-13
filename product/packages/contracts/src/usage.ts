@@ -12,8 +12,12 @@ import {
 } from "./common.js";
 
 const DateRangeFields = {
-  from: TimestampSchema,
-  to: TimestampSchema,
+  from: TimestampSchema.describe(
+    "Start of the period, as an RFC 3339 timestamp. Periods are at most 93 days.",
+  ),
+  to: TimestampSchema.describe(
+    "End of the period, as an RFC 3339 timestamp. Must be after from.",
+  ),
 };
 
 const MAX_RANGE_MILLISECONDS = 93 * 24 * 60 * 60 * 1_000;
@@ -45,7 +49,7 @@ export const UsageQuerySchema = z
   .superRefine(validateDateRange);
 
 const UsageTotalsFields = {
-  charge: UnsignedIntegerStringSchema,
+  charge: UnsignedIntegerStringSchema.describe("Spend in integer nano-USD."),
   input_tokens: UnsignedIntegerStringSchema,
   output_tokens: UnsignedIntegerStringSchema,
   generation_count: UnsignedIntegerStringSchema,
@@ -71,13 +75,41 @@ export const UsageSummarySchema = z.object({
 export const GenerationListQuerySchema = z
   .object({
     ...DateRangeFields,
-    cursor: z.string().min(1).max(1_000).optional(),
-    limit: z.coerce.number().int().min(1).max(100).default(25),
-    api_key_id: UuidSchema.optional(),
-    model: BoundedIdentifierSchema.optional(),
-    search: z.string().trim().min(1).max(300).optional(),
-    sort: z.enum(["newest", "highest_cost"]).default("newest"),
-    status: GenerationStatusSchema.optional(),
+    cursor: z
+      .string()
+      .min(1)
+      .max(1_000)
+      .optional()
+      .describe("The next_cursor from the previous page; opaque."),
+    limit: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .default(25)
+      .describe("Generations per page."),
+    api_key_id: UuidSchema.optional().describe(
+      "Only generations made with this API key ID.",
+    ),
+    model: BoundedIdentifierSchema.optional().describe(
+      "Only generations for this exact model ID.",
+    ),
+    search: z
+      .string()
+      .trim()
+      .min(1)
+      .max(300)
+      .optional()
+      .describe(
+        "Matches generations whose ID starts with this text, or whose model ID or external ID contains it.",
+      ),
+    sort: z
+      .enum(["newest", "highest_cost"])
+      .default("newest")
+      .describe("newest orders by received time; highest_cost by charge."),
+    status: GenerationStatusSchema.optional().describe(
+      "Only generations that ended with this status.",
+    ),
   })
   .strict()
   .superRefine(validateDateRange);
@@ -89,7 +121,7 @@ export const GenerationLogSchema = z.object({
   model_id: BoundedIdentifierSchema,
   status: GenerationStatusSchema,
   streamed: z.boolean(),
-  charge: UnsignedIntegerStringSchema,
+  charge: UnsignedIntegerStringSchema.describe("Charge in integer nano-USD."),
   input_tokens: TokenCountSchema,
   cached_input_tokens: TokenCountSchema,
   cache_write_tokens: TokenCountSchema,

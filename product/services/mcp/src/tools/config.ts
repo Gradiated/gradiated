@@ -1,7 +1,13 @@
+import type { OperationId } from "@gradiated/api/generated/operation-ids.js";
+
+// Argument descriptions come from the OpenAPI document; the config only shapes arguments.
 export interface ArgumentConfig {
-  // The tool argument name; defaults to the API field name.
   name?: string;
-  description?: string;
+  // A hidden argument is not offered to the model; with a value, it is always sent.
+  hidden?: true;
+  value?: unknown;
+  // For a field the API accepts in place of another, such as a task name for a content_ref.
+  required?: true;
 }
 
 export type ToolConfig =
@@ -10,102 +16,86 @@ export type ToolConfig =
       enabled: true;
       name: string;
       title: string;
-      // Replaces the OpenAPI summary and description.
+      // Guidance that names other tools, which the API's own description cannot.
       description?: string;
       // Keyed by the API's path, query or JSON body field name.
       arguments?: Record<string, ArgumentConfig>;
+      onlyConfiguredArguments?: true;
+      // The component schema the response always has when the response is a union.
+      output?: string;
+      // Sent to the gateway with an inference key instead of to the management API.
+      inference?: true;
     };
 
-const TASK: ArgumentConfig = {
-  name: "task_name",
-  description:
-    "The task's name, as sent in the capture header or shown in the console.",
-};
-
-const VERSION: ArgumentConfig = {
-  description: "A version ID from list_task_versions.",
-};
-
-const RUN: ArgumentConfig = {
-  description: "A training run ID from list_training_runs.",
-};
-
-const TIME_RANGE: Record<string, ArgumentConfig> = {
-  from: { description: "Start of the period, as an RFC 3339 timestamp." },
-  to: { description: "End of the period, as an RFC 3339 timestamp." },
-};
+const TASK: ArgumentConfig = { name: "task_name" };
+const VERSION: ArgumentConfig = { name: "version" };
 
 const CONSOLE = "Console session flow, not a workspace operation.";
 const ORGANIZATION =
-  "Organization administration; workspace API keys cannot authorize it.";
+  "Organization administration; workspace credentials cannot authorize it.";
 const CREDENTIALS = "Credential management stays in the console.";
-const INFERENCE = "Inference goes to the gateway, not through MCP.";
+const TRAINING = "Training runs and evaluations are managed in the console.";
+const STAFF = "Staff only.";
 const UPLOAD = "Needs a direct file upload outside MCP.";
+const DOWNLOAD =
+  "Returns a signed download link for a file a model cannot read.";
+const INFERENCE = "call_model covers inference.";
 
-// Every operation in the API's OpenAPI document has an entry; a test fails when one is missing.
-export const TOOL_CONFIG: Record<string, ToolConfig> = {
+export const TOOL_CONFIG: Record<OperationId, ToolConfig> = {
+  getCurrentCredential: {
+    enabled: true,
+    name: "whoami",
+    title: "Who am I",
+    description:
+      "Identifies the connection: the member it acts as, its one workspace, and its organization, whose slug prefixes private model names.",
+  },
   listModels: {
     enabled: true,
     name: "list_models",
     title: "List models",
+    arguments: { external: { hidden: true } },
+    output: "ModelList",
+  },
+  chatCompletions: {
+    enabled: true,
+    name: "call_model",
+    title: "Call model",
     description:
-      "Lists the hosted models this workspace can call, with prices, context lengths and supported parameters.",
+      "Sends messages to a model and returns its reply. The model is a catalog ID from list_models, or a private task model: <organization slug>/<task> for the task's production version or <organization slug>/<task>/<version> for one version, with the slug from whoami.",
+    inference: true,
+    onlyConfiguredArguments: true,
     arguments: {
-      external: {
-        name: "external_catalog",
-        description:
-          'Set to "true" for estimated prices of supported external models instead of hosted ones.',
-      },
+      model: {},
+      messages: {},
+      max_completion_tokens: {},
+      temperature: {},
+      top_p: {},
+      seed: {},
+      stop: {},
+      reasoning_effort: {},
+      response_format: {},
+      stream: { hidden: true, value: false },
     },
   },
-  getUsageSummary: {
-    enabled: true,
-    name: "get_usage",
-    title: "Get usage",
-    description:
-      "Gets the workspace's inference usage and spend over a period, by model and API key.",
-    arguments: TIME_RANGE,
-  },
+  getUsageSummary: { enabled: true, name: "get_usage", title: "Get usage" },
   listGenerations: {
     enabled: true,
     name: "list_generations",
     title: "List generations",
-    description:
-      "Lists the workspace's inference requests, newest first unless sorted by cost. Page with the returned cursor.",
-    arguments: {
-      ...TIME_RANGE,
-      cursor: { description: "The next_cursor from the previous page." },
-      limit: { description: "Generations per page, up to 100." },
-      api_key_id: { description: "Only requests made with this API key." },
-      model: { description: "Only requests to this exact model ID." },
-      search: { description: "Text to search for in request metadata." },
-      task_id: {
-        name: "task_name",
-        description:
-          "Only requests captured for this task. With it, results come from captured traces.",
-      },
-    },
+    arguments: { task_id: TASK },
   },
   getGeneration: {
     enabled: true,
     name: "get_generation",
     title: "Get generation",
-    description: "Gets one inference request with its prompt and response.",
+    description:
+      "Gets a generation's stored request and response. Content is stored only for generations captured for a task, so pass the task's name.",
     arguments: {
-      generation_id: { description: "A generation ID from list_generations." },
-      content_ref: {
-        description:
-          "The content_ref returned with the generation by list_generations.",
-      },
+      task_id: { ...TASK, required: true },
+      content_ref: { hidden: true },
     },
   },
-  listTasks: {
-    enabled: true,
-    name: "list_tasks",
-    title: "List tasks",
-    description:
-      "Lists the workspace's tasks with their latest training run and production version.",
-  },
+  listTasks: { enabled: true, name: "list_tasks", title: "List tasks" },
   getTask: {
     enabled: true,
     name: "get_task",
@@ -116,19 +106,7 @@ export const TOOL_CONFIG: Record<string, ToolConfig> = {
     enabled: true,
     name: "update_task",
     title: "Update task",
-    description:
-      "Changes a task's base model, comparison model, judge model or training schedule. Omitted settings are unchanged.",
-    arguments: {
-      task: TASK,
-      base_model_id: {
-        description: "The base model ID to train, from list_models.",
-      },
-      comparison_model_id: {
-        description:
-          "The model ID evaluations compare trained versions against.",
-      },
-      judge_model_id: { description: "The model ID that judges evaluations." },
-    },
+    arguments: { task: TASK },
   },
   listTaskVersions: {
     enabled: true,
@@ -136,98 +114,61 @@ export const TOOL_CONFIG: Record<string, ToolConfig> = {
     title: "List task versions",
     arguments: { task: TASK },
   },
-  getEvaluationResults: {
+  getTaskVersion: {
     enabled: true,
-    name: "get_evaluation_results",
-    title: "Get evaluation results",
-    description:
-      "Gets a task version's held-out evaluation: the answers and the judge's decisions against the comparison model.",
+    name: "get_task_version",
+    title: "Get task version",
     arguments: { task: TASK, version_id: VERSION },
   },
   promoteTaskVersion: {
     enabled: true,
     name: "promote_task_version",
     title: "Promote task version",
-    description:
-      "Makes a trained version serve the task's production model name.",
     arguments: { task: TASK, version_id: VERSION },
   },
-  getAdapterDownload: {
-    enabled: false,
-    reason: "Returns a signed download link for a file a model cannot use.",
-  },
-  listTaskVersionFiles: { enabled: false, reason: "Not yet exposed." },
-  getTaskVersionFileContent: { enabled: false, reason: "Not yet exposed." },
-  getTaskVersionFileDownload: {
-    enabled: false,
-    reason: "Returns a signed download link for a file a model cannot use.",
-  },
-  createTaskVersionFile: { enabled: false, reason: "Staff only." },
-  completeTaskVersionFile: { enabled: false, reason: "Staff only." },
-  deleteTaskVersionFile: { enabled: false, reason: "Staff only." },
-  listTrainingRuns: {
+  listTaskVersionFiles: {
     enabled: true,
-    name: "list_training_runs",
-    title: "List training runs",
-    arguments: {
-      task_id: { description: "Only runs for this task ID, from list_tasks." },
-    },
-  },
-  getTrainingRun: {
-    enabled: true,
-    name: "get_training_run",
-    title: "Get training run",
-    arguments: { run_id: RUN },
-  },
-  listTrainingRunEvents: {
-    enabled: true,
-    name: "list_training_run_events",
-    title: "List training run events",
-    arguments: {
-      run_id: RUN,
-      after: { description: "Only events after this sequence number." },
-      limit: { description: "Events per page, up to 1000." },
-    },
-  },
-  startTrainingRun: {
-    enabled: true,
-    name: "start_training_run",
-    title: "Start training run",
+    name: "list_task_version_files",
+    title: "List task version files",
     description:
-      "Starts training a new version of a task from its captured data. Training is billed to the organization.",
-    arguments: {
-      task_id: { description: "The task ID to train, from list_tasks." },
-    },
+      "Lists the files delivered with a task version: its training report, report.md, and the data files the report references. Read them with read_task_version_file.",
+    arguments: { task: TASK, version_id: VERSION },
   },
-  cancelTrainingRun: {
+  getTaskVersionFileContent: {
     enabled: true,
-    name: "cancel_training_run",
-    title: "Cancel training run",
-    arguments: { run_id: RUN },
+    name: "read_task_version_file",
+    title: "Read task version file",
+    arguments: { task: TASK, version_id: VERSION, file_id: { name: "file" } },
   },
   getAdapterConfiguration: {
     enabled: true,
     name: "get_adapter_configuration",
     title: "Get adapter configuration",
-    description:
-      "Gets the base checkpoint dimensions an uploaded LoRA adapter must match.",
-    arguments: {
-      model_id: { description: "A base model ID from list_models." },
-    },
   },
+  getTaskVersionFileDownload: { enabled: false, reason: DOWNLOAD },
+  getAdapterDownload: { enabled: false, reason: DOWNLOAD },
+  createTaskVersionFile: { enabled: false, reason: STAFF },
+  completeTaskVersionFile: { enabled: false, reason: STAFF },
+  deleteTaskVersionFile: { enabled: false, reason: STAFF },
+  getEvaluationResults: { enabled: false, reason: TRAINING },
+  listTrainingRuns: { enabled: false, reason: TRAINING },
+  getTrainingRun: { enabled: false, reason: TRAINING },
+  listTrainingRunEvents: { enabled: false, reason: TRAINING },
+  startTrainingRun: { enabled: false, reason: TRAINING },
+  cancelTrainingRun: { enabled: false, reason: TRAINING },
   createModelUpload: { enabled: false, reason: UPLOAD },
   completeModelUpload: { enabled: false, reason: UPLOAD },
   updateWorkspace: {
     enabled: false,
-    reason: "Workspace keys cannot change their workspace.",
+    reason: "Workspace credentials cannot change their workspace.",
   },
   deleteWorkspace: {
     enabled: false,
-    reason: "Workspace keys cannot archive their workspace.",
+    reason: "Workspace credentials cannot archive their workspace.",
   },
-  getCurrentCredential: {
+  createCredentialInferenceKey: {
     enabled: false,
-    reason: "The server calls it to find the credential's workspace.",
+    reason: "The server calls it so OAuth connections can call models.",
   },
   selectOAuthWorkspace: { enabled: false, reason: CONSOLE },
   listPlaygroundMcpTools: { enabled: false, reason: CONSOLE },
@@ -270,7 +211,6 @@ export const TOOL_CONFIG: Record<string, ToolConfig> = {
   listWorkspaces: { enabled: false, reason: ORGANIZATION },
   createWorkspace: { enabled: false, reason: ORGANIZATION },
   systemOne: { enabled: false, reason: INFERENCE },
-  chatCompletions: { enabled: false, reason: INFERENCE },
   createMessage: { enabled: false, reason: INFERENCE },
   createResponse: { enabled: false, reason: INFERENCE },
   countMessageTokens: { enabled: false, reason: INFERENCE },

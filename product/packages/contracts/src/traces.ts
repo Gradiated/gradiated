@@ -7,12 +7,14 @@ export const TaskGenerationQuerySchema = z.strictObject({
     .string()
     .min(1)
     .max(256)
-    .describe("Exact task identifier supplied in the capture header."),
+    .describe(
+      "The task's name, exactly as sent in the capture header. Content is stored only for generations captured for a task.",
+    ),
   cursor: z
     .string()
     .max(4096)
     .optional()
-    .describe("Opaque continuation for captured generations."),
+    .describe("The next_cursor from the previous page; opaque."),
 });
 export const TraceGenerationSchema = z
   .object({
@@ -39,11 +41,25 @@ export const TraceGenerationListSchema = z
   })
   .openapi("TraceGenerationList");
 export const TraceContentPathSchema = WorkspacePathSchema.extend({
-  generation_id: UuidSchema,
+  generation_id: UuidSchema.describe("The generation's ID."),
 });
-export const TraceContentQuerySchema = z.object({
-  content_ref: z.string().min(1).max(2048),
-});
+export const TraceContentQuerySchema = z
+  .object({
+    content_ref: z
+      .string()
+      .min(1)
+      .max(2048)
+      .optional()
+      .describe(
+        "The content_ref returned with the generation when listing a task's generations. Locates the content directly.",
+      ),
+    task_id: TaskGenerationQuerySchema.shape.task_id.optional(),
+  })
+  .refine(
+    (query) =>
+      (query.content_ref === undefined) !== (query.task_id === undefined),
+    "Provide content_ref or task_id.",
+  );
 export const TraceContentSchema = z
   .object({
     generation_id: UuidSchema,

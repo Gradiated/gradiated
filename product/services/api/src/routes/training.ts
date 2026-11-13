@@ -2,6 +2,13 @@ import { changedFields } from "@gradiated/analytics";
 import { z, createRoute, type OpenAPIHono } from "@hono/zod-openapi";
 import {
   CreateModelUploadSchema,
+  CreateTaskVersionFileSchema,
+  TaskVersionFileContentSchema,
+  TaskVersionFileDownloadSchema,
+  TaskVersionFileListSchema,
+  TaskVersionFilePathSchema,
+  TaskVersionFileSchema,
+  TaskVersionFileUploadSchema,
   ModelUploadSchema,
   ModelUploadPathSchema,
   TaskVersionSchema,
@@ -34,7 +41,7 @@ import type {
   TrainingRunRecord,
   TrainingService,
 } from "@gradiated/control";
-import { requireUser } from "../http/problems.js";
+import { ApiProblem, problems, requireUser } from "../http/problems.js";
 import type { ApiEnvironment } from "../types.js";
 
 const base = "/api/v1/workspaces/{workspace_id}";
@@ -345,6 +352,120 @@ export const versionResponse = (
   created_at: version.createdAt.toISOString(),
 });
 
+const listVersionFiles = createRoute({
+  method: "get",
+  path: `${base}/tasks/{task}/versions/{version_id}/files`,
+  operationId: "listTaskVersionFiles",
+  summary: "List version files",
+  description:
+    "Lists the files delivered with a task version, such as its report.md and the data files the report references.",
+  tags: ["Training"],
+  request: { params: TaskVersionPathSchema },
+  responses: {
+    200: json(TaskVersionFileListSchema, "The version's files."),
+    ...errors,
+  },
+});
+const createVersionFile = createRoute({
+  method: "post",
+  path: `${base}/tasks/{task}/versions/{version_id}/files`,
+  operationId: "createTaskVersionFile",
+  summary: "Create version file upload",
+  description:
+    "Staff only. Reserves a file on a task version and returns a signed upload URL that expires after one hour.",
+  tags: ["Training"],
+  request: {
+    params: TaskVersionPathSchema,
+    body: {
+      required: true,
+      content: { "application/json": { schema: CreateTaskVersionFileSchema } },
+    },
+  },
+  responses: {
+    201: json(TaskVersionFileUploadSchema, "A signed file upload URL."),
+    ...errors,
+  },
+});
+const completeVersionFile = createRoute({
+  method: "put",
+  path: `${base}/tasks/{task}/versions/{version_id}/files/{file_id}`,
+  operationId: "completeTaskVersionFile",
+  summary: "Complete version file upload",
+  description:
+    "Staff only. Publishes an uploaded file, replacing any file with the same name on the version.",
+  tags: ["Training"],
+  request: { params: TaskVersionFilePathSchema },
+  responses: {
+    200: json(TaskVersionFileSchema, "The published file."),
+    ...errors,
+  },
+});
+const deleteVersionFile = createRoute({
+  method: "delete",
+  path: `${base}/tasks/{task}/versions/{version_id}/files/{file_id}`,
+  operationId: "deleteTaskVersionFile",
+  summary: "Delete version file",
+  description: "Staff only. Removes a file from a task version.",
+  tags: ["Training"],
+  request: { params: TaskVersionFilePathSchema },
+  responses: {
+    204: { description: "The file was deleted." },
+    ...errors,
+  },
+});
+const versionFileContent = createRoute({
+  method: "get",
+  path: `${base}/tasks/{task}/versions/{version_id}/files/{file_id}/content`,
+  operationId: "getTaskVersionFileContent",
+  summary: "Read version file",
+  description:
+    "Returns the text of a Markdown, CSV, JSON or plain-text file of at most 2 MiB.",
+  tags: ["Training"],
+  request: { params: TaskVersionFilePathSchema },
+  responses: {
+    200: json(TaskVersionFileContentSchema, "The file's text."),
+    ...errors,
+  },
+});
+const downloadVersionFile = createRoute({
+  method: "get",
+  path: `${base}/tasks/{task}/versions/{version_id}/files/{file_id}/download`,
+  operationId: "getTaskVersionFileDownload",
+  summary: "Download version file",
+  description: "Gets a short-lived download link for a version file.",
+  tags: ["Training"],
+  request: { params: TaskVersionFilePathSchema },
+  responses: {
+    200: json(TaskVersionFileDownloadSchema, "A short-lived download link."),
+    ...errors,
+  },
+});
+
+const fileResponse = (file: {
+  id: string;
+  name: string;
+  contentType: string;
+  sizeBytes: number;
+  createdAt: Date;
+}) => ({
+  id: file.id,
+  name: file.name,
+  content_type: file.contentType,
+  size_bytes: file.sizeBytes,
+  created_at: file.createdAt.toISOString(),
+});
+
+const requireStaff = (user: {
+  isStaff: boolean;
+  emailVerified: boolean;
+  impersonatedBy?: string | null;
+}) => {
+  if (!(user.isStaff && user.emailVerified) && !user.impersonatedBy)
+    throw new ApiProblem(
+      problems.forbidden("Only Gradiated staff can manage version files."),
+    );
+};
+
 export const registerTrainingRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
   training: TrainingService,
@@ -549,5 +670,88 @@ export const registerTrainingRoutes = (
     });
 
     return c.json(taskResponse(task), 200);
+  });
+  app.openapi(listVersionFiles, async (c) => {
+    const user = await requireUser(c);
+    const p = c.req.valid("param");
+    const files = await training.files.list(
+      user.id,
+      p.workspace_id,
+      p.task,
+      p.version_id,
+    );
+    return c.json({ data: files.map(fileResponse) }, 200);
+  });
+  app.openapi(createVersionFile, async (c) => {
+    const user = await requireUser(c);
+    requireStaff(user);
+    const p = c.req.valid("param");
+    c.header("Cache-Control", "no-store");
+    return c.json(
+      await training.files.create(
+        user.id,
+        p.workspace_id,
+        p.task,
+        p.version_id,
+        c.req.valid("json"),
+      ),
+      201,
+    );
+  });
+  app.openapi(completeVersionFile, async (c) => {
+    const user = await requireUser(c);
+    requireStaff(user);
+    const p = c.req.valid("param");
+    const file = await training.files.complete(
+      user.id,
+      p.workspace_id,
+      p.task,
+      p.version_id,
+      p.file_id,
+    );
+    return c.json(fileResponse(file), 200);
+  });
+  app.openapi(deleteVersionFile, async (c) => {
+    const user = await requireUser(c);
+    requireStaff(user);
+    const p = c.req.valid("param");
+    await training.files.remove(
+      user.id,
+      p.workspace_id,
+      p.task,
+      p.version_id,
+      p.file_id,
+    );
+    return c.body(null, 204);
+  });
+  app.openapi(versionFileContent, async (c) => {
+    const user = await requireUser(c);
+    const p = c.req.valid("param");
+    c.header("Cache-Control", "no-store");
+    return c.json(
+      await training.files.content(
+        user.id,
+        p.workspace_id,
+        p.task,
+        p.version_id,
+        p.file_id,
+      ),
+      200,
+    );
+  });
+  app.openapi(downloadVersionFile, async (c) => {
+    const user = await requireUser(c);
+    const p = c.req.valid("param");
+    c.header("Cache-Control", "no-store");
+    return c.json(
+      await training.files.download(
+        user.id,
+        p.workspace_id,
+        p.task,
+        p.version_id,
+        p.file_id,
+      ),
+      200,
+    );
   });
 };

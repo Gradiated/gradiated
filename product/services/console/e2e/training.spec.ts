@@ -10,7 +10,8 @@ test.skip(
 );
 
 for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
-  test(`settings, versions, promotion and paged events persist for ${taskName}`, async ({
+  // The task page hides its training runs, data and settings tabs while models are delivered by hand.
+  test.skip(`settings, versions, promotion and paged events persist for ${taskName}`, async ({
     page,
     context,
     account,
@@ -385,7 +386,8 @@ test("the task list does not request per-task histories", async ({ page }) => {
   expect(historyRequests).toBe(0);
 });
 
-test("Train shows admission errors and Cancel uses the selected run", async ({
+// The task page hides its training runs, data and settings tabs while models are delivered by hand.
+test.skip("Train shows admission errors and Cancel uses the selected run", async ({
   page,
 }) => {
   const runId = randomUUID();
@@ -473,7 +475,8 @@ test("Train shows admission errors and Cancel uses the selected run", async ({
 });
 
 for (const failed of [false, true]) {
-  test(`stage logs show orchestrator and verification ${failed ? "failure" : "completion"}`, async ({
+  // The task page hides its training runs, data and settings tabs while models are delivered by hand.
+  test.skip(`stage logs show orchestrator and verification ${failed ? "failure" : "completion"}`, async ({
     page,
   }) => {
     const task = {

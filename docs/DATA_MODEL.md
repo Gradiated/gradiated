@@ -920,3 +920,22 @@ external adapters; those versions use `runs/<version_id>/output/<sha256>/adapter
 and have no evaluation. Their initial serving status is `unavailable` until
 promotion qualifies them on a LoRA-enabled allocation. The upload
 intent is retained for artifact cleanup even after its version or task is deleted.
+
+### Version files
+
+`task_version_files` holds the files delivered with a task version: its `report.md`
+training report and any data files, images or exports the report references. Each
+row has an ID, workspace FK, version FK (cascade), a flat file name, content type,
+declared size, `pending`/`ready`/`deleted` status and creation and completion times. Staff
+reserve a file and receive a one-hour signed PUT to `uploads/version-files/<file_id>`
+in the versioned training artifacts bucket. Completion checks size and copies that
+exact S3 object version to `version-files/<version_id>/<file_id>`, so replaying the
+upload grant cannot change published bytes. Completion and deletion serialize on
+the task version; expired uploads cannot complete. Publication marks the file
+`ready` and replaces any ready file with the same name on that version, deleting
+the replaced object. A partial unique index keeps one ready file per version and
+name. Workspace members list, read (text files up to 2 MiB, served by the API) and
+download ready files. Removed and replaced rows remain as tombstones until artifact
+cleanup deletes their objects after upload grants expire. Cleanup also removes
+abandoned uploads and archived workspace files before task/version rows; S3
+expires noncurrent version-file objects after 30 days.

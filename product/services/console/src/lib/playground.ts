@@ -191,6 +191,7 @@ export const playgroundModels = (
   hosted: readonly Model[],
   tasks: readonly TaskRow[],
   organizationSlug: string,
+  version?: { name: string; task: string },
 ): PlaygroundModel[] => [
   ...hosted
     .filter(
@@ -220,6 +221,25 @@ export const playgroundModels = (
     .map(({ task, id }) => ({
       id,
       label: id,
+      iconId: task.base_model_id ?? task.name,
+      source: "workspace" as const,
+      available: true,
+      capabilities: capabilities(
+        hosted.find((model) => model.id === task.base_model_id),
+      ),
+    })),
+  ...tasks
+    .filter(
+      (task) =>
+        version?.task === task.name &&
+        version.name.startsWith(
+          `${privateModelName(organizationSlug, task.name)}/`,
+        ) &&
+        !hosted.some((model) => model.id === version.name),
+    )
+    .map((task) => ({
+      id: version!.name,
+      label: version!.name,
       iconId: task.base_model_id ?? task.name,
       source: "workspace" as const,
       available: true,

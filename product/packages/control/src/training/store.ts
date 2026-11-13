@@ -28,6 +28,7 @@ import {
   models,
   tasks,
   taskVersions,
+  taskVersionFiles,
   trainingRuns,
   trainingRunEvents,
   workspaces,
@@ -553,6 +554,16 @@ export const createTrainingStore = (database: ControlDatabase) => {
         .where(
           and(
             inArray(tasks.workspaceId, archivedWorkspaceIds()),
+            notExists(
+              database
+                .select({ id: taskVersionFiles.id })
+                .from(taskVersionFiles)
+                .innerJoin(
+                  taskVersions,
+                  eq(taskVersions.id, taskVersionFiles.versionId),
+                )
+                .where(eq(taskVersions.taskId, tasks.id)),
+            ),
             or(
               lt(trainingRuns.finishedAt, finishedBefore),
               and(
@@ -580,6 +591,16 @@ export const createTrainingStore = (database: ControlDatabase) => {
         .where(
           and(
             inArray(tasks.workspaceId, archivedWorkspaceIds()),
+            notExists(
+              database
+                .select({ id: taskVersionFiles.id })
+                .from(taskVersionFiles)
+                .innerJoin(
+                  taskVersions,
+                  eq(taskVersions.id, taskVersionFiles.versionId),
+                )
+                .where(eq(taskVersions.taskId, tasks.id)),
+            ),
             notExists(
               database
                 .select({ id: trainingRuns.id })
@@ -612,6 +633,17 @@ export const createTrainingStore = (database: ControlDatabase) => {
           .where(eq(trainingRuns.taskId, taskId))
           .limit(1);
         if (run) return false;
+
+        const [file] = await tx
+          .select({ id: taskVersionFiles.id })
+          .from(taskVersionFiles)
+          .innerJoin(
+            taskVersions,
+            eq(taskVersions.id, taskVersionFiles.versionId),
+          )
+          .where(eq(taskVersions.taskId, taskId))
+          .limit(1);
+        if (file) return false;
 
         await tx.delete(tasks).where(eq(tasks.id, taskId));
         return true;

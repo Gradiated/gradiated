@@ -4,6 +4,7 @@ import { ChevronDown, FlaskConical, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 
 import { UntrainedTaskState } from "@/components/fine-tuning/untrained-task-state";
+import { Link } from "@tanstack/react-router";
 import { usePrivateModelName } from "@/hooks/use-private-model-name";
 import { useTaskHistory } from "@/hooks/use-training";
 import { QueryState } from "./query-state";
@@ -103,6 +104,14 @@ const VersionRow = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link
+              to="/tasks/$taskId/versions/$versionId"
+              params={{ taskId: version.task, versionId: version.id }}
+            >
+              View report
+            </Link>
+          </DropdownMenuItem>
           {VERSION_MENU.map((item) => (
             <DropdownMenuItem
               key={item.kind}
@@ -177,6 +186,14 @@ const CurrentVersion = ({
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <Button size="sm" variant="outline" asChild>
+            <Link
+              to="/tasks/$taskId/versions/$versionId"
+              params={{ taskId: task.name, versionId: version.id }}
+            >
+              View report
+            </Link>
+          </Button>
           {!version.is_production ? (
             <Button
               size="sm"
@@ -205,7 +222,7 @@ export const TaskModelTab = ({
 }: {
   task: TaskRow;
   onVersionAction: (action: VersionAction) => void;
-  onShowRuns: () => void;
+  onShowRuns?: () => void;
 }) => {
   const query = useTaskHistory(task);
   const versions = query.data?.versions ?? [];
@@ -267,7 +284,7 @@ export const TaskModelTab = ({
           title="No model yet"
           icon={<FlaskConical className="size-5 text-muted-foreground" />}
           action={
-            activeRun ? (
+            activeRun && onShowRuns ? (
               <Button
                 variant="link"
                 size="sm"

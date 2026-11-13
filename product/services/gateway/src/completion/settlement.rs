@@ -255,7 +255,8 @@ impl GenerationSettlement {
             priced_usage,
             outcome,
             timing,
-        );
+        )
+        .with_estimated_joules(usage.estimated_joules());
         let charged = self.finalize(&properties).await?;
 
         Ok(SettledGeneration {

@@ -70,6 +70,51 @@ fn terminal_usage() -> Value {
     })
 }
 
+#[test]
+fn optional_energy_survives_buffered_and_streaming_normalization() {
+    for estimate in [
+        json!(12.4),
+        json!(0),
+        Value::Null,
+        json!(-1),
+        json!("bad"),
+        json!({}),
+        json!(1e100),
+    ] {
+        let expected = estimate.as_f64().filter(|value| *value >= 0.0);
+        let mut buffered = completion();
+        buffered["usage"]["estimated_joules"] = estimate.clone();
+        let result = normalize_completion(
+            &serde_json::to_vec(&buffered).unwrap(),
+            &models("model-a", "model-a"),
+        )
+        .unwrap();
+
+        assert_eq!(result.usage.estimated_joules(), expected);
+        assert_eq!(
+            result.response["usage"]
+                .get("estimated_joules")
+                .and_then(Value::as_f64),
+            expected
+        );
+
+        let mut terminal = terminal_usage();
+        terminal["usage"]["estimated_joules"] = estimate;
+        let mut normalizer = ChatStreamNormalizer::new(models("model-a", "runtime-model"));
+        let chunk = normalizer
+            .normalize(&serde_json::to_vec(&terminal).unwrap())
+            .unwrap();
+
+        assert_eq!(chunk.usage().unwrap().estimated_joules(), expected);
+        assert_eq!(
+            chunk.response["usage"]
+                .get("estimated_joules")
+                .and_then(Value::as_f64),
+            expected
+        );
+    }
+}
+
 #[tokio::test]
 async fn sends_one_qualified_request_and_normalizes_the_response() {
     let mut upstream = completion();

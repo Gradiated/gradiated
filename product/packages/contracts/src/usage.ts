@@ -83,6 +83,7 @@ export const GenerationListQuerySchema = z
   .superRefine(validateDateRange);
 
 export const GenerationLogSchema = z.object({
+  estimated_joules: z.number().finite().nonnegative().nullable().optional(),
   id: UuidSchema,
   external_id: z.string().nullable(),
   model_id: BoundedIdentifierSchema,

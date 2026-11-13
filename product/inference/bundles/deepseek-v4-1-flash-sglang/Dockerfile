@@ -69,6 +69,7 @@ COPY bundles/glm-5-3-flash-sglang/jit-cache-requirements.txt /tmp/jit-cache-requ
 # `uv pip check` (already run on the full environment above) is not repeated here.
 RUN uv pip install --python /bundle/python/bin/python3 --break-system-packages \
       --no-deps --require-hashes -r /tmp/jit-cache-requirements.txt
+COPY runtimes/energy/*.py /bundle/energy/
 COPY bundles/package.sh /package.sh
 COPY --chmod=755 bundles/deepseek-v4-1-flash-sglang/entrypoint /bundle/entrypoint
 COPY bundles/glm-5-3-flash-sglang/patches.json /bundle/
@@ -89,6 +90,7 @@ RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
        /bundle/python/bin/python3 /bundle/deepseek-sglang/verify-build.py /bundle \
     && GRADIATED_REQUIRE_SGLANG=1 /bundle/python/bin/python3 -m unittest discover -s /bundle/deepseek-sglang -p 'test_*.py' \
     && /bundle/python/bin/python3 -m unittest discover -s /bundle/lora -p 'test_*.py' \
+    && GRADIATED_REQUIRE_SGLANG=1 /bundle/python/bin/python3 -m unittest discover -s /bundle/energy -p 'test_*.py' \
     && rm -rf /bundle && touch /verified
 
 FROM scratch AS artifact

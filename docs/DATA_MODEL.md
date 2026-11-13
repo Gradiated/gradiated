@@ -571,11 +571,23 @@ One row per terminal model invocation. Direct and OpenRouter traffic share this 
 
 Use an append-only `MergeTree`, partitioned by `toYYYYMM(completed_at)` and initially ordered by `(organization_id, workspace_id, completed_at, id)`. UUIDv7 allows a point lookup to derive the likely time partition from the generation ID. Add a projection for another access pattern only after measurements justify it.
 
+`estimated_joules` is an optional, nonnegative estimate of GPU energy for the
+runtime request. SGLang integrates sampled power across its assigned GPUs and
+shares it equally among overlapping generation requests after tokenizer
+validation and dispatch, including time queued inside SGLang. It excludes idle periods without requests, CPU/network
+and facility overhead. It is an attribution estimate, not a per-request meter.
+The gateway accepts it from final runtime usage and persists it at the top level
+of generation properties; generation log responses expose it as nullable energy
+in joules. Missing, stale or invalid estimates do not affect generation or billing.
+Older records omit it. Ship the accepting ingestion contract before enabling
+emission from gateways, because older workers reject unknown properties.
+
 `GenerationProperties` is a closed, versioned Zod-authored JSON document:
 
 ```text
 {
   event_schema_version: integer,
+  estimated_joules?: number | null,
   service_tier: "flex" | "default" | "fast",
   external_id: string | null,
   organization_id: uuid,

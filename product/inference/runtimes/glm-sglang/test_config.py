@@ -278,7 +278,7 @@ class Configuration(unittest.TestCase):
 
     def test_python_entrypoint_has_no_shell_or_external_router(self):
         _, backend, router = config.commands(self.environment)
-        self.assertEqual(backend[:3], [str(self.root / 'python/bin/python3'), '-m', 'sglang.launch_server'])
+        self.assertEqual(backend[:2], [str(self.root / 'python/bin/python3'), str(self.root / 'energy/launch.py')])
         self.assertEqual(router[:3], [str(self.root / 'python/bin/python3'), '-m', 'smg.launch_router'])
         self.assertEqual(router[router.index('--host') + 1], '127.0.0.1')
 

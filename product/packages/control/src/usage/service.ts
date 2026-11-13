@@ -38,6 +38,7 @@ const usageTotalRowSchema = usagePointRowSchema
   .extend({ succeeded_count: unsignedStringSchema });
 
 const generationRowSchema = z.strictObject({
+  estimated_joules: GenerationLogSchema.shape.estimated_joules,
   id: z.uuid(),
   external_id: z.string().nullable(),
   model_id: z.string(),
@@ -207,6 +208,7 @@ export const createUsageService = (
             status,
             toUInt8(getSubcolumn(properties, 'streamed')) AS streamed,
             charge,
+            toFloat64OrNull(toString(getSubcolumn(properties, 'estimated_joules'))) AS estimated_joules,
             toUInt64(getSubcolumn(properties, 'usage.input_tokens')) AS input_tokens,
             toUInt64(getSubcolumn(properties, 'usage.cached_input_tokens')) AS cached_input_tokens,
             toUInt64(getSubcolumn(properties, 'usage.cache_write_tokens')) AS cache_write_tokens,

@@ -23,6 +23,7 @@ on:
       - product/inference/runtimes/glm-sglang/**
       - product/inference/runtimes/deepseek-sglang/**
       - product/inference/runtimes/kimi-k31/**
+      - product/inference/runtimes/energy/**
       - product/inference/lora/**
       - product/inference/runtime-launcher/**
       - tools/images/**

@@ -31,6 +31,7 @@ export const GenerationPriceComponentSchema = z.strictObject({
 });
 
 const generationPropertyFields = {
+  estimated_joules: z.number().finite().nonnegative().nullable().optional(),
   external_id: z.string().max(300).nullable(),
   organization_id: UuidSchema,
   workspace_id: UuidSchema,

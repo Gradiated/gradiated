@@ -115,3 +115,11 @@ test("Kimi changes verify its isolated runtime and shared SMG fixes verify both 
     ["glm-5-3-flash-sglang", "kimi-k31-pro", "deepseek-v4-1-flash-sglang"],
   );
 });
+
+
+test("shared energy attribution changes verify all SGLang bundles", () => {
+  assert.deepEqual(
+    bundlesToVerify(["product/inference/runtimes/energy/middleware.py"]),
+    ["glm-5-3-flash-sglang", "kimi-k31-pro", "deepseek-v4-1-flash-sglang"],
+  );
+});

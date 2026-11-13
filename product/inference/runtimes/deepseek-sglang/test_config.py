@@ -1,3 +1,5 @@
+import argparse
+import ast
 from pathlib import Path
 import sys
 import tempfile
@@ -62,6 +64,25 @@ class Configuration(unittest.TestCase):
         for flag, value in [('--max-lora-rank', '8'), ('--max-loras-per-batch', '8'), ('--max-loaded-loras', '64')]:
             self.assertEqual(backend[backend.index(flag) + 1], value)
         self.assertEqual(backend[backend.index('--lora-target-modules') + 1:], config.LORA_TARGETS)
+
+    def test_build_verifier_preserves_model_for_base_and_adapter_commands(self):
+        lora = {**self.environment, 'LORA_ENABLED': 'true', 'MODEL_ID': config.MODEL_ID,
+                'LORA_GPU_SLOTS': '8', 'LORA_CPU_SLOTS': '64', 'LORA_MAX_RANK': '8',
+                'LORA_DISK_CACHE_BYTES': '1073741824', 'LORA_DOWNLOAD_HOSTS': 'artifacts.s3.amazonaws.com'}
+        namespace = {'backend': config.commands(self.environment)[1],
+                     'adapted_backend': config.commands(lora)[1], 'commands': config.commands, 'lora': lora}
+        # Exercise the verifier's CLI extraction without loading its CUDA dependencies.
+        tree = ast.parse((HERE / 'verify-build.py').read_text())
+        calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
+                 and isinstance(node.func, ast.Attribute) and node.func.attr == 'parse_args']
+        self.assertGreaterEqual(len(calls), 2)
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--model-path', required=True)
+        for call in calls:
+            with self.subTest(line=call.lineno):
+                arguments = eval(compile(ast.Expression(call.args[0]), 'build-verifier-arguments', 'eval'), namespace)
+                parsed, _ = parser.parse_known_args(arguments)
+                self.assertEqual(parsed.model_path, config.MODEL)
         self.assertEqual(config.LORA_TARGETS, ['wq_a', 'wq_b', 'wkv', 'wo_a', 'wo_b',
                                               'w1', 'w2', 'w3', 'lm_head'])
 

@@ -75,6 +75,27 @@ describe("usage service", () => {
     expect(last.nextCursor).toBeNull();
   });
 
+  it("returns stored energy estimates and null when unavailable", async () => {
+    const rows = [
+      {
+        ...generation("3", "2026-08-15T12:00:03.000000Z"),
+        estimated_joules: 12.4,
+      },
+      {
+        ...generation("2", "2026-08-15T12:00:02.000000Z"),
+        estimated_joules: null,
+      },
+    ];
+    const clickhouse = fakeClickHouse(() => rows);
+
+    const page = await listPage(clickhouse.client);
+
+    expect(page.data.map((row) => row.estimated_joules)).toEqual([12.4, null]);
+    expect(clickhouse.query.mock.calls[0]?.[0].query).toContain(
+      "toFloat64OrNull(toString(getSubcolumn(properties, 'estimated_joules'))) AS estimated_joules",
+    );
+  });
+
   it("rejects an invalid cursor before querying ClickHouse", async () => {
     const clickhouse = fakeClickHouse(() => []);
 

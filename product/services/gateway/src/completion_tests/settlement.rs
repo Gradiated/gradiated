@@ -3,8 +3,47 @@ use serde_json::json;
 use super::{super::*, support::*};
 use crate::{
     completion::settlement::FINALIZATION_ATTEMPTS, diagnostics::capture::Logs,
-    generation::fixtures::token_prices, RuntimeCompletion, RuntimeFailureKind,
+    generation::fixtures::token_prices, RuntimeCompletion, RuntimeFailureKind, RuntimeStreamEvent,
 };
+
+#[tokio::test]
+async fn buffered_energy_is_stored_without_changing_billing() {
+    let completion = Script::Complete(RuntimeCompletion::from_normalized_parts(
+        json!({"choices": [{"message": {"content": "hi"}}]}),
+        "stop".to_owned(),
+        usage(10, 4, 2).with_estimated_joules(Some(12.4)),
+    ));
+    let harness = Harness::new(qualified_request(1), [completion]);
+
+    harness.complete().await.unwrap();
+
+    let finalized = harness.only_finalized();
+    assert_eq!(finalized["estimated_joules"], 12.4);
+    assert_eq!(finalized["usage"]["charge"], 22);
+}
+
+#[tokio::test]
+async fn streamed_terminal_energy_is_stored_and_missing_energy_is_omitted() {
+    for estimate in [Some(12.4), None, Some(-1.0), Some(f64::NAN)] {
+        let events = vec![
+            content("hi", None),
+            finish("stop"),
+            terminal_usage(usage(10, 4, 2).with_estimated_joules(estimate)),
+            Ok(RuntimeStreamEvent::Done),
+        ];
+        let harness = Harness::new(streaming_request(1), [Script::Stream(events)]);
+
+        harness.stream().await.unwrap();
+
+        let finalized = harness.only_finalized();
+        assert_eq!(finalized["usage"]["charge"], 22);
+        if estimate.is_some_and(|value| value.is_finite() && value >= 0.0) {
+            assert_eq!(finalized["estimated_joules"], 12.4);
+        } else {
+            assert!(finalized.get("estimated_joules").is_none());
+        }
+    }
+}
 
 #[tokio::test]
 async fn decision_settlement_bills_input_and_cached_input_without_output() {

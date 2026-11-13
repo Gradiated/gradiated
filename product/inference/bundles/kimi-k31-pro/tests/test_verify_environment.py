@@ -28,7 +28,7 @@ class VerificationEnvironment(unittest.TestCase):
             python = bundle / 'python/bin/python3'
             # The real step creates /bundle; let it see an existing directory.
             # Its Python calls execute a stand-in that verifies the inherited
-            # loader environment, including the second and third invocations.
+            # loader environment in every invocation.
             python.parent.mkdir(parents=True)
             python.write_text(
                 '#!/bin/sh\n'
@@ -50,10 +50,11 @@ class VerificationEnvironment(unittest.TestCase):
             )
             subprocess.run(['sh', '-ec', step], env=environment, check=True, capture_output=True)
             calls = (root / 'calls').read_text().splitlines()
-            self.assertEqual(len(calls), 3)
+            self.assertEqual(len(calls), 4)
             self.assertIn('verify-build.py', calls[0])
             self.assertIn('unittest discover', calls[1])
             self.assertIn('unittest discover', calls[2])
+            self.assertIn('/energy', calls[3])
             self.assertTrue((root / 'verified').exists())
 
 

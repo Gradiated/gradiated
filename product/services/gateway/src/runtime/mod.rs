@@ -252,7 +252,7 @@ impl RuntimeFailureKind {
     }
 }
 
-#[derive(Clone, Debug, Error, Eq, PartialEq)]
+#[derive(Clone, Debug, Error, PartialEq)]
 #[error("model runtime failed: {kind:?}")]
 pub struct RuntimeFailure {
     kind: RuntimeFailureKind,
@@ -518,7 +518,7 @@ impl RuntimeFailure {
     }
 
     fn or_usage(mut self, usage: NormalizedUsage) -> Self {
-        if self.usage == NormalizedUsage::zero() {
+        if self.usage.is_zero() {
             self.usage = usage;
         }
 

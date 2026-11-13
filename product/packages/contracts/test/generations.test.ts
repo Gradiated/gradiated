@@ -41,6 +41,35 @@ const generationSettled = (
 });
 
 describe("GenerationSettledSchema", () => {
+  it.each([undefined, null, 0, 12.4])(
+    "accepts optional estimated joules %s",
+    (estimated_joules) => {
+      const parsed = GenerationSettledSchema.parse(
+        generationSettled({
+          event_schema_version: 2,
+          service_tier: "flex",
+          estimated_joules,
+        }),
+      );
+      expect(parsed.properties.estimated_joules).toBe(estimated_joules);
+    },
+  );
+
+  it.each([-1, NaN, Infinity, "12.4"])(
+    "rejects invalid estimated joules %s",
+    (estimated_joules) => {
+      expect(
+        GenerationSettledSchema.safeParse(
+          generationSettled({
+            event_schema_version: 2,
+            service_tier: "flex",
+            estimated_joules,
+          }),
+        ).success,
+      ).toBe(false);
+    },
+  );
+
   it("accepts task version slugs longer than catalog model IDs", () => {
     const name = `${"a".repeat(256)}-20261002-2`;
     expect(

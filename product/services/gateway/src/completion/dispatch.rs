@@ -12,8 +12,8 @@ use crate::{
     metrics::{Capacity, CapacityMetrics, FallbackReason},
     routing::RoutePlacement,
     ExternalCapacity, ExternalModel, ExternalRequest, GatewayError, GatewayModelDeployment,
-    InferenceRequest, ModelRuntime, NormalizedUsage, PriceCap, Route, RuntimeCompletion,
-    RuntimeEventStream, RuntimeFailure, RuntimeFailureKind,
+    InferenceRequest, ModelRuntime, PriceCap, Route, RuntimeCompletion, RuntimeEventStream,
+    RuntimeFailure, RuntimeFailureKind,
 };
 
 /// An attempt with less time than this left would only spend the deadline.
@@ -299,7 +299,7 @@ impl RuntimeCall {
                 Err(failure) => failure,
             };
 
-            let refused = failure.usage() == NormalizedUsage::zero()
+            let refused = failure.usage().is_zero()
                 && matches!(
                     failure.kind(),
                     RuntimeFailureKind::Unavailable | RuntimeFailureKind::CapacityExceeded

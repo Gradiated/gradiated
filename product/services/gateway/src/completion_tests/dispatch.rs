@@ -3,8 +3,8 @@ use serde_json::json;
 use super::{super::*, support::*};
 use crate::{
     completion::dispatch::RuntimeCall, diagnostics::capture::Logs, routing::fixtures::deployment,
-    serving_state::ServingStateError, AdmissionError, GatewayModelDeployment, RuntimeFailure,
-    RuntimeFailureKind,
+    serving_state::ServingStateError, AdmissionError, GatewayModelDeployment, NormalizedUsage,
+    RuntimeFailure, RuntimeFailureKind,
 };
 
 #[tokio::test]
@@ -476,4 +476,18 @@ async fn capacity_failures_keep_their_authorised_traffic_class_through_settlemen
         assert_eq!(finalized["status"], "failed");
         assert_eq!(finalized["usage"]["charge"], 0);
     }
+}
+
+#[tokio::test]
+async fn optional_energy_does_not_change_capacity_retry_behavior() {
+    let refusal = Script::Fail(RuntimeFailure::with_usage(
+        RuntimeFailureKind::Unavailable,
+        NormalizedUsage::zero().with_estimated_joules(Some(1.0)),
+    ));
+    let harness = Harness::new(qualified_request(2), [refusal, completion()]);
+
+    harness.complete().await.unwrap();
+
+    assert_eq!(harness.journal.dispatches().len(), 2);
+    assert_eq!(harness.only_finalized()["usage"]["charge"], 31);
 }

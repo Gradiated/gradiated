@@ -8608,6 +8608,13 @@
                           "items": {
                             "type": "object",
                             "properties": {
+                              "estimated_joules": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ],
+                                "minimum": 0
+                              },
                               "id": {
                                 "type": "string",
                                 "format": "uuid",

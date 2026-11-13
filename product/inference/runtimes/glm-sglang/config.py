@@ -267,7 +267,7 @@ def commands(environment, bundle_root=BUNDLE_ROOT):
         if hashlib.sha256(encoded).hexdigest() != model['model_config_sha256']:
             raise ValueError('Qualified GLM quantization overrides changed')
         overrides = ['--json-model-override-args', json.dumps(model_config, separators=(',', ':'))]
-    backend = [python, '-m', 'sglang.launch_server', '--model-path', config['model'],
+    backend = [python, str(root / 'energy/launch.py'), '--model-path', config['model'],
                '--revision', config['revision'], '--served-model-name', config['served_model_name'], '--tp-size', '2',
                '--ep-size', '1', '--moe-dense-tp-size', '2', '--quantization', 'modelopt_fp4', *overrides,
                '--moe-runner-backend', config['moe_runner'], '--disable-shared-experts-fusion',

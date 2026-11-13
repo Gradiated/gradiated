@@ -41,6 +41,7 @@ COPY --chmod=755 bundles/kimi-k31-pro/entrypoint /bundle/entrypoint
 COPY runtimes/glm/warmup-supervisor.py /bundle/warmup-base.py
 COPY runtimes/kimi-k31/*.py /bundle/kimi-k31/
 COPY images/gpu-base/base-id /bundle/base-id
+COPY runtimes/energy/*.py /bundle/energy/
 COPY bundles/package.sh /package.sh
 RUN bash /package.sh
 
@@ -62,6 +63,7 @@ RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
     && /bundle/python/bin/python3 /bundle/kimi-k31/verify-build.py /bundle \
     && /bundle/python/bin/python3 -m unittest discover -s /bundle/kimi-k31 -p 'test_*.py' \
     && /bundle/python/bin/python3 -m unittest discover -s /k31-test -p 'test_*.py' \
+    && GRADIATED_REQUIRE_SGLANG=1 /bundle/python/bin/python3 -m unittest discover -s /bundle/energy -p 'test_*.py' \
     && rm -rf /bundle && touch /verified
 
 FROM scratch AS artifact

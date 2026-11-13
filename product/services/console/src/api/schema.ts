@@ -6155,6 +6155,7 @@ export interface operations {
             | components["schemas"]["TraceGenerationList"]
             | {
                 data: {
+                  estimated_joules?: number | null;
                   /**
                    * Format: uuid
                    * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774

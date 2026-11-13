@@ -50,7 +50,7 @@ def verify(root):
     parser = argparse.ArgumentParser()
     ServerArgs.add_cli_args(parser)
     _, backend, router = commands(env)
-    native = parser.parse_args(backend[3:])
+    native = parser.parse_args(backend[2:])
     assert native.tp_size == native.ep_size == 4 and native.speculative_algorithm == 'DSPARK'
     assert native.max_running_requests == native.cuda_graph_max_bs_decode
     assert native.reasoning_parser == 'deepseek-v41' and native.tool_call_parser == 'deepseekv41'
@@ -59,7 +59,8 @@ def verify(root):
     lora = {**env, 'LORA_ENABLED': 'true', 'MODEL_ID': 'deepseek/deepseek-v4.1-flash-1017',
             'LORA_GPU_SLOTS': '8', 'LORA_CPU_SLOTS': '64', 'LORA_MAX_RANK': '8',
             'LORA_DISK_CACHE_BYTES': '1073741824', 'LORA_DOWNLOAD_HOSTS': 'artifacts.s3.amazonaws.com'}
-    adapted = parser.parse_args(commands(lora)[1][3:])
+    _, adapted_backend, _ = commands(lora)
+    adapted = parser.parse_args(adapted_backend[2:])
     assert adapted.enable_lora and adapted.max_loras_per_batch == 8 and adapted.max_loaded_loras == 64
     assert compileall.compile_dir(site / 'sglang', quiet=1)
     assert compileall.compile_dir(root / 'deepseek-sglang', quiet=1)

@@ -434,6 +434,8 @@ pub(super) struct Choice {
 
 #[derive(Debug, Deserialize)]
 struct UpstreamUsage {
+    #[serde(default)]
+    estimated_joules: Option<Value>,
     prompt_tokens: u64,
     completion_tokens: u64,
     total_tokens: u64,
@@ -472,6 +474,9 @@ impl UpstreamUsage {
                 .or(self.reasoning_tokens)
                 .unwrap_or(0),
         )
+        .map(|usage| {
+            usage.with_estimated_joules(self.estimated_joules.and_then(|value| value.as_f64()))
+        })
         .map_err(|_| ProtocolViolation::Usage.into())
     }
 }
@@ -513,6 +518,8 @@ pub(super) struct NormalizedStreamResponse {
 
 #[derive(Serialize)]
 pub(super) struct PublicUsage {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    estimated_joules: Option<f64>,
     prompt_tokens: u64,
     completion_tokens: u64,
     total_tokens: u64,
@@ -523,6 +530,7 @@ pub(super) struct PublicUsage {
 impl From<NormalizedUsage> for PublicUsage {
     fn from(usage: NormalizedUsage) -> Self {
         Self {
+            estimated_joules: usage.estimated_joules(),
             prompt_tokens: usage.input_tokens(),
             completion_tokens: usage.output_tokens(),
             total_tokens: usage.input_tokens() + usage.output_tokens(),

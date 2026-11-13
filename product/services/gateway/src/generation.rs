@@ -229,8 +229,13 @@ pub enum CapturedPricingError {
     UnsafeInteger,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+fn valid_estimated_joules(joules: Option<f64>) -> Option<f64> {
+    joules.filter(|value| value.is_finite() && *value >= 0.0)
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct NormalizedUsage {
+    estimated_joules: Option<f64>,
     input_tokens: u64,
     cached_input_tokens: u64,
     cache_write_tokens: u64,
@@ -268,6 +273,7 @@ impl NormalizedUsage {
         }
 
         Ok(Self {
+            estimated_joules: None,
             input_tokens,
             cached_input_tokens,
             cache_write_tokens,
@@ -278,12 +284,30 @@ impl NormalizedUsage {
 
     pub fn zero() -> Self {
         Self {
+            estimated_joules: None,
             input_tokens: 0,
             cached_input_tokens: 0,
             cache_write_tokens: 0,
             output_tokens: 0,
             reasoning_tokens: 0,
         }
+    }
+
+    pub(crate) fn is_zero(self) -> bool {
+        self.input_tokens == 0
+            && self.cached_input_tokens == 0
+            && self.cache_write_tokens == 0
+            && self.output_tokens == 0
+            && self.reasoning_tokens == 0
+    }
+
+    pub fn with_estimated_joules(mut self, joules: Option<f64>) -> Self {
+        self.estimated_joules = valid_estimated_joules(joules);
+        self
+    }
+
+    pub fn estimated_joules(self) -> Option<f64> {
+        self.estimated_joules
     }
 
     pub fn input_tokens(self) -> u64 {
@@ -754,8 +778,10 @@ pub enum GenerationTimingError {
     Inconsistent,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GenerationProperties {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    estimated_joules: Option<f64>,
     event_schema_version: u16,
     service_tier: ServiceTier,
     #[serde(flatten)]
@@ -778,6 +804,7 @@ impl GenerationProperties {
         timing: GenerationTiming,
     ) -> Self {
         Self {
+            estimated_joules: None,
             event_schema_version: 2,
             service_tier,
             identity,
@@ -788,6 +815,11 @@ impl GenerationProperties {
             outcome: terminal.outcome,
             timing,
         }
+    }
+
+    pub fn with_estimated_joules(mut self, joules: Option<f64>) -> Self {
+        self.estimated_joules = valid_estimated_joules(joules);
+        self
     }
 
     pub fn organization_id(&self) -> Uuid {

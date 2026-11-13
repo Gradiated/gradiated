@@ -77,7 +77,7 @@ def verify(root):
     _, backend, router = commands(env, bundle)
     parser = argparse.ArgumentParser()
     ServerArgs.add_cli_args(parser)
-    native = parser.parse_args(backend[3:])
+    native = parser.parse_args(backend[2:])
     assert native.tp_size == native.attn_cp_size == 2 and native.enable_prefill_cp
     assert native.moe_runner_backend == 'marlin' and native.max_running_requests == 12
     assert native.mem_fraction_static == 0.85
@@ -94,7 +94,7 @@ def verify(root):
     assert front.queue_timeout_secs == 10 and front.rate_limit_tokens_per_second == 0
     assert front.worker_urls == ['http://127.0.0.1:28084'] and front.disable_retries
     _, hopper_backend, hopper_router = commands({**env, 'GLM_SGLANG_PROFILE': 'h200-tp2'})
-    hopper = parser.parse_args(hopper_backend[3:])
+    hopper = parser.parse_args(hopper_backend[2:])
     assert hopper.tp_size == 2 and not hopper.enable_prefill_cp
     assert hopper.dsa_prefill_backend == 'flashmla_sparse_q8' and hopper.dsa_decode_backend == 'tilelang'
     assert hopper.kv_cache_dtype == 'fp8_e4m3'
@@ -107,7 +107,7 @@ def verify(root):
     hopper_front = parse_router_args(hopper_router[3:])
     assert hopper_front.max_concurrent_requests == 3 and hopper_front.queue_size == 2
     _, b200_backend, b200_router = commands({**env, 'GLM_SGLANG_PROFILE': 'b200-pcp2'})
-    b200 = parser.parse_args(b200_backend[3:])
+    b200 = parser.parse_args(b200_backend[2:])
     assert b200.tp_size == 2 and b200.enable_prefill_cp and b200.attn_cp_size == 2
     assert b200.dsa_prefill_backend == b200.dsa_decode_backend == 'trtllm'
     assert b200.max_running_requests == b200.cuda_graph_max_bs_decode == 6

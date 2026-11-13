@@ -93,6 +93,26 @@ const profilingBatch: ProfilingEventBatch = {
 };
 
 describe("ClickHouse generation writer", () => {
+  it("preserves optional energy estimates in generation properties", async () => {
+    const client = recordingClient();
+    const event = {
+      ...generation,
+      properties: { ...generation.properties, estimated_joules: 12.4 },
+    };
+
+    await createGenerationWriter(client).insertGeneration(event, slotId);
+
+    expect(client.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: [
+          expect.objectContaining({
+            properties: expect.objectContaining({ estimated_joules: 12.4 }),
+          }),
+        ],
+      }),
+    );
+  });
+
   it("inserts the generation with its settlement slot, deduplicated by id", async () => {
     const client = recordingClient();
 

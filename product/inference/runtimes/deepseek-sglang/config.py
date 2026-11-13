@@ -140,7 +140,7 @@ def commands(environment):
     config = settings(environment)
     python = str(config['root'] / 'python/bin/python3')
     active = config['active_requests']
-    backend = [python, '-m', 'sglang.launch_server', '--model-path', MODEL, '--revision', REVISION,
+    backend = [python, str(config['root'] / 'energy/launch.py'), '--model-path', MODEL, '--revision', REVISION,
                '--served-model-name', MODEL, '--tp-size', str(TENSOR_PARALLEL_SIZE),
                '--ep-size', str(TENSOR_PARALLEL_SIZE), '--context-length', '1048576',
                '--mem-fraction-static', str(config['memory_fraction']),

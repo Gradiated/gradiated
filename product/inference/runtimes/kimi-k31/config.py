@@ -79,7 +79,7 @@ def validate_hardware(environment):
 def commands(environment):
     config = settings(environment)
     python = str(config['root'] / 'python/bin/python3')
-    backend = [python, '-m', 'sglang.launch_server', '--model-path', MODEL,
+    backend = [python, str(config['root'] / 'energy/launch.py'), '--model-path', MODEL,
                '--revision', REVISION, '--served-model-name', MODEL, '--tp-size', '8', '--trust-remote-code',
                '--reasoning-parser', 'kimi_k3', '--tool-call-parser', 'kimi_k3',
                '--moe-runner-backend', 'flashinfer_mxfp4', '--flashinfer-mxfp4-moe-precision', 'default',

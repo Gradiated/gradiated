@@ -137,7 +137,7 @@ impl StreamProgress {
 
     fn observe_failure(&mut self, failure: &RuntimeFailure) {
         let usage = failure.usage();
-        if usage != NormalizedUsage::zero() && usage_is_monotonic(self.usage, usage) {
+        if !usage.is_zero() && usage_is_monotonic(self.usage, usage) {
             self.usage = usage;
         }
     }
@@ -151,7 +151,7 @@ impl StreamProgress {
 
     pub(super) fn can_retry_before_any_frame(&self) -> bool {
         !self.frame_delivered
-            && self.usage == NormalizedUsage::zero()
+            && self.usage.is_zero()
             && self.finish_reason.is_none()
             && !self.terminal_usage_seen
     }
@@ -316,7 +316,7 @@ fn tokio_instant(deadline: DateTime<Utc>) -> tokio::time::Instant {
 }
 
 fn usage_is_monotonic(previous: NormalizedUsage, next: NormalizedUsage) -> bool {
-    (previous == NormalizedUsage::zero() || previous.input_tokens() == next.input_tokens())
+    (previous.is_zero() || previous.input_tokens() == next.input_tokens())
         && previous.cached_input_tokens() <= next.cached_input_tokens()
         && previous.cache_write_tokens() <= next.cache_write_tokens()
         && previous.output_tokens() <= next.output_tokens()

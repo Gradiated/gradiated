@@ -25,6 +25,28 @@ test("sign-in page sends and consumes a magic link", async ({
   ).toBeVisible();
 });
 
+test("sign-in returns to the page that needed it", async ({
+  account,
+  context,
+  page,
+}) => {
+  await context.clearCookies();
+  await page.goto("/tasks");
+  await expect(page).toHaveURL(/\/login\?next=%2Ftasks$/);
+
+  await page.getByLabel("Email").fill(account.email);
+  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+  await expect(page.getByText("Check your email")).toBeVisible();
+
+  const verification = await readMagicLink(context.request, account.email);
+  await page.goto(verification.toString());
+
+  await expect(page).toHaveURL(/\/tasks$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Training" }),
+  ).toBeVisible();
+});
+
 test("signed-in navigation includes training and sign out returns to login", async ({
   page,
 }) => {

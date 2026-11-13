@@ -685,7 +685,7 @@ test("impersonation, return and sign-out synchronize identity across tabs", asyn
   await page.getByRole("button", { name: "Account menu" }).click();
   await page.getByRole("menuitem", { name: "Sign out", exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
-  await expect(other).toHaveURL(/\/login$/);
+  await expect(other).toHaveURL(/\/login\?next=%2Fadmin$/);
 });
 
 test("an expired impersonation cold load restores staff before redirecting to login", async ({

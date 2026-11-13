@@ -34,10 +34,18 @@ describe("parseLoginSearch", () => {
   it.each([
     ["/oauth/login?client_id=abc", { next: "/oauth/login?client_id=abc" }],
     ["/oauth/consent", { next: "/oauth/consent" }],
+    ["/playground?model=m&task=t#x", { next: "/playground?model=m&task=t#x" }],
     ["https://evil.example/oauth/login", {}],
     ["//evil.example/oauth/login", {}],
-    ["/api-keys", {}],
-  ])("accepts only an OAuth page as next: %s", (next, expected) => {
+    ["/\\evil.example", {}],
+    ["api-keys", {}],
+    ["/login?next=/api-keys", {}],
+    ["/onboarding", {}],
+    ["//[", {}],
+    ["//console.invalid/tasks", {}],
+    ["///console.invalid/tasks", {}],
+    ["/\t/console.invalid/tasks", {}],
+  ])("accepts only a console page as next: %s", (next, expected) => {
     expect(parseLoginSearch({ next })).toEqual(expected);
   });
 });

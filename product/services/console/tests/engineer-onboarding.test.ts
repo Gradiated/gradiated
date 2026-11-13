@@ -33,6 +33,8 @@ describe("post-training onboarding journey", () => {
       "tasks",
       "/onboarding?journey=post-training",
       "/" + "a".repeat(600),
+      "//[",
+      "//console.invalid/tasks",
     ])
       expect(parseOnboardingSearch({ from })).toEqual({});
   });
@@ -85,14 +87,47 @@ describe("post-training onboarding journey", () => {
       loginSearchFor({
         pathname: "/onboarding",
         search: { journey: "post-training" },
+        href: "/onboarding?journey=post-training",
       }),
     ).toEqual({ journey: "post-training" });
-    expect(loginSearchFor({ pathname: "/onboarding", search: {} })).toEqual({});
     expect(
       loginSearchFor({
-        pathname: "/api-keys",
-        search: { journey: "post-training" },
+        pathname: "/onboarding",
+        search: {},
+        href: "/onboarding",
       }),
     ).toEqual({});
+  });
+
+  it("returns an expired session to the page it was on", () => {
+    expect(
+      loginSearchFor({
+        pathname: "/playground",
+        search: { model: "m" },
+        href: "/playground?model=m",
+      }),
+    ).toEqual({ next: "/playground?model=m" });
+    expect(
+      loginSearchFor({ pathname: "/login", search: {}, href: "/login" }),
+    ).toEqual({});
+    for (const href of ["/", "/api-keys"])
+      expect(loginSearchFor({ pathname: href, search: {}, href })).toEqual({});
+  });
+
+  it("signs in to the requested page and onboards a new account", () => {
+    expect(signInCallbacks({ next: "/tasks/abc?tab=1" }, origin)).toEqual({
+      callbackURL: `${origin}/tasks/abc?tab=1`,
+      newUserCallbackURL: `${origin}/onboarding`,
+      errorCallbackURL: `${origin}/login?next=%2Ftasks%2Fabc%3Ftab%3D1`,
+    });
+  });
+
+  it("sends a new account to an OAuth authorization too", () => {
+    const next = "/oauth/login?client_id=abc";
+    expect(signInCallbacks({ next }, origin)).toEqual({
+      callbackURL: `${origin}${next}`,
+      newUserCallbackURL: `${origin}${next}`,
+      errorCallbackURL: `${origin}/login?next=${encodeURIComponent(next)}`,
+    });
   });
 });

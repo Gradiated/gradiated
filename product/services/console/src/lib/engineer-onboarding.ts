@@ -9,6 +9,9 @@ import type { CurrentUser } from "@/api/queries";
 import {
   POST_TRAINING_JOURNEY,
   invitationPath,
+  isOAuthNext,
+  nextPath,
+  consoleUrl,
   type LoginSearch,
 } from "@/lib/login-search";
 
@@ -19,15 +22,12 @@ export interface OnboardingSearch {
   from?: string;
 }
 
-const ORIGIN_PROBE = "https://console.invalid";
-
 /* Only a path on the console itself, outside onboarding, is a way back. */
 export const consoleReturnPath = (value: unknown) => {
   if (typeof value !== "string" || !value.startsWith("/") || value.length > 512)
     return undefined;
-  const url = new URL(value, ORIGIN_PROBE);
-  if (url.origin !== ORIGIN_PROBE || url.pathname.startsWith("/onboarding"))
-    return undefined;
+  const url = consoleUrl(value);
+  if (!url || url.pathname.startsWith("/onboarding")) return undefined;
   return url.pathname + url.search + url.hash;
 };
 
@@ -53,35 +53,50 @@ export const parseOnboardingSearch = (
   };
 };
 
+const DEFAULT_LANDING = new Set(["/", "/api-keys"]);
+
 export const loginSearchFor = (location: {
   pathname: string;
   search: Record<string, unknown>;
-}): LoginSearch =>
-  location.pathname === "/onboarding" &&
-  location.search.journey === POST_TRAINING_JOURNEY
-    ? { journey: POST_TRAINING_JOURNEY }
-    : {};
+  href: string;
+}): LoginSearch => {
+  if (
+    location.pathname === "/onboarding" &&
+    location.search.journey === POST_TRAINING_JOURNEY
+  )
+    return { journey: POST_TRAINING_JOURNEY };
+  const next = nextPath(location.href);
+  // Sign-in already lands on the API keys page.
+  return next && !DEFAULT_LANDING.has(next) ? { next } : {};
+};
 
 export const signInCallbacks = (search: LoginSearch, consoleOrigin: string) => {
   // An invitation, then an OAuth authorization, comes before the journey.
-  const invitation = search.invitation
+  const required = search.invitation
     ? invitationPath(search.invitation)
-    : search.next;
-  const postTraining = !invitation && search.journey === POST_TRAINING_JOURNEY;
+    : isOAuthNext(search)
+      ? search.next
+      : undefined;
+  const postTraining = !required && search.journey === POST_TRAINING_JOURNEY;
+  // A new account still goes through onboarding.
+  const returnTo = required || postTraining ? undefined : search.next;
   const callbackUrl = (path: string) => new URL(path, consoleOrigin).toString();
+  const retry = new URLSearchParams({
+    ...(postTraining ? { journey: POST_TRAINING_JOURNEY } : {}),
+    ...(search.next && !search.invitation ? { next: search.next } : {}),
+  }).toString();
 
   return {
     callbackURL: callbackUrl(
-      invitation ??
+      required ??
+        returnTo ??
         (postTraining ? POST_TRAINING_ONBOARDING_PATH : "/api-keys"),
     ),
     newUserCallbackURL: callbackUrl(
-      invitation ??
+      required ??
         (postTraining ? POST_TRAINING_ONBOARDING_PATH : "/onboarding"),
     ),
-    errorCallbackURL: callbackUrl(
-      postTraining ? `/login?journey=${POST_TRAINING_JOURNEY}` : "/login",
-    ),
+    errorCallbackURL: callbackUrl(retry ? `/login?${retry}` : "/login"),
   };
 };
 

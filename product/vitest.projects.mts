@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     projects: [
       "packages/*",
-      "services/{api,ops-mcp,wizard,worker}",
+      "services/{api,mcp,ops-mcp,wizard,worker}",
       "services/console/tests/vitest.config.ts",
     ],
   },

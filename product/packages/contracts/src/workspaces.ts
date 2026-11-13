@@ -70,6 +70,16 @@ export const ApiKeySchema = z
   })
   .openapi("ApiKey");
 
+export const ApiKeyIdentitySchema = z
+  .object({
+    id: UuidSchema,
+    organization_id: UuidSchema,
+    workspace_id: UuidSchema,
+  })
+  .openapi("ApiKeyIdentity");
+
+export type ApiKeyIdentity = z.infer<typeof ApiKeyIdentitySchema>;
+
 export const ApiKeyListSchema = z
   .object(pageFields(ApiKeySchema))
   .openapi("ApiKeyList");

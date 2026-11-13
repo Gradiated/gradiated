@@ -645,6 +645,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/api-keys/current": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get current API key
+     * @description Identifies the workspace API key in the Authorization or x-api-key header.
+     */
+    get: operations["getCurrentApiKey"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace_id}/api-keys": {
     parameters: {
       query?: never;
@@ -2111,6 +2131,23 @@ export interface components {
     };
     CreateWorkspace: {
       name: string;
+    };
+    ApiKeyIdentity: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      id: string;
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      organization_id: string;
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      workspace_id: string;
     };
     ApiKeyList: {
       data: components["schemas"]["ApiKey"][];
@@ -5865,6 +5902,35 @@ export interface operations {
       };
       /** @description Application state is unavailable. */
       503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getCurrentApiKey: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The key's organization and workspace. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ApiKeyIdentity"];
+        };
+      };
+      /** @description The key is missing, unknown, expired or revoked. */
+      401: {
         headers: {
           [name: string]: unknown;
         };

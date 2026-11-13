@@ -1,5 +1,6 @@
 import { changedFields } from "@gradiated/analytics";
 import {
+  ApiKeyIdentitySchema,
   ApiKeyListSchema,
   ApiKeyPathSchema,
   ApiKeySchema,
@@ -22,7 +23,8 @@ import type {
 } from "@gradiated/control";
 import { createRoute, type OpenAPIHono } from "@hono/zod-openapi";
 
-import { requireUser } from "../http/problems.js";
+import { bearerSecret } from "../auth/api-key-principal.js";
+import { ApiProblem, problems, requireUser } from "../http/problems.js";
 import type { ApiEnvironment } from "../types.js";
 import { apiKeyResponse } from "./api-key-response.js";
 
@@ -145,6 +147,27 @@ const createWorkspaceRoute = createRoute({
     },
     503: {
       description: "Application state is unavailable.",
+      content: problemContent,
+    },
+  },
+});
+
+const getCurrentApiKeyRoute = createRoute({
+  method: "get",
+  path: "/api/v1/api-keys/current",
+  operationId: "getCurrentApiKey",
+  summary: "Get current API key",
+  description:
+    "Identifies the workspace API key in the Authorization or x-api-key header.",
+  tags: ["API keys"],
+  security: [{ InferenceBearer: [] }, { InferenceApiKey: [] }],
+  responses: {
+    200: {
+      description: "The key's organization and workspace.",
+      content: { "application/json": { schema: ApiKeyIdentitySchema } },
+    },
+    401: {
+      description: "The key is missing, unknown, expired or revoked.",
       content: problemContent,
     },
   },
@@ -370,6 +393,21 @@ export const registerWorkspaceRoutes = (
 
     context.set("logResourceIds", { workspace_id: workspace.id });
     return context.json(workspaceResponse(workspace), 201);
+  });
+
+  app.openapi(getCurrentApiKeyRoute, async (context) => {
+    const secret = bearerSecret(context.req.raw.headers);
+    const owner = secret && (await workspaces.authenticateApiKey(secret));
+    if (!owner) throw new ApiProblem(problems.unauthenticated);
+
+    return context.json(
+      {
+        id: owner.apiKeyId,
+        organization_id: owner.organizationId,
+        workspace_id: owner.workspaceId,
+      },
+      200,
+    );
   });
 
   app.openapi(listApiKeysRoute, async (context) => {

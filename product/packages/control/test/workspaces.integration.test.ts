@@ -465,4 +465,53 @@ describe("workspaces and API keys", () => {
       expect((await storedKey(apiKeyId))?.revokedAt).toBeNull();
     });
   });
+
+  describe("authenticateApiKey", () => {
+    it("finds the creator and workspace of an active key", async () => {
+      const { userId, organizationId, workspaceId } =
+        await membership("member");
+      const { apiKey, secret } = await service.createApiKey(
+        userId,
+        workspaceId,
+        { name: "MCP", expiresAt: null },
+      );
+
+      await expect(service.authenticateApiKey(secret)).resolves.toMatchObject({
+        apiKeyId: apiKey.id,
+        organizationId,
+        workspaceId,
+        user: { id: userId },
+      });
+    });
+
+    it("rejects revoked, expired and unknown keys", async () => {
+      const { userId, workspaceId } = await membership("admin");
+      const revoked = await service.createApiKey(userId, workspaceId, {
+        name: "Revoked",
+        expiresAt: null,
+      });
+      await service.revokeApiKey(userId, workspaceId, revoked.apiKey.id);
+      const expired = await service.createApiKey(userId, workspaceId, {
+        name: "Expired",
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+      await testDatabase.database
+        .update(apiKeys)
+        .set({
+          createdAt: new Date(Date.now() - 120_000),
+          expiresAt: new Date(Date.now() - 1_000),
+        })
+        .where(eq(apiKeys.id, expired.apiKey.id));
+
+      for (const secret of [
+        revoked.secret,
+        expired.secret,
+        `grad_${"x".repeat(43)}`,
+        "other",
+      ])
+        await expect(
+          service.authenticateApiKey(secret),
+        ).resolves.toBeUndefined();
+    });
+  });
 });

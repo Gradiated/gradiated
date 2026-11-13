@@ -91,6 +91,16 @@ The worker checks pending and running training jobs once per minute and requests
 Kubernetes Job deletion when their exact Temporal execution has closed. This also cleans
 up queued jobs after workflow timeout or termination, when workflow cleanup cannot run.
 
+## Customer MCP server
+
+`product/services/mcp` serves the customer MCP server at
+`https://mcp.gradiated.com/mcp` and a generated setup page at its root. Its
+tools are generated from the API's OpenAPI document through a per-operation
+configuration, and each call is the equivalent API request made with the
+caller's workspace API key. The service holds no credentials or database access
+of its own; the API authorizes every call. See its
+[README](../product/services/mcp/README.md).
+
 ## Agent access to production
 
 `product/services/ops-mcp` is the managed MCP interface for agents accessing

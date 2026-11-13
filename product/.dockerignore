@@ -4,7 +4,8 @@
 node_modules
 **/node_modules
 **/target
-services/api/generated
+# The MCP server builds its tools from the other generated files.
+services/api/generated/openapi.json
 # Rust services build their own images from their own directories. Keep their
 # sources and test fixtures out of the application image.
 services/collector

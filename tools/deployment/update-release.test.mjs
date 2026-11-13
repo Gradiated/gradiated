@@ -61,6 +61,10 @@ async function fixture() {
     `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product@sha256:${"d".repeat(64)}\n`,
   );
   await writeFile(
+    path.join(workloads, "mcp.yaml"),
+    `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product:old\n`,
+  );
+  await writeFile(
     path.join(workloads, "worker.yaml"),
     `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product:old\n`,
   );
@@ -124,6 +128,10 @@ test("updates one complete production release", async () => {
   );
   assert.match(clickhouseMigrate, new RegExp(`product@${PRODUCT_DIGEST}`));
   assert.match(worker, new RegExp(`product@${PRODUCT_DIGEST}`));
+  assert.match(
+    await readFile(path.join(workloads, "mcp.yaml"), "utf8"),
+    new RegExp(`product@${PRODUCT_DIGEST}`),
+  );
   const temporalWorker = await readFile(
     path.join(workloads, "temporal-worker.yaml"),
     "utf8",

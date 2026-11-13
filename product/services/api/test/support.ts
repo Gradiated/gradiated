@@ -219,7 +219,12 @@ export const createTestApp = ({
       usage: service("usage"),
       traces: service("traces"),
       training: service("training"),
-      workspaces: service("workspaces"),
+      // Requests without a session are anonymous unless a test accepts their key.
+      workspaces: {
+        ...service("workspaces"),
+        authenticateApiKey:
+          services.workspaces?.authenticateApiKey ?? (async () => undefined),
+      },
     },
   });
 };

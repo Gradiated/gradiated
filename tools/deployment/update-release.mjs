@@ -14,6 +14,7 @@ export const IMAGES = [
     metadataKey: "productImage",
     manifests: [
       "api.yaml",
+      "mcp.yaml",
       "recovery/cronjobs.yaml",
       "rollout-analysis.yaml",
       "clickhouse-migrate.yaml",

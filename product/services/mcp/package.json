@@ -1,0 +1,20 @@
+{
+  "name": "@gradiated/mcp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc --noEmit && vitest run",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "@gradiated/api": "workspace:*",
+    "@gradiated/contracts": "workspace:*",
+    "@hono/node-server": "2.1.1",
+    "@modelcontextprotocol/sdk": "1.32.0",
+    "hono": "4.13.13",
+    "zod": "4.6.6"
+  }
+}

@@ -1,4 +1,4 @@
-import { createWorkspaceStore } from "./store.js";
+import { createWorkspaceStore, type ApiKeyOwnerRecord } from "./store.js";
 import {
   DEFAULT_EVALUATION_JUDGE,
   type UpdateWorkspace,
@@ -71,6 +71,7 @@ export interface WorkspaceApiKeyService {
     workspaceId: string,
     apiKeyId: string,
   ): Promise<void>;
+  authenticateApiKey(secret: string): Promise<ApiKeyOwnerRecord | undefined>;
 }
 
 const { digest: _digest, ...apiKeyColumns } = getTableColumns(apiKeys);
@@ -284,6 +285,13 @@ export const createWorkspaceApiKeyService = (
           .set({ revokedAt, updatedAt: revokedAt })
           .where(eq(apiKeys.id, apiKey.id));
       }
+    },
+
+    // Membership and workspace state are checked by each operation, as for a session.
+    async authenticateApiKey(secret) {
+      if (!secret.startsWith("grad_")) return undefined;
+
+      return records.findActiveApiKeyOwner(apiKeyDigest(secret), new Date());
     },
   };
 };

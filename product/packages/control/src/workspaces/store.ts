@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, gt, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 import {
   WorkspaceSchema,
@@ -9,7 +9,7 @@ import {
 } from "@gradiated/contracts";
 import type { ControlDatabase } from "../db/client.js";
 import { ControlServiceError } from "../errors.js";
-import { workspaces } from "../db/schema/index.js";
+import { apiKeys, users, workspaces } from "../db/schema/index.js";
 
 const WorkspaceRecordSchema = z.object({
   id: UuidSchema,
@@ -24,6 +24,23 @@ const WorkspaceRecordSchema = z.object({
   defaultJudgeModel: EvaluationJudgeSchema,
 });
 
+const ApiKeyOwnerRecordSchema = z.object({
+  apiKeyId: UuidSchema,
+  organizationId: UuidSchema,
+  workspaceId: UuidSchema,
+  user: z.object({
+    id: UuidSchema,
+    name: z.string(),
+    email: z.string(),
+    emailVerified: z.boolean(),
+    isStaff: z.boolean(),
+    image: z.string().nullable(),
+    createdAt: z.date(),
+  }),
+});
+
+export type ApiKeyOwnerRecord = z.infer<typeof ApiKeyOwnerRecordSchema>;
+
 export const createWorkspaceStore = (database: ControlDatabase) => ({
   async get(workspaceId: string) {
     const [workspace] = await database
@@ -32,6 +49,35 @@ export const createWorkspaceStore = (database: ControlDatabase) => ({
       .where(eq(workspaces.id, UuidSchema.parse(workspaceId)))
       .limit(1);
     return workspace ? WorkspaceRecordSchema.parse(workspace) : undefined;
+  },
+  async findActiveApiKeyOwner(digest: Buffer, now: Date) {
+    const [record] = await database
+      .select({
+        apiKeyId: apiKeys.id,
+        organizationId: apiKeys.organizationId,
+        workspaceId: apiKeys.workspaceId,
+        user: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          emailVerified: users.emailVerified,
+          isStaff: users.isStaff,
+          image: users.image,
+          createdAt: users.createdAt,
+        },
+      })
+      .from(apiKeys)
+      .innerJoin(users, eq(users.id, apiKeys.createdBy))
+      .where(
+        and(
+          eq(apiKeys.digest, digest),
+          isNull(apiKeys.revokedAt),
+          or(isNull(apiKeys.expiresAt), gt(apiKeys.expiresAt, now)),
+        ),
+      )
+      .limit(1);
+
+    return record ? ApiKeyOwnerRecordSchema.parse(record) : undefined;
   },
   async update(workspaceId: string, input: UpdateWorkspace) {
     const patch = UpdateWorkspaceSchema.parse(input);

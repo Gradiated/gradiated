@@ -24,6 +24,7 @@ release_paths=(
   infra/environments/prod/us-east-1/kubernetes/workloads/collector.yaml
   infra/environments/prod/us-east-1/kubernetes/workloads/worker.yaml
   infra/environments/prod/us-east-1/kubernetes/workloads/temporal-worker.yaml
+  infra/environments/prod/us-east-1/kubernetes/workloads/mcp.yaml
   infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/workload.yaml
 )
 if git diff --quiet -- "${release_paths[@]}"; then

@@ -32,6 +32,7 @@ on:
       - "product/services/worker/**"
       - "product/services/temporal-worker/**"
       - "product/services/ops-mcp/**"
+      - "product/services/mcp/**"
       - "product/services/gpu-fleet/**"
       - "product/.dockerignore"
       - "product/.nvmrc"

@@ -3,7 +3,9 @@ import type { ReactNode } from "react";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -51,30 +53,44 @@ export const OptionSelect = <Value extends string>({
   disabled?: boolean;
   placeholder?: string;
   renderOption?: (option: Option<Value>) => ReactNode;
-}) => (
-  <Select
-    disabled={disabled ?? false}
-    value={value}
-    onValueChange={optionHandler(options, onValueChange)}
-  >
-    <SelectTrigger className={className} aria-label={label}>
-      <SelectValue placeholder={placeholder} />
-    </SelectTrigger>
-    <SelectContent>
-      {options.map((option) => (
-        <SelectItem
-          key={option.value}
-          value={option.value}
-          disabled={option.disabled ?? false}
-          className={itemClassName}
-          textValue={option.label}
-        >
-          {renderOption ? renderOption(option) : option.label}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-);
+}) => {
+  const item = (option: Option<Value>) => (
+    <SelectItem
+      key={option.value}
+      value={option.value}
+      disabled={option.disabled ?? false}
+      className={itemClassName}
+      textValue={option.label}
+    >
+      {renderOption ? renderOption(option) : option.label}
+    </SelectItem>
+  );
+  const groups = [...new Set(options.map((option) => option.group))];
+
+  return (
+    <Select
+      disabled={disabled ?? false}
+      value={value}
+      onValueChange={optionHandler(options, onValueChange)}
+    >
+      <SelectTrigger className={className} aria-label={label}>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {groups.map((group) =>
+          group === undefined ? (
+            options.filter((option) => option.group === undefined).map(item)
+          ) : (
+            <SelectGroup key={group}>
+              <SelectLabel>{group}</SelectLabel>
+              {options.filter((option) => option.group === group).map(item)}
+            </SelectGroup>
+          ),
+        )}
+      </SelectContent>
+    </Select>
+  );
+};
 
 export const OptionTabs = <Value extends string>({
   value,

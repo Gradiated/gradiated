@@ -2,7 +2,7 @@
 
 Everyone at Gradiated gets AWS access through a pull request. Most people need
 only the `restricted` level: it reads and updates the shared development
-secrets under `gradiated/dev/`, which is what `mise run env:build` uses to write
+secrets under `gradiated/dev/`, which is what `gradctl env build` uses to write
 your `.env`. It cannot see or change anything else in AWS.
 
 ## 1. Add yourself
@@ -47,11 +47,16 @@ sends you an email; you set your password on your first sign-in.
    (your key in `people.tf`, such as `james`). AWS emails you a one-time
    code; enter it, set a password, and register an MFA device when asked. Use
    an authenticator app or a security key.
-2. In your checkout, run:
+2. In your checkout of `Gradiated/gradiated`, install the pinned tools once,
+   then build `.env`:
 
    ```sh
-   mise run env:build
+   mise install
+   gradctl env build
    ```
+
+   mise puts `gradctl` on your PATH inside the checkout. If your shell does
+   not activate mise, run `mise exec -- gradctl env build`.
 
    The first run adds the `gradiated-restricted` AWS profile to
    `~/.aws/config` and opens a browser to sign in. It then writes `.env` from

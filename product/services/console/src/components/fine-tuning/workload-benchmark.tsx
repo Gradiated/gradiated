@@ -181,7 +181,9 @@ export const WorkloadBenchmarkCard = ({
           ].map(([label, value]) => (
             <div key={String(label)}>
               <div className="text-xs text-muted-foreground">{label}</div>
-              <div className="mt-1 text-sm font-medium">{value}</div>
+              <div className="mt-1 flex min-h-6 items-center text-sm font-medium">
+                {value}
+              </div>
             </div>
           ))}
         </div>

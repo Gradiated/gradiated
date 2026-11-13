@@ -132,7 +132,7 @@ Workspace settings expose `default_judge_model` as **Default judge model**. Capt
 
 ## Storybook previews
 
-Browse Storybook at https://gradiated-storybook-gradiated.vercel.app; PR comments link to
+Browse Storybook at https://storybook.gradiated.com; PR comments link to
 the preview for that branch. Run locally from `product/`:
 
 ```sh
@@ -197,10 +197,9 @@ No production API credentials or application environment variables are needed:
 Storybook uses mocked data and disables production analytics.
 
 CI does not capture or commit PNGs. The local capture command above remains
-available for ad hoc checks. The existing AWS-hosted
-`https://storybook.gradiated.com` is the legacy main-branch build; it does not
-show PR changes and stops receiving updates when the old workflow is removed.
-Use the Vercel project's deployment URL for current builds. Moving the custom
-domain requires a separate reviewed DNS/hosting change.
+available for ad hoc checks. The production custom domain
+`https://storybook.gradiated.com` points to Vercel; the project's deployment URL
+`https://gradiated-storybook-gradiated.vercel.app` is also available. AWS does
+not host or deploy Storybook.
 
 Model display names and provider icon paths live in the shared `@gradiated/contracts/model-catalog`. Selectors and model labels use that metadata, falling back to the exact ID for uncataloged models. Provider SVGs are served locally from `public/model-providers/`; exact IDs remain in API snippets and raw request data.

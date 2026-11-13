@@ -288,17 +288,11 @@ configuration in `vercel.json` and PR links provided by Vercel's Git integration
 Preview builds run independently of GitHub Actions. Configure Standard machines
 and on-demand concurrency with one active build per branch for parallel PRs.
 Neither website nor Storybook CI captures or commits screenshots. Local capture
-scripts remain available under `tools/browser/`. The old AWS Storybook custom
-domain is retained as a legacy build until a reviewed DNS/hosting migration;
-use `https://gradiated-storybook-gradiated.vercel.app` and PR preview links for current builds.
-
-Storybook's AWS retirement uses two ordered Terraform releases. The preparation
-release removes the legacy AAAA alias and sets the Storybook bucket's
-`force_destroy` to true, allowing the AWS provider to remove all object versions
-and delete markers during the following release. It also removes obsolete AWS
-Storybook deployment permissions. Wait for that production apply to succeed
-before merging the cutover release. Until cutover, the legacy domain continues
-serving through its A alias.
+scripts remain available under `tools/browser/`. Storybook production is served
+at `https://storybook.gradiated.com` by Vercel. The `public-ingress` module owns
+its CNAME, pointing to `49acbae7731b47db.vercel-dns-016.com`; the Vercel project
+must have this domain assigned to Production. The Vercel deployment URL and PR
+preview links remain available; project deployment protection controls access.
 
 Before observability reconciliation, populate the externally managed
 `gradiated/prod/platform/alertmanager-notifications` secret with a
@@ -308,6 +302,34 @@ that secret version.
 
 Terraform creates `gradiated-prod-deployment`. The role trusts only this
 repository's immutable GitHub OIDC subject in the `production` environment.
+
+### Storybook domain migration
+
+The AWS retirement uses two ordered, reviewed Terraform releases:
+
+1. Apply the preparation release first: remove the old AAAA alias, set only the
+   Storybook bucket's `force_destroy` to true, and remove obsolete deployment
+   permissions. Wait for the production apply to succeed. The old domain keeps
+   serving through its A alias. The saved bucket setting allows the AWS provider
+   to delete all versions and delete markers during the cutover release.
+2. Confirm Vercel's `storybook` project has `storybook.gradiated.com` assigned to
+   Production, recommends `49acbae7731b47db.vercel-dns-016.com`, and has a ready
+   production deployment. Then apply the cutover release. The moved Route 53
+   resource preserves Terraform ownership while changing the A alias to a CNAME.
+   The AAAA alias must already be absent because Route 53 rejects a CNAME alongside either address record.
+   Terraform also removes the Storybook bucket and all its versions, CloudFront
+   distribution, origin access control and outputs. The console and shared
+   certificate/WAF remain in AWS.
+3. Verify the Terraform apply succeeded, Vercel reports valid configuration,
+   HTTPS works, and the expected production stories are present. CloudFront
+   retirement can take time; cached DNS may briefly serve the old distribution.
+
+Do not merge the cutover release until preparation has been applied. Production
+changes run through CI from main. There is no manual bucket purge or state edit.
+The old Storybook GitHub Actions workflow is already removed; Vercel owns builds.
+AWS assets are reproducible build output; reverting after deletion cannot recover
+the old bucket contents or distribution identity. Roll back hosting by restoring
+AWS infrastructure and rebuilding assets, or correct the Vercel domain/deployment.
 
 ## First deployment
 

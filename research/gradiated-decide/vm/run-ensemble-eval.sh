@@ -11,7 +11,7 @@ OTHER=${1:-runs/evals/gd-v1-s1652-a0.5-sample}; WHICH=${2:-sample}
 WEIGHTS=${WEIGHTS:-0.5}; MODES=${MODES:-linear}
 BACKEND=${BACKEND:-knowline-http}; KL_NAME=${KL_NAME:-knowline$([ "$BACKEND" = knowline-http ] && echo -sgl)}
 BASE_RUN=${BASE_RUN:-runs/evals/base-$WHICH}; COMPARE=${COMPARE:-runs/evals/base-$WHICH}
-KL_REVISION=8e56aa1b236a6dd1064dcfd22ba1e5e360e4c140
+KL_REVISION=56ca884a8e3195c9c0786a4ec22e651669d04ba9
 cd "$ROOT"
 PY=$ROOT/venv/bin/python; export PATH=$HOME/.local/bin:$PATH
 "$PY" -c "import requests" 2>/dev/null || VIRTUAL_ENV=$ROOT/venv uv pip install -q requests

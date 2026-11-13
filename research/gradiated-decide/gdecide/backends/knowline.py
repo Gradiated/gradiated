@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 REPO = "PelaAI/KnowLine-31B-Gen1.5"
-REVISION = "8e56aa1b236a6dd1064dcfd22ba1e5e360e4c140"
+REVISION = "56ca884a8e3195c9c0786a4ec22e651669d04ba9"
 FRONT_END_FILES = ("knowline_server.py", "knowline_layout.py")
 
 

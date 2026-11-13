@@ -440,13 +440,15 @@ def main() -> None:
         started = time.time()
         meta = {"step": step, "scheduler": scheduler.state_dict(), "time": started}
         state = {"model": get_model_state_dict(model), "optim": get_optimizer_state_dict(model, optimizer)}
+        # One writer thread per rank (the default) managed ~55 MB/s per rank: 13 minutes for gd-kl2's 335 GB.
+        writer = dcp.FileSystemWriter(str(path), thread_count=16)
         if args.sync_state:
-            dcp.save(state, checkpoint_id=str(path))
+            dcp.save(state, checkpoint_id=str(path), storage_writer=writer)
             state_written(path, meta, started)
             return
         # Stage to host memory (training waits only for this), then write to disk in a background thread; the
         # checkpoint's own collectives run on a gloo group so they never interleave with training's NCCL traffic.
-        future = dcp.async_save(state, checkpoint_id=str(path), process_group=gloo)
+        future = dcp.async_save(state, checkpoint_id=str(path), storage_writer=writer, process_group=gloo)
         pending = (future, path, meta, started)
         log(event="state_staged", step=step, seconds=round(time.time() - started))
 

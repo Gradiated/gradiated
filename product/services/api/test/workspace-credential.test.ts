@@ -36,11 +36,37 @@ const appWithCredentials = () => {
 
     return undefined;
   });
+  const describeCredential = vi.fn(async (secret: string) => {
+    const owner = await authenticateCredential(secret);
+
+    return (
+      owner && {
+        ...owner,
+        workspaceName: "Default",
+        organizationName: "Acme",
+        organizationSlug: "acme",
+      }
+    );
+  });
+  const createOAuthInferenceCredential = vi.fn(async (secret: string) =>
+    secret === oauthToken
+      ? {
+          apiKeyId: "0198ae6f-68b0-7644-812d-c4bf16a926e6",
+          secret: `grad_${"m".repeat(43)}`,
+          expiresAt: new Date("2026-11-13T13:00:00.000Z"),
+        }
+      : undefined,
+  );
   const listTasks = vi.fn(async () => []);
   const listApiKeys = vi.fn(async () => []);
   const app = createTestApp({
     services: {
-      workspaces: { authenticateCredential, listApiKeys },
+      workspaces: {
+        authenticateCredential,
+        describeCredential,
+        createOAuthInferenceCredential,
+        listApiKeys,
+      },
       training: { listTasks },
     },
   });
@@ -130,6 +156,10 @@ describe("GET /api/v1/credentials/current", () => {
       id,
       organization_id: organizationId,
       workspace_id: workspaceId,
+      workspace_name: "Default",
+      organization_name: "Acme",
+      organization_slug: "acme",
+      user: { id: user.id, name: user.name, email: user.email },
     });
   });
 
@@ -145,6 +175,31 @@ describe("GET /api/v1/credentials/current", () => {
         )
       ).status,
     ).toBe(401);
+  });
+});
+
+describe("POST /api/v1/credentials/current/inference-keys", () => {
+  const post = (secret?: string) =>
+    appWithCredentials().app.request(
+      "/api/v1/credentials/current/inference-keys",
+      { method: "POST", ...(secret ? bearer(secret) : {}) },
+    );
+
+  it("gives an OAuth token an inference key", async () => {
+    const response = await post(oauthToken);
+
+    expect(response.status).toBe(201);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.json()).toEqual({
+      secret: `grad_${"m".repeat(43)}`,
+      expires_at: "2026-11-13T13:00:00.000Z",
+    });
+  });
+
+  it("refuses API keys and unknown credentials", async () => {
+    expect((await post(apiKeySecret)).status).toBe(403);
+    expect((await post(`grado_${"u".repeat(32)}`)).status).toBe(401);
+    expect((await post()).status).toBe(401);
   });
 });
 

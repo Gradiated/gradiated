@@ -61,7 +61,8 @@ const content = createRoute({
   path: `${base}/generations/{generation_id}`,
   operationId: "getGeneration",
   summary: "Get generation",
-  description: "Gets one inference request.",
+  description:
+    "Gets one captured generation's stored request and response. Content is stored only for generations captured for a task; locate it with the task's name or the content_ref from listing the task's generations.",
   tags: ["Generations"],
   request: { params: TraceContentPathSchema, query: TraceContentQuerySchema },
   responses: {
@@ -115,13 +116,17 @@ export const registerGenerationRoutes = (
   app.openapi(content, async (c) => {
     const user = await requireUser(c);
     const p = c.req.valid("param");
+    const query = c.req.valid("query");
     c.header("Cache-Control", "no-store");
     return c.json(
       await traces.content(
         user.id,
         p.workspace_id,
         p.generation_id,
-        c.req.valid("query").content_ref,
+        // The schema requires exactly one of them.
+        query.content_ref === undefined
+          ? { task: query.task_id! }
+          : { content_ref: query.content_ref },
       ),
       200,
     );

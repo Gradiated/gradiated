@@ -62,6 +62,13 @@ export const createTrainingService = (
     return task;
   };
 
+  const findVersion = async (taskId: string, reference: string) => {
+    const row = await records.findVersion(taskId, reference);
+    if (!row) throw notFound("version");
+
+    return row;
+  };
+
   const findRun = async (workspaceId: string, runId: string) => {
     const row = await records.getRun(workspaceId, runId);
     if (!row) throw notFound("training run");
@@ -267,8 +274,7 @@ export const createTrainingService = (
     ) {
       await member(userId, workspaceId);
       const task = await findTask(workspaceId, name);
-      const version = await records.getVersion(task.id, versionId);
-      if (!version) throw notFound("version");
+      const version = await findVersion(task.id, versionId);
       if (!downloads?.results)
         throw new ControlServiceError(
           "unavailable",
@@ -288,8 +294,7 @@ export const createTrainingService = (
     ) {
       await member(userId, workspaceId);
       const task = await findTask(workspaceId, name);
-      const version = await records.getVersion(task.id, versionId);
-      if (!version) throw notFound("version");
+      const version = await findVersion(task.id, versionId);
       if (!downloads)
         throw new ControlServiceError(
           "unavailable",
@@ -304,16 +309,27 @@ export const createTrainingService = (
       );
     },
 
+    async getVersion(
+      userId: string,
+      workspaceId: string,
+      name: string,
+      version: string,
+    ) {
+      await member(userId, workspaceId);
+      const task = await findTask(workspaceId, name);
+
+      return { task, version: await findVersion(task.id, version) };
+    },
+
     async promote(
       userId: string,
       workspaceId: string,
       name: string,
-      versionId: string,
+      versionNameOrId: string,
     ) {
       await requireWorkspaceEditor(database, { userId, workspaceId });
       const task = await findTask(workspaceId, name);
-      const version = await records.getVersion(task.id, versionId);
-      if (!version) throw notFound("version");
+      const version = await findVersion(task.id, versionNameOrId);
       requireLoadableAdapter(version);
       if (version.status === "available")
         return records.setProductionVersion(task.id, version.id);

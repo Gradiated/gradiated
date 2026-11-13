@@ -92,12 +92,40 @@ export type GenerationSettled = z.infer<typeof GenerationSettledSchema>;
 export const GenerationsQuerySchema = z
   .strictObject({
     ...GenerationListQuerySchema.shape,
-    from: GenerationListQuerySchema.shape.from.optional(),
-    to: GenerationListQuerySchema.shape.to.optional(),
-    limit: z.coerce.number().int().min(1).max(100).optional(),
-    sort: z.enum(["newest", "highest_cost"]).optional(),
-    task_id: TaskGenerationQuerySchema.shape.task_id.optional(),
-    cursor: z.string().min(1).max(4096).optional(),
+    from: GenerationListQuerySchema.shape.from
+      .optional()
+      .describe(
+        "Start of the period, as an RFC 3339 timestamp. Required without task_id; periods are at most 93 days.",
+      ),
+    to: GenerationListQuerySchema.shape.to
+      .optional()
+      .describe(
+        "End of the period, as an RFC 3339 timestamp. Required without task_id.",
+      ),
+    limit: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .optional()
+      .describe("Generations per page; 25 by default."),
+    sort: z
+      .enum(["newest", "highest_cost"])
+      .optional()
+      .describe(
+        "newest (the default) orders by received time; highest_cost by charge.",
+      ),
+    task_id: TaskGenerationQuerySchema.shape.task_id
+      .optional()
+      .describe(
+        "Lists the generations captured for this task name instead, newest first, with each generation's content_ref. Takes only cursor, not the period or other filters.",
+      ),
+    cursor: z
+      .string()
+      .min(1)
+      .max(4096)
+      .optional()
+      .describe("The next_cursor from the previous page; opaque."),
   })
   .superRefine((query, context) => {
     const result = (

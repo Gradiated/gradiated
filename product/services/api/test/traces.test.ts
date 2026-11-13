@@ -63,8 +63,32 @@ describe("trace routes", () => {
       expect.any(String),
       workspaceId,
       workspaceId,
-      "ref",
+      { content_ref: "ref" },
     );
+  });
+  it("reads a generation by ID and task name, and needs exactly one of them", async () => {
+    const content = vi.fn(async () => ({
+      generation_id: workspaceId,
+      raw: null,
+      canonical: null,
+    }));
+    const app = createTestApp({
+      auth: authenticated,
+      services: { traces: { content } },
+    });
+    const generation = `${path}/generations/${workspaceId}`;
+
+    expect((await app.request(`${generation}?task_id=support`)).status).toBe(
+      200,
+    );
+    expect(content).toHaveBeenCalledWith(
+      expect.any(String),
+      workspaceId,
+      workspaceId,
+      { task: "support" },
+    );
+    for (const query of ["", "?content_ref=ref&task_id=support"])
+      expect((await app.request(`${generation}${query}`)).status).toBe(422);
   });
   it("does not expose the removed workspace discovery and data routes", async () => {
     const app = createTestApp({ auth: authenticated });

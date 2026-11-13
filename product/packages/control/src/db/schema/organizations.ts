@@ -279,8 +279,9 @@ export const apiKeys = pgTable(
       name: "api_keys_workspace_foreign_key",
     }).onDelete("cascade"),
     uniqueIndex("api_keys_digest_unique").on(table.digest),
-    uniqueIndex("api_keys_hidden_owner_unique")
-      .on(table.workspaceId, table.createdBy)
+    // Each member has one hidden key per purpose, such as the playground or MCP.
+    uniqueIndex("api_keys_hidden_owner_name_unique")
+      .on(table.workspaceId, table.createdBy, table.name)
       .where(sql`${table.hidden}`),
     index("api_keys_workspace_created_at_index").on(
       table.organizationId,

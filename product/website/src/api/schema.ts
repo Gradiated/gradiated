@@ -665,6 +665,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/credentials/current/inference-keys": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create inference key for OAuth token
+     * @description Exchanges the OAuth access token in the Authorization header for a one-hour inference key of its member's in its workspace. Inference takes only API keys. Each call rotates the member's single key for OAuth clients, which is not listed with the workspace keys.
+     */
+    post: operations["createCredentialInferenceKey"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/me/oauth-workspace": {
     parameters: {
       query?: never;
@@ -814,7 +834,7 @@ export interface paths {
     };
     /**
      * Get generation
-     * @description Gets one inference request.
+     * @description Gets one captured generation's stored request and response. Content is stored only for generations captured for a task; locate it with the task's name or the content_ref from listing the task's generations.
      */
     get: operations["getGeneration"];
     put?: never;
@@ -1009,6 +1029,26 @@ export interface paths {
      * @description Lists a task's trained versions.
      */
     get: operations["listTaskVersions"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get task version
+     * @description Gets one of a task's versions by its name or ID.
+     */
+    get: operations["getTaskVersion"];
     put?: never;
     post?: never;
     delete?: never;
@@ -2214,6 +2254,28 @@ export interface components {
        * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
        */
       workspace_id: string;
+      workspace_name: string;
+      organization_name: string;
+      /** @description Prefixes the organization's private model names: <slug>/<task> for a task's production version and <slug>/<task>/<version> for one version. */
+      organization_slug: string;
+      /** @description The member the credential acts as. */
+      user: {
+        /**
+         * Format: uuid
+         * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+         */
+        id: string;
+        name: string;
+        email: string;
+      };
+    };
+    PlaygroundCredential: {
+      secret: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      expires_at: string;
     };
     OAuthWorkspaceSelection: {
       /**
@@ -2281,14 +2343,6 @@ export interface components {
        * @example 2026-08-16T12:00:00.000Z
        */
       expires_at?: string | null;
-    };
-    PlaygroundCredential: {
-      secret: string;
-      /**
-       * Format: date-time
-       * @example 2026-08-16T12:00:00.000Z
-       */
-      expires_at: string;
     };
     McpToolList: {
       server: {
@@ -2634,9 +2688,11 @@ export interface components {
       training_schedule: components["schemas"]["TaskTrainingSchedule"];
     };
     UpdateTask: {
+      /** @description The catalog model ID that new versions are trained from. */
       base_model_id?: string;
+      /** @description The catalog model ID that evaluations compare trained versions against. */
       comparison_model_id?: string;
-      judge_model_id?: components["schemas"]["EvaluationJudge"];
+      judge_model_id?: components["schemas"]["EvaluationJudge"] & unknown;
       training_schedule?: components["schemas"]["TaskTrainingSchedule"];
     };
     TrainingRunList: {
@@ -2912,10 +2968,7 @@ export interface components {
       expires_at: string;
     };
     PromoteVersion: {
-      /**
-       * Format: uuid
-       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
-       */
+      /** @description The version's name or ID. */
       version_id: string;
     };
     TaskVersionFileList: {
@@ -5714,7 +5767,9 @@ export interface operations {
   getUsageSummary: {
     parameters: {
       query: {
+        /** @description Start of the period, as an RFC 3339 timestamp. Periods are at most 93 days. */
         from: string;
+        /** @description End of the period, as an RFC 3339 timestamp. Must be after from. */
         to: string;
       };
       header?: never;
@@ -5732,6 +5787,7 @@ export interface operations {
         };
         content: {
           "application/json": {
+            /** @description Spend in integer nano-USD. */
             charge: string;
             input_tokens: string;
             output_tokens: string;
@@ -5740,6 +5796,7 @@ export interface operations {
             daily: {
               /** Format: date */
               date: string;
+              /** @description Spend in integer nano-USD. */
               charge: string;
               input_tokens: string;
               output_tokens: string;
@@ -5747,6 +5804,7 @@ export interface operations {
             }[];
             models: {
               model_id: string;
+              /** @description Spend in integer nano-USD. */
               charge: string;
               input_tokens: string;
               output_tokens: string;
@@ -6053,6 +6111,46 @@ export interface operations {
       };
       /** @description The credential is missing, unknown, expired or revoked. */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  createCredentialInferenceKey: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description A one-hour inference key. */
+      201: {
+        headers: {
+          /** @description Prevents storage of the one-time secret. */
+          "Cache-Control"?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PlaygroundCredential"];
+        };
+      };
+      /** @description The credential is missing, unknown, expired or revoked. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The credential is an API key, or the workspace cannot be used. */
+      403: {
         headers: {
           [name: string]: unknown;
         };
@@ -6504,16 +6602,25 @@ export interface operations {
   listGenerations: {
     parameters: {
       query?: {
+        /** @description Start of the period, as an RFC 3339 timestamp. Required without task_id; periods are at most 93 days. */
         from?: string;
+        /** @description End of the period, as an RFC 3339 timestamp. Required without task_id. */
         to?: string;
+        /** @description The next_cursor from the previous page; opaque. */
         cursor?: string;
+        /** @description Generations per page; 25 by default. */
         limit?: number;
+        /** @description Only generations made with this API key ID. */
         api_key_id?: string;
+        /** @description Only generations for this exact model ID. */
         model?: string;
+        /** @description Matches generations whose ID starts with this text, or whose model ID or external ID contains it. */
         search?: string;
+        /** @description newest (the default) orders by received time; highest_cost by charge. */
         sort?: "newest" | "highest_cost";
+        /** @description Only generations that ended with this status. */
         status?: "succeeded" | "failed" | "cancelled" | "abandoned";
-        /** @description Exact task identifier supplied in the capture header. */
+        /** @description Lists the generations captured for this task name instead, newest first, with each generation's content_ref. Takes only cursor, not the period or other filters. */
         task_id?: string;
       };
       header?: never;
@@ -6544,6 +6651,7 @@ export interface operations {
                   /** @enum {string} */
                   status: "succeeded" | "failed" | "cancelled" | "abandoned";
                   streamed: boolean;
+                  /** @description Charge in integer nano-USD. */
                   charge: string;
                   input_tokens: number;
                   cached_input_tokens: number;
@@ -6620,12 +6728,16 @@ export interface operations {
   };
   getGeneration: {
     parameters: {
-      query: {
-        content_ref: string;
+      query?: {
+        /** @description The content_ref returned with the generation when listing a task's generations. Locates the content directly. */
+        content_ref?: string;
+        /** @description The task's name, exactly as sent in the capture header. Content is stored only for generations captured for a task. */
+        task_id?: string;
       };
       header?: never;
       path: {
         workspace_id: string;
+        /** @description The generation's ID. */
         generation_id: string;
       };
       cookie?: never;
@@ -7307,6 +7419,7 @@ export interface operations {
       header?: never;
       path: {
         workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
         task: string;
       };
       cookie?: never;
@@ -7384,6 +7497,7 @@ export interface operations {
       header?: never;
       path: {
         workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
         task: string;
       };
       cookie?: never;
@@ -7545,6 +7659,7 @@ export interface operations {
       header?: never;
       path: {
         workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
         task: string;
       };
       cookie?: never;
@@ -7616,13 +7731,95 @@ export interface operations {
       };
     };
   };
+  getTaskVersion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
+        task: string;
+        /** @description The version's name or ID. */
+        version_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The version. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TaskVersion"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
   getEvaluationResults: {
     parameters: {
       query?: never;
       header?: never;
       path: {
         workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
         task: string;
+        /** @description The version's name or ID. */
         version_id: string;
       };
       cookie?: never;
@@ -7700,7 +7897,9 @@ export interface operations {
       header?: never;
       path: {
         workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
         task: string;
+        /** @description The version's name or ID. */
         version_id: string;
       };
       cookie?: never;
@@ -7778,6 +7977,7 @@ export interface operations {
       header?: never;
       path: {
         workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
         task: string;
       };
       cookie?: never;
@@ -7859,7 +8059,9 @@ export interface operations {
       header?: never;
       path: {
         workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
         task: string;
+        /** @description The version's name or ID. */
         version_id: string;
       };
       cookie?: never;
@@ -7937,7 +8139,9 @@ export interface operations {
       header?: never;
       path: {
         workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
         task: string;
+        /** @description The version's name or ID. */
         version_id: string;
       };
       cookie?: never;
@@ -8019,8 +8223,11 @@ export interface operations {
       header?: never;
       path: {
         workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
         task: string;
+        /** @description The version's name or ID. */
         version_id: string;
+        /** @description The file's name, such as report.md, or its ID. */
         file_id: string;
       };
       cookie?: never;
@@ -8098,8 +8305,11 @@ export interface operations {
       header?: never;
       path: {
         workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
         task: string;
+        /** @description The version's name or ID. */
         version_id: string;
+        /** @description The file's name, such as report.md, or its ID. */
         file_id: string;
       };
       cookie?: never;
@@ -8175,8 +8385,11 @@ export interface operations {
       header?: never;
       path: {
         workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
         task: string;
+        /** @description The version's name or ID. */
         version_id: string;
+        /** @description The file's name, such as report.md, or its ID. */
         file_id: string;
       };
       cookie?: never;
@@ -8254,8 +8467,11 @@ export interface operations {
       header?: never;
       path: {
         workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
         task: string;
+        /** @description The version's name or ID. */
         version_id: string;
+        /** @description The file's name, such as report.md, or its ID. */
         file_id: string;
       };
       cookie?: never;

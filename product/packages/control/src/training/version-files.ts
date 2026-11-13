@@ -51,7 +51,7 @@ export const createVersionFiles = (
     const task = await records.getTask(workspaceId, taskName);
     if (!task) throw notFound("task");
 
-    const version = await records.getVersion(task.id, versionId);
+    const version = await records.findVersion(task.id, versionId);
     if (!version) throw notFound("version");
 
     return version;
@@ -63,8 +63,11 @@ export const createVersionFiles = (
     });
     if (workspace.archivedAt) throw notFound("workspace");
   };
-  const readyFile = async (versionId: string, fileId: string) => {
-    const file = await files.get(versionId, fileId);
+  // A ready file's name is unique within its version.
+  const readyFile = async (versionId: string, reference: string) => {
+    const file =
+      (await files.get(versionId, reference)) ??
+      (await files.getReadyByName(versionId, reference));
     if (!file || file.status !== "ready") throw notFound("file");
 
     return file;

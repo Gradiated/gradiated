@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import * as zlib from "node:zlib";
 import { z } from "zod";
-import { DAY } from "../constants.js";
+import { DAY, HOUR } from "../constants.js";
 import { ControlServiceError } from "../errors.js";
 import type { ContentStore } from "./storage.js";
 
@@ -85,12 +85,65 @@ export const readTraceContent = async (
   )
     throw contentNotFound();
 
+  const row = await findRow(store, key, workspace, generation);
+  if (!row) throw contentNotFound();
+
+  return readTraceRecord(store, key, row);
+};
+
+const findRow = async (
+  store: ContentStore,
+  key: string,
+  workspace: string,
+  generation: string,
+) => {
   const row = (await readManifest(store, key)).find(
     (row) => row.generation_id === generation && row.workspace_id === workspace,
   );
-  if (!row || !isRetained(row, Date.now())) throw contentNotFound();
+  if (row && !isRetained(row, Date.now())) throw contentNotFound();
 
-  return readTraceRecord(store, key, row);
+  return row;
+};
+
+// Bounds one lookup; a busy task writes a manifest per collector batch each hour.
+const MAX_SCANNED_MANIFESTS = 200;
+
+// The collector files content under the hour in the generation's UUIDv7, so a
+// task name and generation ID find it by scanning that hour's manifests.
+export const findTraceContent = async (
+  store: ContentStore,
+  workspace: string,
+  task: string,
+  generation: string,
+) => {
+  const time = generationTime(generation);
+  if (!(time >= Date.now() - 180 * DAY)) throw contentNotFound();
+
+  const hour = new Date(Math.floor(time / HOUR) * HOUR).toISOString();
+  const path = `${workspacePrefix(workspace)}task=${traceTaskKey(task)}/dt=${hour.slice(0, 10)}/hr=${hour.slice(11, 13)}/`;
+  let cursor: string | undefined;
+  let scanned = 0;
+  do {
+    const page = await store.list(path, { cursor, limit: 100 });
+    for (const key of page.keys) {
+      if (
+        !key.endsWith(".manifest.json") ||
+        key.slice(path.length).includes("/")
+      )
+        continue;
+      if (++scanned > MAX_SCANNED_MANIFESTS)
+        throw new ControlServiceError(
+          "unavailable",
+          "Too many content batches to search; pass the generation's content_ref.",
+        );
+
+      const row = await findRow(store, key, workspace, generation);
+      if (row) return readTraceRecord(store, key, row);
+    }
+    cursor = page.cursor;
+  } while (cursor);
+
+  throw contentNotFound();
 };
 
 export const readTraceRecord = async (

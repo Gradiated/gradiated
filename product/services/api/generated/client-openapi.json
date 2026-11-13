@@ -2791,13 +2791,67 @@
             "format": "uuid",
             "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774",
             "description": "The only workspace the credential can act in."
+          },
+          "workspace_name": {
+            "type": "string"
+          },
+          "organization_name": {
+            "type": "string"
+          },
+          "organization_slug": {
+            "type": "string",
+            "description": "Prefixes the organization's private model names: <slug>/<task> for a task's production version and <slug>/<task>/<version> for one version."
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+              },
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "email"
+            ],
+            "description": "The member the credential acts as."
           }
         },
         "required": [
           "type",
           "id",
           "organization_id",
-          "workspace_id"
+          "workspace_id",
+          "workspace_name",
+          "organization_name",
+          "organization_slug",
+          "user"
+        ]
+      },
+      "PlaygroundCredential": {
+        "type": "object",
+        "properties": {
+          "secret": {
+            "type": "string",
+            "pattern": "^grad_[A-Za-z0-9_-]{43}$"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "secret",
+          "expires_at"
         ]
       },
       "OAuthWorkspaceSelection": {
@@ -2943,24 +2997,6 @@
           "name"
         ],
         "additionalProperties": false
-      },
-      "PlaygroundCredential": {
-        "type": "object",
-        "properties": {
-          "secret": {
-            "type": "string",
-            "pattern": "^grad_[A-Za-z0-9_-]{43}$"
-          },
-          "expires_at": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-08-16T12:00:00.000Z"
-          }
-        },
-        "required": [
-          "secret",
-          "expires_at"
-        ]
       },
       "McpToolList": {
         "type": "object",
@@ -3946,15 +3982,24 @@
           "base_model_id": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 200
+            "maxLength": 200,
+            "description": "The catalog model ID that new versions are trained from."
           },
           "comparison_model_id": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 200
+            "maxLength": 200,
+            "description": "The catalog model ID that evaluations compare trained versions against."
           },
           "judge_model_id": {
-            "$ref": "#/components/schemas/EvaluationJudge"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EvaluationJudge"
+              },
+              {
+                "description": "The catalog model ID that judges evaluations."
+              }
+            ]
           },
           "training_schedule": {
             "$ref": "#/components/schemas/TaskTrainingSchedule"
@@ -4898,8 +4943,9 @@
         "properties": {
           "version_id": {
             "type": "string",
-            "format": "uuid",
-            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "The version's name or ID."
           }
         },
         "required": [
@@ -9544,9 +9590,11 @@
             "schema": {
               "type": "string",
               "format": "date-time",
-              "example": "2026-08-16T12:00:00.000Z"
+              "example": "2026-08-16T12:00:00.000Z",
+              "description": "Start of the period, as an RFC 3339 timestamp. Periods are at most 93 days."
             },
             "required": true,
+            "description": "Start of the period, as an RFC 3339 timestamp. Periods are at most 93 days.",
             "name": "from",
             "in": "query"
           },
@@ -9554,9 +9602,11 @@
             "schema": {
               "type": "string",
               "format": "date-time",
-              "example": "2026-08-16T12:00:00.000Z"
+              "example": "2026-08-16T12:00:00.000Z",
+              "description": "End of the period, as an RFC 3339 timestamp. Must be after from."
             },
             "required": true,
+            "description": "End of the period, as an RFC 3339 timestamp. Must be after from.",
             "name": "to",
             "in": "query"
           }
@@ -9571,7 +9621,8 @@
                   "properties": {
                     "charge": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^\\d+$",
+                      "description": "Spend in integer nano-USD."
                     },
                     "input_tokens": {
                       "type": "string",
@@ -9600,7 +9651,8 @@
                           },
                           "charge": {
                             "type": "string",
-                            "pattern": "^\\d+$"
+                            "pattern": "^\\d+$",
+                            "description": "Spend in integer nano-USD."
                           },
                           "input_tokens": {
                             "type": "string",
@@ -9636,7 +9688,8 @@
                           },
                           "charge": {
                             "type": "string",
-                            "pattern": "^\\d+$"
+                            "pattern": "^\\d+$",
+                            "description": "Spend in integer nano-USD."
                           },
                           "input_tokens": {
                             "type": "string",
@@ -10063,6 +10116,61 @@
           },
           "401": {
             "description": "The credential is missing, unknown, expired or revoked.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/credentials/current/inference-keys": {
+      "post": {
+        "operationId": "createCredentialInferenceKey",
+        "summary": "Create inference key for OAuth token",
+        "description": "Exchanges the OAuth access token in the Authorization header for a one-hour inference key of its member's in its workspace. Inference takes only API keys. Each call rotates the member's single key for OAuth clients, which is not listed with the workspace keys.",
+        "tags": [
+          "API keys"
+        ],
+        "security": [
+          {
+            "InferenceBearer": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "A one-hour inference key.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Prevents storage of the one-time secret.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaygroundCredential"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The credential is missing, unknown, expired or revoked.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The credential is an API key, or the workspace cannot be used.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -10674,9 +10782,11 @@
             "schema": {
               "type": "string",
               "format": "date-time",
-              "example": "2026-08-16T12:00:00.000Z"
+              "example": "2026-08-16T12:00:00.000Z",
+              "description": "Start of the period, as an RFC 3339 timestamp. Required without task_id; periods are at most 93 days."
             },
             "required": false,
+            "description": "Start of the period, as an RFC 3339 timestamp. Required without task_id; periods are at most 93 days.",
             "name": "from",
             "in": "query"
           },
@@ -10684,9 +10794,11 @@
             "schema": {
               "type": "string",
               "format": "date-time",
-              "example": "2026-08-16T12:00:00.000Z"
+              "example": "2026-08-16T12:00:00.000Z",
+              "description": "End of the period, as an RFC 3339 timestamp. Required without task_id."
             },
             "required": false,
+            "description": "End of the period, as an RFC 3339 timestamp. Required without task_id.",
             "name": "to",
             "in": "query"
           },
@@ -10694,9 +10806,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 4096
+              "maxLength": 4096,
+              "description": "The next_cursor from the previous page; opaque."
             },
             "required": false,
+            "description": "The next_cursor from the previous page; opaque.",
             "name": "cursor",
             "in": "query"
           },
@@ -10704,9 +10818,11 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 100
+              "maximum": 100,
+              "description": "Generations per page; 25 by default."
             },
             "required": false,
+            "description": "Generations per page; 25 by default.",
             "name": "limit",
             "in": "query"
           },
@@ -10714,9 +10830,11 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774",
+              "description": "Only generations made with this API key ID."
             },
             "required": false,
+            "description": "Only generations made with this API key ID.",
             "name": "api_key_id",
             "in": "query"
           },
@@ -10724,9 +10842,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 300
+              "maxLength": 300,
+              "description": "Only generations for this exact model ID."
             },
             "required": false,
+            "description": "Only generations for this exact model ID.",
             "name": "model",
             "in": "query"
           },
@@ -10734,9 +10854,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 300
+              "maxLength": 300,
+              "description": "Matches generations whose ID starts with this text, or whose model ID or external ID contains it."
             },
             "required": false,
+            "description": "Matches generations whose ID starts with this text, or whose model ID or external ID contains it.",
             "name": "search",
             "in": "query"
           },
@@ -10746,9 +10868,11 @@
               "enum": [
                 "newest",
                 "highest_cost"
-              ]
+              ],
+              "description": "newest (the default) orders by received time; highest_cost by charge."
             },
             "required": false,
+            "description": "newest (the default) orders by received time; highest_cost by charge.",
             "name": "sort",
             "in": "query"
           },
@@ -10760,9 +10884,11 @@
                 "failed",
                 "cancelled",
                 "abandoned"
-              ]
+              ],
+              "description": "Only generations that ended with this status."
             },
             "required": false,
+            "description": "Only generations that ended with this status.",
             "name": "status",
             "in": "query"
           },
@@ -10771,10 +10897,10 @@
               "type": "string",
               "minLength": 1,
               "maxLength": 256,
-              "description": "Exact task identifier supplied in the capture header."
+              "description": "Lists the generations captured for this task name instead, newest first, with each generation's content_ref. Takes only cursor, not the period or other filters."
             },
             "required": false,
-            "description": "Exact task identifier supplied in the capture header.",
+            "description": "Lists the generations captured for this task name instead, newest first, with each generation's content_ref. Takes only cursor, not the period or other filters.",
             "name": "task_id",
             "in": "query"
           }
@@ -10827,7 +10953,8 @@
                               },
                               "charge": {
                                 "type": "string",
-                                "pattern": "^\\d+$"
+                                "pattern": "^\\d+$",
+                                "description": "Charge in integer nano-USD."
                               },
                               "input_tokens": {
                                 "type": "integer",
@@ -10990,7 +11117,7 @@
       "get": {
         "operationId": "getGeneration",
         "summary": "Get generation",
-        "description": "Gets one inference request.",
+        "description": "Gets one captured generation's stored request and response. Content is stored only for generations captured for a task; locate it with the task's name or the content_ref from listing the task's generations.",
         "tags": [
           "Generations"
         ],
@@ -11009,9 +11136,11 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774",
+              "description": "The generation's ID."
             },
             "required": true,
+            "description": "The generation's ID.",
             "name": "generation_id",
             "in": "path"
           },
@@ -11019,10 +11148,24 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 2048
+              "maxLength": 2048,
+              "description": "The content_ref returned with the generation when listing a task's generations. Locates the content directly."
             },
-            "required": true,
+            "required": false,
+            "description": "The content_ref returned with the generation when listing a task's generations. Locates the content directly.",
             "name": "content_ref",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The task's name, exactly as sent in the capture header. Content is stored only for generations captured for a task."
+            },
+            "required": false,
+            "description": "The task's name, exactly as sent in the capture header. Content is stored only for generations captured for a task.",
+            "name": "task_id",
             "in": "query"
           }
         ],
@@ -11917,9 +12060,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 256
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
             },
             "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
             "name": "task",
             "in": "path"
           }
@@ -12019,9 +12164,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 256
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
             },
             "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
             "name": "task",
             "in": "path"
           }
@@ -12259,9 +12406,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 256
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
             },
             "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
             "name": "task",
             "in": "path"
           }
@@ -12273,6 +12422,124 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TaskVersionList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}": {
+      "get": {
+        "operationId": "getTaskVersion",
+        "summary": "Get task version",
+        "description": "Gets one of a task's versions by its name or ID.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
+            },
+            "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
+            "name": "task",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The version's name or ID."
+            },
+            "required": true,
+            "description": "The version's name or ID.",
+            "name": "version_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskVersion"
                 }
               }
             }
@@ -12363,19 +12630,23 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 256
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
             },
             "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
             "name": "task",
             "in": "path"
           },
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The version's name or ID."
             },
             "required": true,
+            "description": "The version's name or ID.",
             "name": "version_id",
             "in": "path"
           }
@@ -12477,19 +12748,23 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 256
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
             },
             "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
             "name": "task",
             "in": "path"
           },
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The version's name or ID."
             },
             "required": true,
+            "description": "The version's name or ID.",
             "name": "version_id",
             "in": "path"
           }
@@ -12591,9 +12866,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 256
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
             },
             "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
             "name": "task",
             "in": "path"
           }
@@ -12704,19 +12981,23 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 256
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
             },
             "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
             "name": "task",
             "in": "path"
           },
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The version's name or ID."
             },
             "required": true,
+            "description": "The version's name or ID.",
             "name": "version_id",
             "in": "path"
           }
@@ -12816,19 +13097,23 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 256
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
             },
             "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
             "name": "task",
             "in": "path"
           },
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The version's name or ID."
             },
             "required": true,
+            "description": "The version's name or ID.",
             "name": "version_id",
             "in": "path"
           }
@@ -12940,29 +13225,35 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 256
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
             },
             "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
             "name": "task",
             "in": "path"
           },
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The version's name or ID."
             },
             "required": true,
+            "description": "The version's name or ID.",
             "name": "version_id",
             "in": "path"
           },
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The file's name, such as report.md, or its ID."
             },
             "required": true,
+            "description": "The file's name, such as report.md, or its ID.",
             "name": "file_id",
             "in": "path"
           }
@@ -13062,29 +13353,35 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 256
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
             },
             "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
             "name": "task",
             "in": "path"
           },
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The version's name or ID."
             },
             "required": true,
+            "description": "The version's name or ID.",
             "name": "version_id",
             "in": "path"
           },
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The file's name, such as report.md, or its ID."
             },
             "required": true,
+            "description": "The file's name, such as report.md, or its ID.",
             "name": "file_id",
             "in": "path"
           }
@@ -13179,29 +13476,35 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 256
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
             },
             "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
             "name": "task",
             "in": "path"
           },
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The version's name or ID."
             },
             "required": true,
+            "description": "The version's name or ID.",
             "name": "version_id",
             "in": "path"
           },
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The file's name, such as report.md, or its ID."
             },
             "required": true,
+            "description": "The file's name, such as report.md, or its ID.",
             "name": "file_id",
             "in": "path"
           }
@@ -13303,29 +13606,35 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 256
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
             },
             "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
             "name": "task",
             "in": "path"
           },
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The version's name or ID."
             },
             "required": true,
+            "description": "The version's name or ID.",
             "name": "version_id",
             "in": "path"
           },
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The file's name, such as report.md, or its ID."
             },
             "required": true,
+            "description": "The file's name, such as report.md, or its ID.",
             "name": "file_id",
             "in": "path"
           }

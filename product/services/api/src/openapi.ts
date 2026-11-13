@@ -115,6 +115,7 @@ export const unservedDependencies = (): AppDependencies => ({
       getRun: unserved("training.getRun"),
       listRunEvents: unserved("training.listRunEvents"),
       listVersions: unserved("training.listVersions"),
+      getVersion: unserved("training.getVersion"),
       evaluationResults: unserved("training.evaluationResults"),
       downloadAdapter: unserved("training.downloadAdapter"),
       promote: unserved("training.promote"),
@@ -135,6 +136,10 @@ export const unservedDependencies = (): AppDependencies => ({
       ),
       revokeApiKey: unserved("workspaces.revokeApiKey"),
       authenticateCredential: unserved("workspaces.authenticateCredential"),
+      describeCredential: unserved("workspaces.describeCredential"),
+      createOAuthInferenceCredential: unserved(
+        "workspaces.createOAuthInferenceCredential",
+      ),
       selectOAuthWorkspace: unserved("workspaces.selectOAuthWorkspace"),
       requirePlaygroundAccess: unserved("workspaces.requirePlaygroundAccess"),
     },

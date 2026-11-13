@@ -136,6 +136,11 @@ export const TOOL_CONFIG: Record<string, ToolConfig> = {
     title: "List task versions",
     arguments: { task: TASK },
   },
+  getTaskVersion: {
+    enabled: true,
+    name: "get_task_version",
+    title: "Get task version",
+  },
   getEvaluationResults: {
     enabled: true,
     name: "get_evaluation_results",
@@ -224,6 +229,10 @@ export const TOOL_CONFIG: Record<string, ToolConfig> = {
   deleteWorkspace: {
     enabled: false,
     reason: "Workspace keys cannot archive their workspace.",
+  },
+  createCredentialInferenceKey: {
+    enabled: false,
+    reason: "The server calls it to reach inference for OAuth clients.",
   },
   getCurrentCredential: {
     enabled: false,

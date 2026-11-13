@@ -94,13 +94,39 @@ describe("generation content", () => {
       f.userId,
       f.workspaceId,
       f.generation,
-      page.data[0]!.content_ref,
+      { content_ref: page.data[0]!.content_ref },
     );
     expect(content.raw).toEqual(f.record.raw);
     expect(store.read).toHaveBeenLastCalledWith(
       f.key.replace(".manifest.json", ".jsonl.zst"),
       expect.objectContaining({ offset: 0 }),
     );
+  });
+  it("finds a generation by its task name without a content reference", async () => {
+    const f = await fixture();
+    objects.set(
+      f.key.replace("replica-batch", "replica-other"),
+      Buffer.from(
+        JSON.stringify({
+          schema: "gradiated.generation-content-manifest/1",
+          generations: [],
+        }),
+      ),
+    );
+
+    await expect(
+      f.service.content(f.userId, f.workspaceId, f.generation, {
+        task: "test",
+      }),
+    ).resolves.toMatchObject({ raw: f.record.raw });
+    await expect(
+      f.service.content(f.userId, f.workspaceId, f.generation, {
+        task: "other",
+      }),
+    ).rejects.toMatchObject({ code: "not_found" });
+    await expect(
+      f.service.content(f.userId, f.workspaceId, v7(), { task: "test" }),
+    ).rejects.toMatchObject({ code: "not_found" });
   });
   it.each([0, 1])(
     "handles a record %i bytes above the collector limit",
@@ -121,12 +147,9 @@ describe("generation content", () => {
       objects.set(f.key, Buffer.from(JSON.stringify(manifest)));
       objects.set(f.key.replace(".manifest.json", ".jsonl.zst"), frame);
 
-      const result = f.service.content(
-        f.userId,
-        f.workspaceId,
-        f.generation,
-        Buffer.from(JSON.stringify(f.key)).toString("base64url"),
-      );
+      const result = f.service.content(f.userId, f.workspaceId, f.generation, {
+        content_ref: Buffer.from(JSON.stringify(f.key)).toString("base64url"),
+      });
       if (extra === 0) {
         expect((await result).raw?.text).toBe(text);
       } else {
@@ -144,12 +167,11 @@ describe("generation content", () => {
     ).rejects.toMatchObject({ code: "not_found" });
     expect(store.list).not.toHaveBeenCalled();
     await expect(
-      f.service.content(
-        f.userId,
-        f.workspaceId,
-        other.generation,
-        Buffer.from(JSON.stringify(other.key)).toString("base64url"),
-      ),
+      f.service.content(f.userId, f.workspaceId, other.generation, {
+        content_ref: Buffer.from(JSON.stringify(other.key)).toString(
+          "base64url",
+        ),
+      }),
     ).rejects.toMatchObject({ code: "not_found" });
     expect(store.read).not.toHaveBeenCalled();
   });
@@ -205,12 +227,9 @@ describe("generation content", () => {
   it("denies expired content using its recorded retention", async () => {
     const f = await fixture("admin", 100);
     await expect(
-      f.service.content(
-        f.userId,
-        f.workspaceId,
-        f.generation,
-        Buffer.from(JSON.stringify(f.key)).toString("base64url"),
-      ),
+      f.service.content(f.userId, f.workspaceId, f.generation, {
+        content_ref: Buffer.from(JSON.stringify(f.key)).toString("base64url"),
+      }),
     ).rejects.toMatchObject({ code: "not_found" });
     await createTraceCleanup(db.database, store)();
     expect(objects.size).toBe(2);
@@ -264,12 +283,9 @@ describe("generation content", () => {
         trace_retention_days: days,
       });
       await expect(
-        f.service.content(
-          f.userId,
-          f.workspaceId,
-          f.generation,
-          Buffer.from(JSON.stringify(f.key)).toString("base64url"),
-        ),
+        f.service.content(f.userId, f.workspaceId, f.generation, {
+          content_ref: Buffer.from(JSON.stringify(f.key)).toString("base64url"),
+        }),
       ).resolves.toMatchObject({ raw: f.record.raw });
     }
     await createTraceCleanup(db.database, store)();

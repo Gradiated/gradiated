@@ -287,15 +287,52 @@ describe("training routes", () => {
     ["an empty task update", `${path}/tasks/t`, {}, "PATCH"],
     ["an unknown task field", `${path}/tasks/t`, { name: "x" }, "PATCH"],
     [
-      "a malformed version id",
+      "an empty version",
       `${path}/tasks/t/production`,
-      { version_id: "x" },
+      { version_id: "" },
       "PUT",
     ],
   ])("rejects %s", async (_, url, body, method) => {
     const app = createTestApp({ auth: authenticated });
 
     expect((await request(app, url, body, method)).status).toBe(422);
+  });
+
+  it("reads and promotes a version by its name", async () => {
+    const getVersion = vi.fn(async () => {
+      throw new ControlServiceError("not_found", "The version was not found.");
+    });
+    const promote = vi.fn(async () => task);
+    const app = createTestApp({
+      auth: authenticated,
+      services: { training: { getVersion, promote } },
+    });
+
+    expect((await app.request(`${path}/tasks/t/versions/t-v2`)).status).toBe(
+      404,
+    );
+    expect(getVersion).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      "t",
+      "t-v2",
+    );
+    expect(
+      (
+        await request(
+          app,
+          `${path}/tasks/t/production`,
+          { version_id: "t-v2" },
+          "PUT",
+        )
+      ).status,
+    ).toBe(200);
+    expect(promote).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      "t",
+      "t-v2",
+    );
   });
 
   it("returns a cursor only when a page of events is full", async () => {

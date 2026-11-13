@@ -27,6 +27,14 @@ const testApp = () => {
           id: "0198ae6f-68b0-7644-812d-c4bf16a926e3",
           organization_id: "0198ae59-294a-73a9-9d2f-962449d34226",
           workspace_id: workspaceId,
+          workspace_name: "Default",
+          organization_name: "Acme",
+          organization_slug: "acme",
+          user: {
+            id: "0198ae50-94d8-7d4d-a8be-9f9b44b8c774",
+            name: "Ada Lovelace",
+            email: "ada@example.com",
+          },
         });
 
       return Response.json({

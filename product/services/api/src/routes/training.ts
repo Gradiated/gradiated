@@ -261,6 +261,19 @@ const listVersions = createRoute({
     ...errors,
   },
 });
+const getVersion = createRoute({
+  method: "get",
+  path: `${base}/tasks/{task}/versions/{version_id}`,
+  operationId: "getTaskVersion",
+  summary: "Get task version",
+  description: "Gets one of a task's versions by its name or ID.",
+  tags: ["Training"],
+  request: { params: TaskVersionPathSchema },
+  responses: {
+    200: json(TaskVersionSchema, "The version."),
+    ...errors,
+  },
+});
 const evaluationResults = createRoute({
   method: "get",
   path: `${base}/tasks/{task}/versions/{version_id}/evaluation`,
@@ -630,6 +643,17 @@ export const registerTrainingRoutes = (
       200,
     );
   });
+  app.openapi(getVersion, async (c) => {
+    const user = await requireUser(c);
+    const p = c.req.valid("param");
+    const { task, version } = await training.getVersion(
+      user.id,
+      p.workspace_id,
+      p.task,
+      p.version_id,
+    );
+    return c.json(versionResponse(task, version), 200);
+  });
   app.openapi(evaluationResults, async (c) => {
     const user = await requireUser(c);
     const p = c.req.valid("param");
@@ -666,7 +690,8 @@ export const registerTrainingRoutes = (
     c.get("analytics")?.trackWorkspace(user.id, "task_version_promoted", {
       workspace_id: p.workspace_id,
       task_id: task.id,
-      version_id: c.req.valid("json").version_id,
+      // Promotion has just set it.
+      version_id: task.productionVersionId!,
     });
 
     return c.json(taskResponse(task), 200);

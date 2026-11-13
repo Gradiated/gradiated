@@ -37,4 +37,5 @@ export const handbookCovers: Record<HandbookSlug, StoryCover> = {
   "getting-out-the-gate": artworkPresets.gate,
   values: artworkPresets.values,
   brand: artworkPresets.brand,
+  "model-announcements": artworkPresets.thesis,
 };

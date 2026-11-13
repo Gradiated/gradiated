@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { OpenRouterSource } from "./openrouter.ts";
-import { fakeFetch, json } from "./testing.ts";
+import { fakeFetch, json } from "./fakes.ts";
 
 const listing = (data: unknown) =>
   fakeFetch({ [OpenRouterSource.API]: json({ data }) });

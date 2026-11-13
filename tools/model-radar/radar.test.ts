@@ -10,7 +10,7 @@ import {
   FakeSource,
   RecordingNotifier,
   model,
-} from "./testing.ts";
+} from "./fakes.ts";
 import { Watchlist } from "./watchlist.ts";
 
 const dir = await mkdtemp(join(tmpdir(), "model-radar-"));
@@ -210,5 +210,33 @@ describe("Radar", () => {
     source.next = scan("qwen/a", "qwen/b", "qwen/c");
     const fallback = await run();
     assert.deepEqual(fallback.alerts[0]!.models, [model("qwen/c")]);
+  });
+
+  it("only describes models it will post", async () => {
+    const source = new DescribingSource("Hugging Face");
+    const store = new SeenStore(join(dir, `seen-${++runs}.json`));
+    const run = () =>
+      new Radar({
+        sources: [source],
+        watchlist,
+        store,
+        notifiers: [],
+        log: () => {},
+      }).run();
+    const google = (...ids: string[]) => [
+      {
+        scope: "huggingface:google",
+        owner: "google",
+        models: ids.map((id) => model(`google/${id}`)),
+      },
+    ];
+
+    source.next = google();
+    await run();
+    source.next = google("gemma-4-31b", "t5-xxl");
+    await run();
+
+    // t5-xxl is not a Gemma model, so it is neither posted nor looked up.
+    assert.deepEqual(source.asked, [["google/gemma-4-31b"]]);
   });
 });

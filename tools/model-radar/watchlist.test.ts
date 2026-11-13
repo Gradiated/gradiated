@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
-import { model } from "./testing.ts";
+import { model } from "./fakes.ts";
 import { Watchlist } from "./watchlist.ts";
 
 describe("Watchlist", () => {

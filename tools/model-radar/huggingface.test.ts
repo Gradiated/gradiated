@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { HuggingFaceSource } from "./huggingface.ts";
-import { fakeFetch, json } from "./testing.ts";
+import { fakeFetch, json } from "./fakes.ts";
 
 const API = HuggingFaceSource.API;
 
 describe("HuggingFaceSource", () => {
-  it("lists every repo of each org, following the next-page links", async () => {
+  it("lists every model of each org, following the next-page links", async () => {
     const page2 = `${API}?author=Qwen&limit=1000&cursor=abc`;
     const { send, calls } = fakeFetch({
       [`${API}?author=Qwen&limit=1000`]: json(

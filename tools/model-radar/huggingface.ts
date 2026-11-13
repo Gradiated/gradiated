@@ -1,8 +1,9 @@
-// Lists every public model repo under each watched Hugging Face org.
+// Lists every public model under each watched Hugging Face org.
 //
-// Every repo, not just the newest: labs often create a repo privately and make
-// it public weeks later, and it keeps its original creation date. Comparing
-// the full list with the IDs seen last time catches the moment it goes public.
+// Every model, not just the newest: labs often create a model privately and
+// make it public weeks later, and it keeps its original creation date.
+// Comparing the full list with the IDs seen last time catches the moment it
+// goes public.
 
 import type { Model, Scan, Source } from "./model.ts";
 

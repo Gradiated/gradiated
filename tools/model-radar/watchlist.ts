@@ -4,6 +4,7 @@
 import type { Model, SourceName } from "./model.ts";
 
 export type Lab = {
+  /** The name shown in alerts, e.g. "Moonshot AI". */
   lab: string;
   /** Hugging Face orgs, as in huggingface.co/<org>. */
   huggingface: string[];
@@ -13,20 +14,7 @@ export type Lab = {
   include: string[];
 };
 
-const KEYS = new Set(["lab", "huggingface", "openrouter", "include"]);
-
-const strings = (value: unknown, where: string): string[] => {
-  if (value === undefined) return [];
-  if (
-    !Array.isArray(value) ||
-    !value.every(
-      (item) => typeof item === "string" && item.trim() === item && item,
-    )
-  ) {
-    throw new Error(`${where} must be a list of non-empty names.`);
-  }
-  return value;
-};
+const FIELDS = new Set(["lab", "huggingface", "openrouter", "include"]);
 
 export class Watchlist {
   readonly labs: readonly Lab[];
@@ -35,42 +23,17 @@ export class Watchlist {
     this.labs = labs;
   }
 
-  /** Parses and checks watchlist.json, naming the entry at fault. */
+  /** Reads and checks watchlist.json. Errors name the entry at fault. */
   static parse(json: unknown): Watchlist {
-    if (!Array.isArray(json))
+    if (!Array.isArray(json)) {
       throw new Error("The watch list must be a list of labs.");
+    }
+    const labs = json.map(parseLab);
     const names = new Set<string>();
-    const labs = json.map((entry: unknown, index): Lab => {
-      if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
-        throw new Error(`Entry ${index + 1} must be an object.`);
-      }
-      const fields = entry as Record<string, unknown>;
-      const { lab } = fields;
-      if (typeof lab !== "string" || !lab.trim()) {
-        throw new Error(`Entry ${index + 1} needs a "lab" name.`);
-      }
+    for (const { lab } of labs) {
       if (names.has(lab)) throw new Error(`"${lab}" is listed twice.`);
       names.add(lab);
-      const unknown = Object.keys(fields).filter((key) => !KEYS.has(key));
-      if (unknown.length)
-        throw new Error(`${lab}: unknown field "${unknown[0]}".`);
-      const parsed = {
-        lab,
-        huggingface: strings(fields.huggingface, `${lab}: "huggingface"`),
-        openrouter: strings(fields.openrouter, `${lab}: "openrouter"`).map(
-          (p) => p.toLowerCase(),
-        ),
-        include: strings(fields.include, `${lab}: "include"`).map((w) =>
-          w.toLowerCase(),
-        ),
-      };
-      if (!parsed.huggingface.length && !parsed.openrouter.length) {
-        throw new Error(
-          `${lab}: list at least one "huggingface" org or "openrouter" prefix.`,
-        );
-      }
-      return parsed;
-    });
+    }
     return new Watchlist(labs);
   }
 
@@ -93,3 +56,47 @@ export class Watchlist {
     return source === "Hugging Face" ? lab.huggingface : lab.openrouter;
   }
 }
+
+/** One watch-list entry, checked. Entries are numbered from 1 in errors. */
+const parseLab = (entry: unknown, index: number): Lab => {
+  if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
+    throw new Error(`Entry ${index + 1} must be an object.`);
+  }
+  const fields = entry as Record<string, unknown>;
+  const { lab } = fields;
+  if (typeof lab !== "string" || !lab.trim()) {
+    throw new Error(`Entry ${index + 1} needs a "lab" name.`);
+  }
+  const unknown = Object.keys(fields).find((key) => !FIELDS.has(key));
+  if (unknown) throw new Error(`${lab}: unknown field "${unknown}".`);
+
+  const parsed: Lab = {
+    lab,
+    huggingface: nameList(fields.huggingface, `${lab}: "huggingface"`),
+    // OpenRouter IDs and the include words are matched without regard to case.
+    openrouter: nameList(fields.openrouter, `${lab}: "openrouter"`).map(
+      (name) => name.toLowerCase(),
+    ),
+    include: nameList(fields.include, `${lab}: "include"`).map((word) =>
+      word.toLowerCase(),
+    ),
+  };
+  if (!parsed.huggingface.length && !parsed.openrouter.length) {
+    throw new Error(
+      `${lab}: list at least one "huggingface" org or "openrouter" prefix.`,
+    );
+  }
+  return parsed;
+};
+
+/** A list of non-empty names with no spaces around them, or [] when left out. */
+const nameList = (value: unknown, field: string): string[] => {
+  if (value === undefined) return [];
+  const valid =
+    Array.isArray(value) &&
+    value.every(
+      (item) => typeof item === "string" && item && item.trim() === item,
+    );
+  if (!valid) throw new Error(`${field} must be a list of non-empty names.`);
+  return value as string[];
+};

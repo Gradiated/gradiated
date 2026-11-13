@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { Alert } from "./model.ts";
 import { ConsoleNotifier, SlackNotifier } from "./notifiers.ts";
-import { fakeFetch } from "./testing.ts";
+import { fakeFetch } from "./fakes.ts";
 
 const WEBHOOK = "https://hooks.slack.test/services/secret";
 

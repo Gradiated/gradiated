@@ -47,11 +47,11 @@ export class SlackNotifier implements Notifier {
   /** Slack mrkdwn: a bold headline, then one linked line per model. */
   static format(alert: Alert): string {
     const lines = alert.models.map((model) => {
-      const link = `<${model.url}|${escape(model.name)}>`;
-      const id = model.name === model.id ? "" : ` \`${escape(model.id)}\``;
-      return `• ${link}${id}${facts(model, escape)}`;
+      const link = `<${model.url}|${escapeSlack(model.name)}>`;
+      const id = model.name === model.id ? "" : ` \`${escapeSlack(model.id)}\``;
+      return `• ${link}${id}${detailsText(model, escapeSlack)}`;
     });
-    return [`*${escape(headline(alert))}*`, ...lines].join("\n");
+    return [`*${escapeSlack(headline(alert))}*`, ...lines].join("\n");
   }
 }
 
@@ -70,15 +70,16 @@ export class ConsoleNotifier implements Notifier {
   static format(alert: Alert): string {
     const lines = alert.models.map((model) => {
       const id = model.name === model.id ? "" : ` (${model.id})`;
-      return `  • ${model.name}${id}${facts(model, (s) => s)} ${model.url}`;
+      return `  • ${model.name}${id}${detailsText(model, (text) => text)} ${model.url}`;
     });
     return [headline(alert), ...lines].join("\n");
   }
 }
 
-const facts = (model: Model, clean: (text: string) => string) =>
+/** " · weights live · served by Tencent", or "" when there are no details. */
+const detailsText = (model: Model, clean: (text: string) => string) =>
   model.details.length ? ` · ${model.details.map(clean).join(" · ")}` : "";
 
 /** Slack treats &, < and > as markup; everything else is literal. */
-const escape = (text: string) =>
+const escapeSlack = (text: string) =>
   text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");

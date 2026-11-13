@@ -79,36 +79,21 @@ export class OpenRouterSource implements Source {
     return model;
   }
 
-  /** "Tencent", "Moonshot AI, Together and Fireworks", or "Tencent and 5 others". */
+  /** Who serves the model, e.g. "Tencent and 5 others". */
   async #providers(model: Model): Promise<string | null> {
     if (!MODEL_ID.test(model.id)) return null;
     const body = await this.#json(
       `${OpenRouterSource.API}/${model.id}/endpoints`,
     );
-    const endpoints = (body as { data?: { endpoints?: unknown } } | null)?.data
-      ?.endpoints;
-    if (!Array.isArray(endpoints)) return null;
-    const names = [
-      ...new Set(
-        endpoints
-          .map(
-            (endpoint) =>
-              (endpoint as { provider_name?: unknown }).provider_name,
-          )
-          .filter((name): name is string => typeof name === "string" && !!name),
-      ),
-    ];
+    const names = providerNames(body);
     if (!names.length) return null;
-    // The lab's own endpoint first: "MoonshotAI: Kimi" is served by "Moonshot AI".
-    const lab = squash(model.name.split(":")[0]!);
-    names.sort((a, b) => Number(squash(b) === lab) - Number(squash(a) === lab));
-    if (names.length > OpenRouterSource.PROVIDERS_SHOWN) {
-      const others = names.length - 1;
-      return `${names[0]} and ${others} others`;
-    }
-    return names.length === 1
-      ? names[0]!
-      : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+    // The lab's own endpoint first. "MoonshotAI: Kimi K3.1 Pro" is made by "MoonshotAI".
+    const maker = squash(model.name.split(":")[0]!);
+    const labFirst = [
+      ...names.filter((name) => squash(name) === maker),
+      ...names.filter((name) => squash(name) !== maker),
+    ];
+    return listProviders(labFirst);
   }
 
   /** Whether the Hugging Face model OpenRouter names is public yet. */
@@ -139,6 +124,31 @@ export class OpenRouterSource implements Source {
     }
   }
 }
+
+/** Each provider named in an /endpoints response, once. */
+const providerNames = (body: unknown): string[] => {
+  const endpoints = (body as { data?: { endpoints?: unknown } } | null)?.data
+    ?.endpoints;
+  if (!Array.isArray(endpoints)) return [];
+  const names = endpoints.map(
+    (endpoint) => (endpoint as { provider_name?: unknown }).provider_name,
+  );
+  return [
+    ...new Set(names.filter((name) => typeof name === "string" && name)),
+  ] as string[];
+};
+
+/**
+ * "Tencent", "Tencent and Together", "Tencent, Together and Fireworks", and
+ * past PROVIDERS_SHOWN, "Tencent and 5 others".
+ */
+const listProviders = (names: string[]): string => {
+  if (names.length > OpenRouterSource.PROVIDERS_SHOWN) {
+    return `${names[0]} and ${names.length - 1} others`;
+  }
+  if (names.length === 1) return names[0]!;
+  return `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+};
 
 /** "org/name": the only shape put into a URL path. */
 const MODEL_ID = /^[\w.-]+\/[\w.-]+$/;

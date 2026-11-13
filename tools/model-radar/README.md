@@ -5,7 +5,7 @@ on the watch list publishes a new model. It runs every 15 minutes and can be
 started by hand from the Actions tab.
 
 - **Hugging Face** is where weights go live. The radar posts when a new public
-  repo appears under a watched org.
+  model appears under a watched org.
 - **OpenRouter** usually lists a model when it is announced or gets API access,
   often before the weights. The radar posts when a new model appears under a
   watched prefix.
@@ -16,10 +16,10 @@ Both APIs are free and public, so the only secret is the Slack webhook.
 
 1. Restores `seen.json`, the model IDs earlier runs saw, from the Actions
    cache.
-2. Lists every repo of each watched Hugging Face org, and every model on
-   OpenRouter. It lists every repo, not just the newest, because labs often
-   create a repo privately and make it public weeks later, and the repo keeps
-   its original creation date.
+2. Lists every model of each watched Hugging Face org, and every model on
+   OpenRouter. It lists every model, not just the newest, because labs often
+   create a model privately and make it public weeks later, and it keeps its
+   original creation date.
 3. Keeps the models not seen before. It skips OpenRouter's `:free` and `:batch`
    listings and `~lab/...-latest` aliases, which repeat a model already listed.
 4. For each new OpenRouter model, looks up who serves it (named up to five,
@@ -57,11 +57,11 @@ Add an entry to [`watchlist.json`](watchlist.json) in a pull request:
 - `openrouter`: the start of the lab's model IDs, as in
   `openrouter.ai/<prefix>/<model>`. Leave it out for a lab not on OpenRouter.
 - `include` (optional): only models whose ID contains one of these words, for
-  an org that publishes a lot of unrelated repos, such as `["gemma"]` for
+  an org that publishes a lot of unrelated models, such as `["gemma"]` for
   Google.
 
 The quickest way to find both names is the lab's model page on OpenRouter,
-which links to its Hugging Face repo. The pull request runs the tests, which
+which links to its Hugging Face model. The pull request runs the tests, which
 check the file, and a dry run against the real APIs. The new lab posts from
 its next new model after the pull request merges.
 
@@ -97,6 +97,9 @@ the tests pass fakes in and never replace anything global.
   Another channel is another class implementing `Notifier`.
 - [`seen-store.ts`](seen-store.ts) reads and writes `seen.json`.
 - [`watchlist.ts`](watchlist.ts) reads and checks `watchlist.json`.
+
+Tests sit next to the file they test (`radar.test.ts` tests `radar.ts`), as
+elsewhere in `tools/`. Their shared fakes are in [`fakes.ts`](fakes.ts).
 
 Run the tests and the type check:
 

@@ -1,5 +1,5 @@
-// The shapes every part of the radar shares. No imports, so it runs as-is
-// under Node's built-in type stripping.
+// The shapes every part of the radar shares. A Source lists models, the Radar
+// finds the new ones, and each Notifier sends them somewhere.
 
 export type SourceName = "Hugging Face" | "OpenRouter";
 

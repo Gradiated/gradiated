@@ -32,6 +32,17 @@ def stop_children(children):
             child.wait(timeout=5)
 
 
+def lora_target_modules(backend):
+    targets = []
+    for argument in backend[backend.index('--lora-target-modules') + 1:]:
+        if argument.startswith('-'):
+            break
+        targets.append(argument)
+    if not targets:
+        raise ValueError('LoRA target modules are required')
+    return targets
+
+
 def run(environment=os.environ):
     environment = detect_profile(environment)
     config, backend, router = commands(environment)
@@ -60,7 +71,8 @@ def run(environment=os.environ):
             adapters, engine_environment = start(
                 environment, config['model'], config['revision'], config.get('tp', 2), config['backend'],
                 # Not started yet counts as alive: the watcher may run before the engine is published.
-                lambda: not children or children[0].poll() is None)
+                lambda: not children or children[0].poll() is None,
+                target_modules=lora_target_modules(backend))
         children.append(subprocess.Popen(backend, env=backend_environment(engine_environment, config)))
         deadline = time.monotonic() + int(environment.get('RUNTIME_STARTUP_TIMEOUT_SECONDS', '3600'))
         while not stopping.is_set():

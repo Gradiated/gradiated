@@ -30,7 +30,107 @@ const validateAdapterFiles = (
     { layerCount, expertCount },
   );
 
+const headFiles = (prefix = "base_model.model.") => {
+  const config = Buffer.from(
+    JSON.stringify({
+      peft_type: "LORA",
+      task_type: "CAUSAL_LM",
+      base_model_name_or_path: base,
+      r: 2,
+      lora_alpha: 4,
+      target_modules: ["lm_head"],
+      bias: "none",
+    }),
+  );
+  const header = Buffer.from(
+    JSON.stringify({
+      [`${prefix}lm_head.lora_A.weight`]: {
+        dtype: "F32",
+        shape: [2, 4],
+        data_offsets: [0, 32],
+      },
+      [`${prefix}lm_head.lora_B.weight`]: {
+        dtype: "F32",
+        shape: [8, 2],
+        data_offsets: [32, 96],
+      },
+    }),
+  );
+  const size = Buffer.alloc(8);
+  size.writeBigUInt64LE(BigInt(header.length));
+  const weights = Buffer.concat([size, header, Buffer.alloc(96)]);
+  return {
+    config,
+    weights,
+    reader: {
+      sizeBytes: weights.length,
+      read: async (offset: number, length: number) =>
+        weights.subarray(offset, offset + length),
+    },
+  };
+};
+
 describe("external adapter validation", () => {
+  it.each(["base_model.model.", ""])(
+    "accepts a head adapter only with pinned head dimensions (%s)",
+    async (prefix) => {
+      const f = headFiles(prefix);
+      expect(
+        (
+          await validate(f.config, f.reader, base, {
+            layerCount: 1,
+            expertCount: 0,
+            projectionShapes: { lm_head: [8, 4] },
+          })
+        ).r,
+      ).toBe(2);
+    },
+  );
+  it.each(["model.lm_head", "base_model.model.lm_head"])(
+    "rejects a noncanonical head target %s before publication",
+    async (target) => {
+      const f = headFiles();
+      const config = Buffer.from(
+        JSON.stringify({
+          ...JSON.parse(f.config.toString()),
+          target_modules: [target],
+        }),
+      );
+      await expect(
+        validate(config, f.reader, base, {
+          layerCount: 1,
+          expertCount: 0,
+          projectionShapes: { lm_head: [8, 4] },
+        }),
+      ).rejects.toThrow("not supported");
+    },
+  );
+  it("rejects unqualified heads, incorrect vocabulary dimensions, and layer-local head aliases", async () => {
+    const f = headFiles();
+    for (const shapes of [
+      undefined,
+      {},
+      { lm_head: [7, 4] as const },
+      { lm_head: [8, 5] as const },
+    ]) {
+      await expect(
+        validate(f.config, f.reader, base, {
+          layerCount: 1,
+          expertCount: 0,
+          ...(shapes ? { projectionShapes: shapes } : {}),
+        }),
+      ).rejects.toThrow("serving");
+    }
+    const spoof = headFiles("base_model.model.layers.0.");
+    await expect(
+      validate(spoof.config, spoof.reader, base, {
+        layerCount: 1,
+        expertCount: 0,
+        projectionShapes: { lm_head: [8, 4], "0/lm_head": [8, 4] },
+      }),
+    ).rejects.toThrow("not supported");
+  });
+
   it("rejects side markers embedded in module paths", async () => {
     const files = adapterFiles(base);
     const size = Number(files.weights.readBigUInt64LE());

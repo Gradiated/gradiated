@@ -32,6 +32,9 @@ const check = (
 };
 describe("serving adapter dimensions", () => {
   it("derives grouped-query attention and dense MLP dimensions", () => {
+    expect(
+      adapterProjectionShapes({ ...qwen, vocab_size: 16 }),
+    ).not.toHaveProperty("lm_head");
     expect(adapterProjectionShapes(qwen)).toMatchObject({
       "0/self_attn.q_proj": [4, 4],
       "0/self_attn.k_proj": [2, 4],
@@ -71,6 +74,7 @@ describe("serving adapter dimensions", () => {
   it("derives DeepSeek V4.1 low-rank attention and shared experts", () => {
     const shapes = adapterProjectionShapes({
       model_type: "deepseek_v41_text",
+      vocab_size: 129280,
       hidden_size: 5120,
       num_hidden_layers: 40,
       num_attention_heads: 64,
@@ -86,6 +90,7 @@ describe("serving adapter dimensions", () => {
     // DeepSeek-V4.1-Flash-1017 at 1bae0e1. Routed experts are not adaptable on
     // the SGLang runtime, so uploads targeting them are rejected.
     expect(shapes).toMatchObject({
+      lm_head: [129280, 5120],
       "39/attn.wq_a": [1280, 5120],
       "39/attn.wq_b": [32768, 1280],
       "39/attn.wkv": [512, 5120],
@@ -96,7 +101,7 @@ describe("serving adapter dimensions", () => {
       "39/ffn.shared_experts.w3": [2304, 5120],
     });
     expect(shapes).not.toHaveProperty("39/ffn.experts.w2");
-    expect(Object.keys(shapes ?? {})).toHaveLength(320);
+    expect(Object.keys(shapes ?? {})).toHaveLength(321);
   });
 
   it("does not assume unknown architectures are supported", () => {

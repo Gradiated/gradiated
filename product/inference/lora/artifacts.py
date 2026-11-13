@@ -201,7 +201,9 @@ def extract(archive, destination, max_bytes, reserve=None, deadline=None):
     return total
 
 
-def validate_tensors(directory, spec, model_config, deadline=None):
+def validate_tensors(
+    directory, spec, model_config, deadline=None, *, allowed_target_modules=None
+):
     remaining(deadline)
     model_config = model_config.get("text_config", model_config)
     layer_count = model_config["num_hidden_layers"]
@@ -244,6 +246,7 @@ def validate_tensors(directory, spec, model_config, deadline=None):
     coverage = set()
     expert_coverage = {}
     expert_layouts = set()
+    head_sides = set()
     for name, tensor in header.items():
         remaining(deadline)
         if name == "__metadata__":
@@ -251,16 +254,30 @@ def validate_tensors(directory, spec, model_config, deadline=None):
         match = re.fullmatch(
             r"(?:[a-zA-Z0-9_]+\.)*layers\.(\d+)\.(.+)\.lora_([AB])\.weight", name
         )
+        head = re.fullmatch(
+            r"(?:base_model\.model\.)?lm_head\.lora_([AB])\.weight", name
+        )
         if (
-            not match
+            not (match or head)
             or not isinstance(tensor, dict)
             or tensor.get("dtype") not in ("BF16", "F16", "F32")
         ):
             raise ValueError("Unsupported adapter tensor")
-        layer, module, side = int(match[1]), match[2].split(".")[-1], match[3]
-        if layer >= layer_count or module not in {
-            target.split(".")[-1] for target in config["target_modules"]
-        }:
+        if head:
+            layer, module, side = None, "lm_head", head[1]
+            if (
+                "lm_head" not in config["target_modules"]
+                or not isinstance(allowed_target_modules, (list, tuple, set, frozenset))
+                or "lm_head" not in allowed_target_modules
+            ):
+                raise ValueError("Head target is not declared and host-allowed")
+            if config.get("fan_in_fan_out") or config.get("use_rslora"):
+                raise ValueError("Unsupported head LoRA parameterization")
+        else:
+            layer, module, side = int(match[1]), match[2].split(".")[-1], match[3]
+        if (
+            not head and (layer >= layer_count or module == "lm_head")
+        ) or module not in {target.split(".")[-1] for target in config["target_modules"]}:
             raise ValueError("Unexpected module or layer")
         shape = tensor["shape"]
         if len(shape) not in (2, 3) or any(
@@ -268,7 +285,17 @@ def validate_tensors(directory, spec, model_config, deadline=None):
             for dimension in shape
         ):
             raise ValueError("Unsupported tensor shape")
-        expert = re.search(r"(?:^|\.)experts\.(\d+)\.", match[2])
+        if head:
+            hidden = model_config.get("hidden_size")
+            vocab = model_config.get("vocab_size")
+            if any(type(value) is not int or value <= 0 for value in (hidden, vocab)):
+                raise ValueError("Head requires pinned hidden and vocabulary dimensions")
+            if shape != ([rank, hidden] if side == "A" else [vocab, rank]):
+                raise ValueError("Head tensor shape mismatch")
+            if side in head_sides:
+                raise ValueError("Duplicate head tensor")
+            head_sides.add(side)
+        expert = None if head else re.search(r"(?:^|\.)experts\.(\d+)\.", match[2])
         fused = len(shape) == 3
         if expert or fused:
             expert_layouts.add("3d" if fused else "2d")
@@ -362,6 +389,7 @@ def materialize(
     fetch=download,
     reserve=None,
     deadline=None,
+    allowed_target_modules=None,
 ):
     remaining(deadline)
     version = spec["version"]
@@ -398,7 +426,13 @@ def materialize(
             disk_bytes = sum(path.stat().st_size for path in destination.iterdir())
             if disk_bytes > max_bytes:
                 raise ValueError("Cached adapter exceeds disk budget")
-            tensor_bytes = validate_tensors(destination, spec, model_config, deadline)
+            tensor_bytes = validate_tensors(
+                destination,
+                spec,
+                model_config,
+                deadline,
+                allowed_target_modules=allowed_target_modules,
+            )
             return (
                 destination,
                 sum(path.stat().st_size for path in destination.iterdir()),
@@ -432,7 +466,13 @@ def materialize(
             else None,
             deadline=deadline,
         )
-        tensor_bytes = validate_tensors(staging, spec, model_config, deadline)
+        tensor_bytes = validate_tensors(
+            staging,
+            spec,
+            model_config,
+            deadline,
+            allowed_target_modules=allowed_target_modules,
+        )
         hashes = {path.name: file_hash(path, deadline) for path in staging.iterdir()}
         (staging / ".verified.json").write_text(json.dumps(hashes))
         disk_bytes = sum(path.stat().st_size for path in staging.iterdir())

@@ -83,6 +83,8 @@ export const adapterProjectionShapes = (
     return shapes;
   }
   if (config.model_type === "deepseek_v41_text") {
+    if (config.vocab_size !== undefined)
+      shapes.lm_head = [DimensionSchema.parse(config.vocab_size), hidden];
     const head = DimensionSchema.parse(config.head_dim);
     const kvHeads = DimensionSchema.parse(config.num_key_value_heads);
     const qRank = DimensionSchema.parse(config.q_lora_rank);

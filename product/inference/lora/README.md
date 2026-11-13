@@ -8,6 +8,20 @@ with SGLang. The private metadata API and gateway integration are implemented.
 it with an independently qualified training/serving revision pair, for example
 BF16 GLM training and NVFP4 GLM serving.
 
+DeepSeek's declared targets include the top-level `lm_head`. The external upload API accepts the same canonical head keys and validates the vocabulary and hidden dimensions against the pinned DeepSeek configuration; other architectures do not gain head support. Head adapters use
+`base_model.model.lm_head.lora_A.weight` and `lora_B.weight` (or bare `lm_head`
+keys), declare `target_modules: ["lm_head"]`, and require the host's engine target
+allowlist to include it. A must have shape `[rank, hidden_size]` and B
+`[vocab_size, rank]` from the pinned model config. Layer-local heads, added
+vocabulary, transposed factors and RSLoRA heads are rejected. Admission also
+rechecks the host allowlist when recovering a verified disk cache.
+
+This admission path does not qualify an adapter for serving. Active head LoRA
+still requires the pinned runtime's TP sharding, CUDA graphs, speculative
+decoding, adapter isolation and behavioral checks. Separate LoRA residuals can
+round differently from a BF16 merged checkpoint; merged-model results alone
+do not establish active-adapter equivalence.
+
 ## Request path
 
 The gateway authorizes an exact task version in its workspace and sends a normal

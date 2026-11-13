@@ -16,7 +16,7 @@ QUEUE_TIMEOUT_SECONDS = 10
 # The bundle's port of sgl-project/sglang#45231 adapts the five attention projections and the shared
 # expert (w1/w2/w3); routed-expert adapters are rejected at load because neither FP4 MoE kernel exposes
 # LoRA hooks. Names are the checkpoint's module leaves.
-LORA_TARGETS = ['wq_a', 'wq_b', 'wkv', 'wo_a', 'wo_b', 'w1', 'w2', 'w3']
+LORA_TARGETS = ['wq_a', 'wq_b', 'wkv', 'wo_a', 'wo_b', 'w1', 'w2', 'w3', 'lm_head']
 PROFILES = {
     'b300-tp4': {'gpu_product': 'B300', 'active_requests': ACTIVE_REQUESTS, 'prefill_tokens': 16384,
                  'memory_fraction': 0.80, 'dspark_block_size': 5},

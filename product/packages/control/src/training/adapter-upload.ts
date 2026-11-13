@@ -165,24 +165,30 @@ export const validateAdapterFiles = async (
       /^(?:[a-zA-Z0-9_]+\.)*layers\.(\d+)\.(.+)\.lora_([AB])\.weight$/.exec(
         name,
       );
-    if (!tensorName)
+    const head = /^(?:base_model\.model\.)?lm_head\.lora_([AB])\.weight$/.exec(
+      name,
+    );
+    if (!tensorName && !head)
       throw new Error("Only LoRA A/B weight tensors are supported.");
 
+    const modulePath = head ? "lm_head" : tensorName![2]!;
+    const side = head ? head[1] : tensorName![3];
+
     if (
-      tensorName[2]!
+      modulePath
         .split(".")
         .some((part) => part === "lora_A" || part === "lora_B")
     )
       throw new Error("Side markers inside module paths are unsupported.");
 
-    const layer = Number(tensorName[1]);
-    if (layer >= layerCount)
+    const layer = head ? null : Number(tensorName![1]);
+    if (layer !== null && layer >= layerCount)
       throw new Error("Adapter layer is outside the base model.");
 
     const tensor = TensorSchema.parse(tensors[name]);
     const [start, end] = tensor.data_offsets;
     const width = tensor.dtype === "F32" ? 4 : 2;
-    const isA = tensorName[3] === "A";
+    const isA = side === "A";
     const pair = name.replace(
       isA ? ".lora_A" : ".lora_B",
       isA ? ".lora_B" : ".lora_A",
@@ -197,13 +203,25 @@ export const validateAdapterFiles = async (
         "Adapter tensor ranks, pairs or sizes do not match the config.",
       );
 
-    modules.add(tensorName[2]!);
-    const moduleName = tensorName[2]!.split(".").at(-1);
+    modules.add(modulePath);
+    const moduleName = modulePath.split(".").at(-1);
     if (!moduleName || !targetModules.has(moduleName))
       throw new Error("Tensor target modules do not match the config.");
 
+    if (
+      moduleName === "lm_head" &&
+      (!head ||
+        !config.target_modules.includes("lm_head") ||
+        !baseConfiguration.projectionShapes?.lm_head)
+    )
+      throw new Error(
+        "Adapter target module is not supported by this serving model.",
+      );
+
     if (baseConfiguration.projectionShapes) {
-      const key = `${layer}/${tensorName[2]!.replace(/\.experts\.\d+\./, ".experts.")}`;
+      const key = head
+        ? "lm_head"
+        : `${layer}/${modulePath.replace(/\.experts\.\d+\./, ".experts.")}`;
       const expected = baseConfiguration.projectionShapes[key];
       if (!expected)
         throw new Error(
@@ -218,8 +236,11 @@ export const validateAdapterFiles = async (
         );
     }
 
-    const expertName = /(?:^|\.)experts\.(\d+)\./.exec(tensorName[2]!);
+    const expertName = /(?:^|\.)experts\.(\d+)\./.exec(modulePath);
     const fused = tensor.shape.length === 3;
+    if (head && fused)
+      throw new Error("Head adapter tensors must have two dimensions.");
+
     if (expertName || fused) {
       expertLayouts.add(fused ? "3d" : "2d");
       if (!expertCount)

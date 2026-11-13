@@ -5157,6 +5157,31 @@
             "example": "2026-08-16T12:00:00.000Z",
             "description": "When the version was delivered."
           },
+          "adapter": {
+            "type": "object",
+            "properties": {
+              "rank": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "size_bytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "checkpoint": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Base model revision the adapter applies to, when known."
+              }
+            },
+            "required": [
+              "rank",
+              "size_bytes",
+              "checkpoint"
+            ]
+          },
           "files": {
             "type": "array",
             "items": {
@@ -5170,6 +5195,7 @@
           "version",
           "base_model_id",
           "created_at",
+          "adapter",
           "files"
         ]
       },

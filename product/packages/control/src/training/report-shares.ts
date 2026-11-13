@@ -87,6 +87,7 @@ export const createReportShares = (
       version: row.version.name,
       baseModelId: row.version.baseModelId,
       createdAt: row.version.createdAt,
+      adapter: row.version.adapter,
       files: publicFiles(ready, report),
     };
   };

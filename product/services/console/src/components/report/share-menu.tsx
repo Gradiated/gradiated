@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Link2, LoaderCircle, Share2 } from "lucide-react";
+import { Link2, LoaderCircle, Share2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { getVersionShare } from "@/api/training";
@@ -84,7 +84,6 @@ export const ShareMenu = ({
             <Share2 className="size-4" />
           )}
           Share
-          <ChevronDown className="ml-auto size-4 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">

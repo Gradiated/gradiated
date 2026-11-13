@@ -24,6 +24,14 @@ const sharedReport = {
   task: "triage",
   baseModelId: "Qwen/Qwen3-0.6B",
   createdAt: new Date("2026-11-01T00:00:00Z"),
+  adapter: {
+    format: "peft_lora" as const,
+    artifact_uri: "s3://private/adapter.tar",
+    sha256: "a".repeat(64),
+    size_bytes: 1024,
+    rank: 16,
+    base_model_revision: "b".repeat(40),
+  },
   files: [file],
 };
 
@@ -89,6 +97,7 @@ describe("report share routes", () => {
       version: "triage-v1",
       base_model_id: "Qwen/Qwen3-0.6B",
       created_at: "2026-11-01T00:00:00.000Z",
+      adapter: { rank: 16, size_bytes: 1024, checkpoint: "b".repeat(40) },
       files: [
         {
           id: fileId,
@@ -100,6 +109,7 @@ describe("report share routes", () => {
       ],
     });
     expect(report).not.toHaveProperty("versionId");
+    expect(JSON.stringify(report)).not.toContain("s3://");
   });
 
   it("returns 404 for unknown links and rejects malformed signatures", async () => {

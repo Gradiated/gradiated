@@ -1,4 +1,3 @@
-import { modelDisplayName } from "@gradiated/contracts/model-catalog";
 import { VERSION_REPORT_FILE } from "@gradiated/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
@@ -20,6 +19,7 @@ import {
   type ReportSource,
 } from "@/components/report/training-report";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ReportContents, VersionFacts } from "@/components/report/version-rail";
 import { httpStatus } from "@/lib/errors";
 
 const GRADIATED_URL = "https://gradiated.com";
@@ -67,7 +67,7 @@ const PageHead = ({ title }: { title: string }) => (
 const Shell = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-svh bg-background">
     <header className="border-b bg-card/60">
-      <div className="mx-auto flex h-14 max-w-4xl items-center gap-4 px-6">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-6">
         <a href={GRADIATED_URL} aria-label="Gradiated">
           <img
             src="/brand/gradiated-full.svg"
@@ -79,7 +79,7 @@ const Shell = ({ children }: { children: React.ReactNode }) => (
         </a>
       </div>
     </header>
-    <main className="mx-auto flex max-w-4xl flex-col gap-8 px-6 py-10">
+    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
       {children}
     </main>
   </div>
@@ -169,22 +169,37 @@ export const SharedReportPage = () => {
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
         <p className="text-sm text-muted-foreground">
-          {summary.task} · {summary.version} ·{" "}
-          {modelDisplayName(summary.baseModelId)} · Delivered{" "}
+          {summary.task} · {summary.version} · Delivered{" "}
           {new Date(summary.createdAt).toLocaleDateString(undefined, {
             dateStyle: "medium",
           })}
         </p>
       </div>
-      {report.data ? (
-        <TrainingReport report={report.data} source={source} />
-      ) : (
-        <div className="grid min-h-64 place-items-center rounded-xl border border-dashed p-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            This version has no report yet.
-          </p>
+      <div className="flex flex-wrap items-start gap-10">
+        <div className="min-w-0 flex-[999_1_32rem]">
+          {report.data ? (
+            <TrainingReport report={report.data} source={source} />
+          ) : (
+            <div className="grid min-h-64 place-items-center rounded-xl border border-dashed p-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                This version has no report yet.
+              </p>
+            </div>
+          )}
         </div>
-      )}
+        <aside
+          aria-label="Version"
+          className="flex w-full flex-col lg:sticky lg:top-6 lg:w-72 lg:flex-none [&>section:first-child]:border-t-0 [&>section:first-child]:pt-0"
+        >
+          <ReportContents headings={report.data?.headings} />
+          <VersionFacts
+            baseModelId={summary.baseModelId}
+            checkpoint={shared.data.adapter.checkpoint}
+            rank={shared.data.adapter.rank}
+            sizeBytes={shared.data.adapter.size_bytes}
+          />
+        </aside>
+      </div>
       <ReportSignature />
     </Shell>
   );

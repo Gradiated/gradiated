@@ -792,6 +792,14 @@ export const registerTrainingRoutes = (
         version: report.version,
         base_model_id: report.baseModelId,
         created_at: report.createdAt.toISOString(),
+        adapter: {
+          rank: report.adapter.rank,
+          size_bytes: report.adapter.size_bytes,
+          checkpoint:
+            report.adapter.validated_base_model_revision ??
+            report.adapter.base_model_revision ??
+            null,
+        },
         files: report.files.map(fileResponse),
       },
       200,

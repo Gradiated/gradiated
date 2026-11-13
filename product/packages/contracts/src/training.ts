@@ -602,6 +602,14 @@ export const SharedReportSchema = z
     version: z.string().describe("Version name."),
     base_model_id: ModelIdSchema,
     created_at: TimestampSchema.describe("When the version was delivered."),
+    adapter: z.object({
+      rank: z.number().int().positive(),
+      size_bytes: CountSchema,
+      checkpoint: z
+        .string()
+        .nullable()
+        .describe("Base model revision the adapter applies to, when known."),
+    }),
     files: z
       .array(TaskVersionFileSchema)
       .describe("report.md and the files it references by name."),

@@ -130,6 +130,11 @@ const sharedReportFiles = (files: Record<string, string>) => {
             version: version.name,
             base_model_id: version.base_model_id,
             created_at: version.created_at,
+            adapter: {
+              rank: version.adapter.rank,
+              size_bytes: version.adapter.size_bytes,
+              checkpoint: null,
+            },
             files: entries.map(({ content: _content, ...file }) => file),
           })
         : HttpResponse.json(

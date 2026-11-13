@@ -3101,6 +3101,12 @@ export interface components {
        * @example 2026-08-16T12:00:00.000Z
        */
       created_at: string;
+      adapter: {
+        rank: number;
+        size_bytes: number;
+        /** @description Base model revision the adapter applies to, when known. */
+        checkpoint: string | null;
+      };
       /** @description report.md and the files it references by name. */
       files: components["schemas"]["TaskVersionFile"][];
     };

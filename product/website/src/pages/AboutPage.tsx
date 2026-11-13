@@ -66,8 +66,8 @@ export const AboutPage = (): ReactElement => (
           <div>
             <h3 className="gr-heading">Charley Carriero</h3>
             <p className="gr-body gr-muted">
-              Data scientist, engineer and journalist, covering our work, the AI
-              model, inference and chip industries in technical depth.
+              Software engineer and journalist, covering our work, the AI model,
+              inference and chip industries in technical depth.
             </p>
           </div>
           <div>

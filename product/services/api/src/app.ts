@@ -135,6 +135,7 @@ export const createApp = ({
 
   app.use("/api/*", apiRateLimit());
   app.use("/api/v1/waitlist", apiRateLimit(10));
+  app.use("/api/v1/shared-reports/*", apiRateLimit(120));
   for (const [path, limit] of ONBOARDING_RATE_LIMITS)
     app.use(
       `/api/v1/organizations/:organization_id/${path}/*`,

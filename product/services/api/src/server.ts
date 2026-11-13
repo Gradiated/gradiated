@@ -295,6 +295,8 @@ const app = createApp({
       artifactStorage,
       qualifyAdapter,
       createQualificationLock(valkey),
+      // Rotating this key invalidates every public report link.
+      environment.BETTER_AUTH_SECRET,
     ),
   },
 });

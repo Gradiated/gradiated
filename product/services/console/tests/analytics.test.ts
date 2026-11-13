@@ -64,6 +64,49 @@ describe("console analytics", () => {
     expect(JSON.stringify(event)).not.toMatch(/private|secret/);
   });
 
+  it("redacts public report link signatures from pageviews", async () => {
+    await import("@/lib/posthog");
+    const options = posthog.init.mock.calls[0]![1];
+    const version = "0198ae70-0e61-7a51-9d5c-2f4b5e6a7b8e";
+    const signature = "SiGnAtUrE".repeat(4) + "abcdefg";
+    const url = `https://console.gradiated.com/share/${version}/${signature}`;
+    const event = options.before_send({
+      event: "$pageview",
+      $set_once: {
+        $initial_current_url: url,
+        $initial_pathname: `/share/${version}/${signature}`,
+      },
+      properties: {
+        $current_url: url,
+        $pathname: `/share/${version}/${signature}`,
+        $referrer: url,
+        $session_entry_url: `${url}?x=1`,
+      },
+    });
+
+    expect(event.properties).toMatchObject({
+      $current_url: `https://console.gradiated.com/share/${version}/redacted`,
+      $pathname: `/share/${version}/redacted`,
+      $referrer: `https://console.gradiated.com/share/${version}/redacted`,
+      $session_entry_url: `https://console.gradiated.com/share/${version}/redacted`,
+    });
+    expect(JSON.stringify(event)).not.toContain(signature);
+  });
+
+  it("sends nothing, including replay, from public report pages", async () => {
+    await import("@/lib/posthog");
+    const options = posthog.init.mock.calls[0]![1];
+    vi.stubGlobal("location", { pathname: "/share/version/signature" });
+
+    expect(
+      options.before_send({ event: "$snapshot", properties: {} }),
+    ).toBeNull();
+    expect(
+      options.before_send({ event: "$pageview", properties: {} }),
+    ).toBeNull();
+    vi.unstubAllGlobals();
+  });
+
   it("preserves direct referrer attribution on pageviews", async () => {
     await import("@/lib/posthog");
     const options = posthog.init.mock.calls[0]![1];

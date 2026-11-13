@@ -415,6 +415,27 @@ export const createTrainingStore = (database: ControlDatabase) => {
       );
     },
 
+    async getSharedVersion(versionId: string) {
+      const [row] = await database
+        .select({ task: tasks, version: taskVersions })
+        .from(taskVersions)
+        .innerJoin(tasks, eq(tasks.id, taskVersions.taskId))
+        .innerJoin(workspaces, eq(workspaces.id, tasks.workspaceId))
+        .where(
+          and(
+            eq(taskVersions.id, UuidSchema.parse(versionId)),
+            isNull(workspaces.archivedAt),
+          ),
+        );
+
+      return (
+        row && {
+          task: TaskRecordSchema.parse(row.task),
+          version: VersionRecordSchema.parse(row.version),
+        }
+      );
+    },
+
     async listProductionVersions(baseModelId: string) {
       const rows = await database
         .select({ version: taskVersions })

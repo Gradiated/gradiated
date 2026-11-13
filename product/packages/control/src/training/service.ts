@@ -2,6 +2,7 @@ import { createVersionFileStore } from "./version-file-store.js";
 import { readWorkloadBenchmarks } from "./workload-benchmarks.js";
 import { WORKLOAD_BENCHMARK_FILE } from "@gradiated/contracts";
 import type { ObjectStorage } from "../storage/object-storage.js";
+import { createReportShares } from "./report-shares.js";
 import { createVersionFiles } from "./version-files.js";
 import { createModelUploads } from "./uploads.js";
 import { catalogModel } from "@gradiated/contracts/model-catalog";
@@ -46,6 +47,7 @@ export const createTrainingService = (
   uploadStorage?: ObjectStorage,
   qualifyAdapter?: AdapterQualifier,
   lockQualification?: QualificationLock,
+  reportShareSecret?: string,
 ) => {
   const records = createTrainingStore(database);
 
@@ -96,6 +98,7 @@ export const createTrainingService = (
   return {
     uploads: createModelUploads(database, uploadStorage),
     files: createVersionFiles(database, uploadStorage),
+    shares: createReportShares(database, uploadStorage, reportShareSecret),
     async startRun(userId: string, workspaceId: string, taskId: string) {
       await requireWorkspaceEditor(database, { userId, workspaceId });
       const task = await records.getTaskById(workspaceId, taskId);

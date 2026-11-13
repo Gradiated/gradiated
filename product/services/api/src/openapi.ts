@@ -106,6 +106,12 @@ export const unservedDependencies = (): AppDependencies => ({
         download: unserved("training.files.download"),
         remove: unserved("training.files.remove"),
       },
+      shares: {
+        get: unserved("training.shares.get"),
+        shared: unserved("training.shares.shared"),
+        sharedContent: unserved("training.shares.sharedContent"),
+        sharedDownload: unserved("training.shares.sharedDownload"),
+      },
       startRun: unserved("training.startRun"),
       cancelRun: unserved("training.cancelRun"),
       listTasks: unserved("training.listTasks"),

@@ -94,6 +94,59 @@ const versionFiles = (
         expires_at: version.created_at,
       }),
     ),
+    ...shareHandlers(),
+  ];
+};
+
+const shareSignature = "a".repeat(43);
+
+const shareHandlers = () => [
+  http.get(
+    "/api/v1/workspaces/:workspaceId/tasks/:task/versions/:versionId/share",
+    ({ params }) =>
+      HttpResponse.json({
+        version_id: params.versionId,
+        signature: shareSignature,
+      }),
+  ),
+];
+
+const sharedReportFiles = (files: Record<string, string>) => {
+  const entries = Object.entries(files).map(([name, content], index) => ({
+    id: `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+    name,
+    content_type: name.endsWith(".md") ? "text/markdown" : "text/csv",
+    size_bytes: new TextEncoder().encode(content).length,
+    created_at: version.created_at,
+    content,
+  }));
+  const base = "/api/v1/shared-reports/:versionId/:signature";
+
+  return [
+    http.get(base, ({ params }) =>
+      params.signature === shareSignature
+        ? HttpResponse.json({
+            task: "support-assistant",
+            version: version.name,
+            base_model_id: version.base_model_id,
+            created_at: version.created_at,
+            files: entries.map(({ content: _content, ...file }) => file),
+          })
+        : HttpResponse.json(
+            { detail: "The report was not found." },
+            { status: 404 },
+          ),
+    ),
+    http.get(`${base}/files/:fileId/content`, ({ params }) => {
+      const file = entries.find((entry) => entry.id === params.fileId);
+      return file
+        ? HttpResponse.json({
+            name: file.name,
+            content_type: file.content_type,
+            content: file.content,
+          })
+        : HttpResponse.json({ detail: "Not found" }, { status: 404 });
+    }),
   ];
 };
 
@@ -116,6 +169,14 @@ export const TestResults: PageStory = {
 export const VersionReport: PageStory = {
   args: { path: versionPath },
   parameters: { msw: [...versionFiles(reportFiles), ...handlers] },
+};
+export const SharedReport: PageStory = {
+  args: { path: `/share/${version.id}/${shareSignature}` },
+  parameters: { msw: [...sharedReportFiles(reportFiles), ...handlers] },
+};
+export const SharedReportRevoked: PageStory = {
+  args: { path: `/share/${version.id}/${"b".repeat(43)}` },
+  parameters: { msw: [...sharedReportFiles(reportFiles), ...handlers] },
 };
 export const VersionReadyToPromote: PageStory = {
   args: { path: versionPath },

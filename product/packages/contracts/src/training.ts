@@ -576,3 +576,35 @@ export const TaskVersionFileDownloadSchema = z
   })
   .openapi("TaskVersionFileDownload");
 export type CreateTaskVersionFile = z.infer<typeof CreateTaskVersionFileSchema>;
+
+export const ReportShareSignatureSchema = z
+  .string()
+  .regex(/^[A-Za-z0-9_-]{43}$/)
+  .describe(
+    "HMAC-SHA256 of the version ID under a server-side key, base64url-encoded.",
+  );
+export const TaskVersionShareSchema = z
+  .object({
+    version_id: UuidSchema,
+    signature: ReportShareSignatureSchema,
+  })
+  .openapi("TaskVersionShare");
+export const SharedReportPathSchema = z.object({
+  version_id: UuidSchema,
+  signature: ReportShareSignatureSchema,
+});
+export const SharedReportFilePathSchema = SharedReportPathSchema.extend({
+  file_id: UuidSchema,
+});
+export const SharedReportSchema = z
+  .object({
+    task: z.string(),
+    version: z.string().describe("Version name."),
+    base_model_id: ModelIdSchema,
+    created_at: TimestampSchema.describe("When the version was delivered."),
+    files: z
+      .array(TaskVersionFileSchema)
+      .describe("report.md and the files it references by name."),
+  })
+  .openapi("SharedReport");
+export type SharedReport = z.infer<typeof SharedReportSchema>;

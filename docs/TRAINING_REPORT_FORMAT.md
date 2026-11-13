@@ -78,3 +78,18 @@ tokens per second. Quality is a named percentage metric with an optional sample
 count. Each metric can include a replacement-model value; leave unknown values
 null. A missing file preserves the automatic evaluation display. An invalid file
 shows an error in the benchmark card and does not replace automatic table stats.
+
+## Sharing
+
+The version page's **Share** menu has **Copy public link**, which any workspace
+member can use. It copies
+`https://console.gradiated.com/share/<version_id>/<signature>`, a read-only page
+anyone can open without signing in. The signature is an HMAC-SHA256 of the version
+ID keyed by the API's `BETTER_AUTH_SECRET`, so links cannot be guessed and need no
+stored state. Each version has one link. Links cannot be turned off individually;
+rotating the secret invalidates every link. A link serves `report.md` and only the
+version files whose names appear in it, so other deliverables stay private, and
+returns 404 once the workspace is archived. The page sets
+`<meta name="robots" content="noindex, nofollow">`, and every
+`/api/v1/shared-reports/*` response sends `X-Robots-Tag: noindex, nofollow` and
+`Cache-Control: no-store`.

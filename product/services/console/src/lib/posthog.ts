@@ -4,6 +4,10 @@ import { eventSchemas, groupsFor } from "@gradiated/analytics";
 export { posthog };
 export const posthogKey = import.meta.env.VITE_POSTHOG_KEY;
 
+// A share link's signature grants access to the report, so it never leaves the browser.
+export const redactShareSignature = (value: string) =>
+  value.replace(/(\/share\/[^/?#]+\/)[^/?#]+/g, "$1redacted");
+
 if (posthogKey) {
   posthog.init(posthogKey, {
     api_host: import.meta.env.VITE_POSTHOG_HOST ?? "https://us.i.posthog.com",
@@ -14,7 +18,8 @@ if (posthogKey) {
     save_referrer: false,
     save_campaign_params: false,
     before_send: (event) => {
-      if (!event) return null;
+      if (!event || globalThis.location?.pathname.startsWith("/share/"))
+        return null;
 
       if (event.event === "$pageview") {
         event.properties.source = "console";
@@ -48,6 +53,9 @@ if (posthogKey) {
             delete properties[key];
             continue;
           }
+
+          if (typeof properties[key] === "string")
+            properties[key] = redactShareSignature(properties[key]);
 
           if (
             key.endsWith("pathname") ||

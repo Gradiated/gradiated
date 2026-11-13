@@ -220,3 +220,52 @@ export const getVersionFileDownload = (path: VersionFilePath) =>
       { params: { path } },
     ),
   );
+
+export const getVersionShare = (path: VersionPath, signal?: AbortSignal) =>
+  requireData(
+    api.GET(
+      "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/share",
+      { params: { path }, signal: signal ?? null },
+    ),
+  );
+
+export type SharedReportLink = { version_id: string; signature: string };
+
+export const getSharedReport = (link: SharedReportLink, signal?: AbortSignal) =>
+  requireData(
+    api.GET("/api/v1/shared-reports/{version_id}/{signature}", {
+      params: { path: link },
+      credentials: "omit",
+      signal: signal ?? null,
+    }),
+  );
+
+export const getSharedReportFileContent = (
+  link: SharedReportLink,
+  file_id: string,
+  signal?: AbortSignal,
+) =>
+  requireData(
+    api.GET(
+      "/api/v1/shared-reports/{version_id}/{signature}/files/{file_id}/content",
+      {
+        params: { path: { ...link, file_id } },
+        credentials: "omit",
+        signal: signal ?? null,
+      },
+    ),
+  );
+
+export const getSharedReportFileDownload = (
+  link: SharedReportLink,
+  file_id: string,
+) =>
+  requireData(
+    api.GET(
+      "/api/v1/shared-reports/{version_id}/{signature}/files/{file_id}/download",
+      {
+        params: { path: { ...link, file_id } },
+        credentials: "omit",
+      },
+    ),
+  );

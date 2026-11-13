@@ -35,6 +35,7 @@ import {
 } from "@/components/fine-tuning/version-actions";
 import { ModelLabel } from "@/components/model-label";
 import { parseReport } from "@/components/report/report-schema";
+import { ShareMenu } from "@/components/report/share-menu";
 import {
   TrainingReport,
   type ReportFile,
@@ -456,6 +457,10 @@ const VersionReport = ({
               <Download className="size-4" />
               Download
             </Button>
+            <ShareMenu
+              path={path}
+              queryKey={[...trainingKey(workspaceId), "share", version.id]}
+            />
           </div>
 
           {report.data?.headings.length ? (

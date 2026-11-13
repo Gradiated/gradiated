@@ -40,6 +40,9 @@ const UPLOAD = "Needs a direct file upload outside MCP.";
 const DOWNLOAD =
   "Returns a signed download link for a file a model cannot read.";
 const INFERENCE = "call_model covers inference.";
+const SHARING = "Public report links are shared from the console.";
+const PUBLIC_REPORT =
+  "Unauthenticated public report link; the version file tools read the same report.";
 
 export const TOOL_CONFIG: Record<OperationId, ToolConfig> = {
   getCurrentCredential: {
@@ -147,6 +150,10 @@ export const TOOL_CONFIG: Record<OperationId, ToolConfig> = {
   },
   getTaskVersionFileDownload: { enabled: false, reason: DOWNLOAD },
   getAdapterDownload: { enabled: false, reason: DOWNLOAD },
+  getTaskVersionShare: { enabled: false, reason: SHARING },
+  getSharedReport: { enabled: false, reason: PUBLIC_REPORT },
+  getSharedReportFileContent: { enabled: false, reason: PUBLIC_REPORT },
+  getSharedReportFileDownload: { enabled: false, reason: PUBLIC_REPORT },
   createTaskVersionFile: { enabled: false, reason: STAFF },
   completeTaskVersionFile: { enabled: false, reason: STAFF },
   deleteTaskVersionFile: { enabled: false, reason: STAFF },

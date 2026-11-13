@@ -26,3 +26,7 @@ a18b5b3125da03bf6dfb7502cd2e848feb4f6bc4:infra/environments/prod/us-east-1/kuber
 # Fixed UUIDs passed as top-up request keys in tests; identifiers, not credentials. Replaced with randomUUID() in 067efe2.
 12e77e3006b4ed494b40d4cdfe6a7a064522709f:product/packages/control/test/top-up-charges.integration.test.ts:generic-api-key:232
 12e77e3006b4ed494b40d4cdfe6a7a064522709f:product/services/api/test/card-payments.test.ts:generic-api-key:241
+
+# Made-up UUID share tokens in a test and a Storybook mock; fixtures, not credentials. Removed when links became HMAC signatures.
+4f61004348157c36c71dca7d8b57f1d0aefe5890:product/services/api/test/report-shares.test.ts:generic-api-key:7
+4f61004348157c36c71dca7d8b57f1d0aefe5890:product/services/console/src/stories/pages/training.stories.tsx:generic-api-key:101

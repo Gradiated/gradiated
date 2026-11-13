@@ -156,6 +156,15 @@ const versionRoute = createRoute({
   ),
 });
 
+const sharedReportRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/share/$versionId/$signature",
+  component: lazyRouteComponent(
+    () => import("@/pages/shared-report-page"),
+    "SharedReportPage",
+  ),
+});
+
 const billingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/billing",
@@ -270,6 +279,7 @@ const routeTree = rootRoute.addChildren([
   tasksRoute,
   taskRoute,
   versionRoute,
+  sharedReportRoute,
   billingRoute,
   usageRoute,
   logsRoute,

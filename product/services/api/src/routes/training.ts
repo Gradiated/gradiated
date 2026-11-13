@@ -30,6 +30,10 @@ import {
   TrainingRunSchema,
   UpdateTaskSchema,
   WorkspacePathSchema,
+  SharedReportFilePathSchema,
+  SharedReportPathSchema,
+  SharedReportSchema,
+  TaskVersionShareSchema,
   problemContent,
   type Task,
   type TaskVersion,
@@ -454,6 +458,65 @@ const downloadVersionFile = createRoute({
   },
 });
 
+const getVersionShare = createRoute({
+  method: "get",
+  path: `${base}/tasks/{task}/versions/{version_id}/share`,
+  operationId: "getTaskVersionShare",
+  summary: "Get public report link",
+  description:
+    "Gets the version's public, read-only report link. Anyone with the link can read report.md and the files it names; the signature cannot be derived without a server-side key.",
+  tags: ["Training"],
+  request: { params: TaskVersionPathSchema },
+  responses: {
+    200: json(TaskVersionShareSchema, "The public link."),
+    ...errors,
+  },
+});
+const sharedErrors = { 404: errors[404], 422: errors[422], 503: errors[503] };
+const getSharedReport = createRoute({
+  method: "get",
+  path: "/api/v1/shared-reports/{version_id}/{signature}",
+  operationId: "getSharedReport",
+  summary: "Get shared report",
+  description:
+    "Public. Gets a shared version report's summary and the files it can read. Needs no authentication.",
+  tags: ["Shared reports"],
+  request: { params: SharedReportPathSchema },
+  responses: {
+    200: json(SharedReportSchema, "The shared report."),
+    ...sharedErrors,
+  },
+});
+const sharedReportFileContent = createRoute({
+  method: "get",
+  path: "/api/v1/shared-reports/{version_id}/{signature}/files/{file_id}/content",
+  operationId: "getSharedReportFileContent",
+  summary: "Read shared report file",
+  description:
+    "Public. Returns the text of a shared report's Markdown, CSV, JSON or plain-text file.",
+  tags: ["Shared reports"],
+  request: { params: SharedReportFilePathSchema },
+  responses: {
+    200: json(TaskVersionFileContentSchema, "The file's text."),
+    409: errors[409],
+    ...sharedErrors,
+  },
+});
+const sharedReportFileDownload = createRoute({
+  method: "get",
+  path: "/api/v1/shared-reports/{version_id}/{signature}/files/{file_id}/download",
+  operationId: "getSharedReportFileDownload",
+  summary: "Download shared report file",
+  description:
+    "Public. Gets a short-lived download link for a file a shared report names, such as an image.",
+  tags: ["Shared reports"],
+  request: { params: SharedReportFilePathSchema },
+  responses: {
+    200: json(TaskVersionFileDownloadSchema, "A short-lived download link."),
+    ...sharedErrors,
+  },
+});
+
 const fileResponse = (file: {
   id: string;
   name: string;
@@ -696,6 +759,63 @@ export const registerTrainingRoutes = (
     });
 
     return c.json(taskResponse(task), 200);
+  });
+  app.openapi(getVersionShare, async (c) => {
+    const user = await requireUser(c);
+    const p = c.req.valid("param");
+    const share = await training.shares.get(
+      user.id,
+      p.workspace_id,
+      p.task,
+      p.version_id,
+    );
+    c.header("Cache-Control", "no-store");
+    return c.json(
+      { version_id: share.versionId, signature: share.signature },
+      200,
+    );
+  });
+  const sharedHeaders = (c: {
+    header: (name: string, value: string) => void;
+  }) => {
+    c.header("Cache-Control", "no-store");
+    c.header("X-Robots-Tag", "noindex, nofollow");
+    c.header("Referrer-Policy", "no-referrer");
+  };
+  app.openapi(getSharedReport, async (c) => {
+    const { version_id, signature } = c.req.valid("param");
+    const report = await training.shares.shared(version_id, signature);
+    sharedHeaders(c);
+    return c.json(
+      {
+        task: report.task,
+        version: report.version,
+        base_model_id: report.baseModelId,
+        created_at: report.createdAt.toISOString(),
+        files: report.files.map(fileResponse),
+      },
+      200,
+    );
+  });
+  app.openapi(sharedReportFileContent, async (c) => {
+    const { version_id, signature, file_id } = c.req.valid("param");
+    const content = await training.shares.sharedContent(
+      version_id,
+      signature,
+      file_id,
+    );
+    sharedHeaders(c);
+    return c.json(content, 200);
+  });
+  app.openapi(sharedReportFileDownload, async (c) => {
+    const { version_id, signature, file_id } = c.req.valid("param");
+    const download = await training.shares.sharedDownload(
+      version_id,
+      signature,
+      file_id,
+    );
+    sharedHeaders(c);
+    return c.json(download, 200);
   });
   app.openapi(listVersionFiles, async (c) => {
     const user = await requireUser(c);

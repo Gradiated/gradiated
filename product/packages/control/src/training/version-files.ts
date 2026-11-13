@@ -64,6 +64,60 @@ const requireValidBenchmark = async (
   if (!parsed?.success) throw invalid();
 };
 
+export const readVersionFileText = async (
+  storage: Pick<ObjectStorage, "read">,
+  file: VersionFileRecord,
+) => {
+  if (!TEXT_FILE.test(file.name))
+    throw new ControlServiceError(
+      "conflict",
+      "Only text files can be read inline. Download this file instead.",
+    );
+  if (file.sizeBytes > MAX_VERSION_FILE_CONTENT_BYTES)
+    throw new ControlServiceError(
+      "conflict",
+      "The file is too large to read inline. Download it instead.",
+    );
+
+  let bytes: Uint8Array;
+  try {
+    bytes = await storage.read(versionFileKey(file), {
+      maxBytes: MAX_VERSION_FILE_CONTENT_BYTES,
+      timeoutMs: 10_000,
+    });
+  } catch (error) {
+    throw new ControlServiceError(
+      "unavailable",
+      "The file could not be read. Try again shortly.",
+      error,
+    );
+  }
+
+  let content: string;
+  try {
+    content = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    throw new ControlServiceError(
+      "conflict",
+      "The file is not valid UTF-8. Download it instead.",
+    );
+  }
+
+  return { name: file.name, content_type: file.contentType, content };
+};
+
+export const signVersionFileDownload = async (
+  storage: Pick<ObjectStorage, "signDownload">,
+  file: VersionFileRecord,
+) => ({
+  url: await storage.signDownload(versionFileKey(file), {
+    expiresIn: DOWNLOAD_SECONDS,
+    filename: file.name,
+    contentType: file.contentType,
+  }),
+  expires_at: new Date(Date.now() + DOWNLOAD_SECONDS * 1000).toISOString(),
+});
+
 const notFound = (thing: string) =>
   new ControlServiceError("not_found", `The ${thing} was not found.`);
 
@@ -252,42 +306,8 @@ export const createVersionFiles = (
       await member(userId, workspaceId);
       const version = await findVersion(workspaceId, taskName, versionId);
       const file = await readyFile(version.id, fileId);
-      if (!TEXT_FILE.test(file.name))
-        throw new ControlServiceError(
-          "conflict",
-          "Only text files can be read inline. Download this file instead.",
-        );
-      if (file.sizeBytes > MAX_VERSION_FILE_CONTENT_BYTES)
-        throw new ControlServiceError(
-          "conflict",
-          "The file is too large to read inline. Download it instead.",
-        );
 
-      let bytes: Uint8Array;
-      try {
-        bytes = await requireStorage().read(versionFileKey(file), {
-          maxBytes: MAX_VERSION_FILE_CONTENT_BYTES,
-          timeoutMs: 10_000,
-        });
-      } catch (error) {
-        throw new ControlServiceError(
-          "unavailable",
-          "The file could not be read. Try again shortly.",
-          error,
-        );
-      }
-
-      let content: string;
-      try {
-        content = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-      } catch {
-        throw new ControlServiceError(
-          "conflict",
-          "The file is not valid UTF-8. Download it instead.",
-        );
-      }
-
-      return { name: file.name, content_type: file.contentType, content };
+      return readVersionFileText(requireStorage(), file);
     },
 
     async download(
@@ -300,18 +320,8 @@ export const createVersionFiles = (
       await member(userId, workspaceId);
       const version = await findVersion(workspaceId, taskName, versionId);
       const file = await readyFile(version.id, fileId);
-      const url = await requireStorage().signDownload(versionFileKey(file), {
-        expiresIn: DOWNLOAD_SECONDS,
-        filename: file.name,
-        contentType: file.contentType,
-      });
 
-      return {
-        url,
-        expires_at: new Date(
-          Date.now() + DOWNLOAD_SECONDS * 1000,
-        ).toISOString(),
-      };
+      return signVersionFileDownload(requireStorage(), file);
     },
 
     async remove(

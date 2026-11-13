@@ -1117,6 +1117,86 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/share": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get public report link
+     * @description Gets the version's public, read-only report link. Anyone with the link can read report.md and the files it names; the signature cannot be derived without a server-side key.
+     */
+    get: operations["getTaskVersionShare"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/shared-reports/{version_id}/{signature}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get shared report
+     * @description Public. Gets a shared version report's summary and the files it can read. Needs no authentication.
+     */
+    get: operations["getSharedReport"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/shared-reports/{version_id}/{signature}/files/{file_id}/content": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read shared report file
+     * @description Public. Returns the text of a shared report's Markdown, CSV, JSON or plain-text file.
+     */
+    get: operations["getSharedReportFileContent"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/shared-reports/{version_id}/{signature}/files/{file_id}/download": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Download shared report file
+     * @description Public. Gets a short-lived download link for a file a shared report names, such as an image.
+     */
+    get: operations["getSharedReportFileDownload"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/files": {
     parameters: {
       query?: never;
@@ -3001,8 +3081,28 @@ export interface components {
       /** @description The version's name or ID. */
       version_id: string;
     };
-    TaskVersionFileList: {
-      data: components["schemas"]["TaskVersionFile"][];
+    TaskVersionShare: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      version_id: string;
+      /** @description HMAC-SHA256 of the version ID under a server-side key, base64url-encoded. */
+      signature: string;
+    };
+    SharedReport: {
+      task: string;
+      /** @description Version name. */
+      version: string;
+      base_model_id: string;
+      /**
+       * Format: date-time
+       * @description When the version was delivered.
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      created_at: string;
+      /** @description report.md and the files it references by name. */
+      files: components["schemas"]["TaskVersionFile"][];
     };
     TaskVersionFile: {
       /**
@@ -3019,6 +3119,28 @@ export interface components {
        * @example 2026-08-16T12:00:00.000Z
        */
       created_at: string;
+    };
+    TaskVersionFileContent: {
+      /** @description File name within the version, such as report.md or eval-samples.csv. Reports reference data files by this name. */
+      name: string;
+      content_type: string;
+      /** @description UTF-8 text of the file. */
+      content: string;
+    };
+    TaskVersionFileDownload: {
+      /**
+       * Format: uri
+       * @description Short-lived signed URL for the file.
+       */
+      url: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      expires_at: string;
+    };
+    TaskVersionFileList: {
+      data: components["schemas"]["TaskVersionFile"][];
     };
     TaskVersionFileUpload: {
       /**
@@ -3043,25 +3165,6 @@ export interface components {
       size_bytes: number;
       /** @default application/octet-stream */
       content_type: string;
-    };
-    TaskVersionFileContent: {
-      /** @description File name within the version, such as report.md or eval-samples.csv. Reports reference data files by this name. */
-      name: string;
-      content_type: string;
-      /** @description UTF-8 text of the file. */
-      content: string;
-    };
-    TaskVersionFileDownload: {
-      /**
-       * Format: uri
-       * @description Short-lived signed URL for the file.
-       */
-      url: string;
-      /**
-       * Format: date-time
-       * @example 2026-08-16T12:00:00.000Z
-       */
-      expires_at: string;
     };
     /** @description Completed native SystemOne inference response. */
     SystemOneResponse: {
@@ -8059,6 +8162,250 @@ export interface operations {
       };
       /** @description Upload conflict or invalid adapter. */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getTaskVersionShare: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
+        task: string;
+        /** @description The version's name or ID. */
+        version_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The public link. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TaskVersionShare"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getSharedReport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        version_id: string;
+        /** @description HMAC-SHA256 of the version ID under a server-side key, base64url-encoded. */
+        signature: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The shared report. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SharedReport"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getSharedReportFileContent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        version_id: string;
+        /** @description HMAC-SHA256 of the version ID under a server-side key, base64url-encoded. */
+        signature: string;
+        file_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The file's text. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TaskVersionFileContent"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getSharedReportFileDownload: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        version_id: string;
+        /** @description HMAC-SHA256 of the version ID under a server-side key, base64url-encoded. */
+        signature: string;
+        file_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description A short-lived download link. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TaskVersionFileDownload"];
+        };
+      };
+      /** @description Not found. */
+      404: {
         headers: {
           [name: string]: unknown;
         };

@@ -5117,18 +5117,60 @@
         ],
         "additionalProperties": false
       },
-      "TaskVersionFileList": {
+      "TaskVersionShare": {
         "type": "object",
         "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TaskVersionFile"
-            }
+          "version_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "signature": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "description": "HMAC-SHA256 of the version ID under a server-side key, base64url-encoded."
           }
         },
         "required": [
-          "data"
+          "version_id",
+          "signature"
+        ]
+      },
+      "SharedReport": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string",
+            "description": "Version name."
+          },
+          "base_model_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z",
+            "description": "When the version was delivered."
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskVersionFile"
+            },
+            "description": "report.md and the files it references by name."
+          }
+        },
+        "required": [
+          "task",
+          "version",
+          "base_model_id",
+          "created_at",
+          "files"
         ]
       },
       "TaskVersionFile": {
@@ -5165,6 +5207,61 @@
           "content_type",
           "size_bytes",
           "created_at"
+        ]
+      },
+      "TaskVersionFileContent": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "description": "File name within the version, such as report.md or eval-samples.csv. Reports reference data files by this name."
+          },
+          "content_type": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string",
+            "description": "UTF-8 text of the file."
+          }
+        },
+        "required": [
+          "name",
+          "content_type",
+          "content"
+        ]
+      },
+      "TaskVersionFileDownload": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Short-lived signed URL for the file."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "url",
+          "expires_at"
+        ]
+      },
+      "TaskVersionFileList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskVersionFile"
+            }
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "TaskVersionFileUpload": {
@@ -5215,47 +5312,6 @@
         "required": [
           "name",
           "size_bytes"
-        ]
-      },
-      "TaskVersionFileContent": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
-            "description": "File name within the version, such as report.md or eval-samples.csv. Reports reference data files by this name."
-          },
-          "content_type": {
-            "type": "string"
-          },
-          "content": {
-            "type": "string",
-            "description": "UTF-8 text of the file."
-          }
-        },
-        "required": [
-          "name",
-          "content_type",
-          "content"
-        ]
-      },
-      "TaskVersionFileDownload": {
-        "type": "object",
-        "properties": {
-          "url": {
-            "type": "string",
-            "format": "uri",
-            "description": "Short-lived signed URL for the file."
-          },
-          "expires_at": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-08-16T12:00:00.000Z"
-          }
-        },
-        "required": [
-          "url",
-          "expires_at"
         ]
       },
       "SystemOneResponse": {
@@ -13106,6 +13162,379 @@
           },
           "409": {
             "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/share": {
+      "get": {
+        "operationId": "getTaskVersionShare",
+        "summary": "Get public report link",
+        "description": "Gets the version's public, read-only report link. Anyone with the link can read report.md and the files it names; the signature cannot be derived without a server-side key.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
+            },
+            "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
+            "name": "task",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The version's name or ID."
+            },
+            "required": true,
+            "description": "The version's name or ID.",
+            "name": "version_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The public link.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskVersionShare"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/shared-reports/{version_id}/{signature}": {
+      "get": {
+        "operationId": "getSharedReport",
+        "summary": "Get shared report",
+        "description": "Public. Gets a shared version report's summary and the files it can read. Needs no authentication.",
+        "tags": [
+          "Shared reports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "version_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$",
+              "description": "HMAC-SHA256 of the version ID under a server-side key, base64url-encoded."
+            },
+            "required": true,
+            "description": "HMAC-SHA256 of the version ID under a server-side key, base64url-encoded.",
+            "name": "signature",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The shared report.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedReport"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/shared-reports/{version_id}/{signature}/files/{file_id}/content": {
+      "get": {
+        "operationId": "getSharedReportFileContent",
+        "summary": "Read shared report file",
+        "description": "Public. Returns the text of a shared report's Markdown, CSV, JSON or plain-text file.",
+        "tags": [
+          "Shared reports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "version_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$",
+              "description": "HMAC-SHA256 of the version ID under a server-side key, base64url-encoded."
+            },
+            "required": true,
+            "description": "HMAC-SHA256 of the version ID under a server-side key, base64url-encoded.",
+            "name": "signature",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "file_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file's text.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskVersionFileContent"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/shared-reports/{version_id}/{signature}/files/{file_id}/download": {
+      "get": {
+        "operationId": "getSharedReportFileDownload",
+        "summary": "Download shared report file",
+        "description": "Public. Gets a short-lived download link for a file a shared report names, such as an image.",
+        "tags": [
+          "Shared reports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "version_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$",
+              "description": "HMAC-SHA256 of the version ID under a server-side key, base64url-encoded."
+            },
+            "required": true,
+            "description": "HMAC-SHA256 of the version ID under a server-side key, base64url-encoded.",
+            "name": "signature",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "file_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A short-lived download link.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskVersionFileDownload"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
             "content": {
               "application/problem+json": {
                 "schema": {

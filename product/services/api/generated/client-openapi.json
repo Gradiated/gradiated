@@ -5599,6 +5599,14 @@
                 "minimum": 0,
                 "description": "Total charge in USD, calculated from the admission-time pricing snapshot and finalized usage. Gradiated extension to the standard usage object."
               },
+              "estimated_joules": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "description": "Estimated GPU energy used for this generation, in joules. Omitted or null when unavailable; this is an estimate, not a precise measurement."
+              },
               "prompt_tokens_details": {
                 "type": "object",
                 "properties": {

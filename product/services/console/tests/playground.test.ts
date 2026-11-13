@@ -444,6 +444,38 @@ describe("replyStats", () => {
       replyStats({ firstTokenMs: undefined, totalMs: 0, usage: undefined }),
     ).toEqual([]);
   });
+
+  it.each([
+    [12.345, "12.3 J estimated"],
+    [0, "0 J estimated"],
+    [0.012345, "0.0123 J estimated"],
+  ] as const)(
+    "shows the reported energy estimate beside cost (%s J)",
+    (estimated_joules, expected) => {
+      const stats = replyStats({
+        firstTokenMs: 200,
+        totalMs: 1200,
+        usage: { ...usage, estimated_joules },
+      });
+      expect(stats.slice(-2)).toEqual(["$0.000420", expected]);
+    },
+  );
+
+  it.each([undefined, null, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+    "omits unavailable or invalid energy estimates (%s)",
+    (estimated_joules) => {
+      expect(
+        replyStats({
+          firstTokenMs: 200,
+          totalMs: 1200,
+          usage: {
+            ...usage,
+            ...(estimated_joules === undefined ? {} : { estimated_joules }),
+          },
+        }),
+      ).toEqual(replyStats({ firstTokenMs: 200, totalMs: 1200, usage }));
+    },
+  );
 });
 
 describe("requestSnippet", () => {

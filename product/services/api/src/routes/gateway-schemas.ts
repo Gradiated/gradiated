@@ -1,4 +1,4 @@
-import { ServiceTierSchema } from "@gradiated/contracts";
+import { GenerationLogSchema, ServiceTierSchema } from "@gradiated/contracts";
 import { z } from "@hono/zod-openapi";
 
 // These describe gateway wire payloads, not Hono validation. Model capabilities
@@ -286,6 +286,9 @@ const usageCost = z
 const chatUsage = z
   .object({
     cost: usageCost,
+    estimated_joules: GenerationLogSchema.shape.estimated_joules.describe(
+      "Estimated GPU energy used for this generation, in joules. Omitted or null when unavailable; this is an estimate, not a precise measurement.",
+    ),
     prompt_tokens_details: z
       .object({
         cached_tokens: z

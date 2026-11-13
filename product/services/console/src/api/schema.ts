@@ -3220,6 +3220,8 @@ export interface components {
       usage?: {
         /** @description Total charge in USD, calculated from the admission-time pricing snapshot and finalized usage. Gradiated extension to the standard usage object. */
         cost: number;
+        /** @description Estimated GPU energy used for this generation, in joules. Omitted or null when unavailable; this is an estimate, not a precise measurement. */
+        estimated_joules?: number | null;
         /** @description Breakdown of prompt tokens. */
         prompt_tokens_details: {
           /** @description Prompt tokens read from cache; included in prompt_tokens. */

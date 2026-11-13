@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { createOpenApiDocument } from "../src/openapi.js";
 import { createTestApp } from "./support.js";
-import { chatRequest } from "../src/routes/gateway-schemas.js";
+import { chatRequest, chatResponse } from "../src/routes/gateway-schemas.js";
 
 type Schema = {
   $ref?: string;
@@ -18,6 +18,14 @@ type Schema = {
 };
 
 describe("gateway API reference", () => {
+  it("allows absent or null energy estimates and validates reported joules", () => {
+    const usage = chatResponse.shape.usage.unwrap().shape;
+    const estimate = usage.estimated_joules;
+    for (const value of [undefined, null, 0, 12.4])
+      expect(estimate.safeParse(value).success).toBe(true);
+    for (const value of [-1, NaN, Infinity, "12.4"])
+      expect(estimate.safeParse(value).success).toBe(false);
+  });
   it("accepts documented integer DeepSeek efforts and rejects out-of-range values", () => {
     const body = {
       model: "deepseek/deepseek-v4.1-flash-1017",

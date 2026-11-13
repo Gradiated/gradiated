@@ -356,6 +356,7 @@ export const replyStats = ({
 }: ResponseStats): string[] => {
   const tokens = usage?.completion_tokens;
   const generatingMs = totalMs - (firstTokenMs ?? 0);
+  const joules = usage?.estimated_joules;
 
   return [
     ...(tokens === undefined ? [] : [`${tokens} tokens`]),
@@ -366,6 +367,11 @@ export const replyStats = ({
       ? []
       : [`${formatLatency(firstTokenMs)} to first token`]),
     ...(usage ? [formatUsd(usage.cost)] : []),
+    ...(typeof joules === "number" && Number.isFinite(joules) && joules >= 0
+      ? [
+          `${new Intl.NumberFormat(undefined, { maximumSignificantDigits: 3 }).format(joules)} J estimated`,
+        ]
+      : []),
   ];
 };
 

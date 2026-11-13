@@ -51,6 +51,16 @@ type Story = StoryObj<typeof meta>;
 export const Complete: Story = {
   args: { messages: [question, reply({ stats })] },
 };
+export const WithEnergyEstimate: Story = {
+  args: {
+    messages: [
+      question,
+      reply({
+        stats: { ...stats, usage: { ...usage, estimated_joules: 12.4 } },
+      }),
+    ],
+  },
+};
 export const WithReasoning: Story = {
   args: {
     messages: [

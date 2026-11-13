@@ -1,0 +1,6 @@
+{
+  "name": "model-radar",
+  "private": true,
+  "type": "module",
+  "description": "Posts to Slack when watched labs publish new models on Hugging Face or OpenRouter. See README.md."
+}

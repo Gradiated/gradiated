@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { bundles } from "./release.mjs";
-import { bundlesToVerify } from "./verify-inputs.mjs";
+import { bundlesToVerify, workflowRequiresVerification } from "./verify-inputs.mjs";
 
 const every = Object.keys(bundles);
 
@@ -15,6 +15,45 @@ test("base and shared packaging changes verify every bundle", () => {
     ".github/workflows/model-deployment.yml",
   ])
     assert.deepEqual(bundlesToVerify([path]), every, path);
+});
+
+test("trigger-only edits keep verification scoped to actual runtime inputs", () => {
+  const before = readFileSync(".github/workflows/model-deployment.yml", "utf8");
+  const after = before.replace("    paths:\n", "    paths:\n      - product/inference/new-runtime/**\n");
+  assert.equal(workflowRequiresVerification(before, after), false);
+  assert.deepEqual(bundlesToVerify([
+    ".github/workflows/model-deployment.yml",
+    "product/inference/runtimes/energy/middleware.py",
+  ], { triggerOnly: true }), [
+    "glm-5-3-flash-sglang", "kimi-k31-pro", "deepseek-v4-1-flash-sglang",
+  ]);
+  assert.deepEqual(bundlesToVerify([".github/workflows/model-deployment.yml"], { triggerOnly: true }), []);
+});
+
+test("job changes and unknown workflow layouts require full verification", () => {
+  const before = readFileSync(".github/workflows/model-deployment.yml", "utf8");
+  for (const after of [
+    before.replace("timeout-minutes: 90", "timeout-minutes: 60"),
+    before.replace("contents: read", "contents: write"),
+    before.replace("node tools/models/verify-inputs.mjs", "node tools/models/other.mjs"),
+    "on: [invalid",
+  ]) assert.equal(workflowRequiresVerification(before, after), true);
+  assert.equal(workflowRequiresVerification("", before), true);
+});
+
+test("trigger anchors that change job inputs still require verification", () => {
+  const before = 'on:\n  push: &runner ubuntu-24.04\njobs:\n  checks:\n    runs-on: *runner\n';
+  assert.equal(workflowRequiresVerification(before, before.replace('ubuntu-24.04', 'ubuntu-22.04')), true);
+});
+
+test("job value types and aliased trigger types are preserved", () => {
+  for (const before of [
+    'on: push\njobs:\n  checks:\n    strategy:\n      matrix:\n        flag: [false]\n',
+    'on:\n  push: &flag false\njobs:\n  checks:\n    strategy:\n      matrix:\n        flag: [*flag]\n',
+  ]) {
+    assert.equal(workflowRequiresVerification(before, before.replace('false', '"false"')), true);
+    assert.equal(workflowRequiresVerification(before, before.replace('false', '0')), true);
+  }
 });
 test("a bundle's own inputs verify only that bundle", () => {
   assert.deepEqual(

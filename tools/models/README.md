@@ -20,6 +20,19 @@ the AWS deployment role controls ECR and S3 publication. Base or shared packagin
 changes verify every runtime, while model-specific changes verify the affected
 bundle. Build/import checks do not establish GPU serving correctness.
 
+SMG wheels compile in a separate minimal Ubuntu/Python/Rust stage. Only the
+pinned toolchain, SMG source, wheel builder and SMG patches feed that stage, so
+Depot can reuse the compiled wheel when SGLang dependencies or runtime helpers
+change. GLM and DeepSeek share the LoRA variant; Kimi uses the base variant.
+Changing any compiler input rebuilds and reruns its native tests. Every bundle
+still installs the wheel into its own environment and verifies the complete
+packaged runtime. A cold build still pays the compilation cost.
+
+PR checks run CPU-only configuration and verifier regression tests before any
+native build. Trigger-only edits to the workflow keep verification scoped to
+the changed runtime inputs; edits to jobs, permissions or other workflow content
+continue to verify every bundle.
+
 ## Host downloads
 
 The root host agent requests short-lived bundle download grants through the

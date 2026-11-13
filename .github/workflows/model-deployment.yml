@@ -76,6 +76,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+      - run: python3 -m pip install PyYAML==6.0.2
       - id: verification
         if: github.event_name == 'pull_request'
         env:
@@ -106,9 +107,16 @@ jobs:
           path: product/packages/autotrain
           token: ${{ steps.autotrain-token.outputs.token }}
           persist-credentials: false
-      - run: python3 -m pip install PyYAML==6.0.2
       - run: |
           node --test tools/images/*.test.mjs tools/models/*.test.mjs
+      - name: Check runtime configuration before native builds
+        if: steps.verification.outputs.required == 'true'
+        run: |
+          python3 -m unittest discover -s product/inference/runtimes/glm-sglang -p test_config.py
+          python3 -m unittest discover -s product/inference/runtimes/deepseek-sglang -p test_config.py
+          python3 -m unittest discover -s product/inference/runtimes/kimi-k31 -p test_config.py
+          python3 -m unittest discover -s product/inference/bundles/kimi-k31-pro/tests -p test_verify_environment.py
+          python3 -m unittest discover -s product/inference/runtimes/energy -p 'test_*.py'
       - id: bundles
         run: echo "bundles=$(node tools/models/release.mjs list)" >> "$GITHUB_OUTPUT"
       - uses: depot/setup-action@91bc8495a33ebfc504ffc89e5674379ccf23c29c # v1.7.2

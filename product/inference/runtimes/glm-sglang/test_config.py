@@ -1,3 +1,5 @@
+import argparse
+import ast
 import importlib.util
 import os
 import json
@@ -26,6 +28,23 @@ class Configuration(unittest.TestCase):
 
     def tearDown(self):
         self.directory.cleanup()
+
+    def test_build_verifier_keeps_model_argument_for_every_profile(self):
+        namespace = {}
+        for profile, name in [('b300-pcp2', 'backend'), ('h200-tp2', 'hopper_backend'),
+                              ('b200-pcp2', 'b200_backend')]:
+            namespace[name] = config.commands({**self.environment, 'GLM_SGLANG_PROFILE': profile})[1]
+        tree = ast.parse((HERE / 'verify-build.py').read_text())
+        calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
+                 and isinstance(node.func, ast.Attribute) and node.func.attr == 'parse_args']
+        self.assertEqual(len(calls), 3)
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--model-path', required=True)
+        for call in calls:
+            with self.subTest(line=call.lineno):
+                arguments = eval(compile(ast.Expression(call.args[0]), 'build-verifier-arguments', 'eval'), namespace)
+                parsed, _ = parser.parse_known_args(arguments)
+                self.assertEqual(parsed.model_path, config.MODEL)
 
     def test_measured_pcp_marlin_and_native_front(self):
         settings, backend, router = config.commands(self.environment)

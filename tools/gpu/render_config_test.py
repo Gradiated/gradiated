@@ -345,7 +345,8 @@ class RenderTests(unittest.TestCase):
         self.assertNotIn('kev', floors)
         # Plain GLM scales on demand; Kimi and DeepSeek retain fixed capacity.
         self.assertEqual(floors['glm'], (0, 1, 12))
-        self.assertEqual(floors['deepseek'], (2, 2, 32))
+        self.assertEqual(floors['deepseek'], (1, 1, 32))
+        self.assertEqual(floors['deepseek-head-qualification'], (1, 1, 32))
         self.assertEqual(floors['kimi-k31-pro'], (1, 1, 5))
         for model in ('dealignai/glm-5.3-flash-uncensored', 'perplexity-ai/pplx-decider-v1.2'):
             self.assertGreater(models[model]['min_slots'], 0)
@@ -512,7 +513,7 @@ class RenderTests(unittest.TestCase):
         models, runtimes, inventory = self.fleet()
         pools = renderer.plan(models, runtimes, inventory)
         templates = {name: renderer.rollout(name, pools[name], runtimes)['spec']['template']['spec']
-                     for name in ('kimi-k31-pro', 'deepseek')}
+                     for name in ('kimi-k31-pro', 'deepseek', 'deepseek-head-qualification')}
         self.assertEqual(pools['kimi-k31-pro']['hosts'], ['01a0fbf7-5276-700b-903b-7e04da150ed6'])
         self.assertEqual(pools['deepseek']['hosts'], [])
         deepseek = templates['deepseek']
@@ -528,6 +529,25 @@ class RenderTests(unittest.TestCase):
         trainer = (renderer.ROOT / 'product/services/temporal-worker/src/training/kubernetes-host.ts').read_text()
         self.assertIn('key: "gradiated.com/reserved"', trainer)
         self.assertIn('value: "training"', trainer)
+
+    def test_deepseek_head_qualification_preserves_base_and_is_not_public_capacity(self):
+        models, runtimes, hosts = self.fleet()
+        pools = renderer.plan(models, runtimes, hosts)
+        staged = pools['deepseek-head-qualification']
+        base = pools['deepseek']
+        self.assertEqual((staged['mode'], staged['floor'], staged['maximum']), ('qualification', 1, 1))
+        self.assertEqual((base['floor'], base['maximum']), (1, 1))
+        before, after = runtimes[base['runtime']], runtimes[staged['runtime']]
+        self.assertNotEqual(before['model_id'], after['model_id'])
+        for key in ('gpus', 'cpu', 'memory', 'environment'):
+            self.assertEqual(before[key], after[key])
+        for key in ('model_path', 'model_revision', 'tokenizer_revision', 'lora_base_model_revision'):
+            self.assertEqual(before['release'][key], after['release'][key])
+        annotations = renderer.rollout('deepseek-head-qualification', staged, runtimes)[
+            'spec']['template']['metadata']['annotations']
+        self.assertEqual(annotations['gradiated.com/serving-mode'], 'qualification')
+        self.assertEqual(annotations['gradiated.com/serving-model-id'], 'deepseek/deepseek-v4.1-flash-1017')
+        self.assertNotEqual(annotations['gradiated.com/model-id'], annotations['gradiated.com/serving-model-id'])
 
     def test_spread_places_replicas_on_separate_hosts(self):
         pools, catalogue = self.synthetic({'pool': {'runtime': 'r', 'gpu': 'B300', 'max_replicas': 2,

@@ -195,13 +195,15 @@ export const createApiClient = (
       if (location === "body") body[field] = value;
     }
 
+    // A retry shares the first attempt's deadline, so one call never outlasts the pod's drain window.
+    const deadline =
+      Date.now() +
+      (tool.upstream === "inference" ? INFERENCE_TIMEOUT_MS : API_TIMEOUT_MS);
     const send = async (authorization?: string) =>
       request(principal.caller, url, {
         method: tool.method.toUpperCase(),
         ...(authorization ? { authorization } : {}),
-        ...(tool.upstream === "inference"
-          ? { timeoutMs: INFERENCE_TIMEOUT_MS }
-          : {}),
+        timeoutMs: Math.max(deadline - Date.now(), 1),
         ...(values.some(({ location }) => location === "body")
           ? {
               body: JSON.stringify(body),

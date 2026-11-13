@@ -343,10 +343,10 @@ def main():
                      alert if fires else None, [alert],
                      {'namespace': namespace, 'deployment': deployment}, duration)
 
-    for missing in (None, 'api', 'gateway', 'proxy', 'worker'):
+    for missing in (None, 'api', 'gateway', 'proxy', 'worker', 'mcp'):
         inputs = [{'series': 'kube_horizontalpodautoscaler_spec_max_replicas'
                    + f'{{namespace="gradiated",horizontalpodautoscaler="keda-hpa-{service}"}}',
-                   'values': '20+0x8'} for service in ('api', 'gateway', 'proxy', 'worker') if service != missing]
+                   'values': '20+0x8'} for service in ('api', 'gateway', 'proxy', 'worker', 'mcp') if service != missing]
         alert = 'AutoscalerMissing'
         scenario(f'missing HPA {missing}', inputs, alert if missing else None, [alert],
                  {'namespace': 'gradiated', 'horizontalpodautoscaler': f'keda-hpa-{missing}'}, '2m')

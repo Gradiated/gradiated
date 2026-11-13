@@ -13,9 +13,11 @@ import { buildTools } from "./tools/definitions.js";
 const environment = parseMcpEnvironment();
 const metrics = createMcpMetrics();
 
-const valkeyStore = (url: string): CacheStore => {
-  const client = createValkeyClient({ ...environment, VALKEY_URL: url });
+const valkey = environment.VALKEY_URL
+  ? createValkeyClient({ ...environment, VALKEY_URL: environment.VALKEY_URL })
+  : undefined;
 
+const valkeyStore = (client: NonNullable<typeof valkey>): CacheStore => {
   metrics.dependency("valkey", false);
   client.on("ready", () => metrics.dependency("valkey", true));
   client.on("end", () => metrics.dependency("valkey", false));
@@ -45,7 +47,7 @@ const api = createApiClient(
   environment.GRADIATED_INFERENCE_URL,
 );
 const cache = createCredentialCache(
-  environment.VALKEY_URL ? valkeyStore(environment.VALKEY_URL) : undefined,
+  valkey ? valkeyStore(valkey) : undefined,
   metrics.cache,
 );
 const app = createApp({
@@ -62,6 +64,12 @@ const server = serve({
   fetch: app.fetch,
   hostname: environment.HOST,
   port: environment.PORT,
+  serverOptions: {
+    // Beyond the ALB's 660 s idle timeout, so the ALB never reuses a connection Node closed.
+    keepAliveTimeout: 670_000,
+    // Node's 300 s default would cut off a call_model at its own 300 s limit.
+    requestTimeout: 340_000,
+  },
 });
 const metricsServer = startMetricsServer(
   metrics,
@@ -69,9 +77,31 @@ const metricsServer = startMetricsServer(
   environment.METRICS_PORT,
 );
 
-const shutdown = () => {
-  metricsServer.close();
-  server.close(() => process.exit(0));
+const closeServer = (closable: {
+  close(callback: (error?: Error) => void): unknown;
+}) =>
+  new Promise<void>((resolve, reject) => {
+    closable.close((error) => (error ? reject(error) : resolve()));
+  });
+
+const release = async (dependency: string, close: () => Promise<unknown>) => {
+  try {
+    await close();
+  } catch (error) {
+    console.error(`MCP could not close ${dependency}.`, error);
+    process.exitCode = 1;
+  }
 };
-process.once("SIGTERM", shutdown);
-process.once("SIGINT", shutdown);
+
+// The pod's preStop has already taken it out of the load balancer; open requests finish first.
+const shutdown = async () => {
+  await Promise.all([
+    release("http", () => closeServer(server)),
+    release("metrics", () => closeServer(metricsServer)),
+  ]);
+  await release("valkey", async () => {
+    if (valkey?.isOpen) await valkey.quit();
+  });
+};
+process.once("SIGTERM", () => void shutdown());
+process.once("SIGINT", () => void shutdown());

@@ -873,3 +873,95 @@ export const playgroundUnavailableHandlers = [
   ),
   ...playgroundHandlers,
 ];
+
+const otherOrganizationId = "00000000-0000-4000-8000-000000000011";
+const consentWorkspaces: Record<string, components["schemas"]["Workspace"][]> =
+  {
+    [organizationId]: [
+      workspace,
+      {
+        ...workspace,
+        id: "00000000-0000-4000-8000-000000000012",
+        name: "Staging",
+        is_default: false,
+      },
+    ],
+    [otherOrganizationId]: [
+      {
+        ...workspace,
+        id: "00000000-0000-4000-8000-000000000013",
+        organization_id: otherOrganizationId,
+      },
+    ],
+  };
+
+// A client that registered itself and is asking for a workspace.
+export const oauthConsentQuery = new URLSearchParams({
+  response_type: "code",
+  client_id: "storybook-client",
+  redirect_uri: "http://localhost:53682/callback",
+  scope: "mcp offline_access",
+  state: "storybook",
+  sig: "storybook",
+  exp: "1893456000",
+}).toString();
+
+export const oauthConsentHandlers = (currentUser: CurrentUser = user) => [
+  http.get("/api/auth/oauth2/public-client", () =>
+    HttpResponse.json({ client_name: "Claude Code" }),
+  ),
+  http.get("/api/v1/organizations/:organizationId/workspaces", ({ params }) =>
+    HttpResponse.json(
+      list(...(consentWorkspaces[String(params.organizationId)] ?? [])),
+    ),
+  ),
+  ...handlersFor(currentUser),
+];
+
+// Two organizations, each with a workspace named Production.
+export const oauthOrganizationsUser: CurrentUser = {
+  ...user,
+  organizations: [
+    organization,
+    {
+      ...organization,
+      id: otherOrganizationId,
+      name: "Acme",
+      slug: "acme",
+      default_workspace_id: "00000000-0000-4000-8000-000000000013",
+    },
+  ],
+};
+
+// Names are not unique, and one even looks like a disambiguated label.
+const sameNameOrganizations = [
+  ["00000000-0000-4000-8000-000000000021", "Acme", "acme"],
+  ["00000000-0000-4000-8000-000000000022", "Acme", "acme-labs"],
+  ["00000000-0000-4000-8000-000000000023", "Acme (acme)", "acme-acme"],
+] as const;
+
+for (const [id] of sameNameOrganizations)
+  consentWorkspaces[id] = [
+    {
+      ...workspace,
+      id: id.replace(/2(\d)$/, "3$1"),
+      organization_id: id,
+      name: "Default",
+    },
+  ];
+
+export const oauthSameNameUser: CurrentUser = {
+  ...user,
+  organizations: sameNameOrganizations.map(([id, name, slug]) => ({
+    ...organization,
+    id,
+    name,
+    slug,
+    default_workspace_id: id.replace(/2(\d)$/, "3$1"),
+  })),
+};
+
+export const oauthSuspendedUser: CurrentUser = {
+  ...user,
+  organizations: [{ ...organization, status: "suspended" }],
+};

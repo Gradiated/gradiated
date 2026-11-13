@@ -31,6 +31,11 @@ const ApiOnlyEnvironmentSchema = z.object({
   PROFILING_PORT: PortSchema.default(3_003),
   GPU_CONTROL_HOST: z.string().min(1).default("0.0.0.0"),
   GPU_CONTROL_PORT: PortSchema.default(3_004),
+  // Lets the playground reach MCP servers on loopback and private networks; local development only.
+  MCP_PROXY_ALLOW_PRIVATE_NETWORKS: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
   GPU_CONTROL_PROVIDER: z
     .string()
     .regex(/^[a-z][a-z0-9_-]{0,99}$/)
@@ -57,11 +62,16 @@ const authEmailTransport = (environment: Environment): AuthEmailTransport => {
 export const parseApiEnvironment = (
   environment: NodeJS.ProcessEnv,
 ): ApiConfiguration => {
+  const own = ApiOnlyEnvironmentSchema.parse(environment);
+  if (
+    environment.NODE_ENV === "production" &&
+    own.MCP_PROXY_ALLOW_PRIVATE_NETWORKS
+  )
+    throw new Error(
+      "MCP_PROXY_ALLOW_PRIVATE_NETWORKS cannot be enabled in production.",
+    );
+
   const shared = parseEnvironment(environment);
 
-  return {
-    ...shared,
-    ...ApiOnlyEnvironmentSchema.parse(environment),
-    authEmail: authEmailTransport(shared),
-  };
+  return { ...shared, ...own, authEmail: authEmailTransport(shared) };
 };

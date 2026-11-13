@@ -211,3 +211,15 @@ export {
   ImpersonationInputSchema,
   ImpersonationResultSchema,
 } from "./impersonation.js";
+export {
+  CallMcpToolSchema,
+  ListMcpToolsSchema,
+  McpServerConnectionSchema,
+  McpToolListSchema,
+  McpToolResultSchema,
+  McpToolSchema,
+  type McpServerConnection,
+  type McpTool,
+  type McpToolList,
+  type McpToolResult,
+} from "./mcp.js";

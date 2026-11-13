@@ -88,9 +88,30 @@ export interface WorkspaceApiKeyService {
     sessionId: string,
     workspaceId: string,
   ): Promise<void>;
+  requirePlaygroundAccess(userId: string, workspaceId: string): Promise<void>;
 }
 
 const { digest: _digest, ...apiKeyColumns } = getTableColumns(apiKeys);
+
+const requirePlayground = async (
+  database: ControlDatabase,
+  userId: string,
+  workspaceId: string,
+) => {
+  const { workspace } = await requireWritableWorkspace(database, {
+    userId,
+    workspaceId,
+  }).catch((error: unknown) => {
+    if (error instanceof ControlServiceError && error.code === "forbidden")
+      throw new ControlServiceError(
+        "forbidden",
+        "The playground is unavailable in an archived workspace or a suspended organization.",
+      );
+    throw error;
+  });
+
+  return workspace;
+};
 
 export const createWorkspaceApiKeyService = (
   database: ControlDatabase,
@@ -221,17 +242,7 @@ export const createWorkspaceApiKeyService = (
     // Signed-in members try models without managing keys. Each member has one
     // hidden key per workspace; every call rotates its secret and expiry.
     async createPlaygroundCredential(userId, workspaceId) {
-      const { workspace } = await requireWritableWorkspace(database, {
-        userId,
-        workspaceId,
-      }).catch((error: unknown) => {
-        if (error instanceof ControlServiceError && error.code === "forbidden")
-          throw new ControlServiceError(
-            "forbidden",
-            "The playground is unavailable in an archived workspace or a suspended organization.",
-          );
-        throw error;
-      });
+      const workspace = await requirePlayground(database, userId, workspaceId);
 
       const now = new Date();
       const expiresAt = new Date(
@@ -301,6 +312,10 @@ export const createWorkspaceApiKeyService = (
           .set({ revokedAt, updatedAt: revokedAt })
           .where(eq(apiKeys.id, apiKey.id));
       }
+    },
+
+    async requirePlaygroundAccess(userId, workspaceId) {
+      await requirePlayground(database, userId, workspaceId);
     },
 
     // Membership and workspace state are checked by each operation, as for a session.

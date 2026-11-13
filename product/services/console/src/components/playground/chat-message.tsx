@@ -1,4 +1,10 @@
-import { Brain, LoaderCircle } from "lucide-react";
+import {
+  Brain,
+  CircleAlert,
+  CircleCheck,
+  LoaderCircle,
+  Wrench,
+} from "lucide-react";
 
 import { CopyStateIcon } from "@/components/copy-state-icon";
 import { MessageMarkdown } from "@/components/playground/message-markdown";
@@ -8,6 +14,7 @@ import {
   replyStats,
   type AssistantMessage,
   type PlaygroundMessage,
+  type PlaygroundToolCall,
 } from "@/lib/playground";
 
 export const ChatMessage = ({ message }: { message: PlaygroundMessage }) =>
@@ -22,7 +29,8 @@ export const ChatMessage = ({ message }: { message: PlaygroundMessage }) =>
   );
 
 const AssistantReply = ({ reply }: { reply: AssistantMessage }) => {
-  const thinking = reply.status === "streaming" && !reply.content;
+  const thinking =
+    reply.status === "streaming" && !reply.content && !reply.toolCalls?.length;
 
   return (
     <div className="space-y-2">
@@ -41,6 +49,9 @@ const AssistantReply = ({ reply }: { reply: AssistantMessage }) => {
         </details>
       ) : null}
       {reply.content ? <MessageMarkdown content={reply.content} /> : null}
+      {reply.toolCalls?.map((call, index) => (
+        <ToolCall key={call.id || index} call={call} />
+      ))}
       {thinking && !reply.reasoning ? (
         <LoaderCircle
           aria-label="Generating"
@@ -80,3 +91,58 @@ const ReplyFooter = ({ reply }: { reply: AssistantMessage }) => {
     </div>
   );
 };
+
+const prettyJson = (text: string) => {
+  try {
+    return JSON.stringify(JSON.parse(text), null, 2);
+  } catch {
+    return text;
+  }
+};
+
+const ToolCallStatus = ({
+  status,
+}: {
+  status: PlaygroundToolCall["status"];
+}) =>
+  status === "running" ? (
+    <LoaderCircle
+      aria-label="Running"
+      className="size-3.5 animate-spin text-muted-foreground"
+    />
+  ) : status === "failed" ? (
+    <CircleAlert aria-label="Failed" className="size-3.5 text-destructive" />
+  ) : (
+    <CircleCheck aria-label="Done" className="size-3.5 text-muted-foreground" />
+  );
+
+const ToolCall = ({ call }: { call: PlaygroundToolCall }) => (
+  <details className="rounded-lg border bg-muted/40 px-3 py-2 text-sm">
+    <summary className="flex cursor-pointer items-center gap-2 text-muted-foreground select-none">
+      <Wrench className="size-4" />
+      <span className="min-w-0 truncate">
+        {call.server ? `${call.server} · ` : ""}
+        <span className="font-mono text-foreground">{call.tool}</span>
+      </span>
+      <ToolCallStatus status={call.status} />
+    </summary>
+    <div className="mt-2 space-y-2">
+      <ToolCallText
+        label="Arguments"
+        text={prettyJson(call.arguments || "{}")}
+      />
+      {call.result !== undefined ? (
+        <ToolCallText label="Result" text={prettyJson(call.result)} />
+      ) : null}
+    </div>
+  </details>
+);
+
+const ToolCallText = ({ label, text }: { label: string; text: string }) => (
+  <div>
+    <p className="text-xs font-medium text-muted-foreground">{label}</p>
+    <pre className="mt-1 max-h-64 overflow-auto rounded-md bg-background p-2 font-mono text-xs leading-5 break-words whitespace-pre-wrap">
+      {text}
+    </pre>
+  </div>
+);

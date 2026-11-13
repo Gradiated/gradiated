@@ -211,6 +211,8 @@ const model = {
           stop: { type: "unknown" },
           response_format: { type: "unknown" },
           reasoning_effort: { type: "enum", values: ["low", "high", "max"] },
+          tools: { type: "unknown" },
+          tool_choice: { type: "unknown" },
         },
         pricing: [{ type: "completion", unit: "token", cost: 900 }],
       },
@@ -507,8 +509,17 @@ const chatCompletionHandler = http.post(
       );
     }
 
-    const { model } = (await request.json()) as { model: string };
-    const chunk = (delta: Record<string, string>) =>
+    const { model, tools, messages } = (await request.json()) as {
+      model: string;
+      tools?: { function: { name: string } }[];
+      messages: { role: string }[];
+    };
+    const toolName = tools?.find(({ function: { name } }) =>
+      name.endsWith("__list_tasks"),
+    )?.function.name;
+    const callsTool =
+      toolName !== undefined && !messages.some(({ role }) => role === "tool");
+    const chunk = (delta: Record<string, unknown>) =>
       sseEvent({
         id: "storybook-completion",
         object: "chat.completion.chunk",
@@ -519,7 +530,23 @@ const chatCompletionHandler = http.post(
       ...words(PLAYGROUND_REASONING).map((text) =>
         chunk({ reasoning_content: text }),
       ),
-      ...words(PLAYGROUND_REPLY).map((text) => chunk({ content: text })),
+      ...(callsTool
+        ? [
+            chunk({
+              tool_calls: [
+                {
+                  index: 0,
+                  id: "call_storybook",
+                  type: "function",
+                  function: { name: toolName, arguments: "" },
+                },
+              ],
+            }),
+            chunk({
+              tool_calls: [{ index: 0, function: { arguments: "{}" } }],
+            }),
+          ]
+        : words(PLAYGROUND_REPLY).map((text) => chunk({ content: text }))),
       sseEvent({
         id: "storybook-completion",
         object: "chat.completion.chunk",
@@ -553,7 +580,48 @@ const chatCompletionHandler = http.post(
   },
 );
 
+const MCP_TOOLS = [
+  {
+    name: "list_tasks",
+    title: "List tasks",
+    description: "Lists the workspace's tasks.",
+    input_schema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+    read_only: true,
+  },
+  {
+    name: "get_usage",
+    title: "Get usage",
+    description: "Gets the workspace's inference usage and spend.",
+    input_schema: {
+      type: "object",
+      properties: { from: { type: "string" }, to: { type: "string" } },
+      required: ["from", "to"],
+    },
+    read_only: true,
+  },
+];
+
+const mcpHandlers = [
+  http.post("/api/v1/workspaces/:workspaceId/playground/mcp-tool-lists", () =>
+    HttpResponse.json({
+      server: { name: "gradiated", version: "0.1.0", instructions: null },
+      tools: MCP_TOOLS,
+    }),
+  ),
+  http.post("/api/v1/workspaces/:workspaceId/playground/mcp-tool-calls", () =>
+    HttpResponse.json({
+      is_error: false,
+      text: JSON.stringify({ data: [{ name: "support-assistant" }] }),
+    }),
+  ),
+];
+
 export const handlersFor = (currentUser: CurrentUser) => [
+  ...mcpHandlers,
   http.get("/api/v1/me", () => HttpResponse.json(currentUser)),
   http.get("/api/auth/get-session", () =>
     HttpResponse.json(sessionFor(currentUser)),

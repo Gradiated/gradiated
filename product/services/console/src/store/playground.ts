@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+import { installedServers, type InstalledMcpServer } from "@/lib/mcp";
 import {
   DEFAULT_SETTINGS,
   type PlaygroundMessage,
@@ -12,6 +13,8 @@ export interface PlaygroundConversation {
   options: PlaygroundOptions;
   messages: PlaygroundMessage[];
   sessionId: string;
+  // Headers can hold credentials; sign-out clears the store with them.
+  mcpServers: InstalledMcpServer[];
 }
 
 const emptyConversation = (): PlaygroundConversation => ({
@@ -19,6 +22,7 @@ const emptyConversation = (): PlaygroundConversation => ({
   options: DEFAULT_SETTINGS,
   messages: [],
   sessionId: crypto.randomUUID(),
+  mcpServers: installedServers(undefined),
 });
 
 interface PlaygroundState {
@@ -38,7 +42,11 @@ export const playgroundConversation = (
 
   // Options saved by an older version gain any settings added since.
   return stored
-    ? { ...stored, options: { ...DEFAULT_SETTINGS, ...stored.options } }
+    ? {
+        ...stored,
+        options: { ...DEFAULT_SETTINGS, ...stored.options },
+        mcpServers: installedServers(stored.mcpServers),
+      }
     : emptyConversation();
 };
 
@@ -46,7 +54,19 @@ export const playgroundConversation = (
 const settled = (messages: PlaygroundMessage[]): PlaygroundMessage[] =>
   messages.map((message) =>
     message.role === "assistant" && message.status === "streaming"
-      ? { ...message, status: "stopped" }
+      ? {
+          ...message,
+          status: "stopped",
+          ...(message.toolCalls
+            ? {
+                toolCalls: message.toolCalls.map((call) =>
+                  call.status === "running"
+                    ? { ...call, status: "failed" as const }
+                    : call,
+                ),
+              }
+            : {}),
+        }
       : message,
   );
 

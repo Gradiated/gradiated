@@ -17,15 +17,24 @@ export type ChatCompletionParameters = Pick<
   | "presence_penalty"
   | "stop"
   | "response_format"
+  | "tools"
   | "session_id"
 >;
 export type ChatCompletionUsage = NonNullable<
   components["schemas"]["ChatCompletionResponse"]["usage"]
 >;
 
+export interface ToolCallDelta {
+  index: number;
+  id?: string;
+  name?: string;
+  arguments?: string;
+}
+
 export interface ChatCompletionDelta {
   content: string;
   reasoning: string;
+  toolCalls: ToolCallDelta[];
   usage: ChatCompletionUsage | undefined;
 }
 
@@ -35,6 +44,11 @@ interface ChatCompletionChunk {
       content?: string | null;
       reasoning_content?: string | null;
       reasoning?: string | null;
+      tool_calls?: {
+        index?: number;
+        id?: string;
+        function?: { name?: string; arguments?: string };
+      }[];
     };
   }[];
   usage?: ChatCompletionUsage | null;
@@ -109,6 +123,14 @@ export const streamChatCompletion = async ({
     onDelta({
       content: delta?.content ?? "",
       reasoning: delta?.reasoning_content ?? delta?.reasoning ?? "",
+      toolCalls: (delta?.tool_calls ?? []).map((call, position) => ({
+        index: call.index ?? position,
+        ...(call.id ? { id: call.id } : {}),
+        ...(call.function?.name ? { name: call.function.name } : {}),
+        ...(call.function?.arguments
+          ? { arguments: call.function.arguments }
+          : {}),
+      })),
       usage: chunk.usage ?? undefined,
     });
   }

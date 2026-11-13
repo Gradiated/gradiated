@@ -2962,6 +2962,153 @@
           "expires_at"
         ]
       },
+      "McpToolList": {
+        "type": "object",
+        "properties": {
+          "server": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "instructions": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "version",
+              "instructions"
+            ]
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/McpTool"
+            }
+          }
+        },
+        "required": [
+          "server",
+          "tools"
+        ]
+      },
+      "McpTool": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "input_schema": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "read_only": {
+            "type": "boolean",
+            "description": "Whether the server marks the tool read-only."
+          }
+        },
+        "required": [
+          "name",
+          "title",
+          "description",
+          "input_schema",
+          "read_only"
+        ]
+      },
+      "ListMcpTools": {
+        "type": "object",
+        "properties": {
+          "server": {
+            "$ref": "#/components/schemas/McpServerConnection"
+          }
+        },
+        "required": [
+          "server"
+        ],
+        "additionalProperties": false
+      },
+      "McpServerConnection": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2048,
+            "format": "uri",
+            "description": "Streamable HTTP endpoint of a remote MCP server."
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 8192
+            },
+            "default": {},
+            "description": "Headers sent to the server on every request, such as Authorization. They are not stored."
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "McpToolResult": {
+        "type": "object",
+        "properties": {
+          "is_error": {
+            "type": "boolean"
+          },
+          "text": {
+            "type": "string",
+            "description": "The result's text content; other content types are summarized."
+          }
+        },
+        "required": [
+          "is_error",
+          "text"
+        ]
+      },
+      "CallMcpTool": {
+        "type": "object",
+        "properties": {
+          "server": {
+            "$ref": "#/components/schemas/McpServerConnection"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "arguments": {
+            "type": "object",
+            "additionalProperties": {},
+            "default": {}
+          }
+        },
+        "required": [
+          "server",
+          "name"
+        ],
+        "additionalProperties": false
+      },
       "TraceGenerationList": {
         "type": "object",
         "properties": {

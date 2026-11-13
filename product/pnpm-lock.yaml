@@ -208,6 +208,9 @@ importers:
       '@hono/zod-openapi':
         specifier: 1.6.0
         version: 1.6.0(hono@4.13.13)(zod@4.6.6)
+      '@modelcontextprotocol/sdk':
+        specifier: 1.32.0
+        version: 1.32.0(zod@4.6.6)
       '@scalar/hono-api-reference':
         specifier: 0.11.14
         version: 0.11.14(hono@4.13.13)
@@ -229,6 +232,9 @@ importers:
       stripe:
         specifier: 22.5.0
         version: 22.5.0(@types/node@20.19.43)
+      undici:
+        specifier: 7.30.2
+        version: 7.30.2
       uuid:
         specifier: 14.0.1
         version: 14.0.1
@@ -6419,6 +6425,10 @@ packages:
 
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+
+  undici@7.30.2:
+    resolution: {integrity: sha512-mLyPQnHwUxaM/rideoK/+KL8DaAJLRl4aBCfmX444aCSLnIaomqPLtNRe2jdCYcsk5wZzXrDIQC8ZeYNRAYyIA==}
+    engines: {node: '>=20.18.1'}
 
   unicode-properties@1.4.1:
     resolution: {integrity: sha512-CLjCCLQ6UuMxWnbIylkisbRj31qxHPAurvena/0iwSVbQ2G1VY5/HjV0IRabOEbDHlzZlRdCrD4NhB0JtU40Pg==}
@@ -12646,6 +12656,8 @@ snapshots:
   undici-types@5.26.5: {}
 
   undici-types@6.21.0: {}
+
+  undici@7.30.2: {}
 
   unicode-properties@1.4.1:
     dependencies:

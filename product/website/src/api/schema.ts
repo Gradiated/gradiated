@@ -745,6 +745,46 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace_id}/playground/mcp-tool-lists": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List MCP server tools
+     * @description Connects to a remote MCP server for the playground and lists its tools. The connection's headers are used for this request only.
+     */
+    post: operations["listPlaygroundMcpTools"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace_id}/playground/mcp-tool-calls": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Call MCP server tool
+     * @description Calls one tool on a remote MCP server for a playground model's tool call. A failed tool is a result with is_error, not an error response.
+     */
+    post: operations["callPlaygroundMcpTool"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace_id}/generations": {
     parameters: {
       query?: never;
@@ -2249,6 +2289,54 @@ export interface components {
        * @example 2026-08-16T12:00:00.000Z
        */
       expires_at: string;
+    };
+    McpToolList: {
+      server: {
+        name: string;
+        version: string;
+        instructions: string | null;
+      };
+      tools: components["schemas"]["McpTool"][];
+    };
+    McpTool: {
+      name: string;
+      title: string | null;
+      description: string | null;
+      input_schema: {
+        [key: string]: unknown;
+      };
+      /** @description Whether the server marks the tool read-only. */
+      read_only: boolean;
+    };
+    ListMcpTools: {
+      server: components["schemas"]["McpServerConnection"];
+    };
+    McpServerConnection: {
+      /**
+       * Format: uri
+       * @description Streamable HTTP endpoint of a remote MCP server.
+       */
+      url: string;
+      /**
+       * @description Headers sent to the server on every request, such as Authorization. They are not stored.
+       * @default {}
+       */
+      headers: {
+        [key: string]: string;
+      };
+    };
+    McpToolResult: {
+      is_error: boolean;
+      /** @description The result's text content; other content types are summarized. */
+      text: string;
+    };
+    CallMcpTool: {
+      server: components["schemas"]["McpServerConnection"];
+      name: string;
+      /** @default {} */
+      arguments: {
+        [key: string]: unknown;
+      };
     };
     TraceGenerationList: {
       data: components["schemas"]["TraceGeneration"][];
@@ -6262,6 +6350,148 @@ export interface operations {
       };
       /** @description Serving state is unavailable. */
       503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  listPlaygroundMcpTools: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ListMcpTools"];
+      };
+    };
+    responses: {
+      /** @description The server and its tools. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["McpToolList"];
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The playground is unavailable in this workspace. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The workspace was not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The server URL or headers are invalid. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The MCP server could not be reached or failed. */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  callPlaygroundMcpTool: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CallMcpTool"];
+      };
+    };
+    responses: {
+      /** @description The tool's result. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["McpToolResult"];
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The playground is unavailable in this workspace. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The workspace was not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The server URL or headers are invalid. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The MCP server could not be reached or failed. */
+      502: {
         headers: {
           [name: string]: unknown;
         };

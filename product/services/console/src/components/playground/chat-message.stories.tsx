@@ -292,3 +292,46 @@ export const NarrowFormatting: Story = {
     ),
   ],
 };
+export const ToolCalls: Story = {
+  args: {
+    messages: [
+      {
+        id: "question",
+        role: "user",
+        content: "Which tasks are in production?",
+      },
+      reply({
+        id: "calls",
+        content: "",
+        toolCalls: [
+          {
+            id: "call_1",
+            name: "gradiated__list_tasks",
+            server: "Gradiated",
+            tool: "list_tasks",
+            arguments: "{}",
+            status: "complete",
+            result: JSON.stringify({ data: [{ name: "support-assistant" }] }),
+          },
+          {
+            id: "call_2",
+            name: "github__search_issues",
+            server: "GitHub",
+            tool: "search_issues",
+            arguments: '{"query":"label:bug"}',
+            status: "failed",
+            result: "The GitHub token is missing the issues scope.",
+          },
+          {
+            id: "call_3",
+            name: "deepwiki__ask_question",
+            server: "DeepWiki",
+            tool: "ask_question",
+            arguments: '{"repoName":"modelcontextprotocol/specification"}',
+            status: "running",
+          },
+        ],
+      }),
+    ],
+  },
+};

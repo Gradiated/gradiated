@@ -1,5 +1,5 @@
 import { ArrowUp, Square } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +10,9 @@ export const ChatComposer = ({
   placeholder,
   onSend,
   onStop,
+  tools,
 }: {
+  tools?: ReactNode;
   disabled: boolean;
   streaming: boolean;
   placeholder: string;
@@ -41,7 +43,7 @@ export const ChatComposer = ({
         placeholder={placeholder}
         disabled={disabled}
         rows={2}
-        className="max-h-48 min-h-20 resize-none border-0 pr-14 shadow-none focus-visible:ring-0"
+        className="max-h-48 min-h-20 resize-none border-0 pr-14 pb-10 shadow-none focus-visible:ring-0"
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={(event) => {
           if (
@@ -55,6 +57,9 @@ export const ChatComposer = ({
           submit();
         }}
       />
+      {tools ? (
+        <div className="absolute bottom-1.5 left-1.5">{tools}</div>
+      ) : null}
       <div className="absolute right-2 bottom-2">
         {streaming ? (
           <Button

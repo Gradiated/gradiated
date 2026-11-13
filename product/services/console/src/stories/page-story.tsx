@@ -151,6 +151,15 @@ export const pageMeta = {
     if (parameters.playground === "conversation") {
       await canvas.findByText(/to first token/, {}, { timeout: 10000 });
       await canvas.findByText(/before the thought ends/);
+      await canvas.findByText("list_tasks");
+    }
+
+    if (parameters.playground === "mcp") {
+      await userEvent.click(
+        await canvas.findByRole("button", { name: "MCP servers" }),
+      );
+      await body.findByText("2 tools");
+      await body.findByRole("switch", { name: "Use Gradiated" });
     }
 
     if (parameters.playground === "unavailable") {

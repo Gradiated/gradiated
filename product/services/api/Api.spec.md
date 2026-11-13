@@ -41,6 +41,9 @@ The public HTTP API: browser sessions, the management API, the Stripe webhook an
   handler: mcpOAuthProvider in src/auth/oauth.ts
   trust: anonymous
   control: none — Better Auth's OAuth provider owns registration, PKCE and token checks; workspace consent holds the workspace choice
+- playground MCP: a member's playground lists or calls tools on a remote MCP server the member chose
+  handler: registerPlaygroundMcpRoutes in src/routes/playground-mcp.ts
+  trust: customer-session
 - usage: a member reads a workspace's usage
   handler: registerUsageRoutes in src/routes/usage.ts
   trust: customer-session
@@ -132,3 +135,12 @@ The public HTTP API: browser sessions, the management API, the Stripe webhook an
   kinds: identity
   checklist: capability-authorization declared as workspace consent
   checklist: revalidated-permission dismissed: membership is checked again on every request the token makes
+- public MCP destinations: The playground MCP proxy connects only to public addresses over HTTPS, without following redirects, and stores nothing it was sent.
+  over: every connection the proxy opens: loopback, private, link-local, metadata and mapped IPv6 addresses, hostnames that resolve to them, plain HTTP and redirects
+  via: createOutboundFetch
+  because: the URL comes from the member, and the API can reach internal services and cloud metadata that a member must not
+  crossing: customer-session -> control-plane
+  kinds: message
+  checklist: destination-confinement declared as public MCP destinations; the address check runs on the resolved address the socket uses
+  checklist: input-validation declared as the connection schema: http(s) URLs only and at most ten headers, none the proxy sets itself
+  checklist: encrypted-storage dismissed: headers are used for one request and never stored or logged

@@ -6,15 +6,19 @@ import { ModelIcon } from "@/components/model-label";
 import { ChatComposer } from "@/components/playground/chat-composer";
 import { ChatMessage } from "@/components/playground/chat-message";
 import { CodeDialog } from "@/components/playground/code-dialog";
+import { McpPicker } from "@/components/playground/mcp-picker";
 import { PlaygroundSettingsPanel } from "@/components/playground/playground-settings";
 import { Button } from "@/components/ui/button";
 import { usePlaygroundChat } from "@/hooks/use-playground-chat";
 import { usePlaygroundCredential } from "@/hooks/use-playground-credential";
+import { usePlaygroundMcp } from "@/hooks/use-playground-mcp";
 import { usePlaygroundModels } from "@/hooks/use-playground-models";
 import { useProductContext } from "@/hooks/use-product-context";
+import { functionTools } from "@/lib/mcp";
 import {
   chatRequest,
   DEFAULT_SETTINGS,
+  supportsTools,
   NO_CAPABILITIES,
   type PlaygroundMessage,
   type PlaygroundModel,
@@ -40,6 +44,7 @@ export const PlaygroundPage = () => {
   const update = usePlaygroundStore((state) => state.update);
   const options = { ...DEFAULT_SETTINGS, ...stored?.options };
   const chat = usePlaygroundChat(workspaceId);
+  const mcp = usePlaygroundMcp(workspaceId, apiKey);
 
   // A model in the URL wins; otherwise reopen the last one used here.
   const model =
@@ -64,6 +69,7 @@ export const PlaygroundPage = () => {
     model: model?.id ?? "",
     capabilities: model?.capabilities ?? NO_CAPABILITIES,
   };
+  const toolsSupported = supportsTools(settings.capabilities);
 
   const changeSettings = ({
     model: nextModel,
@@ -92,7 +98,11 @@ export const PlaygroundPage = () => {
       actions={
         <>
           <CodeDialog
-            request={chatRequest(settings, chat.messages)}
+            request={chatRequest(
+              settings,
+              chat.messages,
+              toolsSupported ? functionTools(mcp.tools) : [],
+            )}
             disabled={!model || !chat.messages.length}
           />
           <Button
@@ -126,8 +136,15 @@ export const PlaygroundPage = () => {
                 streaming={chat.streaming}
                 placeholder={`Message ${model?.label ?? "the model"}`}
                 onStop={chat.stop}
+                tools={<McpPicker mcp={mcp} toolsSupported={toolsSupported} />}
                 onSend={(content) =>
-                  void chat.send({ apiKey, settings, content })
+                  void chat.send({
+                    apiKey,
+                    settings,
+                    content,
+                    tools: mcp.tools,
+                    callTool: mcp.callTool,
+                  })
                 }
               />
             </div>

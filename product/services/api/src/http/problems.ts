@@ -11,7 +11,7 @@ import { BillingPaymentsError } from "../billing/payments.js";
 import type { ApiEnvironment, SessionUser } from "../types.js";
 
 type ProblemStatus =
-  400 | 401 | 402 | 403 | 404 | 409 | 413 | 422 | 429 | 500 | 503;
+  400 | 401 | 402 | 403 | 404 | 409 | 413 | 422 | 429 | 500 | 502 | 503;
 
 export type ProblemBody = Omit<Problem, "request_id" | "status"> & {
   status: ProblemStatus;
@@ -69,6 +69,13 @@ export const problems = {
     status: 409,
     detail,
     code: "conflict",
+  }),
+  upstreamFailed: (detail: string): ProblemBody => ({
+    type: problemType("upstream-failed"),
+    title: "Upstream server failed",
+    status: 502,
+    detail,
+    code: "upstream_failed",
   }),
   unavailable: (detail: string): ProblemBody => ({
     type: problemType("unavailable"),

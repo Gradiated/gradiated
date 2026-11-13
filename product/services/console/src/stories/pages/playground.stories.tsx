@@ -29,3 +29,7 @@ export const ModelPicker: PageStory = {
   args: { path: "/playground" },
   parameters: { playground: "models", msw: playgroundHandlers },
 };
+export const McpServers: PageStory = {
+  args: { path: "/playground" },
+  parameters: { playground: "mcp", msw: playgroundHandlers },
+};

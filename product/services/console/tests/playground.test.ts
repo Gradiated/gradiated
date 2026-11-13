@@ -336,6 +336,90 @@ describe("chatRequest", () => {
   });
 });
 
+describe("chatRequest with MCP tools", () => {
+  const toolCapable = withCapabilities({
+    parameters: { tools: { type: "unknown" } },
+  });
+  const tools = [{ type: "function", function: { name: "docs__search" } }];
+  const called: PlaygroundMessage[] = [
+    { id: "1", role: "user", content: "Find it" },
+    {
+      id: "2",
+      role: "assistant",
+      content: "",
+      reasoning: "",
+      status: "complete",
+      toolCalls: [
+        {
+          id: "call_1",
+          name: "docs__search",
+          server: "Docs",
+          tool: "search",
+          arguments: '{"q":"mcp"}',
+          status: "complete",
+          result: "Found.",
+        },
+        {
+          id: "call_2",
+          name: "docs__read",
+          server: "Docs",
+          tool: "read",
+          arguments: "{}",
+          status: "failed",
+        },
+      ],
+    },
+    {
+      id: "3",
+      role: "assistant",
+      content: "Here it is.",
+      reasoning: "",
+      status: "complete",
+    },
+  ];
+
+  it("answers each tool call with a tool message", () => {
+    expect(chatRequest(toolCapable, called, tools).messages).toEqual([
+      { role: "user", content: "Find it" },
+      {
+        role: "assistant",
+        content: null,
+        tool_calls: [
+          {
+            id: "call_1",
+            type: "function",
+            function: { name: "docs__search", arguments: '{"q":"mcp"}' },
+          },
+          {
+            id: "call_2",
+            type: "function",
+            function: { name: "docs__read", arguments: "{}" },
+          },
+        ],
+      },
+      { role: "tool", tool_call_id: "call_1", content: "Found." },
+      {
+        role: "tool",
+        tool_call_id: "call_2",
+        content: "The tool call did not complete.",
+      },
+      { role: "assistant", content: "Here it is." },
+    ]);
+  });
+
+  it("sends tools only to models that accept them", () => {
+    expect(chatRequest(toolCapable, called.slice(0, 1), tools).tools).toEqual(
+      tools,
+    );
+    expect(chatRequest(settings, called.slice(0, 1), tools)).not.toHaveProperty(
+      "tools",
+    );
+    expect(chatRequest(toolCapable, called.slice(0, 1), [])).not.toHaveProperty(
+      "tools",
+    );
+  });
+});
+
 describe("replyStats", () => {
   const usage = {
     cost: 0.00042,

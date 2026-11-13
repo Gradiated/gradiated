@@ -2,7 +2,7 @@ import { posthog, posthogKey } from "./posthog";
 import { useSyncExternalStore } from "react";
 import { clearAnalyticsScope } from "./analytics";
 
-export type FeatureFlag = "training";
+export type FeatureFlag = string;
 
 export type FeatureFlagState = boolean | "loading";
 

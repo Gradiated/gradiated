@@ -68,8 +68,8 @@ const setup = async (
       return route.fulfill({ contentType: "application/javascript", body: "" });
     if (path.startsWith("/flags") || path.startsWith("/decide"))
       return json({
-        featureFlags: { training: true },
-        flags: { training: { key: "training", enabled: true, variant: null } },
+        featureFlags: {},
+        flags: {},
       });
     if (!path.startsWith("/api/") && !path.startsWith("/storage/"))
       return route.continue();
@@ -217,6 +217,39 @@ const selectFiles = async (page: Page, rank = 2) => {
     },
   ]);
 };
+
+for (const flags of ["absent", "unavailable"]) {
+  test(`training navigation and direct reload work with flags ${flags}`, async ({
+    page,
+  }) => {
+    await setup(page);
+    if (flags === "unavailable")
+      await page.route(/\/(flags|decide)(\/|\?)/, (route) => route.abort());
+
+    await page.goto(`/tasks/${task.name}`);
+    await expect(
+      page.getByRole("heading", { name: task.name, exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Training", exact: true }),
+    ).toBeVisible();
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: task.name, exact: true }),
+    ).toBeVisible();
+    await page.getByRole("link", { name: "Training", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: "Add model", exact: true }),
+    ).toBeEnabled();
+    const navigation = page.locator('[data-sidebar="content"]');
+    await expect(
+      navigation.getByRole("link", { name: "Training", exact: true }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("link", { name: "Training", exact: true }),
+    ).toHaveAttribute("data-active", "true");
+  });
+}
 
 test("retries busy validation without retransmitting uploaded files", async ({
   page,

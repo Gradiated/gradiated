@@ -26,7 +26,6 @@ import { STAGE_LABEL, type JudgeOutcome } from "@/store/fine-tuning-types";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 
-import { TrainingGate } from "@/components/fine-tuning/training-gate";
 import { ConnectDialog } from "@/components/fine-tuning/connect-dialog";
 import { TrainingEmptyState } from "@/components/fine-tuning/training-empty-state";
 import { SettingsCard } from "@/components/fine-tuning/settings-card";
@@ -52,19 +51,7 @@ const TABS = [
   { value: "settings", label: "Settings" },
 ] as const satisfies readonly Option<string>[];
 
-export const TasksPage = () => (
-  <TrainingGate
-    loadingContent={
-      <ConsolePage page="tasks" title="Training">
-        <TasksTable loading />
-      </ConsolePage>
-    }
-  >
-    <ScopedTasksPage />
-  </TrainingGate>
-);
-
-const ScopedTasksPage = () => {
+export const TasksPage = () => {
   const { workspaceId } = useProductContext();
 
   return <TasksPageBody key={workspaceId} />;

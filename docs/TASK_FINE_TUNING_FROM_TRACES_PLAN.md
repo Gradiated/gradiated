@@ -22,9 +22,9 @@ Published adapter downloads use `GET /api/v1/workspaces/{workspace_id}/tasks/{ta
 
 ## Implemented
 
-The console's `training` feature flag exposes workspace-scoped tasks, model
-settings, runs, paged events, versions and manual promotion through the generated
-Management API client. The collector creates tasks idempotently at capture time;
+The console exposes workspace-scoped tasks, model settings, runs, paged events,
+versions and manual promotion to all signed-in workspace members through the
+generated Management API client, subject to workspace roles. The collector creates tasks idempotently at capture time;
 task listing reads PostgreSQL directly. The workspace default judge seeds each new task’s saved judge.
 Tasks can override that judge independently. The Data tab reads captured traces; no traffic chart,
 request/token statistics or trace progress counter is maintained for training.

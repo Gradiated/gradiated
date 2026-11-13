@@ -25,23 +25,28 @@ test("sign-in page sends and consumes a magic link", async ({
   ).toBeVisible();
 });
 
-test("signed-in navigation redirects and sign out returns to login", async ({
+test("signed-in navigation includes training and sign out returns to login", async ({
   page,
 }) => {
   await page.goto("/");
   await expect(page).toHaveURL(/\/api-keys$/);
 
   await page.goto("/tasks");
-  await expect(page).toHaveURL(/\/models$/);
+  await expect(page).toHaveURL(/\/tasks$/);
   await expect(
-    page.getByRole("heading", { level: 1, name: "Models" }),
+    page.getByRole("heading", { level: 1, name: "Training" }),
   ).toBeVisible();
-  await expect(page.getByRole("link", { name: "Training" })).toHaveCount(0);
 
   const navigation = page.locator('[data-sidebar="content"]');
   await expect(
-    navigation.getByRole("link", { name: "Models" }),
+    navigation.getByRole("link", { name: "Training", exact: true }),
+  ).toBeVisible();
+  await expect(
+    navigation.getByRole("link", { name: "Training" }),
   ).toHaveAttribute("data-active", "true");
+  await expect(
+    navigation.getByRole("link", { name: "Models" }),
+  ).toHaveAttribute("data-active", "false");
   await expect(
     navigation.getByRole("link", { name: "API keys" }),
   ).toHaveAttribute("data-active", "false");

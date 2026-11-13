@@ -644,11 +644,6 @@ jobs:
       - name: Run Playwright tests
         working-directory: product
         run: pnpm --filter @gradiated/console exec playwright test
-      - name: Verify training and live trace data UI
-        working-directory: product
-        env:
-          VITE_FEATURE_FLAGS: training
-        run: pnpm --filter @gradiated/console exec playwright test traces.spec.ts training.spec.ts
       - name: Verify task reloads, skeletons, settings and held-out results
         working-directory: product
         run: pnpm --filter @gradiated/console exec playwright test --config playwright.task-ui.config.ts

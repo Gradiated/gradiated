@@ -7,7 +7,6 @@ import { ArrowLeft, RotateCw } from "lucide-react";
 import { useState } from "react";
 
 import { TaskModelTab } from "@/components/fine-tuning/task-model-tab";
-import { TrainingGate } from "@/components/fine-tuning/training-gate";
 import {
   VersionActionDialog,
   type VersionAction,
@@ -23,16 +22,6 @@ import { Button } from "@/components/ui/button";
 import { QueryState } from "@/components/fine-tuning/query-state";
 import { useProductContext } from "@/hooks/use-product-context";
 
-export const TaskPage = () => {
-  const { taskId } = useParams({ from: "/tasks/$taskId" });
-
-  return (
-    <TrainingGate loadingContent={<TaskLoadingState name={taskId} />}>
-      <ScopedTaskPage />
-    </TrainingGate>
-  );
-};
-
 const TaskLoadingState = ({ name }: { name: string }) => (
   <ConsolePage page="tasks" title={name}>
     <div role="status" aria-label="Loading task" className="space-y-6">
@@ -47,7 +36,7 @@ const TaskLoadingState = ({ name }: { name: string }) => (
   </ConsolePage>
 );
 
-const ScopedTaskPage = () => {
+export const TaskPage = () => {
   const { workspaceId } = useProductContext();
   const { taskId } = useParams({ from: "/tasks/$taskId" });
 

@@ -53,9 +53,9 @@ test.skip("direct task reload initializes flags, edits schedules and opens held-
     const json = (body: unknown) => route.fulfill({ json: body });
     if (path.startsWith("/flags") || path.startsWith("/decide"))
       return json({
-        featureFlags: { training: true },
+        featureFlags: {},
         featureFlagPayloads: {},
-        flags: { training: { key: "training", enabled: true, variant: null } },
+        flags: {},
       });
     if (path === "/api/v1/me")
       return json({
@@ -468,11 +468,9 @@ for (const initialRows of [0, 35]) {
       const json = (body: unknown) => route.fulfill({ json: body });
       if (path.startsWith("/flags") || path.startsWith("/decide"))
         return json({
-          featureFlags: { training: true },
+          featureFlags: {},
           featureFlagPayloads: {},
-          flags: {
-            training: { key: "training", enabled: true, variant: null },
-          },
+          flags: {},
         });
       if (path === "/api/v1/me")
         return json({

@@ -4,11 +4,6 @@ import { expect, test } from "./fixtures";
 import { apiUrl, databaseUrl } from "./env";
 import { apiPathEndsWith, fulfillJson, fulfillProblem } from "./routes";
 
-test.skip(
-  process.env.VITE_FEATURE_FLAGS !== "training",
-  "Requires the training feature.",
-);
-
 for (const taskName of ["support-triage", "Billing Questions & Refunds"]) {
   // The task page hides its training runs, data and settings tabs while models are delivered by hand.
   test.skip(`settings, versions, promotion and paged events persist for ${taskName}`, async ({

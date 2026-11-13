@@ -11,8 +11,8 @@ without joining a waitlist.
 
 Post-training remains in private beta. The training page opens the waitlist
 drawer, which submits to `POST /api/v1/waitlist` and sends a post-training
-confirmation email. The console's existing `training` feature flag continues
-to limit training access.
+confirmation email. The console's training pages and custom LoRA uploads are
+available to all signed-in workspace members, subject to workspace roles.
 
 ## Install
 

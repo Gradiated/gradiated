@@ -37,6 +37,7 @@ test("an admin invites someone who joins from the emailed link", async ({
   await invitee
     .getByRole("button", { name: "Email me a sign-in link" })
     .click();
+  await expect(invitee.getByText("Check your email")).toBeVisible();
   await invitee.goto((await readMagicLink(context.request, email)).toString());
 
   await expect(

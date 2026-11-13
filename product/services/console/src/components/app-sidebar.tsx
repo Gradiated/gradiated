@@ -57,11 +57,9 @@ import {
 import { canManageOrganization } from "@/lib/roles";
 import { useScopeCreation } from "@/hooks/use-product-context";
 import type { SignOutResult } from "@/hooks/use-session";
-import { useFeatureFlag, type FeatureFlag } from "@/lib/feature-flags";
 
 interface NavGroup {
   label: string;
-  flag?: FeatureFlag;
   items: {
     to: NonNullable<LinkProps["to"]>;
     label: string;
@@ -72,7 +70,6 @@ interface NavGroup {
 const NAV_GROUPS: NavGroup[] = [
   {
     label: "Research",
-    flag: "training",
     items: [{ to: "/tasks", label: "Training", icon: FlaskConical }],
   },
   {
@@ -194,17 +191,9 @@ export const AppSidebar = ({
       </SidebarHeader>
 
       <SidebarContent>
-        {NAV_GROUPS.map((group) =>
-          group.flag ? (
-            <FlaggedNavSection
-              key={group.label}
-              flag={group.flag}
-              group={group}
-            />
-          ) : (
-            <NavSection key={group.label} group={group} />
-          ),
-        )}
+        {NAV_GROUPS.map((group) => (
+          <NavSection key={group.label} group={group} />
+        ))}
       </SidebarContent>
 
       <SidebarFooter>
@@ -313,14 +302,6 @@ export const AppSidebar = ({
     </Sidebar>
   );
 };
-
-const FlaggedNavSection = ({
-  flag,
-  group,
-}: {
-  flag: FeatureFlag;
-  group: NavGroup;
-}) => (useFeatureFlag(flag) === true ? <NavSection group={group} /> : null);
 
 const NavSection = ({
   group,

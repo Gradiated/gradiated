@@ -2,10 +2,6 @@ import { MODEL_CATALOG } from "@gradiated/contracts/model-catalog";
 import { expect, test } from "./fixtures";
 import { apiPathEndsWith, fulfillJson, fulfillProblem } from "./routes";
 
-test.skip(
-  process.env.VITE_FEATURE_FLAGS !== "training",
-  "Run the trace suite with the training feature enabled.",
-);
 test.beforeEach(async ({ page }) => {
   const task = {
     name: "support-triage",

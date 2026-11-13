@@ -1,6 +1,6 @@
 # Fine-tuning: dataset, run and trainer contract
 
-The separate TypeScript `temporal-worker` application hosts Temporal workflows. PostgreSQL owns customer-visible run state and events; S3 owns trace content and large artifacts. The console remains behind the `training` feature flag. The `qwen-sft` executor trains pinned Qwen3-0.6B with LoRA on a fixed RunPod H100 pool. The mock remains available for local orchestration tests and existing histories. Published adapters remain unavailable for promotion until inference serving is qualified.
+The separate TypeScript `temporal-worker` application hosts Temporal workflows. PostgreSQL owns customer-visible run state and events; S3 owns trace content and large artifacts. The console training experience is available to all signed-in workspace members, subject to workspace roles. The `qwen-sft` executor trains pinned Qwen3-0.6B with LoRA on a fixed RunPod H100 pool. The mock remains available for local orchestration tests and existing histories. Published adapters remain unavailable for promotion until inference serving is qualified.
 
 ## Admission and identity
 

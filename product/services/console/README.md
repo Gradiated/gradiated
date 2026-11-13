@@ -26,8 +26,8 @@ accessible label.
 
 ## Playground
 
-`/playground` chats with hosted chat models and, when training is enabled,
-tasks with a production version. The browser streams `/v1/chat/completions`
+`/playground` chats with hosted chat models and tasks with a production version.
+The browser streams `/v1/chat/completions`
 from the gateway with a playground credential, so signed-in members never
 handle a key. Each member has one hidden key named Playground per workspace,
 which the API keys page does not list; every credential request rotates its
@@ -70,8 +70,9 @@ Task settings offer manual-only, daily, weekly and custom five-field UTC cron
 schedules. Saving an empty schedule disables automatic training. The next-run
 preview uses the same Temporal-compatible calendar rules as the backend.
 
-The training gate starts session identification before waiting for feature flags,
-so direct task URLs and reloads do not depend on visiting another console page.
+Training navigation, task pages and custom LoRA uploads are available to all
+signed-in workspace members, subject to their workspace role. Direct task URLs,
+reloads and playground task models do not wait for PostHog feature flags.
 Loading training data and trace content uses skeletons.
 
 The Data table loads older pages automatically at the bottom. Empty hour windows
@@ -156,7 +157,7 @@ pnpm --filter @gradiated/console storybook
 
 Stories render the real console routes with a fresh query client and memory
 history. MSW serves synthetic fixtures; authentication and unimplemented API
-mutations cannot reach the real backend. Training is enabled and analytics are
+mutations cannot reach the real backend. Analytics are
 disabled only for Storybook. Page stories cover sign-in, API keys, models,
 usage, logs, billing, training, and every task-detail tab: Model, Training runs,
 Data, and Settings, plus trace content, test results, and the judge selector. Tab and detail stories

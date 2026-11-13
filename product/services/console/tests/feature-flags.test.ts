@@ -69,11 +69,11 @@ describe("feature flags with PostHog", () => {
   it("stays loading after init and ignores anonymous flag answers", async () => {
     const flags = await loadFeatureFlags(env);
 
-    expect(flags.readFeatureFlag("training")).toBe("loading");
+    expect(flags.readFeatureFlag("example")).toBe("loading");
 
     posthog.answerFlags([]);
 
-    expect(flags.readFeatureFlag("training")).toBe("loading");
+    expect(flags.readFeatureFlag("example")).toBe("loading");
   });
 
   it("disables the anonymous first flag load", async () => {
@@ -95,18 +95,18 @@ describe("feature flags with PostHog", () => {
     expect(posthog.identify).toHaveBeenCalledWith(USER.id, {
       email: USER.email,
     });
-    expect(flags.readFeatureFlag("training")).toBe("loading");
+    expect(flags.readFeatureFlag("example")).toBe("loading");
 
-    posthog.answerFlags(["training"]);
+    posthog.answerFlags(["example"]);
 
-    expect(flags.readFeatureFlag("training")).toBe(true);
+    expect(flags.readFeatureFlag("example")).toBe(true);
   });
 
   it("cancels the fallback timer once flags arrive", async () => {
     const flags = await loadFeatureFlags(env);
 
     flags.identifyUser(USER);
-    posthog.answerFlags(["training"]);
+    posthog.answerFlags(["example"]);
 
     expect(vi.getTimerCount()).toBe(0);
   });
@@ -117,7 +117,7 @@ describe("feature flags with PostHog", () => {
     flags.identifyUser(USER);
     posthog.answerFlags([]);
 
-    expect(flags.readFeatureFlag("training")).toBe(false);
+    expect(flags.readFeatureFlag("example")).toBe(false);
   });
 
   it("reloads flags for a returning user instead of identifying again", async () => {
@@ -136,26 +136,26 @@ describe("feature flags with PostHog", () => {
     flags.identifyUser(USER);
     vi.advanceTimersByTime(3_999);
 
-    expect(flags.readFeatureFlag("training")).toBe("loading");
+    expect(flags.readFeatureFlag("example")).toBe("loading");
 
     vi.advanceTimersByTime(1);
 
-    expect(flags.readFeatureFlag("training")).toBe(false);
+    expect(flags.readFeatureFlag("example")).toBe(false);
   });
 
   it("returns to loading after the user is reset", async () => {
     const flags = await loadFeatureFlags(env);
 
     flags.identifyUser(USER);
-    posthog.answerFlags(["training"]);
+    posthog.answerFlags(["example"]);
     flags.resetUser();
 
     expect(posthog.reset).toHaveBeenCalledOnce();
-    expect(flags.readFeatureFlag("training")).toBe("loading");
+    expect(flags.readFeatureFlag("example")).toBe("loading");
 
     vi.advanceTimersByTime(10_000);
 
-    expect(flags.readFeatureFlag("training")).toBe("loading");
+    expect(flags.readFeatureFlag("example")).toBe("loading");
   });
 });
 
@@ -166,16 +166,16 @@ describe("feature flags without PostHog", () => {
       VITE_FEATURE_FLAGS: "",
     });
 
-    expect(flags.readFeatureFlag("training")).toBe(false);
+    expect(flags.readFeatureFlag("example")).toBe(false);
     expect(posthog.init).not.toHaveBeenCalled();
   });
 
   it("turns on locally overridden flags", async () => {
     const flags = await loadFeatureFlags({
       VITE_POSTHOG_KEY: "",
-      VITE_FEATURE_FLAGS: "other, training",
+      VITE_FEATURE_FLAGS: "other, example",
     });
 
-    expect(flags.readFeatureFlag("training")).toBe(true);
+    expect(flags.readFeatureFlag("example")).toBe(true);
   });
 });

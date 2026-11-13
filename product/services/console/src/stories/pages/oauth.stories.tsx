@@ -6,6 +6,7 @@ import {
   oauthConsentHandlers,
   oauthConsentQuery,
   oauthOrganizationsUser,
+  oauthSameNameUser,
   oauthSuspendedUser,
 } from "@/stories/handlers";
 
@@ -39,6 +40,25 @@ export const WorkspacesAcrossOrganizations: PageStory = {
       within(groups[0]!).getByText("Example organization"),
     ).toBeVisible();
     await expect(within(groups[1]!).getByText("Acme")).toBeVisible();
+  },
+};
+
+export const OrganizationsSharingAName: PageStory = {
+  args: { path },
+  parameters: { msw: oauthConsentHandlers(oauthSameNameUser) },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await canvas.findByRole("heading", { level: 1 }, { timeout: 10000 });
+    await userEvent.click(
+      await canvas.findByRole("combobox", { name: "Workspace" }),
+    );
+
+    const groups = await within(canvasElement.ownerDocument.body).findAllByRole(
+      "group",
+    );
+    await expect(
+      groups.map((group) => group.firstElementChild?.textContent),
+    ).toEqual(["Acme (acme)", "Acme (acme-labs)", "Acme (acme)"]);
   },
 };
 

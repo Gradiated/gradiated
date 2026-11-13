@@ -122,6 +122,7 @@ export const OAuthConsentPage = () => {
         value: workspace.id,
         label: workspace.name,
         group: organizationLabel(organization, organizations),
+        groupKey: organization.id,
         disabled: organization.status !== "active",
       })),
   );

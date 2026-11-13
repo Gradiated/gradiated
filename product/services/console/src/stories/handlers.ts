@@ -933,6 +933,34 @@ export const oauthOrganizationsUser: CurrentUser = {
   ],
 };
 
+// Names are not unique, and one even looks like a disambiguated label.
+const sameNameOrganizations = [
+  ["00000000-0000-4000-8000-000000000021", "Acme", "acme"],
+  ["00000000-0000-4000-8000-000000000022", "Acme", "acme-labs"],
+  ["00000000-0000-4000-8000-000000000023", "Acme (acme)", "acme-acme"],
+] as const;
+
+for (const [id] of sameNameOrganizations)
+  consentWorkspaces[id] = [
+    {
+      ...workspace,
+      id: id.replace(/2(\d)$/, "3$1"),
+      organization_id: id,
+      name: "Default",
+    },
+  ];
+
+export const oauthSameNameUser: CurrentUser = {
+  ...user,
+  organizations: sameNameOrganizations.map(([id, name, slug]) => ({
+    ...organization,
+    id,
+    name,
+    slug,
+    default_workspace_id: id.replace(/2(\d)$/, "3$1"),
+  })),
+};
+
 export const oauthSuspendedUser: CurrentUser = {
   ...user,
   organizations: [{ ...organization, status: "suspended" }],

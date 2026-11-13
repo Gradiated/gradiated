@@ -16,6 +16,8 @@ export interface Option<Value extends string> {
   label: string;
   disabled?: boolean;
   group?: string;
+  // Tells apart groups whose labels may repeat; defaults to the label.
+  groupKey?: string;
 }
 
 const findOption = <Value extends string>(
@@ -65,7 +67,12 @@ export const OptionSelect = <Value extends string>({
       {renderOption ? renderOption(option) : option.label}
     </SelectItem>
   );
-  const groups = [...new Set(options.map((option) => option.group))];
+  const groupKey = (option: Option<Value>) => option.groupKey ?? option.group;
+  const groups = [
+    ...new Map(
+      options.map((option) => [groupKey(option), option.group]),
+    ).entries(),
+  ];
 
   return (
     <Select
@@ -77,13 +84,13 @@ export const OptionSelect = <Value extends string>({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {groups.map((group) =>
-          group === undefined ? (
-            options.filter((option) => option.group === undefined).map(item)
+        {groups.map(([key, group]) =>
+          key === undefined ? (
+            options.filter((option) => groupKey(option) === undefined).map(item)
           ) : (
-            <SelectGroup key={group}>
+            <SelectGroup key={key}>
               <SelectLabel>{group}</SelectLabel>
-              {options.filter((option) => option.group === group).map(item)}
+              {options.filter((option) => groupKey(option) === key).map(item)}
             </SelectGroup>
           ),
         )}

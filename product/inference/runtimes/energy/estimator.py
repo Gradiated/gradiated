@@ -4,6 +4,31 @@ import threading
 import time
 
 
+class GpuPowerReader:
+    def __init__(self, nvml, handles, clock=time.monotonic):
+        self.nvml = nvml
+        self.handles = handles
+        self.clock = clock
+        self.previous = None
+
+    def read(self):
+        try:
+            energies = [self.nvml.nvmlDeviceGetTotalEnergyConsumption(handle) for handle in self.handles]
+            now = self.clock()
+            if any(not math.isfinite(value) or value < 0 for value in energies):
+                raise ValueError('Invalid GPU energy counter')
+            previous, self.previous = self.previous, (now, energies)
+            if previous is not None:
+                elapsed = now - previous[0]
+                deltas = [value - old for value, old in zip(energies, previous[1])]
+                if 0 < elapsed <= 2 and all(delta >= 0 for delta in deltas):
+                    return sum(deltas) / 1000 / elapsed
+        except Exception:
+            self.previous = None
+
+        return sum(self.nvml.nvmlDeviceGetPowerUsage(handle) for handle in self.handles) / 1000
+
+
 class EnergyEstimator:
     def __init__(self, clock=time.monotonic):
         self.clock = clock
@@ -66,13 +91,13 @@ class EnergyEstimator:
                 return
             pynvml.nvmlInit()
             handles = [pynvml.nvmlDeviceGetHandleByUUID(device) for device in devices]
+            reader = GpuPowerReader(pynvml, handles)
         except Exception:
             return
 
         while True:
             try:
-                power = sum(pynvml.nvmlDeviceGetPowerUsage(handle) for handle in handles) / 1000
-                self.sample(power)
+                self.sample(reader.read())
             except Exception:
                 self.sample(None)
             time.sleep(.25)

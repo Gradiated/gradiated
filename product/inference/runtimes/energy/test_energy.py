@@ -4,8 +4,52 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from estimator import EnergyEstimator
+from estimator import EnergyEstimator, GpuPowerReader
 from middleware import EnergyMiddleware, mark_generation_started
+
+
+class PowerReaderTests(unittest.TestCase):
+    def setUp(self):
+        self.now = 0
+        self.nvml = SimpleNamespace(
+            nvmlDeviceGetTotalEnergyConsumption=Mock(),
+            nvmlDeviceGetPowerUsage=Mock(return_value=100000),
+        )
+        self.reader = GpuPowerReader(self.nvml, ['GPU-a', 'GPU-b'], clock=lambda: self.now)
+
+    def test_counter_deltas_capture_energy_between_power_samples(self):
+        self.nvml.nvmlDeviceGetTotalEnergyConsumption.side_effect = [1000, 2000, 26000, 52000]
+        self.assertEqual(self.reader.read(), 200)
+        self.now = .25
+        self.assertEqual(self.reader.read(), 300)
+        self.assertEqual(self.nvml.nvmlDeviceGetPowerUsage.call_count, 2)
+
+    def test_one_counter_reset_falls_back_even_if_total_energy_increases(self):
+        self.nvml.nvmlDeviceGetTotalEnergyConsumption.side_effect = [10000, 20000, 0, 70000, 25000, 120000]
+        self.reader.read()
+        self.now = .25
+        self.assertEqual(self.reader.read(), 200)
+        self.now = .5
+        self.assertEqual(self.reader.read(), 300)
+
+    def test_unavailable_counter_resets_baseline_and_uses_power(self):
+        self.nvml.nvmlDeviceGetTotalEnergyConsumption.side_effect = [1000, 2000, RuntimeError('unsupported')]
+        self.reader.read()
+        self.now = .25
+        self.assertEqual(self.reader.read(), 200)
+        self.assertIsNone(self.reader.previous)
+        self.nvml.nvmlDeviceGetTotalEnergyConsumption.side_effect = [100000, 200000]
+        self.now = .5
+        self.assertEqual(self.reader.read(), 200)
+
+    def test_invalid_counters_or_elapsed_time_use_power(self):
+        for value, elapsed in [(float('nan'), .25), (-1, .25), (1000, 0), (1000, 3)]:
+            with self.subTest(value=value, elapsed=elapsed):
+                self.setUp()
+                self.nvml.nvmlDeviceGetTotalEnergyConsumption.side_effect = [0, 0, value, value]
+                self.reader.read()
+                self.now = elapsed
+                self.assertEqual(self.reader.read(), 200)
 
 
 class EstimatorTests(unittest.TestCase):

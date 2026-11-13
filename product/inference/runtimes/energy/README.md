@@ -4,13 +4,21 @@ The GLM, DeepSeek and Kimi SGLang bundles launch SGLang through `launch.py`.
 The entrypoint adds optional ASGI middleware to the existing HTTP app; model
 execution, scheduling and token accounting stay in SGLang. SMG's HTTP relay preserves the response bytes and the extra usage field.
 
-A daemon thread reads NVML power every 250 ms and sums the GPUs explicitly
-assigned by UUID in `NVIDIA_VISIBLE_DEVICES`. Between samples the last power
-reading is integrated over monotonic time and divided equally among overlapping
+A daemon thread reads NVML cumulative energy counters every 250 ms and sums the
+GPUs explicitly assigned by UUID in `NVIDIA_VISIBLE_DEVICES`. Counter differences
+give the average power over each measured interval, including power changes
+between samples. The first reading, unsupported counters, counter resets and
+gaps longer than two seconds fall back to the existing NVML power query.
+Between samples the last interval's average power is integrated over monotonic
+time and divided equally among overlapping
 generation requests dispatched by the tokenizer manager after validation.
 Starting or finishing a request updates the integral
 before changing the divisor. No GPU reads or network calls run on the request
 path. Energy during periods with no generation requests is excluded.
+
+The interval average is extrapolated until the next sample, so short requests
+and batch changes within an interval remain approximate. This improves the
+power input, not allocation by tokens or scheduler batch membership.
 
 This is a modeled allocation of measured GPU power. It includes time queued
 inside SGLang, prefill, decode, speculative work and GPU baseline power while

@@ -225,6 +225,7 @@ def main() -> None:
     parser.add_argument("--attn", default="sdpa", help="gemma only: sdpa, gd_fast (flex sliding window + causal SDPA, no masks) or another transformers attn_implementation")
     parser.add_argument("--balance", action="store_true", help="give every rank a similar-width batch at each step (global length-sorted plan)")
     parser.add_argument("--profile", action="store_true", help="write a torch.profiler table for steps 4-6 (rank 0) to OUT/profile.txt")
+    parser.add_argument("--sync-state", action="store_true", help="write states synchronously (default: stage to host memory, write in the background)")
     parser.add_argument("--bench", action="store_true", help="throughput run: no dev evaluation, state or export")
     args = parser.parse_args()
     gemma = args.family == "gemma"
@@ -402,16 +403,48 @@ def main() -> None:
             (path / "done").write_text(json.dumps(meta))
         dist.barrier()
 
-    def save_state(step):
-        path = out / f"state-{step}"
-        state = {"model": get_model_state_dict(model), "optim": get_optimizer_state_dict(model, optimizer)}
-        dcp.save(state, checkpoint_id=str(path))
-        barrier_done(path, {"step": step, "scheduler": scheduler.state_dict(), "time": time.time()})
+    pending = None  # an async state write: (future, path, meta, started)
+    gloo = None if args.sync_state else dist.new_group(backend="gloo")
+
+    def state_written(path, meta, started):
+        barrier_done(path, meta)
         if rank == 0:
             for old in out.glob("state-*"):
                 if old != path and complete(path):
                     shutil.rmtree(old, ignore_errors=True)
-        log(event="state_saved", step=step)
+        log(event="state_saved", step=meta["step"], seconds=round(time.time() - started))
+
+    def finish_pending(block):
+        """Mark the pending async state complete once every rank's write has finished (or wait for it)."""
+        nonlocal pending
+        if pending is None:
+            return
+        future, path, meta, started = pending
+        if block:
+            future.result()
+        ready = torch.tensor([1.0 if future.done() else 0.0], device=device)
+        dist.all_reduce(ready, op=dist.ReduceOp.MIN)
+        if ready.item() > 0:
+            future.result()
+            pending = None
+            state_written(path, meta, started)
+
+    def save_state(step):
+        nonlocal pending
+        finish_pending(block=True)
+        path = out / f"state-{step}"
+        started = time.time()
+        meta = {"step": step, "scheduler": scheduler.state_dict(), "time": started}
+        state = {"model": get_model_state_dict(model), "optim": get_optimizer_state_dict(model, optimizer)}
+        if args.sync_state:
+            dcp.save(state, checkpoint_id=str(path))
+            state_written(path, meta, started)
+            return
+        # Stage to host memory (training waits only for this), then write to disk in a background thread; the
+        # checkpoint's own collectives run on a gloo group so they never interleave with training's NCCL traffic.
+        future = dcp.async_save(state, checkpoint_id=str(path), process_group=gloo)
+        pending = (future, path, meta, started)
+        log(event="state_staged", step=step, seconds=round(time.time() - started))
 
     def export(step):
         path = out / f"export-{step}"
@@ -554,6 +587,7 @@ def main() -> None:
                 log(event="dev", step=step, dev=evaluate_dev())
             flag = torch.tensor([1.0 if time.time() - last_state > args.state_minutes * 60 else 0.0], device=device)
             dist.all_reduce(flag, op=dist.ReduceOp.MAX)
+            finish_pending(block=False)
             if flag.item() > 0 and step < total_steps:
                 save_state(step)
                 last_state = time.time()
@@ -561,6 +595,7 @@ def main() -> None:
                 export(step)
         epoch += 1
         position = 0
+    finish_pending(block=True)
     if not args.bench:
         log(event="dev", step=step, dev=evaluate_dev())
         export(step)

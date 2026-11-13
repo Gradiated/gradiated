@@ -113,7 +113,7 @@ def gemma_label_logits(hidden, label_weight, softcap):
     return z if softcap is None else torch.tanh(z / softcap) * softcap
 
 
-def build_gemma(checkpoint: Path, dtype, device_index: int, label_ids: list[int]):
+def build_gemma(checkpoint: Path, dtype, device_index: int, label_ids: list[int], attn: str = "sdpa"):
     """Gemma 4 backbone (no LM head) plus KnowLine's frozen label readout, as a module with the Decider signature."""
     import torch
     from transformers.models.gemma4.modeling_gemma4 import Gemma4Model
@@ -121,7 +121,7 @@ def build_gemma(checkpoint: Path, dtype, device_index: int, label_ids: list[int]
     class GemmaDecider(torch.nn.Module):
         def __init__(self):
             super().__init__()
-            self.backbone = Gemma4Model.from_pretrained(str(checkpoint), dtype=dtype, attn_implementation="sdpa", device_map={"": device_index})
+            self.backbone = Gemma4Model.from_pretrained(str(checkpoint), dtype=dtype, attn_implementation=attn, device_map={"": device_index})
             weight = self.backbone.language_model.embed_tokens.weight
             index = torch.tensor(label_ids, device=weight.device)
             self.register_buffer("label_weight", weight.detach()[index].float().clone(), persistent=False)
@@ -161,6 +161,13 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=20261110)
     parser.add_argument("--max-steps", type=int, default=0)
     parser.add_argument("--family", choices=("qwen", "gemma"), default="qwen", help="qwen: Decider checkpoints; gemma: KnowLine")
+    # Speed options. None changes the optimisation maths; --compile and --attn change only kernel rounding.
+    parser.add_argument("--keep-activations", type=int, default=0, help="layers (spread evenly) that store activations instead of recomputing them")
+    parser.add_argument("--no-reshard", action="store_true", help="keep each layer's gathered bf16 weights from forward to backward")
+    parser.add_argument("--compile", action="store_true", help="torch.compile each decoder layer")
+    parser.add_argument("--attn", default="sdpa", help="gemma only: transformers attn_implementation (sdpa, flex_attention, ...)")
+    parser.add_argument("--profile", action="store_true", help="write a torch.profiler table for steps 4-6 (rank 0) to OUT/profile.txt")
+    parser.add_argument("--bench", action="store_true", help="throughput run: no dev evaluation, state or export")
     args = parser.parse_args()
     gemma = args.family == "gemma"
 
@@ -213,7 +220,7 @@ def main() -> None:
             hidden = self.backbone(input_ids=ids, attention_mask=mask, use_cache=False).last_hidden_state
             return self.readout(hidden[rows, cols])
 
-    model = build_gemma(checkpoint, torch.float32, local, label_ids) if gemma else Model()
+    model = build_gemma(checkpoint, torch.float32, local, label_ids, args.attn) if gemma else Model()
     text = model.backbone.language_model
     if gemma:
         freeze_gemma(model.backbone)
@@ -223,9 +230,17 @@ def main() -> None:
         model.backbone.visual.requires_grad_(False)
     model.backbone.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
     model.backbone.config.use_cache = False
+    layers = list(text.layers)
+    if args.keep_activations:
+        keep = {round(i * len(layers) / args.keep_activations) for i in range(min(args.keep_activations, len(layers)))}
+        for i in keep:
+            layers[i].gradient_checkpointing = False
+    if args.compile:
+        for layer in layers:
+            layer.compile()
     policy = MixedPrecisionPolicy(param_dtype=torch.bfloat16, reduce_dtype=torch.float32)
-    for layer in text.layers:
-        fully_shard(layer, mp_policy=policy)
+    for layer in layers:
+        fully_shard(layer, mp_policy=policy, reshard_after_forward=not args.no_reshard)
     for frozen_part in ([model.backbone.vision_tower, model.backbone.embed_vision] if gemma else [model.backbone.visual]):
         if frozen_part is not None:
             fully_shard(frozen_part, mp_policy=policy)
@@ -412,11 +427,18 @@ def main() -> None:
                     m[i] += v[i]
         return {k: {"ce": round(a / c, 4), "acc": round(b / c, 4), "n": int(c)} for k, (a, b, c) in sorted(merged.items()) if c}
 
-    if step == 0:
+    if args.bench:
+        args.dev_every, args.export_every, args.state_minutes = 0, 0, float("inf")
+    profiler = None
+    if args.profile and rank == 0:
+        profiler = torch.profiler.profile(activities=[torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA], schedule=torch.profiler.schedule(wait=3, warmup=1, active=3, repeat=1))
+        profiler.start()
+    if step == 0 and not args.bench:
         log(event="dev", step=0, dev=evaluate_dev())
     last_state = time.time()
     started = time.perf_counter()
     tokens = 0
+    window = (time.perf_counter(), 0)
     epoch = step // max(1, per_epoch)
     position = (step % max(1, per_epoch)) * args.accumulate
     while step < total_steps:
@@ -441,12 +463,27 @@ def main() -> None:
             optimizer.step()
             scheduler.step()
             step += 1
+            if profiler is not None:
+                profiler.step()
+                if step == 7:
+                    profiler.stop()
+                    averages = profiler.key_averages()
+                    try:
+                        table = averages.table(sort_by="self_device_time_total", row_limit=60)
+                    except Exception:
+                        table = averages.table(sort_by="self_cuda_time_total", row_limit=60)
+                    (out / "profile.txt").write_text(table)
+                    profiler = None
             if step % 10 == 0 or step == 1:
                 dist.all_reduce(sums)
                 elapsed = time.perf_counter() - started
                 tok = torch.tensor([tokens], device=device, dtype=torch.float64)
                 dist.all_reduce(tok)
-                log(event="train", step=step, of=total_steps, ce=round(float(sums[0] / sums[2]), 4), brier=round(float(sums[1] / sums[2]), 4), kl=round(float(sums[4] / sums[2]), 5), grad_norm=round(float(norm.full_tensor() if hasattr(norm, "full_tensor") else norm), 3), lr=scheduler.get_last_lr()[0], tokens_per_s=round(float(tok) / elapsed), mem_gib=round(torch.cuda.max_memory_allocated() / 2**30, 1))
+                torch.cuda.synchronize()
+                now = time.perf_counter()
+                recent = round((float(tok) - window[1]) / max(1e-6, now - window[0]))
+                window = (now, float(tok))
+                log(event="train", recent_tokens_per_s=recent, step=step, of=total_steps, ce=round(float(sums[0] / sums[2]), 4), brier=round(float(sums[1] / sums[2]), 4), kl=round(float(sums[4] / sums[2]), 5), grad_norm=round(float(norm.full_tensor() if hasattr(norm, "full_tensor") else norm), 3), lr=scheduler.get_last_lr()[0], tokens_per_s=round(float(tok) / elapsed), mem_gib=round(torch.cuda.max_memory_allocated() / 2**30, 1))
             if args.dev_every and step % args.dev_every == 0:
                 log(event="dev", step=step, dev=evaluate_dev())
             flag = torch.tensor([1.0 if time.time() - last_state > args.state_minutes * 60 else 0.0], device=device)
@@ -458,8 +495,9 @@ def main() -> None:
                 export(step)
         epoch += 1
         position = 0
-    log(event="dev", step=step, dev=evaluate_dev())
-    export(step)
+    if not args.bench:
+        log(event="dev", step=step, dev=evaluate_dev())
+        export(step)
     log(event="finished", step=step)
     dist.destroy_process_group()
 

@@ -3678,6 +3678,29 @@
                           "null"
                         ],
                         "exclusiveMinimum": 0
+                      },
+                      "outcome": {
+                        "type": "object",
+                        "properties": {
+                          "better": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "same": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "worse": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "better",
+                          "same",
+                          "worse"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "required": [

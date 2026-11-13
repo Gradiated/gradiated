@@ -2641,6 +2641,11 @@ export interface components {
           fine_tuned: number;
           comparison: number | null;
           sample_size: number | null;
+          outcome?: {
+            better: number;
+            same: number;
+            worse: number;
+          };
         } | null;
       } | null;
       /** @description Latest model version, including externally uploaded adapters. */

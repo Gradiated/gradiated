@@ -239,6 +239,40 @@ const manualBenchmark = JSON.stringify({
     sample_size: 64,
   },
 });
+const comparedBenchmark = JSON.stringify({
+  schema_version: 1,
+  comparison_model_id: "anthropic/claude-sonnet-5-5",
+  workload: "Full agent runs",
+  notes: "",
+  cost: {
+    unit: "task",
+    fine_tuned: 3_320_000,
+    comparison: 60_000_000,
+    basis: "measured",
+  },
+  speed: {
+    unit: "latency_seconds",
+    fine_tuned: 11.8,
+    comparison: 14.6,
+    statistic: "mean",
+  },
+  quality: {
+    metric: "Runs passed",
+    fine_tuned: 100,
+    comparison: 75,
+    sample_size: 72,
+    outcome: { better: 18, same: 54, worse: 0 },
+  },
+});
+export const ComparedBenchmarks: PageStory = {
+  args: { path: versionPath },
+  parameters: {
+    msw: [
+      ...versionFiles({ ...reportFiles, "benchmark.json": comparedBenchmark }),
+      ...handlersFor(staffUser),
+    ],
+  },
+};
 export const ManualBenchmarks: PageStory = {
   args: { path: versionPath },
   parameters: {
@@ -292,7 +326,7 @@ export const ManualBenchmarksTable: PageStory = {
               base_model_id: version.base_model_id,
               latest_version: version,
               latest_run: null,
-              workload_benchmark: JSON.parse(manualBenchmark),
+              workload_benchmark: JSON.parse(comparedBenchmark),
             },
           ],
         }),

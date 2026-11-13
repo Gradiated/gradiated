@@ -1,4 +1,7 @@
-import { benchmarkLabels } from "@/lib/workload-benchmark";
+import {
+  BenchmarkMetric,
+  BenchmarkQuality,
+} from "@/components/fine-tuning/workload-benchmark";
 import { latestVersionEvaluation } from "@/store/fine-tuning-views";
 import { UploadModelDialog } from "@/components/fine-tuning/upload-model-dialog";
 import { useTrainingMutation } from "@/hooks/use-training";
@@ -190,7 +193,6 @@ const TaskRowView = ({
   onOpen: () => void;
 }) => {
   const benchmark = task.workload_benchmark;
-  const labels = benchmark ? benchmarkLabels(benchmark) : null;
   const run = task.latest_run;
   const summary = latestVersionEvaluation(task);
   const version = task.latest_version?.name ?? run?.version_name;
@@ -231,8 +233,8 @@ const TaskRowView = ({
         />
       </TableCell>
       <TableCell className="px-4 tabular-nums">
-        {labels?.cost ? (
-          <span title={benchmark?.workload}>{labels.cost}</span>
+        {benchmark?.cost ? (
+          <BenchmarkMetric benchmark={benchmark} metric="cost" />
         ) : summary ? (
           <RatioLabel
             ratio={costAdvantage(summary)}
@@ -243,8 +245,8 @@ const TaskRowView = ({
         )}
       </TableCell>
       <TableCell className="px-4 tabular-nums">
-        {labels?.speed ? (
-          <span title={benchmark?.workload}>{labels.speed}</span>
+        {benchmark?.speed ? (
+          <BenchmarkMetric benchmark={benchmark} metric="speed" />
         ) : summary ? (
           <RatioLabel
             ratio={speedAdvantage(summary)}
@@ -255,10 +257,8 @@ const TaskRowView = ({
         )}
       </TableCell>
       <TableCell className="px-4">
-        {labels?.quality ? (
-          <span className="text-sm" title={benchmark?.workload}>
-            {labels.quality}
-          </span>
+        {benchmark?.quality ? (
+          <BenchmarkQuality benchmark={benchmark} />
         ) : summary ? (
           <QualityBar result={summary.vs_comparison} />
         ) : (

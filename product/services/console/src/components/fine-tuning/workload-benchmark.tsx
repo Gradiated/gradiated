@@ -15,7 +15,8 @@ import { useWorkloadBenchmark } from "@/hooks/use-workload-benchmark";
 import { useProductContext } from "@/hooks/use-product-context";
 import { trainingKey, useTrainingMutation } from "@/hooks/use-training";
 import {
-  benchmarkLabels,
+  benchmarkRatios,
+  benchmarkValues,
   benchmarkUsdInput,
   parseBenchmarkUsd,
 } from "@/lib/workload-benchmark";
@@ -33,6 +34,79 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ModelLabel } from "@/components/model-label";
+import {
+  OutcomeBar,
+  RatioLabel,
+} from "@/components/fine-tuning/evaluation-panel";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { modelDisplayName } from "@gradiated/contracts/model-catalog";
+import { formatPercent } from "@/lib/format";
+
+const muted = <span className="text-muted-foreground">—</span>;
+
+// Cost and speed read as the comparison with the replacement, with the
+// measured value in the tooltip; without a replacement, the value itself.
+export const BenchmarkMetric = ({
+  benchmark,
+  metric,
+}: {
+  benchmark: WorkloadBenchmark;
+  metric: "cost" | "speed";
+}) => {
+  const ratio = benchmarkRatios(benchmark)[metric];
+  const value = benchmarkValues(benchmark)[metric];
+  if (ratio) return <RatioLabel ratio={ratio} detail={value ?? ""} />;
+
+  return value ? <span>{value}</span> : muted;
+};
+
+// Paired run outcomes as the better / same / worse bar; without them, the
+// pass rates.
+export const BenchmarkQuality = ({
+  benchmark,
+}: {
+  benchmark: WorkloadBenchmark;
+}) => {
+  const quality = benchmark.quality;
+  if (!quality) return muted;
+  const rates = `${quality.metric}: ${formatPercent(quality.fine_tuned / 100)}${quality.comparison === null ? "" : ` vs ${formatPercent(quality.comparison / 100)}`}`;
+  const outcome = quality.outcome;
+  if (!outcome) return <span>{rates}</span>;
+  const runs = outcome.better + outcome.same + outcome.worse;
+  const share = (count: number) => formatPercent(count / runs);
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="block w-40 cursor-default">
+          <OutcomeBar
+            outcome={{
+              win: outcome.better / runs,
+              tie: outcome.same / runs,
+              loss: outcome.worse / runs,
+              unresolved: 0,
+            }}
+            height="h-2"
+            labels={false}
+          />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs">
+        {benchmark.comparison_model_id
+          ? `vs ${modelDisplayName(benchmark.comparison_model_id)}: `
+          : null}
+        better {share(outcome.better)} · same {share(outcome.same)} · worse{" "}
+        {share(outcome.worse)} of {runs} runs
+        <br />
+        {rates}
+      </TooltipContent>
+    </Tooltip>
+  );
+};
 
 export const WorkloadBenchmarkCard = ({
   task,
@@ -49,7 +123,6 @@ export const WorkloadBenchmarkCard = ({
     canEdit &&
     ((user?.is_staff && user.email_verified) || user?.impersonated_by),
   );
-  const labels = query.data ? benchmarkLabels(query.data) : null;
 
   return (
     <section className="mb-5 rounded-lg border p-5">
@@ -78,34 +151,40 @@ export const WorkloadBenchmarkCard = ({
           Benchmarks could not be loaded.{" "}
           <button onClick={() => void query.retry()}>Retry</button>
         </p>
-      ) : query.data && labels ? (
-        <>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {query.data.workload}
-          </p>
-          <div className="mt-4 grid gap-4 sm:grid-cols-4">
-            {[
-              [
-                "Replaces",
-                <ModelLabel key="model" id={query.data.comparison_model_id} />,
-              ],
-              ["Cost", labels.cost ?? "—"],
-              ["Speed", labels.speed ?? "—"],
-              ["Quality", labels.quality ?? "—"],
-            ].map(([label, value]) => (
-              <div key={String(label)}>
-                <div className="text-xs text-muted-foreground">{label}</div>
-                <div className="mt-1 text-sm font-medium">{value}</div>
-              </div>
-            ))}
-          </div>
-          {query.data.notes ? (
-            <details className="mt-3 text-xs text-muted-foreground">
-              <summary className="cursor-pointer">Benchmark notes</summary>
-              <p className="mt-2 whitespace-pre-wrap">{query.data.notes}</p>
-            </details>
-          ) : null}
-        </>
+      ) : query.data ? (
+        <div className="mt-4 grid gap-4 sm:grid-cols-4">
+          {[
+            [
+              "Replaces",
+              <ModelLabel key="model" id={query.data.comparison_model_id} />,
+            ],
+            [
+              "Cost",
+              <BenchmarkMetric
+                key="cost"
+                benchmark={query.data}
+                metric="cost"
+              />,
+            ],
+            [
+              "Speed",
+              <BenchmarkMetric
+                key="speed"
+                benchmark={query.data}
+                metric="speed"
+              />,
+            ],
+            [
+              "Quality",
+              <BenchmarkQuality key="quality" benchmark={query.data} />,
+            ],
+          ].map(([label, value]) => (
+            <div key={String(label)}>
+              <div className="text-xs text-muted-foreground">{label}</div>
+              <div className="mt-1 text-sm font-medium">{value}</div>
+            </div>
+          ))}
+        </div>
       ) : (
         <p className="mt-3 text-sm text-muted-foreground">
           Add results from your workload evaluation.
@@ -148,6 +227,9 @@ const BenchmarkEditor = ({
     comparisonQuality: initial?.quality?.comparison?.toString() ?? "",
     metric: initial?.quality?.metric ?? "Acceptance",
     samples: initial?.quality?.sample_size?.toString() ?? "",
+    better: initial?.quality?.outcome?.better.toString() ?? "",
+    same: initial?.quality?.outcome?.same.toString() ?? "",
+    worse: initial?.quality?.outcome?.worse.toString() ?? "",
   });
   const [costUnit, setCostUnit] = useState<"task" | "1k_tokens">(
     initial?.cost?.unit ?? "task",
@@ -197,6 +279,17 @@ const BenchmarkEditor = ({
               fine_tuned: numeric(values.quality),
               comparison: numeric(values.comparisonQuality),
               sample_size: numeric(values.samples),
+              ...([values.better, values.same, values.worse].some((value) =>
+                value.trim(),
+              )
+                ? {
+                    outcome: {
+                      better: numeric(values.better) ?? 0,
+                      same: numeric(values.same) ?? 0,
+                      worse: numeric(values.worse) ?? 0,
+                    },
+                  }
+                : {}),
             }
           : null,
       });
@@ -336,6 +429,11 @@ const BenchmarkEditor = ({
               {field("comparisonQuality", "Replacement (%, optional)")}
             </div>
             {field("samples", "Sample count (optional)")}
+            <div className="grid grid-cols-3 gap-3">
+              {field("better", "Runs better (optional)")}
+              {field("same", "Runs the same")}
+              {field("worse", "Runs worse")}
+            </div>
           </fieldset>
           <Label className="grid gap-2">
             Notes

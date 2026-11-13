@@ -53,14 +53,14 @@ describe("costAdvantage", () => {
 });
 
 describe("speedAdvantage", () => {
-  it("rounds the measured production example to 1.4 times slower", () => {
+  it("rounds the measured production example to 43.9% slower", () => {
     const value = summary(
       { fine_tuned: 1, comparison: 1 },
       { fine_tuned: 35.19353687545304, comparison: 50.6595658693694 },
     );
     expect(speedAdvantage(value)).toEqual({
       tone: "bad",
-      label: "1.4× slower",
+      label: "43.9% slower",
     });
     expect(outputSpeed(value)).toBe("35.2 vs 50.7 output tokens/s");
   });
@@ -146,7 +146,7 @@ it("labels the production token cost estimate and preserves its per-1k conversio
     ),
     cost_basis: "catalog_token_estimate" as const,
   };
-  expect(costAdvantage(value).label).toBe("103× cheaper");
+  expect(costAdvantage(value).label).toBe("103.2× cheaper");
   expect(costPer1kRequests(value)).toBe(
     "$0.0344 vs $3.55 per 1k requests (estimated)",
   );

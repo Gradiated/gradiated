@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { WorkloadBenchmarkSchema } from "@gradiated/contracts";
 import {
   benchmarkLabels,
+  benchmarkRatios,
+  benchmarkValues,
   benchmarkUsdInput,
   parseBenchmarkUsd,
 } from "@/lib/workload-benchmark";
@@ -49,6 +51,46 @@ describe("manual workload benchmarks", () => {
     });
     expect(benchmarkLabels(parsed).cost).toContain("1k tokens");
     expect(benchmarkLabels(parsed).speed).toContain("tokens/s");
+  });
+  it("splits the value from the comparison for the training table", () => {
+    const parsed = WorkloadBenchmarkSchema.parse({
+      ...benchmark,
+      cost: {
+        ...benchmark.cost,
+        fine_tuned: 3_320_000,
+        comparison: 60_000_000,
+      },
+      speed: {
+        ...benchmark.speed,
+        statistic: "mean",
+        fine_tuned: 11.8,
+        comparison: 14.6,
+      },
+    });
+    expect(benchmarkValues(parsed)).toEqual({
+      cost: "$0.00332 / task est.",
+      speed: "11.80 s mean",
+    });
+    expect(benchmarkRatios(parsed)).toEqual({
+      cost: { tone: "good", label: "18.1× cheaper" },
+      speed: { tone: "good", label: "23.7% faster" },
+    });
+    expect(benchmarkLabels(parsed).speed).toBe("11.80 s mean · 23.7% faster");
+  });
+  it("accepts paired run outcomes and rejects an empty set", () => {
+    const quality = { ...benchmark.quality, fine_tuned: 100, comparison: 75 };
+    expect(
+      WorkloadBenchmarkSchema.parse({
+        ...benchmark,
+        quality: { ...quality, outcome: { better: 18, same: 54, worse: 0 } },
+      }).quality?.outcome,
+    ).toEqual({ better: 18, same: 54, worse: 0 });
+    expect(
+      WorkloadBenchmarkSchema.safeParse({
+        ...benchmark,
+        quality: { ...quality, outcome: { better: 0, same: 0, worse: 0 } },
+      }).success,
+    ).toBe(false);
   });
   it("retains missing metrics as missing", () => {
     expect(

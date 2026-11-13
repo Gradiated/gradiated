@@ -75,12 +75,24 @@ describe("formatRatio", () => {
     [Number.NaN, { tone: "neutral", label: "n/a" }],
     [Number.POSITIVE_INFINITY, { tone: "neutral", label: "n/a" }],
     [0.5, { tone: "bad", label: "2.0× slower" }],
-    [0.05, { tone: "bad", label: "20× slower" }],
-    [1, { tone: "good", label: "1.0× faster" }],
+    [0.8, { tone: "bad", label: "25.0% slower" }],
+    [0.05, { tone: "bad", label: "20.0× slower" }],
+    [1, { tone: "good", label: "0.0% faster" }],
+    [14.6 / 11.8, { tone: "good", label: "23.7% faster" }],
+    [1.999, { tone: "good", label: "99.9% faster" }],
     [2.46, { tone: "good", label: "2.5× faster" }],
-    [12.4, { tone: "good", label: "12× faster" }],
+    [18.07, { tone: "good", label: "18.1× faster" }],
   ])("describes an advantage of %d", (advantage, expected) => {
     expect(formatRatio(advantage, "faster", "slower")).toEqual(expected);
+  });
+
+  it("reports a saving under 2× as the share of cost removed", () => {
+    expect(formatRatio(1.25, "cheaper", "more expensive").label).toBe(
+      "20.0% cheaper",
+    );
+    expect(formatRatio(0.8, "cheaper", "more expensive").label).toBe(
+      "25.0% more expensive",
+    );
   });
 
   it("treats a zero divisor as not comparable", () => {

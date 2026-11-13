@@ -32,6 +32,18 @@ export const WorkloadBenchmarkSchema = z.strictObject({
       fine_tuned: z.number().min(0).max(100),
       comparison: z.number().min(0).max(100).nullable(),
       sample_size: z.number().int().positive().nullable(),
+      // Paired runs where this model did better than, the same as, or worse
+      // than the replacement.
+      outcome: z
+        .strictObject({
+          better: z.number().int().nonnegative(),
+          same: z.number().int().nonnegative(),
+          worse: z.number().int().nonnegative(),
+        })
+        .refine(({ better, same, worse }) => better + same + worse > 0, {
+          message: "Enter at least one compared run.",
+        })
+        .optional(),
     })
     .nullable(),
 });

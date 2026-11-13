@@ -59,10 +59,14 @@ export interface Ratio {
   label: string;
 }
 
+// Under 2× the difference reads as a percentage, from 2× as a multiple. A
+// saving ("cheaper") is the share of the comparison's cost removed; every
+// other direction is the increase over the slower or cheaper side.
 export const formatRatio = (
   advantage: number,
   good: string,
   bad: string,
+  { goodIsReduction = good === "cheaper" } = {},
 ): Ratio => {
   if (!Number.isFinite(advantage) || advantage <= 0) {
     return { tone: "neutral", label: "n/a" };
@@ -70,10 +74,11 @@ export const formatRatio = (
 
   const isGood = advantage >= 1;
   const factor = isGood ? advantage : 1 / advantage;
+  const percent = isGood && goodIsReduction ? 1 - 1 / factor : factor - 1;
 
   return {
     tone: isGood ? "good" : "bad",
-    label: `${factor >= 10 ? Math.round(factor) : factor.toFixed(1)}× ${isGood ? good : bad}`,
+    label: `${factor < 2 ? `${(percent * 100).toFixed(1)}%` : `${factor.toFixed(1)}×`} ${isGood ? good : bad}`,
   };
 };
 

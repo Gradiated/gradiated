@@ -21,7 +21,7 @@ import type {
 
 const SEGMENTS = [
   { key: "win", label: "Better", className: "bg-[#6e7f31] text-white" },
-  { key: "tie", label: "Equivalent", className: "bg-[#dedbd0] text-[#5a5850]" },
+  { key: "tie", label: "Equivalent", className: "bg-[#a9b878] text-[#2f3a0d]" },
   { key: "loss", label: "Worse", className: "bg-[#e4c880] text-[#5c4710]" },
 ] as const;
 
@@ -75,7 +75,7 @@ export const OutcomeBar = ({
   height = "h-9",
   labels = true,
 }: {
-  outcome: JudgeOutcome;
+  outcome: Omit<JudgeOutcome, "comparator_model_id">;
   height?: string;
   labels?: boolean;
 }) => {

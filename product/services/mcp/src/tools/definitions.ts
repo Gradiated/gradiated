@@ -8,7 +8,7 @@ import {
   type OpenApiDocument,
   type OperationEntry,
 } from "../openapi.js";
-import { TOOL_CONFIG, type ToolConfig } from "./config.js";
+import { TOOL_CONFIG, type ArgumentConfig, type ToolConfig } from "./config.js";
 
 // Filled from the caller's credential, never from the model.
 export const CONTEXT_PARAMETERS = ["workspace_id"] as const;
@@ -21,34 +21,61 @@ export interface ToolArgument {
   location: "path" | "query" | "body";
 }
 
+export interface FixedArgument {
+  field: string;
+  location: ToolArgument["location"];
+  value: unknown;
+}
+
+export interface ObjectSchema {
+  type: "object";
+  properties?: Record<string, JsonSchema>;
+  required?: string[];
+  [key: string]: unknown;
+}
+
 export interface ToolDefinition {
   name: string;
   title: string;
   description: string;
   method: Method;
   path: string;
-  inputSchema: {
-    type: "object";
+  upstream: "api" | "inference";
+  inputSchema: ObjectSchema & {
     properties: Record<string, JsonSchema>;
     required: string[];
     additionalProperties: false;
   };
+  outputSchema?: ObjectSchema;
   arguments: ToolArgument[];
+  fixed: FixedArgument[];
   annotations: ToolAnnotations;
+}
+
+type EnabledConfig = Extract<ToolConfig, { enabled: true }>;
+
+interface Field extends ToolArgument {
+  schema: JsonSchema;
+  required: boolean;
 }
 
 const isContext = (name: string): name is ContextParameter =>
   (CONTEXT_PARAMETERS as readonly string[]).includes(name);
 
-const annotations = (method: Method, title: string): ToolAnnotations => ({
+const annotations = (
+  method: Method,
+  title: string,
+  inference: boolean,
+): ToolAnnotations => ({
   title,
   readOnlyHint: method === "get",
   destructiveHint: method === "delete",
   idempotentHint: method !== "post" && method !== "patch",
-  openWorldHint: false,
+  // A model call reaches a model; every other tool stays inside the workspace.
+  openWorldHint: inference,
 });
 
-const describe = (
+const withDescription = (
   schema: JsonSchema,
   description: string | undefined,
 ): JsonSchema => (description ? { ...schema, description } : schema);
@@ -70,94 +97,174 @@ const bodySchema = (
   return inlined;
 };
 
-const buildTool = (
+const isObjectSchema = (schema: JsonSchema): boolean => {
+  if (schema.type === "object") return true;
+
+  const choices = schema.anyOf ?? schema.oneOf;
+
+  return (
+    Array.isArray(choices) &&
+    choices.length > 0 &&
+    choices.every((choice) => isObjectSchema(choice as JsonSchema))
+  );
+};
+
+const withoutExamples = (schema: unknown): unknown => {
+  if (Array.isArray(schema)) return schema.map(withoutExamples);
+  if (typeof schema !== "object" || schema === null) return schema;
+
+  return Object.fromEntries(
+    Object.entries(schema)
+      .filter(([key]) => key !== "example")
+      .map(([key, value]) => [key, withoutExamples(value)]),
+  );
+};
+
+// MCP output schemas describe an object; an anyOf of object shapes qualifies once typed.
+const outputSchema = (
   entry: OperationEntry,
-  config: Extract<ToolConfig, { enabled: true }>,
+  config: EnabledConfig,
   document: OpenApiDocument,
-): ToolDefinition => {
-  const { operation } = entry;
-  const fields: (ToolArgument & { schema: JsonSchema; required: boolean })[] =
-    [];
+): ObjectSchema | undefined => {
+  const response = Object.entries(entry.operation.responses ?? {}).find(
+    ([status]) => /^2\d\d$/.test(status),
+  )?.[1];
+  const schema = config.output
+    ? { $ref: `#/components/schemas/${config.output}` }
+    : response?.content?.["application/json"]?.schema;
+  if (!schema) return undefined;
 
-  for (const parameter of operation.parameters ?? []) {
-    if (parameter.in !== "path" && parameter.in !== "query") continue;
-    if (isContext(parameter.name)) continue;
+  const inlined = withoutExamples(
+    inlineReferences(schema, document),
+  ) as JsonSchema;
 
-    fields.push({
-      name: parameter.name,
-      field: parameter.name,
-      location: parameter.in,
-      schema: describe(
-        inlineReferences(parameter.schema ?? {}, document) as JsonSchema,
-        parameter.description,
-      ),
-      required: parameter.required === true,
-    });
-  }
+  return isObjectSchema(inlined)
+    ? ({ ...inlined, type: "object" } as ObjectSchema)
+    : undefined;
+};
 
+const fields = (entry: OperationEntry, document: OpenApiDocument): Field[] => {
+  const parameters = (entry.operation.parameters ?? []).flatMap(
+    (parameter): Field[] =>
+      (parameter.in === "path" || parameter.in === "query") &&
+      !isContext(parameter.name)
+        ? [
+            {
+              name: parameter.name,
+              field: parameter.name,
+              location: parameter.in,
+              schema: withDescription(
+                inlineReferences(
+                  parameter.schema ?? {},
+                  document,
+                ) as JsonSchema,
+                parameter.description,
+              ),
+              required: parameter.required === true,
+            },
+          ]
+        : [],
+  );
   const body = bodySchema(entry, document);
-  const bodyRequired = new Set(
+  const required = new Set(
     Array.isArray(body?.required) ? (body.required as string[]) : [],
   );
-  for (const [field, schema] of Object.entries(
+  const bodyFields = Object.entries(
     (body?.properties ?? {}) as Record<string, JsonSchema>,
-  )) {
-    fields.push({
-      name: field,
-      field,
-      location: "body",
-      schema,
-      required: bodyRequired.has(field),
-    });
-  }
+  ).map(([field, schema]): Field => ({
+    name: field,
+    field,
+    location: "body",
+    schema,
+    required: required.has(field),
+  }));
 
-  const configured = config.arguments ?? {};
-  for (const field of Object.keys(configured)) {
-    if (!fields.some((argument) => argument.field === field))
+  return [...parameters, ...bodyFields];
+};
+
+const buildTool = (
+  entry: OperationEntry,
+  config: EnabledConfig,
+  document: OpenApiDocument,
+): ToolDefinition => {
+  const available = fields(entry, document);
+  const configured: Record<string, ArgumentConfig> = config.arguments ?? {};
+
+  for (const field of Object.keys(configured))
+    if (!available.some((argument) => argument.field === field))
       throw new Error(`${config.name} configures unknown argument ${field}.`);
-  }
 
   const properties: Record<string, JsonSchema> = {};
   const required: string[] = [];
   const toolArguments: ToolArgument[] = [];
-  for (const field of fields) {
+  const fixed: FixedArgument[] = [];
+
+  for (const field of available) {
     const override = configured[field.field];
+    const hidden =
+      override?.hidden === true ||
+      (config.onlyConfiguredArguments === true && !override);
+
+    if (hidden) {
+      if (field.required && override?.value === undefined)
+        throw new Error(
+          `${config.name} hides required argument ${field.field} without a value.`,
+        );
+      if (override?.value !== undefined)
+        fixed.push({
+          field: field.field,
+          location: field.location,
+          value: override.value,
+        });
+      continue;
+    }
+
     const name = override?.name ?? field.name;
     if (Object.hasOwn(properties, name))
       throw new Error(`${config.name} has two arguments named ${name}.`);
+    if (typeof field.schema.description !== "string")
+      throw new Error(
+        `Describe ${entry.operation.operationId}'s ${field.field} in the API contract.`,
+      );
 
-    properties[name] = describe(
-      field.schema,
-      override?.description ?? (field.schema.description as string),
-    );
-    if (field.required) required.push(name);
+    properties[name] = field.schema;
+    if (field.required || override?.required) required.push(name);
     toolArguments.push({ name, field: field.field, location: field.location });
   }
+
+  const output = outputSchema(entry, config, document);
 
   return {
     name: config.name,
     title: config.title,
     description:
       config.description ??
-      operation.description ??
-      operation.summary ??
+      entry.operation.description ??
+      entry.operation.summary ??
       config.title,
     method: entry.method,
     path: entry.path,
+    upstream: config.inference ? "inference" : "api",
     inputSchema: {
       type: "object",
       properties,
       required,
       additionalProperties: false,
     },
+    ...(output ? { outputSchema: output } : {}),
     arguments: toolArguments,
-    annotations: annotations(entry.method, config.title),
+    fixed,
+    annotations: annotations(
+      entry.method,
+      config.title,
+      config.inference === true,
+    ),
   };
 };
 
 export const buildTools = (
   document: OpenApiDocument,
-  config: Record<string, ToolConfig> = TOOL_CONFIG,
+  config: Partial<Record<string, ToolConfig>> = TOOL_CONFIG,
 ): ToolDefinition[] => {
   const entries = operations(document);
   const missing = entries
@@ -176,7 +283,7 @@ export const buildTools = (
   const tools = Object.entries(config).flatMap(([id, toolConfig]) => {
     const entry = entries.find(({ operation }) => operation.operationId === id);
 
-    return entry && toolConfig.enabled
+    return entry && toolConfig?.enabled
       ? [buildTool(entry, toolConfig, document)]
       : [];
   });

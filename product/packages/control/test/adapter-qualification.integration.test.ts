@@ -180,17 +180,19 @@ describe("adapter qualification on promotion", () => {
     );
 
     expect(promoted.productionVersionId).toBe(version.id);
-    expect(probe).toHaveBeenCalledOnce();
-    expect(probe.mock.calls[0]![1]).toEqual({
-      workspaceId: owner.workspaceId,
-      versionId: version.id,
-    });
-    expect(loraDeploymentIds).toContain(probe.mock.calls[0]![0].id);
+    expect(probe.mock.calls.map(([target]) => target.id).sort()).toEqual(
+      [...loraDeploymentIds].sort(),
+    );
+    for (const [, identity] of probe.mock.calls)
+      expect(identity).toEqual({
+        workspaceId: owner.workspaceId,
+        versionId: version.id,
+      });
     const after = await stored(task.id, version.id);
     expect(after.version.status).toBe("available");
     expect(after.task.productionVersionId).toBe(version.id);
     expect(reports).toMatchObject([
-      { outcome: "passed", attempts: 1, versionId: version.id },
+      { outcome: "passed", attempts: 2, versionId: version.id },
     ]);
 
     // GPU preload now lists it, under the version ID runtimes use.
@@ -212,10 +214,10 @@ describe("adapter qualification on promotion", () => {
       task.name,
       version.id,
     );
-    expect(probe).toHaveBeenCalledOnce();
+    expect(probe).toHaveBeenCalledTimes(2);
   });
 
-  it("tries the next allocation when one cannot test the adapter", async () => {
+  it("passes when one allocation cannot test the adapter and another passes", async () => {
     const { owner, task, version } = await seedUpload();
     const probe = vi
       .fn<AdapterProbe>()
@@ -243,7 +245,7 @@ describe("adapter qualification on promotion", () => {
   });
 
   it.each([
-    ["rejected", true, "invalid_adapter", "conflict", 1],
+    ["rejected", true, "invalid_adapter", "conflict", 2],
     ["failed", false, "preparation_failed", "unavailable", 2],
   ] as const)(
     "leaves a %s adapter unavailable and production unchanged",

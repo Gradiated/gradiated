@@ -68,14 +68,14 @@ export const createAdapterQualifier = ({
   targets,
   probe,
   report = () => undefined,
-  maxAttempts = 3,
+  maxTargets = 8,
   now = Date.now,
   order = shuffled,
 }: {
   targets: (modelId: string) => Promise<AdapterProbeTarget[]>;
   probe: AdapterProbe;
   report?: (result: AdapterQualificationResult) => void;
-  maxAttempts?: number;
+  maxTargets?: number;
   now?: () => number;
   order?: <T>(items: readonly T[]) => T[];
 }): AdapterQualifier => {
@@ -106,7 +106,7 @@ export const createAdapterQualifier = ({
       (await targets(version.baseModelId)).filter((target) =>
         servesAdapter(target.release, revision),
       ),
-    ).slice(0, maxAttempts);
+    ).slice(0, maxTargets);
     if (!candidates.length) {
       finish("no_capacity", 0);
       throw new ControlServiceError(
@@ -115,30 +115,49 @@ export const createAdapterQualifier = ({
       );
     }
 
-    // A rejection describes the adapter, so no later allocation can override it.
-    let last = { deploymentId: candidates[0]!.id, reason: "probe_failed" };
-    let attempts = 0;
-    for (const target of candidates) {
-      attempts += 1;
-      const result: AdapterProbeOutcome = await probe(target, {
-        workspaceId: version.workspaceId,
-        versionId: version.id,
-      }).catch(() => ({ ok: false, rejected: false, reason: "probe_error" }));
-      if (result.ok) {
-        finish("passed", attempts, target.id);
-        return;
-      }
-      if (result.rejected) {
-        finish("rejected", attempts, target.id, result.reason);
-        throw new ControlServiceError(
-          "conflict",
-          "The serving runtime could not load this adapter. Check that it targets modules this base model supports. The version was not promoted.",
-        );
-      }
-
-      last = { deploymentId: target.id, reason: result.reason };
+    // Every allocation is probed so one that refuses the adapter is never skipped.
+    const results = await Promise.all(
+      candidates.map(async (target) => ({
+        target,
+        result: await probe(target, {
+          workspaceId: version.workspaceId,
+          versionId: version.id,
+        }).catch((): AdapterProbeOutcome => ({
+          ok: false,
+          rejected: false,
+          reason: "probe_error",
+        })),
+      })),
+    );
+    const rejection = results.find(
+      ({ result }) => !result.ok && result.rejected,
+    );
+    if (rejection && !rejection.result.ok) {
+      finish(
+        "rejected",
+        results.length,
+        rejection.target.id,
+        rejection.result.reason,
+      );
+      throw new ControlServiceError(
+        "conflict",
+        "The serving runtime could not load this adapter. Check that it targets modules this base model supports. The version was not promoted.",
+      );
     }
-    finish("failed", attempts, last.deploymentId, last.reason);
+
+    const passed = results.find(({ result }) => result.ok);
+    if (passed) {
+      finish("passed", results.length, passed.target.id);
+      return;
+    }
+
+    const last = results.at(-1)!;
+    finish(
+      "failed",
+      results.length,
+      last.target.id,
+      last.result.ok ? undefined : last.result.reason,
+    );
 
     throw new ControlServiceError(
       "unavailable",

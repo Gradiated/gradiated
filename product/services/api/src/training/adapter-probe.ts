@@ -125,8 +125,9 @@ export const reportAdapterQualification =
     );
   };
 
-// Longer than every allowed probe attempt together, so a crashed holder expires.
-const QUALIFICATION_LOCK_MS = 600_000;
+// Allocations are probed in parallel, so this outlasts one probe; a holder that
+// dies mid-probe blocks retries only briefly.
+const QUALIFICATION_LOCK_MS = ADAPTER_PROBE_TIMEOUT_MS + 50_000;
 const RELEASE_LOCK = `if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) end return 0`;
 
 export const createQualificationLock =

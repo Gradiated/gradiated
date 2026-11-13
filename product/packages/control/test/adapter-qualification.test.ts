@@ -51,7 +51,7 @@ const version = {
 const qualifier = (
   targets: AdapterProbeTarget[],
   probe: AdapterProbe,
-  maxAttempts?: number,
+  maxTargets?: number,
 ) => {
   const reports: AdapterQualificationResult[] = [];
   let clock = 1_000;
@@ -63,7 +63,7 @@ const qualifier = (
       report: (result) => reports.push(result),
       order: (items) => [...items],
       now: () => (clock += 250),
-      ...(maxAttempts ? { maxAttempts } : {}),
+      ...(maxTargets ? { maxTargets } : {}),
     }),
   };
 };
@@ -120,7 +120,7 @@ describe("createAdapterQualifier", () => {
     ]);
   });
 
-  it("stops after the attempt limit and treats a thrown probe as an allocation failure", async () => {
+  it("probes up to the target limit and treats a thrown probe as an allocation failure", async () => {
     const probe = vi.fn<AdapterProbe>(async () => {
       throw new Error("socket closed");
     });
@@ -145,7 +145,7 @@ describe("createAdapterQualifier", () => {
     ]);
   });
 
-  it("stops at a rejection so a later allocation cannot override it", async () => {
+  it("rejects when any allocation refuses the adapter, even if another passes", async () => {
     const probe = vi
       .fn<AdapterProbe>()
       .mockResolvedValueOnce({
@@ -157,11 +157,11 @@ describe("createAdapterQualifier", () => {
     const { qualify, reports } = qualifier([target("a"), target("b")], probe);
 
     await expect(qualify(version)).rejects.toMatchObject({ code: "conflict" });
-    expect(probe).toHaveBeenCalledOnce();
+    expect(probe).toHaveBeenCalledTimes(2);
     expect(reports).toMatchObject([
       {
         outcome: "rejected",
-        attempts: 1,
+        attempts: 2,
         deploymentId: "a",
         reason: "invalid_adapter",
       },

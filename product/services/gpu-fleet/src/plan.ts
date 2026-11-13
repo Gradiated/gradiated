@@ -131,7 +131,7 @@ export const leaseRefusal = (facts: HostFacts, now: Date) => {
   // left by a failed rollout keeps the host out of service on purpose.
   if (node.unschedulable) return "the node is already cordoned";
   if (!pod) return "RunPod could not be read";
-  if (pod.volumeInGb)
+  if (pod.volumeInGb || pod.hasAttachedVolumes)
     return "the pod has a RunPod volume, which a re-image would not wipe";
 };
 

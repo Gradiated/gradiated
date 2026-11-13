@@ -628,6 +628,14 @@ export const createRollouts = (deps: RolloutDependencies) => {
           started >= requested
         )
           return { next: "Join" };
+        // Runpod can wipe a running container without advancing startedAt.
+        // A bootstrap device created after our request independently proves the wipe.
+        if (imageRuns(facts, rollout)) {
+          const bootstrap = await enroll.peer(host);
+          const joined = since(bootstrap?.createdAt);
+          if (joined !== undefined && joined >= requested)
+            return { next: "Join" };
+        }
         if (rollout.kind === "reimage" && imageRuns(facts, rollout))
           return {
             stay: "Waiting for RunPod to pull the image and start the pod",

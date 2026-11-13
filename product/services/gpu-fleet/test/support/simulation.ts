@@ -51,6 +51,7 @@ export type HostSpec = {
   enrolled?: boolean;
   // A RunPod volume, which survives a re-image.
   volumeInGb?: number;
+  hasAttachedVolumes?: boolean;
 };
 
 type Device = {
@@ -488,6 +489,7 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
         lastStartedAt: host.lastStartedAt,
         env: { ...host.env },
         volumeInGb: host.volumeInGb ?? 0,
+        hasAttachedVolumes: host.hasAttachedVolumes ?? false,
         machine: { dataCenterId: "US-TX-1", gpuTypeId: "NVIDIA B300" },
       };
     },
@@ -535,6 +537,7 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
         d.nodeId,
         {
           HostName: d.hostname,
+          Created: d.created,
           TailscaleIPs: d.addresses,
           Tags: d.tags,
           Online: d.connectedToControl,

@@ -30,6 +30,7 @@ export const reloadingRunPod = (
 
     client = {
       pod: forgettingOnRejection(loaded.pod),
+      identity: forgettingOnRejection(loaded.identity),
       update: forgettingOnRejection(loaded.update),
       start: forgettingOnRejection(loaded.start),
     };

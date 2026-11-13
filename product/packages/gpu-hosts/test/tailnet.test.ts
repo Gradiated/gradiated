@@ -41,6 +41,13 @@ describe("tailnet bootstrap peers", () => {
     });
   });
 
+  it("retains the control plane's bootstrap device creation time", () => {
+    const createdAt = "2026-11-13T10:38:36.295162184Z";
+    expect(
+      bootstrapPeer({ Peer: { a: peer({ Created: createdAt }) } }, "pod1"),
+    ).toMatchObject({ createdAt });
+  });
+
   it("ignores other pods and enrolled hosts", () => {
     for (const other of [
       peer({ HostName: "gpu-bootstrap-pod2" }),

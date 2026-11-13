@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createRunPodProvider } from "../../src/instances/runpod.js";
 import { ENROLL_COMMAND, type RunSsh } from "@gradiated/gpu-hosts";
-import { fakeRunPod, rtxPod } from "../support/runpod.js";
+import { fakeRunPod, rtxPod, v2Pod } from "../support/runpod.js";
 const image = "registry.example/gpu-base:pinned";
 const inventory = {
   tailscale_ip: "100.64.0.1",
@@ -61,7 +61,9 @@ describe("RunPod Kubernetes enrollment", () => {
       await expect(
         provider.bootstrap(await provider.describe("pod1"), image, payload),
       ).rejects.toThrow("Refusing to reset");
-      expect(s.calls.every((c) => c.method === "GET")).toBe(true);
+      expect(
+        s.calls.every((c) => c.method === "GET" || c.url.endsWith("/graphql")),
+      ).toBe(true);
     },
   );
   it("re-images and starts a stopped pod with its own bootstrap key and no public SSH", async () => {
@@ -70,11 +72,18 @@ describe("RunPod Kubernetes enrollment", () => {
     const fetch = vi.fn(
       async (input: string | URL | Request, init?: RequestInit) => {
         const method = init?.method ?? "GET";
-        if (method === "POST") started = true;
+        if (String(input).endsWith("/graphql"))
+          return Response.json({
+            data: { pod: { consumerUserId: "user_1", machineId: "machine1" } },
+          });
+        if (String(input).endsWith("/action")) started = true;
         return new Response(
           JSON.stringify(
             method === "GET"
-              ? { ...running, desiredStatus: started ? "RUNNING" : "EXITED" }
+              ? v2Pod({
+                  ...running,
+                  desiredStatus: started ? "RUNNING" : "EXITED",
+                })
               : {},
           ),
         );
@@ -102,15 +111,39 @@ describe("RunPod Kubernetes enrollment", () => {
     )![1]!;
     expect(bootstrapKey).toHaveBeenCalledWith("pod1");
     expect(JSON.parse(String(patch.body))).toEqual({
-      imageName: image,
+      image: image,
       ports: [],
       env: { GRADIATED_TAILSCALE_BOOTSTRAP_KEY: "tskey-auth-bootstrap" },
     });
     expect(
-      fetch.mock.calls.some(([url]) => String(url).endsWith("/start")),
+      fetch.mock.calls.some(([url]) => String(url).endsWith("/action")),
     ).toBe(true);
     expect(revoke).toHaveBeenCalledOnce();
   });
+
+  it.each(["ERROR", "TERMINATED"])(
+    "stops bootstrap polling when v2 reports %s",
+    async (status) => {
+      let patched = false;
+      const base = fakeRunPod(running);
+      const fetch: typeof globalThis.fetch = async (input, init) => {
+        if (init?.method === "PATCH") patched = true;
+        if ((init?.method ?? "GET") === "GET" && patched)
+          return Response.json(v2Pod({ ...running, desiredStatus: status }));
+        return base.fetch(input, init);
+      };
+      const provider = createRunPodProvider({
+        apiKey: "key",
+        fetch,
+        tailnet: { run: vi.fn<RunSsh>(), status: async () => ({ Peer: {} }) },
+      });
+      await expect(
+        provider.bootstrap(await provider.describe("pod1"), image, payload, {
+          allowReset: true,
+        }),
+      ).rejects.toThrow(`GPU bootstrap failed: pod is ${status}`);
+    },
+  );
 
   it("revokes the bootstrap key when the reset fails, and records a failed revocation", async () => {
     const s = setup();
@@ -222,7 +255,11 @@ describe("RunPod tailnet enrollment", () => {
       s.run.mock.invocationCallOrder.at(-1)!,
     );
     expect(s.claimName).toHaveBeenCalledWith(instanceId, expect.any(Date));
-    expect(s.runpod.calls.every((c) => c.method === "GET")).toBe(true);
+    expect(
+      s.runpod.calls.every(
+        (c) => c.method === "GET" || c.url.endsWith("/graphql"),
+      ),
+    ).toBe(true);
     const [target, command, input] = s.run.mock.calls.at(-1)!;
     expect(target.host).toBe("100.64.0.9");
     expect(target.port).toBe(22);

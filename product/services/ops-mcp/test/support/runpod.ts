@@ -1,4 +1,28 @@
+import { runPodSchema } from "@gradiated/gpu-hosts";
+
 export type Call = { method: string; url: string; body: unknown };
+
+export const v2Pod = (input: Record<string, unknown>) => {
+  const pod = runPodSchema.parse(input);
+  return {
+    id: pod.id,
+    status: pod.desiredStatus,
+    image: pod.imageName ?? "registry.example/gpu-base:pinned",
+    startedAt: pod.lastStartedAt ?? null,
+    env: pod.env ?? {},
+    dataCenterId: pod.machine.dataCenterId,
+    ...(pod.gpuCount
+      ? {
+          gpu: {
+            id: pod.machine.gpuTypeId,
+            count: pod.gpuCount,
+            vcpuCount: pod.vcpuCount,
+          },
+        }
+      : { cpu: { vcpuCount: pod.vcpuCount } }),
+    mounts: pod.volumeInGb ? { persistent: { size: pod.volumeInGb } } : {},
+  };
+};
 
 export const fakeRunPod = (pod: Record<string, unknown>) => {
   const calls: Call[] = [];
@@ -8,7 +32,20 @@ export const fakeRunPod = (pod: Record<string, unknown>) => {
     const body = init?.body ? JSON.parse(String(init.body)) : undefined;
     calls.push({ method, url, body });
 
-    return new Response(JSON.stringify(method === "GET" ? pod : {}));
+    return Response.json(
+      url.endsWith("/graphql")
+        ? {
+            data: {
+              pod: {
+                consumerUserId: pod.consumerUserId,
+                machineId: pod.machineId,
+              },
+            },
+          }
+        : method === "GET"
+          ? v2Pod(pod)
+          : {},
+    );
   };
 
   return { calls, fetch: fetch as typeof globalThis.fetch };

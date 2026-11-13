@@ -24,6 +24,7 @@ const statusSchema = z.object({
       z.string(),
       z.object({
         HostName: z.string(),
+        Created: z.string().optional(),
         TailscaleIPs: z.array(z.string()).nullish(),
         Tags: z.array(z.string()).nullish(),
         Online: z.boolean().optional(),
@@ -37,6 +38,7 @@ export type TailnetStatus = z.infer<typeof statusSchema>;
 
 export type BootstrapPeer = {
   readonly ip: string;
+  readonly createdAt?: string;
   readonly hostKeysSha256: readonly string[];
 };
 
@@ -76,7 +78,11 @@ export const bootstrapPeer = (
       `gpu-bootstrap-${podId} is not online with Tailscale SSH enabled`,
     );
 
-  return { ip, hostKeysSha256 };
+  return {
+    ip,
+    hostKeysSha256,
+    ...(peer!.Created && { createdAt: peer!.Created }),
+  };
 };
 
 export const localStatus = (socketPath: string) =>

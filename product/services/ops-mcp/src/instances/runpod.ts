@@ -126,7 +126,10 @@ export const createRunPodProvider = ({
         );
     },
     async describe(podId) {
-      const found = await pod(podId);
+      const [found, identity] = await Promise.all([
+        pod(podId),
+        runpod.identity(podId),
+      ]);
       const sku =
         found.gpuCount > 0
           ? `${found.gpuCount}x ${found.machine.gpuTypeId ?? "unknown GPU"}`
@@ -134,10 +137,10 @@ export const createRunPodProvider = ({
 
       return {
         provider: "runpod",
-        providerAccountId: found.consumerUserId,
+        providerAccountId: identity.consumerUserId,
         providerInstanceId: found.id,
         region: found.machine.dataCenterId ?? null,
-        faultDomain: `runpod:${found.machineId}`,
+        faultDomain: `runpod:${identity.machineId}`,
         sku,
       } satisfies ProviderInstance;
     },
@@ -182,9 +185,7 @@ export const createRunPodProvider = ({
         );
       }
 
-      // RunPod's REST API cannot write account secrets, so the pod gets its
-      // own single-use key directly. It expires within the hour and is
-      // revoked once enrollment ends.
+      // Each pod gets its own single-use key, revoked once enrollment ends.
       const joining = bootstrapKey && (await bootstrapKey(current.id));
       try {
         // Any PATCH resets the pod and wipes its container filesystem. The
@@ -211,6 +212,14 @@ export const createRunPodProvider = ({
         const deadline = Date.now() + 30 * 60 * 1000;
         while (Date.now() < deadline) {
           const ready = await pod(current.id);
+          if (
+            ready.desiredStatus === "ERROR" ||
+            ready.desiredStatus === "TERMINATED"
+          )
+            throw new Error(
+              `GPU bootstrap failed: pod is ${ready.desiredStatus}`,
+            );
+
           if (ready.desiredStatus === "RUNNING") {
             try {
               return await install(ready, payload);

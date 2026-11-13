@@ -59,7 +59,13 @@ const run = async (
   }
 };
 
-const kevFleet = (spare: { volumeInGb?: number; gpus?: number } = {}) => {
+const kevFleet = (
+  spare: {
+    volumeInGb?: number;
+    hasAttachedVolumes?: boolean;
+    gpus?: number;
+  } = {},
+) => {
   const fleet = simulateFleet(
     [
       { instanceId: SPARE, podId: "yzno396wdsidu4", gpus: 1, ...spare },
@@ -338,15 +344,18 @@ describe("host leases", () => {
     expectInPool(fleet, SPARE);
   });
 
-  it("refuses a host whose RunPod volume a re-image would not wipe", async () => {
-    const fleet = kevFleet({ volumeInGb: 100 });
-    fleet.annotateLease(SPARE, request(fleet));
+  it.each([{ volumeInGb: 100 }, { hasAttachedVolumes: true }])(
+    "refuses a host whose RunPod storage a re-image would not wipe (%j)",
+    async (storage) => {
+      const fleet = kevFleet(storage);
+      fleet.annotateLease(SPARE, request(fleet));
 
-    await run(fleet, CURRENT, failed(fleet, SPARE));
+      await run(fleet, CURRENT, failed(fleet, SPARE));
 
-    expectEnded(fleet, SPARE, "Not leased: the pod has a RunPod volume");
-    expectInPool(fleet, SPARE);
-  });
+      expectEnded(fleet, SPARE, "Not leased: the pod has a RunPod volume");
+      expectInPool(fleet, SPARE);
+    },
+  );
 
   it("fails a lease with no room for the host's replicas at once, keeps it in the pool and does not retry it", async () => {
     const fleet = simulateFleet(

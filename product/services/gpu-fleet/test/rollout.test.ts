@@ -1079,6 +1079,43 @@ describe("failures between steps", () => {
     };
   };
 
+  it.each([true, false])(
+    "requires a fresh bootstrap device to resume an accepted re-image with a retained Runpod timestamp (fresh: %s)",
+    async (fresh) => {
+      const fleet = kevFleet();
+      const pod = fleet.enrollment.pod;
+      fleet.enrollment.pod = async (host) => ({
+        ...(await pod(host)),
+        lastStartedAt: "2000-01-01T00:00:00Z",
+      });
+      const peer = fleet.enrollment.peer;
+      if (!fresh)
+        fleet.enrollment.peer = async (host) => {
+          const found = await peer(host);
+          return found && { ...found, createdAt: "2000-01-01T00:00:00Z" };
+        };
+      const stopped = new Set<string>();
+      const api = failingWrite(fleet.kube.api, (_count, path, body) => {
+        const step = (body as { status?: { rollout?: Rollout } }).status
+          ?.rollout?.step;
+        if (step !== "Join" || stopped.has(path)) return false;
+        stopped.add(path);
+        return true;
+      });
+
+      await run(fleet, pins(NEW_IMAGE, NEW_BUNDLE), allSucceeded(fleet), {
+        api,
+        cluster: createCluster(api, () => undefined),
+      });
+
+      if (fresh) expectRolledOut(fleet);
+      else {
+        expect(rollout(fleet, SPARE)?.step).toBe("Reimage");
+        expect(fleet.sim(SPARE).resets).toBe(1);
+      }
+    },
+  );
+
   it("waits out a slow image pull after a restart instead of re-imaging again", async () => {
     const fleet = kevFleet();
     for (const id of HOSTS) fleet.sim(id).pullFor = 20 * 60_000;

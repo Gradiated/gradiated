@@ -86,13 +86,27 @@ describe.skipIf(!files)("a GPU host rejoining after a re-image", () => {
     userAgent: "gpu-fleet-e2e",
     fetch: (async (input: string | URL | Request, init?: RequestInit) => {
       const method = init?.method ?? "GET";
-      if (method === "GET") return Response.json(pod);
+      if (method === "GET")
+        return Response.json({
+          id: pod.id,
+          status: pod.desiredStatus,
+          image: pod.imageName,
+          startedAt: pod.lastStartedAt,
+          env: pod.env,
+          mounts: {},
+          dataCenterId: pod.machine.dataCenterId,
+          gpu: {
+            id: pod.machine.gpuTypeId,
+            count: pod.gpuCount,
+            vcpuCount: pod.vcpuCount,
+          },
+        });
       if (method === "PATCH") {
         const body = JSON.parse(String(init?.body)) as {
-          imageName: string;
+          image: string;
           env: Record<string, string>;
         };
-        pod.imageName = body.imageName;
+        pod.imageName = body.image;
         pod.env = body.env;
         await boot();
         return new Response("");

@@ -50,7 +50,13 @@ describe("RunPod access", () => {
     expect(loads).toBe(2);
 
     revoked.add("new");
-    await expect((await access())!.update("pod1", {})).rejects.toThrow("403");
+    await expect(
+      (await access())!.update("pod1", {
+        imageName: "image",
+        ports: [],
+        env: {},
+      }),
+    ).rejects.toThrow("403");
     await access();
     expect(loads).toBe(3);
   });

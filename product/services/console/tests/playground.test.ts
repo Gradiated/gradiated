@@ -434,7 +434,6 @@ describe("replyStats", () => {
     expect(replyStats({ firstTokenMs: 200, totalMs: 1200, usage })).toEqual([
       "50 tokens",
       "50 tok/s",
-      "200 ms to first token",
       "$0.000420",
     ]);
   });
@@ -446,9 +445,9 @@ describe("replyStats", () => {
   });
 
   it.each([
-    [12.345, "12.3 J estimated"],
-    [0, "0 J estimated"],
-    [0.012345, "0.0123 J estimated"],
+    [12.345, "12.3 J"],
+    [0, "0 J"],
+    [0.012345, "0.0123 J"],
   ] as const)(
     "shows the reported energy estimate beside cost (%s J)",
     (estimated_joules, expected) => {

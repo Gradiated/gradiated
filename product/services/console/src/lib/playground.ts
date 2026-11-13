@@ -9,7 +9,7 @@ import type {
 } from "@/api/inference";
 import type { Model } from "@/api/queries";
 import type { components } from "@/api/schema";
-import { formatLatency, formatUsd } from "@/lib/format";
+import { formatUsd } from "@/lib/format";
 import { privateModelName } from "@/lib/model-name";
 import type { TaskRow } from "@/store/fine-tuning-types";
 
@@ -363,13 +363,10 @@ export const replyStats = ({
     ...(tokens && generatingMs > 0
       ? [`${Math.round((tokens * 1000) / generatingMs)} tok/s`]
       : []),
-    ...(firstTokenMs === undefined
-      ? []
-      : [`${formatLatency(firstTokenMs)} to first token`]),
     ...(usage ? [formatUsd(usage.cost)] : []),
     ...(typeof joules === "number" && Number.isFinite(joules) && joules >= 0
       ? [
-          `${new Intl.NumberFormat(undefined, { maximumSignificantDigits: 3 }).format(joules)} J estimated`,
+          `${new Intl.NumberFormat(undefined, { maximumSignificantDigits: 3 }).format(joules)} J`,
         ]
       : []),
   ];

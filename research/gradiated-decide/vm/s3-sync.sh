@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 # Mirror run directories to S3 every few minutes (spot VMs can disappear at any time).
 # Directories marked complete with a `done` file are uploaded whole; unfinished ones upload only their results and logs
-# (never partial states). Usage: S3_PREFIX=s3://<bucket>/gradiated-decide nohup bash s3-sync.sh &
+# (never partial states). Run states may live in STATE_ROOT/runs (RAM, /dev/shm/gdecide by default): writing 335 GB there
+# takes about a minute against ~13 on the network disk, and S3 is the copy that survives a preemption.
+# Usage: S3_PREFIX=s3://<bucket>/gradiated-decide nohup bash s3-sync.sh &
 set -uo pipefail
 ROOT=${ROOT:-/data/gdecide}
-INTERVAL=${INTERVAL:-300}
+INTERVAL=${INTERVAL:-60}; STATE_ROOT=${STATE_ROOT:-/dev/shm/gdecide}
+aws configure set default.s3.max_concurrent_requests 64; aws configure set default.s3.multipart_chunksize 64MB
 while true; do
-  for run in "$ROOT"/runs/*/; do
+  for run in "$ROOT"/runs/*/ "$STATE_ROOT"/runs/*/; do
+    [ -d "$run" ] || continue
     name=$(basename "$run")
     for d in "$run"*/; do
       sub=$(basename "$d")

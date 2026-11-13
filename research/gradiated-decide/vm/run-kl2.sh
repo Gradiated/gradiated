@@ -48,7 +48,7 @@ rows = [r for r in csv.DictReader(open(sys.argv[1]), delimiter="\t") if r["statu
 print(max(rows, key=lambda r: float(r["tokens_per_s"]))["args"] if rows else "")
 EOF2
 }
-TRAIN=(--family gemma --epochs 1 --max-steps "$STEPS" --lr 2e-6 --readout-lr 1e-5 --brier 0.5 --warmup 30 --state-minutes 30 --dev-every 250 --seed 20261113)
+TRAIN=(--family gemma --epochs 1 --max-steps "$STEPS" --lr 2e-6 --readout-lr 1e-5 --brier 0.5 --warmup 30 --state-minutes 20 --dev-every 250 --seed 20261113)
 if ! grep -q '"event": "finished"' runs/gd-kl2/train.log.jsonl 2>/dev/null; then
   read -ra FAST < logs/bench-gemma.args || FAST=()
   CKPT=$ROOT/runs/gd-kl1/export-1155 bash $V/run-train.sh gd-kl2 kl2 "${TRAIN[@]}" "${FAST[@]}" > logs/train-gd-kl2.log 2>&1 || \

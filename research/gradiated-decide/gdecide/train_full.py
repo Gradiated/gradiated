@@ -225,6 +225,7 @@ def main() -> None:
     parser.add_argument("--attn", default="sdpa", help="gemma only: sdpa, gd_fast (flex sliding window + causal SDPA, no masks) or another transformers attn_implementation")
     parser.add_argument("--balance", action="store_true", help="give every rank a similar-width batch at each step (global length-sorted plan)")
     parser.add_argument("--profile", action="store_true", help="write a torch.profiler table for steps 4-6 (rank 0) to OUT/profile.txt")
+    parser.add_argument("--state-dir", default="", help="where state-<step>/ go (default OUT; run-train.sh uses /dev/shm and s3-sync.sh uploads them)")
     parser.add_argument("--sync-state", action="store_true", help="write states synchronously (default: stage to host memory, write in the background)")
     parser.add_argument("--bench", action="store_true", help="throughput run: no dev evaluation, state or export")
     args = parser.parse_args()
@@ -386,7 +387,10 @@ def main() -> None:
 
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, schedule)
     step = 0
-    states = sorted((p for p in out.glob("state-*") if complete(p)), key=lambda p: int(p.name.split("-")[1]))
+    state_dir = Path(args.state_dir) if args.state_dir else out
+    if rank == 0:
+        state_dir.mkdir(parents=True, exist_ok=True)
+    states = sorted((p for d in {out, state_dir} for p in d.glob("state-*") if complete(p)), key=lambda p: int(p.name.split("-")[1]))
     if states:
         state = {"model": get_model_state_dict(model), "optim": get_optimizer_state_dict(model, optimizer)}
         dcp.load(state, checkpoint_id=str(states[-1]))
@@ -409,7 +413,7 @@ def main() -> None:
     def state_written(path, meta, started):
         barrier_done(path, meta)
         if rank == 0:
-            for old in out.glob("state-*"):
+            for old in [*out.glob("state-*"), *state_dir.glob("state-*")]:
                 if old != path and complete(path):
                     shutil.rmtree(old, ignore_errors=True)
         log(event="state_saved", step=meta["step"], seconds=round(time.time() - started))
@@ -432,7 +436,7 @@ def main() -> None:
     def save_state(step):
         nonlocal pending
         finish_pending(block=True)
-        path = out / f"state-{step}"
+        path = state_dir / f"state-{step}"
         started = time.time()
         meta = {"step": step, "scheduler": scheduler.state_dict(), "time": started}
         state = {"model": get_model_state_dict(model), "optim": get_optimizer_state_dict(model, optimizer)}

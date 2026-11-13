@@ -1,5 +1,5 @@
 import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
-import { Navigate } from "@tanstack/react-router";
+import { Navigate, useRouter } from "@tanstack/react-router";
 import { Check, LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -28,26 +28,26 @@ const Loading = () => (
   </AuthCard>
 );
 
-const SignIn = () => (
-  <Navigate
-    to="/login"
-    search={{ next: `${window.location.pathname}${window.location.search}` }}
-  />
-);
+// The signed authorization query exactly as it arrived; the router's parsed search would re-encode it.
+const useOAuthQuery = () => useRouter().history.location;
+
+const SignIn = () => {
+  const { pathname, search } = useOAuthQuery();
+
+  return <Navigate to="/login" search={{ next: `${pathname}${search}` }} />;
+};
 
 // The API sends a signed-out user here; after sign-in the authorization starts again.
 export const OAuthLoginPage = () => {
   const session = authClient.useSession();
+  const { search } = useOAuthQuery();
 
   useEffect(() => {
     if (session.data)
       window.location.replace(
-        authorizeUrl(
-          location.search,
-          import.meta.env.VITE_API_URL ?? location.origin,
-        ),
+        authorizeUrl(search, import.meta.env.VITE_API_URL ?? location.origin),
       );
-  }, [session.data]);
+  }, [session.data, search]);
 
   if (session.isPending || session.data) return <Loading />;
 
@@ -64,12 +64,12 @@ interface OAuthRedirect {
   redirect_uri?: string;
 }
 
-const respond = async (accept: boolean) => {
+const respond = async (query: string, accept: boolean) => {
   const { data, error } = await authClient.$fetch<OAuthRedirect>(
     "/oauth2/consent",
     {
       method: "POST",
-      body: { accept, oauth_query: location.search.slice(1) },
+      body: { accept, oauth_query: query.slice(1) },
     },
   );
   const target = data?.url ?? data?.redirect_uri;
@@ -81,7 +81,8 @@ const respond = async (accept: boolean) => {
 
 export const OAuthConsentPage = () => {
   const session = authClient.useSession();
-  const search = new URLSearchParams(location.search);
+  const query = useOAuthQuery().search;
+  const search = new URLSearchParams(query);
   const clientId = search.get("client_id") ?? "";
   const scopes = (search.get("scope") ?? "").split(" ").filter(Boolean);
   const signedIn = Boolean(session.data);
@@ -132,10 +133,10 @@ export const OAuthConsentPage = () => {
   const allow = useMutation({
     mutationFn: async (selected: string) => {
       await selectOAuthWorkspace(selected);
-      await respond(true);
+      await respond(query, true);
     },
   });
-  const deny = useMutation({ mutationFn: () => respond(false) });
+  const deny = useMutation({ mutationFn: () => respond(query, false) });
 
   if (session.isPending) return <Loading />;
   if (!session.data) return <SignIn />;

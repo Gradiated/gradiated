@@ -23,6 +23,14 @@ while true; do
       [ -f "$d/.uploaded" ] && [ "$d/.uploaded" -nt "$d/done" ] && continue
       if aws s3 sync --only-show-errors "$d" "$S3_PREFIX/runs/$name/$sub/" --exclude ".uploaded"; then
         touch "$d/.uploaded"
+        # A RAM state also goes to the disk (done marker last), so a restart of this VM resumes without the S3 download.
+        if [ "${run#"$STATE_ROOT"}" != "$run" ] && [ "${sub#state-}" != "$sub" ]; then
+          disk="$ROOT/runs/$name/$sub"; mkdir -p "$disk"
+          if rsync -a --exclude done --exclude .uploaded "$d" "$disk/" && cp "$d/done" "$disk/done"; then
+            touch "$disk/.uploaded"
+            for old in "$ROOT/runs/$name"/state-*/; do [ "$(basename "$old")" != "$sub" ] && rm -rf "$old"; done
+          fi
+        fi
         case "$sub" in state-*) for old in $(aws s3 ls "$S3_PREFIX/runs/$name/" | awk '{print $2}' | grep '^state-' | tr -d /); do
           [ "$old" != "$sub" ] && aws s3 rm --recursive --only-show-errors "$S3_PREFIX/runs/$name/$old/"; done;; esac
       fi

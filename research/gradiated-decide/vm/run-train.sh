@@ -11,7 +11,8 @@ mkdir -p "runs/$RUN" logs
 # States live in RAM (STATE_ROOT, uploaded by s3-sync.sh); after a preemption the newest one comes back from S3.
 STATE_DIR=${STATE_ROOT:-/dev/shm/gdecide}/runs/$RUN
 mkdir -p "$STATE_DIR"
-if ! ls -d runs/$RUN/state-*/done "$STATE_DIR"/state-*/done >/dev/null 2>&1; then
+have_state() { for d in runs/$RUN/state-*/ "$STATE_DIR"/state-*/; do [ -f "$d/done" ] && return 0; done; return 1; }
+if ! have_state; then
   latest=$(aws s3 ls "$S3_PREFIX/runs/$RUN/" | awk '{print $2}' | grep '^state-' | tr -d / | sort -t- -k2 -n | tail -1 || true)
   [ -n "$latest" ] && aws s3 sync --only-show-errors "$S3_PREFIX/runs/$RUN/$latest" "$STATE_DIR/$latest" && touch "$STATE_DIR/$latest/.uploaded"
 fi

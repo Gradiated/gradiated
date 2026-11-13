@@ -413,7 +413,7 @@ def main() -> None:
     def state_written(path, meta, started):
         barrier_done(path, meta)
         if rank == 0:
-            for old in [*out.glob("state-*"), *state_dir.glob("state-*")]:
+            for old in state_dir.glob("state-*"):  # with --state-dir, s3-sync.sh manages the copies in OUT
                 if old != path and complete(path):
                     shutil.rmtree(old, ignore_errors=True)
         log(event="state_saved", step=meta["step"], seconds=round(time.time() - started))

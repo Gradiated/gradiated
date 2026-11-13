@@ -827,5 +827,43 @@
     "environment": {
       "TENSOR_PARALLEL_SIZE": "8"
     }
+  },
+  "c2073c3299a735b5f9daf39081025d37f5b886027e93df963b63340ad9b48405": {
+    "image": "gradiated/deepseek-sglang-bundle@sha256:c2073c3299a735b5f9daf39081025d37f5b886027e93df963b63340ad9b48405",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "1970aa1537d9fffdf1e7633477ab23d724b9a49f03e0d3a954189fd7bab1d31e"
+    },
+    "model_id": "deepseek/deepseek-v4.1-flash-1017-head-qualification",
+    "release": {
+      "schema_version": 1,
+      "model_path": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "model_revision": "1bae0e1088993b9b82de08f59de5be5a34e42170",
+      "tokenizer_path": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "tokenizer_revision": "1bae0e1088993b9b82de08f59de5be5a34e42170",
+      "runtime_revision": "deepseek-sglang-counter-1970aa1537d9",
+      "runtime_model_name": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "lora_enabled": true,
+      "lora_base_model_revision": "1bae0e1088993b9b82de08f59de5be5a34e42170",
+      "tokenizer_mode": "deepseek_v41"
+    },
+    "gpus": 4,
+    "active_requests": 32,
+    "cpu": "32",
+    "memory": "400Gi",
+    "startup_timeout": 5400,
+    "warmup": true,
+    "adapters": true,
+    "environment": {
+      "TENSOR_PARALLEL_SIZE": "4",
+      "MODEL_ID": "deepseek/deepseek-v4.1-flash-1017",
+      "LORA_ENABLED": "true",
+      "LORA_GPU_SLOTS": "8",
+      "LORA_CPU_SLOTS": "64",
+      "LORA_MAX_RANK": "8",
+      "LORA_DISK_CACHE_BYTES": "274877906944",
+      "LORA_DOWNLOAD_HOSTS": "gradiated-prod-model-artifacts-873716897517.s3.us-east-1.amazonaws.com",
+      "GRADIATED_API_BASE_URL": "http://127.0.0.1:3004",
+      "LORA_BASE_MODEL_REVISION": "1bae0e1088993b9b82de08f59de5be5a34e42170"
+    }
   }
 }

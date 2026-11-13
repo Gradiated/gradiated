@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { parseLoginSearch } from "@/lib/login-search";
-import { authorizeUrl } from "@/lib/oauth";
+import { authorizeUrl, organizationLabel } from "@/lib/oauth";
 
 const API = "https://api.gradiated.com";
 
@@ -39,5 +39,21 @@ describe("parseLoginSearch", () => {
     ["/api-keys", {}],
   ])("accepts only an OAuth page as next: %s", (next, expected) => {
     expect(parseLoginSearch({ next })).toEqual(expected);
+  });
+});
+
+describe("organizationLabel", () => {
+  const organizations = [
+    { name: "Acme", slug: "acme" },
+    { name: "Acme", slug: "acme-labs" },
+    { name: "Globex", slug: "globex" },
+  ];
+
+  it("adds the slug only to names that are shared", () => {
+    expect(
+      organizations.map((organization) =>
+        organizationLabel(organization, organizations),
+      ),
+    ).toEqual(["Acme (acme)", "Acme (acme-labs)", "Globex"]);
   });
 });

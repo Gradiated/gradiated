@@ -13,7 +13,11 @@ import { AuthCard } from "@/components/auth-card";
 import { OptionSelect, type Option } from "@/components/option-select";
 import { Button } from "@/components/ui/button";
 import { errorMessage } from "@/lib/errors";
-import { authorizeUrl, OAUTH_SCOPE_DESCRIPTIONS } from "@/lib/oauth";
+import {
+  authorizeUrl,
+  OAUTH_SCOPE_DESCRIPTIONS,
+  organizationLabel,
+} from "@/lib/oauth";
 import { queryKeys } from "@/lib/query-keys";
 import { useWorkspaceSelection } from "@/store/workspace-selection";
 
@@ -117,7 +121,7 @@ export const OAuthConsentPage = () => {
       (workspaceLists[index]?.data?.data ?? []).map((workspace) => ({
         value: workspace.id,
         label: workspace.name,
-        group: organization.name,
+        group: organizationLabel(organization, organizations),
         disabled: organization.status !== "active",
       })),
   );

@@ -24,3 +24,12 @@ export const OAUTH_SCOPE_DESCRIPTIONS: Record<string, string> = {
   mcp: "Read and manage the workspace's models, usage, generations, tasks and training runs, as you.",
   offline_access: "Stay connected after this browser session ends.",
 };
+
+// Organization names are not unique, so a shared name is told apart by its slug.
+export const organizationLabel = (
+  organization: { name: string; slug: string },
+  organizations: readonly { name: string }[],
+): string =>
+  organizations.filter(({ name }) => name === organization.name).length > 1
+    ? `${organization.name} (${organization.slug})`
+    : organization.name;

@@ -28,7 +28,11 @@ export const PlaygroundPage = () => {
   const search = useSearch({ from: "/playground" });
   const navigate = useNavigate({ from: "/playground" });
   const apiKey = usePlaygroundCredential();
-  const { models, hosted, settled } = usePlaygroundModels();
+  const { models, hosted, settled } = usePlaygroundModels(
+    search.model && search.task
+      ? { name: search.model, task: search.task }
+      : undefined,
+  );
   const { workspaceId } = useProductContext();
   const stored = usePlaygroundStore(
     ({ conversations }) => conversations[workspaceId],
@@ -66,7 +70,11 @@ export const PlaygroundPage = () => {
     ...patch
   }: PlaygroundSettingsPatch) => {
     if (nextModel !== undefined) {
-      void navigate({ search: { model: nextModel }, replace: true });
+      void navigate({
+        search: (current) =>
+          nextModel === current.model ? current : { model: nextModel },
+        replace: true,
+      });
     }
 
     update(workspaceId, (conversation) => ({

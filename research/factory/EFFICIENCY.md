@@ -3,7 +3,7 @@
 Measure research speed as valid decisions produced, not as command count or GPU occupancy. The daily report partitions an active Codex turn into synchronous tool wait and model/orchestration time, then reports provider allocations separately because provider work may overlap the coordinator.
 
 ```bash
-python3 .agents/skills/experiment-run/scripts/research_efficiency.py \
+gradctl research efficiency \
   --thread-id "$CODEX_RESEARCH_THREAD_ID" \
   --campaign-dir "$CAMPAIGN_DIR" \
   --hours 24 \

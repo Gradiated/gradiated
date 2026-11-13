@@ -40,6 +40,8 @@ export class ApiMetrics {
   private readonly httpRequestSize: Histogram<"method" | "route">;
   private readonly httpRequests: Counter<"method" | "route" | "status">;
   private readonly httpResponseSize: Histogram<"method" | "route">;
+  private readonly adapterQualifications: Counter<"model" | "outcome">;
+  private readonly adapterQualificationDuration: Histogram<"outcome">;
 
   constructor(
     options: {
@@ -89,6 +91,19 @@ export class ApiMetrics {
       help: "API response Content-Length values when known.",
       labelNames: ["method", "route"],
       buckets: sizeBuckets,
+      registers: [this.registry],
+    });
+    this.adapterQualifications = new Counter({
+      name: "gradiated_api_adapter_qualifications_total",
+      help: "Adapter serving qualifications run on promotion, by base model and outcome.",
+      labelNames: ["model", "outcome"],
+      registers: [this.registry],
+    });
+    this.adapterQualificationDuration = new Histogram({
+      name: "gradiated_api_adapter_qualification_duration_seconds",
+      help: "Duration of adapter serving qualifications, including every loader probe.",
+      labelNames: ["outcome"],
+      buckets: [0.5, 1, 2.5, 5, 10, 20, 30, 45, 60, 90, 120, 180, 300],
       registers: [this.registry],
     });
     this.dependencyReady = new Gauge({
@@ -165,6 +180,22 @@ export class ApiMetrics {
     if (responseSize !== null) {
       this.httpResponseSize.observe({ method, route }, responseSize);
     }
+  };
+
+  /** Starts each outcome at zero so the first failure is an observable increase. */
+  readonly initializeAdapterQualifications = (models: readonly string[]) => {
+    for (const model of models)
+      for (const outcome of ["passed", "rejected", "failed", "no_capacity"])
+        this.adapterQualifications.inc({ model, outcome }, 0);
+  };
+
+  readonly recordAdapterQualification = (
+    model: string,
+    outcome: string,
+    seconds: number,
+  ): void => {
+    this.adapterQualifications.inc({ model, outcome });
+    this.adapterQualificationDuration.observe({ outcome }, seconds);
   };
 
   readonly recordDependencies = (checks: DependencyChecks): void => {

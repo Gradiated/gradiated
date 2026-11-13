@@ -893,7 +893,9 @@ unique within their task. A trained version is named by its input cutoff date,
 format and rank. Large artifacts and datasets remain in object storage.
 
 The task's production-version pointer is changed explicitly by an editor, only
-to an available version of the same task. Promotion uses last-write-wins semantics
+to a version of the same task. An unavailable version, such as an upload, must
+first pass a serving probe on a LoRA-enabled allocation; the same transaction then
+marks it available and sets the pointer. Promotion uses last-write-wins semantics
 for concurrent authorized requests. Availability means durable serving eligibility,
 not residency in an inference runtime's adapter cache. Comparison model IDs may
 name external providers; they are not restricted to the hosted-model table.
@@ -950,5 +952,25 @@ download URLs are temporary grants and are not persisted on versions. See
 time and nullable published version FK. Grants last one hour. Publication locks
 the upload row and is idempotent. `task_versions.training_run_id` is nullable for
 external adapters; those versions use `runs/<version_id>/output/<sha256>/adapter.tar.gz`
-and have no evaluation. Their initial serving status is `unavailable`. The upload
+and have no evaluation. Their initial serving status is `unavailable` until
+promotion qualifies them on a LoRA-enabled allocation. The upload
 intent is retained for artifact cleanup even after its version or task is deleted.
+
+### Version files
+
+`task_version_files` holds the files delivered with a task version: its `report.md`
+training report and any data files, images or exports the report references. Each
+row has an ID, workspace FK, version FK (cascade), a flat file name, content type,
+declared size, `pending`/`ready`/`deleted` status and creation and completion times. Staff
+reserve a file and receive a one-hour signed PUT to `uploads/version-files/<file_id>`
+in the versioned training artifacts bucket. Completion checks size and copies that
+exact S3 object version to `version-files/<version_id>/<file_id>`, so replaying the
+upload grant cannot change published bytes. Completion and deletion serialize on
+the task version; expired uploads cannot complete. Publication marks the file
+`ready` and replaces any ready file with the same name on that version, deleting
+the replaced object. A partial unique index keeps one ready file per version and
+name. Workspace members list, read (text files up to 2 MiB, served by the API) and
+download ready files. Removed and replaced rows remain as tombstones until artifact
+cleanup deletes their objects after upload grants expire. Cleanup also removes
+abandoned uploads and archived workspace files before task/version rows; S3
+expires noncurrent version-file objects after 30 days.

@@ -13,16 +13,16 @@ described in [Leasing a host](../../../tools/virtual-kubelet/README.md#leasing-a
 
 ## Lease
 
-1. Pick a host: `python3 tools/gpu/host-lease.py status`. Choose one with the GPUs
+1. Pick a host: `gradctl gpu lease status`. Choose one with the GPUs
    you need that is `in pool`. Reserved hosts, cordoned hosts and hosts with a
    RunPod volume are refused.
 2. Request it for the time you need, with a purpose a teammate would understand:
-   `python3 tools/gpu/host-lease.py acquire <instance> --hours 6 --purpose "..." --holder <agent or person>`.
+   `gradctl gpu lease acquire <instance> --hours 6 --purpose "..." --holder <agent or person>`.
    Leases are preemptible by default: if a model needs the host, the operator
    takes it back and wipes it with no warning. Add `--no-preempt` only for work
    that cannot lose the host, such as a run without checkpoints, and say why in
    the purpose.
-3. `python3 tools/gpu/host-lease.py wait <instance> --holder <the same holder>`
+3. `gradctl gpu lease wait <instance> --holder <the same holder>`
    until it prints `leased`; it fails if someone else holds the host.
    Draining can take as long as the host's models take to start elsewhere. If it
    reports `Lease failed`, the reason says why (no room for its replicas, a
@@ -35,7 +35,7 @@ Reach the host with Tailscale SSH as root, as in
 
 ## While leased
 
-- Before each session, run `host-lease.py status <instance>` and confirm it is
+- Before each session, run `gradctl gpu lease status <instance>` and confirm it is
   `leased` to you and not near `until`. Never touch a host you do not hold. A
   host that shows anything else, such as `returning` or `in pool (last lease
   preempted)`, is no longer yours, even if SSH still works.
@@ -47,14 +47,14 @@ Reach the host with Tailscale SSH as root, as in
 - Write results you need, checkpoints and logs to S3 as you go. The return
   deletes everything on the host, and a crashed or expired session gets no
   second chance to copy them out.
-- If you need longer, `host-lease.py extend <instance> --hours N` sets the new
+- If you need longer, `gradctl gpu lease extend <instance> --hours N` sets the new
   remaining time. At `until` the operator returns the host whether or not you
   are done.
 
 ## Hand back
 
 1. Stop your processes and confirm everything you need is in S3.
-2. `python3 tools/gpu/host-lease.py release <instance>`, as early as you can.
+2. `gradctl gpu lease release <instance>`, as early as you can.
 3. Report the host, the lease's purpose, and where the results are in your
    response or PR. The host rejoins the pool after a re-image, enrollment and a
    five-minute soak; `status` shows `returning (<step>)` until then.

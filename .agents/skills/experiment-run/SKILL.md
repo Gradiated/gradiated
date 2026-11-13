@@ -49,7 +49,7 @@ Keep the user-selected coordinator model for campaign-level judgment. Use its ex
 Measure the last 24 hours before a daily campaign review:
 
 ```bash
-python3 .agents/skills/experiment-run/scripts/research_efficiency.py \
+gradctl research efficiency \
   --thread-id "$CODEX_RESEARCH_THREAD_ID" \
   --campaign-dir "$CAMPAIGN_DIR" \
   --hours 24 \

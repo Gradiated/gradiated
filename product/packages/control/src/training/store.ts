@@ -28,6 +28,7 @@ import {
   models,
   tasks,
   taskVersions,
+  taskVersionFiles,
   trainingRuns,
   trainingRunEvents,
   workspaces,
@@ -40,6 +41,7 @@ import {
   VersionRecordSchema,
   EventRecordSchema,
   TaskUpdateSchema,
+  VersionUpdateSchema,
 } from "./records.js";
 import { modelNameProblem } from "./model-names.js";
 
@@ -156,6 +158,62 @@ export const createTrainingStore = (database: ControlDatabase) => {
         .where(eq(tasks.id, UuidSchema.parse(taskId)))
         .returning();
       return TaskRecordSchema.parse(row);
+    },
+
+    // The pointer moves only if the task is unchanged since qualification began;
+    // comparing updated_at as well as the pointer rules out an X -> Y -> X race.
+    async promoteQualifiedVersion(
+      taskId: string,
+      versionId: string,
+      expected: { productionVersionId: string | null; updatedAt: Date },
+    ) {
+      return database.transaction(async (tx) => {
+        const [version] = await tx
+          .update(taskVersions)
+          .set(
+            VersionUpdateSchema.parse({
+              status: "available",
+              updatedAt: new Date(),
+            }),
+          )
+          .where(
+            and(
+              eq(taskVersions.id, UuidSchema.parse(versionId)),
+              eq(taskVersions.taskId, UuidSchema.parse(taskId)),
+            ),
+          )
+          .returning({ id: taskVersions.id });
+        if (!version) return "not_found" as const;
+
+        const [row] = await tx
+          .update(tasks)
+          .set(
+            TaskUpdateSchema.parse({
+              productionVersionId: version.id,
+              updatedAt: new Date(),
+            }),
+          )
+          .where(
+            and(
+              eq(tasks.id, UuidSchema.parse(taskId)),
+              or(
+                eq(tasks.productionVersionId, version.id),
+                and(
+                  expected.productionVersionId === null
+                    ? isNull(tasks.productionVersionId)
+                    : eq(
+                        tasks.productionVersionId,
+                        UuidSchema.parse(expected.productionVersionId),
+                      ),
+                  // node-postgres reads timestamps at millisecond precision.
+                  sql`date_trunc('milliseconds', ${tasks.updatedAt}) = ${expected.updatedAt.toISOString()}::timestamptz`,
+                ),
+              ),
+            ),
+          )
+          .returning();
+        return row ? TaskRecordSchema.parse(row) : ("stale" as const);
+      });
     },
 
     async setProductionVersion(taskId: string, versionId: string) {
@@ -496,6 +554,16 @@ export const createTrainingStore = (database: ControlDatabase) => {
         .where(
           and(
             inArray(tasks.workspaceId, archivedWorkspaceIds()),
+            notExists(
+              database
+                .select({ id: taskVersionFiles.id })
+                .from(taskVersionFiles)
+                .innerJoin(
+                  taskVersions,
+                  eq(taskVersions.id, taskVersionFiles.versionId),
+                )
+                .where(eq(taskVersions.taskId, tasks.id)),
+            ),
             or(
               lt(trainingRuns.finishedAt, finishedBefore),
               and(
@@ -523,6 +591,16 @@ export const createTrainingStore = (database: ControlDatabase) => {
         .where(
           and(
             inArray(tasks.workspaceId, archivedWorkspaceIds()),
+            notExists(
+              database
+                .select({ id: taskVersionFiles.id })
+                .from(taskVersionFiles)
+                .innerJoin(
+                  taskVersions,
+                  eq(taskVersions.id, taskVersionFiles.versionId),
+                )
+                .where(eq(taskVersions.taskId, tasks.id)),
+            ),
             notExists(
               database
                 .select({ id: trainingRuns.id })
@@ -555,6 +633,17 @@ export const createTrainingStore = (database: ControlDatabase) => {
           .where(eq(trainingRuns.taskId, taskId))
           .limit(1);
         if (run) return false;
+
+        const [file] = await tx
+          .select({ id: taskVersionFiles.id })
+          .from(taskVersionFiles)
+          .innerJoin(
+            taskVersions,
+            eq(taskVersions.id, taskVersionFiles.versionId),
+          )
+          .where(eq(taskVersions.taskId, taskId))
+          .limit(1);
+        if (file) return false;
 
         await tx.delete(tasks).where(eq(tasks.id, taskId));
         return true;

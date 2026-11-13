@@ -99,7 +99,7 @@ Enrollment (`gradiated-host enroll`, see
 bundle and the root-only configuration; the host agent then stages the runtime
 bundles the controller asks for. Add the host as a `GpuHost` in
 `infra/environments/prod/us-east-1/kubernetes/gpu-inference/hosts.yaml` and run
-`python3 tools/gpu/render-config.py` (requires PyYAML 6.0.2). This generates the
+`gradctl gpu render-config` (requires PyYAML 6.0.2). This generates the
 host key projection and named Node/Lease RBAC. The inventory stores secret
 references, never key values.
 
@@ -144,7 +144,7 @@ access credential. Bundle downloads use temporary grants from the private
 control bridge.
 
 Model catalogue changes are rendered into the controller ConfigMap by
-`python3 tools/gpu/render-config.py`. The controller asks each host to stage the
+`gradctl gpu render-config`. The controller asks each host to stage the
 pinned bundles through private download grants. Downloads run outside the host
 operation lock; activation and pod creation share a lock. Active runtime profiles
 remain unchanged until their pods drain. Select the runtime and placement in `gpu-inference/models.json` alongside the
@@ -456,8 +456,8 @@ bundle pinned together. Pin a published host release and commit the generated
 configuration:
 
 ```sh
-python3 tools/gpu/pin-host.py /path/to/host-runtime-release/release.json
-python3 tools/gpu/render-config.py --check
+gradctl gpu pin-host /path/to/host-runtime-release/release.json
+gradctl gpu render-config --check
 ```
 
 A host whose bundle base differs from its own rejects it before download. Hosts use the existing downloader and short-lived control-bridge grants. Root
@@ -647,16 +647,16 @@ python3 product/inference/images/gpu-base/tests/e2e_image.py /tmp/gpu-fleet-e2e
 
 Hand-run work, such as training on sensitive data, leases a whole host; a host
 is never shared between a lease and serving or training pods. The gpu-fleet
-operator does the work and `tools/gpu/host-lease.py` writes the request, the
+operator does the work and `gradctl gpu lease` writes the request, the
 `fleet.gradiated.com/lease` annotation on the `GpuHost`
 (`{"holder", "purpose", "until", "preemptible"}`):
 
 ```sh
-python3 tools/gpu/host-lease.py acquire 01a0f19d --hours 6 --purpose "SFT sweep" [--no-preempt]
-python3 tools/gpu/host-lease.py wait 01a0f19d     # until the host is leased, or the lease fails
-python3 tools/gpu/host-lease.py extend 01a0f19d --hours 2
-python3 tools/gpu/host-lease.py release 01a0f19d  # hand it back early
-python3 tools/gpu/host-lease.py status
+gradctl gpu lease acquire 01a0f19d --hours 6 --purpose "SFT sweep" [--no-preempt]
+gradctl gpu lease wait 01a0f19d     # until the host is leased, or the lease fails
+gradctl gpu lease extend 01a0f19d --hours 2
+gradctl gpu lease release 01a0f19d  # hand it back early
+gradctl gpu lease status
 ```
 
 - A lease rollout first checks the request and the host, and refuses reserved

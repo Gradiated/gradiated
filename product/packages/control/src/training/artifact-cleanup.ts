@@ -5,6 +5,11 @@ import {
 import type { ControlDatabase } from "../db/client.js";
 import type { ContentStore } from "../traces/storage.js";
 import { createModelUploadStore } from "./upload-store.js";
+import {
+  createVersionFileStore,
+  versionFileKey,
+  versionFileUploadKey,
+} from "./version-file-store.js";
 import { createTrainingStore } from "./store.js";
 import type { TrainingEngine } from "./types.js";
 
@@ -21,6 +26,16 @@ export const createTrainingArtifactCleanup = (
 
   return async () => {
     const at = now().getTime();
+    const files = createVersionFileStore(database);
+    const file = await files.cleanupCandidate(
+      new Date(at - FINISHED_GRACE_MILLISECONDS),
+    );
+    if (file) {
+      await objects.delete([versionFileKey(file), versionFileUploadKey(file)]);
+      await files.delete(file.id);
+      return;
+    }
+
     // Artifact keys carry no workspace, so the run row must outlive its objects.
     const runId = await store.archivedRunToDelete(
       new Date(at - FINISHED_GRACE_MILLISECONDS),

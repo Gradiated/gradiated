@@ -42,7 +42,7 @@ bundle for its own base, so re-imaging a host onto a new base never strands the
 releases it serves. The renderer refuses a base pin in `pins.json` until every
 release has a bundle for that base. Keep an older base's bundles until no host
 runs that base.
-Run `python3 tools/gpu/render-config.py`, review the generated manifests and
+Run `gradctl gpu render-config`, review the generated manifests and
 merge them. Argo owns the deployment. Install the new host release before
 selecting model bundles that no longer carry their own `runtime-launch`.
 
@@ -74,9 +74,9 @@ Stage an uncensored GLM pool for H200 or B200 from its runtime release record;
 the command previews by default:
 
 ```sh
-python3 tools/gpu/stage-glm-pool.py --gpu h200 RELEASE_JSON SOURCE_SHA --replicas 1
-python3 tools/gpu/stage-glm-pool.py --gpu h200 RELEASE_JSON SOURCE_SHA --replicas 1 --write
-python3 tools/gpu/render-config.py
+gradctl gpu stage-glm-pool --gpu h200 RELEASE_JSON SOURCE_SHA --replicas 1
+gradctl gpu stage-glm-pool --gpu h200 RELEASE_JSON SOURCE_SHA --replicas 1 --write
+gradctl gpu render-config
 ```
 
 Review and merge the catalog and manifests through a PR. Test the staged pod
@@ -109,7 +109,7 @@ prepaid balance makes every deployment fail with HTTP 402. An operator-approved
 $10,000 internal reserve credit uses the existing billing ledger without changing
 billing mode, charging a payment method or overwriting the operational balance.
 
-Run `node tools/models/monitoring-billing.mjs` for a read-only production preview.
+Run `gradctl models monitoring-billing` for a read-only production preview.
 The separately approved `--apply-credit` operation uses the fixed operator source
 ID `gradiated-inference-monitoring-reserve-v1`; retries return the same posting
 rather than issuing another credit. The command verifies the fixed production
@@ -119,4 +119,4 @@ or recurring funding. Never use this internal reserve for customer accounts.
 
 The gateway applies the immutable credit through its normal ledger replay; do not
 write the Valkey balance directly. Verify fresh successes for every deployment
-with `node tools/deployment/inference-probe-readiness.mjs` afterward.
+with `gradctl models probe-readiness` afterward.

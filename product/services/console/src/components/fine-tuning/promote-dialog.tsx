@@ -51,7 +51,9 @@ export const PromoteDialog = ({
         </DialogHeader>
         {version.status !== "available" ? (
           <p className="text-sm text-muted-foreground">
-            Serving is not enabled for this version.
+            {promote.isPending
+              ? "Loading the adapter on serving capacity and testing a request. This can take a minute."
+              : "This version has not been served yet. Promoting first loads it on serving capacity and tests a request; production changes only if that succeeds."}
           </p>
         ) : null}
         <DialogFooter>
@@ -59,9 +61,7 @@ export const PromoteDialog = ({
             Cancel
           </Button>
           <Button
-            disabled={
-              !canEdit || promote.isPending || version.status !== "available"
-            }
+            disabled={!canEdit || promote.isPending}
             onClick={() =>
               promote.mutate(version.id, {
                 onSuccess: onClose,
@@ -72,7 +72,11 @@ export const PromoteDialog = ({
               })
             }
           >
-            Promote
+            {promote.isPending
+              ? version.status === "available"
+                ? "Promoting…"
+                : "Testing…"
+              : "Promote"}
           </Button>
         </DialogFooter>
       </DialogContent>

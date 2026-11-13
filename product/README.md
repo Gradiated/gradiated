@@ -54,7 +54,7 @@ the complete development stack through mprocs. The launcher requires `lsof`
 (`apt-get install lsof` on Debian/Ubuntu):
 
 ```sh
-mise run env:build
+gradctl env build
 nvm use
 corepack enable
 pnpm install
@@ -62,7 +62,7 @@ pnpm exec turbo run build --filter=@gradiated/api --filter=@gradiated/worker
 pnpm dev
 ```
 
-`mise run env:build` writes the ignored repository-root `.env` from the
+`gradctl env build` writes the ignored repository-root `.env` from the
 `gradiated/dev/env` secret. It uses the `gradiated-restricted` AWS profile,
 which every collaborator has through the `Restricted` group: it creates the
 profile if needed and opens an AWS sign-in when the session has expired. Rerun it when that secret changes; it keeps any
@@ -353,7 +353,7 @@ queue wait (schedule-to-start), execution latency and failure metrics independen
 of the existing worker. The ordinary worker needs no Temporal credentials.
 
 The dev server runs headless. Start the **temporal-ui** pane manually in mprocs
-(or run `./scripts/run-temporal-ui-local.sh`) to open
+(or run `gradctl product temporal-ui-local`) to open
 [Temporal UI](http://localhost:8233). It is off by default and binds only to
 loopback. The launcher downloads the pinned UI Server 2.54.1 native release,
 checks its SHA-256 and caches it under `.agents/runtime/temporal-ui`; macOS and

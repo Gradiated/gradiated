@@ -4,6 +4,7 @@ import { ChevronDown, FlaskConical, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 
 import { UntrainedTaskState } from "@/components/fine-tuning/untrained-task-state";
+import { Link } from "@tanstack/react-router";
 import { usePrivateModelName } from "@/hooks/use-private-model-name";
 import { useTaskHistory } from "@/hooks/use-training";
 import { QueryState } from "./query-state";
@@ -58,9 +59,7 @@ const VersionMeta = ({ version }: { version: VersionView }) => (
             version.adapter.validated_base_model_revision
         ? " · Different training checkpoint"
         : ""}
-    {version.status === "unavailable"
-      ? " · Awaiting serving qualification"
-      : ""}
+    {version.status === "unavailable" ? " · Not yet served" : ""}
   </>
 );
 
@@ -105,13 +104,18 @@ const VersionRow = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link
+              to="/tasks/$taskId/versions/$versionId"
+              params={{ taskId: version.task, versionId: version.id }}
+            >
+              View report
+            </Link>
+          </DropdownMenuItem>
           {VERSION_MENU.map((item) => (
             <DropdownMenuItem
               key={item.kind}
-              disabled={
-                (item.kind === "use" || item.kind === "promote") &&
-                version.status !== "available"
-              }
+              disabled={item.kind === "use" && version.status !== "available"}
               onSelect={() =>
                 onAction({ kind: item.kind, versionId: version.id })
               }
@@ -182,11 +186,18 @@ const CurrentVersion = ({
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <Button size="sm" variant="outline" asChild>
+            <Link
+              to="/tasks/$taskId/versions/$versionId"
+              params={{ taskId: task.name, versionId: version.id }}
+            >
+              View report
+            </Link>
+          </Button>
           {!version.is_production ? (
             <Button
               size="sm"
               variant="outline"
-              disabled={version.status !== "available"}
               onClick={() =>
                 onAction({ kind: "promote", versionId: version.id })
               }
@@ -211,7 +222,7 @@ export const TaskModelTab = ({
 }: {
   task: TaskRow;
   onVersionAction: (action: VersionAction) => void;
-  onShowRuns: () => void;
+  onShowRuns?: () => void;
 }) => {
   const query = useTaskHistory(task);
   const versions = query.data?.versions ?? [];
@@ -273,7 +284,7 @@ export const TaskModelTab = ({
           title="No model yet"
           icon={<FlaskConical className="size-5 text-muted-foreground" />}
           action={
-            activeRun ? (
+            activeRun && onShowRuns ? (
               <Button
                 variant="link"
                 size="sm"

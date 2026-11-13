@@ -46,7 +46,6 @@ import { OptionTabs, type Option } from "@/components/option-select";
 import { useProductContext } from "@/hooks/use-product-context";
 import { useTasks } from "@/hooks/use-training";
 import { QueryState } from "@/components/fine-tuning/query-state";
-import { JudgeSettings } from "@/components/fine-tuning/judge-settings";
 
 const TABS = [
   { value: "tasks", label: "Models" },
@@ -124,7 +123,6 @@ const TasksPageBody = () => {
 
         <TabsContent value="settings">
           <SettingsCard>
-            <JudgeSettings />
             <TraceCaptureSettings />
           </SettingsCard>
         </TabsContent>
@@ -204,7 +202,6 @@ const TaskRowView = ({
   onOpen: () => void;
 }) => {
   const run = task.latest_run;
-  const uploaded = task.latest_version?.training_run_id === null;
   const summary = latestVersionEvaluation(task);
   const version = task.latest_version?.name ?? run?.version_name;
 
@@ -267,18 +264,11 @@ const TaskRowView = ({
         )}
       </TableCell>
       <TableCell className="pr-5 text-muted-foreground">
-        {task.latest_version?.created_at ? (
-          <span>
-            {trainedDate.format(new Date(task.latest_version.created_at))}
-            {uploaded ? (
-              <span className="ml-1.5 text-xs">· Uploaded</span>
-            ) : null}
-          </span>
-        ) : version && run?.finished_at ? (
-          trainedDate.format(new Date(run.finished_at))
-        ) : (
-          "—"
-        )}
+        {task.latest_version?.created_at
+          ? trainedDate.format(new Date(task.latest_version.created_at))
+          : version && run?.finished_at
+            ? trainedDate.format(new Date(run.finished_at))
+            : "—"}
       </TableCell>
     </TableRow>
   );

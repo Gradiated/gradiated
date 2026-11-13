@@ -83,6 +83,10 @@ export const VersionInsertSchema = VersionRecordSchema.omit({
   createdAt: true,
   updatedAt: true,
 });
+export const VersionUpdateSchema = VersionRecordSchema.pick({
+  status: true,
+  updatedAt: true,
+});
 export const EventInsertSchema = EventRecordSchema.omit({ id: true });
 export const TaskUpdateSchema = TaskRecordSchema.pick({
   baseModelId: true,

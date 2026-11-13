@@ -1,0 +1,47 @@
+With new models released several times a month, staying truly up to date is challenging.
+By producing curated model announcements, our team and your team can stay up to date.
+
+We aim to produce an organized, TLDR-style summary that positions the model in the context of the broader open-weight space.
+We focus on what the important and practical implications of the model release are.
+
+## When we publish
+
+Model announcements often happen in advance of when the model weights are published.
+Sometimes the full technical report comes out with the announcement, other times it comes out with the weights.
+
+We aim to publish shortly after the technical report is out.
+If we publish before the weights are public, any content relying on the weights (for example, our own benchmark) can be updated once the weights are public.
+
+## How we stay informed
+
+- Hugging Face is the source of truth for when new model weights are live.
+- OpenRouter is a good proxy for when a new model is announced or gets API access. It's almost always a day-zero partner.
+- Both have free public APIs. Only a few lab blogs have an RSS feed.
+
+The [model radar](https://github.com/Gradiated/gradiated/tree/main/tools/model-radar) checks both every 15 minutes and posts to `#model-radar` in Slack when a lab on our watch list publishes a new model.
+
+To watch a new lab, add a line to [`watchlist.json`](https://github.com/Gradiated/gradiated/blob/main/tools/model-radar/watchlist.json) in a pull request. The lab's model page on OpenRouter links to its Hugging Face model, which gives you both names.
+
+```json
+{ "lab": "Tencent", "huggingface": ["tencent"], "openrouter": ["tencent"] }
+```
+
+We also follow the labs' X accounts by hand to catch early chatter or a "coming soon" post.
+
+## What goes in a post
+
+- How long since the last model release from this lab or model family?
+- What differentiates it from its predecessors? Is it bigger, smaller, specialized?
+- What the announcement and technical report emphasize.
+- What kinds of work or industries this model might be relevant to: who should pay attention?
+- Interesting or important changes, such as an update to the attention architecture or training strategy.
+
+Also anything handy:
+
+- Licensing details or updates: can you use it commercially, are there revenue caps, etc.
+- Links to the announcement, the weights, the technical report and the model on Hugging Face.
+- Relevant benchmarks.
+
+## Gradiated benchmarks
+
+Coming soon.

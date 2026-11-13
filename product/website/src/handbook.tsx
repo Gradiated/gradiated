@@ -6,6 +6,7 @@ import GoToMarketContent from "./handbook/getting-out-the-gate.mdx";
 import HiringContent from "./handbook/hiring.mdx";
 import InPersonContent from "./handbook/in-person.mdx";
 import MissionContent from "./handbook/mission.mdx";
+import ModelAnnouncementsContent from "./handbook/model-announcements.mdx";
 import OnboardingContent from "./handbook/onboarding.mdx";
 import PrioritiesContent from "./handbook/priorities.mdx";
 import ProductContent from "./handbook/product.mdx";
@@ -34,6 +35,7 @@ export type HandbookSlug =
   | "getting-out-the-gate"
   | "values"
   | "brand"
+  | "model-announcements"
   | "working-with-posthog";
 
 export type HandbookPageDefinition = {
@@ -183,6 +185,14 @@ export const handbookPages: HandbookPageDefinition[] = [
     description: "The Gradiated brand principles.",
     Content: BrandContent,
   },
+  {
+    slug: "model-announcements",
+    section: "Content",
+    title: "Model announcements",
+    pageTitle: "Model announcements",
+    description: "How Gradiated writes about new open-weight models.",
+    Content: ModelAnnouncementsContent,
+  },
 ];
 
 const handbookSectionOrder: Array<{
@@ -226,6 +236,11 @@ const handbookSectionOrder: Array<{
     artSlug: "getting-out-the-gate",
     label: "Going to market",
     slugs: ["getting-out-the-gate", "brand"],
+  },
+  {
+    artSlug: "model-announcements",
+    label: "Content",
+    slugs: ["model-announcements"],
   },
 ];
 

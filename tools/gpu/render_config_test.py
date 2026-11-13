@@ -341,7 +341,7 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(floors['glm-dealign-sglang'], (2, 7, 12))
         self.assertEqual(floors['glm-dealign-sglang-b200'][:2], (0, 0))
         self.assertEqual(floors['glm-dealign-sglang-h200'][:2], (0, 0))
-        self.assertEqual(floors['decider-l40s'], (1, 1, 1))
+        self.assertEqual(floors['decider-l40s'], (2, 2, 1))
         self.assertNotIn('kev', floors)
         # Plain GLM scales on demand; Kimi and DeepSeek retain fixed capacity.
         self.assertEqual(floors['glm'], (0, 1, 12))

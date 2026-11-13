@@ -35,13 +35,13 @@ test("models page shows the available model and pricing", async ({ page }) => {
   ]);
   await expect(
     table.getByRole("row", { name: /^Input / }).getByRole("cell"),
-  ).toHaveText(["Input", "$0.00400", "$0.00600", "$0.00900"]);
+  ).toHaveText(["Input", "$0.210", "$0.300", "$0.450"]);
   await expect(
     table.getByRole("row", { name: /^Cached input / }).getByRole("cell"),
-  ).toHaveText(["Cached input", "$0.00", "$0.00100", "$0.00100"]);
+  ).toHaveText(["Cached input", "$0.00400", "$0.00700", "$0.0100"]);
   await expect(
     table.getByRole("row", { name: /^Output / }).getByRole("cell"),
-  ).toHaveText(["Output", "$0.140", "$0.200", "$0.300"]);
+  ).toHaveText(["Output", "$0.840", "$1.20", "$1.80"]);
 
   const layout = await table.evaluate((element) => {
     const tableWidth = element.getBoundingClientRect().width;

@@ -187,9 +187,9 @@ export const models: ModelPageData[] = [
       },
     ],
     vitals: {
-      input: "$0.006",
-      cachedInput: "$0.001",
-      output: "$0.20",
+      input: "$0.30",
+      cachedInput: "$0.007",
+      output: "$1.20",
       context: "1M",
     },
     gettingStarted: {

@@ -34,8 +34,8 @@ export const createDeepseekV41Flash1017ModelConfiguration = () =>
             max_context_length: { value: 1_048_576, unit: "token" },
           },
           pricing: [
-            { type: "prompt", unit: "token", cost: 6 },
-            { type: "cached_prompt", unit: "token", cost: 1 },
+            { type: "prompt", unit: "token", cost: 300 },
+            { type: "cached_prompt", unit: "token", cost: 7 },
           ],
         },
       ],
@@ -63,11 +63,11 @@ export const createDeepseekV41Flash1017ModelConfiguration = () =>
             chat_template_kwargs: { type: "unknown" },
           },
           pricing: [
-            { type: "completion", unit: "token", cost: 200 },
+            { type: "completion", unit: "token", cost: 1_200 },
             {
               type: "internal_reasoning",
               unit: "token",
-              cost: 200,
+              cost: 1_200,
             },
           ],
         },

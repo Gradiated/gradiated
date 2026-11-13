@@ -42,8 +42,11 @@ describe("model configurations", () => {
   );
 
   const pinnedPrices: Record<string, { input: number[]; output: number[] }> = {
-    "deepseek/deepseek-v4.1-flash-1017": { input: [6, 1], output: [200, 200] },
-    "deepseek/deepseek-v4.1-flash": { input: [6, 1], output: [200, 200] },
+    "deepseek/deepseek-v4.1-flash-1017": {
+      input: [300, 7],
+      output: [1_200, 1_200],
+    },
+    "deepseek/deepseek-v4.1-flash": { input: [300, 7], output: [1_200, 1_200] },
     "z-ai/glm-5.3-flash": { input: [150, 30], output: [500, 500] },
     "dealignai/glm-5.3-flash-uncensored": {
       input: [100, 10],

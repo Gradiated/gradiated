@@ -305,11 +305,10 @@ DeepSeek IDs were checked on 10 November 2026; GLM IDs on 13 September 2026:
 - [GLM weights](https://huggingface.co/zai-org/GLM-5.3-Flash):
   `zai-org/GLM-5.3-Flash`.
 
-DeepSeek V4.1 Flash 1017 is hosted on our capacity at $0.006 input,
-$0.001 cached input, and $0.20 output per million tokens. Output pricing also
+DeepSeek V4.1 Flash 1017 is hosted on our capacity at $0.30 input,
+$0.007 cached input, and $1.20 output per million tokens. Output pricing also
 applies to reasoning tokens. Its OpenRouter fallback permits up to $0.30 input
-and $1.20 output per million tokens, covering Modal and the common standard
-provider tier. Customer billing still uses the catalog prices above.
+and $1.20 output per million tokens. Customer billing uses the catalog prices.
 
 The original `deepseek/deepseek-v4.1-flash` checkpoint is retired and is neither
 listed nor served, including through its retained OpenRouter mapping. Existing

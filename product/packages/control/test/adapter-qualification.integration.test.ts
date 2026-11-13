@@ -299,6 +299,36 @@ describe("adapter qualification on promotion", () => {
     expect(after.version.status).toBe("available");
   });
 
+  it("does not overwrite promotions that returned the pointer to its old value", async () => {
+    const { owner, task, version } = await seedUpload();
+    const [other] = await db.database
+      .insert(taskVersions)
+      .values({
+        ...version,
+        id: uuidv7(),
+        name: "briefly-serving",
+        status: "available",
+      })
+      .returning();
+    const probe = vi.fn<AdapterProbe>(async () => {
+      for (const productionVersionId of [other!.id, null])
+        await db.database
+          .update(tasks)
+          .set({ productionVersionId, updatedAt: new Date() })
+          .where(eq(tasks.id, task.id));
+      return { ok: true };
+    });
+    const { service } = setup(probe);
+
+    await expect(
+      service.promote(owner.userId, owner.workspaceId, task.name, version.id),
+    ).rejects.toMatchObject({ code: "conflict" });
+
+    expect((await stored(task.id, version.id)).task.productionVersionId).toBe(
+      null,
+    );
+  });
+
   it("succeeds when a concurrent promotion of the same version already won", async () => {
     const { owner, task, version } = await seedUpload();
     const probe = vi.fn<AdapterProbe>(async () => {

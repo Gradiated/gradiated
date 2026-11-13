@@ -334,11 +334,10 @@ export const createTrainingService = (
       let promoted: Awaited<ReturnType<typeof records.promoteQualifiedVersion>>;
       try {
         await qualifyAdapter(version);
-        promoted = await records.promoteQualifiedVersion(
-          task.id,
-          version.id,
-          task.productionVersionId,
-        );
+        promoted = await records.promoteQualifiedVersion(task.id, version.id, {
+          productionVersionId: task.productionVersionId,
+          updatedAt: task.updatedAt,
+        });
       } finally {
         await release().catch(() => undefined);
       }
@@ -346,7 +345,7 @@ export const createTrainingService = (
       if (promoted === "stale")
         throw new ControlServiceError(
           "conflict",
-          "Another version was promoted while this one was being tested. This version can now serve; promote it again to make it production.",
+          "This model changed while the version was being tested. The version can now serve; promote it again to make it production.",
         );
 
       return promoted;

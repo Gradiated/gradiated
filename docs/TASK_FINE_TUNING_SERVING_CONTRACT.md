@@ -25,8 +25,9 @@ pass. One request at a time qualifies a version: a Valkey lock
 token-checked release) is held from the probes through the final transaction,
 and a concurrent promotion of the same version answers 409. A pass marks the version
 `available` and sets the production pointer in one transaction, but only if the
-pointer still holds the value seen before the probe (or already names this
-version); otherwise the version stays available and the request answers 409 so
+task is unchanged since the probe began (same pointer and `updated_at`, so an
+X → Y → X sequence also counts as a change) or the pointer already names this
+version; otherwise the version stays available and the request answers 409 so
 a slow probe never reverses a newer promotion. A 422 from any loader (the loader
 or runtime rejected the adapter) answers 409, even if another allocation
 passed; other failures, including no compatible allocation, answer 503. Failures leave the version and pointer unchanged.

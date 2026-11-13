@@ -159,11 +159,12 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return TaskRecordSchema.parse(row);
     },
 
-    // The pointer moves only if it still holds the value seen before qualification.
+    // The pointer moves only if the task is unchanged since qualification began;
+    // comparing updated_at as well as the pointer rules out an X -> Y -> X race.
     async promoteQualifiedVersion(
       taskId: string,
       versionId: string,
-      expectedProductionVersionId: string | null,
+      expected: { productionVersionId: string | null; updatedAt: Date },
     ) {
       return database.transaction(async (tx) => {
         const [version] = await tx
@@ -195,13 +196,17 @@ export const createTrainingStore = (database: ControlDatabase) => {
             and(
               eq(tasks.id, UuidSchema.parse(taskId)),
               or(
-                expectedProductionVersionId === null
-                  ? isNull(tasks.productionVersionId)
-                  : eq(
-                      tasks.productionVersionId,
-                      UuidSchema.parse(expectedProductionVersionId),
-                    ),
                 eq(tasks.productionVersionId, version.id),
+                and(
+                  expected.productionVersionId === null
+                    ? isNull(tasks.productionVersionId)
+                    : eq(
+                        tasks.productionVersionId,
+                        UuidSchema.parse(expected.productionVersionId),
+                      ),
+                  // node-postgres reads timestamps at millisecond precision.
+                  sql`date_trunc('milliseconds', ${tasks.updatedAt}) = ${expected.updatedAt.toISOString()}::timestamptz`,
+                ),
               ),
             ),
           )

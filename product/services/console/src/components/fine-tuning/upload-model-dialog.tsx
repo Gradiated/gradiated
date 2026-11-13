@@ -399,7 +399,7 @@ export const UploadModelDialog = ({
                 <Label htmlFor="upload-version">Version name</Label>
                 <Input
                   id="upload-version"
-                  placeholder="e.g. support-triage-v1"
+                  placeholder="e.g. v1"
                   value={name}
                   maxLength={128}
                   pattern={"[a-zA-Z0-9][a-zA-Z0-9._\\-]*"}

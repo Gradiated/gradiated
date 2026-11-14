@@ -59,8 +59,8 @@ describe("model configurations", () => {
     "jaredpalmer/kev-9b": { input: [30, 6], output: [0] },
     "perplexity-ai/pplx-decider-v1.2": { input: [20, 20], output: [0] },
     "moonshotai/kimi-k3.1-pro": {
-      input: [250, 25],
-      output: [2_500, 2_500],
+      input: [200, 20],
+      output: [2_000, 2_000],
     },
     "z-ai/glm-5.3": { input: [1_400, 260], output: [4_400, 4_400] },
   };

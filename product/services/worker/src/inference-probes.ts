@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { ModelRecord, ModelReplica } from "@gradiated/control";
 import { modelType } from "@gradiated/contracts/model-catalog";
 import { Counter, Gauge, Histogram, type Registry } from "prom-client";
+import { INFERENCE_PROBE_TIMEOUT_MS } from "./inference-probe.js";
 import { sleep } from "./sleep.js";
 import { createProbeDeadline } from "./probe-deadline.js";
 
@@ -76,7 +77,7 @@ export class InferenceProbeMetrics {
       name: "gradiated_inference_probe_duration_seconds",
       help: "Public inference probe duration including full response body.",
       labelNames: labels,
-      buckets: [0.05, 0.1, 0.25, 0.5, 1, 2, 4],
+      buckets: [0.05, 0.1, 0.25, 0.5, 1, 2, 4, 10],
       registers: [registry],
     });
     this.routedTargets = new Gauge({
@@ -101,7 +102,7 @@ export class InferenceProbeMetrics {
       name: "gradiated_inference_routed_probe_duration_seconds",
       help: "Public inference probe duration using normal gateway routing.",
       labelNames: ["model"],
-      buckets: [0.05, 0.1, 0.25, 0.5, 1, 2, 4],
+      buckets: [0.05, 0.1, 0.25, 0.5, 1, 2, 4, 10],
       registers: [registry],
     });
   }
@@ -175,9 +176,9 @@ export class InferenceProbeMetrics {
 
 export const probeLeaseScript = `
 if redis.call('GET', KEYS[1]) == ARGV[1] then
-  return redis.call('PEXPIRE', KEYS[1], 15000)
+  return redis.call('PEXPIRE', KEYS[1], 30000)
 end
-if redis.call('SET', KEYS[1], ARGV[1], 'NX', 'PX', 15000) then return 1 end
+if redis.call('SET', KEYS[1], ARGV[1], 'NX', 'PX', 30000) then return 1 end
 return 0`;
 const releaseLeaseScript = `
 if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) end
@@ -212,8 +213,8 @@ export const runInferenceProbes = async (options: {
   try {
     while (!options.signal.aborted) {
       const start = performance.now();
-      // Discovery and both four-second phases must fit inside the fifteen-second lease.
-      const deadline = createProbeDeadline(options.signal, 12_000);
+      // Discovery and both ten-second phases must fit inside the thirty-second lease.
+      const deadline = createProbeDeadline(options.signal, 24_000);
       const { signal } = deadline;
       try {
         if (Number(await options.eval(probeLeaseScript, lease)) === 1) {
@@ -265,7 +266,10 @@ export const runInferenceProbes = async (options: {
             signal.throwIfAborted();
             await Promise.all(
               targets.map(async (replica) => {
-                const request = createProbeDeadline(signal, 4_000);
+                const request = createProbeDeadline(
+                  signal,
+                  INFERENCE_PROBE_TIMEOUT_MS,
+                );
                 const started = performance.now();
                 let succeeded = false;
                 try {

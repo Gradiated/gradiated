@@ -208,7 +208,7 @@ starts, each event read has a 30-second idle limit, and the original generation
 deadline still bounds the entire request. Buffered completions allow the same
 prefill wait before response bytes begin, then retain the 30-second body-read
 idle limit. Rejection bodies retain their short idle limit. Deployment probes
-keep their own four-second total deadline.
+keep their own ten-second total deadline.
 
 The SGLang runtimes bound admission in SMG with `--max-concurrent-requests`
 and `--queue-size` (see `product/inference/runtimes/glm-sglang/config.py` and

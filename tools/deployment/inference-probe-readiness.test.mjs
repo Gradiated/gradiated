@@ -28,7 +28,7 @@ test("requires fresh successful real inference for every serving deployment", ()
 });
 test("detects stopped monitoring separately from failed inference", () => {
   assert.throws(
-    () => checkInferenceProbeReadiness([observation(99, 80)], 100),
+    () => checkInferenceProbeReadiness([observation(99, 69)], 100),
     /discovery/,
   );
   assert.throws(
@@ -127,5 +127,22 @@ test("accepts minute-spaced deployment successes with deadline and scrape allowa
   assert.throws(
     () => checkInferenceProbeReadiness([observation(24)], 100),
     /successful public inference/,
+  );
+});
+
+test("accepts three readiness samples while a slow probe pass finishes", () => {
+  for (const now of [90, 95, 100])
+    assert.equal(
+      checkInferenceProbeReadiness([observation(85, 76)], now).size,
+      1,
+    );
+
+  assert.equal(
+    checkInferenceProbeReadiness([observation(99, 70)], 100).size,
+    1,
+  );
+  assert.throws(
+    () => checkInferenceProbeReadiness([observation(99, 69)], 100),
+    /discovery/,
   );
 });

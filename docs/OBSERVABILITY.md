@@ -135,14 +135,16 @@ never enter Git.
 
 `InferenceModelProbeFailed` measures normal customer routing: one request per
 model every five seconds, with a fresh random opening prefix, the gateway's
-normal selection and fallback, no SDK retries and a four-second deadline. It is
+normal selection and fallback, no SDK retries and a ten-second deadline. It is
 critical after fifteen seconds without success and one minute of continued
 failure. This is a short-request availability check; long-prefill performance
 needs separate measurements. Routed checks finish before targeted diagnostics
 begin, so monitoring does not submit overlapping checks to a single-slot
-replica. Each request has its own four-second deadline. The normal pass cadence
-is five seconds; slow phases can extend a pass, bounded by twelve seconds
-including discovery and both phases, within the fifteen-second leader lease.
+replica. Each request has its own ten-second deadline. The normal pass cadence
+is five seconds; slow phases can extend a pass, bounded by twenty-four seconds
+including discovery and both phases, within the thirty-second leader lease.
+Probe inventory remains fresh for thirty seconds; the independent catalog
+inventory retains its twenty-second freshness window.
 
 Targeted probes exercise every serving replica once per sixty seconds with
 fallback disabled, staggered across twelve five-second passes to avoid a fleet-wide
@@ -363,7 +365,7 @@ absence of separate vendor-managed notifications outside the inspected systems.
 | Area | Existing protection | Important remaining gap and next action |
 | --- | --- | --- |
 | Monitoring and notifications — highest priority | Prometheus/Alertmanager self-monitoring and notification-failure rules; Watchdog heartbeat to incident.io | Both servers have one replica. The heartbeat proves Alertmanager can reach incident.io, not that the incident webhook credential works. Assess HA placement and alert on webhook delivery failures. |
-| Customer serving — highest priority | Public API/console probes; authenticated per-deployment inference probes; gateway request, generation and dependency metrics | Probes originate inside EKS. Inference probes validate authentication, completion and usage with a four-second deadline; they depend on the internal monitoring account. An independent external vantage point remains missing. |
+| Customer serving — highest priority | Public API/console probes; authenticated per-deployment inference probes; gateway request, generation and dependency metrics | Probes originate inside EKS. Inference probes validate authentication, completion and usage with a ten-second deadline; they depend on the internal monitoring account. An independent external vantage point remains missing. |
 | Billing-integrity events | Immediate finalization/backpressure rules with first-event timestamp gauges; leader-aware worker progress and eligible backlog | Timestamp gauges cover first-sample events, but a process that dies before any subsequent scrape can still lose in-memory evidence. Durable billing records remain the accounting authority. |
 | PostgreSQL and Valkey | App dependency checks; primary RDS is Multi-AZ, deletion-protected, has 35-day backups and recent restorable time; cache has 30-day snapshots; `gradiated-data-stores` alerts on RDS storage, connections, CPU and memory, and on Valkey storage, ECPU, throttling and evictions | RDS failover and availability events are not routed. Connection thresholds assume the default `max_connections`. |
 | ClickHouse / ingestion | Worker failures, pending age, eligible settlement backlog; Terraform specifies two replicas and daily backups retained 30 days | No direct ClickHouse scrape target was present. Add query/insert failures, storage/resource saturation and backup freshness checks. Unread stream age is not measured; pending-only alerts cannot prove ingestion completeness. |

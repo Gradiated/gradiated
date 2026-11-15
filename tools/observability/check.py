@@ -698,7 +698,7 @@ def main():
         ('never completed', '0+0x30', '1+5x30', '1+0x30', 'InferenceModelProbeFailed', '80s'),
         ('stops completing', '1+0x30', '1+5x30', '1+0x30', 'InferenceModelProbeFailed', '80s'),
         ('short transient', '1 1 1 16+5x27', '1+5x30', '1+0x30', None, '30s'),
-        ('monitor stopped', '1+0x30', '1+0x30', '1+0x30', 'InferenceProbeMonitoringStalled', '85s'),
+        ('monitor stopped', '1+0x30', '1+0x30', '1+0x30', 'InferenceProbeMonitoringStalled', '95s'),
         ('retired target', '1+0x30', '1+5x30', '1+0x2 stale', None, '60s'),
     ]:
         scenario('public inference: ' + name, [
@@ -709,6 +709,15 @@ def main():
         ], expected, probe_alerts,
         {'model': 'test/model'} if expected == 'InferenceModelProbeFailed' else {},
         duration, interval='5s')
+
+    scenario('public inference: slow ten-second phases keep monitoring fresh', [
+        probe_series('gradiated_inference_routed_probe_last_success_timestamp_seconds',
+                     ' '.join(str(1 + (i // 5) * 25) for i in range(61))),
+        probe_series('gradiated_inference_routed_probe_target', '1+0x60'),
+        probe_series('gradiated_inference_probe_inventory_timestamp_seconds',
+                     ' '.join(str(1 + (i // 5) * 25) for i in range(61)), '{instance="a"}'),
+        probe_series('gradiated_inference_catalog_inventory_timestamp_seconds', '1+5x60', '{instance="a"}'),
+    ], None, probe_alerts, eval_time='5m', interval='5s')
 
     # A recovery shorter than five minutes must not close/reopen the model alert.
     recovery_success = ' '.join(str(0 if t < 90 else 100 if 115 <= t < 205 else t)
@@ -770,7 +779,7 @@ def main():
                      '{instance="b",model="test/model",deployment="test-deployment"}'),
         probe_series('gradiated_inference_probe_inventory_timestamp_seconds', '1+5x30', '{instance="b"}'),
         probe_series('gradiated_inference_catalog_inventory_timestamp_seconds', '1+5x200', '{instance="b"}'),
-    ], 'InferenceProbeMonitoringStalled', probe_alerts, {'model': 'test/model'}, '90s', interval='5s')
+    ], 'InferenceProbeMonitoringStalled', probe_alerts, {'model': 'test/model'}, '100s', interval='5s')
 
     for healthy in (False, True):
         inputs = [

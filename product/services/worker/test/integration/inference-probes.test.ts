@@ -27,7 +27,7 @@ it("elects one owner atomically, renews its lease and allows takeover after expi
   const owner = (await client.get(key))!;
   const standby = owner === "first" ? "second" : "first";
   expect(await attempt(owner)).toBe(1);
-  expect(await client.pTTL(key)).toBeGreaterThan(14_000);
+  expect(await client.pTTL(key)).toBeGreaterThan(29_000);
   expect(await attempt(standby)).toBe(0);
   await client.pExpire(key, 1);
   await new Promise((resolve) => setTimeout(resolve, 10));

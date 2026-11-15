@@ -106,7 +106,7 @@ integration tests. Set `WORKER_TEST_VALKEY_URL` to use a local Valkey instead.
 `INFERENCE_PROBE_BASE_URL` enables real inference checks through the public API.
 The existing verification workspace and user issue short-lived API keys that are
 rotated automatically and revoked on shutdown. Keys and response bodies are not
-logged. One worker holds a fifteen-second Valkey lease; standby workers take over
+logged. One worker holds a thirty-second Valkey lease; standby workers take over
 when it expires. This runs independently of settlement leadership.
 
 Every five seconds the leader discovers available catalog models and deployment
@@ -125,7 +125,7 @@ deployment once per minute, staggered across passes, using the exact-deployment
 verification header with fallback disabled. Chat requests use eight output tokens;
 System One requests use a small classification. Valid responses identify a
 generation and contain a completed inference result; targeted responses must
-also acknowledge the deployment. Each phase has a four-second request deadline
+also acknowledge the deployment. Each phase has a ten-second request deadline
 and no retries. Canary and draining replicas are excluded from targeted probes;
 rollout qualification still uses its separate SDK checks.
 

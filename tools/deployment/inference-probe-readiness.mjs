@@ -29,7 +29,7 @@ export const checkInferenceProbeReadiness = (
         successes.set(id, Math.max(successes.get(id) ?? 0, Number(value)));
     }
   }
-  if (!inventory || now - inventory > 10)
+  if (!inventory || now - inventory > 30)
     throw new Error("Probe discovery is not fresh");
   if (!targets.size)
     throw new Error("No serving inference deployments discovered");
@@ -127,7 +127,8 @@ if (
       const stable =
         previous.size === current.size &&
         [...current].every(
-          ([id, timestamp]) => previous.has(id) && timestamp >= previous.get(id),
+          ([id, timestamp]) =>
+            previous.has(id) && timestamp >= previous.get(id),
         );
       consecutive = stable ? consecutive + 1 : 1;
       previous = current;

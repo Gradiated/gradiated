@@ -3,6 +3,8 @@ import { TypeSafeClient, choice } from "@typesafe-ai/sdk";
 import OpenAI from "openai";
 import type { ModelVerification } from "./model-verification.js";
 
+export const INFERENCE_PROBE_TIMEOUT_MS = 10_000;
+
 export const probeModel = async (options: ModelVerification): Promise<void> => {
   const targetedFetch: typeof fetch = async (input, init) => {
     const request = new Request(input, init);
@@ -27,7 +29,7 @@ export const probeModel = async (options: ModelVerification): Promise<void> => {
       defaultModel: options.modelId,
       fetch: targetedFetch,
       retry: { maxRetries: 0 },
-      timeout: 4_000,
+      timeout: INFERENCE_PROBE_TIMEOUT_MS,
     });
     const result = await client.systemOne(
       {
@@ -57,7 +59,7 @@ export const probeModel = async (options: ModelVerification): Promise<void> => {
     baseURL: `${options.baseURL.replace(/\/$/, "")}/v1`,
     fetch: targetedFetch,
     maxRetries: 0,
-    timeout: 4_000,
+    timeout: INFERENCE_PROBE_TIMEOUT_MS,
   });
   const result = await client.chat.completions.create(
     {

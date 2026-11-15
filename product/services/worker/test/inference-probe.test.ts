@@ -194,6 +194,33 @@ describe("public inference probes", () => {
     expect(prefixes[0]).not.toBe(prefixes[1]);
   });
 
+  it.each([undefined, "system_one"] as const)(
+    "allows a %s response after nine seconds",
+    async (protocol) => {
+      vi.useFakeTimers();
+      const probing = probeModel({
+        ...options,
+        protocol,
+        fetch: async (input) => {
+          await new Promise((resolve) => setTimeout(resolve, 9_000));
+          (input as Request).signal.throwIfAborted();
+          return response(
+            protocol === "system_one"
+              ? {
+                  model: options.modelId,
+                  usage: { input_tokens: 10, output_tokens: 0 },
+                  answers: { category: { type: "choice", choice: "billing" } },
+                }
+              : completion,
+          );
+        },
+      });
+      const outcome = expect(probing).resolves.toBeUndefined();
+      await vi.advanceTimersByTimeAsync(9_001);
+      await outcome;
+    },
+  );
+
   it("does not retry HTTP failures", async () => {
     const fetch = vi.fn(async () =>
       Response.json({ error: { message: "Failure" } }, { status: 503 }),
@@ -395,7 +422,7 @@ describe("public inference probes", () => {
       replicas: async () => [replica],
       models: async () => [model],
       probe: async (_replica, signal) => {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 9000));
         signal.throwIfAborted();
       },
       metrics: new InferenceProbeMetrics(registry),
@@ -405,7 +432,7 @@ describe("public inference probes", () => {
         abort.abort();
       },
     });
-    await vi.advanceTimersByTimeAsync(6001);
+    await vi.advanceTimersByTimeAsync(18001);
     await run;
     expect(rendered).toContain(
       `deployment="${deploymentId}",result="success"} 1`,

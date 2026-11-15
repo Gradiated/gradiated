@@ -180,6 +180,7 @@ export {
   createAdapterDownloads,
   type AdapterDownloads,
 } from "./training/downloads.js";
+export { ADAPTER_DEMOS, seedAdapterDemos } from "./training/adapter-demos.js";
 export {
   createAdapterHostingService,
   type AdapterHostingService,

@@ -432,6 +432,69 @@ export const AdapterDownloadSchema = z
     ),
   })
   .openapi("AdapterDownload");
+const FeatureCountSchema = z.number().int().positive().max(1_000_000);
+export const AdapterWeightModuleSchema = z
+  .object({
+    module: z
+      .string()
+      .min(1)
+      .max(256)
+      .describe(
+        "Module path inside a decoder layer, such as self_attn.q_proj, or lm_head. Expert indices are folded into one module.",
+      ),
+    layer: z
+      .number()
+      .int()
+      .nonnegative()
+      .nullable()
+      .describe("Decoder layer index; null for lm_head."),
+    shape: z
+      .tuple([FeatureCountSchema, FeatureCountSchema])
+      .describe("Output and input features of the adapted projection."),
+    experts: z
+      .number()
+      .int()
+      .positive()
+      .describe("Experts folded into this module; 1 for a dense projection."),
+    rank: z.number().int().positive(),
+    norm: z
+      .number()
+      .nonnegative()
+      .describe(
+        "Frobenius norm of the update the adapter adds: ΔW = scale · B · A.",
+      ),
+    singular_values: z
+      .array(z.number().nonnegative())
+      .max(1024)
+      .describe(
+        "Singular values of ΔW, largest first. Empty when the module folds several experts or the rank is above 64.",
+      ),
+    heatmap_shape: z
+      .tuple([FeatureCountSchema, FeatureCountSchema])
+      .describe("Rows (output blocks) and columns (input blocks) of heatmap."),
+    heatmap: z
+      .string()
+      .max(8192)
+      .describe(
+        "Base64 bytes, row-major. Each byte is the Frobenius norm of one block of ΔW, with 255 at heatmap_max.",
+      ),
+    heatmap_max: z.number().nonnegative(),
+  })
+  .openapi("AdapterWeightModule");
+export const AdapterWeightsSchema = z
+  .object({
+    rank: z.number().int().positive(),
+    alpha: z.number().positive(),
+    scale: z
+      .number()
+      .positive()
+      .describe("Multiplier PEFT applies to B · A: alpha / rank."),
+    parameters: CountSchema.describe("LoRA A and B parameters in the adapter."),
+    modules: z.array(AdapterWeightModuleSchema).max(16_384),
+  })
+  .openapi("AdapterWeights");
+export type AdapterWeights = z.infer<typeof AdapterWeightsSchema>;
+export type AdapterWeightModule = z.infer<typeof AdapterWeightModuleSchema>;
 export const StartTrainingRunSchema = z
   .object({
     task_id: UuidSchema.describe("Task to train within this workspace."),

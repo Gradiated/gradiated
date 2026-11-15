@@ -5,6 +5,7 @@ import type { ModelDeploymentRelease } from "@gradiated/contracts";
 import {
   applyCatalog,
   catalogModels,
+  seedAdapterDemos,
   type CatalogModelInput,
 } from "@gradiated/control";
 
@@ -232,6 +233,22 @@ await withControlDatabase(async ({ database, catalog }) => {
       sourceType: "operator",
       sourceId: `local-development-credit-v1:${creditTarget.organizationId}`,
     });
+  }
+  // Versions with synthetic adapters on large bases, for the adapter explorer.
+  // Only into local object storage, never a deployed bucket.
+  const artifacts = process.env.TRAINING_ARTIFACTS_BUCKET;
+  const localObjectStorage =
+    /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?$/.test(
+      process.env.AWS_ENDPOINT_URL_S3 ?? "",
+    );
+  if (creditTarget && artifacts && localObjectStorage) {
+    const seeded = await seedAdapterDemos({
+      database,
+      bucket: artifacts,
+      organizationId: creditTarget.organizationId,
+    });
+    if (seeded.length)
+      console.log(`Seeded adapter explorer demos: ${seeded.join(", ")}`);
   }
 }, databaseUrl);
 

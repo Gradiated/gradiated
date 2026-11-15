@@ -2,7 +2,7 @@ import { VERSION_REPORT_FILE } from "@gradiated/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import {
   getSharedReport,
@@ -18,6 +18,8 @@ import {
   type ReportFile,
   type ReportSource,
 } from "@/components/report/training-report";
+import { AdapterExplorerButton } from "@/components/adapter-explorer/explorer-dialog";
+import { loadAnonymousFlags, useFeatureFlag } from "@/lib/feature-flags";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ReportContents, VersionFacts } from "@/components/report/version-rail";
 import { httpStatus } from "@/lib/errors";
@@ -89,6 +91,8 @@ export const SharedReportPage = () => {
   const { versionId, signature } = useParams({
     from: "/share/$versionId/$signature",
   });
+  useEffect(loadAnonymousFlags, []);
+  const exploreWeights = useFeatureFlag("explore-weights");
   const link = useMemo(
     () => ({ version_id: versionId, signature }),
     [versionId, signature],
@@ -191,6 +195,13 @@ export const SharedReportPage = () => {
           aria-label="Version"
           className="flex w-full flex-col lg:sticky lg:top-6 lg:w-72 lg:flex-none [&>section:first-child]:border-t-0 [&>section:first-child]:pt-0"
         >
+          {exploreWeights === true ? (
+            <AdapterExplorerButton
+              target={{ kind: "shared", versionId, signature }}
+              title={`${summary.task}/${summary.version}`}
+              baseModelId={summary.baseModelId}
+            />
+          ) : null}
           <ReportContents headings={report.data?.headings} />
           <VersionFacts
             baseModelId={summary.baseModelId}

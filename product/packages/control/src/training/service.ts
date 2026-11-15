@@ -25,6 +25,7 @@ import { requireLoadableAdapter } from "./hosting.js";
 import type { AdapterQualifier, QualificationLock } from "./qualification.js";
 import { createTrainingRunStore } from "./run-store.js";
 import { createTrainingStore } from "./store.js";
+import type { TaskVersionRecord } from "./records.js";
 import { TrainingAdmissionError, type TrainingEngine } from "./types.js";
 
 export type {
@@ -95,10 +96,31 @@ export const createTrainingService = (
     return engine;
   };
 
+  const { structure, ...uploads } = createModelUploads(database, uploadStorage);
+  const { sharedVersion, ...shares } = createReportShares(
+    database,
+    uploadStorage,
+    reportShareSecret,
+  );
+  const summarize = (version: TaskVersionRecord) => {
+    if (!downloads?.weights)
+      throw new ControlServiceError(
+        "unavailable",
+        "Adapter storage is not configured.",
+      );
+
+    return downloads.weights(
+      version.adapter.artifact_uri,
+      version.trainingRunId ?? version.id,
+      version.adapter.size_bytes,
+      version.adapter.sha256,
+    );
+  };
+
   return {
-    uploads: createModelUploads(database, uploadStorage),
+    uploads,
     files: createVersionFiles(database, uploadStorage),
-    shares: createReportShares(database, uploadStorage, reportShareSecret),
+    shares,
     async startRun(userId: string, workspaceId: string, taskId: string) {
       await requireWorkspaceEditor(database, { userId, workspaceId });
       const task = await records.getTaskById(workspaceId, taskId);
@@ -330,6 +352,27 @@ export const createTrainingService = (
         version.adapter.size_bytes,
         version.adapter.sha256,
       );
+    },
+
+    async adapterWeights(
+      userId: string,
+      workspaceId: string,
+      name: string,
+      versionId: string,
+    ) {
+      await member(userId, workspaceId);
+      const task = await findTask(workspaceId, name);
+      return summarize(await findVersion(task.id, versionId));
+    },
+
+    async sharedAdapterWeights(versionId: string, signature: string) {
+      const { version } = await sharedVersion(versionId, signature);
+      return summarize(version);
+    },
+
+    async sharedAdapterConfiguration(versionId: string, signature: string) {
+      const { version } = await sharedVersion(versionId, signature);
+      return structure(version.baseModelId);
     },
 
     async getVersion(

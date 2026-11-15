@@ -3283,6 +3283,16 @@
             "maximum": 4096,
             "description": "Routed experts per layer."
           },
+          "expertLayers": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4095
+            },
+            "maxItems": 4096,
+            "description": "Layers that have routed experts; absent for dense models."
+          },
           "projectionShapes": {
             "type": "object",
             "additionalProperties": {
@@ -5123,6 +5133,138 @@
         "required": [
           "url",
           "expires_at"
+        ]
+      },
+      "AdapterWeights": {
+        "type": "object",
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "alpha": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "scale": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Multiplier PEFT applies to B · A: alpha / rank."
+          },
+          "parameters": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "LoRA A and B parameters in the adapter."
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdapterWeightModule"
+            },
+            "maxItems": 16384
+          }
+        },
+        "required": [
+          "rank",
+          "alpha",
+          "scale",
+          "parameters",
+          "modules"
+        ]
+      },
+      "AdapterWeightModule": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "Module path inside a decoder layer, such as self_attn.q_proj, or lm_head. Expert indices are folded into one module."
+          },
+          "layer": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Decoder layer index; null for lm_head."
+          },
+          "shape": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 1000000
+              },
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 1000000
+              }
+            ],
+            "description": "Output and input features of the adapted projection."
+          },
+          "experts": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "Experts folded into this module; 1 for a dense projection."
+          },
+          "rank": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "norm": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Frobenius norm of the update the adapter adds: ΔW = scale · B · A."
+          },
+          "singular_values": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0
+            },
+            "maxItems": 1024,
+            "description": "Singular values of ΔW, largest first. Empty when the module folds several experts or the rank is above 64."
+          },
+          "heatmap_shape": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 1000000
+              },
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 1000000
+              }
+            ],
+            "description": "Rows (output blocks) and columns (input blocks) of heatmap."
+          },
+          "heatmap": {
+            "type": "string",
+            "maxLength": 8192,
+            "description": "Base64 bytes, row-major. Each byte is the Frobenius norm of one block of ΔW, with 255 at heatmap_max."
+          },
+          "heatmap_max": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "module",
+          "layer",
+          "shape",
+          "experts",
+          "rank",
+          "norm",
+          "singular_values",
+          "heatmap_shape",
+          "heatmap",
+          "heatmap_max"
         ]
       },
       "PromoteVersion": {
@@ -13127,6 +13269,124 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/adapter/weights": {
+      "get": {
+        "operationId": "getAdapterWeights",
+        "summary": "Get adapter weight summary",
+        "description": "Summarizes how a task version's LoRA adapter changes each projection of the base model: the norm and singular values of each update and a coarse block heatmap. The first request for a version reads the whole adapter and can take several seconds; later requests are served from a cache.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
+            },
+            "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
+            "name": "task",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The version's name or ID."
+            },
+            "required": true,
+            "description": "The version's name or ID.",
+            "name": "version_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Per-projection adapter weight summary.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdapterWeights"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspace_id}/tasks/{task}/production": {
       "put": {
         "operationId": "promoteTaskVersion",
@@ -13398,6 +13658,156 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SharedReport"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/shared-reports/{version_id}/{signature}/adapter/weights": {
+      "get": {
+        "operationId": "getSharedAdapterWeights",
+        "summary": "Get shared adapter weight summary",
+        "description": "Public. Summarizes how a shared version's adapter changes each projection of the base model, as the workspace route does. Needs no authentication.",
+        "tags": [
+          "Shared reports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "version_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$",
+              "description": "HMAC-SHA256 of the version ID under a server-side key, base64url-encoded."
+            },
+            "required": true,
+            "description": "HMAC-SHA256 of the version ID under a server-side key, base64url-encoded.",
+            "name": "signature",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Per-projection adapter weight summary.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdapterWeights"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/shared-reports/{version_id}/{signature}/adapter/configuration": {
+      "get": {
+        "operationId": "getSharedAdapterConfiguration",
+        "summary": "Get shared adapter base structure",
+        "description": "Public. Gets the layer structure of a shared version's base model. Needs no authentication.",
+        "tags": [
+          "Shared reports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "version_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$",
+              "description": "HMAC-SHA256 of the version ID under a server-side key, base64url-encoded."
+            },
+            "required": true,
+            "description": "HMAC-SHA256 of the version ID under a server-side key, base64url-encoded.",
+            "name": "signature",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pinned checkpoint structure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdapterConfiguration"
                 }
               }
             }

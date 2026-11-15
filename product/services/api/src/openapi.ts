@@ -124,6 +124,11 @@ export const unservedDependencies = (): AppDependencies => ({
       getVersion: unserved("training.getVersion"),
       evaluationResults: unserved("training.evaluationResults"),
       downloadAdapter: unserved("training.downloadAdapter"),
+      adapterWeights: unserved("training.adapterWeights"),
+      sharedAdapterWeights: unserved("training.sharedAdapterWeights"),
+      sharedAdapterConfiguration: unserved(
+        "training.sharedAdapterConfiguration",
+      ),
       promote: unserved("training.promote"),
     },
     usage: {

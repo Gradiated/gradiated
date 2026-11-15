@@ -167,6 +167,14 @@ export const getAdapterConfiguration = (
 type VersionPath = { workspace_id: string; task: string; version_id: string };
 type VersionFilePath = VersionPath & { file_id: string };
 
+export const getAdapterWeights = (path: VersionPath, signal?: AbortSignal) =>
+  requireData(
+    api.GET(
+      "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/adapter/weights",
+      { params: { path }, signal: signal ?? null },
+    ),
+  );
+
 export const listVersionFiles = (path: VersionPath, signal?: AbortSignal) =>
   requireData(
     api.GET(
@@ -250,6 +258,33 @@ export const getSharedReportFileContent = (
       "/api/v1/shared-reports/{version_id}/{signature}/files/{file_id}/content",
       {
         params: { path: { ...link, file_id } },
+        credentials: "omit",
+        signal: signal ?? null,
+      },
+    ),
+  );
+
+export const getSharedAdapterWeights = (
+  link: SharedReportLink,
+  signal?: AbortSignal,
+) =>
+  requireData(
+    api.GET("/api/v1/shared-reports/{version_id}/{signature}/adapter/weights", {
+      params: { path: link },
+      credentials: "omit",
+      signal: signal ?? null,
+    }),
+  );
+
+export const getSharedAdapterConfiguration = (
+  link: SharedReportLink,
+  signal?: AbortSignal,
+) =>
+  requireData(
+    api.GET(
+      "/api/v1/shared-reports/{version_id}/{signature}/adapter/configuration",
+      {
+        params: { path: link },
         credentials: "omit",
         signal: signal ?? null,
       },

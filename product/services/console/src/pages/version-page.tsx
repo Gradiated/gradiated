@@ -1,3 +1,5 @@
+import { AdapterExplorerButton } from "@/components/adapter-explorer/explorer-dialog";
+import { useFeatureFlag } from "@/lib/feature-flags";
 import { WorkloadBenchmarkCard } from "@/components/fine-tuning/workload-benchmark";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
@@ -154,6 +156,7 @@ const VersionReport = ({
   version: VersionView;
   versions: VersionView[];
 }) => {
+  const exploreWeights = useFeatureFlag("explore-weights");
   const modelName = usePrivateModelName();
   const { workspaceId, user } = useProductContext();
   const { canEdit } = useTrainingMutation(task.name);
@@ -402,6 +405,18 @@ const VersionReport = ({
               <Download className="size-4" />
               Download
             </Button>
+            {exploreWeights === true ? (
+              <AdapterExplorerButton
+                target={{
+                  workspaceId,
+                  task: task.name,
+                  versionId: version.id,
+                  baseModelId: version.base_model_id,
+                }}
+                title={`${task.name}/${version.name}`}
+                baseModelId={version.base_model_id}
+              />
+            ) : null}
             <ShareMenu
               path={path}
               queryKey={[...trainingKey(workspaceId), "share", version.id]}

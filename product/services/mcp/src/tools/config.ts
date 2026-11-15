@@ -43,6 +43,8 @@ const INFERENCE = "call_model covers inference.";
 const SHARING = "Public report links are shared from the console.";
 const PUBLIC_REPORT =
   "Unauthenticated public report link; the version file tools read the same report.";
+const EXPLORER =
+  "Feeds the console's 3D weight explorer; the per-block summary is not useful to a model.";
 
 export const TOOL_CONFIG: Record<OperationId, ToolConfig> = {
   getCurrentCredential: {
@@ -154,6 +156,9 @@ export const TOOL_CONFIG: Record<OperationId, ToolConfig> = {
   getSharedReport: { enabled: false, reason: PUBLIC_REPORT },
   getSharedReportFileContent: { enabled: false, reason: PUBLIC_REPORT },
   getSharedReportFileDownload: { enabled: false, reason: PUBLIC_REPORT },
+  getAdapterWeights: { enabled: false, reason: EXPLORER },
+  getSharedAdapterWeights: { enabled: false, reason: PUBLIC_REPORT },
+  getSharedAdapterConfiguration: { enabled: false, reason: PUBLIC_REPORT },
   createTaskVersionFile: { enabled: false, reason: STAFF },
   completeTaskVersionFile: { enabled: false, reason: STAFF },
   deleteTaskVersionFile: { enabled: false, reason: STAFF },

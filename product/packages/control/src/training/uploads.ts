@@ -64,6 +64,24 @@ export const createModelUploads = (
     }
   };
 
+  // Public catalog data: the pinned base checkpoint's layer layout.
+  const structure = async (modelId: string) => {
+    const model = await records.getModel(modelId);
+    const entry = catalogModel(modelId) as CatalogEntry | undefined;
+    // Serving-only models can still describe their layers for the explorer.
+    const supported = entry?.training ?? entry?.architecture;
+    if (!model || !supported)
+      throw new ControlServiceError(
+        "not_found",
+        "No adapter validation profile exists for this model.",
+      );
+
+    return loadBaseConfiguration(
+      supported.model ?? model.properties.hugging_face_id ?? model.id,
+      supported.revision,
+    );
+  };
+
   return {
     async configuration(userId: string, workspaceId: string, modelId: string) {
       const membership = await requireWorkspaceMembership(database, {
@@ -76,20 +94,9 @@ export const createModelUploads = (
           "The workspace was not found.",
         );
 
-      const model = await records.getModel(modelId);
-      const supported = (catalogModel(modelId) as CatalogEntry | undefined)
-        ?.training;
-      if (!model || !supported)
-        throw new ControlServiceError(
-          "not_found",
-          "No adapter validation profile exists for this model.",
-        );
-
-      return loadBaseConfiguration(
-        supported.model ?? model.properties.hugging_face_id ?? model.id,
-        supported.revision,
-      );
+      return structure(modelId);
     },
+    structure,
     async create(
       userId: string,
       workspaceId: string,

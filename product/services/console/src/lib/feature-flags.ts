@@ -17,6 +17,7 @@ const localOverrides = new Set(
 
 const listeners = new Set<() => void>();
 let identifiedUserId: string | undefined;
+let anonymous = false;
 let flagsLoaded = false;
 let loadTimeout: ReturnType<typeof setTimeout> | undefined;
 
@@ -28,8 +29,9 @@ const setFlagsLoaded = (loaded: boolean) => {
 if (posthogKey) {
   posthog.onFeatureFlags(() => {
     if (
-      identifiedUserId !== undefined &&
-      posthog.get_distinct_id() === identifiedUserId
+      (identifiedUserId !== undefined &&
+        posthog.get_distinct_id() === identifiedUserId) ||
+      (anonymous && identifiedUserId === undefined)
     ) {
       clearTimeout(loadTimeout);
       setFlagsLoaded(true);
@@ -53,12 +55,23 @@ export const identifyUser = (user: { id: string; email: string }) => {
   loadTimeout = setTimeout(() => setFlagsLoaded(true), FLAG_LOAD_TIMEOUT_MS);
 };
 
+// Public pages have no session; flags then evaluate for whoever this browser last identified as, or no one.
+export const loadAnonymousFlags = () => {
+  if (!posthogKey || identifiedUserId !== undefined || anonymous) return;
+
+  anonymous = true;
+  posthog.reloadFeatureFlags();
+  clearTimeout(loadTimeout);
+  loadTimeout = setTimeout(() => setFlagsLoaded(true), FLAG_LOAD_TIMEOUT_MS);
+};
+
 export const resetUser = () => {
   if (!posthogKey) return;
 
   posthog.reset();
   clearAnalyticsScope();
   identifiedUserId = undefined;
+  anonymous = false;
   clearTimeout(loadTimeout);
   setFlagsLoaded(false);
 };

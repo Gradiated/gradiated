@@ -128,4 +128,51 @@ describe("report share routes", () => {
     ).toBe(422);
     expect(shared).toHaveBeenCalledOnce();
   });
+
+  it("serves a shared version's adapter summary and base structure without a session", async () => {
+    const weights = {
+      rank: 1,
+      alpha: 2,
+      scale: 2,
+      parameters: 10,
+      modules: [],
+    };
+    const structure = { layerCount: 28, expertCount: 0 };
+    const sharedAdapterWeights = vi.fn(async () => weights);
+    const sharedAdapterConfiguration = vi.fn(async () => structure);
+    const app = createTestApp({
+      services: {
+        training: { sharedAdapterWeights, sharedAdapterConfiguration },
+      },
+    });
+
+    for (const [path, body] of [
+      [`/api/v1/shared-reports/${link}/adapter/weights`, weights],
+      [`/api/v1/shared-reports/${link}/adapter/configuration`, structure],
+    ] as const) {
+      const response = await app.request(path);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual(body);
+      expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+    }
+    expect(sharedAdapterWeights).toHaveBeenCalledWith(versionId, signature);
+    expect(sharedAdapterConfiguration).toHaveBeenCalledWith(
+      versionId,
+      signature,
+    );
+  });
+
+  it("returns 404 for a shared adapter behind an unknown link", async () => {
+    const sharedAdapterWeights = vi.fn(async () => {
+      throw new ControlServiceError("not_found", "The report was not found.");
+    });
+    const app = createTestApp({
+      services: { training: { sharedAdapterWeights } },
+    });
+
+    expect(
+      (await app.request(`/api/v1/shared-reports/${link}/adapter/weights`))
+        .status,
+    ).toBe(404);
+  });
 });

@@ -1,5 +1,6 @@
 import type { Meta } from "@storybook/react-vite";
 import { delay, http, HttpResponse } from "msw";
+import { userEvent, within } from "storybook/test";
 
 import type { components } from "@/api/schema";
 import {
@@ -11,6 +12,10 @@ import {
 } from "@/stories/handlers";
 import { Page, pageMeta, type PageStory } from "@/stories/page-story";
 import { sampleReport, sampleReportData } from "@/stories/report-fixture";
+import {
+  qwen06bStructure,
+  qwen06bWeights,
+} from "@/stories/adapter-weights-fixture";
 
 const meta = { ...pageMeta, title: "Pages/Training" } satisfies Meta<
   typeof Page
@@ -174,6 +179,32 @@ export const TestResults: PageStory = {
 export const VersionReport: PageStory = {
   args: { path: versionPath },
   parameters: { msw: [...versionFiles(reportFiles), ...handlers] },
+};
+// Opens the 3D adapter explorer from the version report. The adapter is synthetic.
+export const VersionAdapterExplorer: PageStory = {
+  args: { path: versionPath },
+  parameters: {
+    msw: [
+      http.get(
+        "/api/v1/workspaces/:workspaceId/tasks/:task/versions/:versionId/adapter/weights",
+        () => HttpResponse.json(qwen06bWeights),
+      ),
+      http.get(
+        "/api/v1/workspaces/:workspaceId/adapter-configurations/:modelId",
+        () => HttpResponse.json(qwen06bStructure),
+      ),
+      ...versionFiles(reportFiles),
+      ...handlers,
+    ],
+  },
+  play: async (context) => {
+    await meta.play(context);
+    const body = within(context.canvasElement.ownerDocument.body);
+    await userEvent.click(
+      await body.findByRole("button", { name: "Explore weights" }),
+    );
+    await body.findByRole("dialog", undefined, { timeout: 10_000 });
+  },
 };
 export const SharedReport: PageStory = {
   args: { path: `/share/${version.id}/${shareSignature}` },

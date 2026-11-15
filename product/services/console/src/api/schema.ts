@@ -1097,6 +1097,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/adapter/weights": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get adapter weight summary
+     * @description Summarizes how a task version's LoRA adapter changes each projection of the base model: the norm and singular values of each update and a coarse block heatmap. The first request for a version reads the whole adapter and can take several seconds; later requests are served from a cache.
+     */
+    get: operations["getAdapterWeights"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace_id}/tasks/{task}/production": {
     parameters: {
       query?: never;
@@ -1149,6 +1169,46 @@ export interface paths {
      * @description Public. Gets a shared version report's summary and the files it can read. Needs no authentication.
      */
     get: operations["getSharedReport"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/shared-reports/{version_id}/{signature}/adapter/weights": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get shared adapter weight summary
+     * @description Public. Summarizes how a shared version's adapter changes each projection of the base model, as the workspace route does. Needs no authentication.
+     */
+    get: operations["getSharedAdapterWeights"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/shared-reports/{version_id}/{signature}/adapter/configuration": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get shared adapter base structure
+     * @description Public. Gets the layer structure of a shared version's base model. Needs no authentication.
+     */
+    get: operations["getSharedAdapterConfiguration"];
     put?: never;
     post?: never;
     delete?: never;
@@ -2522,6 +2582,8 @@ export interface components {
       layerCount: number;
       /** @description Routed experts per layer. */
       expertCount: number;
+      /** @description Layers that have routed experts; absent for dense models. */
+      expertLayers?: number[];
       /** @description Output and input dimensions keyed by layer and module. */
       projectionShapes?: {
         [key: string]: [number, number];
@@ -3081,6 +3143,35 @@ export interface components {
        * @example 2026-08-16T12:00:00.000Z
        */
       expires_at: string;
+    };
+    AdapterWeights: {
+      rank: number;
+      alpha: number;
+      /** @description Multiplier PEFT applies to B · A: alpha / rank. */
+      scale: number;
+      /** @description LoRA A and B parameters in the adapter. */
+      parameters: number;
+      modules: components["schemas"]["AdapterWeightModule"][];
+    };
+    AdapterWeightModule: {
+      /** @description Module path inside a decoder layer, such as self_attn.q_proj, or lm_head. Expert indices are folded into one module. */
+      module: string;
+      /** @description Decoder layer index; null for lm_head. */
+      layer: number | null;
+      /** @description Output and input features of the adapted projection. */
+      shape: [number, number];
+      /** @description Experts folded into this module; 1 for a dense projection. */
+      experts: number;
+      rank: number;
+      /** @description Frobenius norm of the update the adapter adds: ΔW = scale · B · A. */
+      norm: number;
+      /** @description Singular values of ΔW, largest first. Empty when the module folds several experts or the rank is above 64. */
+      singular_values: number[];
+      /** @description Rows (output blocks) and columns (input blocks) of heatmap. */
+      heatmap_shape: [number, number];
+      /** @description Base64 bytes, row-major. Each byte is the Frobenius norm of one block of ΔW, with 255 at heatmap_max. */
+      heatmap: string;
+      heatmap_max: number;
     };
     PromoteVersion: {
       /** @description The version's name or ID. */
@@ -8118,6 +8209,86 @@ export interface operations {
       };
     };
   };
+  getAdapterWeights: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
+        task: string;
+        /** @description The version's name or ID. */
+        version_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Per-projection adapter weight summary. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdapterWeights"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
   promoteTaskVersion: {
     parameters: {
       query?: never;
@@ -8300,6 +8471,108 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["SharedReport"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getSharedAdapterWeights: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        version_id: string;
+        /** @description HMAC-SHA256 of the version ID under a server-side key, base64url-encoded. */
+        signature: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Per-projection adapter weight summary. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdapterWeights"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getSharedAdapterConfiguration: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        version_id: string;
+        /** @description HMAC-SHA256 of the version ID under a server-side key, base64url-encoded. */
+        signature: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Pinned checkpoint structure. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdapterConfiguration"];
         };
       };
       /** @description Not found. */

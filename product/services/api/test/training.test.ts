@@ -3,6 +3,7 @@ import {
   type TrainingRunRecord,
   TrainingAdmissionError,
 } from "@gradiated/control";
+import type { AdapterWeights } from "@gradiated/contracts";
 import { describe, expect, it, vi } from "vitest";
 import {
   authenticated,
@@ -103,6 +104,50 @@ describe("training routes", () => {
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     expect(await response.json()).toEqual(result);
     expect(downloadAdapter).toHaveBeenCalledWith(
+      expect.any(String),
+      workspaceId,
+      "Billing Questions",
+      runId,
+    );
+  });
+
+  it("returns adapter weight summaries only to authenticated members", async () => {
+    const result: AdapterWeights = {
+      rank: 4,
+      alpha: 8,
+      scale: 2,
+      parameters: 4 * (129_280 + 5_120),
+      modules: [
+        {
+          module: "lm_head",
+          layer: null,
+          shape: [129_280, 5_120],
+          experts: 1,
+          rank: 4,
+          norm: 3.5,
+          singular_values: [3, 1.5, 1, 0.5],
+          heatmap_shape: [1, 1],
+          heatmap: "/w==",
+          heatmap_max: 3.5,
+        },
+      ],
+    };
+    const adapterWeights = vi.fn(async () => result);
+    const url = `${path}/tasks/Billing%20Questions/versions/${runId}/adapter/weights`;
+    const anonymous = createTestApp({
+      services: { training: { adapterWeights } },
+    });
+    expect((await anonymous.request(url)).status).toBe(401);
+    expect(adapterWeights).not.toHaveBeenCalled();
+    const app = createTestApp({
+      auth: authenticated,
+      services: { training: { adapterWeights } },
+    });
+    const response = await app.request(url);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("private, max-age=300");
+    expect(await response.json()).toEqual(result);
+    expect(adapterWeights).toHaveBeenCalledWith(
       expect.any(String),
       workspaceId,
       "Billing Questions",

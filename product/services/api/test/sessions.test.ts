@@ -21,6 +21,8 @@ const publicRoutes = new Set([
   "GET /api/v1/shared-reports/:version_id/:signature",
   "GET /api/v1/shared-reports/:version_id/:signature/files/:file_id/content",
   "GET /api/v1/shared-reports/:version_id/:signature/files/:file_id/download",
+  "GET /api/v1/shared-reports/:version_id/:signature/adapter/weights",
+  "GET /api/v1/shared-reports/:version_id/:signature/adapter/configuration",
   "POST /api/v1/invitations/preview",
   "POST /api/webhooks/stripe",
   "GET /.well-known/oauth-authorization-server",

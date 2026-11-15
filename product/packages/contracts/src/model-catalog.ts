@@ -23,6 +23,8 @@ export type CatalogEntry = {
     target_modules?: readonly string[];
     gradient_checkpointing?: boolean;
   };
+  /** Pinned checkpoint whose config.json describes the layers, for models without a training profile. */
+  architecture?: { model: string; revision: string };
 };
 
 export const MODEL_CATALOG = [
@@ -31,6 +33,10 @@ export const MODEL_CATALOG = [
     displayName: "Kimi K3.1 Pro",
     icon: null,
     supportedUses: ["judge", "comparison", "serving"],
+    architecture: {
+      model: "moonshotai/Kimi-K3.1-Pro",
+      revision: "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e",
+    },
   },
   {
     id: "deepseek/deepseek-v4.1-flash-1017",

@@ -36,11 +36,10 @@ export class ObjectStorage {
     });
   }
 
-  private consume = async (
+  async *stream(
     key: string,
     { maxBytes, timeoutMs = 120_000, versionId }: ObjectReadOptions,
-    receive: (chunk: Uint8Array) => void | Promise<void>,
-  ) => {
+  ): AsyncGenerator<Uint8Array> {
     const response = await this.client.send(
       new GetObjectCommand({
         Bucket: this.bucket,
@@ -64,10 +63,22 @@ export class ObjectStorage {
         sizeBytes += chunk.value.length;
         if (sizeBytes > maxBytes) throw new Error("Object exceeds read limit.");
 
-        await receive(chunk.value);
+        yield chunk.value;
       }
     } finally {
       await reader.cancel();
+    }
+  }
+
+  private consume = async (
+    key: string,
+    options: ObjectReadOptions,
+    receive: (chunk: Uint8Array) => void | Promise<void>,
+  ) => {
+    let sizeBytes = 0;
+    for await (const chunk of this.stream(key, options)) {
+      sizeBytes += chunk.length;
+      await receive(chunk);
     }
     return sizeBytes;
   };

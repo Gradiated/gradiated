@@ -47,13 +47,59 @@ describe("immutable base configuration", () => {
       .mockResolvedValueOnce(
         response({ num_hidden_layers: 32, num_local_experts: 8 }),
       );
+    const every = Array.from({ length: 32 }, (_, layer) => layer);
     expect(await readBaseModelConfiguration(repo, revision, fetcher)).toEqual({
       layerCount: 32,
       expertCount: 4,
+      expertLayers: every,
     });
     expect(await readBaseModelConfiguration(repo, revision, fetcher)).toEqual({
       layerCount: 32,
       expertCount: 8,
+      expertLayers: every,
+    });
+  });
+  it("lists the layers with routed experts and ignores malformed sparsity hints", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        response({
+          num_hidden_layers: 6,
+          num_experts: 896,
+          first_k_dense_replace: 1,
+          moe_layer_freq: 1,
+        }),
+      )
+      .mockResolvedValueOnce(
+        response({
+          num_hidden_layers: 6,
+          num_experts: 64,
+          decoder_sparse_step: 2,
+          mlp_only_layers: [5],
+        }),
+      )
+      .mockResolvedValueOnce(
+        response({
+          num_hidden_layers: 4,
+          n_routed_experts: 8,
+          first_k_dense_replace: "three",
+          moe_layer_freq: [1, 2],
+        }),
+      );
+    expect(await readBaseModelConfiguration(repo, revision, fetcher)).toEqual({
+      layerCount: 6,
+      expertCount: 896,
+      expertLayers: [1, 2, 3, 4, 5],
+    });
+    expect(await readBaseModelConfiguration(repo, revision, fetcher)).toEqual({
+      layerCount: 6,
+      expertCount: 64,
+      expertLayers: [1, 3],
+    });
+    expect(await readBaseModelConfiguration(repo, revision, fetcher)).toEqual({
+      layerCount: 4,
+      expertCount: 8,
+      expertLayers: [0, 1, 2, 3],
     });
   });
   it("follows bounded same-origin Hugging Face cache redirects", async () => {

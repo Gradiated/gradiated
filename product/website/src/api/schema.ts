@@ -1097,6 +1097,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/adapter/weights": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get adapter weight summary
+     * @description Summarizes how a task version's LoRA adapter changes each projection of the base model: the norm and singular values of each update and a coarse block heatmap. The first request for a version reads the whole adapter and can take several seconds; later requests are served from a cache.
+     */
+    get: operations["getAdapterWeights"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace_id}/tasks/{task}/production": {
     parameters: {
       query?: never;
@@ -1110,6 +1130,126 @@ export interface paths {
      * @description Sets which task version serves requests. A version that is not yet available, such as an uploaded adapter, is first loaded and tested on a LoRA-enabled serving allocation of its base model and becomes available only when that succeeds; this can take up to a few minutes. 409 means the serving runtime rejected the adapter; 503 means no allocation could test it.
      */
     put: operations["promoteTaskVersion"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/share": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get public report link
+     * @description Gets the version's public, read-only report link. Anyone with the link can read report.md and the files it names; the signature cannot be derived without a server-side key.
+     */
+    get: operations["getTaskVersionShare"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/shared-reports/{version_id}/{signature}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get shared report
+     * @description Public. Gets a shared version report's summary and the files it can read. Needs no authentication.
+     */
+    get: operations["getSharedReport"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/shared-reports/{version_id}/{signature}/adapter/weights": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get shared adapter weight summary
+     * @description Public. Summarizes how a shared version's adapter changes each projection of the base model, as the workspace route does. Needs no authentication.
+     */
+    get: operations["getSharedAdapterWeights"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/shared-reports/{version_id}/{signature}/adapter/configuration": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get shared adapter base structure
+     * @description Public. Gets the layer structure of a shared version's base model. Needs no authentication.
+     */
+    get: operations["getSharedAdapterConfiguration"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/shared-reports/{version_id}/{signature}/files/{file_id}/content": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read shared report file
+     * @description Public. Returns the text of a shared report's Markdown, CSV, JSON or plain-text file.
+     */
+    get: operations["getSharedReportFileContent"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/shared-reports/{version_id}/{signature}/files/{file_id}/download": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Download shared report file
+     * @description Public. Gets a short-lived download link for a file a shared report names, such as an image.
+     */
+    get: operations["getSharedReportFileDownload"];
+    put?: never;
     post?: never;
     delete?: never;
     options?: never;
@@ -2442,6 +2582,8 @@ export interface components {
       layerCount: number;
       /** @description Routed experts per layer. */
       expertCount: number;
+      /** @description Layers that have routed experts; absent for dense models. */
+      expertLayers?: number[];
       /** @description Output and input dimensions keyed by layer and module. */
       projectionShapes?: {
         [key: string]: [number, number];
@@ -2533,6 +2675,36 @@ export interface components {
       data: components["schemas"]["TaskListItem"][];
     };
     TaskListItem: components["schemas"]["Task"] & {
+      /** @description Manual workload benchmark for the latest version, if available. */
+      workload_benchmark?: {
+        /** @enum {number} */
+        schema_version: 1;
+        comparison_model_id: string | null;
+        workload: string;
+        notes: string;
+        cost: {
+          /** @enum {string} */
+          unit: "task" | "1k_tokens";
+          fine_tuned: number;
+          comparison: number | null;
+          /** @enum {string} */
+          basis: "measured" | "estimated";
+        } | null;
+        speed: {
+          /** @enum {string} */
+          unit: "output_tokens_per_second" | "latency_seconds";
+          fine_tuned: number;
+          comparison: number | null;
+          /** @enum {string} */
+          statistic: "mean" | "median";
+        } | null;
+        quality: {
+          metric: string;
+          fine_tuned: number;
+          comparison: number | null;
+          sample_size: number | null;
+        } | null;
+      } | null;
       /** @description Latest model version, including externally uploaded adapters. */
       latest_version?: {
         /**
@@ -2967,12 +3139,67 @@ export interface components {
        */
       expires_at: string;
     };
+    AdapterWeights: {
+      rank: number;
+      alpha: number;
+      /** @description Multiplier PEFT applies to B · A: alpha / rank. */
+      scale: number;
+      /** @description LoRA A and B parameters in the adapter. */
+      parameters: number;
+      modules: components["schemas"]["AdapterWeightModule"][];
+    };
+    AdapterWeightModule: {
+      /** @description Module path inside a decoder layer, such as self_attn.q_proj, or lm_head. Expert indices are folded into one module. */
+      module: string;
+      /** @description Decoder layer index; null for lm_head. */
+      layer: number | null;
+      /** @description Output and input features of the adapted projection. */
+      shape: [number, number];
+      /** @description Experts folded into this module; 1 for a dense projection. */
+      experts: number;
+      rank: number;
+      /** @description Frobenius norm of the update the adapter adds: ΔW = scale · B · A. */
+      norm: number;
+      /** @description Singular values of ΔW, largest first. Empty when the module folds several experts or the rank is above 64. */
+      singular_values: number[];
+      /** @description Rows (output blocks) and columns (input blocks) of heatmap. */
+      heatmap_shape: [number, number];
+      /** @description Base64 bytes, row-major. Each byte is the Frobenius norm of one block of ΔW, with 255 at heatmap_max. */
+      heatmap: string;
+      heatmap_max: number;
+    };
     PromoteVersion: {
       /** @description The version's name or ID. */
       version_id: string;
     };
-    TaskVersionFileList: {
-      data: components["schemas"]["TaskVersionFile"][];
+    TaskVersionShare: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      version_id: string;
+      /** @description HMAC-SHA256 of the version ID under a server-side key, base64url-encoded. */
+      signature: string;
+    };
+    SharedReport: {
+      task: string;
+      /** @description Version name. */
+      version: string;
+      base_model_id: string;
+      /**
+       * Format: date-time
+       * @description When the version was delivered.
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      created_at: string;
+      adapter: {
+        rank: number;
+        size_bytes: number;
+        /** @description Base model revision the adapter applies to, when known. */
+        checkpoint: string | null;
+      };
+      /** @description report.md and the files it references by name. */
+      files: components["schemas"]["TaskVersionFile"][];
     };
     TaskVersionFile: {
       /**
@@ -2989,6 +3216,28 @@ export interface components {
        * @example 2026-08-16T12:00:00.000Z
        */
       created_at: string;
+    };
+    TaskVersionFileContent: {
+      /** @description File name within the version, such as report.md or eval-samples.csv. Reports reference data files by this name. */
+      name: string;
+      content_type: string;
+      /** @description UTF-8 text of the file. */
+      content: string;
+    };
+    TaskVersionFileDownload: {
+      /**
+       * Format: uri
+       * @description Short-lived signed URL for the file.
+       */
+      url: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      expires_at: string;
+    };
+    TaskVersionFileList: {
+      data: components["schemas"]["TaskVersionFile"][];
     };
     TaskVersionFileUpload: {
       /**
@@ -3013,25 +3262,6 @@ export interface components {
       size_bytes: number;
       /** @default application/octet-stream */
       content_type: string;
-    };
-    TaskVersionFileContent: {
-      /** @description File name within the version, such as report.md or eval-samples.csv. Reports reference data files by this name. */
-      name: string;
-      content_type: string;
-      /** @description UTF-8 text of the file. */
-      content: string;
-    };
-    TaskVersionFileDownload: {
-      /**
-       * Format: uri
-       * @description Short-lived signed URL for the file.
-       */
-      url: string;
-      /**
-       * Format: date-time
-       * @example 2026-08-16T12:00:00.000Z
-       */
-      expires_at: string;
     };
     /** @description Completed native SystemOne inference response. */
     SystemOneResponse: {
@@ -7974,6 +8204,86 @@ export interface operations {
       };
     };
   };
+  getAdapterWeights: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
+        task: string;
+        /** @description The version's name or ID. */
+        version_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Per-projection adapter weight summary. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdapterWeights"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
   promoteTaskVersion: {
     parameters: {
       query?: never;
@@ -8029,6 +8339,352 @@ export interface operations {
       };
       /** @description Upload conflict or invalid adapter. */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getTaskVersionShare: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
+        task: string;
+        /** @description The version's name or ID. */
+        version_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The public link. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TaskVersionShare"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getSharedReport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        version_id: string;
+        /** @description HMAC-SHA256 of the version ID under a server-side key, base64url-encoded. */
+        signature: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The shared report. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SharedReport"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getSharedAdapterWeights: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        version_id: string;
+        /** @description HMAC-SHA256 of the version ID under a server-side key, base64url-encoded. */
+        signature: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Per-projection adapter weight summary. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdapterWeights"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getSharedAdapterConfiguration: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        version_id: string;
+        /** @description HMAC-SHA256 of the version ID under a server-side key, base64url-encoded. */
+        signature: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Pinned checkpoint structure. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdapterConfiguration"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getSharedReportFileContent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        version_id: string;
+        /** @description HMAC-SHA256 of the version ID under a server-side key, base64url-encoded. */
+        signature: string;
+        file_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The file's text. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TaskVersionFileContent"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getSharedReportFileDownload: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        version_id: string;
+        /** @description HMAC-SHA256 of the version ID under a server-side key, base64url-encoded. */
+        signature: string;
+        file_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description A short-lived download link. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TaskVersionFileDownload"];
+        };
+      };
+      /** @description Not found. */
+      404: {
         headers: {
           [name: string]: unknown;
         };

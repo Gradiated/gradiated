@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { beforeEach, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { send, sign } = vi.hoisted(() => ({ send: vi.fn(), sign: vi.fn() }));
 vi.mock("@aws-sdk/client-s3", async (importOriginal) => ({
@@ -11,6 +11,13 @@ vi.mock("@aws-sdk/client-s3", async (importOriginal) => ({
 vi.mock("@aws-sdk/s3-request-presigner", () => ({ getSignedUrl: sign }));
 import { ObjectStorage } from "../src/storage/object-storage.js";
 import { createAdapterDownloads } from "../src/training/downloads.js";
+import {
+  archive,
+  matrix,
+  random,
+  safetensors,
+  tarEntry,
+} from "./support/adapter-archive.js";
 
 const run = "0198ae50-94d8-7d4d-a8be-9f9b44b8c774";
 const sha = "a".repeat(64);
@@ -139,4 +146,119 @@ it("hashes archives without an S3 SHA256 and signs the verified version", async 
   );
   expect(send.mock.calls[1]![0].input.VersionId).toBe("original");
   expect(sign.mock.calls[0]![1].input.VersionId).toBe("original");
+});
+
+describe("adapter weight summaries", () => {
+  const next = random(9);
+  const gz = archive(
+    tarEntry(
+      "adapter_config.json",
+      Buffer.from(JSON.stringify({ r: 2, lora_alpha: 4 })),
+    ),
+    tarEntry(
+      "adapter_model.safetensors",
+      safetensors([
+        {
+          name: "model.layers.0.self_attn.q_proj.lora_A.weight",
+          matrix: matrix(2, 8, next),
+        },
+        {
+          name: "model.layers.0.self_attn.q_proj.lora_B.weight",
+          matrix: matrix(8, 2, next),
+        },
+      ]),
+    ),
+  );
+  const digest = createHash("sha256").update(gz).digest("hex");
+  const cacheKey = `runs/${run}/output/adapter-weights/${digest}.v1.json`;
+  const body = (bytes: Uint8Array) => ({
+    ContentLength: bytes.length,
+    Body: {
+      transformToWebStream: () =>
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(bytes);
+            controller.close();
+          },
+        }),
+    },
+  });
+  const objects = new Map<string, Uint8Array>();
+  const storage = (archiveBytes: Uint8Array = gz) => {
+    send.mockImplementation(
+      async (command: { input: Record<string, unknown> }) => {
+        const { Key, Body } = command.input as {
+          Key: string;
+          Body?: Uint8Array;
+        };
+        const name = command.constructor.name;
+        if (name === "HeadObjectCommand")
+          return { ContentLength: archiveBytes.length, VersionId: "published" };
+        if (name === "PutObjectCommand") {
+          objects.set(Key, Body!);
+          return {};
+        }
+        if (Key.endsWith(".tar.gz")) return body(archiveBytes);
+        const cached = objects.get(Key);
+        if (!cached)
+          throw Object.assign(new Error("NoSuchKey"), { name: "NoSuchKey" });
+        return body(cached);
+      },
+    );
+    return createAdapterDownloads(new ObjectStorage("artifacts"));
+  };
+  const reads = () =>
+    send.mock.calls.filter(
+      ([command]) =>
+        command.constructor.name === "GetObjectCommand" &&
+        String(command.input.Key).endsWith(".tar.gz"),
+    );
+
+  beforeEach(() => objects.clear());
+
+  it("summarizes the verified archive version once, then serves the cache", async () => {
+    const downloads = storage();
+    const [first, concurrent] = await Promise.all([
+      downloads.weights!(uri, run, gz.length, digest),
+      downloads.weights!(uri, run, gz.length, digest),
+    ]);
+    expect(first).toEqual(concurrent);
+    expect(first.modules).toMatchObject([
+      { layer: 0, module: "self_attn.q_proj", shape: [8, 8], rank: 2 },
+    ]);
+    expect(reads()).toHaveLength(1);
+    expect(reads()[0]![0].input.VersionId).toBe("published");
+    expect(JSON.parse(Buffer.from(objects.get(cacheKey)!).toString())).toEqual(
+      first,
+    );
+
+    expect(await storage().weights!(uri, run, gz.length, digest)).toEqual(
+      first,
+    );
+    expect(reads()).toHaveLength(1);
+  });
+
+  it("refuses and does not cache an archive whose bytes differ from the version", async () => {
+    const tampered = Buffer.from(gz);
+    tampered[tampered.length - 1]! ^= 1;
+    await expect(
+      storage(tampered).weights!(uri, run, gz.length, digest),
+    ).rejects.toThrow("could not be summarized");
+    await expect(
+      storage().weights!(uri, run, gz.length, "b".repeat(64)),
+    ).rejects.toThrow("could not be summarized");
+    expect(objects.size).toBe(0);
+  });
+
+  it("does not read archives outside the version's run", async () => {
+    await expect(
+      storage().weights!(
+        uri.replace(run, "another-run"),
+        run,
+        gz.length,
+        digest,
+      ),
+    ).rejects.toThrow("unavailable");
+    expect(send).not.toHaveBeenCalled();
+  });
 });

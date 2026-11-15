@@ -5,7 +5,7 @@ procs:
       send-keys: ["<C-c>"]
   api:
     # The repository .env may carry deployed auth origins; local sign-in keeps these.
-    shell: "scripts/with-root-env.sh GPU_CONTROL_HOST GPU_CONTROL_PROVIDER GPU_CONTROL_PORT BETTER_AUTH_URL TRUSTED_ORIGINS DATABASE_URL VALKEY_URL TRAINING_EXECUTOR TEMPORAL_ADDRESS TEMPORAL_NAMESPACE CONTENTS_BUCKET AWS_ENDPOINT_URL_S3 AWS_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN -- mise exec -- env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE pnpm --filter @gradiated/api dev"
+    shell: "scripts/with-root-env.sh GPU_CONTROL_HOST GPU_CONTROL_PROVIDER GPU_CONTROL_PORT BETTER_AUTH_URL TRUSTED_ORIGINS DATABASE_URL VALKEY_URL TRAINING_EXECUTOR TEMPORAL_ADDRESS TEMPORAL_NAMESPACE CONTENTS_BUCKET TRAINING_ARTIFACTS_BUCKET AWS_ENDPOINT_URL_S3 AWS_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN -- mise exec -- env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE pnpm --filter @gradiated/api dev"
     env:
       <<: &contents_env
         CONTENTS_BUCKET: gradiated-local-contents
@@ -14,6 +14,8 @@ procs:
         AWS_ACCESS_KEY_ID: gradiated-local
         AWS_SECRET_ACCESS_KEY: gradiated-local-secret
         AWS_SESSION_TOKEN: ""
+      # Versioned bucket the seed creates; adapter downloads and the explorer read it.
+      TRAINING_ARTIFACTS_BUCKET: &artifacts_bucket gradiated-local-artifacts
       DATABASE_URL: &database_url postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated
       AUTH_TEST_MODE: "true"
       BETTER_AUTH_URL: http://localhost:3000
@@ -139,9 +141,11 @@ procs:
       CLICKHOUSE_PORT: *clickhouse_port
       CLICKHOUSE_SECURE: *clickhouse_secure
   seed:
-    shell: "mise exec -- pnpm --filter @gradiated/api seed"
+    shell: "mise exec -- env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE pnpm --filter @gradiated/api seed"
     autostart: false
     env:
+      <<: *contents_env
+      TRAINING_ARTIFACTS_BUCKET: *artifacts_bucket
       DATABASE_URL: *database_url
       SEED_API_URL: http://127.0.0.1:3001
       VALKEY_URL: *valkey_url

@@ -10,7 +10,9 @@ const config: StorybookConfig = {
     ...config,
     define: {
       ...config.define,
-      "import.meta.env.VITE_FEATURE_FLAGS": JSON.stringify("training"),
+      "import.meta.env.VITE_FEATURE_FLAGS": JSON.stringify(
+        "training,explore-weights",
+      ),
       "import.meta.env.VITE_POSTHOG_KEY": "undefined",
       "import.meta.env.VITE_API_URL": "undefined",
     },

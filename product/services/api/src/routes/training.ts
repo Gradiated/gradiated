@@ -17,6 +17,7 @@ import {
   PromoteVersionSchema,
   TaskVersionPathSchema,
   AdapterDownloadSchema,
+  AdapterWeightsSchema,
   EvaluationResultsSchema,
   TaskListSchema,
   TaskPathSchema,
@@ -68,6 +69,31 @@ const json = <Schema>(schema: Schema, description: string) => ({
   content: { "application/json": { schema } },
 });
 
+const AdapterConfigurationSchema = z
+  .object({
+    layerCount: z
+      .number()
+      .int()
+      .min(1)
+      .max(4096)
+      .describe("Number of transformer layers."),
+    expertCount: z
+      .number()
+      .int()
+      .min(0)
+      .max(4096)
+      .describe("Routed experts per layer."),
+    expertLayers: z
+      .array(z.number().int().min(0).max(4095))
+      .max(4096)
+      .optional()
+      .describe("Layers that have routed experts; absent for dense models."),
+    projectionShapes: z
+      .record(z.string(), z.tuple([z.number(), z.number()]).readonly())
+      .optional()
+      .describe("Output and input dimensions keyed by layer and module."),
+  })
+  .openapi("AdapterConfiguration");
 const adapterConfiguration = createRoute({
   method: "get",
   path: `${base}/adapter-configurations/{model_id}`,
@@ -82,29 +108,7 @@ const adapterConfiguration = createRoute({
     }),
   },
   responses: {
-    200: json(
-      z
-        .object({
-          layerCount: z
-            .number()
-            .int()
-            .min(1)
-            .max(4096)
-            .describe("Number of transformer layers."),
-          expertCount: z
-            .number()
-            .int()
-            .min(0)
-            .max(4096)
-            .describe("Routed experts per layer."),
-          projectionShapes: z
-            .record(z.string(), z.tuple([z.number(), z.number()]).readonly())
-            .optional()
-            .describe("Output and input dimensions keyed by layer and module."),
-        })
-        .openapi("AdapterConfiguration"),
-      "Pinned checkpoint structure.",
-    ),
+    200: json(AdapterConfigurationSchema, "Pinned checkpoint structure."),
     ...errors,
   },
 });
@@ -310,6 +314,20 @@ const downloadAdapter = createRoute({
     ...errors,
   },
 });
+const adapterWeights = createRoute({
+  method: "get",
+  path: `${base}/tasks/{task}/versions/{version_id}/adapter/weights`,
+  operationId: "getAdapterWeights",
+  summary: "Get adapter weight summary",
+  description:
+    "Summarizes how a task version's LoRA adapter changes each projection of the base model: the norm and singular values of each update and a coarse block heatmap. The first request for a version reads the whole adapter and can take several seconds; later requests are served from a cache.",
+  tags: ["Training"],
+  request: { params: TaskVersionPathSchema },
+  responses: {
+    200: json(AdapterWeightsSchema, "Per-projection adapter weight summary."),
+    ...errors,
+  },
+});
 const promote = createRoute({
   method: "put",
   path: `${base}/tasks/{task}/production`,
@@ -484,6 +502,34 @@ const getSharedReport = createRoute({
   request: { params: SharedReportPathSchema },
   responses: {
     200: json(SharedReportSchema, "The shared report."),
+    ...sharedErrors,
+  },
+});
+const sharedAdapterWeights = createRoute({
+  method: "get",
+  path: "/api/v1/shared-reports/{version_id}/{signature}/adapter/weights",
+  operationId: "getSharedAdapterWeights",
+  summary: "Get shared adapter weight summary",
+  description:
+    "Public. Summarizes how a shared version's adapter changes each projection of the base model, as the workspace route does. Needs no authentication.",
+  tags: ["Shared reports"],
+  request: { params: SharedReportPathSchema },
+  responses: {
+    200: json(AdapterWeightsSchema, "Per-projection adapter weight summary."),
+    ...sharedErrors,
+  },
+});
+const sharedAdapterConfiguration = createRoute({
+  method: "get",
+  path: "/api/v1/shared-reports/{version_id}/{signature}/adapter/configuration",
+  operationId: "getSharedAdapterConfiguration",
+  summary: "Get shared adapter base structure",
+  description:
+    "Public. Gets the layer structure of a shared version's base model. Needs no authentication.",
+  tags: ["Shared reports"],
+  request: { params: SharedReportPathSchema },
+  responses: {
+    200: json(AdapterConfigurationSchema, "Pinned checkpoint structure."),
     ...sharedErrors,
   },
 });
@@ -742,6 +788,19 @@ export const registerTrainingRoutes = (
     c.header("Cache-Control", "no-store");
     return c.json(download, 200);
   });
+  app.openapi(adapterWeights, async (c) => {
+    const user = await requireUser(c);
+    const p = c.req.valid("param");
+    const weights = await training.adapterWeights(
+      user.id,
+      p.workspace_id,
+      p.task,
+      p.version_id,
+    );
+    // Versions never change their adapter, but membership can change.
+    c.header("Cache-Control", "private, max-age=300");
+    return c.json(weights, 200);
+  });
   app.openapi(promote, async (c) => {
     const user = await requireUser(c);
     const p = c.req.valid("param");
@@ -804,6 +863,21 @@ export const registerTrainingRoutes = (
       },
       200,
     );
+  });
+  app.openapi(sharedAdapterWeights, async (c) => {
+    const { version_id, signature } = c.req.valid("param");
+    const weights = await training.sharedAdapterWeights(version_id, signature);
+    sharedHeaders(c);
+    return c.json(weights, 200);
+  });
+  app.openapi(sharedAdapterConfiguration, async (c) => {
+    const { version_id, signature } = c.req.valid("param");
+    const structure = await training.sharedAdapterConfiguration(
+      version_id,
+      signature,
+    );
+    sharedHeaders(c);
+    return c.json(structure, 200);
   });
   app.openapi(sharedReportFileContent, async (c) => {
     const { version_id, signature, file_id } = c.req.valid("param");

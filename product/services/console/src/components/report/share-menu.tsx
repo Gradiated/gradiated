@@ -66,10 +66,7 @@ export const ShareMenu = ({
         throw error;
       }
     },
-    onSuccess: () =>
-      toast.success("Public link copied", {
-        description: "Anyone with the link can view this report.",
-      }),
+    onSuccess: () => toast.success("Public link copied"),
     onError: (error) =>
       toast.error(errorMessage(error, "The link could not be copied.")),
   });
@@ -86,18 +83,13 @@ export const ShareMenu = ({
           Share
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
+      <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem
           disabled={copy.isPending}
           onSelect={() => copy.mutate()}
         >
           <Link2 className="size-4" />
-          <span className="flex flex-col">
-            Copy public link
-            <span className="text-xs text-muted-foreground">
-              Anyone with the link can view
-            </span>
-          </span>
+          Copy public link
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

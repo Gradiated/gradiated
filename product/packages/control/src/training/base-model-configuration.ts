@@ -12,12 +12,26 @@ const ConfigurationSchema = z.object({
   n_routed_experts: ExpertCountSchema.nullable().optional(),
   num_local_experts: ExpertCountSchema.nullable().optional(),
 });
+// Where routed experts sit, for display only: an unexpected value is ignored
+// rather than failing the configuration that adapter validation depends on.
+const lenient = <Schema extends z.ZodType>(schema: Schema) =>
+  schema.optional().catch(undefined);
+const SparsitySchema = z.object({
+  num_experts: lenient(ExpertCountSchema),
+  first_k_dense_replace: lenient(z.number().int().min(0).max(4096)),
+  moe_layer_freq: lenient(z.number().int().min(1).max(4096)),
+  decoder_sparse_step: lenient(z.number().int().min(1).max(4096)),
+  mlp_only_layers: lenient(
+    z.array(z.number().int().min(0).max(4095)).max(4096),
+  ),
+});
 const DocumentSchema = z
   .object({ text_config: z.unknown().optional() })
   .passthrough();
 export type BaseModelConfiguration = {
   layerCount: number;
   expertCount: number;
+  expertLayers?: number[];
   projectionShapes?: ProjectionShapes;
 };
 const repository = z
@@ -85,13 +99,27 @@ export const readBaseModelConfiguration = async (
       const projectionShapes = adapterProjectionShapes(
         document.text_config ?? document,
       );
+      const sparsity = SparsitySchema.parse(document.text_config ?? document);
+      const expertCount =
+        config.n_routed_experts === undefined
+          ? (config.num_local_experts ?? sparsity.num_experts ?? 0)
+          : (config.n_routed_experts ?? 0);
+      const dense = new Set(sparsity.mlp_only_layers ?? []);
+      const expertLayers = Array.from(
+        { length: config.num_hidden_layers },
+        (_, layer) => layer,
+      ).filter(
+        (layer) =>
+          layer >= (sparsity.first_k_dense_replace ?? 0) &&
+          layer % (sparsity.moe_layer_freq ?? 1) === 0 &&
+          (layer + 1) % (sparsity.decoder_sparse_step ?? 1) === 0 &&
+          !dense.has(layer),
+      );
       return {
         ...(projectionShapes ? { projectionShapes } : {}),
         layerCount: config.num_hidden_layers,
-        expertCount:
-          config.n_routed_experts === undefined
-            ? (config.num_local_experts ?? 0)
-            : (config.n_routed_experts ?? 0),
+        expertCount,
+        ...(expertCount ? { expertLayers } : {}),
       };
     }
     throw new Error("Too many configuration redirects.");

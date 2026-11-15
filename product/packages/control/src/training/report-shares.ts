@@ -70,11 +70,16 @@ export const createReportShares = (
       actual.length === expected.length && timingSafeEqual(actual, expected)
     );
   };
-  const shared = async (versionId: string, signature: string) => {
+  const sharedVersion = async (versionId: string, signature: string) => {
     if (!verified(versionId, signature)) throw notFound("report");
 
     const row = await records.getSharedVersion(versionId);
     if (!row) throw notFound("report");
+
+    return row;
+  };
+  const shared = async (versionId: string, signature: string) => {
+    const row = await sharedVersion(versionId, signature);
 
     const ready = await files.listReady(versionId);
     const reportFile = ready.find((file) => file.name === VERSION_REPORT_FILE);
@@ -124,6 +129,7 @@ export const createReportShares = (
     },
 
     shared,
+    sharedVersion,
 
     async sharedContent(versionId: string, signature: string, fileId: string) {
       return readVersionFileText(

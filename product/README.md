@@ -148,6 +148,16 @@ SEED_LOCAL_QWEN=1 pnpm --filter @gradiated/api seed
 pnpm smoke:gateway
 ```
 
+From the `seed` pane, the seed also creates a versioned `gradiated-local-artifacts`
+bucket in the local SeaweedFS and four model versions whose adapters are synthetic
+(seeded noise shaped like real LoRA weights, never served): `flash-head` and
+`flash-attention` on DeepSeek V4.1 Flash 1017, `glm-triage` on GLM-5.3 Flash and
+`kimi-research` on Kimi K3.1 Pro. Open one under **Models** and choose
+**Explore weights** to try the adapter explorer. The seed skips them
+unless `TRAINING_ARTIFACTS_BUCKET` and a loopback `AWS_ENDPOINT_URL_S3` are set,
+as the `seed` pane does. The `api` pane reads the same bucket; restart it after
+pulling this change.
+
 The smoke command creates a temporary API key through the Management API, calls the
 gateway on port 3002, verifies UUIDv7 and authoritative usage in the response,
 and revokes the key. A successful response is returned only after the gateway

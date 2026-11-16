@@ -72,9 +72,13 @@ Draw 40 traces at random, spread across the task's range, and read them. Write t
 cleaning code from what they show:
 
 - **Clean:** drop empty, trivial or broken conversations, and merge duplicates. Drop traces not related to the task.
-- **Anonymize:** replace each real name, company, email, id, address and secret with a realistic fake, the same fake
-  everywhere in the trace. A cheap model tags names and companies in prose; patterns catch emails, URLs, ids and
-  phones everywhere.
+- **Anonymize:** replace each real name, company, email, id, address and secret with a fake of the same kind. A
+  person's name becomes another plausible person's name, an organization another organization name, an address
+  another address, and an id an id of the same shape. A cheap model tags names and companies in prose; patterns
+  catch emails, URLs, ids and phones everywhere.
+- **Keep fakes stable and varied:** the same real value always gets the same fake, derived from a seeded hash, so
+  it stays consistent across all traces. Draw fakes from a large pool so few are reused across the dataset, and never
+  give two real values the same fake within a trace.
 - **Protect code:** never change code, queries, schemas or field names.
 - **Final check:** drop any row where a known real value or a hard pattern survives.
 

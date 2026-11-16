@@ -32,6 +32,8 @@ const slugify = (text: string): string =>
 
 type Level = "h2" | "h3" | "h4";
 
+const userScrollEvents = ["wheel", "touchstart", "keydown", "pointerdown"];
+
 const makeHeading = (Tag: Level) => {
   const Heading = ({
     children,
@@ -53,15 +55,32 @@ const makeHeading = (Tag: Level) => {
       }
       if (hash !== anchor) return;
 
-      // Waits for the rail to switch into handbook mode, which moves the page.
-      const timeout = window.setTimeout(() => {
+      const scroll = (): void => {
         document.getElementById(anchor)?.scrollIntoView({
           behavior: "instant",
           block: "start",
         });
-      }, 50);
+      };
 
-      return () => window.clearTimeout(timeout);
+      // The rail's 650 ms slide into doc mode reflows the page, so the heading
+      // is re-pinned on every resize until it settles or the reader scrolls.
+      const observer = new ResizeObserver(scroll);
+      const stop = (): void => {
+        observer.disconnect();
+        window.clearTimeout(timeout);
+        for (const type of userScrollEvents) {
+          window.removeEventListener(type, stop);
+        }
+      };
+      const timeout = window.setTimeout(stop, 1500);
+
+      observer.observe(document.body);
+      for (const type of userScrollEvents) {
+        window.addEventListener(type, stop, { passive: true });
+      }
+      scroll();
+
+      return stop;
     }, [anchor]);
 
     const copy = (event: MouseEvent<HTMLAnchorElement>): void => {

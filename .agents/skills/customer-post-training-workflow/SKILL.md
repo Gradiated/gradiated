@@ -7,11 +7,14 @@ description: End-to-end workflow for post-training a model for a customer from t
 
 Turn a customer's production traces into a model that beats their current one on a task they care about. Work stage by stage, and show the researcher each stage's results before starting the next.
 
+The **researcher** is the person at Gradiated running this work. The **customer** is the company whose traces
+these are, and **end users** are the customer's own users.
+
 ## Ground rules
 
 - Keep the customer's data and any clone of their code in their own folder outside this repository
   (`~/dev/<customer>/`). Never commit or push either. Only skills and reusable tooling go in this repository.
-- When getting trace data from the customers account, such as a PostHog impersonation, you should only take read-only actions: confirm the org and project, run only queries, and tell the user when they can log out.
+- When getting trace data from the customers account, such as a PostHog impersonation, you should only take read-only actions: confirm the org and project, run only queries, and tell the researcher when they can log out.
 - Model calls that see customer content go through OpenRouter zero-data-retention providers.
 
 ## Stages
@@ -30,7 +33,7 @@ Turn a customer's production traces into a model that beats their current one on
      hand-checked examples, a scored dataset, or running in CI).
    - **People:** who commits to it most often, and recently, from the git history of its files.
 
-   Choose the task or tasks to train on with the user. Weigh cost, volume, whether a smaller model could do the job,
+   Choose the task or tasks to train on with the researcher. Weigh cost, volume, whether a smaller model could do the job,
    and whether results can be scored. Some customers have only one task.
 
 3. **Clean and anonymize** the chosen tasks with `$trace-cleaning`.
@@ -46,4 +49,4 @@ Turn a customer's production traces into a model that beats their current one on
 
 7. **Evaluate** on held-out data. Compare against the customer's current model and the untrained base model.
 
-8. **Deliver** the adapter as a task model version. Promote it only with the user's approval.
+8. **Deliver** the adapter as a task model version. Promote it only with the researcher's approval.

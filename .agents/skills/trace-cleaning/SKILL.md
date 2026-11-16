@@ -26,7 +26,7 @@ Read a random sample of traces from the chosen task before writing any code. Lea
 conversations are about, where personal and customer data appears (prose, tool arguments, tool results, tables),
 what code or structured data must not change, and what was lost when the trace was captured.
 
-Agree with the user what gets replaced, what stays, and which rows get dropped.
+Agree with the researcher what gets replaced, what stays, and which rows get dropped.
 
 ## 2. Build the first version
 

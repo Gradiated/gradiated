@@ -243,7 +243,7 @@
 .sand-journey h1 {
   font-family: var(--font-title);
   font-size: var(--text-hero);
-  font-weight: 650;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-hero);
   line-height: var(--leading-hero);
   margin: 0 0 1.25rem;
@@ -287,7 +287,7 @@
 .sand-journey .scene-text h2 {
   font-family: var(--font-title);
   font-size: var(--text-section);
-  font-weight: 650;
+  font-weight: var(--weight-heading);
   letter-spacing: -0.01em;
   line-height: 1.1;
   margin: 0 0 1rem;
@@ -296,7 +296,7 @@
 .sand-journey .scene-text h3 {
   font-family: var(--font-title);
   font-size: 1.25rem;
-  font-weight: 650;
+  font-weight: var(--weight-heading);
   letter-spacing: -0.01em;
   line-height: 1.25;
   margin: 0 0 1rem;

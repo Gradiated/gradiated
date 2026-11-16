@@ -461,7 +461,7 @@
 
 .gr-value--display .gr-value-text {
   font-family: var(--font-title);
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   font-size: clamp(32px, 3.84vw, 58px);
   line-height: 1.06;
   letter-spacing: -0.02em;

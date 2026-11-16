@@ -42,7 +42,7 @@
   margin: calc(0.5 * var(--u)) 0 0;
   font-family: var(--font-title);
   font-size: var(--text-heading);
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.18;
   text-wrap: balance;

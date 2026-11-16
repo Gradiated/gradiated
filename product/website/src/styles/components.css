@@ -32,6 +32,25 @@
   transition: border-color var(--dur-fast) var(--ease-response);
 }
 
+/* The select draws its own chevron: the native one sits hard against the
+   edge and ignores padding. Two gradient squares meet in a ∨, set in
+   currentColor so it follows the theme like any glyph. */
+.gr-select,
+select.gr-sys-input {
+  appearance: none;
+  padding-inline-end: calc(1.5 * var(--u));
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    right calc(0.6 * var(--u) + 5px) center,
+    right calc(0.6 * var(--u)) center;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+}
+
 .gr-textarea {
   min-height: calc(4 * var(--u));
   resize: vertical;

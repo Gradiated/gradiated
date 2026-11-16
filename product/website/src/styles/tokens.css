@@ -173,6 +173,11 @@
      Named for the job so it cannot be mistaken for prose again. */
   --text-ui: 0.9375rem;
 
+  /* A third-level heading in prose: clearly over body, well under an h2.
+     Looser than the larger headings, whose -0.04em closes up at this size. */
+  --text-subheading: 1.3125rem;
+  --tracking-subheading: -0.01em;
+
   /* Nav dropdown card titles: under a subheading, over body. */
   --text-card: 1.0625rem;
 
@@ -207,7 +212,7 @@
      -0.04em is -0.72px, which is tight enough to start closing counters in
      running copy. */
   --tracking-body: -0.015em;
-  --weight-heading: 500;
+  --weight-heading: 700;
   --weight-lede: 400;
 
   /* Space between a subheading and the copy under it. Type-internal spacing is

@@ -42,14 +42,14 @@
 .gr-sys-h1 {
   font-family: var(--font-title);
   font-size: var(--text-section);
-  font-weight: 650;
+  font-weight: var(--weight-heading);
   margin: 0 0 var(--space-2);
 }
 
 .gr-sys-h2 {
   font-family: var(--font-title);
   font-size: clamp(24px, 2.2vw, 32px);
-  font-weight: 650;
+  font-weight: var(--weight-heading);
   margin: 0 0 var(--space-2);
 }
 

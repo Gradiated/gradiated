@@ -112,7 +112,7 @@
   font-size: var(--text-hero);
   letter-spacing: var(--tracking-hero);
   line-height: var(--leading-hero);
-  font-weight: 650;
+  font-weight: var(--weight-heading);
   margin: 0 0 2rem;
   max-width: 900px;
   text-wrap: balance;
@@ -374,7 +374,7 @@
 .fab-machine-preview strong {
   font-family: var(--font-title);
   font-size: 1.15rem;
-  font-weight: 500;
+  font-weight: var(--weight-heading);
 }
 .fab-machine-preview p {
   font-size: 0.95rem;
@@ -476,7 +476,7 @@
 .fab-step h2 {
   font-family: var(--font-title, sans-serif);
   font-size: var(--text-section);
-  font-weight: 650;
+  font-weight: var(--weight-heading);
   line-height: 1.1;
   letter-spacing: -0.01em;
   margin: 0 0 1.8rem;

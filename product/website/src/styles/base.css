@@ -69,7 +69,7 @@ html {
   font-size: var(--text-hero);
   line-height: var(--leading-hero);
   letter-spacing: var(--tracking-hero);
-  font-weight: 500;
+  font-weight: var(--weight-heading);
 }
 
 /* A step above .gr-hero, for a page whose whole first screen is one sentence.
@@ -80,7 +80,7 @@ html {
   font-size: var(--text-display);
   line-height: var(--leading-display);
   letter-spacing: var(--tracking-hero);
-  font-weight: 500;
+  font-weight: var(--weight-heading);
 }
 
 .gr-section-title {
@@ -88,7 +88,7 @@ html {
   font-size: var(--text-section);
   line-height: 1.15;
   letter-spacing: -0.015em;
-  font-weight: 500;
+  font-weight: var(--weight-heading);
 }
 
 /* Subheadings share the title face with the section titles — Instrument Sans

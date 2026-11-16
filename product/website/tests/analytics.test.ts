@@ -82,6 +82,8 @@ describe("website analytics", () => {
   it("preserves direct referrer attribution on events and persons", async () => {
     await import("../src/analytics");
     const options = posthog.init.mock.calls[0]![1];
+    // posthog-js only attaches $referrer and $referring_domain when it saves referrer info.
+    expect(options.save_referrer).not.toBe(false);
     const event = options.before_send({
       event: "$pageview",
       $set_once: { $initial_referrer: "$direct" },

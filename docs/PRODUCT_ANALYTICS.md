@@ -14,7 +14,9 @@ Production environment. Local and preview builds are disabled unless their
 environment supplies a separate `VITE_POSTHOG_KEY`. Website tracking is initialized
 only by the browser entry point, so prerendering does not emit visits. Website
 URL properties retain paths but exclude query strings and fragments; form
-autocapture and exception capture are disabled. Session replay is enabled for
+autocapture and exception capture are disabled. Website events keep the
+sanitized `$referrer` and `$referring_domain` for traffic sources; posthog-js
+attaches them only while `save_referrer` stays enabled. Session replay is enabled for
 the website and console when the target project enables recording.
 
 ## Identity and groups

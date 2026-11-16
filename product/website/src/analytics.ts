@@ -15,7 +15,6 @@ if (key) {
     enable_heatmaps: false,
     disable_surveys: true,
     advanced_disable_feature_flags_on_first_load: true,
-    save_referrer: false,
     save_campaign_params: false,
     before_send: (event) => {
       if (!event || !["$pageview", "$snapshot"].includes(event.event))

@@ -198,7 +198,7 @@ const llmsText = [
   "",
   `- [About](${absoluteUrl("/about/")}): How Gradiated began inside PostHog and why it exists.`,
   `- [Careers](${absoluteUrl("/careers/")}): Open roles in inference software and silicon.`,
-  `- [Thesis](${absoluteUrl("/notes/our-thesis/")}): The Gradiated view of inference.`,
+  `- [Thesis](${absoluteUrl("/library/our-thesis/")}): The Gradiated view of inference.`,
   "",
 ].join("\n");
 await writeFile(join(outputRoot, "llms.txt"), llmsText);

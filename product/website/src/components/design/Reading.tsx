@@ -58,7 +58,7 @@ export const Reading = ({
   title: string;
 }): ReactElement => {
   /* The rail draws "back"; the page draws nothing above its content. */
-  useRailBack({ href: "/notes/", label: "Notes" });
+  useRailBack({ href: "/library/", label: "Library" });
   const proseRef = useRef<HTMLDivElement>(null);
   const [sections, setSections] = useState<Section[]>([]);
   const [active, setActive] = useState<string>();

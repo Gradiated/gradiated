@@ -1,23 +1,6 @@
 import { Fragment } from "react";
 import type { ReactNode } from "react";
 import { SiteLink } from "./components/SiteLink";
-import { articles } from "./articles";
-
-export type Note = {
-  slug: string;
-  date: string;
-  title: string;
-  description?: string;
-};
-
-export const notes: Note[] = articles
-  .filter((article) => article.path.startsWith("/notes/"))
-  .map((article) => ({
-    slug: article.path.split("/")[2],
-    date: article.status === "draft" ? "Draft" : article.publishedAt,
-    title: article.title,
-    description: article.description,
-  }));
 
 export const ThesisContent = (): ReactNode => (
   <>

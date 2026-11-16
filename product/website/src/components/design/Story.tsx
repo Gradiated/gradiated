@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactElement } from "react";
+import type { CSSProperties, ReactElement, ReactNode } from "react";
 import type { ArtworkPreset } from "../../lib/artwork";
 import { WaferArtwork } from "./WaferArtwork";
 
@@ -27,6 +27,8 @@ export type StoryArt = {
 };
 
 export type Story = {
+  /** A live illustration that fills the well. Wins over `art`. */
+  illustration?: ReactNode;
   /** Real artwork, when a piece has it. Wins over `cover`. */
   art?: StoryArt;
   /** A generated wafer artwork — the fallback while art does not exist. */
@@ -60,9 +62,11 @@ export const StoryCard = ({
           see .gr-story-art in pages.css. */}
       <span
         aria-hidden
-        className={`gr-story-well${story.art || story.cover ? " gr-story-cover" : ""}`}
+        className={`gr-story-well${story.illustration || story.art || story.cover ? " gr-story-cover" : ""}`}
       >
-        {story.art ? (
+        {story.illustration ? (
+          <span className="gr-story-illustration">{story.illustration}</span>
+        ) : story.art ? (
           <span
             className="gr-story-art"
             style={

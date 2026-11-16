@@ -17,10 +17,11 @@ import { artworkPresets } from "./lib/artwork";
    its own catalogue. Notes always use their authored article metadata. */
 const HANDBOOK_DATE = { date: "Sep 9, 2026", dateTime: "2026-09-09" };
 
-const displayDate = (date: string): string =>
+export const displayDate = (date: string): string =>
   new Date(date).toLocaleDateString("en-US", {
     day: "numeric",
     month: "short",
+    timeZone: "UTC",
     year: "numeric",
   });
 
@@ -71,27 +72,27 @@ const excerptFor = (slug: string): string | undefined => {
    and the lead/pair landscape). Pieces without an entry keep their generated
    wafer cover — the maps below stay as the fallback, not a competitor. */
 const NOTE_ART: Record<string, StoryArt> = {
-  "/notes/gemma-inference-engine/": {
+  "/library/gemma-inference-engine/": {
     tall: "/brand/library/carat.webp",
     wide: "/brand/library/carat-wide.webp",
   },
-  "/notes/our-thesis/": {
+  "/library/our-thesis/": {
     tall: "/brand/library/thesis.webp",
     wide: "/brand/library/thesis-wide.webp",
   },
-  "/notes/2026-10-starting-on-hard-mode/": {
+  "/library/2026-10-starting-on-hard-mode/": {
     tall: "/brand/library/mission.webp",
     wide: "/brand/library/mission-wide.webp",
   },
-  "/notes/0-to-1-weeks-at-gradiated/": {
+  "/library/0-to-1-weeks-at-gradiated/": {
     tall: "/brand/library/zero-to-one.webp",
     wide: "/brand/library/zero-to-one-wide.webp",
   },
 };
 
 const NOTE_COVERS: Record<string, StoryCover> = {
-  "/notes/gemma-inference-engine/": artworkPresets.carat,
-  "/notes/our-thesis/": artworkPresets.thesis,
+  "/library/gemma-inference-engine/": artworkPresets.carat,
+  "/library/our-thesis/": artworkPresets.thesis,
 };
 
 /** Newest first, with the collection supplied by article metadata. */

@@ -1,90 +1,106 @@
+import { useMemo, useState } from "react";
 import type { ReactElement } from "react";
 import { articles } from "../articles";
-import { Arrow, Band, Footer, Module, Substrate } from "../components/design";
+import {
+  Band,
+  Footer,
+  GridIcon,
+  ListIcon,
+  Module,
+  Nav,
+  Reveal,
+  StoryList,
+  StoryRow,
+  Substrate,
+} from "../components/design";
+import type { Story } from "../components/design";
 import { SandCircuitArtwork } from "../components/design/SandCircuitArtwork";
 import { ChipLayersArtwork } from "../components/sand-library/ChipLayersArtwork";
+import { displayDate, libraryStories } from "../library-stories";
 import "../styles/index.css";
 import "../components/sand-library/sand-library.css";
-import "./library-mag.css";
 
-/* /library/ — the magazine.
- *
- * The multi-media front for everything the lab publishes: interactive
- * journeys, essays, films. Editorial register, deliberately apart from
- * the product pages: a masthead, series carrying SUPERTITLES, features
- * with real artwork, and a compact index of everything else.
- *
- * Series are collections. Sand to Thought opens the magazine with the
- * two fabrication journeys as its first listings.
- */
+const SAND_OVERVIEW_PATH =
+  "/library/sand-to-thought/how-to-get-an-answer-out-of-sand/";
 
-const monthYear = (iso: string): string =>
-  new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
+const journeys: Array<Story & { publishedAt: string }> = articles
+  .filter((article) => article.collection === "sand-to-thought")
+  .map((article) => ({
+    date: displayDate(article.publishedAt),
+    dateTime: article.status === "draft" ? undefined : article.publishedAt,
+    href: article.path,
+    illustration:
+      article.path === SAND_OVERVIEW_PATH ? (
+        <SandCircuitArtwork />
+      ) : (
+        <ChipLayersArtwork variant="chip" />
+      ),
+    kind: "note",
+    lede: article.description,
+    publishedAt: article.publishedAt,
+    title: article.title,
+  }));
 
-const kind = (layout: string): string =>
-  layout === "journey" ? "Interactive journey" : "Essay";
+const publishedAtByPath = new Map(
+  articles.map((article) => [article.path, article.publishedAt]),
+);
 
 export const LibraryPage = (): ReactElement => {
-  /* The Library carries the broad top-of-funnel work only. Product
-     pieces live under Notes, operational writing under the Handbook —
-     neither lists here. Today that means the Sand to Thought series. */
-  const sandSeries = articles
-    .filter((article) => article.collection === "sand-to-thought")
-    .sort((a, b) => a.publishedAt.localeCompare(b.publishedAt));
+  const [view, setView] = useState<"grid" | "list">("grid");
+  const shown = useMemo(
+    () =>
+      [
+        ...libraryStories
+          .filter((story) => story.kind === "note")
+          .map((story) => ({
+            ...story,
+            publishedAt: publishedAtByPath.get(story.href) ?? "",
+          })),
+        ...journeys,
+      ].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)),
+    [],
+  );
 
   return (
     <Substrate>
-      <main className="gr-mag">
-        <Band>
-          <Module className="gr-module--top" index={0}>
-            <header className="gr-mag-masthead">
-              <h1 className="gr-mag-title">Library</h1>
-            </header>
+      <Nav />
 
-            {/* -- the opening series ----------------------------------- */}
-            <section aria-label="Sand to Thought" className="gr-mag-series">
-              <div className="gr-mag-features">
-                {sandSeries.map((article) => (
-                  <article className="gr-mag-feature" key={article.path}>
-                    <a className="gr-mag-feature-link" href={article.path}>
-                      <div className="gr-mag-feature-art">
-                        {article.path ===
-                        "/library/sand-to-thought/how-to-get-an-answer-out-of-sand/" ? (
-                          <SandCircuitArtwork />
-                        ) : (
-                          <ChipLayersArtwork variant="chip" />
-                        )}
-                      </div>
-                      <div className="gr-mag-feature-copy">
-                        <p className="gr-mag-super">Sand to Thought</p>
-                        <h3 className="gr-mag-feature-title">
-                          {article.title} <Arrow />
-                        </h3>
-                        {article.description && (
-                          <p className="gr-mag-feature-dek">
-                            {article.description}
-                          </p>
-                        )}
-                        <p className="gr-mag-meta">
-                          {kind(article.layout)} ·{" "}
-                          {monthYear(article.publishedAt)}
-                        </p>
-                      </div>
-                    </a>
-                  </article>
-                ))}
+      <Band>
+        <Module className="gr-module--top" index={0}>
+          <header className="gr-masthead">
+            <div className="gr-masthead-line">
+              <div>
+                <Reveal as="h1" by="word" className="gr-masthead-title">
+                  Library
+                </Reveal>
               </div>
-            </section>
-          </Module>
-        </Band>
-        <Band>
-          <Footer index={1} />
-        </Band>
-      </main>
+
+              <div className="gr-library-controls">
+                <button
+                  aria-label={
+                    view === "grid" ? "Show as a list" : "Show as a grid"
+                  }
+                  className="gr-library-view"
+                  onClick={() => setView(view === "grid" ? "list" : "grid")}
+                  type="button"
+                >
+                  {view === "grid" ? <ListIcon /> : <GridIcon />}
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {view === "list" ? (
+            <StoryList stories={shown} />
+          ) : (
+            <StoryRow columns="repeat(3, var(--card-narrow))" stories={shown} />
+          )}
+        </Module>
+      </Band>
+
+      <Band>
+        <Footer index={1} />
+      </Band>
     </Substrate>
   );
 };

@@ -53,9 +53,9 @@ const COLUMNS: FooterColumn[] = [
     title: "Company",
     links: [
       { href: "/about/", label: "About" },
-      { href: "/notes/our-thesis/", label: "Thesis" },
+      { href: "/library/our-thesis/", label: "Thesis" },
       { href: "/careers/", label: "Careers" },
-      { href: "/notes/", label: "Notes" },
+      { href: "/library/", label: "Library" },
       { href: "/handbook/", label: "Handbook" },
     ],
   },

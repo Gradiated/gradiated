@@ -6317,6 +6317,18 @@
   background-position: 50% 50%;
 }
 
+/* The journey artworks position their layers absolutely. */
+.gr-story-illustration {
+  position: absolute;
+  inset: 0;
+  display: grid;
+}
+
+.gr-story-illustration > * {
+  width: 100%;
+  height: 100%;
+}
+
 /* Wider than a narrow cell can be: the pair and lead cells, which is where
    the landscape crop belongs. The tall crop would cover them too, but with
    its head and feet cut off — the wide crop was composed for this shape. */

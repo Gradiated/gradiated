@@ -24,7 +24,6 @@ import { HomePage } from "./pages/HomePage";
 import { InferencePage } from "./pages/InferencePage";
 import { LEGAL, LegalPage } from "./pages/LegalPages";
 import type { LegalSlug } from "./pages/LegalPages";
-import { NotesIndexPage } from "./pages/LibraryIndexPage";
 import { HandbookPage } from "./pages/HandbookPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { ArticleReadingPage } from "./pages/ReadingPages";
@@ -56,7 +55,15 @@ const MOVED_JOURNEYS: Record<string, string> = {
   "/sand-to-thought/fabricating-a-transistor/":
     "/library/sand-to-thought/fabricating-a-transistor/",
   "/sand-to-thought/library/": "/library/sand-to-thought/",
-  "/library/gemma-inference-engine/": "/notes/gemma-inference-engine/",
+  "/notes/": "/library/",
+  ...Object.fromEntries(
+    articles
+      .filter((article) => article.collection === "library")
+      .map((article) => [
+        article.path.replace(/^\/library\//, "/notes/"),
+        article.path,
+      ]),
+  ),
 };
 
 const RouteScrollRestoration = (): null => {
@@ -142,14 +149,6 @@ export const AppRoutes = (): ReactElement => (
     {Object.entries(MOVED_JOURNEYS).map(([from, to]) => (
       <Route element={<MovedJourney to={to} />} key={from} path={from} />
     ))}
-    <Route
-      element={
-        <Shelled>
-          <NotesIndexPage />
-        </Shelled>
-      }
-      path="/notes/"
-    />
     <Route
       element={
         <Shelled>

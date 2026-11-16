@@ -1,80 +1,48 @@
 ---
 name: customer-post-training-workflow
-description: End-to-end workflow for post-training a model for a customer from their production LLM traces, from data access through trace cleaning, experiment selection, SFT or RL training, evaluation and delivery. Use when starting or resuming customer post-training work, to find which stage comes next and which skill runs it.
+description: End-to-end workflow for post-training a model for a customer from their production LLM traces, from export and task breakdown through trace cleaning, experiments, training, evaluation and delivery. Use when starting or resuming customer post-training work, to find which stage comes next and which skill runs it.
 ---
 
 # Customer post-training workflow
 
-The map for turning a customer's production traces into a model that beats their current one on their workload.
-Each stage names the skill that runs it. Where a stage has no skill yet, follow the notes here and write the skill
-once the procedure has worked on a real customer.
-
-Work stage by stage. A stage is done when its exit criterion holds, not when its code runs. Quality of the data
-bounds everything after it, so do not hurry stage 2 to reach training.
+Turn a customer's production traces into a model that beats their current one on a task they care about. Work stage
+by stage, and show the user each stage's results before starting the next.
 
 ## Ground rules
 
-- Keep each customer's data and working files in their own folder outside this repository
-  (`~/dev/<customer>/`), next to any clone of their code. Commit only reusable tooling and skills here.
-- Access to a customer's accounts, such as a PostHog impersonation, is read-only. Confirm the org and project before
-  querying, run only reads, and tell the user when they can log out.
-- Model calls that see customer content go through OpenRouter zero-data-retention providers. Cheap models are enough
-  for tagging, review and auditing.
-- Report each stage's numbers to the user before starting the next.
+- Keep the customer's data and any clone of their code in their own folder outside this repository
+  (`~/dev/<customer>/`). Never commit or push either. Only skills and reusable tooling go in this repository.
+- Customer accounts, such as a PostHog impersonation, are read-only: confirm the org and project, run only
+  queries, and tell the user when they can log out.
+- Model calls that see customer content go through OpenRouter zero-data-retention providers.
 
 ## Stages
 
-| # | Stage | Skill | Exit criterion |
-|---|---|---|---|
-| 1 | Understand and export the source | `$trace-cleaning`, step 0 | Raw export verified against source totals; coverage, retention and capture loss reported |
-| 2 | Clean and anonymize | `$trace-cleaning` | A close-read round of 20 and then 40 with no serious findings; gates pass |
-| 3 | Choose the first experiments | planned (`$post-training-experiments`) | A ranked list of experiments with hypotheses, baselines, budget and the eval that decides each |
-| 4 | Build training data or RL environments | none yet | SFT rows or environments spot-checked in rounds of 20 and 40 |
-| 5 | Train | `$dev-training`, `$gpu-host-lease`, `$experiment-run` | Runs finish within budget with checkpoints and logs |
-| 6 | Evaluate | `$experiment-run` | Candidate against the customer's current model and base on held-out data, with uncertainty |
-| 7 | Deliver | none yet | Adapter uploaded as a task model version and promoted only with the user's approval |
+1. **Export the traces.** Find where the full prompts and responses live, check retention (content may be expiring),
+   and download everything with paginated read-only queries. Check the row count against the source.
 
-### 1. Understand and export the source
+2. **Break the traces into tasks.** A task is one kind of model call with one job, usually one agent or prompt.
+   For each task, find:
+   - what it does, from sample traces and the customer's code;
+   - the model it uses;
+   - calls, traces and tokens per day;
+   - cost, and its share of the total;
+   - latency and error rate.
 
-Learn the customer's product and agents from their code and traces: which agents exist, what each one does, its
-models, volume, cost and latency. Find where full content lives and how their instrumentation shaped it. Export
-everything still within retention, since it expires. `$trace-cleaning` step 0 has the profiling and export
-procedure.
+   Show the user a table, one row per task, and choose the task or tasks to train on. Look at cost, volume, whether
+   a smaller model could do the job, and whether results can be scored. Some customers have only one task.
 
-### 2. Clean and anonymize
+3. **Clean and anonymize** the chosen tasks with `$trace-cleaning`.
 
-Run `$trace-cleaning` until its close-read loop is clean. Its output is the only data later stages use.
+4. **Choose the first experiments.** A skill for this is planned. For now, write down each experiment's hypothesis,
+   data, baseline, budget and the eval that decides it.
 
-### 3. Choose the first experiments
+5. **Build the training data or RL environments.** Split by conversation or end user, never by row. Spot-check the
+   result in rounds of 20 and then 40, as in cleaning.
 
-To be written as `$post-training-experiments`. Until then, choose from the stage 1 profile:
+6. **Train.** Get GPUs with `$dev-training` or `$gpu-host-lease`, and run each experiment as `$experiment-run`
+   describes.
 
-- which agent or call type carries the most volume, cost or latency, and whether a smaller model could serve it;
-- whether outcomes can be scored automatically (structured output, tool success, the user's next action), which
-  decides between SFT and RL;
-- how much clean, unique data each candidate has after stage 2;
-- the cheapest experiment that would show a gain, and the baseline it must beat.
+7. **Evaluate** on held-out data. Compare against the customer's current model and the untrained base model.
 
-State each experiment's hypothesis, data, baseline, budget, timeout and deciding eval before running it.
-
-### 4. Build training data or RL environments
-
-Split by conversation or by customer end user, never by row. Restore what the capture dropped where the customer's
-code makes it recoverable (for example a system prompt kept in source). Spot-check the built rows or generated tasks
-in rounds of 20 and then 40, as in stage 2.
-
-### 5. Train
-
-Get compute with `$dev-training` (spot or on-demand VMs) or `$gpu-host-lease` (a host from the serving pool). Run
-each experiment as `$experiment-run` describes, with an absolute deadline and cleanup.
-
-### 6. Evaluate
-
-Evaluate on held-out data the model never saw, against the customer's current model and the untrained base. Include
-an untrained control when a gain is small. Report the uncertainty, and do not carry a result over to another model,
-agent or workload without measuring it there.
-
-### 7. Deliver
-
-Upload the adapter as a task model version, and promote it only with the user's approval. Report what it was trained
-on, how it was evaluated and its known limits.
+8. **Deliver** the adapter as a task model version. Promote it only with the user's approval.

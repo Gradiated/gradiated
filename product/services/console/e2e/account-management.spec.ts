@@ -93,16 +93,16 @@ test("account menus create and select organizations and workspaces", async ({
   ).toBeVisible();
 });
 
-test("adding a workspace waits for the organization to load", async ({
+test("the console shell waits for the current user to load", async ({
   page,
 }) => {
   await page.route("**/api/v1/me", () => undefined);
   await page.goto("/api-keys");
 
-  await page.getByRole("button", { name: "Workspace menu" }).click();
+  await expect(page.getByLabel("Loading")).toBeVisible();
   await expect(
-    page.getByRole("menuitem", { name: "Add workspace" }),
-  ).toHaveAttribute("aria-disabled", "true");
+    page.getByRole("button", { name: "Workspace menu" }),
+  ).toHaveCount(0);
 });
 
 test("settings save organization and workspace names across reloads", async ({

@@ -389,6 +389,21 @@ async fn relay(
     Ok(response)
 }
 
+/// Every `Content-Encoding` field in order, joined as one list, or none when
+/// the body is not encoded. Stacked codings can arrive as separate fields.
+fn content_codings(headers: &axum::http::HeaderMap) -> Option<String> {
+    let codings: Vec<&str> = headers
+        .get_all(axum::http::header::CONTENT_ENCODING)
+        .iter()
+        .filter_map(|value| value.to_str().ok())
+        .flat_map(|value| value.split(','))
+        .map(str::trim)
+        .filter(|coding| !coding.is_empty() && !coding.eq_ignore_ascii_case("identity"))
+        .collect();
+
+    (!codings.is_empty()).then(|| codings.join(", "))
+}
+
 fn captured(
     identity: &Identity,
     headers: &axum::http::HeaderMap,
@@ -420,8 +435,31 @@ fn captured(
         path,
         retention_days: identity.trace_retention_days,
         request_content_type: header(&axum::http::header::CONTENT_TYPE),
-        request_content_encoding: header(&axum::http::header::CONTENT_ENCODING)
-            .filter(|coding| !coding.trim().eq_ignore_ascii_case("identity")),
+        request_content_encoding: content_codings(headers),
         request,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_content_encoding_field_is_kept_in_order() {
+        let mut headers = axum::http::HeaderMap::new();
+        assert_eq!(content_codings(&headers), None);
+        headers.append(
+            CONTENT_ENCODING_HEADER,
+            HeaderValue::from_static("identity"),
+        );
+        assert_eq!(content_codings(&headers), None);
+        headers.append(CONTENT_ENCODING_HEADER, HeaderValue::from_static("gzip"));
+        headers.append(
+            CONTENT_ENCODING_HEADER,
+            HeaderValue::from_static("br, zstd"),
+        );
+        assert_eq!(content_codings(&headers).as_deref(), Some("gzip, br, zstd"));
+    }
+
+    const CONTENT_ENCODING_HEADER: HeaderName = axum::http::header::CONTENT_ENCODING;
 }

@@ -1,7 +1,9 @@
 """`gradctl env build`: build the repository .env from the shared development secret.
 
 Reads gradiated/dev/env from AWS Secrets Manager and writes .env with mode
-0600. Variables in the existing .env that the secret does not hold are kept
+0600. With --with-fde it also reads gradiated/dev/fde, the forward-deployed
+engineering keys for customer work, whose values win where both secrets name a
+variable. Variables in the existing .env that the secrets do not hold are kept
 in a local-only section. Prints variable names only, never values.
 
 Uses the gradiated-restricted profile by default, which every collaborator
@@ -22,6 +24,7 @@ from pathlib import Path
 from .core import Context, DependencyMissing, Meta, Result, group, leaf
 
 SECRET_ID = "gradiated/dev/env"
+FDE_SECRET_ID = "gradiated/dev/fde"
 REGION = "us-east-1"
 ACCOUNT_ID = "873716897517"
 SSO_SESSION = {
@@ -59,27 +62,27 @@ def ensure_profile(profile: str) -> None:
     print(f"Added the {profile} AWS profile.")
 
 
-def fetch(profile: str) -> subprocess.CompletedProcess:
+def fetch(profile: str, secret_id: str = SECRET_ID) -> subprocess.CompletedProcess:
     return subprocess.run(
-        ["aws", "secretsmanager", "get-secret-value", "--secret-id", SECRET_ID,
+        ["aws", "secretsmanager", "get-secret-value", "--secret-id", secret_id,
          "--profile", profile, "--region", REGION,
          "--query", "SecretString", "--output", "text"],
         capture_output=True, text=True,
     )
 
 
-def read_secret(profile: str) -> dict[str, str]:
+def read_secret(profile: str, secret_id: str = SECRET_ID) -> dict[str, str]:
     ensure_profile(profile)
-    result = fetch(profile)
+    result = fetch(profile, secret_id)
     # A missing assignment is AccessDenied (Secrets Manager) or ForbiddenException
     # (SSO); signing in again cannot fix either.
     if result.returncode and not any(code in result.stderr for code in ("AccessDenied", "ForbiddenException")):
         print(f"Signing in to AWS as {profile}; approve the request in your browser.")
         subprocess.run(["aws", "sso", "login", "--profile", profile], check=True)
-        result = fetch(profile)
+        result = fetch(profile, secret_id)
     if result.returncode:
         sys.exit(
-            f"Could not read {SECRET_ID} with the {profile} profile. Ask an "
+            f"Could not read {secret_id} with the {profile} profile. Ask an "
             "administrator to add you with the restricted access level in "
             "infra/bootstrap/identity-center/people.tf."
         )
@@ -89,7 +92,7 @@ def read_secret(profile: str) -> dict[str, str]:
         # shells drop NUL bytes, so neither survives .env.
         if (not NAME.fullmatch(name) or not isinstance(value, str)
                 or value.splitlines() not in ([], [value]) or "\0" in value):
-            sys.exit(f"{SECRET_ID} holds an entry that cannot go in .env: {name}")
+            sys.exit(f"{secret_id} holds an entry that cannot go in .env: {name}")
     return values
 
 
@@ -143,12 +146,20 @@ def build(ctx: Context) -> Result:
     if target.is_symlink():
         sys.exit(f"{target} is a symlink. Remove it or point mise at a regular file, and run again.")
     values = read_secret(ctx.args.profile)
+    sources, overridden = [SECRET_ID], []
+    if ctx.args.with_fde:
+        fde = read_secret(ctx.args.profile, FDE_SECRET_ID)
+        overridden = sorted(set(values) & set(fde))
+        values.update(fde)
+        sources.append(FDE_SECRET_ID)
+    source = " and ".join(sources)
     existing = read_existing(target)
     # Keep every local line in file order: one may refer to another before it,
     # and a repeated name changes meaning part way through the file.
     kept = [(name, line) for name, line in existing if name not in values]
 
-    lines = [f"# Built from {SECRET_ID} by `gradctl env build`; rerun to refresh."]
+    command = "gradctl env build --with-fde" if ctx.args.with_fde else "gradctl env build"
+    lines = [f"# Built from {source} by `{command}`; rerun it to refresh."]
     lines += [f"{name}={quote(values[name])}" for name in sorted(values)]
     if kept:
         lines += ["", LOCAL_HEADER, *(line for _, line in kept)]
@@ -165,14 +176,17 @@ def build(ctx: Context) -> Result:
 
     added = sorted(set(values) - {name for name, _ in existing})
     kept_names = list(dict.fromkeys(name for name, _ in kept))
-    text = [f"Wrote {target} with {len(values)} variables from {SECRET_ID}."]
+    text = [f"Wrote {target} with {len(values)} variables from {source}."]
+    if overridden:
+        text.append(f"From {FDE_SECRET_ID} instead of {SECRET_ID}: " + ", ".join(overridden))
     if added:
         text.append("Added: " + ", ".join(added))
     if kept_names:
         text.append("Kept local-only: " + ", ".join(kept_names))
     # Names only, never values.
     return Result(data={"path": str(target), "variables": sorted(values), "added": added,
-                        "kept_local_only": kept_names}, text="\n".join(text))
+                        "kept_local_only": kept_names, "sources": sources, "fde_overrides": overridden},
+                  text="\n".join(text))
 
 
 def login(ctx: Context) -> Result:
@@ -192,6 +206,8 @@ def register(commands, common) -> None:
         "Write .env (mode 0600) from gradiated/dev/env, keeping local-only variables; prints names, never values",
         effects="write", repo=True, tailnet=False, interactive=True, requires=("aws",)), common)
     parser.add_argument("--profile", default="gradiated-restricted", help="AWS profile that reads the secret")
+    parser.add_argument("--with-fde", action="store_true",
+                        help="Also read gradiated/dev/fde (forward-deployed engineering keys); its values win")
     aws = group(commands, "aws", "Gradiated AWS access")
     parser = leaf(aws, "login", login, Meta(
         "Sign in to AWS SSO, creating the profile if it is missing (opens a browser)",

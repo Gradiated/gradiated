@@ -308,6 +308,7 @@ def main():
         ('keda-hpa-api', 'AutoscalingLimited', '10m', 2, 1, False),
         ('keda-hpa-api', 'AutoscalingLimited', '10m', 20, 0, False),
         ('keda-hpa-api', 'AutoscalingLimited', '10m', 20, 1, True),
+        ('keda-hpa-collector', 'AutoscalingLimited', '10m', 20, 1, True),
         ('keda-hpa-proxy', 'RequestPathAutoscalingLimited', '3m', 20, 1, True),
         ('keda-hpa-proxy', 'RequestPathAutoscalingLimited', '1m', 20, 1, False),
         ('keda-hpa-gateway', 'RequestPathAutoscalingLimited', '3m', 2, 1, False),
@@ -343,10 +344,10 @@ def main():
                      alert if fires else None, [alert],
                      {'namespace': namespace, 'deployment': deployment}, duration)
 
-    for missing in (None, 'api', 'gateway', 'proxy', 'worker', 'mcp'):
+    for missing in (None, 'api', 'gateway', 'proxy', 'worker', 'mcp', 'collector'):
         inputs = [{'series': 'kube_horizontalpodautoscaler_spec_max_replicas'
                    + f'{{namespace="gradiated",horizontalpodautoscaler="keda-hpa-{service}"}}',
-                   'values': '20+0x8'} for service in ('api', 'gateway', 'proxy', 'worker', 'mcp') if service != missing]
+                   'values': '20+0x8'} for service in ('api', 'gateway', 'proxy', 'worker', 'mcp', 'collector') if service != missing]
         alert = 'AutoscalerMissing'
         scenario(f'missing HPA {missing}', inputs, alert if missing else None, [alert],
                  {'namespace': 'gradiated', 'horizontalpodautoscaler': f'keda-hpa-{missing}'}, '2m')

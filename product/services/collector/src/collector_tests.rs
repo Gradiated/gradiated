@@ -730,3 +730,114 @@ async fn a_manifest_upload_failure_preserves_the_spool_for_restart_and_reuses_th
     assert_eq!(batch::frames(&frame).next().unwrap().record, body);
     restarted.shutdown(Duration::from_secs(5)).await;
 }
+
+#[tokio::test]
+async fn a_full_memory_budget_refuses_at_once_and_releases_after_each_request() {
+    let running = start(limits());
+    let state = running.collector.state.clone();
+    let held = state
+        .buffer
+        .clone()
+        .try_acquire_many_owned(4 * 1024 * 1024 - 100)
+        .unwrap();
+    let body = record(Uuid::now_v7(), "budget");
+    let send = |body: Vec<u8>| {
+        let request = Request::post("/v1/contents")
+            .header("authorization", format!("Bearer {TOKEN}"))
+            .header("content-length", body.len())
+            .body(Body::from(body))
+            .unwrap();
+        public_router(state.clone()).oneshot(request)
+    };
+
+    assert_eq!(
+        send(body.clone()).await.unwrap().status(),
+        StatusCode::SERVICE_UNAVAILABLE
+    );
+    assert!(state.metrics.encode().contains("reason=\"busy\"} 1"));
+
+    drop(held);
+    assert_eq!(send(body).await.unwrap().status(), StatusCode::ACCEPTED);
+    assert_eq!(state.buffer.available_permits(), 4 * 1024 * 1024);
+}
+
+#[tokio::test]
+async fn a_body_without_a_length_reserves_the_record_limit() {
+    let running = start(limits());
+    let state = running.collector.state.clone();
+    let _held = state
+        .buffer
+        .clone()
+        .try_acquire_many_owned(3 * 1024 * 1024 + 1)
+        .unwrap();
+    let request = Request::post("/v1/contents")
+        .header("authorization", format!("Bearer {TOKEN}"))
+        .body(Body::from(record(Uuid::now_v7(), "unsized")))
+        .unwrap();
+
+    assert_eq!(
+        public_router(state)
+            .oneshot(request)
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::SERVICE_UNAVAILABLE
+    );
+}
+
+#[tokio::test]
+async fn a_declared_oversized_body_gets_413_even_when_the_budget_is_busy() {
+    let running = start(limits());
+    let state = running.collector.state.clone();
+    let _held = state
+        .buffer
+        .clone()
+        .try_acquire_many_owned(4 * 1024 * 1024)
+        .unwrap();
+    let request = Request::post("/v1/contents")
+        .header("authorization", format!("Bearer {TOKEN}"))
+        .header("content-length", 1024 * 1024 + 1)
+        .body(Body::from(vec![b' '; 1024 * 1024 + 1]))
+        .unwrap();
+
+    assert_eq!(
+        public_router(state.clone())
+            .oneshot(request)
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::PAYLOAD_TOO_LARGE
+    );
+    assert!(!state.metrics.encode().contains("reason=\"busy\""));
+}
+
+#[tokio::test]
+async fn requests_in_flight_rise_while_handled_and_return_to_zero() {
+    let running = start(limits());
+    let state = running.collector.state.clone();
+    let in_flight = || {
+        state
+            .metrics
+            .encode()
+            .lines()
+            .find_map(|line| line.strip_prefix("gradiated_collector_requests_in_flight "))
+            .map(str::to_owned)
+    };
+    let guard = state.metrics.request_started();
+    assert_eq!(in_flight().as_deref(), Some("1"));
+    drop(guard);
+
+    let request = Request::post("/v1/contents")
+        .header("authorization", format!("Bearer {TOKEN}"))
+        .body(Body::from(record(Uuid::now_v7(), "in-flight")))
+        .unwrap();
+    assert_eq!(
+        public_router(state.clone())
+            .oneshot(request)
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::ACCEPTED
+    );
+    assert_eq!(in_flight().as_deref(), Some("0"));
+}

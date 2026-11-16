@@ -14,14 +14,14 @@ be 30, 90 or 180, and `trainable` must be `true` for `hosted` and `false` for
 normalizes them into generation records. Hosted Chat Completions include a
 canonical prompt and answer; length-limited answers are marked truncated.
 
-| Status | Meaning                                                                                 |
-| ------ | --------------------------------------------------------------------------------------- |
-| 202    | The record is written to disk and will be uploaded.                                     |
-| 204    | The record has no task, so it is not stored.                                            |
-| 400    | The body is not a valid contents record.                                                |
-| 401    | The token is missing or wrong.                                                          |
-| 413    | The body is larger than `COLLECTOR_MAX_RECORD_BYTES`.                                   |
-| 503    | The disk budget is full or the collector is shutting down. The sender drops the record. |
+| Status | Meaning                                                                                                               |
+| ------ | --------------------------------------------------------------------------------------------------------------------- |
+| 202    | The record is written to disk and will be uploaded.                                                                   |
+| 204    | The record has no task, so it is not stored.                                                                          |
+| 400    | The body is not a valid contents record.                                                                              |
+| 401    | The token is missing or wrong.                                                                                        |
+| 413    | The body is larger than `COLLECTOR_MAX_RECORD_BYTES`.                                                                 |
+| 503    | The memory or disk budget is full, or the collector is shutting down. The sender retries once, then drops the record. |
 
 Generation metadata (all fields copied into manifests) is capped at 64 KiB per
 record. Batches also seal before their manifest reaches 8 MiB, independently of
@@ -74,6 +74,27 @@ Without `DATABASE_URL`, standalone capture still works but registers no tasks.
 Metrics expose `gradiated_collector_tasks_registered_total` and
 `gradiated_collector_task_registration_failures_total`.
 
+## Compressed bodies
+
+The proxy captures compressed request and response bodies as sent, with their
+`Content-Encoding`. The collector decodes `gzip`, `x-gzip`, `deflate` (zlib or
+raw), `br` and `zstd`, including stacked codings, with a 96 MiB output limit
+against decompression bombs, then parses the decoded body like any other. A
+cancelled or failed stream keeps what decoded before it ended. A body that does
+not decode, or another coding, is stored raw with `raw.request_content_encoding`
+or `raw.response_content_encoding` naming the coding that still applies.
+
+## Scaling
+
+KEDA scales the collector from 3 to 12 replicas
+([`collector-autoscaling.yaml`](../../../infra/environments/prod/us-east-1/kubernetes/workloads/collector-autoscaling.yaml)).
+The demand is `gradiated_collector_requests_in_flight`, intake requests being
+handled or waiting for one of the 8 slots, at 4 per pod, alongside CPU and
+memory. Proxies find every replica through the `collector-headless` Service and
+spread posts across them, so a new replica takes traffic within 5 seconds. Scale
+down removes one pod every 5 minutes; the pod stops taking posts, then seals and
+uploads its open batches within `COLLECTOR_DRAIN_SECONDS`.
+
 ## Configuration
 
 | Variable                            | Default        | Purpose                                                                       |
@@ -87,8 +108,9 @@ Metrics expose `gradiated_collector_tasks_registered_total` and
 | `COLLECTOR_REPLICA`                 | `HOSTNAME`     | Batch name prefix, unique per replica                                         |
 | `COLLECTOR_BIND_ADDRESS`            | `0.0.0.0:3004` | Intake listener                                                               |
 | `COLLECTOR_ADMIN_ADDRESS`           | `0.0.0.0:9004` | Health and metrics                                                            |
-| `COLLECTOR_MAX_RECORD_BYTES`        | `33554432`     | Largest record                                                                |
-| `COLLECTOR_MAX_CONCURRENT_REQUESTS` | `8`            | Requests handled at once; with the record limit, this bounds memory           |
+| `COLLECTOR_MAX_RECORD_BYTES`        | `100663296`    | Largest record: a 32 MB request and its response, binary bodies in base64     |
+| `COLLECTOR_MAX_BUFFERED_BYTES`      | `268435456`    | Request bodies held at once; a post that does not fit gets 503 `busy`         |
+| `COLLECTOR_MAX_CONCURRENT_REQUESTS` | `8`            | Requests handled at once                                                      |
 | `COLLECTOR_MAX_OPEN_STREAMS`        | `256`          | Open batches before the oldest is sealed early                                |
 | `COLLECTOR_MAX_PENDING_BATCHES`     | `1024`         | Sealed batches waiting to upload before records that need a new batch get 503 |
 | `COLLECTOR_MAX_BATCH_BYTES`         | `16777216`     | Batch size that triggers upload                                               |

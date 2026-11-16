@@ -161,6 +161,79 @@ def check_autoscaling(root):
                     series('gradiated_api_http_requests_total', '0+300x8', 'a', route='/v1/models'),
                     series('gradiated_api_http_requests_total', '0+600x8', 'b', route='/v1/models'),
                     series('gradiated_api_http_requests_total', '0+9000x8', 'a', route='/health/ready')], 30)
+    tests.extend(check_collector(workloads, applications))
+    return tests
+
+
+def check_collector(workloads, applications):
+    """The collector scales on intake requests in flight and drains batches before it exits."""
+    spec = yaml.safe_load((workloads / 'collector-autoscaling.yaml').read_text())['spec']
+    resources = list(yaml.safe_load_all((workloads / 'collector.yaml').read_text()))
+    deployment = next(d for d in resources if d['kind'] == 'Deployment')
+    config = next(d for d in resources if d['kind'] == 'ConfigMap')['data']
+    budget = next(d for d in resources if d['kind'] == 'PodDisruptionBudget')
+    headless = next(d for d in resources if d['kind'] == 'Service' and d['metadata']['name'] == 'collector-headless')
+    proxy = next(d for d in yaml.safe_load_all((workloads / 'proxy.yaml').read_text()) if d['kind'] == 'ConfigMap')
+    owners = [name for name, app in applications.items()
+              if 'collector-autoscaling.yaml' in app['spec']['source'].get('directory', {}).get('include', '')]
+    assert owners == ['collector'], owners
+    assert spec['scaleTargetRef']['name'] == 'collector'
+    assert deployment['spec']['replicas'] == spec['minReplicaCount'] == 3
+    assert spec['maxReplicaCount'] > spec['minReplicaCount']
+    assert spec['fallback']['behavior'] == 'currentReplicasIfHigher'
+    assert spec['fallback']['replicas'] >= spec['minReplicaCount']
+    assert budget['spec']['maxUnavailable'] == 1
+    pod = deployment['spec']['template']['spec']
+    pre_stop = pod['containers'][0]['lifecycle']['preStop']['sleep']['seconds']
+    assert pod['terminationGracePeriodSeconds'] >= int(config['COLLECTOR_DRAIN_SECONDS']) + pre_stop, \
+        'A removed collector must have time to upload its open batches'
+    down = spec['advanced']['horizontalPodAutoscalerConfig']['behavior']['scaleDown']
+    assert all(p['type'] == 'Pods' and p['value'] == 1 for p in down['policies'])
+    assert headless['spec']['clusterIP'] == 'None'
+    assert headless['spec']['selector'] == deployment['spec']['selector']['matchLabels']
+    assert proxy['data']['PROXY_COLLECTOR_DISCOVERY_HOST'] == 'collector-headless.gradiated.svc.cluster.local'
+    triggers = {t['type']: t for t in spec['triggers']}
+    assert set(triggers) == {'prometheus', 'cpu', 'memory'}
+    assert triggers['prometheus']['metadata']['ignoreNullValues'] == 'false'
+    assert triggers['prometheus']['metricType'] == 'AverageValue'
+    for resource in ('cpu', 'memory'):
+        assert triggers[resource]['metadata']['containerName'] == 'collector'
+    app = applications['collector']['spec']
+    assert 'RespectIgnoreDifferences=true' in app['syncPolicy']['syncOptions']
+    assert {'group': 'apps', 'kind': 'Deployment', 'name': 'collector',
+            'namespace': 'gradiated', 'jsonPointers': ['/spec/replicas']} in app['ignoreDifferences']
+
+    def series(metric, values, pod='a', **labels):
+        labels = {'namespace': 'gradiated', 'pod': pod, **labels}
+        selector = ','.join(f'{k}="{v}"' for k, v in labels.items())
+        return {'series': f'{metric}{{{selector}}}', 'values': values}
+
+    def inputs(pods=('a', 'b')):
+        result = [series('kube_deployment_status_replicas_available', '2+0x8', pod='', deployment='collector')]
+        for pod in pods:
+            result += [series('gradiated_collector_service_info', '1+0x8', pod),
+                       series('up', '1+0x8', pod, job='collector')]
+        return result
+
+    tests = []
+
+    def case(name, data, value):
+        tests.append({'name': f'autoscaling collector: {name}', 'interval': '30s',
+                      'input_series': data, 'promql_expr_test': [{
+                          'expr': triggers['prometheus']['metadata']['query'],
+                          'eval_time': '2m', 'exp_samples': [] if value is None else [{
+                              'labels': 'gradiated:autoscaling_demand{service="collector"}',
+                              'value': value}]}]})
+
+    case('missing telemetry is not zero', [], None)
+    case('an image without the in-flight gauge reports zero demand', inputs(), 0)
+    case('sum intake requests in flight across pods', inputs() + [
+        series('gradiated_collector_requests_in_flight', '6+0x8', 'a'),
+        series('gradiated_collector_requests_in_flight', '5+0x8', 'b')], 11)
+    case('missing pod cannot masquerade as idle', inputs(('a',)), None)
+    data = inputs()
+    next(item for item in data if item['series'].startswith('up{'))['values'] = '0+0x8'
+    case('failed scrape cannot masquerade as idle', data, None)
     return tests
 
 

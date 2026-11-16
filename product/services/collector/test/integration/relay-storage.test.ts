@@ -254,3 +254,277 @@ it.each(["complete", "cancelled"] as const)(
     }
   },
 );
+
+it("persists a binary multipart upload and audio response byte for byte", async () => {
+  const instance = await makeCase("vllm");
+  await instance.database.query(
+    "update workspaces set trace_capture_enabled = true where id = $1",
+    [instance.workspace],
+  );
+  const proxy = await fixture.startProxy({
+    PROXY_COLLECTOR_URL: collector.url,
+    PROXY_COLLECTOR_TOKEN: token,
+  });
+  const upload = Buffer.concat([
+    Buffer.from(
+      '--b0und\r\nContent-Disposition: form-data; name="model"\r\n\r\nwhisper-1\r\n' +
+        '--b0und\r\nContent-Disposition: form-data; name="file"; filename="tone.wav"\r\nContent-Type: audio/wav\r\n\r\n',
+    ),
+    Buffer.from([0x52, 0x49, 0x46, 0x46, 0xff, 0xfe, 0x00, 0x80]),
+    Buffer.from("\r\n--b0und--\r\n"),
+  ]);
+  const audio = Buffer.from([0x49, 0x44, 0x33, 0x04, 0xff, 0xfb, 0x90, 0x00]);
+  fixture.provider.reply({
+    body: audio,
+    headers: { "content-type": "audio/mpeg" },
+  });
+  const response = await proxy.client.post("/v1/audio/translations", {
+    headers: {
+      ...relayHeaders(instance, "openai"),
+      "content-type": "multipart/form-data; boundary=b0und",
+      "x-gradiated-task": "binary-storage",
+    },
+    content: upload,
+  });
+  expect(response.status).toBe(200);
+  const client = s3();
+
+  try {
+    const key = await eventually(
+      async () => {
+        const listed = await client.send(
+          new ListObjectsV2Command({
+            Bucket: bucket,
+            Prefix: `v1/ws=${instance.workspace}/`,
+          }),
+        );
+        return listed.Contents?.find((object) =>
+          object.Key?.endsWith(".manifest.json"),
+        )?.Key;
+      },
+      10_000,
+      "binary capture persisted",
+    );
+    const manifest = JSON.parse(
+      await (
+        await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }))
+      ).Body!.transformToString(),
+    );
+    const row = manifest.generations[0];
+    expect(row).toMatchObject({
+      generation_id: response.headers["x-gradiated-generation-id"],
+      protocol: "openai.http",
+      model: "whisper-1",
+      source: "relay",
+    });
+    const frame = await client.send(
+      new GetObjectCommand({
+        Bucket: bucket,
+        Key: key.replace(/\.manifest\.json$/, ".jsonl.zst"),
+        Range: `bytes=${row.offset}-${row.offset + row.length - 1}`,
+      }),
+    );
+    const decompress = (
+      zlib as unknown as { zstdDecompressSync(bytes: Uint8Array): Buffer }
+    ).zstdDecompressSync;
+    const record = JSON.parse(
+      decompress(await frame.Body!.transformToByteArray()).toString(),
+    );
+    expect(record.raw.path).toBe("/v1/audio/translations");
+    expect(record.raw.request_content_type).toBe(
+      "multipart/form-data; boundary=b0und",
+    );
+    expect(Buffer.from(record.raw.request.data, "base64")).toEqual(upload);
+    expect(record.raw.response_content_type).toBe("audio/mpeg");
+    expect(Buffer.from(record.raw.response.data, "base64")).toEqual(audio);
+  } finally {
+    client.destroy();
+  }
+});
+
+it("persists a request near the 32 MB body limit whole", async () => {
+  const instance = await makeCase("vllm");
+  await instance.database.query(
+    "update workspaces set trace_capture_enabled = true where id = $1",
+    [instance.workspace],
+  );
+  const proxy = await fixture.startProxy({
+    PROXY_COLLECTOR_URL: collector.url,
+    PROXY_COLLECTOR_TOKEN: token,
+  });
+  const attachment = Buffer.alloc(23_000_000, 7).toString("base64");
+  const request = JSON.stringify({
+    ...CHAT.body(providerModel("openai")),
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image_url",
+            image_url: { url: `data:image/png;base64,${attachment}` },
+          },
+        ],
+      },
+    ],
+  });
+  expect(request.length).toBeGreaterThan(30_000_000);
+  fixture.provider.reply({
+    body: '{"choices":[{"message":{"content":"Large"}}]}',
+    headers: { "content-type": "application/json" },
+  });
+  const response = await proxy.client.post(CHAT.path, {
+    headers: {
+      ...relayHeaders(instance, "openai"),
+      "content-type": "application/json",
+      "x-gradiated-task": "large-storage",
+    },
+    content: request,
+  });
+  expect(response.status).toBe(200);
+  const client = s3();
+
+  try {
+    const key = await eventually(
+      async () => {
+        const listed = await client.send(
+          new ListObjectsV2Command({
+            Bucket: bucket,
+            Prefix: `v1/ws=${instance.workspace}/`,
+          }),
+        );
+        return listed.Contents?.find((object) =>
+          object.Key?.endsWith(".manifest.json"),
+        )?.Key;
+      },
+      30_000,
+      "large capture persisted",
+    );
+    const manifest = JSON.parse(
+      await (
+        await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }))
+      ).Body!.transformToString(),
+    );
+    const row = manifest.generations[0];
+    const frame = await client.send(
+      new GetObjectCommand({
+        Bucket: bucket,
+        Key: key.replace(/\.manifest\.json$/, ".jsonl.zst"),
+        Range: `bytes=${row.offset}-${row.offset + row.length - 1}`,
+      }),
+    );
+    const decompress = (
+      zlib as unknown as {
+        zstdDecompressSync(
+          bytes: Uint8Array,
+          options: { maxOutputLength: number },
+        ): Buffer;
+      }
+    ).zstdDecompressSync;
+    const record = JSON.parse(
+      decompress(await frame.Body!.transformToByteArray(), {
+        maxOutputLength: 128 * 1024 * 1024,
+      }).toString(),
+    );
+    expect(record.generation_id).toBe(
+      response.headers["x-gradiated-generation-id"],
+    );
+    expect(record.raw.request.messages[0].content[0].image_url.url).toBe(
+      `data:image/png;base64,${attachment}`,
+    );
+  } finally {
+    client.destroy();
+  }
+}, 120_000);
+
+it.each(["json", "stream"] as const)(
+  "decodes a gzip %s response the client receives compressed",
+  async (kind) => {
+    const instance = await makeCase("vllm");
+    await instance.database.query(
+      "update workspaces set trace_capture_enabled = true where id = $1",
+      [instance.workspace],
+    );
+    const proxy = await fixture.startProxy({
+      PROXY_COLLECTOR_URL: collector.url,
+      PROXY_COLLECTOR_TOKEN: token,
+    });
+    const plain =
+      kind === "json"
+        ? '{"choices":[{"message":{"role":"assistant","content":"Unzipped"},"finish_reason":"stop"}]}'
+        : 'data: {"id":"c","choices":[{"index":0,"delta":{"role":"assistant","content":"Unzipped"},"finish_reason":null}]}\n\n' +
+          'data: {"id":"c","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n';
+    const compressed = zlib.gzipSync(plain);
+    fixture.provider.reply({
+      body: compressed,
+      headers: {
+        "content-type":
+          kind === "json" ? "application/json" : "text/event-stream",
+        "content-encoding": "gzip",
+      },
+    });
+    const response = await proxy.client.stream(CHAT.path, {
+      headers: {
+        ...relayHeaders(instance, "openai"),
+        "x-gradiated-task": `gzip-${kind}`,
+        "accept-encoding": "gzip, deflate, br",
+      },
+      json: {
+        ...CHAT.body(providerModel("openai")),
+        ...(kind === "stream" ? { stream: true } : {}),
+      },
+    });
+    const chunks: Buffer[] = [];
+    for await (const chunk of response.message) chunks.push(Buffer.from(chunk));
+    expect(response.status).toBe(200);
+    expect(response.headers["content-encoding"]).toBe("gzip");
+    expect(Buffer.concat(chunks)).toEqual(compressed);
+    expect(fixture.provider.requests.at(-1)?.headers["accept-encoding"]).toBe(
+      "gzip, deflate, br",
+    );
+    const client = s3();
+
+    try {
+      const key = await eventually(
+        async () => {
+          const listed = await client.send(
+            new ListObjectsV2Command({
+              Bucket: bucket,
+              Prefix: `v1/ws=${instance.workspace}/`,
+            }),
+          );
+          return listed.Contents?.find((object) =>
+            object.Key?.endsWith(".manifest.json"),
+          )?.Key;
+        },
+        10_000,
+        "gzip capture persisted",
+      );
+      const manifest = JSON.parse(
+        await (
+          await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }))
+        ).Body!.transformToString(),
+      );
+      const row = manifest.generations[0];
+      expect(row).toMatchObject({
+        protocol: "openai.chat",
+        streamed: kind === "stream",
+      });
+      const frame = await client.send(
+        new GetObjectCommand({
+          Bucket: bucket,
+          Key: key.replace(/\.manifest\.json$/, ".jsonl.zst"),
+          Range: `bytes=${row.offset}-${row.offset + row.length - 1}`,
+        }),
+      );
+      const decompress = (
+        zlib as unknown as { zstdDecompressSync(bytes: Uint8Array): Buffer }
+      ).zstdDecompressSync;
+      const record = JSON.parse(
+        decompress(await frame.Body!.transformToByteArray()).toString(),
+      );
+      expect(record.raw.response.choices[0].message.content).toBe("Unzipped");
+    } finally {
+      client.destroy();
+    }
+  },
+);

@@ -15,7 +15,7 @@ import { createWorkspaceApiKeyService } from "../src/workspaces/service.js";
 import { createTraceService } from "../src/traces/service.js";
 import { traceTaskKey } from "../src/traces/content.js";
 import { createTraceCleanup } from "../src/traces/cleanup.js";
-import type { ContentStore } from "../src/traces/storage.js";
+import { type ContentStore, MAX_RECORD_BYTES } from "../src/traces/storage.js";
 import { workspaces } from "../src/db/schema/index.js";
 import { createMemoryContentStore } from "./support/content-store.js";
 import { seedMember } from "./support/fixtures.js";
@@ -132,7 +132,7 @@ describe("generation content", () => {
     "handles a record %i bytes above the collector limit",
     async (extra) => {
       const f = await fixture();
-      const limit = 32 * 1024 * 1024;
+      const limit = MAX_RECORD_BYTES;
       const empty = { ...f.record, raw: { text: "" } };
       const text = "x".repeat(
         limit - Buffer.byteLength(JSON.stringify(empty)) + extra,

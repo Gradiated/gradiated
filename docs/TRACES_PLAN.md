@@ -175,13 +175,20 @@ HTTP from the proxy, the gateway and the API.
 - **Storage**: a Deployment with an `emptyDir` volume. The volume survives a
   container restart, so a process crash loses nothing that was accepted. A lost
   pod or node can lose up to one flush window.
-- **Limits**: at most 8 requests are handled at once and a record is at most
-  32 MiB, which bounds memory; at most 256 batches are open, and the oldest is
+- **Limits**: at most 8 requests are handled at once, a record is at most
+  96 MiB (a 32 MB request and its response, with binary bodies in base64), and
+  request bodies held at once share a 256 MiB budget, which bounds memory; at most 256 batches are open, and the oldest is
   sealed early when a new one is needed; at most 1024 sealed batches wait to
   upload; batch bytes on disk have a cap. At a cap the collector returns 503
   and the sender drops the record.
 - **Replicas**: each replica writes its own batches; the replica name is part
-  of the batch name. Replicas do not coordinate.
+  of the batch name. Replicas do not coordinate. Each proxy resolves a headless
+  Service to every replica, rotates its posts across them with up to 8 in
+  flight, and retries a refused post on another replica.
+- **Scaling**: KEDA scales the collector from 3 to 12 replicas on intake
+  requests in flight (4 per pod), CPU and memory. It scales down one pod every
+  5 minutes; a removed pod seals and uploads its open batches within its
+  60-second drain.
 - **Idempotency**: an upload retry writes the same object key, so a batch is
   never stored twice. A sender retry can store a generation twice; its
   `generation_id` is unique, so every reader keeps the first frame for an
@@ -212,9 +219,19 @@ line is either a `GenerationContent` record or the following relay envelope:
 }
 ```
 
-The proxy copies unencoded UTF-8 request and response text and never parses
-provider protocols. Encoded responses or invalid UTF-8 bodies are skipped and
-counted as `unsupported`; the client receives the original bytes. The envelope
+The proxy never parses provider protocols. It sends UTF-8 bodies as text in
+`request` and `response`, and any other bytes, such as a multipart upload or an
+audio response, as base64 in `request_base64` and `response_base64`. Each line
+has exactly one of each pair, plus `request_content_type` (null without a
+header), `response_content_type` (`application/octet-stream` without a
+header), and `request_content_encoding` and `response_content_encoding` for a
+compressed body. Every content type and coding is captured. The proxy never
+changes the customer's `Accept-Encoding` or the bytes they receive: a
+compressed body is captured as sent, and the collector decodes `gzip`,
+`x-gzip`, `deflate`, `br` and `zstd`, including stacked codings, up to 96 MiB
+of output. A stream that was cancelled or failed keeps what decoded before it
+ended. A body that cannot be decoded, or uses another coding, is stored raw
+with the coding that still applies. The envelope
 contains no credentials or header collections. `outcome` is `complete`, `error`,
 `cancelled` or `truncated`. The collector derives `started_at` from UUIDv7,
 `model` from the request, and `protocol` from provider and path. A missing trace
@@ -229,13 +246,25 @@ SSE, the collector rebuilds Anthropic Messages, OpenAI Chat and OpenAI Responses
 into their non-streaming JSON shapes. Text, reasoning and tool arguments are
 assembled; Responses terminal events supply the authoritative response snapshot.
 Supported interrupted streams retain the assembled partial response and the
-sender's outcome. A malformed stream, incomplete Anthropic tool JSON or an
-unsupported partial event is rejected as an invalid line instead of storing a
-misleading complete response. Provider usage remains in `raw.response`; the
-record's usage maps input, output, reasoning and cached input tokens, with null
-for unavailable counts. Canonical messages are deferred to a later change.
+sender's outcome. Provider usage remains in `raw.response`; the record's usage
+maps input, output, reasoning and cached input tokens, with null for unavailable
+counts. Canonical messages are deferred to a later change.
 
-The request body is capped at 32 MiB, as for single-record intake. Each line is
+Every other exchange is stored raw, so no format is lost: other endpoints such
+as embeddings, transcriptions, speech and file uploads, and any body that does
+not parse as its protocol, such as a malformed stream, incomplete Anthropic tool
+JSON or a non-JSON error page. A stream that did not complete is parsed up to its last whole event. A raw record has `protocol` `<provider>.http`,
+`canonical=null`, and `raw` holding `path`, `request_content_type`,
+`request_content_encoding`, `request`,
+`response_content_type` and `response`. Each body is parsed JSON when it parses,
+text when it is UTF-8, and `{"encoding": "base64", "data": "..."}` otherwise.
+`model` comes from the JSON body's `model`, then a multipart `model` field,
+else `unknown`. Usage reads `input_tokens`/`prompt_tokens` and
+`output_tokens`/`completion_tokens` when the response has them. A request that
+refers to an uploaded file by ID stores the ID, not the file.
+
+The request body is capped at 96 MiB, as for single-record intake. A post that
+does not fit the memory budget gets 503 `busy` before its body is read. Each line is
 validated and appended independently. Invalid lines are dropped and counted;
 records without a task are skipped and counted. A processed batch returns 202,
 even if every line was dropped. A spool refusal returns 503 for the batch;

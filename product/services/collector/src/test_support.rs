@@ -88,6 +88,7 @@ pub fn start_with(data_dir: &TempDir, limits: Limits, store: Arc<dyn ObjectStore
         replica: "collector-0".to_owned(),
         token: TOKEN.to_owned(),
         max_record_bytes: 1024 * 1024,
+        max_buffered_bytes: 4 * 1024 * 1024,
         max_concurrent_requests: 4,
         limits,
         drain: Duration::from_secs(5),

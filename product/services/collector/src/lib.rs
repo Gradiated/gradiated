@@ -1,5 +1,6 @@
 mod batch;
 mod config;
+mod decode;
 mod http;
 mod metrics;
 mod postgres;
@@ -100,6 +101,7 @@ impl Collector {
                 token: Arc::from(config.token.as_str()),
                 metrics,
                 max_record_bytes: config.max_record_bytes,
+                buffer: Arc::new(tokio::sync::Semaphore::new(config.max_buffered_bytes)),
                 max_concurrent_requests: config.max_concurrent_requests,
             },
             expiry,

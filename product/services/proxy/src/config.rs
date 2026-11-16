@@ -105,6 +105,7 @@ struct Environment {
     proxy_body_read_seconds: u64,
 
     proxy_collector_url: Option<String>,
+    proxy_collector_discovery_host: Option<String>,
     proxy_collector_token: Option<String>,
     #[serde(default = "default_capture_buffer_bytes")]
     proxy_capture_buffer_bytes: usize,
@@ -246,6 +247,9 @@ impl TryFrom<Environment> for ProxyConfig {
 
                 Some(CaptureSettings {
                     collector_url,
+                    collector_discovery_host: environment
+                        .proxy_collector_discovery_host
+                        .filter(|host| !host.is_empty()),
                     collector_token,
                     buffer_bytes: environment.proxy_capture_buffer_bytes,
                 })
@@ -459,7 +463,15 @@ mod tests {
 
         let capture = config(&[url, token]).unwrap().capture.unwrap();
         assert_eq!(capture.collector_url, url.1);
+        assert_eq!(capture.collector_discovery_host, None);
         assert_eq!(capture.buffer_bytes, 256 * 1024 * 1024);
+
+        let discovery = ("PROXY_COLLECTOR_DISCOVERY_HOST", "collector-headless");
+        let capture = config(&[url, token, discovery]).unwrap().capture.unwrap();
+        assert_eq!(
+            capture.collector_discovery_host.as_deref(),
+            Some(discovery.1)
+        );
 
         for overrides in [
             &[url][..],

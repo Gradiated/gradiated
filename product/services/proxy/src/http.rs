@@ -419,6 +419,9 @@ fn captured(
         provider,
         path,
         retention_days: identity.trace_retention_days,
+        request_content_type: header(&axum::http::header::CONTENT_TYPE),
+        request_content_encoding: header(&axum::http::header::CONTENT_ENCODING)
+            .filter(|coding| !coding.trim().eq_ignore_ascii_case("identity")),
         request,
     })
 }

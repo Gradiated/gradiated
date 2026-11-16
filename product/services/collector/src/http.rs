@@ -4,7 +4,7 @@ use axum::{
     body::Bytes,
     extract::{rejection::BytesRejection, DefaultBodyLimit, Request, State},
     http::{
-        header::{AUTHORIZATION, CONTENT_TYPE},
+        header::{AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
         HeaderMap, StatusCode,
     },
     middleware::{self, Next},
@@ -30,15 +30,20 @@ pub struct AppState {
     pub token: Arc<str>,
     pub metrics: Metrics,
     pub max_record_bytes: usize,
+    /// Bytes of request bodies held at once, across every request.
+    pub buffer: Arc<tokio::sync::Semaphore>,
     pub max_concurrent_requests: usize,
 }
 
 pub fn public_router(state: AppState) -> Router {
     Router::new()
         .route("/v1/contents", post(accept))
+        .route_layer(middleware::from_fn_with_state(state.clone(), reserve))
         .route_layer(middleware::from_fn_with_state(state.clone(), authorize))
         .layer(DefaultBodyLimit::max(state.max_record_bytes))
         .layer(ConcurrencyLimitLayer::new(state.max_concurrent_requests))
+        // Outside the concurrency limit, so requests waiting for a slot count as demand.
+        .layer(middleware::from_fn_with_state(state.clone(), count))
         .with_state(state)
 }
 
@@ -60,6 +65,38 @@ async fn authorize(State(state): State<AppState>, request: Request, next: Next) 
     } else {
         refuse(&state, StatusCode::UNAUTHORIZED, "unauthorized")
     }
+}
+
+async fn count(State(state): State<AppState>, request: Request, next: Next) -> Response {
+    let _in_flight = state.metrics.request_started();
+
+    next.run(request).await
+}
+
+/// Holds the body's bytes from the memory budget until the response is sent. A
+/// sender that does not fit gets 503 at once and retries on another replica.
+async fn reserve(State(state): State<AppState>, request: Request, next: Next) -> Response {
+    let declared = request
+        .headers()
+        .get(CONTENT_LENGTH)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.parse::<usize>().ok());
+    // A body that can never fit is refused for good, not as a retryable 503.
+    if declared.is_some_and(|bytes| bytes > state.max_record_bytes) {
+        return refuse(&state, StatusCode::PAYLOAD_TOO_LARGE, "too_large");
+    }
+    let bytes = declared
+        .unwrap_or(state.max_record_bytes)
+        .clamp(1, state.max_record_bytes);
+    let Ok(_held) = u32::try_from(bytes)
+        .ok()
+        .and_then(|bytes| state.buffer.clone().try_acquire_many_owned(bytes).ok())
+        .ok_or(())
+    else {
+        return refuse(&state, StatusCode::SERVICE_UNAVAILABLE, "busy");
+    };
+
+    next.run(request).await
 }
 
 async fn accept(

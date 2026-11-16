@@ -127,6 +127,7 @@ describe("relay capture", () => {
       status: 200,
       outcome: "complete",
       completed_at: expect.any(String),
+      request_content_type: "application/json",
       request: body,
       response_content_type: "text/event-stream",
       response: STREAM.join(""),
@@ -138,6 +139,51 @@ describe("relay capture", () => {
     expect(post?.headers["content-type"]).toBe("application/x-ndjson");
     const [sent] = fixture.provider.requests;
     expect(Object.keys(sent!.headers)).not.toContain("x-gradiated-task");
+  });
+
+  it("captures a binary multipart upload and a binary response as exact base64", async () => {
+    const proxy = await fixture.startProxy(collector.env());
+    const instance = await makeCase("vllm");
+    await enableCapture(instance);
+    const upload = Buffer.concat([
+      Buffer.from(
+        '--b0und\r\nContent-Disposition: form-data; name="model"\r\n\r\nwhisper-1\r\n' +
+          '--b0und\r\nContent-Disposition: form-data; name="file"; filename="tone.wav"\r\nContent-Type: audio/wav\r\n\r\n',
+      ),
+      Buffer.from([0x52, 0x49, 0x46, 0x46, 0xff, 0xfe, 0x00, 0x80]),
+      Buffer.from("\r\n--b0und--\r\n"),
+    ]);
+    const audio = Buffer.from([0x49, 0x44, 0x33, 0x04, 0xff, 0xfb, 0x90, 0x00]);
+    fixture.provider.reply({
+      body: audio,
+      headers: { "content-type": "audio/mpeg" },
+    });
+
+    const response = await proxy.client.stream("/v1/audio/speech", {
+      headers: {
+        ...relayHeaders(instance, "openai"),
+        "content-type": "multipart/form-data; boundary=b0und",
+        "x-gradiated-task": "voice",
+      },
+      content: upload,
+    });
+    const chunks: Buffer[] = [];
+    for await (const chunk of response.message) chunks.push(Buffer.from(chunk));
+
+    expect(response.status).toBe(200);
+    expect(Buffer.concat(chunks)).toEqual(audio);
+    expect(fixture.provider.requests.at(-1)?.body).toEqual(upload);
+    const line = await capturedFor(
+      String(response.headers["x-gradiated-generation-id"]),
+    );
+    expect(line.path).toBe("/v1/audio/speech");
+    expect(line.request_content_type).toBe(
+      "multipart/form-data; boundary=b0und",
+    );
+    expect(line.request).toBeUndefined();
+    expect(Buffer.from(String(line.request_base64), "base64")).toEqual(upload);
+    expect(line.response_content_type).toBe("audio/mpeg");
+    expect(Buffer.from(String(line.response_base64), "base64")).toEqual(audio);
   });
 
   it.each([
@@ -239,7 +285,7 @@ describe("relay capture", () => {
     ).toBe(false);
   });
 
-  it("forwards compressed bytes unchanged and counts the unsupported capture", async () => {
+  it("forwards compressed bytes unchanged and captures them with their coding", async () => {
     const proxy = await fixture.startProxy(collector.env());
     const instance = await makeCase("vllm");
     await enableCapture(instance);
@@ -268,15 +314,16 @@ describe("relay capture", () => {
     expect(response.status).toBe(200);
     expect(response.headers["content-encoding"]).toBe("gzip");
     expect(Buffer.concat(chunks)).toEqual(compressed);
-    expect((await proxy.admin.get("/metrics")).text).toContain(
-      'gradiated_proxy_captures_total{result="unsupported"} 1',
+    const line = await capturedFor(
+      String(response.headers["x-gradiated-generation-id"]),
     );
-    expect(
-      collector.lines.some(
-        (line) =>
-          line.generation_id === response.headers["x-gradiated-generation-id"],
-      ),
-    ).toBe(false);
+    expect(line.response_content_encoding).toBe("gzip");
+    expect(Buffer.from(String(line.response_base64), "base64")).toEqual(
+      compressed,
+    );
+    expect(fixture.provider.requests.at(-1)?.headers["accept-encoding"]).toBe(
+      "gzip",
+    );
   });
 
   it("sends queued generations before the proxy exits on SIGTERM", async () => {

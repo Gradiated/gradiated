@@ -5,15 +5,13 @@ description: End-to-end workflow for post-training a model for a customer from t
 
 # Customer post-training workflow
 
-Turn a customer's production traces into a model that beats their current one on a task they care about. Work stage
-by stage, and show the user each stage's results before starting the next.
+Turn a customer's production traces into a model that beats their current one on a task they care about. Work stage by stage, and show the researcher each stage's results before starting the next.
 
 ## Ground rules
 
 - Keep the customer's data and any clone of their code in their own folder outside this repository
   (`~/dev/<customer>/`). Never commit or push either. Only skills and reusable tooling go in this repository.
-- Customer accounts, such as a PostHog impersonation, are read-only: confirm the org and project, run only
-  queries, and tell the user when they can log out.
+- When getting trace data from the customers account, such as a PostHog impersonation, you should only take read-only actions: confirm the org and project, run only queries, and tell the user when they can log out.
 - Model calls that see customer content go through OpenRouter zero-data-retention providers.
 
 ## Stages
@@ -22,15 +20,18 @@ by stage, and show the user each stage's results before starting the next.
    and download everything with paginated read-only queries. Check the row count against the source.
 
 2. **Break the traces into tasks.** A task is one kind of model call with one job, usually one agent or prompt.
-   For each task, find:
-   - what it does, from sample traces and the customer's code;
-   - the model it uses;
-   - calls, traces and tokens per day;
-   - cost, and its share of the total;
-   - latency and error rate.
+   Group the traces into tasks, then read the customer's codebase to understand each one. Write a short report per
+   task, a few paragraphs rather than a table row, covering:
+   - **What it does and how it is set up:** for example, an agent with an MCP server and these tools, a one-shot
+     extraction prompt, or a subagent called by another task. Say where it lives in the code.
+   - **Model and usage:** the model, calls and traces per day, tokens, cost and its share of the total, latency and
+     error rate.
+   - **Evals:** whether the codebase has evals for it, what they measure, and how developed they are (none, a few
+     hand-checked examples, a scored dataset, or running in CI).
+   - **People:** who commits to it most often, and recently, from the git history of its files.
 
-   Show the user a table, one row per task, and choose the task or tasks to train on. Look at cost, volume, whether
-   a smaller model could do the job, and whether results can be scored. Some customers have only one task.
+   Choose the task or tasks to train on with the user. Weigh cost, volume, whether a smaller model could do the job,
+   and whether results can be scored. Some customers have only one task.
 
 3. **Clean and anonymize** the chosen tasks with `$trace-cleaning`.
 

@@ -87,7 +87,6 @@ impl Admission {
         Ok(())
     }
 
-    /// Returns the body's bytes to the shared budget, for a body that is refused.
     pub fn release_bytes(&mut self) {
         self.bytes = None;
     }

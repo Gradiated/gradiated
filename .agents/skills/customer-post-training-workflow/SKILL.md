@@ -16,6 +16,9 @@ these are, and **end users** are the customer's own users.
   (`~/dev/<customer>/`). Never commit or push either. Only skills and reusable tooling go in this repository.
 - When getting trace data from the customers account, such as a PostHog impersonation, you should only take read-only actions: confirm the org and project, run only queries, and tell the researcher when they can log out.
 - Model calls that see customer content go through OpenRouter zero-data-retention providers.
+- Track cost per customer and stage in the FDE PostHog project: OpenRouter requests send the customer as `user` and
+  the stage in `trace` (OpenRouter Broadcast forwards them, without content); GPU time is tagged with
+  `gradctl compute up --customer <customer> --stage <stage>` and sent by `gradctl compute meter` and `down`.
 - Train and evaluate the model inside the customer's own harness (their agent framework, prompts, tools and
   request format), so it sees in training exactly what it will see in production.
 

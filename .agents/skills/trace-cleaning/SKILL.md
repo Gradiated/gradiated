@@ -69,7 +69,10 @@ Read a random sample of traces from the chosen task before writing any code. Lea
 conversations are about, where personal and customer data appears (prose, tool arguments, tool results, tables),
 what code or structured data must not change, and what was lost when the trace was captured.
 
-Agree with the researcher what gets replaced, what stays, and which rows get dropped.
+Agree with the researcher what gets replaced, what stays, and which rows get dropped. Always replace hard PII:
+people, emails, phones, companies other than manufacturers, street addresses and account, customer, job and PO
+numbers. Context names that are not personal, such as project names, can be kept when replacing them would make
+traces inconsistent; at Bild they caused most remaining defects, and keeping them was the right call.
 
 ## 3. Build the first version
 
@@ -83,14 +86,23 @@ cleaning code from what they show:
 - **Anonymize:** replace each real name, company, email, id, address and secret with a fake of the same kind. A
   person's name becomes another plausible person's name, an organization another organization name, an address
   another address, and an id an id of the same shape. A cheap model tags names and companies in prose; patterns
-  catch emails, URLs, ids and phones everywhere.
+  catch emails, URLs, ids, phones, licence numbers and user names in file paths everywhere.
+- **Replace names word by word:** give each identifying word one fake word used everywhere in the conversation, and
+  keep generic words. Every form of a name then changes the same way ("Quillmere Tower", `QUILLMERE_TWR.pdf`),
+  where whole-name fakes needed clustering of forms and kept failing. A name made only of generic words gets one
+  whole fake.
+- **Decide what is generic from the data:** a word used by many different end users across the dataset (door,
+  floor, plans) is generic; a dictionary is the wrong test. Build the manufacturer list from the customer's code
+  and from manufacturer fields in tool results, and never replace those names.
 - **Keep fakes stable and varied:** the same real value always gets the same fake, derived from a seeded hash, so
   it stays consistent across all traces. Draw fakes from a large pool so few are reused across the dataset, and never
   give two real values the same fake within a trace.
-- **Protect code:** never change code, queries, schemas or field names.
+- **Protect code and structure:** never change code, queries, schemas, JSON field names, domain codes (spec
+  sections, state codes) or two-letter acronyms. Change a number or code only inside the name it belongs to, so a
+  house number never changes a coordinate elsewhere.
 - **Final check:** drop any row where a known real value or a hard pattern survives.
 
-Run it on the whole dataset, and count rows in, rows out and drops by reason.
+Run it on the sample, and count rows in, rows out and drops by reason.
 
 ## 4. Check
 
@@ -103,11 +115,37 @@ Passing these is not enough. Close reads find what they miss.
 
 ## 5. Close-read, fix, repeat
 
-1. Draw a fresh random sample of 20 traces that no earlier round has read.
+Iterate on samples, not the whole dataset. Each round takes a minute and costs cents:
+
+1. Draw a fresh random sample of 20 traces that no earlier round has read, from traces that contain values to
+   replace, and anonymize only those.
 2. Have a cheap ZDR model compare each raw trace with its anonymized version. It reports real data left behind,
    anything that changes the task (merged or split entities, broken references, code or numbers that no longer
    agree), and rows too poor to train on.
-3. Fix each kind of defect in the code, not in single rows, and add a test with made-up values.
-4. Rerun everything and draw a new sample.
+3. Verify every serious finding with a stronger ZDR model given the policy as an explicit checklist: what is
+   replaced, what is kept, and what counts as serious. Cheap reviewers often report the policy itself as a defect;
+   count only confirmed findings.
+4. Fix each kind of defect in the code, not in single rows, and add a test with made-up values.
+5. Draw a new sample and repeat.
 
-Stop when a round of 20 and then a round of 40 find nothing serious. Report the rounds and what each one fixed.
+Stop when rounds of 20 and then 40 have few confirmed serious defects. When several rounds do not move the rate,
+change the design or the policy instead of adding rules, and measure before paying for a stronger tagger (at Bild a
+10x more expensive tagger gave the same rate). Then run the whole dataset once, and measure it on a fresh sample of
+about 100. Report the rounds and what each one fixed.
+
+## 6. Tag and filter
+
+Tag every trace for the environment: deterministic tags from the messages (decisions per step, tools used, whether
+the request was captured) and judged tags from a cheap ZDR model (task type, completion state, failure mode, how a
+rollout could be scored, signal value). Drop only duplicates and traces that are not meaningful. Keep failures,
+capture gaps and low-signal traces, flagged, so each experiment can choose its own subset.
+
+## Running the pipeline
+
+- Cache every model call by its input, so a rerun only pays for text that changed.
+- Write results as each trace finishes, cap every retry loop and request timeout, and print progress, so one slow
+  request cannot stall a run.
+- Run long jobs as one chain that writes a log per stage. Never start a second copy that writes the same files, and
+  never pipe a long job through `head`.
+- Log the cost of every request with the customer, stage and run, and send it to PostHog (see the
+  customer-post-training workflow).

@@ -5,8 +5,11 @@ description: Anonymize and clean a customer's LLM traces into a high-quality dat
 
 # Trace cleaning
 
-The output becomes training data and RL environments, so mistakes carry through to the model. A previous
-environment was poor because its source data was badly cleaned. The goal is two things at once: no real personal or customer data is left, and every row stays accurate, consistent and worth training on.
+The goal of a cleaned trace dataset is production signal for building a high-fidelity RL environment: what end
+users actually ask for, the state they work in, the tools the agent uses, and how conversations succeed or fail.
+Both successful and failed traces matter. A previous environment was poor because its source data was badly
+cleaned, so mistakes here carry through to the model. Two things must hold at once: no real personal or customer
+data is left, and every trace stays accurate, consistent and true to the task it came from.
 
 The code changes for every customer. The loop stays the same: **read samples, build, check, read fresh samples, fix, repeat.**
 

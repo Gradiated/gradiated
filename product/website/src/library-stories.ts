@@ -74,15 +74,13 @@ const excerptFor = (slug: string): string | undefined => {
 const NOTE_ART: Record<string, StoryArt> = {
   "/library/gemma-inference-engine/": {
     tall: "/brand/library/carat.webp",
-    wide: "/brand/library/carat-wide.webp",
   },
   "/library/our-thesis/": {
     tall: "/brand/library/thesis.webp",
     wide: "/brand/library/thesis-wide.webp",
   },
   "/library/2026-10-starting-on-hard-mode/": {
-    tall: "/brand/library/mission.webp",
-    wide: "/brand/library/mission-wide.webp",
+    tall: "/brand/library/hard-mode.webp",
   },
   "/library/0-to-1-weeks-at-gradiated/": {
     tall: "/brand/library/zero-to-one.webp",

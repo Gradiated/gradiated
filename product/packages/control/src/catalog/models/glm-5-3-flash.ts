@@ -103,8 +103,8 @@ export const createDealignGlm53FlashModelConfiguration = () => {
       input_modalities: base.properties.input_modalities.map((modality) => ({
         ...modality,
         pricing: [
-          { type: "prompt", unit: "token", cost: 100 },
-          { type: "cached_prompt", unit: "token", cost: 10 },
+          { type: "prompt", unit: "token", cost: 150 },
+          { type: "cached_prompt", unit: "token", cost: 15 },
         ],
       })),
       output_modalities: base.properties.output_modalities.map((modality) => ({

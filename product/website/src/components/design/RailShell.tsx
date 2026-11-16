@@ -184,13 +184,6 @@ const SECTIONS: readonly Section[] = [
         image: "/brand/nav/handbook.webp",
       },
       {
-        title: "Team",
-        blurb: "The people building Gradiated.",
-        href: "/about/",
-        art: "var(--color-zinc-800)",
-        framed: true,
-      },
-      {
         title: "About",
         blurb: "AI research lab in Cambridge, UK.",
         href: "/about/",

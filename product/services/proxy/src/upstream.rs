@@ -87,6 +87,10 @@ impl Admission {
         Ok(())
     }
 
+    pub fn release_bytes(&mut self) {
+        self.bytes = None;
+    }
+
     fn remaining(&self, total: Duration) -> Duration {
         total.saturating_sub(self.admitted.elapsed())
     }

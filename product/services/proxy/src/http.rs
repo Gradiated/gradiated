@@ -28,6 +28,9 @@ use crate::{
     upstream::{gateway_headers, provider_headers, Admission, UpstreamResponse, Upstreams},
 };
 
+const DRAIN_FACTOR: usize = 4;
+const MIN_DRAIN_BYTES: usize = 64 * 1024 * 1024;
+
 const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-generation-id");
 const TASK_HEADER: HeaderName = HeaderName::from_static("x-gradiated-task");
 const TRACE_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-trace-id");
@@ -193,6 +196,12 @@ async fn read_body(
     let read = async {
         let mut body = body;
         let mut buffer = BytesMut::new();
+        let mut refused = None;
+        let mut drained = 0usize;
+        let drain_limit = limits
+            .max_request_bytes
+            .saturating_mul(DRAIN_FACTOR)
+            .max(MIN_DRAIN_BYTES);
 
         while let Some(frame) = body.frame().await {
             let frame = frame.map_err(|_| ProxyError::InvalidRequest)?;
@@ -200,17 +209,33 @@ async fn read_body(
                 continue;
             };
 
-            if buffer.len() + chunk.len() > limits.max_request_bytes {
-                return Err(ProxyError::PayloadTooLarge);
+            // Closing while the client still sends makes the load balancer answer 502.
+            if let Some(error) = refused {
+                drained += chunk.len();
+                if drained > drain_limit {
+                    return Err(error);
+                }
+                continue;
             }
 
-            admission
-                .reserve(chunk.len())
-                .map_err(|error| ProxyError::from_upstream(error, false))?;
+            let reserved = if buffer.len() + chunk.len() > limits.max_request_bytes {
+                Err(ProxyError::PayloadTooLarge)
+            } else {
+                admission
+                    .reserve(chunk.len())
+                    .map_err(|error| ProxyError::from_upstream(error, false))
+            };
+            if let Err(error) = reserved {
+                refused = Some(error);
+                drained = buffer.len() + chunk.len();
+                buffer = BytesMut::new();
+                admission.release_bytes();
+                continue;
+            }
             buffer.extend_from_slice(&chunk);
         }
 
-        Ok(buffer.freeze())
+        refused.map_or(Ok(buffer.freeze()), Err)
     };
 
     tokio::time::timeout(limits.body_read, read)

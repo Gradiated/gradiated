@@ -25,7 +25,9 @@ endpoints relay with no proxy change.
 
 1. Take an in-flight slot, read the body within the byte limit, then reserve its
    bytes in the process budget. A full slot count or budget returns
-   `proxy_overloaded`.
+   `proxy_overloaded`. A refused body is still read to its end and discarded, up to
+   four times the byte limit (at least 64 MiB), before the error is sent:
+   closing while the client still uploads makes a load balancer answer 502.
 2. Read the Gradiated key and the provider key. Either can be in
    `Authorization` or `x-api-key`; the Gradiated key can also be in
    `x-gradiated-api-key`. The format of each value decides what it is.

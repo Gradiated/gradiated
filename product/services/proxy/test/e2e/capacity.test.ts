@@ -149,6 +149,97 @@ describe("request size", () => {
     },
   );
 
+  it("reads an oversized upload to its end before answering 413", async () => {
+    const proxy = await fixture.startProxy({
+      PROXY_MAX_REQUEST_BYTES: String(LIMIT),
+    });
+    const instance = await makeCase("vllm");
+    const { hostname, port } = new URL(proxy.url);
+    const total = 4 * 1024 * 1024;
+    const chunk = Buffer.alloc(64 * 1024, "x");
+
+    const socket = connect(Number(port), hostname);
+    await new Promise<void>((resolve) => socket.once("connect", resolve));
+    let received = "";
+    let failure: Error | undefined;
+    socket.on("data", (data) => (received += data.toString()));
+    socket.on("error", (error) => (failure = error));
+    const write = (data: string | Buffer) =>
+      new Promise<void>((resolve, reject) =>
+        socket.write(data, (error) => (error ? reject(error) : resolve())),
+      );
+
+    await write(
+      [
+        `POST ${MESSAGES.path} HTTP/1.1`,
+        `host: ${hostname}`,
+        "content-type: application/json",
+        `content-length: ${total}`,
+        ...Object.entries(relayHeaders(instance, "anthropic")).map(
+          ([name, value]) => `${name}: ${value}`,
+        ),
+        "",
+        "",
+      ].join("\r\n"),
+    );
+    for (let sent = 0; sent < total; sent += chunk.length) {
+      await write(chunk);
+      if (sent < 4 * chunk.length)
+        await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
+    await eventually(() => received.includes("payload_too_large"), 5000);
+    expect(failure).toBeUndefined();
+    expect(received).toMatch(/^HTTP\/1\.1 413 /);
+    expect(received.indexOf("HTTP/1.1 413")).toBe(
+      received.lastIndexOf("HTTP/1.1 "),
+    );
+    socket.destroy();
+    expect(fixture.provider.requests).toEqual([]);
+  });
+
+  it("stops reading an oversized upload past the drain limit", async () => {
+    const proxy = await fixture.startProxy({
+      PROXY_MAX_REQUEST_BYTES: String(LIMIT),
+    });
+    const instance = await makeCase("vllm");
+    const { hostname, port } = new URL(proxy.url);
+    const chunk = Buffer.alloc(1024 * 1024, "x");
+
+    const socket = connect(Number(port), hostname);
+    await new Promise<void>((resolve) => socket.once("connect", resolve));
+    const closed = new Promise<void>((resolve) => {
+      socket.on("close", () => resolve());
+      socket.on("error", () => resolve());
+    });
+    socket.write(
+      [
+        `POST ${MESSAGES.path} HTTP/1.1`,
+        `host: ${hostname}`,
+        "content-type: application/json",
+        `content-length: ${1024 * 1024 * 1024}`,
+        ...Object.entries(relayHeaders(instance, "anthropic")).map(
+          ([name, value]) => `${name}: ${value}`,
+        ),
+        "",
+        "",
+      ].join("\r\n"),
+    );
+    let sent = 0;
+    while (!socket.destroyed && sent < 512 * 1024 * 1024) {
+      if (!socket.write(chunk))
+        await Promise.race([
+          new Promise((resolve) => socket.once("drain", resolve)),
+          closed,
+        ]);
+      sent += chunk.length;
+    }
+    await closed;
+
+    expect(sent).toBeLessThan(256 * 1024 * 1024);
+    expect(fixture.provider.requests).toEqual([]);
+  });
+
   it("accepts a body of exactly the limit", async () => {
     const proxy = await fixture.startProxy({
       PROXY_MAX_REQUEST_BYTES: String(LIMIT),

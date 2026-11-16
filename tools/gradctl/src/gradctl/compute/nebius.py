@@ -173,6 +173,10 @@ class Nebius:
                 'user': Nebius.ssh_user,
                 'machines': [{'address': address, 'port': 22, 'user': Nebius.ssh_user}] if address else [],
                 'term': 'spot' if instance['spec'].get('preemptible') else 'on-demand',
+                'gpu_type': resources['platform'],
+                'gpus': int(resources['preset'].split('gpu')[0]) if resources['preset'][:1].isdigit() else None,
+                'preset': resources['preset'], 'usd_per_gpu_hour': None,
+                'created_at': instance['metadata'].get('created_at'),
                 'shape': f"{resources['platform']}/{resources['preset']}"}
 
     def find(self, name):

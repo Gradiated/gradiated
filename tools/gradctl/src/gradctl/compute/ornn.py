@@ -159,6 +159,11 @@ class Ornn:
         return {'name': name, 'id': reservation['reservationId'], 'region': reservation.get('facilityId') or '-',
                 'state': state, 'address': first['address'], 'port': first['port'], 'user': first['user'],
                 'machines': machines, 'term': reservation.get('kind') or '-',
+                'gpu_type': reservation.get('gpuSlug'), 'gpus': reservation.get('reservedGpuCount'),
+                'usd_per_gpu_hour': (reservation['pricePerGpuHourMicroUsd'] / 1e6
+                                     if reservation.get('pricePerGpuHourMicroUsd') is not None else None),
+                'created_at': (reservation.get('createdAt') or reservation.get('startTime')
+                               or reservation.get('startsAt')),
                 'shape': f"{reservation.get('gpuSlug')}/{reservation.get('reservedGpuCount')}gpu"
                          + (f" as {len(statuses)} VMs" if len(statuses) > 1 else '')
                          + f" ${reservation.get('pricePerGpuHourMicroUsd', 0) / 1e6:.2f}/gpu-hr"}

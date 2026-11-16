@@ -85,6 +85,10 @@ only what you copy to them, and `gradiated/dev/env` holds only development keys.
    moved above your limit; Ornn prepays each hour and refunds unused time.
    Ornn reservations have no names: the machine that ran `up` remembers the
    name, and `ls` elsewhere shows the reservation ID, which every command accepts.
+   Tag the cost: `--customer <customer>` (for example `bild-ai`, the same value
+   OpenRouter requests send as `user`; default `gradiated`), `--stage` (cleaning,
+   env-build, training, rollout, eval, serving or dev), `--run-id` and
+   `--workstream`.
 3. Give the VM bucket access: `gradctl compute s3 <name>` installs a key that can
    only use the development training bucket as the VM's default AWS profile.
    VMs start with no credentials; do not copy any other key to them.
@@ -97,8 +101,16 @@ only what you copy to them, and `gradiated/dev/env` holds only development keys.
    still pays for its disk. Resume on a new VM from S3; `start` the old one only
    if the new one cannot be created, and `down` whichever you no longer need. An
    ended Ornn VM is gone with its disk.
-7. Delete as soon as you are done: `gradctl compute down <name>` deletes the VM,
-   its disk and its tailnet device. If it fails part way, run it again.
+7. Meter the cost while VMs are up: run `gradctl compute meter` every 15 to 60
+   minutes. It sends each VM's GPU time since it was last metered, with its tags,
+   GPU type and count and price, as `compute_usage` events to the FDE PostHog
+   project, next to the OpenRouter `$ai_generation` events. Run it from the
+   machine that ran `up`, which holds the tags; elsewhere VMs show as
+   `unattributed`. For GPU time this command does not manage, such as our own
+   serving fleet running rollouts, send it with `gradctl compute record-usage`.
+8. Delete as soon as you are done: `gradctl compute down <name>` sends the final
+   cost interval, then deletes the VM, its disk and its tailnet device. If it fails
+   part way, run it again.
 
 Report the VM, its hours and where the results are in your response or PR.
 

@@ -12,6 +12,15 @@
   gradctl compute s3 NAME                                give the VM the development bucket key
   gradctl compute start NAME | stop NAME                 preemption stops a VM, it is not deleted
   gradctl compute down NAME                              delete the VM, its disk and its tailnet device
+  gradctl compute meter [--provider P[,P]]               send each VM's cost since it was last metered to PostHog
+  gradctl compute record-usage --provider P --gpu-type G --gpu-count N --usd-per-gpu-hour X --hours H ...
+                                                         send GPU time this command does not manage (our fleet)
+
+Cost events: `up` takes --customer, --stage, --run-id and --workstream and records
+them locally; `meter` (run it every 15 to 60 minutes while VMs are up) and `down`
+send `compute_usage` events with those tags, the GPU type and count, and the
+price, to the FDE PostHog project (see gradctl/usage.py for the schema). A VM
+created on another machine is metered from its creation time as unattributed.
 
 Providers: nebius and ornn, both virtual machines. --provider picks one or more
 (repeat it or separate with commas); without it, search and ls cover every
@@ -48,9 +57,11 @@ import sys
 import time
 import urllib.parse
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
 from ..core import Meta, Result, UsageError, group, leaf
+from .. import usage
 from ..devenv import secret
 from .nebius import Nebius
 from .ornn import Ornn
@@ -264,6 +275,140 @@ def search(args):
     return Result(data=rows, text='\n'.join(lines))
 
 
+def hourly_price(cloud, vm, cache):
+    """USD per hour for the whole VM, and where the price came from."""
+    if vm.get('usd_per_gpu_hour') is not None and vm.get('gpus'):
+        return vm['usd_per_gpu_hour'] * vm['gpus'], f'{cloud.name}_reservation'
+    if hasattr(cloud, 'hourly_price') and vm.get('preset'):
+        key = (vm['region'], vm['gpu_type'], vm['preset'], vm['term'])
+        if key not in cache:
+            try:
+                cache[key] = cloud.hourly_price(*key)
+            except (SystemExit, Exception) as error:
+                print(f"no price for {vm['name']}: {error}", file=sys.stderr)
+                cache[key] = None
+        return cache[key], f'{cloud.name}_current_price'
+    return None, 'unknown'
+
+
+def ledger_key(cloud, vm, book):
+    """The VM's ledger key, by its stable resource ID; an entry `up` recorded under the name moves to the ID."""
+    key = f"{cloud.name}:{vm.get('id') or vm['name']}"
+    named = f"{cloud.name}:{vm['name']}"
+    if key not in book and named in book and named != key:
+        book[key] = book.pop(named)
+    return key
+
+
+def meter_vms(cloud, vms, end, source):
+    """Send one compute_usage event per VM for the time since it was last metered; returns the events sent.
+
+    Each event is built once and kept in the ledger as pending until PostHog accepts it, so a retry resends the
+    identical event (same uuid and timestamp) and PostHog drops the duplicate. An interval is billed by the state
+    the VM was last seen in, since the time of a change between meters is not known. A billed interval without a
+    price is not sent: it stays open until a price is available.
+    """
+    pending, cache = {}, {}
+    with usage.ledger(state()) as book:
+        for vm in vms:
+            key = ledger_key(cloud, vm, book)
+            tags = book.setdefault(key, {})
+            tags.setdefault('resource_name', vm['name'])
+            if tags.get('pending'):
+                pending[key] = tags['pending']
+                continue
+            start = (usage.parse_time(tags.get('metered_until')) or usage.parse_time(tags.get('started_at'))
+                     or usage.parse_time(vm.get('created_at')) or end)
+            if (end - start).total_seconds() < 1:
+                continue
+            interval_state = tags.get('last_state') or vm.get('state')
+            price, price_source = hourly_price(cloud, vm, cache)
+            if price is None and interval_state in usage.BILLED_STATES:
+                print(f"no price for {vm['name']}; its time since {start.isoformat()} is kept for the next meter",
+                      file=sys.stderr)
+                continue
+            event = usage.event(
+                customer=tags.get('customer'), stage=tags.get('stage'), run_id=tags.get('run_id'),
+                workstream=tags.get('workstream'), provider=cloud.name, resource_name=vm['name'],
+                resource_id=vm.get('id'), region=vm.get('region'), term=vm.get('term'), gpu_type=vm.get('gpu_type'),
+                gpu_count=vm.get('gpus'), usd_per_hour=price, price_source=price_source, start=start, end=end,
+                vm_state=interval_state, source=source)
+            tags['pending'] = event
+            tags['next_state'] = vm.get('state')
+            pending[key] = event
+    if not pending:
+        return []
+    usage.send(list(pending.values()))
+    settle(pending)
+    return list(pending.values())
+
+
+def settle(sent):
+    """Advance the ledger past events PostHog accepted, and drop entries of deleted VMs with nothing left to send."""
+    with usage.ledger(state()) as book:
+        for key, event in sent.items():
+            tags = book.get(key)
+            if not tags or tags.get('pending', {}).get('uuid') != event['uuid']:
+                continue
+            tags['metered_until'] = event['properties']['interval_end']
+            tags['last_state'] = tags.pop('next_state', None) or tags.get('last_state')
+            tags.pop('pending')
+            if tags.get('deleted'):
+                book.pop(key)
+
+
+def flush_pending(skip=()):
+    """Send pending events of VMs no longer listed, such as one whose final send failed during `down`."""
+    with usage.ledger(state()) as book:
+        pending = {k: t['pending'] for k, t in book.items() if t.get('pending') and k not in skip}
+    if pending:
+        usage.send(list(pending.values()))
+        settle(pending)
+    return list(pending.values())
+
+
+def meter(args):
+    end, found = usage.now(), []
+
+    def collect(name, cloud):
+        found.append((cloud, list(cloud.list())))
+    # A provider that cannot be reached is skipped; a failure to deliver events fails the command.
+    each_provider(args.provider, collect)
+    sent, keys = [], set()
+    for cloud, vms in found:
+        sent.extend(meter_vms(cloud, vms, end, 'gradctl compute meter'))
+        keys |= {f"{cloud.name}:{vm.get('id') or vm['name']}" for vm in vms}
+    sent.extend(flush_pending(skip=keys))
+    cost = sum(e['properties']['cost_usd'] for e in sent)
+    rows = [{k: e['properties'][k] for k in ('provider', 'resource_name', 'customer', 'stage', 'gpu_type',
+                                              'gpu_count', 'duration_seconds', 'cost_usd')} for e in sent]
+    text = '\n'.join(f"{r['resource_name']:24} {r['provider']:8} {r['customer']:14} {r['stage'] or '-':10} "
+                     f"{r['gpu_count'] or '-'}x{r['gpu_type']} {r['duration_seconds'] / 3600:6.2f}h "
+                     f"${r['cost_usd']:.2f}" for r in rows)
+    return Result(data={'events': len(sent), 'cost_usd': round(cost, 4), 'vms': rows},
+                  text=(text + '\n' if text else '') + f'Sent {len(sent)} compute_usage events, ${cost:.2f}')
+
+
+def record_usage(args):
+    end = usage.parse_time(args.end) if args.end else usage.now()
+    if args.start:
+        start = usage.parse_time(args.start)
+    elif args.hours is not None:
+        start = datetime.fromtimestamp(end.timestamp() - args.hours * 3600, timezone.utc)
+    else:
+        raise UsageError('pass --hours or --start')
+    if not start or not end or end <= start:
+        raise UsageError('the interval must end after it starts')
+    sent = usage.event(customer=args.customer, stage=args.stage, run_id=args.run_id, workstream=args.workstream,
+                       provider=args.provider, resource_name=args.resource, resource_id=args.resource,
+                       region=args.region, term=args.term, gpu_type=args.gpu_type, gpu_count=args.gpu_count,
+                       usd_per_hour=args.usd_per_gpu_hour * args.gpu_count, price_source='recorded', start=start,
+                       end=end, vm_state='RUNNING', source='gradctl compute record-usage')
+    usage.send([sent])
+    return Result(data=sent['properties'], text=f"Sent {sent['properties']['gpu_hours']:.2f} GPU-hours, "
+                                                f"${sent['properties']['cost_usd']:.2f}, for {args.customer}")
+
+
 def up(args):
     if not re.fullmatch('[a-z][a-z0-9-]{1,40}', args.name) or '--' in args.name or args.name.endswith('-'):
         raise UsageError('NAME must be lowercase letters, digits and single dashes')
@@ -281,6 +426,9 @@ def up(args):
     host = f'{cloud.name}-{args.name}'
     cloud.create(args.name, region, args.platform, args.preset, args.disk_gib, args.image,
                  lambda: cloud_init(cloud, host), term=args.term, max_price=args.max_price)
+    with usage.ledger(state()) as book:
+        book[f'{cloud.name}:{args.name}'] = {'customer': args.customer, 'stage': args.stage, 'run_id': args.run_id,
+                                             'workstream': args.workstream, 'started_at': usage.now().isoformat()}
     print(f"Creating {args.term} {args.name} in {cloud.name} {region or ''}; waiting for it to run", file=sys.stderr)
     started = time.time()
     while time.time() < started + 1800:
@@ -376,7 +524,13 @@ def s3(args):
 def lifecycle(action):
     def run(args):
         cloud = located(args)
-        getattr(cloud, action)(find(cloud, args.name))
+        vm = find(cloud, args.name)
+        try:
+            # Close the interval at the state change, so the time before it is billed by the state it had.
+            meter_vms(cloud, [vm], usage.now(), f'gradctl compute {action}')
+        except Exception as error:  # noqa: BLE001 - cost reporting must never block starting or stopping a VM
+            print(f'could not send the cost event for {args.name}: {error}', file=sys.stderr)
+        getattr(cloud, action)(vm)
         return Result(data={'action': action, 'name': args.name, 'provider': cloud.name},
                       text=f'{action}: {args.name}')
     return run
@@ -387,6 +541,10 @@ def down(args):
     cloud, vm = locate(args)
     lines, removed = [], []
     if vm:
+        try:
+            meter_vms(cloud, [vm], usage.now(), 'gradctl compute down')
+        except Exception as error:  # noqa: BLE001 - cost reporting must never block deleting a VM
+            print(f'could not send the final cost event for {args.name}: {error}', file=sys.stderr)
         cloud.delete(vm)
         lines.append(f'Deleted {args.name} and its boot disk')
         print(lines[-1], file=sys.stderr, flush=True)
@@ -408,6 +566,13 @@ def down(args):
             removed.append(device['name'])
             lines.append(f"Removed tailnet device {device['name']}")
             print(lines[-1], file=sys.stderr, flush=True)
+    if cloud and vm:
+        with usage.ledger(state()) as book:
+            key = ledger_key(cloud, vm, book)
+            if book.get(key, {}).get('pending'):
+                book[key]['deleted'] = True  # the next `meter` sends the final interval, then drops the entry
+            else:
+                book.pop(key, None)
     return Result(data={'name': args.name, 'deleted_vm': bool(vm), 'provider': cloud.name if cloud else None,
                         'removed_tailnet_devices': removed}, text='\n'.join(lines))
 
@@ -416,6 +581,15 @@ def setup(args):
     from . import setup as setup_module
     setup_module.run(args)
     return Result(data={'provider': args.target}, text=f'{args.target} credentials written to gradiated/dev/env')
+
+
+def attribution(parser):
+    parser.add_argument('--customer', default='gradiated',
+                        help='who the work is for, as in OpenRouter `user` (bild-ai); default gradiated (internal)')
+    parser.add_argument('--stage', default='dev',
+                        help='cleaning, env-build, training, rollout, eval, serving or dev (default)')
+    parser.add_argument('--run-id', help='the run or experiment this time belongs to')
+    parser.add_argument('--workstream', help='for example bildy')
 
 
 def positive(value):
@@ -464,7 +638,24 @@ def register(commands, common) -> None:
                         help='refuse to create the VM above this USD per GPU-hour now; spot prices can move later')
     parser.add_argument('--disk-gib', type=int, help='Nebius boot disk, default 250; Ornn nodes have their own disk')
     parser.add_argument('--image', help='Nebius image family (default Ubuntu 24.04 with CUDA) or Ornn disk ID')
+    attribution(parser)
     command('ls', ls, Meta('Every dev-training VM on every provider', requires=creds), many=True)
+    command('meter', meter, Meta("Send each VM's GPU cost since it was last metered to PostHog as compute_usage "
+                                 'events', effects='write', requires=creds), many=True)
+    parser = leaf(sub, 'record-usage', lambda ctx: record_usage(ctx.args), Meta(
+        'Send a compute_usage event for GPU time gradctl does not manage, such as our own serving fleet',
+        effects='write'), common)
+    parser.add_argument('--provider', required=True, help='for example fleet, runpod or nebius')
+    parser.add_argument('--resource', required=True, help='host, node or pool name')
+    parser.add_argument('--gpu-type', required=True, help='for example nvidia_b300')
+    parser.add_argument('--gpu-count', type=positive, required=True)
+    parser.add_argument('--usd-per-gpu-hour', type=float, required=True)
+    parser.add_argument('--hours', type=float, help='length of the interval ending now (or at --end)')
+    parser.add_argument('--start', help='ISO 8601 start, instead of --hours')
+    parser.add_argument('--end', help='ISO 8601 end, default now')
+    parser.add_argument('--region')
+    parser.add_argument('--term', choices=['spot', 'on-demand', 'reserved'], default='reserved')
+    attribution(parser)
     parser = leaf(sub, 'ssh', lambda ctx: ssh(ctx.args, ctx.json), Meta(
         'Run a command on a VM over SSH (or open a shell without --json)', effects='write', requires=creds,
         interactive=True), common)

@@ -20,7 +20,7 @@ export type StoryCover = ArtworkPreset;
 
 /** Real artwork for a piece, in the two crops the layout uses. */
 export type StoryArt = {
-  /** The 0.89 portrait crop — narrow cells, the read page, mobile. */
+  /** The 4:5 portrait crop — narrow cells, the read page, mobile. */
   tall: string;
   /** The landscape crop for the lead and pair cells. Falls back to tall. */
   wide?: string;
@@ -118,16 +118,20 @@ export const StoryRow = ({
   columns,
   lead = false,
   stories,
+  uniform = false,
 }: {
   columns: string;
   /** The one card at the top of the page, laid out with its well beside. */
   lead?: boolean;
   stories: Story[];
+  /** Every card is the same width, so the wells can hold the cover ratio. */
+  uniform?: boolean;
 }): ReactElement => {
   return (
     <div
       className="gr-story-row"
       data-columns={stories.length}
+      data-uniform={uniform || undefined}
       style={{ gridTemplateColumns: columns } as CSSProperties}
     >
       {stories.map((story) => (

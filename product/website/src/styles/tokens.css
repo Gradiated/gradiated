@@ -91,8 +91,8 @@
    * height instead: the cards in a row are different widths, and a ratio would
    * make the wide one taller than the narrow one beside it and break the line
    * the titles sit on. That constraint is a row's, so it lifts as soon as the
-   * cards stack. */
-  --cover-ratio: 320 / 360;
+   * cards stack, and never applies to a row of equal cards. */
+  --cover-ratio: 4 / 5;
 
   /* A true one-device-pixel hairline. At 1px on a 2dppx display a lattice
      line is two device pixels wide, which reads as heavy. Applied as a

@@ -55,7 +55,11 @@ export const HardwarePage = (): ReactElement => (
       </Module>
 
       <Module index={1}>
-        <StoryRow columns="repeat(3, var(--card-narrow))" stories={PIECES} />
+        <StoryRow
+          columns="repeat(3, var(--card-narrow))"
+          stories={PIECES}
+          uniform
+        />
       </Module>
     </Band>
 

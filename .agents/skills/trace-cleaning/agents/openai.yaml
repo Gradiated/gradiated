@@ -1,0 +1,4 @@
+interface:
+  display_name: "Trace Cleaning"
+  short_description: "Anonymize and clean customer traces for training"
+  default_prompt: "Use $trace-cleaning to anonymize and clean customer LLM traces into an SFT or RL dataset through fresh random close-read rounds."

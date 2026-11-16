@@ -28,9 +28,7 @@ use crate::{
     upstream::{gateway_headers, provider_headers, Admission, UpstreamResponse, Upstreams},
 };
 
-/// A refused upload is read and discarded up to this multiple of the body limit.
 const DRAIN_FACTOR: usize = 4;
-/// ...and at least this much, so a small configured limit still drains ordinary uploads.
 const MIN_DRAIN_BYTES: usize = 64 * 1024 * 1024;
 
 const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-generation-id");
@@ -211,9 +209,7 @@ async fn read_body(
                 continue;
             };
 
-            // A refused body is read to its end and discarded, because closing
-            // while the client still sends makes a load balancer answer 502
-            // instead of the refusal. A body beyond the drain limit is closed.
+            // Closing while the client still sends makes the load balancer answer 502.
             if let Some(error) = refused {
                 drained += chunk.len();
                 if drained > drain_limit {

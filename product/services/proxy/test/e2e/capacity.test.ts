@@ -155,7 +155,6 @@ describe("request size", () => {
     });
     const instance = await makeCase("vllm");
     const { hostname, port } = new URL(proxy.url);
-    // A load balancer that is still sending when the proxy closes answers 502.
     const total = 4 * 1024 * 1024;
     const chunk = Buffer.alloc(64 * 1024, "x");
 
@@ -185,7 +184,6 @@ describe("request size", () => {
     );
     for (let sent = 0; sent < total; sent += chunk.length) {
       await write(chunk);
-      // Give the proxy time to answer and close mid-upload, as a slow client would.
       if (sent < 4 * chunk.length)
         await new Promise((resolve) => setTimeout(resolve, 50));
     }
@@ -227,7 +225,6 @@ describe("request size", () => {
         "",
       ].join("\r\n"),
     );
-    // Keep sending until the proxy hangs up; it reads at most the 64 MiB floor.
     let sent = 0;
     while (!socket.destroyed && sent < 512 * 1024 * 1024) {
       if (!socket.write(chunk))

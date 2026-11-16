@@ -72,6 +72,9 @@ Draw 40 traces at random, spread across the task's range, and read them. Write t
 cleaning code from what they show:
 
 - **Clean:** drop empty, trivial or broken conversations, and merge duplicates. Drop traces not related to the task.
+  Filter on signal, not on completeness. When traces seed an RL environment rather than being trained on directly,
+  keep traces with capture gaps (missing images, dropped history, truncated results) and tag the gaps, since the
+  request, the tools used and the outcome are still useful.
 - **Anonymize:** replace each real name, company, email, id, address and secret with a fake of the same kind. A
   person's name becomes another plausible person's name, an organization another organization name, an address
   another address, and an id an id of the same shape. A cheap model tags names and companies in prose; patterns

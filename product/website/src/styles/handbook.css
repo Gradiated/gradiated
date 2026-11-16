@@ -339,3 +339,42 @@ img.gr-pill__avatar {
   color: var(--color-text-muted);
   font-size: 0.9em;
 }
+
+/* -- heading links ----------------------------------------------------------
+   Hover a heading to show a link icon; clicking it copies the section's URL. */
+
+.gr-root .gr-prose a.gr-heading-anchor__link {
+  display: inline-flex;
+  align-items: center;
+  margin-inline-start: 0.35em;
+  padding: 0.1em;
+  border-radius: calc(var(--radius) / 2);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  vertical-align: middle;
+  opacity: 0;
+  transition:
+    opacity var(--dur-fast, 150ms) ease,
+    color var(--dur-fast, 150ms) ease;
+}
+
+.gr-root .gr-prose .gr-heading-anchor:hover a.gr-heading-anchor__link,
+.gr-root .gr-prose a.gr-heading-anchor__link:focus-visible,
+.gr-root .gr-prose a.gr-heading-anchor__link[data-copied] {
+  opacity: 1;
+}
+
+.gr-root .gr-prose a.gr-heading-anchor__link:hover {
+  color: var(--color-text);
+}
+
+.gr-heading-anchor__icon {
+  width: 0.7em;
+  height: 0.7em;
+}
+
+@media (hover: none) {
+  .gr-root .gr-prose a.gr-heading-anchor__link {
+    opacity: 0.5;
+  }
+}

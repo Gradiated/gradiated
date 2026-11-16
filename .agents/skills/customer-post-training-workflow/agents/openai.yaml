@@ -1,0 +1,4 @@
+interface:
+  display_name: "Customer Post-Training Workflow"
+  short_description: "Post-train a model on a customer's traces, end to end"
+  default_prompt: "Use $customer-post-training-workflow to take a customer's traces through cleaning, experiment selection, training and evaluation to a delivered model."

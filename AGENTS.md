@@ -55,6 +55,7 @@ This repository is the complete project state for the research and product-build
 - `$browser-research`: reproducible research on JavaScript-heavy or interactive websites.
 - `$product-build`: repository-first product implementation, verification, and handoff.
 - `$experiment-run`: bounded, reproducible experiments with cleanup; routine output stays untracked.
+- `$customer-post-training-workflow`: end-to-end customer post-training map from traces to a delivered model; names each stage's skill.
 - `$trace-cleaning`: anonymize and clean customer LLM traces into SFT/RL data through fresh random close-read rounds.
 - `$dev-training`: spot GPU VMs for development training, isolated from production on the tailnet.
 - `$gpu-host-lease`: lease a whole GPU host out of the serving pool for hand-run work, then hand it back to be wiped.

@@ -6,11 +6,22 @@ description: Anonymize and clean a customer's LLM traces into a high-quality dat
 # Trace cleaning
 
 The output becomes training data and RL environments, so mistakes carry through to the model. A previous
-environment was poor because its source data was badly cleaned. The goal is two things at once: no real personal or
-customer data is left, and every row stays accurate, consistent and worth training on.
+environment was poor because its source data was badly cleaned. The goal is two things at once: no real personal or customer data is left, and every row stays accurate, consistent and worth training on.
 
-The code changes for every customer. The loop stays the same: **read samples, build, check, read fresh samples, fix,
-repeat.**
+The code changes for every customer. The loop stays the same: **read samples, build, check, read fresh samples, fix, repeat.**
+
+## Keep the task intact
+
+Anonymizing can quietly change what a trace means, and then any task built from it is wrong. Every real value maps
+to exactly one fake, and every fake to exactly one real value, across the whole trace:
+
+- two different customers must never end up with the same email, name or id;
+- one entity must never appear as two different things, for example "Acme" in the question and "Globex" in the
+  tool result, or a full name in one message and a different fake surname in another;
+- relationships must survive: a query, its result and the answer that cites it still agree, counts and totals still
+  add up, and ids, dates and references still point at the right things.
+
+If a trace cannot be anonymized without changing its task, drop it.
 
 ## Data handling
 
@@ -33,7 +44,7 @@ Agree with the researcher what gets replaced, what stays, and which rows get dro
 Draw 40 traces at random, spread across the task's range, and read them. Write the first anonymization and
 cleaning code from what they show:
 
-- **Clean:** drop empty, trivial or broken conversations, and merge duplicates.
+- **Clean:** drop empty, trivial or broken conversations, and merge duplicates. Drop traces not related to the task.
 - **Anonymize:** replace each real name, company, email, id, address and secret with a realistic fake, the same fake
   everywhere in the trace. A cheap model tags names and companies in prose; patterns catch emails, URLs, ids and
   phones everywhere.
@@ -47,6 +58,7 @@ Run it on the whole dataset, and count rows in, rows out and drops by reason.
 - **Leak check:** search the output for every real value in the map.
 - **Audit:** a different cheap model looks for real data in a sample of the output.
 - **Code check:** compare code in the output with the raw traces. It should be unchanged.
+- **Consistency check:** the fake-to-real map is one-to-one within each trace. No two reals share a fake.
 
 Passing these is not enough. Close reads find what they miss.
 
@@ -54,7 +66,8 @@ Passing these is not enough. Close reads find what they miss.
 
 1. Draw a fresh random sample of 20 traces that no earlier round has read.
 2. Have a cheap ZDR model compare each raw trace with its anonymized version. It reports real data left behind,
-   inconsistent fakes, broken code or numbers, and rows too poor to train on.
+   anything that changes the task (merged or split entities, broken references, code or numbers that no longer
+   agree), and rows too poor to train on.
 3. Fix each kind of defect in the code, not in single rows, and add a test with made-up values.
 4. Rerun everything and draw a new sample.
 

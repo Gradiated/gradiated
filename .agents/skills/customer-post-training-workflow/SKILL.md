@@ -16,6 +16,8 @@ these are, and **end users** are the customer's own users.
   (`~/dev/<customer>/`). Never commit or push either. Only skills and reusable tooling go in this repository.
 - When getting trace data from the customers account, such as a PostHog impersonation, you should only take read-only actions: confirm the org and project, run only queries, and tell the researcher when they can log out.
 - Model calls that see customer content go through OpenRouter zero-data-retention providers.
+- Train and evaluate the model inside the customer's own harness (their agent framework, prompts, tools and
+  request format), so it sees in training exactly what it will see in production.
 
 ## Stages
 
@@ -26,7 +28,8 @@ these are, and **end users** are the customer's own users.
    Group the traces into tasks, then read the customer's codebase to understand each one. Write a short report per
    task, a few paragraphs rather than a table row, covering:
    - **What it does and how it is set up:** for example, an agent with an MCP server and these tools, a one-shot
-     extraction prompt, or a subagent called by another task. Say where it lives in the code.
+     extraction prompt, or a subagent called by another task. Say where it lives in the code, and which harness and
+     API it runs on (for example pydantic-ai on the Anthropic Messages API).
    - **Model and usage:** the model, calls and traces per day, tokens, cost and its share of the total, latency and
      error rate.
    - **Evals:** whether the codebase has evals for it, what they measure, and how developed they are (none, a few

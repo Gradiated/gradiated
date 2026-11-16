@@ -1543,7 +1543,7 @@
 .gr-tier-note {
   font-family: var(--font-title);
   font-size: 17px;
-  font-weight: var(--weight-heading);
+  font-weight: 500;
   line-height: 1.2;
   letter-spacing: -0.04em;
   color: var(--color-text-muted);
@@ -2225,7 +2225,7 @@
   display: block;
   font-family: var(--font-title);
   font-size: var(--text-card);
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
 }
 
@@ -2261,7 +2261,7 @@
   margin-block: 0;
   font-family: var(--font-title);
   font-size: calc(2 * var(--text-heading));
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.05;
 }
@@ -2385,7 +2385,7 @@
   display: block;
   font-family: var(--font-title);
   font-size: var(--text-heading);
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.2;
 }
@@ -2620,7 +2620,7 @@
     6.4vw,
     calc(2.6 * var(--text-heading))
   );
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.06;
 }
@@ -2740,9 +2740,10 @@
 /* Space above a heading, not below it: a heading belongs to what follows it,
    and equal space on both sides leaves it floating between two sections. */
 .gr-prose h2,
-.gr-prose h3 {
+.gr-prose h3,
+.gr-prose > h4 {
   font-family: var(--font-title);
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.2;
 }
@@ -2754,7 +2755,8 @@
 
 .gr-root .gr-prose > h3 {
   margin-block-start: 1.8em;
-  font-size: var(--text-card);
+  font-size: var(--text-subheading);
+  letter-spacing: var(--tracking-subheading);
 }
 
 .gr-prose ul,
@@ -3002,7 +3004,7 @@
   color: #f4f2ec;
   font-family: var(--font-title);
   font-size: calc(var(--text-section) * 0.82);
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.3;
 }
@@ -3153,7 +3155,7 @@
   max-width: 9ch;
   font-family: var(--font-title);
   font-size: clamp(38px, 3.6vw, 54px);
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.02;
 }
@@ -3376,7 +3378,7 @@
   margin: 0;
   font-family: var(--font-title);
   font-size: var(--text-heading);
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.15;
 }
@@ -3411,7 +3413,7 @@
 .gr-root .gr-careers-no-roles-title {
   font-family: var(--font-title);
   font-size: var(--text-heading);
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.15;
 }
@@ -3519,7 +3521,7 @@
   display: block;
   font-family: var(--font-title);
   font-size: calc(1.4 * var(--text-heading));
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.1;
 }
@@ -3576,7 +3578,7 @@
   max-width: 18ch;
   font-family: var(--font-title);
   font-size: calc(2.3 * var(--text-heading));
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.06;
 }
@@ -3736,7 +3738,7 @@
   margin: 0 0 calc(0.9 * var(--u));
   font-family: var(--font-title);
   font-size: var(--text-heading);
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.15;
 }
@@ -3796,7 +3798,7 @@
   margin-block: calc(0.5 * var(--u)) var(--u);
   font-family: var(--font-title);
   font-size: calc(1.8 * var(--text-heading));
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.05;
 }
@@ -3967,7 +3969,7 @@
   margin-block: 0 calc(0.8 * var(--u));
   font-family: var(--font-title);
   font-size: calc(1.9 * var(--text-heading));
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.05;
 }
@@ -4315,7 +4317,7 @@
   display: block;
   font-family: var(--font-title);
   font-size: var(--text-card);
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   line-height: 1.2;
 }
@@ -4405,7 +4407,7 @@
 .gr-artwork-panel .gr-input,
 .gr-artwork-panel .gr-select {
   color: var(--color-light-100);
-  background: var(--color-dark-200);
+  background-color: var(--color-dark-200);
   border-color: var(--color-dark-300);
 }
 
@@ -5069,7 +5071,9 @@
 
   /* Large, ON the module — no bleed into the gutters. */
   .gr-root .gr-fold-left .gr-home-title {
-    font-size: clamp(2.35rem, 10vw, 3rem);
+    /* Sized to the longest pair, "reliance on" (4.8em), not to the whole
+       last line: "frontier models" breaks in two and the type gains a third. */
+    font-size: clamp(2.6rem, 13.3vw, 3.6rem);
     max-width: none;
     text-wrap: wrap;
   }

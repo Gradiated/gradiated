@@ -156,7 +156,7 @@
   /* Sized so the longest title (Sand to Thought) holds ONE line beside
      the arrow and glyph — the lockup must never wrap. */
   font-size: 19px;
-  font-weight: 650;
+  font-weight: var(--weight-heading);
   white-space: nowrap;
   color: #fafafa;
 }
@@ -371,7 +371,7 @@
   max-width: min(16ch, var(--rail-content));
   font-family: var(--font-title);
   font-size: clamp(26px, 2.6vw, 40px);
-  font-weight: 650;
+  font-weight: var(--weight-heading);
   line-height: 1.06;
   animation: gr-rail-in 0.5s 0.15s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
 }
@@ -427,7 +427,7 @@
   justify-self: start;
   font-family: var(--font-title);
   font-size: 20px;
-  font-weight: 500;
+  font-weight: var(--weight-heading);
 }
 
 .gr-rail-under-name::after {
@@ -475,7 +475,7 @@
   margin: clamp(16px, 3vh, 32px) 0 18px;
   font-family: var(--font-title);
   font-size: 20px;
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   color: #fafafa;
 }
 
@@ -533,7 +533,7 @@
 .gr-rail-model-initial {
   font-family: var(--font-title);
   font-size: 24px;
-  font-weight: 650;
+  font-weight: var(--weight-heading);
   line-height: 1;
 }
 

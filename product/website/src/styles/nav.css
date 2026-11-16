@@ -266,7 +266,7 @@
   font-family: var(--font-title);
   /* 40px. --u is 24px, so a calc that multiplies it will not land here. */
   font-size: 2.5rem;
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: -0.04em;
   line-height: 1.05;
   color: var(--color-text);
@@ -946,7 +946,7 @@
   align-self: start;
   font-family: var(--font-title);
   font-size: var(--text-card);
-  font-weight: 500;
+  font-weight: var(--weight-heading);
   letter-spacing: var(--tracking-heading);
   /* The panel's ink, not the site's link colour. `.gr-link` paints every text
      link olive, which is right in body copy — but in here the card titles are

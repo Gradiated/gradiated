@@ -243,7 +243,7 @@ const TYPE_STEPS = [
     style: {
       fontFamily: "var(--font-title)",
       fontSize: "var(--text-display)",
-      fontWeight: 650,
+      fontWeight: "var(--weight-heading)" as never,
       lineHeight: "var(--leading-display)",
       letterSpacing: "var(--tracking-hero)",
     },
@@ -255,7 +255,7 @@ const TYPE_STEPS = [
     style: {
       fontFamily: "var(--font-title)",
       fontSize: "var(--text-hero)",
-      fontWeight: 650,
+      fontWeight: "var(--weight-heading)" as never,
       lineHeight: "var(--leading-hero)",
       letterSpacing: "var(--tracking-hero)",
     },
@@ -267,7 +267,7 @@ const TYPE_STEPS = [
     style: {
       fontFamily: "var(--font-title)",
       fontSize: "var(--text-section)",
-      fontWeight: 650,
+      fontWeight: "var(--weight-heading)" as never,
       lineHeight: 1.05,
     },
     sample: "Silicon, owned end to end",
@@ -282,6 +282,17 @@ const TYPE_STEPS = [
       letterSpacing: "var(--tracking-heading)",
     },
     sample: "Open-model inference",
+  },
+  {
+    label: "Subheading",
+    v: "--text-subheading",
+    style: {
+      fontFamily: "var(--font-title)",
+      fontSize: "var(--text-subheading)",
+      fontWeight: "var(--weight-heading)" as never,
+      letterSpacing: "var(--tracking-subheading)",
+    },
+    sample: "Location factor",
   },
   {
     label: "Lede",

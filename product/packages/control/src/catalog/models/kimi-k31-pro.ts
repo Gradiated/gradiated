@@ -24,8 +24,8 @@ export const createKimiK31ProModelConfiguration = () =>
             max_context_length: { value: 1_048_576, unit: "token" },
           },
           pricing: [
-            { type: "prompt", unit: "token", cost: 200 },
-            { type: "cached_prompt", unit: "token", cost: 20 },
+            { type: "prompt", unit: "token", cost: 1_600 },
+            { type: "cached_prompt", unit: "token", cost: 160 },
           ],
         },
       ],
@@ -57,8 +57,8 @@ export const createKimiK31ProModelConfiguration = () =>
             reasoning_effort: { type: "enum", values: ["low", "high", "max"] },
           },
           pricing: [
-            { type: "completion", unit: "token", cost: 2_000 },
-            { type: "internal_reasoning", unit: "token", cost: 2_000 },
+            { type: "completion", unit: "token", cost: 8_000 },
+            { type: "internal_reasoning", unit: "token", cost: 8_000 },
           ],
         },
       ],

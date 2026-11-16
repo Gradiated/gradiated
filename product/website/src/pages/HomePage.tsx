@@ -97,6 +97,7 @@ export const HomePage = (): ReactElement => (
           <StoryRow
             columns="repeat(3, var(--card-narrow))"
             stories={libraryStories.slice(0, 3)}
+            uniform
           />
         </div>
         {/* The closing card: one full-width invitation, the hero's two ways

@@ -12,20 +12,12 @@ import {
   DocsCodeBlock,
   DocsInlineCode,
 } from "../components/docs/DocsCodeBlock";
-import { storyAt } from "../library-stories";
+import { displayDate, storyAt } from "../library-stories";
 import "../styles/index.css";
 
 const articleContent = import.meta.glob<{
   default: ComponentType<Record<string, unknown>>;
 }>("../../content/articles/*.mdx", { eager: true });
-
-/* `Sep 9, 2026`, as the mock sets it. */
-const on = (date: string) =>
-  new Date(date).toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 
 export const ArticleReadingPage = ({
   article,
@@ -56,7 +48,9 @@ export const ArticleReadingPage = ({
             author={article.author}
             authorTitle={article.authorTitle}
             byline={
-              article.status === "draft" ? undefined : on(article.publishedAt)
+              article.status === "draft"
+                ? undefined
+                : displayDate(article.publishedAt)
             }
             bylineDateTime={
               article.status === "draft" ? undefined : article.publishedAt

@@ -93,7 +93,11 @@ export const LibraryPage = (): ReactElement => {
           {view === "list" ? (
             <StoryList stories={shown} />
           ) : (
-            <StoryRow columns="repeat(3, var(--card-narrow))" stories={shown} />
+            <StoryRow
+              columns="repeat(3, var(--card-narrow))"
+              stories={shown}
+              uniform
+            />
           )}
         </Module>
       </Band>

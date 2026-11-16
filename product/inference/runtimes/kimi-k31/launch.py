@@ -229,8 +229,13 @@ class Supervisor(base.Supervisor):
         if self.child is None or self.child.poll() is not None:
             return False
         try:
-            # SMG /health is process liveness; /readiness requires a healthy worker.
             with urllib.request.urlopen(self.runtime_url + '/readiness', timeout=2) as response:
+                if response.status != 200:
+                    return False
+            if not self.backend_url or not self.backend_url.startswith('http://127.0.0.1:'):
+                return False
+            # Native /health can pass while a GPU kernel is stuck; require a scheduler response.
+            with urllib.request.urlopen(self.backend_url + '/health_generate', timeout=2) as response:
                 return response.status == 200
         except Exception:
             return False

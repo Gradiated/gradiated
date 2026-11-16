@@ -102,6 +102,14 @@ exercise cold prompt shapes, concurrency and mixed prefill/decode. The product
 worker must independently qualify this exact runtime incarnation through the
 production SDK before normal routing.
 
+After startup, readiness requires both SMG `/readiness` and the native backend's
+`/health_generate`, each with a two-second HTTP timeout. The native check requires
+a scheduler response even when generation is disabled on `/health`; a live HTTP
+process cannot keep a stalled GPU engine ready. While busy, SGLang can acknowledge
+health through normal scheduler progress; while idle, it generates one token.
+Failed checks make the allocation unready so new eligible requests use other
+capacity, including OpenRouter, without shortening legitimate prefill deadlines.
+
 The entrypoint preserves the host's assigned UUIDs in `NVIDIA_VISIBLE_DEVICES`
 and resolves their physical indices with `nvidia-smi` before setting numeric
 `CUDA_VISIBLE_DEVICES` in the same assignment order. Missing or duplicate UUIDs

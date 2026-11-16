@@ -41,6 +41,59 @@ class Warmup(unittest.TestCase):
 
 
 
+class RuntimeHealth(unittest.TestCase):
+    def supervisor(self):
+        supervisor = launch.Supervisor(['unused'], runtime_url='http://127.0.0.1:30000',
+                                       backend_url='http://127.0.0.1:30004')
+        supervisor.child = Mock()
+        supervisor.child.poll.return_value = None
+        supervisor.qualified.set()
+        return supervisor
+
+    def test_ready_requires_router_readiness_and_scheduler_progress(self):
+        supervisor = self.supervisor()
+        responses = [Mock(status=200), Mock(status=200)]
+        for response in responses:
+            response.__enter__ = Mock(return_value=response)
+            response.__exit__ = Mock(return_value=False)
+        with patch.object(launch.urllib.request, 'urlopen', side_effect=responses) as opened:
+            self.assertTrue(supervisor.ready())
+        self.assertEqual([call.args[0] for call in opened.call_args_list],
+                         ['http://127.0.0.1:30000/readiness',
+                          'http://127.0.0.1:30004/health_generate'])
+        self.assertTrue(all(call.kwargs['timeout'] == 2 for call in opened.call_args_list))
+
+    def test_healthy_router_cannot_hide_a_stalled_or_failed_scheduler(self):
+        for failure in [TimeoutError('scheduler stalled'), OSError('backend unavailable')]:
+            router = Mock(status=200)
+            router.__enter__ = Mock(return_value=router)
+            router.__exit__ = Mock(return_value=False)
+            with self.subTest(failure=failure), patch.object(
+                    launch.urllib.request, 'urlopen', side_effect=[router, failure]):
+                self.assertFalse(self.supervisor().ready())
+
+    def test_scheduler_must_report_success(self):
+        router, scheduler = Mock(status=200), Mock(status=503)
+        for response in [router, scheduler]:
+            response.__enter__ = Mock(return_value=response)
+            response.__exit__ = Mock(return_value=False)
+        with patch.object(launch.urllib.request, 'urlopen', side_effect=[router, scheduler]):
+            self.assertFalse(self.supervisor().ready())
+
+    def test_dead_child_or_unready_router_never_probes_scheduler(self):
+        supervisor = self.supervisor()
+        supervisor.child.poll.return_value = 1
+        with patch.object(launch.urllib.request, 'urlopen') as opened:
+            self.assertFalse(supervisor.ready())
+        opened.assert_not_called()
+        router = Mock(status=503)
+        router.__enter__ = Mock(return_value=router)
+        router.__exit__ = Mock(return_value=False)
+        with patch.object(launch.urllib.request, 'urlopen', return_value=router) as opened:
+            self.assertFalse(self.supervisor().ready())
+        self.assertEqual(opened.call_count, 1)
+
+
 class ExtraWarmup(unittest.TestCase):
     def supervisor(self, cap=3):
         return launch.Supervisor(['unused'], backend_url='http://127.0.0.1:30004', active_requests=cap,

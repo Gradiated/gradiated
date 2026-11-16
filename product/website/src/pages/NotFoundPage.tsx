@@ -28,7 +28,7 @@ import "../styles/index.css";
    second is somewhere worth going instead. */
 const WAYS_OUT = [
   { href: "/", label: "Return home", tone: "main" },
-  { href: "/notes/our-thesis/", label: "Read the thesis", tone: "secondary" },
+  { href: "/library/our-thesis/", label: "Read the thesis", tone: "secondary" },
 ] as const;
 
 export const NotFoundPage = (): ReactElement => (

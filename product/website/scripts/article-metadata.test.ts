@@ -55,7 +55,7 @@ test("draft filtering applies to every article, not a named route", () => {
   const sources = {
     "a.mdx": fixture(),
     "b.mdx": fixture("draft", "/library/another/"),
-    "c.mdx": fixture("draft", "/notes/third/"),
+    "c.mdx": fixture("draft", "/library/third/"),
   };
   assert.equal(buildArticleRegistry(sources, true).length, 3);
   assert.deepEqual(
@@ -98,7 +98,7 @@ test("Carat is published with the requested date; Thesis uses the same schema", 
     ),
     "thesis",
   );
-  assert.equal(thesis.path, "/notes/our-thesis/");
+  assert.equal(thesis.path, "/library/our-thesis/");
 });
 
 test("the October progress note is included in production", () => {
@@ -108,7 +108,7 @@ test("the October progress note is included in production", () => {
   );
   const article = parseArticleMetadata(source, "October progress note");
 
-  assert.equal(article.path, "/notes/2026-10-starting-on-hard-mode/");
+  assert.equal(article.path, "/library/2026-10-starting-on-hard-mode/");
   assert.equal(article.status, "published");
   assert.equal(buildArticleRegistry({ note: source }, false).length, 1);
 });

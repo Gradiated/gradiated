@@ -22,8 +22,7 @@ const SiteHeader = (): ReactElement => {
       ? "docs"
       : location.pathname.startsWith("/handbook")
         ? "handbook"
-        : location.pathname.startsWith("/library") ||
-            location.pathname.startsWith("/notes")
+        : location.pathname.startsWith("/library")
           ? "notes"
           : "home";
 
@@ -62,9 +61,9 @@ const SiteHeader = (): ReactElement => {
           </Link>
           <Link
             className={`transition-colors hover:text-accent max-[850px]:hidden ${active === "notes" ? "text-ink" : "text-muted"}`}
-            to="/notes/"
+            to="/library/"
           >
-            Notes
+            Library
           </Link>
           <Link
             className={`transition-colors hover:text-accent max-[850px]:hidden ${active === "handbook" ? "text-ink" : "text-muted"}`}
@@ -119,7 +118,7 @@ const SiteHeader = (): ReactElement => {
           {[
             { label: "Home", to: "/" },
             { label: "Docs", to: "/docs/" },
-            { label: "Notes", to: "/notes/" },
+            { label: "Library", to: "/library/" },
             { label: "Handbook", to: "/handbook/" },
             { label: "Careers", to: "/careers/" },
           ].map((item) => (

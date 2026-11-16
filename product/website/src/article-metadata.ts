@@ -20,7 +20,7 @@ const schema = z
     path: z
       .string()
       .regex(
-        /^(?:\/(?:library|notes)\/[a-z0-9]+(?:-[a-z0-9]+)*\/|\/library\/sand-to-thought\/[a-z0-9]+(?:-[a-z0-9]+)*\/)$/,
+        /^(?:\/library\/[a-z0-9]+(?:-[a-z0-9]+)*\/|\/library\/sand-to-thought\/[a-z0-9]+(?:-[a-z0-9]+)*\/)$/,
       ),
     collection: z.enum(["library", "sand-to-thought"]).default("library"),
     category: z.enum(["notes", "hardware"]).default("notes"),

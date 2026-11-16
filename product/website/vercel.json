@@ -60,13 +60,18 @@
       "permanent": true
     },
     {
-      "source": "/library/gemma-inference-engine/",
-      "destination": "/notes/gemma-inference-engine/",
+      "source": "/notes/working-with-us/",
+      "destination": "/careers/",
       "permanent": true
     },
     {
-      "source": "/notes/working-with-us/",
-      "destination": "/careers/",
+      "source": "/notes/",
+      "destination": "/library/",
+      "permanent": true
+    },
+    {
+      "source": "/notes/:slug/",
+      "destination": "/library/:slug/",
       "permanent": true
     },
     {

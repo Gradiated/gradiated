@@ -86,7 +86,7 @@ export const HomePage = (): ReactElement => (
       <Module index={2}>
         <div className="gr-news-head">
           <h2 className="gr-heading">Latest News</h2>
-          <a className="gr-link" href="/notes/">
+          <a className="gr-link" href="/library/">
             Read More
             <Arrow />
           </a>

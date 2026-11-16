@@ -34,7 +34,7 @@ it("keeps the Library hydration fallback independent of its query string", () =>
 
   expect(renderLibrary("?show=methods")).toBe(fallback);
   expect(renderLibrary("?show=handbook")).toBe(fallback);
-  expect(fallback).toContain("gr-mag-masthead");
+  expect(fallback).toContain("gr-masthead-title");
   expect(fallback).not.toContain("gr-handbook-index");
 });
 
@@ -66,4 +66,22 @@ it("redirects every former Library and Methods URL at the server", () => {
       }),
     ]),
   );
+});
+
+it("sends every former Notes URL to the Library", () => {
+  const sources = vercel.redirects.map((redirect) => redirect.source);
+
+  expect(vercel.redirects).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ source: "/notes/", destination: "/library/" }),
+      expect.objectContaining({
+        source: "/notes/:slug/",
+        destination: "/library/:slug/",
+      }),
+    ]),
+  );
+  expect(sources.indexOf("/notes/working-with-us/")).toBeLessThan(
+    sources.indexOf("/notes/:slug/"),
+  );
+  expect(sources).not.toContain("/library/gemma-inference-engine/");
 });

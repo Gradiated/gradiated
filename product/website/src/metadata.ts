@@ -83,11 +83,6 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Join Gradiated to make open-model inference more efficient across models, software, systems, and silicon.",
   },
-  "/notes/": {
-    title: "Notes",
-    description:
-      "Read Gradiated notes about inference research, systems, hardware, and company building.",
-  },
   "/handbook/": {
     title: "Handbook",
     description:
@@ -310,8 +305,6 @@ const breadcrumbFor = (pathname: string, title: string): object | null => {
     parts.push({ name: "Developer docs", path: "/docs/" });
   } else if (pathname.startsWith("/careers/")) {
     parts.push({ name: "Careers", path: "/careers/" });
-  } else if (pathname.startsWith("/notes/")) {
-    parts.push({ name: "Notes", path: "/notes/" });
   } else if (pathname.startsWith("/handbook/")) {
     parts.push({ name: "Handbook", path: "/handbook/" });
   } else if (pathname.startsWith("/library/")) {

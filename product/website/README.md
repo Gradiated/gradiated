@@ -157,7 +157,7 @@ and shared code blocks work in every article. The Thesis MDX file currently uses
 its existing React body to preserve the current copy.
 
 The registry validates required fields, calendar dates, paths, status, and
-duplicate routes. Paths use `/library/<slug>/`, `/notes/<slug>/`, or `/sand-to-thought/` and its subpages. Articles default to `collection: library`; the semiconductor guide uses `collection: sand-to-thought` and is excluded from Library cards and navigation lists. An optional
+duplicate routes. Paths use `/library/<slug>/` or `/library/sand-to-thought/<slug>/`. Articles default to `collection: library`; the semiconductor guide uses `collection: sand-to-thought`. Both list on the Library page; only `collection: library` feeds the navigation lists. Former `/notes/` addresses redirect to `/library/`. An optional
 `updatedAt` date must not precede `publishedAt`. `image` is optional and defaults
 to the site mark. Use a site-relative image path. Dates use quoted `YYYY-MM-DD`.
 
@@ -283,10 +283,10 @@ Set `VITE_CONSOLE_BASE_URL` at build time to override this destination.
 
 ## Sand to Thought
 
-The semiconductor guide lives at `/sand-to-thought/`, with its own top navigation
-link immediately after Library. The old `/library/how-to-get-an-answer-out-of-sand/`
-address redirects to it, preserving section fragments. Library contains Notes and
-Handbook. Article subjects (`category`) remain separate from their collection.
+The semiconductor guide lives under `/library/sand-to-thought/` and lists on the
+Library page beside the other articles. The old `/sand-to-thought/` addresses
+redirect to it, preserving section fragments. Article subjects (`category`)
+remain separate from their collection.
 
 The guide opens with the animated dune-to-circuit artwork and continues directly
 into the illustrated article. Its contents list is generated from the script’s

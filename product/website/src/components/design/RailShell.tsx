@@ -184,12 +184,6 @@ const SECTIONS: readonly Section[] = [
         image: "/brand/nav/handbook.webp",
       },
       {
-        title: "Notes",
-        blurb: "Notes on inference systems.",
-        href: "/notes/",
-        image: "/brand/nav/notes.webp",
-      },
-      {
         title: "About",
         blurb: "AI research lab in Cambridge, UK.",
         href: "/about/",

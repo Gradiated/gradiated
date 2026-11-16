@@ -115,7 +115,7 @@ const NAV_ITEMS: NavItem[] = [
      yet — one card is not a gallery, and the shared panel only earns its
      complexity where there is a set to move between. */
   { href: "/hardware/", label: "Hardware" },
-  { href: "/notes/", label: "Notes" },
+  { href: "/library/", label: "Library" },
   { href: "/handbook/", label: "Handbook" },
   ...(hasGuide
     ? [{ href: SAND_TO_THOUGHT_URL, label: "Sand to Thought" }]

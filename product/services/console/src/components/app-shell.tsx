@@ -1,3 +1,4 @@
+import { LoaderCircle } from "lucide-react";
 import type { ReactNode } from "react";
 
 import type { CurrentUser, Workspace } from "@/api/queries";
@@ -70,6 +71,17 @@ export const AppShell = ({
             Retry
           </Button>
         </div>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="grid min-h-svh place-items-center">
+        <LoaderCircle
+          aria-label="Loading"
+          className="size-5 animate-spin text-muted-foreground"
+        />
       </main>
     );
   }

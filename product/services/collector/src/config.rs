@@ -12,6 +12,8 @@ pub enum ConfigError {
     Store,
     #[error("{0} must be greater than zero")]
     Zero(&'static str),
+    #[error("COLLECTOR_MAX_BUFFERED_BYTES must be at least COLLECTOR_MAX_RECORD_BYTES")]
+    Buffer,
     #[error("COLLECTOR_TOKEN must be at least 32 characters")]
     Token,
 }
@@ -33,6 +35,7 @@ pub struct CollectorConfig {
     pub replica: String,
     pub token: String,
     pub max_record_bytes: usize,
+    pub max_buffered_bytes: usize,
     pub max_concurrent_requests: usize,
     pub limits: Limits,
     pub drain: Duration,
@@ -54,6 +57,8 @@ struct Environment {
     collector_token: String,
     #[serde(default = "default_max_record_bytes")]
     collector_max_record_bytes: usize,
+    #[serde(default = "default_max_buffered_bytes")]
+    collector_max_buffered_bytes: usize,
     #[serde(default = "default_max_concurrent_requests")]
     collector_max_concurrent_requests: usize,
     #[serde(default = "default_max_open_streams")]
@@ -125,6 +130,10 @@ impl CollectorConfig {
             }
         }
 
+        if environment.collector_max_buffered_bytes < environment.collector_max_record_bytes {
+            return Err(ConfigError::Buffer);
+        }
+
         if environment.collector_token.len() < 32 {
             return Err(ConfigError::Token);
         }
@@ -142,6 +151,7 @@ impl CollectorConfig {
                 .unwrap_or_else(|| "collector".to_owned()),
             token: environment.collector_token,
             max_record_bytes: environment.collector_max_record_bytes,
+            max_buffered_bytes: environment.collector_max_buffered_bytes,
             max_concurrent_requests: environment.collector_max_concurrent_requests,
             limits: Limits {
                 max_open_streams: environment.collector_max_open_streams,
@@ -163,8 +173,16 @@ fn default_admin_address() -> SocketAddr {
     SocketAddr::from(([0, 0, 0, 0], 9004))
 }
 
+/// A 64 MiB generation (a 32 MB request and its response) is at most this large
+/// once binary bodies are base64.
 fn default_max_record_bytes() -> usize {
-    32 * 1024 * 1024
+    96 * 1024 * 1024
+}
+
+/// Request bodies held at once. Parsing and compression copy a body a few times,
+/// so this bounds memory well inside the container limit.
+fn default_max_buffered_bytes() -> usize {
+    256 * 1024 * 1024
 }
 
 fn default_max_concurrent_requests() -> usize {
@@ -222,11 +240,21 @@ mod tests {
     }
 
     #[test]
+    fn the_buffer_holds_at_least_one_record() {
+        assert!(matches!(
+            config(&[("COLLECTOR_MAX_BUFFERED_BYTES", "1024")]),
+            Err(ConfigError::Buffer)
+        ));
+    }
+
+    #[test]
     fn defaults_follow_the_plan() {
         let config = config(&[]).unwrap();
 
         assert_eq!(config.limits.max_batch_bytes, 16 * 1024 * 1024);
         assert_eq!(config.limits.max_batch_age, Duration::from_secs(60));
+        assert_eq!(config.max_record_bytes, 96 * 1024 * 1024);
+        assert_eq!(config.max_buffered_bytes, 256 * 1024 * 1024);
         assert!(matches!(config.store, Store::S3 { .. }));
     }
 

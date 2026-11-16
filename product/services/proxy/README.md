@@ -55,18 +55,28 @@ checks the chain without real provider calls. See [Product](../../README.md).
 
 The proxy sends hosted and relayed generations to the collector when the workspace has
 `trace_capture_enabled` and the request has a non-empty `x-gradiated-task`
-header. Hosted Chat Completions are normalized into trainable conversational records; relayed records remain excluded from training. Tool calls are retained, but the text SFT builder excludes tool-bearing generations. Capture identity lookup runs alongside forwarding with a one-second deadline. If it is still pending when the gateway responds, capture is skipped. Only unencoded UTF-8 JSON and event-stream responses are captured. Encoded or invalid UTF-8 bodies are skipped and counted as `unsupported`; the client still receives the original bytes. The proxy does not
+header. Hosted Chat Completions are normalized into trainable conversational records; relayed records remain excluded from training. Tool calls are retained, but the text SFT builder excludes tool-bearing generations. Capture identity lookup runs alongside forwarding with a one-second deadline. If it is still pending when the gateway responds, capture is skipped. Every content type is captured: UTF-8 bodies travel as text, and other bytes, such as multipart uploads, images or audio, travel as base64. Compressed bodies are captured as sent with their `Content-Encoding`, and the collector decodes them; the customer's `Accept-Encoding` and the bytes they receive are never changed. A response whose `Content-Encoding` header is not readable text is skipped and counted as `unsupported`. The proxy does not
 parse the bodies: each line of the `application/x-ndjson` batch holds the raw
 request and response text with the generation's identifiers, and the collector
-does the parsing. See the [traces plan](../../../docs/TRACES_PLAN.md).
+does the parsing; exchanges it does not parse, such as embeddings or transcriptions, are stored as raw HTTP. See the [traces plan](../../../docs/TRACES_PLAN.md).
 
 - The response is copied as it streams, and the generation is queued when the
   stream completes, fails or is cancelled.
 - One byte budget (`PROXY_CAPTURE_BUFFER_BYTES`) covers generations that are
   being recorded, queued or sent. A generation that does not fit, or that is
-  larger than 16 MiB, is dropped.
-- One background task sends a batch at 1 MiB or after 100 ms. Each post has a
-  5-second timeout. A failed post is retried once, then dropped.
+  larger than 64 MiB, is dropped. Any request within the 32 MB body limit is
+  captured with a response of up to 32 MiB. A line that JSON escaping or base64
+  grows past 95 MiB is also dropped as `too_large`, so every post fits the
+  collector's 96 MiB limit.
+- One background task forms a batch at 1 MiB or after 100 ms, and up to 8
+  batches are posted at once. Each post has a timeout of 5 seconds plus 1
+  second for each 8 MiB.
+- A Kubernetes Service keeps one connection on one pod, so with
+  `PROXY_COLLECTOR_DISCOVERY_HOST` the proxy resolves that headless Service to
+  every collector pod every 5 seconds and rotates posts across them. A failed
+  post is retried on the next pod, up to 3 attempts with 3 or more pods, then
+  dropped. Without the host, or when it resolves to nothing, posts use
+  `PROXY_COLLECTOR_URL` and are retried once.
 - On SIGTERM, queued generations are sent after the open streams finish, for at
   most 15 seconds.
 
@@ -114,6 +124,7 @@ Capture never delays or fails a customer request.
 | `PROXY_BODY_READ_SECONDS`             | `60`                        | Time allowed to receive the request body              |
 | `PROXY_COLLECTOR_URL`                 | unset                       | Collector intake URL; unset turns capture off         |
 | `PROXY_COLLECTOR_TOKEN`               | unset                       | Collector bearer token; required with the URL         |
+| `PROXY_COLLECTOR_DISCOVERY_HOST`      | unset                       | Headless Service of every collector pod (HTTP only)   |
 | `PROXY_CAPTURE_BUFFER_BYTES`          | `268435456`                 | Bytes held across all captured generations            |
 
 The collector secret must be provisioned before deploying a proxy with capture configured. The capture byte budget includes queued record overhead and task, trace, session, path and content-type strings.

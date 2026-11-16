@@ -27,6 +27,7 @@ pub struct Metrics {
     task_registration_failures: Counter,
     open_streams: Gauge,
     disk_bytes: Gauge,
+    requests_in_flight: Gauge,
     backlog: Arc<Backlog>,
 }
 
@@ -44,6 +45,7 @@ impl Metrics {
         let task_registration_failures = Counter::default();
         let open_streams = Gauge::default();
         let disk_bytes = Gauge::default();
+        let requests_in_flight = Gauge::default();
         let service_info = Gauge::<i64>::default();
         service_info.set(1);
 
@@ -103,6 +105,11 @@ impl Metrics {
             disk_bytes.clone(),
         );
         registry.register(
+            "requests_in_flight",
+            "Intake requests being handled or waiting for a slot; the autoscaling demand",
+            requests_in_flight.clone(),
+        );
+        registry.register(
             "service_info",
             "Always one while the collector runs",
             service_info,
@@ -121,6 +128,7 @@ impl Metrics {
             task_registration_failures,
             open_streams,
             disk_bytes,
+            requests_in_flight,
             backlog,
         }
     }
@@ -158,6 +166,13 @@ impl Metrics {
         self.batches_recovered.inc_by(batches as u64);
     }
 
+    /// Counts one intake request until the returned guard is dropped.
+    pub fn request_started(&self) -> InFlight {
+        self.requests_in_flight.inc();
+
+        InFlight(self.requests_in_flight.clone())
+    }
+
     pub fn set_open_streams(&self, count: usize) {
         self.open_streams.set(count as i64);
     }
@@ -170,5 +185,13 @@ impl Metrics {
         encode(&mut output, &self.registry).expect("encoding into a String cannot fail");
 
         output
+    }
+}
+
+pub struct InFlight(Gauge);
+
+impl Drop for InFlight {
+    fn drop(&mut self) {
+        self.0.dec();
     }
 }

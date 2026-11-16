@@ -26,6 +26,12 @@ export interface ContentStore {
   ): Promise<Uint8Array>;
   delete(keys: string[]): Promise<void>;
 }
+/**
+ * The largest stored object the API reads: one generation record, which the
+ * collector caps at 96 MiB, or one manifest.
+ */
+export const MAX_RECORD_BYTES = 96 * 1024 * 1024;
+
 export const createContentStore = (bucket: string): ContentStore => {
   const client = new S3Client({ maxAttempts: 3 });
   const send = <T>(operation: Promise<T>): Promise<T> =>
@@ -81,7 +87,7 @@ export const createContentStore = (bucket: string): ContentStore => {
           { abortSignal: AbortSignal.timeout(10_000) },
         ),
       );
-      const limit = 32 * 1024 * 1024;
+      const limit = MAX_RECORD_BYTES;
       if (!response.Body || (response.ContentLength ?? 0) > limit)
         throw new ControlServiceError(
           "unavailable",

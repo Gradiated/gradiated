@@ -3,7 +3,7 @@ import * as zlib from "node:zlib";
 import { z } from "zod";
 import { DAY, HOUR } from "../constants.js";
 import { ControlServiceError } from "../errors.js";
-import type { ContentStore } from "./storage.js";
+import { type ContentStore, MAX_RECORD_BYTES } from "./storage.js";
 
 const rowSchema = z.object({
   workspace_id: z.string().uuid(),
@@ -20,11 +20,7 @@ const rowSchema = z.object({
   usage: z.record(z.string(), z.unknown()).nullable(),
   retention_days: z.number().int(),
   offset: z.number().int().nonnegative(),
-  length: z
-    .number()
-    .int()
-    .positive()
-    .max(32 * 1024 * 1024),
+  length: z.number().int().positive().max(MAX_RECORD_BYTES),
 });
 
 export type TraceManifestRow = z.infer<typeof rowSchema>;
@@ -172,7 +168,7 @@ export const readTraceRecord = async (
       decompress(
         bytes,
         // The collector appends a newline to each admitted JSON record.
-        { maxOutputLength: 32 * 1024 * 1024 + 1 },
+        { maxOutputLength: MAX_RECORD_BYTES + 1 },
         (error, result) => (error ? reject(error) : resolve(result)),
       ),
     );

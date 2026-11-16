@@ -132,18 +132,17 @@ fn sse_handles_crlf_comments_multiline_data_and_huge_sparse_indices() {
 }
 
 #[test]
-fn malformed_and_unsupported_relays_are_rejected() {
+fn malformed_envelopes_are_rejected() {
     let valid = relay("{}", "openai", "/v1/responses", "application/json");
     for (key, value) in [
         (
             "generation_id",
             json!("123e4567-e89b-42d3-a456-426614174000"),
         ),
-        ("request", json!("{")),
-        ("response", json!("[]")),
         ("retention_days", json!(7)),
-        ("path", json!("/v1/unknown")),
         ("outcome", json!("invented")),
+        ("request_base64", json!("AAAA")),
+        ("response", json!(null)),
         ("status", json!(999)),
     ] {
         let mut input = valid.clone();
@@ -294,4 +293,261 @@ fn hosted_bare_endpoints_preserve_protocol_and_classify_token_limits() {
         assert_eq!(output["outcome"], "truncated");
         assert_eq!(output["source"], "hosted");
     }
+}
+
+fn raw(input: &Value) -> Value {
+    serde_json::from_slice(&normalize(&serde_json::to_vec(input).unwrap()).unwrap()).unwrap()
+}
+
+#[test]
+fn bodies_that_do_not_parse_as_their_protocol_are_kept_raw() {
+    for (key, value) in [
+        ("request", json!("{")),
+        ("response", json!("[]")),
+        ("path", json!("/v1/unknown")),
+    ] {
+        let mut input = relay("{}", "openai", "/v1/responses", "application/json");
+        input[key] = value.clone();
+        let record = raw(&input);
+        assert_eq!(record["protocol"], "openai.http", "{key}");
+        assert_eq!(record["raw"]["path"], input["path"], "{key}");
+        assert_eq!(record["canonical"], Value::Null, "{key}");
+    }
+
+    let mut stream = relay(
+        "data: nope\n\n",
+        "openai",
+        "/v1/chat/completions",
+        "text/event-stream",
+    );
+    stream["outcome"] = json!("error");
+    let record = raw(&stream);
+    assert_eq!(record["protocol"], "openai.http");
+    assert_eq!(record["streamed"], true);
+    assert_eq!(record["outcome"], "error");
+    assert_eq!(record["raw"]["response"], "data: nope\n\n");
+}
+
+#[test]
+fn embeddings_keep_json_bodies_model_and_usage() {
+    let mut input = relay(
+        r#"{"data":[{"embedding":[0.1]}],"usage":{"prompt_tokens":3,"total_tokens":3}}"#,
+        "openai",
+        "/v1/embeddings",
+        "application/json",
+    );
+    input["request"] = json!(r#"{"model":"text-embedding-3-small","input":"hi"}"#);
+    let record = raw(&input);
+
+    assert_eq!(record["model"], "text-embedding-3-small");
+    assert_eq!(record["raw"]["request"]["input"], "hi");
+    assert_eq!(record["raw"]["response"]["data"][0]["embedding"][0], 0.1);
+    assert_eq!(record["usage"]["input"], 3);
+    assert_eq!(record["source"], "relay");
+    assert_eq!(record["trainable"], false);
+}
+
+#[test]
+fn multipart_uploads_and_binary_responses_keep_exact_bytes() {
+    use base64::{engine::general_purpose::STANDARD, Engine};
+
+    let upload = b"--b0und\r\nContent-Disposition: form-data; name=\"model\"\r\n\r\nwhisper-1\r\n--b0und\r\nContent-Disposition: form-data; name=\"file\"; filename=\"tone.wav\"\r\nContent-Type: audio/wav\r\n\r\nRIFF\xff\xfe\x00\x01\r\n--b0und--\r\n";
+    let audio = b"ID3\x04\x00\xff\xfb\x90";
+    let mut input = relay("", "openai", "/v1/audio/transcriptions", "audio/mpeg");
+    input.as_object_mut().unwrap().remove("request");
+    input.as_object_mut().unwrap().remove("response");
+    input["request_base64"] = json!(STANDARD.encode(upload));
+    input["request_content_type"] = json!("multipart/form-data; boundary=b0und");
+    input["response_base64"] = json!(STANDARD.encode(audio));
+    let record = raw(&input);
+
+    assert_eq!(record["protocol"], "openai.http");
+    assert_eq!(record["model"], "whisper-1");
+    assert_eq!(
+        record["raw"]["request_content_type"],
+        "multipart/form-data; boundary=b0und"
+    );
+    assert_eq!(record["raw"]["request"]["encoding"], "base64");
+    let stored = STANDARD
+        .decode(record["raw"]["request"]["data"].as_str().unwrap())
+        .unwrap();
+    assert_eq!(stored, upload);
+    let stored = STANDARD
+        .decode(record["raw"]["response"]["data"].as_str().unwrap())
+        .unwrap();
+    assert_eq!(stored, audio);
+    assert_eq!(record["usage"], Value::Null);
+}
+
+#[test]
+fn text_bodies_and_requests_without_a_model_are_kept() {
+    let mut input = relay("Beep.", "openai", "/v1/audio/transcriptions", "text/plain");
+    input["request"] = json!("");
+    input["request_content_type"] = Value::Null;
+    let record = raw(&input);
+
+    assert_eq!(record["model"], "unknown");
+    assert_eq!(record["raw"]["request"], "");
+    assert_eq!(record["raw"]["response"], "Beep.");
+}
+
+#[test]
+fn a_request_that_does_not_decode_is_kept_raw_with_its_coding() {
+    use base64::{engine::general_purpose::STANDARD, Engine};
+
+    let mut input = relay("{}", "openai", "/v1/responses", "application/json");
+    input.as_object_mut().unwrap().remove("request");
+    input["request_base64"] = json!(STANDARD.encode(b"\x1f\x8b\x08\x00"));
+    input["request_content_encoding"] = json!("gzip");
+    let record = raw(&input);
+
+    assert_eq!(record["protocol"], "openai.http");
+    assert_eq!(record["raw"]["request_content_encoding"], "gzip");
+    assert_eq!(record["raw"]["request"]["encoding"], "base64");
+
+    let mut identity = relay("{}", "openai", "/v1/responses", "application/json");
+    identity["request_content_encoding"] = json!("identity");
+    assert_eq!(raw(&identity)["protocol"], "openai.responses");
+}
+
+fn gzip(bytes: &[u8]) -> Vec<u8> {
+    use std::io::Write;
+
+    let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+    encoder.write_all(bytes).unwrap();
+    encoder.finish().unwrap()
+}
+
+fn compressed(response: &[u8], provider: &str, path: &str, mime: &str, coding: &str) -> Value {
+    use base64::{engine::general_purpose::STANDARD, Engine};
+
+    let mut input = relay("", provider, path, mime);
+    input.as_object_mut().unwrap().remove("response");
+    input["response_base64"] = json!(STANDARD.encode(response));
+    input["response_content_encoding"] = json!(coding);
+    input
+}
+
+#[test]
+fn gzip_json_and_event_stream_responses_are_decoded_and_parsed() {
+    let body = br#"{"choices":[{"message":{"role":"assistant","content":"Decoded"},"finish_reason":"stop"}],"usage":{"prompt_tokens":4,"completion_tokens":1}}"#;
+    let record = raw(&compressed(
+        &gzip(body),
+        "openai",
+        "/v1/chat/completions",
+        "application/json",
+        "gzip",
+    ));
+    assert_eq!(record["protocol"], "openai.chat");
+    assert_eq!(
+        record["raw"]["response"]["choices"][0]["message"]["content"],
+        "Decoded"
+    );
+    assert_eq!(record["usage"]["input"], 4);
+
+    let events = stream(&[
+        json!({"type": "message_start", "message": {"id": "msg_1", "role": "assistant", "content": [], "usage": {"input_tokens": 3, "output_tokens": 0}}}),
+        json!({"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}}),
+        json!({"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "Hi"}}),
+        json!({"type": "content_block_stop", "index": 0}),
+        json!({"type": "message_stop"}),
+    ]);
+    let record = raw(&compressed(
+        &gzip(events.as_bytes()),
+        "anthropic",
+        "/v1/messages",
+        "text/event-stream",
+        "gzip",
+    ));
+    assert_eq!(record["protocol"], "anthropic.messages");
+    assert_eq!(record["streamed"], true);
+    assert_eq!(record["raw"]["response"]["content"][0]["text"], "Hi");
+}
+
+#[test]
+fn a_gzip_request_is_decoded_and_parsed() {
+    use base64::{engine::general_purpose::STANDARD, Engine};
+
+    let mut input = relay("{}", "openai", "/v1/responses", "application/json");
+    input.as_object_mut().unwrap().remove("request");
+    input["request_base64"] = json!(STANDARD.encode(gzip(br#"{"model":"gpt-test","input":"hi"}"#)));
+    input["request_content_encoding"] = json!("gzip");
+    let record = raw(&input);
+
+    assert_eq!(record["protocol"], "openai.responses");
+    assert_eq!(record["model"], "gpt-test");
+    assert_eq!(record["raw"]["request"]["input"], "hi");
+}
+
+#[test]
+fn a_cancelled_compressed_stream_keeps_what_decoded() {
+    let events: String = (0..2000)
+        .map(|n| {
+            format!(
+                "data: {}\n\n",
+                json!({"choices": [{"index": 0, "delta": {"content": format!("{n} ")}}]})
+            )
+        })
+        .collect();
+    let encoded = gzip(events.as_bytes());
+    let mut input = compressed(
+        &encoded[..encoded.len() / 2],
+        "openai",
+        "/v1/chat/completions",
+        "text/event-stream",
+        "gzip",
+    );
+    input["outcome"] = json!("cancelled");
+    let record = raw(&input);
+
+    assert_eq!(record["protocol"], "openai.chat");
+    assert_eq!(record["outcome"], "cancelled");
+    let text = record["raw"]["response"]["choices"][0]["message"]["content"]
+        .as_str()
+        .unwrap();
+    assert!(text.starts_with("0 1 2 "), "{text}");
+}
+
+#[test]
+fn bodies_that_do_not_decode_are_kept_with_their_coding() {
+    let encoded = gzip(br#"{"choices":[]}"#);
+    let truncated = compressed(
+        &encoded[..encoded.len() - 4],
+        "openai",
+        "/v1/chat/completions",
+        "application/json",
+        "gzip",
+    );
+    let unknown = compressed(
+        b"\x1f\x9d\x90",
+        "openai",
+        "/v1/chat/completions",
+        "application/json",
+        "compress",
+    );
+
+    for (input, coding) in [(truncated, "gzip"), (unknown, "compress")] {
+        let record = raw(&input);
+        assert_eq!(record["protocol"], "openai.http", "{coding}");
+        assert_eq!(record["raw"]["response_content_encoding"], coding);
+        assert_eq!(record["raw"]["response"]["encoding"], "base64");
+    }
+}
+
+#[test]
+fn an_interrupted_stream_cut_mid_event_keeps_its_whole_events() {
+    let mut input = relay(
+        "data: {\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Kept\"}}]}\n\ndata: {\"choi",
+        "openai",
+        "/v1/chat/completions",
+        "text/event-stream",
+    );
+    input["outcome"] = json!("cancelled");
+    let record = raw(&input);
+
+    assert_eq!(record["protocol"], "openai.chat");
+    assert_eq!(
+        record["raw"]["response"]["choices"][0]["message"]["content"],
+        "Kept"
+    );
 }

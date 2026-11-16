@@ -33,6 +33,8 @@ If a trace cannot be anonymized without changing its task, drop it.
 - Every model call goes through OpenRouter with zero data retention:
   `{"zdr": true, "data_collection": "deny", "only": [<enabled ZDR providers>], "sort": "throughput"}`.
   Cheap models are enough, such as `deepseek/deepseek-v4.1-flash-1017`.
+  Read `OPENROUTER_API_KEY` from the AWS secret `gradiated/dev/fde`, which holds the shared forward-deployed
+  engineering keys, and never print it.
 
 ## 1. Convert to one format
 

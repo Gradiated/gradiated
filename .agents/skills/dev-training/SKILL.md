@@ -25,9 +25,9 @@ unavailable. Either way, plan every run to survive losing the VM:
   lost at any time.
 - Save checkpoints, metrics, logs and results to the development training
   bucket (`DEV_TRAINING_S3_BUCKET` in `gradiated/dev/env`) under
-  `s3://<bucket>/<project>/<run>/`, regularly while the job runs, not only at
-  the end: at least every 15 to 30 minutes of GPU work, and
-  after every evaluation or milestone. Choose an interval you would be content
+  `s3://<bucket>/<project>/<run>/`, the path you gave `gradctl compute s3`,
+  regularly while the job runs, not only at the end: at least every 15 to 30
+  minutes of GPU work, and after every evaluation or milestone. Choose an interval you would be content
   to lose.
 - Make the job resumable: on start, look for the latest checkpoint in S3 and
   continue from it. Keep the exact command, code revision and configuration
@@ -89,9 +89,19 @@ only what you copy to them, and `gradiated/dev/env` holds only development keys.
    OpenRouter requests send as `user`; default `gradiated`), `--stage` (cleaning,
    env-build, training, rollout, eval, serving or dev), `--run-id` and
    `--workstream`.
-3. Give the VM bucket access: `gradctl compute s3 <name>` installs a key that can
-   only use the development training bucket as the VM's default AWS profile.
-   VMs start with no credentials; do not copy any other key to them.
+3. Give the VM bucket access for the paths it needs, and only those:
+   `gradctl compute s3 <name> --path <project>/<run>` installs, as the VM's
+   default AWS profile, temporary credentials that can read and write only
+   `s3://<bucket>/<project>/<run>/` and expire after 24 hours (`--hours`, up to
+   36). Paths are required. Choose a new path for a new run rather than reusing
+   another run's; add `--read <project>/<earlier-run>` to resume from a
+   checkpoint the VM must not change. Repeat either flag for more paths (about
+   eight fit). List with a trailing slash (`aws s3 ls s3://<bucket>/<path>/`).
+   A `--read` path may not sit inside a `--path`. Run the command again before
+   the credentials expire to renew them on a longer job: the VM reads them
+   through `credential_process`, so AWS SDKs and the CLI in a running job pick
+   up the renewal without a restart. VMs start with no credentials; do not
+   copy any other key to them.
 4. Connect: `gradctl compute ssh <name> [command]`, or
    `tailscale ssh root@<provider>-<name>` once it has joined the tailnet.
    Nodes of a multi-node job reach each other by MagicDNS name.

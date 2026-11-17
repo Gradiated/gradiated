@@ -29,7 +29,8 @@ import urllib.parse
 import urllib.request
 
 API = 'https://app.spheron.ai'
-TERMS = {'spot': 'SPOT', 'on-demand': 'DEDICATED'}
+# CLUSTER offers are dedicated bare-metal servers: on demand, never reclaimed.
+TERMS = {'SPOT': 'spot', 'DEDICATED': 'on-demand', 'CLUSTER': 'on-demand'}
 STATES = {'deploying': 'STARTING', 'running': 'RUNNING', 'stopped': 'STOPPED'}
 GONE = ('terminated', 'terminated-provider', 'failed')
 
@@ -65,9 +66,9 @@ class Spheron:
                 detail = error.read().decode(errors='replace')
                 if error.code == 404 and missing_ok:
                     return None
-                # A 429 was refused before anything happened, so any call may repeat it. Spheron has no
-                # idempotency key, so only reads repeat after a server error: a repeated create could buy twice.
-                if attempt < 4 and (error.code == 429 or (method == 'GET' and error.code in (500, 502, 503, 504))):
+                # Spheron has no idempotency key, so only reads repeat: a repeated create, even after a 429,
+                # could buy twice, and Spheron asks callers never to loop deployment creation.
+                if attempt < 4 and method == 'GET' and error.code in (429, 500, 502, 503, 504):
                     wait = error.headers.get('Retry-After') or error.headers.get('RateLimit-Reset') or 2 ** attempt
                     time.sleep(min(int(float(wait)), 60))
                     continue
@@ -90,12 +91,13 @@ class Spheron:
         """Every GPU VM offer as (GPU type, offer), across every page."""
         page = 1
         while True:
-            params = {'computeType': 'gpu', 'limit': 100, 'page': page,
-                      **({'instanceType': TERMS[term]} if term else {})}
+            # Filtered here rather than by instanceType, since on-demand spans DEDICATED and CLUSTER.
+            params = {'computeType': 'gpu', 'limit': 100, 'page': page}
             found = self.api('GET', '/api/gpu-offers', params)
             for group in found.get('data', []):
                 for offer in group.get('offers', []):
-                    if (offer.get('instanceType') in TERMS.values() and offer.get('gpuCount', 0) >= 1
+                    kind = TERMS.get(offer.get('instanceType'))
+                    if (kind and (term is None or kind == term) and offer.get('gpuCount', 0) >= 1
                             and group.get('gpuType') != 'CPU' and offer.get('provider') != 'spheron-con'):
                         yield group['gpuType'], offer
             if page >= (found.get('totalPages') or 1):
@@ -109,7 +111,7 @@ class Spheron:
 
     @staticmethod
     def term(instance_type):
-        return 'spot' if instance_type == 'SPOT' else 'on-demand'
+        return TERMS.get(instance_type, 'on-demand')
 
     def regions(self):
         return sorted({f"{offer['provider']}/{cluster}" for _, offer in self.catalog()
@@ -136,7 +138,8 @@ class Spheron:
                 offers.append({
                     'gpu': gpu, 'region': f"{offer['provider']}/{cluster}", 'term': self.term(offer['instanceType']),
                     'gpus': gpus, 'gpu_hour': price / gpus, 'hour': price, 'available': available,
-                    'virtualization': 'bare-metal' if 'BAREMETAL' in gpu or 'metal' in deployment else 'vm',
+                    'virtualization': 'bare-metal' if offer['instanceType'] == 'CLUSTER' or 'BAREMETAL' in gpu
+                                      or deployment in ('cluster', 'baremetal', 'bare-metal') else 'vm',
                     'seller': offer['provider'], 'offer_id': offer['offerId'],
                     'up': f"--provider spheron --platform {gpu} --preset {shlex.quote(offer['offerId'])} "
                           f"--region {shlex.quote(cluster)}"})
@@ -242,6 +245,11 @@ class Spheron:
             check = self.api('GET', f'{path}/can-terminate')
             if check.get('canTerminate'):
                 break
+            if deployment.get('status') == 'stopped':
+                # Stopped time does not count toward the minimum runtime, so waiting would never end.
+                sys.exit(f"Spheron will not terminate {vm['name']} while it is stopped short of its minimum runtime "
+                         f"({check.get('timeRemaining')} of {check.get('minimumRuntime')} minutes left). Run "
+                         f"`gradctl compute start {vm['name']}`, then `down` again; the disk bills until then")
             if time.time() > deadline:
                 sys.exit(f"Spheron will not terminate {vm['name']} yet ({check.get('reason')}); run `down` again")
             remaining = check.get('timeRemaining')

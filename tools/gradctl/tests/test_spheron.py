@@ -14,9 +14,12 @@ B300 = {'provider': 'spheron-es', 'offerId': 'UK South 1::gpu-b300-sxm::8gpu', '
 H100 = {'provider': 'data-crunch', 'offerId': '1H100.80S.30V_FIN-01_200_spot', 'gpuCount': 1, 'price': 3.41,
         'hasDiscount': True, 'discountedPrice': 3.0, 'available': True, 'clusters': ['Finland 1'],
         'instanceType': 'SPOT', 'os_options': ['Ubuntu 24.04', 'Ubuntu 24.04 + CUDA 13.0 Open'], 'extras': {}}
+METAL = {**H100, 'offerId': 'metal', 'instanceType': 'CLUSTER', 'gpuCount': 8, 'price': 15.84,
+         'hasDiscount': False, 'clusters': ['dallas'], 'extras': {'deployment_type': 'cluster'}}
 CATALOG = {'data': [{'gpuType': 'B300_SXM6', 'offers': [B300]},
                     {'gpuType': 'H100_SXM5', 'offers': [H100, {**H100, 'offerId': 'sold', 'available': False}]},
                     {'gpuType': 'CPU', 'offers': [{**H100, 'gpuCount': 0}]},
+                    {'gpuType': 'H100_SXM5', 'offers': [METAL]},
                     {'gpuType': 'H100_SXM5_CONTAINER', 'offers': [{**H100, 'provider': 'spheron-con'}]}],
            'totalPages': 1}
 RUNNING = {'id': 'd-1', 'name': 'exp', 'providerId': 'spheron-es', 'region': 'UK South 1', 'status': 'running',
@@ -50,6 +53,13 @@ class SpheronTests(unittest.TestCase):
         self.assertEqual(offers[0]['region'], 'spheron-es/UK South 1')
         self.assertEqual(offers[0]['up'], "--provider spheron --platform B300_SXM6 "
                                           "--preset 'UK South 1::gpu-b300-sxm::8gpu' --region 'UK South 1'")
+
+    def test_cluster_offers_are_on_demand_bare_metal(self):
+        [metal] = FakeSpheron({('GET', '/api/gpu-offers'): CATALOG}).offers('on-demand')
+        self.assertEqual((metal['offer_id'], metal['term'], metal['virtualization'], metal['gpu_hour']),
+                         ('metal', 'on-demand', 'bare-metal', 1.98))
+        self.assertNotIn('metal', [o['offer_id'] for o in FakeSpheron({('GET', '/api/gpu-offers'): CATALOG})
+                                   .offers('spot')])
 
     def test_create_deploys_the_offer_with_our_key_and_no_sandbox(self):
         spheron = FakeSpheron({('GET', '/api/gpu-offers'): CATALOG, ('POST', '/api/deployments'): {'id': 'd-1'}})
@@ -111,6 +121,17 @@ class SpheronTests(unittest.TestCase):
         sleep.assert_called_once_with(120)
         self.assertEqual(spheron.calls[-1][:2], ('DELETE', '/api/deployments/d-1'))
 
+    def test_delete_of_a_stopped_vm_short_of_its_minimum_does_not_wait(self):
+        spheron = FakeSpheron({
+            ('GET', '/api/deployments/d-1'): {**RUNNING, 'status': 'stopped'},
+            ('GET', '/api/deployments/d-1/can-terminate'): {'canTerminate': False, 'timeRemaining': 12,
+                                                             'minimumRuntime': 20},
+        })
+        with mock.patch('time.sleep') as sleep, self.assertRaises(SystemExit) as stopped:
+            spheron.delete(spheron.vm(RUNNING))
+        sleep.assert_not_called()
+        self.assertIn('compute start exp', str(stopped.exception))
+
     def test_delete_of_a_gone_deployment_does_nothing(self):
         spheron = FakeSpheron({('GET', '/api/deployments/d-1'): {**RUNNING, 'status': 'terminated-provider'}})
         spheron.delete(spheron.vm(RUNNING))
@@ -125,6 +146,15 @@ class SpheronTests(unittest.TestCase):
             spheron.api('POST', '/api/deployments', body={})
         self.assertEqual(urlopen.call_count, 1)
         self.assertIn('internal_error', str(failed.exception))
+
+    def test_a_rate_limited_create_is_not_repeated(self):
+        spheron = Spheron(lambda name: 'key', None)
+        error = urllib.error.HTTPError('https://app.spheron.ai/api/deployments', 429, 'Too Many', {}, None)
+        error.read = lambda: b'{"code": "rate_limited", "error": "slow down"}'
+        with mock.patch('urllib.request.urlopen', side_effect=error) as urlopen, mock.patch('time.sleep'), \
+                self.assertRaises(SystemExit):
+            spheron.api('POST', '/api/deployments', body={})
+        self.assertEqual(urlopen.call_count, 1)
 
     def test_reads_retry_network_failures_then_fail(self):
         spheron = Spheron(lambda name: 'key', None)

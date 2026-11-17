@@ -82,6 +82,15 @@ class MintTests(unittest.TestCase):
         with self.assertRaises(UsageError):
             commands.s3(self.s3_args())
 
+    def test_a_read_path_cannot_sit_inside_a_writable_one(self):
+        for read in ('bildy', 'bildy/old-run', 'bildy/old-run/step-9'):
+            with self.assertRaises(UsageError, msg=read):
+                commands.s3(self.s3_args(path=['bildy'], read=[read]))
+        # A sibling sharing a name prefix is not inside it.
+        with mock.patch.object(commands, 'located', side_effect=SystemExit('stop before SSH')), \
+                self.assertRaises(SystemExit):
+            commands.s3(self.s3_args(path=['bildy/run-8'], read=['bildy/run-80']))
+
     def test_hours_stay_within_what_aws_allows(self):
         with self.assertRaises(UsageError):
             commands.s3(self.s3_args(path=['bildy/run-8'], hours=48))
@@ -94,12 +103,17 @@ class MintTests(unittest.TestCase):
                 mock.patch.object(commands, 'ssh_command', return_value=['ssh', 'vm']), \
                 mock.patch.object(commands, 'bucket_credentials', return_value=ISSUED['Credentials']) as mint, \
                 mock.patch('subprocess.run') as run:
-            result = commands.s3(self.s3_args(path=['bildy/run-8'], read=['bildy/run-7', 'bildy/run-8']))
+            result = commands.s3(self.s3_args(path=['bildy/run-8'], read=['bildy/run-7']))
         mint.assert_called_once_with('exp', BUCKET, ['bildy/run-8'], ['bildy/run-7'], 24)
         self.assertEqual(run.call_count, 2)
-        installed = run.call_args.kwargs['input']
-        self.assertIn('aws_session_token = token', installed)
-        self.assertNotIn('AKIAUSER', installed)
+        # A credential_process document, which SDKs re-read near expiry, so renewals reach running jobs.
+        installed = json.loads(run.call_args.kwargs['input'])
+        self.assertEqual((installed['Version'], installed['SessionToken'], installed['Expiration']),
+                         (1, 'token', '2026-11-18T12:00:00+00:00'))
+        self.assertNotIn('AKIAUSER', run.call_args.kwargs['input'])
+        script = run.call_args.args[0][-1]
+        self.assertIn('credential_process', script)
+        self.assertIn('rm -f ~/.aws/credentials', script)
         self.assertEqual(result.data['expires_at'], '2026-11-18T12:00:00+00:00')
 
 

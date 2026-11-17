@@ -97,8 +97,11 @@ only what you copy to them, and `gradiated/dev/env` holds only development keys.
    another run's; add `--read <project>/<earlier-run>` to resume from a
    checkpoint the VM must not change. Repeat either flag for more paths (about
    eight fit). List with a trailing slash (`aws s3 ls s3://<bucket>/<path>/`).
-   Run the command again before the credentials expire to renew them on a
-   longer job. VMs start with no credentials; do not copy any other key to them.
+   A `--read` path may not sit inside a `--path`. Run the command again before
+   the credentials expire to renew them on a longer job: the VM reads them
+   through `credential_process`, so AWS SDKs and the CLI in a running job pick
+   up the renewal without a restart. VMs start with no credentials; do not
+   copy any other key to them.
 4. Connect: `gradctl compute ssh <name> [command]`, or
    `tailscale ssh root@<provider>-<name>` once it has joined the tailnet.
    Nodes of a multi-node job reach each other by MagicDNS name.

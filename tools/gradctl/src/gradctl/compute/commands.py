@@ -512,6 +512,18 @@ BUCKET_PATH = re.compile(r'[A-Za-z0-9][A-Za-z0-9._=-]*(/[A-Za-z0-9][A-Za-z0-9._=
 WRITE_ACTIONS = ['s3:PutObject', 's3:DeleteObject', 's3:AbortMultipartUpload', 's3:ListMultipartUploadParts']
 
 
+# The VM reads its token through credential_process, which AWS SDKs call again as the token nears its
+# Expiration, so a running job picks up a renewed token without restarting. A static ~/.aws/credentials
+# file, which SDKs load once and which outranks credential_process, is removed. The file is replaced
+# atomically so a refresh never reads half of it.
+VM_CREDENTIALS = ' && '.join([
+    'umask 077', 'mkdir -p ~/.aws', 'cat > ~/.aws/dev-training-token.json.new',
+    'mv ~/.aws/dev-training-token.json.new ~/.aws/dev-training-token.json', 'rm -f ~/.aws/credentials',
+    'printf "[default]\\nregion = us-east-1\\ncredential_process = cat %s/.aws/dev-training-token.json\\n" '
+    '"$HOME" > ~/.aws/config',
+])
+
+
 def bucket_path(value):
     """A key prefix in the development bucket, such as bildy/run-7: no wildcards, '..' or leading '/'."""
     path = value.strip().rstrip('/')
@@ -572,6 +584,13 @@ def s3(args):
     if not args.path and not args.read:
         raise UsageError('name the bucket paths the VM may use with --path (read and write) or --read',
                          hint='gradctl compute s3 NAME --path <project>/<run>; pick a new path for a new run')
+    writes, reads = sorted(set(args.path or [])), sorted(set(args.read or []))
+    for read in reads:
+        # A writable parent would make a read-only path writable after all.
+        parent = next((w for w in writes if read == w or read.startswith(w + '/')), None)
+        if parent:
+            raise UsageError(f'--read {read} is inside the writable --path {parent}, so it would not be read-only',
+                             hint='make the writable path a sibling, such as <project>/<new-run>')
     if not 0.25 <= args.hours <= 36:
         raise UsageError('--hours must be from 0.25 to 36, the range AWS allows for these credentials')
     cloud = located(args)
@@ -580,20 +599,18 @@ def s3(args):
         # A split Ornn node lists only its running VMs; configure them all at once.
         sys.exit(f"{args.name} is {vm['state']}; run `gradctl compute s3` once every VM runs")
     bucket = secret('DEV_TRAINING_S3_BUCKET')
-    writes, reads = sorted(set(args.path or [])), sorted(set(args.read or []) - set(args.path or []))
     issued = bucket_credentials(args.name, bucket, writes, reads, args.hours)
-    credentials = '\n'.join(['[default]', f"aws_access_key_id = {issued['AccessKeyId']}",
-                             f"aws_secret_access_key = {issued['SecretAccessKey']}",
-                             f"aws_session_token = {issued['SessionToken']}", ''])
+    credentials = json.dumps({'Version': 1, 'AccessKeyId': issued['AccessKeyId'],
+                              'SecretAccessKey': issued['SecretAccessKey'], 'SessionToken': issued['SessionToken'],
+                              'Expiration': issued['Expiration']})
     for index in range(len(vm['machines'])):
-        subprocess.run([*ssh_command(cloud, args.name, index), 'umask 077 && mkdir -p ~/.aws && '
-                        'cat > ~/.aws/credentials && printf "[default]\\nregion = us-east-1\\n" > ~/.aws/config'],
-                       input=credentials, text=True, check=True, timeout=120, stdout=sys.stderr)
+        subprocess.run([*ssh_command(cloud, args.name, index), VM_CREDENTIALS], input=credentials, text=True,
+                       check=True, timeout=120, stdout=sys.stderr)
     expires = issued['Expiration']
     lines = [f'{args.name} can use these paths of s3://{bucket} until {expires}:']
     lines += [f'  read and write  s3://{bucket}/{p}/' for p in writes]
     lines += [f'  read only       s3://{bucket}/{p}/' for p in reads]
-    lines.append('Run `gradctl compute s3` again before then to renew them.')
+    lines.append('Run `gradctl compute s3` again before then to renew them; running jobs pick up the renewal.')
     return Result(data={'name': args.name, 'bucket': bucket, 'machines': len(vm['machines']), 'write_paths': writes,
                         'read_paths': reads, 'expires_at': expires}, text='\n'.join(lines))
 

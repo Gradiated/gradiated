@@ -234,11 +234,11 @@ async fn sends_the_mapped_model_with_privacy_routing_and_only_the_platform_key()
 }
 
 #[tokio::test]
-async fn fallback_uses_fixed_provider_maxima_for_every_tier_and_transport() {
+async fn fallback_uses_fixed_standard_provider_maxima_for_every_tier_and_transport() {
     for (model, expected) in [
         (
             "deepseek/deepseek-v4.1-flash-1017",
-            json!({"prompt": 0.60, "completion": 2.40}),
+            json!({"prompt": 0.30, "completion": 1.20}),
         ),
         (
             "z-ai/glm-5.3-flash",

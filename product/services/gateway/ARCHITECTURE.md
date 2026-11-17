@@ -1022,12 +1022,12 @@ providers that cost no more than the caller pays, except for hardcoded
 operator-approved allowances.
 `openrouter::MODEL_MAX_PRICE` sets absolute ceilings independent of the
 request's service-tier price. These are fixed operator-approved values: the
-separate prompt and completion maxima across Baseten and Modal endpoints listed
-by OpenRouter on 2026-11-17, including priority endpoints:
+separate prompt and completion maxima across standard-tier Baseten and Modal
+endpoints listed by OpenRouter on 2026-11-17, excluding fast and priority endpoints:
 
 - [`deepseek/deepseek-v4.1-flash-1017`](https://openrouter.ai/api/v1/models/deepseek/deepseek-v4.1-flash-1017/endpoints):
-  $0.60 input and $2.40 output per million tokens (Baseten priority; Baseten
-  standard is $0.30/$1.20 and Modal is $0.25/$1.00).
+  $0.30 input and $1.20 output per million tokens (Baseten standard; Modal is
+  $0.25/$1.00).
 - [`z-ai/glm-5.3-flash`](https://openrouter.ai/api/v1/models/z-ai/glm-5.3-flash/endpoints):
   $0.15 input and $0.50 output per million tokens (both providers match).
 - [`moonshotai/kimi-k3.1-pro`](https://openrouter.ai/api/v1/models/moonshotai/kimi-k3.1-pro/endpoints):

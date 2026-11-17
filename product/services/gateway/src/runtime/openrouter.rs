@@ -38,7 +38,7 @@ const UNSUPPORTED_PARAMETERS: [&str; 1] = ["chat_template_kwargs"];
 const MODEL_UNSUPPORTED_PARAMETERS: [(&str, &[&str]); 1] =
     [("moonshotai/kimi-k3.1-pro", &["parallel_tool_calls"])];
 
-// Baseten/Modal endpoint maxima on OpenRouter, checked 2026-11-17 (including priority).
+// Baseten/Modal endpoint maxima on OpenRouter, checked 2026-11-17 (standard tier only).
 const MODEL_MAX_PRICE: [(&str, PriceCap); 3] = [
     (
         "moonshotai/kimi-k3.1-pro",
@@ -50,8 +50,8 @@ const MODEL_MAX_PRICE: [(&str, PriceCap); 3] = [
     (
         "deepseek/deepseek-v4.1-flash-1017",
         PriceCap {
-            prompt: 600,
-            completion: 2_400,
+            prompt: 300,
+            completion: 1_200,
         },
     ),
     (

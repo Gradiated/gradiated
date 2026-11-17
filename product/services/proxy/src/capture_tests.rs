@@ -540,6 +540,69 @@ async fn a_line_that_escapes_past_the_collector_limit_is_dropped_whole() {
     assert_eq!(counted(&metrics, "sent"), 1);
 }
 
+fn queued(budget: &Arc<Semaphore>, held: u32, response: &[u8]) -> Queued {
+    Queued {
+        generation: Generation {
+            relay: relay(b"{}"),
+            status: 200,
+            content_type: "audio/mpeg".to_owned(),
+            content_encoding: None,
+            response: BytesMut::from(response),
+            budget: budget.clone().try_acquire_many_owned(held).unwrap(),
+        },
+        outcome: Outcome::Complete,
+        completed_at: Utc::now(),
+    }
+}
+
+fn held(batch: &Batch) -> usize {
+    batch
+        .budget
+        .iter()
+        .map(OwnedSemaphorePermit::num_permits)
+        .sum()
+}
+
+#[test]
+fn a_serialized_line_holds_its_own_size_of_the_budget() {
+    let (collector, _) = spread(Vec::new());
+    let total = collector.budget.available_permits();
+    let mut batch = Batch::default();
+
+    collector.append(&mut batch, queued(&collector.budget, 3002, &[0xff; 3000]));
+    collector.append(&mut batch, queued(&collector.budget, 10_000, b"{}"));
+
+    assert!(batch.body.len() > 4000 && batch.body.len() < 13_002);
+    assert_eq!(held(&batch), batch.body.len());
+    assert_eq!(batch.body.capacity(), batch.body.len());
+    assert_eq!(
+        collector.budget.available_permits(),
+        total - batch.body.len()
+    );
+    drop(batch);
+    assert_eq!(collector.budget.available_permits(), total);
+}
+
+#[test]
+fn a_line_that_cannot_grow_into_the_budget_is_dropped_as_full() {
+    let (collector, metrics) = spread(Vec::new());
+    let total = collector.budget.available_permits();
+    let rest = collector
+        .budget
+        .clone()
+        .try_acquire_many_owned((total - 3002) as u32)
+        .unwrap();
+    let mut batch = Batch::default();
+
+    collector.append(&mut batch, queued(&collector.budget, 3002, &[0xff; 3000]));
+
+    assert!(batch.body.is_empty());
+    assert!(batch.budget.is_empty());
+    assert_eq!(counted(&metrics, "full"), 1);
+    drop(rest);
+    assert_eq!(collector.budget.available_permits(), total);
+}
+
 /// A fake collector replica on its own port, optionally slow, that counts the
 /// posts it is handling at once.
 #[derive(Clone, Default)]
@@ -580,6 +643,7 @@ fn spread(addresses: Vec<SocketAddr>) -> (Collector, Metrics) {
     let metrics = Metrics::default();
     let collector = Collector {
         client: Client::new(),
+        budget: Arc::new(Semaphore::new(1024 * 1024)),
         targets: Targets::fixed(
             Url::parse("http://collector-headless.invalid:3004/v1/contents").unwrap(),
             addresses,

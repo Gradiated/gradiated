@@ -65,8 +65,10 @@ does the parsing; exchanges it does not parse, such as embeddings or transcripti
 - The response is copied as it streams, and the generation is queued when the
   stream completes, fails or is cancelled.
 - One byte budget (`PROXY_CAPTURE_BUFFER_BYTES`) covers generations that are
-  being recorded, queued or sent. A generation that does not fit, or that is
-  larger than 64 MiB, is dropped. Any request within the 32 MB body limit is
+  being recorded, queued or sent. Once serialized for the collector, a
+  generation holds the size of its line instead, so base64 and escaping growth
+  count too. A generation that does not fit, or that is larger than 64 MiB, is
+  dropped. Any request within the 32 MB body limit is
   captured with a response of up to 32 MiB. A line that JSON escaping or base64
   grows past 95 MiB is also dropped as `too_large`, so every post fits the
   collector's 96 MiB limit.

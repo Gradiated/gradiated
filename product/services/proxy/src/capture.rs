@@ -138,15 +138,18 @@ impl Capture {
         let (queue, receiver) = mpsc::unbounded_channel();
         let (stop, stopped) = oneshot::channel();
 
+        let budget = Arc::new(Semaphore::new(settings.buffer_bytes));
+
         let capture = Self {
             inner: Some(Arc::new(Inner {
                 queue,
-                budget: Arc::new(Semaphore::new(settings.buffer_bytes)),
+                budget: budget.clone(),
                 metrics: metrics.clone(),
             })),
         };
         let collector = Collector {
             client,
+            budget,
             targets,
             token: settings.collector_token,
             metrics,
@@ -306,6 +309,7 @@ pub enum CaptureError {
 
 struct Collector {
     client: Client,
+    budget: Arc<Semaphore>,
     targets: Targets,
     token: String,
     metrics: Metrics,
@@ -563,17 +567,45 @@ impl Collector {
             response_content_encoding: generation.content_encoding.as_deref(),
             response: Body::new(&generation.response, ResponseField),
         };
-        let start = batch.body.len();
-        serde_json::to_writer(&mut batch.body, &line).expect("a relay line always serializes");
-        batch.body.push(b'\n');
+        let estimate = (relay.request.len() + generation.response.len()) * 4 / 3 + 4096;
+        let mut encoded = Vec::with_capacity(estimate);
+        serde_json::to_writer(&mut encoded, &line).expect("a relay line always serializes");
+        encoded.push(b'\n');
+        let mut budget = generation.budget;
+        drop(generation.relay);
+        drop(generation.response);
         // JSON escaping and base64 can grow a body past the collector's limit;
         // the bound is on the line as sent.
-        if batch.body.len() - start > MAX_LINE_BYTES {
-            batch.body.truncate(start);
+        if encoded.len() > MAX_LINE_BYTES {
             self.metrics.record_captures(CaptureResult::TooLarge, 1);
             return;
         }
-        batch.budget.push(generation.budget);
+
+        // The captured bytes are freed once serialized, so the line holds
+        // exactly its own size of the budget until the post ends.
+        let held = budget.num_permits();
+        if encoded.len() > held {
+            let Ok(more) = self
+                .budget
+                .clone()
+                .try_acquire_many_owned((encoded.len() - held) as u32)
+            else {
+                self.metrics.record_captures(CaptureResult::Full, 1);
+                return;
+            };
+            budget.merge(more);
+        } else if let Some(surplus) = budget.split(held - encoded.len()) {
+            drop(surplus);
+        }
+
+        if batch.body.is_empty() {
+            encoded.shrink_to_fit();
+            batch.body = encoded;
+        } else {
+            batch.body.reserve_exact(encoded.len());
+            batch.body.extend_from_slice(&encoded);
+        }
+        batch.budget.push(budget);
     }
 
     async fn post(&self, batch: Batch) {

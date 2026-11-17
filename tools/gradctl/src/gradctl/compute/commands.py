@@ -22,13 +22,15 @@ send `compute_usage` events with those tags, the GPU type and count, and the
 price, to the FDE PostHog project (see gradctl/usage.py for the schema). A VM
 created on another machine is metered from its creation time as unattributed.
 
-Providers: nebius and ornn, both virtual machines. --provider picks one or more
+Providers: nebius, ornn and spheron, all virtual machines (some Spheron offers are
+bare metal). --provider picks one or more
 (repeat it or separate with commas); without it, search and ls cover every
 provider, commands that take NAME find the VM on whichever provider has it, and
 up takes the provider from the platform's name. `search` lists what each sells
 with what is available now and the arguments for `up`. Spot VMs can be taken back at any time;
 on-demand VMs cost more and run until stopped (Ornn's also end when the seller's
-listing ends).
+listing ends). Spheron resells several clouds; `search` shows the seller in REGION,
+and bills at least 20 minutes of each VM.
 
 A VM joins the tailnet as <provider>-<NAME> with tag:dev-training and
 tag:dev-training-<provider>. It can reach other VMs from the same provider, for
@@ -65,8 +67,9 @@ from .. import usage
 from ..devenv import secret
 from .nebius import Nebius
 from .ornn import Ornn
+from .spheron import Spheron
 
-PROVIDERS = {'nebius': Nebius, 'ornn': Ornn}
+PROVIDERS = {'nebius': Nebius, 'ornn': Ornn, 'spheron': Spheron}
 TAILSCALE = 'https://api.tailscale.com/api/v2'
 TAG = 'tag:dev-training'
 
@@ -259,7 +262,8 @@ def search(args):
     rows = []
 
     def collect(name, cloud):
-        rows.extend({**offer, 'provider': name, 'virtualization': cloud.virtualization}
+        # An offer may name its own virtualization, such as a Spheron bare-metal server.
+        rows.extend({'virtualization': cloud.virtualization, **offer, 'provider': name}
                     for offer in cloud.offers(args.term) if matches(args, offer))
     each_provider(args.provider, collect)
     rows.sort(key=lambda r: (r['gpu_hour'], r['hour'], -(r['available'] or 0)))
@@ -434,7 +438,7 @@ def up(args):
     while time.time() < started + 1800:
         vm = cloud.find(args.name)
         if not vm and time.time() > started + 120:
-            # Ornn ends a reservation whose VMs cannot start.
+            # Ornn ends a reservation whose VMs cannot start; Spheron fails a deployment that cannot.
             sys.exit(f'{args.name} disappeared before it ran; check `gradctl compute ls` and the provider console')
         if vm and vm['state'] == 'RUNNING' and vm['address']:
             data = {'name': args.name, 'provider': cloud.name, 'region': vm['region'], 'term': args.term,
@@ -599,8 +603,8 @@ def positive(value):
 
 
 def register(commands, common) -> None:
-    sub = group(commands, 'compute', 'Development training GPU VMs from Nebius or Ornn, isolated on the tailnet '
-                                     '(see $dev-training)')
+    sub = group(commands, 'compute', 'Development training GPU VMs from Nebius, Ornn or Spheron, isolated on '
+                                     'the tailnet (see $dev-training)')
     creds = ('aws',)
 
     def command(name, run, meta, vm=False, many=False, aliases=()):
@@ -630,14 +634,17 @@ def register(commands, common) -> None:
     parser = command('up', up, Meta('Create a VM, wait for it to run and join it to the tailnet; spends money',
                                     effects='write', requires=creds), vm=True)
     parser.add_argument('--platform', required=True,
-                        help='Nebius platform (gpu-h100-sxm) or Ornn GPU slug (nvidia_h100_sxm); see `search`')
-    parser.add_argument('--preset', help='Nebius only, for example 1gpu-16vcpu-200gb; Ornn sells whole nodes')
-    parser.add_argument('--region', help='Ornn default: the cheapest region')
+                        help='Nebius platform (gpu-h100-sxm), Ornn GPU slug (nvidia_h100_sxm) or Spheron GPU '
+                             'type (H100_SXM5); see `search`')
+    parser.add_argument('--preset', help='Nebius preset (1gpu-16vcpu-200gb) or Spheron offer ID; Ornn sells whole '
+                                         'nodes')
+    parser.add_argument('--region', help='Ornn and Spheron default: the cheapest region')
     parser.add_argument('--term', choices=['spot', 'on-demand'], default='spot')
     parser.add_argument('--max-price', type=float,
                         help='refuse to create the VM above this USD per GPU-hour now; spot prices can move later')
     parser.add_argument('--disk-gib', type=int, help='Nebius boot disk, default 250; Ornn nodes have their own disk')
-    parser.add_argument('--image', help='Nebius image family (default Ubuntu 24.04 with CUDA) or Ornn disk ID')
+    parser.add_argument('--image', help='Nebius image family (default Ubuntu 24.04 with CUDA), Ornn disk ID or '
+                                        "one of the Spheron offer's os_options (default Ubuntu with CUDA)")
     attribution(parser)
     command('ls', ls, Meta('Every dev-training VM on every provider', requires=creds), many=True)
     command('meter', meter, Meta("Send each VM's GPU cost since it was last metered to PostHog as compute_usage "
@@ -674,8 +681,9 @@ def register(commands, common) -> None:
     parser = leaf(sub, 'setup', lambda ctx: setup(ctx.args), Meta(
         'Admin: write or rotate the provider and Tailscale credentials in gradiated/dev/env', effects='write',
         requires=('aws', 'nebius')), common)
-    parser.add_argument('target', nargs='?', choices=['nebius', 'ornn', 'tailscale'], default='nebius',
-                        help='ornn reads a new API key on stdin; tailscale copies only the Tailscale clients')
+    parser.add_argument('target', nargs='?', choices=['nebius', 'ornn', 'spheron', 'tailscale'], default='nebius',
+                        help='ornn and spheron read a new API key on stdin; tailscale copies only the Tailscale '
+                             'clients')
     parser.add_argument('--aws-profile', default='gradiated-admin')
     parser.add_argument('--rotate-ssh-key', action='store_true',
                         help='replace the SSH key; existing VMs keep trusting only the old one')

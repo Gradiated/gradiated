@@ -34,7 +34,8 @@ class SearchTests(unittest.TestCase):
             dev_training.provider_list('aws')
 
     def test_each_platform_name_has_one_provider(self):
-        for platform, expected in (('gpu-h100-sxm', 'nebius'), ('nvidia_b300', 'ornn'), ('cpu', 'ornn')):
+        for platform, expected in (('gpu-h100-sxm', 'nebius'), ('nvidia_b300', 'ornn'), ('cpu', 'ornn'),
+                                    ('H100_SXM5', 'spheron'), ('B300_SXM6', 'spheron')):
             owners = [name for name, cls in dev_training.PROVIDERS.items()
                       if re.match(cls.platform_pattern, platform)]
             self.assertEqual(owners, [expected])

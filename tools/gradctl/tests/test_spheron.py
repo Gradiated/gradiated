@@ -82,6 +82,15 @@ class SpheronTests(unittest.TestCase):
             spheron.create('exp', None, 'H100_SXM5', None, None, None, None, term='spot')
         self.assertEqual(spheron.calls[-1][3]['offerId'], H100['offerId'])
 
+    def test_a_seller_in_the_region_picks_that_seller_only(self):
+        cheaper = {**B300, 'provider': 'spheron-ms', 'offerId': 'ms-b300', 'price': 30.0}
+        catalog = {**CATALOG, 'data': [{'gpuType': 'B300_SXM6', 'offers': [B300, cheaper]}]}
+        spheron = FakeSpheron({('GET', '/api/gpu-offers'): catalog, ('POST', '/api/deployments'): {'id': 'd-3'}})
+        with mock.patch('sys.stderr'):
+            spheron.create('exp', 'spheron-es/UK South 1', 'B300_SXM6', None, None, None, None, term='spot')
+        self.assertEqual((spheron.calls[-1][3]['provider'], spheron.calls[-1][3]['region']),
+                         ('spheron-es', 'UK South 1'))
+
     def test_create_refuses_above_max_price(self):
         spheron = FakeSpheron({('GET', '/api/gpu-offers'): CATALOG})
         with mock.patch('sys.stderr'), self.assertRaises(SystemExit):

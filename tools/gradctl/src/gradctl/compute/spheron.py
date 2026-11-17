@@ -194,19 +194,22 @@ class Spheron:
     def create(self, name, region, platform, preset, disk_gib, image, user_data, term='spot', max_price=None):
         if disk_gib:
             print('Spheron offers come with a fixed disk; ignoring --disk-gib', file=sys.stderr)
+        seller = None
         if region and '/' in region:
-            region = region.split('/', 1)[1]  # `ls` and `search` show regions as <seller>/<cluster>
+            # `ls` and `search` show regions as <seller>/<cluster>; keep the seller the user chose.
+            seller, region = region.split('/', 1)
         candidates = []
         for gpu, offer in self.catalog(term):
             if gpu != platform or (preset and offer['offerId'] != preset) or not offer.get('available') \
-                    or offer.get('maintenance'):
+                    or offer.get('maintenance') or (seller and offer['provider'] != seller):
                 continue
             for cluster in offer.get('clusters') or []:
                 if not region or region == cluster or (not preset and region.lower() in cluster.lower()):
                     candidates.append((self.price(offer) / offer['gpuCount'], cluster, offer))
         if not candidates:
+            where = f"{seller + '/' if seller else ''}{region}" if region else ''
             sys.exit(f"Spheron has no available {term} {platform} offer"
-                     f"{' ' + preset if preset else ''}{' in ' + region if region else ''}; see `search`")
+                     f"{' ' + preset if preset else ''}{' in ' + where if where else ''}; see `search`")
         gpu_hour, cluster, offer = min(candidates, key=lambda c: c[0])
         operating_system = image or self.default_os(offer.get('os_options') or [])
         if image and image not in (offer.get('os_options') or []):

@@ -278,7 +278,19 @@ class Spheron:
             # Spheron enforces this cap atomically at create, and later stops (not deletes) the VM if the live
             # spot price climbs above it. It covers the whole instance, at least the starting price.
             body['maxHourlyRate'] = round(max_price * offer['gpuCount'], 2)
-        deployment = self.api('POST', '/api/deployments', body=body)
+        try:
+            deployment = self.api('POST', '/api/deployments', body=body)
+        except Unconfirmed:
+            # Spheron may have created it: look for it by its name before reporting failure, and never repeat
+            # the create, which could buy a second VM.
+            print(f'Spheron did not confirm creating {name}; checking whether it exists', file=sys.stderr, flush=True)
+            for _ in range(8):
+                time.sleep(15)
+                found = self.find(name)
+                if found:
+                    return found['id']
+            sys.exit(f'Spheron did not confirm creating {name}, and it is not listed yet. Check '
+                     f'`gradctl compute ls --provider spheron` before trying again, so as not to buy a second VM')
         return deployment['id']
 
     def start(self, vm):

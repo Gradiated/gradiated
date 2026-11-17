@@ -103,6 +103,23 @@ class SpheronTests(unittest.TestCase):
         self.assertEqual((spheron.calls[-1][3]['provider'], spheron.calls[-1][3]['region']),
                          ('spheron-es', 'UK South 1'))
 
+    def test_an_unconfirmed_create_is_found_by_name_and_never_repeated(self):
+        from gradctl.compute.spheron import Unconfirmed
+        spheron = FakeSpheron({('GET', '/api/gpu-offers'): CATALOG,
+                               ('GET', '/api/deployments'): Answers([[], [RUNNING]])})
+        original = spheron.api
+        posts = []
+
+        def api(method, path, params=None, body=None, missing_ok=False):
+            if method == 'POST':
+                posts.append(path)
+                raise Unconfirmed('Spheron POST /api/deployments: HTTP 504 provider_timeout')
+            return original(method, path, params, body, missing_ok)
+        spheron.api = api
+        with mock.patch('time.sleep'), mock.patch('sys.stderr'):
+            self.assertEqual(spheron.create('exp', None, 'B300_SXM6', None, None, None, None), 'd-1')
+        self.assertEqual(posts, ['/api/deployments'])
+
     def test_create_refuses_above_max_price(self):
         spheron = FakeSpheron({('GET', '/api/gpu-offers'): CATALOG})
         with mock.patch('sys.stderr'), self.assertRaises(SystemExit):

@@ -677,7 +677,7 @@ def lifecycle(action):
 def down(args):
     # Rerunnable: with the VM already gone it still removes the tailnet device.
     cloud, vm = locate(args)
-    lines, removed = [], []
+    lines, removed, keep_ledger = [], [], False
     if vm:
         if hasattr(cloud, 'wait_until_deletable'):
             # Spheron bills a minimum runtime and refuses to delete before it; wait first, so the final
@@ -693,6 +693,8 @@ def down(args):
                 close_ended(cloud, set(), usage.now(), 'gradctl compute down', only=args.name)
         except (SystemExit, Exception) as error:  # noqa: BLE001 - cost reporting must never block deleting a VM
             print(f'could not send the final cost event for {args.name}: {error}', file=sys.stderr)
+            # An ended VM that could not be closed keeps its ledger entry, so the next `meter` closes it.
+            keep_ledger = not fresh
         vm = fresh or vm
         cloud.delete(vm)
         lines.append(f'Deleted {args.name} and its boot disk')
@@ -721,7 +723,7 @@ def down(args):
             removed.append(device['name'])
             lines.append(f"Removed tailnet device {device['name']}")
             print(lines[-1], file=sys.stderr, flush=True)
-    if cloud and vm:
+    if cloud and vm and not keep_ledger:
         with usage.ledger(state()) as book:
             key = ledger_key(cloud, vm, book)
             if book.get(key, {}).get('pending'):

@@ -216,7 +216,7 @@ async fn sends_the_mapped_model_with_privacy_routing_and_only_the_platform_key()
             "data_collection": "deny",
             "require_parameters": true,
             "zdr": true,
-            "max_price": {"prompt": 0.15, "completion": 1.2}
+            "max_price": {"prompt": 0.15, "completion": 0.5}
         })
     );
     assert_eq!(
@@ -234,60 +234,67 @@ async fn sends_the_mapped_model_with_privacy_routing_and_only_the_platform_key()
 }
 
 #[tokio::test]
-async fn deepseek_fallback_covers_standard_provider_prices_for_buffered_and_streaming_requests() {
-    for streaming in [false, true] {
-        let mock = mock_json(StatusCode::OK, json!({})).await;
-        let mut deepseek = if streaming { streaming_chat() } else { chat() };
-        deepseek.model = ExternalModel::openrouter("deepseek/deepseek-v4.1-flash-1017");
-        deepseek.price_cap = PriceCap {
-            prompt: 6,
-            completion: 200,
-        };
+async fn fallback_uses_fixed_provider_maxima_for_every_tier_and_transport() {
+    for (model, expected) in [
+        (
+            "deepseek/deepseek-v4.1-flash-1017",
+            json!({"prompt": 0.60, "completion": 2.40}),
+        ),
+        (
+            "z-ai/glm-5.3-flash",
+            json!({"prompt": 0.15, "completion": 0.50}),
+        ),
+        (
+            "moonshotai/kimi-k3.1-pro",
+            json!({"prompt": 2.0, "completion": 10.0}),
+        ),
+    ] {
+        for stream in [false, true] {
+            for (prompt, completion) in [(6, 200), (150, 500), (2_700, 13_500)] {
+                let mock = mock_json(StatusCode::OK, json!({})).await;
+                let mut request = if stream { streaming_chat() } else { chat() };
+                request.model = ExternalModel::openrouter(model);
+                request.price_cap = PriceCap { prompt, completion };
 
-        let client = client(&mock).await;
-        if streaming {
-            let _ = client.stream(deepseek).await;
-        } else {
-            let _ = client.complete(deepseek).await;
+                if stream {
+                    let _ = client(&mock).await.stream(request).await;
+                } else {
+                    let _ = client(&mock).await.complete(request).await;
+                }
+
+                let recorded = mock.requests();
+                assert_eq!(recorded.len(), 1);
+                assert_eq!(
+                    recorded[0].body["provider"],
+                    json!({
+                        "data_collection": "deny",
+                        "require_parameters": true,
+                        "zdr": true,
+                        "max_price": expected,
+                    }),
+                    "{model}, stream={stream}, catalog={prompt}/{completion}",
+                );
+            }
         }
-
-        let recorded = mock.requests();
-        assert_eq!(recorded.len(), 1);
-        assert_eq!(
-            recorded[0].body["provider"],
-            json!({
-                "data_collection": "deny",
-                "require_parameters": true,
-                "zdr": true,
-                "max_price": {"prompt": 0.30, "completion": 1.20}
-            })
-        );
     }
 }
 
 #[tokio::test]
-async fn kimi_fallback_uses_fixed_endpoint_medians_for_every_tier_and_transport() {
-    for stream in [false, true] {
-        for (prompt, completion) in [(1_800, 9_000), (1_260, 6_300), (2_700, 13_500)] {
-            let mock = mock_json(StatusCode::OK, json!({})).await;
-            let mut kimi = if stream { streaming_chat() } else { chat() };
-            kimi.model = ExternalModel::openrouter("moonshotai/kimi-k3.1-pro");
-            kimi.price_cap = PriceCap { prompt, completion };
+async fn other_models_keep_the_captured_catalog_price_cap() {
+    let mock = mock_json(StatusCode::OK, json!({})).await;
+    let mut request = chat();
+    request.model = ExternalModel::openrouter("other/model");
+    request.price_cap = PriceCap {
+        prompt: 123,
+        completion: 456,
+    };
 
-            if stream {
-                let _ = client(&mock).await.stream(kimi).await;
-            } else {
-                let _ = client(&mock).await.complete(kimi).await;
-            }
+    let _ = client(&mock).await.complete(request).await;
 
-            let recorded = mock.requests();
-            assert_eq!(recorded.len(), 1);
-            assert_eq!(
-                recorded[0].body["provider"]["max_price"],
-                json!({"prompt": 2.0, "completion": 10.0})
-            );
-        }
-    }
+    assert_eq!(
+        mock.requests()[0].body["provider"]["max_price"],
+        json!({"prompt": 0.123, "completion": 0.456}),
+    );
 }
 
 #[tokio::test]

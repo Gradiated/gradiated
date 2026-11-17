@@ -38,8 +38,8 @@ const UNSUPPORTED_PARAMETERS: [&str; 1] = ["chat_template_kwargs"];
 const MODEL_UNSUPPORTED_PARAMETERS: [(&str, &[&str]); 1] =
     [("moonshotai/kimi-k3.1-pro", &["parallel_tool_calls"])];
 
-// Kimi's ceilings are the per-endpoint medians listed by OpenRouter on 2026-11-13.
-const MODEL_MAX_PRICE: [(&str, PriceCap); 2] = [
+// Baseten/Modal endpoint maxima on OpenRouter, checked 2026-11-17 (including priority).
+const MODEL_MAX_PRICE: [(&str, PriceCap); 3] = [
     (
         "moonshotai/kimi-k3.1-pro",
         PriceCap {
@@ -50,8 +50,15 @@ const MODEL_MAX_PRICE: [(&str, PriceCap); 2] = [
     (
         "deepseek/deepseek-v4.1-flash-1017",
         PriceCap {
-            prompt: 300,
-            completion: 1_200,
+            prompt: 600,
+            completion: 2_400,
+        },
+    ),
+    (
+        "z-ai/glm-5.3-flash",
+        PriceCap {
+            prompt: 150,
+            completion: 500,
         },
     ),
 ];

@@ -120,8 +120,8 @@ Do not merge every adapter into a full checkpoint or allocate one GPU per versio
 as the default. Dedicated replicas remain an operator option for isolation or
 measured demand. Shared pools imply shared fault and capacity boundaries.
 
-Production serves every model on SGLang, so adapters load into the pinned SGLang
-bundles; [SGLang adapter loading](../product/inference/lora/README.md) describes the
+The adapter-capable production pools (GLM-5.3 Flash and DeepSeek V4.1 Flash 1017)
+run on SGLang, so adapters load into their pinned SGLang bundles; [SGLang adapter loading](../product/inference/lora/README.md) describes the
 implemented path. Dynamic loading stays on an authenticated private path and
 accepts only validated local artifacts.
 

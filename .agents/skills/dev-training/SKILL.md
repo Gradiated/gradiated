@@ -1,11 +1,11 @@
 ---
 name: dev-training
-description: Search available GPU compute and prices across providers, get a spot or on-demand GPU VM (Nebius or Ornn) for development training or experiments, connect to it over Tailscale or SSH, and delete it afterwards. Use whenever an agent needs a GPU outside the serving fleet, including multi-node training; the VMs are isolated from production and from every other machine on the tailnet.
+description: Search available GPU compute and prices across providers, get a spot or on-demand GPU VM (Nebius, Ornn or Spheron) for development training or experiments, connect to it over Tailscale or SSH, and delete it afterwards. Use whenever an agent needs a GPU outside the serving fleet, including multi-node training; the VMs are isolated from production and from every other machine on the tailnet.
 ---
 
 # Development training GPUs
 
-`gradctl compute` creates GPU VMs from Nebius or Ornn for
+`gradctl compute` creates GPU VMs from Nebius, Ornn or Spheron for
 training runs and experiments. Use it instead of leasing a serving host when the
 work does not need production hardware.
 
@@ -13,6 +13,7 @@ work does not need production hardware.
 | --- | --- | --- | --- | --- |
 | Nebius | VM | presets from 1 GPU | preemption stops the VM with no warning | `start` resumes a stopped VM |
 | Ornn | VM | whole nodes, often 8 GPUs | a reservation needing the GPUs ends it; a seller reclaim gives `preemptNoticeSeconds` (`/run/ornn/preemption.json`) | a resale market: prices and supply change hourly; on-demand also ends when the seller's listing ends; no stop or restart |
+| Spheron | VM (some bare metal) | fixed offers from 1 GPU, resold from several clouds (seller in `REGION`) | the seller reclaims the VM with no warning and deletes it | bills at least 20 minutes, so `down` waits that long after `up`; Spheron ES spot prices move every 15 minutes, and with `--max-price` Spheron stops the VM (disk kept) if the price climbs above it; stop and start only where the seller supports it |
 
 ## Spot or on-demand
 
@@ -55,7 +56,7 @@ only what you copy to them, and `gradiated/dev/env` holds only development keys.
 - Credentials come from `gradiated/dev/env`. Load it into an ignored `.env` as
   AGENTS.md describes, or let the tool read it with the `gradiated-readonly`
   AWS profile.
-- `mise install` provides the Nebius CLI, pinned in `mise.toml`; Ornn needs none.
+- `mise install` provides the Nebius CLI, pinned in `mise.toml`; Ornn and Spheron need none.
 - `gradctl` runs only on the Gradiated tailnet (`gradctl tailnet status`).
   Join a machine that is not on it as an ephemeral `tag:dev-machine` device
   with `gradctl tailnet join`, which reads `TAILSCALE_DEV_MACHINE_AUTH_KEY`.
@@ -69,13 +70,14 @@ only what you copy to them, and `gradiated/dev/env` holds only development keys.
 
 ## Use
 
-1. Find compute: `gradctl compute search [--provider nebius,ornn] [--gpu h100]
+1. Find compute: `gradctl compute search [--provider nebius,ornn,spheron] [--gpu h100]
    [--term spot] [--region us-] [--max-gpus 8] [--max-price 3]` lists what is
    available now, cheapest per GPU-hour first, with the provider,
    virtualization, GPUs per VM, how many such VMs can start now (`AVAIL`) and
    the arguments for `up`. Sold-out offers are hidden unless you pass `--all`.
    Nebius counts stop at our quota and are blank for shapes it does not
-   report; Ornn counts are whole nodes for sale. Without `--provider` it
+   report; Ornn counts are whole nodes for sale; Spheron counts only some
+   sellers and is blank for the rest. Without `--provider` it
    searches every provider. `platforms --provider nebius --region <region>`
    lists every Nebius preset. Try the next offer if `up` fails.
 2. Create: `gradctl compute up <name> <arguments from search> --max-price <USD per GPU-hour>`.
@@ -85,6 +87,8 @@ only what you copy to them, and `gradiated/dev/env` holds only development keys.
    moved above your limit; Ornn prepays each hour and refunds unused time.
    Ornn reservations have no names: the machine that ran `up` remembers the
    name, and `ls` elsewhere shows the reservation ID, which every command accepts.
+   Spheron `up` takes the GPU type as `--platform` and the offer ID as `--preset`
+   (both from `search`); without `--preset` it takes the cheapest offer of that GPU.
    Tag the cost: `--customer <customer>` (for example `bild-ai`, the same value
    OpenRouter requests send as `user`; default `gradiated`), `--stage` (cleaning,
    env-build, training, rollout, eval, serving or dev), `--run-id` and
@@ -126,7 +130,7 @@ Report the VM, its hours and where the results are in your response or PR.
 
 ## Adding a provider
 
-Add a module beside `nebius.py` and `ornn.py` in
+Add a module beside `nebius.py`, `ornn.py` and `spheron.py` in
 `tools/gradctl/src/gradctl/compute/` with the same attributes
 (`virtualization`, `cloud_init`, `ephemeral`) and methods (`regions`,
 `platforms`, `offers`, `find`, `list`, `create`, `start`, `stop`, `delete`) and
@@ -136,7 +140,9 @@ over SSH. Add `tag:dev-training-<provider>`, owned by `tag:terraform` (never by 
 node tag), with its grant, SSH rule and tests in the tailnet policy, and add the
 provider to `dev_training_provider` in `infra/modules/tailscale/credentials.tf`. Give the provider
 its own SSH key and a setup script that writes `<PROVIDER>_*` keys to
-`gradiated/dev/env`, with development-only credentials. Check that the
+`gradiated/dev/env`, with development-only credentials. Turn off any
+provider feature that runs commands on VMs through its API (such as Spheron's
+Agent GPU Sandbox, `agentAccess`). Check that the
 provider's account-level access (such as RunPod's SSH proxy, which gives every
 account key root on every pod) cannot reach production machines; use a separate
 account if it can.

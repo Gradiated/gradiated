@@ -33,6 +33,14 @@ VM it starts, and writes ORNN_API_KEY, ORNN_ORGANIZATION_ID and ORNN_SSH_* to
 gradiated/dev/env. Without a key on stdin it reuses the stored one, so it can
 rotate just the SSH key.
 
+`gradctl compute setup spheron` sets up Spheron alone, like Ornn. Spheron GPU VM
+API keys are created in its dashboard (Settings > API Keys), so pass a new key on
+stdin, for example `pbpaste | gradctl compute setup spheron`. It checks the key,
+generates an ed25519 SSH key used only for Spheron VMs (once, as for Nebius), and
+writes SPHERON_API_KEY and SPHERON_SSH_* to gradiated/dev/env. The public key is
+sent with each deployment rather than saved on the Spheron account, so rotating
+it with --rotate-ssh-key leaves running VMs on the old key.
+
 It prints key names and resource IDs, never secret values.
 """
 
@@ -47,6 +55,7 @@ import tempfile
 
 from .nebius import CONFIG
 from .ornn import Ornn
+from .spheron import Spheron
 NAME = 'dev-training'
 HOME_REGION = 'eu-north1'
 DEV_SECRET = 'gradiated/dev/env'
@@ -187,10 +196,36 @@ def setup_ornn(args):
         print(f"revoked previous SSH key {old['id']}")
 
 
+def setup_spheron(args):
+    environment = json.loads(aws(args.aws_profile, 'secretsmanager', 'get-secret-value', '--secret-id',
+                                 DEV_SECRET, '--query', 'SecretString', '--output', 'text'))
+    key = '' if sys.stdin.isatty() else sys.stdin.read().strip()
+    key = key or environment.get('SPHERON_API_KEY')
+    if not key:
+        sys.exit('Pass a Spheron GPU VM API key on stdin, for example `pbpaste | gradctl compute setup spheron`')
+    spheron = Spheron(lambda name: key, None)
+    teams = spheron.api('GET', '/api/teams')
+    for team in teams:
+        print(f"Spheron team {team.get('name')} ({team.get('id')}), {len(team.get('members') or [])} members, "
+              f"balance ${team.get('balance') or 0:.2f}")
+    added = {'SPHERON_API_KEY': key}
+    ssh = {name: environment[name] for name in ('SPHERON_SSH_PRIVATE_KEY_B64', 'SPHERON_SSH_PUBLIC_KEY_B64')
+           if name in environment}
+    if args.rotate_ssh_key or len(ssh) != 2:
+        with tempfile.TemporaryDirectory() as directory:
+            os.chmod(directory, 0o700)
+            private, public = ssh_key(directory, 'gradiated-spheron-dev')
+        ssh = {'SPHERON_SSH_PRIVATE_KEY_B64': private, 'SPHERON_SSH_PUBLIC_KEY_B64': public}
+    added.update(ssh)
+    put_environment(args.aws_profile, environment, added)
+
+
 def run(args):
-    """Set up args.target: nebius (default, with the shared keys), ornn or tailscale."""
+    """Set up args.target: nebius (default, with the shared keys), ornn, spheron or tailscale."""
     if args.target == 'ornn':
         return setup_ornn(args)
+    if args.target == 'spheron':
+        return setup_spheron(args)
     if args.target == 'tailscale':
         environment = json.loads(aws(args.aws_profile, 'secretsmanager', 'get-secret-value', '--secret-id',
                                      DEV_SECRET, '--query', 'SecretString', '--output', 'text'))

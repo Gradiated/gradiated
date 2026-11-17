@@ -24,13 +24,15 @@ send `compute_usage` events with those tags, the GPU type and count, and the
 price, to the FDE PostHog project (see gradctl/usage.py for the schema). A VM
 created on another machine is metered from its creation time as unattributed.
 
-Providers: nebius and ornn, both virtual machines. --provider picks one or more
+Providers: nebius, ornn and spheron, all virtual machines (some Spheron offers are
+bare metal). --provider picks one or more
 (repeat it or separate with commas); without it, search and ls cover every
 provider, commands that take NAME find the VM on whichever provider has it, and
 up takes the provider from the platform's name. `search` lists what each sells
 with what is available now and the arguments for `up`. Spot VMs can be taken back at any time;
 on-demand VMs cost more and run until stopped (Ornn's also end when the seller's
-listing ends).
+listing ends). Spheron resells several clouds; `search` shows the seller in REGION,
+and bills at least 20 minutes of each VM.
 
 A VM joins the tailnet as <provider>-<NAME> with tag:dev-training and
 tag:dev-training-<provider>. It can reach other VMs from the same provider, for
@@ -70,8 +72,9 @@ from .. import usage
 from ..devenv import secret
 from .nebius import Nebius
 from .ornn import Ornn
+from .spheron import Spheron
 
-PROVIDERS = {'nebius': Nebius, 'ornn': Ornn}
+PROVIDERS = {'nebius': Nebius, 'ornn': Ornn, 'spheron': Spheron}
 TAILSCALE = 'https://api.tailscale.com/api/v2'
 TAG = 'tag:dev-training'
 
@@ -264,7 +267,8 @@ def search(args):
     rows = []
 
     def collect(name, cloud):
-        rows.extend({**offer, 'provider': name, 'virtualization': cloud.virtualization}
+        # An offer may name its own virtualization, such as a Spheron bare-metal server.
+        rows.extend({'virtualization': cloud.virtualization, **offer, 'provider': name}
                     for offer in cloud.offers(args.term) if matches(args, offer))
     each_provider(args.provider, collect)
     rows.sort(key=lambda r: (r['gpu_hour'], r['hour'], -(r['available'] or 0)))
@@ -324,9 +328,16 @@ def meter_vms(cloud, vms, end, source):
                 continue
             start = (usage.parse_time(tags.get('metered_until')) or usage.parse_time(tags.get('started_at'))
                      or usage.parse_time(vm.get('created_at')) or end)
+            # A provider that bills only from a point after creation (Spheron's startedAt) sets
+            # billing_started_at; the time before it cost nothing and is not sent.
+            billed_from = usage.parse_time(vm.get('billing_started_at'))
+            began_billing = bool(billed_from and start < billed_from <= end)
+            if began_billing:
+                start = billed_from
             if (end - start).total_seconds() < 1:
                 continue
-            interval_state = tags.get('last_state') or vm.get('state')
+            # From the billing start on, the VM is no longer in the unbilled state an earlier meter saw.
+            interval_state = vm.get('state') if began_billing else tags.get('last_state') or vm.get('state')
             price, price_source = hourly_price(cloud, vm, cache)
             if price is None and interval_state in usage.BILLED_STATES:
                 print(f"no price for {vm['name']}; its time since {start.isoformat()} is kept for the next meter",
@@ -362,6 +373,34 @@ def settle(sent):
                 book.pop(key)
 
 
+def close_ended(cloud, seen, end, source, only=None):
+    """Send the final interval of VMs this machine tracked that the provider has since ended, then forget them.
+
+    A provider such as Spheron drops a reclaimed spot VM from its live list, so neither `meter` nor `down`
+    would see it again. `seen` holds the ledger keys of VMs still listed; `only` limits this to one VM name.
+    """
+    if not hasattr(cloud, 'ended'):
+        return []
+    prefix = f'{cloud.name}:'
+    with usage.ledger(state()) as book:
+        tracked = [(key[len(prefix):], tags.get('started_at')) for key, tags in book.items()
+                   if key.startswith(prefix) and key not in seen and not tags.get('pending')
+                   and (only is None or only in (key[len(prefix):], tags.get('resource_name')))]
+    sent = []
+    for key, vm in cloud.ended(tracked) if tracked else []:
+        with usage.ledger(state()) as book:
+            if prefix + key in book:
+                book[prefix + key]['deleted'] = True  # dropped once its final interval is accepted
+        # It ran until it ended: bill its last interval as running unless an earlier meter saw it otherwise.
+        final = {**vm, 'state': 'RUNNING'} if vm.get('billing_started_at') else vm
+        sent.extend(meter_vms(cloud, [final], min(end, usage.parse_time(vm.get('ended_at')) or end), source))
+        with usage.ledger(state()) as book:
+            for gone in (prefix + key, prefix + str(vm.get('id'))):
+                if gone in book and not book[gone].get('pending'):
+                    book.pop(gone)
+    return sent
+
+
 def flush_pending(skip=()):
     """Send pending events of VMs no longer listed, such as one whose final send failed during `down`."""
     with usage.ledger(state()) as book:
@@ -382,7 +421,12 @@ def meter(args):
     sent, keys = [], set()
     for cloud, vms in found:
         sent.extend(meter_vms(cloud, vms, end, 'gradctl compute meter'))
-        keys |= {f"{cloud.name}:{vm.get('id') or vm['name']}" for vm in vms}
+        listed = {f"{cloud.name}:{vm.get('id') or vm['name']}" for vm in vms}
+        keys |= listed
+        try:
+            sent.extend(close_ended(cloud, listed, end, 'gradctl compute meter'))
+        except (SystemExit, Exception) as error:  # noqa: BLE001 - the next meter retries it
+            print(f'could not close ended {cloud.name} VMs: {error}', file=sys.stderr)
     sent.extend(flush_pending(skip=keys))
     cost = sum(e['properties']['cost_usd'] for e in sent)
     rows = [{k: e['properties'][k] for k in ('provider', 'resource_name', 'customer', 'stage', 'gpu_type',
@@ -439,7 +483,7 @@ def up(args):
     while time.time() < started + 1800:
         vm = cloud.find(args.name)
         if not vm and time.time() > started + 120:
-            # Ornn ends a reservation whose VMs cannot start.
+            # Ornn ends a reservation whose VMs cannot start; Spheron fails a deployment that cannot.
             sys.exit(f'{args.name} disappeared before it ran; check `gradctl compute ls` and the provider console')
         if vm and vm['state'] == 'RUNNING' and vm['address']:
             data = {'name': args.name, 'provider': cloud.name, 'region': vm['region'], 'term': args.term,
@@ -633,12 +677,25 @@ def lifecycle(action):
 def down(args):
     # Rerunnable: with the VM already gone it still removes the tailnet device.
     cloud, vm = locate(args)
-    lines, removed = [], []
+    lines, removed, keep_ledger = [], [], False
     if vm:
+        if hasattr(cloud, 'wait_until_deletable'):
+            # Spheron bills a minimum runtime and refuses to delete before it; wait first, so the final
+            # meter below counts that time, with the VM as it is after the wait (it may have started running).
+            fresh = cloud.wait_until_deletable(vm)
+        else:
+            fresh = vm
         try:
-            meter_vms(cloud, [vm], usage.now(), 'gradctl compute down')
-        except Exception as error:  # noqa: BLE001 - cost reporting must never block deleting a VM
+            if fresh:
+                meter_vms(cloud, [fresh], usage.now(), 'gradctl compute down')
+            else:
+                # The provider ended it during the wait, such as a spot reclaim: close it by its end time.
+                close_ended(cloud, set(), usage.now(), 'gradctl compute down', only=args.name)
+        except (SystemExit, Exception) as error:  # noqa: BLE001 - cost reporting must never block deleting a VM
             print(f'could not send the final cost event for {args.name}: {error}', file=sys.stderr)
+            # An ended VM that could not be closed keeps its ledger entry, so the next `meter` closes it.
+            keep_ledger = not fresh
+        vm = fresh or vm
         cloud.delete(vm)
         lines.append(f'Deleted {args.name} and its boot disk')
         print(lines[-1], file=sys.stderr, flush=True)
@@ -649,6 +706,12 @@ def down(args):
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
     else:
         lines.append(f'No VM named {args.name}; removing its tailnet device if one is left')
+        # A VM the provider ended itself, such as a reclaimed Spheron spot VM, still owes its final interval.
+        for name in [cloud.name] if cloud else [args.provider] if args.provider else sorted(PROVIDERS):
+            try:
+                close_ended(provider(name), set(), usage.now(), 'gradctl compute down', only=args.name)
+            except (SystemExit, Exception) as error:  # noqa: BLE001 - cost reporting must never block down
+                print(f'could not send the final cost event for {args.name} on {name}: {error}', file=sys.stderr)
     names = [f'{name}-{args.name}' for name in ([cloud.name] if cloud else [args.provider] if args.provider
                                                  else PROVIDERS)]
     token = tailscale_token()
@@ -660,7 +723,7 @@ def down(args):
             removed.append(device['name'])
             lines.append(f"Removed tailnet device {device['name']}")
             print(lines[-1], file=sys.stderr, flush=True)
-    if cloud and vm:
+    if cloud and vm and not keep_ledger:
         with usage.ledger(state()) as book:
             key = ledger_key(cloud, vm, book)
             if book.get(key, {}).get('pending'):
@@ -693,8 +756,8 @@ def positive(value):
 
 
 def register(commands, common) -> None:
-    sub = group(commands, 'compute', 'Development training GPU VMs from Nebius or Ornn, isolated on the tailnet '
-                                     '(see $dev-training)')
+    sub = group(commands, 'compute', 'Development training GPU VMs from Nebius, Ornn or Spheron, isolated on '
+                                     'the tailnet (see $dev-training)')
     creds = ('aws',)
 
     def command(name, run, meta, vm=False, many=False, aliases=()):
@@ -724,14 +787,17 @@ def register(commands, common) -> None:
     parser = command('up', up, Meta('Create a VM, wait for it to run and join it to the tailnet; spends money',
                                     effects='write', requires=creds), vm=True)
     parser.add_argument('--platform', required=True,
-                        help='Nebius platform (gpu-h100-sxm) or Ornn GPU slug (nvidia_h100_sxm); see `search`')
-    parser.add_argument('--preset', help='Nebius only, for example 1gpu-16vcpu-200gb; Ornn sells whole nodes')
-    parser.add_argument('--region', help='Ornn default: the cheapest region')
+                        help='Nebius platform (gpu-h100-sxm), Ornn GPU slug (nvidia_h100_sxm) or Spheron GPU '
+                             'type (H100_SXM5); see `search`')
+    parser.add_argument('--preset', help='Nebius preset (1gpu-16vcpu-200gb) or Spheron offer ID; Ornn sells whole '
+                                         'nodes')
+    parser.add_argument('--region', help='Ornn and Spheron default: the cheapest region')
     parser.add_argument('--term', choices=['spot', 'on-demand'], default='spot')
     parser.add_argument('--max-price', type=float,
                         help='refuse to create the VM above this USD per GPU-hour now; spot prices can move later')
     parser.add_argument('--disk-gib', type=int, help='Nebius boot disk, default 250; Ornn nodes have their own disk')
-    parser.add_argument('--image', help='Nebius image family (default Ubuntu 24.04 with CUDA) or Ornn disk ID')
+    parser.add_argument('--image', help='Nebius image family (default Ubuntu 24.04 with CUDA), Ornn disk ID or '
+                                        "one of the Spheron offer's os_options (default Ubuntu with CUDA)")
     attribution(parser)
     command('ls', ls, Meta('Every dev-training VM on every provider', requires=creds), many=True)
     command('meter', meter, Meta("Send each VM's GPU cost since it was last metered to PostHog as compute_usage "
@@ -775,8 +841,9 @@ def register(commands, common) -> None:
     parser = leaf(sub, 'setup', lambda ctx: setup(ctx.args), Meta(
         'Admin: write or rotate the provider and Tailscale credentials in gradiated/dev/env', effects='write',
         requires=('aws', 'nebius')), common)
-    parser.add_argument('target', nargs='?', choices=['nebius', 'ornn', 'tailscale'], default='nebius',
-                        help='ornn reads a new API key on stdin; tailscale copies only the Tailscale clients')
+    parser.add_argument('target', nargs='?', choices=['nebius', 'ornn', 'spheron', 'tailscale'], default='nebius',
+                        help='ornn and spheron read a new API key on stdin; tailscale copies only the Tailscale '
+                             'clients')
     parser.add_argument('--aws-profile', default='gradiated-admin')
     parser.add_argument('--rotate-ssh-key', action='store_true',
                         help='replace the SSH key; existing VMs keep trusting only the old one')

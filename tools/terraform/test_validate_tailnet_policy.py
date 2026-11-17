@@ -25,11 +25,13 @@ class TailnetPolicyTests(unittest.TestCase):
                                    (('tag:dev-machine', 'autogroup:admin'), ('tag:dev-training',)),
                                    (('tag:dev-training-nebius',), ('tag:dev-training-nebius',)),
                                    (('tag:dev-training-ornn',), ('tag:dev-training-ornn',)),
+                                   (('tag:dev-training-spheron',), ('tag:dev-training-spheron',)),
                                    (('tag:ops-mcp', 'tag:gpu-fleet'), ('tag:gpu-bootstrap',))])
         self.assertEqual(rules[('accept', ('tag:dev-machine', 'autogroup:admin'))]['dst'], ['tag:dev-training'])
         # A development training node reaches only nodes on its own provider, and
         # no node tag owns a provider tag, so a node cannot re-tag itself as another.
-        node_tags = {'tag:dev-training', 'tag:dev-training-nebius', 'tag:dev-training-ornn'}
+        node_tags = {'tag:dev-training', 'tag:dev-training-nebius', 'tag:dev-training-ornn',
+                     'tag:dev-training-spheron'}
         for tag in node_tags - {'tag:dev-training'}:
             self.assertEqual(rules[('accept', (tag,))]['dst'], [tag])
             self.assertEqual(policy['tagOwners'][tag], ['tag:terraform'])

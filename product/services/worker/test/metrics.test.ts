@@ -244,6 +244,7 @@ describe("worker metrics server", () => {
     inferenceTargets?: () => Promise<
       readonly { id: string; modelId: string }[]
     >,
+    runtimeTargets?: () => Promise<unknown>,
   ): Promise<string> => {
     const started = startWorkerMetricsServer(
       metrics,
@@ -251,6 +252,7 @@ describe("worker metrics server", () => {
       0,
       targets,
       inferenceTargets,
+      runtimeTargets,
     );
     server = started;
     await new Promise((resolve) => started.once("listening", resolve));
@@ -279,6 +281,22 @@ describe("worker metrics server", () => {
     expect(failed.status).toBe(503);
     expect(await failed.text()).toBe("");
     expect((await fetch(`${origin}/metrics`)).status).toBe(200);
+  });
+
+  it("serves runtime metrics discovery separately and fails closed", async () => {
+    const groups = [
+      { targets: ["host.example"], labels: { deployment: "test" } },
+    ];
+    const targets = vi
+      .fn()
+      .mockResolvedValueOnce(groups)
+      .mockRejectedValueOnce(new Error("unavailable"));
+    const origin = await listen(createMetrics(), undefined, undefined, targets);
+    const success = await fetch(`${origin}/metrics/targets/runtime`);
+    expect(success.status).toBe(200);
+    expect(await success.json()).toEqual(groups);
+    expect((await fetch(`${origin}/metrics/targets/runtime`)).status).toBe(503);
+    expect((await fetch(`${origin}/metrics/targets/lora`)).status).toBe(404);
   });
 
   it.each(["/metrics", "/metrics?timeout=20s"])(

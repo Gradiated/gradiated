@@ -23,6 +23,7 @@ pub struct GatewayMetrics {
 }
 
 struct Metrics {
+    workloads: crate::workload_metrics::WorkloadMetrics,
     registry: Registry,
     http_requests: CounterFamily<HttpRequestLabels>,
     admissions: CounterFamily<GenerationLabels>,
@@ -152,6 +153,7 @@ impl GatewayMetrics {
         );
 
         let metrics = Metrics {
+            workloads: crate::workload_metrics::WorkloadMetrics::register(&mut registry),
             http_requests: registered(
                 &mut registry,
                 "http_requests",
@@ -346,6 +348,14 @@ impl GatewayMetrics {
             .inc();
     }
 
+    pub(crate) fn record_qualified_request(
+        &self,
+        model: &str,
+        request: &crate::request_telemetry::RequestTelemetry,
+    ) {
+        self.inner.workloads.qualified(model, request);
+    }
+
     pub(crate) fn record_admission_rejection(
         &self,
         scope: &GenerationScope<'_>,
@@ -376,6 +386,7 @@ impl GatewayMetrics {
         drop(self.inner.runtime_latency_seconds.get_or_create(&labels));
 
         AdmittedGenerationMetrics {
+            request_telemetry: None,
             metrics: self.clone(),
             labels,
             is_verification: scope.is_verification,
@@ -570,6 +581,7 @@ pub(crate) struct TerminalRecord<'a> {
 }
 
 pub(crate) struct AdmittedGenerationMetrics {
+    pub(crate) request_telemetry: Option<crate::request_telemetry::RequestTelemetry>,
     is_verification: bool,
     metrics: GatewayMetrics,
     labels: GenerationLabels,
@@ -624,6 +636,11 @@ impl AdmittedGenerationMetrics {
         let labels = &self.labels;
         let metrics = &self.metrics.inner;
         let status = GenerationStatus::as_str(outcome.status());
+        if let Some(telemetry) = &self.request_telemetry {
+            metrics
+                .workloads
+                .observe(&labels.model, telemetry, usage, status);
+        }
         let error_code = outcome.error_code().unwrap_or("none");
         if error_code == "capacity_exceeded" {
             self.metrics.record_capacity_pressure(&labels.model);

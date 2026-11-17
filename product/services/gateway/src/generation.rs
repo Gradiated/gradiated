@@ -781,6 +781,8 @@ pub enum GenerationTimingError {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GenerationProperties {
     #[serde(skip_serializing_if = "Option::is_none")]
+    request_telemetry: Option<crate::request_telemetry::RequestTelemetry>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     estimated_joules: Option<f64>,
     event_schema_version: u16,
     service_tier: ServiceTier,
@@ -806,6 +808,7 @@ impl GenerationProperties {
         Self {
             estimated_joules: None,
             event_schema_version: 2,
+            request_telemetry: None,
             service_tier,
             identity,
             status: terminal.status,
@@ -824,6 +827,15 @@ impl GenerationProperties {
 
     pub fn organization_id(&self) -> Uuid {
         self.identity.organization_id
+    }
+
+    pub(crate) fn with_request_telemetry(
+        mut self,
+        telemetry: Option<crate::request_telemetry::RequestTelemetry>,
+    ) -> Self {
+        self.request_telemetry = telemetry;
+
+        self
     }
 
     pub fn charge(&self) -> u64 {

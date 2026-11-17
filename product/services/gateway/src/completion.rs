@@ -373,7 +373,24 @@ impl CompletionService {
             }
         };
 
-        let metrics = self.metrics.generation_admitted(&scope);
+        let mut metrics = self.metrics.generation_admitted(&scope);
+        if let Some(mut telemetry) = request.request_telemetry.clone() {
+            telemetry.effective_max_output_tokens = Some(request.effective_output_tokens);
+            telemetry.context_limit_tokens = Some(request.max_context_tokens);
+            telemetry.output_limit_source = if telemetry.requested_max_output_tokens.is_some() {
+                "caller"
+            } else if request.request.open_output_limit {
+                "remaining_context"
+            } else {
+                "catalog"
+            };
+            telemetry.traffic = if request.is_verification {
+                "verification"
+            } else {
+                "routed"
+            };
+            metrics.request_telemetry = Some(telemetry);
+        }
         let capacity = self
             .metrics
             .capacity(metric_model(&request), request.is_verification);

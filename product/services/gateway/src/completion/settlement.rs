@@ -256,7 +256,13 @@ impl GenerationSettlement {
             outcome,
             timing,
         )
-        .with_estimated_joules(usage.estimated_joules());
+        .with_estimated_joules(usage.estimated_joules())
+        .with_request_telemetry(
+            self.metrics
+                .request_telemetry
+                .clone()
+                .map(|value| value.with_usage(usage)),
+        );
         let charged = self.finalize(&properties).await?;
 
         Ok(SettledGeneration {

@@ -1,7 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { loraMetricsTargets } from "../src/lora-metrics-targets.js";
+import {
+  loraMetricsTargets,
+  runtimeMetricsTargets,
+} from "../src/lora-metrics-targets.js";
 
 describe("LoRA metrics targets", () => {
+  it("discovers the private runtime metrics endpoint independently of adapter metrics", () => {
+    expect(
+      runtimeMetricsTargets([
+        { id: "a", modelId: "glm", serviceUrl: "https://host.example/alloc/a" },
+      ])[0]?.labels.__metrics_path__,
+    ).toBe("/alloc/a/internal/runtime-metrics");
+    expect(() =>
+      runtimeMetricsTargets([
+        {
+          id: "a",
+          modelId: "glm",
+          serviceUrl: "https://secret@host.example/alloc/a",
+        },
+      ]),
+    ).toThrow();
+  });
   it("uses the allocation's existing host route without disclosing credentials", () => {
     expect(
       loraMetricsTargets([

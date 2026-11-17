@@ -633,6 +633,18 @@ emission from gateways, because older workers reject unknown properties.
 ```
 
 Version 2 requires `service_tier`. Version 1 omits it and means `default`.
+Version 2 also accepts optional `request_telemetry`, a closed version 1 metadata
+document authored in `product/packages/contracts/src/request-telemetry.ts` and
+extracted by the Rust gateway. It retains fixed task/category labels with their
+provenance, requested bounded settings, structural counts, bounded text-shape
+statistics, output/context limits and reported-usage buckets. It contains no
+request/response text, schema identifiers, tool names, content hashes, token IDs,
+embeddings or hidden states. It uses the existing generation retention and access
+controls, including with trace capture off. See the gateway README for extraction
+budgets and uncertainty semantics. Consumers must accept the optional field before
+producers emit it. Existing rows without it remain valid; no table migration is
+required. The same generation's timing, usage and release digest support joint
+workload analysis without new identifier-bearing Prometheus dimensions.
 Native SystemOne uses this same generation event with `service_tier: "default"`.
 Its authoritative prefill usage has nonnegative safe-integer input tokens and
 cached input no greater than input. Output, cache-write and reasoning quantities

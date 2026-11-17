@@ -63,6 +63,7 @@ class HostAgentTest(unittest.TestCase):
                     configuration = self.host.proxy_config()
                 self.assertIn(f'location /alloc/{self.uid}/', configuration)
                 self.assertIn('proxy_pass http://127.0.0.1:38083/health;', configuration)
+                self.assertIn(f'location = /alloc/{self.uid}/internal/runtime-metrics {{ proxy_pass http://127.0.0.1:38083/metrics; }}', configuration)
         for name in ('', 'h200', 'unknown', 'h200-tp2 extra', 4, None):
             profile['environment']['GLM_SGLANG_PROFILE'] = name
             with self.subTest(invalid_profile=name), self.assertRaises(ValueError):

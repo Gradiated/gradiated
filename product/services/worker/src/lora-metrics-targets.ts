@@ -5,6 +5,12 @@ export type AdapterMetricsTarget = {
 };
 
 export const loraMetricsTargets = (rows: AdapterMetricsTarget[]) =>
+  inferenceMetricsTargets(rows, "/internal/adapters/metrics");
+
+export const runtimeMetricsTargets = (rows: AdapterMetricsTarget[]) =>
+  inferenceMetricsTargets(rows, "/internal/runtime-metrics");
+
+const inferenceMetricsTargets = (rows: AdapterMetricsTarget[], path: string) =>
   rows.map((row) => {
     const url = new URL(row.serviceUrl);
     const privateTarget =
@@ -24,7 +30,7 @@ export const loraMetricsTargets = (rows: AdapterMetricsTarget[]) =>
       targets: [url.host],
       labels: {
         __scheme__: url.protocol.slice(0, -1),
-        __metrics_path__: `${url.pathname.replace(/\/$/, "")}/internal/adapters/metrics`,
+        __metrics_path__: `${url.pathname.replace(/\/$/, "")}${path}`,
         model: row.modelId,
         deployment: row.id,
         service: "inference",

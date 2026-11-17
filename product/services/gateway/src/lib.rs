@@ -21,6 +21,7 @@ mod postgres_reader;
 mod protocol;
 mod readiness;
 mod request;
+mod request_telemetry;
 pub mod routing;
 pub mod runtime;
 mod service_tier;
@@ -33,6 +34,7 @@ mod systemone;
 mod test_support;
 mod tokenizer;
 mod valkey_auth;
+mod workload_metrics;
 
 pub use adapter::PrivateAdapter;
 pub use completion::CompletionService;

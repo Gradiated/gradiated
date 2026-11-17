@@ -15,6 +15,7 @@ import {
   UuidSchema,
 } from "./common.js";
 import { ServiceTierSchema } from "./service-tiers.js";
+import { RequestTelemetrySchema } from "./request-telemetry.js";
 
 export const GenerationPriceComponentSchema = z.strictObject({
   unit: z.enum([
@@ -76,6 +77,7 @@ export const GenerationPropertiesSchema = z
       ...generationPropertyFields,
       event_schema_version: z.literal(2),
       service_tier: ServiceTierSchema,
+      request_telemetry: RequestTelemetrySchema.optional(),
     }),
   ])
   .openapi("GenerationProperties");

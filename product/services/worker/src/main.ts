@@ -37,7 +37,10 @@ import {
   runSdkQualification,
 } from "./kubernetes-qualification.js";
 import { serviceLog } from "./logging.js";
-import { loraMetricsTargets } from "./lora-metrics-targets.js";
+import {
+  loraMetricsTargets,
+  runtimeMetricsTargets,
+} from "./lora-metrics-targets.js";
 import { startWorkerMetricsServer, WorkerMetrics } from "./metrics.js";
 import { createOperationalBalanceReader } from "./operational-balance.js";
 import { runGenerationSettlementLoop } from "./settlement-loop.js";
@@ -74,6 +77,10 @@ const metricsServer = startWorkerMetricsServer(
   async () =>
     (await createDeploymentStore(database).replicas()).map(
       ({ id, modelId }) => ({ id, modelId }),
+    ),
+  async () =>
+    runtimeMetricsTargets(
+      await createDeploymentStore(database).runtimeMetricsTargets(),
     ),
 );
 

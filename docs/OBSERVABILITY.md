@@ -7,6 +7,53 @@ and alert resources live under
 Application metrics contain no organization, workspace, API-key, generation,
 prompt, or completion labels.
 
+## Inference workload metadata
+
+The [Inference Workloads dashboard](https://grafana.gradiated.com/d/gradiated-workloads)
+shows gateway request categories, task-label provenance, token-length distributions,
+cache ratios, message/tool/schema complexity, text byte distributions and extraction
+truncation. Task labels are fixed caller hints or uncertain local English keyword
+heuristics; they are not semantic ground truth. The
+[gateway README](../product/services/gateway/README.md#request-workload-metadata)
+defines the metadata contract, budgets and coverage. No prompts, completions,
+tool/schema identifiers, token IDs or hidden states are collected by this path.
+
+Rich per-generation metadata is stored in the existing ClickHouse
+`generations.properties.request_telemetry` JSON alongside authoritative token
+usage, timing, outcome and served release. The
+[workload mixture query](../product/packages/control/clickhouse/queries/workload-mixture.sql)
+deduplicates generation IDs, excludes verification and unsuccessful generations,
+and produces joint task/structure/input/output/cache buckets for constructing
+synthetic data. It suppresses cohorts below 100 requests, which reduces sparse
+exports but is not an anonymization or differential privacy guarantee. Keep
+request-weighted and output-token-weighted mixtures separate. Metadata retains
+the existing usage access/retention policy; raw customer content is not an input
+to the synthetic generator.
+
+Worker discovery at `/metrics/targets/runtime` lists all available allocations
+behind their canonical private host routes, including replicas without LoRA.
+The `inference-runtimes` ScrapeConfig scrapes every 30 seconds via
+`/alloc/<id>/internal/runtime-metrics`. The host forwards this fixed path to the
+warmup supervisor's metrics endpoint, or the runtime metrics endpoint for profiles
+without a supervisor. Draining allocations remain unavailable. Scrape limits and
+an explicit metric/label allowlist bound the native series retained by Prometheus.
+Discovery failures return 503, preserving the previous target list rather than
+inventing a healthy empty inventory.
+
+Native `sglang:spec_accept_rate` and `sglang:spec_accept_length` are recent-window
+gauges and can be stale while idle. Do not average them to claim a daily weighted
+acceptance rate. Native verification and generation counters are available when
+the runtime exports them; accepted/proposed counters and per-request acceptance
+are not synthesized from gauges. Task-specific acceptance needs additional native
+per-request instrumentation; workload metadata alone does not provide it. Missing
+native metrics are unknown, not zero acceptance.
+
+Rollout order: deploy schema-aware workers before the gateway emits the optional
+metadata field. Separately publish and roll out the host bundle containing the
+private metrics route, then enable the runtime scrape configuration. Existing hosts
+without the route will fail native scrapes. This configuration does not itself
+upgrade a running GPU host, and it does not enable trace capture or training.
+
 Application metrics for API, gateway, proxy, collector, worker, and Temporal
 worker are scraped every 5 seconds with a 5-second timeout. Canary analysis
 queries Prometheus every 15 seconds after a 30-second initial delay; its

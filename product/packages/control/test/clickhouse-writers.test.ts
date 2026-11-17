@@ -1,4 +1,6 @@
+import { readFileSync } from "node:fs";
 import type { InsertResult } from "@clickhouse/client";
+import { RequestTelemetrySchema } from "@gradiated/contracts";
 import type {
   GenerationSettled,
   ProfilingEventBatch,
@@ -93,6 +95,41 @@ const profilingBatch: ProfilingEventBatch = {
 };
 
 describe("ClickHouse generation writer", () => {
+  it("preserves the closed request metadata document during ingestion", async () => {
+    const request_telemetry = RequestTelemetrySchema.parse(
+      JSON.parse(
+        readFileSync(
+          new URL(
+            "../../contracts/test/fixtures/request-telemetry.json",
+            import.meta.url,
+          ),
+          "utf8",
+        ),
+      ),
+    );
+    const client = recordingClient();
+    await createGenerationWriter(client).insertGeneration(
+      {
+        ...generation,
+        properties: {
+          ...generation.properties,
+          event_schema_version: 2,
+          service_tier: "fast",
+          request_telemetry,
+        },
+      },
+      slotId,
+    );
+    expect(client.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: [
+          expect.objectContaining({
+            properties: expect.objectContaining({ request_telemetry }),
+          }),
+        ],
+      }),
+    );
+  });
   it("preserves optional energy estimates in generation properties", async () => {
     const client = recordingClient();
     const event = {

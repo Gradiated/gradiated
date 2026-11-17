@@ -62,6 +62,10 @@ export {
   type UpdateMember,
 } from "./members.js";
 export { WizardKeyResponseSchema, type WizardKeyResponse } from "./wizard.js";
+export {
+  RequestTelemetrySchema,
+  type RequestTelemetry,
+} from "./request-telemetry.js";
 export { ProblemSchema, problemContent, type Problem } from "./problem.js";
 export {
   ModelListSchema,

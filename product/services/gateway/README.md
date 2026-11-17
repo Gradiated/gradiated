@@ -339,6 +339,79 @@ Watch `gradiated_gateway_capacity_fallbacks_total`,
 `gradiated_gateway_calculated_charge_nano_usd_total{deployment="openrouter"}`,
 and generations whose terminal log has `capacity="openrouter"`.
 
+## Request workload metadata
+
+Every validated generation request is counted in
+`gradiated_gateway_workload_qualified_requests_total` before token bounds,
+routing and admission. Every admitted generation that reaches settlement carries
+optional `request_telemetry` version 1 in the existing version 2 generation
+properties document. The worker validates the closed contract and stores it in
+ClickHouse `generations.properties.request_telemetry`, independently of trace
+capture. Requests rejected before admission have aggregate qualification/HTTP
+counters, but no durable generation row. Token-count requests do not create
+generation workload observations.
+
+The metadata records original client protocol, a fixed client family, routed or
+verification traffic, message/role counts and transitions, UTF-8 text bytes by
+role, last-user and maximum-message text sizes, content-part type counts,
+tool definition/call/result counts, strict-tool count, tool-choice mode, and
+bounded schema node/property/required/enum counts and depth. Schema contents,
+property names, tool names and arguments are not retained; argument string byte
+lengths are counted. Anthropic tool-result payloads are not recursively scanned.
+SystemOne state and question contents are not scanned.
+
+Requested sampling settings retain only bounded standard numeric/boolean fields.
+Seed values and stop strings are excluded; only their presence/count is recorded.
+Missing or unrepresentable settings are null, not presumed runtime defaults.
+Requested and effective output limits, their source, and the catalog context
+limit are distinct. Authoritative reported usage remains in `properties.usage`;
+per-role byte sizes are not token estimates. Token buckets cover input, uncached
+input and output. Cache, reasoning and output/input ratio buckets explicitly use
+`undefined` when their denominator is zero. Failed/cancelled requests can have
+partial or zero reported usage; use succeeded rows for a completed-workload mix.
+
+Structural kind is `multimodal`, `structured_output`, `tool_context`,
+`plain_text`, or `system_one`, in that precedence order. Nonexclusive numeric
+features remain available when a request combines tools, schemas and attachments.
+The task taxonomy is `code_edit`, `code_generation`, `debugging`, `summarization`,
+`translation`, `extraction`, `classification`, `reasoning`, `question_answering`,
+`creative_writing`, `other`, and `unknown`. Callers may set
+`x-gradiated-task-type` to one exact taxonomy value other than `unknown`.
+Unrecognized or duplicate headers are ignored. This header affects telemetry
+only, not dispatch, capture, training permission or billing.
+
+Without a caller hint, a deterministic English keyword heuristic examines at most
+8 KiB from the first text part of the last user message, before its first code
+fence. The source is recorded as `caller`, `heuristic` or `unknown`, with scan
+length/truncation. These labels are uncertain, caller hints are unverified, and
+neither is ground truth. No external classifier is invoked. Do not discard
+`unknown` when designing a synthetic workload mixture.
+
+At most 64 KiB of text per request is scanned for line breaks, maximum line size,
+ASCII whitespace/digits, non-ASCII bytes, code-fence counts and a fixed language
+hint from recognized fence tags. Counts describe the scanned prefix, not the
+whole request when truncated. Message/content traversal and each schema summary
+are capped at 4096 nodes; schema depth is capped at 32. Totals available directly
+from arrays remain exact, while inspected subcounts can be partial. Each budget
+has an explicit truncation flag. No text excerpts, arbitrary labels, hashes of
+content, token IDs, embeddings, logits or hidden states enter this document.
+
+The gateway exports `workload_requests`, `workload_tokens`,
+`workload_token_lengths`, `workload_structure`, `workload_bytes`,
+`workload_fractions` and `workload_truncated` metric families with model and fixed
+categories. Customer, session and generation identifiers are not metric labels.
+Rich joint breakdowns belong in ClickHouse rather than a Prometheus label
+cross-product. Metadata follows the existing usage retention/access controls;
+it is not an anonymization guarantee or authorization to train on request content.
+
+Deploy the updated worker/contract consumers before the gateway emits this
+optional field: old workers reject unknown properties. No ClickHouse migration
+is needed. Older generation rows without telemetry remain valid and should be
+excluded explicitly from workload queries. See the Inference Workloads dashboard
+and `packages/control/clickhouse/queries/workload-mixture.sql` for an aggregate
+synthetic-data recipe. The query deduplicates generation IDs and suppresses groups
+with fewer than 100 requests; this suppression is not differential privacy.
+
 ## Verify
 
 ```sh

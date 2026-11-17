@@ -507,6 +507,7 @@ pub(super) fn qualified_request(deployment_count: u128) -> QualifiedRequest {
     let model_deployments = (1..=deployment_count).map(deployment).collect();
 
     QualifiedRequest {
+        request_telemetry: None,
         is_verification: false,
         adapter: None,
         metadata: RequestMetadata {

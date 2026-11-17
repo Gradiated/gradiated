@@ -42,7 +42,12 @@ pub fn browser_cors(origins: Vec<HeaderValue>) -> CorsLayer {
     CorsLayer::new()
         .allow_origin(AllowOrigin::list(origins))
         .allow_methods([Method::GET, Method::POST])
-        .allow_headers([AUTHORIZATION, CONTENT_TYPE, DEPLOYMENT_ID_HEADER])
+        .allow_headers([
+            AUTHORIZATION,
+            CONTENT_TYPE,
+            DEPLOYMENT_ID_HEADER,
+            HeaderName::from_static("x-gradiated-task-type"),
+        ])
         .expose_headers([
             GENERATION_ID_HEADER,
             SERVICE_TIER_HEADER,
@@ -247,10 +252,46 @@ async fn serve(
     }
     crate::session_telemetry::record_body(&request);
     let translated = endpoint.protocol.translate_request(&request)?;
-    let qualified =
+    let mut qualified =
         state
             .coordinator
             .qualify(metadata, headers, hosted, &translated, endpoint.kind)?;
+
+    if matches!(endpoint.operation, Operation::Complete) {
+        let mut telemetry = crate::request_telemetry::RequestTelemetry::extract(
+            &request,
+            endpoint.protocol,
+            body.len(),
+        );
+        if endpoint.kind == crate::RequestKind::SystemOne {
+            telemetry.protocol = "system_one";
+            telemetry.kind = "system_one";
+        }
+        telemetry.client = crate::diagnostics::client_family(
+            headers
+                .get("user-agent")
+                .and_then(|value| value.to_str().ok())
+                .filter(|value| value.len() <= 512),
+        );
+        let mut hints = headers.get_all("x-gradiated-task-type").iter();
+        let hint = hints.next().and_then(|value| value.to_str().ok());
+        if hints.next().is_none() {
+            telemetry.task_hint(hint);
+        }
+        telemetry.traffic = if qualified.is_verification {
+            "verification"
+        } else {
+            "routed"
+        };
+        let model = qualified
+            .adapter
+            .as_ref()
+            .map_or(qualified.request.model.as_str(), |adapter| {
+                adapter.base_model_id.as_str()
+            });
+        state.metrics.record_qualified_request(model, &telemetry);
+        qualified.request_telemetry = Some(telemetry);
+    }
 
     let pinned = headers
         .contains_key(&DEPLOYMENT_ID_HEADER)

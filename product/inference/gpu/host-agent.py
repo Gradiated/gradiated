@@ -607,6 +607,8 @@ class Agent:
                 continue
             elif profile.get("warmup"):
                 lines.append(f"location = /alloc/{uid}/health {{ proxy_pass http://127.0.0.1:{port + 3}/health; }}")
+            metrics_port = port + 3 if profile.get("warmup") else port
+            lines.append(f"location = /alloc/{uid}/internal/runtime-metrics {{ proxy_pass http://127.0.0.1:{metrics_port}/metrics; }}")
             if profile.get("adapters"):
                 lines.append(f"location /alloc/{uid}/internal/adapters {{ proxy_pass http://127.0.0.1:{port + 2}/internal/adapters; }}")
             lines.append(f"location /alloc/{uid}/ {{ proxy_pass http://127.0.0.1:{port}/; "

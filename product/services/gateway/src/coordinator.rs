@@ -33,6 +33,7 @@ pub struct RequestMetadata {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct QualifiedRequest {
+    pub(crate) request_telemetry: Option<crate::request_telemetry::RequestTelemetry>,
     pub metadata: RequestMetadata,
     pub is_verification: bool,
     pub identity: AuthenticatedIdentity,
@@ -201,6 +202,7 @@ impl HostedRequest {
         .map_err(|error| inconsistent_state(pricing_diagnostic_code(&error)))?;
 
         Ok(QualifiedRequest {
+            request_telemetry: None,
             metadata,
             is_verification,
             identity,

@@ -14,6 +14,9 @@ export interface ModelReplica {
 }
 export interface DeploymentStore {
   replicas(): Promise<ModelReplica[]>;
+  runtimeMetricsTargets(): Promise<
+    { id: string; modelId: string; serviceUrl: string }[]
+  >;
   adapterMetricsTargets(): Promise<
     { id: string; modelId: string; serviceUrl: string }[]
   >;
@@ -35,8 +38,9 @@ export interface DeploymentStore {
 const hostProxyUrl = (instance: typeof instances.$inferSelect) =>
   privateServingUrl(instance.id);
 
-const adapterAllocations = async (
+const privateAllocations = async (
   database: ControlDatabase,
+  adaptersOnly: boolean,
   modelId?: string,
 ) => {
   const rows = await database
@@ -51,7 +55,9 @@ const adapterAllocations = async (
     .innerJoin(instances, eq(modelDeployments.instanceId, instances.id))
     .where(
       and(
-        sql`${modelDeployments.release}->>'lora_enabled' = 'true'`,
+        adaptersOnly
+          ? sql`${modelDeployments.release}->>'lora_enabled' = 'true'`
+          : undefined,
         eq(modelDeployments.status, "available"),
         isNull(instances.retiredAt),
         modelId === undefined
@@ -77,16 +83,23 @@ const adapterAllocations = async (
 export const createDeploymentStore = (
   database: ControlDatabase,
 ): DeploymentStore => ({
+  runtimeMetricsTargets: async () =>
+    (await privateAllocations(database, false)).map(
+      ({ id, modelId, serviceUrl }) => ({ id, modelId, serviceUrl }),
+    ),
   adapterMetricsTargets: async () =>
-    (await adapterAllocations(database)).map(({ id, modelId, serviceUrl }) => ({
-      id,
-      modelId,
-      serviceUrl,
-    })),
+    (await privateAllocations(database, true)).map(
+      ({ id, modelId, serviceUrl }) => ({
+        id,
+        modelId,
+        serviceUrl,
+      }),
+    ),
 
   adapterProbeTargets: async (modelId) =>
-    adapterAllocations(
+    privateAllocations(
       database,
+      true,
       ModelDeploymentRecordSchema.shape.modelId.parse(modelId),
     ),
 

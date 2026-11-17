@@ -534,3 +534,36 @@ fn routing_capacity_metrics_separate_verification_from_routed_requests() {
         .iter()
         .any(|line| line.contains("traffic=\"verification\"") && line.ends_with(" 1")));
 }
+
+#[test]
+fn workload_metrics_separate_qualification_from_terminal_usage_and_have_bounded_labels() {
+    let metrics = GatewayMetrics::new();
+    let telemetry = crate::request_telemetry::RequestTelemetry::extract(
+        &serde_json::json!({"messages":[{"role":"user","content":"Summarize private-content"}],"tools":[{"function":{"name":"private-tool","parameters":{"properties":{"private-key":{"type":"string"}}}}}]}),
+        crate::protocol::Protocol::OpenAiChat,
+        200,
+    );
+    metrics.record_qualified_request("model-a", &telemetry);
+    let before = metrics.encode();
+    assert!(before.lines().any(|line| line
+        .starts_with("gradiated_gateway_workload_qualified_requests_total{")
+        && line.ends_with(" 1")));
+    assert!(!before
+        .lines()
+        .any(|line| line.starts_with("gradiated_gateway_workload_tokens_total{")));
+    let mut generation = admitted(&metrics);
+    generation.request_telemetry = Some(telemetry);
+    generation.record_terminal(&terminal(10, Some(100), 200).record());
+    let body = metrics.encode();
+    assert!(body.lines().any(
+        |line| line.starts_with("gradiated_gateway_workload_tokens_total{")
+            && line.contains("quantity=\"input\"")
+            && line.ends_with(" 100")
+    ));
+    assert!(body.lines().any(|line| line
+        .starts_with("gradiated_gateway_workload_requests_total{")
+        && line.contains("task_type=\"summarization\"")
+        && line.ends_with(" 1")));
+    assert!(!body.contains("private-"));
+    assert!(!body.contains("workspace"));
+}

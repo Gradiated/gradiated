@@ -167,6 +167,21 @@ describe("adapter qualification on promotion", () => {
     }
   });
 
+  it("discovers runtime metrics for available private allocations including non-LoRA replicas", async () => {
+    const store = createDeploymentStore(db.database);
+    const targets = await store.runtimeMetricsTargets();
+    expect(targets).toHaveLength(4);
+    expect(
+      targets.filter((target) => target.modelId === baseModelId),
+    ).toHaveLength(3);
+    expect(await store.adapterMetricsTargets()).toHaveLength(3);
+    for (const target of targets) {
+      expect(target.serviceUrl).toBe(
+        `http://gpu-${hostId}.tailscale-inference.svc.cluster.local:8888/alloc/${target.id}`,
+      );
+    }
+  });
+
   it("qualifies an uploaded version, then makes it the available production version", async () => {
     const { owner, task, version } = await seedUpload();
     const probe = vi.fn<AdapterProbe>(async () => ({ ok: true }));

@@ -357,6 +357,7 @@ export const startWorkerMetricsServer = (
   port: number,
   targets?: () => Promise<unknown>,
   inferenceTargets?: () => Promise<readonly { id: string; modelId: string }[]>,
+  runtimeTargets?: () => Promise<unknown>,
 ): Server => {
   const server = createServer((request, response) => {
     const pathname = request.url?.split("?", 1)[0];
@@ -386,10 +387,13 @@ export const startWorkerMetricsServer = (
 
     if (
       request.method === "GET" &&
-      pathname === "/metrics/targets/lora" &&
-      targets
+      (pathname === "/metrics/targets/lora" ||
+        pathname === "/metrics/targets/runtime") &&
+      (pathname === "/metrics/targets/lora" ? targets : runtimeTargets)
     ) {
-      void targets().then(
+      const discover =
+        pathname === "/metrics/targets/lora" ? targets! : runtimeTargets!;
+      void discover().then(
         (groups) => {
           const body = JSON.stringify(groups);
           response
@@ -400,7 +404,7 @@ export const startWorkerMetricsServer = (
             .end(body);
         },
         (error: unknown) => {
-          serviceLog("error", "lora_metrics_discovery_failed", { error });
+          serviceLog("error", "inference_metrics_discovery_failed", { error });
           response.writeHead(503).end();
         },
       );

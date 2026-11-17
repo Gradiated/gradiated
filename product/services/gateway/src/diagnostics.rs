@@ -351,7 +351,7 @@ fn secret_suffix(headers: &HeaderMap) -> Option<String> {
         })
 }
 
-fn client_family(user_agent: Option<&str>) -> &'static str {
+pub(crate) fn client_family(user_agent: Option<&str>) -> &'static str {
     let user_agent = user_agent.unwrap_or_default().to_ascii_lowercase();
     [
         ("claude-code", "claude-code"),

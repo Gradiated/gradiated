@@ -73,8 +73,13 @@ class Spheron:
                 # Spheron has no idempotency key, so only reads repeat: a repeated create, even after a 429,
                 # could buy twice, and Spheron asks callers never to loop deployment creation.
                 if attempt < 4 and method == 'GET' and error.code in (429, 500, 502, 503, 504):
-                    wait = error.headers.get('Retry-After') or error.headers.get('RateLimit-Reset') or 2 ** attempt
-                    time.sleep(min(int(float(wait)), 60))
+                    wait = self.retry_after(error, detail) if error.code == 429 else 2 ** attempt
+                    if wait > 900:
+                        sys.exit(f'Spheron rate-limited {method} {path} for {wait} seconds; try again later')
+                    if wait > 30:
+                        print(f'Spheron rate-limited {path}; waiting {wait} seconds for the window to reset',
+                              file=sys.stderr, flush=True)
+                    time.sleep(wait)
                     continue
                 try:
                     found = json.loads(detail)
@@ -90,6 +95,22 @@ class Spheron:
                     continue
                 sys.exit(f'Spheron {method} {path}: {error}')
         raise AssertionError('unreachable')
+
+    @staticmethod
+    def retry_after(error, detail):
+        """Seconds left in a 429's rate-limit window: details.retryAfter, else Retry-After or RateLimit-Reset.
+
+        The top-level retryAfter is the whole window's length on most limits, so it is not used.
+        """
+        try:
+            seconds = (json.loads(detail).get('details') or {}).get('retryAfter')
+        except (ValueError, AttributeError):
+            seconds = None
+        seconds = seconds or error.headers.get('Retry-After') or error.headers.get('RateLimit-Reset') or 1
+        try:
+            return max(1, int(float(seconds)))
+        except ValueError:
+            return 60
 
     def catalog(self, term=None):
         """Every GPU VM offer as (GPU type, offer), across every page."""

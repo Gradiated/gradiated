@@ -181,6 +181,19 @@ class SpheronTests(unittest.TestCase):
             spheron.api('POST', '/api/deployments', body={})
         self.assertEqual(urlopen.call_count, 1)
 
+    def test_a_rate_limited_read_waits_for_the_window_to_reset(self):
+        spheron = Spheron(lambda name: 'key', None)
+        error = urllib.error.HTTPError('https://app.spheron.ai/api/deployments', 429, 'Too Many',
+                                       {'RateLimit-Reset': '30'}, None)
+        error.read = lambda: b'{"code": "rate_limited", "retryAfter": 900, "details": {"retryAfter": 412}}'
+        ok = mock.MagicMock()
+        ok.__enter__.return_value.read.return_value = b'[]'
+        with mock.patch('urllib.request.urlopen', side_effect=[error, ok]), mock.patch('time.sleep') as sleep, \
+                mock.patch('sys.stderr'):
+            self.assertEqual(spheron.api('GET', '/api/deployments'), [])
+        # details.retryAfter, the time left, not the top-level window length or a short backoff.
+        sleep.assert_called_once_with(412)
+
     def test_reads_retry_network_failures_then_fail(self):
         spheron = Spheron(lambda name: 'key', None)
         with mock.patch('urllib.request.urlopen', side_effect=urllib.error.URLError('no route')) as urlopen, \

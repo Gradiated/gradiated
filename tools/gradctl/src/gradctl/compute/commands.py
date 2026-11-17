@@ -9,7 +9,9 @@
                          [--max-price USD_PER_GPU_HOUR] [--disk-gib N]
   gradctl compute ls [--provider P[,P]]
   gradctl compute ssh [--vm N] NAME [command...]       N picks one of the VMs Ornn splits a node into
-  gradctl compute s3 NAME                                give the VM the development bucket key
+  gradctl compute s3 NAME --path P [--read P] [--hours H]
+                                                         give the VM expiring credentials for those
+                                                         bucket paths only
   gradctl compute start NAME | stop NAME                 preemption stops a VM, it is not deleted
   gradctl compute down NAME                              delete the VM, its disk and its tailnet device
   gradctl compute meter [--provider P[,P]]               send each VM's cost since it was last metered to PostHog
@@ -40,9 +42,12 @@ joins as tag:dev-machine with
 
 Credentials come from gradiated/dev/env: from the environment (an ignored .env
 loaded as AGENTS.md describes) or, if unset, read with the AWS profile in
-AWS_PROFILE (default gradiated-readonly). VMs start with no credentials; `s3`
-installs a key that can only use the development training bucket
-(DEV_TRAINING_S3_BUCKET), so jobs on the VM can save checkpoints themselves.
+AWS_PROFILE (default gradiated-readonly). VMs start with no credentials. `s3`
+installs temporary credentials, minted from the bucket user's key, that reach
+only the paths it is given in the development training bucket
+(DEV_TRAINING_S3_BUCKET) and expire after --hours (default 24), so jobs on the
+VM can save checkpoints themselves. The bucket user's own key never leaves the
+machine that runs gradctl.
 These are spot VMs: save results to S3 regularly. A stopped VM still pays for
 its disk.
 """
@@ -503,22 +508,94 @@ def ssh(args, as_json=False):
                   error=f'the remote command exited with status {result.returncode}', error_code='remote_failed')
 
 
+BUCKET_PATH = re.compile(r'[A-Za-z0-9][A-Za-z0-9._=-]*(/[A-Za-z0-9][A-Za-z0-9._=-]*)*')
+WRITE_ACTIONS = ['s3:PutObject', 's3:DeleteObject', 's3:AbortMultipartUpload', 's3:ListMultipartUploadParts']
+
+
+def bucket_path(value):
+    """A key prefix in the development bucket, such as bildy/run-7: no wildcards, '..' or leading '/'."""
+    path = value.strip().rstrip('/')
+    if not BUCKET_PATH.fullmatch(path) or any(part in ('.', '..') for part in path.split('/')):
+        raise argparse.ArgumentTypeError('a path such as <project>/<run>: letters, digits, . _ = - and /, '
+                                         'with no wildcards, .. or leading /')
+    return path
+
+
+def bucket_policy(bucket, writes, reads):
+    """A session policy that allows only these paths: list and read every path, write only `writes`.
+
+    Listing is limited to `<path>/` and below, not the bare prefix, which would also list `<path>-other/`.
+    """
+    arn = f'arn:aws:s3:::{bucket}'
+    every = sorted(set(writes) | set(reads))
+    statements = [
+        {'Sid': 'Locate', 'Effect': 'Allow', 'Action': 's3:GetBucketLocation', 'Resource': arn},
+        {'Sid': 'List', 'Effect': 'Allow', 'Action': ['s3:ListBucket', 's3:ListBucketVersions'], 'Resource': arn,
+         'Condition': {'StringLike': {'s3:prefix': [f'{p}/{suffix}' for p in every for suffix in ('', '*')]}}},
+        {'Sid': 'Read', 'Effect': 'Allow', 'Action': ['s3:GetObject', 's3:GetObjectVersion'],
+         'Resource': [f'{arn}/{p}/*' for p in every]},
+    ]
+    if writes:
+        statements.append({'Sid': 'Write', 'Effect': 'Allow', 'Action': WRITE_ACTIONS,
+                           'Resource': [f'{arn}/{p}/*' for p in sorted(set(writes))]})
+    return {'Version': '2012-10-17', 'Statement': statements}
+
+
+def bucket_credentials(name, bucket, writes, reads, hours):
+    """Temporary credentials, from the bucket user's key, that expire after `hours` and reach only these paths.
+
+    GetFederationToken grants the overlap of the bucket user's own policy and the session policy, so the
+    result can never exceed the bucket, and a federated user cannot mint further credentials.
+    """
+    policy = json.dumps(bucket_policy(bucket, writes, reads), separators=(',', ':'))
+    if len(policy) > 2048:
+        sys.exit(f'{len(writes) + len(reads)} paths make a policy over the 2048 characters AWS allows; '
+                 'name fewer, or a common parent path')
+    environment = {k: v for k, v in os.environ.items()
+                   if not k.startswith('AWS_') or k in ('AWS_CA_BUNDLE',)}
+    environment.update({'AWS_ACCESS_KEY_ID': secret('DEV_TRAINING_AWS_ACCESS_KEY_ID'),
+                        'AWS_SECRET_ACCESS_KEY': secret('DEV_TRAINING_AWS_SECRET_ACCESS_KEY'),
+                        'AWS_DEFAULT_REGION': 'us-east-1'})
+    # Federated user names are at most 32 characters; the bucket user may mint only dt-* names.
+    result = subprocess.run(['aws', 'sts', 'get-federation-token', '--name', f'dt-{name}'[:32],
+                             '--duration-seconds', str(int(hours * 3600)),
+                             '--policy', policy,
+                             '--output', 'json'],
+                            env=environment, text=True, capture_output=True, timeout=60)
+    if result.returncode:
+        sys.exit(f'Could not mint bucket credentials: {result.stderr.strip()[:500]}')
+    return json.loads(result.stdout)['Credentials']
+
+
 def s3(args):
-    """Install the bucket-only key as the VM user's default AWS profile, over stdin."""
-    credentials = '\n'.join(['[default]', f"aws_access_key_id = {secret('DEV_TRAINING_AWS_ACCESS_KEY_ID')}",
-                             f"aws_secret_access_key = {secret('DEV_TRAINING_AWS_SECRET_ACCESS_KEY')}", ''])
+    """Install credentials that reach only the chosen paths and expire, as the VM user's default AWS profile."""
+    if not args.path and not args.read:
+        raise UsageError('name the bucket paths the VM may use with --path (read and write) or --read',
+                         hint='gradctl compute s3 NAME --path <project>/<run>; pick a new path for a new run')
+    if not 0.25 <= args.hours <= 36:
+        raise UsageError('--hours must be from 0.25 to 36, the range AWS allows for these credentials')
     cloud = located(args)
     vm = find(cloud, args.name)
     if vm['state'] != 'RUNNING':
         # A split Ornn node lists only its running VMs; configure them all at once.
         sys.exit(f"{args.name} is {vm['state']}; run `gradctl compute s3` once every VM runs")
+    bucket = secret('DEV_TRAINING_S3_BUCKET')
+    writes, reads = sorted(set(args.path or [])), sorted(set(args.read or []) - set(args.path or []))
+    issued = bucket_credentials(args.name, bucket, writes, reads, args.hours)
+    credentials = '\n'.join(['[default]', f"aws_access_key_id = {issued['AccessKeyId']}",
+                             f"aws_secret_access_key = {issued['SecretAccessKey']}",
+                             f"aws_session_token = {issued['SessionToken']}", ''])
     for index in range(len(vm['machines'])):
         subprocess.run([*ssh_command(cloud, args.name, index), 'umask 077 && mkdir -p ~/.aws && '
                         'cat > ~/.aws/credentials && printf "[default]\\nregion = us-east-1\\n" > ~/.aws/config'],
                        input=credentials, text=True, check=True, timeout=120, stdout=sys.stderr)
-    bucket = secret('DEV_TRAINING_S3_BUCKET')
-    return Result(data={'name': args.name, 'bucket': bucket, 'machines': len(vm['machines'])},
-                  text=f'{args.name} can now read and write s3://{bucket}')
+    expires = issued['Expiration']
+    lines = [f'{args.name} can use these paths of s3://{bucket} until {expires}:']
+    lines += [f'  read and write  s3://{bucket}/{p}/' for p in writes]
+    lines += [f'  read only       s3://{bucket}/{p}/' for p in reads]
+    lines.append('Run `gradctl compute s3` again before then to renew them.')
+    return Result(data={'name': args.name, 'bucket': bucket, 'machines': len(vm['machines']), 'write_paths': writes,
+                        'read_paths': reads, 'expires_at': expires}, text='\n'.join(lines))
 
 
 def lifecycle(action):
@@ -663,8 +740,15 @@ def register(commands, common) -> None:
     parser.add_argument('--vm', type=positive, default=1, help='which VM of a node Ornn split into several (1, 2, ...)')
     parser.add_argument('name')
     parser.add_argument('command', nargs=argparse.REMAINDER, help='command to run; put it after --')
-    command('s3', s3, Meta('Give the VM the key that can use only the development training bucket',
-                           effects='write', requires=creds), vm=True)
+    parser = command('s3', s3, Meta('Give the VM expiring credentials for chosen paths of the development '
+                                    'training bucket', effects='write', requires=creds), vm=True)
+    parser.add_argument('--path', type=bucket_path, action='append',
+                        help='bucket path the VM may read and write, such as <project>/<run>; repeat for more. '
+                             'Choose a new path for a new run')
+    parser.add_argument('--read', type=bucket_path, action='append',
+                        help='bucket path the VM may only read, such as an earlier run to resume from; repeatable')
+    parser.add_argument('--hours', type=float, default=24,
+                        help='how long the credentials last, from 0.25 to 36 hours (default 24)')
     command('start', lifecycle('start'), Meta('Start a stopped (preempted) VM', effects='write', requires=creds),
             vm=True)
     command('stop', lifecycle('stop'), Meta('Stop a VM; its disk is kept and still billed', effects='write',

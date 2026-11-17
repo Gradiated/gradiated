@@ -20,7 +20,9 @@ RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS build
 
-COPY --from=credentials / /packages/credentials/
+# Take the credentials from the planner, which resolved them for the recipe, so the
+# recipe and its path dependency always come from the same layer.
+COPY --from=planner /packages/credentials/ /packages/credentials/
 COPY --from=planner /app/recipe.json recipe.json
 
 RUN cargo chef cook --locked --release --recipe-path recipe.json

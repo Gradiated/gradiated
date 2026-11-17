@@ -110,6 +110,26 @@ class Meter(unittest.TestCase):
         # Stopped at the last meter: the hour before the restart was seen is not billed for GPUs.
         self.assertEqual(restarted[0]['properties']['cost_usd'], 0.0)
 
+    def test_billing_starts_when_the_provider_starts_charging(self):
+        started = T0 + timedelta(minutes=30)
+        with mock.patch.object(usage, 'send', return_value=1):
+            events = commands.meter_vms(self.cloud, [vm(billing_started_at=started.isoformat())],
+                                        T0 + timedelta(hours=1, minutes=30), 'test')
+        # The half hour spent deploying before Spheron's startedAt costs nothing and is not sent.
+        self.assertEqual((events[0]['properties']['interval_start'], events[0]['properties']['cost_usd']),
+                         (started.isoformat(), 60.0))
+
+    def test_down_waits_for_the_provider_before_the_final_meter(self):
+        order = []
+        cloud = SimpleNamespace(name='spheron', wait_until_deletable=lambda v: order.append('wait') or True,
+                                delete=lambda v: order.append('delete'))
+        with mock.patch.object(commands, 'locate', return_value=(cloud, vm())), \
+                mock.patch.object(commands, 'meter_vms', side_effect=lambda *a: order.append('meter')), \
+                mock.patch.object(commands, 'tailscale_token', return_value='t'), \
+                mock.patch.object(commands, 'tailscale', return_value={'devices': []}), mock.patch('sys.stderr'):
+            commands.down(SimpleNamespace(name='train-1', provider=None))
+        self.assertEqual(order, ['wait', 'meter', 'delete'])
+
     def test_a_ledger_entry_recorded_by_name_moves_to_the_resource_id(self):
         events = self.meter(T0 + timedelta(hours=1))
         self.assertEqual(events[0]['properties']['customer'], 'bild-ai')

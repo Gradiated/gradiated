@@ -109,7 +109,11 @@ class SpheronTests(unittest.TestCase):
     def test_a_deploying_vm_has_no_machine_yet(self):
         deploying = {**RUNNING, 'status': 'deploying', 'ipAddress': None, 'user': None, 'sshCommand': None}
         vm = FakeSpheron({('GET', '/api/deployments'): [deploying]}).find('exp')
-        self.assertEqual((vm['state'], vm['machines'], vm['user']), ('STARTING', [], 'root'))
+        self.assertEqual((vm['state'], vm['machines'], vm['user']), ('DEPLOYING', [], 'root'))
+        # Spheron charges nothing while deploying, so the meter must not bill this state.
+        from gradctl import usage
+        self.assertNotIn(vm['state'], usage.BILLED_STATES)
+        self.assertEqual(FakeSpheron({}).vm(RUNNING)['billing_started_at'], RUNNING['startedAt'])
 
     def test_stop_relays_why_a_vm_cannot_stop(self):
         spheron = FakeSpheron({})

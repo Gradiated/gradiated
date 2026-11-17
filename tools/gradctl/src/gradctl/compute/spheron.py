@@ -31,7 +31,8 @@ import urllib.request
 API = 'https://app.spheron.ai'
 # CLUSTER offers are dedicated bare-metal servers: on demand, never reclaimed.
 TERMS = {'SPOT': 'spot', 'DEDICATED': 'on-demand', 'CLUSTER': 'on-demand'}
-STATES = {'deploying': 'STARTING', 'running': 'RUNNING', 'stopped': 'STOPPED'}
+# Spheron bills from startedAt, so deploying is not a billed state (usage.BILLED_STATES has STARTING).
+STATES = {'deploying': 'DEPLOYING', 'running': 'RUNNING', 'stopped': 'STOPPED'}
 GONE = ('terminated', 'terminated-provider', 'failed')
 
 
@@ -175,6 +176,8 @@ class Spheron:
                 'term': self.term(deployment.get('instanceType')), 'gpu_type': deployment.get('gpuType'),
                 'gpus': gpus, 'usd_per_gpu_hour': rate / gpus if rate is not None and gpus else None,
                 'created_at': deployment.get('startedAt') or deployment.get('createdAt'),
+                # Spheron charges nothing while a deployment is deploying; metering starts here.
+                'billing_started_at': deployment.get('startedAt'),
                 'supports_pause': deployment.get('supportsPause'),
                 'pause_unsupported_reason': deployment.get('pauseUnsupportedReason'),
                 'shape': f"{gpus}x{deployment.get('gpuType')} {seller}"
@@ -238,16 +241,20 @@ class Spheron:
                      'use `down`')
         self.api('POST', f"/api/deployments/{vm['id']}/pause")
 
-    def delete(self, vm, wait_minutes=45):
+    def wait_until_deletable(self, vm, wait_minutes=45):
+        """Wait until Spheron will terminate the deployment; False if it is already gone.
+
+        `down` calls this before its final meter, so the billed minimum runtime spent waiting is counted.
+        """
         path = f"/api/deployments/{vm['id']}"
         deadline = time.time() + wait_minutes * 60
         while True:
             deployment = self.api('GET', path, missing_ok=True)
             if deployment is None or deployment.get('status') in GONE:
-                return
+                return False
             check = self.api('GET', f'{path}/can-terminate')
             if check.get('canTerminate'):
-                break
+                return True
             if deployment.get('status') == 'stopped':
                 # Stopped time does not count toward the minimum runtime, so waiting would never end.
                 sys.exit(f"Spheron will not terminate {vm['name']} while it is stopped short of its minimum runtime "
@@ -260,4 +267,7 @@ class Spheron:
                   + (f', {remaining} minutes left of its {check.get("minimumRuntime")}-minute minimum'
                      if remaining else '') + '); waiting', file=sys.stderr, flush=True)
             time.sleep(min(max(float(remaining or 0) * 60, 15), 120))
-        self.api('DELETE', path)
+
+    def delete(self, vm):
+        if self.wait_until_deletable(vm):
+            self.api('DELETE', f"/api/deployments/{vm['id']}")

@@ -328,6 +328,11 @@ def meter_vms(cloud, vms, end, source):
                 continue
             start = (usage.parse_time(tags.get('metered_until')) or usage.parse_time(tags.get('started_at'))
                      or usage.parse_time(vm.get('created_at')) or end)
+            # A provider that bills only from a point after creation (Spheron's startedAt) sets
+            # billing_started_at; the time before it cost nothing and is not sent.
+            billed_from = usage.parse_time(vm.get('billing_started_at'))
+            if billed_from and start < billed_from <= end:
+                start = billed_from
             if (end - start).total_seconds() < 1:
                 continue
             interval_state = tags.get('last_state') or vm.get('state')
@@ -639,6 +644,10 @@ def down(args):
     cloud, vm = locate(args)
     lines, removed = [], []
     if vm:
+        if hasattr(cloud, 'wait_until_deletable'):
+            # Spheron bills a minimum runtime and refuses to delete before it; wait first, so the final
+            # meter below counts that time.
+            cloud.wait_until_deletable(vm)
         try:
             meter_vms(cloud, [vm], usage.now(), 'gradctl compute down')
         except Exception as error:  # noqa: BLE001 - cost reporting must never block deleting a VM

@@ -557,14 +557,13 @@ fn queued(budget: &Arc<Semaphore>, held: u32, response: &[u8]) -> Queued {
 
 fn held(batch: &Batch) -> usize {
     batch
-        .budget
-        .iter()
-        .map(OwnedSemaphorePermit::num_permits)
-        .sum()
+        .held
+        .as_ref()
+        .map_or(0, OwnedSemaphorePermit::num_permits)
 }
 
 #[test]
-fn a_serialized_line_holds_its_own_size_of_the_budget() {
+fn a_batch_holds_budget_for_its_whole_body_until_posted() {
     let (collector, _) = spread(Vec::new());
     let total = collector.budget.available_permits();
     let mut batch = Batch::default();
@@ -572,13 +571,10 @@ fn a_serialized_line_holds_its_own_size_of_the_budget() {
     collector.append(&mut batch, queued(&collector.budget, 3002, &[0xff; 3000]));
     collector.append(&mut batch, queued(&collector.budget, 10_000, b"{}"));
 
-    assert!(batch.body.len() > 4000 && batch.body.len() < 13_002);
-    assert_eq!(held(&batch), batch.body.len());
-    assert_eq!(batch.body.capacity(), batch.body.len());
-    assert_eq!(
-        collector.budget.available_permits(),
-        total - batch.body.len()
-    );
+    assert_eq!(batch.lines, 2);
+    assert!(batch.body.len() > 4000);
+    assert_eq!(held(&batch), batch.body.capacity());
+    assert_eq!(collector.budget.available_permits(), total - held(&batch));
     drop(batch);
     assert_eq!(collector.budget.available_permits(), total);
 }
@@ -587,19 +583,40 @@ fn a_serialized_line_holds_its_own_size_of_the_budget() {
 fn a_line_that_cannot_grow_into_the_budget_is_dropped_as_full() {
     let (collector, metrics) = spread(Vec::new());
     let total = collector.budget.available_permits();
-    let rest = collector
-        .budget
-        .clone()
-        .try_acquire_many_owned((total - 3002) as u32)
-        .unwrap();
     let mut batch = Batch::default();
 
-    collector.append(&mut batch, queued(&collector.budget, 3002, &[0xff; 3000]));
+    // Each control byte escapes to six, so 256 KiB would need 1.5 MiB.
+    collector.append(
+        &mut batch,
+        queued(&collector.budget, 256 * 1024, &[1; 256 * 1024]),
+    );
 
     assert!(batch.body.is_empty());
-    assert!(batch.budget.is_empty());
+    assert_eq!(batch.lines, 0);
+    assert!(batch.body.capacity() <= total);
+    assert_eq!(held(&batch), batch.body.capacity());
     assert_eq!(counted(&metrics, "full"), 1);
-    drop(rest);
+    drop(batch);
+    assert_eq!(collector.budget.available_permits(), total);
+}
+
+#[test]
+fn base64_is_reserved_before_it_is_encoded() {
+    let (collector, metrics) = spread(Vec::new());
+    let total = collector.budget.available_permits();
+    let mut batch = Batch::default();
+
+    // 768 KiB of binary is 1 MiB of base64, which must be held alongside the
+    // line written from it; both cannot fit in a 1 MiB budget.
+    collector.append(
+        &mut batch,
+        queued(&collector.budget, 768 * 1024, &[0xff; 768 * 1024]),
+    );
+
+    assert!(batch.body.is_empty());
+    assert_eq!(batch.body.capacity(), 0);
+    assert_eq!(counted(&metrics, "full"), 1);
+    drop(batch);
     assert_eq!(collector.budget.available_permits(), total);
 }
 
@@ -656,10 +673,10 @@ fn spread(addresses: Vec<SocketAddr>) -> (Collector, Metrics) {
 }
 
 fn one_line_batch() -> Batch {
-    let budget = Arc::new(Semaphore::new(1));
     Batch {
         body: b"{}\n".to_vec(),
-        budget: vec![budget.try_acquire_owned().unwrap()],
+        held: None,
+        lines: 1,
     }
 }
 

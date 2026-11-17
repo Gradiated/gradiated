@@ -13,7 +13,7 @@ work does not need production hardware.
 | --- | --- | --- | --- | --- |
 | Nebius | VM | presets from 1 GPU | preemption stops the VM with no warning | `start` resumes a stopped VM |
 | Ornn | VM | whole nodes, often 8 GPUs | a reservation needing the GPUs ends it; a seller reclaim gives `preemptNoticeSeconds` (`/run/ornn/preemption.json`) | a resale market: prices and supply change hourly; on-demand also ends when the seller's listing ends; no stop or restart |
-| Spheron | VM (some bare metal) | fixed offers from 1 GPU, resold from several clouds (seller in `REGION`) | the seller reclaims the VM with no warning and deletes it | bills at least 20 minutes, so `down` waits that long after `up`; Spheron ES spot prices move every 15 minutes; stop and start only where the seller supports it |
+| Spheron | VM (some bare metal) | fixed offers from 1 GPU, resold from several clouds (seller in `REGION`) | the seller reclaims the VM with no warning and deletes it | bills at least 20 minutes, so `down` waits that long after `up`; Spheron ES spot prices move every 15 minutes, and with `--max-price` Spheron stops the VM (disk kept) if the price climbs above it; stop and start only where the seller supports it |
 
 ## Spot or on-demand
 

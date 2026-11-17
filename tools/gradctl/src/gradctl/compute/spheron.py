@@ -269,6 +269,10 @@ class Spheron:
                 'instanceType': offer['instanceType'], 'name': name, 'ssh_public_key': public_key,
                 # Never the Agent GPU Sandbox: it runs commands on the VM for anyone holding the API key.
                 'agentAccess': False}
+        if max_price is not None and (offer.get('extras') or {}).get('live_spot_price'):
+            # Spheron enforces this cap atomically at create, and later stops (not deletes) the VM if the live
+            # spot price climbs above it. It covers the whole instance, at least the starting price.
+            body['maxHourlyRate'] = round(max_price * offer['gpuCount'], 2)
         deployment = self.api('POST', '/api/deployments', body=body)
         return deployment['id']
 

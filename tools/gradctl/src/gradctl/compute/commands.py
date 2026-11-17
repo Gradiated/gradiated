@@ -331,11 +331,13 @@ def meter_vms(cloud, vms, end, source):
             # A provider that bills only from a point after creation (Spheron's startedAt) sets
             # billing_started_at; the time before it cost nothing and is not sent.
             billed_from = usage.parse_time(vm.get('billing_started_at'))
-            if billed_from and start < billed_from <= end:
+            began_billing = bool(billed_from and start < billed_from <= end)
+            if began_billing:
                 start = billed_from
             if (end - start).total_seconds() < 1:
                 continue
-            interval_state = tags.get('last_state') or vm.get('state')
+            # From the billing start on, the VM is no longer in the unbilled state an earlier meter saw.
+            interval_state = vm.get('state') if began_billing else tags.get('last_state') or vm.get('state')
             price, price_source = hourly_price(cloud, vm, cache)
             if price is None and interval_state in usage.BILLED_STATES:
                 print(f"no price for {vm['name']}; its time since {start.isoformat()} is kept for the next meter",

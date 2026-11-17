@@ -76,6 +76,18 @@ class SpheronTests(unittest.TestCase):
         self.assertNotIn('sshKeyId', body)
         self.assertNotIn('cloudInit', body)
 
+    def test_max_price_caps_a_live_spot_deployment_at_spheron(self):
+        live = {**B300, 'extras': {**B300['extras'], 'live_spot_price': True}}
+        catalog = {**CATALOG, 'data': [{'gpuType': 'B300_SXM6', 'offers': [live]}]}
+        spheron = FakeSpheron({('GET', '/api/gpu-offers'): catalog, ('POST', '/api/deployments'): {'id': 'd-4'}})
+        with mock.patch('sys.stderr'):
+            spheron.create('exp', None, 'B300_SXM6', None, None, None, None, term='spot', max_price=6)
+        self.assertEqual(spheron.calls[-1][3]['maxHourlyRate'], 48.0)
+        spheron = FakeSpheron({('GET', '/api/gpu-offers'): CATALOG, ('POST', '/api/deployments'): {'id': 'd-5'}})
+        with mock.patch('sys.stderr'):
+            spheron.create('exp', None, 'B300_SXM6', None, None, None, None, term='spot', max_price=6)
+        self.assertNotIn('maxHourlyRate', spheron.calls[-1][3])
+
     def test_create_without_a_preset_takes_the_cheapest_available_offer(self):
         spheron = FakeSpheron({('GET', '/api/gpu-offers'): CATALOG, ('POST', '/api/deployments'): {'id': 'd-2'}})
         with mock.patch('sys.stderr'):

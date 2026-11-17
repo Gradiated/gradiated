@@ -119,6 +119,15 @@ class Meter(unittest.TestCase):
         self.assertEqual((events[0]['properties']['interval_start'], events[0]['properties']['cost_usd']),
                          (started.isoformat(), 60.0))
 
+    def test_the_interval_after_billing_starts_is_billed_even_if_the_last_meter_saw_it_deploying(self):
+        started = T0 + timedelta(minutes=30)
+        with mock.patch.object(usage, 'send', return_value=1):
+            commands.meter_vms(self.cloud, [vm(state='DEPLOYING')], T0 + timedelta(minutes=10), 'test')
+            events = commands.meter_vms(self.cloud, [vm(billing_started_at=started.isoformat())],
+                                        T0 + timedelta(hours=1, minutes=30), 'test')
+        self.assertEqual((events[0]['properties']['interval_start'], events[0]['properties']['cost_usd']),
+                         (started.isoformat(), 60.0))
+
     def test_down_waits_for_the_provider_then_meters_the_vm_as_it_is_after_the_wait(self):
         order, running = [], vm(billing_started_at=T0.isoformat())
         cloud = SimpleNamespace(name='spheron', delete=lambda v: order.append('delete'),

@@ -5,7 +5,10 @@ import { describe, expect, inject, it } from "vitest";
 import { useCases, type Case } from "./case.js";
 import { chatChunks } from "./chat.js";
 import { isJsonObject, object, type JsonValue } from "./json.js";
-import type { RuntimeKind } from "./mock-runtimes/server.js";
+import {
+  REAL_RUNTIME_PROFILE,
+  type ContainerRuntimeKind,
+} from "./stack/real-runtimes.js";
 
 // A ceiling, not a target: the runtimes are warmed before any test runs, so these
 // should finish in seconds. Set per test, because a file-level config does not
@@ -23,14 +26,16 @@ const count = (value: JsonValue | undefined): number => {
 };
 
 /** A case whose successful responses come from the real server, not the profile. */
-const realCase = (kind: RuntimeKind): Promise<Case> =>
-  makeCase(kind, { upstream: { kind: "proxy", ...runtimes[kind]! } });
+const realCase = (kind: ContainerRuntimeKind): Promise<Case> =>
+  makeCase(REAL_RUNTIME_PROFILE[kind], {
+    upstream: { kind: "proxy", ...runtimes[kind]! },
+  });
 
-describe.skipIf(!runtimes.vllm)("real LLM runtime", () => {
+describe.skipIf(!runtimes["sglang-cpu"])("real LLM runtime", () => {
   it(
     "returns an envelope the gateway accepts, and forwards a faithful request",
     async () => {
-      const instance = await realCase("vllm");
+      const instance = await realCase("sglang-cpu");
       const response = await instance.post({ max_tokens: 4 });
       expect(response.status, response.text).toBe(200);
 
@@ -47,7 +52,7 @@ describe.skipIf(!runtimes.vllm)("real LLM runtime", () => {
 
       // What the gateway actually put on the wire, observed through the proxy.
       const forwarded = instance.runtimes[0]!.calls[0]!;
-      expect(forwarded.model).toBe(runtimes.vllm!.model);
+      expect(forwarded.model).toBe(runtimes["sglang-cpu"]!.model);
       expect(forwarded.max_tokens).toBe(4);
       expect(forwarded).not.toHaveProperty("service_tier");
       expect(forwarded).not.toHaveProperty("session_id");
@@ -58,7 +63,7 @@ describe.skipIf(!runtimes.vllm)("real LLM runtime", () => {
   it(
     "settles billing from the runtime's own token counts",
     async () => {
-      const instance = await realCase("vllm");
+      const instance = await realCase("sglang-cpu");
       const response = await instance.post({ max_tokens: 4 });
       expect(response.status).toBe(200);
 
@@ -87,7 +92,7 @@ describe.skipIf(!runtimes.vllm)("real LLM runtime", () => {
   it(
     "streams real SSE frames through to a terminated stream",
     async () => {
-      const instance = await realCase("vllm");
+      const instance = await realCase("sglang-cpu");
       const response = await instance.http.stream(instance.path, {
         headers: instance.headers,
         json: instance.body({ stream: true, max_tokens: 4 }),

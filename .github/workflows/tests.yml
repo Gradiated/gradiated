@@ -15,7 +15,7 @@ on:
       - "product/inference/host/**"
       - "product/inference/runtimes/kev/**"
       - "product/inference/runtimes/decider/**"
-      - "product/inference/runtimes/vllm/**"
+      - "product/inference/runtimes/sglang-cpu/**"
       - "product/packages/**"
       - ".github/actions/product-changes/**"
       - ".github/actions/relevant/**"
@@ -438,7 +438,7 @@ jobs:
         env:
           OPENROUTER_LIVE_API_KEY: ${{ secrets.OPENROUTER_CI_API_KEY }}
         run: test -n "$OPENROUTER_LIVE_API_KEY" || { echo "::error::The OPENROUTER_CI_API_KEY Actions secret is not set"; exit 1; }
-      - name: Exercise gateway against Kev, vLLM and OpenRouter peers
+      - name: Exercise gateway against Kev, OpenAI-compatible and OpenRouter peers
         working-directory: product
         env:
           OPENROUTER_LIVE_API_KEY: ${{ secrets.OPENROUTER_CI_API_KEY }}
@@ -554,11 +554,11 @@ jobs:
         uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
         with:
           project: ${{ vars.DEPOT_PROJECT_ID }}
-          context: product/inference/runtimes/vllm
-          file: product/inference/runtimes/vllm/Dockerfile.cpu
+          context: product/inference/runtimes/sglang-cpu
+          file: product/inference/runtimes/sglang-cpu/Dockerfile
           platforms: linux/amd64
           load: true
-          tags: gradiated/vllm-cpu:ci
+          tags: gradiated/sglang-cpu:ci
       - name: Build the CPU decision runtime
         uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
         with:
@@ -571,7 +571,7 @@ jobs:
       - name: Run the gateway against real CPU runtimes
         working-directory: product
         env:
-          GATEWAY_REAL_RUNTIME: vllm,kev
+          GATEWAY_REAL_RUNTIME: sglang-cpu,kev
         run: >-
           pnpm --filter @gradiated/gateway exec vitest run
           --reporter=default --reporter=junit

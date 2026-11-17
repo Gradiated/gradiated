@@ -1,15 +1,15 @@
-# A CPU build of vLLM with the test weights baked in, for the gateway's
+# A CPU build of SGLang with the test weights baked in, for the gateway's
 # real-runtime fidelity tests.
 #
-# This is NOT a production image: production serves every model on SGLang (and
-# Kev on its native runtime). vLLM is used here only because it ships a pinned CPU
-# build, so CI can exercise the gateway against a real OpenAI-compatible server
+# This is NOT a production image: production serves every model on GPU SGLang
+# bundles (and Kev on its native runtime). This uses upstream's CPU release so CI
+# can exercise the gateway against the same OpenAI-compatible server as production
 # rather than our own mock, and a run never has to reach Hugging Face to do it.
 #
 # The base is pinned by digest and the weights by commit. A download pinned by
 # commit records no refs/main, and the caller serves the weights by name, so the
 # weights layer records it.
-FROM public.ecr.aws/q9t5s3a7/vllm-cpu-release-repo@sha256:ea8b61f8ccab650e1c369105373863ac12a581b53f289b344cea72a09238e131
+FROM docker.io/lmsysorg/sglang:v0.5.23-xeon@sha256:f22c18d175270ad1aa63ff6298a4d5a79954520863d5eab6862f94728c2d18df
 
 ARG CPU_WEIGHTS=Qwen/Qwen2.5-0.5B-Instruct
 ARG CPU_WEIGHTS_REVISION=7ae557604adf67be50417f59c2c2f167def9a775
@@ -28,5 +28,5 @@ ref.write_text(weights.name)"
 # image that lost them fails loudly instead of quietly downloading them again.
 ENV HF_HUB_OFFLINE=1
 
-# The base image's entrypoint is ["vllm", "serve"], so the caller supplies the
-# model and flags as arguments.
+# The caller supplies the model and server flags as arguments.
+ENTRYPOINT ["python3", "-m", "sglang.launch_server"]

@@ -41,7 +41,7 @@ declare module "vitest" {
   }
 }
 
-/** GATEWAY_REAL_RUNTIME names the real runtimes to start, such as "vllm,kev". */
+/** GATEWAY_REAL_RUNTIME names the real runtimes to start, such as "sglang-cpu,kev". */
 const enabledRealRuntimes = (): RealRuntimeKind[] =>
   (process.env.GATEWAY_REAL_RUNTIME ?? "")
     .split(",")
@@ -50,7 +50,7 @@ const enabledRealRuntimes = (): RealRuntimeKind[] =>
     .map((name) => {
       if (!isRealRuntimeKind(name)) {
         throw new Error(
-          `Unknown real runtime "${name}"; expected vllm, kev or sglang`,
+          `Unknown real runtime "${name}"; expected sglang-cpu, kev or sglang`,
         );
       }
 

@@ -682,11 +682,18 @@ def down(args):
         if hasattr(cloud, 'wait_until_deletable'):
             # Spheron bills a minimum runtime and refuses to delete before it; wait first, so the final
             # meter below counts that time, with the VM as it is after the wait (it may have started running).
-            vm = cloud.wait_until_deletable(vm) or vm
+            fresh = cloud.wait_until_deletable(vm)
+        else:
+            fresh = vm
         try:
-            meter_vms(cloud, [vm], usage.now(), 'gradctl compute down')
-        except Exception as error:  # noqa: BLE001 - cost reporting must never block deleting a VM
+            if fresh:
+                meter_vms(cloud, [fresh], usage.now(), 'gradctl compute down')
+            else:
+                # The provider ended it during the wait, such as a spot reclaim: close it by its end time.
+                close_ended(cloud, set(), usage.now(), 'gradctl compute down', only=args.name)
+        except (SystemExit, Exception) as error:  # noqa: BLE001 - cost reporting must never block deleting a VM
             print(f'could not send the final cost event for {args.name}: {error}', file=sys.stderr)
+        vm = fresh or vm
         cloud.delete(vm)
         lines.append(f'Deleted {args.name} and its boot disk')
         print(lines[-1], file=sys.stderr, flush=True)

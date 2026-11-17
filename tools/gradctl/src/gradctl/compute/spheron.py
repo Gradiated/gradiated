@@ -39,6 +39,10 @@ STATES = {'deploying': 'DEPLOYING', 'running': 'RUNNING', 'stopped': 'STOPPED'}
 GONE = ('terminated', 'terminated-provider', 'failed')
 
 
+class Unconfirmed(SystemExit):
+    """A change Spheron may have accepted without saying so: a 504 or a timeout after the request was sent."""
+
+
 class Spheron:
     name = 'spheron'
     ssh_user = 'root'
@@ -86,14 +90,15 @@ class Spheron:
                     detail = f"{found.get('code')}: {found.get('error')}"
                 except (ValueError, AttributeError):
                     detail = detail[:500]
-                sys.exit(f'Spheron {method} {path}: HTTP {error.code} {detail}')
+                failure = SystemExit if error.code != 504 or method == 'GET' else Unconfirmed
+                raise failure(f'Spheron {method} {path}: HTTP {error.code} {detail}')
             except (urllib.error.URLError, OSError) as error:
                 # Connection failures before a response: nothing reached Spheron for a refused connection,
                 # but a timeout may have, so only reads repeat.
                 if attempt < 4 and method == 'GET':
                     time.sleep(2 ** attempt)
                     continue
-                sys.exit(f'Spheron {method} {path}: {error}')
+                raise (SystemExit if method == 'GET' else Unconfirmed)(f'Spheron {method} {path}: {error}')
         raise AssertionError('unreachable')
 
     @staticmethod
@@ -283,7 +288,19 @@ class Spheron:
         if vm.get('supports_pause') is False:
             sys.exit(f"Spheron cannot stop {vm['name']}: {vm.get('pause_unsupported_reason') or 'not supported'}; "
                      'use `down`')
-        self.api('POST', f"/api/deployments/{vm['id']}/pause")
+        path = f"/api/deployments/{vm['id']}"
+        try:
+            self.api('POST', f'{path}/pause')
+        except Unconfirmed:
+            # A stop can outlive the request; Spheron says to poll rather than repeat it.
+            print(f"Spheron did not confirm the stop of {vm['name']}; checking whether it is stopping",
+                  file=sys.stderr, flush=True)
+            for _ in range(20):
+                time.sleep(15)
+                deployment = self.api('GET', path, missing_ok=True)
+                if deployment is None or deployment.get('status') in ('stopped', *GONE):
+                    return
+            raise
 
     def wait_until_deletable(self, vm, wait_minutes=45):
         """Wait until Spheron will terminate the deployment, and return it as it is then; None if it is gone.

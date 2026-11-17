@@ -139,6 +139,17 @@ class Meter(unittest.TestCase):
             commands.down(SimpleNamespace(name='train-1', provider=None))
         self.assertEqual(order, ['wait', running, 'delete'])
 
+    def test_down_closes_a_vm_reclaimed_during_the_wait_by_its_end_time(self):
+        cloud = SimpleNamespace(name='spheron', wait_until_deletable=lambda v: None, delete=lambda v: None)
+        with mock.patch.object(commands, 'locate', return_value=(cloud, vm(state='DEPLOYING'))), \
+                mock.patch.object(commands, 'meter_vms') as metered, \
+                mock.patch.object(commands, 'close_ended') as closed, \
+                mock.patch.object(commands, 'tailscale_token', return_value='t'), \
+                mock.patch.object(commands, 'tailscale', return_value={'devices': []}), mock.patch('sys.stderr'):
+            commands.down(SimpleNamespace(name='train-1', provider=None))
+        metered.assert_not_called()
+        self.assertEqual(closed.call_args.kwargs['only'], 'train-1')
+
     def test_a_vm_the_provider_ended_gets_its_final_interval_and_is_forgotten(self):
         ended = vm(state='TERMINATED-PROVIDER', billing_started_at=T0.isoformat(),
                    ended_at=(T0 + timedelta(hours=2)).isoformat())

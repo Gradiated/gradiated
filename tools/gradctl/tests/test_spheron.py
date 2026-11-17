@@ -139,6 +139,32 @@ class SpheronTests(unittest.TestCase):
         # A same-named deployment from before this `up` is not this VM.
         self.assertEqual(dict(spheron.ended([('exp', '2026-11-18T00:00:00+00:00')])), {})
 
+    def test_an_unconfirmed_stop_is_checked_not_failed(self):
+        from gradctl.compute.spheron import Unconfirmed
+        spheron = FakeSpheron({('GET', '/api/deployments/d-1'): Answers([RUNNING, {**RUNNING, 'status': 'stopped'}])})
+        original = spheron.api
+
+        def api(method, path, params=None, body=None, missing_ok=False):
+            if method == 'POST':
+                raise Unconfirmed('Spheron POST pause: HTTP 504 provider_timeout')
+            return original(method, path, params, body, missing_ok)
+        spheron.api = api
+        with mock.patch('time.sleep'), mock.patch('sys.stderr'):
+            spheron.stop({**spheron.vm(RUNNING), 'supports_pause': True})
+        self.assertEqual([c[1] for c in spheron.calls], ['/api/deployments/d-1'] * 2)
+
+    def test_a_504_on_a_change_is_unconfirmed_and_on_a_read_is_a_failure(self):
+        from gradctl.compute.spheron import Unconfirmed
+        spheron = Spheron(lambda name: 'key', None)
+        error = urllib.error.HTTPError('https://app.spheron.ai/x', 504, 'Timeout', {}, None)
+        error.read = lambda: b'{"code": "provider_timeout", "error": "slow"}'
+        with mock.patch('urllib.request.urlopen', side_effect=error), mock.patch('time.sleep'):
+            with self.assertRaises(Unconfirmed):
+                spheron.api('POST', '/api/deployments/d-1/pause')
+            with self.assertRaises(SystemExit) as read:
+                spheron.api('GET', '/api/deployments/d-1')
+        self.assertNotIsInstance(read.exception, Unconfirmed)
+
     def test_stop_relays_why_a_vm_cannot_stop(self):
         spheron = FakeSpheron({})
         with self.assertRaises(SystemExit) as stopped:

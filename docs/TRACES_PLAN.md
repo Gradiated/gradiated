@@ -10,7 +10,8 @@ Adapter hosting and production promotion are proposed in the
 [fine-tuning plan](TASK_FINE_TUNING_FROM_TRACES_PLAN.md#proposed-hosting-and-production-promotion).
 
 The [LoRA hosting PR stack](LORA_HOSTING_PR_STACK.md) defines the proposed
-implementation order and acceptance checks on the existing vLLM infrastructure.
+implementation order and acceptance checks. Adapters are served on the SGLang
+bundles; see [SGLang adapter loading](../product/inference/lora/README.md).
 
 ## Decisions
 

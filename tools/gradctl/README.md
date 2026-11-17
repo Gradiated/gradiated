@@ -107,7 +107,7 @@ Run `gradctl commands` for the current list.
 | `env` / `aws` | `env build` writes `.env` from `gradiated/dev/env`; `aws login [--profile]` |
 | `compute` | `search`, `platforms`, `up`, `ls`, `ssh`, `s3`, `start`, `stop`, `down`, `setup`; see `$dev-training` |
 | `gpu lease` | `acquire`, `wait`, `extend`, `release`, `status`; see `$gpu-host-lease` |
-| `gpu` | `render-config`, `stage-glm-pool`, `stage-kimi-pool`, `pin-host`, `pin-sglang-pools`, `prepare-enrollment`, `mint-bootstrap-key`, `create-runpod-template`, `qualification-slot` |
+| `gpu` | `render-config`, `stage-glm-pool`, `stage-kimi-pool`, `pin-host`, `prepare-enrollment`, `mint-bootstrap-key`, `create-runpod-template`, `qualification-slot` |
 | `infra` | `fmt`, `check`, `sec` |
 | `security` | `drata-policies`, `drata-risks`, `argocd-auth`, `temporal-ui`, `audit-controls`, `unauthorized-calls`, `ci-boundaries` |
 | `observability` | `check`, `platform`, `controller-requests` |

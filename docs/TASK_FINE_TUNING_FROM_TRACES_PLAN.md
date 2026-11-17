@@ -120,13 +120,10 @@ Do not merge every adapter into a full checkpoint or allocate one GPU per versio
 as the default. Dedicated replicas remain an operator option for isolation or
 measured demand. Shared pools imply shared fault and capacity boundaries.
 
-Use a pinned vLLM bundle for the first candidate because the current serving jobs
-already use vLLM. Its [official LoRA documentation](https://docs.vllm.ai/en/stable/features/lora/)
-describes named adapters, bounded adapter capacity and dynamic loading; the exact
-Qwen/runtime combination still needs qualification. Upstream limits dynamic
-loading to trusted isolated environments. Our design therefore keeps that control
-on an authenticated private path and accepts only validated local artifacts.
-This is a candidate runtime choice, not measured compatibility or performance.
+Production serves every model on SGLang, so adapters load into the pinned SGLang
+bundles; [SGLang adapter loading](../product/inference/lora/README.md) describes the
+implemented path. Dynamic loading stays on an authenticated private path and
+accepts only validated local artifacts.
 
 ```mermaid
 flowchart LR
@@ -426,7 +423,7 @@ prompts, weights, signed URLs or secrets. Record hosting and promotion actors.
 
 The [LoRA hosting PR stack](LORA_HOSTING_PR_STACK.md) expands these increments
 into four reviewable changes with code scope, dependencies, interface boundaries
-and acceptance checks, based on the existing pinned vLLM stack.
+and acceptance checks.
 
 | Increment | Deliverable | Acceptance |
 | --- | --- | --- |
@@ -440,7 +437,7 @@ Run DevEx first, then focused contract, control/PostgreSQL, Temporal replay,
 API/console and Rust gateway checks for the increment. Live GPU qualification
 requires a separately bounded hypothesis, spending/time budget and exact resource
 scope. CPU doubles establish orchestration only. The runtime qualification gate
-comes before claiming vLLM compatibility or selecting fleet sizing.
+comes before claiming runtime compatibility or selecting fleet sizing.
 
 Decisions proposed for review: shared serverless base pools, mixed TP2/TP4 host
 placement, tiered demand-driven caches, explicit immutable/production selectors,

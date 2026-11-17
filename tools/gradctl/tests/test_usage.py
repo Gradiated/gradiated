@@ -119,16 +119,36 @@ class Meter(unittest.TestCase):
         self.assertEqual((events[0]['properties']['interval_start'], events[0]['properties']['cost_usd']),
                          (started.isoformat(), 60.0))
 
-    def test_down_waits_for_the_provider_before_the_final_meter(self):
-        order = []
-        cloud = SimpleNamespace(name='spheron', wait_until_deletable=lambda v: order.append('wait') or True,
-                                delete=lambda v: order.append('delete'))
-        with mock.patch.object(commands, 'locate', return_value=(cloud, vm())), \
-                mock.patch.object(commands, 'meter_vms', side_effect=lambda *a: order.append('meter')), \
+    def test_down_waits_for_the_provider_then_meters_the_vm_as_it_is_after_the_wait(self):
+        order, running = [], vm(billing_started_at=T0.isoformat())
+        cloud = SimpleNamespace(name='spheron', delete=lambda v: order.append('delete'),
+                                wait_until_deletable=lambda v: order.append('wait') or running)
+        with mock.patch.object(commands, 'locate', return_value=(cloud, vm(state='DEPLOYING'))), \
+                mock.patch.object(commands, 'meter_vms', side_effect=lambda c, vms, *a: order.append(vms[0])), \
                 mock.patch.object(commands, 'tailscale_token', return_value='t'), \
                 mock.patch.object(commands, 'tailscale', return_value={'devices': []}), mock.patch('sys.stderr'):
             commands.down(SimpleNamespace(name='train-1', provider=None))
-        self.assertEqual(order, ['wait', 'meter', 'delete'])
+        self.assertEqual(order, ['wait', running, 'delete'])
+
+    def test_a_vm_the_provider_ended_gets_its_final_interval_and_is_forgotten(self):
+        ended = vm(state='TERMINATED-PROVIDER', billing_started_at=T0.isoformat(),
+                   ended_at=(T0 + timedelta(hours=2)).isoformat())
+        asked = []
+        cloud = SimpleNamespace(name='ornn', ended=lambda tracked: asked.extend(tracked) or [('train-1', ended)])
+        sent = []
+        with mock.patch.object(usage, 'send', side_effect=lambda events: sent.extend(events) or len(events)):
+            commands.close_ended(cloud, set(), T0 + timedelta(hours=5), 'test')
+        self.assertEqual(asked, [('train-1', T0.isoformat())])
+        # Billed up to the reclaim, not up to now, and the ledger entry is gone.
+        self.assertEqual((sent[0]['properties']['interval_end'], sent[0]['properties']['cost_usd']),
+                         ((T0 + timedelta(hours=2)).isoformat(), 120.0))
+        with usage.ledger(self.dir) as book:
+            self.assertEqual(book, {})
+
+    def test_listed_vms_are_not_closed(self):
+        cloud = SimpleNamespace(name='ornn', ended=mock.Mock(return_value=[]))
+        commands.close_ended(cloud, {'ornn:train-1'}, T0 + timedelta(hours=1), 'test')
+        cloud.ended.assert_not_called()
 
     def test_a_ledger_entry_recorded_by_name_moves_to_the_resource_id(self):
         events = self.meter(T0 + timedelta(hours=1))

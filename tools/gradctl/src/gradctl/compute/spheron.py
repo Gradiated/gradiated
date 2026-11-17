@@ -20,6 +20,7 @@ run less than its minimum runtime (20 minutes by default, and charged in full
 either way), so `down` waits until it can.
 """
 
+from datetime import timedelta
 import json
 import shlex
 import sys
@@ -27,6 +28,8 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+
+from .. import usage
 
 API = 'https://app.spheron.ai'
 # CLUSTER offers are dedicated bare-metal servers: on demand, never reclaimed.
@@ -154,11 +157,26 @@ class Spheron:
             return ('ubuntu' in text, 'cuda' in text, '24.04' in text, '22.04' in text, 'kubernetes' not in text)
         return max(options, key=rank) if options else None
 
-    def deployments(self):
-        found = self.api('GET', '/api/deployments', {'status': 'active'})
+    def deployments(self, status='active'):
+        found = self.api('GET', '/api/deployments', {'status': status})
         if isinstance(found, dict):
             found = found.get('deployments') or found.get('data') or []
-        return [d for d in found if d.get('status') not in GONE]
+        return [d for d in found if (d.get('status') in GONE) == (status == 'inactive')]
+
+    def ended(self, tracked):
+        """(key, VM) for each tracked deployment that has since ended, such as a reclaimed spot VM.
+
+        `tracked` holds (ledger key, started_at): a key is a deployment ID, or the name `up` gave a deployment
+        not yet metered, which matches only a deployment created after that `up` began.
+        """
+        gone = self.deployments('inactive')
+        for key, started in tracked:
+            begun = usage.parse_time(started)
+            matches = [d for d in gone if d['id'] == key] or [
+                d for d in gone if d.get('name') == key and begun
+                and (usage.parse_time(d.get('createdAt')) or begun) >= begun - timedelta(minutes=10)]
+            if matches:
+                yield key, self.vm(max(matches, key=lambda d: d.get('createdAt') or ''))
 
     def vm(self, deployment):
         status = deployment.get('status') or 'unknown'
@@ -178,6 +196,7 @@ class Spheron:
                 'created_at': deployment.get('startedAt') or deployment.get('createdAt'),
                 # Spheron charges nothing while a deployment is deploying; metering starts here.
                 'billing_started_at': deployment.get('startedAt'),
+                'ended_at': deployment.get('stoppedAt') if status in GONE else None,
                 'supports_pause': deployment.get('supportsPause'),
                 'pause_unsupported_reason': deployment.get('pauseUnsupportedReason'),
                 'shape': f"{gpus}x{deployment.get('gpuType')} {seller}"
@@ -242,19 +261,20 @@ class Spheron:
         self.api('POST', f"/api/deployments/{vm['id']}/pause")
 
     def wait_until_deletable(self, vm, wait_minutes=45):
-        """Wait until Spheron will terminate the deployment; False if it is already gone.
+        """Wait until Spheron will terminate the deployment, and return it as it is then; None if it is gone.
 
-        `down` calls this before its final meter, so the billed minimum runtime spent waiting is counted.
+        `down` calls this before its final meter, so the billed minimum runtime spent waiting is counted with
+        the deployment's state and startedAt at the end of the wait, not at its start.
         """
         path = f"/api/deployments/{vm['id']}"
         deadline = time.time() + wait_minutes * 60
         while True:
             deployment = self.api('GET', path, missing_ok=True)
             if deployment is None or deployment.get('status') in GONE:
-                return False
+                return None
             check = self.api('GET', f'{path}/can-terminate')
             if check.get('canTerminate'):
-                return True
+                return self.vm(deployment)
             if deployment.get('status') == 'stopped':
                 # Stopped time does not count toward the minimum runtime, so waiting would never end.
                 sys.exit(f"Spheron will not terminate {vm['name']} while it is stopped short of its minimum runtime "

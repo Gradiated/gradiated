@@ -371,6 +371,34 @@ def settle(sent):
                 book.pop(key)
 
 
+def close_ended(cloud, seen, end, source, only=None):
+    """Send the final interval of VMs this machine tracked that the provider has since ended, then forget them.
+
+    A provider such as Spheron drops a reclaimed spot VM from its live list, so neither `meter` nor `down`
+    would see it again. `seen` holds the ledger keys of VMs still listed; `only` limits this to one VM name.
+    """
+    if not hasattr(cloud, 'ended'):
+        return []
+    prefix = f'{cloud.name}:'
+    with usage.ledger(state()) as book:
+        tracked = [(key[len(prefix):], tags.get('started_at')) for key, tags in book.items()
+                   if key.startswith(prefix) and key not in seen and not tags.get('pending')
+                   and (only is None or only in (key[len(prefix):], tags.get('resource_name')))]
+    sent = []
+    for key, vm in cloud.ended(tracked) if tracked else []:
+        with usage.ledger(state()) as book:
+            if prefix + key in book:
+                book[prefix + key]['deleted'] = True  # dropped once its final interval is accepted
+        # It ran until it ended: bill its last interval as running unless an earlier meter saw it otherwise.
+        final = {**vm, 'state': 'RUNNING'} if vm.get('billing_started_at') else vm
+        sent.extend(meter_vms(cloud, [final], min(end, usage.parse_time(vm.get('ended_at')) or end), source))
+        with usage.ledger(state()) as book:
+            for gone in (prefix + key, prefix + str(vm.get('id'))):
+                if gone in book and not book[gone].get('pending'):
+                    book.pop(gone)
+    return sent
+
+
 def flush_pending(skip=()):
     """Send pending events of VMs no longer listed, such as one whose final send failed during `down`."""
     with usage.ledger(state()) as book:
@@ -391,7 +419,12 @@ def meter(args):
     sent, keys = [], set()
     for cloud, vms in found:
         sent.extend(meter_vms(cloud, vms, end, 'gradctl compute meter'))
-        keys |= {f"{cloud.name}:{vm.get('id') or vm['name']}" for vm in vms}
+        listed = {f"{cloud.name}:{vm.get('id') or vm['name']}" for vm in vms}
+        keys |= listed
+        try:
+            sent.extend(close_ended(cloud, listed, end, 'gradctl compute meter'))
+        except (SystemExit, Exception) as error:  # noqa: BLE001 - the next meter retries it
+            print(f'could not close ended {cloud.name} VMs: {error}', file=sys.stderr)
     sent.extend(flush_pending(skip=keys))
     cost = sum(e['properties']['cost_usd'] for e in sent)
     rows = [{k: e['properties'][k] for k in ('provider', 'resource_name', 'customer', 'stage', 'gpu_type',
@@ -646,8 +679,8 @@ def down(args):
     if vm:
         if hasattr(cloud, 'wait_until_deletable'):
             # Spheron bills a minimum runtime and refuses to delete before it; wait first, so the final
-            # meter below counts that time.
-            cloud.wait_until_deletable(vm)
+            # meter below counts that time, with the VM as it is after the wait (it may have started running).
+            vm = cloud.wait_until_deletable(vm) or vm
         try:
             meter_vms(cloud, [vm], usage.now(), 'gradctl compute down')
         except Exception as error:  # noqa: BLE001 - cost reporting must never block deleting a VM
@@ -662,6 +695,12 @@ def down(args):
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
     else:
         lines.append(f'No VM named {args.name}; removing its tailnet device if one is left')
+        # A VM the provider ended itself, such as a reclaimed Spheron spot VM, still owes its final interval.
+        for name in [cloud.name] if cloud else [args.provider] if args.provider else sorted(PROVIDERS):
+            try:
+                close_ended(provider(name), set(), usage.now(), 'gradctl compute down', only=args.name)
+            except (SystemExit, Exception) as error:  # noqa: BLE001 - cost reporting must never block down
+                print(f'could not send the final cost event for {args.name} on {name}: {error}', file=sys.stderr)
     names = [f'{name}-{args.name}' for name in ([cloud.name] if cloud else [args.provider] if args.provider
                                                  else PROVIDERS)]
     token = tailscale_token()

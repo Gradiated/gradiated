@@ -115,6 +115,18 @@ class SpheronTests(unittest.TestCase):
         self.assertNotIn(vm['state'], usage.BILLED_STATES)
         self.assertEqual(FakeSpheron({}).vm(RUNNING)['billing_started_at'], RUNNING['startedAt'])
 
+    def test_ended_finds_reclaimed_deployments_by_id_or_by_a_name_from_this_up(self):
+        reclaimed = {**RUNNING, 'status': 'terminated-provider', 'createdAt': '2026-11-17T10:00:05Z',
+                     'stoppedAt': '2026-11-17T12:00:00Z'}
+        older = {**reclaimed, 'id': 'd-old', 'createdAt': '2026-11-01T10:00:00Z'}
+        spheron = FakeSpheron({('GET', '/api/deployments'): [RUNNING, reclaimed, older]})
+        found = dict(spheron.ended([('exp', '2026-11-17T10:00:00+00:00'), ('d-old', None), ('other', None)]))
+        self.assertEqual((found['exp']['id'], found['exp']['ended_at']), ('d-1', '2026-11-17T12:00:00Z'))
+        self.assertEqual(found['d-old']['id'], 'd-old')
+        self.assertNotIn('other', found)
+        # A same-named deployment from before this `up` is not this VM.
+        self.assertEqual(dict(spheron.ended([('exp', '2026-11-18T00:00:00+00:00')])), {})
+
     def test_stop_relays_why_a_vm_cannot_stop(self):
         spheron = FakeSpheron({})
         with self.assertRaises(SystemExit) as stopped:

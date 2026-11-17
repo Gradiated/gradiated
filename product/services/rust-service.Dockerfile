@@ -13,17 +13,17 @@ WORKDIR /app
 
 FROM chef AS planner
 
-COPY --from=credentials / /packages/credentials/
+# The credentials copy follows a service-specific layer, so its cache entry can
+# never be shared with a service that passes the empty stage instead.
 COPY . .
+COPY --from=credentials / /packages/credentials/
 
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS build
 
-# Take the credentials from the planner, which resolved them for the recipe, so the
-# recipe and its path dependency always come from the same layer.
-COPY --from=planner /packages/credentials/ /packages/credentials/
 COPY --from=planner /app/recipe.json recipe.json
+COPY --from=credentials / /packages/credentials/
 
 RUN cargo chef cook --locked --release --recipe-path recipe.json
 

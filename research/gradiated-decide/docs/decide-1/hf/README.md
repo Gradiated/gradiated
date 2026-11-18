@@ -23,59 +23,55 @@ You send a state (a conversation, an email, a diff, a ticket) and any number of 
 of k (`choice`) or grade on a rubric (`score`). decide-1 returns a probability for each option. It does not generate
 text.
 
-decide-1 is a fine-tune of [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it). Our initial checkpoint was
-[KnowLine-31B-Gen1.5](https://huggingface.co/PelaAI/KnowLine-31B-Gen1.5), PelaAI's decision fine-tune of Gemma 4 31B.
-From it we trained on about 520M tokens of licence-checked public data in two stages: broad typed decisions first, then
-temporal and numeric reasoning, long policies and contracts, preference judging and dialogue state (see
-[Training](#training)). The released weights average the result 50/50 with the initial checkpoint. decide-1 uses
-KnowLine's serving stack unchanged: the same SGLang engine, front end (`knowline_server.py`), prompt layout and
-temperatures, so existing KnowLine clients only change the model path.
+decide-1 is a fine-tune of [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it). We started from
+[KnowLine-31B-Gen1.5](https://huggingface.co/PelaAI/KnowLine-31B-Gen1.5), PelaAI's decision fine-tune of Gemma 4 31B,
+and trained it further on about 520M tokens of licence-checked public data (see [Training](#training)).
 
 ## Results
 
-Every number is from public test sets, measured by us with the same harness and serving stack for every model.
+decide-1 against TypeSafe Jev 1.14 and GPT-6 Luna on the text benchmarks of Google's Gemini Decision 1 launch table.
+Accuracy (%) unless noted; higher is better except calibration error.
 
-| | KnowLine-31B-Gen1.5 (initial checkpoint) | decide-1 |
-|---|---|---|
-| Decision Index 0.3, public tests | 70.54 | **71.34** |
-| JevBench, public split (231 decisions) | 90.91 | **91.34** |
-| Mean calibration error (ECE) over six Gemini Decision 1 launch benchmarks | 0.036 | **0.031** |
+| Benchmark | **decide-1** | TypeSafe Jev 1.14 | GPT-6 Luna |
+|---|---|---|---|
+| JevBench (public split) | **91.3** | 90.0 | 90.9 |
+| Amazon ESCI (macro-F1) | **63.5** | 56.7 | 54.7 |
+| New Yorker caption contest | **87.5** | 72.0 | 68.4 |
+| PubMedQA | **81.2** | 78.2 | 74.4 |
+| Global-MMLU-Lite | 84.2 | **85.0** | 79.6 |
+| When2Call | **91.2** | 82.0 | 70.4 |
+| Top-1 calibration error (ECE), lower is better | **0.031** | 0.049 | 0.072 |
 
-Decision Index 0.3 by area:
+decide-1's numbers are ours, from public test sets with our own harness. The Jev 1.14 and GPT-6 Luna numbers are from
+[Google's launch post](https://blog.google/innovation-and-ai/technology/developers-tools/gemini-decisions-api/) (GPT-6
+Luna through OpenAI's Decisions API). Google did not publish its prompts, subsets or harness, so the comparison is
+indicative. Our ECE is the mean over these six benchmarks; Google's is over seven shared evaluations.
 
-| Area | KnowLine-31B-Gen1.5 | decide-1 |
-|---|---|---|
-| Knowledge & reasoning | 59.6 | 60.3 |
-| Language | 72.8 | 73.8 |
-| Retrieval & routing | 73.2 | 75.8 |
-| Tools & agents | 85.4 | 84.5 |
-| Arts & taste | 60.7 | 60.8 |
+On the public Decision Index 0.3 suite, decide-1 scores **71.34** (self-run), against 60.70 for Jev 1.14 on the board
+and 70.54 for KnowLine-31B-Gen1.5, our initial checkpoint (self-run). We have no score on the board's private tasks.
 
-Several of the largest gains (BANKING77, ESCI, New Yorker, CLINC150) are on benchmarks whose train split is in our
-data. Their test rows were decontaminated (exact match and word 13-gram overlap), but these are in-distribution gains.
-We have no score on the Decision Index board's private tasks.
+## Using decide-1
 
-## Serving
-
-```bash
-pip install "sglang[all]==0.5.21" "transformers==5.12.1" requests
-hf download gradiated/decide-1 --local-dir decide-1
-bash decide-1/serve_knowline.sh decide-1 0 8080     # GPU 0, front end on port 8080
-```
+decide-1 is available on the [Gradiated API](https://gradiated.com/docs) as `gradiated/decide-1`:
 
 ```bash
-curl -s localhost:8080/v1/systemone -d '{
-  "state": {"email": {"from": "IT Service Desk <it-support@gradlated.com>", "subject": "Action required", "body": "..."}},
-  "questions": {"phishing": {"type": "noul", "instructions": "Is this email a phishing attempt?"}}}'
+curl https://api.gradiated.com/v1/systemone \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gradiated/decide-1",
+    "state": {"ticket": "I was charged twice. Please fix this today."},
+    "questions": {
+      "category": {"type": "choice", "instructions": "Choose the department for this ticket.",
+                   "criteria": {"billing": "Charges or payments", "technical": "Something is broken",
+                                "other": "Anything else"}}}}'
 ```
 
-[INFERENCE.md](INFERENCE.md) is KnowLine's serving guide; all of it applies to decide-1. The weights are bf16, about
-63 GB, and fit one 80 GB or larger GPU. Gradiated's hosted API serves decide-1 as `gradiated/decide-1`.
+The weights in this repository are bf16, about 63 GB.
 
 ## Training
 
-- **Initial checkpoint:** KnowLine-31B-Gen1.5 (PelaAI, Apache-2.0), itself fine-tuned from Gemma 4 31B. Both stages
-  start from it (stage 2 from stage 1's result), and the final blend averages back towards it.
+- **Initial checkpoint:** KnowLine-31B-Gen1.5 (PelaAI, Apache-2.0), a decision fine-tune of Gemma 4 31B.
 - **Stage 1:** 952k rows, 1,155 steps (0.25 epoch): procedural typed decisions, the commercial-licence rows of
   tasksource's Jev-format decisions, the official train splits of 14 Decision Index benchmarks and sn92's sets.
 - **Stage 2:** 563k rows, 1,000 steps (0.35 epoch) from stage 1, aimed at its errors: temporal and numeric reasoning
@@ -83,16 +79,15 @@ curl -s localhost:8080/v1/systemone -d '{
   (HelpSteer2/3, OASST2, Stack Exchange), dialogue state (MultiWOZ), plus about a sixth replay of stage 1.
 - **Setup:** full fine-tune, bf16 compute with fp32 master weights, soft cross-entropy on the option distribution plus
   0.5 × Brier score. About 101 GPU-hours on B200 and B300.
-- **Blend:** the released weights are 0.5 × KnowLine-31B-Gen1.5 + 0.5 × the stage 2 checkpoint. The blend scores 0.7
-  points above the initial checkpoint on our dev sample (70.49 vs 69.83); the stage 2 checkpoint alone scores 1.2 points
-  below it.
+- **Blend:** the released weights are 0.5 × the initial checkpoint + 0.5 × the stage 2 checkpoint. On our dev sample
+  the blend scores 0.7 points above the initial checkpoint; the stage 2 checkpoint alone scores 1.2 points below it.
 
 ### Data and licences
 
 All training data is public and was licence-checked per source. We excluded sources whose licence forbids commercial
 use or is unstated, and removed rows written by OpenAI, Anthropic or Google models from mixed-author sources. Every
-source was decontaminated against the Decision Index 0.3 test rows, the kit's test pools, and the JevBench and Gemini
-launch panel items.
+source was decontaminated (exact match and word 13-gram overlap) against the Decision Index 0.3 test rows, the kit's
+test pools, and the JevBench and Gemini launch panel items.
 
 Sources: procedural typed decisions; sn92 (generalist and specialists); tasksource Jev-format decisions (commercial
 rows only); the train splits of API-Bank, BANKING77, CLINC150, SGD, ARC, WinoGrande, HellaSwag, GSM8K, ChessBench,
@@ -104,15 +99,17 @@ Their licences are permissive (Apache-2.0, MIT, BSD, CC-BY) or share-alike (CC-B
 preferences, TempReason and ShARC). We release the weights under Apache-2.0, the licence of the base model, and credit
 every source here.
 
+Amazon ESCI, When2Call and New Yorker are among the benchmarks whose train splits we used; their test rows were
+decontaminated, but these are in-distribution results.
+
 ## Limitations
 
-- **Single seed, no error bars.** Differences of a few tenths of a point are within the noise of our blending choices.
-- **Calibration is uneven.** ECE fell on ESCI, PubMedQA, New Yorker and When2Call and rose on JevBench and
-  Global-MMLU-Lite. Check calibration on your own data before thresholding.
+- **Calibration is uneven.** Against the initial checkpoint, ECE fell on four of the six benchmarks above and rose on
+  JevBench and Global-MMLU-Lite. Check calibration on your own data before thresholding.
 - **Yes/no lean.** With no evidence either way, `noul` answers lean towards yes.
-- **Languages.** Mostly English. KnowLine also covers Chinese; we did not train or test on it.
+- **Languages.** Trained and evaluated mostly in English.
 
 ## Licence
 
-Apache-2.0. decide-1 contains code and weights from KnowLine-31B-Gen1.5 (Apache-2.0, PelaAI), which derives from Gemma
-4 (Apache-2.0, Google). `MODIFICATIONS` describes what we changed.
+Apache-2.0. decide-1 contains weights from KnowLine-31B-Gen1.5 (Apache-2.0, PelaAI), which derives from Gemma 4
+(Apache-2.0, Google). `MODIFICATIONS` describes what we changed.

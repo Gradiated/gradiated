@@ -176,22 +176,24 @@ what the gateway put on the wire.
 
 ## Real runtimes
 
-`real-runtime.test.ts` runs the gateway against a real vLLM server and a real
-Kev server on the CPU. Production serves every chat model on SGLang; the `vllm`
-case kind is the gateway's single OpenAI-compatible runtime wire, which SGLang
-also accepts, and vLLM is used here only because it ships a pinned CPU build. These tests find differences between the mocks and the
-real runtimes. They check wire shape and that billing uses the token counts
-from the runtime. They do not check exact token counts.
+`real-runtime.test.ts` runs the gateway against a real SGLang server and a real
+Kev server on the CPU. The SGLang server is upstream's CPU release, while
+production runs GPU SGLang bundles. Its cases use the `vllm` mock profile's
+deployment, which is the gateway's single OpenAI-compatible runtime wire. These
+tests find differences between the mocks and the real runtimes. They check wire
+shape and that billing uses the token counts from the runtime. They do not check
+exact token counts.
 
 ```sh
-GATEWAY_REAL_RUNTIME=vllm,kev pnpm --filter @gradiated/gateway test:integration
+GATEWAY_REAL_RUNTIME=sglang-cpu,kev pnpm --filter @gradiated/gateway test:integration
 ```
 
 `GATEWAY_REAL_RUNTIME` names the runtimes to start. The tests for a runtime
 that is not named are skipped. The images are built from
-`product/inference/runtimes/{vllm,kev}/Dockerfile.cpu` with the weights
-included. To use a server that already runs, set `GATEWAY_REAL_RUNTIME_URL_VLLM`
-or `GATEWAY_REAL_RUNTIME_URL_KEV`. The vLLM CPU image is amd64 only. On Apple
+`product/inference/runtimes/sglang-cpu/Dockerfile` and
+`product/inference/runtimes/kev/Dockerfile.cpu` with the weights included. To use
+a server that already runs, set `GATEWAY_REAL_RUNTIME_URL_SGLANG_CPU` or
+`GATEWAY_REAL_RUNTIME_URL_KEV`. The SGLang CPU image is amd64 only. On Apple
 Silicon, use the URL variable or let CI run these tests.
 
 When a real runtime is enabled, global setup also starts a second gateway with a
@@ -309,7 +311,7 @@ A default CPU run does not test production registration, health publishing, TLS,
 ingress, IAM, settlement workers, Valkey failover,
 kernel correctness, tokenizer templates, long contexts or sustained load. The
 Rust unit tests and the ignored Valkey tests are also necessary. A green run
-does not certify a vLLM version or GPU type.
+does not certify an SGLang version or GPU type.
 
 ## Session diagnostics
 

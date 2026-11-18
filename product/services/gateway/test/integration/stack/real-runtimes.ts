@@ -11,11 +11,22 @@ export interface RealRuntime {
   readonly modelRevision?: string;
 }
 
-export type RealRuntimeKind = RuntimeKind | "sglang";
+/**
+ * `sglang-cpu` and `kev` are containers this suite starts; `sglang` is a resident
+ * GPU deployment the caller points at.
+ */
+export type ContainerRuntimeKind = "sglang-cpu" | "kev";
+export type RealRuntimeKind = ContainerRuntimeKind | "sglang";
 export type RealRuntimes = Partial<Record<RealRuntimeKind, RealRuntime>>;
 
 export const isRealRuntimeKind = (value: string): value is RealRuntimeKind =>
-  value === "vllm" || value === "kev" || value === "sglang";
+  value === "sglang-cpu" || value === "kev" || value === "sglang";
+
+/** The mock wire profile whose deployment a real container stands in for. */
+export const REAL_RUNTIME_PROFILE: Record<ContainerRuntimeKind, RuntimeKind> = {
+  "sglang-cpu": "vllm",
+  kev: "kev",
+};
 
 export const externalSglang = (environment: NodeJS.ProcessEnv): RealRuntime => {
   const value = environment.GATEWAY_REAL_RUNTIME_URL_SGLANG;
@@ -61,8 +72,8 @@ export const externalSglang = (environment: NodeJS.ProcessEnv): RealRuntime => {
 interface RuntimeImage {
   readonly image: string;
   /**
-   * The id the gateway addresses and that the runtime returns. vLLM answers with
-   * its `--served-model-name` rather than echoing, so the two must match.
+   * The id the gateway addresses and that the runtime returns. SGLang answers
+   * with its `--served-model-name` rather than echoing, so the two must match.
    */
   readonly model: string;
   readonly ready: string;
@@ -96,11 +107,12 @@ const CPU_MODEL =
   process.env.GATEWAY_REAL_RUNTIME_MODEL ?? "gradiated/cpu-test-model";
 const CPU_WEIGHTS = "Qwen/Qwen2.5-0.5B-Instruct";
 
-// Both images are built from product/inference/runtimes/{vllm,kev}/Dockerfile.cpu
-// with their weights baked in, so a run never reaches Hugging Face.
-const REAL_RUNTIMES: Record<RuntimeKind, RuntimeImage> = {
-  vllm: {
-    image: process.env.GATEWAY_REAL_RUNTIME_IMAGE ?? "gradiated/vllm-cpu:ci",
+// The images are built from product/inference/runtimes/sglang-cpu/Dockerfile and
+// product/inference/runtimes/kev/Dockerfile.cpu with their weights baked in, so a
+// run never reaches Hugging Face.
+const REAL_RUNTIMES: Record<ContainerRuntimeKind, RuntimeImage> = {
+  "sglang-cpu": {
+    image: process.env.GATEWAY_REAL_RUNTIME_IMAGE ?? "gradiated/sglang-cpu:ci",
     model: CPU_MODEL,
     ready: "/v1/models",
     warm: async (baseUrl, model) => {
@@ -120,11 +132,9 @@ const REAL_RUNTIMES: Record<RuntimeKind, RuntimeImage> = {
       `127.0.0.1:${port}:8080`,
       // vLLM's multiprocess executor puts its ring buffer in shared memory and
       // needs 160 MiB of it; Docker's default /dev/shm is 64 MiB.
+      // SGLang's scheduler and tokenizer processes share tensors through /dev/shm;
+      // Docker's default 64 MiB is too small.
       "--shm-size=1g",
-      "-e",
-      // A CI runner has to hold this alongside the gateway, Valkey and the
-      // decision runtime.
-      "VLLM_CPU_KVCACHE_SPACE=1",
       "-e",
       // Generation is memory-bandwidth bound on a CPU, so starving it of threads
       // is what makes these tests slow.
@@ -134,6 +144,7 @@ const REAL_RUNTIMES: Record<RuntimeKind, RuntimeImage> = {
       "PYTHONUNBUFFERED=1",
     ],
     args: [
+      "--model-path",
       CPU_WEIGHTS,
       "--served-model-name",
       CPU_MODEL,
@@ -141,17 +152,22 @@ const REAL_RUNTIMES: Record<RuntimeKind, RuntimeImage> = {
       "0.0.0.0",
       "--port",
       "8080",
+      "--device",
+      "cpu",
       "--dtype",
-      "float32",
-      "--max-model-len",
+      "bfloat16",
+      "--context-length",
       "2048",
-      "--max-num-seqs",
+      "--max-running-requests",
       "4",
-      "--enforce-eager",
-      "--scheduling-policy",
-      "priority",
-      "--enable-prompt-tokens-details",
-      "--disable-uvicorn-access-log",
+      // A CI runner has to hold the KV cache alongside the gateway, Valkey and
+      // the decision runtime.
+      "--max-total-tokens",
+      "8192",
+      // Production reports cached input this way, and billing prices it.
+      "--enable-cache-report",
+      // The suite sends its own warmup request once the catalog answers.
+      "--skip-server-warmup",
     ],
   },
   // The image runs the adapter we deploy. Upstream's own server reports serialized
@@ -183,7 +199,7 @@ const RUNTIME_READY_TIMEOUT_MS = 240_000;
 
 const awaitReady = async (
   docker: LocalDocker,
-  kind: RuntimeKind,
+  kind: ContainerRuntimeKind,
   container: string,
   baseUrl: string,
 ): Promise<void> => {
@@ -223,7 +239,7 @@ const awaitReady = async (
   }
 };
 
-/** GATEWAY_REAL_RUNTIME_URL_VLLM or _KEV points at a server that is already running. */
+/** GATEWAY_REAL_RUNTIME_URL_SGLANG_CPU or _KEV points at a server that is already running. */
 export const startRealRuntime = async (
   docker: LocalDocker,
   kind: RealRuntimeKind,
@@ -252,7 +268,9 @@ export const startRealRuntime = async (
 
   const spec = REAL_RUNTIMES[kind];
   const existing =
-    process.env[`GATEWAY_REAL_RUNTIME_URL_${kind.toUpperCase()}`];
+    process.env[
+      `GATEWAY_REAL_RUNTIME_URL_${kind.toUpperCase().replaceAll("-", "_")}`
+    ];
 
   if (existing) {
     const baseUrl = existing.replace(/\/$/, "");

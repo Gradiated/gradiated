@@ -43,7 +43,7 @@ CATALOG_MODELS = (
 GATEWAY = ("product/services/gateway/*", *STORAGE)
 PROXY = ("product/services/proxy/*", *GATEWAY, "product/packages/credentials/*")
 COLLECTOR = ("product/services/collector/*", *PROXY)
-RUNTIMES = ("product/inference/runtimes/kev/*", "product/inference/runtimes/vllm/*")
+RUNTIMES = ("product/inference/runtimes/kev/*", "product/inference/runtimes/sglang-cpu/*")
 JOB_PATHS = {
     "integration": (*GATEWAY, "product/docker-compose.yml"),
     "native_cpp": (

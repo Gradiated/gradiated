@@ -14,7 +14,7 @@ on:
       - "product/inference/images/gpu-base/**"
       - "product/inference/host/**"
       - "product/inference/runtimes/kev/**"
-      - "product/inference/runtimes/vllm/**"
+      - "product/inference/runtimes/sglang-cpu/**"
       - "product/packages/**"
       - ".github/actions/product-changes/**"
       - ".github/actions/relevant/**"

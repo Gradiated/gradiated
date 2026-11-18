@@ -189,7 +189,7 @@ impl HostedRequest {
             return Err(no_capacity(&model, adapter.is_some()));
         }
 
-        let effective_output_tokens = effective_output_tokens(&request, output)?;
+        let effective_output_tokens = effective_output_tokens(&request, output);
         request.open_output_limit = request.output_token_limit().is_none()
             && OPEN_OUTPUT_LIMIT_MODELS.contains(&model.id.as_str());
         let input = model.properties.text_input();
@@ -792,20 +792,16 @@ fn listed_release_digest(model: &GatewayModel) -> Option<String> {
 /// exceed the context window. The catalog default stays the model maximum.
 const OPEN_OUTPUT_LIMIT_MODELS: [&str; 1] = ["moonshotai/kimi-k3.1-pro"];
 
-fn effective_output_tokens(
-    request: &InferenceRequest,
-    output: &TextOutputModality,
-) -> Result<u64, GatewayError> {
+fn effective_output_tokens(request: &InferenceRequest, output: &TextOutputModality) -> u64 {
     if request.decision.is_some() {
-        return Ok(0);
+        return 0;
     }
 
+    // A limit above the model maximum is capped, not refused: clients size it
+    // from another model's window, and providers serving the same model accept it.
     match request.output_token_limit() {
-        Some(limit) if limit.value() > output.max_length.value => Err(
-            GatewayError::context_length_exceeded(limit.parameter_name()),
-        ),
-        Some(limit) => Ok(limit.value()),
-        None => Ok(output.default_length.value),
+        Some(limit) => limit.value().min(output.max_length.value),
+        None => output.default_length.value,
     }
 }
 

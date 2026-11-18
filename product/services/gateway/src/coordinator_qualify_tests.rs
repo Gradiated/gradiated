@@ -321,24 +321,15 @@ async fn forwards_advertised_reasoning_effort_and_rejects_unsupported_values() {
 
 #[tokio::test]
 async fn rejects_invalid_supported_model_parameters() {
-    for (body, expected) in [
-        (
-            br#"{"model":"model-a","messages":[{}],"temperature":3}"#.as_slice(),
-            GatewayError::invalid_request(Some("temperature")),
-        ),
-        (
-            br#"{"model":"model-a","messages":[{}],"max_tokens":4097}"#.as_slice(),
-            GatewayError::context_length_exceeded("max_tokens"),
-        ),
-        (
-            br#"{"model":"model-a","messages":[{}],"max_completion_tokens":4097}"#.as_slice(),
-            GatewayError::context_length_exceeded("max_completion_tokens"),
-        ),
-    ] {
-        let result = qualify_chat(Arc::new(TestServingState::ready()), body).await;
-
-        assert_eq!(result.err(), Some(expected));
-    }
+    let result = qualify_chat(
+        Arc::new(TestServingState::ready()),
+        br#"{"model":"model-a","messages":[{}],"temperature":3}"#,
+    )
+    .await;
+    assert_eq!(
+        result.err(),
+        Some(GatewayError::invalid_request(Some("temperature")))
+    );
 
     let mut state = TestServingState::ready();
     state.model = Some(model(false));
@@ -351,6 +342,30 @@ async fn rejects_invalid_supported_model_parameters() {
         result.err(),
         Some(GatewayError::unsupported_parameter("stream"))
     );
+}
+
+#[tokio::test]
+async fn an_output_limit_above_the_model_maximum_is_capped() {
+    for (body, limit_name) in [
+        (
+            br#"{"model":"model-a","messages":[{}],"max_tokens":875091}"#.as_slice(),
+            "max_tokens",
+        ),
+        (
+            br#"{"model":"model-a","messages":[{}],"max_completion_tokens":4097}"#.as_slice(),
+            "max_completion_tokens",
+        ),
+    ] {
+        let request = qualify_chat(Arc::new(TestServingState::ready()), body)
+            .await
+            .unwrap();
+        assert_eq!(request.effective_output_tokens, 4_096);
+
+        let upstream = request
+            .request
+            .into_upstream_body_for_model(request.effective_output_tokens, None);
+        assert_eq!(upstream[limit_name], 4_096);
+    }
 }
 
 #[tokio::test]

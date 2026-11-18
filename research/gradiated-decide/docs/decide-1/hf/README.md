@@ -43,6 +43,7 @@ table. Accuracy (%) unless noted; higher is better except calibration error.
 
 | Benchmark | **linden-1** | TypeSafe Jev 1.14 | GPT-6 Luna |
 |---|---|---|---|
+| Decision Index 0.3, public tests (109,586 requests, index) | **71.3** | 60.5 | 47.3 |
 | JevBench (public split, 231) | **91.3** | 88.3 | 89.6 |
 | Amazon ESCI (5,000, macro-F1) | **63.5** | 56.9 | 53.7 |
 | New Yorker caption contest (528) | **87.5** | 72.0 | 69.5 |
@@ -51,7 +52,7 @@ table. Accuracy (%) unless noted; higher is better except calibration error.
 | When2Call (3,652) | **91.2** | 81.9 | 69.1 |
 | Top-1 calibration error (ECE), mean of the six, lower is better | **0.031** | 0.067 | 0.093 |
 
-We ran all three models ourselves on the same items with the same scorer: Jev 1.14 through TypeSafe's API and GPT-6 Luna through OpenAI's Decisions API. A question a model refuses or cannot answer counts as wrong. Each question is asked in each provider's native format (yes/no, choice or score); prompts, options and states are identical.
+We ran all three models ourselves on the same items with the same scorer: Jev 1.14 through TypeSafe's API and GPT-6 Luna through OpenAI's Decisions API. A question a model refuses or cannot answer counts as wrong. Each question is asked in each provider's native format (yes/no, choice or score); prompts, options and states are identical. The Decision Index row is the full public suite of the [Decision Index](https://github.com/apolinario/decision-index) 0.3 edition, scored with the kit's own scorer; its benchmarks score skill above a baseline, so a model that leans to one answer scores near zero on them.
 
 ## Using linden-1
 

@@ -225,14 +225,21 @@ def hub_files(repo, revision):
     return files
 
 
+def blob_paths(hub, directory, blob):
+    """Where a cached blob may live: the repository's own blobs/ or the hub-wide store hub/blobs/<first two>/<id>
+    that newer huggingface_hub releases share between repositories."""
+    return directory / "blobs" / blob, hub / "blobs" / blob[:2] / blob
+
+
 def missing_bytes(hub, repo, revision, files):
-    # Another revision of the repository may already hold a file's blob, which the download reuses.
+    # Another revision of the repository (or, with the shared store, another repository) may already hold a file's
+    # blob, which the download reuses.
     directory = repo_directory(hub, repo)
-    snapshot, blobs = directory / "snapshots" / revision, directory / "blobs"
+    snapshot = directory / "snapshots" / revision
     return sum(size for name, (size, blob) in files.items()
                if not (snapshot / name).exists()
                and not (isinstance(blob, str) and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", blob)
-                        and (blobs / blob).is_file()))
+                        and any(path.is_file() for path in blob_paths(hub, directory, blob))))
 
 
 def last_used(path):
@@ -240,6 +247,31 @@ def last_used(path):
         return (path / CACHE_MARKER).stat().st_mtime
     except FileNotFoundError:
         return path.stat().st_mtime
+
+
+# A blob of the shared store written this recently may belong to a download that has not linked it yet.
+SHARED_BLOB_GRACE_SECONDS = 3600
+
+
+def prune_shared_blobs(hub, log, now=time.time):
+    """Delete hub/blobs files no remaining snapshot links to. Evicting a repository removes only its links when the
+    runtime's huggingface_hub keeps blobs in the shared store, so without this eviction frees nothing."""
+    store = hub / "blobs"
+    if not store.is_dir():
+        return
+    linked = {os.path.realpath(link) for link in hub.glob("models--*/snapshots/*/**/*") if link.is_symlink()}
+    cutoff, freed, count = now() - SHARED_BLOB_GRACE_SECONDS, 0, 0
+    for blob in store.glob("*/*"):
+        if (not blob.is_file() or blob.is_symlink() or blob.name.endswith(".incomplete")
+                or os.path.realpath(blob) in linked):
+            continue
+        status = blob.stat()
+        if status.st_mtime > cutoff:
+            continue
+        blob.unlink()
+        freed, count = freed + status.st_size, count + 1
+    if count:
+        log(f"Removed {count} unlinked shared blobs ({freed} bytes)")
 
 
 def evict_models(hub, needed, protected, log, usage=shutil.disk_usage):
@@ -251,6 +283,7 @@ def evict_models(hub, needed, protected, log, usage=shutil.disk_usage):
             return
         shutil.rmtree(path)
         log(f"Evicted cached model {path.name}")
+        prune_shared_blobs(hub, log)
         free = usage(hub).free
     if free < needed:
         log(f"Model cache needs {needed} free bytes but only {free} remain after eviction")

@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import signal
+import time
 import select
 import tempfile
 import unittest
@@ -1244,6 +1245,45 @@ class ModelCacheTest(unittest.TestCase):
         self.prepare(self.serving('org/model', 'e' * 40), files=listing)
 
         self.assertTrue(stale.exists())
+
+    def shared_blob(self, blob, age=7200):
+        path = self.hub / 'blobs' / blob[:2] / blob
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b'x')
+        os.utime(path, (time.time() - age, time.time() - age))
+        return path
+
+    def link(self, directory, name, blob):
+        link = directory / 'snapshots' / self.revision / name
+        link.unlink(missing_ok=True)
+        link.symlink_to(blob)
+
+    @unittest.skipUnless(hasattr(agent, 'prune_shared_blobs'), 'the frozen recovery agent predates the shared blob store')
+    def test_evicting_a_model_frees_its_blobs_in_the_shared_store(self):
+        old = self.cached('org/old', 60, 1)
+        kept = self.cached('org/kept', 60, 5)
+        old_blob, kept_blob = self.shared_blob('a' * 64), self.shared_blob('b' * 64)
+        self.link(old, 'model.safetensors', old_blob)
+        self.link(kept, 'model.safetensors', kept_blob)
+        downloading = self.shared_blob('c' * 64, age=10)
+        incomplete = self.shared_blob('d' * 64 + '.incomplete')
+        self.free = 50  # evicting org/old (60) is enough for the 101-byte pull
+
+        self.prepare(self.serving('org/new'))
+
+        self.assertFalse(old.exists())
+        self.assertFalse(old_blob.exists())
+        self.assertTrue(kept_blob.exists())
+        self.assertTrue(downloading.exists())
+        self.assertTrue(incomplete.exists())
+        self.assertIn('Removed 1 unlinked shared blobs (1 bytes)', self.logs)
+
+    @unittest.skipUnless(hasattr(agent, 'prune_shared_blobs'), 'the frozen recovery agent predates the shared blob store')
+    def test_blob_in_the_shared_store_is_not_counted_as_missing(self):
+        self.shared_blob('c' * 64)
+        listing = {'model.safetensors': (100, 'c' * 64), 'config.json': (1, 'd' * 40)}
+
+        self.assertEqual(agent.missing_bytes(self.hub, 'org/model', 'e' * 40, listing), 1)
 
     def test_profiles_without_pinned_weights_are_ignored(self):
         old = self.cached('org/old', 500, 1)

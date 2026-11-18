@@ -102,9 +102,7 @@ def validate(data, model=MODEL):
             stack.extend((item, depth + 1) for item in value)
         elif isinstance(value, float) and not math.isfinite(value):
             raise InvalidRequest("JSON numbers must be finite")
-    # Kev's request record needs instruction text; a question without instructions is asked with none.
-    questions = {key: {"instructions": "", **question} for key, question in questions.items()}
-    return {**{key: value for key, value in data.items() if key != "priority"}, "questions": questions}
+    return {key: value for key, value in data.items() if key != "priority"}
 
 
 class Engine:
@@ -116,8 +114,11 @@ class Engine:
 
     def answer(self, data):
         server = self.server
+        # Kev's request record needs instruction text; a question without instructions is asked with none. Other
+        # runtimes sharing this App see the request as sent.
+        questions = {key: {"instructions": "", **q} for key, q in data["questions"].items()}
         try:
-            req = self.api.SystemOneRequest.model_validate(data)
+            req = self.api.SystemOneRequest.model_validate({**data, "questions": questions})
             rec, meta = self.api.to_record(req)
         except ValueError:
             raise InvalidRequest("invalid request") from None

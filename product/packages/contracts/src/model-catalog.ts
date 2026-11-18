@@ -93,6 +93,13 @@ export const MODEL_CATALOG = [
     supportedUses: ["judge", "comparison", "serving"],
   },
   {
+    id: "gradiated/linden-1",
+    type: "decision",
+    displayName: "linden-1 31B",
+    icon: null,
+    supportedUses: ["serving"],
+  },
+  {
     id: "perplexity-ai/pplx-decider-v1.2",
     type: "decision",
     displayName: "Decider v1.2 27B",

@@ -84,6 +84,12 @@ export const bundles = {
     "product/inference/runtimes/decider",
     "product/inference/runtimes/kev/adapter.py",
   ],
+  "linden-1-sglang": [
+    "product/inference/bundles/linden-1-sglang",
+    "product/inference/runtimes/linden",
+    "product/inference/runtimes/kev/adapter.py",
+    "product/inference/runtimes/glm-sglang/artifact-cache.py",
+  ],
   "kev-9b": [
     "product/inference/bundles/kev-9b",
     "product/inference/runtimes/kev/adapter.py",

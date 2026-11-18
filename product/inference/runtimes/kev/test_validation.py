@@ -63,7 +63,7 @@ class RequestSchemaTests(unittest.IsolatedAsyncioTestCase):
         for question in questions:
             with self.subTest(question):
                 self.assertEqual(adapter.validate({**request(), "questions": {"q": question}})["questions"]["q"],
-                                 {"instructions": "", **question})
+                                 question)
                 status, body = await call(app, {**request(), "questions": {"q": question}})
                 self.assertEqual(status, 200)
                 self.assertEqual(body["answers"]["q"]["type"], question["type"])

@@ -1,0 +1,51 @@
+{
+  "flashinfer_version": "0.6.18",
+  "repository": "https://edge.urm.nvidia.com/artifactory/sw-kernelinferencelibrary-public-generic-local/",
+  "files": [
+    {
+      "path": "2d6a5a029eefcc388ec0ceb87efb55d8bcce5c3c/fmha/trtllm-gen/checksums.txt",
+      "sha256": "d79b5c51fc8597fac57dae0da4afa114fb2014575e4ec3df099ad856d97cabc3",
+      "size": 6532703
+    },
+    {
+      "path": "2d6a5a029eefcc388ec0ceb87efb55d8bcce5c3c/fmha/trtllm-gen/fmhaSm100fKernel_QkvBfloat16OBfloat16H256PagedKvSlidingOrChunkedCausalP64MultiCtasKvCgaVarSeqQ8Kv256StaticGroupedSwapsAbForGen.cubin",
+      "sha256": "1cbeaef3c324030f14d66433daa9bb9dc8a9c4c4f850de48091ea9bbe9dac4f6",
+      "size": 129768
+    },
+    {
+      "path": "2d6a5a029eefcc388ec0ceb87efb55d8bcce5c3c/fmha/trtllm-gen/fmhaSm100fKernel_QkvBfloat16OBfloat16H256PagedKvSlidingOrChunkedCausalP64MultiCtasKvVarSeqQ8Kv256StaticGroupedSwapsAbForGen.cubin",
+      "sha256": "6e2469c29b5f4d71fbb9e95ee717ed9079c756cb740c5d47a3510b7ba2ee31f7",
+      "size": 128304
+    },
+    {
+      "path": "2d6a5a029eefcc388ec0ceb87efb55d8bcce5c3c/fmha/trtllm-gen/fmhaSm100fKernel_QkvBfloat16OBfloat16H256PagedKvSlidingOrChunkedCausalP64VarSeqQ8Kv256PersistentGroupedSwapsAbForGen.cubin",
+      "sha256": "b42b3cc3b650a8fd32901a00b83254fce648d32f9cdab0950e9bead0310f6281",
+      "size": 124080
+    },
+    {
+      "path": "2d6a5a029eefcc388ec0ceb87efb55d8bcce5c3c/fmha/trtllm-gen/fmhaSm100fKernel_QkvBfloat16OBfloat16H512PagedKvCausalP64MultiCtasKvVarSeqQ8Kv256StaticGroupedSwapsAbForGen.cubin",
+      "sha256": "c03547c734d80a5ab200340e5395797985947fa051f5a751663f7c235d60751e",
+      "size": 170800
+    },
+    {
+      "path": "2d6a5a029eefcc388ec0ceb87efb55d8bcce5c3c/fmha/trtllm-gen/fmhaSm100fKernel_QkvBfloat16OBfloat16H512PagedKvCausalP64VarSeqQ8Kv256PersistentGroupedSwapsAbForGen.cubin",
+      "sha256": "573f6cbce7b90b0defe5ad1ce55da3975ba794a7ea8d4dac01c6461fd23843ca",
+      "size": 153504
+    },
+    {
+      "path": "2d6a5a029eefcc388ec0ceb87efb55d8bcce5c3c/fmha/trtllm-gen/fmhaSm103aKernel_QkvBfloat16OBfloat16H256PagedKvSlidingOrChunkedCausalP64VarSeqQ128Kv128PersistentContext.cubin",
+      "sha256": "7beb8458233c48515d81af48f3582267a75f462adf44cc4cee9d4acc32494832",
+      "size": 129744
+    },
+    {
+      "path": "2d6a5a029eefcc388ec0ceb87efb55d8bcce5c3c/fmha/trtllm-gen/fmhaSm103aKernel_QkvBfloat16OBfloat16H512HVPerCta256PagedKvCausalP64VarSeqQ128Kv128PersistentContext.cubin",
+      "sha256": "69da3f165fdea157292a363c3464c4a79d2fbfa442718c1c96bda7e7b03f378b",
+      "size": 127240
+    },
+    {
+      "path": "2d6a5a029eefcc388ec0ceb87efb55d8bcce5c3c/fmha/trtllm-gen/include/flashInferMetaInfo.h",
+      "sha256": "892b5a755dde041ec97eacd1ba2156643977cc8e34d882a108a7e45096c0fae4",
+      "size": 15683295
+    }
+  ]
+}

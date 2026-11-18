@@ -18,6 +18,11 @@ target "verify-decider-27b" {
   dockerfile = "bundles/decider-27b/Dockerfile"
 }
 
+target "verify-linden-1-sglang" {
+  inherits   = ["bundle"]
+  dockerfile = "bundles/linden-1-sglang/Dockerfile"
+}
+
 target "verify-kev-9b" {
   inherits   = ["bundle"]
   dockerfile = "bundles/kev-9b/Dockerfile"

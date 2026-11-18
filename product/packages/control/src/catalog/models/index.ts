@@ -1,3 +1,4 @@
+import { createLinden1ModelConfiguration } from "./linden-1.js";
 import { createDecider27bModelConfiguration } from "./decider-27b.js";
 import { createDeepseekV41Flash1017ModelConfiguration } from "./deepseek-v4-1-flash-1017.js";
 import { createDeepseekV41FlashModelConfiguration } from "./deepseek-v4-1-flash.js";
@@ -10,6 +11,7 @@ import { createKev9bModelConfiguration } from "./kev-9b.js";
 import { createKimiK31ProModelConfiguration } from "./kimi-k31-pro.js";
 
 export const catalogModels = [
+  createLinden1ModelConfiguration(),
   createDecider27bModelConfiguration(),
   createDeepseekV41Flash1017ModelConfiguration(),
   createGlm53FlashModelConfiguration(),

@@ -1,0 +1,3 @@
+# Prebuilt FlashInfer 0.6.18 ops for CUDA 13 (including SM100/SM103 TRT-LLM attention), so a B300 host loads them
+# instead of JIT-compiling them at start. The shim only discovers installed providers; it never downloads.
+flashinfer-jit-cache @ https://github.com/flashinfer-ai/flashinfer/releases/download/v0.6.18/flashinfer_jit_cache-0.6.18+cu130-cp39-abi3-manylinux_2_28_x86_64.whl --hash=sha256:428a47a554ade93c30a818e142b781df58582bf056bab94611fb4c906cc366bf

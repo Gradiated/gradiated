@@ -57,6 +57,7 @@ describe("model configurations", () => {
       output: [450, 450],
     },
     "jaredpalmer/kev-9b": { input: [30, 6], output: [0] },
+    "gradiated/linden-1": { input: [20, 20], output: [0] },
     "perplexity-ai/pplx-decider-v1.2": { input: [20, 20], output: [0] },
     "moonshotai/kimi-k3.1-pro": {
       input: [1_600, 160],
@@ -92,6 +93,7 @@ describe("model configurations", () => {
       "dealignai/glm-5.3-flash-uncensored": null,
       "dealignai/glm-5.3-flash-uncensored-nvfp4": null,
       "jaredpalmer/kev-9b": undefined,
+      "gradiated/linden-1": null,
       "perplexity-ai/pplx-decider-v1.2": null,
       "moonshotai/kimi-k3.1-pro": "moonshotai/kimi-k3.1-pro",
       "z-ai/glm-5.3": "z-ai/glm-5.3",
@@ -128,6 +130,7 @@ describe("model configurations", () => {
 
   it("classifies the generation models as chat", () => {
     expect(catalogModels.map((model) => modelType(model.id))).toEqual([
+      "decision",
       "decision",
       "chat",
       "chat",
@@ -223,7 +226,22 @@ it("identifies Dealign weights separately from the stock training base", () => {
   });
 });
 
-it("serves text-only Decider with no external provider or training capability", () => {
+it("lists text-only linden-1, unavailable until its pool serves, with no external provider or training capability", () => {
+  const model = catalogModels.find((item) => item.id === "gradiated/linden-1");
+  expect(model?.status).toBe("unavailable");
+  expect(
+    model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
+  ).toBeNull();
+  expect(modelType("gradiated/linden-1")).toBe("decision");
+  expect(modelSupportedUses("gradiated/linden-1")).toEqual(["serving"]);
+  expect(model?.properties).toMatchObject({
+    hugging_face_id: "gradiated/linden-1",
+    quantization: "bf16",
+    tokenizer: "Gemma",
+  });
+});
+
+it("serves text-only Decider v1.2 until linden-1 replaces it", () => {
   const model = catalogModels.find(
     (item) => item.id === "perplexity-ai/pplx-decider-v1.2",
   );

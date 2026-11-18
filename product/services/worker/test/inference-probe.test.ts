@@ -47,13 +47,13 @@ describe("public inference probes", () => {
     expect(
       catalogProbeTargets([
         { id: "deepseek/deepseek-v4.1-flash-1017", status: "available" },
-        { id: "perplexity-ai/pplx-decider-v1.2", status: "available" },
+        { id: "gradiated/linden-1", status: "available" },
         { id: "test/unavailable", status: "unavailable" },
         { id: "test/retired", status: "retired" },
       ]),
     ).toEqual([
       { modelId: "deepseek/deepseek-v4.1-flash-1017" },
-      { modelId: "perplexity-ai/pplx-decider-v1.2", protocol: "system_one" },
+      { modelId: "gradiated/linden-1", protocol: "system_one" },
     ]);
   });
 

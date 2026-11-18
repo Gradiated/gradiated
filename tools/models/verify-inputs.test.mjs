@@ -58,7 +58,7 @@ test("job value types and aliased trigger types are preserved", () => {
 test("a bundle's own inputs verify only that bundle", () => {
   assert.deepEqual(
     bundlesToVerify(["product/inference/runtimes/kev/adapter.py"]),
-    ["decider-27b", "kev-9b"],
+    ["decider-27b", "linden-1-sglang", "kev-9b"],
   );
   assert.deepEqual(bundlesToVerify(["product/inference/lora/manager.py"]), [
     "glm-5-3-flash-sglang",
@@ -67,6 +67,9 @@ test("a bundle's own inputs verify only that bundle", () => {
 });
 test("Decider runtime changes verify its isolated bundle", () => {
   assert.deepEqual(bundlesToVerify(["product/inference/runtimes/decider/service.py"]), ["decider-27b"]);
+});
+test("linden-1 runtime changes verify only its bundle", () => {
+  assert.deepEqual(bundlesToVerify(["product/inference/runtimes/linden/service.py"]), ["linden-1-sglang"]);
 });
 
 test("docs, tests, GLM and release tooling verify nothing", () => {

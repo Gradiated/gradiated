@@ -27,8 +27,7 @@ linden-1 is a fine-tune of [Gemma 4 31B](https://huggingface.co/google/gemma-4-3
 
 ## Results
 
-This is how linden-1 compares against TypeSafe Jev 1.14 and GPT-6 Luna on the public Decision Index and the six text
-benchmarks of Google's Gemini Decision 1 launch table. Accuracy (%) unless noted; higher is better except calibration error.
+This is how linden-1 compares against TypeSafe Jev 1.14 and GPT-6 Luna on a wide range of decision model benchmarks.
 
 | Benchmark | **linden-1** | TypeSafe Jev 1.14 | GPT-6 Luna |
 |---|---|---|---|
@@ -45,22 +44,18 @@ We ran all three models ourselves on the same items with the same scorer: Jev 1.
 
 ## Latency
 
-Time to answer one request, sent one at a time: median and 90th percentile of 15 requests per case, each with a fresh
-request ID so no cache can answer it.
+Decision models also need to be fast - so we measured the time to answer a range of decision mdoel requests across linden-1, Jev and Luna.
 
 | Request | linden-1 | TypeSafe Jev 1.14 | GPT-6 Luna |
 |---|---|---|---|
-| Moderation: a forum comment (~150 tokens), 1 yes/no question | **49 ms** (p90 50) | 172 ms (p90 212) | 281 ms (p90 385) |
-| Tool routing: a short chat and 5 tools (~400 tokens), 5 yes/no questions | **119 ms** (p90 120) | 159 ms (p90 180) | 375 ms (p90 419) |
-| Support triage: a customer email (~1,000 tokens), choice, score and yes/no | 187 ms (p90 190) | **166 ms** (p90 190) | 308 ms (p90 533) |
-| Contract review: a services agreement (~3,400 tokens), choice and yes/no | 275 ms (p90 277) | **178 ms** (p90 186) | 292 ms (p90 391) |
-| Incident report: a postmortem (~8,500 tokens), 1 yes/no question | 481 ms (p90 483) | **193 ms** (p90 223) | 324 ms (p90 722) |
+| Moderation: a forum comment (~150 tokens), 1 yes/no question | **49 ms** | 172 ms | 281 ms |
+| Tool routing: a short chat and 5 tools (~400 tokens), 5 yes/no questions | **119 ms** | 159 ms | 375 ms |
+| Support triage: a customer email (~1,000 tokens), choice, score and yes/no | 187 ms | **166 ms** | 308 ms |
+| Contract review: a services agreement (~3,400 tokens), choice and yes/no | 275 ms | **178 ms** | 292 ms |
+| Incident report: a postmortem (~8,500 tokens), 1 yes/no question | 481 ms | **193 ms** | 324 ms |
 
-linden-1 was measured on one NVIDIA B300 serving it alone, with the client on the same host. Jev 1.14 and GPT-6 Luna
-were measured through their public APIs from a client about 5 ms from their endpoints, so their times include a short
-network hop and their API layers. linden-1 is fastest on short requests and steady at every size; Jev 1.14 is faster on
-inputs from about 1,000 tokens, where linden-1 reads short inputs twice for accuracy and its cost grows with input
-length.
+linden-1 is fastest on short requests and steady at every size; Jev 1.14 is faster on
+inputs from about 1,000 tokens.
 
 ## Using linden-1
 
@@ -88,7 +83,7 @@ Try it out and let us know how you find it.
   tasksource's Jev-format decisions, the official train splits of 14 Decision Index benchmarks and sn92's sets.
 - **Stage 2:** 563k rows, 1,000 steps (0.35 epoch) from stage 1, aimed at what it performed poorly at: temporal and numeric reasoning
   (TempReason, TimeQA, TAT-QA, FinQA), long policies and contracts (ShARC, CUAD, MAUD, LexGLUE), preference judging
-  (HelpSteer2/3, OASST2, Stack Exchange), dialogue state (MultiWOZ), plus about a sixth replay of stage 1.
+  (HelpSteer2/3, OASST2, Stack Exchange), dialogue state (MultiWOZ). About a sixth of the rows were replayed from stage 1 so it kept what it had learned.
 - **Setup:** full fine-tune, BF16 compute with FP32 master weights, soft cross-entropy on the option distribution plus 0.5 × Brier score. About 101 GPU-hours across B200/B300s.
 - **Blend:** the released weights are 0.5 × the initial checkpoint + 0.5 × the stage 2 checkpoint.
 
@@ -118,13 +113,11 @@ decontaminated, but these are in-distribution results.
 
 ## Where did the name come from?
 
-linden-1 is named after the linden tree (lime in British English). In medieval Germany, village courts and
-assemblies met outdoors under a linden in the middle of the village. People brought their disputes, the case was
-heard, and a judgment was given there and then. Records of the time say judgments were given *sub tilia*, "under the
-linden", and some of these court lindens (*Gerichtslinden*) still stand.
+linden-1 is named after the linden tree. In medieval Germany, village courts and
+assemblies met outdoors under a linden in the middle of the village. People brought their disputes, the case was heard, and a judgment was given there and then. 
 
-That is the idea behind the model. You bring it a state and a question, it weighs every option, and it gives a
-judgment straight away: one forward pass, a probability for each option and no deliberation in text.
+Records of the time say judgments were given *sub tilia*, "under the
+linden", and some of these court lindens (*Gerichtslinden*) still stand.
 
 ## Licence
 

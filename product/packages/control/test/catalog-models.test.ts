@@ -241,11 +241,11 @@ it("serves text-only linden-1 with no external provider or training capability",
   });
 });
 
-it("serves text-only Decider v1.2 until linden-1 replaces it", () => {
+it("retires Decider v1.2 but keeps its historical model ID", () => {
   const model = catalogModels.find(
     (item) => item.id === "perplexity-ai/pplx-decider-v1.2",
   );
-  expect(model?.status).toBe("available");
+  expect(model?.status).toBe("retired");
   expect(
     model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
   ).toBeNull();

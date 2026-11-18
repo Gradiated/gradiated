@@ -572,7 +572,7 @@ def main():
                          'Delete their directories under gpu-inference/models/ in the same change and merge it. '
                          'Once Argo has deleted ' + ', '.join(f'gpu-model-{name}' for name in names)
                          + ' (their resources keep running), run '
-                         + '; '.join(f'kubectl -n gpu-inference delete rollout,scaledobject {name}' for name in names)
+                         + '; '.join(f'kubectl -n gpu-inference delete rollout,scaledobject,poddisruptionbudget {name}' for name in names)
                          + '.')
     stale = []
     for path, content in pinned_copies(json.loads((GPU / 'pins.json').read_text())).items():

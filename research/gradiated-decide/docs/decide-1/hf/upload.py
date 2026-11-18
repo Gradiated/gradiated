@@ -1,6 +1,6 @@
-"""Assemble the gradiated/decide-1 Hugging Face repo and upload it.
+"""Assemble the gradiated/linden-1 Hugging Face repo and upload it.
 
-Usage: HF_TOKEN=... python upload.py MERGE_DIR STAGING_DIR [--repo gradiated/decide-1] [--public] [--dry-run]
+Usage: HF_TOKEN=... python upload.py MERGE_DIR STAGING_DIR [--repo gradiated/linden-1] [--public] [--dry-run]
 
 MERGE_DIR is the gd-kl2-s1000-a0.5 blend (s3://<dev bucket>/gradiated-decide/runs/merges/gd-kl2-s1000-a0.5). The repo
 gets, in STAGING_DIR (hard links, no copies of the weights):
@@ -24,8 +24,7 @@ KNOWLINE = "PelaAI/KnowLine-31B-Gen1.5"
 KNOWLINE_REVISION = "56ca884a8e3195c9c0786a4ec22e651669d04ba9"
 FROM_MERGE = ("config.json", "generation_config.json", "model.safetensors.index.json", "tokenizer.json",
               "tokenizer_config.json", "chat_template.jinja", "processor_config.json")
-FROM_KNOWLINE = (".gitattributes", "INFERENCE.md", "LICENSE", "knowline_server.py", "knowline_layout.py",
-                 "knowline_engine.py", "serve_knowline.sh", "temperatures.json")
+FROM_KNOWLINE = (".gitattributes", "LICENSE")
 HERE = Path(__file__).resolve().parent
 
 
@@ -58,7 +57,7 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("merge", type=Path)
     p.add_argument("staging", type=Path)
-    p.add_argument("--repo", default="gradiated/decide-1")
+    p.add_argument("--repo", default="gradiated/linden-1")
     p.add_argument("--public", action="store_true")
     p.add_argument("--dry-run", action="store_true")
     a = p.parse_args()

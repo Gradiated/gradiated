@@ -23,8 +23,7 @@ You send a state (a conversation, an email, a diff, a ticket) and any number of 
 of k (`choice`) or grade on a rubric (`score`). linden-1 returns a probability for each option. It does not generate
 text.
 
-linden-1 is a fine-tune of [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it). We started from the
-[KnowLine-31B-Gen1.5](https://huggingface.co/PelaAI/KnowLine-31B-Gen1.5) checkpoint and trained it on 520M tokens of public decision data (see [Training](#training)).
+linden-1 is a fine-tune of [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it).
 
 ## Results
 
@@ -33,7 +32,7 @@ table. Accuracy (%) unless noted; higher is better except calibration error.
 
 | Benchmark | **linden-1** | TypeSafe Jev 1.14 | GPT-6 Luna |
 |---|---|---|---|
-| Decision Index 0.3, public tests (109,586 requests, index) | **71.3** | 60.5 | 47.3 |
+| Decision Index 0.3, public tests | **71.3** | 60.5 | 47.3 |
 | JevBench (public split, 231) | **91.3** | 88.3 | 89.6 |
 | Amazon ESCI (5,000, macro-F1) | **63.5** | 56.9 | 53.7 |
 | New Yorker caption contest (528) | **87.5** | 72.0 | 69.5 |

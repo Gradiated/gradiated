@@ -29,23 +29,23 @@ and trained it further on about 520M tokens of licence-checked public data (see 
 
 ## Results
 
-decide-1 against TypeSafe Jev 1.14 and GPT-6 Luna on the text benchmarks of Google's Gemini Decision 1 launch table.
-Accuracy (%) unless noted; higher is better except calibration error.
+decide-1 against TypeSafe Jev 1.14 and GPT-6 Luna on the six text benchmarks of Google's Gemini Decision 1 launch
+table. Accuracy (%) unless noted; higher is better except calibration error.
 
 | Benchmark | **decide-1** | TypeSafe Jev 1.14 | GPT-6 Luna |
 |---|---|---|---|
-| JevBench (public split) | **91.3** | 90.0 | 90.9 |
-| Amazon ESCI (macro-F1) | **63.5** | 56.7 | 54.7 |
-| New Yorker caption contest | **87.5** | 72.0 | 68.4 |
-| PubMedQA | **81.2** | 78.2 | 74.4 |
-| Global-MMLU-Lite | 84.2 | **85.0** | 79.6 |
-| When2Call | **91.2** | 82.0 | 70.4 |
-| Top-1 calibration error (ECE), lower is better | **0.031** | 0.049 | 0.072 |
+| JevBench (public split, 231) | **91.3** | 88.3 | 89.6 |
+| Amazon ESCI (5,000, macro-F1) | **63.5** | 56.9 | 53.7 |
+| New Yorker caption contest (528) | **87.5** | 72.0 | 69.5 |
+| PubMedQA (1,000) | **81.2** | 79.4 | 71.9 |
+| Global-MMLU-Lite, non-English (8,800) | 84.2 | **84.7** | 80.4 |
+| When2Call (3,652) | **91.2** | 81.9 | 69.1 |
+| Top-1 calibration error (ECE), mean of the six, lower is better | **0.031** | 0.067 | 0.093 |
 
-decide-1's numbers are ours, from public test sets with our own harness. The Jev 1.14 and GPT-6 Luna numbers are from
-[Google's launch post](https://blog.google/innovation-and-ai/technology/developers-tools/gemini-decisions-api/) (GPT-6
-Luna through OpenAI's Decisions API). Google did not publish its prompts, subsets or harness, so the comparison is
-indicative. Our ECE is the mean over these six benchmarks; Google's is over seven shared evaluations.
+We ran all three models ourselves in November 2026, on the same items with the same scorer: Jev 1.14 through
+TypeSafe's API (`jev-1.14.0`) and GPT-6 Luna through OpenAI's Decisions API. A question a model refuses or cannot
+answer counts as wrong. Each question is asked in each provider's native format (yes/no, choice or score); prompts,
+options and states are identical.
 
 On the public Decision Index 0.3 suite, decide-1 scores **71.34** (self-run), against 60.70 for Jev 1.14 on the board
 and 70.54 for KnowLine-31B-Gen1.5, our initial checkpoint (self-run). We have no score on the board's private tasks.

@@ -25,7 +25,8 @@ does not upcast target weights or expert activations. Native FP8 KV is retained.
 
 The provisional profile reserves eight B300 UUIDs on one host and uses TP8,
 85% static device memory, a 0.45 KDA-to-KV memory ratio, an 8K-token prefill budget,
-prefill/decode interval zero and decode graphs through batch five. DFLASH uses
+shortest-prefill-first scheduling, prefill/decode interval four while any request
+is running, and decode graphs through batch five. DFLASH uses
 block five, non-overlap scheduling and ReplaySSM. Its draft is
 `RadixArk/Kimi-K3.1-Dflash2-Preview` at
 `d0d8bc2e3c6d0a195d2e00a49017e71ca8d881f1`, with the explicit `cutedsl_mla`
@@ -120,6 +121,23 @@ different allocator policy and is not enabled here. The portable archive also
 retains the image's Ninja 1.13.2 executable, whose absence otherwise prevents
 the custom collective's first CUDA JIT build.
 
+With the default policy and interval zero, a long uncached prompt ran its 8K
+chunks back to back: every running stream stopped and a newly admitted short
+prompt waited for the whole prefill. On a spot 8xB300 running the
+`kimi-k31-19bbe4a04aaa` archive, three streams and a probe slot, a 384K-token
+prompt froze running streams for 22 s and gave the short probe a 21 s TTFT.
+Shortest-prefill-first reserves chunk budget for shorter waiting prompts (probe
+TTFT 0.44 s at 384K and 0.87 s at 128K); interval four gives running streams
+four decode rounds after each chunk (about 22 tokens/s during the prefill on
+essay text, instead of about 1). The long prompt's TTFT rises from 21.8 to 25.6
+s. Five-stream closed-loop throughput matched the old profile (median 65-96
+against 75-90 tokens/s per stream across two trials each; aggregate 347-463
+against 339-448). Mixed chunked prefill added little on top (running streams
+fall back to one plain token per mixed step) and interval two left streams at
+12-17 tokens/s, so neither is selected. Longer intervals trade more long-prompt
+TTFT for stream speed: with random-token streams, interval 16 roughly doubled
+stream speed over interval four but raised the 384K TTFT to 36 s.
+
 The configured 1M context requires a resident token pool large enough for the
 request and its output. A separate TP8/B5 arm used a 0.45 KDA-to-KV ratio,
 sixteen running requests and graph capacity, 2K prefill chunks and prefill/decode
@@ -128,7 +146,7 @@ tokens and 512 generated tokens at 213.06 decode tokens/s, with 97.16 seconds to
 first token. A prefix-reuse retrieval smoke found the planted middle-context
 marker; the measured pool held 1,079,680 tokens. That arm failed the 32K cold
 throughput holdout and is not selected. Its near-limit result does not qualify
-the provisional 8K-chunk, interval-zero profile, which still needs long-context
+the provisional 8K-chunk, interval-four profile, which still needs long-context
 and exact immutable archive qualification. Earlier three-stream throughput
 results also used a different 0.9 ratio and batch-32 runtime; they do not qualify
 this complete five-request profile. The optimization target is

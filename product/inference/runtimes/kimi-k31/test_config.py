@@ -27,7 +27,9 @@ class Configuration(unittest.TestCase):
                             ('--tool-call-parser', 'kimi_k3'), ('--mem-fraction-static', '0.85'),
                             ('--max-running-requests', '5'), ('--cuda-graph-max-bs-decode', '5'),
                             ('--context-length', '1048576'), ('--chunked-prefill-size', '8192'),
-                            ('--mamba-full-memory-ratio', '0.45'), ('--prefill-decode-interval', '0')]:
+                            ('--mamba-full-memory-ratio', '0.45'), ('--prefill-decode-interval', '4'),
+                            ('--prefill-decode-interval-min-bs', '1'),
+                            ('--schedule-policy', 'shortest-prefill-first')]:
             self.assertEqual(backend[backend.index(flag) + 1], value)
         self.assertIn('--trust-remote-code', backend)
         self.assertNotIn('--dtype', backend)
@@ -38,6 +40,7 @@ class Configuration(unittest.TestCase):
         self.assertEqual(router[router.index('--max-concurrent-requests') + 1], '5')
         self.assertNotIn('--enable-cache-report', backend)
         self.assertNotIn('--disable-radix-cache', backend)
+        self.assertNotIn('--enable-mixed-chunk', backend)
         self.assertEqual(settings['backend'], 18084)
         self.assertEqual(router[router.index('--queue-size') + 1], '0')
         self.assertIn('--disable-retries', router)

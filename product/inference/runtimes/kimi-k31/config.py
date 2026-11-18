@@ -91,7 +91,13 @@ def commands(environment):
                '--enable-linear-replayssm-spec', '--mamba-ssm-dtype', 'float32',
                '--max-running-requests', str(ACTIVE_REQUESTS), '--context-length', '1048576',
                '--mem-fraction-static', '0.85', '--chunked-prefill-size', '8192',
-               '--mamba-full-memory-ratio', '0.45', '--prefill-decode-interval', '0',
+               '--mamba-full-memory-ratio', '0.45',
+               # Short prompts jump ahead of a long chunked prefill, and running
+               # streams get four decode rounds after every prefill chunk instead
+               # of freezing for the whole prefill. An idle replica still
+               # prefills back to back.
+               '--schedule-policy', 'shortest-prefill-first', '--prefill-decode-interval', '4',
+               '--prefill-decode-interval-min-bs', '1',
                '--max-prefill-tokens', '8192', '--cuda-graph-max-bs-decode', str(ACTIVE_REQUESTS),
                '--enable-metrics', '--random-seed', '42',
                '--host', '127.0.0.1', '--port', str(config['backend'])]

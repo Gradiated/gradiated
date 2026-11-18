@@ -44,18 +44,22 @@ We ran all three models ourselves on the same items with the same scorer: Jev 1.
 
 ## Latency
 
-Decision models also need to be fast - so we measured the time to answer a range of decision mdoel requests across linden-1, Jev and Luna.
+Time to answer one request, sent one at a time: median and 90th percentile of 15 requests per case. Every request
+starts each text field of its state with a new random number, so no prefix cache can answer it.
 
 | Request | linden-1 | TypeSafe Jev 1.14 | GPT-6 Luna |
 |---|---|---|---|
-| Moderation: a forum comment (~150 tokens), 1 yes/no question | **49 ms** | 172 ms | 281 ms |
-| Tool routing: a short chat and 5 tools (~400 tokens), 5 yes/no questions | **119 ms** | 159 ms | 375 ms |
-| Support triage: a customer email (~1,000 tokens), choice, score and yes/no | 187 ms | **166 ms** | 308 ms |
-| Contract review: a services agreement (~3,400 tokens), choice and yes/no | 275 ms | **178 ms** | 292 ms |
-| Incident report: a postmortem (~8,500 tokens), 1 yes/no question | 481 ms | **193 ms** | 324 ms |
+| Moderation: a forum comment (~150 tokens), 1 yes/no question | **48 ms** (p90 49) | 165 ms (p90 187) | 334 ms (p90 415) |
+| Tool routing: a short chat and 5 tools (~400 tokens), 5 yes/no questions | **113 ms** (p90 113) | 158 ms (p90 177) | 333 ms (p90 513) |
+| Support triage: a customer email (~1,000 tokens), choice, score and yes/no | 184 ms (p90 186) | **163 ms** (p90 188) | 284 ms (p90 463) |
+| Contract review: a services agreement (~3,400 tokens), choice and yes/no | 273 ms (p90 274) | **172 ms** (p90 181) | 344 ms (p90 397) |
+| Incident report: a postmortem (~8,500 tokens), 1 yes/no question | 483 ms (p90 485) | **219 ms** (p90 228) | 275 ms (p90 341) |
 
-linden-1 is fastest on short requests and steady at every size; Jev 1.14 is faster on
-inputs from about 1,000 tokens.
+linden-1 was measured on one NVIDIA B300 serving it alone, with the client on the same host. Jev 1.14 and GPT-6 Luna
+were measured through their public APIs from a client about 15 ms from their endpoints, so their times include a short
+network hop and their API layers. linden-1 is fastest on short requests and steady at every size; Jev 1.14 is faster on
+inputs from about 1,000 tokens, where linden-1 reads short inputs twice for accuracy and its cost grows with input
+length.
 
 ## Using linden-1
 

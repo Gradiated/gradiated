@@ -1,0 +1,8 @@
+decide-1 is a modified version of PelaAI/KnowLine-31B-Gen1.5 (revision 56ca884a8e3195c9c0786a4ec22e651669d04ba9),
+made by Gradiated in November 2026.
+
+- Weights: 0.5 x KnowLine-31B-Gen1.5 + 0.5 x a full fine-tune of it (two stages, about 520M tokens of public data; see
+  README.md). Every tensor is a linear interpolation of the two; no tensor was added or removed.
+- README.md: replaced with decide-1's model card. README.zh.md (KnowLine's Chinese card) is not included.
+- Unchanged from KnowLine-31B-Gen1.5: config, tokenizer, chat template, processor config, temperatures.json,
+  knowline_server.py, knowline_layout.py, knowline_engine.py, serve_knowline.sh, INFERENCE.md and LICENSE.

@@ -133,7 +133,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/systemone-sdk/": {
     title: "SystemOne SDK",
     description:
-      "Use Decider with the TypeSafe SystemOne SDK on Gradiated. Copy Python, Node, and cURL examples for choices, probabilities, and scores.",
+      "Use linden-1 with the TypeSafe SystemOne SDK on Gradiated. Copy Python, Node, and cURL examples for choices, probabilities, and scores.",
   },
   "/docs/service-tiers/": {
     title: "Service tiers",

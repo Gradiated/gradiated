@@ -226,9 +226,9 @@ it("identifies Dealign weights separately from the stock training base", () => {
   });
 });
 
-it("lists text-only linden-1, unavailable until its pool serves, with no external provider or training capability", () => {
+it("serves text-only linden-1 with no external provider or training capability", () => {
   const model = catalogModels.find((item) => item.id === "gradiated/linden-1");
-  expect(model?.status).toBe("unavailable");
+  expect(model?.status).toBe("available");
   expect(
     model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
   ).toBeNull();

@@ -9,7 +9,7 @@ export const createLinden1ModelConfiguration = () =>
   ({
     id: linden1ModelId,
     name: modelDisplayName(linden1ModelId),
-    status: "unavailable",
+    status: "available",
     openrouterModelId: null,
     properties: {
       description:

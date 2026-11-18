@@ -1,8 +1,8 @@
 # SystemOne SDK
 
-<DocsLead>Use the TypeSafe SDK to ask Decider for decisions. Set your Gradiated base URL, API key, and model, then send a state and named questions.</DocsLead>
+<DocsLead>Use the TypeSafe SDK to ask linden-1 for decisions. Set your Gradiated base URL, API key, and model, then send a state and named questions.</DocsLead>
 
-Decider v1.2 27B is an open decision model that Gradiated serves through the native SystemOne API. If you already use TypeSafe's SDK for Jev, use the same client with `perplexity-ai/pplx-decider-v1.2` on Gradiated. This selects Decider; `jev-latest` is not a Gradiated model alias.
+linden-1 31B is Gradiated's open decision model, served through the native SystemOne API. If you already use TypeSafe's SDK for Jev, use the same client with `gradiated/linden-1` on Gradiated. This selects linden-1; `jev-latest` is not a Gradiated model alias.
 
 ## Install
 
@@ -39,7 +39,7 @@ from typesafe_sdk import Choice, TypeSafeClient
 with TypeSafeClient(
     base_url="https://api.gradiated.com",
     api_key=os.environ["GRADIATED_API_KEY"],
-    model="perplexity-ai/pplx-decider-v1.2",
+    model="gradiated/linden-1",
 ) as client:
     response = client.system_one(
         state={"ticket": "I was charged twice. Please fix this today."},
@@ -68,7 +68,7 @@ import { choice, TypeSafeClient } from "@typesafe-ai/sdk";
 const client = new TypeSafeClient({
   baseURL: "https://api.gradiated.com",
   apiKey: process.env.GRADIATED_API_KEY,
-  defaultModel: "perplexity-ai/pplx-decider-v1.2",
+  defaultModel: "gradiated/linden-1",
 });
 
 const response = await client.systemOne({
@@ -94,7 +94,7 @@ curl https://api.gradiated.com/v1/systemone \
   -H "Authorization: Bearer $GRADIATED_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "perplexity-ai/pplx-decider-v1.2",
+    "model": "gradiated/linden-1",
     "state": {"ticket": "I was charged twice. Please fix this today."},
     "questions": {
       "category": {
@@ -129,7 +129,7 @@ from typesafe_sdk import Noul, Score, TypeSafeClient
 with TypeSafeClient(
     base_url="https://api.gradiated.com",
     api_key=os.environ["GRADIATED_API_KEY"],
-    model="perplexity-ai/pplx-decider-v1.2",
+    model="gradiated/linden-1",
 ) as client:
     response = client.system_one(
         state={"ticket": "I was charged twice. Please fix this today."},
@@ -155,7 +155,7 @@ import { noul, score, TypeSafeClient } from "@typesafe-ai/sdk";
 const client = new TypeSafeClient({
   baseURL: "https://api.gradiated.com",
   apiKey: process.env.GRADIATED_API_KEY,
-  defaultModel: "perplexity-ai/pplx-decider-v1.2",
+  defaultModel: "gradiated/linden-1",
 });
 
 const response = await client.systemOne({
@@ -181,10 +181,10 @@ console.log(response.answers.urgency.score);
 
 ## Supported requests
 
-Decider accepts 1–64 named questions per request. A choice has 1–255 options; a score has 2–255 ordered criteria. Keep requests small: the hosted runtime limits bodies to 1 MiB and packed inputs to 8,192 tokens. Multiple questions also consume the input budget.
+linden-1 accepts 1–64 named questions per request. A choice has 1–255 options and a score 1–255 ordered criteria; a single option or level is answered with certainty. Instructions are optional: a question without them is asked through its criteria alone. States are text, JSON or a text-only chat; images and other media are not supported. The hosted runtime limits bodies to 1 MiB and each question's prompt, including the state, to 32,768 tokens.
 
-Use the native SystemOne endpoint for Decider. It returns all answers in one response, with no streaming or text generation parameters such as `max_tokens` or `temperature`. Only the `default` service tier is supported; omit `service_tier` to use it.
+Use the native SystemOne endpoint for linden-1. It returns all answers in one response, with no streaming or text generation parameters such as `max_tokens` or `temperature`. Only the `default` service tier is supported; omit `service_tier` to use it.
 
-Usage counts input tokens, including question tokens. Generated output tokens are zero. See [errors and retries](/docs/errors/) for handling rejected requests and rate limits.
+Usage counts the tokens linden-1 reads: the prompt shared by all questions once, plus each question's own part. A request of up to about 3,000 tokens is read twice, so it counts roughly twice its length. Generated output tokens are zero. See [errors and retries](/docs/errors/) for handling rejected requests and rate limits.
 
 SDK reference: [Python](https://github.com/typesafe-ai/typesafe-sdk-python) · [JavaScript](https://github.com/typesafe-ai/typesafe-sdk-js).

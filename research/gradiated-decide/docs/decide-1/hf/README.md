@@ -27,8 +27,8 @@ linden-1 is a fine-tune of [Gemma 4 31B](https://huggingface.co/google/gemma-4-3
 
 ## Results
 
-This is how linden-1 compares against TypeSafe Jev 1.14 and GPT-6 Luna on the six text benchmarks of Google's Gemini Decision 1 launch
-table. Accuracy (%) unless noted; higher is better except calibration error.
+This is how linden-1 compares against TypeSafe Jev 1.14 and GPT-6 Luna on the public Decision Index and the six text
+benchmarks of Google's Gemini Decision 1 launch table. Accuracy (%) unless noted; higher is better except calibration error.
 
 | Benchmark | **linden-1** | TypeSafe Jev 1.14 | GPT-6 Luna |
 |---|---|---|---|

@@ -1,4 +1,5 @@
 use std::{
+    io::{self, Write},
     net::SocketAddr,
     sync::{
         atomic::{AtomicUsize, Ordering},
@@ -48,6 +49,8 @@ const RETRY_DELAY: Duration = Duration::from_millis(250);
 const MAX_POSTS_IN_FLIGHT: usize = 8;
 /// How long a resolved set of collector replicas is used before resolving again.
 const RESOLVE_INTERVAL: Duration = Duration::from_secs(5);
+/// The batch body grows by half or at least this much, budget permitting.
+const SINK_STEP: usize = 64 * 1024;
 
 #[derive(Clone, Debug)]
 pub struct CaptureSettings {
@@ -138,15 +141,18 @@ impl Capture {
         let (queue, receiver) = mpsc::unbounded_channel();
         let (stop, stopped) = oneshot::channel();
 
+        let budget = Arc::new(Semaphore::new(settings.buffer_bytes));
+
         let capture = Self {
             inner: Some(Arc::new(Inner {
                 queue,
-                budget: Arc::new(Semaphore::new(settings.buffer_bytes)),
+                budget: budget.clone(),
                 metrics: metrics.clone(),
             })),
         };
         let collector = Collector {
             client,
+            budget,
             targets,
             token: settings.collector_token,
             metrics,
@@ -306,6 +312,7 @@ pub enum CaptureError {
 
 struct Collector {
     client: Client,
+    budget: Arc<Semaphore>,
     targets: Targets,
     token: String,
     metrics: Metrics,
@@ -481,7 +488,89 @@ impl<F: Field> Serialize for Body<'_, F> {
 #[derive(Default)]
 struct Batch {
     body: Vec<u8>,
-    budget: Vec<OwnedSemaphorePermit>,
+    /// Permits for the body's whole capacity, held until its post ends.
+    held: Option<OwnedSemaphorePermit>,
+    lines: u64,
+}
+
+/// Serializes a line straight into the batch, taking budget before the body
+/// grows, so escaping or base64 can never allocate past the capture budget.
+/// A generation's own permits pay first: its captured bytes, freed when the
+/// line is done, are the one allocation outside the budget while it is written.
+struct Sink<'a> {
+    batch: &'a mut Batch,
+    budget: &'a Arc<Semaphore>,
+    own: Option<OwnedSemaphorePermit>,
+    end: usize,
+    refused: Option<CaptureResult>,
+}
+
+/// Takes `n` permits, from the generation's own first and the budget for the rest.
+fn take(
+    own: &mut Option<OwnedSemaphorePermit>,
+    budget: &Arc<Semaphore>,
+    n: usize,
+) -> Option<OwnedSemaphorePermit> {
+    let mine = own
+        .as_ref()
+        .map_or(0, OwnedSemaphorePermit::num_permits)
+        .min(n);
+    let mut taken = if n > mine {
+        Some(
+            budget
+                .clone()
+                .try_acquire_many_owned((n - mine) as u32)
+                .ok()?,
+        )
+    } else {
+        None
+    };
+    if let Some(part) = own.as_mut().and_then(|own| own.split(mine)) {
+        match &mut taken {
+            Some(taken) => taken.merge(part),
+            None => taken = Some(part),
+        }
+    }
+    taken
+}
+
+impl Write for Sink<'_> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        let len = self.batch.body.len() + buf.len();
+        if len > self.end {
+            self.refused = Some(CaptureResult::TooLarge);
+            return Err(io::Error::other("line too large"));
+        }
+
+        let held = self
+            .batch
+            .held
+            .as_ref()
+            .map_or(0, OwnedSemaphorePermit::num_permits);
+        if len > held {
+            let step = len.max(held + held / 2).max(SINK_STEP).min(self.end);
+            let mut acquire = |target: usize| {
+                take(&mut self.own, self.budget, target - held).map(|permit| (target, permit))
+            };
+            let Some((target, more)) = acquire(step).or_else(|| acquire(len)) else {
+                self.refused = Some(CaptureResult::Full);
+                return Err(io::Error::other("capture budget full"));
+            };
+            match &mut self.batch.held {
+                Some(permit) => permit.merge(more),
+                held => *held = Some(more),
+            }
+            let reserve = target - self.batch.body.len();
+            self.batch.body.reserve_exact(reserve);
+        }
+
+        self.batch.body.extend_from_slice(buf);
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
 }
 
 impl Collector {
@@ -539,6 +628,17 @@ impl Collector {
         let generation = queued.generation;
         let relay = &generation.relay;
 
+        let encoded: usize = [&relay.request[..], &generation.response[..]]
+            .into_iter()
+            .filter(|bytes| std::str::from_utf8(bytes).is_err())
+            .map(|bytes| bytes.len().div_ceil(3) * 4)
+            .sum();
+        let mut own = Some(generation.budget);
+        let Some(_encoded) = take(&mut own, &self.budget, encoded) else {
+            self.metrics.record_captures(CaptureResult::Full, 1);
+            return;
+        };
+
         let line = Line {
             schema: if relay.hosted {
                 "gradiated.hosted/1"
@@ -564,25 +664,37 @@ impl Collector {
             response: Body::new(&generation.response, ResponseField),
         };
         let start = batch.body.len();
-        serde_json::to_writer(&mut batch.body, &line).expect("a relay line always serializes");
-        batch.body.push(b'\n');
+        let mut sink = Sink {
+            batch,
+            budget: &self.budget,
+            own,
+            end: start + MAX_LINE_BYTES,
+            refused: None,
+        };
         // JSON escaping and base64 can grow a body past the collector's limit;
         // the bound is on the line as sent.
-        if batch.body.len() - start > MAX_LINE_BYTES {
+        let written = serde_json::to_writer(&mut sink, &line)
+            .map_err(|_| ())
+            .and_then(|()| sink.write_all(b"\n").map_err(|_| ()));
+        let refused = sink.refused;
+        if written.is_err() {
             batch.body.truncate(start);
-            self.metrics.record_captures(CaptureResult::TooLarge, 1);
+            self.metrics
+                .record_captures(refused.unwrap_or(CaptureResult::Full), 1);
             return;
         }
-        batch.budget.push(generation.budget);
+        batch.lines += 1;
     }
 
     async fn post(&self, batch: Batch) {
-        if batch.budget.is_empty() {
+        let Batch { body, held, lines } = batch;
+        if lines == 0 {
             return;
         }
 
-        let count = batch.budget.len() as u64;
-        let body = Bytes::from(batch.body);
+        let _held = held;
+        let count = lines;
+        let body = Bytes::from(body);
         let timeout = post_timeout(body.len());
         let send = |url: Url| {
             self.client

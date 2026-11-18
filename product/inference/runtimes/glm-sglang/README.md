@@ -275,4 +275,4 @@ CPU verification does not qualify GPU kernels or gateway behavior. The packaged
 runtime still requires cold-cache GPU startup, actual local-gateway tests for
 streaming, tools, overload, failover and cancellation, and the authorized canary
 before a slow production rollout. Publishing the artifact alone does not change
-production selection; the existing vLLM bundle remains available for rollback.
+production selection; roll back to the previous SGLang runtime in the catalogue.

@@ -144,6 +144,7 @@ pub(super) struct RuntimeCall {
     pub(super) runtime: Arc<dyn ModelRuntime>,
     pub(super) external_runtime: Option<Arc<dyn ExternalCapacity>>,
     pub(super) generation_id: Uuid,
+    pub(super) organization_id: Uuid,
     pub(super) workspace_id: Uuid,
     pub(super) request: InferenceRequest,
     pub(super) effective_output_tokens: u64,
@@ -368,6 +369,7 @@ impl RuntimeCall {
                     .expect("only a configured client plans external capacity"),
                 request: ExternalRequest {
                     generation_id: self.generation_id,
+                    organization_id: self.organization_id,
                     workspace_id: self.workspace_id,
                     model: model.clone(),
                     request,
@@ -508,6 +510,7 @@ impl RuntimeCall {
             runtime,
             external_runtime: None,
             generation_id: Uuid::now_v7(),
+            organization_id: Uuid::now_v7(),
             workspace_id: Uuid::now_v7(),
             request,
             effective_output_tokens,

@@ -1011,6 +1011,15 @@ gets our own capacity's answer as above.
 
 ### Requests sent
 
+`FALLBACK_PROVIDER_RESTRICTIONS` in `runtime/openrouter.rs` maps authenticated
+organization IDs to strict provider allowlists. Add entries there for new
+organization restrictions. PostHog (`01a01fdd-37b5-7305-a913-aa3dc782c81c`)
+also sends `provider.only: ["baseten", "modal"]` on every OpenRouter
+attempt, across all workspaces and request protocols. This strict allowlist
+preserves the privacy and price limits below; if no approved endpoint matches,
+external capacity fails without widening the list. Other organizations do not
+receive this provider restriction.
+
 The body holds the qualified fields, `model` set to the mapping, the effective
 output limit, `provider: {data_collection: "deny", require_parameters: true,
 zdr: true, max_price}` on every request, context compression disabled,

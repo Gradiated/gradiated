@@ -27,6 +27,10 @@ use gradiated_credentials::{CredentialLoader, Provider};
 const STREAM_ADMISSION_PEEK: Duration = Duration::from_secs(1);
 const REJECTION_READ: Duration = Duration::from_millis(250);
 const MAX_PROVIDER_NAME_CHARS: usize = 100;
+pub(super) const POSTHOG_ORGANIZATION_ID: Uuid =
+    Uuid::from_u128(0x01a01fdd37b57305a913aa3dc782c81c);
+const FALLBACK_PROVIDER_RESTRICTIONS: &[(Uuid, &[&str])] =
+    &[(POSTHOG_ORGANIZATION_ID, &["baseten", "modal"])];
 
 /// Advertised parameters OpenRouter does not understand. It ignores rather than
 /// rejects them, so a request carrying one stays on our capacity.
@@ -196,6 +200,7 @@ impl OpenRouterClient {
 
     fn body(&self, request: ExternalRequest) -> Value {
         let ExternalRequest {
+            organization_id,
             workspace_id,
             model,
             request,
@@ -224,6 +229,14 @@ impl OpenRouterClient {
                 },
             }),
         );
+
+        if let Some((_, providers)) = FALLBACK_PROVIDER_RESTRICTIONS
+            .iter()
+            .find(|(organization, _)| *organization == organization_id)
+        {
+            body["provider"]["only"] = json!(providers);
+        }
+
         // Context compression is on by default for small-context endpoints and
         // would silently drop the middle of a prompt.
         body.insert(

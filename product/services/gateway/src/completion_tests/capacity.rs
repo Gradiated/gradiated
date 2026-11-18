@@ -62,6 +62,10 @@ async fn a_mapped_model_without_deployments_is_served_and_billed_at_catalog_pric
     assert_eq!(sent[0].request.model, "model-a");
     assert_eq!(sent[0].workspace_id, harness.request.identity.workspace_id);
     assert_eq!(
+        sent[0].organization_id,
+        harness.request.identity.organization_id
+    );
+    assert_eq!(
         sent[0].output_tokens,
         harness.request.effective_output_tokens
     );

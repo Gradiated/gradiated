@@ -59,6 +59,7 @@ fn request(body: Value) -> ExternalRequest {
 
     ExternalRequest {
         generation_id: GENERATION_ID,
+        organization_id: Uuid::from_u128(1),
         workspace_id: WORKSPACE_ID,
         model: ExternalModel::openrouter(UPSTREAM_MODEL),
         request,
@@ -230,6 +231,51 @@ async fn sends_the_mapped_model_with_privacy_routing_and_only_the_platform_key()
     assert_ne!(session, "session-key");
     for runtime_field in ["priority", "stream_options", "service_tier"] {
         assert!(body.get(runtime_field).is_none(), "{runtime_field}");
+    }
+}
+
+#[tokio::test]
+async fn posthog_fallbacks_only_allow_approved_providers_for_every_workspace_and_transport() {
+    for streaming in [false, true] {
+        for organization_id in [
+            crate::runtime::openrouter::POSTHOG_ORGANIZATION_ID,
+            Uuid::now_v7(),
+        ] {
+            for workspace_id in [WORKSPACE_ID, Uuid::now_v7()] {
+                let mock = if streaming {
+                    MockRuntime::builder()
+                        .sse(PATH, &measured_stream())
+                        .start()
+                        .await
+                } else {
+                    mock_json(StatusCode::OK, completion()).await
+                };
+                let mut request = if streaming { streaming_chat() } else { chat() };
+                request.organization_id = organization_id;
+                request.workspace_id = workspace_id;
+
+                let client = client(&mock).await;
+                if streaming {
+                    collect(client.stream(request).await.unwrap()).await;
+                } else {
+                    client.complete(request).await.unwrap();
+                }
+
+                let recorded = mock.requests();
+                assert_eq!(recorded.len(), 1);
+                let mut provider = json!({
+                    "data_collection": "deny",
+                    "require_parameters": true,
+                    "zdr": true,
+                    "max_price": {"prompt": 0.15, "completion": 0.5}
+                });
+                if organization_id == crate::runtime::openrouter::POSTHOG_ORGANIZATION_ID {
+                    provider["only"] = json!(["baseten", "modal"]);
+                }
+
+                assert_eq!(recorded[0].body["provider"], provider);
+            }
+        }
     }
 }
 

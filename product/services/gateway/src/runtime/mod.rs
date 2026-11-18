@@ -60,6 +60,7 @@ pub trait ExternalCapacity: Send + Sync {
 
 pub struct ExternalRequest {
     pub generation_id: Uuid,
+    pub organization_id: Uuid,
     pub workspace_id: Uuid,
     pub model: ExternalModel,
     pub request: InferenceRequest,

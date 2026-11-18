@@ -600,6 +600,7 @@ impl Generation {
             runtime: self.runtime,
             external_runtime: self.external,
             generation_id: metadata.generation_id,
+            organization_id: identity.organization_id,
             workspace_id: identity.workspace_id,
             request,
             effective_output_tokens,

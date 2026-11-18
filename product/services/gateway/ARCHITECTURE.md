@@ -1021,13 +1021,21 @@ reasoning prices, which OpenRouter bills alike), so OpenRouter routes only to
 providers that cost no more than the caller pays, except for hardcoded
 operator-approved allowances.
 `openrouter::MODEL_MAX_PRICE` sets absolute ceilings independent of the
-request's service-tier price. For `moonshotai/kimi-k3.1-pro`, these are $2 input
-and $10 output per million tokens: the separate prompt and completion medians
-across the 24 listed [OpenRouter endpoints](https://openrouter.ai/api/v1/models/moonshotai/kimi-k3.1-pro/endpoints)
-on 2026-11-13. These are fixed operator-approved values, with no runtime price
-lookup or percentage adjustment. Flex and other service tiers use the same ceilings.
-For `deepseek/deepseek-v4.1-flash-1017`, the ceilings are $0.30 input and $1.20
-output per million tokens, covering Modal and the common standard provider tier.
+request's service-tier price. These are fixed operator-approved values: the
+separate prompt and completion maxima across standard-tier Baseten and Modal
+endpoints listed by OpenRouter on 2026-11-17, excluding fast and priority endpoints:
+
+- [`deepseek/deepseek-v4.1-flash-1017`](https://openrouter.ai/api/v1/models/deepseek/deepseek-v4.1-flash-1017/endpoints):
+  $0.30 input and $1.20 output per million tokens (Baseten standard; Modal is
+  $0.25/$1.00).
+- [`z-ai/glm-5.3-flash`](https://openrouter.ai/api/v1/models/z-ai/glm-5.3-flash/endpoints):
+  $0.15 input and $0.50 output per million tokens (both providers match).
+- [`moonshotai/kimi-k3.1-pro`](https://openrouter.ai/api/v1/models/moonshotai/kimi-k3.1-pro/endpoints):
+  $2 input and $10 output per million tokens (Modal; no Baseten endpoint listed).
+
+There is no runtime price lookup or percentage adjustment. Flex and other
+service tiers use the same ceilings. These caps do not restrict provider selection
+to Baseten or Modal; other eligible endpoints may serve within the same caps.
 Gradiated absorbs any difference from the captured catalog prices and does not
 require a local replica for fallback. `max_price` has no
 cached-input field and OpenRouter ignores unknown ones, so a provider's

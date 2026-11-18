@@ -26,16 +26,6 @@ text.
 linden-1 is a fine-tune of [Gemma 4 31B](https://huggingface.co/google/gemma-4-31B-it). We started from the
 [KnowLine-31B-Gen1.5](https://huggingface.co/PelaAI/KnowLine-31B-Gen1.5) checkpoint and trained it on 520M tokens of public decision data (see [Training](#training)).
 
-## Where did the name come from?
-
-linden-1 is named after the linden tree (lime in British English). In medieval Germany, village courts and
-assemblies met outdoors under a linden in the middle of the village. People brought their disputes, the case was
-heard, and a judgment was given there and then. Records of the time say judgments were given *sub tilia*, "under the
-linden", and some of these court lindens (*Gerichtslinden*) still stand.
-
-That is the idea behind the model. You bring it a state and a question, it weighs every option, and it gives a
-judgment straight away: one forward pass, a probability for each option and no deliberation in text.
-
 ## Results
 
 This is how linden-1 compares against TypeSafe Jev 1.14 and GPT-6 Luna on the six text benchmarks of Google's Gemini Decision 1 launch
@@ -107,6 +97,16 @@ decontaminated, but these are in-distribution results.
 
 - **Yes/no lean.** With no evidence either way, `noul` answers lean towards yes.
 - **Languages.** Trained and evaluated mostly in English, so performance outside of that has not been measured.
+
+## Where did the name come from?
+
+linden-1 is named after the linden tree (lime in British English). In medieval Germany, village courts and
+assemblies met outdoors under a linden in the middle of the village. People brought their disputes, the case was
+heard, and a judgment was given there and then. Records of the time say judgments were given *sub tilia*, "under the
+linden", and some of these court lindens (*Gerichtslinden*) still stand.
+
+That is the idea behind the model. You bring it a state and a question, it weighs every option, and it gives a
+judgment straight away: one forward pass, a probability for each option and no deliberation in text.
 
 ## Licence
 

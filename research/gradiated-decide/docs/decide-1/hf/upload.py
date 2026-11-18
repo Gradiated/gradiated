@@ -7,7 +7,7 @@ gets, in STAGING_DIR (hard links, no copies of the weights):
 - from MERGE_DIR: the weights, index, config, generation config, tokenizer, chat template and processor config;
 - from PelaAI/KnowLine-31B-Gen1.5 at the pinned revision (the code the production runtime pins): the serving code,
   temperatures, INFERENCE.md, LICENSE and .gitattributes;
-- from this directory: README.md (the model card) and MODIFICATIONS;
+- from this directory: README.md (the model card);
 - SHA256SUMS of every file, written here.
 The repo is created private unless --public; make it public on the Hub (or rerun with --public) once checked.
 """
@@ -48,8 +48,7 @@ def stage(merge: Path, out: Path) -> None:
         os.link(src, out / src.name)
     for name in FROM_KNOWLINE:
         shutil.copy(hf_hub_download(KNOWLINE, name, revision=KNOWLINE_REVISION), out / name)
-    for name in ("README.md", "MODIFICATIONS"):
-        shutil.copy(HERE / name, out / name)
+    shutil.copy(HERE / "README.md", out / "README.md")
     files = [p for p in sorted(out.iterdir()) if p.is_file() and p.name not in (".gitattributes", "SHA256SUMS")]
     sums = [f"{sha256(p)}  {p.name}" for p in files]
     (out / "SHA256SUMS").write_text("\n".join(sums) + "\n")

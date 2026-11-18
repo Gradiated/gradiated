@@ -2785,6 +2785,32 @@
   font-weight: 500;
 }
 
+.gr-prose .gr-prose-quote-image {
+  width: 66.6667%;
+}
+
+.gr-prose .gr-prose-quote-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.gr-prose .gr-prose-quote-image figcaption {
+  margin-block-start: 0.7em;
+  padding-block-start: 0.55em;
+  border-block-start: 1px solid var(--color-rule);
+  color: var(--color-text-muted);
+  font-size: var(--text-note);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .gr-prose .gr-prose-quote-image {
+    width: 100%;
+  }
+}
+
 .gr-prose blockquote {
   padding-inline-start: 1em;
   border-inline-start: 2px solid var(--color-rule);

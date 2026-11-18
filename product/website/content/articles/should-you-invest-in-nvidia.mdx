@@ -1,0 +1,122 @@
+---
+title: "Should you invest in NVIDIA?"
+path: /library/should-you-invest-in-nvidia/
+category: notes
+status: draft
+publishedAt: "2026-11-17"
+---
+It's the most valuable company in the world. We thought it would be interesting to create a point of view on what's going on with this rather well known chip designer. NVIDIA [just reported $115.8bn of quarterly revenue](https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Announces-Financial-Results-for-Third-Quarter-Fiscal-2027/default.aspx) and, at roughly a $3.7tn market value, trades at about 8× its latest-quarter revenue annualised—but it can still be a great business and a bad investment if that price assumes decades of extraordinary growth, margins and dominance.
+
+## How NVIDIA got so big
+
+They say you can't drive by looking in the rear view mirror, but if you know the roads well, maybe! Let's look backwards to build a little context on why NVIDIA became a giant.
+
+NVIDIA first spent a decade winning the PC graphics market, building the chip-design expertise and installed base that would later let it turn GPUs into general-purpose computers. This got it to around $22bn in value ahead of the first AI breakthrough ([AlexNet](https://papers.nips.cc/paper_files/paper/2012/file/c399862d3b9d6b76c8436e924a68c45b-Paper.pdf)) and when CUDA really took off. CUDA is NVIDIA's programming platform for treating its GPUs as parallel computers rather than just graphics hardware, bundling the programming model, compiler, drivers, libraries and developer tools into one stack.
+
+Competitors could offer capable chips, but not the same ready-made environment. A CUDA workload came with mature libraries, profilers, documentation, framework support and developers who already knew the tools; moving it to AMD or another accelerator meant porting, retuning and revalidating the software before trusting it in production. NVIDIA's moat was therefore not simply a faster chip, but CUDA's position as the default target for GPU software. The more hardware it installed, the more developers turned up, which led to better libraries and framework support, less deployment risk, and ultimately more hardware purchases.
+
+NVIDIA sold more than capable chips: it supplied GPUs, NVLink/NVSwitch networking, complete systems, libraries, profilers, support and an upgrade path. This mattered because an AI cluster is only as effective as the whole system: thousands of GPUs must exchange data quickly, remain busy and run reliable, supported software. Owning more of that stack let NVIDIA offer predictable performance and faster deployment with fewer integration problems, so a rival chip had to be not merely cheaper or faster, but good enough to justify rebuilding and revalidating the surrounding system.
+
+AMD's chips could be technically capable without matching adoption: customers also had to port, validate and tune software, retrain operators, reproduce reliability and wait for model/framework support. That matters because a chip that is cheaper on paper can be more expensive overall once engineering time, delayed deployment, lower utilisation and production risk are included. AMD therefore had to be materially better or cheaper—not merely comparable—to make switching worthwhile, while its smaller user base meant fewer developers improving its software ecosystem.
+
+By the time ChatGPT launched, NVIDIA was already worth $390bn: AI had spent a decade growing out of public view in research and data centres, while gaming, CUDA and networking had transformed NVIDIA from a graphics-card maker into a computing platform.
+
+# Is CUDA as strong a moat for inference?
+
+This is where things get interesting. Inference is becoming the majority of AI workloads. Estimates put it at roughly 55–60% of data-centre AI compute today: [AMD projects a 60/40 inference-to-training split for 2026](https://newsroom.amd.com/documents/2026/07/2a710b7d-c107-4639-8855-fa9366f83967.pdf), while a [Bloom Energy survey](https://www.bloomenergy.com/wp-content/uploads/power-report-2026-mid-year-pulse-final.pdf) also places inference above half.
+
+My bet is that inference _may_ be where people stop caring about CUDA as much, and this is a big deal. Let's contrast the workloads.
+
+In training, you need flexibility. Frontier models have repeatably changed, and I find it hard to imagine there won't be more architectural shifts to come - by design to keep driving step changes in capability. After all, your human brain runs on far fewer watts than your agent, and yet it has many skills that are still far from possible today for AI. Self improvement, goal setting and a sense of purpose, an abstracted sense of reality and so on.
+
+Production inference optimizes a known model once then serves it many times. Given that many LLMs now are more than good enough to power production workloads, people are shifting workloads over to non frontier. As I write this today, a great example was OpenAI's 6.2 Sol. Influencers were up in arms at how "terrible" it is. An engineer at PostHog put it best:
+
+<figure className="gr-prose-quote-image">
+  <img src="/assets/editorial/mad-lad-radu.png" alt="PostHog engineer Radu Raicea saying he used Astra all day and saw no difference in anything" />
+  <figcaption>— Radu, PostHog engineer, talking about OpenAI's latest model</figcaption>
+</figure>
+
+- Framework path versus custom-kernel path: how much CUDA-specific code remains when serving through PyTorch, vLLM, SGLang, Triton or vendor libraries?
+- Real switching costs to test: porting and kernel work; output equivalence; latency tails; failure recovery; observability; operator familiarity; support for a newly released architecture.
+- Counterpoint: inference is not static when model architectures, quantization formats, context lengths and serving techniques change quickly; NVIDIA can reassert the moat through fast day-one support and continuously optimized software.
+- Key empirical question: production cost per completed task on equivalent reliability and latency targets, not theoretical FLOPS or a one-off kernel result.
+
+## NVIDIA's largest customers are building alternatives
+
+The custom-silicon examples matter most because these customers are not merely choosing a different GPU vendor; they are trying to remove the merchant GPU from part of the stack.
+
+- **OpenAI/Broadcom:** Jalapeño is an OpenAI-designed inference accelerator, with engineering samples already in the lab and initial deployment targeted by the end of 2026. Inference is the logical place to begin: a stable, high-volume workload lets OpenAI sacrifice some generality for lower cost and power, while avoiding NVIDIA's margin. This is a direct attempt to own the economics of the chip rather than rent them from NVIDIA, although final performance measurement was still in progress when OpenAI announced it. Source: [OpenAI announcement](https://openai.com/index/openai-broadcom-jalapeno-inference-chip/).
+- **Anthropic/AWS:** Anthropic says Claude already trains and serves on more than one million AWS Trainium2 chips, with its April 2026 agreement expanding capacity across future Trainium generations. This is more than a roadmap: it is evidence that a frontier-model company can run substantial production workloads on a vertically integrated cloud chip and software stack outside NVIDIA's platform. AWS—not Anthropic—owns the silicon, but the strategic effect is the same: more of the value and bargaining power moves to NVIDIA's customer. Source: [Anthropic announcement](https://www.anthropic.com/news/anthropic-amazon-compute).
+- The other signals reinforce the direction without yet proving displacement: OpenAI has agreed to as much as 6 GW of AMD GPUs and Anthropic has announced up to 2 GW beginning in 2027, while one direct customer represented 16% of NVIDIA's latest reported quarterly revenue. Large commitments are not the same as deployed capacity or independently measured economics, but they give concentrated customers credible dual-sourcing leverage. Sources: [AMD/OpenAI agreement](https://ir.amd.com/financial-information/sec-filings/content/0001193125-25-230895/d28189dex991.htm), [AMD/Anthropic plan](https://ir.amd.com/news-events/press-releases/detail/1294/aai-2026-amd-delivers-full-stack-compute-for-the-agentic-ai-era), [NVIDIA Q2 FY2027 10-Q](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/nvda-20260726.htm).
+
+## Will chip design become trivial?
+
+Many see the current state of things that chip design could be in its GPT-3.5 era. ie the AI chip design stuff is interesting, not transformative - but it will be.
+
+Perhaps not trivial, but much less scarce. Google's reinforcement-learning system produces chip floorplans in hours rather than weeks or months, and its layouts have been used in the last three generations of Google's TPUs. Commercial tools have moved beyond demonstrations: Synopsys says its AI-assisted design suite has contributed to hundreds of tapeouts, with up to 10× faster turnaround on parts of the flow. Sources: [Google DeepMind on AlphaChip](https://deepmind.google/blog/how-alphachip-transformed-computer-chip-design/), [Synopsys production results](https://investor.synopsys.com/news/news-details/2024/Synopsys-Announces-New-AI-Driven-EDA-IP-and-Systems-Design-Solutions-At-SNUG-Silicon-Valley/default.aspx).
+
+Verification may be the more important breakthrough. Generating a plausible design is not enough: teams must prove that it behaves correctly across edge cases and closes timing, power and coverage before committing to an expensive tapeout. AI is beginning to generate tests, diagnose failures and close coverage; Google researchers report reducing one verification-model task from six weeks to three days, while Synopsys reports four-times-faster testing at the same coverage. These are meaningful reductions in individual steps, not evidence that an entire chip can move from idea to production ten times faster: sign-off, masks, fabrication, advanced packaging, bring-up and software still remain. Sources: [Google verification research](https://research.google/pubs/immutable-truths-as-simulation-drivers-an-ai-powered-workflow-for-translating-architectural-formal-specifications-into-c-based-simulation-components-2/), [Synopsys results](https://investor.synopsys.com/news/news-details/2024/Synopsys-Announces-New-AI-Driven-EDA-IP-and-Systems-Design-Solutions-At-SNUG-Silicon-Valley/default.aspx).
+
+The clearest beneficiary could be TSMC. If more cloud companies and startups can design credible accelerators, they can take those designs to the same neutral manufacturer. TSMC already made 12,682 products for 534 customers in 2025, and its Open Innovation Platform explicitly combines verified IP, design services, cloud tools, packaging and manufacturing to lower the barrier to a successful chip. Easier design could therefore broaden TSMC's customer base while concentrating more value in leading-edge fabrication and packaging. Sources: [TSMC 2025 annual report](https://investor.tsmc.com/static/annualReports/2025/english/index.html), [TSMC Open Innovation Platform](https://www.cld.tsmc.com/english/dedicatedFoundry/oip).
+
+For NVIDIA, this would weaken one layer of the moat, especially for stable inference workloads that a large customer can optimize into its own ASIC. NVIDIA is fabless, but it is no longer merely a chip designer: CUDA, networking, systems, support, supply access and the pace of its product roadmap still have to be replicated. The bear case is that AI-assisted design lets more customers bypass NVIDIA and send their own silicon to TSMC; the counterpoint is that NVIDIA gets the same design tools and has more proprietary data, engineers and capital with which to use them.
+
+Competitors are also chasing a moving target. NVIDIA updates the GPU, memory, networking, rack design and serving software together, and software improvements can make hardware faster after it has been installed. An alternative therefore has to beat NVIDIA's next system on real production economics—not merely today's chip on a benchmark. Chip design becoming easier would reduce NVIDIA's stranglehold, not automatically eliminate it.
+
+## China is becoming a separate competitive system
+
+- Current export-control baseline: BIS moved H200, MI325X and similar exports to China to case-by-case review subject to security conditions in January 2026; later rules and remote-access controls can change the addressable market. Source: [BIS policy announcement](https://www.bis.gov/press-release/department-commerce-revises-license-review-policy-semiconductors-exported-china).
+- Huawei: Atlas 950 SuperPoD uses Ascend 950DT chips and UnifiedBus; Huawei says the system scales to 8,192 NPUs. Treat performance and deployment claims as vendor-reported unless independently reproduced. Sources: [Huawei product announcement](https://www.huawei.com/en/news/2026/3/mwc-superpod-ai), [Huawei architecture update](https://www.huawei.com/en/news/2026/9/new-computing-architecture-peerium).
+- Moore Threads: MTT S5000 is the current training/inference/HPC GPU named in Chinese government reporting; MUSA is the software architecture. Treat cluster scale and cost-performance statements as company/government-reported, not independent benchmarks. Source: [Zhejiang government-hosted profile](https://www.ezhejiang.gov.cn/2026-11/05/c_1225783.htm).
+- Protected domestic demand creates scale for Chinese hardware, interconnects and software even if individual chips trail NVIDIA; system availability and local support may matter more than chip-level parity.
+- Investment question: export restrictions can protect NVIDIA technology while also accelerating a separate ecosystem NVIDIA may not later recover.
+
+## Open-weight models grow demand and weaken lock-in
+
+- More capable open-weight models can expand total inference: more products, more self-hosting, more fine-tuning and more workloads that were uneconomic behind a closed API.
+- Published weights also make repeated optimization, quantization, kernel specialization and validation on competing hardware easier than for a model available only through one provider.
+- NVIDIA is participating rather than resisting: Nemotron publishes open models plus deployment guides, fine-tuning recipes and agentic examples. Sources: [Nemotron deployment guides](https://docs.nvidia.com/nemotron/latest/deployment-guides.html), [Nemotron 3 Ultra technical post](https://developer.nvidia.com/blog/nvidia-nemotron-3-ultra-powers-faster-more-efficient-reasoning-for-long-running-agents/).
+- Tension to preserve: open weights may increase total GPU demand while reducing NVIDIA's pricing power per unit of useful inference.
+
+## Follow the money through the AI infrastructure chain
+
+NVIDIA can benefit from short replacement cycles even when its customers do not: each new generation creates another sale, while operators and lenders absorb the risk that older GPUs stop earning premium returns before they are fully paid off. Demand is only durable if a GPU earns enough over its economic life to cover its purchase price, financing, power, networking, data-centre costs and operations—not merely if it remains functional on an accounting depreciation schedule. CoreWeave explicitly warns that its estimates of GPU useful life and its ability to redeploy older infrastructure may be wrong. Source: [CoreWeave Q3 2026 10-Q](https://www.sec.gov/Archives/edgar/data/1769628/000176962826000465/crwv-20260930.htm).
+
+- Map: investors and lenders → neoclouds/data-centre developers → NVIDIA GPU and system purchases → model labs → products → paying end customers.
+- CoreWeave snapshot for the quarter ended 30 September 2026: $3.661bn revenue, $846m net interest expense and $709m net loss; nine-month cash flows included $5.6bn from operations, $24.7bn used in investing and $21.3bn from financing. Source: [CoreWeave Q3 2026 10-Q](https://www.sec.gov/Archives/edgar/data/1769628/000176962826000465/crwv-20260930.htm).
+- CoreWeave reported $132.3bn of remaining performance obligations at 30 September 2026; test cancellation rights, variable consideration, delivery conditions, customer concentration and the timing of revenue conversion instead of treating RPO as cash. Same source.
+- NVIDIA capacity support, equity investments, cloud commitments, guarantees or longer payment terms can reduce deployment friction but add counterparty exposure. NVIDIA's 10-Q describes AI-cloud commitments, data-centre support and extended terms for some investment-grade customers. Source: [NVIDIA Q2 FY2027 10-Q](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/nvda-20260726.htm).
+- Do not equate linked financing relationships with fake revenue; ask whether each transaction has a solvent end customer, arm's-length economics, enforceable obligations and cash conversion.
+
+## Demand can rise while cost per task falls
+
+- Efficiency levers: quantization, sparsity, better kernels, better scheduling, speculative decoding, smaller/specialized models and new chips.
+- Rebound effect: lower unit cost can unlock more usage, longer contexts, more parallel attempts and always-on agents.
+- Counter-effect: better models may complete the same job in fewer tokens, fewer retries or fewer tool calls; raw token growth can exaggerate economic value.
+- Measure useful AI spending and cost per completed task, including success rate, human time saved and latency—not tokens alone.
+- Key demand question: do long-running agents create durable paid workloads faster than software and hardware reduce the cost of each successful outcome?
+
+## Supply constraints create both scarcity and commitments
+
+- Current chain: advanced wafers and packaging at TSMC/Taiwan; HBM from SK hynix, Samsung and Micron; substrates, optics, networking, cooling, power, land and data-centre construction.
+- NVIDIA disclosed $279bn of supply and capacity commitments at 26 July 2026, up from $119bn one quarter earlier; these commitments support growth but create downside if demand or product mix changes. Source: [NVIDIA Q2 FY2027 10-Q](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/nvda-20260726.htm).
+- Same filing: a charge associated with excess H200 inventory and purchase obligations after demand diminished—evidence that replacement timing and product transitions already carry costs.
+- Power, land and shell availability can delay customer deployments even when GPUs exist; packaging or HBM can constrain finished systems even when wafers exist.
+- Terafab: keep as a longer-term question about additional semiconductor manufacturing capacity and vertical integration; do not present it as part of NVIDIA's current supply or as relief for today's TSMC/HBM/packaging constraints without a verified ownership, timetable and process-node plan.
+
+## Leadership and governance now belong in the thesis
+
+We should talk about this but not too much as it's overdone already...
+
+- Verified material change: NVIDIA's board accepted Jensen Huang's resignation as CEO, president and director on 11 November 2026; CFO Colette Kress became interim CEO and Harvey Jones became board chair. Source: [NVIDIA 8-K filed 12 November 2026](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000082/nvda-20261111.htm).
+- Separate facts in the 8-K from speculation about cause; the filing confirms the transition but does not state a reason for the resignation.
+- Investment questions: succession, retention of senior technical/commercial leaders, continuity of customer relationships, capital allocation and whether product-roadmap execution is institutional or founder-dependent.
+- [James: decide how much weight the leadership transition changes bull/base/bear probabilities; avoid repeating scandal details unless linked to a primary board or SEC document and directly relevant to valuation.]
+
+## Return to valuation
+
+- Bull scenario: [James: revenue growth, inference share, gross margin, terminal multiple, time horizon and probability.]
+- Bear scenario: [James: slower end-customer monetization, customer insourcing, AMD/custom-silicon/China pressure, shorter GPU replacement economics, margin compression and multiple contraction.]
+- What would increase confidence: competing systems fail to match NVIDIA's production economics across important workloads; customer revenue and cash flow catch up with infrastructure spend; NVIDIA sustains margins as supply expands.
+- What would reduce confidence: alternatives reach dependable scale; large customers gain bargaining leverage; utilization or AI product revenue misses infrastructure commitments; NVIDIA's margins fall faster than unit demand grows.
+- Decision rule: update the thesis on competitive production economics, end-customer revenue versus infrastructure spend and NVIDIA margins—not on headline benchmark records or aggregate token counts alone.

@@ -29,6 +29,7 @@ JEVBENCH_REVISION = "609a664e81f46e03731600bd7bd9f1b7a61257c5"
 PUBMEDQA = ("qiaojin/PubMedQA", "9001f2853fb87cab8d220904e0de81ac6973b318")
 GLOBAL_MMLU_LITE = ("CohereLabs/Global-MMLU-Lite", "36c2fd756f19ccf13a9a96c8e53ccecc02192b8b")
 SUITE_BENCHMARKS = {"Amazon ESCI": "Amazon ESCI", "When2Call MCQ": "When2Call", "New Yorker caption matching": "New Yorker"}
+API_BACKENDS = ("openai-decisions", "typesafe")
 ORDER = ["JevBench", "Amazon ESCI", "New Yorker", "PubMedQA", "Global-MMLU-Lite", "When2Call"]
 
 
@@ -125,20 +126,24 @@ def top(answer):
 
 
 def run(args):
-    import torch
-
-    from gdecide.evaluate import load_decider
-
     rank, world = int(os.environ.get("RANK", 0)), int(os.environ.get("WORLD_SIZE", 1))
     local = int(os.environ.get("LOCAL_RANK", 0))
-    torch.cuda.set_device(local)
+    if args.backend not in API_BACKENDS:
+        import torch
+
+        torch.cuda.set_device(local)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     path = out / f"predictions-{rank}.jsonl"
     done = {json.loads(line)["id"] for line in open(path)} if path.exists() else set()
     items = [json.loads(line) for i, line in enumerate(open(args.items)) if i % world == rank]
     items = [it for it in items if it["id"] not in done]
-    if args.backend == "mammoth":
+    if args.backend in API_BACKENDS:  # hosted APIs: evaluation only, answers never enter training data
+        from gdecide.backends import api
+
+        cls = api.OpenAIDecisions if args.backend == "openai-decisions" else api.TypeSafe
+        decider = cls(**({"model": args.model} if args.model else {}), workers=args.workers)
+    elif args.backend == "mammoth":
         from gdecide.backends.mammoth import MammothDecider
         decider = MammothDecider(args.checkpoint, f"cuda:{local}")
     elif args.backend == "knowline-http":
@@ -149,6 +154,8 @@ def run(args):
         decider = KnowLineDecider.from_pretrained(args.checkpoint, device=f"cuda:{local}", max_length=args.max_length,
                                                   batch_tokens=args.batch_tokens, temperature=1.0)
     else:
+        from gdecide.evaluate import load_decider
+
         decider = load_decider(args.checkpoint, None, f"cuda:{local}", args.max_length, args.batch_tokens)
     with open(path, "a") as f:
         for start in range(0, len(items), args.chunk):
@@ -245,7 +252,9 @@ def main() -> None:
     r.add_argument("--items", required=True)
     r.add_argument("--checkpoint", required=True)
     r.add_argument("--out", required=True)
-    r.add_argument("--backend", choices=["pplx", "knowline", "knowline-http", "mammoth"], default="pplx")
+    r.add_argument("--backend", choices=["pplx", "knowline", "knowline-http", "mammoth", *API_BACKENDS], default="pplx")
+    r.add_argument("--model", help="API backends: model ID (default gpt-6-luna / jev-1.14.0)")
+    r.add_argument("--workers", type=int, default=32, help="API backends: parallel requests")
     r.add_argument("--max-length", type=int, default=131072)
     r.add_argument("--batch-tokens", type=int, default=32768)
     r.add_argument("--chunk", type=int, default=64)

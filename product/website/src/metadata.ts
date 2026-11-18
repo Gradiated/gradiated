@@ -30,7 +30,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/": {
     title: "Run open models",
     description:
-      "Run open models through one API. Gradiated works across software, training, chips, and data centers to make them more capable and affordable.",
+      "Gradiated trains a router for your workload, using open models where they meet your quality requirements and frontier models where they’re needed.",
   },
   "/about/": {
     title: "About",

@@ -830,7 +830,7 @@ export const HomeFlow = (): ReactElement => {
             ))}
           </h2>
           <p className="gr-muted">
-            {"Once you move to your own model, we make money by offering you the inference. We’re designing our own chips to drive down your costs further than anyone else can."
+            {"We make money by running the open or post trained models your router sends work to. We’re designing our own chips to drive down the cost of that inference further than anyone else can."
               .split(" ")
               .map((w, i) => (
                 <span

@@ -43,6 +43,25 @@ benchmarks of Google's Gemini Decision 1 launch table. Accuracy (%) unless noted
 
 We ran all three models ourselves on the same items with the same scorer: Jev 1.14 through TypeSafe's API and GPT-6 Luna through OpenAI's Decisions API. A question a model refuses or cannot answer counts as wrong. Each question is asked in each provider's native format (yes/no, choice or score); prompts, options and states are identical. The Decision Index row is the full public suite of the [Decision Index](https://github.com/apolinario/decision-index) 0.3 edition, scored with the kit's own scorer; its benchmarks score skill above a baseline, so a model that leans to one answer scores near zero on them.
 
+## Latency
+
+Time to answer one request, sent one at a time: median and 90th percentile of 15 requests per case, each with a fresh
+request ID so no cache can answer it.
+
+| Request | linden-1 | TypeSafe Jev 1.14 | GPT-6 Luna |
+|---|---|---|---|
+| Moderation: a forum comment (~150 tokens), 1 yes/no question | **49 ms** (p90 50) | 172 ms (p90 212) | 281 ms (p90 385) |
+| Tool routing: a short chat and 5 tools (~400 tokens), 5 yes/no questions | **119 ms** (p90 120) | 159 ms (p90 180) | 375 ms (p90 419) |
+| Support triage: a customer email (~1,000 tokens), choice, score and yes/no | 187 ms (p90 190) | **166 ms** (p90 190) | 308 ms (p90 533) |
+| Contract review: a services agreement (~3,400 tokens), choice and yes/no | 275 ms (p90 277) | **178 ms** (p90 186) | 292 ms (p90 391) |
+| Incident report: a postmortem (~8,500 tokens), 1 yes/no question | 481 ms (p90 483) | **193 ms** (p90 223) | 324 ms (p90 722) |
+
+linden-1 was measured on one NVIDIA B300 serving it alone, with the client on the same host. Jev 1.14 and GPT-6 Luna
+were measured through their public APIs from a client about 5 ms from their endpoints, so their times include a short
+network hop and their API layers. linden-1 is fastest on short requests and steady at every size; Jev 1.14 is faster on
+inputs from about 1,000 tokens, where linden-1 reads short inputs twice for accuracy and its cost grows with input
+length.
+
 ## Using linden-1
 
 linden-1 is available on the [Gradiated API](https://gradiated.com/docs) as `gradiated/linden-1`:

@@ -343,11 +343,11 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(floors['glm-dealign-sglang-h200'][:2], (0, 0))
         self.assertEqual(floors['decider-l40s'], (2, 2, 1))
         self.assertNotIn('kev', floors)
-        # Plain GLM scales on demand; Kimi and DeepSeek retain fixed capacity.
+        # Plain GLM and Kimi scale on demand; DeepSeek retains fixed capacity.
         self.assertEqual(floors['glm'], (0, 1, 12))
         self.assertEqual(floors['deepseek'], (1, 1, 32))
         self.assertEqual(floors['deepseek-head-qualification'], (1, 1, 32))
-        self.assertEqual(floors['kimi-k31-pro'], (1, 1, 5))
+        self.assertEqual(floors['kimi-k31-pro'], (0, 2, 5))
         for model in ('dealignai/glm-5.3-flash-uncensored', 'perplexity-ai/pplx-decider-v1.2'):
             self.assertGreater(models[model]['min_slots'], 0)
         # Models never name hosts; reservations on hosts.yaml place pools instead.
@@ -524,7 +524,7 @@ class RenderTests(unittest.TestCase):
         self.assertFalse(any(t['key'] == 'gradiated.com/reserved' for t in deepseek['tolerations']))
         requested = sum(int(templates[name]['containers'][0]['resources']['requests']['nvidia.com/gpu'])
                         * pools[name]['floor'] for name in templates)
-        self.assertEqual(requested, 16)
+        self.assertEqual(requested, 8)
         # Training Jobs tolerate a training reservation if a host is ever given one.
         trainer = (renderer.ROOT / 'product/services/temporal-worker/src/training/kubernetes-host.ts').read_text()
         self.assertIn('key: "gradiated.com/reserved"', trainer)

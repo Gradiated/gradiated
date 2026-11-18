@@ -4,6 +4,8 @@ use serde_json::{Map, Value};
 use crate::{json::strict_json, GatewayError, ServiceTier};
 
 const MAX_OPTIONS: usize = 255;
+/// The pinned Decider v1.2 bundle predates optional instructions and one-level scores; remove with Decider.
+const DECIDER_V1_2: &str = "perplexity-ai/pplx-decider-v1.2";
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct SystemOneRequest {
@@ -37,10 +39,10 @@ pub(crate) enum AnswerShape {
 impl AnswerShape {
     fn parse(value: &Value) -> Option<Self> {
         let question = value.as_object()?;
-        if !question.contains_key("instructions")
-            || question
-                .keys()
-                .any(|key| !matches!(key.as_str(), "type" | "instructions" | "criteria"))
+        // Instructions are optional, as in TypeSafe's API: its SDK omits them when a question has only criteria.
+        if question
+            .keys()
+            .any(|key| !matches!(key.as_str(), "type" | "instructions" | "criteria"))
         {
             return None;
         }
@@ -56,8 +58,9 @@ impl AnswerShape {
                     })
             }
             "score" => {
+                // One level is a valid rubric in TypeSafe's API: its answer is certain.
                 let levels = criteria?.as_array()?.len();
-                (2..=MAX_OPTIONS)
+                (1..=MAX_OPTIONS)
                     .contains(&levels)
                     .then_some(Self::Score { levels })
             }
@@ -114,6 +117,17 @@ impl SystemOneRequest {
 
         let shapes = question_shapes(&wire.questions)
             .ok_or(GatewayError::invalid_request(Some("questions")))?;
+        if wire.model.eq_ignore_ascii_case(DECIDER_V1_2)
+            && (wire
+                .questions
+                .values()
+                .any(|question| question.get("instructions").is_none())
+                || shapes
+                    .iter()
+                    .any(|(_, shape)| *shape == AnswerShape::Score { levels: 1 }))
+        {
+            return Err(GatewayError::invalid_request(Some("questions")));
+        }
 
         Ok(Self {
             model: wire.model,
@@ -322,17 +336,59 @@ mod tests {
         }
         for question in [
             json!({"type":"other","instructions":""}),
-            json!({"type":"noul"}),
             json!({"type":"noul","instructions":"","extra":1}),
             json!({"type":"noul","instructions":"","criteria":[]}),
             json!({"type":"choice","instructions":"","criteria":{}}),
             json!({"type":"choice","instructions":"","criteria":[]}),
-            json!({"type":"score","instructions":"","criteria":["only"]}),
             json!({"type":"score","instructions":"","criteria":vec!["";256]}),
         ] {
             let mut body = request_value();
             body["questions"]["pick"] = question;
             assert!(SystemOneRequest::parse(&serde_json::to_vec(&body).unwrap()).is_err());
+        }
+    }
+
+    #[test]
+    fn instructions_are_optional_and_a_score_may_have_one_level() {
+        // TypeSafe's API accepts both; its SDK omits instructions for criteria-only questions.
+        for question in [
+            json!({"type":"noul"}),
+            json!({"type":"noul","criteria":{"true":"Angry","false":"Calm"}}),
+            json!({"type":"choice","criteria":{"billing":"Charges","access":"Login"}}),
+            json!({"type":"score","criteria":["calm","annoyed","furious"]}),
+            json!({"type":"score","instructions":"Rate","criteria":["only"]}),
+        ] {
+            let mut body = request_value();
+            body["questions"]["pick"] = question.clone();
+            assert!(
+                SystemOneRequest::parse(&serde_json::to_vec(&body).unwrap()).is_ok(),
+                "{question}"
+            );
+        }
+    }
+
+    #[test]
+    fn the_pinned_decider_keeps_requiring_instructions_and_two_score_levels() {
+        for (question, valid) in [
+            (json!({"type":"noul"}), false),
+            (
+                json!({"type":"score","instructions":"Rate","criteria":["only"]}),
+                false,
+            ),
+            (json!({"type":"noul","instructions":null}), true),
+            (
+                json!({"type":"score","instructions":"Rate","criteria":["a","b"]}),
+                true,
+            ),
+        ] {
+            let mut body = request_value();
+            body["model"] = json!(DECIDER_V1_2);
+            body["questions"]["pick"] = question.clone();
+            assert_eq!(
+                SystemOneRequest::parse(&serde_json::to_vec(&body).unwrap()).is_ok(),
+                valid,
+                "{question}"
+            );
         }
     }
 

@@ -49,30 +49,12 @@
     }
   },
   {
-    "name": "instructions-required",
-    "request": {
-      "model": "jaredpalmer/kev-9b",
-      "state": "x",
-      "questions": { "q": { "type": "noul" } }
-    }
-  },
-  {
     "name": "empty-choice-options",
     "request": {
       "model": "jaredpalmer/kev-9b",
       "state": "x",
       "questions": {
         "q": { "type": "choice", "instructions": "Pick", "criteria": {} }
-      }
-    }
-  },
-  {
-    "name": "score-needs-two-levels",
-    "request": {
-      "model": "jaredpalmer/kev-9b",
-      "state": "x",
-      "questions": {
-        "q": { "type": "score", "instructions": "Rank", "criteria": ["only"] }
       }
     }
   },

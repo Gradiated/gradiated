@@ -44,14 +44,29 @@ class RequestSchemaTests(unittest.IsolatedAsyncioTestCase):
     async def test_invalid_questions_are_rejected(self):
         app = adapter.App(engine())
         questions = [{"type": "choice", "instructions": "?", "criteria": {}},
-                     {"type": "score", "instructions": "?", "criteria": ["a"]},
+                     {"type": "score", "instructions": "?", "criteria": []},
                      {"type": "noul", "instructions": "?", "ignored": True},
                      {"type": "noul", "instructions": "?", "criteria": {"typo": "x"}},
-                     {"type": "noul"},
                      {"type": "other", "instructions": "?"}]
         for question in questions:
             with self.subTest(question):
                 self.assertEqual((await call(app, {**request(), "questions": {"q": question}}))[0], 422)
+
+    async def test_typesafe_optional_instructions_and_one_level_scores_are_accepted(self):
+        # TypeSafe's API accepts both; its SDK omits instructions for criteria-only questions.
+        app = adapter.App(engine())
+        questions = [{"type": "noul"},
+                     {"type": "noul", "criteria": {"true": "Angry", "false": "Calm"}},
+                     {"type": "choice", "criteria": {"billing": "Charges", "access": "Login"}},
+                     {"type": "score", "criteria": ["calm", "annoyed", "furious"]},
+                     {"type": "score", "instructions": "Rate", "criteria": ["only"]}]
+        for question in questions:
+            with self.subTest(question):
+                self.assertEqual(adapter.validate({**request(), "questions": {"q": question}})["questions"]["q"],
+                                 {"instructions": "", **question})
+                status, body = await call(app, {**request(), "questions": {"q": question}})
+                self.assertEqual(status, 200)
+                self.assertEqual(body["answers"]["q"]["type"], question["type"])
 
 
 class JsonBoundsTests(unittest.IsolatedAsyncioTestCase):

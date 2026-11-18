@@ -42,6 +42,9 @@ tokio-postgres-rustls = { version = "0.14.0", default-features = false, features
 deadpool-postgres = "0.14.2"
 rustls-native-certs = "0.8.4"
 rustls-pemfile = "2.2.0"
+# Request bodies the TypeSafe SDK compresses (`Content-Encoding: zstd`), and gzip.
+zstd = "0.14.3"
+flate2 = "1.1.11"
 
 [dev-dependencies]
 tokio = { version = "1.45.1", features = ["test-util"] }

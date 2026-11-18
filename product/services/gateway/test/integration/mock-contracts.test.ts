@@ -124,6 +124,15 @@ it("emits vLLM usage and chunk shapes the official client types accept", () => {
   });
 });
 
+it("accepts Kev questions without instructions, as TypeSafe's API does", () => {
+  expect(() =>
+    kev.validate(
+      { ...kevBody, questions: { q: { type: "noul" } } },
+      "fixture/model",
+    ),
+  ).not.toThrow();
+});
+
 it("gives the Kev mock fixed prefill-only usage and named typed answers", () => {
   expect(kev.response(kevBody, 40)).toEqual({
     model: "fixture/model",
@@ -135,7 +144,10 @@ it("gives the Kev mock fixed prefill-only usage and named typed answers", () => 
 it.each([
   { shape: "a list", questions: [{ type: "noul", instructions: "x" }] },
   { shape: "no type", questions: { q: { instructions: "x" } } },
-  { shape: "no instructions", questions: { q: { type: "noul" } } },
+  {
+    shape: "non-string instructions",
+    questions: { q: { type: "noul", instructions: 1 } },
+  },
 ])("rejects malformed Kev questions ($shape)", ({ questions }) => {
   expect(() =>
     kev.validate({ ...kevBody, questions }, "fixture/model"),

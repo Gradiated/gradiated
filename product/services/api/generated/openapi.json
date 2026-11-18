@@ -5633,7 +5633,7 @@
                 "additionalProperties": {
                   "type": "string"
                 },
-                "minProperties": 2,
+                "minProperties": 1,
                 "maxProperties": 255,
                 "description": "Zero-based level indices mapped to rendered upstream JSON descriptions."
               },
@@ -5645,7 +5645,7 @@
                   "maximum": 1,
                   "description": "Probability or confidence in [0, 1]."
                 },
-                "minProperties": 2,
+                "minProperties": 1,
                 "maxProperties": 255,
                 "description": "Probabilities keyed by zero-based level index."
               }
@@ -5783,7 +5783,7 @@
                     "$ref": "#/components/schemas/SystemOneJson"
                   },
                   {
-                    "description": "Required question instructions as JSON, rendered using upstream Kev JSON semantics."
+                    "description": "Question instructions as JSON. Optional, as in TypeSafe's API: the TypeSafe SDK omits them when a question has only criteria. perplexity-ai/pplx-decider-v1.2 still requires them."
                   }
                 ]
               },
@@ -5799,7 +5799,6 @@
             },
             "required": [
               "type",
-              "instructions",
               "criteria"
             ],
             "additionalProperties": false
@@ -5820,7 +5819,7 @@
                     "$ref": "#/components/schemas/SystemOneJson"
                   },
                   {
-                    "description": "Required question instructions as JSON, rendered using upstream Kev JSON semantics."
+                    "description": "Question instructions as JSON. Optional, as in TypeSafe's API: the TypeSafe SDK omits them when a question has only criteria. perplexity-ai/pplx-decider-v1.2 still requires them."
                   }
                 ]
               },
@@ -5856,8 +5855,7 @@
               }
             },
             "required": [
-              "type",
-              "instructions"
+              "type"
             ],
             "additionalProperties": false
           },
@@ -5877,7 +5875,7 @@
                     "$ref": "#/components/schemas/SystemOneJson"
                   },
                   {
-                    "description": "Required question instructions as JSON, rendered using upstream Kev JSON semantics."
+                    "description": "Question instructions as JSON. Optional, as in TypeSafe's API: the TypeSafe SDK omits them when a question has only criteria. perplexity-ai/pplx-decider-v1.2 still requires them."
                   }
                 ]
               },
@@ -5886,14 +5884,13 @@
                 "items": {
                   "$ref": "#/components/schemas/SystemOneJson"
                 },
-                "minItems": 2,
+                "minItems": 1,
                 "maxItems": 255,
-                "description": "Two to 255 ordered JSON level descriptions, indexed from zero."
+                "description": "One to 255 ordered JSON level descriptions, indexed from zero. A single level is answered with certainty; perplexity-ai/pplx-decider-v1.2 still requires at least two."
               }
             },
             "required": [
               "type",
-              "instructions",
               "criteria"
             ],
             "additionalProperties": false

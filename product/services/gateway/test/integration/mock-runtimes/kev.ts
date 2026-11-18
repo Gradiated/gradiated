@@ -35,8 +35,13 @@ const questions = (body: JsonObject): Question[] => {
   }
 
   return entries.map(([name, question]) => {
-    if (!isJsonObject(question) || typeof question.instructions !== "string") {
-      throw new Error("question missing instructions");
+    // Instructions are optional, as in TypeSafe's API.
+    if (
+      !isJsonObject(question) ||
+      (question.instructions !== undefined &&
+        typeof question.instructions !== "string")
+    ) {
+      throw new Error("question instructions must be a string");
     }
     if (!isQuestionType(question.type)) {
       throw new Error("unknown question type");

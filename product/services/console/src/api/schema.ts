@@ -3379,7 +3379,7 @@ export interface components {
            * @enum {string}
            */
           type: "choice";
-          instructions: components["schemas"]["SystemOneJson"] & unknown;
+          instructions?: components["schemas"]["SystemOneJson"] & unknown;
           /** @description One to 255 named options with JSON descriptions; null leaves an option undescribed. */
           criteria: {
             [key: string]: components["schemas"]["SystemOneJson"];
@@ -3391,7 +3391,7 @@ export interface components {
            * @enum {string}
            */
           type: "noul";
-          instructions: components["schemas"]["SystemOneJson"] & unknown;
+          instructions?: components["schemas"]["SystemOneJson"] & unknown;
           /** @description Optional JSON descriptions for false and true outcomes. Other keys are rejected to prevent silently ignored options. */
           criteria?: {
             false?: components["schemas"]["SystemOneJson"] & unknown;
@@ -3404,8 +3404,8 @@ export interface components {
            * @enum {string}
            */
           type: "score";
-          instructions: components["schemas"]["SystemOneJson"] & unknown;
-          /** @description Two to 255 ordered JSON level descriptions, indexed from zero. */
+          instructions?: components["schemas"]["SystemOneJson"] & unknown;
+          /** @description One to 255 ordered JSON level descriptions, indexed from zero. A single level is answered with certainty; perplexity-ai/pplx-decider-v1.2 still requires at least two. */
           criteria: components["schemas"]["SystemOneJson"][];
         };
     ChatCompletionResponse: {

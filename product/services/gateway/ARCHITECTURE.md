@@ -128,8 +128,10 @@ release's hash tag, like its deployment statuses.
 
 `systemone.rs` validates the closed request envelope and rejects duplicate JSON
 keys at every depth. A required exact model and text/object/array state accompany
-1..64 named questions. `choice` takes 1..255 named criteria; `score` takes
-2..255 ordered criteria; `noul` optionally takes a null or object criteria value
+1..64 named questions, each with optional instructions (as in TypeSafe's API).
+`choice` takes 1..255 named criteria; `score` takes 1..255 ordered criteria.
+The pinned `perplexity-ai/pplx-decider-v1.2` bundle predates both relaxations, so
+for that model instructions stay required and `score` takes 2..255 criteria; `noul` optionally takes a null or object criteria value
 whose only permitted keys are `false` and `true`. Unknown outcome keys are
 rejected, never silently dropped. Instructions and descriptions accept JSON values.
 Model and question names are 1..200 UTF-16 code units; an optional, non-null

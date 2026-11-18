@@ -22,7 +22,9 @@ def request(data):
     questions = {}
     for key, value in data['questions'].items():
         question = dict(value)
-        question['instructions'] = text(question['instructions'])
+        # Optional, as in TypeSafe's API; pplx_decider uses its default instructions when they are absent.
+        if 'instructions' in question:
+            question['instructions'] = text(question['instructions'])
         criteria = question.get('criteria')
         if isinstance(criteria, dict):
             question['criteria'] = {key: None if value is None else text(value)

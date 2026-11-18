@@ -129,6 +129,20 @@ describe("native SystemOne request contract", () => {
 
   it.each([
     { ...question, instructions: undefined },
+    { type: "noul" },
+    { type: "noul", criteria: { true: "Angry", false: "Calm" } },
+    { type: "score", criteria: ["calm", "annoyed", "furious"] },
+    { type: "score", instructions: "Rank", criteria: ["only"] },
+  ])(
+    "accepts what TypeSafe's API accepts (optional instructions, one-level scores): %j",
+    (value) => {
+      expect(
+        SystemOneRequestSchema.safeParse(withQuestion(value)).success,
+      ).toBe(true);
+    },
+  );
+
+  it.each([
     { ...question, instructions: NaN },
     { ...question, instructions: { x: () => 1 } },
     { ...question, type: "unknown" },
@@ -137,7 +151,7 @@ describe("native SystemOne request contract", () => {
     { ...question, criteria: options(256) },
     { ...question, criteria: [] },
     { ...question, criteria: null },
-    { type: "score", instructions: "Rank", criteria: ["only"] },
+    { type: "score", instructions: "Rank", criteria: [] },
     { type: "score", instructions: "Rank", criteria: Array(256).fill(null) },
     { type: "score", instructions: "Rank", criteria: { a: null, b: null } },
     { type: "noul", instructions: "Check", criteria: [] },

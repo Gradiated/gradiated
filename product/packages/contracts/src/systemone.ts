@@ -19,8 +19,8 @@ const LevelIndexSchema = z.string().regex(/^(0|[1-9]\d*)$/);
 const HostedModelIdSchema = ModelIdSchema.describe(
   "Exact hosted model ID, required; no default, alias resolution or fallback.",
 );
-const InstructionsSchema = SystemOneJsonSchema.describe(
-  "Required question instructions as JSON, rendered using upstream Kev JSON semantics.",
+const InstructionsSchema = SystemOneJsonSchema.optional().describe(
+  "Question instructions as JSON. Optional, as in TypeSafe's API: the TypeSafe SDK omits them when a question has only criteria. perplexity-ai/pplx-decider-v1.2 still requires them.",
 );
 
 const boundedMap = <T extends z.ZodType>(
@@ -74,10 +74,10 @@ export const SystemOneQuestionSchema = z
       instructions: InstructionsSchema,
       criteria: z
         .array(SystemOneJsonSchema)
-        .min(2)
+        .min(1)
         .max(255)
         .describe(
-          "Two to 255 ordered JSON level descriptions, indexed from zero.",
+          "One to 255 ordered JSON level descriptions, indexed from zero. A single level is answered with certainty; perplexity-ai/pplx-decider-v1.2 still requires at least two.",
         ),
     }),
   ])
@@ -159,13 +159,13 @@ export const SystemOneAnswerSchema = z
         .describe("Expected zero-based rubric level, potentially fractional."),
       confidence: ProbabilitySchema,
       legend: boundedMap(LevelIndexSchema, z.string(), {
-        min: 2,
+        min: 1,
         max: 255,
       }).describe(
         "Zero-based level indices mapped to rendered upstream JSON descriptions.",
       ),
       probabilities: boundedMap(LevelIndexSchema, ProbabilitySchema, {
-        min: 2,
+        min: 1,
         max: 255,
       }).describe("Probabilities keyed by zero-based level index."),
     }),

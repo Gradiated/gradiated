@@ -77,13 +77,14 @@ def validate(data, model=MODEL):
     for key, question in questions.items():
         if not key or len(key) > MAX_QUESTION_KEY_LENGTH or not isinstance(question, dict):
             raise InvalidRequest("invalid question")
-        if set(question) - {"type", "instructions", "criteria"} or "instructions" not in question:
-            raise InvalidRequest("unknown question fields or missing instructions")
+        # Instructions are optional, as in TypeSafe's API (its SDK omits them for criteria-only questions).
+        if set(question) - {"type", "instructions", "criteria"}:
+            raise InvalidRequest("unknown question fields")
         kind, criteria = question.get("type"), question.get("criteria")
         if kind == "choice":
             valid = isinstance(criteria, dict) and 1 <= len(criteria) <= MAX_CRITERIA
         elif kind == "score":
-            valid = isinstance(criteria, list) and 2 <= len(criteria) <= MAX_CRITERIA
+            valid = isinstance(criteria, list) and 1 <= len(criteria) <= MAX_CRITERIA
         elif kind == "noul":
             valid = criteria is None or (isinstance(criteria, dict) and not set(criteria) - {"false", "true"})
         else:
@@ -101,7 +102,9 @@ def validate(data, model=MODEL):
             stack.extend((item, depth + 1) for item in value)
         elif isinstance(value, float) and not math.isfinite(value):
             raise InvalidRequest("JSON numbers must be finite")
-    return {key: value for key, value in data.items() if key != "priority"}
+    # Kev's request record needs instruction text; a question without instructions is asked with none.
+    questions = {key: {"instructions": "", **question} for key, question in questions.items()}
+    return {**{key: value for key, value in data.items() if key != "priority"}, "questions": questions}
 
 
 class Engine:

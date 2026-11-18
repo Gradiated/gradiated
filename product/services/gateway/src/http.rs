@@ -4,7 +4,7 @@ use axum::{
     body::Bytes,
     extract::{rejection::BytesRejection, DefaultBodyLimit, State},
     http::{
-        header::{AUTHORIZATION, CONTENT_TYPE},
+        header::{AUTHORIZATION, CONTENT_ENCODING, CONTENT_LENGTH, CONTENT_TYPE},
         HeaderMap, HeaderName, HeaderValue, Method, StatusCode,
     },
     response::{
@@ -24,7 +24,7 @@ use uuid::Uuid;
 
 use crate::{
     catalog::ProviderCompliance,
-    coordinator::ClassifiedRequest,
+    coordinator::{Authorization, ClassifiedRequest},
     diagnostics::limited_warn,
     protocol::{Frame, Protocol, StreamItem},
     readiness::ReadinessCheck,
@@ -33,6 +33,12 @@ use crate::{
 };
 
 const MAX_REQUEST_BYTES: usize = 32_000_000;
+/// Compressed bodies inflated at once: each holds at most a 32 MiB zstd window and 32 MB of output.
+static DECOMPRESSION_SLOTS: tokio::sync::Semaphore = tokio::sync::Semaphore::const_new(4);
+const ZSTD_WINDOW_LOG_MAX: u32 = 25;
+/// How long a compressed body waits for a slot before a retryable overloaded error; ordinary bodies inflate in
+/// well under a millisecond.
+const DECOMPRESSION_WAIT: Duration = Duration::from_secs(2);
 const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-generation-id");
 const SERVICE_TIER_HEADER: HeaderName = HeaderName::from_static("x-gradiated-service-tier");
 const DEPLOYMENT_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-deployment-id");
@@ -42,7 +48,12 @@ pub fn browser_cors(origins: Vec<HeaderValue>) -> CorsLayer {
     CorsLayer::new()
         .allow_origin(AllowOrigin::list(origins))
         .allow_methods([Method::GET, Method::POST])
-        .allow_headers([AUTHORIZATION, CONTENT_TYPE, DEPLOYMENT_ID_HEADER])
+        .allow_headers([
+            AUTHORIZATION,
+            CONTENT_TYPE,
+            CONTENT_ENCODING,
+            DEPLOYMENT_ID_HEADER,
+        ])
         .expose_headers([
             GENERATION_ID_HEADER,
             SERVICE_TIER_HEADER,
@@ -153,6 +164,103 @@ pub fn router(state: GatewayState) -> Router {
         .with_state(state)
 }
 
+#[derive(Clone, Copy)]
+enum Codec {
+    Zstd,
+    Gzip,
+}
+
+/// Inflates a zstd or gzip body (the TypeSafe SDK compresses bodies of 1 KiB or more) once the credential is known;
+/// any other encoding is an invalid request.
+async fn decoded(
+    state: &GatewayState,
+    headers: &HeaderMap,
+    body: Bytes,
+    received_at: chrono::DateTime<Utc>,
+) -> Result<(HeaderMap, Bytes, Option<Authorization>), GatewayError> {
+    let unsupported = || GatewayError::invalid_request(Some("content-encoding"));
+    let mut values = headers.get_all(CONTENT_ENCODING).iter();
+    let (Some(value), None) = (values.next(), values.next()) else {
+        return Err(unsupported());
+    };
+    let codec = match value
+        .to_str()
+        .map(|v| v.trim().to_ascii_lowercase())
+        .as_deref()
+    {
+        Ok("identity") => None,
+        Ok("zstd") => Some(Codec::Zstd),
+        Ok("gzip" | "x-gzip") => Some(Codec::Gzip),
+        _ => return Err(unsupported()),
+    };
+    let mut headers = headers.clone();
+    headers.remove(CONTENT_ENCODING);
+    headers.remove(CONTENT_LENGTH);
+    let Some(codec) = codec else {
+        return Ok((headers, body, None));
+    };
+    let authorization = state
+        .coordinator
+        .authenticate(&headers, received_at)
+        .await?;
+    let body = inflate_in_slot(&DECOMPRESSION_SLOTS, codec, body).await?;
+
+    Ok((headers, body, Some(authorization)))
+}
+
+/// Inflates on a blocking thread holding one of `slots`; the permit moves into the task, so a cancelled request
+/// keeps its slot until inflation ends.
+async fn inflate_in_slot(
+    slots: &'static tokio::sync::Semaphore,
+    codec: Codec,
+    body: Bytes,
+) -> Result<Bytes, GatewayError> {
+    // A bounded wait: a caller cannot queue compressed bodies indefinitely ahead of admission.
+    let slot = tokio::time::timeout(DECOMPRESSION_WAIT, slots.acquire())
+        .await
+        .map_err(|_| GatewayError::ProxyOverloaded)?
+        .map_err(|_| GatewayError::ProxyOverloaded)?;
+    tokio::task::spawn_blocking(move || {
+        let _slot = slot;
+        inflate(codec, &body)
+    })
+    .await
+    .map_err(|_| GatewayError::invalid_request(None))?
+}
+
+fn inflate(codec: Codec, body: &[u8]) -> Result<Bytes, GatewayError> {
+    use std::io::Read;
+
+    let invalid = |_| {
+        limited_warn!(
+            error_code = "body_decode_failed",
+            "compressed request body rejected"
+        );
+        GatewayError::invalid_request(None)
+    };
+    let reader: Box<dyn Read + '_> = match codec {
+        Codec::Zstd => {
+            let mut decoder = zstd::stream::read::Decoder::new(body).map_err(invalid)?;
+            // The decoder otherwise accepts a 128 MiB history window from a tiny frame; 32 MiB matches the body limit.
+            decoder
+                .window_log_max(ZSTD_WINDOW_LOG_MAX)
+                .map_err(invalid)?;
+            Box::new(decoder)
+        }
+        Codec::Gzip => Box::new(flate2::read::MultiGzDecoder::new(body)),
+    };
+    let mut out = Vec::new();
+    reader
+        .take(MAX_REQUEST_BYTES as u64 + 1)
+        .read_to_end(&mut out)
+        .map_err(invalid)?;
+    if out.len() > MAX_REQUEST_BYTES {
+        return Err(GatewayError::PayloadTooLarge);
+    }
+
+    Ok(out.into())
+}
+
 fn endpoint(endpoint: &'static Endpoint) -> MethodRouter<GatewayState> {
     post(
         move |State(state): State<GatewayState>,
@@ -223,14 +331,24 @@ async fn serve(
     is_verification: &mut bool,
 ) -> Result<Response, GatewayError> {
     let body = body.map_err(body_rejection)?;
+    let decoded_headers;
+    let (headers, body, authorization) = if headers.contains_key(CONTENT_ENCODING) {
+        let (decoded, body, authorization) =
+            decoded(state, headers, body, metadata.received_at).await?;
+        decoded_headers = decoded;
+        (&decoded_headers, body, authorization)
+    } else {
+        (headers, body, None)
+    };
     let classified = state
         .coordinator
-        .classify_with_traffic(
+        .classify_authorized(
             headers,
             &body,
             metadata.received_at,
             endpoint.protocol,
             is_verification,
+            authorization,
         )
         .await;
     crate::diagnostics::body::record("client_request", &body, None);
@@ -720,7 +838,7 @@ mod tests {
                     .header("access-control-request-method", "POST")
                     .header(
                         "access-control-request-headers",
-                        "authorization,content-type,x-gradiated-deployment-id",
+                        "authorization,content-type,content-encoding,x-gradiated-deployment-id",
                     )
                     .body(Body::empty())
                     .unwrap(),
@@ -735,6 +853,10 @@ mod tests {
             .to_str()
             .unwrap()
             .contains("x-gradiated-deployment-id"));
+        assert!(allowed.headers()["access-control-allow-headers"]
+            .to_str()
+            .unwrap()
+            .contains("content-encoding"));
 
         let exposed = app
             .clone()
@@ -998,6 +1120,152 @@ mod tests {
         assert!(response.headers().contains_key(GENERATION_ID_HEADER));
         assert_eq!(serving_state.lookups("credential"), 0);
         assert_eq!(error_code(response).await, "invalid_request");
+    }
+
+    async fn post_encoded(application: Router, encoding: &str, body: Vec<u8>) -> Response {
+        application
+            .oneshot(json_request(
+                "/v1/systemone",
+                &[
+                    ("authorization", "Bearer grad_test"),
+                    ("content-encoding", encoding),
+                ],
+                body,
+            ))
+            .await
+            .unwrap()
+    }
+
+    const SYSTEMONE_BODY: &str = r#"{"model":"gradiated/linden-1","state":"Charged twice.","questions":{"q":{"type":"noul","instructions":"Is it urgent?"}}}"#;
+
+    fn authenticated_application() -> (Router, Arc<TestServingState>) {
+        let state = Arc::new(TestServingState::ready());
+        let application = router_for(true, state.clone());
+
+        (application, state)
+    }
+
+    #[tokio::test]
+    async fn zstd_and_gzip_bodies_are_decompressed_after_authentication() {
+        use std::io::Write;
+
+        let zstd = zstd::encode_all(SYSTEMONE_BODY.as_bytes(), 3).unwrap();
+        let mut gzip = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+        gzip.write_all(SYSTEMONE_BODY.as_bytes()).unwrap();
+        let gzip = gzip.finish().unwrap();
+
+        for (encoding, body) in [("zstd", zstd), ("gzip", gzip)] {
+            let (application, serving_state) = authenticated_application();
+            let _ = post_encoded(application, encoding, body).await;
+
+            // The decoded JSON is classified with the authorization made before inflating it.
+            assert_eq!(serving_state.lookups("credential"), 1, "{encoding}");
+            assert_eq!(serving_state.lookups("model"), 1, "{encoding}");
+            assert_eq!(
+                serving_state.requested_models.lock().unwrap().as_slice(),
+                ["gradiated/linden-1"],
+                "{encoding}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn a_compressed_body_from_an_unknown_caller_is_not_inflated() {
+        let (application, serving_state) = observed_application();
+        let bomb = zstd::encode_all(vec![b' '; MAX_REQUEST_BYTES + 1].as_slice(), 19).unwrap();
+
+        let response = post_encoded(application, "zstd", bomb).await;
+
+        // Inflating would answer 413; the credential is refused first.
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        assert_eq!(serving_state.lookups("credential"), 1);
+        assert_eq!(serving_state.lookups("model"), 0);
+    }
+
+    #[tokio::test]
+    async fn an_unsupported_encoding_is_an_invalid_request_in_the_error_envelope() {
+        for encoding in ["br", "zstd, gzip"] {
+            let (application, serving_state) = observed_application();
+            let response = post_encoded(application, encoding, SYSTEMONE_BODY.into()).await;
+
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{encoding}");
+            assert!(response.headers().contains_key(GENERATION_ID_HEADER));
+            assert_eq!(serving_state.lookups("credential"), 0, "{encoding}");
+            assert_eq!(error_code(response).await, "invalid_request");
+        }
+    }
+
+    #[tokio::test]
+    async fn a_zstd_frame_with_a_window_above_32_mib_is_refused() {
+        use std::io::Write;
+
+        let mut encoder = zstd::stream::write::Encoder::new(Vec::new(), 3).unwrap();
+        encoder.include_contentsize(false).unwrap();
+        encoder.window_log(27).unwrap();
+        encoder.write_all(SYSTEMONE_BODY.as_bytes()).unwrap();
+        let frame = encoder.finish().unwrap();
+        assert_eq!(
+            zstd::decode_all(frame.as_slice()).unwrap(),
+            SYSTEMONE_BODY.as_bytes()
+        );
+
+        let (application, serving_state) = authenticated_application();
+        let response = post_encoded(application, "zstd", frame).await;
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(serving_state.lookups("model"), 0);
+    }
+
+    #[tokio::test]
+    async fn a_cancelled_inflation_keeps_its_slot_until_it_ends() {
+        static SLOTS: tokio::sync::Semaphore = tokio::sync::Semaphore::const_new(1);
+        let bomb = zstd::encode_all(vec![b' '; MAX_REQUEST_BYTES].as_slice(), 19).unwrap();
+        let inflation = tokio::spawn(inflate_in_slot(&SLOTS, Codec::Zstd, bomb.into()));
+        while SLOTS.available_permits() == 1 {
+            tokio::task::yield_now().await;
+        }
+        inflation.abort();
+        assert!(inflation.await.unwrap_err().is_cancelled());
+        // The blocking task still runs and still holds the slot after its request is gone.
+        assert_eq!(SLOTS.available_permits(), 0);
+        let _released = tokio::time::timeout(Duration::from_secs(30), SLOTS.acquire())
+            .await
+            .expect("the slot is released when inflation ends")
+            .unwrap();
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_compressed_body_waits_a_bounded_time_for_a_slot() {
+        static SLOTS: tokio::sync::Semaphore = tokio::sync::Semaphore::const_new(1);
+        let _held = SLOTS.acquire().await.unwrap();
+        let body = zstd::encode_all(SYSTEMONE_BODY.as_bytes(), 3).unwrap();
+
+        let refused = inflate_in_slot(&SLOTS, Codec::Zstd, body.into()).await;
+
+        assert!(matches!(refused, Err(GatewayError::ProxyOverloaded)));
+    }
+
+    #[tokio::test]
+    async fn a_corrupt_compressed_body_is_an_invalid_request() {
+        let (application, serving_state) = authenticated_application();
+        let response = post_encoded(application, "zstd", b"not zstd".to_vec()).await;
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(serving_state.lookups("model"), 0);
+        assert_eq!(error_code(response).await, "invalid_request");
+    }
+
+    #[tokio::test]
+    async fn a_compressed_body_cannot_expand_past_the_body_limit() {
+        let (application, serving_state) = authenticated_application();
+        let bomb = zstd::encode_all(vec![b' '; MAX_REQUEST_BYTES + 1].as_slice(), 19).unwrap();
+        assert!(bomb.len() < 64 * 1024);
+
+        let response = post_encoded(application, "zstd", bomb).await;
+
+        assert_eq!(response.status(), StatusCode::PAYLOAD_TOO_LARGE);
+        assert_eq!(serving_state.lookups("model"), 0);
+        assert_eq!(error_code(response).await, "payload_too_large");
     }
 
     #[tokio::test]

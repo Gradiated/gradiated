@@ -17,7 +17,7 @@ RUN cd /kev \
        --exclude-newer 2026-09-26T00:00:00Z flash-linear-attention==0.5.2 triton==3.8.0 \
     && uv pip install --python /bundle/python/bin/python3 --break-system-packages --no-deps "kev @ git+https://github.com/jaredpalmer/kev@$KEV_COMMIT" \
     && find /bundle/python -name __pycache__ -prune -exec rm -rf {} + \
-    && rm -rf /kev /tmp/requirements.txt
+    && rm -rf /kev /tmp/requirements.txt /root/.cache
 
 FROM dependencies AS package
 COPY bundles/package.sh /package.sh
@@ -29,8 +29,9 @@ RUN bash /package.sh
 # The caller supplies the exact base digest as a named build context.
 FROM runtime-base AS verify
 # Compile Triton's actual helper to check bundled headers without a GPU or driver.
-RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
-    mkdir /bundle && tar -xzf /tmp/runtime.tar.gz -C /bundle \
+# A copy, not a mount: the builder fails to mount this stage's snapshot ("failed to mount ... no such file").
+COPY --from=package /runtime.tar.gz /tmp/runtime.tar.gz
+RUN mkdir /bundle && tar -xzf /tmp/runtime.tar.gz -C /bundle \
     && cd /bundle \
     && python/bin/python3 -c 'import adapter, fla, kev.checkpoint, kev.serve, torch, uvicorn; assert torch.version.cuda.startswith("12.8"), torch.version.cuda; assert adapter.installed_commit() == adapter.UPSTREAM_COMMIT' \
     && timeout 60 cc -O3 -fPIC -c \
@@ -38,7 +39,7 @@ RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
         -Ipython/include/python3.12 \
         -Ipython/lib/python3.12/site-packages/triton/backends/nvidia/include \
         -o /tmp/cuda_utils.o \
-    && rm -rf /tmp/cuda_utils.o /bundle && touch /verified
+    && rm -rf /tmp/cuda_utils.o /tmp/runtime.tar.gz /bundle && touch /verified
 
 FROM scratch AS artifact
 COPY --from=verify /verified /verified

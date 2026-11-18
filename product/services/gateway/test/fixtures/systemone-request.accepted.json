@@ -51,5 +51,23 @@
         "q": { "type": "noul", "instructions": null, "criteria": null }
       }
     }
+  },
+  {
+    "name": "instructions-optional",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": { "q": { "type": "noul" } }
+    }
+  },
+  {
+    "name": "score-with-one-level",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": {
+        "q": { "type": "score", "instructions": "Rank", "criteria": ["only"] }
+      }
+    }
   }
 ]

@@ -66,6 +66,20 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(result['usage'], {'input_tokens': 100, 'cached_input_tokens': 0, 'output_tokens': 0})
         self.sync.assert_called_once()
 
+    def test_a_question_without_instructions_is_forwarded_without_them(self):
+        self.data['questions'] = {'ok': {'type': 'choice', 'criteria': {'a': 'A', 'b': None}}}
+        self.decider.decide.return_value['answers'] = {
+            'ok': {'type': 'choice', 'choice': 'a', 'probabilities': {'a': 0.75, 'b': 0.25}}}
+        self.engine.answer(self.data)
+        question = self.decider.decide.call_args.args[0]['questions']['ok']
+        self.assertNotIn('instructions', question)
+        self.assertEqual(question['criteria'], {'a': 'A', 'b': None})
+
+    def test_null_instructions_are_forwarded_as_json_text(self):
+        self.data['questions']['ok']['instructions'] = None
+        self.engine.answer(self.data)
+        self.assertEqual(self.decider.decide.call_args.args[0]['questions']['ok']['instructions'], 'null')
+
     def test_oversized_joint_request_is_rejected_before_any_forward_pass(self):
         self.decider.encoder.encode.return_value.length = 8193
         with self.assertRaises(adapter.InvalidRequest):

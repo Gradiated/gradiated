@@ -253,7 +253,8 @@ fn no_capacity(model: &GatewayModel, adapter: bool) -> GatewayError {
     }
 }
 
-struct Authorization {
+/// A checked credential and its workspace and account, reused across one request.
+pub(crate) struct Authorization {
     identity: AuthenticatedIdentity,
     funds_hosted: bool,
     /// OpenRouter resells this capacity and fails over itself; serving its traffic
@@ -489,6 +490,20 @@ impl RequestCoordinator {
         protocol: Protocol,
         is_verification: &mut bool,
     ) -> Result<ClassifiedRequest, GatewayError> {
+        self.classify_authorized(headers, body, received_at, protocol, is_verification, None)
+            .await
+    }
+
+    /// [`Self::classify_with_traffic`], reusing an authorization already made for this request.
+    pub(crate) async fn classify_authorized(
+        &self,
+        headers: &HeaderMap,
+        body: &[u8],
+        received_at: DateTime<Utc>,
+        protocol: Protocol,
+        is_verification: &mut bool,
+        authorization: Option<Authorization>,
+    ) -> Result<ClassifiedRequest, GatewayError> {
         *is_verification = false;
         // A malformed or unsupported request is a local error on every route, so it
         // is rejected before identity.
@@ -500,7 +515,10 @@ impl RequestCoordinator {
         protocol.validate_request(&target.request)?;
         let mut cache_key = crate::session_affinity::cache_key(headers, &target.request)?;
 
-        let authorization = self.authorize(headers, received_at).await?;
+        let authorization = match authorization {
+            Some(authorization) => authorization,
+            None => self.authorize(headers, received_at).await?,
+        };
         let header = "x-gradiated-deployment-id";
         if headers.contains_key("x-gradiated-verification-deployment") {
             return Err(GatewayError::invalid_request(Some(header)));
@@ -656,6 +674,15 @@ impl RequestCoordinator {
             },
             request: target.request,
         })
+    }
+
+    /// Checks the credential alone, so a compressed body is inflated only for a known caller.
+    pub(crate) async fn authenticate(
+        &self,
+        headers: &HeaderMap,
+        received_at: DateTime<Utc>,
+    ) -> Result<Authorization, GatewayError> {
+        self.authorize(headers, received_at).await
     }
 
     async fn authorize(

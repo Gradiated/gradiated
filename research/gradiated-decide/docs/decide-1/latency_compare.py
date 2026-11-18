@@ -10,6 +10,7 @@ client, so it includes the network: the script also reports each endpoint's medi
 import argparse
 import json
 import os
+import random
 import socket
 import statistics
 import sys
@@ -56,14 +57,15 @@ def connect_ms(url):
 
 
 def vary(state):
-    """The same state with a fresh request id first, so no cache can answer a timed request."""
-    tag = f"request {uuid.uuid4()}"
+    """The same state with a random number at the start of every top-level text field (and of the first chat message),
+    so the varying part comes first whatever order a provider puts the fields in, and no prefix cache can answer it."""
+    n = random.randrange(10**8)
     if isinstance(state, dict) and set(state) == {"messages"}:
         first, *rest = state["messages"]
-        return {"messages": [{**first, "content": f"{tag}\n{first['content']}"}, *rest]}
+        return {"messages": [{**first, "content": f"{n} {first['content']}"}, *rest]}
     if isinstance(state, dict):
-        return {"request_id": tag, **state}
-    return f"{tag}\n{state}"
+        return {k: f"{n} {v}" if isinstance(v, str) else v for k, v in state.items()}
+    return f"{n} {state}"
 
 
 def cases(examples):

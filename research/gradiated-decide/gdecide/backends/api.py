@@ -27,6 +27,11 @@ class Unsupported(ValueError):
     pass
 
 
+def _text(v):
+    """OpenAI wants strings; structured criteria (arrays/objects) are sent as their JSON text."""
+    return v if isinstance(v, str) else json.dumps(v, ensure_ascii=False)
+
+
 def _post(session, url, body, headers, timeout=120, attempts=8):
     for attempt in range(attempts):
         try:
@@ -82,17 +87,17 @@ class OpenAIDecisions(_Parallel):
         if kind == "noul":
             text = q["instructions"]
             if crit:
-                text += f"\nTrue means: {crit.get('true')}\nFalse means: {crit.get('false')}"
-            return {"name": name, "type": "predicate", "instructions": text}
+                text += f"\nTrue means: {_text(crit.get('true'))}\nFalse means: {_text(crit.get('false'))}"
+            return {"name": name, "type": "predicate", "instructions": _text(text)}
         if kind == "choice":
             items = crit.items() if isinstance(crit, dict) else ((c, None) for c in crit)
-            return {"name": name, "type": "choice", "instructions": q["instructions"],
-                    "choices": [{"value": k, "description": v or k} for k, v in items]}
+            return {"name": name, "type": "choice", "instructions": _text(q["instructions"]),
+                    "choices": [{"value": k, "description": _text(v) if v else k} for k, v in items]}
         if kind == "score":
             if not 2 <= len(crit) <= 10:
                 raise Unsupported(f"score with {len(crit)} levels")
-            return {"name": name, "type": "score", "instructions": q["instructions"],
-                    "levels": [{"label": str(i), "description": d} for i, d in enumerate(crit)]}
+            return {"name": name, "type": "score", "instructions": _text(q["instructions"]),
+                    "levels": [{"label": str(i), "description": _text(d)} for i, d in enumerate(crit)]}
         raise Unsupported(f"question type {kind}")
 
     def one(self, request):
@@ -112,10 +117,10 @@ class OpenAIDecisions(_Parallel):
             if a["type"] == "predicate":
                 answers[a["name"]] = {"type": "noul", "noul": float(a["probability"])}
             elif a["type"] == "choice":
-                answers[a["name"]] = {"type": "choice", "probabilities": {
+                answers[a["name"]] = {"type": "choice", "choice": a["choice"], "probabilities": {
                     p["value"]: float(p["probability"]) for p in a["probabilities"]}}
             elif a["type"] == "score":
-                answers[a["name"]] = {"type": "score", "probabilities": {
+                answers[a["name"]] = {"type": "score", "score": float(a["score"]), "probabilities": {
                     str(p["label"]): float(p["probability"]) for p in a["probabilities"]}}
         return {"answers": answers, "usage": r.get("usage", {})}
 

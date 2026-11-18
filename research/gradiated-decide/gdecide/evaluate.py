@@ -23,6 +23,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
+API_BACKENDS = ("openai-decisions", "typesafe")
+
+
 def stamp() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -82,7 +85,9 @@ def main() -> None:
     parser.add_argument("--max-length", type=int, default=131072)
     parser.add_argument("--batch-tokens", type=int, default=32768)
     parser.add_argument("--temperature", type=float)
-    parser.add_argument("--backend", choices=("pplx", "knowline", "knowline-http", "mammoth"), default="pplx")
+    parser.add_argument("--backend", choices=("pplx", "knowline", "knowline-http", "mammoth", *API_BACKENDS), default="pplx")
+    parser.add_argument("--model", help="API backends: model ID (default gpt-6-luna / jev-1.14.0)")
+    parser.add_argument("--workers", type=int, default=32, help="API backends: parallel requests")
     parser.add_argument("--option", action="append", default=[], help="backend option KEY=VALUE (knowline)")
     args = parser.parse_args()
 
@@ -111,11 +116,27 @@ def main() -> None:
     rows = [r for r in rows if r["_evaluation"]["run_id"] not in done]
     rows.sort(key=lambda r: r["_evaluation"].get("proxy_tokens", 0))
 
-    import torch
+    if args.backend in API_BACKENDS:  # hosted APIs: evaluation only, answers never enter training data
+        import types
 
-    device = f"cuda:{local}"
-    torch.cuda.set_device(local)
-    if args.backend == "mammoth":
+        from gdecide.backends import api
+
+        torch = types.SimpleNamespace(__version__="none", OutOfMemoryError=MemoryError, cuda=types.SimpleNamespace(
+            empty_cache=lambda: None, get_device_name=lambda _: "api"))
+        device = None
+    else:
+        import torch
+
+        device = f"cuda:{local}"
+        torch.cuda.set_device(local)
+    if args.backend in API_BACKENDS:
+        cls = api.OpenAIDecisions if args.backend == "openai-decisions" else api.TypeSafe
+        decider = cls(**({"model": args.model} if args.model else {}), workers=args.workers)
+        unsupported = decider.unsupported
+        temperature = None
+        engine = f"{args.backend}:{decider.model}"
+        settings = decider.settings
+    elif args.backend == "mammoth":
         from gdecide.backends.mammoth import MammothDecider
 
         decider = MammothDecider(args.checkpoint, device)
@@ -172,7 +193,9 @@ def main() -> None:
             try:
                 responses = decider.decide(requests, temperature=temperature)
                 ms = (time.perf_counter() - t) * 1000 / len(chunk)
-                records = [record(r, "ok", response=resp, ms=ms) for r, resp in zip(chunk, responses, strict=True)]
+                records = [record(r, "ok", response=resp, ms=ms) if "error" not in resp else
+                           record(r, "unsupported" if resp["error"].startswith("Unsupported") else "error",
+                                  error=resp["error"]) for r, resp in zip(chunk, responses, strict=True)]
             except Exception:
                 torch.cuda.empty_cache()
                 records = []

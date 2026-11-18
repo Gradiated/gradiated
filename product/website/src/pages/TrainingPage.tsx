@@ -18,15 +18,15 @@ import "../styles/index.css";
 const FEATURES = [
   {
     title: "Better",
-    body: "Fine tuning changes the weights, so the model learns your task, formats and edge cases instead of being reminded in every prompt.",
+    body: "Train on your task, formats and edge cases, then measure whether the model improves on the results that matter to your product.",
   },
   {
     title: "Faster",
-    body: "A smaller model has fewer weights to read and less work to do for every token. Fine tuning lets that smaller model stay useful on a narrow job.",
+    body: "A smaller model has less work to do for every token. Use it for the tasks where evaluations show it can deliver the quality you need.",
   },
   {
     title: "Cheaper",
-    body: "Using a smaller model cuts the compute behind every request. The saving repeats on every token, not just during training.",
+    body: "Using a smaller model cuts the compute behind every request. At enough volume, those inference savings can justify the cost of training.",
   },
 ];
 
@@ -38,7 +38,7 @@ export const TrainingPage = (): ReactElement => (
       <Module bleed className="gr-module--fold" index={0}>
         <Fold
           title={["Make the", "model yours."]}
-          lede="Post-training is in private beta. Join the waitlist to train models on your workload for better results, faster responses, and lower cost."
+          lede="Post-training is in private beta. When your workload calls for a bespoke model, train on your production tasks to improve the results that matter to your product."
         >
           <CostStory />
         </Fold>
@@ -66,8 +66,8 @@ export const TrainingPage = (): ReactElement => (
               production. See what improved, what regressed and what stayed the
               same—along with the judge model, evaluation rubric, scores and
               confidence. Drill down from the summary to the prompts, responses
-              and trace data behind individual results. Decide if the new
-              weights earn their place in production.
+              and trace data behind individual results. Decide which tasks
+              the new model is ready to take on.
             </p>
             <div style={{ marginBlockStart: "1.5rem" }}>
               <WaitlistButton className="gr-button gr-button--main">

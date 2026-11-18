@@ -48,7 +48,7 @@ export const HomePage = (): ReactElement => (
       <Module bleed className="gr-module--fold" index={0}>
         <div className="gr-fold-left">
           <h1 className="gr-display gr-home-title">
-            <Reveal by="word">Drop your reliance on frontier models</Reveal>
+            <Reveal by="word">Use frontier models where they matter</Reveal>
           </h1>
           <div className="gr-home-actions">
             <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
@@ -104,8 +104,8 @@ export const HomePage = (): ReactElement => (
             in restated now the page has made its case. */}
         <div className="gr-home-cta">
           <h2 className="gr-heading gr-home-cta-title">
-            Get your own <br className="gr-home-cta-br" />
-            models today
+            Find what can run <br className="gr-home-cta-br" />
+            on open models
           </h2>
           <div className="gr-home-actions">
             <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
@@ -182,7 +182,7 @@ const products = [
     id: "inference",
     title: "Proxy your Model Inference...",
     description:
-      "Bring your existing code, change your base URL, and start sending requests to the latest frontier or open models.",
+      "Bring your existing code, change your base URL, and start learning where open models can reduce your costs.",
     features: [
       "Usage-based pricing or bring your own key",
       "No infrastructure to manage",
@@ -193,13 +193,13 @@ const products = [
   },
   {
     id: "post-training",
-    title: "... to get your own Model.",
+    title: "... to learn what needs frontier.",
     description:
-      "We'll improve and run your benchmarks, move you to open source and run automated reinforcement learning to turn your production traces into a model trained for your workload.",
+      "We evaluate open models on your production tasks and train a router for your workload. Use open models where they meet your quality requirements, and frontier models where they don’t.",
     features: [
       "Learn from real production traces",
-      "Evaluations built around your tasks",
-      "Own your own model weights. Served through the same API",
+      "Routing evaluated against your tasks",
+      "Open and frontier models through the same API",
     ],
     action: "Start Research",
     href: `${CONSOLE_BASE_URL}/onboarding/post-training`,
@@ -324,16 +324,16 @@ const HomeProducts = (): ReactElement => (
           text: "Frontier model companies offer the path of least resistance for powering your products. But scaling demands lower unit costs, and the more AI your product runs, the more those API bills work against you.",
         },
         {
-          text: "Open-weight models seem like the obvious solution, so why do so many teams that try them, just end up back on frontier APIs? Usually they swap the model and leave everything else untouched like their prompts, evals and inference settings. And post-training is a new expertise that needs GPUs, that most teams don’t have.",
+          text: "Open-weight models seem like the obvious solution, until they struggle with something your product needs. A model can look great on benchmarks and still fall short on real tasks, especially long-running agents. Fine tuning alone won’t always close that gap.",
         },
         {
-          text: "At Gradiated we proxy your current inference and collect your real production traces. We set up benchmarks or use your existing ones and test open models against them, show you before-and-afters, and tune your prompts, and the model itself to your preferences until we beat what you run now.",
+          text: "At Gradiated we proxy your current inference and evaluate open models against your real production tasks. We train a router for your workload that learns which tasks open models can handle and which still need a frontier model.",
         },
         {
-          text: "We then continue the cycle and ensure an automated RL loop keeps your models getting better over time.",
+          text: "We run the open-model inference for the tasks you move over, while keeping frontier models for the rest. As your workload grows, those production traces give us the foundation for more bespoke training where it makes economic sense.",
         },
         {
-          text: "Today, we do this by giving you a self-serve (!) forward deployed researcher. We make money on the inference if you move to your own model, and we aim to be the cheapest in the world at that too...",
+          text: "Today, we do this by giving you a self-serve (!) forward deployed researcher. We make money on the open-model inference you move to us, and we aim to be the cheapest in the world at that too...",
         },
       ]}
     />
@@ -546,8 +546,8 @@ const InferenceExample = (): ReactElement => {
 
 const RL_STEPS = [
   "Production traces",
-  "Evaluations + RL",
-  "Own the weights to your own post-trained model",
+  "Evaluations + routing",
+  "Open or frontier models",
 ];
 
 /** A 3x3 field of square dies; `lit` of them are on. The matrix fills as

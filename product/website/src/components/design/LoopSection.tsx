@@ -820,16 +820,15 @@ export const LoopSection = ({
             style={{ "--enter-delay": "0.3s" } as CSSProperties}
           >
             <p>
-              We rebuild your production traces as an RL environment, derive
-              evals from what actually succeeded in production, and post-train
-              an open model against them.
+              Routing shows us where open models work today and where they
+              still fall short. Your production traces help us identify the
+              gaps worth closing with post-training.
             </p>
             <p>
-              Post-training a model on your own workload is normally a staffing
-              problem. You need people who do RL for a living, and a cluster you
-              pay for whether or not it&apos;s busy. Gradiated completely
-              removes the need for that part. It&apos;s just an API endpoint,
-              and your production traffic.
+              When your workload is large enough to justify bespoke training,
+              we can build evaluations and RL environments around those tasks.
+              We handle the research and infrastructure, and serve the
+              resulting model through the same API.
             </p>
           </div>
         </div>

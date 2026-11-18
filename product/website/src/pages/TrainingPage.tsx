@@ -66,8 +66,8 @@ export const TrainingPage = (): ReactElement => (
               production. See what improved, what regressed and what stayed the
               same—along with the judge model, evaluation rubric, scores and
               confidence. Drill down from the summary to the prompts, responses
-              and trace data behind individual results. Decide which tasks
-              the new model is ready to take on.
+              and trace data behind individual results. Decide which tasks the
+              new model is ready to take on.
             </p>
             <div style={{ marginBlockStart: "1.5rem" }}>
               <WaitlistButton className="gr-button gr-button--main">

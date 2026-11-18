@@ -820,15 +820,15 @@ export const LoopSection = ({
             style={{ "--enter-delay": "0.3s" } as CSSProperties}
           >
             <p>
-              Routing shows us where open models work today and where they
-              still fall short. Your production traces help us identify the
-              gaps worth closing with post-training.
+              Routing shows us where open models work today and where they still
+              fall short. Your production traces help us identify the gaps worth
+              closing with post-training.
             </p>
             <p>
-              When your workload is large enough to justify bespoke training,
-              we can build evaluations and RL environments around those tasks.
-              We handle the research and infrastructure, and serve the
-              resulting model through the same API.
+              When your workload is large enough to justify bespoke training, we
+              can build evaluations and RL environments around those tasks. We
+              handle the research and infrastructure, and serve the resulting
+              model through the same API.
             </p>
           </div>
         </div>

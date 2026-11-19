@@ -244,8 +244,10 @@ class RenderTests(unittest.TestCase):
             runtime_path = root / 'product/inference/gpu/runtimes.json'
             runtime_path.parent.mkdir(parents=True)
             shutil.copyfile(renderer.ROOT / 'product/inference/gpu/runtimes.json', runtime_path)
-            removed = self.hosts[-1]['spec']['instanceId']
-            (gpu / 'hosts.yaml').write_text(yaml.safe_dump_all(self.hosts[:-1]))
+            # The last host no pool reservation depends on.
+            host = [h for h in self.hosts if not h['spec'].get('extraTaints')][-1]
+            removed = host['spec']['instanceId']
+            (gpu / 'hosts.yaml').write_text(yaml.safe_dump_all([h for h in self.hosts if h is not host]))
             with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu, MODELS=gpu / 'models'):
                 # Step one: out of hosts.yaml, so Argo stops wanting the GpuHost,
                 # but still drainable.
@@ -301,7 +303,8 @@ class RenderTests(unittest.TestCase):
             (gpu / 'models.json').write_text(json.dumps(models))
             stock = models['z-ai/glm-5.3-flash']
             with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu, MODELS=gpu / 'models'):
-                self.assertEqual(renderer.retired_outputs(renderer.render()), {gpu / 'models/linden-b300/linden-b300.yaml'})
+                self.assertEqual(renderer.retired_outputs(renderer.render()), {
+                    gpu / 'models/linden-b300/linden-b300.yaml', gpu / 'models/linden-b300-us/linden-b300-us.yaml'})
                 with patch('sys.argv', ['render-config.py', '--check']), \
                         self.assertRaisesRegex(SystemExit, 'kubectl -n gpu-inference delete rollout,scaledobject,poddisruptionbudget linden-b300'):
                     renderer.main()
@@ -510,7 +513,8 @@ class RenderTests(unittest.TestCase):
                 reserved.setdefault((taint['key'], taint['value']), []).append(host['instance_id'])
         # No host is held for training: it runs on shared capacity, preemptible by models.
         self.assertEqual(reserved, {
-            ('gradiated.com/reserved', 'kimi-k31'): ['01a0fbf7-5276-700b-903b-7e04da150ed6']})
+            ('gradiated.com/reserved', 'kimi-k31'): ['01a0fbf7-5276-700b-903b-7e04da150ed6'],
+            ('gradiated.com/reserved', 'linden-us'): ['01a1f438-b779-71cd-ac20-ccaeb04496e6']})
         models, runtimes, inventory = self.fleet()
         pools = renderer.plan(models, runtimes, inventory)
         templates = {name: renderer.rollout(name, pools[name], runtimes)['spec']['template']['spec']

@@ -8,10 +8,8 @@ location:
   city: London
   country: UK
 # Links shown as icons beside your name. Remove the # to use any of them:
-# links:
-   [Google scholar](https://scholar.google.com/citations?user=jxa34SIAAAAJ&hl=en)
-#   github: https://github.com/your-handle
-   [Linkedin](https://uk.linkedin.com/in/aidan-gabriel-mcconnell)
+links:
+   linkedin: https://uk.linkedin.com/in/aidan-gabriel-mcconnell
 #   x: https://x.com/your-handle
 # Pictures in images/gallery/ beside this file are your gallery. To caption
 # one:
@@ -31,6 +29,8 @@ above is shown as your bio. -->
 PhD from ETH Zurich in semiconductor qubits and quantum optics.
 
 BA and MSci from Cambridge in Natural Sciences (Physics), with a focus on quantum information, condensed matter and atomic physics.
+
+[Google Scholar](https://scholar.google.com/citations?user=jxa34SIAAAAJ&hl=en)
 
 ## Working on
 

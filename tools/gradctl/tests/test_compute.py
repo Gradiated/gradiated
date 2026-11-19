@@ -35,7 +35,7 @@ class SearchTests(unittest.TestCase):
 
     def test_each_platform_name_has_one_provider(self):
         for platform, expected in (('gpu-h100-sxm', 'nebius'), ('nvidia_b300', 'ornn'), ('cpu', 'ornn'),
-                                    ('H100_SXM5', 'spheron'), ('B300_SXM6', 'spheron')):
+                                    ('H100_SXM5', 'spheron'), ('B300_SXM6', 'spheron'), ('sku_abc', 'sfcompute')):
             owners = [name for name, cls in dev_training.PROVIDERS.items()
                       if re.match(cls.platform_pattern, platform)]
             self.assertEqual(owners, [expected])
@@ -106,6 +106,40 @@ class SearchTests(unittest.TestCase):
         self.assertAlmostEqual(nebius.hourly_price('eu-north1', 'gpu-h100-sxm', '8gpu-128vcpu-1600gb', 'spot'), 18.96)
         self.assertEqual(nebius.hourly_price('eu-north1', 'gpu-h100-sxm', '1gpu-16vcpu-200gb', 'on-demand'), 99.0)
         self.assertEqual(nebius.hourly_price('eu-north1', 'gpu-l40s-a', '1gpu-8vcpu-32gb', 'spot'), 99.0)
+
+
+class ExtensionCommandTests(unittest.TestCase):
+    def test_dispatch_preserves_provider_result(self):
+        from unittest import mock
+        from types import SimpleNamespace
+        cloud = SimpleNamespace(name='sfcompute', extend=mock.Mock(return_value={
+            'hours': 2, 'end_at': 10800, 'order_id': 'ordr_test'}))
+        vm = {'name': 'exp'}
+        args = argparse.Namespace(name='exp', provider='sfcompute', hours=2, max_price=3)
+        with mock.patch.object(dev_training, 'locate', return_value=(cloud, vm)):
+            result = dev_training.extend(args)
+        cloud.extend.assert_called_once_with(vm, 2, 3)
+        self.assertEqual(result.data['provider'], 'sfcompute')
+        self.assertEqual(result.data['order_id'], 'ordr_test')
+
+    def test_continuously_billed_providers_explain_why_extension_is_unnecessary(self):
+        from unittest import mock
+        from gradctl.core import UsageError
+        for name in ('nebius', 'ornn', 'spheron'):
+            cloud = dev_training.PROVIDERS[name](lambda name: '', None)
+            args = argparse.Namespace(name='exp', provider=name, hours=1, max_price=3)
+            with mock.patch.object(dev_training, 'locate', return_value=(cloud, {'name': 'exp'})):
+                with self.assertRaisesRegex(UsageError, name):
+                    dev_training.extend(args)
+
+    def test_invalid_limits_fail_before_provider_lookup(self):
+        from unittest import mock
+        from gradctl.core import UsageError
+        for hours, cap in ((0, 2), (float('nan'), 2), (1, float('inf')), (1, -1)):
+            with mock.patch.object(dev_training, 'locate') as locate:
+                with self.assertRaises(UsageError):
+                    dev_training.extend(argparse.Namespace(hours=hours, max_price=cap))
+                locate.assert_not_called()
 
 
 class SshTests(unittest.TestCase):

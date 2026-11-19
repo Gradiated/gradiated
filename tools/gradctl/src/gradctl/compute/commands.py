@@ -56,6 +56,7 @@ its disk.
 
 import argparse
 import json
+import math
 import os
 import re
 import shlex
@@ -73,8 +74,9 @@ from ..devenv import secret
 from .nebius import Nebius
 from .ornn import Ornn
 from .spheron import Spheron
+from .sfcompute import SFCompute
 
-PROVIDERS = {'nebius': Nebius, 'ornn': Ornn, 'spheron': Spheron}
+PROVIDERS = {'nebius': Nebius, 'ornn': Ornn, 'spheron': Spheron, 'sfcompute': SFCompute}
 TAILSCALE = 'https://api.tailscale.com/api/v2'
 TAG = 'tag:dev-training'
 
@@ -213,9 +215,11 @@ def join_machine(cloud, name, host, index):
 
 
 def cloud_init(cloud, host):
-    public_key = secret(f'{cloud.name.upper()}_SSH_PUBLIC_KEY_B64').strip()
+    public_key = secret(f"{getattr(cloud, 'secret_prefix', cloud.name.upper())}_SSH_PUBLIC_KEY_B64").strip()
     return '\n'.join([
         '#cloud-config',
+        # SF Compute public images use root SSH; cloud-init otherwise disables it.
+        *(['disable_root: false'] if cloud.ssh_user == 'root' else []),
         'users:',
         f'  - name: {cloud.ssh_user}',
         '    sudo: ALL=(ALL) NOPASSWD:ALL',
@@ -334,11 +338,20 @@ def meter_vms(cloud, vms, end, source):
             began_billing = bool(billed_from and start < billed_from <= end)
             if began_billing:
                 start = billed_from
-            if (end - start).total_seconds() < 1:
+            billed_until = usage.parse_time(vm.get('billing_ended_at'))
+            interval_end = min(end, billed_until) if billed_until else end
+            if (interval_end - start).total_seconds() < 1:
                 continue
             # From the billing start on, the VM is no longer in the unbilled state an earlier meter saw.
             interval_state = vm.get('state') if began_billing else tags.get('last_state') or vm.get('state')
-            price, price_source = hourly_price(cloud, vm, cache)
+            if billed_until:
+                # A known terminal boundary establishes that the preceding interval was billed,
+                # including the first observation of an already-expired SF allocation.
+                interval_state = 'RUNNING'
+            if hasattr(cloud, 'usage_price'):
+                price, price_source = cloud.usage_price(vm, start, interval_end), f'{cloud.name}_fills'
+            else:
+                price, price_source = hourly_price(cloud, vm, cache)
             if price is None and interval_state in usage.BILLED_STATES:
                 print(f"no price for {vm['name']}; its time since {start.isoformat()} is kept for the next meter",
                       file=sys.stderr)
@@ -347,7 +360,7 @@ def meter_vms(cloud, vms, end, source):
                 customer=tags.get('customer'), stage=tags.get('stage'), run_id=tags.get('run_id'),
                 workstream=tags.get('workstream'), provider=cloud.name, resource_name=vm['name'],
                 resource_id=vm.get('id'), region=vm.get('region'), term=vm.get('term'), gpu_type=vm.get('gpu_type'),
-                gpu_count=vm.get('gpus'), usd_per_hour=price, price_source=price_source, start=start, end=end,
+                gpu_count=vm.get('gpus'), usd_per_hour=price, price_source=price_source, start=start, end=interval_end,
                 vm_state=interval_state, source=source)
             tags['pending'] = event
             tags['next_state'] = vm.get('state')
@@ -473,6 +486,10 @@ def up(args):
         sys.exit(f"{args.name} already exists in {other.name} {existing['region']}")
     region = args.region or cloud.default_region
     host = f'{cloud.name}-{args.name}'
+    if args.duration_hours is not None:
+        if cloud.name != 'sfcompute':
+            raise UsageError('--duration-hours is supported only by SF Compute')
+        cloud.duration_hours = args.duration_hours
     cloud.create(args.name, region, args.platform, args.preset, args.disk_gib, args.image,
                  lambda: cloud_init(cloud, host), term=args.term, max_price=args.max_price)
     with usage.ledger(state()) as book:
@@ -504,6 +521,23 @@ def up(args):
              '`gradctl compute down`')
 
 
+def extend(args):
+    if not math.isfinite(args.hours) or args.hours <= 0:
+        raise UsageError('--hours must be finite and positive')
+    if not math.isfinite(args.max_price) or args.max_price <= 0:
+        raise UsageError('--max-price must be finite and positive (USD per GPU-hour)')
+    cloud, vm = locate(args)
+    if not vm:
+        raise UsageError(f'No VM named {args.name}')
+    if not hasattr(cloud, 'extend'):
+        raise UsageError(f"{cloud.name}: {cloud.extension_note}")
+    data = cloud.extend(vm, args.hours, args.max_price)
+    return Result(data={'name': vm['name'], 'provider': cloud.name, **data},
+                  text=f"Extended {vm['name']} by {data['hours']:g} hours through "
+                       f"{datetime.fromtimestamp(data['end_at'], timezone.utc).isoformat()} "
+                       f"(order {data['order_id']})")
+
+
 def ls(args):
     rows = []
 
@@ -522,7 +556,7 @@ def ssh_command(cloud, name, index=0):
                  'VMs it has)')
     machine = vm['machines'][index]
     key = state() / f'{cloud.name}-ssh-key'
-    content = secret(f'{cloud.name.upper()}_SSH_PRIVATE_KEY_B64').strip() + '\n'
+    content = secret(f"{getattr(cloud, 'secret_prefix', cloud.name.upper())}_SSH_PRIVATE_KEY_B64").strip() + '\n'
     if not key.exists() or key.read_text() != content:
         key.touch(mode=0o600)
         key.write_text(content)
@@ -756,7 +790,7 @@ def positive(value):
 
 
 def register(commands, common) -> None:
-    sub = group(commands, 'compute', 'Development training GPU VMs from Nebius, Ornn or Spheron, isolated on '
+    sub = group(commands, 'compute', 'Development training GPU VMs from Nebius, Ornn, Spheron or SF Compute, isolated on '
                                      'the tailnet (see $dev-training)')
     creds = ('aws',)
 
@@ -788,7 +822,7 @@ def register(commands, common) -> None:
                                     effects='write', requires=creds), vm=True)
     parser.add_argument('--platform', required=True,
                         help='Nebius platform (gpu-h100-sxm), Ornn GPU slug (nvidia_h100_sxm) or Spheron GPU '
-                             'type (H100_SXM5); see `search`')
+                             'type (H100_SXM5), or SF Compute SKU (sku_...); see `search`')
     parser.add_argument('--preset', help='Nebius preset (1gpu-16vcpu-200gb) or Spheron offer ID; Ornn sells whole '
                                          'nodes')
     parser.add_argument('--region', help='Ornn and Spheron default: the cheapest region')
@@ -798,7 +832,16 @@ def register(commands, common) -> None:
     parser.add_argument('--disk-gib', type=int, help='Nebius boot disk, default 250; Ornn nodes have their own disk')
     parser.add_argument('--image', help='Nebius image family (default Ubuntu 24.04 with CUDA), Ornn disk ID or '
                                         "one of the Spheron offer's os_options (default Ubuntu with CUDA)")
+    parser.add_argument('--duration-hours', type=float,
+                        help='SF Compute: prepaid window upper bound (default 1 hour), ends on the last '
+                             'provider schedule boundary within this duration; down does not refund unused time')
     attribution(parser)
+    parser = command('extend', extend, Meta(
+        'Extend a running reservation without replacing its VM; spends money where supported',
+        effects='write', requires=creds), vm=True)
+    parser.add_argument('--hours', '--duration-hours', dest='hours', required=True, type=float,
+                        help='additional prepaid hours, ending on a provider schedule boundary within this duration')
+    parser.add_argument('--max-price', type=float, required=True, help='maximum USD per GPU-hour for the extension')
     command('ls', ls, Meta('Every dev-training VM on every provider', requires=creds), many=True)
     command('meter', meter, Meta("Send each VM's GPU cost since it was last metered to PostHog as compute_usage "
                                  'events', effects='write', requires=creds), many=True)
@@ -841,7 +884,7 @@ def register(commands, common) -> None:
     parser = leaf(sub, 'setup', lambda ctx: setup(ctx.args), Meta(
         'Admin: write or rotate the provider and Tailscale credentials in gradiated/dev/env', effects='write',
         requires=('aws', 'nebius')), common)
-    parser.add_argument('target', nargs='?', choices=['nebius', 'ornn', 'spheron', 'tailscale'], default='nebius',
+    parser.add_argument('target', nargs='?', choices=['nebius', 'ornn', 'spheron', 'sfcompute', 'tailscale'], default='nebius',
                         help='ornn and spheron read a new API key on stdin; tailscale copies only the Tailscale '
                              'clients')
     parser.add_argument('--aws-profile', default='gradiated-admin')

@@ -220,8 +220,35 @@ def setup_spheron(args):
     put_environment(args.aws_profile, environment, added)
 
 
+def setup_sfcompute(args):
+    """Create a dedicated SSH key and choose a workspace; never provision compute."""
+    from .sfcompute import SFCompute
+    environment = json.loads(aws(args.aws_profile, 'secretsmanager', 'get-secret-value', '--secret-id',
+                                 DEV_SECRET, '--query', 'SecretString', '--output', 'text'))
+    token = environment.get('SF_COMPUTE_API_TOKEN')
+    if not token:
+        sys.exit('Set SF_COMPUTE_API_TOKEN in gradiated/dev/env first')
+    cloud = SFCompute(lambda name: token, None)
+    workspaces = list(cloud.pages('/v2/workspaces'))
+    workspace = environment.get('SF_COMPUTE_WORKSPACE')
+    if not workspace:
+        if len(workspaces) != 1:
+            sys.exit('Set SF_COMPUTE_WORKSPACE to a workspace ID or resource path in gradiated/dev/env')
+        workspace = workspaces[0]['id']
+    added = {'SF_COMPUTE_WORKSPACE': workspace}
+    keys = ('SF_COMPUTE_SSH_PRIVATE_KEY_B64', 'SF_COMPUTE_SSH_PUBLIC_KEY_B64')
+    if args.rotate_ssh_key or not all(environment.get(k) for k in keys):
+        with tempfile.TemporaryDirectory() as directory:
+            os.chmod(directory, 0o700)
+            private, public = ssh_key(directory, 'gradiated-sfcompute-dev')
+        added.update(dict(zip(keys, (private, public))))
+    put_environment(args.aws_profile, environment, added)
+
+
 def run(args):
     """Set up args.target: nebius (default, with the shared keys), ornn, spheron or tailscale."""
+    if args.target == 'sfcompute':
+        return setup_sfcompute(args)
     if args.target == 'ornn':
         return setup_ornn(args)
     if args.target == 'spheron':

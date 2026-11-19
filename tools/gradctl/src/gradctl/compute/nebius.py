@@ -21,6 +21,7 @@ PROJECTS = CONFIG['projects']
 
 class Nebius:
     name = 'nebius'
+    extension_note = 'VMs keep running and billing until stopped/deleted or preempted; there is no prepaid expiry to extend'
     ssh_user = 'ubuntu'
     default_region = 'eu-north1'
     virtualization = 'vm'

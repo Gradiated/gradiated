@@ -32,6 +32,7 @@ LIVE = ('confirmed', 'active')
 
 class Ornn:
     name = 'ornn'
+    extension_note = 'hourly VMs renew automatically until ended; extending beyond a seller listing or spot reclaim is unsupported'
     ssh_user = 'ubuntu'
     default_region = None
     virtualization = 'vm'

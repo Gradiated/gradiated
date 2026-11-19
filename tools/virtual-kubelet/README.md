@@ -243,7 +243,8 @@ Every pool scales on the same three signals, in its own slots, and the HPA takes
 the largest (a pool with no floor has a fourth, below):
 
 - **Utilization.** The model's peak in-flight generations over the last minute
-  (`gradiated:model_busy_slots`), divided by 0.7, less the slots the pools ahead
+  (`gradiated:model_busy_slots`), divided by the pool's utilization target
+  (0.7 unless the pool sets `utilization`), less the slots the pools ahead
   of this one serve: a pool still growing counts at its maximum, and one that
   requests its maximum counts only its ready replicas, so demand it cannot place
   or serve passes to the next pool. In-flight generations include those
@@ -259,13 +260,20 @@ the largest (a pool with no floor has a fourth, below):
   up on refusals only once every pool ahead of it requests its maximum, so a
   pool that cannot place its replicas hands demand on.
 
+A pool aiming for revenue per replica-hour rather than headroom can raise
+`utilization` (up to 1.2), adding replicas only once requests queue, and lengthen
+`hold_minutes` (up to 120), keeping replicas through the gaps between bursts
+instead of paying for another start. The uncensored GLM pool runs at 1.0 with
+a 30-minute hold.
+
 There is no CPU, memory or GPU-memory signal. Both recording rules live in
 `workloads/observability/autoscaling-prometheus-rules.yaml`; the scaling
 constants live in `tools/gpu/render-config.py`. All queries require fresh,
 complete gateway telemetry. Missing samples or a Prometheus outage trigger a
 fallback that retains the current replica count when it exceeds the floor.
 Scale-up adds every replica the signals ask for at once, at least doubling or
-adding four every 15 seconds, because a start takes minutes; scale-down waits ten minutes and
+adding four every 15 seconds, because a start takes minutes; scale-down waits for the pool's hold (ten
+minutes unless the pool sets `hold_minutes`) and
 removes one at a time: a third signal, `draining`, holds the requested count
 while any of the pool's replicas is terminating, because it can still hold its
 GPUs, so the next removal waits only as long as the actual drain. New replicas

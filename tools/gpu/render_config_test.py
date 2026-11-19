@@ -700,6 +700,25 @@ class RenderTests(unittest.TestCase):
         for trigger in scaled['triggers']:
             self.assertTrue(trigger['metadata']['query'].endswith('> time() - 45))'))
 
+    def test_pool_may_set_its_own_utilization_target_and_hold(self):
+        pool = {'runtime': 'twelve', 'gpu': 'B300', 'max_replicas': 2, 'progress_deadline_seconds': 60}
+        pools, _ = self.synthetic({'tuned': {**pool, 'utilization': 1.0, 'hold_minutes': 30}},
+                                  twelve={'active_requests': 12})
+        queries = renderer.scaling_queries('tuned', pools['tuned'])
+        self.assertTrue(queries['utilization'].endswith('/ 1.0, 0)[30m:30s])'))
+        self.assertTrue(queries['refusals'].endswith('or vector(0))[30m:30s])'))
+        for field, value in [('utilization', 0.4), ('utilization', 1.5), ('utilization', True), ('utilization', '1'),
+                             ('hold_minutes', 5), ('hold_minutes', 180), ('hold_minutes', 30.0)]:
+            with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, field):
+                self.synthetic({'tuned': {**pool, field: value}}, twelve={'active_requests': 12})
+        # The uncensored GLM pool trades headroom for revenue per replica-hour;
+        # every other pool keeps the defaults.
+        models, runtimes, hosts = self.fleet()
+        fleet = renderer.plan(models, runtimes, hosts)
+        tuned = {name: (pool['utilization'], pool['hold_minutes']) for name, pool in fleet.items()
+                 if (pool['utilization'], pool['hold_minutes']) != (renderer.UTILIZATION, renderer.HOLD_MINUTES)}
+        self.assertEqual(tuned, {'glm-dealign-sglang': (1.0, 30)})
+
     def test_replica_rules_follow_rollout_targets_and_floors(self):
         models, runtimes, hosts = self.fleet()
         pools = renderer.plan(models, runtimes, hosts)

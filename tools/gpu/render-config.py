@@ -78,14 +78,16 @@ def host_taints(spec):
 # one Rollout: one runtime release on one GPU type. A slot is one concurrent
 # request a replica admits: its runtime's enforced active_requests, or the pool's
 # slots for a runtime without one. Every pool scales on the same two signals;
-# there is no per-model tuning.
+# a pool may set its own utilization target and hold_minutes.
 UTILIZATION = 0.7  # keep each model's in-flight requests at 70% of its slots
+HOLD_MINUTES = 10  # how long a pool keeps capacity for its last peak
 REFUSAL_SHARE = 0.05  # add a replica while our capacity refuses over 5% of requests
 RESERVED = 'gradiated.com/reserved'
 PROMETHEUS = 'http://observability-kube-prometh-prometheus.observability.svc:9090'
 REPLICA_RULES = KUBE / 'workloads/observability/model-replica-rules.yaml'
 NAME = re.compile(r'[a-z](?:[a-z0-9-]*[a-z0-9])?')
 POOL_FIELDS = {'runtime', 'gpu', 'gpu_count', 'reservation', 'spread', 'slots', 'max_replicas', 'mode', 'replicas',
+               'utilization', 'hold_minutes',
                'progress_deadline_seconds', 'max_surge', 'max_unavailable', 'rolling_update', 'labels', 'annotations'}
 SERVING_ANNOTATIONS = {'gradiated.com/model-id', 'gradiated.com/release',
                        'gradiated.com/serving-model-id', 'gradiated.com/serving-mode'}
@@ -153,10 +155,20 @@ def plan(models, runtimes, hosts):
                 unfilled = max(0, unfilled - floor * slots)
             else:
                 raise ValueError(f'Pool {name} mode must be production or qualification')
+            # A pool may trade headroom for revenue per replica-hour: a higher
+            # utilization target adds replicas later, a longer hold keeps them
+            # through the gaps between bursts instead of restarting them.
+            utilization = pool.get('utilization', UTILIZATION)
+            if type(utilization) not in (int, float) or not 0.5 <= utilization <= 1.2:
+                raise ValueError(f'Pool {name} utilization must be a number from 0.5 to 1.2')
+            hold = pool.get('hold_minutes', HOLD_MINUTES)
+            if not count(hold, 10) or hold > 120:
+                raise ValueError(f'Pool {name} hold_minutes must be an integer from 10 to 120')
             if 'reservation' in pool and not reserved.get(pool['reservation']):
                 raise ValueError(f'Pool {name} needs a host in hosts.yaml reserved for {pool["reservation"]!r}')
             pools[name] = {**pool, 'model': model_id, 'mode': mode, 'slots': slots, 'floor': floor,
                            'maximum': maximum, 'ahead': list(ahead),
+                           'utilization': utilization, 'hold_minutes': hold,
                            'hosts': sorted(reserved.get(pool.get('reservation'), []))}
             if mode == 'production' and maximum:
                 ahead.append((name, maximum, slots))
@@ -344,7 +356,7 @@ def scaling_queries(name, pool):
     # maximum; once it requests its maximum only its ready replicas count, so
     # demand it cannot place or serve passes on.
     busy = f'(max(gradiated:model_busy_slots{{{model}}}) or (0 * sum(gradiated:autoscaling_demand{{service="gateway"}})))'
-    need = f'{busy} / {UTILIZATION}' + ''.join(
+    need = f'{busy} / {pool["utilization"]}' + ''.join(
         f' - (({ready_replicas(other)} * {slots} and on() ({desired_replicas(other)} >= {maximum}))'
         f' or vector({maximum * slots}))' for other, maximum, slots in pool['ahead'])
     # While refusals exceed their share, ask for one replica more than are
@@ -366,11 +378,13 @@ def scaling_queries(name, pool):
     deleting = f'kube_pod_deletion_timestamp{{{pods}}}'
     staying = f'count({active} unless on(pod) {deleting})'
     draining = f'(count({deleting} and on(pod) {active}) > 0)'
-    # Each scaling signal keeps its ten-minute peak: scale-up follows at once,
-    # scale-down only after ten quiet minutes. Kept here, not in the HPA window,
-    # so a draining hold does not restart the wait.
-    signals = {'utilization': f'max_over_time(clamp_min({need}, 0)[10m:30s])',
-               'refusals': f'max_over_time((({step} and on() {refusing}{full}) or vector(0))[10m:30s])',
+    # Each scaling signal keeps its peak for the pool's hold (ten minutes by
+    # default): scale-up follows at once, scale-down only after that many quiet
+    # minutes. Kept here, not in the HPA window, so a draining hold does not
+    # restart the wait.
+    hold = f'[{pool["hold_minutes"]}m:30s]'
+    signals = {'utilization': f'max_over_time(clamp_min({need}, 0){hold})',
+               'refusals': f'max_over_time((({step} and on() {refusing}{full}) or vector(0)){hold})',
                'draining': f'(({staying} * {pool["slots"]} and on() {draining}) or vector(0))'}
     if not pool['floor']:
         # A pool with no floor may be at zero replicas when a new revision lands,

@@ -914,5 +914,27 @@
     "memory": "96Gi",
     "request_memory": "96Gi",
     "startup_timeout": 1800
+  },
+  "66d1e0c0bbf4ebcc9c8cd996938ece0ae63a3a75333ab3f6209b2b55bcb6397b": {
+    "image": "gradiated/linden-bundle@sha256:66d1e0c0bbf4ebcc9c8cd996938ece0ae63a3a75333ab3f6209b2b55bcb6397b",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "66d1e0c0bbf4ebcc9c8cd996938ece0ae63a3a75333ab3f6209b2b55bcb6397b"
+    },
+    "model_id": "gradiated/linden-1",
+    "release": {
+      "protocol": "system_one",
+      "schema_version": 1,
+      "model_path": "gradiated/linden-1",
+      "model_revision": "ca21f84254e58d108e49747deefe08ceb3dfe939",
+      "tokenizer_path": "gradiated/linden-1",
+      "tokenizer_revision": "ca21f84254e58d108e49747deefe08ceb3dfe939",
+      "runtime_revision": "linden-66d1e0c0bbf4"
+    },
+    "gpus": 1,
+    "active_requests": 8,
+    "cpu": "16",
+    "memory": "96Gi",
+    "request_memory": "96Gi",
+    "startup_timeout": 1800
   }
 }

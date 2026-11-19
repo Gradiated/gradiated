@@ -223,9 +223,9 @@ def scaling_tests(name, pool, queries, wrap=False):
              [item for item in reporters() if 'gpu-inference' not in item['series']]
              + rollouts(ahead=pool['ahead'][0][1] - 1) + requests(54, 6), zero)
         case('demand the pools ahead can hold leaves this pool idle', reporters() + [
-            series('gradiated_gateway_active_generations', f'{ahead * 0.7:g}+0x12', model=model, deployment='d')], zero)
+            series('gradiated_gateway_active_generations', f'{ahead * pool["utilization"]:g}+0x12', model=model, deployment='d')], zero)
         held = [item for item in reporters() if 'gpu-inference' not in item['series']]
-        demand = [series('gradiated_gateway_active_generations', f'{ahead * 0.7:g}+0x12', model=model, deployment='d')]
+        demand = [series('gradiated_gateway_active_generations', f'{ahead * pool["utilization"]:g}+0x12', model=model, deployment='d')]
         case('a pool ahead at its maximum that cannot serve hands its demand on',
              held + rollouts(ahead_ready=0) + demand, {**zero, 'utilization': ahead})
         case('a pool ahead still growing keeps its share while it loads',

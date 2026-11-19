@@ -25,8 +25,10 @@ import prompt
 log = logging.getLogger('linden.service')
 
 MODEL = 'gradiated/linden-1'
-# The immutable Hub commit of gradiated/linden-1; verify-build.py refuses to package an unpinned runtime.
-REVISION = 'eba925a94f6308f486334be5669399bd620f8fce'
+# The immutable Hub commit of gradiated/linden-1; verify-build.py refuses to package an unpinned runtime. This is the
+# FP8 checkpoint (compressed-tensors, FP8 dynamic), which SGLang loads as FP8 from its config; the BF16 weights are
+# the Hub's bf16 branch (eba925a94f6308f486334be5669399bd620f8fce).
+REVISION = 'ca21f84254e58d108e49747deefe08ceb3dfe939'
 # The longest prompt SGLang accepts. Requests whose rendered prompt is longer are rejected, never truncated.
 MAX_TOKENS = 32768
 QUANTIZATIONS = {'none': [], 'fp8': ['--quantization', 'fp8']}

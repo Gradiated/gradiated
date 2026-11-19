@@ -4,8 +4,11 @@ Native SystemOne serving for `gradiated/linden-1`, a 31B Gemma 4 decision model,
 `/v1/systemone` contract (`product/packages/contracts/src/systemone.ts`), the API the TypeSafe SDK calls.
 
 - `service.py`: Kev's bounded ASGI adapter (`kev_http`) in front of a loopback SGLang 0.5.21 engine started from the
-  pinned Hub revision (weights, configuration and tokenizer only; no repository code runs). BF16 by default; each
-  bundle fixes its precision with `LINDEN_QUANTIZATION`.
+  pinned Hub revision (weights, configuration and tokenizer only; no repository code runs). The pinned
+  revision is the FP8 checkpoint (compressed-tensors, FP8 dynamic: per-channel weight scales, per-token activation
+  scales), which SGLang loads as FP8 from its config. It matches BF16 on Decision Index 0.3 (70.50 against 70.49 on
+  11,025 questions) and is 21% faster on an 8,500-token request on a B300 (367 ms against 469). `LINDEN_QUANTIZATION`
+  can still ask SGLang to quantize a BF16 revision on load.
 - `prompt.py`: linden-1's prompt format and readout. The state becomes chat turns; each question is a block of
   lettered options; a request whose single read fits 3,000 tokens is written twice, and a longer one is read once
   after a header listing the questions. The answer is the softmax of the option labels' next-token log probabilities

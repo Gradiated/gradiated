@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { ReactElement } from "react";
+import { resolveColor, useThemeVersion } from "../../lib/theme-color";
 import hiring from "../../hiring-countries.generated.json";
 
 type Reason = "sanctions" | "high-cost" | "contractors" | "timezone";
@@ -58,43 +59,6 @@ const restrictions = new Map(
   hiring.countries.map((country) => [country.code, country.reason as Reason]),
 );
 
-// The probe resolves var() chains; the canvas turns any color syntax into
-// sRGB bytes, so color-mix(), color() and oklch() all come out right.
-const resolve = (host: HTMLElement, property: string): number => {
-  const probe = document.createElement("span");
-  probe.style.color = `var(${property})`;
-  host.append(probe);
-  const color = getComputedStyle(probe).color;
-  probe.remove();
-
-  const context = document.createElement("canvas").getContext("2d");
-  if (!context) return 0;
-
-  context.fillStyle = color;
-  context.fillRect(0, 0, 1, 1);
-  const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
-
-  return (r << 16) | (g << 8) | b;
-};
-
-const useThemeVersion = (): number => {
-  const [version, setVersion] = useState(0);
-
-  useEffect(() => {
-    const observer = new MutationObserver(() =>
-      setVersion((value) => value + 1),
-    );
-    observer.observe(document.documentElement, {
-      attributeFilter: ["data-theme"],
-      subtree: true,
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  return version;
-};
-
 export const CountriesWeHireIn = (): ReactElement => {
   const chartRef = useRef<HTMLDivElement>(null);
   const theme = useThemeVersion();
@@ -114,7 +78,8 @@ export const CountriesWeHireIn = (): ReactElement => {
     ]).then(([am5, am5map, worldLow, animated]) => {
       if (disposed) return;
 
-      const color = (property: string) => am5.color(resolve(host, property));
+      const color = (property: string) =>
+        am5.color(resolveColor(host, property));
 
       // No licence key (PostHog's is theirs), so amCharts shows its credit.
       const root = am5.Root.new(host);

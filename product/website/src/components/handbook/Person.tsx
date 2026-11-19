@@ -15,7 +15,7 @@ const Avatar = ({ person }: { person: PersonRecord }): ReactElement =>
       alt=""
       className="gr-pill__avatar"
       height={20}
-      src={`/people/${person.photo}`}
+      src={person.photo}
       width={20}
     />
   ) : (

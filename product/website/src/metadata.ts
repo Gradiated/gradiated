@@ -2,6 +2,7 @@ import { jobs } from "./careers";
 import { handbookPages } from "./handbook";
 import { models } from "./models";
 import { articles } from "./articles";
+import { team } from "./team";
 
 export const siteOrigin = "https://gradiated.com";
 
@@ -37,6 +38,22 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Learn how Gradiated began inside PostHog and why PostHog created a dedicated brand for inference research and infrastructure.",
   },
+  "/team/": {
+    title: "Team",
+    description:
+      "Meet the people at Gradiated: who they are, what they are working on, and where in the world they are based.",
+  },
+  ...Object.fromEntries(
+    team.map((member) => [
+      member.path,
+      {
+        title: member.name,
+        description: `${member.name} is ${member.role} at Gradiated.${
+          member.summary ? ` ${member.summary}` : ""
+        }`,
+      },
+    ]),
+  ),
   "/training/": {
     title: "Training",
     description:
@@ -307,6 +324,8 @@ const breadcrumbFor = (pathname: string, title: string): object | null => {
     parts.push({ name: "Careers", path: "/careers/" });
   } else if (pathname.startsWith("/handbook/")) {
     parts.push({ name: "Handbook", path: "/handbook/" });
+  } else if (pathname.startsWith("/team/")) {
+    parts.push({ name: "Team", path: "/team/" });
   } else if (pathname.startsWith("/library/")) {
     parts.push({ name: "Library", path: "/library/" });
   } else {
@@ -426,6 +445,32 @@ export const getStructuredData = (pathname: string): object[] => {
       mainEntityOfPage: url,
       author: organization,
       publisher: organization,
+    });
+    return data;
+  }
+
+  const member = team.find(({ path }) => path === normalizedPath);
+  if (member) {
+    data.push({
+      "@type": "ProfilePage",
+      url,
+      mainEntity: {
+        "@type": "Person",
+        name: member.name,
+        jobTitle: member.role,
+        worksFor: { "@id": organization["@id"] },
+        ...(member.summary && { description: member.summary }),
+        ...(member.photo && { image: absoluteUrl(member.photo.src) }),
+        ...(member.location && {
+          homeLocation: {
+            "@type": "Place",
+            name: `${member.location.city}, ${member.location.country}`,
+          },
+        }),
+        ...(Object.values(member.links).length > 0 && {
+          sameAs: Object.values(member.links),
+        }),
+      },
     });
     return data;
   }

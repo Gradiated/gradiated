@@ -1,0 +1,157 @@
+/* /about/: a collage hero, three principles, the layers of a chip, and the
+   team. */
+
+/* -- hero ------------------------------------------------------------------ */
+
+.gr-module--about-hero {
+  --canvas: 2928 / 2120;
+}
+
+.gr-module--about-why::before {
+  display: none;
+}
+
+/* -- principles and the chip ---------------------------------------------- */
+
+.gr-features-icon {
+  display: block;
+  width: auto;
+  height: calc(2.4 * var(--u));
+  margin-block-end: calc(1.2 * var(--u));
+}
+
+/* Six diamonds, each overlapping the next by a quarter, spanning the band.
+   Later layers sit on top, as they do in the package. */
+.gr-about-dies {
+  --die: calc(100% / 4.85);
+
+  display: flex;
+  margin-block-start: calc(4 * var(--u));
+}
+
+.gr-about-die {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--die);
+  aspect-ratio: 1;
+}
+
+.gr-about-die + .gr-about-die {
+  margin-inline-start: calc(var(--die) * -0.23);
+}
+
+.gr-about-die img {
+  width: 70.71%;
+  height: auto;
+  rotate: 45deg;
+}
+
+/* The lid's pins reach past the package, so its picture is drawn larger. */
+.gr-about-die:last-child img {
+  width: 82%;
+}
+
+/* Hidden only once the script is watching for them, then up one at a time,
+   substrate first. The fade is over early so a die is solid while it is
+   still settling; the long expo-out is what makes it glide rather than land. */
+.gr-about-dies[data-reveal="waiting"] .gr-about-die {
+  opacity: 0;
+  translate: 0 35%;
+}
+
+.gr-about-dies[data-reveal="seen"] .gr-about-die {
+  animation:
+    gr-die-rise 1300ms var(--ease-open) both,
+    gr-die-fade 500ms ease-out both;
+  animation-delay: calc(var(--i) * 90ms);
+}
+
+@keyframes gr-die-rise {
+  from {
+    translate: 0 35%;
+  }
+}
+
+@keyframes gr-die-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.gr-about-silicon {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--u) var(--pad);
+  align-items: start;
+  margin-block-start: calc(3.5 * var(--u));
+}
+
+.gr-about-silicon .gr-body {
+  margin-inline-start: calc(2 * var(--u));
+}
+
+/* -- team ------------------------------------------------------------------ */
+
+.gr-about-team-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--u);
+  padding-block-end: calc(2.5 * var(--u));
+}
+
+/* A name or role may run wider than the picture above it, as in print, and
+   wraps only when four (or three) of them no longer fit side by side. */
+.gr-root .gr-member-grid--about {
+  grid-template-columns: repeat(4, minmax(0, max-content));
+  justify-content: space-between;
+  row-gap: calc(3.5 * var(--u));
+}
+
+.gr-member-grid--about .gr-member-frame {
+  width: calc(8.1 * var(--u));
+  max-width: 100%;
+}
+
+.gr-member-grid--about .gr-member-role {
+  color: var(--color-text-muted);
+}
+
+.gr-member-grid--about .gr-portrait {
+  aspect-ratio: 10 / 11;
+  object-position: 50% 30%;
+  object-view-box: inset(0 3% 0 3%);
+}
+
+/* -- narrower -------------------------------------------------------------- */
+
+/* Fewer across as soon as the longest names would wrap: measured at 1240px
+   for four and 1000px for three. */
+@media (max-width: 77.5rem) {
+  .gr-root .gr-member-grid--about {
+    grid-template-columns: repeat(3, minmax(0, max-content));
+  }
+}
+
+@media (max-width: 62.5rem) {
+  .gr-root .gr-member-grid--about {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: calc(2 * var(--u));
+  }
+}
+
+@media (max-width: 60rem) {
+  .gr-about-silicon {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gr-about-silicon .gr-body {
+    margin-inline-start: 0;
+  }
+
+  .gr-member-grid--about .gr-member-frame {
+    width: 100%;
+  }
+}

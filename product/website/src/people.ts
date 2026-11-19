@@ -1,3 +1,5 @@
+import { team } from "./team";
+
 export type Team = {
   name: string;
   slug: string;
@@ -13,18 +15,21 @@ export type Person = {
 
 export const teams: Team[] = [];
 
-export const people: Person[] = [
-  { name: "James Hawkins", role: "Cofounder and CEO" },
-  { name: "Josh Snyder", role: "Cofounder" },
-  { name: "Aidan McConnell", role: "Technical staff" },
-  { name: "Shmo Gupta", role: "Designer" },
-  { name: "Scott Lewis", role: "Executive Assistant" },
-];
+/* Derived from the profiles in content/team/, so a person is added in one
+   place and the handbook's name pills link to their profile. */
+export const people: Person[] = team.map((member) => ({
+  name: member.name,
+  href: member.path,
+  photo: member.photo?.small,
+  role: member.role,
+}));
 
 export const findPerson = (name: string): Person => {
   const person = people.find((candidate) => candidate.name === name);
   if (!person)
-    throw new Error(`Unknown person "${name}": add them to src/people.ts.`);
+    throw new Error(
+      `Unknown person "${name}": add a profile for them in content/team/.`,
+    );
 
   return person;
 };

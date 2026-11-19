@@ -1,0 +1,58 @@
+{
+  "aidan-mcconnell": {
+    "gallery": {},
+    "profile": {
+      "bust": "/team/aidan-mcconnell/profile-bust.webp",
+      "small": "/team/aidan-mcconnell/profile-small.webp",
+      "src": "/team/aidan-mcconnell/profile.webp"
+    }
+  },
+  "charley-carriero": {
+    "gallery": {},
+    "profile": {
+      "bust": "/team/charley-carriero/profile-bust.webp",
+      "small": "/team/charley-carriero/profile-small.webp",
+      "src": "/team/charley-carriero/profile.webp"
+    }
+  },
+  "james-hawkins": {
+    "gallery": {},
+    "profile": {
+      "bust": "/team/james-hawkins/profile-bust.webp",
+      "small": "/team/james-hawkins/profile-small.webp",
+      "src": "/team/james-hawkins/profile.webp"
+    }
+  },
+  "josh-snyder": {
+    "gallery": {},
+    "profile": {
+      "bust": "/team/josh-snyder/profile-bust.webp",
+      "small": "/team/josh-snyder/profile-small.webp",
+      "src": "/team/josh-snyder/profile.webp"
+    }
+  },
+  "riccardo-barbano": {
+    "gallery": {},
+    "profile": {
+      "bust": "/team/riccardo-barbano/profile-bust.webp",
+      "small": "/team/riccardo-barbano/profile-small.webp",
+      "src": "/team/riccardo-barbano/profile.webp"
+    }
+  },
+  "scott-lewis": {
+    "gallery": {},
+    "profile": {
+      "bust": "/team/scott-lewis/profile-bust.webp",
+      "small": "/team/scott-lewis/profile-small.webp",
+      "src": "/team/scott-lewis/profile.webp"
+    }
+  },
+  "trevor-kensiski": {
+    "gallery": {},
+    "profile": {
+      "bust": "/team/trevor-kensiski/profile-bust.webp",
+      "small": "/team/trevor-kensiski/profile-small.webp",
+      "src": "/team/trevor-kensiski/profile.webp"
+    }
+  }
+}

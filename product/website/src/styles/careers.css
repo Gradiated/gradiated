@@ -1,0 +1,263 @@
+/* /careers/: a collage hero, why Gradiated, the expectations as textured
+   cards, then the interlude and the open roles. */
+
+/* The copy sits high, clear of the people in the collage. */
+.gr-module--careers-hero {
+  --canvas: 2926 / 2120;
+  --copy-rows: 1fr auto 2.6fr;
+}
+
+/* -- why ------------------------------------------------------------------- */
+
+.gr-careers-why {
+  display: grid;
+  grid-template-columns: auto minmax(0, 59%);
+  justify-content: space-between;
+  column-gap: calc(2 * var(--u));
+}
+
+/* The title and the card span the reasons: title level with the first,
+   card's foot level with the last. */
+.gr-careers-why-lead {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: calc(1.5 * var(--u));
+}
+
+.gr-careers-why .gr-idcard {
+  justify-items: start;
+}
+
+.gr-careers-reasons {
+  display: grid;
+  row-gap: calc(1.75 * var(--u));
+}
+
+.gr-careers-reason {
+  display: grid;
+  grid-template-columns: calc(2.8 * var(--u)) minmax(0, 1fr);
+  column-gap: calc(1.6 * var(--u));
+  align-items: start;
+}
+
+/* Each fits the same square, so a wide icon reads no larger than a tall one. */
+.gr-careers-reason-icon {
+  justify-self: center;
+  width: calc(1.8 * var(--u));
+  height: calc(1.8 * var(--u));
+  object-fit: contain;
+}
+
+.gr-root .gr-careers-reason-title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.15;
+}
+
+.gr-root .gr-careers-reason-body {
+  margin: calc(0.6 * var(--u)) 0 0;
+  font-size: var(--text-note);
+  line-height: 1.55;
+}
+
+/* -- before you decide ---------------------------------------------------- */
+
+.gr-careers-decide-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--u);
+  padding-block-end: calc(1.75 * var(--u));
+}
+
+.gr-careers-handbook {
+  display: flex;
+  align-items: center;
+  gap: calc(1.6 * var(--u));
+  max-width: 42ch;
+  color: var(--color-text-muted);
+  font-size: var(--text-note);
+  line-height: 1.5;
+}
+
+.gr-root .gr-careers-handbook p {
+  margin: 0;
+}
+
+.gr-careers-handbook img {
+  flex: none;
+  width: auto;
+  height: calc(1.8 * var(--u));
+}
+
+/* One and a half times a module's usual space under the cards. */
+.gr-root .gr-careers-decide-module {
+  padding-block-end: calc(6.75 * var(--u));
+}
+
+@media (max-width: 60rem) {
+  .gr-rail-sheet
+    .gr-root[data-tier]:not([data-tier="wide"])
+    .gr-module.gr-careers-decide-module:not(.gr-module--fold) {
+    padding-block-end: calc(var(--rhythm-section) * 0.75);
+  }
+}
+
+/* Wide screens fan the cards out (BounceCards); narrower ones stack them. */
+.gr-careers-fan {
+  position: relative;
+}
+
+.gr-careers-tile--fan {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+}
+
+.gr-careers-tiles-frame {
+  display: none;
+}
+
+@media (max-width: 60rem) {
+  .gr-careers-fan {
+    display: none;
+  }
+
+  .gr-careers-tiles-frame {
+    display: block;
+  }
+}
+
+/* Its own width is what sizes the rows below. */
+.gr-careers-tiles-frame {
+  container-type: inline-size;
+}
+
+/* A row is at least as tall as a card is wide, and the whole row grows
+   together when one card's writing needs more. */
+.gr-careers-tiles {
+  --across: 3;
+  --gap: calc(1.2 * var(--u));
+
+  display: grid;
+  grid-template-columns: repeat(var(--across), minmax(0, 1fr));
+  grid-auto-rows: minmax(
+    calc((100cqi - (var(--across) - 1) * var(--gap)) / var(--across) * 22 / 21),
+    auto
+  );
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gr-careers-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--u);
+  border-radius: var(--radius);
+  padding: calc(1.1 * var(--u));
+  color: var(--ink);
+}
+
+.gr-careers-tile--wide {
+  grid-column: span 2;
+}
+
+.gr-careers-tile-field {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  width: 100%;
+  height: 100%;
+}
+
+.gr-root .gr-careers-tile-body,
+.gr-root .gr-careers-tile-title {
+  position: relative;
+  margin: 0;
+}
+
+.gr-root .gr-careers-tile-body {
+  max-width: 36ch;
+  font-size: var(--text-note);
+  line-height: 1.5;
+}
+
+.gr-root .gr-careers-tile-title {
+  max-width: 15ch;
+  font-family: var(--font-title);
+  text-wrap: balance;
+  font-size: calc(0.9 * var(--text-heading));
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.1;
+}
+
+.gr-careers-tile--wide .gr-careers-tile-title {
+  max-width: none;
+}
+
+/* -- entrances ------------------------------------------------------------- */
+
+/* Hidden only once the script is watching for them, then up one at a time. */
+.gr-careers-why[data-reveal="waiting"] .gr-careers-reason,
+.gr-careers-tiles[data-reveal="waiting"] .gr-careers-tile {
+  opacity: 0;
+}
+
+.gr-careers-why[data-reveal="seen"] .gr-careers-reason,
+.gr-careers-tiles[data-reveal="seen"] .gr-careers-tile {
+  animation:
+    gr-careers-rise 1100ms var(--ease-open) both,
+    gr-careers-fade 400ms ease-out both;
+  animation-delay: calc(var(--i) * 90ms);
+}
+
+@keyframes gr-careers-rise {
+  from {
+    translate: 0 calc(1.5 * var(--u));
+  }
+}
+
+@keyframes gr-careers-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* -- narrower -------------------------------------------------------------- */
+
+@media (max-width: 60rem) {
+  .gr-careers-why {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: calc(2 * var(--u));
+  }
+
+  .gr-careers-tiles {
+    --across: 2;
+  }
+
+  /* Two across, the wide card closes the grid rather than leave a gap. */
+  .gr-careers-tile--wide {
+    order: 1;
+  }
+}
+
+@media (max-width: 40rem) {
+  .gr-careers-tiles {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: minmax(calc(12 * var(--u)), auto);
+  }
+
+  .gr-careers-tile--wide {
+    grid-column: auto;
+  }
+}

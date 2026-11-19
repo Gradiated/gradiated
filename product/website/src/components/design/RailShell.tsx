@@ -50,6 +50,9 @@ export type RailDocGroup = {
     label: string;
     /** An indented child of the item above it (a journey subsection). */
     sub?: boolean;
+    /** A small square before the label: a person's photo, their initials,
+     *  or an icon. The team's contents use it; it replaces the chip. */
+    thumb?: { icon?: ReactNode; src?: string; text?: string };
   }[];
 };
 
@@ -458,9 +461,19 @@ export const RailShell = ({
                       <Link
                         data-active={item.href === shown.current || undefined}
                         data-sub={item.sub || undefined}
+                        data-thumb={item.thumb ? true : undefined}
                         key={item.href}
                         to={item.href}
                       >
+                        {item.thumb ? (
+                          <span aria-hidden="true" className="gr-rail-thumb">
+                            {item.thumb.src ? (
+                              <img alt="" src={item.thumb.src} />
+                            ) : (
+                              (item.thumb.icon ?? item.thumb.text)
+                            )}
+                          </span>
+                        ) : null}
                         {item.label}
                       </Link>
                     ),

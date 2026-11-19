@@ -243,6 +243,62 @@
   font-size: 13px;
 }
 
+/* A row with a thumbnail (the team's contents): the picture takes the
+   chip's place, and lights the same way when its page is open. */
+.gr-rail-docnav a[data-thumb] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 0;
+}
+
+/* Rows with a picture need more air than rows of text: at the text rows'
+   8px the squares read as one column rather than as separate people. */
+.gr-rail-docnav-group:has(a[data-thumb]) {
+  gap: 20px;
+}
+
+.gr-rail-docnav a[data-thumb]::before {
+  content: none;
+}
+
+.gr-rail-thumb {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: #27272a;
+  color: #a1a1aa;
+  font-family: var(--font-title);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  /* Drawn INSIDE the square. The list scrolls, so it clips at its own left
+     edge, and a ring outside the thumbnail lost its left side there. */
+  outline: 1.5px solid transparent;
+  outline-offset: -1.5px;
+  transition: outline-color 0.2s ease;
+}
+
+.gr-rail-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gr-rail-thumb .gr-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.gr-rail-docnav a[data-active] .gr-rail-thumb {
+  outline-color: var(--color-cloud-lavender);
+  color: var(--color-cloud-lavender);
+}
+
 .gr-rail-docnav a:hover {
   color: #fafafa;
 }

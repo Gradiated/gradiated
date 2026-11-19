@@ -1,0 +1,804 @@
+/* /team/ and /team/<name>/, plus the people row on /about/.
+   A person is always the same card: a 4:5 portrait, then name, role and one
+   line of detail. Everything is sized from the lattice unit like the rest. */
+
+/* -- portrait -------------------------------------------------------------- */
+
+.gr-portrait {
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--cover-ratio);
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--color-panel);
+}
+
+/* Until someone adds a photo. Set in the title face so the tile reads as
+   part of the page's type rather than as a missing image. */
+.gr-portrait--initials {
+  display: grid;
+  place-items: center;
+  container-type: inline-size;
+  color: var(--color-text-muted);
+  font-family: var(--font-title);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-heading);
+  font-size: var(--text-hero);
+  user-select: none;
+}
+
+/* -- member cards ---------------------------------------------------------- */
+
+.gr-root .gr-member-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: calc(2 * var(--u)) var(--pad);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gr-root .gr-member-grid > li {
+  margin: 0;
+}
+
+.gr-member {
+  display: grid;
+  gap: calc(0.15 * var(--u));
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+/* On hover the picture zooms slowly inside a frame that stays still. */
+.gr-member-frame {
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius);
+  margin-block-end: calc(0.6 * var(--u));
+}
+
+.gr-member .gr-portrait {
+  border-radius: 0;
+  transition: scale 600ms var(--ease-media);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .gr-member:hover .gr-portrait {
+    scale: 1.03;
+  }
+}
+
+.gr-member:focus-visible .gr-portrait {
+  scale: 1.03;
+}
+
+.gr-member-name {
+  font-family: var(--font-title);
+  font-size: var(--text-subheading);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-subheading);
+  line-height: 1.2;
+}
+
+.gr-member-role {
+  font-size: var(--text-card);
+}
+
+.gr-member-place,
+.gr-member-summary {
+  color: var(--color-text-muted);
+  font-size: var(--text-ui);
+  line-height: 1.45;
+}
+
+.gr-member-summary {
+  margin-block-start: calc(0.25 * var(--u));
+}
+
+/* -- overview ------------------------------------------------------------ */
+
+/* One screen: the copy on the band's left, the globe hung off the sheet's
+   right edge with four fifths of it showing. */
+.gr-root .gr-team-overview {
+  padding-block: 0;
+}
+
+.gr-team-overview::before,
+.gr-team-overview:last-child::after {
+  display: none;
+}
+
+.gr-team-overview .gr-module-inner {
+  position: relative;
+  display: grid;
+  align-items: center;
+  width: 100%;
+  min-height: 100dvh;
+  overflow: hidden;
+  container-type: inline-size;
+}
+
+.gr-team-overview-copy {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: 100%;
+  padding-inline: calc((100% - var(--module-w)) / 2);
+  pointer-events: none;
+}
+
+.gr-team-overview-copy > * {
+  max-width: 34rem;
+  pointer-events: auto;
+}
+
+.gr-root .gr-team-overview-title {
+  /* As wide as its words, so it never sits over the globe. */
+  width: fit-content;
+  max-width: none;
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: var(--text-masthead);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-hero);
+  line-height: var(--leading-display);
+}
+
+.gr-root .gr-team-overview-copy .gr-body {
+  margin-block: calc(1.2 * var(--u)) 0;
+}
+
+.gr-root .gr-team-overview-copy .gr-page-hero-actions {
+  margin-block-start: calc(1.5 * var(--u));
+}
+
+/* amCharts draws its hover card with pointer events off; its links need them. */
+.gr-team-map-globe a {
+  pointer-events: auto;
+}
+
+.gr-team-overview .gr-team-map-globe {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  /* Sized so the four fifths that show fit the room right of the copy
+     (its left edge, 36rem and a 2u gap). */
+  width: max(
+    0px,
+    min(
+      88dvh,
+      calc(((100cqi + var(--module-w)) / 2 - 36rem - 2 * var(--u)) / 0.8)
+    )
+  );
+  aspect-ratio: 1;
+  translate: 20% -50%;
+}
+
+/* Too narrow for the globe beside the copy. */
+@media (max-width: 75rem) {
+  /* The copy first, then the globe whole beneath it. */
+  .gr-team-overview .gr-module-inner {
+    display: block;
+    min-height: 0;
+  }
+
+  .gr-team-overview-copy {
+    padding-block: calc(var(--nav-h) + 2 * var(--u)) calc(2 * var(--u));
+  }
+
+  .gr-team-overview .gr-team-map-globe {
+    position: relative;
+    top: auto;
+    width: min(100%, 36rem);
+    margin-inline: auto;
+    translate: none;
+  }
+}
+
+/* -- profile ---------------------------------------------------------------
+
+   A dark band across the top of the sheet carries the name; the portrait
+   hangs out of it into the page, with the page's contents under it; the
+   person's own sections run down the column beside.
+
+   Spacing is measured off the design at the full 24px unit: band 224px,
+   portrait 240x300 starting 106px down, a 96px gutter between the columns (wider than the design, by request).
+   Type is the system's own roles — no size here is a one-off.              */
+
+.gr-module--profile {
+  --profile-band: calc(9.33 * var(--u));
+  --profile-top: calc(4.4 * var(--u));
+  padding-block-start: 0;
+  /* The band is a background layer, for the model page's reason: anything
+     painted inside .gr-module-inner sits under its entrance transform and
+     is clipped to the band's width. A background cannot be. */
+  background-image: linear-gradient(
+    var(--rail-ink, #18181b),
+    var(--rail-ink, #18181b)
+  );
+  background-repeat: no-repeat;
+  background-size: 100% var(--profile-band);
+}
+
+/* The band is the page's top edge; a rule across it would cut the name. */
+.gr-module--profile::before {
+  display: none;
+}
+
+.gr-profile {
+  display: grid;
+  /* On the band, like every other page: the portrait starts at the left
+     gutter and the text column runs to the right one. */
+  grid-template-columns: calc(10 * var(--u)) minmax(0, 1fr);
+  grid-template-rows: calc(var(--profile-band) - var(--profile-top)) auto;
+  column-gap: calc(4 * var(--u));
+  padding-block-start: var(--profile-top);
+}
+
+.gr-profile-head {
+  grid-column: 2;
+  grid-row: 1;
+  /* Fixed ink: the band is the rail's colour in every theme. */
+  color: #fafafa;
+  padding-block-start: calc(0.3 * var(--u));
+}
+
+.gr-root .gr-profile-name {
+  margin: 0;
+  font-family: var(--font-title);
+  /* The section-title role: the name is this page's title, at the size
+     every other page's section titles take. */
+  font-size: var(--text-section);
+  font-weight: var(--weight-heading);
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+
+.gr-profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(0.25 * var(--u)) var(--u);
+  margin-block-start: calc(0.55 * var(--u));
+  color: #e4e4e7;
+  font-size: var(--text-lede);
+  letter-spacing: var(--tracking-body);
+  line-height: 1.3;
+}
+
+.gr-root .gr-profile-meta p {
+  margin: 0;
+}
+
+.gr-profile-flag {
+  margin-inline-end: 0.4em;
+}
+
+.gr-root .gr-profile-links {
+  display: flex;
+  gap: calc(0.4 * var(--u));
+  margin: 0 0 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.gr-root .gr-profile-links > li {
+  margin: 0;
+}
+
+.gr-profile-links a {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-full);
+  background: #27272a;
+  color: #d4d4d8;
+  transition:
+    background-color var(--dur-fast) var(--ease-response),
+    color var(--dur-fast) var(--ease-response);
+}
+
+.gr-profile-links a:hover,
+.gr-profile-links a:focus-visible {
+  background: #fafafa;
+  color: #18181b;
+}
+
+.gr-profile-links svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+
+.gr-profile-side {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  /* One gap for everything in the column, so the share button keeps its
+     distance from the portrait on a profile too short to have contents. */
+  gap: calc(1.7 * var(--u));
+}
+
+.gr-profile-side .gr-portrait {
+  box-shadow: var(--shadow-raise);
+}
+
+/* Contents, then share, as one block that follows the reader. */
+.gr-profile-rail {
+  position: sticky;
+  top: calc(1.5 * var(--u));
+  display: grid;
+  gap: calc(1.7 * var(--u));
+  justify-items: start;
+}
+
+.gr-profile-share {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 3.125rem;
+  height: 3.125rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-panel);
+  box-shadow: inset 0 0 0 1px var(--color-rule);
+  color: var(--color-text);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-response),
+    color var(--dur-fast) var(--ease-response);
+}
+
+.gr-profile-share:hover,
+.gr-profile-share[data-copied] {
+  background: var(--color-text);
+  box-shadow: none;
+  color: var(--color-inverse);
+}
+
+.gr-profile-share svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.gr-profile-share-note {
+  position: absolute;
+  inset-inline-start: calc(100% + 0.5 * var(--u));
+  color: var(--color-text-muted);
+  font-size: var(--text-ui);
+  white-space: nowrap;
+}
+
+/* The profile's sections, as tabs: one shows at a time. */
+.gr-profile-nav {
+  display: grid;
+  gap: calc(0.85 * var(--u));
+  justify-items: start;
+}
+
+.gr-profile-nav button {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(0.5 * var(--u));
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--text-body);
+  letter-spacing: var(--tracking-body);
+  line-height: 1.2;
+  text-align: start;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+/* A bare icon, in the label's own colour: it darkens with the label when
+   its section is open. */
+.gr-profile-nav-icon {
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.gr-profile-nav-icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.gr-profile-nav button:hover,
+.gr-profile-nav button[aria-selected="true"] {
+  color: var(--color-text);
+}
+
+.gr-profile-main {
+  grid-column: 2;
+  grid-row: 2;
+  padding-block-start: calc(2.4 * var(--u));
+  /* Tall enough that a short section does not pull the footer up under the
+     contents beside it. */
+  min-height: calc(16 * var(--u));
+}
+
+/* The class sets no display, but say it: `hidden` must win over any
+   display a section is given later. */
+.gr-profile-section[hidden] {
+  display: none;
+}
+
+.gr-root .gr-profile-title {
+  margin: 0 0 calc(0.9 * var(--u));
+  font-family: var(--font-title);
+  /* The heading role, one step under the name. */
+  font-size: var(--text-heading);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-heading);
+  line-height: var(--leading-heading);
+}
+
+/* A person's own words: the body size on the design's 1.6 leading, with a
+   full line between paragraphs. */
+.gr-root .gr-profile-prose {
+  /* The column runs to the gutter; the reading measure does not. */
+  max-width: 44rem;
+  font-size: var(--text-body);
+  line-height: 1.6;
+  letter-spacing: var(--tracking-body);
+}
+
+.gr-root .gr-profile-prose > * + * {
+  margin-block-start: 1.6em;
+}
+
+/* A list belongs to the line that introduces it. */
+.gr-root .gr-profile-prose > p + ul,
+.gr-root .gr-profile-prose > p + ol,
+.gr-root .gr-profile-prose > h3 + * {
+  margin-block-start: 0.7em;
+}
+
+.gr-root .gr-profile-prose li + li {
+  margin-block-start: 0.5em;
+}
+
+/* Under the person's own words, where a section has both. */
+.gr-root .gr-profile-prose + .gr-profile-posts,
+.gr-root .gr-profile-prose + .gr-profile-gallery {
+  margin-block-start: calc(1.5 * var(--u));
+}
+
+.gr-root .gr-profile-gallery {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gr-root .gr-profile-gallery > li {
+  margin: 0;
+}
+
+/* Posts: a plain list of titles, each with its date or the writer's note.
+   Separated by space, not rules. */
+.gr-profile-posts {
+  display: grid;
+  gap: calc(1.25 * var(--u));
+  justify-items: start;
+}
+
+.gr-root .gr-profile-posts ul {
+  display: grid;
+  gap: calc(0.6 * var(--u));
+  width: 100%;
+  max-width: 44rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-body);
+  letter-spacing: var(--tracking-body);
+  line-height: 1.4;
+}
+
+.gr-root .gr-profile-posts li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--u);
+  margin: 0;
+}
+
+.gr-root .gr-profile-posts-none {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body);
+}
+
+.gr-profile-posts a {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-decoration-color: var(--color-rule);
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--dur-fast) var(--ease-response);
+}
+
+.gr-profile-posts a:hover,
+.gr-profile-posts a:focus-visible {
+  text-decoration-color: currentColor;
+}
+
+.gr-profile-posts time,
+.gr-profile-posts li > span {
+  flex: none;
+  max-width: 50%;
+  color: var(--color-text-muted);
+  font-size: var(--text-ui);
+  text-align: end;
+}
+
+.gr-root .gr-profile-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--u);
+}
+
+.gr-root .gr-profile-gallery figure {
+  margin: 0;
+}
+
+.gr-profile-gallery-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  cursor: zoom-in;
+  overflow: hidden;
+}
+
+.gr-profile-gallery-open img {
+  transition: scale 600ms var(--ease-media);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .gr-profile-gallery-open:hover img {
+    scale: 1.03;
+  }
+}
+
+.gr-profile-gallery-open:focus-visible img {
+  scale: 1.03;
+}
+
+.gr-profile-gallery img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--color-panel);
+}
+
+.gr-root .gr-profile-gallery figcaption {
+  margin-block-start: calc(0.4 * var(--u));
+  color: var(--color-text-muted);
+  font-size: var(--text-ui);
+  line-height: 1.4;
+}
+
+/* -- lightbox --------------------------------------------------------------
+   A gallery picture at full size. Dark in every theme: the picture is the
+   only thing on screen. */
+
+.gr-lightbox {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: calc(3 * var(--u)) calc(3.5 * var(--u));
+  border: 0;
+  background: rgb(9 9 11 / 0.94);
+  color: #fafafa;
+}
+
+.gr-lightbox[open] {
+  display: grid;
+  place-items: center;
+}
+
+.gr-lightbox::backdrop {
+  background: transparent;
+}
+
+.gr-lightbox-figure {
+  display: grid;
+  gap: calc(0.6 * var(--u));
+  justify-items: center;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0;
+  min-height: 0;
+}
+
+.gr-lightbox-figure img {
+  max-width: 100%;
+  max-height: calc(100dvh - 9 * var(--u));
+  object-fit: contain;
+  border-radius: var(--radius);
+}
+
+.gr-lightbox-figure figcaption {
+  color: #d4d4d8;
+  font-size: var(--text-ui);
+}
+
+.gr-lightbox-button {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: #27272a;
+  color: #fafafa;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-response);
+}
+
+.gr-lightbox-button:hover {
+  background: #3f3f46;
+}
+
+.gr-lightbox-button svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.gr-lightbox-close {
+  inset: var(--u) var(--u) auto auto;
+}
+
+.gr-lightbox-prev,
+.gr-lightbox-next {
+  top: 50%;
+  translate: 0 -50%;
+}
+
+.gr-lightbox-prev {
+  left: var(--u);
+}
+
+.gr-lightbox-next {
+  right: var(--u);
+}
+
+/* -- narrower -------------------------------------------------------------- */
+
+@media (max-width: 72rem) {
+  .gr-root .gr-member-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 60rem) {
+  .gr-root .gr-member-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: calc(1.5 * var(--u)) var(--u);
+  }
+
+  /* One column: a shallower band, the portrait hanging out of it, then the
+     name on the page's own ground, the contents as a row, and the sections. */
+  .gr-root .gr-module.gr-module--profile {
+    --profile-band: calc(6 * var(--u));
+    --profile-top: calc(2 * var(--u));
+    padding-block-start: 0;
+  }
+
+  .gr-profile {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .gr-profile-side {
+    display: contents;
+  }
+
+  .gr-profile-side .gr-portrait {
+    order: 1;
+    width: calc(8 * var(--u));
+  }
+
+  .gr-profile-head {
+    order: 2;
+    color: var(--color-text);
+    padding-block-start: var(--u);
+  }
+
+  .gr-profile-meta {
+    color: var(--color-text-muted);
+  }
+
+  .gr-root .gr-profile-links {
+    margin-inline-start: 0;
+    flex-basis: 100%;
+    margin-block-start: calc(0.5 * var(--u));
+  }
+
+  .gr-profile-links a {
+    background: var(--color-panel);
+    color: var(--color-text);
+  }
+
+  .gr-profile-rail {
+    display: contents;
+  }
+
+  .gr-profile-nav {
+    order: 3;
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(0.6 * var(--u)) var(--u);
+    margin-block-start: calc(1.5 * var(--u));
+  }
+
+  /* Beside the portrait, level with its foot. */
+  .gr-profile {
+    position: relative;
+  }
+
+  .gr-profile-share {
+    position: absolute;
+    inset: calc(var(--profile-top) + 10 * var(--u) - 2.5rem) 0 auto auto;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin: 0;
+  }
+
+  .gr-profile-share-note {
+    inset-inline: auto calc(100% + 0.5 * var(--u));
+  }
+
+  .gr-profile-main {
+    order: 4;
+    padding-block-start: calc(2 * var(--u));
+    min-height: 0;
+  }
+
+  .gr-lightbox {
+    padding: calc(3.5 * var(--u)) var(--u);
+  }
+
+  .gr-root .gr-profile-gallery {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* The date or note drops under the title. */
+  .gr-root .gr-profile-posts li {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .gr-profile-posts time,
+  .gr-profile-posts li > span {
+    max-width: none;
+    text-align: start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-member .gr-portrait,
+  .gr-profile-gallery-open img {
+    transition: none;
+  }
+
+  .gr-member:is(:hover, :focus-visible) .gr-portrait,
+  .gr-profile-gallery-open:is(:hover, :focus-visible) img {
+    scale: 1;
+  }
+}

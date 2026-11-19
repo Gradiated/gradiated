@@ -238,6 +238,8 @@ export const Features = ({
   items: {
     body: string;
     evidence?: { href: string; label: string };
+    /** A small picture above the title. */
+    icon?: string;
     title: string;
   }[];
 }): ReactElement => (
@@ -248,6 +250,9 @@ export const Features = ({
     >
       {items.map((item) => (
         <div key={item.title}>
+          {item.icon ? (
+            <img alt="" className="gr-features-icon" src={item.icon} />
+          ) : null}
           <h3 className="gr-heading">{item.title}</h3>
           <p className="gr-body gr-muted">
             {item.body}

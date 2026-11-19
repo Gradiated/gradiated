@@ -20,7 +20,7 @@ const HostedModelIdSchema = ModelIdSchema.describe(
   "Exact hosted model ID, required; no default, alias resolution or fallback.",
 );
 const InstructionsSchema = SystemOneJsonSchema.optional().describe(
-  "Question instructions as JSON. Optional, as in TypeSafe's API: the TypeSafe SDK omits them when a question has only criteria. perplexity-ai/pplx-decider-v1.2 still requires them.",
+  "Question instructions as JSON. Optional, as in TypeSafe's API: the TypeSafe SDK omits them when a question has only criteria.",
 );
 
 const boundedMap = <T extends z.ZodType>(
@@ -77,7 +77,7 @@ export const SystemOneQuestionSchema = z
         .min(1)
         .max(255)
         .describe(
-          "One to 255 ordered JSON level descriptions, indexed from zero. A single level is answered with certainty; perplexity-ai/pplx-decider-v1.2 still requires at least two.",
+          "One to 255 ordered JSON level descriptions, indexed from zero. A single level is answered with certainty.",
         ),
     }),
   ])

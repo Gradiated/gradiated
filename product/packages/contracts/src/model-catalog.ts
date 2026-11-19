@@ -95,7 +95,7 @@ export const MODEL_CATALOG = [
   {
     id: "gradiated/linden-1",
     type: "decision",
-    displayName: "linden-1 31B",
+    displayName: "linden-1",
     icon: null,
     supportedUses: ["serving"],
   },

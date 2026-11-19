@@ -4,8 +4,6 @@ use serde_json::{Map, Value};
 use crate::{json::strict_json, GatewayError, ServiceTier};
 
 const MAX_OPTIONS: usize = 255;
-/// The pinned Decider v1.2 bundle predates optional instructions and one-level scores; remove with Decider.
-const DECIDER_V1_2: &str = "perplexity-ai/pplx-decider-v1.2";
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct SystemOneRequest {
@@ -117,18 +115,6 @@ impl SystemOneRequest {
 
         let shapes = question_shapes(&wire.questions)
             .ok_or(GatewayError::invalid_request(Some("questions")))?;
-        if wire.model.eq_ignore_ascii_case(DECIDER_V1_2)
-            && (wire
-                .questions
-                .values()
-                .any(|question| question.get("instructions").is_none())
-                || shapes
-                    .iter()
-                    .any(|(_, shape)| *shape == AnswerShape::Score { levels: 1 }))
-        {
-            return Err(GatewayError::invalid_request(Some("questions")));
-        }
-
         Ok(Self {
             model: wire.model,
             state: wire.state,
@@ -362,31 +348,6 @@ mod tests {
             body["questions"]["pick"] = question.clone();
             assert!(
                 SystemOneRequest::parse(&serde_json::to_vec(&body).unwrap()).is_ok(),
-                "{question}"
-            );
-        }
-    }
-
-    #[test]
-    fn the_pinned_decider_keeps_requiring_instructions_and_two_score_levels() {
-        for (question, valid) in [
-            (json!({"type":"noul"}), false),
-            (
-                json!({"type":"score","instructions":"Rate","criteria":["only"]}),
-                false,
-            ),
-            (json!({"type":"noul","instructions":null}), true),
-            (
-                json!({"type":"score","instructions":"Rate","criteria":["a","b"]}),
-                true,
-            ),
-        ] {
-            let mut body = request_value();
-            body["model"] = json!(DECIDER_V1_2);
-            body["questions"]["pick"] = question.clone();
-            assert_eq!(
-                SystemOneRequest::parse(&serde_json::to_vec(&body).unwrap()).is_ok(),
-                valid,
                 "{question}"
             );
         }

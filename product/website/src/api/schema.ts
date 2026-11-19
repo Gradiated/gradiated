@@ -3405,7 +3405,7 @@ export interface components {
            */
           type: "score";
           instructions?: components["schemas"]["SystemOneJson"] & unknown;
-          /** @description One to 255 ordered JSON level descriptions, indexed from zero. A single level is answered with certainty; perplexity-ai/pplx-decider-v1.2 still requires at least two. */
+          /** @description One to 255 ordered JSON level descriptions, indexed from zero. A single level is answered with certainty. */
           criteria: components["schemas"]["SystemOneJson"][];
         };
     ChatCompletionResponse: {

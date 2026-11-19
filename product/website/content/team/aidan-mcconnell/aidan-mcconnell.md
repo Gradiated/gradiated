@@ -1,7 +1,7 @@
 ---
 name: Dr Aidan McConnell
-role: Technical Staff – Chips
-summary: PhD in quantum computing and semiconductors.
+role: Technical Staff – Hardware
+summary: PhD in semiconductor quantum computing.
 order: 3
 # Where you are based, to the city. Public, and puts you on the map.
 location:
@@ -9,9 +9,9 @@ location:
   country: UK
 # Links shown as icons beside your name. Remove the # to use any of them:
 # links:
-#   website: https://example.com
+   [Google scholar](https://scholar.google.com/citations?user=jxa34SIAAAAJ&hl=en)
 #   github: https://github.com/your-handle
-#   linkedin: https://www.linkedin.com/in/your-handle
+   [Linkedin](https://uk.linkedin.com/in/aidan-gabriel-mcconnell)
 #   x: https://x.com/your-handle
 # Pictures in images/gallery/ beside this file are your gallery. To caption
 # one:
@@ -28,6 +28,10 @@ is not shown, so delete nothing: fill in what you want. -->
 paragraphs read better than one long one. Until you write this, your summary
 above is shown as your bio. -->
 
+PhD from ETH Zurich in semiconductor qubits and quantum optics.
+
+BA and MSci from Cambridge in Natural Sciences (Physics), with a focus on quantum information, condensed matter and atomic physics.
+
 ## Working on
 
 <!-- The areas of research you are working in at the moment. A sentence or two
@@ -35,6 +39,9 @@ on each, and what the open question is. Keep this one current.
 
 - **An area of research.** What you are trying to find out.
 -->
+
+Models → AI infrastructure → **Chips** → **Data centers** → **Energy**
+Watching the first two closely. Hands-on with the last three.
 
 ## Things I've done
 
@@ -51,6 +58,9 @@ Add writing from anywhere else as a list of links, with an optional note:
 
 - [Title of the post](https://example.com/your-post) — where or when
 -->
+
+[How do we print a transistor onto silicon?](https://www.gradiated.com/library/sand-to-thought/fabricating-a-transistor/)
+[How to get an answer out of sand](https://www.gradiated.com/library/sand-to-thought/how-to-get-an-answer-out-of-sand/)
 
 ## Gallery
 

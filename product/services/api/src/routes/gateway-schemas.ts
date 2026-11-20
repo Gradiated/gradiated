@@ -694,5 +694,27 @@ export const catalogResponse = z
       .describe(
         "Model catalog entries visible through the authenticated gateway.",
       ),
+    models: z
+      .array(
+        z.object({
+          name: model,
+          description: z.string().describe("Human-readable model description."),
+          release_date: z
+            .string()
+            .describe("UTC release date of the model, as YYYY-MM-DD."),
+        }),
+      )
+      .describe(
+        "The same models as data, as TypeSafe SDK model cards; name is the id to send.",
+      ),
   })
   .openapi("InferenceModelList");
+
+/** Every 429 the gateway returns carries Retry-After. */
+export const retryAfterHeaders = {
+  "Retry-After": {
+    description:
+      "Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog).",
+    schema: { type: "integer", minimum: 0, maximum: 30 },
+  },
+} as const;

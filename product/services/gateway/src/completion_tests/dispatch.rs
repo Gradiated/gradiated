@@ -286,7 +286,7 @@ async fn busy_deployments_reject_the_request_at_capacity() {
 
     assert_eq!(
         harness.complete().await.unwrap_err(),
-        GatewayError::CapacityExceeded
+        GatewayError::capacity_exceeded()
     );
 
     assert_eq!(
@@ -326,7 +326,7 @@ async fn adapter_capacity_pressure_is_counted_against_its_base_model() {
 
     assert_eq!(
         harness.complete().await.unwrap_err(),
-        GatewayError::CapacityExceeded
+        GatewayError::capacity_exceeded()
     );
     assert_eq!(
         harness.metric("routing_capacity_rejections_total", "model=\"base-model\""),
@@ -461,7 +461,7 @@ async fn capacity_failures_keep_their_authorised_traffic_class_through_settlemen
 
         assert_eq!(
             harness.complete().await.unwrap_err(),
-            GatewayError::CapacityExceeded
+            GatewayError::capacity_exceeded()
         );
         let traffic = if is_verification {
             "verification"

@@ -80,12 +80,13 @@ impl SglangClient {
 /// A rejected chat request can still report usage the runtime consumed.
 async fn rejected_with_usage(response: Response) -> RuntimeFailure {
     let status = response.status();
+    let headers = response.headers().clone();
     let usage = match read_bounded_body(response).await {
         Ok(body) => optional_usage(&body).unwrap_or_else(NormalizedUsage::zero),
         Err(_) => NormalizedUsage::zero(),
     };
 
-    RuntimeFailure::rejected(status, usage)
+    RuntimeFailure::rejected(status, usage).with_retry_after(&headers)
 }
 
 struct ChatEventStream {

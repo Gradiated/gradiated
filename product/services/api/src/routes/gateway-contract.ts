@@ -9,6 +9,7 @@ import {
   responsesRequest,
   responsesResponse,
   catalogResponse,
+  retryAfterHeaders,
 } from "./gateway-schemas.js";
 import { registerSystemOneContract } from "./systemone-contract.js";
 
@@ -21,7 +22,10 @@ const errors = {
   402: { description: "Insufficient prepaid balance." },
   404: { description: "Unknown or unavailable exact model." },
   413: { description: "Request exceeds the gateway body limit." },
-  429: { description: "Admission or inference capacity exhausted." },
+  429: {
+    description: "Admission or inference capacity exhausted.",
+    headers: retryAfterHeaders,
+  },
   503: {
     description: "Runtime, deployment, or gateway dependency unavailable.",
   },

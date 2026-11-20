@@ -229,7 +229,8 @@ impl ModelRuntime for SglangClient {
             return Err(RuntimeFailure::rejected(
                 response.status(),
                 crate::NormalizedUsage::zero(),
-            ));
+            )
+            .with_retry_after(response.headers()));
         }
 
         let body = read_bounded_body(response).await?;
@@ -354,9 +355,10 @@ pub(super) async fn send(request: RequestBuilder) -> Result<Response, RuntimeFai
 }
 
 pub(super) async fn rejected_response(response: Response) -> RuntimeFailure {
+    let headers = response.headers().clone();
     let status = record_rejection(response).await;
 
-    RuntimeFailure::rejected(status, crate::NormalizedUsage::zero())
+    RuntimeFailure::rejected(status, crate::NormalizedUsage::zero()).with_retry_after(&headers)
 }
 
 pub(super) async fn record_rejection(mut response: Response) -> reqwest::StatusCode {

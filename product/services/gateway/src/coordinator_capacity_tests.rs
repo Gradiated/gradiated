@@ -352,6 +352,7 @@ async fn a_mapped_model_lists_as_ready_without_a_residency_claim() {
 
     let model = &listed["data"][0];
     assert_eq!(model["id"], "model-a");
+    assert_eq!(listed["models"][0]["name"], "model-a");
     assert_eq!(model["is_ready"], true);
     assert_eq!(model["datacenters"], serde_json::json!([]));
     assert!(model.get("deployment_region").is_none());
@@ -363,7 +364,9 @@ async fn a_mapped_model_lists_as_ready_without_a_residency_claim() {
 async fn openrouter_sees_only_our_own_capacity() {
     let openrouter = |deployments| from_openrouter(released(mapped(deployments)), Some(true));
 
-    assert_eq!(listing(openrouter(0)).await["data"], serde_json::json!([]));
+    let hidden = listing(openrouter(0)).await;
+    assert_eq!(hidden["data"], serde_json::json!([]));
+    assert_eq!(hidden["models"], serde_json::json!([]));
 
     let mut unhealthy = openrouter(1);
     unhealthy.statuses = Some(Vec::new());

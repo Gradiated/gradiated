@@ -165,7 +165,7 @@ async fn live_tp1_both_at_capacity_return_429_after_two_attempts() {
         } else {
             harness.complete().await.unwrap_err()
         };
-        assert_eq!(error, GatewayError::CapacityExceeded);
+        assert_eq!(error, GatewayError::capacity_exceeded());
         assert_eq!(
             error.into_response().status(),
             StatusCode::TOO_MANY_REQUESTS

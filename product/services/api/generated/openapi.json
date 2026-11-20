@@ -7442,10 +7442,39 @@
               ]
             },
             "description": "Model catalog entries visible through the authenticated gateway."
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "description": "Exact hosted model ID from GET /v1/models; no aliases or fallback."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Human-readable model description."
+                },
+                "release_date": {
+                  "type": "string",
+                  "description": "UTC release date of the model, as YYYY-MM-DD."
+                }
+              },
+              "required": [
+                "name",
+                "description",
+                "release_date"
+              ]
+            },
+            "description": "The same models as data, as TypeSafe SDK model cards; name is the id to send."
           }
         },
         "required": [
-          "data"
+          "data",
+          "models"
         ]
       }
     },
@@ -13064,7 +13093,17 @@
             "description": "The request exceeds the gateway body limit."
           },
           "429": {
-            "description": "Admission or inference capacity is exhausted."
+            "description": "Admission or inference capacity is exhausted.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog).",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30
+                }
+              }
+            }
           },
           "503": {
             "description": "Runtime failure, invalid native response, no healthy deployment, or an unavailable gateway dependency."
@@ -13135,7 +13174,17 @@
             "description": "Request exceeds the gateway body limit."
           },
           "429": {
-            "description": "Admission or inference capacity exhausted."
+            "description": "Admission or inference capacity exhausted.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog).",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30
+                }
+              }
+            }
           },
           "503": {
             "description": "Runtime, deployment, or gateway dependency unavailable."
@@ -13206,7 +13255,17 @@
             "description": "Request exceeds the gateway body limit."
           },
           "429": {
-            "description": "Admission or inference capacity exhausted."
+            "description": "Admission or inference capacity exhausted.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog).",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30
+                }
+              }
+            }
           },
           "503": {
             "description": "Runtime, deployment, or gateway dependency unavailable."
@@ -13277,7 +13336,17 @@
             "description": "Request exceeds the gateway body limit."
           },
           "429": {
-            "description": "Admission or inference capacity exhausted."
+            "description": "Admission or inference capacity exhausted.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog).",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30
+                }
+              }
+            }
           },
           "503": {
             "description": "Runtime, deployment, or gateway dependency unavailable."
@@ -13342,7 +13411,17 @@
             "description": "Request exceeds the gateway body limit."
           },
           "429": {
-            "description": "Admission or inference capacity exhausted."
+            "description": "Admission or inference capacity exhausted.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog).",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30
+                }
+              }
+            }
           },
           "503": {
             "description": "Runtime, deployment, or gateway dependency unavailable."

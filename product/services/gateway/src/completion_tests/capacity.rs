@@ -217,7 +217,7 @@ async fn when_openrouter_also_fails_the_caller_gets_our_own_failure_settled_once
 
     assert_eq!(
         harness.complete().await.unwrap_err(),
-        GatewayError::CapacityExceeded
+        GatewayError::capacity_exceeded()
     );
 
     assert_eq!(
@@ -243,7 +243,7 @@ async fn openrouter_finding_no_provider_answers_as_our_capacity_would_have() {
         .local_status(|status| status.accepting_requests = false);
     assert_eq!(
         saturated.complete().await.unwrap_err(),
-        GatewayError::CapacityExceeded
+        GatewayError::capacity_exceeded()
     );
 
     let without_deployments = Harness::new(mapped_request(0), [])
@@ -258,7 +258,7 @@ async fn openrouter_finding_no_provider_answers_as_our_capacity_would_have() {
         .local_status(|status| status.accepting_requests = false);
     assert_eq!(
         streamed.stream().await.err(),
-        Some(GatewayError::CapacityExceeded)
+        Some(GatewayError::capacity_exceeded())
     );
 }
 
@@ -274,7 +274,7 @@ async fn an_openrouter_stream_failing_before_any_frame_answers_with_our_failure(
 
     assert_eq!(
         items.last(),
-        Some(&StreamItem::Error(GatewayError::CapacityExceeded))
+        Some(&StreamItem::Error(GatewayError::capacity_exceeded()))
     );
     assert_eq!(
         harness.only_finalized()["outcome"]["error_code"],
@@ -351,7 +351,7 @@ async fn an_unmapped_model_keeps_its_local_failure() {
         .local_status(|status| status.accepting_requests = false);
     assert_eq!(
         harness.complete().await.unwrap_err(),
-        GatewayError::CapacityExceeded
+        GatewayError::capacity_exceeded()
     );
     assert_eq!(harness.journal.external_dispatches(), 0);
     assert_eq!(

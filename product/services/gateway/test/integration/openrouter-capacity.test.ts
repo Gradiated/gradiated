@@ -315,6 +315,25 @@ describe("OpenRouter capacity", () => {
     });
   });
 
+  it("keeps our runtime's Retry-After when OpenRouter also fails", async () => {
+    const instance = await mapped();
+    instance.runtimes[0]!.enqueue({
+      status: 429,
+      errorHeaders: { "Retry-After": "7" },
+    });
+    openRouter.enqueue({ status: 429, errorHeaders: { "Retry-After": "20" } });
+
+    const response = await instance.post();
+
+    expectRejected(response, { code: "capacity_exceeded" });
+    expect(response.headers["retry-after"]).toBe("7");
+    await instance.settled(response, {
+      status: "failed",
+      charge: 0,
+      releaseDigest: OPENROUTER_DIGEST,
+    });
+  });
+
   it("answers as our saturated capacity would when OpenRouter has no provider", async () => {
     const instance = await mapped();
     await instance.status({ accepting_requests: false });

@@ -26,7 +26,8 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import { entered, fillConcurrencyCap } from "./admission.js";
 import { expectRejected } from "./assertions.js";
 import { useCases, type Case } from "./case.js";
-import { deferred } from "./eventually.js";
+import { chatSdk } from "./chat.js";
+import { deferred, eventually } from "./eventually.js";
 import { object, type JsonObject, type JsonValue } from "./json.js";
 import type { PlanOptions } from "./mock-runtimes/server.js";
 import {
@@ -154,8 +155,7 @@ describe("TypeSafe SDK answers", () => {
       expect(response.headers.get("x-gradiated-generation-id")).toMatch(
         /^[0-9a-f-]{36}$/,
       );
-      // TypeSafe's request ID header is not part of the gateway's contract.
-      expect(requestId).toBeUndefined();
+      expect(requestId).toBe(response.headers.get("x-gradiated-generation-id"));
 
       const properties = await instance.settled(
         { headers: headerRecord(response.headers) },
@@ -611,10 +611,13 @@ describe("TypeSafe SDK errors", () => {
         }),
       );
 
-      expectSdkError(error, RateLimitError, {
+      const api = expectSdkError(error, RateLimitError, {
         status: 429,
         code: "concurrency_exceeded",
       });
+      expect(api.headers.get("retry-after")).toBe("1");
+      expect((api as RateLimitError).retryAfterMs).toBe(1000);
+      expect(api.requestId).toBe(api.headers.get("x-gradiated-generation-id"));
     } finally {
       held.release();
     }
@@ -748,6 +751,8 @@ describe("TypeSafe SDK errors", () => {
       );
 
       const api = expectSdkError(error, kind, { status, code });
+      expect(api.requestId).toMatch(/^[0-9a-f-]{36}$/);
+      expect(api.requestId).toBe(api.headers.get("x-gradiated-generation-id"));
       expect(JSON.stringify(api.body)).not.toContain("PRIVATE_RUNTIME_DETAIL");
       expect(api.message).not.toContain("PRIVATE_RUNTIME_DETAIL");
       await settledFrom(instance, api, { status: "failed", charge: 0 });
@@ -755,16 +760,34 @@ describe("TypeSafe SDK errors", () => {
     },
   );
 
-  // KNOWN GAP, not a regression guard to keep: the gateway sends no Retry-After
-  // on any 429 and drops the runtime's, so the SDK's `retryAfterMs` is always
-  // undefined and it falls back to its own backoff. When the gateway starts
-  // sending one, replace this with an assertion that the SDK honours it.
-  it("known gap: a 429 carries no Retry-After for the SDK to honour", async () => {
+  it.each<{
+    name: string;
+    plan: PlanOptions;
+    retryAfter: string;
+  }>([
+    {
+      name: "passes a runtime 429's Retry-After through",
+      plan: { status: 429, errorHeaders: { "Retry-After": "7" } },
+      retryAfter: "7",
+    },
+    {
+      name: "passes a runtime 503's Retry-After through",
+      plan: { status: 503, errorHeaders: { "Retry-After": "2" } },
+      retryAfter: "2",
+    },
+    {
+      name: "caps a runtime Retry-After at 30 seconds",
+      plan: { status: 429, errorHeaders: { "Retry-After": "3600" } },
+      retryAfter: "30",
+    },
+    {
+      name: "sends one second when the runtime gives no Retry-After",
+      plan: { status: 429 },
+      retryAfter: "1",
+    },
+  ])("$name to RateLimitError.retryAfterMs", async ({ plan, retryAfter }) => {
     const instance = await makeCase("kev");
-    instance.runtimes[0]!.enqueue({
-      status: 429,
-      errorHeaders: { "Retry-After": "7" },
-    });
+    instance.runtimes[0]!.enqueue(plan);
 
     const error = await rejection(
       typesafeClient(instance).systemOne({
@@ -777,8 +800,11 @@ describe("TypeSafe SDK errors", () => {
       status: 429,
       code: "capacity_exceeded",
     });
-    expect(api.headers.get("retry-after")).toBeNull();
-    expect((api as RateLimitError).retryAfterMs).toBeUndefined();
+    expect(api.headers.get("retry-after")).toBe(retryAfter);
+    expect((api as RateLimitError).retryAfterMs).toBe(
+      Number(retryAfter) * 1000,
+    );
+    expect(api.requestId).toBe(api.headers.get("x-gradiated-generation-id"));
     await settledFrom(instance, api, { status: "failed", charge: 0 });
   });
 });
@@ -815,6 +841,28 @@ describe("TypeSafe SDK retries", () => {
       "succeeded",
     ]);
     expect(await instance.charged()).toBe(FULL_CHARGE);
+  });
+
+  it("waits the gateway's Retry-After before it retries", async () => {
+    const instance = await makeCase("kev");
+    instance.runtimes[0]!.enqueue({
+      status: 429,
+      errorHeaders: { "Retry-After": "2" },
+    });
+    const { fetch, attempts } = countingFetch();
+    const started = Date.now();
+
+    const { data } = await typesafeClient(instance, {
+      fetch,
+      retry: { maxRetries: 1, ...IMMEDIATE_RETRIES },
+    })
+      .systemOne({ state: TICKET, questions: { q: noul("Is this billing?") } })
+      .withResponse();
+
+    expect(data.answers.q.noul).toBe(0.75);
+    expect(attempts).toHaveLength(2);
+    // The one-millisecond backoff is overridden by the server's two seconds.
+    expect(Date.now() - started).toBeGreaterThanOrEqual(1900);
   });
 
   it("gives up after maxRetries and charges nothing", async () => {
@@ -1014,6 +1062,53 @@ describe("TypeSafe SDK cancellation", () => {
     expect(error).toBeInstanceOf(APIUserAbortError);
     expect(attempts.length).toBeLessThanOrEqual(1);
     await instance.expectNotDispatched();
+  });
+});
+
+describe("TypeSafe SDK models", () => {
+  it("lists the case's model as a TypeSafe model card", async () => {
+    const instance = await makeCase("kev");
+
+    // The shared catalog cache refreshes every second.
+    const card = await eventually(
+      async () =>
+        (await typesafeClient(instance).models.list()).find(
+          (model) => model.name === instance.model,
+        ),
+      5000,
+      "the model never appeared in models.list()",
+    );
+
+    expect(card).toEqual({
+      name: instance.model,
+      description: "Synthetic contract tests",
+      release_date: "2026-01-01",
+    });
+  });
+
+  it("serves the TypeSafe cards beside the catalog the OpenAI SDK reads", async () => {
+    const instance = await makeCase("kev");
+    await instance.ready();
+
+    // Other cases publish models concurrently, so compare within one response.
+    const listing = await instance.http.get("/v1/models", {
+      headers: instance.headers,
+    });
+    const body = listing.json() as {
+      data: { id: string }[];
+      models: { name: string }[];
+    };
+    expect(body.models.map((card) => card.name)).toEqual(
+      body.data.map((model) => model.id),
+    );
+
+    const cards = await typesafeClient(instance).models.list();
+    expect(cards.map((card) => card.name)).toContain(instance.model);
+    const openAi: string[] = [];
+    for await (const model of chatSdk(instance).models.list()) {
+      openAi.push(model.id);
+    }
+    expect(openAi).toContain(instance.model);
   });
 });
 

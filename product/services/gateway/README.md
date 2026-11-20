@@ -142,6 +142,14 @@ input and cached-input usage with exactly zero output tokens; serialized
 answers are not generated tokens. The gateway validates answers and runtime
 model identity before returning the requested public model ID.
 
+The official TypeSafe SDK works against the gateway unchanged. Its `requestId`
+reads `x-typesafe-request-id`, which every inference response (errors included)
+sets to the generation ID. Every 429 sends `Retry-After`: the runtime's own
+value capped at 30 seconds, otherwise 1 second (5 for `settlement_backlog`),
+and the SDK waits that long before it retries. `GET /v1/models` returns the
+SDK's `models` cards (`name`, `description`, `release_date`) beside the
+provider `data` array that OpenAI and OpenRouter clients read.
+
 ## Deployment routing
 
 An authenticated workspace can pin a request to one serving replica with

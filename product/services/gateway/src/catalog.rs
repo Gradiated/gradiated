@@ -23,15 +23,35 @@ pub struct CatalogModel {
 #[derive(Debug, Serialize)]
 pub struct ModelCatalogResponse<'a> {
     data: Vec<ProviderModel<'a>>,
+    models: Vec<TypeSafeModelCard<'a>>,
 }
 
 impl<'a> ModelCatalogResponse<'a> {
     pub fn from_models(models: &'a [CatalogModel], compliance: ProviderCompliance) -> Self {
+        let data = models
+            .iter()
+            .filter_map(|model| ProviderModel::from_model(model, compliance))
+            .collect::<Vec<_>>();
+        let models = data.iter().map(TypeSafeModelCard::from_listed).collect();
+
+        Self { data, models }
+    }
+}
+
+/// `name` is the model ID a request sends, not the display name.
+#[derive(Debug, Serialize)]
+struct TypeSafeModelCard<'a> {
+    name: &'a str,
+    description: &'a str,
+    release_date: String,
+}
+
+impl<'a> TypeSafeModelCard<'a> {
+    fn from_listed(model: &ProviderModel<'a>) -> Self {
         Self {
-            data: models
-                .iter()
-                .filter_map(|model| ProviderModel::from_model(model, compliance))
-                .collect(),
+            name: model.id,
+            description: model.description,
+            release_date: model.released_at.format("%Y-%m-%d").to_string(),
         }
     }
 }
@@ -44,6 +64,8 @@ struct ProviderModel<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     hugging_face_id: Option<&'a str>,
     created: i64,
+    #[serde(skip)]
+    released_at: &'a DateTime<Utc>,
     #[serde(skip_serializing_if = "Option::is_none")]
     quantization: Option<ModelQuantization>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -110,6 +132,7 @@ impl<'a> ProviderModel<'a> {
             name: &model.name,
             hugging_face_id: properties.hugging_face_id.as_deref(),
             created: released_at.timestamp(),
+            released_at,
             quantization: properties.quantization,
             tokenizer: properties.tokenizer.as_deref(),
             description: &properties.description,
@@ -312,8 +335,42 @@ mod tests {
         };
         let response =
             serde_json::to_value(ModelCatalogResponse::from_models(&models, compliance)).unwrap();
+        let ids = |list: &str, field: &str| {
+            response[list]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|model| model[field].clone())
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(ids("models", "name"), ids("data", "id"));
 
         response["data"].as_array().unwrap().first().cloned()
+    }
+
+    #[test]
+    fn publishes_a_typesafe_model_card_beside_the_provider_catalog() {
+        let models = [CatalogModel {
+            model: model(),
+            healthy_deployments: 1,
+            external_capacity: false,
+        }];
+        let compliance = ProviderCompliance {
+            zdr: true,
+            hipaa: false,
+        };
+        let response =
+            serde_json::to_value(ModelCatalogResponse::from_models(&models, compliance)).unwrap();
+
+        assert_eq!(
+            response["models"],
+            json!([{
+                "name": "model-a",
+                "description": models[0].model.properties.description,
+                "release_date": "2026-01-02"
+            }])
+        );
+        assert_eq!(response.as_object().unwrap().len(), 2);
     }
 
     #[test]

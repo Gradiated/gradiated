@@ -6,7 +6,6 @@ import {
   NotFoundError,
   noul,
   score,
-  TypeSafeError,
 } from "@typesafe-ai/sdk";
 import { describe, expect, it } from "vitest";
 
@@ -34,7 +33,7 @@ describe("TypeSafe SDK against a hosted SystemOne model", () => {
   it("answers through the proxy, served and billed by the gateway", async () => {
     const instance = await hostedKev();
 
-    const { data, response } = await typesafeClient(
+    const { data, response, requestId } = await typesafeClient(
       instance,
       {},
       fixture.proxy.url,
@@ -43,6 +42,7 @@ describe("TypeSafe SDK against a hosted SystemOne model", () => {
       .withResponse();
 
     expect(data.model).toBe(instance.model);
+    expect(requestId).toBe(response.headers.get("x-gradiated-generation-id"));
     expect(data.answers.billing.noul).toBe(0.75);
     expect(data.answers.team.choice).toBe("billing");
     expect(data.answers.urgency.legend).toEqual({ 0: "Can wait", 1: "Today" });
@@ -143,11 +143,7 @@ describe("TypeSafe SDK against a hosted SystemOne model", () => {
     await instance.expectNotDispatched();
   });
 
-  // KNOWN GAP: TypeSafe's `GET /v1/models` returns `{ models: [...] }`, the
-  // gateway returns OpenAI's `{ object: "list", data: [...] }`, so the SDK's
-  // `models.list()` cannot read our catalog. When the gateway serves both
-  // shapes, replace this with an assertion that the SDK lists the model.
-  it("known gap: models.list() cannot read the gateway's catalog", async () => {
+  it("lists the gateway's catalog through models.list()", async () => {
     const instance = await hostedKev();
 
     const listing = await fetch(`${fixture.proxy.url}/v1/models`, {
@@ -156,14 +152,16 @@ describe("TypeSafe SDK against a hosted SystemOne model", () => {
     expect(listing.status).toBe(200);
     const body = (await listing.json()) as { data: { id: string }[] };
     expect(body.data.map((model) => model.id)).toContain(instance.model);
-    expect(body).not.toHaveProperty("models");
 
-    const error = await rejection(
-      typesafeClient(instance, {}, fixture.proxy.url).models.list(),
-    );
-    expect(error).toBeInstanceOf(TypeSafeError);
-    expect((error as Error).message).toMatch(
-      /expected \{ models: \[\.\.\.\] \}/,
-    );
+    const cards = await typesafeClient(
+      instance,
+      {},
+      fixture.proxy.url,
+    ).models.list();
+    expect(cards.find((card) => card.name === instance.model)).toEqual({
+      name: instance.model,
+      description: "Synthetic contract tests",
+      release_date: "2026-01-01",
+    });
   });
 });

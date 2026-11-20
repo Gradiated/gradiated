@@ -1,5 +1,5 @@
 use axum::{
-    http::StatusCode,
+    http::{header::RETRY_AFTER, HeaderValue, StatusCode},
     response::{IntoResponse, Response},
     Json,
 };
@@ -7,9 +7,15 @@ use serde::Serialize;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum GatewayError {
-    InvalidRequest { param: Option<String> },
-    UnsupportedParameter { param: Option<String> },
-    ContextLengthExceeded { param: Option<String> },
+    InvalidRequest {
+        param: Option<String>,
+    },
+    UnsupportedParameter {
+        param: Option<String>,
+    },
+    ContextLengthExceeded {
+        param: Option<String>,
+    },
     PayloadTooLarge,
     InvalidApiKey,
     ProviderKeyRequired,
@@ -21,7 +27,10 @@ pub enum GatewayError {
     InsufficientBalance,
     ConcurrencyExceeded,
     SettlementBacklog,
-    CapacityExceeded,
+    /// The runtime's own `Retry-After`, capped; `None` sends the admission default.
+    CapacityExceeded {
+        retry_after_seconds: Option<u8>,
+    },
     ModelNotFound,
     ModelUnavailable,
     ServingStateUnavailable,
@@ -29,7 +38,23 @@ pub enum GatewayError {
     FinalizationUnavailable,
 }
 
+/// A longer runtime value would park callers that another replica could serve.
+pub(crate) const MAX_RETRY_AFTER_SECONDS: u8 = 30;
+
+/// Admission has no queue and a slot frees when any request ends; route status is
+/// cached for one second, so a sooner retry sees the same full view.
+pub(crate) const ADMISSION_RETRY_AFTER_SECONDS: u8 = 1;
+
+/// The settlement stream drains at its consumer's pace, not when a request ends.
+pub(crate) const SETTLEMENT_RETRY_AFTER_SECONDS: u8 = 5;
+
 impl GatewayError {
+    pub const fn capacity_exceeded() -> Self {
+        Self::CapacityExceeded {
+            retry_after_seconds: None,
+        }
+    }
+
     pub fn invalid_request(param: Option<&str>) -> Self {
         Self::InvalidRequest {
             param: bounded_param(param),
@@ -60,7 +85,7 @@ impl GatewayError {
             Self::ProviderTimeout => StatusCode::GATEWAY_TIMEOUT,
             Self::ProxyOverloaded => StatusCode::SERVICE_UNAVAILABLE,
             Self::InsufficientBalance => StatusCode::PAYMENT_REQUIRED,
-            Self::ConcurrencyExceeded | Self::SettlementBacklog | Self::CapacityExceeded => {
+            Self::ConcurrencyExceeded | Self::SettlementBacklog | Self::CapacityExceeded { .. } => {
                 StatusCode::TOO_MANY_REQUESTS
             }
             Self::ModelNotFound | Self::ModelUnavailable => StatusCode::NOT_FOUND,
@@ -86,7 +111,7 @@ impl GatewayError {
             Self::InsufficientBalance => "insufficient_balance",
             Self::ConcurrencyExceeded => "concurrency_exceeded",
             Self::SettlementBacklog => "settlement_backlog",
-            Self::CapacityExceeded => "capacity_exceeded",
+            Self::CapacityExceeded { .. } => "capacity_exceeded",
             Self::ModelNotFound => "model_not_found",
             Self::ModelUnavailable => "model_unavailable",
             Self::ServingStateUnavailable => "serving_state_unavailable",
@@ -99,7 +124,7 @@ impl GatewayError {
         match self {
             Self::InvalidApiKey | Self::ProviderKeyRequired => "authentication_error",
             Self::WorkspaceArchived | Self::OrganizationSuspended => "permission_error",
-            Self::ConcurrencyExceeded | Self::SettlementBacklog | Self::CapacityExceeded => {
+            Self::ConcurrencyExceeded | Self::SettlementBacklog | Self::CapacityExceeded { .. } => {
                 "rate_limit_error"
             }
             Self::ProviderUnavailable
@@ -142,7 +167,7 @@ impl GatewayError {
                 "The organization has reached its funded concurrency limit."
             }
             Self::SettlementBacklog => "Generation settlement is temporarily backlogged.",
-            Self::CapacityExceeded => "The model is temporarily at capacity.",
+            Self::CapacityExceeded { .. } => "The model is temporarily at capacity.",
             Self::ModelNotFound => "The requested model was not found.",
             Self::ModelUnavailable => "The requested model is unavailable.",
             Self::ServingStateUnavailable => "Required serving state is unavailable.",
@@ -168,11 +193,33 @@ impl GatewayError {
             | Self::InsufficientBalance
             | Self::ConcurrencyExceeded
             | Self::SettlementBacklog
-            | Self::CapacityExceeded
+            | Self::CapacityExceeded { .. }
             | Self::ServingStateUnavailable
             | Self::RuntimeUnavailable
             | Self::FinalizationUnavailable => None,
         }
+    }
+
+    pub(crate) fn retry_after_seconds(&self) -> Option<u8> {
+        match self {
+            Self::ConcurrencyExceeded => Some(ADMISSION_RETRY_AFTER_SECONDS),
+            Self::CapacityExceeded {
+                retry_after_seconds,
+            } => Some(retry_after_seconds.unwrap_or(ADMISSION_RETRY_AFTER_SECONDS)),
+            Self::SettlementBacklog => Some(SETTLEMENT_RETRY_AFTER_SECONDS),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn response_with(&self, body: impl Serialize) -> Response {
+        let mut response = (self.status(), Json(body)).into_response();
+        if let Some(seconds) = self.retry_after_seconds() {
+            response
+                .headers_mut()
+                .insert(RETRY_AFTER, HeaderValue::from(u16::from(seconds)));
+        }
+
+        response
     }
 
     pub(crate) fn envelope(&self) -> ErrorEnvelope<'_> {
@@ -207,9 +254,7 @@ impl GatewayError {
 
 impl IntoResponse for GatewayError {
     fn into_response(self) -> Response {
-        let status = self.status();
-        let response = self.envelope();
-        (status, Json(response)).into_response()
+        self.response_with(self.envelope())
     }
 }
 
@@ -361,7 +406,7 @@ mod tests {
                 None,
             ),
             (
-                GatewayError::CapacityExceeded,
+                GatewayError::capacity_exceeded(),
                 StatusCode::TOO_MANY_REQUESTS,
                 "capacity_exceeded",
                 "rate_limit_error",
@@ -411,6 +456,58 @@ mod tests {
             assert_eq!(error.error_type(), error_type, "{code}");
             assert_eq!(error.param(), param, "{code}");
             assert!(codes.insert(code), "{code} is not unique");
+        }
+    }
+
+    #[test]
+    fn every_429_and_only_a_429_carries_retry_after() {
+        let errors = [
+            GatewayError::invalid_request(None),
+            GatewayError::PayloadTooLarge,
+            GatewayError::InvalidApiKey,
+            GatewayError::InsufficientBalance,
+            GatewayError::ProxyOverloaded,
+            GatewayError::ConcurrencyExceeded,
+            GatewayError::SettlementBacklog,
+            GatewayError::capacity_exceeded(),
+            GatewayError::CapacityExceeded {
+                retry_after_seconds: Some(7),
+            },
+            GatewayError::ModelNotFound,
+            GatewayError::RuntimeUnavailable,
+        ];
+
+        for error in errors {
+            let expected = match &error {
+                GatewayError::ConcurrencyExceeded => Some("1"),
+                GatewayError::SettlementBacklog => Some("5"),
+                GatewayError::CapacityExceeded {
+                    retry_after_seconds: None,
+                } => Some("1"),
+                GatewayError::CapacityExceeded {
+                    retry_after_seconds: Some(_),
+                } => Some("7"),
+                _ => None,
+            };
+            let code = error.code();
+            for response in [
+                error.clone().into_response(),
+                error.response_with(error.anthropic_envelope()),
+            ] {
+                assert_eq!(
+                    response.status() == StatusCode::TOO_MANY_REQUESTS,
+                    expected.is_some(),
+                    "{code}"
+                );
+                assert_eq!(
+                    response
+                        .headers()
+                        .get(RETRY_AFTER)
+                        .map(|value| value.to_str().unwrap()),
+                    expected,
+                    "{code}"
+                );
+            }
         }
     }
 

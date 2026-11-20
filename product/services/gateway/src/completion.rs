@@ -260,7 +260,7 @@ impl CompletionService {
             RouteAvailability::Ready(route) => return Ok(Ok(route)),
             RouteAvailability::AtCapacity(diagnostics) => Unroutable {
                 reason: FallbackReason::AtCapacity,
-                error: GatewayError::CapacityExceeded,
+                error: GatewayError::capacity_exceeded(),
                 diagnostics: Some(diagnostics),
             },
             RouteAvailability::Unavailable(diagnostics) => Unroutable {

@@ -4015,6 +4015,15 @@ export interface components {
           hipaa: boolean;
         };
       }[];
+      /** @description The same models as data, as TypeSafe SDK model cards; name is the id to send. */
+      models: {
+        /** @description Exact hosted model ID from GET /v1/models; no aliases or fallback. */
+        name: string;
+        /** @description Human-readable model description. */
+        description: string;
+        /** @description UTC release date of the model, as YYYY-MM-DD. */
+        release_date: string;
+      }[];
     };
   };
   responses: never;
@@ -9329,6 +9338,8 @@ export interface operations {
       /** @description Admission or inference capacity is exhausted. */
       429: {
         headers: {
+          /** @description Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog). */
+          "Retry-After"?: number;
           [name: string]: unknown;
         };
         content?: never;
@@ -9403,6 +9414,8 @@ export interface operations {
       /** @description Admission or inference capacity exhausted. */
       429: {
         headers: {
+          /** @description Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog). */
+          "Retry-After"?: number;
           [name: string]: unknown;
         };
         content?: never;
@@ -9477,6 +9490,8 @@ export interface operations {
       /** @description Admission or inference capacity exhausted. */
       429: {
         headers: {
+          /** @description Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog). */
+          "Retry-After"?: number;
           [name: string]: unknown;
         };
         content?: never;
@@ -9551,6 +9566,8 @@ export interface operations {
       /** @description Admission or inference capacity exhausted. */
       429: {
         headers: {
+          /** @description Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog). */
+          "Retry-After"?: number;
           [name: string]: unknown;
         };
         content?: never;
@@ -9624,6 +9641,8 @@ export interface operations {
       /** @description Admission or inference capacity exhausted. */
       429: {
         headers: {
+          /** @description Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog). */
+          "Retry-After"?: number;
           [name: string]: unknown;
         };
         content?: never;

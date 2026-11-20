@@ -212,13 +212,13 @@ class for each step of the request lifecycle.
 
 The gateway owns these canonical routes:
 
-| Method | Path                   | Authentication     | Purpose                                                 |
-| ------ | ---------------------- | ------------------ | ------------------------------------------------------- |
-| `POST` | `/v1/chat/completions` | Bearer credential  | Streaming and non-streaming exact-model inference.      |
-| `GET`  | `/v1/models`           | Bearer credential  | Provider schema for public and the caller's own models. |
-| `GET`  | `/health/live`         | none               | Process liveness only.                                  |
-| `GET`  | `/health/ready`        | none               | Readiness of required serving dependencies.             |
-| `GET`  | `/metrics`             | network-restricted | Prometheus metrics for the private observability stack. |
+| Method | Path                   | Authentication     | Purpose                                                                    |
+| ------ | ---------------------- | ------------------ | -------------------------------------------------------------------------- |
+| `POST` | `/v1/chat/completions` | Bearer credential  | Streaming and non-streaming exact-model inference.                         |
+| `GET`  | `/v1/models`           | Bearer credential  | Provider schema and TypeSafe cards for public and the caller's own models. |
+| `GET`  | `/health/live`         | none               | Process liveness only.                                                     |
+| `GET`  | `/health/ready`        | none               | Readiness of required serving dependencies.                                |
+| `GET`  | `/metrics`             | network-restricted | Prometheus metrics for the private observability stack.                    |
 
 Both SDKs use `https://api.gradiated.com` as their public base URL. The public
 ALB routes the OpenAI and Anthropic request paths to this service. The gateway
@@ -914,6 +914,12 @@ access checks as Chat Completions but does not create a lease.
 8. Convert integer nano-USD token prices to exact base-10 USD strings.
 9. Require `released_at` before advertising a model because the provider
    document requires a creation timestamp.
+10. Beside the provider `data` array, return the same models as TypeSafe SDK
+    model cards in `models`: `name` is the model ID, `description` is the
+    catalog description and `release_date` is the UTC date of `released_at`
+    (`YYYY-MM-DD`). The TypeSafe SDK's `models.list()` reads only `models`;
+    OpenAI and OpenRouter clients read only `data`. Both arrays come from the
+    same filtered list, so neither can show a model the other hides.
 
 The response never exposes `service_url`, `SGLANG_API_KEY`, artifact revisions,
 or the internal served-release digest.
@@ -1151,6 +1157,23 @@ Desmond sets `accepting_requests: false` before severe KV or queue pressure.
 |       `413` | `payload_too_large`                                                            | Request exceeded the transport body ceiling.             |
 |       `429` | `capacity_exceeded`, `concurrency_exceeded`, `settlement_backlog`              | SGLang overload or gateway admission rejection.          |
 |       `503` | `serving_state_unavailable`, `runtime_unavailable`, `finalization_unavailable` | Required serving dependency or invariant is unavailable. |
+
+Every `429` carries `Retry-After` in whole seconds, which the official SDKs
+honour before their own backoff:
+
+- `capacity_exceeded` from a runtime that sent `Retry-After` (delay-seconds or
+  an HTTP date) passes that value through, capped at 30 seconds so one replica
+  cannot park callers another replica could serve;
+- any other `capacity_exceeded` and `concurrency_exceeded` send `1`. Admission
+  has no queue: a slot frees as soon as any in-flight request on the model or
+  organization ends, and route status is cached for one second, so a sooner
+  retry would see the same full view;
+- `settlement_backlog` sends `5`, because the settlement stream drains at its
+  consumer's pace rather than when one request ends.
+
+Every inference response, successful or not, carries its generation ID in
+both `x-gradiated-generation-id` and `x-typesafe-request-id`, the header the
+TypeSafe SDK reads as `requestId`.
 
 Errors caused by caller input do not mark readiness unhealthy. Valkey
 unavailability, configured-runtime unavailability, invalid loaded catalog

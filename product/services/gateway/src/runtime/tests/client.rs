@@ -195,12 +195,12 @@ async fn classifies_rejected_statuses_and_retains_valid_usage() {
         (
             StatusCode::TOO_MANY_REQUESTS,
             RuntimeFailureKind::CapacityExceeded,
-            GatewayError::CapacityExceeded,
+            GatewayError::capacity_exceeded(),
         ),
         (
             StatusCode::SERVICE_UNAVAILABLE,
             RuntimeFailureKind::CapacityExceeded,
-            GatewayError::CapacityExceeded,
+            GatewayError::capacity_exceeded(),
         ),
         (
             StatusCode::BAD_GATEWAY,

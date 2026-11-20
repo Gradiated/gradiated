@@ -320,6 +320,7 @@ impl RuntimeCall {
             if next.is_none() {
                 return Err(failure);
             }
+            self.keep_own_error(&failure);
             self.follow_route().await;
         }
     }
@@ -415,6 +416,14 @@ impl RuntimeCall {
         self.plan.reason = Some(reason);
 
         Some(self.plan.target.capacity())
+    }
+
+    /// Replaces the error just recorded for an OpenRouter fallback with the local
+    /// failure itself, which keeps that runtime's `Retry-After`.
+    pub(super) fn keep_own_error(&mut self, failure: &RuntimeFailure) {
+        if let (Target::External(_), Some(own)) = (&self.plan.target, &mut self.plan.own_error) {
+            *own = failure.gateway_error();
+        }
     }
 
     /// OpenRouter's failure before output never reaches the caller: they get the

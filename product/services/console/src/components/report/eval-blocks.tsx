@@ -9,6 +9,7 @@ import {
   formatDelta,
   formatMetric,
   groupCases,
+  isRate,
   messageText,
   passedOf,
   pickMetric,
@@ -127,7 +128,8 @@ const seeded = (seed: number) => () => {
 };
 
 // Resamples whole interval_group_by groups (cases without the tag stand alone),
-// because rollouts of one case or one project are not independent.
+// because rollouts of one case or one project are not independent. Only groups
+// scored for both models count, so the interval compares like with like.
 const differenceInterval = ({ index, a, b, metric }: Ready) => {
   const key = index.eval.interval_group_by;
   const groups = [
@@ -136,10 +138,12 @@ const differenceInterval = ({ index, a, b, metric }: Ready) => {
       .filter((item) => !key || item.tags[key] === undefined)
       .map((item) => [item.id]),
   ];
-  const totals = groups.map((ids) => ({
-    a: aggregate(index, a.id, metric, ids),
-    b: aggregate(index, b.id, metric, ids),
-  }));
+  const totals = groups
+    .map((ids) => ({
+      a: aggregate(index, a.id, metric, ids),
+      b: aggregate(index, b.id, metric, ids),
+    }))
+    .filter((total) => total.a.n && total.b.n);
   const next = seeded(7);
   const deltas: number[] = [];
 
@@ -299,7 +303,18 @@ const Bar = ({
 export const EvalBreakdown = (props: EvalProps) => (
   <EvalFigure props={props}>
     {({ index, a, b, metric }) => {
-      const scale = metric.kind === "score" ? (metric.max ?? 1) : 1;
+      const rows = withAll(index, props.by).map((group) => ({
+        group,
+        means: [a, b].map(
+          (model) => aggregate(index, model.id, metric, group.ids).mean,
+        ),
+      }));
+      const scale = isRate(metric)
+        ? 1
+        : (metric.max ??
+          Math.max(
+            ...rows.flatMap((row) => row.means.map((mean) => mean ?? 0)),
+          ));
 
       return (
         <div className="flex flex-col gap-3">
@@ -309,30 +324,21 @@ export const EvalBreakdown = (props: EvalProps) => (
               [MODEL_COLORS[1], b.name],
             ]}
           />
-          {withAll(index, props.by).map((group) => (
+          {rows.map(({ group, means }) => (
             <GroupRow
               key={group.label}
               label={group.label}
               count={group.ids.length}
             >
               <div className="flex flex-col gap-1">
-                {[a, b].map((model, slot) => {
-                  const mean = aggregate(
-                    index,
-                    model.id,
-                    metric,
-                    group.ids,
-                  ).mean;
-
-                  return (
-                    <Bar
-                      key={model.id}
-                      value={(mean ?? 0) / scale}
-                      color={MODEL_COLORS[slot]!}
-                      label={formatMetric(metric, mean)}
-                    />
-                  );
-                })}
+                {means.map((mean, slot) => (
+                  <Bar
+                    key={slot}
+                    value={scale ? (mean ?? 0) / scale : 0}
+                    color={MODEL_COLORS[slot]!}
+                    label={formatMetric(metric, mean)}
+                  />
+                ))}
               </div>
             </GroupRow>
           ))}

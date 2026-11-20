@@ -87,6 +87,37 @@ describe("difference interval groups", () => {
   });
 });
 
+describe("difference interval pairing", () => {
+  it("shows no interval when the models were never scored on the same case", () => {
+    const unpaired = structuredClone(sampleEval);
+    for (const rollout of unpaired.rollouts)
+      if (
+        (rollout.model_id === "support-mini") !==
+        (rollout.case_id === "case-1")
+      )
+        rollout.status = "error";
+    const html = renderToStaticMarkup(
+      createElement(
+        EvalDataContext.Provider,
+        {
+          value: new Map([
+            [
+              "a.eval.json",
+              {
+                status: "ready" as const,
+                index: parseEval(JSON.stringify(unpaired)),
+              },
+            ],
+          ]),
+        },
+        createElement(EvalSummary, { eval: "a.eval.json" }),
+      ),
+    );
+
+    expect(html).not.toContain("95% interval");
+  });
+});
+
 describe("eval report tags", () => {
   it("collects the eval files a report references", () => {
     const report = parseReport(

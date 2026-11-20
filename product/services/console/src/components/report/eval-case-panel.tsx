@@ -83,15 +83,25 @@ const Conversation = ({
   );
 };
 
+const asText = (value: unknown) =>
+  typeof value === "string" ? value : JSON.stringify(value, null, 2);
+
+const Output = ({ value }: { value: unknown }) => (
+  <pre className="max-h-64 overflow-auto rounded-md bg-muted px-3 py-2 font-mono text-xs leading-5 whitespace-pre-wrap break-words">
+    {asText(value)}
+  </pre>
+);
+
 const Expected = ({ index, caseId }: { index: EvalIndex; caseId: string }) => {
-  const expected = index.caseById.get(caseId)!.expected;
-  if (!expected.length) return null;
+  const { expected, expected_output: output } = index.caseById.get(caseId)!;
+  if (!expected.length && output === undefined) return null;
 
   return (
     <section className="flex min-w-0 flex-col gap-2 rounded-xl border bg-card px-5 py-4">
       <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-        Expected · {expected.length}
+        Expected{expected.length ? ` · ${expected.length}` : ""}
       </h3>
+      {output === undefined ? null : <Output value={output} />}
       <table className="w-full text-sm">
         <tbody>
           {expected.map((row, position) => (
@@ -282,6 +292,7 @@ const Result = ({
           </div>
         </>
       ) : null}
+      {rollout.output === undefined ? null : <Output value={rollout.output} />}
       {rollout.explanation ? (
         <p className="text-sm text-muted-foreground">{rollout.explanation}</p>
       ) : null}

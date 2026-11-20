@@ -170,6 +170,8 @@ TOOLS = (
          'Measure exact native Inkling candidate token lengths with hash-verified tokenizer files', network=False),
     Tool('research', 'decision-semantic-audit', (python('tools/decision_training/audit_semantics.py'),),
          'Check supported procedural targets with independent Bayesian, incident and route oracles', network=False),
+    Tool('research', 'decision-release-index', (python('tools/decision_training/release_index.py'),),
+         'Apply source policy and prompt repairs, then index protected/duplicate groups and source-family holdouts', network=False),
     Tool('research', 'decision-train', (python('tools/decision_training/train.py'),),
          'Fine-tune Inkling decision adapters, checkpoint to scoped S3 and evaluate public JevBench'),
     Tool('research', 'decision-distributed-smoke', (python('tools/decision_training/smoke_distributed.py'),),

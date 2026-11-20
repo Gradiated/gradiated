@@ -15,6 +15,18 @@ def verify_snapshot(run_dir):
         raise ValueError("model manifest does not describe the pinned Inkling release")
     files = []
     metadata = {}
+    listed = {row["rfilename"] for row in manifest["siblings"]}
+    actual = {
+        str(path.relative_to(root / "model"))
+        for path in (root / "model").rglob("*")
+        if path.is_file()
+        and not path.relative_to(root / "model").is_relative_to(".cache/huggingface")
+    }
+    if actual != listed:
+        raise ValueError(
+            f"model files differ from pinned manifest: extra={sorted(actual - listed)}, "
+            f"missing={sorted(listed - actual)}"
+        )
     for row in manifest["siblings"]:
         relative = Path(row["rfilename"])
         if relative.is_absolute() or ".." in relative.parts:

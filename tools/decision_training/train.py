@@ -86,6 +86,21 @@ def validate_checkpoint_identity(manifest, identity):
 
 
 def build_run_identity(root, data, max_length):
+    source_dir = pathlib.Path(__file__).resolve().parent
+    benchmark_dir = root / "jevbench" / "jevbench"
+    sources = {
+        "runner/" + name: source_dir / name
+        for name in ("train.py", "data.py", "snapshot.py")
+    }
+    for name in ("__init__.py", "scoring.py", "metrics.py", "tasks.py"):
+        if not (benchmark_dir / name).is_file():
+            raise ValueError(f"missing benchmark executable source: {name}")
+    sources.update(
+        {
+            "jevbench/" + str(path.relative_to(benchmark_dir)): path
+            for path in benchmark_dir.rglob("*.py")
+        }
+    )
     return {
         "model": "thinkingmachines/Inkling-2-Mini",
         "revision": "6e7c8248f75265bdd4fbab5273304243b5d8c2cb",
@@ -93,6 +108,10 @@ def build_run_identity(root, data, max_length):
         "evaluation_batch_size": 1,
         "verified_model_manifest_sha256": verify_snapshot(root),
         "max_length": max_length,
+        "executable_sources_sha256": {
+            name: hashlib.sha256(path.read_bytes()).hexdigest()
+            for name, path in sorted(sources.items())
+        },
         "data": {
             name: hashlib.sha256((data / name).read_bytes()).hexdigest()
             for name in ["train.jsonl", "dev.jsonl", "jevbench-231.jsonl"]
@@ -207,6 +226,13 @@ def main():
             source = pathlib.Path(__file__).parent / name
             if source.exists():
                 upload(source, prefix + "/source/" + name)
+        for source in sorted((ROOT / "jevbench" / "jevbench").rglob("*.py")):
+            upload(
+                source,
+                prefix
+                + "/source/jevbench/"
+                + str(source.relative_to(ROOT / "jevbench")),
+            )
         event("s3_sync")
 
     identity = build_run_identity(ROOT, DATA, args.max_length)

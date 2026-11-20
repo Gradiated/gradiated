@@ -3,6 +3,7 @@ import json
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from snapshot import verify_snapshot
 from train import (
@@ -87,6 +88,10 @@ class SnapshotTests(unittest.TestCase):
             ],
         }
         (root / "model-manifest.json").write_text(json.dumps(manifest))
+        benchmark = root / "jevbench" / "jevbench"
+        benchmark.mkdir(parents=True)
+        for name in ("__init__.py", "scoring.py", "metrics.py", "tasks.py"):
+            (benchmark / name).write_text("# fixture\n")
 
     def test_changed_shape_compatible_weights_invalidate_cached_identity(self):
         with TemporaryDirectory() as directory:
@@ -105,6 +110,51 @@ class SnapshotTests(unittest.TestCase):
             (root / "model/config.json").write_bytes(b"[]\n")
             with self.assertRaisesRegex(ValueError, "digest"):
                 verify_snapshot(root)
+
+    def test_added_loading_artifact_is_rejected_even_after_cached_verification(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.fixture(root)
+            for path in (root / "model").iterdir():
+                path.chmod(0o444)
+            verify_snapshot(root)
+            for name in (
+                "adapter_config.json",
+                "tokenizer_config.json",
+                "chat_template.jinja",
+            ):
+                extra = root / "model" / name
+                extra.write_text("{}\n")
+                with (
+                    self.subTest(name=name),
+                    self.assertRaisesRegex(ValueError, "extra"),
+                ):
+                    verify_snapshot(root)
+                extra.unlink()
+            self.assertTrue(verify_snapshot(root))
+
+    def test_runner_and_scoring_changes_invalidate_cached_evaluations(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.fixture(root)
+            data = root / "data"
+            data.mkdir()
+            for name in ("train.jsonl", "dev.jsonl", "jevbench-231.jsonl"):
+                (data / name).write_text("{}\n")
+            runner = root / "source"
+            runner.mkdir()
+            for name in ("train.py", "data.py", "snapshot.py"):
+                (runner / name).write_text("# fixture\n")
+            with patch("train.__file__", str(runner / "train.py")):
+                baseline = build_run_identity(root, data, 128)
+                for source in (
+                    runner / "train.py",
+                    root / "jevbench/jevbench/scoring.py",
+                ):
+                    source.write_text("# changed implementation\n")
+                    self.assertNotEqual(baseline, build_run_identity(root, data, 128))
+                    source.write_text("# fixture\n")
+                self.assertEqual(baseline, build_run_identity(root, data, 128))
 
     def test_token_limit_changes_the_cached_evaluation_identity(self):
         with TemporaryDirectory() as directory:

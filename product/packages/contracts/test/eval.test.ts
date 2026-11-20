@@ -71,6 +71,23 @@ describe("EvalSchema", () => {
     );
   });
 
+  it("checks grader references and the interval tag", () => {
+    const input = {
+      ...valid(),
+      interval_group_by: "Customer",
+      metrics: [
+        { id: "correct", name: "Passed", kind: "pass", grader_id: "judge" },
+      ],
+    };
+
+    expect(
+      EvalSchema.safeParse(input).error?.issues.map((issue) => issue.message),
+    ).toEqual([
+      "Unknown grader judge.",
+      "interval_group_by must name a case tag.",
+    ]);
+  });
+
   it("needs two models to compare", () => {
     const input = valid();
     input.models = input.models.slice(0, 1);

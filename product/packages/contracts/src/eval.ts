@@ -191,6 +191,29 @@ export const EvalSchema = z
     if (!metrics.has(value.primary_metric))
       issue("primary_metric must name a metric.", ["primary_metric"]);
 
+    const graders = new Set(value.graders.map((grader) => grader.id));
+    if (graders.size !== value.graders.length)
+      issue("Grader IDs must be unique.", ["graders"]);
+    for (const [path, list] of [
+      ["metrics", value.metrics],
+      ["comparisons", value.comparisons],
+    ] as const)
+      list.forEach((item, index) => {
+        if (item.grader_id !== undefined && !graders.has(item.grader_id))
+          issue(`Unknown grader ${item.grader_id}.`, [
+            path,
+            index,
+            "grader_id",
+          ]);
+      });
+
+    const groupBy = value.interval_group_by;
+    if (
+      groupBy !== undefined &&
+      !value.cases.some((item) => item.tags[groupBy] !== undefined)
+    )
+      issue("interval_group_by must name a case tag.", ["interval_group_by"]);
+
     value.rollouts.forEach((rollout, index) => {
       if (!cases.has(rollout.case_id))
         issue(`Unknown case ${rollout.case_id}.`, [

@@ -10,6 +10,23 @@ import time
 from data import read_jsonl
 
 
+def validate_resume_arguments(saved, current):
+    critical = (
+        "batch_size",
+        "accumulation",
+        "max_length",
+        "learning_rate",
+        "brier_weight",
+        "rank",
+        "steps",
+    )
+    changed = [
+        key for key in critical if key not in saved or saved[key] != current[key]
+    ]
+    if changed:
+        raise ValueError("checkpoint training arguments differ: " + ", ".join(changed))
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Train and evaluate a direct Inkling decision adapter."
@@ -23,12 +40,15 @@ def main():
     parser.add_argument("--data-dir", type=pathlib.Path)
     parser.add_argument("--output-dir", type=pathlib.Path)
     parser.add_argument("--resume", type=str)
+    parser.add_argument("--evaluate-only", action="store_true")
     parser.add_argument("--steps", type=int, default=500)
     parser.add_argument("--seconds", type=int, default=9000)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--accumulation", type=int, default=4)
     parser.add_argument("--max-length", type=int, default=1024)
     args = parser.parse_args()
+    if args.evaluate_only and not args.resume:
+        parser.error("--evaluate-only requires --resume")
     if not args.s3_uri.startswith("s3://") or len(args.s3_uri[5:].split("/", 1)) != 2:
         parser.error("--s3-uri must contain a bucket and project prefix")
     if (
@@ -370,10 +390,11 @@ def main():
         for name, digest in checkpoint_manifest["files"].items():
             if hashlib.sha256((ckpt / name).read_bytes()).hexdigest() != digest:
                 raise ValueError("incomplete or corrupt checkpoint")
+        state = torch.load(ckpt / "trainer.pt", map_location="cpu", weights_only=False)
+        validate_resume_arguments(state["args"], vars(args))
         set_peft_model_state_dict(
             model, load_file(str(ckpt / "adapter_model.safetensors"))
         )
-        state = torch.load(ckpt / "trainer.pt", map_location="cpu", weights_only=False)
         optimizer.load_state_dict(state["optimizer"])
         step = state["step"]
         cursor = state["cursor"]
@@ -383,7 +404,8 @@ def main():
         event("resumed", checkpoint=str(ckpt), step=step)
     first_step = step + 1
     completed_steps = step
-    for step in range(first_step, args.steps + 1):
+    final_step = step if args.evaluate_only else args.steps
+    for step in range(first_step, final_step + 1):
         if time.monotonic() > deadline - 900 or (
             args.stop_file and args.stop_file.exists()
         ):

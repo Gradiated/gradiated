@@ -33,6 +33,7 @@ def main():
         "prepare_scale.py",
         "data.py",
         "scale_data.py",
+        "original_data.py",
     ):
         content = Path(__file__).with_name(name).read_bytes()
         (root / name).write_bytes(content)

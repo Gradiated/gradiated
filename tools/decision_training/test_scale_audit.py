@@ -57,6 +57,7 @@ class ScaleAuditTests(unittest.TestCase):
                 "data.py",
                 "prepare_scale.py",
                 "scale_data.py",
+                "original_data.py",
             ):
                 (root / name).write_text("# fixture\n")
             first = root / "first"

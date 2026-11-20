@@ -11,6 +11,7 @@ import time
 from data import read_jsonl
 from distributed import DistributedRun, rank_batches
 from prompting import render_prompt
+from runtime import runtime_fingerprint
 from snapshot import verify_snapshot
 
 
@@ -136,6 +137,7 @@ def build_run_identity(root, data, max_length, world_size=1):
             "snapshot.py",
             "distributed.py",
             "prompting.py",
+            "runtime.py",
         )
     }
     for name in ("__init__.py", "scoring.py", "metrics.py", "tasks.py"):
@@ -155,6 +157,7 @@ def build_run_identity(root, data, max_length, world_size=1):
         "verified_model_manifest_sha256": verify_snapshot(root),
         "max_length": max_length,
         "training_world_size": world_size,
+        "runtime": runtime_fingerprint(),
         "executable_sources_sha256": {
             name: hashlib.sha256(path.read_bytes()).hexdigest()
             for name, path in sorted(sources.items())
@@ -281,6 +284,7 @@ def main():
             "snapshot.py",
             "distributed.py",
             "prompting.py",
+            "runtime.py",
             "compare.py",
             "requirements.txt",
         ):
@@ -774,8 +778,6 @@ def main():
         distributed.barrier()
         distributed.close()
         return
-    model.save_pretrained(OUT / "adapter-final", save_embedding_layers=False)
-    tokenizer.save_pretrained(OUT / "adapter-final")
     trained_dev, _ = evaluate(dev, "trained-dev", sync_outputs=False)
 
     # Temperature is selected using only the source-held-out dev set, never JevBench labels.
@@ -802,6 +804,19 @@ def main():
         )
     )
     evaluate(bench, "trained-jevbench", temperature=temp, sync_outputs=False)
+
+    def write_final_adapter():
+        model.save_pretrained(OUT / "adapter-final", save_embedding_layers=False)
+        check_deadline(deadline)
+        tokenizer.save_pretrained(OUT / "adapter-final")
+
+    try:
+        bounded_checkpoint_write(write_final_adapter, deadline, reserve=0)
+    except TimeoutError:
+        event("final_adapter_deferred", steps=completed_steps)
+        raise RuntimeError(
+            "scoring complete but final adapter serialization exceeded the deadline"
+        ) from None
     event("complete", steps=completed_steps)
     sync()
     distributed.barrier()

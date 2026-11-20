@@ -16,6 +16,32 @@ from prompting import render_prompt
 TOKENIZER = None
 
 
+def verify_tokenizer_directory(root, manifest):
+    root = Path(root)
+    expected = set()
+    for item in manifest["files"]:
+        path = Path(item["file"])
+        if path.is_absolute() or ".." in path.parts:
+            raise ValueError("invalid tokenizer manifest path")
+        expected.add(str(path))
+    actual = {
+        str(path.relative_to(root))
+        for path in root.rglob("*")
+        if path.is_file()
+        and not path.relative_to(root).is_relative_to(".cache/huggingface")
+    }
+    if actual != expected:
+        raise ValueError("tokenizer files differ from pinned manifest")
+    if (
+        not {"tokenizer.json", "tokenizer_config.json", "chat_template.jinja"}
+        <= expected
+    ):
+        raise ValueError("tokenizer manifest lacks required loading artifacts")
+    for item in manifest["files"]:
+        if digest_file(root / item["file"]) != item["sha256"]:
+            raise ValueError("tokenizer file mismatch")
+
+
 def initialize(tokenizer_dir):
     global TOKENIZER
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -78,9 +104,7 @@ def main():
     tokenizer_manifest = json.loads(args.tokenizer_manifest.read_text())
     if tokenizer_manifest["revision"] != "6e7c8248f75265bdd4fbab5273304243b5d8c2cb":
         raise ValueError("wrong tokenizer revision")
-    for item in tokenizer_manifest["files"]:
-        if digest_file(args.tokenizer_dir / item["file"]) != item["sha256"]:
-            raise ValueError("tokenizer file mismatch")
+    verify_tokenizer_directory(args.tokenizer_dir, tokenizer_manifest)
     source = root / "source"
     source.mkdir()
     source_hashes = {}
@@ -90,6 +114,7 @@ def main():
         "prepare_scale.py",
         "data.py",
         "scale_data.py",
+        "original_data.py",
     ):
         content = Path(__file__).with_name(name).read_bytes()
         (source / name).write_bytes(content)

@@ -28,7 +28,13 @@ def capture_sources(root, source_dir=None):
     destination = root / "source"
     destination.mkdir()
     digests = {}
-    for name in ("audit_scale.py", "data.py", "prepare_scale.py", "scale_data.py"):
+    for name in (
+        "audit_scale.py",
+        "data.py",
+        "prepare_scale.py",
+        "scale_data.py",
+        "original_data.py",
+    ):
         content = (source_dir / name).read_bytes()
         (destination / name).write_bytes(content)
         digests[name] = hashlib.sha256(content).hexdigest()

@@ -7,9 +7,13 @@ import json
 from pathlib import Path
 
 from data import normalize_tasksource, text
+from original_data import normalize_eikos, normalize_esci, normalize_snli
 from scale_data import curate_candidate, normalize_procedural, normalize_verqen
 
 PINS = {
+    "stanfordnlp/snli": "cdb5c3d5eed6ead6e5a341c8e56e669bb666725b",
+    "tasksource/esci": "8113b17a5d4099e20243282c926f1bc1a08a4d13",
+    "caiovicentino1/eikos-decisions": "cebb4a26687cb14742fd07c0ebe17387ee51d369",
     "tasksource/tasksource-jev-typed-decisions": "8df2e5c9a33f19a2c2b8febf291c3acb0a91a8a8",
     "tasksource/procedural-typed-decisions": "05ca1d0388f57461a634a7caed67145d28e2eca7",
     "zorqelis-ai/verqen-decisions": "c21319ea8c28ad5103be185aea1f2e4323570bcd",
@@ -35,7 +39,13 @@ def digest_file(path):
 
 
 def candidates(raw, repo):
-    if repo == "tasksource/tasksource-jev-typed-decisions":
+    if repo == "stanfordnlp/snli":
+        yield None, lambda: normalize_snli(raw)
+    elif repo == "tasksource/esci":
+        yield None, lambda: normalize_esci(raw)
+    elif repo == "caiovicentino1/eikos-decisions":
+        yield None, lambda: normalize_eikos(raw)
+    elif repo == "tasksource/tasksource-jev-typed-decisions":
         yield None, lambda: normalize_tasksource(raw)
     elif repo == "zorqelis-ai/verqen-decisions":
         questions = raw["questions"]
@@ -67,6 +77,27 @@ def candidates(raw, repo):
         raise ValueError("unsupported source")
 
 
+def raw_batches(path, batch_size=2048):
+    if Path(path).suffix == ".parquet":
+        import pyarrow.parquet as pq
+
+        for batch in pq.ParquetFile(path).iter_batches(batch_size=batch_size):
+            yield batch.to_pylist()
+    elif Path(path).suffix == ".jsonl":
+        pending = []
+        with Path(path).open() as stream:
+            for line in stream:
+                if line.strip():
+                    pending.append(json.loads(line))
+                    if len(pending) == batch_size:
+                        yield pending
+                        pending = []
+        if pending:
+            yield pending
+    else:
+        raise ValueError("unsupported raw acquisition format")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-manifest", action="append", type=Path, required=True)
@@ -93,7 +124,13 @@ def main():
     source_dir = root / "source"
     source_dir.mkdir()
     builder = {}
-    for name in ("prepare_scale.py", "scale_data.py", "data.py", "data_sources.json"):
+    for name in (
+        "prepare_scale.py",
+        "scale_data.py",
+        "data.py",
+        "original_data.py",
+        "data_sources.json",
+    ):
         content = Path(__file__).with_name(name).read_bytes()
         (source_dir / name).write_bytes(content)
         builder[name] = hashlib.sha256(content).hexdigest()
@@ -114,8 +151,8 @@ def main():
         for item in sources:
             repo = item["repo"]
             row_index = 0
-            for batch in pq.ParquetFile(item["path"]).iter_batches(batch_size=2048):
-                for raw in batch.to_pylist():
+            for batch in raw_batches(item["path"]):
+                for raw in batch:
                     counts["source_rows"] += 1
                     try:
                         for question_id, convert in candidates(raw, repo):

@@ -40,7 +40,7 @@ to 2 MiB.
     {
       "id": "case-1",
       "title": "Refund a duplicate charge",
-      "tags": { "Difficulty": "Hard", "Area": "Billing" },
+      "tags": { "Difficulty": "Hard", "Area": "Billing", "Customer": "Acme" },
       "messages": [{ "role": "user", "content": "…" }],
       "expected": [{ "id": "e1", "group": "Order 1042", "label": "Amount", "value": "$49.00" }]
     }

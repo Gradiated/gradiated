@@ -303,14 +303,18 @@ const Result = ({
   );
 };
 
-// Traces often repeat the case conversation before the model's first turn.
-const withoutPrefix = (messages: EvalMessage[], prefix: EvalMessage[]) => {
-  const shown = new Set(prefix.map((message) => message.content));
-  const start = messages.findIndex(
-    (message) => message.role !== "user" || !shown.has(message.content),
-  );
+const same = (left?: EvalMessage, right?: EvalMessage) =>
+  left?.role === right?.role && left?.content === right?.content;
 
-  return start < 0 ? [] : messages.slice(start);
+// Traces repeat either the whole case conversation or only its final request.
+const withoutPrefix = (messages: EvalMessage[], prefix: EvalMessage[]) => {
+  if (
+    prefix.length &&
+    prefix.every((message, at) => same(message, messages[at]))
+  )
+    return messages.slice(prefix.length);
+
+  return same(messages[0], prefix.at(-1)) ? messages.slice(1) : messages;
 };
 
 const ModelColumn = ({

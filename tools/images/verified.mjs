@@ -48,9 +48,10 @@ export const selectImages = (
 };
 // The parent as a full SHA: plan() refuses anything else, and selectImages
 // treats a base it cannot plan as "every image changed".
-export const parentRevision = (revision) =>
+export const parentRevision = (revision, cwd = undefined) =>
   execFileSync("git", ["rev-parse", "--verify", `${revision}^{commit}^`], {
     encoding: "utf8",
+    cwd,
   }).trim();
 const hashArchive = async (path) => {
   const hash = createHash("sha256");

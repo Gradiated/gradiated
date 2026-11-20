@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { execFileSync } from "node:child_process";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { parentRevision, trustedRun, validateMetadata } from "./verified.mjs";
 test("only a successful CI workflow from the same repository qualifies an artifact", () => {
   const run = {
@@ -49,13 +52,31 @@ test("input identity and archive integrity must both match", () => {
 });
 
 test("the parent revision is a full SHA that plan() accepts", () => {
-  const head = execFileSync("git", ["rev-parse", "HEAD"], {
-    encoding: "utf8",
-  }).trim();
-  const parent = parentRevision(head);
-  assert.match(parent, /^[0-9a-f]{40}$/);
-  assert.equal(
-    parent,
-    execFileSync("git", ["rev-parse", "HEAD^"], { encoding: "utf8" }).trim(),
-  );
+  // A throwaway repository, so the test works in shallow CI checkouts.
+  const directory = mkdtempSync(join(tmpdir(), "parent-revision-"));
+  const git = (...args) =>
+    execFileSync("git", ["-C", directory, ...args], {
+      encoding: "utf8",
+    }).trim();
+  try {
+    git("init", "-q");
+    for (const message of ["first", "second"])
+      git(
+        "-c",
+        "user.name=test",
+        "-c",
+        "user.email=test@example.com",
+        "commit",
+        "-q",
+        "--allow-empty",
+        "-m",
+        message,
+      );
+    const head = git("rev-parse", "HEAD");
+    const parent = parentRevision(head, directory);
+    assert.match(parent, /^[0-9a-f]{40}$/);
+    assert.equal(parent, git("rev-parse", "HEAD^"));
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });

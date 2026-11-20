@@ -28,13 +28,10 @@ is not shown, so delete nothing: fill in what you want. -->
 paragraphs read better than one long one. Until you write this, your summary
 above is shown as your bio. -->
 
-I think it's important that people understand the details of what's going on in AI right now.
-It's surely not going anywhere. Building cheap and energy efficient AI is a great problem to solve.
-We're giving it a go, and my job here is to take you along for the ride.
+I'd like to make it easier to follow what's going on in AI right now.
+There are large problems to solve, and building cheap and energy efficient AI systems is one of them.
 
-Professionally, I've spent most of my career as a software engineer. 
-
-
+We're giving that one a go, and I'm very happy to be writing about it.
 
 
 ## Working on
@@ -63,7 +60,6 @@ Add writing from anywhere else as a list of links, with an optional note:
 - [Title of the post](https://example.com/your-post) — where or when
 -->
 
-- [0 to 1 weeks at Gradiated](https://www.gradiated.com/library/0-to-1-weeks-at-gradiated/)
 - [Kimi K3.1 Pro](https://www.gradiated.com/library/kimi-k-3-point-1-pro/)
 
 ## Gallery

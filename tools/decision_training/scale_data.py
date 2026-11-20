@@ -19,12 +19,26 @@ def repair_event_probability_wording(task, key, instructions):
         "is it more likely than not to be a deposit?"
     ):
         return "If one transaction is picked uniformly at random, is it a deposit?"
+    if key == "random_is_deposit" and instructions == (
+        "Is a randomly chosen transaction more likely than not a deposit?"
+    ):
+        return "Is a uniformly randomly chosen transaction a deposit?"
     match = re.fullmatch(
         r"Is a randomly chosen line more likely than not to order (\d+) or more units\?",
         instructions,
     )
     if key == "random_line_bulk" and match:
         return f"Does a uniformly randomly chosen line order {match[1]} or more units?"
+    match = re.fullmatch(
+        r"If one order line is picked uniformly at random, is its quantity "
+        r"more likely than not to be at least (\d+)\?",
+        instructions,
+    )
+    if key == "random_line_bulk" and match:
+        return (
+            "If one order line is picked uniformly at random, "
+            f"is its quantity at least {match[1]}?"
+        )
     match = re.fullmatch(
         r"If one task is picked uniformly at random, is it more likely than not "
         r"to last more than (\d+) minutes\?",
@@ -35,6 +49,13 @@ def repair_event_probability_wording(task, key, instructions):
             "If one task is picked uniformly at random, "
             f"does it last more than {match[1]} minutes?"
         )
+    match = re.fullmatch(
+        r"Is a randomly chosen task more likely than not to take longer "
+        r"than (\d+) minutes\?",
+        instructions,
+    )
+    if key == "random_is_long" and match:
+        return f"Does a uniformly randomly chosen task take longer than {match[1]} minutes?"
     raise ValueError("unreviewed arithmetic probability-threshold wording")
 
 

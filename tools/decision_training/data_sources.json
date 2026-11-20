@@ -579,6 +579,7 @@
         "counts": {
           "states": 360000,
           "questions": 1171199,
+          "wording_repairs_applied": 13016,
           "valid_current_schema": 1159769,
           "soft_questions": 80706,
           "choice": 505700,
@@ -591,7 +592,7 @@
           "ledger_checks": 5942,
           "unparsed_text_states": 17323
         },
-        "admission": "NOT_ADMITTED: semantic wording/ties require repair or exclusion; grouped overlap/token/provenance gates remain."
+        "admission": "NOT_ADMITTED: known event-probability wording repaired with targets unchanged; broader semantic, grouped overlap, token and provenance gates remain."
       }
     },
     {

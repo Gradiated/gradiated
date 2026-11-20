@@ -49,6 +49,27 @@ class ScaleDataTests(unittest.TestCase):
                 "arithmetic", "new", "Is it more likely than not to rain?"
             )
 
+    def test_alternate_event_probability_templates_are_also_repaired(self):
+        for key, instruction in (
+            (
+                "random_is_deposit",
+                "Is a randomly chosen transaction more likely than not a deposit?",
+            ),
+            (
+                "random_line_bulk",
+                "If one order line is picked uniformly at random, is its quantity more likely than not to be at least 3?",
+            ),
+            (
+                "random_is_long",
+                "Is a randomly chosen task more likely than not to take longer than 30 minutes?",
+            ),
+        ):
+            with self.subTest(key=key):
+                self.assertNotIn(
+                    "more likely than not",
+                    repair_event_probability_wording("arithmetic", key, instruction),
+                )
+
     def test_native_choice_aligns_by_id_instead_of_dictionary_order(self):
         row = {
             "id": "case1",

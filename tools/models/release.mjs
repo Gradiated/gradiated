@@ -94,6 +94,22 @@ export const bundles = {
     "product/inference/bundles/kev-9b",
     "product/inference/runtimes/kev/adapter.py",
   ],
+  "jevk5-sglang": [
+    "product/inference/bundles/jevk5-sglang",
+    "product/inference/runtimes/jevk5",
+    "product/inference/runtimes/posthog/posthog_common.py",
+    "product/inference/runtimes/kev/adapter.py",
+    "product/inference/bundles/linden-1-sglang/requirements.txt",
+    "product/inference/bundles/linden-1-sglang/jit-cache-requirements.txt",
+  ],
+  "jeeves-sglang": [
+    "product/inference/bundles/jeeves-sglang",
+    "product/inference/runtimes/jeeves",
+    "product/inference/runtimes/posthog/posthog_common.py",
+    "product/inference/runtimes/kev/adapter.py",
+    "product/inference/bundles/linden-1-sglang/requirements.txt",
+    "product/inference/bundles/linden-1-sglang/jit-cache-requirements.txt",
+  ],
 };
 export const inputDigest = (baseImage, tree) => {
   if (!/@sha256:[0-9a-f]{64}$/.test(baseImage))

@@ -16,6 +16,9 @@ on:
       - "product/inference/runtimes/kev/**"
       - "product/inference/runtimes/decider/**"
       - "product/inference/runtimes/linden/**"
+      - "product/inference/runtimes/jevk5/**"
+      - "product/inference/runtimes/jeeves/**"
+      - "product/inference/runtimes/posthog/**"
       - "product/inference/runtimes/sglang-cpu/**"
       - "product/packages/**"
       - ".github/actions/product-changes/**"
@@ -410,7 +413,8 @@ jobs:
         run: >-
           uv run --no-project --python 3.12
           --with fastapi --with httpx --with pytest
-          python -m pytest -p no:cacheprovider product/inference/runtimes/kev product/inference/runtimes/decider product/inference/runtimes/linden -q
+          python -m pytest -p no:cacheprovider product/inference/runtimes/kev product/inference/runtimes/decider product/inference/runtimes/linden
+          product/inference/runtimes/jevk5 product/inference/runtimes/jeeves product/inference/runtimes/posthog -q
 
   gateway-contract:
     name: Gateway runtime integration

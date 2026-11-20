@@ -28,6 +28,16 @@ target "verify-kev-9b" {
   dockerfile = "bundles/kev-9b/Dockerfile"
 }
 
+target "verify-jevk5-sglang" {
+  inherits   = ["bundle"]
+  dockerfile = "bundles/jevk5-sglang/Dockerfile"
+}
+
+target "verify-jeeves-sglang" {
+  inherits   = ["bundle"]
+  dockerfile = "bundles/jeeves-sglang/Dockerfile"
+}
+
 target "verify-training" {
   inherits   = ["bundle"]
   context    = "product"

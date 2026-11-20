@@ -19,6 +19,9 @@ on:
       - product/packages/contracts/src/training-recipe.json
       - product/inference/runtimes/decider/**
       - product/inference/runtimes/linden/**
+      - product/inference/runtimes/jevk5/**
+      - product/inference/runtimes/jeeves/**
+      - product/inference/runtimes/posthog/posthog_common.py
       - product/inference/runtimes/kev/adapter.py
       - product/inference/runtimes/glm/**
       - product/inference/runtimes/glm-sglang/**

@@ -8,6 +8,52 @@ import sys
 import time
 
 from data import read_jsonl
+from snapshot import verify_snapshot
+
+
+def parse_s3_uri(uri):
+    bucket, separator, prefix = uri.removeprefix("s3://").partition("/")
+    prefix = prefix.strip("/")
+    if (
+        not uri.startswith("s3://")
+        or not separator
+        or not bucket
+        or not prefix
+        or any(c.isspace() for c in uri)
+        or "?" in uri
+        or "#" in uri
+    ):
+        raise ValueError("--s3-uri must contain a nonempty bucket and project prefix")
+    return bucket, prefix
+
+
+def validate_experiment_bounds(args):
+    if (
+        args["steps"] < 1
+        or args["seconds"] < 120
+        or min(
+            args[key] for key in ["batch_size", "accumulation", "max_length", "rank"]
+        )
+        < 1
+        or not math.isfinite(args["learning_rate"])
+        or args["learning_rate"] <= 0
+        or not math.isfinite(args["brier_weight"])
+        or args["brier_weight"] < 0
+    ):
+        raise ValueError("invalid experiment bounds")
+    if not args["evaluate_only"] and args["seconds"] <= 900:
+        raise ValueError(
+            "training deadline must exceed the 900-second evaluation reserve"
+        )
+
+
+def learning_rate_for_step(step, total_steps, peak):
+    return (
+        peak
+        * min(1.0, step / 20)
+        * 0.5
+        * (1 + math.cos(math.pi * (step - 1) / total_steps))
+    )
 
 
 def validate_resume_arguments(saved, current):
@@ -25,6 +71,21 @@ def validate_resume_arguments(saved, current):
     ]
     if changed:
         raise ValueError("checkpoint training arguments differ: " + ", ".join(changed))
+
+
+def build_run_identity(root, data, max_length):
+    return {
+        "model": "thinkingmachines/Inkling-2-Mini",
+        "revision": "6e7c8248f75265bdd4fbab5273304243b5d8c2cb",
+        "prompt": "native-chat-none-letter-v1",
+        "evaluation_batch_size": 1,
+        "verified_model_manifest_sha256": verify_snapshot(root),
+        "max_length": max_length,
+        "data": {
+            name: hashlib.sha256((data / name).read_bytes()).hexdigest()
+            for name in ["train.jsonl", "dev.jsonl", "jevbench-231.jsonl"]
+        },
+    }
 
 
 def main():
@@ -49,14 +110,11 @@ def main():
     args = parser.parse_args()
     if args.evaluate_only and not args.resume:
         parser.error("--evaluate-only requires --resume")
-    if not args.s3_uri.startswith("s3://") or len(args.s3_uri[5:].split("/", 1)) != 2:
-        parser.error("--s3-uri must contain a bucket and project prefix")
-    if (
-        args.steps < 0
-        or args.seconds < 120
-        or min(args.batch_size, args.accumulation, args.max_length, args.rank) < 1
-    ):
-        parser.error("invalid experiment bounds")
+    try:
+        s3_bucket, s3_prefix = parse_s3_uri(args.s3_uri)
+        validate_experiment_bounds(vars(args))
+    except ValueError as error:
+        parser.error(str(error))
     import torch
     from peft import LoraConfig, get_peft_model, set_peft_model_state_dict
     from safetensors.torch import load_file
@@ -92,7 +150,7 @@ def main():
         import boto3
 
         s = boto3.client("s3")
-        bucket, prefix = args.s3_uri[5:].strip("/").split("/", 1)
+        bucket, prefix = s3_bucket, s3_prefix
         for base in [OUT, DATA]:
             for p in sorted(
                 base.rglob("*"), key=lambda p: p.name == "checkpoint-complete.json"
@@ -109,6 +167,7 @@ def main():
             "pilot.json",
             "model-manifest.json",
             "model-sha256.txt",
+            "model-integrity.json",
         ]:
             p = ROOT / name
             if p.exists():
@@ -116,16 +175,7 @@ def main():
         s.upload_file(__file__, bucket, prefix + "/source/train.py")
         event("s3_sync")
 
-    identity = {
-        "model": "thinkingmachines/Inkling-2-Mini",
-        "revision": "6e7c8248f75265bdd4fbab5273304243b5d8c2cb",
-        "prompt": "native-chat-none-letter-v1",
-        "evaluation_batch_size": 1,
-        "data": {
-            name: hashlib.sha256((DATA / name).read_bytes()).hexdigest()
-            for name in ["train.jsonl", "dev.jsonl", "jevbench-231.jsonl"]
-        },
-    }
+    identity = build_run_identity(ROOT, DATA, args.max_length)
     identity_path = OUT / "identity.json"
     if identity_path.exists():
         if json.loads(identity_path.read_text()) != identity:
@@ -435,12 +485,7 @@ def main():
         )
         assert torch.isfinite(norm) and norm > 0, norm
         for group in optimizer.param_groups:
-            group["lr"] = (
-                args.learning_rate
-                * min(1.0, step / 20)
-                * 0.5
-                * (1 + math.cos(math.pi * step / args.steps))
-            )
+            group["lr"] = learning_rate_for_step(step, args.steps, args.learning_rate)
         optimizer.step()
         completed_steps = step
         optimizer.zero_grad(set_to_none=True)
@@ -488,6 +533,10 @@ def main():
             sync()
             lastsave = time.monotonic()
 
+    if not args.evaluate_only and completed_steps < first_step:
+        raise RuntimeError(
+            "no optimizer updates completed; no trained comparison will be written"
+        )
     model.save_pretrained(OUT / "adapter-final", save_embedding_layers=False)
     tokenizer.save_pretrained(OUT / "adapter-final")
     trained_dev, _ = evaluate(dev, "trained-dev")

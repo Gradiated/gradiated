@@ -49,7 +49,7 @@ export const parseEval = (text: string): EvalIndex => {
 };
 
 export const pickModels = (index: EvalIndex, ids?: unknown) => {
-  const wanted = Array.isArray(ids) ? ids.map(String) : [];
+  const wanted = Array.isArray(ids) ? [...new Set(ids.map(String))] : [];
   const chosen = wanted
     .map((id) => index.models.find((model) => model.id === id))
     .filter((model): model is EvalModel => Boolean(model));

@@ -6,7 +6,12 @@ import { describe, expect, it } from "vitest";
 import { EvalSummary } from "../src/components/report/eval-blocks";
 import { EvalDataContext } from "../src/components/report/eval-context";
 import { parseReport } from "../src/components/report/report-schema";
-import { aggregate, parseEval, verdictOf } from "../src/lib/eval-data";
+import {
+  aggregate,
+  parseEval,
+  pickModels,
+  verdictOf,
+} from "../src/lib/eval-data";
 import { sampleEval } from "../src/stories/eval-fixture";
 
 const index = parseEval(JSON.stringify(sampleEval));
@@ -49,6 +54,13 @@ describe("eval data", () => {
       "same",
       "same",
       "better",
+    ]);
+  });
+
+  it("ignores a model selection that repeats one model", () => {
+    expect(pickModels(index, ["frontier", "frontier"])).toEqual([
+      mini,
+      frontier,
     ]);
   });
 

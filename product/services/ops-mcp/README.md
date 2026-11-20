@@ -81,7 +81,9 @@ unset; `AWS_GPU_REGION`, `AWS_GPU_BOOTSTRAP_INSTANCE_PROFILE`,
 `alias/gradiated-gpu-prod`). The
 instance must be tagged `gradiated:managed=gpu-fleet`. ops-mcp mints its
 single-use bootstrap key and writes it, with `AWS_GPU_BASE_IMAGE` (or
-`GPU_BASE_IMAGE` while that is unset; RunPod always uses `GPU_BASE_IMAGE`), to
+`GPU_BASE_IMAGE` while that is unset; RunPod always uses `GPU_BASE_IMAGE`,
+which must be an input-hash tag since RunPod pulls only by tag, while
+`AWS_GPU_BASE_IMAGE` may instead name a digest in the same repository), to
 the secret `gradiated/gpu-bootstrap/<instance ID>`; the host launcher outside the container
 reads it with the instance profile and starts the image, which joins as
 `gpu-bootstrap-<instance ID>`. Enrollment then runs as on RunPod. A fresh

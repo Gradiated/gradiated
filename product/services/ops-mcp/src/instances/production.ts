@@ -32,6 +32,7 @@ import {
 } from "@gradiated/gpu-hosts";
 
 import { readSecret } from "./aws.js";
+import { artifactAccount } from "./image.js";
 
 export type RegistrationSettings = {
   readonly credentialsDirectory: string;
@@ -50,8 +51,9 @@ export type RegistrationSettings = {
     readonly bootstrapInstanceProfile: string;
     readonly launchTemplateName: string;
     readonly secretKmsKeyId: string;
-    // The GPU base image AWS hosts run; hostImage unless set. Every image
-    // must still enroll from the one pinned host bundle and its base ID.
+    // The GPU base image AWS hosts run, by tag or digest; hostImage unless
+    // set. Every image must still enroll from the one pinned host bundle and
+    // its base ID.
     readonly hostImage?: string;
   };
 };
@@ -141,9 +143,11 @@ export const productionRegistrations = (
         .string()
         .regex(/^[0-9a-f]{64}$/)
         .parse(settings.hostBundleSha256);
-      const account = settings.hostImage.match(/^(\d{12})\.dkr\.ecr\./)?.[1];
-      if (!account)
-        throw new Error("GPU base image must identify its artifact account");
+      // The bundle lives beside the image this instance's provider runs.
+      const account = artifactAccount(
+        (instance.provider === "aws" && settings.aws?.hostImage) ||
+          settings.hostImage,
+      );
 
       // The pinned bundle must be built for the image that runs gradiated-host enroll.
       const baseId = (

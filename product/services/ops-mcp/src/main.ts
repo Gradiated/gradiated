@@ -3,7 +3,11 @@ import { z } from "zod";
 import { createBackend } from "./backend.js";
 import { createHttp } from "./http.js";
 import { createAuth } from "./auth.js";
-import { GpuBaseImageSchema } from "./instances/image.js";
+import {
+  AwsGpuBaseImageSchema,
+  GpuBaseImageSchema,
+  gpuBaseRepository,
+} from "./instances/image.js";
 import { productionRegistrations } from "./instances/production.js";
 const config = z
   .object({
@@ -19,8 +23,9 @@ const config = z
     CREDENTIALS_DIRECTORY: z.string().min(1),
     GPU_BASE_IMAGE: GpuBaseImageSchema,
     // The GPU base image AWS hosts run, so AWS can move to a new build
-    // without re-imaging RunPod hosts; GPU_BASE_IMAGE unless set.
-    AWS_GPU_BASE_IMAGE: GpuBaseImageSchema.optional(),
+    // without re-imaging RunPod hosts; GPU_BASE_IMAGE unless set. A tag or a
+    // digest in GPU_BASE_IMAGE's repository, the one the host launcher runs.
+    AWS_GPU_BASE_IMAGE: AwsGpuBaseImageSchema.optional(),
     GPU_HOST_BOOTSTRAP_SHA256: z
       .string()
       .regex(/^[0-9a-f]{64}$/)
@@ -64,6 +69,16 @@ const config = z
       .min(1)
       .default("alias/gradiated-gpu-prod"),
   })
+  .refine(
+    ({ GPU_BASE_IMAGE, AWS_GPU_BASE_IMAGE }) =>
+      !AWS_GPU_BASE_IMAGE ||
+      gpuBaseRepository(AWS_GPU_BASE_IMAGE) ===
+        gpuBaseRepository(GPU_BASE_IMAGE),
+    {
+      message: "AWS_GPU_BASE_IMAGE must be in GPU_BASE_IMAGE's repository",
+      path: ["AWS_GPU_BASE_IMAGE"],
+    },
+  )
   .parse(process.env);
 const audit = (event: Record<string, unknown>) =>
   process.stdout.write(

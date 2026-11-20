@@ -80,6 +80,11 @@ def validate_resume_arguments(saved, current):
         raise ValueError("checkpoint training arguments differ: " + ", ".join(changed))
 
 
+def validate_checkpoint_identity(manifest, identity):
+    if "identity" not in manifest or manifest["identity"] != identity:
+        raise ValueError("checkpoint identity is missing or belongs to another run")
+
+
 def build_run_identity(root, data, max_length):
     return {
         "model": "thinkingmachines/Inkling-2-Mini",
@@ -192,7 +197,16 @@ def main():
             p = ROOT / name
             if p.exists():
                 upload(p, prefix + "/" + name)
-        upload(__file__, prefix + "/source/train.py")
+        for name in (
+            "train.py",
+            "data.py",
+            "snapshot.py",
+            "compare.py",
+            "requirements.txt",
+        ):
+            source = pathlib.Path(__file__).parent / name
+            if source.exists():
+                upload(source, prefix + "/source/" + name)
         event("s3_sync")
 
     identity = build_run_identity(ROOT, DATA, args.max_length)
@@ -465,8 +479,7 @@ def main():
         checkpoint_manifest = json.loads(
             (ckpt / "checkpoint-complete.json").read_text()
         )
-        if checkpoint_manifest.get("identity", identity) != identity:
-            raise ValueError("checkpoint belongs to different data, model or prompt")
+        validate_checkpoint_identity(checkpoint_manifest, identity)
         for name, digest in checkpoint_manifest["files"].items():
             if hashlib.sha256((ckpt / name).read_bytes()).hexdigest() != digest:
                 raise ValueError("incomplete or corrupt checkpoint")

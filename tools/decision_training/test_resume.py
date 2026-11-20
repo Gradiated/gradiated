@@ -1,9 +1,21 @@
 import unittest
 
-from train import validate_resume_arguments
+from train import validate_checkpoint_identity, validate_resume_arguments
 
 
 class ResumeTests(unittest.TestCase):
+    def test_checkpoint_requires_explicit_matching_model_and_data_identity(self):
+        identity = {"model": "base-a", "data": {"train": "sha256-a"}}
+        for manifest in (
+            {},
+            {"identity": None},
+            {"identity": {**identity, "model": "base-b"}},
+            {"identity": {**identity, "data": {"train": "sha256-b"}}},
+        ):
+            with self.subTest(manifest=manifest), self.assertRaises(ValueError):
+                validate_checkpoint_identity(manifest, identity)
+        validate_checkpoint_identity({"identity": identity}, identity)
+
     def setUp(self):
         self.saved = {
             "batch_size": 16,

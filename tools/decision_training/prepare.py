@@ -65,6 +65,10 @@ def main():
     args = parser.parse_args()
     if min(args.priority_cap, args.other_cap, args.sn92_family_cap, args.dev_rows) < 1:
         parser.error("sample bounds must be positive")
+    builder_sources = {
+        name: Path(__file__).with_name(name).read_bytes()
+        for name in ("prepare.py", "data.py")
+    }
     import pyarrow.parquet as pq
     from huggingface_hub import HfApi, hf_hub_download
 
@@ -182,7 +186,14 @@ def main():
         (output / f"{name}.jsonl").write_text(
             "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows)
         )
+    builder_files = {}
+    for name, content in builder_sources.items():
+        destination = output / "source" / name
+        destination.parent.mkdir(exist_ok=True)
+        destination.write_bytes(content)
+        builder_files["source/" + name] = hashlib.sha256(content).hexdigest()
     manifest = {
+        "builder": {"entrypoint": "source/prepare.py", "files": builder_files},
         "seed": args.seed,
         "inputs": inputs,
         "counts": dict(counts),

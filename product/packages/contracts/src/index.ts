@@ -165,6 +165,7 @@ export {
   type UsageSummary,
 } from "./usage.js";
 export {
+  SYSTEMONE_MAX_QUESTIONS,
   SystemOneJsonSchema,
   SystemOneQuestionSchema,
   SystemOneRequestSchema,

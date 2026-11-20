@@ -11,7 +11,9 @@ const PATH = "/v1/systemone";
 
 const REQUEST_FIELDS = ["model", "state", "questions", "priority"];
 const QUESTION_TYPES = ["noul", "choice", "score"] as const;
-const MAX_QUESTIONS = 64;
+// SYSTEMONE_MAX_QUESTIONS in @gradiated/contracts: the gateway's and kev_http's bound. Not
+// imported because the proxy and collector typecheck these mocks without that package.
+const MAX_QUESTIONS = 1024;
 
 type QuestionType = (typeof QUESTION_TYPES)[number];
 

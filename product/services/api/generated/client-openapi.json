@@ -5690,7 +5690,7 @@
               "$ref": "#/components/schemas/SystemOneAnswer"
             },
             "minProperties": 1,
-            "maxProperties": 64,
+            "maxProperties": 1024,
             "description": "Answers keyed by the request question names."
           },
           "usage": {
@@ -5896,8 +5896,8 @@
               "$ref": "#/components/schemas/SystemOneQuestion"
             },
             "minProperties": 1,
-            "maxProperties": 64,
-            "description": "One to 64 named questions; each name is 1..200 characters."
+            "maxProperties": 1024,
+            "description": "One to 1,024 named questions; each name is 1..200 characters. Runtime token limits usually bind first."
           },
           "session_id": {
             "type": "string",
@@ -5958,13 +5958,29 @@
                 ]
               },
               "criteria": {
-                "type": "object",
-                "additionalProperties": {
-                  "$ref": "#/components/schemas/SystemOneJson"
-                },
-                "minProperties": 1,
-                "maxProperties": 255,
-                "description": "One to 255 named options with JSON descriptions; null leaves an option undescribed."
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/SystemOneJson"
+                    },
+                    "minProperties": 1,
+                    "maxProperties": 255,
+                    "description": "One to 255 named options with JSON descriptions; null leaves an option undescribed."
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1,
+                    "maxItems": 255,
+                    "uniqueItems": true,
+                    "description": "One to 255 distinct, non-empty option names, equivalent to an object mapping each name to null."
+                  }
+                ],
+                "description": "Named options: an object of option names to JSON descriptions, or a list of option names."
               }
             },
             "required": [

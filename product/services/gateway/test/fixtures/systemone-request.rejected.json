@@ -139,5 +139,52 @@
       "questions": { "q": { "type": "noul", "instructions": "Check" } },
       "session_id": "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567"
     }
+  },
+  {
+    "name": "choice-list-duplicate-label",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": {
+        "q": { "type": "choice", "criteria": ["billing", "billing"] }
+      }
+    }
+  },
+  {
+    "name": "choice-list-empty-label",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": { "q": { "type": "choice", "criteria": ["billing", ""] } }
+    }
+  },
+  {
+    "name": "choice-list-non-string-label",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": { "q": { "type": "choice", "criteria": ["billing", null] } }
+    }
+  },
+  {
+    "name": "choice-list-empty",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": { "q": { "type": "choice", "criteria": [] } }
+    }
+  },
+  {
+    "name": "choice-list-object-label",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": {
+        "q": {
+          "type": "choice",
+          "criteria": ["billing", { "technical": null }]
+        }
+      }
+    }
   }
 ]

@@ -3408,7 +3408,7 @@ export interface components {
             [key: string]: components["schemas"]["SystemOneJson"];
           }
         | components["schemas"]["SystemOneJson"][];
-      /** @description One to 64 named questions; each name is 1..200 characters. */
+      /** @description One to 1,024 named questions; each name is 1..200 characters. Runtime token limits usually bind first. */
       questions: {
         [key: string]: components["schemas"]["SystemOneQuestion"];
       };
@@ -3440,10 +3440,12 @@ export interface components {
            */
           type: "choice";
           instructions?: components["schemas"]["SystemOneJson"] & unknown;
-          /** @description One to 255 named options with JSON descriptions; null leaves an option undescribed. */
-          criteria: {
-            [key: string]: components["schemas"]["SystemOneJson"];
-          };
+          /** @description Named options: an object of option names to JSON descriptions, or a list of option names. */
+          criteria:
+            | {
+                [key: string]: components["schemas"]["SystemOneJson"];
+              }
+            | string[];
         }
       | {
           /**

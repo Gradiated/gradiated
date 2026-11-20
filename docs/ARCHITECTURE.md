@@ -401,8 +401,11 @@ constructs the closed generation properties document and invokes the Valkey
 finalization script. A lost process may leave an expired, unbilled generation;
 there is no durable in-progress request table at launch.
 
-Native SystemOne accepts an exact model, text/object/array state and 1..64
-named `choice`, `noul` or `score` questions with JSON instructions and criteria.
+Native SystemOne accepts an exact model, text/object/array state and 1..1,024
+named `choice`, `noul` or `score` questions with JSON instructions and criteria;
+runtime token limits bind well before that count. `choice` criteria may be a
+list of distinct option names, which the gateway rewrites to undescribed options
+(`{name: null}`) before routing, so runtimes receive only the object form.
 Optional `noul` criteria accept only `false` and `true` keys; unsupported
 outcomes are rejected rather than silently discarded by the runtime.
 Its closed envelope rejects streaming, output-token controls, caller priority

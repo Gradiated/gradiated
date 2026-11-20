@@ -121,8 +121,13 @@ are required. See the [loader configuration](../../inference/lora/README.md).
 ## Native SystemOne
 
 `POST /v1/systemone` accepts an exact model, text/object/array `state`, and
-1..64 named `choice`, `noul`, or `score` questions. Instructions and criteria
-support structured JSON. Optional `noul` criteria allow only `false` and `true`
+1..1,024 named `choice`, `noul`, or `score` questions. Instructions and criteria
+support structured JSON. `choice` criteria may also be a list of 1..255
+distinct, non-empty option names (as PostHog's clients send); the gateway
+rewrites the list to `{name: null, ...}` before routing, so runtimes and answer
+validation see only the object form. The question bound is a backstop: every
+runtime's token limits reject large requests well before 1,024 questions.
+Optional `noul` criteria allow only `false` and `true`
 outcome keys; any other key is rejected. Unknown fields, streaming, output-token controls,
 caller priority, and `fast`/`flex` are rejected; only `default` is implemented.
 An optional `session_id` must contain 1..256 UTF-16 code units.

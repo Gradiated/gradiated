@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  SYSTEMONE_MAX_QUESTIONS,
   SystemOneRequestSchema,
   SystemOneResponseSchema,
 } from "../src/index.js";
@@ -62,7 +63,7 @@ describe("native SystemOne request contract", () => {
       model: "X".repeat(200),
       session_id: "s".repeat(256),
       questions: Object.fromEntries(
-        Array.from({ length: 64 }, (_, i) => [
+        Array.from({ length: SYSTEMONE_MAX_QUESTIONS }, (_, i) => [
           String(i).padStart(200, "q"),
           question,
         ]),
@@ -73,6 +74,59 @@ describe("native SystemOne request contract", () => {
       ...value,
       service_tier: "default",
     });
+  });
+
+  it("accepts more than 64 questions", () => {
+    const questions = Object.fromEntries(
+      Array.from({ length: 65 }, (_, i) => [String(i), question]),
+    );
+
+    expect(
+      SystemOneRequestSchema.safeParse({ ...request, questions }).success,
+    ).toBe(true);
+  });
+
+  it("keeps list choice criteria as sent, in order (the gateway rewrites them)", () => {
+    const parsed = SystemOneRequestSchema.parse(
+      withQuestion({ type: "choice", criteria: ["10", "2", "billing"] }),
+    );
+
+    expect(parsed.questions.topic).toEqual({
+      type: "choice",
+      criteria: ["10", "2", "billing"],
+    });
+  });
+
+  it.each([
+    [["only"]],
+    [Array.from({ length: 255 }, (_, i) => `option-${i}`)],
+    [["😀", " ", "a".repeat(10_000)]],
+  ])("accepts list choice criteria: case %#", (labels) => {
+    expect(
+      SystemOneRequestSchema.safeParse(
+        withQuestion({ ...question, criteria: labels }),
+      ).success,
+    ).toBe(true);
+  });
+
+  it.each([
+    [[]],
+    [Array.from({ length: 256 }, (_, i) => `option-${i}`)],
+    [["a", "a"]],
+    [["a", "b", "a"]],
+    [[""]],
+    [["a", ""]],
+    [["a", null]],
+    [["a", 1]],
+    [["a", ["b"]]],
+    [["a", { b: null }]],
+    [[true]],
+  ])("rejects invalid list choice criteria: %j", (labels) => {
+    expect(
+      SystemOneRequestSchema.safeParse(
+        withQuestion({ ...question, criteria: labels }),
+      ).success,
+    ).toBe(false);
   });
 
   it("validates recursive JSON shape independently of runtime depth limits", () => {
@@ -103,7 +157,10 @@ describe("native SystemOne request contract", () => {
     { questions: options(65) },
     {
       questions: Object.fromEntries(
-        Array.from({ length: 65 }, (_, i) => [String(i), question]),
+        Array.from({ length: SYSTEMONE_MAX_QUESTIONS + 1 }, (_, i) => [
+          String(i),
+          question,
+        ]),
       ),
     },
     { questions: { "": question } },

@@ -128,13 +128,24 @@ release's hash tag, like its deployment statuses.
 
 `systemone.rs` validates the closed request envelope and rejects duplicate JSON
 keys at every depth. A required exact model and text/object/array state accompany
-1..64 named questions, each with optional instructions (as in TypeSafe's API).
-`choice` takes 1..255 named criteria; `score` takes 1..255 ordered criteria;
+1..1,024 named questions, each with optional instructions (as in TypeSafe's API).
+`choice` takes 1..255 named criteria, as an object of descriptions or a list of
+distinct, non-empty names; parsing rewrites a list to `{name: null, ...}`, so the
+runtime request, answer validation and everything after parsing see only the
+object form. `score` takes 1..255 ordered criteria;
 `noul` optionally takes a null or object criteria value
 whose only permitted keys are `false` and `true`. Unknown outcome keys are
 rejected, never silently dropped. Instructions and descriptions accept JSON values.
 Model and question names are 1..200 UTF-16 code units; an optional, non-null
 session ID is 1..256. Shared accepted/rejected fixtures test TypeScript parity.
+
+The question bound is shared with every runtime through Kev's `kev_http` adapter
+(`MAX_QUESTIONS`), which Decider, Linden and the PostHog runtimes reuse. It is a
+backstop, not the work bound: each runtime's own token limits (Kev and Decider
+8,192 tokens a request, PostHog runtimes 16,384 a prompt and 65,536 a request,
+Linden 32,768 a prompt with the shared prefix prefilled once) and the runtime's
+1 MiB body limit reject large requests first, with 422. One request holds one
+admission slot regardless of its question count, and usage bills every input token.
 
 Only `service_tier: "default"` is implemented. Streaming, output-token controls,
 caller priority and unknown fields fail before dispatch. A `system_one` runtime

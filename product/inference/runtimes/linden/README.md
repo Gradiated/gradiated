@@ -27,7 +27,7 @@ option labels' log probabilities.
 ## Contract
 
 - Questions: `noul`, `choice` (1-255 options; a single-option choice is answered without the model) and `score`
-  (2-255 levels), up to 64 per request, any JSON in instructions and criteria. Text only: images, audio and files are
+  (2-255 levels), up to 1,024 per request, any JSON in instructions and criteria. Text only: images, audio and files are
   rejected with 422.
 - Answers carry exactly the gateway's fields: `noul`; `choice`, `confidence`, `probabilities`; `score`, `legend`
   (level index to description text), `confidence`, `probabilities`. Answers that would fail the gateway's checks mark

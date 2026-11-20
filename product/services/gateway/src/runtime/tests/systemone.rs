@@ -283,3 +283,82 @@ fn accepts_independently_rounded_large_distributions() {
     body["answers"] = json!({"q":{"type":"choice","choice":"0","confidence":0,"probabilities":(0..30).map(|i| (i.to_string(), json!(0.03))).collect::<Map<_,_>>()}});
     assert!(normalize_response(&serde_json::to_vec(&body).unwrap(), &request, &models()).is_ok());
 }
+
+#[tokio::test]
+async fn list_choice_criteria_reach_the_runtime_as_options_and_key_its_answers() {
+    let mut body = request_value();
+    body["questions"]["pick"]["criteria"] = json!(["a", "b"]);
+    let request = crate::InferenceRequest::parse_kind(
+        &serde_json::to_vec(&body).unwrap(),
+        crate::RequestKind::SystemOne,
+    )
+    .unwrap();
+    let runtime = MockRuntime::builder()
+        .json(SYSTEMONE, StatusCode::OK, response())
+        .start()
+        .await;
+    let mut deployment = runtime.system_one_deployment();
+    deployment.release.runtime_model_name = Some("runtime-model".to_owned());
+
+    let completion = client()
+        .complete(&deployment, request, 0, deadline(5))
+        .await
+        .unwrap();
+
+    assert_eq!(
+        completion.into_response()["answers"]["pick"]["probabilities"],
+        json!({"a":0.25,"b":0.75})
+    );
+    let forwarded = &runtime.requests()[0].body["questions"];
+    assert_eq!(forwarded["pick"]["criteria"], json!({"a":null,"b":null}));
+    assert_eq!(forwarded["yes"], request_value()["questions"]["yes"]);
+    assert_eq!(forwarded["level"], request_value()["questions"]["level"]);
+}
+
+#[test]
+fn answers_to_list_choice_criteria_must_use_its_labels() {
+    let mut body = request_value();
+    body["questions"]["pick"]["criteria"] = json!(["a", "b"]);
+    let request = SystemOneRequest::parse(&serde_json::to_vec(&body).unwrap()).unwrap();
+    let check = |response: &Value| {
+        normalize_response(&serde_json::to_vec(response).unwrap(), &request, &models())
+    };
+
+    assert!(check(&response()).is_ok());
+    for (pointer, value) in [
+        ("/answers/pick/choice", json!("c")),
+        ("/answers/pick/probabilities", json!({"0":0.25,"1":0.75})),
+        ("/answers/pick/probabilities", json!({"a":0.25,"c":0.75})),
+        ("/answers/pick/probabilities", json!({"a":1})),
+    ] {
+        let mut response = response();
+        *response.pointer_mut(pointer).unwrap() = value;
+        assert!(check(&response).is_err(), "{pointer}");
+    }
+}
+
+#[test]
+fn validates_answers_to_every_question_of_a_large_request() {
+    let count = crate::systemone::MAX_QUESTIONS;
+    let mut body = request_value();
+    body["questions"] = (0..count)
+        .map(|i| (format!("q{i}"), json!({"type":"noul"})))
+        .collect::<Map<_, _>>()
+        .into();
+    let request = SystemOneRequest::parse(&serde_json::to_vec(&body).unwrap()).unwrap();
+    let mut response = response();
+    response["answers"] = (0..count)
+        .map(|i| (format!("q{i}"), json!({"type":"noul","noul":0.5})))
+        .collect::<Map<_, _>>()
+        .into();
+    let check = |response: &Value| {
+        normalize_response(&serde_json::to_vec(response).unwrap(), &request, &models())
+    };
+
+    assert!(check(&response).is_ok());
+    response["answers"]
+        .as_object_mut()
+        .unwrap()
+        .remove(&format!("q{}", count - 1));
+    assert!(check(&response).is_err());
+}

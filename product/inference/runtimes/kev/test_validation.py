@@ -1,3 +1,4 @@
+import json
 import unittest
 
 import adapter
@@ -24,7 +25,7 @@ class RequestSchemaTests(unittest.IsolatedAsyncioTestCase):
         app = adapter.App(engine())
         mutations = [{"model": "kev-latest"}, {"model": "other"}, {"priority": True}, {"priority": 10.0},
                      {"priority": 1}, {"priority": "0"}, {"extra": 1}, {"questions": {}},
-                     {"questions": noul_questions(65)}]
+                     {"questions": noul_questions(adapter.MAX_QUESTIONS + 1)}]
         for change in mutations:
             with self.subTest(change):
                 self.assertEqual((await call(app, {**request(), **change}))[0], 422)
@@ -122,8 +123,17 @@ class StateTypeTests(unittest.IsolatedAsyncioTestCase):
 
 
 class QuestionBoundaryTests(unittest.IsolatedAsyncioTestCase):
-    async def test_sixty_four_questions_are_accepted(self):
-        self.assertEqual((await call(adapter.App(engine()), {**request(""), "questions": noul_questions(64)}))[0], 200)
+    async def test_the_question_bound_is_inclusive(self):
+        data = {**request(""), "questions": noul_questions(adapter.MAX_QUESTIONS)}
+        self.assertEqual((await call(adapter.App(RecordingEngine()), data))[0], 200)
+
+    async def test_token_limits_bind_before_the_question_bound(self):
+        # Tiny questions about a one-token state still exceed Kev's padded-row token limit at the bound.
+        data = {**request(""), "questions": noul_questions(adapter.MAX_QUESTIONS)}
+        status, body = await call(adapter.App(engine()), data)
+
+        self.assertEqual(status, 422)
+        self.assertIn(f"{adapter.MAX_TOKENS} tokens", json.dumps(body))
 
     async def test_question_key_length_is_bounded(self):
         app = adapter.App(engine())

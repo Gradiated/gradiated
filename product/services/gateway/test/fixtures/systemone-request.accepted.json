@@ -69,5 +69,97 @@
         "q": { "type": "score", "instructions": "Rank", "criteria": ["only"] }
       }
     }
+  },
+  {
+    "name": "choice-list-criteria",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": {
+        "q": { "type": "choice", "criteria": ["billing", "technical"] }
+      }
+    }
+  },
+  {
+    "name": "choice-list-single-label",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": { "q": { "type": "choice", "criteria": ["only"] } }
+    }
+  },
+  {
+    "name": "sixty-five-questions",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": {
+        "q0": { "type": "noul" },
+        "q1": { "type": "noul" },
+        "q2": { "type": "noul" },
+        "q3": { "type": "noul" },
+        "q4": { "type": "noul" },
+        "q5": { "type": "noul" },
+        "q6": { "type": "noul" },
+        "q7": { "type": "noul" },
+        "q8": { "type": "noul" },
+        "q9": { "type": "noul" },
+        "q10": { "type": "noul" },
+        "q11": { "type": "noul" },
+        "q12": { "type": "noul" },
+        "q13": { "type": "noul" },
+        "q14": { "type": "noul" },
+        "q15": { "type": "noul" },
+        "q16": { "type": "noul" },
+        "q17": { "type": "noul" },
+        "q18": { "type": "noul" },
+        "q19": { "type": "noul" },
+        "q20": { "type": "noul" },
+        "q21": { "type": "noul" },
+        "q22": { "type": "noul" },
+        "q23": { "type": "noul" },
+        "q24": { "type": "noul" },
+        "q25": { "type": "noul" },
+        "q26": { "type": "noul" },
+        "q27": { "type": "noul" },
+        "q28": { "type": "noul" },
+        "q29": { "type": "noul" },
+        "q30": { "type": "noul" },
+        "q31": { "type": "noul" },
+        "q32": { "type": "noul" },
+        "q33": { "type": "noul" },
+        "q34": { "type": "noul" },
+        "q35": { "type": "noul" },
+        "q36": { "type": "noul" },
+        "q37": { "type": "noul" },
+        "q38": { "type": "noul" },
+        "q39": { "type": "noul" },
+        "q40": { "type": "noul" },
+        "q41": { "type": "noul" },
+        "q42": { "type": "noul" },
+        "q43": { "type": "noul" },
+        "q44": { "type": "noul" },
+        "q45": { "type": "noul" },
+        "q46": { "type": "noul" },
+        "q47": { "type": "noul" },
+        "q48": { "type": "noul" },
+        "q49": { "type": "noul" },
+        "q50": { "type": "noul" },
+        "q51": { "type": "noul" },
+        "q52": { "type": "noul" },
+        "q53": { "type": "noul" },
+        "q54": { "type": "noul" },
+        "q55": { "type": "noul" },
+        "q56": { "type": "noul" },
+        "q57": { "type": "noul" },
+        "q58": { "type": "noul" },
+        "q59": { "type": "noul" },
+        "q60": { "type": "noul" },
+        "q61": { "type": "noul" },
+        "q62": { "type": "noul" },
+        "q63": { "type": "noul" },
+        "q64": { "type": "noul" }
+      }
+    }
   }
 ]

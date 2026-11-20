@@ -19,6 +19,7 @@ import {
   checkCounts,
   formatMetric,
   passedOf,
+  pickMetric,
   pickModels,
   rolloutsOf,
   scoreOf,
@@ -26,6 +27,7 @@ import {
 } from "@/lib/eval-data";
 import { cn } from "@/lib/utils";
 import { MODEL_COLORS, TagChip } from "./eval-blocks";
+import type { EvalView } from "./eval-context";
 import { TraceView } from "./trace-view";
 
 const Conversation = ({
@@ -253,9 +255,11 @@ const Result = ({
         )}
         <span className="text-base font-semibold">
           {metric.kind === "pass"
-            ? passed
-              ? "Passed"
-              : "Failed"
+            ? passed === null
+              ? "Not scored"
+              : passed
+                ? "Passed"
+                : "Failed"
             : `${metric.name}: ${formatMetric(metric, scoreOf(rollout, metric))}`}
         </span>
       </div>
@@ -406,14 +410,14 @@ export const EvalCasePanel = ({
   index,
   caseId,
   order,
-  models,
+  view,
   onNavigate,
   onClose,
 }: {
   index: EvalIndex | null;
   caseId: string | null;
   order: readonly string[];
-  models?: string[];
+  view?: EvalView | undefined;
   onNavigate: (caseId: string) => void;
   onClose: () => void;
 }) => {
@@ -479,14 +483,14 @@ export const EvalCasePanel = ({
               <Expected index={index} caseId={item.id} />
             </div>
             <div className="grid gap-4 lg:grid-cols-2">
-              {pickModels(index, models).map((model, slot) => (
+              {pickModels(index, view?.models).map((model, slot) => (
                 <ModelColumn
                   key={`${item.id}-${model.id}`}
                   index={index}
                   caseId={item.id}
                   model={model}
                   color={MODEL_COLORS[slot] ?? MODEL_COLORS[0]}
-                  metric={index.metric}
+                  metric={pickMetric(index, view?.metric)}
                 />
               ))}
             </div>

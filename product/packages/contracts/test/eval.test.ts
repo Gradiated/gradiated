@@ -62,6 +62,13 @@ describe("EvalSchema", () => {
     );
   });
 
+  it("needs two models to compare", () => {
+    const input = valid();
+    input.models = input.models.slice(0, 1);
+
+    expect(EvalSchema.safeParse(input).success).toBe(false);
+  });
+
   it("rejects duplicate rollout IDs", () => {
     const input = valid();
     input.rollouts[1]!.id = "r1";

@@ -162,7 +162,7 @@ export const EvalSchema = z
     primary_metric: Id,
     graders: z.array(EvalGraderSchema).default([]),
     interval_group_by: z.string().max(80).optional(),
-    models: z.array(EvalModelSchema).min(1),
+    models: z.array(EvalModelSchema).min(2),
     cases: z.array(EvalCaseSchema).min(1),
     rollouts: z.array(EvalRolloutSchema),
     comparisons: z.array(EvalComparisonSchema).default([]),

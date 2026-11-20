@@ -59,6 +59,34 @@ describe("eval data", () => {
   });
 });
 
+describe("difference interval groups", () => {
+  it("keeps cases without the grouping tag", () => {
+    const grouped = structuredClone(sampleEval);
+    grouped.interval_group_by = "Customer";
+    grouped.cases[0]!.tags = { ...grouped.cases[0]!.tags, Customer: "Acme" };
+    const html = renderToStaticMarkup(
+      createElement(
+        EvalDataContext.Provider,
+        {
+          value: new Map([
+            [
+              "a.eval.json",
+              {
+                status: "ready" as const,
+                index: parseEval(JSON.stringify(grouped)),
+              },
+            ],
+          ]),
+        },
+        createElement(EvalSummary, { eval: "a.eval.json" }),
+      ),
+    );
+
+    const [, low, high] = /95% interval (\S+) pts to (\S+) pts/.exec(html)!;
+    expect(low).not.toBe(high);
+  });
+});
+
 describe("eval report tags", () => {
   it("collects the eval files a report references", () => {
     const report = parseReport(

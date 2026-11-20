@@ -7,8 +7,15 @@ export type EvalDataset =
   | { status: "error"; message: string }
   | { status: "ready"; index: EvalIndex };
 
+export type EvalView = { models: string[]; metric: string };
+
 export type EvalPanel = {
-  open: (file: string, caseId: string, order?: readonly string[]) => void;
+  open: (
+    file: string,
+    caseId: string,
+    order: readonly string[],
+    view: EvalView,
+  ) => void;
 };
 
 export const EvalDataContext = createContext<ReadonlyMap<string, EvalDataset>>(

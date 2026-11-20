@@ -25,6 +25,7 @@ import {
   EvalDataContext,
   EvalPanelContext,
   type EvalDataset,
+  type EvalView,
 } from "./eval-context";
 import {
   Badge,
@@ -212,7 +213,10 @@ export const TrainingReport = ({
   const [localCase, setLocalCase] = useState<OpenCase>({});
   const selected = openCase ?? localCase;
   const showCase = onOpenCase ?? setLocalCase;
-  const [order, setOrder] = useState<readonly string[]>([]);
+  const [opened, setOpened] = useState<{
+    order: readonly string[];
+    view?: EvalView;
+  }>({ order: [] });
   const panelEval = selected.eval ? evals.get(selected.eval) : undefined;
   const panelIndex = panelEval?.status === "ready" ? panelEval.index : null;
   const datasets = new Map<string, ReportDataset>(
@@ -238,8 +242,8 @@ export const TrainingReport = ({
       <EvalDataContext.Provider value={evals}>
         <EvalPanelContext.Provider
           value={{
-            open: (file, caseId, nextOrder) => {
-              setOrder(nextOrder ?? []);
+            open: (file, caseId, order, view) => {
+              setOpened({ order, view });
               showCase({ eval: file, case: caseId });
             },
           }}
@@ -284,10 +288,11 @@ export const TrainingReport = ({
               index={panelIndex}
               caseId={selected.case ?? null}
               order={
-                order.length
-                  ? order
+                opened.order.length
+                  ? opened.order
                   : (panelIndex?.cases.map((item) => item.id) ?? [])
               }
+              view={opened.view}
               onNavigate={(caseId) => showCase({ ...selected, case: caseId })}
               onClose={() => showCase({})}
             />

@@ -20,7 +20,7 @@ import {
   type Verdict,
 } from "@/lib/eval-data";
 import { cn } from "@/lib/utils";
-import { useEvalDataset, useEvalPanel } from "./eval-context";
+import { useEvalDataset, useEvalPanel, type EvalView } from "./eval-context";
 import { DatasetState, Figure } from "./report-blocks";
 
 export const MODEL_COLORS = ["#6e7f31", "#3f6d8f"] as const;
@@ -37,6 +37,7 @@ type EvalProps = {
 };
 type Ready = {
   file: string;
+  view: EvalView;
   index: EvalIndex;
   a: EvalModel;
   b: EvalModel;
@@ -60,6 +61,7 @@ const EvalFigure = ({
     );
 
   const [a, b] = pickModels(dataset.index, props.models);
+  const metric = pickMetric(dataset.index, props.metric);
   return (
     <Figure title={props.title} caption={props.caption}>
       {children({
@@ -67,7 +69,8 @@ const EvalFigure = ({
         index: dataset.index,
         a: a!,
         b: b!,
-        metric: pickMetric(dataset.index, props.metric),
+        metric,
+        view: { models: [a!.id, b!.id], metric: metric.id },
       })}
     </Figure>
   );
@@ -123,12 +126,16 @@ const seeded = (seed: number) => () => {
   return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
 };
 
-// Resamples whole groups (by interval_group_by, else single cases), because
-// rollouts of one case or one project are not independent.
+// Resamples whole interval_group_by groups (cases without the tag stand alone),
+// because rollouts of one case or one project are not independent.
 const differenceInterval = ({ index, a, b, metric }: Ready) => {
-  const groups = index.eval.interval_group_by
-    ? groupCases(index, index.eval.interval_group_by).map((group) => group.ids)
-    : index.cases.map((item) => [item.id]);
+  const key = index.eval.interval_group_by;
+  const groups = [
+    ...(key ? groupCases(index, key).map((group) => group.ids) : []),
+    ...index.cases
+      .filter((item) => !key || item.tags[key] === undefined)
+      .map((item) => [item.id]),
+  ];
   const totals = groups.map((ids) => ({
     a: aggregate(index, a.id, metric, ids),
     b: aggregate(index, b.id, metric, ids),
@@ -403,7 +410,7 @@ export const EvalCaseGrid = (props: EvalProps) => {
 
   return (
     <EvalFigure props={props}>
-      {({ file, index, a, b, metric }) => {
+      {({ file, view, index, a, b, metric }) => {
         const range =
           metric.kind === "score" ? (metric.max ?? 1) - (metric.min ?? 0) : 1;
         const grouped = groupCases(index, props.by);
@@ -447,7 +454,7 @@ export const EvalCaseGrid = (props: EvalProps) => {
                         type="button"
                         aria-label={item.title}
                         title={`${item.title}\n${a.name}: ${rolloutLabel(rolloutsOf(index, id, a.id), metric)}\n${b.name}: ${rolloutLabel(rolloutsOf(index, id, b.id), metric)}`}
-                        onClick={() => panel.open(file, id, order)}
+                        onClick={() => panel.open(file, id, order, view)}
                         className="size-5 rounded-[4px] outline-offset-2 hover:outline-2 hover:outline-foreground/40"
                         style={{ background: cellColor(verdict, delta, range) }}
                       />
@@ -506,7 +513,7 @@ export const EvalExamples = (
 
   return (
     <EvalFigure props={props}>
-      {({ file, index, a, b, metric }) => {
+      {({ file, view, index, a, b, metric }) => {
         const where = props.where ?? "better";
         const [winner, loser] = where === "better" ? [a, b] : [b, a];
         const matches = index.cases
@@ -531,7 +538,7 @@ export const EvalExamples = (
                 <li key={item.id}>
                   <button
                     type="button"
-                    onClick={() => panel.open(file, item.id, order)}
+                    onClick={() => panel.open(file, item.id, order, view)}
                     className="flex w-full flex-col gap-0.5 py-2.5 text-left"
                   >
                     <span className="font-medium hover:underline">
@@ -598,7 +605,7 @@ const FILTERS = [
 
 const tagId = (key: string, value: string) => `${key}: ${value}`;
 
-const CaseList = ({ file, index, a, b, metric }: Ready) => {
+const CaseList = ({ file, view, index, a, b, metric }: Ready) => {
   const panel = useEvalPanel();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "differ">("all");
@@ -717,7 +724,7 @@ const CaseList = ({ file, index, a, b, metric }: Ready) => {
           {rows.slice(0, limit).map((item) => (
             <tr
               key={item.id}
-              onClick={() => panel.open(file, item.id, order)}
+              onClick={() => panel.open(file, item.id, order, view)}
               className="cursor-pointer border-b last:border-0 hover:bg-muted/50"
             >
               <td className="py-2.5 pr-3">

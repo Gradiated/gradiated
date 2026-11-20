@@ -565,15 +565,34 @@
       "repo": "tasksource/procedural-typed-decisions",
       "url": "https://huggingface.co/datasets/tasksource/procedural-typed-decisions",
       "config": "all",
-      "training_rows_reported": null,
+      "training_rows_reported": 360000,
       "priority": "exact_oracle_reasoning",
       "label_evidence": "Exact arithmetic, lookup, Bayesian posteriors, tracking and routing; embedded subsets already in Tasksource. Use native generator family IDs and replay labels.",
       "terms": "Apache-2.0",
       "overlap_relations": "Audit required; see notes.",
-      "admission_notes": "Exact arithmetic, lookup, Bayesian posteriors, tracking and routing; embedded subsets already in Tasksource. Use native generator family IDs and replay labels.",
+      "admission_notes": "Exact arithmetic, lookup, Bayesian posteriors, tracking and routing; embedded subsets already in Tasksource. Use native generator family IDs and replay labels. Full audit found10634 graded targets with threshold-worded questions; repair or exclude this wording before admission. Independent JSON ledger checker:5942 checks,0 numerical mismatches; text renderings not covered.",
       "linked_models": [],
       "revision": "05ca1d0388f57461a634a7caed67145d28e2eca7",
-      "status": "candidate_not_admitted"
+      "status": "candidate_not_admitted",
+      "measured_audit": {
+        "revision": "05ca1d0388f57461a634a7caed67145d28e2eca7",
+        "counts": {
+          "states": 360000,
+          "questions": 1171199,
+          "valid_current_schema": 1159769,
+          "soft_questions": 80706,
+          "choice": 505700,
+          "score": 281960,
+          "noul": 372109,
+          "graded_probability_with_threshold_wording": 10634,
+          "unsupported_or_invalid": 11430
+        },
+        "independent_ledger_oracle": {
+          "ledger_checks": 5942,
+          "unparsed_text_states": 17323
+        },
+        "admission": "NOT_ADMITTED: semantic wording/ties require repair or exclusion; grouped overlap/token/provenance gates remain."
+      }
     },
     {
       "repo": "lothnic/themis-decision-mixture-v1",
@@ -643,6 +662,94 @@
       "admission_notes": "Real human pairwise organisational choices; full data not open under usable default terms. No contact or access acceptance requested; not in admissible totals.",
       "linked_models": [],
       "revision": null,
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "kshitijthakkar/nirnaya-probability-distill-v1",
+      "url": "https://huggingface.co/datasets/kshitijthakkar/nirnaya-probability-distill-v1",
+      "config": "see_pinned_card",
+      "training_rows_reported": 1469057,
+      "priority": "alternative_repackaging",
+      "terms": "Apache-only selection; whole-source mixture includes deliberate conflicting targets",
+      "admission_notes": "Repackages existing Tasksource/procedural/JevEmbed/LocalLLaMA. Do not add its row count to those parents. Reuse source traceability, quarantine3 conflicts; use its original source splits to avoid re-split leakage.",
+      "revision": "84c269a6008d59e9c9b49f5a93f1605f0f8bafb6",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "HIT-TMG/JevEmbed-Data",
+      "url": "https://huggingface.co/datasets/HIT-TMG/JevEmbed-Data",
+      "config": "see_pinned_card",
+      "training_rows_reported": 1601157,
+      "priority": "source_specific_incremental_only",
+      "terms": "Mixed source terms, including non-compete components",
+      "admission_notes": "Contains19 source repositories and137 domains, many existing OpenJev/SargeDev rows. Inspect PROCESSING_REPORT and row terms; exclude non-compete/restricted-source rows and heldouts.",
+      "revision": "fc7f44305315082d7d554d572024861e438aeffa",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "helmo/synthetic-typed-decisions",
+      "url": "https://huggingface.co/datasets/helmo/synthetic-typed-decisions",
+      "config": "see_pinned_card",
+      "training_rows_reported": 9879,
+      "priority": "small_teacher_supplement",
+      "terms": "MIT compilation; DeepSeek teacher",
+      "admission_notes": "207 topics, usually1question/record. Schema validation is not semantic verification; avoid one-template/letter-position habits.",
+      "revision": "1827dc0d7f5a77f172107bfa25a49d2eda50b32e",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "tasksource/synthetic-typed-decisions",
+      "url": "https://huggingface.co/datasets/tasksource/synthetic-typed-decisions",
+      "config": "see_pinned_card",
+      "training_rows_reported": 6666,
+      "priority": "small_workflow_supplement",
+      "terms": "Apache compilation; writer and teacher provenance must be checked",
+      "admission_notes": "21190 training questions across235 workflows. Preserve workflow holdouts and writer provenance; soft teacher distributions not automatically real calibrated uncertainty.",
+      "revision": "7ec5a61d5db158f637c30adeb6e66660f1dfee87",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "caiovicentino1/eikos-decisions",
+      "url": "https://huggingface.co/datasets/caiovicentino1/eikos-decisions",
+      "config": "see_pinned_card",
+      "training_rows_reported": 24286,
+      "priority": "selective_verified_supplement",
+      "terms": "CC BY4 and row-specific upstream terms; GLM/Ornith writers",
+      "admission_notes": "Core21150+long1517+views1619 training rows according card; card/viewer counts differ. Programmatic and exact probability rows promising; source card explicitly notes teacher disagreement/label smoothing, yes-first noul, removed known label errors andFinEntitybenchmark overlaps. Use pinned byte counts and all current exclusions.",
+      "revision": "cebb4a26687cb14742fd07c0ebe17387ee51d369",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "jylin001206/SII-Decision-4B-Training-Data",
+      "url": "https://huggingface.co/datasets/jylin001206/SII-Decision-4B-Training-Data",
+      "config": "see_pinned_card",
+      "training_rows_reported": 29326,
+      "priority": "self_distillation_supplement",
+      "terms": "Mixed upstream terms; source inventory required",
+      "admission_notes": "Original gold and same-size teacher reasoning distributions kept separate. Labels/multiple probability fields are never model inputs. Validation is not train; opaque IDs needsource-family group preservation.",
+      "revision": "d15cb0599b51f4771855529b3c92eac6c081a6a4",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "skundu42/kev-prepared",
+      "url": "https://huggingface.co/datasets/skundu42/kev-prepared",
+      "config": "see_pinned_card",
+      "training_rows_reported": null,
+      "priority": "provenance_review_before_use",
+      "terms": "No blanket licence; original source terms apply",
+      "admission_notes": "Approx394k train rows, mainly NLI/reasoning recasts, tokenization included. Use original text/labels with our tokenizer; upstream ANLI/unknown tasks may be excluded.",
+      "revision": "5cea4539b6676edfb4fd1fb60878e9aee602b0cd",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "soyrsoyr/jev-playground-rlcd-v0",
+      "url": "https://huggingface.co/datasets/soyrsoyr/jev-playground-rlcd-v0",
+      "config": "see_pinned_card",
+      "training_rows_reported": 4500,
+      "priority": "calibration_oracle_supplement",
+      "terms": "MIT",
+      "admission_notes": "4500 training states. Soft probabilities generated by signal-strength convention: verify they represent conditional task uncertainty, not arbitrary smoothing. Replayed support/review templates must stay grouped.",
+      "revision": "3a7c53a49b706af2014110a533a62da511887bc1",
       "status": "candidate_not_admitted"
     }
   ],

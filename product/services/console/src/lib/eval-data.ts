@@ -165,7 +165,7 @@ export const tagGroups = (index: EvalIndex, by?: unknown) => {
     .map((item) => item.id);
 
   return groups.length && untagged.length
-    ? [...groups, { label: "None", ids: untagged }]
+    ? [...groups, { label: `No ${String(by)}`, ids: untagged }]
     : groups;
 };
 

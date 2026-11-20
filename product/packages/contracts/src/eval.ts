@@ -191,6 +191,15 @@ export const EvalSchema = z
     if (!metrics.has(value.primary_metric))
       issue("primary_metric must name a metric.", ["primary_metric"]);
 
+    value.metrics.forEach((metric, index) => {
+      if (metric.kind === "pass" && !metric.higher_is_better)
+        issue("Pass metrics count passing as better.", [
+          "metrics",
+          index,
+          "higher_is_better",
+        ]);
+    });
+
     const graders = new Set(value.graders.map((grader) => grader.id));
     if (graders.size !== value.graders.length)
       issue("Grader IDs must be unique.", ["graders"]);

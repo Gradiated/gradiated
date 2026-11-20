@@ -88,6 +88,24 @@ describe("EvalSchema", () => {
     ]);
   });
 
+  it("rejects pass metrics where failing is better", () => {
+    const input = {
+      ...valid(),
+      metrics: [
+        {
+          id: "correct",
+          name: "Passed",
+          kind: "pass",
+          higher_is_better: false,
+        },
+      ],
+    };
+
+    expect(EvalSchema.safeParse(input).error?.issues[0]?.message).toBe(
+      "Pass metrics count passing as better.",
+    );
+  });
+
   it("needs two models to compare", () => {
     const input = valid();
     input.models = input.models.slice(0, 1);

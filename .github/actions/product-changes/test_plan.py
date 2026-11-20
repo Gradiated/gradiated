@@ -107,6 +107,22 @@ class ProductChangesTest(unittest.TestCase):
         self.assertFalse(result["playwright"])
         self.assertFalse(result["inference_native"])
 
+    def test_systemone_surfaces_run_the_typesafe_sdk_suites(self):
+        # typesafe-sdk.test.ts runs in gateway_contract, its proxy twin in proxy_e2e.
+        for path in (
+            "product/services/gateway/src/systemone.rs",
+            "product/services/gateway/src/runtime/systemone.rs",
+            "product/services/gateway/test/integration/mock-runtimes/kev.ts",
+            "product/services/gateway/package.json",
+            "product/packages/contracts/src/systemone.ts",
+            "product/package.json",
+        ):
+            result = plan([path])
+            self.assertTrue(result["gateway_contract"], path)
+            self.assertTrue(result["proxy_e2e"], path)
+        # kev_http's source of truth; the proxy suite uses only the mock runtime.
+        self.assertTrue(plan(["product/inference/runtimes/kev/adapter.py"])["gateway_contract"])
+
     def test_runtime_change_runs_runtime_checks_without_backend_unit_tests(self):
         result = plan(["product/inference/runtimes/kev/app.py"])
         self.assertTrue(result["native_kev"])

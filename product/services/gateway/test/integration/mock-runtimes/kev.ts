@@ -48,6 +48,11 @@ const questions = (body: JsonObject): Question[] => {
     if (!isQuestionType(question.type)) {
       throw new Error("unknown question type");
     }
+    // kev_http takes choice criteria only as an object. The gateway rewrites a
+    // customer's list form before dispatch, so a list here is a gateway bug.
+    if (question.type === "choice" && !isJsonObject(question.criteria)) {
+      throw new Error("choice criteria must be an object");
+    }
 
     return { name, type: question.type, criteria: question.criteria };
   });

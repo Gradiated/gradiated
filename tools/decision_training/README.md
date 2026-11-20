@@ -15,6 +15,34 @@ Exact normalized-state and word-13-gram matches against the frozen public JevBen
 
 The Linden-1 card lists its public sources, but KnowLine's card says its training data is not released. Baseten's Mammoth-1 and Bison-1 cards describe their mixtures and objectives without a downloadable training corpus. Their `*-decision-index` repositories contain evaluation results and must not be treated as training corpora.
 
+## Sources for a larger run
+
+[`data_sources.json`](data_sources.json) is a discovery catalogue, not an acquisition lockfile or an admitted training release. It records 31 dataset/config candidates, reported training counts, label evidence, overlap relationships and admission requirements. Most new sources still need immutable revisions, complete file manifests and a full scan. The existing pilot source pins and admission policy are unchanged. Raw cards, previews and discovery hashes stay under ignored `.agents/runtime/decision-data-discovery/`.
+
+The initial search retrieved 478 model cards and extracted 154 unique dataset links; 539 other requests failed, including rate-limited requests. This is broad discovery rather than an exhaustive census. Ten dataset/config previews (611 ordered rows) were collected to inspect formats; these samples do not establish whole-corpus quality or retention rates.
+
+| Candidate | Reported train rows | Contribution and admission concern |
+| --- | ---: | --- |
+| Tasksource `filtered-full` | 1,305,478 | Broad tasks and native distributions; commercial-use metadata and LLM-assisted cleanup. Includes 97,030 uncertain retained decisions. |
+| VerQen, five train configs | 1,620,819 | Procedural policies, oracle environments, public labels, paraphrases and longer contexts. Later stages reuse scenarios. |
+| Jev Decisions v1 | 11,269,408 | Agent actions and outcomes; only 6,214,185 records across **all splits** have Choice supervision. Software engineering dominates. |
+| OpenDecisionMix | 957,323 | Routing, safety, grounding and response judgement. Original gold and Jev predictions are separate; upstream review required. |
+| SargeDev v3 / Solar v4 | 655,806 / 756,619 | Soft targets; mostly overlapping scenarios with different teachers. Relabels are not additional unique cases. |
+| Open-Jev controls, BEV, SN92, Plumb | See catalogue | Procedural, counterfactual, temporal, numeric, policy and multilingual diversity; shared upstream records need deduplication. |
+
+Twenty to fifty times the pilot's 127,888 rows means 2,557,760–6,394,400 usable rows. Tasksource filtered-full plus VerQen supplies a **2,926,297-row candidate pool** before cross-source deduplication, provenance, source terms, benchmark exclusions and token/option limits. This does not establish a 23× clean release. The larger agent corpus adds scale, but repeated trajectories and failed actions cannot be counted as independent correct supervision.
+
+Before assembling a larger training release:
+
+1. Freeze full source revisions, files, hashes and original partitions. Resolve source terms and teacher provenance; hold out unknown or restricted components under the pilot's policy.
+2. Preserve original gold, human vote distributions and teacher predictions as distinct evidence. Recompute procedural answers where possible; audit stratified samples per source/family and detected conflicts. Teacher agreement alone does not establish correctness or calibration.
+3. Canonicalize question types, ordered scales, option identities and probabilities. Exclude rationales, gold answers, future outcomes and teacher predictions from inputs. The current renderer supports at most 26 options and filters over 2,048 tokens: remeasure retention with the exact Inkling tokenizer before choosing a larger context/readout.
+4. Deduplicate exact model-visible decisions, shared upstream rows and near-identical scenarios across corpora; quarantine conflicting targets. Keep counterfactuals, translations and alternate questions as related views with a shared group. Report unique states, scenarios/trajectories, questions and tokens separately.
+5. Protect public JevBench and additional benchmarks by source identity, exact text and approximate overlap. Use source/family/trajectory holdouts for validation and calibration. OpenDecisions, DecisionPivot, Fast Decisions and `*-decision-index` results remain evaluation data irrespective of Hub split names or card links.
+6. Cap mixture shares by skill, source family, label evidence, language, type, length and trajectory. Publish accepted/rejected counts, cross-split checks, attributions and a hash-bound release manifest. Set size from survivors rather than repeating rows to fill a quota.
+
+Strands Decider v2 describes 17,480,970 rows, but its [recipe says the data is not in the repository](https://github.com/strands-labs/strands-decider/blob/main/training/README.md#the-v2-recipes). Its older public recipe has smaller generated data and reconstruction steps. Recipe disclosure also does not make the complete Bison/Mammoth/KnowLine mixtures downloadable.
+
 ## Run
 
 Use a dedicated development-training GPU with `gradctl compute`. Keep the allocation owner and an independent cleanup watchdog running; the training program checkpoints but does not delete provider resources. Grant only the run's S3 paths using `gradctl compute s3`. No production credentials or customer inputs are needed.

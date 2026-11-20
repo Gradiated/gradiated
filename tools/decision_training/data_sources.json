@@ -1,0 +1,654 @@
+{
+  "schema_version": 1,
+  "as_of": "2026-11-20",
+  "purpose": "Source discovery for a future larger run; no candidate is an admitted clean training release.",
+  "pilot_training_rows": 127888,
+  "target_training_rows": [
+    2557760,
+    6394400
+  ],
+  "count_unit": "source rows/states unless explicitly described as individual questions; counts not additive",
+  "sources": [
+    {
+      "repo": "tasksource/tasksource-jev-typed-decisions",
+      "url": "https://huggingface.co/datasets/tasksource/tasksource-jev-typed-decisions",
+      "config": "filtered-full",
+      "training_rows_reported": 1305478,
+      "priority": "core",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Native annotations, human distributions, deterministic recasts; GLM-assisted rejection review; 97030 uncertain rows retained.",
+      "terms": "Per-source; commercial metadata required.",
+      "overlap_relations": "Subset of historical full/train; do not concatenate default/full/filtered-full.",
+      "admission_notes": "Recheck source terms and author provenance; recover keep/uncertain evidence; screen all protected benchmarks; current pilot used capped default shards.",
+      "linked_models": [
+        "Ernnnn/Qwen3.8-27B-Decision-v0.4"
+      ],
+      "revision": "8df2e5c9a33f19a2c2b8febf291c3acb0a91a8a8",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "tasksource/tasksource-jev-typed-decisions",
+      "url": "https://huggingface.co/datasets/tasksource/tasksource-jev-typed-decisions",
+      "config": "full",
+      "training_rows_reported": 2550012,
+      "priority": "alternative_to_filtered",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Native annotations and deterministic recasts; later additions beyond filtered snapshot.",
+      "terms": "Mixed; commercial/NC/unspecified fields.",
+      "overlap_relations": "Superset/overlap with default and filtered-full.",
+      "admission_notes": "Use only incremental source groups missing from filtered-full; do not add counts.",
+      "linked_models": [
+        "Ernnnn/Qwen3.8-27B-Decision-v0.4"
+      ],
+      "revision": "8df2e5c9a33f19a2c2b8febf291c3acb0a91a8a8",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "zorqelis-ai/verqen-decisions",
+      "url": "https://huggingface.co/datasets/zorqelis-ai/verqen-decisions",
+      "config": "decisions+agentic+paraphrase+long_context+formats",
+      "training_rows_reported": 1620819,
+      "priority": "core",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Rule-computed procedural labels plus recast public train splits.",
+      "terms": "Per-row CC BY, CC BY-SA, Apache, MIT, CC0, AFL; preserve upstream terms.",
+      "overlap_relations": "Later stages derive from decisions; public classification tasks overlap Tasksource/SN92.",
+      "admission_notes": "Separate scenarios from views; group by original source identity; deterministic label replay for procedural rows; exact train counts 1406252+92567+50000+30000+42000.",
+      "linked_models": [
+        "zorqelis-ai/VerQen"
+      ],
+      "revision": "c21319ea8c28ad5103be185aea1f2e4323570bcd",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "samatv256/jev-decisions-v1",
+      "url": "https://huggingface.co/datasets/samatv256/jev-decisions-v1",
+      "config": "default",
+      "training_rows_reported": 11269408,
+      "priority": "scale_after_audit",
+      "decision_types": [
+        "choice",
+        "completion",
+        "value"
+      ],
+      "label_evidence": "Explicit target actions and trajectory outcomes; eligibility flags authoritative.",
+      "terms": "CC BY 4.0 compilation with component/source terms.",
+      "overlap_relations": "Overlaps NVIDIA upstream trajectories and some OpenDecisionMix sources.",
+      "admission_notes": "6214185 choice-eligible across all splits, not train count; 58.03% of choices Open-SWE; cap source and trajectory; never infer action labels from failed trajectories; exclude post-decision outcome metadata from input.",
+      "linked_models": [
+        "samatv256/mini-Jev"
+      ],
+      "revision": "c12aadf1f01c72616bfab0b02480e21806397669",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "samatv256/jev-decisions-v1",
+      "url": "https://huggingface.co/datasets/samatv256/jev-decisions-v1",
+      "config": "general-clean-50k",
+      "training_rows_reported": 50000,
+      "priority": "adapter_smoke",
+      "decision_types": [
+        "choice"
+      ],
+      "label_evidence": "Sanitized unambiguous Choice subset; grouped trajectory caps.",
+      "terms": "CC BY 4.0 plus source terms.",
+      "overlap_relations": "Subset of default train; no Open-SWE.",
+      "admission_notes": "Only 15023 branches <=2048 under source tokenizer; remeasure with Inkling; longest <=8192; sanitize duplicates still present.",
+      "linked_models": [
+        "samatv256/mini-Jev"
+      ],
+      "revision": "c12aadf1f01c72616bfab0b02480e21806397669",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "MaziyarPanahi/OpenDecisionMix-1M",
+      "url": "https://huggingface.co/datasets/MaziyarPanahi/OpenDecisionMix-1M",
+      "config": "default",
+      "training_rows_reported": 957323,
+      "priority": "core_after_upstream_review",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Original gold plus Jev predictions; keep them separate.",
+      "terms": "Mixed; RAGTruth requires upstream/model-output review.",
+      "overlap_relations": "NVIDIA sources overlap Tasksource and Jev Decisions.",
+      "admission_notes": "Prefer original human/programmatic targets; review derived targets and Jev disagreement; exclude prediction/confidence/answer columns from input; 23 task families.",
+      "linked_models": [
+        "Unverified model-training link; useful independent public corpus"
+      ],
+      "revision": "fb0a2aaa868df78c4f877d77dd6b63e5769065e1",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "SargeDev/jev-distill-corpus-v3",
+      "url": "https://huggingface.co/datasets/SargeDev/jev-distill-corpus-v3",
+      "config": "default",
+      "training_rows_reported": 655806,
+      "priority": "soft_target_supplement",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Jev teacher probabilities, 32B memory relevance, Open-Jev programmatic rows.",
+      "terms": "Apache-2.0 compilation; source terms survive.",
+      "overlap_relations": "Includes 94801 Open-Jev rows across splits; v4 relabels most of v3; v1 subset reused.",
+      "admission_notes": "Teacher outputs are not human-calibrated truth; do not concatenate versions; preserve all heldouts.",
+      "linked_models": [
+        "autotrust/AutoTrust-Decider-Mini-9B",
+        "autotrust/AutoTrust-Decider-Pro-27B"
+      ],
+      "revision": "75111a13a8455032f0435050bfc7e0c9026ecfe8",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "SargeDev/solar-decisions-corpus-v4",
+      "url": "https://huggingface.co/datasets/SargeDev/solar-decisions-corpus-v4",
+      "config": "default",
+      "training_rows_reported": 756619,
+      "priority": "alternative_soft_targets",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Solar Decide Flash distributions; second teacher over same scenarios.",
+      "terms": "Apache-2.0 compilation; upstream terms.",
+      "overlap_relations": "696741 relabeled v3 records plus 120000 new questions across all splits.",
+      "admission_notes": "Retain multi-teacher targets on one scenario or select one; never count relabeling as new evidence.",
+      "linked_models": [],
+      "revision": "2b91072c6948e8354e5ec96e24bc9073b76462f4",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "OpenAGILab/Jev-dataset",
+      "url": "https://huggingface.co/datasets/OpenAGILab/Jev-dataset",
+      "config": "12 configs; train only",
+      "training_rows_reported": null,
+      "priority": "controlled_reasoning",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Controlled mostly synthetic oracle/reference labels.",
+      "terms": "CC0 for own controls; component-specific terms.",
+      "overlap_relations": "release-v2 subset of browser-drone expansion; mirrored ZefanCai/Open-Jev; SargeDev embeds release rows.",
+      "admission_notes": "Preserve family/trajectory groups; compositional/OOD heldouts; verify precise config-level unique counts.",
+      "linked_models": [
+        "ZefanCai/Open-Jev-2B",
+        "ZefanCai/Open-Jev-9B"
+      ],
+      "revision": "4427393a93ccd4465d1eb7b3f53a7aff05bd8a34",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "ZefanCai/Open-Jev-v1.1",
+      "url": "https://huggingface.co/datasets/ZefanCai/Open-Jev-v1.1",
+      "config": "community-hard-mix-v2-redistributable",
+      "training_rows_reported": 147139,
+      "priority": "controlled_reasoning",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Controlled policies, counterfactuals, WANLI and replay.",
+      "terms": "CC0/CC BY source-dependent.",
+      "overlap_relations": "Replays Open-Jev; WANLI overlaps public mixtures.",
+      "admission_notes": "Only 6400 underlying scenarios behind 51200 new controlled views across all splits; dedup at root scenario.",
+      "linked_models": [
+        "ZefanCai/Open-Jev-27B-v1.1"
+      ],
+      "revision": "10ad6888333fa97f8c948192797bad3de3040802",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "avbiswas/bev-decision",
+      "url": "https://huggingface.co/datasets/avbiswas/bev-decision",
+      "config": "all",
+      "training_rows_reported": 231332,
+      "priority": "diversity_after_provenance",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Source-grounded public annotations, procedural controls, some soft annotator shares.",
+      "terms": "No aggregate clearance; check original sources individually.",
+      "overlap_relations": "all includes default and four expansions; many public tasks recur elsewhere.",
+      "admission_notes": "Rows have multiple questions; count both states and questions; inherited test splits never train; excludes restricted-source families under current policy.",
+      "linked_models": [
+        "avbiswas/bev-decider-0.4B"
+      ],
+      "revision": "11ed9b5b879e7f9524e7c89c1037d498c54206f0",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "decisionmodels/sn92-generalist-train-v1",
+      "url": "https://huggingface.co/datasets/decisionmodels/sn92-generalist-train-v1",
+      "config": "train",
+      "training_rows_reported": 109547,
+      "priority": "retain_high_quality",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Programmatic/source-verified and synthetic teacher labels.",
+      "terms": "CC BY 4.0/CC0 per item.",
+      "overlap_relations": "Already partly in pilot; grouped variants and public upstream overlap.",
+      "admission_notes": "Retain current provenance exclusions; expand caps selectively; 27 languages.",
+      "linked_models": [
+        "Zayaan/reax-generalist-r2"
+      ],
+      "revision": "2241ec2c5e9812178c3127165d830a3bc8006685",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "decisionmodels/sn92-specialists",
+      "url": "https://huggingface.co/datasets/decisionmodels/sn92-specialists",
+      "config": "train",
+      "training_rows_reported": null,
+      "priority": "retain_high_quality",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Programmatic gold and teacher distributions with writer/labeler provenance.",
+      "terms": "CC BY 4.0.",
+      "overlap_relations": "Already partly in pilot; added family packs may overlap.",
+      "admission_notes": "Use manifests for exact counts; retain all existing provenance screens and dev holdouts.",
+      "linked_models": [
+        "SN92 competition models"
+      ],
+      "revision": "e2ff3bb099553fd9fd93f806152d5f261579bf3e",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "Lexmount/WebJev",
+      "url": "https://huggingface.co/datasets/Lexmount/WebJev",
+      "config": "all",
+      "training_rows_reported": 64122,
+      "priority": "long_context_browser",
+      "decision_types": [
+        "choice"
+      ],
+      "label_evidence": "Executed trajectories, shuffled reannotation and verifier checks; publisher reports 98% acceptable in audit.",
+      "terms": "Apache covers contribution; third-party page/task rights separate.",
+      "overlap_relations": "Same task/instance at multiple candidate scales.",
+      "admission_notes": "Group task_id; median action3056/grounding5665 source-tokenizer tokens; many >26 options; useful after longer-context/readout changes.",
+      "linked_models": [
+        "Lexmount/WebJev-35B-A3B"
+      ],
+      "revision": "fb2f378d3a46c76d29867f0c01e9556a87295892",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "crh225/plumb-decisions",
+      "url": "https://huggingface.co/datasets/crh225/plumb-decisions",
+      "config": "default",
+      "training_rows_reported": 5014,
+      "priority": "hard_policy_supplement",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Qwen authored; two independent solutions agree; exact-probability checks.",
+      "terms": "Apache-2.0.",
+      "overlap_relations": "Group multiple questions per source document.",
+      "admission_notes": "All 131 test rows remain calibration-only; audit teacher consistency versus actual rules.",
+      "linked_models": [
+        "crh225/plumb-4b"
+      ],
+      "revision": "718a9f006f3beaecfa7f66a819553f99ed7b94f6",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "n4ze3m/typed-decisions-synth",
+      "url": "https://huggingface.co/datasets/n4ze3m/typed-decisions-synth",
+      "config": "default",
+      "training_rows_reported": null,
+      "priority": "small_soft_supplement",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "DeepSeek teacher distributions averaged over three passes.",
+      "terms": "MIT compilation; inspect source details.",
+      "overlap_relations": "Already used in community OpenJev blends.",
+      "admission_notes": "Approx 6.68k training states, multiple questions; exact current count needs manifest; group state_id.",
+      "linked_models": [
+        "alanhuangya/OpenJev-4B"
+      ],
+      "revision": "7b86c5eda358b0d3bf4a45d503675ea1c16cfa00",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "OmniJev/OneJev-Data",
+      "url": "https://huggingface.co/datasets/OmniJev/OneJev-Data",
+      "config": "default",
+      "training_rows_reported": 94707,
+      "priority": "later_multimodal",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "127 source datasets, execution outcomes, some teacher labels.",
+      "terms": "Per-source; research-only and unknown terms included.",
+      "overlap_relations": "Text/agent upstreams repeat other mixes.",
+      "admission_notes": "Image/video-heavy 17.7GB; select permitted sources; keep evaluation datasets out despite train packaging.",
+      "linked_models": [
+        "OmniJev/OneJev-27B"
+      ],
+      "revision": "1028292856b8bc3029e4e423df78d0637c735dc0",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "chaoliangUNSW/jev-style-2b-v4-training",
+      "url": "https://huggingface.co/datasets/chaoliangUNSW/jev-style-2b-v4-training",
+      "config": "pool-main.tar/train.jsonl",
+      "training_rows_reported": 916923,
+      "priority": "later_mixed_pool",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Complete multimodal training pool; Jev1.14 distillation and source labels.",
+      "terms": "Mixed source terms, no blanket permissive licence.",
+      "overlap_relations": "Upstream classification/vision overlaps other corpora.",
+      "admission_notes": "7.77GB tar; code and SHA256SUMS published; filter row licence, author and source split before any admission.",
+      "linked_models": [
+        "chaoliangUNSW/Jev-Style-2B-Decision-v4"
+      ],
+      "revision": "ef24fc8cbef4f86b560f7de7b589281d1fbf186b",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "jevhome/jevhome-decisions",
+      "url": "https://huggingface.co/datasets/jevhome/jevhome-decisions",
+      "config": "default",
+      "training_rows_reported": 124176,
+      "priority": "restricted_subset_only",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Human-labelled sources, procedural labels and teacher probabilities.",
+      "terms": "Procedural/synthetic rows CC BY-NC; public rows individual licences.",
+      "overlap_relations": "Public datasets and synthetic views overlap others.",
+      "admission_notes": "Exclude NC/unspecified and restricted teacher sources; do not use blanket corpus licence.",
+      "linked_models": [
+        "jevhome/jevhome-ettin-1b"
+      ],
+      "revision": "16b377a51b927225af180b1fd041e4d4746bc92b",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "jaeyong2/jev-decision-claude-distill",
+      "url": "https://huggingface.co/datasets/jaeyong2/jev-decision-claude-distill",
+      "config": "train",
+      "training_rows_reported": 37932,
+      "priority": "excluded_current_provenance_policy",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "150827 questions; Qwen/Opus teachers, unlabelled rows also retained.",
+      "terms": "Apache compilation; teacher-output terms separate.",
+      "overlap_relations": "language_pool overlaps train.",
+      "admission_notes": "All text authored by Codex/Claude: excluded by existing source policy; noul uses yes first, unlike our canonical no-first convention.",
+      "linked_models": [
+        "jaeyong2 Clef-derived decision model"
+      ],
+      "revision": "3e9213624a0903363eace61d286d692da3c8b5e9",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "LocalLLaMA/typed-decisions",
+      "url": "https://huggingface.co/datasets/LocalLLaMA/typed-decisions",
+      "config": "train subsets only",
+      "training_rows_reported": null,
+      "priority": "small_supplement_after_audit",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Synthetic workflow decisions with soft distributions.",
+      "terms": "Apache-2.0.",
+      "overlap_relations": "Often repackaged in community mixtures; benchmark repository also contains heldouts.",
+      "admission_notes": "Never train test/config eval rows; original pilot restrictions still apply.",
+      "linked_models": [
+        "convaiinnovations/laya-typed-decisions"
+      ],
+      "revision": "822f44b399bcc4ba87569c0d0e35c2bcbaede672",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "fastino/fast-decisions",
+      "url": "https://huggingface.co/datasets/fastino/fast-decisions",
+      "config": "17 configs",
+      "training_rows_reported": null,
+      "priority": "evaluation_only",
+      "decision_types": [
+        "choice",
+        "noul"
+      ],
+      "label_evidence": "Small schema-driven classification benchmark.",
+      "terms": "Apache-2.0.",
+      "overlap_relations": "Used as evaluation by LiquidAI/GLiNER despite train split naming.",
+      "admission_notes": "Protect as evaluation, not training; split name alone does not establish intended training use.",
+      "linked_models": [
+        "LiquidAI/d1-3B",
+        "fastino/GLiNER2.5-Decide"
+      ],
+      "revision": "35afb79a0f611a1db44380e855ac2a821b0a4da1",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "jgeuter/OpenDecisions",
+      "url": "https://huggingface.co/datasets/jgeuter/OpenDecisions",
+      "config": "test",
+      "training_rows_reported": 0,
+      "priority": "evaluation_only",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "2352 validation decisions.",
+      "terms": "CC BY-SA; explicit request not to train.",
+      "overlap_relations": "JevBench-like heldout evaluation.",
+      "admission_notes": "Exclude whole repository from training.",
+      "linked_models": [
+        "StrandsAgents/strands-decider-E2B-gemma4-v2-2611"
+      ],
+      "revision": "ff0b640be2b72c7d06d9d656a34ad6eed79ec7fe",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "startlux-models/DecisionPivot",
+      "url": "https://huggingface.co/datasets/startlux-models/DecisionPivot",
+      "config": "validation",
+      "training_rows_reported": 0,
+      "priority": "evaluation_only",
+      "decision_types": [
+        "choice",
+        "noul",
+        "score"
+      ],
+      "label_evidence": "Counterfactual decision benchmark.",
+      "terms": "Source-dependent.",
+      "overlap_relations": "Linked model-card evaluation.",
+      "admission_notes": "Protect entire benchmark, even when linked under dataset metadata.",
+      "linked_models": [
+        "StrandsAgents/strands-decider-E2B-gemma4-v2-2611"
+      ],
+      "revision": "3e3854f18f7aa27c9f9140a2ce35bd1dd470e02a",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "artemsnegirev/razvilka",
+      "url": "https://huggingface.co/datasets/artemsnegirev/razvilka",
+      "config": "test",
+      "training_rows_reported": 0,
+      "priority": "evaluation_only",
+      "decision_types": [
+        "choice",
+        "noul"
+      ],
+      "label_evidence": "735 Russian benchmark decisions.",
+      "terms": "Per-task.",
+      "overlap_relations": "Model-card eval link, not released training data.",
+      "admission_notes": "Protect complete test set.",
+      "linked_models": [
+        "ai-forever/FRIDA-Decisions"
+      ],
+      "revision": "a31c9404615592085e81f971c65896ab91afd179",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "tasksource/procedural-typed-decisions",
+      "url": "https://huggingface.co/datasets/tasksource/procedural-typed-decisions",
+      "config": "all",
+      "training_rows_reported": null,
+      "priority": "exact_oracle_reasoning",
+      "label_evidence": "Exact arithmetic, lookup, Bayesian posteriors, tracking and routing; embedded subsets already in Tasksource. Use native generator family IDs and replay labels.",
+      "terms": "Apache-2.0",
+      "overlap_relations": "Audit required; see notes.",
+      "admission_notes": "Exact arithmetic, lookup, Bayesian posteriors, tracking and routing; embedded subsets already in Tasksource. Use native generator family IDs and replay labels.",
+      "linked_models": [],
+      "revision": "05ca1d0388f57461a634a7caed67145d28e2eca7",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "lothnic/themis-decision-mixture-v1",
+      "url": "https://huggingface.co/datasets/lothnic/themis-decision-mixture-v1",
+      "config": "decisions",
+      "training_rows_reported": null,
+      "priority": "audited_repackaging",
+      "label_evidence": "Approx 73.2k train rows; upstream source lock/audit present. Most rows reuse Tasksource/Open-Jev/CommitPack; inherited hh-rlhf excluded under current policy. Option order may differ from canonical_target metadata.",
+      "terms": "Mixed source terms",
+      "overlap_relations": "Audit required; see notes.",
+      "admission_notes": "Approx 73.2k train rows; upstream source lock/audit present. Most rows reuse Tasksource/Open-Jev/CommitPack; inherited hh-rlhf excluded under current policy. Option order may differ from canonical_target metadata.",
+      "linked_models": [],
+      "revision": "93b15c9fba1bfe96b4403626ea9f5c5f8c2fc2fb",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "m-lagnajit/calibrated-typed-decisions",
+      "url": "https://huggingface.co/datasets/m-lagnajit/calibrated-typed-decisions",
+      "config": "default",
+      "training_rows_reported": 16995,
+      "priority": "human_distribution_supplement",
+      "label_evidence": "Human GoEmotions votes plus calibrated teacher distributions; preserve original gold and teacher target distinctions; PubMedQA heldout never train.",
+      "terms": "Per-source terms; compilation CC BY 4.0",
+      "overlap_relations": "Audit required; see notes.",
+      "admission_notes": "Human GoEmotions votes plus calibrated teacher distributions; preserve original gold and teacher target distinctions; PubMedQA heldout never train.",
+      "linked_models": [],
+      "revision": "56067d1421f90ba9b094d271a85a03c155757255",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "Hanish/lq-decide-data",
+      "url": "https://huggingface.co/datasets/Hanish/lq-decide-data",
+      "config": "default+families",
+      "training_rows_reported": 138803,
+      "priority": "selective_reasoning_supplement",
+      "label_evidence": "109523 public rows plus29280 synthetic family rows; author measured candidate-selection surface shortcut: exclude/rebuild that family. Intended target alone does not verify surface consistency.",
+      "terms": "Per-source plus MIT synthetic surface writer",
+      "overlap_relations": "Audit required; see notes.",
+      "admission_notes": "109523 public rows plus29280 synthetic family rows; author measured candidate-selection surface shortcut: exclude/rebuild that family. Intended target alone does not verify surface consistency.",
+      "linked_models": [],
+      "revision": "79bc8cf1517b94dab6eba388daae0a4d6f4c0b68",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "wassname/machiavelli",
+      "url": "https://huggingface.co/datasets/wassname/machiavelli",
+      "config": "default",
+      "training_rows_reported": 672138,
+      "priority": "requires_new_label_contract",
+      "label_evidence": "446854 choices_differ records; harm annotations are not a uniquely correct action. Repeated game visits; exclude future choice_obs/choice_reward. Benchmark lineage and source restrictions need review.",
+      "terms": "MIT repository; verify third-party game/content terms",
+      "overlap_relations": "Audit required; see notes.",
+      "admission_notes": "446854 choices_differ records; harm annotations are not a uniquely correct action. Repeated game visits; exclude future choice_obs/choice_reward. Benchmark lineage and source restrictions need review.",
+      "linked_models": [],
+      "revision": "382d044d990f929548039d7551778867281d5b1c",
+      "status": "candidate_not_admitted"
+    },
+    {
+      "repo": "NordosoftOy/innoduel-rlhf",
+      "url": "https://huggingface.co/datasets/NordosoftOy/innoduel-rlhf",
+      "config": "train",
+      "training_rows_reported": 1514713,
+      "priority": "not_openly_usable",
+      "label_evidence": "Real human pairwise organisational choices; full data not open under usable default terms. No contact or access acceptance requested; not in admissible totals.",
+      "terms": "Gated, negotiated commercial licensing",
+      "overlap_relations": "Audit required; see notes.",
+      "admission_notes": "Real human pairwise organisational choices; full data not open under usable default terms. No contact or access acceptance requested; not in admissible totals.",
+      "linked_models": [],
+      "revision": null,
+      "status": "candidate_not_admitted"
+    }
+  ],
+  "unreleased_mixtures": [
+    {
+      "models": [
+        "baselabs/bison-1",
+        "baselabs/groundhog-1"
+      ],
+      "reported_rows": 6710000,
+      "availability": "Card describes Mix12; no downloadable complete corpus found."
+    },
+    {
+      "models": [
+        "baselabs/mammoth-1",
+        "baselabs/elephant-1"
+      ],
+      "reported_rows": 6210000,
+      "availability": "Mix8 technical report describes method/categories; no downloadable complete corpus found."
+    },
+    {
+      "models": [
+        "PelaAI/KnowLine-31B-Gen1"
+      ],
+      "availability": "Card explicitly says data not included."
+    },
+    {
+      "models": [
+        "StrandsAgents/strands-decider-E2B-gemma4-v2-2611"
+      ],
+      "reported_rows": 17480970,
+      "availability": "v2 recipe explicitly says training data not in repository; older recipe has smaller committed/generated data."
+    },
+    {
+      "models": [
+        "perplexity-ai/pplx-decider-v1.3"
+      ],
+      "availability": "No downloadable complete training corpus found on inspected card."
+    }
+  ]
+}

@@ -30,3 +30,7 @@ a18b5b3125da03bf6dfb7502cd2e848feb4f6bc4:infra/environments/prod/us-east-1/kuber
 # Made-up UUID share tokens in a test and a Storybook mock; fixtures, not credentials. Removed when links became HMAC signatures.
 4f61004348157c36c71dca7d8b57f1d0aefe5890:product/services/api/test/report-shares.test.ts:generic-api-key:7
 4f61004348157c36c71dca7d8b57f1d0aefe5890:product/services/console/src/stories/pages/training.stories.tsx:generic-api-key:101
+
+# Public Transformers class imported after AutoTokenizer; Inkling2LoopForConditionalGeneration is not a credential.
+e6db8177bc699d976b0119748384e25918732dd0:tools/decision_training/probe.py:generic-api-key:19
+e6db8177bc699d976b0119748384e25918732dd0:tools/decision_training/train.py:generic-api-key:43

@@ -2,6 +2,7 @@ import Markdoc, {
   type Config,
   type Node,
   type RenderableTreeNode,
+  type SchemaAttribute,
   type ValidateError,
 } from "@markdoc/markdoc";
 
@@ -25,6 +26,22 @@ const dataTag = {
   title: { type: String },
   caption: { type: String },
 };
+
+const evalTag = (
+  render: string,
+  attributes: Record<string, SchemaAttribute> = {},
+) => ({
+  render,
+  selfClosing: true,
+  attributes: {
+    eval: { type: String, required: true },
+    models: { type: Array },
+    metric: { type: String },
+    title: { type: String },
+    caption: { type: String },
+    ...attributes,
+  },
+});
 
 export const reportConfig: Config = {
   nodes: {
@@ -181,6 +198,15 @@ export const reportConfig: Config = {
       render: "Tab",
       attributes: { title: { type: String, required: true } },
     },
+    "eval-summary": evalTag("EvalSummary"),
+    "eval-breakdown": evalTag("EvalBreakdown", { by: { type: String } }),
+    "eval-head-to-head": evalTag("EvalHeadToHead", { by: { type: String } }),
+    "eval-case-grid": evalTag("EvalCaseGrid", { by: { type: String } }),
+    "eval-examples": evalTag("EvalExamples", {
+      where: { type: String, matches: ["better", "worse"], default: "better" },
+      limit: { type: Number },
+    }),
+    "eval-cases": evalTag("EvalCases"),
   },
 };
 
@@ -189,6 +215,7 @@ export type ParsedReport = {
   errors: ValidateError[];
   headings: { id: string; title: string }[];
   dataFiles: string[];
+  evalFiles: string[];
   title: string | undefined;
 };
 
@@ -256,6 +283,16 @@ export const parseReport = (source: string): ParsedReport => {
               node.type === "tag" && typeof node.attributes.data === "string",
           )
           .map((node) => String(node.attributes.data)),
+      ),
+    ],
+    evalFiles: [
+      ...new Set(
+        nodes
+          .filter(
+            (node) =>
+              node.type === "tag" && typeof node.attributes.eval === "string",
+          )
+          .map((node) => String(node.attributes.eval)),
       ),
     ],
     title: frontmatter?.[1]?.trim().replace(/^["']|["']$/g, ""),

@@ -1,5 +1,7 @@
 import {
   CreateTaskVersionFileSchema,
+  EVAL_FILE_PATTERN,
+  MAX_EVAL_FILE_CONTENT_BYTES,
   MAX_VERSION_FILE_CONTENT_BYTES,
   WORKLOAD_BENCHMARK_FILE,
   type CreateTaskVersionFile,
@@ -73,7 +75,10 @@ export const readVersionFileText = async (
       "conflict",
       "Only text files can be read inline. Download this file instead.",
     );
-  if (file.sizeBytes > MAX_VERSION_FILE_CONTENT_BYTES)
+  const maxBytes = EVAL_FILE_PATTERN.test(file.name)
+    ? MAX_EVAL_FILE_CONTENT_BYTES
+    : MAX_VERSION_FILE_CONTENT_BYTES;
+  if (file.sizeBytes > maxBytes)
     throw new ControlServiceError(
       "conflict",
       "The file is too large to read inline. Download it instead.",
@@ -82,8 +87,8 @@ export const readVersionFileText = async (
   let bytes: Uint8Array;
   try {
     bytes = await storage.read(versionFileKey(file), {
-      maxBytes: MAX_VERSION_FILE_CONTENT_BYTES,
-      timeoutMs: 10_000,
+      maxBytes,
+      timeoutMs: 30_000,
     });
   } catch (error) {
     throw new ControlServiceError(

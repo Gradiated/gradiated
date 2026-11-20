@@ -454,7 +454,7 @@ const versionFileContent = createRoute({
   operationId: "getTaskVersionFileContent",
   summary: "Read version file",
   description:
-    "Returns the text of a Markdown, CSV, JSON or plain-text file of at most 2 MiB.",
+    "Returns the text of a Markdown, CSV, JSON or plain-text file of at most 2 MiB, or a .eval.json file of at most 32 MiB.",
   tags: ["Training"],
   request: { params: TaskVersionFilePathSchema },
   responses: {

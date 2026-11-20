@@ -984,7 +984,8 @@ upload grant cannot change published bytes. Completion and deletion serialize on
 the task version; expired uploads cannot complete. Publication marks the file
 `ready` and replaces any ready file with the same name on that version, deleting
 the replaced object. A partial unique index keeps one ready file per version and
-name. Workspace members list, read (text files up to 2 MiB, served by the API) and
+name. Workspace members list, read (text files up to 2 MiB, or 32 MiB for
+`.eval.json` files, served by the API) and
 download ready files. Removed and replaced rows remain as tombstones until artifact
 cleanup deletes their objects after upload grants expire. Cleanup also removes
 abandoned uploads and archived workspace files before task/version rows; S3

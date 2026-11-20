@@ -2,7 +2,12 @@ import { AdapterExplorerButton } from "@/components/adapter-explorer/explorer-di
 import { useFeatureFlag } from "@/lib/feature-flags";
 import { WorkloadBenchmarkCard } from "@/components/fine-tuning/workload-benchmark";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useParams } from "@tanstack/react-router";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearch,
+} from "@tanstack/react-router";
 import {
   ArrowLeft,
   Check,
@@ -156,6 +161,9 @@ const VersionReport = ({
   version: VersionView;
   versions: VersionView[];
 }) => {
+  const openCase = useSearch({ from: "/tasks/$taskId/versions/$versionId" });
+  const navigate = useNavigate({ from: "/tasks/$taskId/versions/$versionId" });
+
   const exploreWeights = useFeatureFlag("explore-weights");
   const modelName = usePrivateModelName();
   const { workspaceId, user } = useProductContext();
@@ -335,7 +343,17 @@ const VersionReport = ({
                   </div>
                 </div>
               ) : null}
-              <TrainingReport report={report.data} source={source} />
+              <TrainingReport
+                report={report.data}
+                source={source}
+                openCase={openCase}
+                onOpenCase={(next) =>
+                  void navigate({
+                    search: next,
+                    replace: Boolean(openCase.case),
+                  })
+                }
+              />
             </div>
           ) : (
             <div className="grid min-h-64 place-items-center rounded-xl border border-dashed p-8 text-center">

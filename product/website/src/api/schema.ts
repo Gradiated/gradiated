@@ -1314,7 +1314,7 @@ export interface paths {
     };
     /**
      * Read version file
-     * @description Returns the text of a Markdown, CSV, JSON or plain-text file of at most 2 MiB.
+     * @description Returns the text of a Markdown, CSV, JSON or plain-text file of at most 2 MiB, or a .eval.json file of at most 32 MiB.
      */
     get: operations["getTaskVersionFileContent"];
     put?: never;

@@ -28,7 +28,24 @@
         "Ernnnn/Qwen3.8-27B-Decision-v0.4"
       ],
       "revision": "8df2e5c9a33f19a2c2b8febf291c3acb0a91a8a8",
-      "status": "candidate_not_admitted"
+      "status": "candidate_not_admitted",
+      "measured_audit": {
+        "revision": "8df2e5c9a33f19a2c2b8febf291c3acb0a91a8a8",
+        "counts": {
+          "rows": 1304043,
+          "schema_and_existing_source_filter_pass": 1218577,
+          "soft_targets": 136301,
+          "choice": 862097,
+          "noul": 270488,
+          "score": 85992,
+          "license_or_named_provenance_exclusion": 37964,
+          "invalid_or_unsupported": 47502
+        },
+        "unique_exact_states": 872993,
+        "unique_exact_decision_targets": 1178701,
+        "conflicting_exact_decisions": 0,
+        "quality_status": "NOT_ADMITTED: full structural/exact duplicate audit and existing source filters only; benchmark/near overlap, group partitions, semantic quality and Inkling token audits remain."
+      }
     },
     {
       "repo": "tasksource/tasksource-jev-typed-decisions",
@@ -70,7 +87,22 @@
         "zorqelis-ai/VerQen"
       ],
       "revision": "c21319ea8c28ad5103be185aea1f2e4323570bcd",
-      "status": "candidate_not_admitted"
+      "status": "candidate_not_admitted",
+      "measured_audit": {
+        "revision": "c21319ea8c28ad5103be185aea1f2e4323570bcd",
+        "counts": {
+          "rows": 1620819,
+          "questions": 1776286,
+          "valid_questions": 1775890,
+          "soft_questions": 37166,
+          "over_26_options": 15333,
+          "invalid_questions": 396
+        },
+        "unique_exact_states": 1498174,
+        "unique_exact_decision_targets": 1767058,
+        "conflicting_exact_decisions": 4,
+        "quality_status": "NOT_ADMITTED: structural and exact duplicate checks only; provenance, benchmark/near overlap, group splits, semantic label and Inkling token audits still required."
+      }
     },
     {
       "repo": "samatv256/jev-decisions-v1",

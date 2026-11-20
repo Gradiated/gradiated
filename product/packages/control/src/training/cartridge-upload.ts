@@ -130,6 +130,21 @@ export const validateCartridgeFile = async (
     fail("The embeddings tensor size does not match its shape.");
 
   const slots = tensor(header, "slot_token_ids");
+  const ranges = [embeddings, ...(slots ? [slots] : [])]
+    .map((entry) => entry.data_offsets)
+    .sort((left, right) => left[0] - right[0]);
+  if (
+    ranges[0]![0] !== 0 ||
+    ranges.some(
+      ([start, end], index) =>
+        end < start || (index > 0 && start !== ranges[index - 1]![1]),
+    ) ||
+    ranges.at(-1)![1] !== dataLength
+  )
+    fail(
+      "Tensor data must be contiguous and fill the file, as safetensors requires.",
+    );
+
   if (slots) {
     if (
       slots.dtype !== "I64" ||

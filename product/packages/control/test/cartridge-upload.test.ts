@@ -82,6 +82,11 @@ describe("validateCartridgeFile", () => {
       safetensors({ slots: false }).subarray(0, -4),
       "does not match its shape",
     ],
+    [
+      "trailing bytes after the tensors",
+      Buffer.concat([safetensors(), Buffer.alloc(4)]),
+      "contiguous and fill the file",
+    ],
   ])("rejects %s", async (_, bytes, message) => {
     await expect(validate(bytes)).rejects.toThrow(message);
   });

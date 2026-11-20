@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
   AdapterWeightsSchema,
+  CARTRIDGE_FILE,
   EvaluationResultsSchema,
   type AdapterWeights,
 } from "@gradiated/contracts";
@@ -45,19 +46,34 @@ export const createAdapterDownloads = (
 ): AdapterDownloads => {
   const archiveKey = (uri: string, runId: string) => {
     const bucket = storage?.bucket;
-    const prefix = `s3://${bucket}/runs/${runId}/`;
     const key = uri.slice(`s3://${bucket}/`.length);
     if (
       !storage ||
       !bucket ||
-      !uri.startsWith(prefix) ||
+      !uri.startsWith(`s3://${bucket}/`) ||
       !/^[a-zA-Z0-9_./-]+$/.test(key) ||
-      key.split("/").some((part) => part === ".." || part === ".") ||
-      !key.endsWith(".tar.gz")
+      key.split("/").some((part) => part === ".." || part === ".")
     )
       return undefined;
+    if (key.startsWith(`runs/${runId}/`) && key.endsWith(".tar.gz"))
+      return {
+        storage,
+        key,
+        filename: "adapter.tar.gz",
+        contentType: "application/gzip",
+      };
+    if (
+      key.startsWith(`cartridges/${runId}/`) &&
+      key.endsWith(`/${CARTRIDGE_FILE}`)
+    )
+      return {
+        storage,
+        key,
+        filename: CARTRIDGE_FILE,
+        contentType: "application/octet-stream",
+      };
 
-    return { storage, key };
+    return undefined;
   };
   const inFlight = new Map<string, Promise<AdapterWeights>>();
   // One summary at a time per process: each one streams and decodes a whole
@@ -152,8 +168,8 @@ export const createAdapterDownloads = (
         const url = await storage.signDownload(key, {
           versionId: object.versionId,
           expiresIn: 300,
-          filename: "adapter.tar.gz",
-          contentType: "application/gzip",
+          filename: archive.filename,
+          contentType: archive.contentType,
         });
         return { url, expires_at: expiresAt.toISOString() };
       } catch {
@@ -165,7 +181,11 @@ export const createAdapterDownloads = (
     },
     weights(uri, runId, sizeBytes, sha256) {
       const archive = archiveKey(uri, runId);
-      if (!archive || !/^[0-9a-f]{64}$/.test(sha256))
+      if (
+        !archive ||
+        archive.filename !== "adapter.tar.gz" ||
+        !/^[0-9a-f]{64}$/.test(sha256)
+      )
         return Promise.reject(
           new ControlServiceError(
             "unavailable",

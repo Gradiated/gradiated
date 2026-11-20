@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { trustedRun, validateMetadata } from "./verified.mjs";
+import { execFileSync } from "node:child_process";
+import { parentRevision, trustedRun, validateMetadata } from "./verified.mjs";
 test("only a successful CI workflow from the same repository qualifies an artifact", () => {
   const run = {
     status: "completed",
@@ -44,5 +45,17 @@ test("input identity and archive integrity must both match", () => {
       "policy",
       "archive",
     ),
+  );
+});
+
+test("the parent revision is a full SHA that plan() accepts", () => {
+  const head = execFileSync("git", ["rev-parse", "HEAD"], {
+    encoding: "utf8",
+  }).trim();
+  const parent = parentRevision(head);
+  assert.match(parent, /^[0-9a-f]{40}$/);
+  assert.equal(
+    parent,
+    execFileSync("git", ["rev-parse", "HEAD^"], { encoding: "utf8" }).trim(),
   );
 });

@@ -1,0 +1,86 @@
+--- a/sglang/srt/managers/schedule_batch.py
++++ b/sglang/srt/managers/schedule_batch.py
+@@ -100,6 +100,8 @@
+ from sglang.srt.disaggregation.utils import FAKE_BOOTSTRAP_HOST, DisaggregationMode
+ from sglang.srt.dllm.mixin.req import ReqDllmMixin
+ from sglang.srt.environ import envs
++from sglang.srt.managers.cartridge import gather_indices as cartridge_gather_indices
++from sglang.srt.managers.cartridge import get_pool as get_cartridge_pool
+ from sglang.srt.managers.embed_types import PositionalEmbeds
+ from sglang.srt.managers.kv_hints import KvHintsEnvelope
+ from sglang.srt.managers.scheduler_components.new_token_ratio_tracker import (
+@@ -1307,6 +1309,8 @@
+         self.extra_key = extra_key
+         self.cache_salt = cache_salt or None
+         self.lora_id = lora_id
++        # Prompt cartridge (CartridgeRef); its digest namespaces extra_key.
++        self.cartridge = None
+         self.routing_key = routing_key
+ 
+         # Lazy extra buffer: skip radix cache insert when prealloc failed at
+@@ -2683,6 +2687,9 @@
+     # Token replacement embeddings and absolute positions (optional).
+     replace_embeds: Optional[torch.Tensor] = None
+     replace_positions: Optional[torch.Tensor] = None
++    # Prompt-cartridge rows of this extend: embedding rows and table rows.
++    cartridge_dst: Optional[torch.Tensor] = None
++    cartridge_src: Optional[torch.Tensor] = None
+ 
+     # Read by ForwardBatch ngram embedding init
+     ne_token_table: torch.Tensor = None
+@@ -3074,6 +3081,8 @@
+         all_replace_embeds: List[torch.Tensor] = []
+         all_replace_positions: List[int] = []
+         has_replace_embeds = False
++        cartridge_pool = get_cartridge_pool()
++        cartridge_spans = []
+         input_id_pointer = 0
+         input_id_lens = [len(input_id) for input_id in input_ids]
+         extend_input_logprob_token_ids = []
+@@ -3112,6 +3121,20 @@
+                         req.positional_embed_overrides.embeds[list(indices)]
+                     )
+                     all_replace_positions.extend(positions)
++            if req.cartridge is not None:
++                cartridge = req.cartridge
++                if cartridge_pool is None:
++                    raise RuntimeError("cartridge request without a cartridge pool")
++                if pre_len < cartridge.start + cartridge.num_tokens:
++                    cartridge_spans.append(
++                        (
++                            input_id_pointer,
++                            pre_len,
++                            input_id_lens[i],
++                            cartridge.start,
++                            cartridge_pool.rows(cartridge.sha256),
++                        )
++                    )
+             input_id_pointer += input_id_lens[i]
+ 
+             multimodal_inputs.append(req.multimodal_inputs)
+@@ -3235,6 +3258,16 @@
+         )
+         self.replace_embeds = replace_embeds_tensor
+         self.replace_positions = replace_positions_tensor
++        self.cartridge_dst = self.cartridge_src = None
++        if cartridge_spans:
++            dst, src = cartridge_gather_indices(cartridge_spans)
++            if dst:
++                staged = torch.frombuffer(dst + src, dtype=torch.int32)
++                if _pin:
++                    staged = staged.pin_memory()
++                staged = staged.to(self.device, non_blocking=True)
++                self.cartridge_dst = staged[: len(dst)]
++                self.cartridge_src = staged[len(dst) :]
+         for mm_input in multimodal_inputs:
+             if mm_input is None:
+                 continue
+@@ -3894,6 +3927,8 @@
+         self.input_embeds = None
+         self.replace_embeds = None
+         self.replace_positions = None
++        self.cartridge_dst = None
++        self.cartridge_src = None
+ 
+         self.mamba_cow_src_indices = None
+         self.mamba_cow_dst_indices = None

@@ -1,0 +1,182 @@
+--- /dev/null
++++ b/sglang/srt/layers/cartridge_embedding.py
+@@ -0,0 +1,179 @@
++"""GPU table of prompt-cartridge rows and the prefill scatter into embeddings.
++
++Decode never touches the table. A prefill batch with cartridge positions
++carries ``cartridge_dst`` (rows of the embedding output) and ``cartridge_src``
++(rows of the table) in its ForwardBatch; one kernel copies them after the
++token-embedding lookup. Batches without cartridge positions launch nothing.
++"""
++
++from __future__ import annotations
++
++from typing import Optional, Sequence
++
++import torch
++
++from sglang.srt.layers.layer_boundary import get_attn_tp_context
++from sglang.srt.managers.cartridge import Cartridge
++from sglang.srt.model_executor.runner_backend_utils.breakable_cuda_graph.breakable_cuda_graph import (
++    eager_on_graph,
++)
++from sglang.srt.model_executor.runner_backend_utils.breakable_cuda_graph.context import (
++    is_in_breakable_cuda_graph,
++)
++from sglang.srt.model_executor.runner_backend_utils.tc_piecewise_cuda_graph import (
++    get_tc_piecewise_forward_context,
++)
++from sglang.srt.runtime_context import get_lora, get_parallel
++
++try:
++    import triton
++    import triton.language as tl
++except ImportError:  # CPU-only installs fall back to index_copy_.
++    triton = None
++
++_table: Optional["CartridgeTable"] = None
++
++
++class CartridgeTable:
++    def __init__(self, capacity_bytes: int, hidden_size: int, device: torch.device):
++        dtype = torch.bfloat16
++        rows = capacity_bytes // (hidden_size * dtype.itemsize)
++        self.hidden_size = hidden_size
++        self.weight = torch.zeros(rows, hidden_size, dtype=dtype, device=device)
++
++    @property
++    def capacity_rows(self) -> int:
++        return self.weight.shape[0]
++
++    def write(self, cartridge: Cartridge, rows: Sequence[int]) -> None:
++        """Copy a cartridge's embeddings into ``rows`` on the current stream."""
++        if (
++            cartridge.hidden_size != self.hidden_size
++            or len(rows) != cartridge.num_tokens
++        ):
++            raise ValueError("cartridge does not match the cartridge table")
++        data = bytearray(cartridge.embeddings_nbytes)
++        with open(cartridge.path, "rb") as source:
++            source.seek(cartridge.embeddings_offset)
++            if source.readinto(data) != len(data):
++                raise ValueError("cartridge file is truncated")
++        values = torch.frombuffer(data, dtype=torch.bfloat16).view(
++            cartridge.num_tokens, self.hidden_size
++        )
++        index = torch.tensor(list(rows), dtype=torch.int64, device=self.weight.device)
++        # Blocking copies from pageable memory, so ``data`` may be freed on return.
++        self.weight.index_copy_(0, index, values.to(self.weight.device))
++
++
++def set_cartridge_table(table: Optional[CartridgeTable]) -> None:
++    global _table
++    _table = table
++
++
++def get_cartridge_table() -> Optional[CartridgeTable]:
++    return _table
++
++
++if triton is not None:
++
++    @triton.jit
++    def _scatter_rows_kernel(
++        out_ptr,
++        table_ptr,
++        dst_ptr,
++        src_ptr,
++        out_stride,
++        table_stride,
++        hidden: tl.constexpr,
++        zero: tl.constexpr,
++        BLOCK: tl.constexpr,
++    ):
++        row = tl.program_id(0)
++        dst = tl.load(dst_ptr + row).to(tl.int64)
++        src = tl.load(src_ptr + row).to(tl.int64)
++        for start in tl.static_range(0, hidden, BLOCK):
++            cols = start + tl.arange(0, BLOCK)
++            mask = cols < hidden
++            if zero:
++                values = tl.zeros([BLOCK], dtype=out_ptr.dtype.element_ty)
++            else:
++                values = tl.load(table_ptr + src * table_stride + cols, mask=mask)
++            tl.store(out_ptr + dst * out_stride + cols, values, mask=mask)
++
++
++def scatter_cartridge_rows(
++    hidden_states: torch.Tensor,
++    table: torch.Tensor,
++    dst: torch.Tensor,
++    src: torch.Tensor,
++    *,
++    zero: bool = False,
++) -> None:
++    """``hidden_states[dst] = table[src]`` (or zeros) in place, one launch."""
++    count = dst.shape[0]
++    if count == 0:
++        return
++    if triton is None or not hidden_states.is_cuda:
++        if zero:
++            hidden_states.index_fill_(0, dst.long(), 0)
++        else:
++            hidden_states.index_copy_(
++                0, dst.long(), table.index_select(0, src.long()).to(hidden_states.dtype)
++            )
++        return
++    hidden = hidden_states.shape[-1]
++    _scatter_rows_kernel[(count,)](
++        hidden_states,
++        table,
++        dst,
++        src,
++        hidden_states.stride(0),
++        table.stride(0),
++        hidden=hidden,
++        zero=zero,
++        BLOCK=min(triton.next_power_of_2(hidden), 2048),
++    )
++
++
++def write_cartridge_rows(
++    hidden_states: torch.Tensor, forward_batch, zero: bool
++) -> None:
++    dst = getattr(forward_batch, "cartridge_dst", None)
++    if dst is None:
++        return
++    scatter_cartridge_rows(
++        hidden_states,
++        _table.weight,
++        dst,
++        forward_batch.cartridge_src,
++        zero=zero,
++    )
++
++
++def _write_cartridge_rows_on_replay(hidden_states: torch.Tensor, zero: bool) -> None:
++    write_cartridge_rows(
++        hidden_states, get_tc_piecewise_forward_context().forward_batch, zero
++    )
++
++
++# Cartridge positions differ per batch, so the scatter runs between captured
++# segments of the breakable prefill graph.
++_bcg_write_cartridge_rows = eager_on_graph(_write_cartridge_rows_on_replay)
++
++
++def apply_cartridges(hidden_states: torch.Tensor, forward_batch) -> None:
++    """Write cartridge rows into a prefill's token embeddings [T, hidden]."""
++    # Prefill graphs are captured before the scheduler allocates the table, so
++    # the flag, not the table, decides whether the scatter is part of them.
++    if (
++        get_lora().cartridge_pool_bytes <= 0
++        or not forward_batch.forward_mode.is_extend_or_draft_extend_or_mixed()
++    ):
++        return
++    # A scattered attention-TP input is a vocabulary-parallel partial sum that
++    # is reduced later; only one rank contributes the cartridge row.
++    zero = get_attn_tp_context().input_scattered and get_parallel().attn_tp_rank != 0
++    if is_in_breakable_cuda_graph():
++        _bcg_write_cartridge_rows(hidden_states, zero)
++    else:
++        write_cartridge_rows(hidden_states, forward_batch, zero)

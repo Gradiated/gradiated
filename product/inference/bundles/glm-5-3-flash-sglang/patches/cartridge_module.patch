@@ -1,0 +1,384 @@
+--- /dev/null
++++ b/sglang/srt/managers/cartridge.py
+@@ -0,0 +1,381 @@
++"""Prompt cartridges: learned input embeddings at the start of the system prompt.
++
++A cartridge is a safetensors file with ``embeddings`` [K, hidden_size] (bf16),
++optional ``slot_token_ids`` [K] (int64) and ``gradiated.cartridge/1`` metadata.
++Its K rows replace the input embeddings of K prompt positions that start the
++system prompt. The positions keep the slot token IDs as their token IDs, so
++token-ID readers (Engram hashing, hash-routed MoE layers, logprobs) see what
++the cartridge was trained behind. The radix and HiCache keys are namespaced
++by the cartridge digest instead of the token IDs.
++
++This module has no torch dependency: the tokenizer manager, the scheduler and
++CPU tests use it. ``sglang.srt.layers.cartridge_embedding`` owns the GPU table.
++"""
++
++from __future__ import annotations
++
++import collections
++import dataclasses
++import json
++import math
++import os
++import struct
++from array import array
++from typing import Any, Callable, Iterable, List, Optional, Sequence, Tuple
++
++FORMAT = "gradiated.cartridge/1"
++PLACEMENT = "system_prompt_start"
++DEFAULT_SEPARATOR = "\n\n"
++EXTRA_KEY_PREFIX = "cartridge:"
++MAX_HEADER_BYTES = 1024 * 1024
++SYSTEM_ROLES = ("system", "developer")
++
++
++class CartridgeError(ValueError):
++    pass
++
++
++@dataclasses.dataclass(frozen=True)
++class Cartridge:
++    sha256: str
++    path: str
++    num_tokens: int
++    hidden_size: int
++    separator: str
++    slot_token_ids: Tuple[int, ...]
++    embeddings_offset: int
++
++    @property
++    def embeddings_nbytes(self) -> int:
++        return self.num_tokens * self.hidden_size * 2
++
++
++def _tensor_span(
++    header: dict, name: str, dtype: str, shape: List[int]
++) -> Tuple[int, int]:
++    entry = header.get(name)
++    if (
++        not isinstance(entry, dict)
++        or entry.get("dtype") != dtype
++        or entry.get("shape") != shape
++        or not isinstance(entry.get("data_offsets"), list)
++        or len(entry["data_offsets"]) != 2
++        or any(type(v) is not int or v < 0 for v in entry["data_offsets"])
++    ):
++        raise CartridgeError(f"cartridge tensor {name} must be {dtype} {shape}")
++    start, end = entry["data_offsets"]
++    if end - start != (2 if dtype == "BF16" else 8) * math.prod(shape):
++        raise CartridgeError(f"cartridge tensor {name} has the wrong byte size")
++    return start, end
++
++
++def read_cartridge(
++    path: str,
++    *,
++    sha256: str,
++    num_tokens: int,
++    hidden_size: int,
++    vocab_size: int,
++) -> Cartridge:
++    """Parse a cartridge header and slot IDs without reading its embeddings."""
++    with open(path, "rb") as source:
++        prefix = source.read(8)
++        if len(prefix) != 8:
++            raise CartridgeError("cartridge has no safetensors header")
++        header_size = struct.unpack("<Q", prefix)[0]
++        if not 0 < header_size <= MAX_HEADER_BYTES:
++            raise CartridgeError("cartridge safetensors header is too large")
++        try:
++            header = json.loads(source.read(header_size))
++        except ValueError:
++            raise CartridgeError("cartridge safetensors header is not JSON") from None
++        if not isinstance(header, dict):
++            raise CartridgeError("cartridge safetensors header is not an object")
++        data_start = 8 + header_size
++        metadata = header.pop("__metadata__", {})
++        if not isinstance(metadata, dict) or metadata.get("format") != FORMAT:
++            raise CartridgeError(f"cartridge metadata must set format={FORMAT}")
++        if metadata.get("placement", PLACEMENT) != PLACEMENT:
++            raise CartridgeError(f"cartridge placement must be {PLACEMENT}")
++        separator = metadata.get("separator", DEFAULT_SEPARATOR)
++        if not isinstance(separator, str):
++            raise CartridgeError("cartridge separator must be text")
++        if set(header) - {"embeddings", "slot_token_ids"}:
++            raise CartridgeError("cartridge holds tensors other than its embeddings")
++        if "slot_token_ids" not in header:
++            # Without the slot IDs, token-ID readers would hash or route
++            # placeholders the cartridge was never trained behind.
++            raise CartridgeError("this runtime requires cartridge slot_token_ids")
++
++        embeddings = _tensor_span(
++            header, "embeddings", "BF16", [num_tokens, hidden_size]
++        )
++        slots = _tensor_span(header, "slot_token_ids", "I64", [num_tokens])
++        if (
++            data_start + max(embeddings[1], slots[1])
++            > os.fstat(source.fileno()).st_size
++        ):
++            raise CartridgeError("cartridge file is truncated")
++        source.seek(data_start + slots[0])
++        slot_token_ids = struct.unpack(
++            f"<{num_tokens}q", source.read(slots[1] - slots[0])
++        )
++
++    if any(not 0 <= token < vocab_size for token in slot_token_ids):
++        raise CartridgeError("cartridge slot_token_ids are outside the vocabulary")
++    return Cartridge(
++        sha256=sha256,
++        path=path,
++        num_tokens=num_tokens,
++        hidden_size=hidden_size,
++        separator=separator,
++        slot_token_ids=slot_token_ids,
++        embeddings_offset=data_start + embeddings[0],
++    )
++
++
++def extra_key(sha256: str, caller_extra_key: Optional[str]) -> str:
++    """Radix and HiCache namespace of a cartridge request."""
++    namespace = EXTRA_KEY_PREFIX + sha256
++    return f"{namespace}|{caller_extra_key}" if caller_extra_key else namespace
++
++
++# --- Template-time placement ------------------------------------------------
++
++
++@dataclasses.dataclass(frozen=True)
++class MessageAdapter:
++    """How to read and rebuild one chat message type (dicts or protocol models)."""
++
++    role: Callable[[Any], str]
++    content: Callable[[Any], Any]
++    with_content: Callable[[Any, Any], Any]
++    system: Callable[[str], Any]
++    text_part: Callable[[str], Any]
++    part_text: Callable[[Any], Optional[str]]
++    with_part_text: Callable[[Any, str], Any]
++
++
++def _dict_part_text(part: Any) -> Optional[str]:
++    if isinstance(part, dict) and part.get("type") == "text":
++        return part.get("text")
++    return None
++
++
++DICT_MESSAGES = MessageAdapter(
++    role=lambda message: message["role"],
++    content=lambda message: message.get("content"),
++    with_content=lambda message, content: {**message, "content": content},
++    system=lambda content: {"role": "system", "content": content},
++    text_part=lambda text: {"type": "text", "text": text},
++    part_text=_dict_part_text,
++    with_part_text=lambda part, text: {**part, "text": text},
++)
++
++
++def _prefixed_content(content: Any, prefix: str, adapter: MessageAdapter) -> Any:
++    if content is None or isinstance(content, str):
++        return prefix + (content or "")
++    parts = list(content)
++    first = adapter.part_text(parts[0]) if parts else None
++    if first is not None:
++        return [adapter.with_part_text(parts[0], prefix + first), *parts[1:]]
++    return [adapter.text_part(prefix), *parts]
++
++
++def system_prefixed(
++    messages: Sequence[Any], prefix: str, adapter: MessageAdapter = DICT_MESSAGES
++) -> List[Any]:
++    """Messages whose system prompt starts with ``prefix``.
++
++    The leading system (or developer) message is prefixed; a conversation
++    without one gets an empty system message first.
++    """
++    messages = list(messages)
++    if messages and adapter.role(messages[0]) in SYSTEM_ROLES:
++        first = messages[0]
++        return [
++            adapter.with_content(
++                first, _prefixed_content(adapter.content(first), prefix, adapter)
++            ),
++            *messages[1:],
++        ]
++    return [adapter.system(prefix), *messages]
++
++
++def common_prefix_length(left: Sequence[int], right: Sequence[int]) -> int:
++    length = min(len(left), len(right))
++    for index in range(length):
++        if left[index] != right[index]:
++            return index
++    return length
++
++
++def place_cartridge(
++    render: Callable[[List[Any]], Tuple[Sequence[int], Any]],
++    messages: Sequence[Any],
++    cartridge: Cartridge,
++    slot_text: str,
++    adapter: MessageAdapter = DICT_MESSAGES,
++) -> Tuple[Any, int]:
++    """Render ``messages`` with the cartridge slots at the system prompt start.
++
++    ``render`` maps messages to (prompt token IDs, rendered request). Returns
++    the rendered request whose system prompt begins with the slot text and the
++    separator, as in training, and the first cartridge position. The position
++    comes from where that render first differs from one without the slot
++    text, so prompt content never decides where cartridge rows go.
++    """
++    ids, rendered = render(
++        system_prefixed(messages, slot_text + cartridge.separator, adapter)
++    )
++    baseline, _ = render(system_prefixed(messages, cartridge.separator, adapter))
++    start = common_prefix_length(ids, baseline)
++    if tuple(ids[start : start + cartridge.num_tokens]) != cartridge.slot_token_ids:
++        raise CartridgeError(
++            "the chat template did not render the cartridge slots as their token IDs"
++        )
++    return rendered, start
++
++
++# --- GPU table residency ----------------------------------------------------
++
++
++@dataclasses.dataclass
++class _Resident:
++    pages: List[int]
++    rows: array
++    round: int
++
++
++class CartridgePool:
++    """Bookkeeping for the GPU cartridge table: pages, LRU eviction, rows.
++
++    The table holds ``capacity_rows`` embedding rows in pages of ``page_rows``.
++    Every prefill admission round reserves the cartridges its requests still
++    need to prefill; ``load`` writes a cartridge's rows when it becomes
++    resident. A cartridge reserved in one of the last ``protected_rounds``
++    rounds is never evicted, so a batch still in flight keeps reading its rows.
++    Every attention-TP rank sees the same admissions and makes the same choices.
++    """
++
++    def __init__(
++        self,
++        capacity_rows: int,
++        load: Callable[[Any, Sequence[int]], None],
++        *,
++        page_rows: int = 16,
++        protected_rounds: int = 2,
++    ):
++        if capacity_rows < page_rows or page_rows <= 0 or protected_rounds < 1:
++            raise ValueError("cartridge pool is smaller than one page")
++        self.page_rows = page_rows
++        self.num_pages = capacity_rows // page_rows
++        self.load = load
++        self.protected_rounds = protected_rounds
++        self.free_pages: List[int] = list(range(self.num_pages - 1, -1, -1))
++        self.resident: collections.OrderedDict[str, _Resident] = (
++            collections.OrderedDict()
++        )
++        self.round = 0
++        self.loads = 0
++        self.evictions = 0
++
++    def pages_for(self, num_tokens: int) -> int:
++        return -(-num_tokens // self.page_rows)
++
++    def fits(self, num_tokens: int) -> bool:
++        return self.pages_for(num_tokens) <= self.num_pages
++
++    def begin_round(self) -> None:
++        self.round += 1
++
++    def _evictable(self, entry: _Resident) -> bool:
++        return entry.round <= self.round - self.protected_rounds
++
++    def admit(self, ref: Any, prefix_len: int) -> bool:
++        """Reserve ``ref`` (sha256, path, num_tokens, start) for this round.
++
++        Returns False when the table cannot hold it now; the request then
++        waits for a later round, like a request waiting for KV memory.
++        """
++        entry = self.resident.get(ref.sha256)
++        if entry is not None:
++            entry.round = self.round
++            self.resident.move_to_end(ref.sha256)
++            return True
++        if prefix_len >= ref.start + ref.num_tokens:
++            return True
++
++        needed = self.pages_for(ref.num_tokens)
++        if needed > self.num_pages:
++            return False
++        evictable = [
++            key for key, value in self.resident.items() if self._evictable(value)
++        ]
++        reclaimable = sum(len(self.resident[key].pages) for key in evictable)
++        if len(self.free_pages) + reclaimable < needed:
++            return False
++        for key in evictable:
++            if len(self.free_pages) >= needed:
++                break
++            self.free_pages.extend(reversed(self.resident.pop(key).pages))
++            self.evictions += 1
++
++        pages = [self.free_pages.pop() for _ in range(needed)]
++        rows = array(
++            "i",
++            (
++                pages[slot // self.page_rows] * self.page_rows + slot % self.page_rows
++                for slot in range(ref.num_tokens)
++            ),
++        )
++        try:
++            self.load(ref, rows)
++        except BaseException:
++            self.free_pages.extend(reversed(pages))
++            raise
++        self.resident[ref.sha256] = _Resident(pages=pages, rows=rows, round=self.round)
++        self.loads += 1
++        return True
++
++    def rows(self, sha256: str) -> array:
++        entry = self.resident.get(sha256)
++        if entry is None or entry.round != self.round:
++            raise RuntimeError("cartridge was not admitted in this prefill round")
++        return entry.rows
++
++
++_pool: Optional[CartridgePool] = None
++
++
++def set_pool(pool: Optional[CartridgePool]) -> None:
++    global _pool
++    _pool = pool
++
++
++def get_pool() -> Optional[CartridgePool]:
++    return _pool
++
++
++def gather_indices(
++    spans: Iterable[Tuple[int, int, int, int, Optional[Sequence[int]]]],
++) -> Tuple[array, array]:
++    """Destination token rows and source table rows for one extend batch.
++
++    Each span is (first row of the request in the batch, prefix length,
++    extend length, first cartridge position, table rows of the cartridge).
++    Only cartridge positions inside this extend are written, so a cached
++    cartridge prefix or a chunk past the cartridge contributes nothing.
++    """
++    dst, src = array("i"), array("i")
++    for offset, prefix_len, extend_len, start, rows in spans:
++        if rows is None:
++            continue
++        first = max(prefix_len, start)
++        last = min(prefix_len + extend_len, start + len(rows))
++        if first >= last:
++            continue
++        dst.extend(range(offset + first - prefix_len, offset + last - prefix_len))
++        src.extend(rows[first - start : last - start])
++    return dst, src

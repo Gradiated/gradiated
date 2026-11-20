@@ -1,0 +1,12 @@
+--- a/sglang/srt/model_executor/runner/prefill_cuda_graph_runner.py
++++ b/sglang/srt/model_executor/runner/prefill_cuda_graph_runner.py
+@@ -2134,6 +2134,9 @@
+         # The n-gram hasher runs outside the graph and reads this at replay.
+         static_forward_batch.ngram_embedding_info = forward_batch.ngram_embedding_info
+         static_forward_batch.engram_history = forward_batch.engram_history
++        # The cartridge scatter runs outside the graph and reads these at replay.
++        static_forward_batch.cartridge_dst = forward_batch.cartridge_dst
++        static_forward_batch.cartridge_src = forward_batch.cartridge_src
+         # The engram lookup break reads the staged rows at replay.
+         static_forward_batch.engram_staged_rows = forward_batch.engram_staged_rows
+         # The encoder replay fold: a replay builds the same window floors and

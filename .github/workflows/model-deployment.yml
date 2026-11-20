@@ -120,6 +120,7 @@ jobs:
           python3 -m unittest discover -s product/inference/runtimes/deepseek-sglang -p test_config.py
           python3 -m unittest discover -s product/inference/runtimes/kimi-k31 -p test_config.py
           python3 -m unittest discover -s product/inference/bundles/kimi-k31-pro/tests -p test_verify_environment.py
+          python3 -m unittest discover -s product/inference/bundles/glm-5-3-flash-sglang/tests -p 'test_*.py'
           python3 -m unittest discover -s product/inference/runtimes/energy -p 'test_*.py'
       - id: bundles
         run: echo "bundles=$(node tools/models/release.mjs list)" >> "$GITHUB_OUTPUT"

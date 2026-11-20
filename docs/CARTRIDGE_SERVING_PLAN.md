@@ -51,31 +51,54 @@ There is no console upload UI yet; staff use the API.
 
 ## Serving (SGLang)
 
-Cartridges reuse SGLang's multimodal precomputed-embedding path instead of
-patching the embedding layer:
+Cartridges use a small dedicated path instead of SGLang's multimodal
+precomputed-embedding path. For DeepSeek V4.1 the multimodal path would:
+
+- turn off breakable prefill CUDA graphs server-wide;
+- add per-request host work and host syncs to every prefill forward;
+- ship K x hidden_size tensors with every request;
+- feed pad values to Engram hashing and hash-routed MoE layers.
+
+The bundle patches the embedding output instead, and they leave
+`VocabParallelEmbedding` unchanged:
 
 - **Resolution.** The tokenizer manager's adapter resolver returns
-  `kind: "cartridge"`. The adapter loader downloads, verifies and caches the
-  file, and registers it in a GPU **cartridge pool** keyed by its sha256. The
-  pool is bounded by `--cartridge-pool-bytes` and evicts the least recently used
-  cartridge with no running requests.
-- **Placement.** After the chat template is rendered, the tokenizer manager
-  inserts K placeholder positions, plus the separator tokens, at the start of
-  the system prompt, adding an empty system message when the request has none.
-  The cartridge becomes one multimodal item with precomputed features whose
-  identity is the cartridge sha256.
-- **Isolation and caching.** SGLang replaces an item's placeholder positions
-  with pad values derived from its identity. The radix cache therefore shares a
-  cartridge prefix between requests that use the same cartridge, and never
-  between different cartridges. Customer text cannot produce pad values, so
-  only the inserted positions receive cartridge embeddings.
-- **Embedding.** The model's existing multimodal embedding routine writes the
-  cartridge rows at those positions; DeepSeek V4.1 already uses it for vision.
-  When `slot_token_ids` are present, Engram hashes those IDs at the cartridge
-  positions, so serving matches training.
-- **Speculative decoding.** DSPARK draft layers read the target model's hidden
-  states, and their own embedding lookups must use the same cartridge rows.
-  Qualification runs with speculative decoding on.
+  `kind: "cartridge"` with the verified local path, sha256 and K. The adapter
+  loader downloads, verifies and caches the file. Only chat completions place
+  cartridges; other endpoints reject cartridge names.
+- **Placement.** The chat endpoint renders the request twice. One render
+  starts the system prompt with the slot text and the separator, as in
+  training; the other starts it with the separator alone. An empty system
+  message is added when the request has none. The first position where the
+  two renders differ is where the cartridge starts. Prompt content never
+  decides placement, and the slot IDs must appear there exactly or the request
+  fails.
+- **Token IDs.** The cartridge positions keep the slot token IDs. Engram
+  hashing, hash routing and logprobs therefore read the IDs the cartridge was
+  trained behind, with no override. Serving requires `slot_token_ids`.
+- **Isolation and caching.** The scheduler namespaces `extra_key` as
+  `cartridge:<sha256>`, prepended to any caller key. The radix cache and HiCache
+  share a cartridge prefix only between requests for the same cartridge, even
+  when different cartridges use the same slot IDs.
+- **GPU table.** Each rank holds a bf16 table bounded by
+  `--cartridge-pool-bytes`, in 16-row pages. Prefill admission reserves the
+  cartridges each round still needs to prefill, and loads missing ones from the
+  verified file. When the table is full, it evicts the least recently used
+  cartridge that neither this round nor the previous one reserved; a batch
+  still in flight therefore keeps its rows. A request waits only when the
+  table is full of reserved cartridges, as it would for KV memory.
+- **Embedding.** `prepare_for_extend` builds, on the host, the destination
+  token rows and table rows of the cartridge positions in the extend. These
+  are copied with the input IDs. After the token-embedding lookup, one Triton
+  kernel copies those rows. Inside the breakable prefill graph the copy runs
+  as a graph break that reads the live batch.
+- **Speculative decoding.** DSPARK's draft takes the target's hidden states
+  for the prompt and embeds only its own block tokens, so it needs no
+  cartridge work. Qualification runs with speculative decoding on.
+- **Unsupported, rejected at startup:** full or piecewise prefill graphs,
+  pipeline parallelism, prefill context parallelism, encoder SWA replay and
+  PD disaggregation. Cartridge requests reject media, sessions and raw
+  `input_ids`.
 
 ### Mixed batches cost nothing extra
 
@@ -109,8 +132,10 @@ production DeepSeek V4.1 Flash configuration:
 - prefill throughput with warm cartridges, matching the uncached prompt suffix
   alone.
 
-The change is carried as a bundle patch shaped for upstream: a cartridge
-resolver, the pool, template-time insertion and the Engram ID override.
+The change is carried as bundle patches shaped for upstream (`cartridge_*.patch`):
+a cartridge resolver, the GPU table, template-time placement with slot IDs as
+token IDs, and the embedding scatter. The GPU test plan and benchmark are in
+[`product/inference/benchmarks/CARTRIDGE.md`](../product/inference/benchmarks/CARTRIDGE.md).
 
 ## Gateway and billing
 

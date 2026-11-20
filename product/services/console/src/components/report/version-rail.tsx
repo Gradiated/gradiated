@@ -133,7 +133,7 @@ export const VersionFacts = ({
             )}
           </Detail>
           <Detail label="Adapter">{adapter}</Detail>
-          <Detail label="Adapter size">{formatFileSize(sizeBytes)}</Detail>
+          <Detail label="Size">{formatFileSize(sizeBytes)}</Detail>
         </dl>
       </RailSection>
     </>

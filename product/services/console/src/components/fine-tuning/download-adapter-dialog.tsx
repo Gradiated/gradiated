@@ -128,8 +128,9 @@ export const DownloadAdapterDialog = ({
         <DialogHeader>
           <DialogTitle>Download {version.name}</DialogTitle>
           <DialogDescription>
-            A standard PEFT LoRA adapter you can serve anywhere its base model
-            runs.
+            {adapter.format === "cartridge"
+              ? "A cartridge: learned input embeddings that go in front of the system prompt of the unchanged base model."
+              : "A standard PEFT LoRA adapter you can serve anywhere its base model runs."}
           </DialogDescription>
         </DialogHeader>
 
@@ -153,7 +154,7 @@ export const DownloadAdapterDialog = ({
               <span className="text-muted-foreground">Unknown</span>
             )}
           </Detail>
-          <Detail label={adapter.format === "cartridge" ? "Positions" : "Rank"}>
+          <Detail label={adapter.format === "cartridge" ? "Tokens" : "Rank"}>
             <span className="tabular-nums">
               {adapter.format === "cartridge"
                 ? adapter.num_tokens.toLocaleString()
@@ -185,8 +186,11 @@ export const DownloadAdapterDialog = ({
         {adapter.format === "cartridge" ? (
           <p className="text-xs text-muted-foreground">
             <span className="font-mono">cartridge.safetensors</span> holds the
-            cartridge's learned input embeddings, which go in front of the
-            system prompt.
+            embeddings
+            {adapter.has_slot_token_ids
+              ? " and the token IDs they were trained behind"
+              : ""}
+            .
           </p>
         ) : (
           <div className="space-y-2">

@@ -73,15 +73,16 @@ metric), `title` and `caption`.
 
 | Tag | Shows | Extra attributes |
 | --- | --- | --- |
-| `{% eval-summary /%}` | Headline result, a tile per model, the difference with a 95% interval, and the case count | |
-| `{% eval-breakdown /%}` | Each model's score for all cases and for each value of a tag | `by` (tag key) |
+| `{% eval-summary /%}` | Headline result, a tile per model, the difference, and the task count | `by` (tag key; names the groups where the first model is furthest ahead and behind) |
+| `{% eval-breakdown /%}` | Each model's score for each value of a tag, or for all cases without `by` | `by` (tag key) |
 | `{% eval-head-to-head /%}` | How many cases each model did better on, or the same | `by` |
 | `{% eval-case-grid /%}` | One square per case, coloured by which model did better | `by` |
-| `{% eval-examples /%}` | The cases with the largest gap, with the most common failure | `where` = `better` (default) or `worse`; `limit` (default 5) |
+| `{% eval-examples /%}` | The cases with the largest gap, with each model's score | `where` = `better` (default) or `worse`; `limit` (default 5) |
 | `{% eval-cases /%}` | Searchable case list with tag filters and per-model results | |
 
-Clicking a case opens it beside the report: the conversation, the expected
-result, and each model's rollouts with their checks and traces. The open case
+Reports call cases **tasks** and rollouts **runs**. Clicking a task opens it
+beside the report: the conversation, the expected result, and each model's runs
+with their checks and traces. The open case
 is in the page URL (`?eval=…&case=…`), so links open straight to it.
 
 ```markdown

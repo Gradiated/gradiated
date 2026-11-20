@@ -198,7 +198,7 @@ export const reportConfig: Config = {
       render: "Tab",
       attributes: { title: { type: String, required: true } },
     },
-    "eval-summary": evalTag("EvalSummary"),
+    "eval-summary": evalTag("EvalSummary", { by: { type: String } }),
     "eval-breakdown": evalTag("EvalBreakdown", { by: { type: String } }),
     "eval-head-to-head": evalTag("EvalHeadToHead", { by: { type: String } }),
     "eval-case-grid": evalTag("EvalCaseGrid", { by: { type: String } }),

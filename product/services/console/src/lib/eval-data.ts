@@ -228,3 +228,65 @@ export const messageText = (rollout: EvalRollout) =>
       ].join(" "),
     )
     .join(" ");
+
+// Mulberry32: a seeded generator keeps the interval stable between renders.
+const seeded = (seed: number) => () => {
+  seed = (seed + 0x6d2b79f5) | 0;
+  let value = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+  value = (value + Math.imul(value ^ (value >>> 7), 61 | value)) ^ value;
+  return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+};
+
+// Resamples interval_group_by groups (untagged cases alone): rollouts of one
+// case or project aren't independent. Only groups scored for both models count.
+export const differenceInterval = (
+  index: EvalIndex,
+  a: EvalModel,
+  b: EvalModel,
+  metric: EvalMetric,
+) => {
+  const key = index.eval.interval_group_by;
+  const groups = [
+    ...(key ? groupCases(index, key).map((group) => group.ids) : []),
+    ...index.cases
+      .filter((item) => !key || item.tags[key] === undefined)
+      .map((item) => [item.id]),
+  ];
+  const totals = groups
+    .map((ids) => ({
+      a: aggregate(index, a.id, metric, ids),
+      b: aggregate(index, b.id, metric, ids),
+    }))
+    .filter((total) => total.a.n && total.b.n);
+  if (totals.length < 2) return null;
+
+  const next = seeded(7);
+  const deltas: number[] = [];
+
+  for (let draw = 0; draw < 2000; draw++) {
+    let sumA = 0;
+    let countA = 0;
+    let sumB = 0;
+    let countB = 0;
+    for (let pick = 0; pick < totals.length; pick++) {
+      const total = totals[Math.floor(next() * totals.length)]!;
+      sumA += (total.a.mean ?? 0) * total.a.n;
+      countA += total.a.n;
+      sumB += (total.b.mean ?? 0) * total.b.n;
+      countB += total.b.n;
+    }
+
+    if (countA && countB)
+      deltas.push(
+        (sumA / countA - sumB / countB) * (metric.higher_is_better ? 1 : -1),
+      );
+  }
+
+  deltas.sort((left, right) => left - right);
+  return deltas.length
+    ? {
+        low: deltas[Math.floor(deltas.length * 0.025)]!,
+        high: deltas[Math.floor(deltas.length * 0.975)]!,
+      }
+    : null;
+};

@@ -5,8 +5,8 @@ import type {
   EvalModel,
   EvalRollout,
 } from "@gradiated/contracts";
-import { ChevronLeft, ChevronRight, CircleCheck, CircleX } from "lucide-react";
-import { useState } from "react";
+import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,130 +26,158 @@ import {
   type EvalIndex,
 } from "@/lib/eval-data";
 import { cn } from "@/lib/utils";
-import { MODEL_COLORS, TagChip } from "./eval-blocks";
 import type { EvalView } from "./eval-context";
+import { ModelMark, SectionLabel } from "./eval-ui";
 import { TraceView } from "./trace-view";
 
-const Conversation = ({
-  index,
-  caseId,
+const Card = ({
+  className,
+  children,
 }: {
-  index: EvalIndex;
-  caseId: string;
-}) => {
-  const messages = index.caseById
-    .get(caseId)!
-    .messages.filter((message) => message.content);
-  const [showAll, setShowAll] = useState(false);
-  const hidden = showAll ? 0 : Math.max(0, messages.length - 3);
+  className?: string;
+  children: ReactNode;
+}) => (
+  <section
+    className={cn("flex min-w-0 flex-col rounded-xl border bg-card", className)}
+  >
+    {children}
+  </section>
+);
+
+const LABELS = {
+  system: "System",
+  user: "User",
+  assistant: "Assistant",
+  tool: "Tool",
+};
+const CONTEXT_CHARS = 400;
+
+const Request = ({ messages }: { messages: EvalMessage[] }) => {
+  const shown = messages.filter(
+    (message): message is EvalMessage & { role: keyof typeof LABELS } =>
+      message.role in LABELS && Boolean(message.content),
+  );
+  const request = shown.findLastIndex((message) => message.role === "user");
+  const earlier = shown.slice(0, Math.max(request, 0));
+  const [open, setOpen] = useState(false);
 
   return (
-    <section className="flex min-w-0 flex-col gap-2 rounded-xl border bg-card px-5 py-4">
-      <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-        Conversation
-      </h3>
-      {hidden ? (
-        <button
-          type="button"
-          onClick={() => setShowAll(true)}
-          className="self-start text-xs text-muted-foreground hover:text-foreground"
-        >
-          Show {hidden} earlier messages
-        </button>
-      ) : null}
-      {messages.slice(hidden).map((message, position, shown) => {
-        const last = position === shown.length - 1;
-
-        return (
-          <div
-            key={position}
-            className={cn(
-              "max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm leading-6 whitespace-pre-wrap break-words",
-              message.role === "user" ? "self-end" : "self-start bg-muted",
-              message.role === "user" &&
-                (last ? "bg-foreground text-background" : "bg-muted"),
-            )}
-          >
-            {last && message.role === "user" ? (
-              <span className="mb-1 block text-[11px] opacity-70">
-                Case request
-              </span>
-            ) : null}
-            {message.content}
+    <div className="flex min-w-0 flex-col gap-2">
+      <span className="text-xs text-muted-foreground">Request</span>
+      {earlier.length ? (
+        open ? (
+          <div className="flex flex-col gap-2 border-l-2 pl-3">
+            {earlier.map((message, position) => (
+              <p
+                key={position}
+                className="text-[13px] leading-5 break-words whitespace-pre-wrap text-muted-foreground"
+              >
+                <span className="font-medium text-foreground/70">
+                  {LABELS[message.role]}:
+                </span>{" "}
+                {message.content!.length > CONTEXT_CHARS
+                  ? `${message.content!.slice(0, CONTEXT_CHARS)}…`
+                  : message.content}
+              </p>
+            ))}
           </div>
-        );
-      })}
-    </section>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="self-start text-xs text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground"
+          >
+            Show {earlier.length} earlier{" "}
+            {earlier.length === 1 ? "message" : "messages"}
+          </button>
+        )
+      ) : null}
+      {request >= 0 ? (
+        <p className="text-[15px] leading-6 break-words whitespace-pre-wrap">
+          {shown[request]!.content}
+        </p>
+      ) : null}
+    </div>
   );
 };
 
 const asText = (value: unknown) =>
   typeof value === "string" ? value : JSON.stringify(value, null, 2);
 
-const Output = ({ value }: { value: unknown }) => (
-  <pre className="max-h-64 overflow-auto rounded-md bg-muted px-3 py-2 font-mono text-xs leading-5 whitespace-pre-wrap break-words">
-    {asText(value)}
-  </pre>
-);
-
 const Expected = ({ index, caseId }: { index: EvalIndex; caseId: string }) => {
   const { expected, expected_output: output } = index.caseById.get(caseId)!;
   if (!expected.length && output === undefined) return null;
 
   return (
-    <section className="flex min-w-0 flex-col gap-2 rounded-xl border bg-card px-5 py-4">
-      <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-        Expected{expected.length ? ` · ${expected.length}` : ""}
-      </h3>
-      {output === undefined ? null : <Output value={output} />}
-      <table className="w-full text-sm">
-        <tbody>
+    <div className="flex min-w-0 flex-col gap-2">
+      <span className="text-xs text-muted-foreground">
+        {expected.length === 1 ? "Expected change" : "Expected"}
+        {expected.length > 1 ? ` · ${expected.length} changes` : ""}
+      </span>
+      {output !== undefined ? (
+        <pre className="max-h-64 overflow-auto rounded-md bg-muted/70 px-3 py-2 font-mono text-xs leading-5 whitespace-pre-wrap">
+          {asText(output)}
+        </pre>
+      ) : null}
+      {expected.length ? (
+        <ul className="flex flex-col gap-2.5">
           {expected.map((row, position) => (
-            <tr
-              key={row.id ?? position}
-              className="border-b align-top last:border-0"
-            >
-              <td className="py-1.5 pr-3">{row.group}</td>
-              <td className="py-1.5 pr-3 text-muted-foreground">{row.label}</td>
-              <td className="py-1.5 font-mono text-xs leading-5">
-                {row.value}
-              </td>
-            </tr>
+            <li key={row.id ?? position} className="flex flex-col gap-0.5">
+              <span className="text-[15px] leading-6">
+                {row.label} <span className="text-muted-foreground">→</span>{" "}
+                <span className="font-mono text-[13px]">{row.value}</span>
+              </span>
+              {row.group ? (
+                <span className="text-[13px] leading-5 text-muted-foreground">
+                  {row.group}
+                </span>
+              ) : null}
+            </li>
           ))}
-        </tbody>
-      </table>
-    </section>
+        </ul>
+      ) : null}
+    </div>
   );
 };
 
+const SHOWN_CHECKS = 5;
+
 const Checks = ({ checks }: { checks: EvalCheck[] }) => {
-  const [showAll, setShowAll] = useState(false);
+  const [all, setAll] = useState(false);
   const groups = [
     {
       title: "Wrong or missing",
+      dot: "bg-red-600",
       rows: checks.filter(
         (check) => check.status === "wrong" || check.status === "missing",
       ),
     },
     {
       title: "Not requested",
+      dot: "bg-amber-500",
       rows: checks.filter((check) => check.status === "unexpected"),
     },
   ].filter((group) => group.rows.length);
   if (!groups.length) return null;
 
-  let budget = showAll ? Infinity : 6;
   const total = groups.reduce((sum, group) => sum + group.rows.length, 0);
+  let budget = all ? Infinity : SHOWN_CHECKS;
 
   return (
-    <div className="flex flex-col gap-1">
-      <table className="w-full table-fixed text-xs">
+    <div className="overflow-hidden rounded-lg border">
+      <table className="w-full table-fixed text-[13px]">
+        <colgroup>
+          <col className="w-[22%]" />
+          <col className="w-[22%]" />
+          <col />
+          <col />
+        </colgroup>
         <thead>
-          <tr className="text-left text-muted-foreground">
-            <th className="py-1 font-normal">Record</th>
-            <th className="py-1 font-normal">Field</th>
-            <th className="py-1 font-normal">Expected</th>
-            <th className="py-1 font-normal">This rollout</th>
+          <tr className="border-b text-left text-xs text-muted-foreground">
+            <th className="px-3 py-2 font-normal">Record</th>
+            <th className="px-3 py-2 font-normal">Field</th>
+            <th className="px-3 py-2 font-normal">Expected</th>
+            <th className="px-3 py-2 font-normal">This run</th>
           </tr>
         </thead>
         <tbody>
@@ -159,40 +187,42 @@ const Checks = ({ checks }: { checks: EvalCheck[] }) => {
             if (!rows.length) return null;
 
             return [
-              <tr key={group.title}>
-                <td colSpan={4} className="pt-2 pb-1 font-medium">
-                  {group.title} · {group.rows.length}
+              <tr key={group.title} className="border-b bg-muted/50">
+                <td colSpan={4} className="px-3 py-1.5 text-xs">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className={cn("size-1.5 rounded-full", group.dot)} />
+                    {group.title}
+                    <span className="text-muted-foreground">
+                      · {group.rows.length}
+                    </span>
+                  </span>
                 </td>
               </tr>,
               ...rows.map((check, position) => (
                 <tr
                   key={`${group.title}-${position}`}
-                  className="border-t align-top"
+                  className="border-b align-top last:border-0"
                 >
-                  <td className="py-1.5 pr-2 break-words">
+                  <td className="px-3 py-2 break-words">
                     {check.group ?? "—"}
                   </td>
-                  <td className="py-1.5 pr-2 break-words text-muted-foreground">
-                    {check.label}
-                  </td>
-                  <td className="py-1.5 pr-2 font-mono break-words">
+                  <td className="px-3 py-2 break-words">{check.label}</td>
+                  <td className="px-3 py-2 font-mono text-xs leading-5 break-words">
                     {check.expected ?? "—"}
                   </td>
-                  <td className="py-1.5 font-mono break-words">
-                    <span
-                      className={
-                        check.status === "missing"
-                          ? "text-muted-foreground"
-                          : "text-red-700"
-                      }
-                    >
-                      {check.actual ?? "—"}
-                    </span>
+                  <td className="px-3 py-2 font-mono text-xs leading-5 break-words">
                     {check.status === "missing" ? (
-                      <span className="block font-sans text-[11px] text-muted-foreground">
-                        Not changed
+                      <span className="text-muted-foreground">
+                        {check.actual ?? "—"}
+                        <span className="block font-sans text-[11px]">
+                          not changed
+                        </span>
                       </span>
-                    ) : null}
+                    ) : (
+                      <span className="text-[#bb322b]">
+                        {check.actual ?? "—"}
+                      </span>
+                    )}
                   </td>
                 </tr>
               )),
@@ -200,105 +230,132 @@ const Checks = ({ checks }: { checks: EvalCheck[] }) => {
           })}
         </tbody>
       </table>
-      {!showAll && total > 6 ? (
+      {!all && total > SHOWN_CHECKS ? (
         <button
           type="button"
-          onClick={() => setShowAll(true)}
-          className="self-start text-xs text-muted-foreground hover:text-foreground"
+          onClick={() => setAll(true)}
+          className="w-full border-t px-3 py-2 text-left text-xs text-muted-foreground hover:text-foreground"
         >
-          Show {total - 6} more
+          Show {total - SHOWN_CHECKS} more
         </button>
       ) : null}
     </div>
   );
 };
 
+const plural = (count: number, word: string) =>
+  `${count.toLocaleString()} ${word}${count === 1 ? "" : "s"}`;
+
 const Result = ({
   rollout,
+  messages,
   metric,
 }: {
   rollout: EvalRollout;
+  messages: EvalMessage[];
   metric: EvalMetric;
 }) => {
+  if (rollout.status !== "completed")
+    return (
+      <div className="flex flex-col gap-3 border-l-4 border-l-border px-5 py-4">
+        <div className="flex flex-col gap-1">
+          <p className="font-semibold">Didn’t finish</p>
+          <p className="text-[13px] text-muted-foreground">
+            {rollout.error ?? `The run ended with ${rollout.status}.`} Left out
+            of the scores.
+          </p>
+        </div>
+        <Checks checks={rollout.checks} />
+      </div>
+    );
+
   const passed = passedOf(rollout, metric);
   const counts = checkCounts(rollout);
   const expected = counts.passed + counts.wrong + counts.missing;
-  const calls = rollout.messages.reduce(
+  const calls = messages.reduce(
     (sum, message) => sum + (message.tool_calls?.length ?? 0),
     0,
   );
+  const replies = messages.filter((message) => message.role === "user").length;
   const stats = [
-    calls ? `${calls} tool calls` : null,
+    rollout.duration_ms ? `${(rollout.duration_ms / 1000).toFixed(1)} s` : null,
+    calls ? plural(calls, "tool call") : null,
+    replies ? plural(replies, "user reply") : null,
     rollout.usage?.output_tokens
-      ? `${rollout.usage.output_tokens.toLocaleString()} output tokens`
+      ? plural(rollout.usage.output_tokens, "output token")
       : null,
-    rollout.duration_ms ? `${Math.round(rollout.duration_ms / 1000)} s` : null,
   ].filter(Boolean);
-
-  if (rollout.status !== "completed")
-    return (
-      <div className="rounded-lg border border-dashed px-4 py-3 text-sm">
-        <p className="font-medium">Didn’t complete ({rollout.status})</p>
-        {rollout.error ? (
-          <p className="text-xs text-muted-foreground">{rollout.error}</p>
-        ) : null}
-        <p className="text-xs text-muted-foreground">Left out of the scores.</p>
-      </div>
-    );
+  const title =
+    metric.kind !== "pass"
+      ? `${metric.name}: ${formatMetric(metric, scoreOf(rollout, metric))}`
+      : passed === null
+        ? "Not scored"
+        : passed
+          ? "Passed"
+          : "Failed";
 
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 rounded-lg border-l-4 bg-muted/40 px-4 py-3",
+        "flex flex-col gap-3 border-l-4 px-5 py-4",
         passed === false
-          ? "border-l-red-600"
+          ? "border-l-[#bb322b]"
           : passed
-            ? "border-l-[#6e7f31]"
+            ? "border-l-[#8aa63a]"
             : "border-l-border",
       )}
     >
-      <div className="flex items-center gap-2">
-        {passed === null ? null : passed ? (
-          <CircleCheck aria-hidden className="size-5 text-[#6e7f31]" />
-        ) : (
-          <CircleX aria-hidden className="size-5 text-red-600" />
+      <div className="flex items-center gap-3">
+        {passed === null ? null : (
+          <span
+            className={cn(
+              "grid size-9 shrink-0 place-items-center rounded-full",
+              passed
+                ? "bg-[#f2f7d9] text-[#475617]"
+                : "bg-[#fcecea] text-[#bb322b]",
+            )}
+          >
+            {passed ? (
+              <Check aria-hidden className="size-4.5" />
+            ) : (
+              <X aria-hidden className="size-4.5" />
+            )}
+          </span>
         )}
-        <span className="text-base font-semibold">
-          {metric.kind === "pass"
-            ? passed === null
-              ? "Not scored"
-              : passed
-                ? "Passed"
-                : "Failed"
-            : `${metric.name}: ${formatMetric(metric, scoreOf(rollout, metric))}`}
-        </span>
+        <div className="flex flex-col">
+          <span className="text-base leading-6 font-semibold">{title}</span>
+          {expected ? (
+            <span className="text-[13px] text-muted-foreground">
+              {counts.passed} of {expected} expected changes made
+              {counts.unexpected ? ` · ${counts.unexpected} not requested` : ""}
+            </span>
+          ) : null}
+        </div>
       </div>
       {expected ? (
-        <>
-          <p className="text-sm">
-            {counts.passed} of {expected} expected changes made
-            {counts.unexpected ? ` · ${counts.unexpected} not requested` : ""}
-          </p>
-          <div className="flex h-1.5 overflow-hidden rounded-full bg-muted">
-            <span className="bg-[#6e7f31]" style={{ flex: counts.passed }} />
-            <span
-              className="bg-red-500"
-              style={{ flex: counts.wrong + counts.missing }}
-            />
-            <span
-              className="bg-amber-400"
-              style={{ flex: counts.unexpected }}
-            />
-          </div>
-        </>
-      ) : null}
-      {rollout.output === undefined ? null : <Output value={rollout.output} />}
-      {rollout.explanation ? (
-        <p className="text-sm text-muted-foreground">{rollout.explanation}</p>
+        <div className="flex h-1.5 gap-px overflow-hidden rounded-full">
+          <span className="bg-[#8aa63a]" style={{ flex: counts.passed }} />
+          <span
+            className="bg-[#e07a72]"
+            style={{ flex: counts.wrong + counts.missing }}
+          />
+          <span className="bg-[#e4c880]" style={{ flex: counts.unexpected }} />
+        </div>
       ) : null}
       {stats.length ? (
-        <p className="text-xs text-muted-foreground">{stats.join(" · ")}</p>
+        <p className="text-[13px] text-muted-foreground">{stats.join(" · ")}</p>
       ) : null}
+      {rollout.output !== undefined ? (
+        <pre className="max-h-64 overflow-auto rounded-md bg-muted/70 px-3 py-2 font-mono text-xs leading-5 whitespace-pre-wrap">
+          {asText(rollout.output)}
+        </pre>
+      ) : null}
+      {rollout.explanation ? (
+        <p className="text-[13px] text-muted-foreground">
+          {rollout.explanation}
+        </p>
+      ) : null}
+      <Checks checks={rollout.checks} />
     </div>
   );
 };
@@ -306,7 +363,7 @@ const Result = ({
 const same = (left?: EvalMessage, right?: EvalMessage) =>
   left?.role === right?.role && left?.content === right?.content;
 
-// Traces repeat either the whole case conversation or only its final request.
+// Traces repeat either the whole task conversation or only its final request.
 const withoutPrefix = (messages: EvalMessage[], prefix: EvalMessage[]) => {
   if (
     prefix.length &&
@@ -321,46 +378,40 @@ const ModelColumn = ({
   index,
   caseId,
   model,
-  color,
   metric,
 }: {
   index: EvalIndex;
   caseId: string;
   model: EvalModel;
-  color: string;
   metric: EvalMetric;
 }) => {
   const rollouts = rolloutsOf(index, caseId, model.id);
   const [selected, setSelected] = useState(0);
   const rollout = rollouts[Math.min(selected, rollouts.length - 1)];
+  const messages = rollout
+    ? withoutPrefix(rollout.messages, index.caseById.get(caseId)!.messages)
+    : [];
 
   return (
-    <section className="flex min-w-0 flex-col gap-3 rounded-xl border bg-card px-5 py-4">
-      <div className="flex flex-col gap-0.5">
-        <span className="flex items-center gap-2 font-semibold">
-          <span
-            aria-hidden
-            className="size-2.5 rounded-sm"
-            style={{ background: color }}
-          />
-          {model.name}
-        </span>
-        {model.description ? (
-          <span className="text-xs text-muted-foreground">
-            {model.description}
-          </span>
-        ) : null}
-        {model.setup?.notes ? (
-          <span className="text-xs text-muted-foreground">
-            {model.setup.notes}
-          </span>
-        ) : null}
-      </div>
-      {rollouts.length ? (
-        <>
+    <Card>
+      <div className="flex flex-col gap-3 px-5 pt-4 pb-3">
+        <div className="flex items-center gap-2.5">
+          <ModelMark model={model} boxed />
+          <div className="flex min-w-0 flex-col">
+            <span className="text-[15px] leading-5 font-semibold">
+              {model.name}
+            </span>
+            {model.description ? (
+              <span className="text-xs text-muted-foreground">
+                {model.description}
+              </span>
+            ) : null}
+          </div>
+        </div>
+        {rollouts.length ? (
           <div
             role="tablist"
-            aria-label={`${model.name} rollouts`}
+            aria-label={`${model.name} runs`}
             className="flex flex-wrap gap-1.5"
           >
             {rollouts.map((item, position) => {
@@ -374,50 +425,51 @@ const ModelColumn = ({
                   aria-selected={item === rollout}
                   onClick={() => setSelected(position)}
                   className={cn(
-                    "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs",
+                    "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[13px]",
                     item === rollout
                       ? "border-foreground"
-                      : "text-muted-foreground",
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  {passed === null ? null : passed ? (
-                    <CircleCheck
-                      aria-hidden
-                      className="size-3.5 text-[#6e7f31]"
-                    />
-                  ) : (
-                    <CircleX aria-hidden className="size-3.5 text-red-600" />
+                  {passed === null ? null : (
+                    <span
+                      className={cn(
+                        "grid size-3.5 place-items-center rounded-full",
+                        passed
+                          ? "bg-[#f2f7d9] text-[#475617]"
+                          : "bg-[#fcecea] text-[#bb322b]",
+                      )}
+                    >
+                      {passed ? (
+                        <Check aria-hidden className="size-2.5" />
+                      ) : (
+                        <X aria-hidden className="size-2.5" />
+                      )}
+                    </span>
                   )}
-                  Rollout {position + 1}
-                  {metric.kind === "pass"
-                    ? null
-                    : ` · ${formatMetric(metric, scoreOf(item, metric))}`}
+                  Run {position + 1}
                 </button>
               );
             })}
           </div>
-          {rollout ? (
-            <>
-              <Result rollout={rollout} metric={metric} />
-              <Checks checks={rollout.checks} />
-              <h4 className="pt-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Trace
-              </h4>
-              <TraceView
-                messages={withoutPrefix(
-                  rollout.messages,
-                  index.caseById.get(caseId)!.messages,
-                )}
-              />
-            </>
-          ) : null}
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No runs for this task.
+          </p>
+        )}
+      </div>
+      {rollout ? (
+        <>
+          <div className="border-t">
+            <Result rollout={rollout} messages={messages} metric={metric} />
+          </div>
+          <div className="flex flex-col gap-3 border-t px-5 py-4">
+            <SectionLabel>Rollout</SectionLabel>
+            <TraceView messages={messages} />
+          </div>
         </>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          No rollouts for this case.
-        </p>
-      )}
-    </section>
+      ) : null}
+    </Card>
   );
 };
 
@@ -449,14 +501,14 @@ export const EvalCasePanel = ({
         className="w-full overflow-y-auto bg-background p-0 sm:max-w-[min(1440px,96vw)]"
       >
         {index && item ? (
-          <div className="flex flex-col gap-4 px-6 py-5">
+          <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-5 px-8 py-6">
             <div className="flex flex-wrap items-center justify-between gap-3 pr-8">
-              <span className="text-xs text-muted-foreground">
+              <span className="text-[13px] text-muted-foreground">
                 {index.eval.title}
               </span>
               {position >= 0 ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground tabular-nums">
+                  <span className="mr-1 text-[13px] text-muted-foreground tabular-nums">
                     {position + 1} of {order.length}
                   </span>
                   <Button
@@ -478,33 +530,30 @@ export const EvalCasePanel = ({
                 </div>
               ) : null}
             </div>
-            <div className="flex flex-col gap-2">
-              <SheetTitle className="text-xl font-semibold tracking-tight">
+            <div className="flex flex-col gap-2.5">
+              <SheetTitle className="text-2xl leading-8 font-semibold tracking-[-0.01em]">
                 {item.title}
               </SheetTitle>
-              <SheetDescription className="flex flex-wrap gap-1">
-                {Object.entries(item.tags).map(([key, value]) => (
-                  <TagChip key={key} name={key} value={value} />
-                ))}
+              <SheetDescription className="text-[13px] text-muted-foreground">
+                {Object.values(item.tags).join(" · ")}
               </SheetDescription>
               {item.description ? (
-                <p className="text-sm text-muted-foreground">
+                <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
                   {item.description}
                 </p>
               ) : null}
             </div>
-            <div className="grid gap-4 lg:grid-cols-2">
-              <Conversation index={index} caseId={item.id} />
+            <Card className="grid gap-6 px-5 py-4 lg:grid-cols-2">
+              <Request messages={item.messages} />
               <Expected index={index} caseId={item.id} />
-            </div>
-            <div className="grid gap-4 lg:grid-cols-2">
-              {pickModels(index, view?.models).map((model, slot) => (
+            </Card>
+            <div className="grid items-start gap-4 lg:grid-cols-2">
+              {pickModels(index, view?.models).map((model) => (
                 <ModelColumn
                   key={`${item.id}-${model.id}`}
                   index={index}
                   caseId={item.id}
                   model={model}
-                  color={MODEL_COLORS[slot] ?? MODEL_COLORS[0]}
                   metric={pickMetric(index, view?.metric)}
                 />
               ))}

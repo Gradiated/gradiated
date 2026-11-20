@@ -148,7 +148,7 @@ title: Support actions, round one
 
 ## Results
 
-{% eval-summary eval="support.eval.json" /%}
+{% eval-summary eval="support.eval.json" by="Difficulty" /%}
 
 {% columns %}
 {% eval-breakdown eval="support.eval.json" by="Difficulty" title="Pass rate by difficulty" /%}

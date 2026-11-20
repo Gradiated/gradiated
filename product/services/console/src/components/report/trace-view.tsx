@@ -1,15 +1,20 @@
 import type { EvalMessage } from "@gradiated/contracts";
-import { ChevronRight, MessageCircleQuestion, Wrench } from "lucide-react";
+import { ChevronRight, Lightbulb, Wrench } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
+import { MessageMarkdown } from "@/components/playground/message-markdown";
 import { cn } from "@/lib/utils";
 
 type ToolCall = NonNullable<EvalMessage["tool_calls"]>[number];
-type Step =
-  | { kind: "message"; message: EvalMessage }
-  | { kind: "call"; call: ToolCall; result?: EvalMessage };
+type CallStep = {
+  kind: "call";
+  call: ToolCall;
+  result?: EvalMessage | undefined;
+};
+type Step = { kind: "message"; message: EvalMessage } | CallStep;
 
 const ASK_USER = /^(ask_user|ask_human|request_user_input)$/;
+const GROUP_AFTER = 4;
 
 const pretty = (text: string) => {
   try {
@@ -19,6 +24,11 @@ const pretty = (text: string) => {
   }
 };
 
+const toolName = (name: string) => {
+  const words = name.replace(/[_-]+/g, " ").trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
+
 const argsPreview = (text: string) => {
   try {
     const value: unknown = JSON.parse(text);
@@ -26,9 +36,9 @@ const argsPreview = (text: string) => {
       return Object.entries(value)
         .map(
           ([key, item]) =>
-            `${key}: ${typeof item === "string" ? item : JSON.stringify(item)}`,
+            `${key.replace(/_/g, " ")}: ${typeof item === "string" ? item : JSON.stringify(item)}`,
         )
-        .join(", ");
+        .join(" · ");
   } catch {
     return text;
   }
@@ -51,7 +61,7 @@ const questionOf = (call: ToolCall) => {
 
 const toSteps = (messages: EvalMessage[]) => {
   const steps: Step[] = [];
-  const pending = new Map<string, Extract<Step, { kind: "call" }>>();
+  const pending = new Map<string, CallStep>();
 
   for (const message of messages) {
     if (message.role === "tool" && message.tool_call_id) {
@@ -62,13 +72,11 @@ const toSteps = (messages: EvalMessage[]) => {
       }
     }
 
-    if (message.role === "assistant" && (message.content || message.reasoning))
+    if (message.role !== "assistant" || message.content || message.reasoning)
       steps.push({ kind: "message", message: { ...message, tool_calls: [] } });
-    else if (message.role !== "assistant")
-      steps.push({ kind: "message", message });
 
     for (const call of message.tool_calls ?? []) {
-      const step: Extract<Step, { kind: "call" }> = { kind: "call", call };
+      const step: CallStep = { kind: "call", call };
       pending.set(call.id, step);
       steps.push(step);
     }
@@ -77,25 +85,88 @@ const toSteps = (messages: EvalMessage[]) => {
   return steps;
 };
 
-const Disclosure = ({
-  summary,
-  children,
-  className,
-}: {
-  summary: ReactNode;
-  children: ReactNode;
-  className?: string;
-}) => {
+const Code = ({ children }: { children: string }) => (
+  <pre className="max-h-80 overflow-auto rounded-md bg-muted/70 px-3 py-2 font-mono text-[11.5px] leading-5 break-words whitespace-pre-wrap">
+    {children}
+  </pre>
+);
+
+const Thought = ({ text }: { text: string }) => {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className={cn("min-w-0 rounded-lg border bg-card", className)}>
+    <div className="flex flex-col gap-1.5">
       <button
         type="button"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
-        className="flex w-full min-w-0 items-center gap-2 px-3 py-2 text-left text-xs"
+        className="inline-flex items-center gap-1.5 self-start text-[12.5px] text-muted-foreground hover:text-foreground"
       >
+        <Lightbulb aria-hidden className="size-3.5" />
+        Thought · {text.length.toLocaleString()} characters
+      </button>
+      {open ? (
+        <p className="border-l-2 pl-3 text-[12.5px] leading-5 whitespace-pre-wrap text-muted-foreground">
+          {text}
+        </p>
+      ) : null}
+    </div>
+  );
+};
+
+const Bubble = ({
+  label,
+  align,
+  children,
+}: {
+  label: string;
+  align: "left" | "right";
+  children: ReactNode;
+}) => (
+  <div
+    className={cn(
+      "flex max-w-[88%] flex-col gap-0.5 rounded-xl px-3.5 py-2.5",
+      align === "right" ? "ml-auto bg-muted" : "mr-auto border bg-card",
+    )}
+  >
+    <span className="text-[11.5px] text-muted-foreground">{label}</span>
+    <div className="text-sm leading-6 break-words whitespace-pre-wrap">
+      {children}
+    </div>
+  </div>
+);
+
+const ToolCard = ({ call, result }: Omit<CallStep, "kind">) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className={cn(
+        "rounded-lg border bg-card",
+        result?.is_error && "border-red-200",
+      )}
+    >
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+        className="flex w-full min-w-0 items-center gap-2 px-3 py-2 text-left text-[13px]"
+      >
+        <Wrench
+          aria-hidden
+          className="size-3.5 shrink-0 text-muted-foreground"
+        />
+        <span className="shrink-0 font-medium">
+          {toolName(call.function.name)}
+        </span>
+        <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground">
+          {argsPreview(call.function.arguments)}
+        </span>
+        {result?.is_error ? (
+          <span className="shrink-0 rounded bg-red-50 px-1.5 text-[11px] text-red-700">
+            Error
+          </span>
+        ) : null}
         <ChevronRight
           aria-hidden
           className={cn(
@@ -103,128 +174,61 @@ const Disclosure = ({
             open && "rotate-90",
           )}
         />
-        {summary}
       </button>
-      {open ? <div className="border-t px-3 py-2.5">{children}</div> : null}
+      {open ? (
+        <div className="flex flex-col gap-2 border-t px-3 py-2.5">
+          <span className="text-[11.5px] text-muted-foreground">Arguments</span>
+          <Code>{pretty(call.function.arguments)}</Code>
+          <span className="text-[11.5px] text-muted-foreground">Result</span>
+          {result ? (
+            <Code>{pretty(result.content ?? "")}</Code>
+          ) : (
+            <span className="text-xs text-muted-foreground">
+              No result recorded.
+            </span>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 };
 
-const Code = ({ children }: { children: string }) => (
-  <pre className="max-h-96 overflow-auto rounded-md bg-muted px-3 py-2 font-mono text-[11px] leading-5 whitespace-pre-wrap break-words">
-    {children}
-  </pre>
-);
+const StepView = ({ step }: { step: Step }) => {
+  if (step.kind === "call") {
+    if (!ASK_USER.test(step.call.function.name))
+      return <ToolCard call={step.call} result={step.result} />;
 
-const Bubble = ({ role, children }: { role: string; children: ReactNode }) => (
-  <div
-    className={cn(
-      "flex flex-col gap-1 rounded-xl px-3.5 py-2.5 text-sm leading-6",
-      role === "user" ? "bg-muted" : "bg-card",
-    )}
-  >
-    <span className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-      {role === "user"
-        ? "User"
-        : role === "system"
-          ? "System"
-          : role === "tool"
-            ? "Tool"
-            : "Assistant"}
-    </span>
-    <div className="whitespace-pre-wrap break-words">{children}</div>
-  </div>
-);
-
-const MessageStep = ({ message }: { message: EvalMessage }) => (
-  <div className="flex flex-col gap-2">
-    {message.reasoning ? (
-      <Disclosure
-        className="border-dashed bg-transparent"
-        summary={
-          <span className="min-w-0 truncate text-muted-foreground">
-            <span className="font-medium text-foreground/80">Thinking</span>
-            {" · "}
-            {message.reasoning.slice(0, 140)}
-          </span>
-        }
-      >
-        <p className="text-xs leading-5 whitespace-pre-wrap text-muted-foreground">
-          {message.reasoning}
-        </p>
-      </Disclosure>
-    ) : null}
-    {message.content ? (
-      <Bubble role={message.role}>{message.content}</Bubble>
-    ) : null}
-  </div>
-);
-
-const CallStep = ({
-  call,
-  result,
-}: {
-  call: ToolCall;
-  result?: EvalMessage | undefined;
-}) => {
-  if (ASK_USER.test(call.function.name))
     return (
-      <div className="flex flex-col gap-2">
-        <div className="flex gap-2 rounded-xl border bg-card px-3.5 py-2.5 text-sm leading-6">
-          <MessageCircleQuestion
-            aria-hidden
-            className="mt-1 size-4 shrink-0 text-muted-foreground"
-          />
-          <div className="min-w-0 whitespace-pre-wrap break-words">
-            {questionOf(call)}
-          </div>
-        </div>
-        {result?.content ? <Bubble role="user">{result.content}</Bubble> : null}
-      </div>
+      <>
+        <Bubble label="Question for the user" align="left">
+          {questionOf(step.call)}
+        </Bubble>
+        {step.result?.content ? (
+          <Bubble label="User" align="right">
+            {step.result.content}
+          </Bubble>
+        ) : null}
+      </>
     );
+  }
+
+  const { message } = step;
+  if (message.role === "user")
+    return (
+      <Bubble label="User" align="right">
+        {message.content}
+      </Bubble>
+    );
+  if (message.role !== "assistant")
+    return message.content ? <Code>{message.content}</Code> : null;
 
   return (
-    <Disclosure
-      className={cn(result?.is_error && "border-red-200")}
-      summary={
-        <>
-          <Wrench
-            aria-hidden
-            className="size-3.5 shrink-0 text-muted-foreground"
-          />
-          <span className="shrink-0 font-mono font-medium">
-            {call.function.name}
-          </span>
-          <span className="min-w-0 truncate font-mono text-muted-foreground">
-            {argsPreview(call.function.arguments)}
-          </span>
-          {result?.is_error ? (
-            <span className="ml-auto shrink-0 rounded bg-red-50 px-1.5 py-0.5 text-[11px] text-red-700">
-              Error
-            </span>
-          ) : null}
-        </>
-      }
-    >
-      <div className="flex flex-col gap-2">
-        <span className="text-[11px] text-muted-foreground">Arguments</span>
-        <Code>{pretty(call.function.arguments)}</Code>
-        {result ? (
-          <>
-            <span className="text-[11px] text-muted-foreground">Result</span>
-            <Code>{pretty(result.content ?? "")}</Code>
-          </>
-        ) : (
-          <span className="text-xs text-muted-foreground">
-            No result recorded.
-          </span>
-        )}
-      </div>
-    </Disclosure>
+    <>
+      {message.reasoning ? <Thought text={message.reasoning} /> : null}
+      {message.content ? <MessageMarkdown content={message.content} /> : null}
+    </>
   );
 };
-
-const GROUP_AFTER = 4;
 
 const isPlainCall = (step: Step) =>
   step.kind === "call" && !ASK_USER.test(step.call.function.name);
@@ -259,15 +263,8 @@ export const TraceView = ({ messages }: { messages: EvalMessage[] }) => {
   }
 
   return steps.length ? (
-    <div className="flex min-w-0 flex-col gap-2">{blocks}</div>
+    <div className="flex min-w-0 flex-col gap-2.5">{blocks}</div>
   ) : (
     <p className="text-sm text-muted-foreground">No trace recorded.</p>
   );
 };
-
-const StepView = ({ step }: { step: Step }) =>
-  step.kind === "message" ? (
-    <MessageStep message={step.message} />
-  ) : (
-    <CallStep call={step.call} result={step.result} />
-  );

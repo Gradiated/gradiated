@@ -8,6 +8,7 @@ import { EvalDataContext } from "../src/components/report/eval-context";
 import { parseReport } from "../src/components/report/report-schema";
 import {
   aggregate,
+  differenceInterval,
   parseEval,
   pickModels,
   verdictOf,
@@ -76,31 +77,21 @@ describe("difference interval groups", () => {
     const grouped = structuredClone(sampleEval);
     grouped.interval_group_by = "Customer";
     grouped.cases[0]!.tags = { ...grouped.cases[0]!.tags, Customer: "Acme" };
-    const html = renderToStaticMarkup(
-      createElement(
-        EvalDataContext.Provider,
-        {
-          value: new Map([
-            [
-              "a.eval.json",
-              {
-                status: "ready" as const,
-                index: parseEval(JSON.stringify(grouped)),
-              },
-            ],
-          ]),
-        },
-        createElement(EvalSummary, { eval: "a.eval.json" }),
-      ),
-    );
+    const groupedIndex = parseEval(JSON.stringify(grouped));
+    const [a, b] = groupedIndex.models;
 
-    const [, low, high] = /95% interval (\S+) pts to (\S+) pts/.exec(html)!;
-    expect(low).not.toBe(high);
+    const interval = differenceInterval(
+      groupedIndex,
+      a!,
+      b!,
+      groupedIndex.metric,
+    )!;
+    expect(interval.low).not.toBe(interval.high);
   });
 });
 
 describe("difference interval pairing", () => {
-  it("shows no interval when the models were never scored on the same case", () => {
+  it("has no interval when the models were never scored on the same case", () => {
     const unpaired = structuredClone(sampleEval);
     for (const rollout of unpaired.rollouts)
       if (
@@ -108,6 +99,20 @@ describe("difference interval pairing", () => {
         (rollout.case_id === "case-1")
       )
         rollout.status = "error";
+    const unpairedIndex = parseEval(JSON.stringify(unpaired));
+    const [a, b] = unpairedIndex.models;
+
+    expect(
+      differenceInterval(unpairedIndex, a!, b!, unpairedIndex.metric),
+    ).toBeNull();
+  });
+});
+
+describe("eval summary headline", () => {
+  it("does not call models level when one has no scored runs", () => {
+    const missing = structuredClone(sampleEval);
+    for (const rollout of missing.rollouts)
+      if (rollout.model_id === "support-mini") rollout.status = "error";
     const html = renderToStaticMarkup(
       createElement(
         EvalDataContext.Provider,
@@ -117,7 +122,7 @@ describe("difference interval pairing", () => {
               "a.eval.json",
               {
                 status: "ready" as const,
-                index: parseEval(JSON.stringify(unpaired)),
+                index: parseEval(JSON.stringify(missing)),
               },
             ],
           ]),
@@ -126,7 +131,8 @@ describe("difference interval pairing", () => {
       ),
     );
 
-    expect(html).not.toContain("95% interval");
+    expect(html).toContain("not enough scored runs");
+    expect(html).not.toContain("on par");
   });
 });
 
@@ -157,8 +163,7 @@ describe("eval report tags", () => {
       ),
     );
 
-    expect(html).toContain("passes 83.3%");
-    expect(html).toContain("against 72.2%");
-    expect(html).toContain("6 cases");
+    expect(html).toContain("passes 83.3% of runs, against 72.2%");
+    expect(html).toContain("6 tasks");
   });
 });

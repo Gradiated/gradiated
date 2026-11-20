@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { TaskVersionAdapter } from "@gradiated/contracts";
+import type { PeftLoraAdapter } from "@gradiated/contracts";
 import type { ControlDatabase } from "../../src/db/client.js";
 import { eq } from "drizzle-orm";
 import { tasks, workspaces } from "../../src/db/schema/index.js";
@@ -7,7 +7,7 @@ import { createCatalogService } from "../../src/catalog/service.js";
 import type { TrainingInput } from "../../src/training/types.js";
 import { modelInput, seedMember } from "./fixtures.js";
 
-export const trainingAdapter: TaskVersionAdapter = {
+export const trainingAdapter: PeftLoraAdapter = {
   format: "peft_lora",
   artifact_uri: "s3://test/adapter",
   sha256: "a".repeat(64),

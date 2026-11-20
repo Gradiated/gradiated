@@ -3324,11 +3324,18 @@
           },
           "config_url": {
             "type": "string",
-            "format": "uri"
+            "format": "uri",
+            "description": "LoRA uploads only."
           },
           "weights_url": {
             "type": "string",
-            "format": "uri"
+            "format": "uri",
+            "description": "LoRA uploads only."
+          },
+          "cartridge_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Cartridge uploads only."
           },
           "expires_at": {
             "type": "string",
@@ -3338,58 +3345,112 @@
         },
         "required": [
           "id",
-          "config_url",
-          "weights_url",
           "expires_at"
         ]
       },
       "CreateModelUpload": {
-        "type": "object",
-        "properties": {
-          "task": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 128
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "format": {
+                "type": "string",
+                "enum": [
+                  "cartridge"
+                ]
+              },
+              "task": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "create_task": {
+                "type": "boolean",
+                "default": false
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+              },
+              "base_model_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "cartridge_size": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 4294967296,
+                "description": "Size of cartridge.safetensors in bytes."
+              }
+            },
+            "required": [
+              "format",
+              "task",
+              "name",
+              "base_model_id",
+              "cartridge_size"
+            ],
+            "additionalProperties": false
           },
-          "create_task": {
-            "type": "boolean",
-            "default": false
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 128,
-            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
-          },
-          "base_model_id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "base_model_revision": {
-            "type": "string",
-            "pattern": "^[0-9a-f]{40}$",
-            "description": "Legacy hint; the uploaded config determines declared training provenance."
-          },
-          "config_size": {
-            "type": "integer",
-            "minimum": 2,
-            "maximum": 65536
-          },
-          "weights_size": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 536870912
+          {
+            "type": "object",
+            "properties": {
+              "format": {
+                "type": "string",
+                "enum": [
+                  "peft_lora"
+                ],
+                "default": "peft_lora"
+              },
+              "task": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "create_task": {
+                "type": "boolean",
+                "default": false
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+              },
+              "base_model_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "base_model_revision": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$",
+                "description": "Legacy hint; the uploaded config determines declared training provenance."
+              },
+              "config_size": {
+                "type": "integer",
+                "minimum": 2,
+                "maximum": 65536
+              },
+              "weights_size": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 536870912
+              }
+            },
+            "required": [
+              "task",
+              "name",
+              "base_model_id",
+              "config_size",
+              "weights_size"
+            ],
+            "additionalProperties": false
           }
-        },
-        "required": [
-          "task",
-          "name",
-          "base_model_id",
-          "config_size",
-          "weights_size"
-        ],
-        "additionalProperties": false
+        ]
       },
       "TaskVersion": {
         "type": "object",
@@ -3451,6 +3512,23 @@
         ]
       },
       "TaskVersionAdapter": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/PeftLoraAdapter"
+          },
+          {
+            "$ref": "#/components/schemas/CartridgeAdapter"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "format",
+          "mapping": {
+            "peft_lora": "#/components/schemas/PeftLoraAdapter",
+            "cartridge": "#/components/schemas/CartridgeAdapter"
+          }
+        }
+      },
+      "PeftLoraAdapter": {
         "type": "object",
         "properties": {
           "format": {
@@ -3470,9 +3548,53 @@
             "type": "integer",
             "minimum": 0
           },
+          "base_model_revision": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300,
+            "description": "Immutable training checkpoint declared in the adapter config, when known."
+          },
+          "declared_base_model_revision": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "validated_base_model_revision": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}$",
+            "description": "Supported base checkpoint used for deterministic tensor validation; this is not proof of training provenance."
+          },
           "rank": {
             "type": "integer",
             "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "format",
+          "artifact_uri",
+          "sha256",
+          "size_bytes",
+          "rank"
+        ]
+      },
+      "CartridgeAdapter": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "cartridge"
+            ]
+          },
+          "artifact_uri": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0
           },
           "base_model_revision": {
             "type": "string",
@@ -3488,6 +3610,30 @@
             "type": "string",
             "pattern": "^[0-9a-f]{40}$",
             "description": "Supported base checkpoint used for deterministic tensor validation; this is not proof of training provenance."
+          },
+          "num_tokens": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "Prompt positions the cartridge occupies."
+          },
+          "hidden_size": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "placement": {
+            "type": "string",
+            "enum": [
+              "system_prompt_start"
+            ]
+          },
+          "separator": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "Text placed between the cartridge and the system prompt."
+          },
+          "has_slot_token_ids": {
+            "type": "boolean",
+            "description": "Whether the cartridge records the token IDs it was trained behind."
           }
         },
         "required": [
@@ -3495,7 +3641,11 @@
           "artifact_uri",
           "sha256",
           "size_bytes",
-          "rank"
+          "num_tokens",
+          "hidden_size",
+          "placement",
+          "separator",
+          "has_slot_token_ids"
         ]
       },
       "StartTrainingRunResponse": {
@@ -5325,9 +5475,28 @@
           "adapter": {
             "type": "object",
             "properties": {
+              "format": {
+                "type": "string",
+                "enum": [
+                  "peft_lora",
+                  "cartridge"
+                ]
+              },
               "rank": {
-                "type": "integer",
-                "exclusiveMinimum": 0
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "exclusiveMinimum": 0,
+                "description": "LoRA rank; null for cartridges."
+              },
+              "num_tokens": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "exclusiveMinimum": 0,
+                "description": "Cartridge positions; null for LoRA adapters."
               },
               "size_bytes": {
                 "type": "integer",
@@ -5342,7 +5511,9 @@
               }
             },
             "required": [
+              "format",
               "rank",
+              "num_tokens",
               "size_bytes",
               "checkpoint"
             ]

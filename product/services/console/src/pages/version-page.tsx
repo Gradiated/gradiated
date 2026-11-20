@@ -449,7 +449,11 @@ const VersionReport = ({
               version.adapter.validated_base_model_revision ??
               version.adapter.base_model_revision
             }
-            rank={version.adapter.rank}
+            adapter={
+              version.adapter.format === "cartridge"
+                ? `Cartridge, ${version.adapter.num_tokens.toLocaleString()} tokens`
+                : `LoRA, rank ${version.adapter.rank}`
+            }
             sizeBytes={version.adapter.size_bytes}
           />
 

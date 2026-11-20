@@ -852,7 +852,13 @@ export const registerTrainingRoutes = (
         base_model_id: report.baseModelId,
         created_at: report.createdAt.toISOString(),
         adapter: {
-          rank: report.adapter.rank,
+          format: report.adapter.format,
+          rank:
+            report.adapter.format === "peft_lora" ? report.adapter.rank : null,
+          num_tokens:
+            report.adapter.format === "cartridge"
+              ? report.adapter.num_tokens
+              : null,
           size_bytes: report.adapter.size_bytes,
           checkpoint:
             report.adapter.validated_base_model_revision ??

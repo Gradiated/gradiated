@@ -215,7 +215,11 @@ export const SharedReportPage = () => {
           <VersionFacts
             baseModelId={summary.baseModelId}
             checkpoint={shared.data.adapter.checkpoint}
-            rank={shared.data.adapter.rank}
+            adapter={
+              shared.data.adapter.format === "cartridge"
+                ? `Cartridge, ${(shared.data.adapter.num_tokens ?? 0).toLocaleString()} tokens`
+                : `LoRA, rank ${shared.data.adapter.rank ?? "unknown"}`
+            }
             sizeBytes={shared.data.adapter.size_bytes}
           />
         </aside>

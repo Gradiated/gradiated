@@ -86,7 +86,10 @@ describe("model upload routes", () => {
     const response = await post(app, input);
     expect(response.status).toBe(201);
     expect(response.headers.get("cache-control")).toBe("no-store");
-    expect(create).toHaveBeenCalledWith(user.id, workspaceId, input);
+    expect(create).toHaveBeenCalledWith(user.id, workspaceId, {
+      ...input,
+      format: "peft_lora",
+    });
   });
   it("requires authentication for completion", async () => {
     const complete = vi.fn();

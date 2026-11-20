@@ -5,6 +5,11 @@ import type { TaskVersionRecord } from "./records.js";
 import { createTrainingStore } from "./store.js";
 
 export const requireLoadableAdapter = (version: TaskVersionRecord) => {
+  if (version.adapter.format === "cartridge")
+    throw new ControlServiceError(
+      "unavailable",
+      "Cartridge versions cannot be served yet.",
+    );
   if (
     !(
       version.adapter.validated_base_model_revision ??

@@ -9,6 +9,8 @@ const LayerCountSchema = z.number().int().min(1).max(4096);
 const ExpertCountSchema = z.number().int().min(0).max(4096);
 const ConfigurationSchema = z.object({
   num_hidden_layers: LayerCountSchema,
+  hidden_size: z.number().int().positive().optional(),
+  vocab_size: z.number().int().positive().optional(),
   n_routed_experts: ExpertCountSchema.nullable().optional(),
   num_local_experts: ExpertCountSchema.nullable().optional(),
 });
@@ -30,6 +32,8 @@ const DocumentSchema = z
   .passthrough();
 export type BaseModelConfiguration = {
   layerCount: number;
+  hiddenSize?: number;
+  vocabSize?: number;
   expertCount: number;
   expertLayers?: number[];
   projectionShapes?: ProjectionShapes;
@@ -118,6 +122,8 @@ export const readBaseModelConfiguration = async (
       return {
         ...(projectionShapes ? { projectionShapes } : {}),
         layerCount: config.num_hidden_layers,
+        ...(config.hidden_size ? { hiddenSize: config.hidden_size } : {}),
+        ...(config.vocab_size ? { vocabSize: config.vocab_size } : {}),
         expertCount,
         ...(expertCount ? { expertLayers } : {}),
       };

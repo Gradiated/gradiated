@@ -75,32 +75,64 @@ export const RunEvaluationSchema = z
   .openapi("RunEvaluation");
 export type RunEvaluation = z.infer<typeof RunEvaluationSchema>;
 
-export const TaskVersionAdapterSchema = z
+const AdapterArtifactFields = {
+  artifact_uri: z.string().startsWith("s3://"),
+  sha256: Sha256Schema,
+  size_bytes: CountSchema,
+  base_model_revision: z
+    .string()
+    .min(1)
+    .max(300)
+    .optional()
+    .describe(
+      "Immutable training checkpoint declared in the adapter config, when known.",
+    ),
+  declared_base_model_revision: z.string().max(300).optional(),
+  validated_base_model_revision: z
+    .string()
+    .regex(/^[0-9a-f]{40}$/)
+    .optional()
+    .describe(
+      "Supported base checkpoint used for deterministic tensor validation; this is not proof of training provenance.",
+    ),
+};
+export const PeftLoraAdapterSchema = z
   .object({
     format: z.literal("peft_lora"),
-    artifact_uri: z.string().startsWith("s3://"),
-    sha256: Sha256Schema,
-    size_bytes: CountSchema,
+    ...AdapterArtifactFields,
     rank: z.number().int().positive(),
-    base_model_revision: z
+  })
+  .openapi("PeftLoraAdapter");
+export const CARTRIDGE_FILE = "cartridge.safetensors";
+export const CARTRIDGE_FORMAT = "gradiated.cartridge/1";
+export const CartridgeAdapterSchema = z
+  .object({
+    format: z.literal("cartridge"),
+    ...AdapterArtifactFields,
+    num_tokens: z
+      .number()
+      .int()
+      .positive()
+      .describe("Prompt positions the cartridge occupies."),
+    hidden_size: z.number().int().positive(),
+    placement: z.literal("system_prompt_start"),
+    separator: z
       .string()
-      .min(1)
-      .max(300)
-      .optional()
+      .max(64)
+      .describe("Text placed between the cartridge and the system prompt."),
+    has_slot_token_ids: z
+      .boolean()
       .describe(
-        "Immutable training checkpoint declared in the adapter config, when known.",
-      ),
-    declared_base_model_revision: z.string().max(300).optional(),
-    validated_base_model_revision: z
-      .string()
-      .regex(/^[0-9a-f]{40}$/)
-      .optional()
-      .describe(
-        "Supported base checkpoint used for deterministic tensor validation; this is not proof of training provenance.",
+        "Whether the cartridge records the token IDs it was trained behind.",
       ),
   })
+  .openapi("CartridgeAdapter");
+export const TaskVersionAdapterSchema = z
+  .discriminatedUnion("format", [PeftLoraAdapterSchema, CartridgeAdapterSchema])
   .openapi("TaskVersionAdapter");
 export type TaskVersionAdapter = z.infer<typeof TaskVersionAdapterSchema>;
+export type PeftLoraAdapter = z.infer<typeof PeftLoraAdapterSchema>;
+export type CartridgeAdapter = z.infer<typeof CartridgeAdapterSchema>;
 
 const GpuSchema = z.object({
   type: z.string(),
@@ -543,33 +575,50 @@ export const EvaluationResultsSchema = z
 
 export const MAX_UPLOADED_ADAPTER_RANK = 8;
 export const MAX_ADAPTER_BYTES = 512 * 1024 * 1024;
+export const MAX_CARTRIDGE_BYTES = 4 * 1024 * 1024 * 1024;
+const UploadTargetFields = {
+  task: ModelNameSegmentSchema,
+  create_task: z.boolean().default(false),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .max(MAX_MODEL_NAME_SEGMENT_LENGTH)
+    .regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/),
+  base_model_id: ModelIdSchema,
+};
+export const LoraModelUploadSchema = z.strictObject({
+  format: z.literal("peft_lora").default("peft_lora"),
+  ...UploadTargetFields,
+  base_model_revision: z
+    .string()
+    .regex(/^[0-9a-f]{40}$/)
+    .optional()
+    .describe(
+      "Legacy hint; the uploaded config determines declared training provenance.",
+    ),
+  config_size: z.number().int().min(2).max(65536),
+  weights_size: z.number().int().positive().max(MAX_ADAPTER_BYTES),
+});
+const CartridgeUploadSchema = z.strictObject({
+  format: z.literal("cartridge"),
+  ...UploadTargetFields,
+  cartridge_size: z
+    .number()
+    .int()
+    .positive()
+    .max(MAX_CARTRIDGE_BYTES)
+    .describe(`Size of ${CARTRIDGE_FILE} in bytes.`),
+});
 export const CreateModelUploadSchema = z
-  .strictObject({
-    task: ModelNameSegmentSchema,
-    create_task: z.boolean().default(false),
-    name: z
-      .string()
-      .trim()
-      .min(1)
-      .max(MAX_MODEL_NAME_SEGMENT_LENGTH)
-      .regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/),
-    base_model_id: ModelIdSchema,
-    base_model_revision: z
-      .string()
-      .regex(/^[0-9a-f]{40}$/)
-      .optional()
-      .describe(
-        "Legacy hint; the uploaded config determines declared training provenance.",
-      ),
-    config_size: z.number().int().min(2).max(65536),
-    weights_size: z.number().int().positive().max(MAX_ADAPTER_BYTES),
-  })
+  .union([CartridgeUploadSchema, LoraModelUploadSchema])
   .openapi("CreateModelUpload");
 export const ModelUploadSchema = z
   .object({
     id: UuidSchema,
-    config_url: z.url(),
-    weights_url: z.url(),
+    config_url: z.url().optional().describe("LoRA uploads only."),
+    weights_url: z.url().optional().describe("LoRA uploads only."),
+    cartridge_url: z.url().optional().describe("Cartridge uploads only."),
     expires_at: TimestampSchema,
   })
   .openapi("ModelUpload");
@@ -577,6 +626,7 @@ export const ModelUploadPathSchema = WorkspacePathSchema.extend({
   upload_id: UuidSchema,
 });
 export type CreateModelUpload = z.infer<typeof CreateModelUploadSchema>;
+export type CreateModelUploadInput = z.input<typeof CreateModelUploadSchema>;
 
 export const MAX_VERSION_FILE_BYTES = 100 * 1024 * 1024;
 export const MAX_VERSION_FILE_CONTENT_BYTES = 2 * 1024 * 1024;
@@ -666,7 +716,19 @@ export const SharedReportSchema = z
     base_model_id: ModelIdSchema,
     created_at: TimestampSchema.describe("When the version was delivered."),
     adapter: z.object({
-      rank: z.number().int().positive(),
+      format: z.enum(["peft_lora", "cartridge"]),
+      rank: z
+        .number()
+        .int()
+        .positive()
+        .nullable()
+        .describe("LoRA rank; null for cartridges."),
+      num_tokens: z
+        .number()
+        .int()
+        .positive()
+        .nullable()
+        .describe("Cartridge positions; null for LoRA adapters."),
       size_bytes: CountSchema,
       checkpoint: z
         .string()

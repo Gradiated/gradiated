@@ -68,12 +68,12 @@ export const ReportContents = ({
 export const VersionFacts = ({
   baseModelId,
   checkpoint,
-  rank,
+  adapter,
   sizeBytes,
 }: {
   baseModelId: string;
   checkpoint: string | null | undefined;
-  rank: number;
+  adapter: string;
   sizeBytes: number;
 }) => {
   const models = useQuery(modelsQuery());
@@ -132,7 +132,7 @@ export const VersionFacts = ({
               <span className="text-muted-foreground">Unknown</span>
             )}
           </Detail>
-          <Detail label="Rank">{rank}</Detail>
+          <Detail label="Adapter">{adapter}</Detail>
           <Detail label="Adapter size">{formatFileSize(sizeBytes)}</Detail>
         </dl>
       </RailSection>

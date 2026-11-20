@@ -176,7 +176,9 @@ export const EvalSchema = z
     );
     const models = new Set(value.models.map((model) => model.id));
     const cases = new Set(value.cases.map((item) => item.id));
-    const rollouts = new Set(value.rollouts.map((rollout) => rollout.id));
+    const rollouts = new Map(
+      value.rollouts.map((rollout) => [rollout.id, rollout.case_id]),
+    );
 
     if (!unique(value.metrics, (metric) => metric.id))
       issue("Metric IDs must be unique.", ["metrics"]);
@@ -220,8 +222,14 @@ export const EvalSchema = z
     });
 
     value.comparisons.forEach((comparison, index) => {
-      if (!rollouts.has(comparison.a) || !rollouts.has(comparison.b))
-        issue("Comparisons must name two rollouts.", ["comparisons", index]);
+      if (
+        rollouts.get(comparison.a) !== comparison.case_id ||
+        rollouts.get(comparison.b) !== comparison.case_id
+      )
+        issue("Comparisons must name two rollouts of their case.", [
+          "comparisons",
+          index,
+        ]);
     });
   });
 

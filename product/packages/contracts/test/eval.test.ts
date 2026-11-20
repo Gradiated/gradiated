@@ -78,6 +78,17 @@ describe("EvalSchema", () => {
     expect(EvalSchema.safeParse(input).success).toBe(false);
   });
 
+  it("rejects comparisons of rollouts from another case", () => {
+    const input = {
+      ...valid(),
+      comparisons: [{ case_id: "case-2", a: "r1", b: "r2", winner: "a" }],
+    };
+
+    expect(EvalSchema.safeParse(input).error?.issues[0]?.message).toBe(
+      "Comparisons must name two rollouts of their case.",
+    );
+  });
+
   it("rejects duplicate rollout IDs", () => {
     const input = valid();
     input.rollouts[1]!.id = "r1";

@@ -127,9 +127,8 @@ const seeded = (seed: number) => () => {
   return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
 };
 
-// Resamples whole interval_group_by groups (cases without the tag stand alone),
-// because rollouts of one case or one project are not independent. Only groups
-// scored for both models count, so the interval compares like with like.
+// Resamples interval_group_by groups (untagged cases alone): rollouts of one
+// case or project aren't independent. Only groups scored for both models count.
 const differenceInterval = ({ index, a, b, metric }: Ready) => {
   const key = index.eval.interval_group_by;
   const groups = [

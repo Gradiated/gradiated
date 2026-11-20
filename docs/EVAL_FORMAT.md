@@ -32,7 +32,8 @@ to 2 MiB.
       "description": "Custom model · built on Qwen3 8B",
       "kind": "model",
       "setup": { "system_prompt": "Standard prompt", "harness": "Support agent" }
-    }
+    },
+    { "id": "frontier", "name": "Frontier model", "description": "Off the shelf" }
   ],
 
   "cases": [

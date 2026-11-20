@@ -23,6 +23,52 @@ def key(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).digest()[:16]
 
 
+def capture_sources(root, source_dir=None):
+    source_dir = Path(source_dir or Path(__file__).parent)
+    destination = root / "source"
+    destination.mkdir()
+    digests = {}
+    for name in ("audit_scale.py", "data.py", "prepare_scale.py", "scale_data.py"):
+        content = (source_dir / name).read_bytes()
+        (destination / name).write_bytes(content)
+        digests[name] = hashlib.sha256(content).hexdigest()
+    return digests
+
+
+def legacy_acquisitions(manifest, supplied_manifests):
+    if manifest.get("normalization_version") == "canonical-v2-zero-groups-preserved":
+        return []
+    expected = {
+        (item["repo"], item["revision"], item["file"]): item
+        for item in manifest["sources"]
+        if item["repo"] == "tasksource/tasksource-jev-typed-decisions"
+    }
+    supplied = {
+        (item["repo"], item["revision"], item["file"]): item
+        for path in supplied_manifests
+        for item in json.loads(Path(path).read_text())
+    }
+    if not expected.keys() <= supplied.keys():
+        raise ValueError(
+            "legacy Tasksource candidates require explicit --source-manifest acquisitions for zero-group repair"
+        )
+    result = []
+    for identity, original in expected.items():
+        item = supplied[identity]
+        path = Path(item["path"])
+        if (
+            item["sha256"] != original["sha256"]
+            or item["bytes"] != original["bytes"]
+            or path.stat().st_size != original["bytes"]
+            or digest_file(path) != original["sha256"]
+        ):
+            raise ValueError(
+                "legacy acquisition hash differs from candidate-bound source"
+            )
+        result.append(item)
+    return result
+
+
 def decision_keys(row):
     """Align nominal option probabilities by description; ordinal order stays fixed."""
     options = [canonical_text(value) for value in row["descriptions"]]
@@ -88,6 +134,13 @@ def main():
     parser.add_argument("--benchmark", type=Path, required=True)
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--seconds", type=int, default=1200)
+    parser.add_argument(
+        "--source-manifest",
+        type=Path,
+        action="append",
+        default=[],
+        help="Explicit hash-verified raw acquisitions for legacy candidate zero-group repair",
+    )
     args = parser.parse_args()
     import pyarrow.parquet as pq
 
@@ -102,11 +155,13 @@ def main():
     root.mkdir(parents=True, exist_ok=True)
     if any(root.iterdir()):
         raise ValueError("retain previous audits; new output must be empty")
+    source_hashes = capture_sources(root)
     manifest_path = args.candidates / "manifest.json"
     complete = json.loads((args.candidates / "COMPLETE.json").read_text())
     if digest_file(manifest_path) != complete["manifest_sha256"]:
         raise ValueError("candidate manifest digest differs")
     manifest = json.loads(manifest_path.read_text())
+    acquisitions = legacy_acquisitions(manifest, args.source_manifest)
     for item in manifest["files"]:
         check()
         if digest_file(args.candidates / item["file"]) != item["sha256"]:
@@ -131,9 +186,7 @@ def main():
     )
     counts, families = collections.Counter(), collections.Counter()
     zero_group_ids = set()
-    for item in manifest["sources"]:
-        if item["repo"] != "tasksource/tasksource-jev-typed-decisions":
-            continue
+    for item in acquisitions:
         for batch in pq.ParquetFile(item["path"]).iter_batches(
             columns=["id", "group_id"]
         ):
@@ -239,13 +292,13 @@ def main():
     connection.executemany("INSERT INTO disposition VALUES(?,?,?)", pending)
     connection.commit()
     connection.close()
-    source = Path(__file__).read_bytes()
-    (root / "audit_scale.py").write_bytes(source)
     result = {
         "status": "EXACT_AUDIT_ONLY_NOT_ADMITTED",
         "candidate_manifest_sha256": complete["manifest_sha256"],
         "benchmark_sha256": digest_file(args.benchmark),
-        "audit_source_sha256": hashlib.sha256(source).hexdigest(),
+        "audit_source_sha256": source_hashes["audit_scale.py"],
+        "executable_sources_sha256": source_hashes,
+        "verified_legacy_acquisitions": acquisitions,
         "counts": dict(counts),
         "families": dict(families),
         "seconds": time.monotonic() - started,

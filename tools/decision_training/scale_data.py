@@ -12,6 +12,15 @@ def canonical_family(source):
 
 def repair_event_probability_wording(task, key, instructions):
     """Make native k/n event targets answer an event, not a probability threshold."""
+    if task == "partial_observation_calibration" and key == "incident_real":
+        event = "After conditioning on every sensor observation, is the incident real?"
+        if instructions not in {
+            event,
+            "After conditioning on every sensor observation, is the incident more likely real than not?",
+            "What is the posterior probability that the incident is real after conditioning on every sensor observation?",
+        }:
+            raise ValueError("unreviewed sensor posterior question wording")
+        return event
     if task != "arithmetic" or "more likely than not" not in instructions:
         return instructions
     if key == "random_is_deposit" and instructions == (
@@ -57,6 +66,26 @@ def repair_event_probability_wording(task, key, instructions):
     if key == "random_is_long" and match:
         return f"Does a uniformly randomly chosen task take longer than {match[1]} minutes?"
     raise ValueError("unreviewed arithmetic probability-threshold wording")
+
+
+def curate_candidate(row):
+    family = row.get("family_group", row["source_task"])
+    if not family.endswith("/partial_observation_calibration"):
+        return row
+    original = row["question"]["instructions"]
+    repaired = repair_event_probability_wording(
+        "partial_observation_calibration", "incident_real", original
+    )
+    if repaired == original:
+        return row
+    return {
+        **row,
+        "question": {**row["question"], "instructions": repaired},
+        "curation": {
+            "repair": "sensor-event-probability-wording-v1",
+            "original_instructions": original,
+        },
+    }
 
 
 def normalize_verqen(row, question_offset=0):
@@ -150,7 +179,9 @@ def normalize_procedural(row):
                 "label_evidence": "programmatic_target_requires_rendering_audit",
                 "curation": (
                     {
-                        "repair": "native-event-probability-wording-v1",
+                        "repair": "sensor-event-probability-wording-v1"
+                        if row["task"] == "partial_observation_calibration"
+                        else "native-event-probability-wording-v1",
                         "original_instructions": question["instructions"],
                     }
                     if instructions != question["instructions"]

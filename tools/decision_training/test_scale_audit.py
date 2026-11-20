@@ -1,10 +1,74 @@
+import hashlib
+import json
 import sqlite3
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
-from audit_scale import decision_keys, group_components
+from audit_scale import (
+    capture_sources,
+    decision_keys,
+    group_components,
+    legacy_acquisitions,
+)
 
 
 class ScaleAuditTests(unittest.TestCase):
+    def test_portable_legacy_acquisitions_are_explicit_and_hash_verified(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = root / "copied.parquet"
+            raw.write_bytes(b"verified source")
+            original = {
+                "repo": "tasksource/tasksource-jev-typed-decisions",
+                "revision": "pinned",
+                "file": "train.parquet",
+                "path": "/missing/builder/path",
+                "bytes": raw.stat().st_size,
+                "sha256": hashlib.sha256(raw.read_bytes()).hexdigest(),
+            }
+            manifest = {"sources": [original]}
+            with self.assertRaisesRegex(ValueError, "explicit"):
+                legacy_acquisitions(manifest, [])
+            supplied = root / "acquired.json"
+            supplied.write_text(json.dumps([{**original, "path": str(raw)}]))
+            self.assertEqual(
+                legacy_acquisitions(manifest, [supplied])[0]["path"], str(raw)
+            )
+            raw.write_bytes(b"different bytes")
+            with self.assertRaisesRegex(ValueError, "hash"):
+                legacy_acquisitions(manifest, [supplied])
+            self.assertEqual(
+                legacy_acquisitions(
+                    {
+                        **manifest,
+                        "normalization_version": "canonical-v2-zero-groups-preserved",
+                    },
+                    [],
+                ),
+                [],
+            )
+
+    def test_helper_source_change_changes_archived_audit_identity(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name in (
+                "audit_scale.py",
+                "data.py",
+                "prepare_scale.py",
+                "scale_data.py",
+            ):
+                (root / name).write_text("# fixture\n")
+            first = root / "first"
+            first.mkdir()
+            before = capture_sources(first, root)
+            (root / "data.py").write_text("# changed overlap algorithm\n")
+            second = root / "second"
+            second.mkdir()
+            after = capture_sources(second, root)
+            self.assertNotEqual(before["data.py"], after["data.py"])
+            self.assertEqual(before["audit_scale.py"], after["audit_scale.py"])
+
     def row(self):
         return {
             "state": "An order arrived with a damaged item and incomplete shipping address.",

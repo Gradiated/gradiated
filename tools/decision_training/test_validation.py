@@ -187,7 +187,13 @@ class SnapshotTests(unittest.TestCase):
                 (data / name).write_text("{}\n")
             runner = root / "source"
             runner.mkdir()
-            for name in ("train.py", "data.py", "snapshot.py", "distributed.py"):
+            for name in (
+                "train.py",
+                "data.py",
+                "snapshot.py",
+                "distributed.py",
+                "prompting.py",
+            ):
                 (runner / name).write_text("# fixture\n")
             with patch("train.__file__", str(runner / "train.py")):
                 baseline = build_run_identity(root, data, 128)

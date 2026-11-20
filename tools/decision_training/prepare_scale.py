@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 from data import normalize_tasksource, text
-from scale_data import normalize_procedural, normalize_verqen
+from scale_data import curate_candidate, normalize_procedural, normalize_verqen
 
 PINS = {
     "tasksource/tasksource-jev-typed-decisions": "8df2e5c9a33f19a2c2b8febf291c3acb0a91a8a8",
@@ -125,6 +125,7 @@ def main():
                                     raise ValueError(
                                         "existing licence/provenance filter"
                                     )
+                                row = curate_candidate(row)
                                 if repo.endswith("verqen-decisions") and not all(
                                     term in TERMS
                                     for term in row["license"].lower().split("/")
@@ -186,6 +187,8 @@ def main():
     flush()
     manifest = {
         "status": "CANDIDATES_ONLY_NOT_ADMITTED_FOR_TRAINING",
+        "normalization_version": "canonical-v2-zero-groups-preserved",
+        "curation_version": "sensor-event-probability-wording-v1",
         "sources": sources,
         "builder": builder,
         "counts": dict(counts),

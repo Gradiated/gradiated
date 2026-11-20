@@ -10,6 +10,7 @@ import time
 
 from data import read_jsonl
 from distributed import DistributedRun, rank_batches
+from prompting import render_prompt
 from snapshot import verify_snapshot
 
 
@@ -129,7 +130,13 @@ def build_run_identity(root, data, max_length, world_size=1):
     benchmark_dir = root / "jevbench" / "jevbench"
     sources = {
         "runner/" + name: source_dir / name
-        for name in ("train.py", "data.py", "snapshot.py", "distributed.py")
+        for name in (
+            "train.py",
+            "data.py",
+            "snapshot.py",
+            "distributed.py",
+            "prompting.py",
+        )
     }
     for name in ("__init__.py", "scoring.py", "metrics.py", "tasks.py"):
         if not (benchmark_dir / name).is_file():
@@ -273,6 +280,7 @@ def main():
             "data.py",
             "snapshot.py",
             "distributed.py",
+            "prompting.py",
             "compare.py",
             "requirements.txt",
         ):
@@ -331,27 +339,7 @@ def main():
         return {**r, "descriptions": descs}
 
     def encode(r):
-        state = (
-            r["state"]
-            if isinstance(r["state"], str)
-            else json.dumps(r["state"], ensure_ascii=False, sort_keys=True)
-        )
-        q = r["question"]
-        instruction = (
-            q["instructions"]
-            if isinstance(q["instructions"], str)
-            else json.dumps(q["instructions"], ensure_ascii=False)
-        )
-        opts = "\n".join(f"{letters[i]}: {d}" for i, d in enumerate(r["descriptions"]))
-        content = f"State:\n{state}\n\nQuestion:\n{instruction}\n\nOptions:\n{opts}\n\nChoose the correct option. Reply with its letter only."
-        prompt = (
-            tokenizer.apply_chat_template(
-                [{"role": "user", "content": content}],
-                tokenize=False,
-                reasoning_effort="none",
-            )
-            + "<|message_model|><|content_text|>"
-        )
+        prompt = render_prompt(tokenizer, r)
         ids = tokenizer.encode(prompt, add_special_tokens=False)
         return {**r, "ids": ids}
 

@@ -2,6 +2,7 @@ import json
 import unittest
 
 from scale_data import (
+    curate_candidate,
     normalize_procedural,
     normalize_verqen,
     repair_event_probability_wording,
@@ -9,6 +10,43 @@ from scale_data import (
 
 
 class ScaleDataTests(unittest.TestCase):
+    def test_sensor_posterior_targets_keep_event_semantics_and_original_wording(self):
+        original = "After conditioning on every sensor observation, is the incident more likely real than not?"
+        raw = {
+            "id": "sensor",
+            "task": "partial_observation_calibration",
+            "state": "sensor evidence",
+            "questions": {"incident_real": {"type": "noul", "instructions": original}},
+            "answers": {"incident_real": {"noul": 0.8}},
+        }
+        normalized = next(normalize_procedural(raw))
+        self.assertEqual(
+            normalized["question"]["instructions"],
+            "After conditioning on every sensor observation, is the incident real?",
+        )
+        self.assertAlmostEqual(normalized["target"][1], 0.8)
+        self.assertEqual(normalized["curation"]["original_instructions"], original)
+        recast = {
+            **normalized,
+            "family_group": "procedural-typed-decisions/partial_observation_calibration",
+            "question": {
+                **normalized["question"],
+                "instructions": "What is the posterior probability that the incident is real after conditioning on every sensor observation?",
+            },
+        }
+        curated = curate_candidate(recast)
+        self.assertEqual(
+            curated["question"]["instructions"], normalized["question"]["instructions"]
+        )
+        self.assertEqual(curated["target"], recast["target"])
+        self.assertEqual(curate_candidate(curated), curated)
+        with self.assertRaisesRegex(ValueError, "unreviewed sensor"):
+            repair_event_probability_wording(
+                "partial_observation_calibration",
+                "incident_real",
+                "Is the probability above 0.9?",
+            )
+
     def test_graded_event_target_does_not_answer_a_threshold_question(self):
         row = {
             "id": "ledger",

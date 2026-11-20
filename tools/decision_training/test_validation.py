@@ -7,6 +7,7 @@ from tempfile import TemporaryDirectory
 from snapshot import verify_snapshot
 from train import (
     build_run_identity,
+    check_deadline,
     learning_rate_for_step,
     parse_s3_uri,
     validate_experiment_bounds,
@@ -14,6 +15,20 @@ from train import (
 
 
 class RunnerValidationTests(unittest.TestCase):
+    def test_microbatches_cannot_consume_the_evaluation_reserve(self):
+        completed = 0
+        with self.assertRaises(TimeoutError):
+            for now in range(0, 101, 10):
+                check_deadline(100, reserve=20, now=now)
+                completed += 1
+        self.assertEqual(completed, 8)
+        with self.assertRaises(TimeoutError):
+            check_deadline(100, now=100)
+
+    def test_previous_operation_duration_is_reserved_before_starting(self):
+        with self.assertRaises(TimeoutError):
+            check_deadline(100, reserve=20, now=75, estimated_seconds=6)
+
     def test_short_deadlines_and_zero_updates_are_rejected(self):
         base = {
             "steps": 1,

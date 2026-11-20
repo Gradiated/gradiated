@@ -11,6 +11,13 @@ from data import read_jsonl
 from snapshot import verify_snapshot
 
 
+def check_deadline(deadline, reserve=0, now=None, estimated_seconds=0):
+    if (
+        time.monotonic() if now is None else now
+    ) + estimated_seconds >= deadline - reserve:
+        raise TimeoutError("experiment deadline or reserved evaluation window reached")
+
+
 def parse_s3_uri(uri):
     bucket, separator, prefix = uri.removeprefix("s3://").partition("/")
     prefix = prefix.strip("/")
@@ -115,6 +122,8 @@ def main():
         validate_experiment_bounds(vars(args))
     except ValueError as error:
         parser.error(str(error))
+    start = time.monotonic()
+    deadline = start + args.seconds
     import torch
     from peft import LoraConfig, get_peft_model, set_peft_model_state_dict
     from safetensors.torch import load_file
@@ -132,8 +141,6 @@ def main():
     torch.manual_seed(20261120)
     torch.set_num_threads(12)
     OUT.mkdir(parents=True, exist_ok=True)
-    start = time.monotonic()
-    deadline = start + args.seconds
 
     def event(kind, **fields):
         row = {
@@ -148,19 +155,29 @@ def main():
 
     def sync():
         import boto3
+        from botocore.config import Config
 
-        s = boto3.client("s3")
+        check_deadline(deadline)
+        s = boto3.client(
+            "s3",
+            config=Config(
+                connect_timeout=5, read_timeout=30, retries={"total_max_attempts": 3}
+            ),
+        )
         bucket, prefix = s3_bucket, s3_prefix
+
+        def upload(path, key):
+            check_deadline(deadline)
+            s.upload_file(
+                str(path), bucket, key, Callback=lambda _bytes: check_deadline(deadline)
+            )
+
         for base in [OUT, DATA]:
             for p in sorted(
                 base.rglob("*"), key=lambda p: p.name == "checkpoint-complete.json"
             ):
                 if p.is_file() and not p.name.endswith(".tmp"):
-                    s.upload_file(
-                        str(p),
-                        bucket,
-                        prefix + "/" + base.name + "/" + str(p.relative_to(base)),
-                    )
+                    upload(p, prefix + "/" + base.name + "/" + str(p.relative_to(base)))
         for name in [
             "train.py",
             "prepare_data.py",
@@ -171,8 +188,8 @@ def main():
         ]:
             p = ROOT / name
             if p.exists():
-                s.upload_file(str(p), bucket, prefix + "/" + name)
-        s.upload_file(__file__, bucket, prefix + "/source/train.py")
+                upload(p, prefix + "/" + name)
+        upload(__file__, prefix + "/source/train.py")
         event("s3_sync")
 
     identity = build_run_identity(ROOT, DATA, args.max_length)
@@ -282,8 +299,18 @@ def main():
         model.eval()
         predictions = []
         ordered = sorted(rows, key=lambda r: len(r["ids"]))
-        with torch.no_grad():
+        prediction_path = OUT / (name + ".jsonl")
+        if (
+            prediction_path.exists()
+            and prediction_path.stat().st_size
+            and not (OUT / (name + ".json")).exists()
+        ):
+            raise RuntimeError(
+                "partial evaluation exists; retain and repair it rather than replaying requests"
+            )
+        with torch.no_grad(), prediction_path.open("w") as prediction_stream:
             for offset, row in enumerate(ordered):
+                check_deadline(deadline)
                 batch = [row]
                 ts = time.monotonic()
                 raw = logits(batch)
@@ -334,6 +361,8 @@ def main():
                         )
                         entry["brier"] = sum((a - b) ** 2 for a, b in zip(p, target))
                     predictions.append(entry)
+                    prediction_stream.write(json.dumps(entry) + "\n")
+                    prediction_stream.flush()
                 if offset % 40 == 0:
                     event(
                         "evaluation_progress",
@@ -354,9 +383,6 @@ def main():
             for kind in ["noul", "choice", "score"]
             if (rs := [r for r in predictions if r["type"] == kind])
         }
-        (OUT / (name + ".jsonl")).write_text(
-            "".join(json.dumps(r) + "\n" for r in predictions)
-        )
         (OUT / (name + ".json")).write_text(json.dumps(metrics, indent=2) + "\n")
         event("evaluation_complete", name=name, **metrics)
         sync()
@@ -455,6 +481,8 @@ def main():
     first_step = step + 1
     completed_steps = step
     final_step = step if args.evaluate_only else args.steps
+    longest_microbatch_seconds = 0
+    longest_optimizer_seconds = 0
     for step in range(first_step, final_step + 1):
         if time.monotonic() > deadline - 900 or (
             args.stop_file and args.stop_file.exists()
@@ -464,7 +492,20 @@ def main():
         model.train()
         loss_sum = 0
         step_start = time.monotonic()
+        step_cursor = cursor
+        interrupted = False
         for micro in range(args.accumulation):
+            try:
+                check_deadline(
+                    deadline, reserve=900, estimated_seconds=longest_microbatch_seconds
+                )
+            except TimeoutError:
+                interrupted = True
+                break
+            if args.stop_file and args.stop_file.exists():
+                interrupted = True
+                break
+            micro_start = time.monotonic()
             batch = batches[cursor % len(batches)]
             cursor += 1
             raw = logits(batch)
@@ -480,6 +521,22 @@ def main():
             assert torch.isfinite(loss), loss
             loss.backward()
             loss_sum += loss.item()
+            torch.cuda.synchronize()
+            longest_microbatch_seconds = max(
+                longest_microbatch_seconds, time.monotonic() - micro_start
+            )
+        try:
+            check_deadline(
+                deadline, reserve=900, estimated_seconds=longest_optimizer_seconds
+            )
+        except TimeoutError:
+            interrupted = True
+        if interrupted:
+            cursor = step_cursor
+            optimizer.zero_grad(set_to_none=True)
+            event("partial_update_discarded", pending_step=step)
+            break
+        optimizer_start = time.monotonic()
         norm = torch.nn.utils.clip_grad_norm_(
             [p for p in model.parameters() if p.requires_grad], 1.0
         )
@@ -487,6 +544,10 @@ def main():
         for group in optimizer.param_groups:
             group["lr"] = learning_rate_for_step(step, args.steps, args.learning_rate)
         optimizer.step()
+        torch.cuda.synchronize()
+        longest_optimizer_seconds = max(
+            longest_optimizer_seconds, time.monotonic() - optimizer_start
+        )
         completed_steps = step
         optimizer.zero_grad(set_to_none=True)
         if step == 1 or step % 10 == 0:

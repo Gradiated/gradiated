@@ -62,6 +62,15 @@ describe("EvalSchema", () => {
     );
   });
 
+  it("checks score types against their metric", () => {
+    const input = valid();
+    (input.rollouts[0]!.scores as Record<string, unknown>).correct = 0.5;
+
+    expect(EvalSchema.safeParse(input).error?.issues[0]?.message).toBe(
+      "correct scores must be true, false or null.",
+    );
+  });
+
   it("needs two models to compare", () => {
     const input = valid();
     input.models = input.models.slice(0, 1);

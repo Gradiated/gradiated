@@ -399,7 +399,8 @@ export const EvalHeadToHead = (props: EvalProps) => (
 );
 
 const cellColor = (verdict: Verdict | null, delta: number, range: number) => {
-  if (verdict !== "better" && verdict !== "worse") return SAME_COLOR;
+  if (verdict === null) return "transparent";
+  if (verdict === "same") return SAME_COLOR;
 
   const slot = verdict === "better" ? 0 : 1;
   return Math.abs(delta) >= range / 2 ? MODEL_COLORS[slot] : LIGHT_COLORS[slot];
@@ -414,9 +415,15 @@ export const EvalCaseGrid = (props: EvalProps) => {
         const range =
           metric.kind === "score" ? (metric.max ?? 1) - (metric.min ?? 0) : 1;
         const grouped = groupCases(index, props.by);
-        const groups = grouped.length
-          ? grouped
-          : [{ label: "", ids: index.cases.map((item) => item.id) }];
+        const untagged = index.cases
+          .filter((item) => !props.by || item.tags[props.by] === undefined)
+          .map((item) => item.id);
+        const groups = [
+          ...grouped,
+          ...(untagged.length
+            ? [{ label: grouped.length ? "None" : "", ids: untagged }]
+            : []),
+        ];
         const order = groups.flatMap((group) => group.ids);
 
         return (
@@ -455,7 +462,10 @@ export const EvalCaseGrid = (props: EvalProps) => {
                         aria-label={item.title}
                         title={`${item.title}\n${a.name}: ${rolloutLabel(rolloutsOf(index, id, a.id), metric)}\n${b.name}: ${rolloutLabel(rolloutsOf(index, id, b.id), metric)}`}
                         onClick={() => panel.open(file, id, order, view)}
-                        className="size-5 rounded-[4px] outline-offset-2 hover:outline-2 hover:outline-foreground/40"
+                        className={cn(
+                          "size-5 rounded-[4px] outline-offset-2 hover:outline-2 hover:outline-foreground/40",
+                          verdict === null && "border border-dashed",
+                        )}
                         style={{ background: cellColor(verdict, delta, range) }}
                       />
                     );
@@ -645,7 +655,9 @@ const CaseList = ({ file, view, index, a, b, metric }: Ready) => {
     (item) =>
       (!needle || searchText.get(item.id)!.includes(needle)) &&
       (filter === "all" ||
-        verdictOf(index, item.id, a, b, metric).verdict !== "same") &&
+        ["better", "worse"].includes(
+          verdictOf(index, item.id, a, b, metric).verdict ?? "",
+        )) &&
       tagValues.every(({ key, values }) => {
         const chosen = values.filter((value) => tags.has(tagId(key, value)));
         return !chosen.length || chosen.includes(item.tags[key] ?? "");

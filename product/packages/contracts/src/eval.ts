@@ -171,7 +171,9 @@ export const EvalSchema = z
   .superRefine((value, context) => {
     const issue = (message: string, path: (string | number)[]) =>
       context.addIssue({ code: z.ZodIssueCode.custom, message, path });
-    const metrics = new Set(value.metrics.map((metric) => metric.id));
+    const metrics = new Map(
+      value.metrics.map((metric) => [metric.id, metric.kind]),
+    );
     const models = new Set(value.models.map((model) => model.id));
     const cases = new Set(value.cases.map((item) => item.id));
     const rollouts = new Set(value.rollouts.map((rollout) => rollout.id));
@@ -200,14 +202,21 @@ export const EvalSchema = z
           index,
           "model_id",
         ]);
-      for (const metric of Object.keys(rollout.scores))
-        if (!metrics.has(metric))
-          issue(`Unknown metric ${metric}.`, [
-            "rollouts",
-            index,
-            "scores",
-            metric,
-          ]);
+      for (const [metric, score] of Object.entries(rollout.scores)) {
+        const kind = metrics.get(metric);
+        const path = ["rollouts", index, "scores", metric];
+        if (!kind) issue(`Unknown metric ${metric}.`, path);
+        else if (
+          score !== null &&
+          (kind === "pass") !== (typeof score === "boolean")
+        )
+          issue(
+            kind === "pass"
+              ? `${metric} scores must be true, false or null.`
+              : `${metric} scores must be numbers or null.`,
+            path,
+          );
+      }
     });
 
     value.comparisons.forEach((comparison, index) => {

@@ -168,6 +168,8 @@ TOOLS = (
          'Audit exact candidate conflicts and protected benchmark case components; does not admit training', network=False),
     Tool('research', 'decision-train', (python('tools/decision_training/train.py'),),
          'Fine-tune Inkling decision adapters, checkpoint to scoped S3 and evaluate public JevBench'),
+    Tool('research', 'decision-distributed-smoke', (python('tools/decision_training/smoke_distributed.py'),),
+         'Check torchrun accumulation and optimizer/RNG resume against a full-batch toy oracle', network=False),
     Tool('research', 'decision-compare', (python('tools/decision_training/compare.py'),),
          'Compare frozen decision predictions with fair dev calibration and paired uncertainty', network=False),
     Tool('research', 'decision-probe', (python('tools/decision_training/probe.py'),),

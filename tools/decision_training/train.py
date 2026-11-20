@@ -9,6 +9,7 @@ import sys
 import time
 
 from data import read_jsonl
+from distributed import DistributedRun, rank_batches
 from snapshot import verify_snapshot
 
 
@@ -101,6 +102,8 @@ def validate_resume_arguments(saved, current):
     changed = [
         key for key in critical if key not in saved or saved[key] != current[key]
     ]
+    if saved.get("training_world_size", 1) != current.get("training_world_size", 1):
+        changed.append("training_world_size")
     if changed:
         raise ValueError("checkpoint training arguments differ: " + ", ".join(changed))
 
@@ -121,12 +124,12 @@ def validate_output_reuse(output, resume):
         )
 
 
-def build_run_identity(root, data, max_length):
+def build_run_identity(root, data, max_length, world_size=1):
     source_dir = pathlib.Path(__file__).resolve().parent
     benchmark_dir = root / "jevbench" / "jevbench"
     sources = {
         "runner/" + name: source_dir / name
-        for name in ("train.py", "data.py", "snapshot.py")
+        for name in ("train.py", "data.py", "snapshot.py", "distributed.py")
     }
     for name in ("__init__.py", "scoring.py", "metrics.py", "tasks.py"):
         if not (benchmark_dir / name).is_file():
@@ -144,6 +147,7 @@ def build_run_identity(root, data, max_length):
         "evaluation_batch_size": 1,
         "verified_model_manifest_sha256": verify_snapshot(root),
         "max_length": max_length,
+        "training_world_size": world_size,
         "executable_sources_sha256": {
             name: hashlib.sha256(path.read_bytes()).hexdigest()
             for name, path in sorted(sources.items())
@@ -190,6 +194,9 @@ def main():
     from safetensors.torch import load_file
     from transformers import AutoTokenizer, Inkling2LoopForConditionalGeneration
 
+    distributed = DistributedRun(torch)
+    args.training_world_size = distributed.world_size
+
     ROOT = args.run_dir.resolve()
     DATA = args.data_dir or ROOT / "data"
     OUT = args.output_dir or ROOT / "outputs"
@@ -201,9 +208,13 @@ def main():
     random.seed(20261120)
     torch.manual_seed(20261120)
     torch.set_num_threads(12)
-    OUT.mkdir(parents=True, exist_ok=True)
+    if distributed.primary:
+        OUT.mkdir(parents=True, exist_ok=True)
+    distributed.barrier()
 
     def event(kind, **fields):
+        if not distributed.primary:
+            return
         row = {
             "event": kind,
             "time": time.time(),
@@ -215,6 +226,8 @@ def main():
             f.write(json.dumps(row) + "\n")
 
     def sync(reserve=0):
+        if not distributed.primary:
+            return
         import boto3
         from botocore.config import Config
 
@@ -259,6 +272,7 @@ def main():
             "train.py",
             "data.py",
             "snapshot.py",
+            "distributed.py",
             "compare.py",
             "requirements.txt",
         ):
@@ -274,15 +288,20 @@ def main():
             )
         event("s3_sync")
 
-    identity = build_run_identity(ROOT, DATA, args.max_length)
+    identity = distributed.broadcast(
+        build_run_identity(ROOT, DATA, args.max_length, distributed.world_size)
+        if distributed.primary
+        else None
+    )
     identity_path = OUT / "identity.json"
-    if identity_path.exists():
+    if distributed.primary and identity_path.exists():
         if json.loads(identity_path.read_text()) != identity:
             raise ValueError(
                 "output directory belongs to different model, prompt or data"
             )
-    else:
+    elif distributed.primary:
         identity_path.write_text(json.dumps(identity, indent=2) + "\n")
+    distributed.barrier()
 
     def read(name):
         return read_jsonl(DATA / name)
@@ -367,12 +386,16 @@ def main():
     model.eval()
     event("model_loaded", gpu_allocated_gb=torch.cuda.memory_allocated() / 1e9)
 
-    def logits(rows):
+    training_model = model
+
+    def logits(rows, training=False):
         inputs = tokenizer.pad(
             {"input_ids": [r["ids"] for r in rows]}, return_tensors="pt"
         ).to("cuda")
         return (
-            model(**inputs, use_cache=False, logits_to_keep=1)
+            (training_model if training else model)(
+                **inputs, use_cache=False, logits_to_keep=1
+            )
             .logits[:, -1, letter_ids]
             .float()
         )
@@ -473,24 +496,29 @@ def main():
 
     with torch.no_grad():
         lengths = sorted(bench, key=lambda row: len(row["ids"]))
-        probability_delta = max(
-            (
-                logits([row])[0, : len(row["labels"])].softmax(-1)
-                - logits([row])[0, : len(row["labels"])].softmax(-1)
+        probability_delta = (
+            max(
+                (
+                    logits([row])[0, : len(row["labels"])].softmax(-1)
+                    - logits([row])[0, : len(row["labels"])].softmax(-1)
+                )
+                .abs()
+                .max()
+                .item()
+                for row in [lengths[0], lengths[len(lengths) // 2], lengths[-1]]
             )
-            .abs()
-            .max()
-            .item()
-            for row in [lengths[0], lengths[len(lengths) // 2], lengths[-1]]
+            if distributed.primary
+            else 0
         )
         if probability_delta > 1e-5:
             raise ValueError(f"single-request replay is unstable: {probability_delta}")
         event("single_request_replay", maximum_probability_delta=probability_delta)
 
-    if not (OUT / "baseline-jevbench.json").exists():
+    if distributed.primary and not (OUT / "baseline-jevbench.json").exists():
         evaluate(bench, "baseline-jevbench")
-    if not (OUT / "baseline-dev.json").exists():
+    if distributed.primary and not (OUT / "baseline-dev.json").exists():
         evaluate(dev, "baseline-dev")
+    distributed.barrier()
     # Fixed low-rank intervention on attention projections and answer readout.
     targets = [
         name
@@ -530,11 +558,16 @@ def main():
     )
 
     # Length buckets reduce padding without changing examples or targets.
-    train.sort(key=lambda r: len(r["ids"]))
-    batches = [
-        train[i : i + args.batch_size] for i in range(0, len(train), args.batch_size)
-    ]
-    random.shuffle(batches)
+    batches, dropped = rank_batches(
+        train, args.batch_size, distributed.world_size, distributed.rank
+    )
+    event(
+        "distributed_geometry",
+        world_size=distributed.world_size,
+        global_batch_size=args.batch_size * args.accumulation * distributed.world_size,
+        local_batches=len(batches),
+        dropped_incomplete_epoch_examples=dropped,
+    )
     step = 0
     cursor = 0
     lastsave = time.monotonic()
@@ -556,19 +589,28 @@ def main():
         optimizer.load_state_dict(state["optimizer"])
         step = state["step"]
         cursor = state["cursor"]
-        random.setstate(state["random"])
-        torch.set_rng_state(state["torch_rng"])
-        torch.cuda.set_rng_state_all(state["cuda_rng"])
+        rng = state.get("rank_rng", [state])[distributed.rank]
+        random.setstate(rng["random"])
+        torch.set_rng_state(rng["torch_rng"])
+        torch.cuda.set_rng_state(
+            rng["cuda_rng"][0]
+            if "rank_rng" in state
+            else rng["cuda_rng"][distributed.local_rank]
+        )
         event("resumed", checkpoint=str(ckpt), step=step)
+    training_model = distributed.wrap(model)
     first_step = step + 1
     completed_steps = step
     final_step = step if args.evaluate_only else args.steps
     longest_microbatch_seconds = 0
     longest_optimizer_seconds = 0
     longest_checkpoint_seconds = 0
+    cumulative_tokens = 0
+    training_wall_start = time.monotonic()
     for step in range(first_step, final_step + 1):
-        if time.monotonic() > deadline - 900 or (
-            args.stop_file and args.stop_file.exists()
+        if not distributed.all(
+            time.monotonic() < deadline - 900
+            and not (args.stop_file and args.stop_file.exists())
         ):
             event("training_deadline_or_stop")
             break
@@ -577,42 +619,47 @@ def main():
         step_start = time.monotonic()
         step_cursor = cursor
         interrupted = False
+        useful_tokens = 0
+        padded_tokens = 0
         for micro in range(args.accumulation):
-            try:
-                check_deadline(
-                    deadline, reserve=900, estimated_seconds=longest_microbatch_seconds
-                )
-            except TimeoutError:
-                interrupted = True
-                break
-            if args.stop_file and args.stop_file.exists():
+            if not distributed.all(
+                time.monotonic() + longest_microbatch_seconds < deadline - 900
+                and not (args.stop_file and args.stop_file.exists())
+            ):
                 interrupted = True
                 break
             micro_start = time.monotonic()
             batch = batches[cursor % len(batches)]
             cursor += 1
-            raw = logits(batch)
-            losses = []
-            for r, z in zip(batch, raw):
-                target = torch.tensor(r["target"], device="cuda", dtype=torch.float32)
-                lp = z[: len(target)].log_softmax(-1)
-                p = lp.exp()
-                losses.append(
-                    -(target * lp).sum() + args.brier_weight * ((p - target) ** 2).sum()
-                )
-            loss = torch.stack(losses).mean() / args.accumulation
-            assert torch.isfinite(loss), loss
-            loss.backward()
+            with distributed.accumulation(
+                training_model, micro == args.accumulation - 1
+            ):
+                raw = logits(batch, training=True)
+                losses = []
+                for r, z in zip(batch, raw):
+                    target = torch.tensor(
+                        r["target"], device="cuda", dtype=torch.float32
+                    )
+                    lp = z[: len(target)].log_softmax(-1)
+                    p = lp.exp()
+                    losses.append(
+                        -(target * lp).sum()
+                        + args.brier_weight * ((p - target) ** 2).sum()
+                    )
+                loss = torch.stack(losses).mean() / args.accumulation
+                if not distributed.all(bool(torch.isfinite(loss))):
+                    raise ValueError("nonfinite loss on a training rank")
+                loss.backward()
             loss_sum += loss.item()
+            useful_tokens += sum(len(row["ids"]) for row in batch)
+            padded_tokens += len(batch) * max(len(row["ids"]) for row in batch)
             torch.cuda.synchronize()
             longest_microbatch_seconds = max(
                 longest_microbatch_seconds, time.monotonic() - micro_start
             )
-        try:
-            check_deadline(
-                deadline, reserve=900, estimated_seconds=longest_optimizer_seconds
-            )
-        except TimeoutError:
+        if not distributed.all(
+            time.monotonic() + longest_optimizer_seconds < deadline - 900
+        ):
             interrupted = True
         if interrupted:
             cursor = step_cursor
@@ -623,7 +670,8 @@ def main():
         norm = torch.nn.utils.clip_grad_norm_(
             [p for p in model.parameters() if p.requires_grad], 1.0
         )
-        assert torch.isfinite(norm) and norm > 0, norm
+        if not distributed.all(bool(torch.isfinite(norm) and norm > 0)):
+            raise ValueError("invalid gradient norm on a training rank")
         for group in optimizer.param_groups:
             group["lr"] = learning_rate_for_step(step, args.steps, args.learning_rate)
         optimizer.step()
@@ -632,21 +680,45 @@ def main():
             longest_optimizer_seconds, time.monotonic() - optimizer_start
         )
         completed_steps = step
+        cumulative_tokens += useful_tokens
         optimizer.zero_grad(set_to_none=True)
         if step == 1 or step % 10 == 0:
+            global_useful = distributed.sum(useful_tokens)
+            global_padded = distributed.sum(padded_tokens)
+            cumulative_global_tokens = distributed.sum(cumulative_tokens)
+            global_loss = distributed.sum(loss_sum) / distributed.world_size
             event(
                 "training_step",
                 step=step,
-                loss=loss_sum,
+                loss=global_loss,
                 gradient_norm=norm.item(),
                 seconds=time.monotonic() - step_start,
                 gpu_peak_gb=torch.cuda.max_memory_allocated() / 1e9,
+                useful_tokens=global_useful,
+                padded_tokens=global_padded,
+                useful_tokens_per_second=global_useful
+                / (time.monotonic() - step_start),
+                cumulative_useful_tokens=cumulative_global_tokens,
+                training_wall_seconds=time.monotonic() - training_wall_start,
+                end_to_end_useful_tokens_per_second=cumulative_global_tokens
+                / (time.monotonic() - training_wall_start),
             )
-        if step == 1 or step % 100 == 0 or time.monotonic() - lastsave > 600:
+        if distributed.primary_flag(
+            step == 1 or step % 100 == 0 or time.monotonic() - lastsave > 600
+        ):
+            rank_rng = distributed.gather(
+                {
+                    "random": random.getstate(),
+                    "torch_rng": torch.get_rng_state(),
+                    "cuda_rng": [torch.cuda.get_rng_state()],
+                }
+            )
             ckpt = OUT / f"checkpoint-{step:05d}"
             staging = ckpt.with_name(ckpt.name + ".tmp")
 
-            def write_checkpoint(staging=staging, step=step, cursor=cursor, ckpt=ckpt):
+            def write_checkpoint(
+                staging=staging, step=step, cursor=cursor, ckpt=ckpt, rank_rng=rank_rng
+            ):
                 model.save_pretrained(staging, save_embedding_layers=False)
                 check_deadline(deadline, reserve=900)
                 torch.save(
@@ -656,7 +728,8 @@ def main():
                         "optimizer": optimizer.state_dict(),
                         "random": random.getstate(),
                         "torch_rng": torch.get_rng_state(),
-                        "cuda_rng": torch.cuda.get_rng_state_all(),
+                        "cuda_rng": rank_rng[0]["cuda_rng"],
+                        "rank_rng": rank_rng,
                         "args": {
                             k: str(v) if isinstance(v, pathlib.Path) else v
                             for k, v in vars(args).items()
@@ -688,18 +761,20 @@ def main():
                 check_deadline(deadline, reserve=900)
                 staging.rename(ckpt)
 
-            try:
-                elapsed = bounded_checkpoint_write(
-                    write_checkpoint, deadline, longest_checkpoint_seconds
-                )
-                longest_checkpoint_seconds = max(longest_checkpoint_seconds, elapsed)
-            except TimeoutError:
-                event("checkpoint_write_deferred", step=step)
-                break
-            try:
-                sync(reserve=900)
-            except TimeoutError:
-                event("checkpoint_sync_deferred", step=step)
+            checkpoint_ok = True
+            if distributed.primary:
+                try:
+                    elapsed = bounded_checkpoint_write(
+                        write_checkpoint, deadline, longest_checkpoint_seconds
+                    )
+                    longest_checkpoint_seconds = max(
+                        longest_checkpoint_seconds, elapsed
+                    )
+                    sync(reserve=900)
+                except TimeoutError:
+                    event("checkpoint_deferred", step=step)
+                    checkpoint_ok = False
+            if not distributed.primary_flag(checkpoint_ok):
                 break
             lastsave = time.monotonic()
 
@@ -707,6 +782,10 @@ def main():
         raise RuntimeError(
             "no optimizer updates completed; no trained comparison will be written"
         )
+    if not distributed.primary:
+        distributed.barrier()
+        distributed.close()
+        return
     model.save_pretrained(OUT / "adapter-final", save_embedding_layers=False)
     tokenizer.save_pretrained(OUT / "adapter-final")
     trained_dev, _ = evaluate(dev, "trained-dev", sync_outputs=False)
@@ -737,6 +816,8 @@ def main():
     evaluate(bench, "trained-jevbench", temperature=temp, sync_outputs=False)
     event("complete", steps=completed_steps)
     sync()
+    distributed.barrier()
+    distributed.close()
 
 
 if __name__ == "__main__":

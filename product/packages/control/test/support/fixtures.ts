@@ -7,7 +7,10 @@ import type {
 
 import { asc, eq } from "drizzle-orm";
 
-import type { CatalogService } from "../../src/catalog/service.js";
+import type {
+  CatalogModelInput,
+  CatalogService,
+} from "../../src/catalog/service.js";
 import type { ControlDatabase } from "../../src/db/client.js";
 import {
   balanceTransactions,
@@ -169,8 +172,19 @@ export const modelInput = (
 ): ModelInput => ({
   id: `test/${randomUUID()}`,
   name: "Test model",
+  type: "chat",
   status: "available",
   properties: modelProperties(),
+  ...overrides,
+});
+
+/** A Git catalog definition of a model owned by the organization with `slug`. */
+export const ownedModelDefinition = (
+  slug: string,
+  overrides: Partial<CatalogModelInput> = {},
+): CatalogModelInput => ({
+  ...modelInput({ id: `${slug}/jeeves-${randomUUID()}` }),
+  owner: { organizationSlug: slug },
   ...overrides,
 });
 

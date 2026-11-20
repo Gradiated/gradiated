@@ -21,7 +21,8 @@ use crate::{
     },
     session_routing::{Placed, PlacementOutcome, PlacementRequest, RouteLease, SESSION_LIFETIME},
     valkey_auth::{ValkeyIamCredentials, ValkeyIamError},
-    FinalizationError, FinalizationOutcome, GatewayConfig, GenerationProperties, ValkeyIamConfig,
+    FinalizationError, FinalizationOutcome, GatewayConfig, GenerationProperties, ModelAccess,
+    ValkeyIamConfig,
 };
 
 const ADMIT_GENERATION_V1: &str = concat!(
@@ -62,6 +63,13 @@ const STATUS_CACHE_TTL: Duration = Duration::from_secs(1);
 /// Far above the number of live releases; it bounds entries left by retired ones.
 const STATUS_CACHE_CAPACITY: usize = 10_000;
 
+/// The read-through key of a `GatewayModel`. Records under the earlier
+/// `model:<id>` key predate `organization_id` and would read as public, so this
+/// gateway never reads them; gateways still on that key keep their own entries.
+pub(crate) fn model_cache_key(model_id: &str) -> String {
+    format!("model:v2:{model_id}")
+}
+
 #[async_trait]
 pub trait ServingState: Send + Sync {
     async fn credential(
@@ -79,9 +87,19 @@ pub trait ServingState: Send + Sync {
         organization_id: Uuid,
     ) -> Result<Option<GatewayAccount>, ServingStateError>;
 
-    async fn model(&self, model_id: &str) -> Result<Option<GatewayModel>, ServingStateError>;
+    /// The model a request names, if this caller may see it. Another
+    /// organization's own model is `None`, exactly like an unknown ID.
+    async fn model_for(
+        &self,
+        access: ModelAccess,
+        model_id: &str,
+    ) -> Result<Option<GatewayModel>, ServingStateError>;
 
-    async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError>;
+    /// Every servable model this caller may see.
+    async fn models_visible_to(
+        &self,
+        access: ModelAccess,
+    ) -> Result<Vec<GatewayModel>, ServingStateError>;
 
     async fn private_model_exists(
         &self,
@@ -143,6 +161,33 @@ pub struct ValkeyServingState {
 }
 
 impl ValkeyServingState {
+    /// The model record whoever asks. Private to this type: the request path
+    /// reads models only through [`ServingState::model_for`] and
+    /// [`ServingState::models_visible_to`], which take the caller's access.
+    async fn unscoped_model(
+        &self,
+        model_id: &str,
+    ) -> Result<Option<GatewayModel>, ServingStateError> {
+        let model: Option<GatewayModel> = self
+            .read_through("GatewayModel", model_cache_key(model_id), || {
+                self.database.model_json(model_id)
+            })
+            .await?;
+        let Some(model) = model else {
+            return Ok(None);
+        };
+
+        model
+            .properties
+            .validate_for_serving()
+            .map_err(ServingStateError::InvalidModelProperties)?;
+        if model.id != model_id && !model.aliases.iter().any(|alias| alias == model_id) {
+            return Err(ServingStateError::MismatchedModelId);
+        }
+
+        Ok(Some(model))
+    }
+
     pub async fn connect(
         url: &str,
         database: PostgresReader,
@@ -565,25 +610,15 @@ impl ServingState for ValkeyServingState {
             .await
     }
 
-    async fn model(&self, model_id: &str) -> Result<Option<GatewayModel>, ServingStateError> {
-        let model: Option<GatewayModel> = self
-            .read_through("GatewayModel", format!("model:{model_id}"), || {
-                self.database.model_json(model_id)
-            })
-            .await?;
-        let Some(model) = model else {
-            return Ok(None);
-        };
-
-        model
-            .properties
-            .validate_for_serving()
-            .map_err(ServingStateError::InvalidModelProperties)?;
-        if model.id != model_id && !model.aliases.iter().any(|alias| alias == model_id) {
-            return Err(ServingStateError::MismatchedModelId);
-        }
-
-        Ok(Some(model))
+    async fn model_for(
+        &self,
+        access: ModelAccess,
+        model_id: &str,
+    ) -> Result<Option<GatewayModel>, ServingStateError> {
+        Ok(self
+            .unscoped_model(model_id)
+            .await?
+            .filter(|model| access.permits(model)))
     }
 
     async fn private_model_exists(
@@ -616,13 +651,18 @@ impl ServingState for ValkeyServingState {
 
     /// Every model that can be served. A model whose record is unusable is left
     /// out rather than failing the whole listing.
-    async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError> {
+    async fn models_visible_to(
+        &self,
+        access: ModelAccess,
+    ) -> Result<Vec<GatewayModel>, ServingStateError> {
         let model_ids = self.database.model_ids().await?;
 
         let mut models = Vec::with_capacity(model_ids.len());
         for model_id in model_ids {
-            match self.model(&model_id).await {
-                Ok(Some(model)) if model.id == model_id => models.push(model),
+            match self.unscoped_model(&model_id).await {
+                Ok(Some(model)) if model.id == model_id && access.permits(&model) => {
+                    models.push(model)
+                }
                 Ok(_) => {}
                 Err(error) if error.is_unusable_record() => {
                     crate::diagnostics::limited_warn!(%model_id, phase = "catalog_read",

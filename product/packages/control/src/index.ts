@@ -65,11 +65,12 @@ export {
   createCatalogBillingService,
   type CatalogBillingService,
 } from "./catalog-billing/service.js";
-export { applyCatalog } from "./catalog/apply.js";
+export { applyCatalog, type SkippedCatalogModel } from "./catalog/apply.js";
 export { catalogModels } from "./catalog/models/index.js";
 export {
   createCatalogService,
   type CatalogModelInput,
+  type CatalogModelUpsert,
   type CatalogService,
   type ModelDeploymentRecord,
   type ModelRecord,

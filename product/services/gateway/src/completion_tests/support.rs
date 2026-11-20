@@ -385,7 +385,11 @@ impl ServingState for RecordingServingState {
         Ok(None)
     }
 
-    async fn model(&self, _model_id: &str) -> Result<Option<GatewayModel>, ServingStateError> {
+    async fn model_for(
+        &self,
+        _access: crate::ModelAccess,
+        _model_id: &str,
+    ) -> Result<Option<GatewayModel>, ServingStateError> {
         Ok(None)
     }
 
@@ -405,7 +409,10 @@ impl ServingState for RecordingServingState {
         Ok(None)
     }
 
-    async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError> {
+    async fn models_visible_to(
+        &self,
+        _access: crate::ModelAccess,
+    ) -> Result<Vec<GatewayModel>, ServingStateError> {
         Ok(Vec::new())
     }
 

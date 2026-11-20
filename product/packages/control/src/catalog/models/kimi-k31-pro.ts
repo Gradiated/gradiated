@@ -9,6 +9,7 @@ export const createKimiK31ProModelConfiguration = () =>
     id: kimiK31ProModelId,
     name: modelDisplayName(kimiK31ProModelId),
     status: "available",
+    type: "chat",
     openrouterModelId: kimiK31ProModelId,
     properties: {
       description:

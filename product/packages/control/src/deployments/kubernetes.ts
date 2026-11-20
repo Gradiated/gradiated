@@ -10,6 +10,7 @@ import type { ControlDatabase } from "../db/client.js";
 import { instances, modelDeployments, models } from "../db/schema/index.js";
 import { DEPLOYMENT_RECONCILE_LOCK } from "./store.js";
 import { privateServingUrl } from "../instances/endpoints.js";
+import { releaseServesType } from "../catalog/protocol.js";
 
 export const KubernetesDeploymentSchema = z.object({
   id: z.uuid(),
@@ -44,6 +45,7 @@ export const createKubernetesDeploymentStore = (database: ControlDatabase) => ({
       );
       const listed = new Set(current.map((pod) => pod.id));
       let written = 0;
+      const refused: string[] = [];
       const withdraw = (id: string) =>
         tx
           .update(modelDeployments)
@@ -63,10 +65,16 @@ export const createKubernetesDeploymentStore = (database: ControlDatabase) => ({
             and(eq(instances.id, pod.instanceId), isNull(instances.retiredAt)),
           );
         const [model] = await tx
-          .select({ id: models.id })
+          .select({ id: models.id, type: models.type })
           .from(models)
           .where(eq(models.id, pod.modelId));
-        if (!host || !model) {
+        // An organization's model serves one declared interface; a pod of the
+        // other protocol never becomes one of its deployments, or the gateway
+        // could route a request to a release that can't answer it.
+        const mismatched =
+          model !== undefined && !releaseServesType(pod.release, model.type);
+        if (mismatched) refused.push(pod.id);
+        if (!host || !model || mismatched) {
           await withdraw(pod.id);
           continue;
         }
@@ -107,6 +115,6 @@ export const createKubernetesDeploymentStore = (database: ControlDatabase) => ({
           await withdraw(id);
         }
       }
-      return { written };
+      return { written, refused };
     }),
 });

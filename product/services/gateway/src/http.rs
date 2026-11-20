@@ -1341,3 +1341,7 @@ mod support;
 #[cfg(test)]
 #[path = "http_diagnostics_tests.rs"]
 mod diagnostics_tests;
+
+#[cfg(test)]
+#[path = "http_listing_tests.rs"]
+mod listing_tests;

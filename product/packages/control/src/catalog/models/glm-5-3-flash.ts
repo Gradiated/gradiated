@@ -9,6 +9,7 @@ export const createGlm53FlashModelConfiguration = () =>
     id: glm53FlashModelId,
     name: modelDisplayName(glm53FlashModelId),
     status: "available",
+    type: "chat",
     // Checked 2026-11-05: OpenRouter's entry has this model's Hugging Face ID.
     openrouterModelId: "z-ai/glm-5.3-flash",
     properties: {
@@ -91,6 +92,7 @@ export const createDealignGlm53FlashModelConfiguration = () => {
     id,
     name: modelDisplayName(id),
     status: "available",
+    type: "chat",
     // OpenRouter does not serve Dealign's weights; standard GLM is a different model.
     openrouterModelId: null,
     properties: {

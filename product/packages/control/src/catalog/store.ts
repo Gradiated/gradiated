@@ -1,11 +1,13 @@
-import { getTableColumns, ne } from "drizzle-orm";
+import { and, eq, getTableColumns, isNull, ne, sql } from "drizzle-orm";
 import {
   GatewayModelDeploymentSchema,
   ModelPropertiesInputSchema,
 } from "@gradiated/contracts";
 import type { ControlDatabase } from "../db/client.js";
 import { modelDeployments, models } from "../db/schema/index.js";
+import { ControlServiceError } from "../errors.js";
 import { requireRow } from "../require-row.js";
+import { releaseServesType } from "./protocol.js";
 import type { CatalogService } from "./service.js";
 import { ModelRecordSchema, ModelDeploymentRecordSchema } from "./records.js";
 
@@ -19,13 +21,26 @@ export const createCatalogStore = (
     const rows = await database
       .select()
       .from(models)
-      .where(options.includeRetired ? undefined : ne(models.status, "retired"))
+      .where(
+        and(
+          options.includeRetired ? undefined : ne(models.status, "retired"),
+          // Organization-owned models stay out unless the caller asks for them,
+          // so no listing can publish one by accident.
+          options.includeOrganizationModels
+            ? undefined
+            : isNull(models.organizationId),
+        ),
+      )
       .orderBy(models.createdAt, models.id);
 
     return ModelRecordSchema.array().parse(rows);
   },
 
   async upsertModel(input) {
+    // A definition's owner slug is resolved by applyCatalog; writing one
+    // directly would drop the owner and publish the model.
+    if ("owner" in input)
+      throw new Error("Apply an owned catalog definition with applyCatalog.");
     const now = new Date();
     const properties = ModelPropertiesInputSchema.parse(input.properties);
 
@@ -36,6 +51,8 @@ export const createCatalogStore = (
       openrouterModelId: input.openrouterModelId ?? null,
       tokenizerPath: tokenizer?.path ?? null,
       tokenizerRevision: tokenizer?.revision ?? null,
+      organizationId: input.organizationId ?? null,
+      type: input.type,
       createdAt: now,
       updatedAt: now,
     });
@@ -53,14 +70,32 @@ export const createCatalogStore = (
           openrouterModelId: record.openrouterModelId,
           tokenizerPath: record.tokenizerPath,
           tokenizerRevision: record.tokenizerRevision,
+          type: record.type,
           updatedAt: now,
         },
+        // A model's owner is fixed when it is first written, as gateways cache
+        // records under the ID; a write with another owner returns no row.
+        setWhere: sql`${models.organizationId} is not distinct from ${record.organizationId}`,
       })
       .returning();
-
-    return ModelRecordSchema.parse(
+    const stored = ModelRecordSchema.parse(
       requireRow(rows, "The model upsert returned no row."),
     );
+
+    // A changed type withdraws the deployments that no longer serve it, in the
+    // same transaction, so the gateway never routes to the other interface.
+    await database
+      .update(modelDeployments)
+      .set({ status: "unavailable", updatedAt: now })
+      .where(
+        and(
+          eq(modelDeployments.modelId, stored.id),
+          ne(modelDeployments.status, "unavailable"),
+          sql`(coalesce(${modelDeployments.release}->>'protocol', '') = 'system_one') <> ${stored.type === "decision"}`,
+        ),
+      );
+
+    return stored;
   },
 
   async upsertModelDeployment(input) {
@@ -90,6 +125,15 @@ export const createCatalogStore = (
       modelId: input.modelId,
       createdAt: now,
     });
+    const [model] = await database
+      .select({ type: models.type })
+      .from(models)
+      .where(eq(models.id, record.modelId));
+    if (model && !releaseServesType(record.release, model.type))
+      throw new ControlServiceError(
+        "conflict",
+        `This release does not serve the model's ${model.type} interface.`,
+      );
 
     const rows = await database
       .insert(modelDeployments)

@@ -293,18 +293,25 @@ export class Case {
 
   async publish(): Promise<void> {
     await this.database.query(
-      `insert into models (id, name, status, properties, openrouter_model_id)
-       values ($1, $2, $3, $4, $5)
+      `insert into models (id, name, status, properties, openrouter_model_id, type)
+       values ($1, $2, $3, $4, $5, $6)
        on conflict (id) do update
        set name = excluded.name, status = excluded.status,
            properties = excluded.properties,
-           openrouter_model_id = excluded.openrouter_model_id, updated_at = now()`,
+           openrouter_model_id = excluded.openrouter_model_id,
+           type = excluded.type, updated_at = now()`,
       [
         this.model,
         this.record.name,
         this.record.status,
         JSON.stringify(this.record.properties),
         this.openRouterModel,
+        // A model's deployments serve its declared interface.
+        this.deployments.some(
+          (deployment) => deployment.release.protocol === "system_one",
+        )
+          ? "decision"
+          : "chat",
       ],
     );
     await this.database.query(
@@ -329,7 +336,8 @@ export class Case {
       );
     }
 
-    await this.redis.del(`model:${this.model}`);
+    // The gateway's `model_cache_key`.
+    await this.redis.del(`model:v2:${this.model}`);
   }
 
   async status(

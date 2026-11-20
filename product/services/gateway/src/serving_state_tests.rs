@@ -476,12 +476,12 @@ mod records {
     async fn a_cached_model_under_another_id_is_rejected() {
         let fixture = Fixture::new().await;
         let model_id = unique_model_id();
-        let key = format!("model:{model_id}");
+        let key = model_cache_key(&model_id);
         fixture
             .cache_record(&key, &model_json("model-a", "Model A"))
             .await;
 
-        let result = fixture.state.model(&model_id).await;
+        let result = fixture.state.unscoped_model(&model_id).await;
 
         assert!(matches!(result, Err(ServingStateError::MismatchedModelId)));
 
@@ -493,12 +493,12 @@ mod records {
     async fn a_cached_model_with_invalid_properties_is_rejected() {
         let fixture = Fixture::new().await;
         let model_id = unique_model_id();
-        let key = format!("model:{model_id}");
+        let key = model_cache_key(&model_id);
         fixture
             .cache_record(&key, &model_json(&model_id, &"x".repeat(2_001)))
             .await;
 
-        let result = fixture.state.model(&model_id).await;
+        let result = fixture.state.unscoped_model(&model_id).await;
 
         assert!(matches!(
             result,
@@ -513,16 +513,121 @@ mod records {
     async fn a_valid_cached_model_is_served_without_postgres() {
         let fixture = Fixture::new().await;
         let model_id = unique_model_id();
-        let key = format!("model:{model_id}");
+        let key = model_cache_key(&model_id);
         fixture
             .cache_record(&key, &model_json(&model_id, "Model A"))
             .await;
 
-        let model = fixture.state.model(&model_id).await.unwrap().unwrap();
+        let model = fixture
+            .state
+            .unscoped_model(&model_id)
+            .await
+            .unwrap()
+            .unwrap();
 
         assert_eq!(model.id, model_id);
+        assert_eq!(model.organization_id, None);
 
         fixture.delete_record(&key).await;
+    }
+
+    fn owned_model_json(id: &str, organization_id: Uuid) -> String {
+        let mut record: serde_json::Value =
+            serde_json::from_str(&model_json(id, "Model A")).unwrap();
+        record["organization_id"] = serde_json::Value::String(organization_id.to_string());
+        record.to_string()
+    }
+
+    #[test]
+    fn a_record_without_an_owner_is_public_and_an_owned_one_keeps_its_owner() {
+        let owner = Uuid::from_u128(7);
+        let public: GatewayModel = parse_record("GatewayModel", &model_json("a", "A")).unwrap();
+        let owned: GatewayModel =
+            parse_record("GatewayModel", &owned_model_json("a", owner)).unwrap();
+        let null_owner = model_json("a", "A").replacen('{', r#"{"organization_id":null,"#, 1);
+        let null_owner: GatewayModel = parse_record("GatewayModel", &null_owner).unwrap();
+
+        assert_eq!(public.organization_id, None);
+        assert_eq!(null_owner.organization_id, None);
+        assert_eq!(owned.organization_id, Some(owner));
+        let identity = |organization_id, workspace_id| crate::auth::AuthenticatedIdentity {
+            api_key_id: Uuid::from_u128(1),
+            organization_id,
+            workspace_id,
+        };
+        let member = identity(owner, Uuid::from_u128(9));
+        let outsider = identity(Uuid::from_u128(8), Uuid::from_u128(10));
+        assert!(ModelAccess::caller(&member).permits(&owned));
+        assert!(ModelAccess::caller(&outsider).permits(&public));
+        assert!(!ModelAccess::caller(&outsider).permits(&owned));
+        assert!(!ModelAccess::calling(&outsider, Some(Uuid::from_u128(9))).permits(&owned));
+        assert!(ModelAccess::calling(&outsider, Some(Uuid::from_u128(10))).permits(&owned));
+    }
+
+    #[test]
+    fn model_records_are_cached_apart_from_records_without_owners() {
+        assert_eq!(model_cache_key("acme/jeeves"), "model:v2:acme/jeeves");
+        assert_ne!(model_cache_key("acme/jeeves"), "model:acme/jeeves");
+    }
+
+    #[tokio::test]
+    #[ignore = "requires the local one-node Valkey cluster"]
+    async fn a_cached_owned_model_keeps_its_owner() {
+        let fixture = Fixture::new().await;
+        let model_id = unique_model_id();
+        let key = model_cache_key(&model_id);
+        let owner = Uuid::now_v7();
+        fixture
+            .cache_record(&key, &owned_model_json(&model_id, owner))
+            .await;
+
+        let model = fixture
+            .state
+            .unscoped_model(&model_id)
+            .await
+            .unwrap()
+            .unwrap();
+        let identity = |organization_id| crate::auth::AuthenticatedIdentity {
+            api_key_id: Uuid::now_v7(),
+            organization_id,
+            workspace_id: Uuid::now_v7(),
+        };
+
+        assert_eq!(model.organization_id, Some(owner));
+        let for_owner = fixture
+            .state
+            .model_for(ModelAccess::caller(&identity(owner)), &model_id)
+            .await
+            .unwrap();
+        let for_other = fixture
+            .state
+            .model_for(ModelAccess::caller(&identity(Uuid::now_v7())), &model_id)
+            .await
+            .unwrap();
+        assert_eq!(for_owner.map(|model| model.id), Some(model_id.clone()));
+        assert_eq!(for_other, None);
+
+        fixture.delete_record(&key).await;
+    }
+
+    /// An entry written before `organization_id` existed could be an owned model
+    /// read as public, so it must never be served; the read falls to PostgreSQL,
+    /// which these tests do not run.
+    #[tokio::test]
+    #[ignore = "requires the local one-node Valkey cluster"]
+    async fn a_record_under_the_key_before_owners_is_never_read() {
+        let fixture = Fixture::new().await;
+        let model_id = unique_model_id();
+        let legacy = format!("model:{model_id}");
+        fixture
+            .cache_record(&legacy, &model_json(&model_id, "Model A"))
+            .await;
+
+        let result = fixture.state.unscoped_model(&model_id).await;
+
+        assert!(!matches!(result, Ok(Some(_))));
+
+        fixture.delete_record(&legacy).await;
     }
 }
 

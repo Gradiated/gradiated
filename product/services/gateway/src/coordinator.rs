@@ -19,7 +19,7 @@ use crate::{
     runtime::openrouter_supports_parameter,
     serving_state::{ServingState, ServingStateError},
     CatalogModel, ExternalModel, GatewayError, GatewayModel, GatewayModelDeployment,
-    InferenceRequest, RequestKind,
+    InferenceRequest, ModelAccess, RequestKind,
 };
 
 /// A runtime scheduling hint that only internal callers may set.
@@ -428,11 +428,14 @@ impl RequestCoordinator {
     ) -> Result<Vec<CatalogModel>, GatewayError> {
         let authorization = self.authorize(headers, requested_at).await?;
         let from_openrouter = authorization.from_openrouter;
-        authorization.into_hosted_identity()?;
+        let identity = authorization.into_hosted_identity()?;
 
+        // Another organization's own model is never listed, including to
+        // OpenRouter, whose key belongs to its own organization, or to the
+        // verification workspace.
         let models = self
             .serving_state
-            .models()
+            .models_visible_to(ModelAccess::caller(&identity))
             .await
             .map_err(state_unavailable("catalog_read"))?;
 
@@ -544,9 +547,12 @@ impl RequestCoordinator {
         let mut model_id = target.model.clone();
         model_id.make_ascii_lowercase();
         let mut adapter = None;
+        // An organization's own model answers only its keys and the platform's
+        // verification workspace; to anyone else it is an unknown model.
+        let access = ModelAccess::calling(&authorization.identity, self.verification_workspace_id);
         let mut model = self
             .serving_state
-            .model(&model_id)
+            .model_for(access, &model_id)
             .await
             .map_err(state_unavailable("model_read"))?;
         if model.is_some()
@@ -556,7 +562,15 @@ impl RequestCoordinator {
                 .await
                 .map_err(state_unavailable("private_adapter_read"))?
         {
-            return Err(inconsistent_state("ambiguous_model_name"));
+            // A retired hosted model gives its name to the private model, as
+            // happens when the catalog withholds an owned model that collides.
+            if model
+                .as_ref()
+                .is_some_and(|model| model.status != ModelStatus::Retired)
+            {
+                return Err(inconsistent_state("ambiguous_model_name"));
+            }
+            model = None;
         }
         if model.is_none() {
             let resolved = self
@@ -571,7 +585,7 @@ impl RequestCoordinator {
             }
             model = self
                 .serving_state
-                .model(&resolved.base_model_id)
+                .model_for(access, &resolved.base_model_id)
                 .await
                 .map_err(state_unavailable("model_read"))?;
             if model
@@ -867,3 +881,7 @@ mod adapter_tests;
 #[cfg(test)]
 #[path = "coordinator_capacity_tests.rs"]
 mod capacity_tests;
+
+#[cfg(test)]
+#[path = "coordinator_ownership_tests.rs"]
+mod ownership_tests;

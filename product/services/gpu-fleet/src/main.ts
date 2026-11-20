@@ -127,7 +127,10 @@ const rollouts = createRollouts({
     if (!database)
       throw new Error("The model catalog credential is unavailable");
 
-    const models = await createCatalogService(database).listModels();
+    // Organizations' own models run on fleet pools like any other.
+    const models = await createCatalogService(database).listModels({
+      includeOrganizationModels: true,
+    });
     return new Map(models.map((model) => [model.id, model.status]));
   },
   mode: config.MODE,

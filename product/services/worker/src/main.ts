@@ -58,7 +58,9 @@ const metrics = new WorkerMetrics({
     ? {
         catalogModels: async () =>
           catalogProbeTargets(
-            await createCatalogService(database).listModels(),
+            await createCatalogService(database).listModels({
+              includeOrganizationModels: true,
+            }),
           ),
       }
     : {}),
@@ -269,6 +271,8 @@ supervisors.push(
 if (process.env.GPU_KUBERNETES_NAMESPACE) {
   const namespace = process.env.GPU_KUBERNETES_NAMESPACE;
   const store = createKubernetesDeploymentStore(database);
+  // Pods whose release can't serve their organization model's declared type.
+  const refusedPods = new Set<string>();
   const view = createKubernetesDeploymentView(
     process.env.GPU_KUBERNETES_NAMESPACE,
     createKubernetesGet(signal),
@@ -284,7 +288,16 @@ if (process.env.GPU_KUBERNETES_NAMESPACE) {
         while (!signal.aborted) {
           const start = performance.now();
           const result = await store.reconcile(view);
-          if (result) metrics.recordReconciliation(result.written);
+          if (result) {
+            metrics.recordReconciliation(result.written);
+            for (const id of result.refused) {
+              if (refusedPods.has(id)) continue;
+              refusedPods.add(id);
+              serviceLog("warn", "deployment_protocol_refused", {
+                deployment_id: id,
+              });
+            }
+          }
           await observeReplicaReadiness({
             store: createDeploymentStore(database),
             valkey: settlementValkey,
@@ -329,7 +342,11 @@ if (process.env.GPU_KUBERNETES_NAMESPACE) {
               );
               locked = result.rows[0]?.locked === true;
               if (locked) {
-                const models = await catalog.listModels();
+                // The verification workspace may call organizations' own
+                // models, so their pods qualify like any other.
+                const models = await catalog.listModels({
+                  includeOrganizationModels: true,
+                });
                 const availableModelIds = new Set(
                   models
                     .filter((model) => model.status === "available")
@@ -383,7 +400,10 @@ if (environment.INFERENCE_PROBE_BASE_URL) {
           await runInferenceProbes({
             eval: (script, options) => settlementValkey.eval(script, options),
             replicas: () => store.replicas(),
-            models: async () => catalogProbeTargets(await catalog.listModels()),
+            models: async () =>
+              catalogProbeTargets(
+                await catalog.listModels({ includeOrganizationModels: true }),
+              ),
             beforePass: async () => {
               if (issued && Date.now() < refreshAt) return;
 

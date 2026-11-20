@@ -312,7 +312,7 @@ describe("with a provider key", () => {
       [instance.model, aliases],
     );
     await instance.database.query(
-      "insert into models (id, name, status, properties) select $2, name, 'retired', properties from models where id = $1",
+      "insert into models (id, name, status, properties, type) select $2, name, 'retired', properties, type from models where id = $1",
       [instance.model, aliases[0]],
     );
     await fixture.proxy.catalogRefreshedAfter(Date.now());

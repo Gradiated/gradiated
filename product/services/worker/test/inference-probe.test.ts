@@ -46,14 +46,30 @@ describe("public inference probes", () => {
   it("discovers every available catalog model, including decisions, without consulting replicas", () => {
     expect(
       catalogProbeTargets([
-        { id: "deepseek/deepseek-v4.1-flash-1017", status: "available" },
-        { id: "gradiated/linden-1", status: "available" },
-        { id: "test/unavailable", status: "unavailable" },
-        { id: "test/retired", status: "retired" },
+        {
+          id: "deepseek/deepseek-v4.1-flash-1017",
+          status: "available",
+          type: "chat",
+        },
+        { id: "gradiated/linden-1", status: "available", type: "decision" },
+        { id: "test/unavailable", status: "unavailable", type: "chat" },
+        { id: "test/retired", status: "retired", type: "decision" },
       ]),
     ).toEqual([
       { modelId: "deepseek/deepseek-v4.1-flash-1017" },
       { modelId: "gradiated/linden-1", protocol: "system_one" },
+    ]);
+  });
+
+  it("probes an organization's own decision model over SystemOne", () => {
+    expect(
+      catalogProbeTargets([
+        { id: "posthog/jeeves", status: "available", type: "decision" },
+        { id: "posthog/chatty", status: "available", type: "chat" },
+      ]),
+    ).toEqual([
+      { modelId: "posthog/jeeves", protocol: "system_one" },
+      { modelId: "posthog/chatty" },
     ]);
   });
 

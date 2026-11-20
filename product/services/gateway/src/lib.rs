@@ -65,9 +65,9 @@ pub(crate) use generation::{
 };
 pub(crate) use metrics::GatewayMetrics;
 pub(crate) use model::{
-    InputPriceType, InputTokenPrice, ModelParameterDescriptor, ModelQuantization, OutputPriceType,
-    OutputTokenPrice, PinnedTokenizer, SupportedTextInputs, TextInputModality, TextOutputModality,
-    TokenMeasure, TokenUnit,
+    InputPriceType, InputTokenPrice, ModelAccess, ModelParameterDescriptor, ModelQuantization,
+    OutputPriceType, OutputTokenPrice, PinnedTokenizer, SupportedTextInputs, TextInputModality,
+    TextOutputModality, TokenMeasure, TokenUnit,
 };
 pub(crate) use request::{InferenceRequest, OutputTokenLimit, RequestKind};
 pub(crate) use routing::{healthy_deployment_count, Route, RouteAvailability, RouteInput};

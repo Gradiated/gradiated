@@ -101,6 +101,7 @@ const localQwen = {
   model: {
     id: "mlx-community/qwen3-0.6b-4bit",
     name: "Qwen3 0.6B 4-bit",
+    type: "chat",
     status: "available",
     properties: {
       description:

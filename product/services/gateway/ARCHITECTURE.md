@@ -212,13 +212,13 @@ class for each step of the request lifecycle.
 
 The gateway owns these canonical routes:
 
-| Method | Path                   | Authentication     | Purpose                                                  |
-| ------ | ---------------------- | ------------------ | -------------------------------------------------------- |
-| `POST` | `/v1/chat/completions` | Bearer credential  | Streaming and non-streaming exact-model inference.       |
-| `GET`  | `/v1/models`           | Bearer credential  | Provider schema for configured non-retired exact models. |
-| `GET`  | `/health/live`         | none               | Process liveness only.                                   |
-| `GET`  | `/health/ready`        | none               | Readiness of required serving dependencies.              |
-| `GET`  | `/metrics`             | network-restricted | Prometheus metrics for the private observability stack.  |
+| Method | Path                   | Authentication     | Purpose                                                 |
+| ------ | ---------------------- | ------------------ | ------------------------------------------------------- |
+| `POST` | `/v1/chat/completions` | Bearer credential  | Streaming and non-streaming exact-model inference.      |
+| `GET`  | `/v1/models`           | Bearer credential  | Provider schema for public and the caller's own models. |
+| `GET`  | `/health/live`         | none               | Process liveness only.                                  |
+| `GET`  | `/health/ready`        | none               | Readiness of required serving dependencies.             |
+| `GET`  | `/metrics`             | network-restricted | Prometheus metrics for the private observability stack. |
 
 Both SDKs use `https://api.gradiated.com` as their public base URL. The public
 ALB routes the OpenAI and Anthropic request paths to this service. The gateway
@@ -420,29 +420,37 @@ admission; other omitted parameters retain the pinned runtime/model defaults.
 ### 5. Canonical model and parameter qualification
 
 1. Convert the requested model ID to ASCII lowercase.
-2. Read `model:<normalized_model_id>` directly from Valkey.
+2. Read `model:v2:<normalized_model_id>` through Valkey.
 3. Strictly deserialize `GatewayModel` and its closed `ModelProperties`.
 4. Require `model.id` to equal the normalized request model exactly.
-5. Reject `unavailable` or `retired` models for inference.
-6. Read the model's projected `deployments` array and optional
+5. Treat a model with an `organization_id` as missing unless the caller's key
+   belongs to that organization or to the configured verification workspace,
+   so another organization gets the same `model_not_found` as for an unknown
+   ID. Serving state applies this itself: `model_for` and `models_visible_to`
+   take a `ModelAccess` built from the authenticated identity, and the record
+   read without one is private to the Valkey state.
+6. Reject `unavailable` or `retired` models for inference.
+7. Read the model's projected `deployments` array and optional
    `openrouter_model_id` from that same `GatewayModel` value.
-7. Select the first valid `available` deployment in projection order; reject a
+8. Select the first valid `available` deployment in projection order; reject a
    malformed one. A model without one qualifies only when OpenRouter may serve
    it; otherwise the existing `503 serving_state_unavailable` applies.
-8. Read the text output modality's `supported_parameters` and the model's
+9. Read the text output modality's `supported_parameters` and the model's
    request-scoped `passthrough_parameters` maps.
-9. Validate every advertised non-envelope top-level field against its
-   model-specific descriptor. Remove optional fields that the selected model
-   does not advertise.
-10. Apply the descriptor's outer type, range, enum, and size checks without
+10. Validate every advertised non-envelope top-level field against its
+    model-specific descriptor. Remove optional fields that the selected model
+    does not advertise.
+11. Apply the descriptor's outer type, range, enum, and size checks without
     recreating every nested OpenAI or SGLang type in Rust.
-11. Preserve every qualified, supported JSON value unchanged in the upstream
+12. Preserve every qualified, supported JSON value unchanged in the upstream
     body and capture effective pricing and the deployment release digest.
 
 The `GatewayModel` is the complete current PostgreSQL record of the model and its
 deployments, read through Valkey. Nothing projects it: a cache miss reads
 PostgreSQL and caches the row for `GATEWAY_RECORD_CACHE_TTL_SECONDS`, and a model
-PostgreSQL does not have is never cached. Apart from explicit catalog aliases, lookup has no scoring,
+PostgreSQL does not have is never cached. The record carries the owning
+`organization_id`; records cached under the earlier `model:<id>` key have no
+owner, so they are never read. Apart from explicit catalog aliases, lookup has no scoring,
 fallback, provider selection, or network discovery. The descriptor map is the
 public capability list. It does not claim that every model supports the same
 parameters. Adding a parameter normally changes
@@ -894,7 +902,9 @@ access checks as Chat Completions but does not create a lease.
    use `KEYS` or an unbounded Valkey scan.
 3. Fetch each corresponding `GatewayModel` and its deployment status hash.
 4. Exclude retired, malformed, or missing-deployment models, unless OpenRouter
-   may serve the model for the caller.
+   may serve the model for the caller. Exclude every model owned by another
+   organization; an organization sees its own. OpenRouter's key belongs to its
+   own organization, so its provider listing never includes one.
 5. Set `is_ready = true` when at least one deployment has fresh healthy status,
    or when the model is available and OpenRouter may serve it for the caller.
 6. Include explicitly staged unavailable models with `is_ready = false` so the

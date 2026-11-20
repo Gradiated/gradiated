@@ -155,6 +155,7 @@ select json_build_object(
     'openrouter_model_id', models.openrouter_model_id,
     'tokenizer', case when models.tokenizer_path is null or models.tokenizer_revision is null then null
       else json_build_object('path', models.tokenizer_path, 'revision', models.tokenizer_revision) end,
+    'organization_id', models.organization_id,
     'deployments', coalesce(
       (
         select json_agg(

@@ -6,7 +6,7 @@ import {
   OpenRouterModelIdSchema,
   UuidSchema,
 } from "@gradiated/contracts";
-import { MODEL_STATUSES } from "../db/schema/index.js";
+import { MODEL_STATUSES, MODEL_TYPES } from "../db/schema/index.js";
 
 export const ModelRecordSchema = z.object({
   id: ModelSchema.shape.id,
@@ -22,6 +22,10 @@ export const ModelRecordSchema = z.object({
     .string()
     .regex(/^[0-9a-f]{40}$/)
     .nullable(),
+  /** The only organization that can call or list the model; null is public. */
+  organizationId: UuidSchema.nullable(),
+  /** The interface the model serves, which its deployments must serve too. */
+  type: z.enum(MODEL_TYPES),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

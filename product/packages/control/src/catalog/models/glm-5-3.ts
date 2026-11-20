@@ -13,6 +13,7 @@ export const createGlm53ModelConfiguration = () =>
     id: glm53ModelId,
     name: modelDisplayName(glm53ModelId),
     status: "available",
+    type: "chat",
     // Checked 2026-11-06: OpenRouter's entry has this model's Hugging Face ID.
     openrouterModelId: "z-ai/glm-5.3",
     // Counts tokens while no deployment supplies a tokenizer.

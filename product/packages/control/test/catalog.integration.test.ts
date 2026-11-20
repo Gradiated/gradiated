@@ -100,6 +100,7 @@ describe("model catalog", () => {
       testDatabase.database.insert(models).values({
         id: `${input.id}-raw`,
         name: "Raw",
+        type: "chat",
         status: "available",
         properties: ModelPropertiesInputSchema.parse(input.properties),
         openrouterModelId: "author/model:free",

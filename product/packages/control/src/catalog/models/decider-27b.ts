@@ -10,6 +10,7 @@ export const createDecider27bModelConfiguration = () =>
     id: decider27bModelId,
     name: modelDisplayName(decider27bModelId),
     status: "retired",
+    type: "decision",
     openrouterModelId: null,
     properties: {
       description:

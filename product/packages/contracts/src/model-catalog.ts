@@ -12,7 +12,6 @@ export type CatalogEntry = {
   displayName: string;
   icon: string | null;
   supportedUses: readonly ModelUseCase[];
-  type?: "chat" | "decision";
   training?: {
     revision: string;
     model?: string;
@@ -94,21 +93,18 @@ export const MODEL_CATALOG = [
   },
   {
     id: "gradiated/linden-1",
-    type: "decision",
     displayName: "linden-1",
     icon: null,
     supportedUses: ["serving"],
   },
   {
     id: "perplexity-ai/pplx-decider-v1.2",
-    type: "decision",
     displayName: "Decider v1.2 27B",
     icon: null,
     supportedUses: ["serving"],
   },
   {
     id: "jaredpalmer/kev-9b",
-    type: "decision",
     displayName: "Kev 9B",
     icon: null,
     supportedUses: ["serving"],
@@ -308,12 +304,6 @@ export const isLegacyModelId = (id: string) =>
 export const catalogModel = (id: string) =>
   MODEL_CATALOG.find((model) => model.id === id) ??
   LEGACY_MODEL_CATALOG.find((model) => model.id === id);
-
-export const modelType = (id: string): "chat" | "decision" => {
-  const model: CatalogEntry | undefined = catalogModel(id);
-
-  return model?.type ?? "chat";
-};
 
 // Hosted catalog rows without a catalog entry are inference deployments.
 export const modelSupportedUses = (id: string): readonly ModelUseCase[] => {

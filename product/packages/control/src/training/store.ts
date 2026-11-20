@@ -121,6 +121,8 @@ export const createTrainingStore = (database: ControlDatabase) => {
       return row && TaskRecordSchema.parse(row);
     },
 
+    // Base models are public: an organization's own model is never a base,
+    // and another organization must not learn that one exists.
     async getModel(modelId: string) {
       const [row] = await database
         .select({
@@ -129,7 +131,12 @@ export const createTrainingStore = (database: ControlDatabase) => {
           properties: models.properties,
         })
         .from(models)
-        .where(eq(models.id, ModelSchema.shape.id.parse(modelId)));
+        .where(
+          and(
+            eq(models.id, ModelSchema.shape.id.parse(modelId)),
+            isNull(models.organizationId),
+          ),
+        );
 
       return (
         row &&

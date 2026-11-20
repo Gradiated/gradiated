@@ -265,7 +265,12 @@ const Summary = (ready: Ready) => {
         <Stat
           label="Evaluated"
           value={`${index.cases.length} cases`}
-          note={`${index.eval.rollouts.length} rollouts${incomplete ? ` · ${incomplete} didn’t complete` : ""}`}
+          note={`${
+            index.eval.rollouts.filter(
+              (rollout) =>
+                rollout.model_id === a.id || rollout.model_id === b.id,
+            ).length
+          } rollouts${incomplete ? ` · ${incomplete} didn’t complete` : ""}`}
         />
       </div>
     </div>
@@ -417,8 +422,15 @@ export const EvalCaseGrid = (props: EvalProps) => {
   return (
     <EvalFigure props={props}>
       {({ file, view, index, a, b, metric }) => {
-        const range =
-          metric.kind === "score" ? (metric.max ?? 1) - (metric.min ?? 0) : 1;
+        const range = isRate(metric)
+          ? 1
+          : metric.min !== undefined && metric.max !== undefined
+            ? metric.max - metric.min
+            : Math.max(
+                ...index.cases.map((item) =>
+                  Math.abs(verdictOf(index, item.id, a, b, metric).delta),
+                ),
+              );
         const grouped = groupCases(index, props.by);
         const untagged = index.cases
           .filter((item) => !props.by || item.tags[props.by] === undefined)

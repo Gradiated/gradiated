@@ -228,3 +228,21 @@ export {
   WorkloadBenchmarkSchema,
   type WorkloadBenchmark,
 } from "./workload-benchmark.js";
+export {
+  EVAL_FILE_PATTERN,
+  EVAL_SCHEMA,
+  EvalCaseSchema,
+  EvalCheckSchema,
+  EvalMessageSchema,
+  EvalModelSchema,
+  EvalRolloutSchema,
+  EvalSchema,
+  MAX_EVAL_FILE_CONTENT_BYTES,
+  type Eval,
+  type EvalCase,
+  type EvalCheck,
+  type EvalMessage,
+  type EvalMetric,
+  type EvalModel,
+  type EvalRollout,
+} from "./eval.js";

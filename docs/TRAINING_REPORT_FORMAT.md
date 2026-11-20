@@ -45,7 +45,8 @@ unreadable file shows a quiet placeholder instead of the block.
 | --- | --- | --- |
 | `{% metrics %}` with `{% metric /%}` | Headline numbers | `label`, `value` (required); `change`; `tone` = `positive` (default), `negative`, `neutral`; optional sparkline from `data` + `y` |
 | `{% callout %}` | Recommendation or context | `type` = `note` (default), `recommendation`, `success`, `warning`; `title` |
-| `{% columns %}` with `{% card %}` | Side-by-side cards | columns: `count` = 2 (default), 3, 4; card: `title` |
+| `{% columns %}` | Side-by-side blocks, such as cards, charts or eval tags | `count` = 2 (default), 3, 4 |
+| `{% card %}` | Titled box for prose | `title` |
 | `{% badge %}` | Inline status in prose | `tone` = `neutral` (default), `positive`, `negative`, `info` |
 | `{% chart /%}` | Bar, line, area or donut chart | `type`, `data`, `x`, `y` (list, e.g. `y=["train_loss","eval_loss"]`) required; `stacked=true`; `format` = `number`, `percent`, `usd`; `title`, `caption` |
 | `{% bar-list /%}` | Ranked breakdown | `data`, `label`, `value` required; `format`; `max`; `title`, `caption` |
@@ -61,6 +62,35 @@ Example:
 
 ```markdown
 {% chart type="line" data="metrics.csv" x="step" y=["train_loss", "eval_loss"] title="Training loss" /%}
+```
+
+## Evals
+
+An attached [eval file](EVAL_FORMAT.md) (`<name>.eval.json`) compares models
+case by case. Every eval tag takes `eval` (the file name, required), `models`
+(two model IDs; default the first two), `metric` (default the eval's primary
+metric), `title` and `caption`.
+
+| Tag | Shows | Extra attributes |
+| --- | --- | --- |
+| `{% eval-summary /%}` | Headline result, a tile per model, the difference with a 95% interval, and the case count | |
+| `{% eval-breakdown /%}` | Each model's score for all cases and for each value of a tag | `by` (tag key) |
+| `{% eval-head-to-head /%}` | How many cases each model did better on, or the same | `by` |
+| `{% eval-case-grid /%}` | One square per case, coloured by which model did better | `by` |
+| `{% eval-examples /%}` | The cases with the largest gap, with the most common failure | `where` = `better` (default) or `worse`; `limit` (default 5) |
+| `{% eval-cases /%}` | Searchable case list with tag filters and per-model results | |
+
+Clicking a case opens it beside the report: the conversation, the expected
+result, and each model's rollouts with their checks and traces. The open case
+is in the page URL (`?eval=…&case=…`), so links open straight to it.
+
+```markdown
+{% eval-summary eval="support.eval.json" /%}
+
+{% columns %}
+{% eval-breakdown eval="support.eval.json" by="Difficulty" title="Pass rate by difficulty" /%}
+{% eval-head-to-head eval="support.eval.json" by="Difficulty" title="Case by case" /%}
+{% /columns %}
 ```
 
 ## Editable workload benchmarks

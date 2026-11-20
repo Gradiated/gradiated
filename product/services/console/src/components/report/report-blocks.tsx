@@ -106,12 +106,12 @@ const formatValue = (value: unknown, format: unknown) => {
 const useDataset = (name: unknown): ReportDataset =>
   useContext(ReportDataContext).get(String(name)) ?? { status: "loading" };
 
-const DatasetState = ({
+export const DatasetState = ({
   dataset,
   name,
   height = "h-48",
 }: {
-  dataset: ReportDataset;
+  dataset: { status: ReportDataset["status"]; message?: string };
   name: unknown;
   height?: string;
 }) =>
@@ -134,7 +134,7 @@ const DatasetState = ({
     </div>
   ) : null;
 
-const Figure = ({
+export const Figure = ({
   title,
   caption,
   children,

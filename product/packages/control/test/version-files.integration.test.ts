@@ -275,6 +275,20 @@ describe("version files", () => {
     await service.remove(member.userId, ...key, file.id);
     expect(await service.list(member.userId, ...key)).toEqual([]);
   });
+  it("reads eval files above the usual inline limit", async () => {
+    const { member, service, key, upload } = await setup();
+    const large = "x".repeat(3 * 1024 * 1024);
+    const evalFile = await upload("run.eval.json", large);
+    const dataFile = await upload("rows.json", large);
+
+    expect(
+      (await service.content(member.userId, ...key, evalFile.id)).content,
+    ).toHaveLength(large.length);
+    await expect(
+      service.content(member.userId, ...key, dataFile.id),
+    ).rejects.toMatchObject({ code: "conflict" });
+  });
+
   it("returns a controlled conflict for malformed UTF-8 text", async () => {
     const { member, service, key, upload, objects } = await setup();
     const file = await upload("report.md", "x");

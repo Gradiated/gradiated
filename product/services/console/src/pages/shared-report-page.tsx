@@ -1,6 +1,6 @@
 import { VERSION_REPORT_FILE } from "@gradiated/contracts";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "@tanstack/react-router";
+import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
 import { useEffect, useMemo } from "react";
 
@@ -91,6 +91,8 @@ export const SharedReportPage = () => {
   const { versionId, signature } = useParams({
     from: "/share/$versionId/$signature",
   });
+  const openCase = useSearch({ from: "/share/$versionId/$signature" });
+  const navigate = useNavigate({ from: "/share/$versionId/$signature" });
   useEffect(loadAnonymousFlags, []);
   const exploreWeights = useFeatureFlag("explore-weights");
   const link = useMemo(
@@ -182,7 +184,14 @@ export const SharedReportPage = () => {
       <div className="flex flex-wrap items-start gap-10">
         <div className="min-w-0 flex-[999_1_32rem]">
           {report.data ? (
-            <TrainingReport report={report.data} source={source} />
+            <TrainingReport
+              report={report.data}
+              source={source}
+              openCase={openCase}
+              onOpenCase={(next) =>
+                void navigate({ search: next, replace: Boolean(openCase.case) })
+              }
+            />
           ) : (
             <div className="grid min-h-64 place-items-center rounded-xl border border-dashed p-8 text-center">
               <p className="text-sm text-muted-foreground">

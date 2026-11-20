@@ -59,14 +59,14 @@ def repair_event_probability_wording(task, key, instructions):
     raise ValueError("unreviewed arithmetic probability-threshold wording")
 
 
-def normalize_verqen(row):
+def normalize_verqen(row, question_offset=0):
     """Keep source-family grouping across format, context and paraphrase stages."""
     repo = "zorqelis-ai/verqen-decisions"
     source = canonical_family(row["source"])
     questions = row["questions"]
     if isinstance(questions, str):
         questions = json.loads(questions)
-    for index, question in enumerate(questions):
+    for index, question in enumerate(questions, start=question_offset):
         options = question["options"]
         kind = question["type"]
         if len(set(map(text, options))) != len(options):

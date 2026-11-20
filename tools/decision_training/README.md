@@ -43,6 +43,8 @@ Before assembling a larger training release:
 
 Strands Decider v2 describes 17,480,970 rows, but its [recipe says the data is not in the repository](https://github.com/strands-labs/strands-decider/blob/main/training/README.md#the-v2-recipes). Its older public recipe has smaller generated data and reconstruction steps. Recipe disclosure also does not make the complete Bison/Mammoth/KnowLine mixtures downloadable.
 
+`gradctl research decision-data-scale -- --source-manifest <acquisition.json> --run-dir <empty-output-dir>` normalizes the pinned VerQen, filtered Tasksource and native procedural acquisitions into traceable candidate Parquet shards. Repeat `--source-manifest` for each acquisition. It verifies every input hash, archives builder sources, records per-question rejection reasons and preserves source groups and probability order. The completion marker binds the shard manifest. These shards are explicitly **candidates only**: benchmark/group exclusions, cross-source exact/near deduplication, semantic admission, holdouts and exact tokenizer limits must pass before exporting a training release.
+
 ## Run
 
 Use a dedicated development-training GPU with `gradctl compute`. Keep the allocation owner and an independent cleanup watchdog running; the training program checkpoints but does not delete provider resources. Grant only the run's S3 paths using `gradctl compute s3`. No production credentials or customer inputs are needed.

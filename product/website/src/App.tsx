@@ -1,4 +1,4 @@
-import { Fragment, useEffect } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import type { ReactElement } from "react";
 import {
   BrowserRouter,
@@ -8,6 +8,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { articles } from "./articles";
+import { pinToAnchor } from "./pin-to-anchor";
 import { jobs } from "./careers";
 import { handbookPages } from "./handbook";
 import { models } from "./models";
@@ -68,8 +69,12 @@ const MOVED_JOURNEYS: Record<string, string> = {
 
 const RouteScrollRestoration = (): null => {
   const { hash, pathname } = useLocation();
+  const loaded = useRef(false);
 
   useEffect(() => {
+    const firstLoad = !loaded.current;
+    loaded.current = true;
+
     if (hash) {
       let targetId: string;
 
@@ -79,6 +84,8 @@ const RouteScrollRestoration = (): null => {
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         return;
       }
+
+      if (firstLoad) return pinToAnchor(targetId);
 
       document.getElementById(targetId)?.scrollIntoView({ block: "start" });
       return;

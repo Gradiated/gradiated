@@ -110,6 +110,17 @@ def validate_checkpoint_identity(manifest, identity):
         raise ValueError("checkpoint identity is missing or belongs to another run")
 
 
+def validate_output_reuse(output, resume):
+    output = pathlib.Path(output)
+    if not resume and (
+        any(output.glob("checkpoint-*")) or (output / "adapter-final").exists()
+    ):
+        raise ValueError(
+            "output directory already contains training artifacts; use --resume "
+            "or a new output directory"
+        )
+
+
 def build_run_identity(root, data, max_length):
     source_dir = pathlib.Path(__file__).resolve().parent
     benchmark_dir = root / "jevbench" / "jevbench"
@@ -169,6 +180,7 @@ def main():
     try:
         s3_bucket, s3_prefix = parse_s3_uri(args.s3_uri)
         validate_experiment_bounds(vars(args))
+        validate_output_reuse(args.output_dir or args.run_dir / "outputs", args.resume)
     except ValueError as error:
         parser.error(str(error))
     start = time.monotonic()

@@ -164,6 +164,8 @@ TOOLS = (
          'Build a pinned, screened public decision-training mixture and frozen JevBench evaluation'),
     Tool('research', 'decision-data-scale', (python('tools/decision_training/prepare_scale.py'),),
          'Normalize verified public scale-up candidate shards; separate admission is required', network=False),
+    Tool('research', 'decision-data-audit', (python('tools/decision_training/audit_scale.py'),),
+         'Audit exact candidate conflicts and protected benchmark case components; does not admit training', network=False),
     Tool('research', 'decision-train', (python('tools/decision_training/train.py'),),
          'Fine-tune Inkling decision adapters, checkpoint to scoped S3 and evaluate public JevBench'),
     Tool('research', 'decision-compare', (python('tools/decision_training/compare.py'),),

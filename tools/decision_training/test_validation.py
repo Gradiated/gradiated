@@ -15,10 +15,22 @@ from train import (
     learning_rate_for_step,
     parse_s3_uri,
     validate_experiment_bounds,
+    validate_output_reuse,
 )
 
 
 class RunnerValidationTests(unittest.TestCase):
+    def test_nonresume_reuse_of_training_artifacts_fails_before_model_load(self):
+        with TemporaryDirectory() as directory:
+            output = Path(directory)
+            (output / "baseline-dev.json").write_text("{}")
+            validate_output_reuse(output, None)
+            checkpoint = output / "checkpoint-00001"
+            checkpoint.mkdir()
+            with self.assertRaisesRegex(ValueError, "already contains"):
+                validate_output_reuse(output, None)
+            validate_output_reuse(output, str(checkpoint))
+
     def test_checkpoint_is_skipped_near_the_evaluation_reserve(self):
         called = []
         with self.assertRaises(TimeoutError):

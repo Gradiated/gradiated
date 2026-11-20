@@ -153,11 +153,11 @@ def main():
         with (OUT / "events.jsonl").open("a") as f:
             f.write(json.dumps(row) + "\n")
 
-    def sync():
+    def sync(reserve=0):
         import boto3
         from botocore.config import Config
 
-        check_deadline(deadline)
+        check_deadline(deadline, reserve=reserve)
         s = boto3.client(
             "s3",
             config=Config(
@@ -167,9 +167,12 @@ def main():
         bucket, prefix = s3_bucket, s3_prefix
 
         def upload(path, key):
-            check_deadline(deadline)
+            check_deadline(deadline, reserve=reserve)
             s.upload_file(
-                str(path), bucket, key, Callback=lambda _bytes: check_deadline(deadline)
+                str(path),
+                bucket,
+                key,
+                Callback=lambda _bytes: check_deadline(deadline, reserve=reserve),
             )
 
         for base in [OUT, DATA]:
@@ -591,7 +594,11 @@ def main():
                     indent=2,
                 )
             )
-            sync()
+            try:
+                sync(reserve=900)
+            except TimeoutError:
+                event("checkpoint_sync_deferred", step=step)
+                break
             lastsave = time.monotonic()
 
     if not args.evaluate_only and completed_steps < first_step:

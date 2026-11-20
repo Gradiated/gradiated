@@ -10,6 +10,7 @@ import {
   formatMetric,
   groupCases,
   isRate,
+  tagGroups,
   messageText,
   passedOf,
   pickMetric,
@@ -116,7 +117,7 @@ const GroupRow = ({
 
 const withAll = (index: EvalIndex, by?: string) => [
   { label: "All cases", ids: index.cases.map((item) => item.id) },
-  ...groupCases(index, by),
+  ...tagGroups(index, by),
 ];
 
 // Mulberry32: a seeded generator keeps the interval stable between renders.
@@ -143,6 +144,8 @@ const differenceInterval = ({ index, a, b, metric }: Ready) => {
       b: aggregate(index, b.id, metric, ids),
     }))
     .filter((total) => total.a.n && total.b.n);
+  if (totals.length < 2) return null;
+
   const next = seeded(7);
   const deltas: number[] = [];
 
@@ -356,6 +359,7 @@ const VERDICT_COLORS = [
   ["better", MODEL_COLORS[0]],
   ["same", SAME_COLOR],
   ["worse", MODEL_COLORS[1]],
+  ["none", "transparent"],
 ] as const;
 
 export const EvalHeadToHead = (props: EvalProps) => (
@@ -370,15 +374,14 @@ export const EvalHeadToHead = (props: EvalProps) => (
           ]}
         />
         {withAll(index, props.by).map((group) => {
-          const counts: Record<Verdict, number> = {
+          const counts: Record<Verdict | "none", number> = {
             better: 0,
             same: 0,
             worse: 0,
+            none: 0,
           };
-          for (const id of group.ids) {
-            const { verdict } = verdictOf(index, id, a, b, metric);
-            if (verdict) counts[verdict]++;
-          }
+          for (const id of group.ids)
+            counts[verdictOf(index, id, a, b, metric).verdict ?? "none"]++;
 
           return (
             <GroupRow
@@ -397,7 +400,7 @@ export const EvalHeadToHead = (props: EvalProps) => (
                 </div>
                 <span className="text-xs text-muted-foreground">
                   {counts.better} better · {counts.same} same · {counts.worse}{" "}
-                  worse
+                  worse{counts.none ? ` · ${counts.none} without a result` : ""}
                 </span>
               </div>
             </GroupRow>
@@ -431,16 +434,10 @@ export const EvalCaseGrid = (props: EvalProps) => {
                   Math.abs(verdictOf(index, item.id, a, b, metric).delta),
                 ),
               );
-        const grouped = groupCases(index, props.by);
-        const untagged = index.cases
-          .filter((item) => !props.by || item.tags[props.by] === undefined)
-          .map((item) => item.id);
-        const groups = [
-          ...grouped,
-          ...(untagged.length
-            ? [{ label: grouped.length ? "None" : "", ids: untagged }]
-            : []),
-        ];
+        const grouped = tagGroups(index, props.by);
+        const groups = grouped.length
+          ? grouped
+          : [{ label: "", ids: index.cases.map((item) => item.id) }];
         const order = groups.flatMap((group) => group.ids);
 
         return (

@@ -158,6 +158,17 @@ export const groupCases = (index: EvalIndex, by?: unknown) => {
     .map(([label, ids]) => ({ label, ids }));
 };
 
+export const tagGroups = (index: EvalIndex, by?: unknown) => {
+  const groups = groupCases(index, by);
+  const untagged = index.cases
+    .filter((item) => item.tags[String(by)] === undefined)
+    .map((item) => item.id);
+
+  return groups.length && untagged.length
+    ? [...groups, { label: "None", ids: untagged }]
+    : groups;
+};
+
 export const isRate = (metric: EvalMetric) =>
   metric.kind === "pass" ||
   (metric.kind === "score" && metric.min === 0 && metric.max === 1);

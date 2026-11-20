@@ -750,8 +750,16 @@ const CaseList = ({ file, view, index, a, b, metric }: Ready) => {
           {rows.slice(0, limit).map((item) => (
             <tr
               key={item.id}
+              tabIndex={0}
+              aria-label={`Open ${item.title}`}
               onClick={() => panel.open(file, item.id, order, view)}
-              className="cursor-pointer border-b last:border-0 hover:bg-muted/50"
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+
+                event.preventDefault();
+                panel.open(file, item.id, order, view);
+              }}
+              className="cursor-pointer border-b outline-none last:border-0 hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
             >
               <td className="py-2.5 pr-3">
                 <div className="flex flex-col gap-1">

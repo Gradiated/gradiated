@@ -160,6 +160,14 @@ TOOLS = (
          requires=('cmake', 'git')),
 
     # Agent skills.
+    Tool('research', 'decision-data', (python('tools/decision_training/prepare.py'),),
+         'Build a pinned, screened public decision-training mixture and frozen JevBench evaluation'),
+    Tool('research', 'decision-train', (python('tools/decision_training/train.py'),),
+         'Fine-tune Inkling decision adapters, checkpoint to scoped S3 and evaluate public JevBench'),
+    Tool('research', 'decision-compare', (python('tools/decision_training/compare.py'),),
+         'Compare frozen decision predictions with fair dev calibration and paired uncertainty', network=False),
+    Tool('research', 'decision-probe', (python('tools/decision_training/probe.py'),),
+         'Diagnose padding and numerical batch sensitivity of the released Inkling implementation'),
     Tool('research', 'efficiency', (python('.agents/skills/experiment-run/scripts/research_efficiency.py'),),
          'Account Codex and provider throughput for $experiment-run from event timing, not reasoning text',
          network=False),

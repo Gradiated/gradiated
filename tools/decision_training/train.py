@@ -1,0 +1,502 @@
+import argparse
+import hashlib
+import json
+import math
+import pathlib
+import random
+import sys
+import time
+
+from data import read_jsonl
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Train and evaluate a direct Inkling decision adapter."
+    )
+    parser.add_argument("--run-dir", type=pathlib.Path, required=True)
+    parser.add_argument("--s3-uri", required=True)
+    parser.add_argument("--brier-weight", type=float, default=1.0)
+    parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--rank", type=int, default=32)
+    parser.add_argument("--stop-file", type=pathlib.Path)
+    parser.add_argument("--data-dir", type=pathlib.Path)
+    parser.add_argument("--output-dir", type=pathlib.Path)
+    parser.add_argument("--resume", type=str)
+    parser.add_argument("--steps", type=int, default=500)
+    parser.add_argument("--seconds", type=int, default=9000)
+    parser.add_argument("--batch-size", type=int, default=4)
+    parser.add_argument("--accumulation", type=int, default=4)
+    parser.add_argument("--max-length", type=int, default=1024)
+    args = parser.parse_args()
+    if not args.s3_uri.startswith("s3://") or len(args.s3_uri[5:].split("/", 1)) != 2:
+        parser.error("--s3-uri must contain a bucket and project prefix")
+    if (
+        args.steps < 0
+        or args.seconds < 120
+        or min(args.batch_size, args.accumulation, args.max_length, args.rank) < 1
+    ):
+        parser.error("invalid experiment bounds")
+    import torch
+    from peft import LoraConfig, get_peft_model, set_peft_model_state_dict
+    from safetensors.torch import load_file
+    from transformers import AutoTokenizer, Inkling2LoopForConditionalGeneration
+
+    ROOT = args.run_dir.resolve()
+    DATA = args.data_dir or ROOT / "data"
+    OUT = args.output_dir or ROOT / "outputs"
+    sys.path.insert(0, str(ROOT / "jevbench"))
+    from jevbench.metrics import brier_score, ece_top_label
+    from jevbench.scoring import score_task
+    from jevbench.tasks import Task
+
+    random.seed(20261120)
+    torch.manual_seed(20261120)
+    torch.set_num_threads(12)
+    OUT.mkdir(parents=True, exist_ok=True)
+    start = time.monotonic()
+    deadline = start + args.seconds
+
+    def event(kind, **fields):
+        row = {
+            "event": kind,
+            "time": time.time(),
+            "elapsed": time.monotonic() - start,
+            **fields,
+        }
+        print(json.dumps(row), flush=True)
+        with (OUT / "events.jsonl").open("a") as f:
+            f.write(json.dumps(row) + "\n")
+
+    def sync():
+        import boto3
+
+        s = boto3.client("s3")
+        bucket, prefix = args.s3_uri[5:].strip("/").split("/", 1)
+        for base in [OUT, DATA]:
+            for p in sorted(
+                base.rglob("*"), key=lambda p: p.name == "checkpoint-complete.json"
+            ):
+                if p.is_file() and not p.name.endswith(".tmp"):
+                    s.upload_file(
+                        str(p),
+                        bucket,
+                        prefix + "/" + base.name + "/" + str(p.relative_to(base)),
+                    )
+        for name in [
+            "train.py",
+            "prepare_data.py",
+            "pilot.json",
+            "model-manifest.json",
+            "model-sha256.txt",
+        ]:
+            p = ROOT / name
+            if p.exists():
+                s.upload_file(str(p), bucket, prefix + "/" + name)
+        s.upload_file(__file__, bucket, prefix + "/source/train.py")
+        event("s3_sync")
+
+    identity = {
+        "model": "thinkingmachines/Inkling-2-Mini",
+        "revision": "6e7c8248f75265bdd4fbab5273304243b5d8c2cb",
+        "prompt": "native-chat-none-letter-v1",
+        "evaluation_batch_size": 1,
+        "data": {
+            name: hashlib.sha256((DATA / name).read_bytes()).hexdigest()
+            for name in ["train.jsonl", "dev.jsonl", "jevbench-231.jsonl"]
+        },
+    }
+    identity_path = OUT / "identity.json"
+    if identity_path.exists():
+        if json.loads(identity_path.read_text()) != identity:
+            raise ValueError(
+                "output directory belongs to different model, prompt or data"
+            )
+    else:
+        identity_path.write_text(json.dumps(identity, indent=2) + "\n")
+
+    def read(name):
+        return read_jsonl(DATA / name)
+
+    tokenizer = AutoTokenizer.from_pretrained(ROOT / "model")
+    tokenizer.padding_side = "left"
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    letter_ids = [tokenizer.encode(c, add_special_tokens=False) for c in letters]
+    assert all(len(x) == 1 for x in letter_ids), letter_ids
+    letter_ids = torch.tensor([x[0] for x in letter_ids], device="cuda")
+
+    def bench_row(r):
+        q = r["question"]
+        criteria = q.get("criteria")
+        labels = r["labels"]
+        if q["type"] == "noul":
+            descs = [
+                str((criteria or {}).get("false" if l == "no" else "true", l))
+                for l in labels
+            ]
+        elif q["type"] == "score":
+            descs = [str(criteria[int(l)]) for l in labels]
+        else:
+            descs = [str(criteria[l]) for l in labels]
+        return {**r, "descriptions": descs}
+
+    def encode(r):
+        state = (
+            r["state"]
+            if isinstance(r["state"], str)
+            else json.dumps(r["state"], ensure_ascii=False, sort_keys=True)
+        )
+        q = r["question"]
+        instruction = (
+            q["instructions"]
+            if isinstance(q["instructions"], str)
+            else json.dumps(q["instructions"], ensure_ascii=False)
+        )
+        opts = "\n".join(f"{letters[i]}: {d}" for i, d in enumerate(r["descriptions"]))
+        content = f"State:\n{state}\n\nQuestion:\n{instruction}\n\nOptions:\n{opts}\n\nChoose the correct option. Reply with its letter only."
+        prompt = (
+            tokenizer.apply_chat_template(
+                [{"role": "user", "content": content}],
+                tokenize=False,
+                reasoning_effort="none",
+            )
+            + "<|message_model|><|content_text|>"
+        )
+        ids = tokenizer.encode(prompt, add_special_tokens=False)
+        return {**r, "ids": ids}
+
+    train = []
+    for r in read("train.jsonl"):
+        r = encode(r)
+        if len(r["ids"]) <= args.max_length:
+            train.append(r)
+    dev = [encode(r) for r in read("dev.jsonl")]
+    dev = [r for r in dev if len(r["ids"]) <= args.max_length][:256]
+    bench = [encode(bench_row(r)) for r in read("jevbench-231.jsonl")]
+    event(
+        "data_ready",
+        train=len(train),
+        dev=len(dev),
+        benchmark=len(bench),
+        max_benchmark_tokens=max(len(r["ids"]) for r in bench),
+    )
+    assert train and dev and len(bench) == 231
+
+    event("model_load_start")
+    model, loading = Inkling2LoopForConditionalGeneration.from_pretrained(
+        ROOT / "model",
+        dtype=torch.bfloat16,
+        device_map="cuda",
+        output_loading_info=True,
+    )
+    for key in ["missing_keys", "unexpected_keys", "mismatched_keys", "error_msgs"]:
+        assert not loading.get(key), (key, loading[key])
+    model.config.use_cache = False
+    model.model.language_model.config.use_cache = False
+    model.eval()
+    event("model_loaded", gpu_allocated_gb=torch.cuda.memory_allocated() / 1e9)
+
+    def logits(rows):
+        inputs = tokenizer.pad(
+            {"input_ids": [r["ids"] for r in rows]}, return_tensors="pt"
+        ).to("cuda")
+        return (
+            model(**inputs, use_cache=False, logits_to_keep=1)
+            .logits[:, -1, letter_ids]
+            .float()
+        )
+
+    def evaluate(rows, name, temperature=1.0):
+        model.eval()
+        predictions = []
+        ordered = sorted(rows, key=lambda r: len(r["ids"]))
+        with torch.no_grad():
+            for offset, row in enumerate(ordered):
+                batch = [row]
+                ts = time.monotonic()
+                raw = logits(batch)
+                torch.cuda.synchronize()
+                dt = time.monotonic() - ts
+                for r, z in zip(batch, raw):
+                    n = len(r["labels"])
+                    p = (z[:n] / temperature).softmax(-1).tolist()
+                    probs = dict(zip(r["labels"], p))
+                    entry = {
+                        "id": r["id"],
+                        "type": r["question"]["type"],
+                        "probs": probs,
+                        "logits": z[:n].tolist(),
+                        "elapsed_batch_seconds": dt,
+                        "batch_size": len(batch),
+                    }
+                    if "expected" in r:
+                        task = Task.from_dict(
+                            {
+                                k: r[k]
+                                for k in [
+                                    "id",
+                                    "family",
+                                    "state",
+                                    "question",
+                                    "labels",
+                                    "expected",
+                                    "split",
+                                    "group",
+                                    "provenance",
+                                ]
+                                if k in r
+                            }
+                        )
+                        result = score_task(probs, task)
+                        entry.update(result)
+                        entry["expected"] = r["expected"]
+                        entry["family"] = r["family"]
+                        entry["brier"] = brier_score(
+                            probs, str(r["expected"]), r["labels"]
+                        )
+                    else:
+                        target = r["target"]
+                        entry["target"] = target
+                        entry["correct"] = max(range(n), key=lambda i: p[i]) == max(
+                            range(n), key=lambda i: target[i]
+                        )
+                        entry["brier"] = sum((a - b) ** 2 for a, b in zip(p, target))
+                    predictions.append(entry)
+                if offset % 40 == 0:
+                    event(
+                        "evaluation_progress",
+                        name=name,
+                        done=min(offset + len(batch), len(ordered)),
+                        total=len(ordered),
+                    )
+        pairs = [(max(r["probs"].values()), r["correct"]) for r in predictions]
+        metrics = {
+            "n": len(predictions),
+            "accuracy": sum(r["correct"] for r in predictions) / len(predictions),
+            "brier": sum(r["brier"] for r in predictions) / len(predictions),
+            "ece": ece_top_label(pairs),
+            "temperature": temperature,
+        }
+        metrics["by_type"] = {
+            kind: {"n": len(rs), "accuracy": sum(r["correct"] for r in rs) / len(rs)}
+            for kind in ["noul", "choice", "score"]
+            if (rs := [r for r in predictions if r["type"] == kind])
+        }
+        (OUT / (name + ".jsonl")).write_text(
+            "".join(json.dumps(r) + "\n" for r in predictions)
+        )
+        (OUT / (name + ".json")).write_text(json.dumps(metrics, indent=2) + "\n")
+        event("evaluation_complete", name=name, **metrics)
+        sync()
+        return predictions, metrics
+
+    with torch.no_grad():
+        lengths = sorted(bench, key=lambda row: len(row["ids"]))
+        probability_delta = max(
+            (
+                logits([row])[0, : len(row["labels"])].softmax(-1)
+                - logits([row])[0, : len(row["labels"])].softmax(-1)
+            )
+            .abs()
+            .max()
+            .item()
+            for row in [lengths[0], lengths[len(lengths) // 2], lengths[-1]]
+        )
+        if probability_delta > 1e-5:
+            raise ValueError(f"single-request replay is unstable: {probability_delta}")
+        event("single_request_replay", maximum_probability_delta=probability_delta)
+
+    if not (OUT / "baseline-jevbench.json").exists():
+        evaluate(bench, "baseline-jevbench")
+    if not (OUT / "baseline-dev.json").exists():
+        evaluate(dev, "baseline-dev")
+    # Fixed low-rank intervention on attention projections and answer readout.
+    targets = [
+        name
+        for name, module in model.named_modules()
+        if isinstance(module, torch.nn.Linear)
+        and (".self_attn." in name or name == "lm_head")
+    ]
+    assert len(targets) > 50, targets
+    model = get_peft_model(
+        model,
+        LoraConfig(
+            r=args.rank,
+            lora_alpha=2 * args.rank,
+            lora_dropout=0,
+            target_modules=targets,
+            bias="none",
+        ),
+    )
+    model.gradient_checkpointing_enable(
+        gradient_checkpointing_kwargs={"use_reentrant": False}
+    )
+    model.enable_input_require_grads()
+    optimizer = torch.optim.AdamW(
+        [p for p in model.parameters() if p.requires_grad],
+        lr=args.learning_rate,
+        betas=(0.9, 0.95),
+        weight_decay=0.0,
+    )
+    event(
+        "training_start",
+        trainable=sum(p.numel() for p in model.parameters() if p.requires_grad),
+        targets=targets,
+        arguments={
+            k: str(v) if isinstance(v, pathlib.Path) else v
+            for k, v in vars(args).items()
+        },
+    )
+
+    # Length buckets reduce padding without changing examples or targets.
+    train.sort(key=lambda r: len(r["ids"]))
+    batches = [
+        train[i : i + args.batch_size] for i in range(0, len(train), args.batch_size)
+    ]
+    random.shuffle(batches)
+    step = 0
+    cursor = 0
+    lastsave = time.monotonic()
+    optimizer.zero_grad(set_to_none=True)
+    if args.resume:
+        ckpt = pathlib.Path(args.resume)
+        checkpoint_manifest = json.loads(
+            (ckpt / "checkpoint-complete.json").read_text()
+        )
+        if checkpoint_manifest.get("identity", identity) != identity:
+            raise ValueError("checkpoint belongs to different data, model or prompt")
+        for name, digest in checkpoint_manifest["files"].items():
+            if hashlib.sha256((ckpt / name).read_bytes()).hexdigest() != digest:
+                raise ValueError("incomplete or corrupt checkpoint")
+        set_peft_model_state_dict(
+            model, load_file(str(ckpt / "adapter_model.safetensors"))
+        )
+        state = torch.load(ckpt / "trainer.pt", map_location="cpu", weights_only=False)
+        optimizer.load_state_dict(state["optimizer"])
+        step = state["step"]
+        cursor = state["cursor"]
+        random.setstate(state["random"])
+        torch.set_rng_state(state["torch_rng"])
+        torch.cuda.set_rng_state_all(state["cuda_rng"])
+        event("resumed", checkpoint=str(ckpt), step=step)
+    first_step = step + 1
+    completed_steps = step
+    for step in range(first_step, args.steps + 1):
+        if time.monotonic() > deadline - 900 or (
+            args.stop_file and args.stop_file.exists()
+        ):
+            event("training_deadline_or_stop")
+            break
+        model.train()
+        loss_sum = 0
+        step_start = time.monotonic()
+        for micro in range(args.accumulation):
+            batch = batches[cursor % len(batches)]
+            cursor += 1
+            raw = logits(batch)
+            losses = []
+            for r, z in zip(batch, raw):
+                target = torch.tensor(r["target"], device="cuda", dtype=torch.float32)
+                lp = z[: len(target)].log_softmax(-1)
+                p = lp.exp()
+                losses.append(
+                    -(target * lp).sum() + args.brier_weight * ((p - target) ** 2).sum()
+                )
+            loss = torch.stack(losses).mean() / args.accumulation
+            assert torch.isfinite(loss), loss
+            loss.backward()
+            loss_sum += loss.item()
+        norm = torch.nn.utils.clip_grad_norm_(
+            [p for p in model.parameters() if p.requires_grad], 1.0
+        )
+        assert torch.isfinite(norm) and norm > 0, norm
+        for group in optimizer.param_groups:
+            group["lr"] = (
+                args.learning_rate
+                * min(1.0, step / 20)
+                * 0.5
+                * (1 + math.cos(math.pi * step / args.steps))
+            )
+        optimizer.step()
+        completed_steps = step
+        optimizer.zero_grad(set_to_none=True)
+        if step == 1 or step % 10 == 0:
+            event(
+                "training_step",
+                step=step,
+                loss=loss_sum,
+                gradient_norm=norm.item(),
+                seconds=time.monotonic() - step_start,
+                gpu_peak_gb=torch.cuda.max_memory_allocated() / 1e9,
+            )
+        if step == 1 or step % 100 == 0 or time.monotonic() - lastsave > 600:
+            ckpt = OUT / f"checkpoint-{step:05d}"
+            model.save_pretrained(ckpt, save_embedding_layers=False)
+            torch.save(
+                {
+                    "step": step,
+                    "cursor": cursor,
+                    "optimizer": optimizer.state_dict(),
+                    "random": random.getstate(),
+                    "torch_rng": torch.get_rng_state(),
+                    "cuda_rng": torch.cuda.get_rng_state_all(),
+                    "args": {
+                        k: str(v) if isinstance(v, pathlib.Path) else v
+                        for k, v in vars(args).items()
+                    },
+                },
+                ckpt / "trainer.pt",
+            )
+            (ckpt / "checkpoint-complete.json").write_text(
+                json.dumps(
+                    {
+                        "step": step,
+                        "identity": identity,
+                        "files": {
+                            p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+                            for p in ckpt.iterdir()
+                            if p.is_file() and p.name != "checkpoint-complete.json"
+                        },
+                    },
+                    indent=2,
+                )
+            )
+            sync()
+            lastsave = time.monotonic()
+
+    model.save_pretrained(OUT / "adapter-final", save_embedding_layers=False)
+    tokenizer.save_pretrained(OUT / "adapter-final")
+    trained_dev, _ = evaluate(dev, "trained-dev")
+
+    # Temperature is selected using only the source-held-out dev set, never JevBench labels.
+    def dev_loss(t):
+        total = 0
+        for r in trained_dev:
+            z = torch.tensor(r["logits"]) / t
+            y = torch.tensor(r["target"])
+            total += -(y * z.log_softmax(-1)).sum().item()
+        return total / len(trained_dev)
+
+    temp = min([0.5, 0.7, 0.85, 1.0, 1.2, 1.5, 2.0, 2.5, 3.0], key=dev_loss)
+    (OUT / "calibration.json").write_text(
+        json.dumps(
+            {
+                "temperature": temp,
+                "source": "trained-dev",
+                "held_out_from_training": True,
+                "grid_nll": {
+                    str(t): dev_loss(t)
+                    for t in [0.5, 0.7, 0.85, 1.0, 1.2, 1.5, 2.0, 2.5, 3.0]
+                },
+            }
+        )
+    )
+    evaluate(bench, "trained-jevbench", temperature=temp)
+    event("complete", steps=completed_steps)
+    sync()
+
+
+if __name__ == "__main__":
+    main()

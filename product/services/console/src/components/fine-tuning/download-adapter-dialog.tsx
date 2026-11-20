@@ -185,8 +185,8 @@ export const DownloadAdapterDialog = ({
         {adapter.format === "cartridge" ? (
           <p className="text-xs text-muted-foreground">
             <span className="font-mono">cartridge.safetensors</span> holds the
-            cartridge embeddings. Gradiated serves it in front of the system
-            prompt.
+            cartridge's learned input embeddings, which go in front of the
+            system prompt.
           </p>
         ) : (
           <div className="space-y-2">

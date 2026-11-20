@@ -14,6 +14,7 @@ import SequencingContent from "./handbook/sequencing-and-depth.mdx";
 import ShareOptionsContent from "./handbook/share-options.mdx";
 import SideGigsContent from "./handbook/side-gigs.mdx";
 import SpendingCompanyMoneyContent from "./handbook/spending-company-money.mdx";
+import TimeOffContent from "./handbook/time-off.mdx";
 import ValuesContent from "./handbook/values.mdx";
 import PeopleContent from "./handbook/what-we-look-for.mdx";
 import WorkingWithPostHogContent from "./handbook/working-with-posthog.mdx";
@@ -32,6 +33,7 @@ export type HandbookSlug =
   | "share-options"
   | "feedback"
   | "side-gigs"
+  | "time-off"
   | "getting-out-the-gate"
   | "values"
   | "brand"
@@ -161,6 +163,14 @@ export const handbookPages: HandbookPageDefinition[] = [
     Content: SideGigsContent,
   },
   {
+    slug: "time-off",
+    section: "People",
+    title: "Time off",
+    pageTitle: "Time off",
+    description: "How holidays, sick days and parental leave work here.",
+    Content: TimeOffContent,
+  },
+  {
     slug: "getting-out-the-gate",
     section: "Going to market",
     title: "Getting out the gate",
@@ -230,6 +240,7 @@ const handbookSectionOrder: Array<{
       "share-options",
       "feedback",
       "side-gigs",
+      "time-off",
     ],
   },
   {

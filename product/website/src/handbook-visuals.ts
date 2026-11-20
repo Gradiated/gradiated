@@ -34,6 +34,7 @@ export const handbookCovers: Record<HandbookSlug, StoryCover> = {
   "share-options": artworkPresets.people,
   feedback: artworkPresets.people,
   "side-gigs": artworkPresets.people,
+  "time-off": artworkPresets.people,
   "getting-out-the-gate": artworkPresets.gate,
   values: artworkPresets.values,
   brand: artworkPresets.brand,

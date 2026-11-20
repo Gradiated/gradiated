@@ -88,6 +88,12 @@ export const validateCartridgeFile = async (
   }
 
   const metadata = (header.__metadata__ ?? {}) as Record<string, unknown>;
+  if (
+    typeof metadata !== "object" ||
+    Array.isArray(metadata) ||
+    Object.values(metadata).some((value) => typeof value !== "string")
+  )
+    fail("Safetensors metadata values must all be text.");
   if (metadata.format !== CARTRIDGE_FORMAT)
     fail(`The cartridge metadata must set format to ${CARTRIDGE_FORMAT}.`);
   if ((metadata.placement ?? "system_prompt_start") !== "system_prompt_start")

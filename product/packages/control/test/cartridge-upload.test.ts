@@ -83,6 +83,13 @@ describe("validateCartridgeFile", () => {
       "does not match its shape",
     ],
     [
+      "non-text metadata",
+      safetensors({
+        metadata: { format: "gradiated.cartridge/1", steps: 300 } as never,
+      }),
+      "metadata values must all be text",
+    ],
+    [
       "trailing bytes after the tensors",
       Buffer.concat([safetensors(), Buffer.alloc(4)]),
       "contiguous and fill the file",

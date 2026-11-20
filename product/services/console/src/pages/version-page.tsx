@@ -423,7 +423,8 @@ const VersionReport = ({
               <Download className="size-4" />
               Download
             </Button>
-            {exploreWeights === true ? (
+            {exploreWeights === true &&
+            version.adapter.format === "peft_lora" ? (
               <AdapterExplorerButton
                 target={{
                   workspaceId,

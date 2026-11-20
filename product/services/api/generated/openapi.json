@@ -3402,8 +3402,7 @@
                 "type": "string",
                 "enum": [
                   "peft_lora"
-                ],
-                "default": "peft_lora"
+                ]
               },
               "task": {
                 "type": "string",

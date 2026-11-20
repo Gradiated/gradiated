@@ -588,7 +588,7 @@ const UploadTargetFields = {
   base_model_id: ModelIdSchema,
 };
 export const LoraModelUploadSchema = z.strictObject({
-  format: z.literal("peft_lora").default("peft_lora"),
+  format: z.literal("peft_lora").optional(),
   ...UploadTargetFields,
   base_model_revision: z
     .string()

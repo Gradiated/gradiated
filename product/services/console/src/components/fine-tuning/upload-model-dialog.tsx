@@ -232,6 +232,7 @@ export const UploadModelDialog = ({
     ]);
   };
   const draft = LoraModelUploadSchema.omit({
+    format: true,
     base_model_revision: true,
   }).safeParse({
     task: task?.name ?? taskName.trim(),

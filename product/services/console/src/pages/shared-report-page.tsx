@@ -204,7 +204,8 @@ export const SharedReportPage = () => {
           aria-label="Version"
           className="flex w-full flex-col lg:sticky lg:top-6 lg:w-72 lg:flex-none [&>section:first-child]:border-t-0 [&>section:first-child]:pt-0"
         >
-          {exploreWeights === true ? (
+          {exploreWeights === true &&
+          shared.data.adapter.format === "peft_lora" ? (
             <AdapterExplorerButton
               target={{ kind: "shared", versionId, signature }}
               title={`${summary.task}/${summary.version}`}

@@ -2629,11 +2629,8 @@ export interface components {
           cartridge_size: number;
         }
       | {
-          /**
-           * @default peft_lora
-           * @enum {string}
-           */
-          format: "peft_lora";
+          /** @enum {string} */
+          format?: "peft_lora";
           task: string;
           /** @default false */
           create_task: boolean;

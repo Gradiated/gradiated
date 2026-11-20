@@ -111,6 +111,20 @@ def normalize_eikos(row):
         or row.get("label_source") not in ("program", "exact_probability")
     ):
         return None
+    upstream = row.get("upstream")
+    license_terms = row.get("license") or "cc-by-4.0"
+    upstream_license = row.get("upstream_license") or row.get("source_license")
+    if upstream:
+        if row.get("upstream_split") != "train" and "train" not in upstream.lower():
+            return None
+        upstream_license = upstream_license or {
+            "GSM8K train (MIT)": "mit",
+            "TAT-QA (CC BY 4.0)": "cc-by-4.0",
+        }.get(upstream)
+        if not upstream_license:
+            raise ValueError("Eikos upstream terms are unavailable")
+        if upstream_license != license_terms:
+            license_terms += "/" + upstream_license
     options = row["options"]
     labels = [option["label"] for option in options]
     descriptions = [option.get("description") or option["label"] for option in options]
@@ -121,7 +135,13 @@ def normalize_eikos(row):
             "source": repo,
             "source_task": "eikos/" + row["family"],
             "family_group": "eikos/" + row["family"],
-            "license": "cc-by-4.0",
+            "license": license_terms,
+            "attribution": {
+                "upstream": upstream,
+                "upstream_license": upstream_license,
+                "source_origin": row.get("source"),
+                "source_attribution": row.get("attribution"),
+            },
             "state": row["state"],
             "question": {
                 "type": row["question_type"],

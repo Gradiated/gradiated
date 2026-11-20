@@ -8,12 +8,31 @@ import importlib.metadata
 import json
 import os
 import time
+from contextlib import contextmanager
 from pathlib import Path
 
 from prepare_scale import digest_file
 from prompting import render_prompt
 
 TOKENIZER = None
+
+
+@contextmanager
+def terminating_pool(**kwargs):
+    pool = concurrent.futures.ProcessPoolExecutor(**kwargs)
+    try:
+        yield pool
+    except BaseException:
+        processes = list(pool._processes.values()) if pool._processes else []
+        for process in processes:
+            if process.is_alive():
+                process.kill()
+        pool.shutdown(wait=False, cancel_futures=True)
+        for process in processes:
+            process.join(timeout=0.1)
+        raise
+    else:
+        pool.shutdown(wait=True)
 
 
 def verify_tokenizer_directory(root, manifest):
@@ -138,7 +157,7 @@ def main():
     files = []
     offset = 0
     with (
-        concurrent.futures.ProcessPoolExecutor(
+        terminating_pool(
             max_workers=args.workers,
             initializer=initialize,
             initargs=(str(args.tokenizer_dir.resolve()),),
@@ -159,7 +178,9 @@ def main():
                 work.append((offset, records))
                 offset += len(records)
             lengths = []
-            for first, values, samples in pool.map(measure, work):
+            for first, values, samples in pool.map(
+                measure, work, timeout=max(0.001, deadline - time.monotonic())
+            ):
                 if time.monotonic() >= deadline:
                     raise TimeoutError("token audit deadline")
                 lengths.extend(

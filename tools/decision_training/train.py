@@ -235,7 +235,7 @@ def main():
         with (OUT / "events.jsonl").open("a") as f:
             f.write(json.dumps(row) + "\n")
 
-    def sync(reserve=0):
+    def sync(reserve=0, scored_only=False):
         if not distributed.primary:
             return
         import boto3
@@ -259,6 +259,25 @@ def main():
                 Callback=lambda _bytes: check_deadline(deadline, reserve=reserve),
             )
 
+        priority = [
+            OUT / (name + suffix)
+            for name in (
+                "trained-jevbench",
+                "trained-dev",
+                "baseline-jevbench",
+                "baseline-dev",
+            )
+            for suffix in (".jsonl", ".json")
+        ]
+        priority += [
+            OUT / name for name in ("calibration.json", "identity.json", "events.jsonl")
+        ]
+        for path in priority:
+            if path.exists():
+                upload(path, prefix + "/" + OUT.name + "/" + path.name)
+        if scored_only:
+            event("scored_outputs_s3_sync")
+            return
         for base in [OUT, DATA]:
             for p in sorted(
                 base.rglob("*"), key=lambda p: p.name == "checkpoint-complete.json"
@@ -804,6 +823,7 @@ def main():
         )
     )
     evaluate(bench, "trained-jevbench", temperature=temp, sync_outputs=False)
+    sync(scored_only=True)
 
     def write_final_adapter():
         model.save_pretrained(OUT / "adapter-final", save_embedding_layers=False)

@@ -4,11 +4,36 @@ import json
 import math
 import pathlib
 import random
+import signal
 import sys
 import time
 
 from data import read_jsonl
 from snapshot import verify_snapshot
+
+
+def bounded_checkpoint_write(write, deadline, previous_seconds=0, reserve=900):
+    # Skip near the fence, and interrupt unexpectedly slow serialization/hashing.
+    # The supported training entry point runs on the Linux main thread.
+    check_deadline(
+        deadline, reserve=reserve, estimated_seconds=max(60, 2 * previous_seconds)
+    )
+    if signal.getitimer(signal.ITIMER_REAL) != (0.0, 0.0):
+        raise RuntimeError("checkpoint writer cannot replace an active alarm")
+
+    def timeout(_signum, _frame):
+        raise TimeoutError("checkpoint write reached the evaluation reserve")
+
+    old_handler = signal.signal(signal.SIGALRM, timeout)
+    started = time.monotonic()
+    try:
+        signal.setitimer(signal.ITIMER_REAL, deadline - reserve - started)
+        write()
+        check_deadline(deadline, reserve=reserve)
+        return time.monotonic() - started
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, old_handler)
 
 
 def check_deadline(deadline, reserve=0, now=None, estimated_seconds=0):
@@ -203,7 +228,9 @@ def main():
             for p in sorted(
                 base.rglob("*"), key=lambda p: p.name == "checkpoint-complete.json"
             ):
-                if p.is_file() and not p.name.endswith(".tmp"):
+                if p.is_file() and not any(
+                    part.endswith(".tmp") for part in p.relative_to(base).parts
+                ):
                     upload(p, prefix + "/" + base.name + "/" + str(p.relative_to(base)))
         for name in [
             "train.py",
@@ -526,6 +553,7 @@ def main():
     final_step = step if args.evaluate_only else args.steps
     longest_microbatch_seconds = 0
     longest_optimizer_seconds = 0
+    longest_checkpoint_seconds = 0
     for step in range(first_step, final_step + 1):
         if time.monotonic() > deadline - 900 or (
             args.stop_file and args.stop_file.exists()
@@ -604,36 +632,58 @@ def main():
             )
         if step == 1 or step % 100 == 0 or time.monotonic() - lastsave > 600:
             ckpt = OUT / f"checkpoint-{step:05d}"
-            model.save_pretrained(ckpt, save_embedding_layers=False)
-            torch.save(
-                {
-                    "step": step,
-                    "cursor": cursor,
-                    "optimizer": optimizer.state_dict(),
-                    "random": random.getstate(),
-                    "torch_rng": torch.get_rng_state(),
-                    "cuda_rng": torch.cuda.get_rng_state_all(),
-                    "args": {
-                        k: str(v) if isinstance(v, pathlib.Path) else v
-                        for k, v in vars(args).items()
-                    },
-                },
-                ckpt / "trainer.pt",
-            )
-            (ckpt / "checkpoint-complete.json").write_text(
-                json.dumps(
+            staging = ckpt.with_name(ckpt.name + ".tmp")
+
+            def write_checkpoint(staging=staging, step=step, cursor=cursor, ckpt=ckpt):
+                model.save_pretrained(staging, save_embedding_layers=False)
+                check_deadline(deadline, reserve=900)
+                torch.save(
                     {
                         "step": step,
-                        "identity": identity,
-                        "files": {
-                            p.name: hashlib.sha256(p.read_bytes()).hexdigest()
-                            for p in ckpt.iterdir()
-                            if p.is_file() and p.name != "checkpoint-complete.json"
+                        "cursor": cursor,
+                        "optimizer": optimizer.state_dict(),
+                        "random": random.getstate(),
+                        "torch_rng": torch.get_rng_state(),
+                        "cuda_rng": torch.cuda.get_rng_state_all(),
+                        "args": {
+                            k: str(v) if isinstance(v, pathlib.Path) else v
+                            for k, v in vars(args).items()
                         },
                     },
-                    indent=2,
+                    staging / "trainer.pt",
                 )
-            )
+                files = {}
+                for path in staging.iterdir():
+                    if not path.is_file() or path.name == "checkpoint-complete.json":
+                        continue
+                    digest = hashlib.sha256()
+                    with path.open("rb") as stream:
+                        while chunk := stream.read(4 * 1024 * 1024):
+                            check_deadline(deadline, reserve=900)
+                            digest.update(chunk)
+                    files[path.name] = digest.hexdigest()
+                check_deadline(deadline, reserve=900)
+                (staging / "checkpoint-complete.json").write_text(
+                    json.dumps(
+                        {
+                            "step": step,
+                            "identity": identity,
+                            "files": files,
+                        },
+                        indent=2,
+                    )
+                )
+                check_deadline(deadline, reserve=900)
+                staging.rename(ckpt)
+
+            try:
+                elapsed = bounded_checkpoint_write(
+                    write_checkpoint, deadline, longest_checkpoint_seconds
+                )
+                longest_checkpoint_seconds = max(longest_checkpoint_seconds, elapsed)
+            except TimeoutError:
+                event("checkpoint_write_deferred", step=step)
+                break
             try:
                 sync(reserve=900)
             except TimeoutError:

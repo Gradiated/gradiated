@@ -83,7 +83,9 @@ def normalize_tasksource(row):
             "labels": labels,
             "descriptions": options,
             "target": target,
-            "group": repo + ":" + str(row.get("group_id") or row["id"]),
+            "group": repo
+            + ":"
+            + str(row["id"] if row.get("group_id") is None else row["group_id"]),
         }
     )
 

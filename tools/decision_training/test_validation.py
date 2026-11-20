@@ -1,5 +1,7 @@
 import hashlib
 import json
+import signal
+import time
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -7,6 +9,7 @@ from unittest.mock import patch
 
 from snapshot import verify_snapshot
 from train import (
+    bounded_checkpoint_write,
     build_run_identity,
     check_deadline,
     learning_rate_for_step,
@@ -16,6 +19,35 @@ from train import (
 
 
 class RunnerValidationTests(unittest.TestCase):
+    def test_checkpoint_is_skipped_near_the_evaluation_reserve(self):
+        called = []
+        with self.assertRaises(TimeoutError):
+            bounded_checkpoint_write(
+                lambda: called.append(True), time.monotonic() + 930
+            )
+        self.assertFalse(called)
+
+    def test_slow_checkpoint_write_is_interrupted_before_publication(self):
+        with TemporaryDirectory() as directory:
+            complete = Path(directory) / "checkpoint-complete.json"
+            old_handler = signal.getsignal(signal.SIGALRM)
+
+            def slow_write():
+                time.sleep(1)
+                complete.write_text("{}")
+
+            # Bypass only the conservative preflight margin to exercise the
+            # actual timer with a short wall-clock deadline.
+            with patch("train.check_deadline"), self.assertRaises(TimeoutError):
+                bounded_checkpoint_write(slow_write, time.monotonic() + 0.03, reserve=0)
+            self.assertFalse(complete.exists())
+            self.assertEqual(signal.getsignal(signal.SIGALRM), old_handler)
+            self.assertEqual(signal.getitimer(signal.ITIMER_REAL), (0, 0))
+            bounded_checkpoint_write(
+                lambda: complete.write_text("{}"), time.monotonic() + 1000
+            )
+            self.assertTrue(complete.exists())
+
     def test_microbatches_cannot_consume_the_evaluation_reserve(self):
         completed = 0
         with self.assertRaises(TimeoutError):

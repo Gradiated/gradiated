@@ -7,6 +7,30 @@ from data import normalize_tasksource, normalize_typed, read_jsonl, split_rows
 
 
 class DecisionDataTests(unittest.TestCase):
+    def test_zero_group_id_keeps_counterfactuals_in_one_partition(self):
+        base = {
+            "source": "CREAK",
+            "question": "Is it true?",
+            "kind": "noul",
+            "options": [],
+            "target": [0.3],
+            "group_id": 0,
+            "license": "cc-by-4.0",
+            "license_use": "commercial",
+        }
+        rows = [
+            normalize_tasksource({**base, "id": str(i), "state": f"Claim {i}"})
+            for i in range(100)
+        ]
+        self.assertEqual(len({row["group"] for row in rows}), 1)
+        self.assertTrue(rows[0]["group"].endswith(":0"))
+        train, dev = split_rows(rows)
+        self.assertEqual(sorted((len(train), len(dev))), [0, 100])
+        fallback = normalize_tasksource(
+            {**base, "id": "fallback", "state": "Claim", "group_id": None}
+        )
+        self.assertTrue(fallback["group"].endswith(":fallback"))
+
     def test_jsonl_preserves_unicode_line_separator_inside_state(self):
         row = {"state": "first\u2028second\u0085third"}
         with TemporaryDirectory() as directory:

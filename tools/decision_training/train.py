@@ -298,7 +298,7 @@ def main():
             .float()
         )
 
-    def evaluate(rows, name, temperature=1.0):
+    def evaluate(rows, name, temperature=1.0, sync_outputs=True):
         model.eval()
         predictions = []
         ordered = sorted(rows, key=lambda r: len(r["ids"]))
@@ -388,7 +388,8 @@ def main():
         }
         (OUT / (name + ".json")).write_text(json.dumps(metrics, indent=2) + "\n")
         event("evaluation_complete", name=name, **metrics)
-        sync()
+        if sync_outputs:
+            sync()
         return predictions, metrics
 
     with torch.no_grad():
@@ -607,7 +608,7 @@ def main():
         )
     model.save_pretrained(OUT / "adapter-final", save_embedding_layers=False)
     tokenizer.save_pretrained(OUT / "adapter-final")
-    trained_dev, _ = evaluate(dev, "trained-dev")
+    trained_dev, _ = evaluate(dev, "trained-dev", sync_outputs=False)
 
     # Temperature is selected using only the source-held-out dev set, never JevBench labels.
     def dev_loss(t):
@@ -632,7 +633,7 @@ def main():
             }
         )
     )
-    evaluate(bench, "trained-jevbench", temperature=temp)
+    evaluate(bench, "trained-jevbench", temperature=temp, sync_outputs=False)
     event("complete", steps=completed_steps)
     sync()
 

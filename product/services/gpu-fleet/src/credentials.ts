@@ -143,7 +143,8 @@ export const productionEnrollment = (
     },
     instanceTailnet: (instanceId) =>
       instanceTailnet(instanceId, fetch, enrollment),
-    bootstrapKey: (podId) => bootstrapAuthKey(podId, fetch, bootstrap),
+    bootstrapKey: (instanceId) =>
+      bootstrapAuthKey(instanceId, fetch, bootstrap),
     inferenceKey: (instanceId) =>
       tailscaleAuthKey(instanceId, fetch, enrollment),
     revokeKey: (client, id) =>

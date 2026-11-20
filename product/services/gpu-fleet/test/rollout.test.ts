@@ -156,6 +156,44 @@ describe("rolling re-image", () => {
       });
   });
 
+  it("leaves an AWS host on another image alone while the RunPod hosts roll", async () => {
+    const AWS = "01a0fbf9-0000-7000-8000-000000000001";
+    const fleet = simulateFleet(
+      [
+        { instanceId: SPARE, podId: "yzno396wdsidu4", gpus: 1 },
+        { instanceId: FIRST, podId: "zhimpngvqyotuj", gpus: 1 },
+        { instanceId: SECOND, podId: "dv31b4wrd2yc8n", gpus: 1 },
+        {
+          instanceId: AWS,
+          podId: "i-0123456789abcdef0",
+          gpus: 1,
+          provider: "aws",
+        },
+      ],
+      [{ name: "kev", gpus: 1, replicas: 2 }],
+    );
+    fleet.place("kev", FIRST);
+    fleet.place("kev", SECOND);
+
+    const events = await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      allSucceeded(fleet),
+    );
+
+    expect(started(events)).toEqual([SPARE, FIRST, SECOND]);
+    expect(fleet.sim(AWS)).toMatchObject({
+      image: OLD_IMAGE,
+      bundle: OLD_BUNDLE,
+      resets: 0,
+    });
+    expect(fleet.host(AWS).status?.rollout).toBeUndefined();
+    expect(fleet.host(AWS).status?.plan).toBe(
+      `Waiting: Observed only: automated re-imaging is not yet supported for aws hosts; the host runs bundle ${OLD_BUNDLE}, not the pinned bundle`,
+    );
+    expect(fleet.node(AWS).spec?.unschedulable).toBeFalsy();
+  });
+
   it("blocks without draining when there is no room, holds the fleet, and waits for capacity to change", async () => {
     const fleet = simulateFleet(
       [

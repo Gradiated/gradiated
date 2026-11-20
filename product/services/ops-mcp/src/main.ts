@@ -18,6 +18,9 @@ const config = z
     ALERTMANAGER_URL: z.url(),
     CREDENTIALS_DIRECTORY: z.string().min(1),
     GPU_BASE_IMAGE: GpuBaseImageSchema,
+    // The GPU base image AWS hosts run, so AWS can move to a new build
+    // without re-imaging RunPod hosts; GPU_BASE_IMAGE unless set.
+    AWS_GPU_BASE_IMAGE: GpuBaseImageSchema.optional(),
     GPU_HOST_BOOTSTRAP_SHA256: z
       .string()
       .regex(/^[0-9a-f]{64}$/)
@@ -37,6 +40,29 @@ const config = z
       .string()
       .min(1)
       .default("/var/run/tailscale/tailscaled.sock"),
+    // arn:aws:iam::<GPU account>:role/gradiated-gpu-fleet-operator. AWS GPU
+    // registration is refused while it is unset.
+    AWS_GPU_OPERATOR_ROLE_ARN: z
+      .string()
+      .regex(/^arn:aws:iam::\d{12}:role\/[\w+=,.@/-]{1,512}$/)
+      .optional(),
+    AWS_GPU_REGION: z
+      .string()
+      .regex(/^[a-z]{2}(-[a-z]+)+-\d{1,2}$/)
+      .default("us-east-1"),
+    AWS_GPU_BOOTSTRAP_INSTANCE_PROFILE: z
+      .string()
+      .min(1)
+      .default("gradiated-gpu-prod-host-bootstrap"),
+    // Its default version names the AMI a re-image restores.
+    AWS_GPU_LAUNCH_TEMPLATE: z
+      .string()
+      .min(1)
+      .default("gradiated-gpu-prod-host"),
+    AWS_GPU_SECRET_KMS_KEY: z
+      .string()
+      .min(1)
+      .default("alias/gradiated-gpu-prod"),
   })
   .parse(process.env);
 const audit = (event: Record<string, unknown>) =>
@@ -80,6 +106,18 @@ const { server, privateServer, metrics } = createHttp({
         socksPort: config.TAILSCALE_SOCKS5_PORT,
         localApiSocket: config.TAILSCALE_LOCALAPI_SOCKET,
       },
+      ...(config.AWS_GPU_OPERATOR_ROLE_ARN && {
+        aws: {
+          region: config.AWS_GPU_REGION,
+          roleArn: config.AWS_GPU_OPERATOR_ROLE_ARN,
+          bootstrapInstanceProfile: config.AWS_GPU_BOOTSTRAP_INSTANCE_PROFILE,
+          launchTemplateName: config.AWS_GPU_LAUNCH_TEMPLATE,
+          secretKmsKeyId: config.AWS_GPU_SECRET_KMS_KEY,
+          ...(config.AWS_GPU_BASE_IMAGE && {
+            hostImage: config.AWS_GPU_BASE_IMAGE,
+          }),
+        },
+      }),
     },
     (event) => audit({ service: "ops-mcp", ...event }),
   ),

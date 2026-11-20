@@ -493,6 +493,40 @@ class RenderTests(unittest.TestCase):
         self.assertNotIn('affinity', spec)
         self.assertEqual(spec['schedulerName'], 'gradiated-gpu')
 
+    def aws_host(self, instance='019d5a4a-0000-7000-8000-000000000003', ec2='i-0123456789abcdef0'):
+        document = self.host(instance)
+        document['spec']['provider'] = {'name': 'aws', 'accountId': '111122223333', 'region': 'us-east-1',
+                                        'availabilityZone': 'us-east-1b', 'ec2InstanceId': ec2}
+        document['spec']['inventory'] = {'gpuProduct': 'L4', 'gpuCount': 1, 'cpu': 3, 'memoryGiB': 12}
+        document['spec']['extraTaints'] = [{'key': 'gradiated.com/reserved', 'value': 'posthog', 'effect': 'NoSchedule'}]
+        return document
+
+    def test_an_aws_host_and_a_pool_pinned_to_aws_hosts(self):
+        runpod = self.host()
+        hosts, secrets = renderer.inventory([runpod, self.aws_host()])
+        self.assertNotIn('provider', hosts[0])
+        self.assertEqual(hosts[1]['provider'], 'aws')
+        self.assertEqual(len(secrets), 2)
+        # EC2 instance IDs are unique per provider, and a pod ID never collides with one.
+        with self.assertRaisesRegex(ValueError, 'unique'):
+            renderer.inventory([self.aws_host(), self.aws_host('019d5a4a-0000-7000-8000-000000000004')])
+        unknown = self.host()
+        unknown['spec']['provider']['name'] = 'elsewhere'
+        with self.assertRaisesRegex(ValueError, 'provider must be one of'):
+            renderer.inventory([unknown])
+
+        pool = {'runtime': 'private', 'gpu': 'L4', 'provider': 'aws', 'reservation': 'posthog', 'max_replicas': 1,
+                'progress_deadline_seconds': 60}
+        pools, catalogue = self.synthetic({'posthog': pool}, hosts=hosts, private={'active_requests': 4})
+        spec = renderer.rollout('posthog', pools['posthog'], catalogue)['spec']['template']['spec']
+        self.assertEqual(spec['nodeSelector'], {'gradiated.com/provider': 'aws', 'nvidia.com/gpu.product': 'L4'})
+        self.assertIn({'key': 'gradiated.com/reserved', 'operator': 'Equal', 'value': 'posthog', 'effect': 'NoSchedule'},
+                      spec['tolerations'])
+        for invalid, message in (({**pool, 'provider': 'gcp'}, 'provider must be one of'),
+                                 ({**pool, 'provider': 'runpod'}, 'is not one')):
+            with self.subTest(pool=invalid), self.assertRaisesRegex(ValueError, message):
+                self.synthetic({'posthog': invalid}, hosts=hosts, private={'active_requests': 4})
+
     def test_an_unreserved_pool_prefers_hosts_holding_its_startup_state(self):
         digest = '0123456789abcdef' * 4
         pools, catalogue = self.synthetic({'pool': {'runtime': digest, 'gpu': 'B300', 'max_replicas': 2,

@@ -12,7 +12,12 @@ import {
   type TailnetStatus,
 } from "@gradiated/gpu-hosts";
 
-import type { Bundle, GpuHost } from "./hosts.js";
+import {
+  providerInstanceId,
+  runPodId,
+  type Bundle,
+  type GpuHost,
+} from "./hosts.js";
 
 export class ReimageNotSent extends Error {
   constructor(cause: unknown) {
@@ -32,7 +37,7 @@ export type EnrollmentDependencies = {
   runpod: RunPodClient;
   tailnet: { status: () => Promise<TailnetStatus>; run: RunSsh };
   instanceTailnet: (instanceId: string) => Promise<InstanceTailnet>;
-  bootstrapKey: (podId: string) => Promise<AuthKey>;
+  bootstrapKey: (providerInstanceId: string) => Promise<AuthKey>;
   inferenceKey: (instanceId: string) => Promise<AuthKey>;
   // Each OAuth client can revoke only the keys it minted.
   revokeKey: (client: KeyClient, id: string) => Promise<void>;
@@ -48,6 +53,7 @@ const SKU_PRODUCTS: Record<string, string> = {
   B300: "NVIDIA B300",
   H100: "NVIDIA H100",
   H200: "NVIDIA H200",
+  L4: "NVIDIA L4",
   L40S: "NVIDIA L40S",
   "RTX-PRO-6000": "NVIDIA RTX PRO 6000",
 };
@@ -62,15 +68,16 @@ const sku = (host: GpuHost) => {
 };
 
 export const createEnrollment = (deps: EnrollmentDependencies) => ({
-  pod: (host: GpuHost) => deps.runpod.pod(host.spec.provider.podId),
+  // RunPod's view of a RunPod host; an AWS host is never re-imaged here.
+  pod: (host: GpuHost) => deps.runpod.pod(runPodId(host)),
 
   tailnetOf: (host: GpuHost) => deps.instanceTailnet(host.spec.instanceId),
 
   peer: async (host: GpuHost): Promise<BootstrapPeer | null> =>
-    bootstrapPeer(await deps.tailnet.status(), host.spec.provider.podId),
+    bootstrapPeer(await deps.tailnet.status(), providerInstanceId(host)),
 
   bootstrapKey: async (host: GpuHost): Promise<MintedKey> => {
-    const { key, id } = await deps.bootstrapKey(host.spec.provider.podId);
+    const { key, id } = await deps.bootstrapKey(providerInstanceId(host));
     return { key, id: `bootstrap:${id}` };
   },
 
@@ -84,7 +91,7 @@ export const createEnrollment = (deps: EnrollmentDependencies) => ({
   // Throws ReimageNotSent when RunPod certainly did not apply the update. Any
   // other error leaves it unknown whether the pod is being re-imaged.
   reimage: async (host: GpuHost, image: string, bootstrapKey: string) => {
-    const podId = host.spec.provider.podId;
+    const podId = runPodId(host);
     const current = await deps.runpod.pod(podId).catch((error: unknown) => {
       throw new ReimageNotSent(error);
     });

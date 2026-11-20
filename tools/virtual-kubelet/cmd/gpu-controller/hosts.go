@@ -20,7 +20,13 @@ import (
 
 var gpuHosts = schema.GroupVersionResource{Group: "fleet.gradiated.com", Version: "v1alpha1", Resource: "gpuhosts"}
 
-const faultDomainLabel = "gradiated.com/fault-domain"
+const (
+	faultDomainLabel = "gradiated.com/fault-domain"
+	providerLabel    = "gradiated.com/provider"
+)
+
+// Node label values the GpuHost CRD admits for spec.provider.name.
+var providers = map[string]bool{"runpod": true, "aws": true}
 
 type gpuHost struct {
 	Metadata struct {
@@ -30,7 +36,9 @@ type gpuHost struct {
 		InstanceID  string     `json:"instanceId"`
 		ExtraTaints hostTaints `json:"extraTaints,omitempty"`
 		Provider    struct {
-			MachineID string `json:"machineId"`
+			Name             string `json:"name"`
+			MachineID        string `json:"machineId"`
+			AvailabilityZone string `json:"availabilityZone"`
 		} `json:"provider"`
 		Inventory struct {
 			GPUProduct string `json:"gpuProduct"`
@@ -46,6 +54,9 @@ type gpuHost struct {
 func validateHost(h host) error {
 	if h.GPUCount < 1 || h.GPUCount > 8 || h.CPU < 1 || h.CPU > 512 || h.MemoryGiB < 1 || h.MemoryGiB > 4096 {
 		return fmt.Errorf("host %s has invalid resource capacity", h.InstanceID)
+	}
+	if !providers[h.Provider] {
+		return fmt.Errorf("host %s has unknown provider %q", h.InstanceID, h.Provider)
 	}
 	return validateExtraTaints(h.ExtraTaints)
 }
@@ -63,15 +74,22 @@ func hostFromObject(object map[string]any) (host, error) {
 	if item.Metadata.Name != "gpu-"+id {
 		return host{}, fmt.Errorf("GpuHost %s is not named after instance %s", item.Metadata.Name, id)
 	}
+	// A RunPod host's fault domain is its machine; an EC2 instance's is its
+	// availability zone.
+	domain := item.Spec.Provider.MachineID
+	if item.Spec.Provider.Name == "aws" {
+		domain = item.Spec.Provider.AvailabilityZone
+	}
 	h := host{
 		InstanceID:  id,
+		Provider:    item.Spec.Provider.Name,
 		Endpoint:    "http://gpu-" + id + ".tailscale-inference.svc.cluster.local:8888/_kubelet",
 		TokenFile:   "/var/run/gradiated-host-keys/" + id,
 		GPUCount:    item.Spec.Inventory.GPUCount,
 		CPU:         item.Spec.Inventory.CPU,
 		MemoryGiB:   item.Spec.Inventory.MemoryGiB,
 		GPUProduct:  item.Spec.Inventory.GPUProduct,
-		FaultDomain: item.Spec.Provider.MachineID,
+		FaultDomain: domain,
 		ExtraTaints: item.Spec.ExtraTaints,
 	}
 	return h, validateHost(h)

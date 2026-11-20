@@ -108,9 +108,20 @@ class Identity(unittest.TestCase):
         self.assertIsNone(self.tailscale.config())
 
     def test_a_new_pod_needs_a_valid_pod_id_and_key(self):
-        for pod, key in (('', 'tskey-auth-x'), ('ABC', 'tskey-auth-x'), ('abc', ''), ('abc', 'ssh-ed25519 AAAA')):
-            with self.subTest(pod=pod, key=key), self.assertRaises(ValueError):
+        for pod, key in (('', 'tskey-auth-x'), ('ABC', 'tskey-auth-x'), ('abc', ''), ('abc', 'ssh-ed25519 AAAA'),
+                         ('i-0123abc', 'tskey-auth-x'), ('i-0123456789ABCDEF0', 'tskey-auth-x'),
+                         ('i-0123456789abcdef01', 'tskey-auth-x'), ('pod/../x', 'tskey-auth-x')):
+            with self.subTest(pod=pod, key=key), self.assertRaisesRegex(ValueError, 'GRADIATED_PROVIDER_INSTANCE_ID'):
                 self.tailscale.join_as_bootstrap(pod, key)
+
+    def test_an_ec2_instance_joins_as_its_own_bootstrap_device(self):
+        for instance in ('i-0123abcd', 'i-0123456789abcdef0'):
+            with self.subTest(instance=instance):
+                self.layout.tailscale_config.unlink(missing_ok=True)
+                self.assertTrue(self.tailscale.join_as_bootstrap(instance, 'tskey-auth-bootstrap'))
+                self.assertEqual(self.tailscale.config(), {'pod': instance})
+                self.assertEqual(self.tailscale.next_step({'BackendState': 'NeedsLogin'}),
+                                 ('bootstrap', f'gpu-bootstrap-{instance}'))
 
     def test_promotion_is_staged_once_for_one_host_identity(self):
         with self.assertRaises(ValueError):

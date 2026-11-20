@@ -1,16 +1,11 @@
 import {
-  bootstrapPeer,
   createRunPodClient,
-  enroll,
-  waitForPromotion,
   type EnrollmentPayload,
   type RunPod,
-  type RunSsh,
-  type SshTarget,
-  type TailnetStatus,
 } from "@gradiated/gpu-hosts";
 
 import type { InstanceProvider, ProviderInstance } from "./provider.js";
+import { tailnetEnrollment, type TailnetAccess } from "./tailnet.js";
 
 export interface RunPodOptions {
   readonly apiKey: string;
@@ -21,17 +16,7 @@ export interface RunPodOptions {
     podId: string,
   ) => Promise<{ key: string; revoke: () => Promise<void> }>;
   readonly audit?: (event: Record<string, unknown>) => void;
-  readonly tailnet: {
-    readonly run: RunSsh;
-    readonly status: () => Promise<TailnetStatus>;
-    readonly promotionTimeoutMs?: number;
-    readonly promotionPollMs?: number;
-    // Removes the offline devices an earlier boot left under gpu-<id>.
-    readonly releaseName?: (instanceId: string) => Promise<number>;
-    // Finds the promoted device, makes sure it is named gpu-<id> and returns
-    // its address.
-    readonly claimName?: (instanceId: string, since: Date) => Promise<string>;
-  };
+  readonly tailnet: TailnetAccess;
 }
 
 export const createRunPodProvider = ({
@@ -47,65 +32,16 @@ export const createRunPodProvider = ({
     userAgent: "gradiated-ops-mcp",
   });
   const pod = runpod.pod;
-
-  const tailnetTarget = async (podId: string): Promise<SshTarget | null> => {
-    const peer = bootstrapPeer(await tailnet.status(), podId);
-    return (
-      peer && { host: peer.ip, port: 22, hostKeySha256: peer.hostKeysSha256 }
-    );
-  };
+  const enrollment = tailnetEnrollment(tailnet, audit);
+  const tailnetTarget = enrollment.target;
 
   const transport = async (current: RunPod) => {
     const target = await tailnetTarget(current.id);
     return target && { run: tailnet.run, target };
   };
 
-  const install = async (current: RunPod, payload: EnrollmentPayload) => {
-    const route = await transport(current);
-    if (!route) throw new Error("No enrollment connection to the GPU pod");
-
-    if (!tailnet.releaseName || !tailnet.claimName)
-      throw new Error("GPU tailnet name management is not configured");
-    const instanceId = payload.instance_id;
-    const released = await tailnet.releaseName(instanceId);
-    if (released)
-      audit?.({
-        event: "tailscale_stale_devices_removed",
-        instance_id: instanceId,
-        count: released,
-      });
-
-    const started = new Date();
-    const {
-      version: _version,
-      promotion,
-      ...inventory
-    } = await enroll(route.run, route.target, payload);
-    if (!promotion) return inventory;
-
-    await waitForPromotion(
-      tailnet.status,
-      route.target.host,
-      tailnet.promotionTimeoutMs,
-      tailnet.promotionPollMs,
-    );
-    // The bootstrap device can go offline a few seconds before the
-    // re-authenticated device appears in the device list.
-    const deadline = Date.now() + (tailnet.promotionTimeoutMs ?? 180_000);
-    for (;;) {
-      try {
-        return {
-          ...inventory,
-          tailscale_ip: await tailnet.claimName(instanceId, started),
-        };
-      } catch (error) {
-        if (Date.now() >= deadline) throw error;
-      }
-      await new Promise((resolve) =>
-        setTimeout(resolve, tailnet.promotionPollMs ?? 5_000),
-      );
-    }
-  };
+  const install = (current: RunPod, payload: EnrollmentPayload) =>
+    enrollment.install(current.id, payload);
 
   return {
     async checkTailscaleEnrollment(podId, options) {

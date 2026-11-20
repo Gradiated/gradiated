@@ -68,7 +68,7 @@ describe("GPU enrollment contract", () => {
         fields,
       ),
     ).toThrow(
-      "GPU enrollment supports B200, B300, H100, H200, L40S and RTX PRO 6000 hosts",
+      "GPU enrollment supports B200, B300, H100, H200, L4, L40S and RTX PRO 6000 hosts",
     );
     expect(() =>
       enrollmentPayload(instance, { ...fields, api_endpoint: "10.40.1.1" }),
@@ -125,8 +125,8 @@ describe("GPU enrollment contract", () => {
     ).toThrow();
   });
 
-  it("enrolls H100 and L40S hosts but not an L40", () => {
-    for (const sku of ["8x NVIDIA H100 80GB HBM3", "1x NVIDIA L40S"])
+  it("enrolls H100, L4 and L40S hosts but not an L40", () => {
+    for (const sku of ["8x NVIDIA H100 80GB HBM3", "1x NVIDIA L40S", "1x L4"])
       expect(enrollmentPayload({ ...instance, sku }, fields)).toEqual({
         version: 1,
         ...fields,
@@ -134,7 +134,7 @@ describe("GPU enrollment contract", () => {
     expect(() =>
       enrollmentPayload({ ...instance, sku: "1x NVIDIA L40" }, fields),
     ).toThrow();
-    for (const gpu_product of ["H100", "L40S"])
+    for (const gpu_product of ["H100", "L4", "L40S"])
       expect(
         enrollmentResultSchema.parse({ ...result, gpu_count: 1, gpu_product }),
       ).toMatchObject({ gpu_product });

@@ -95,6 +95,13 @@ class Enrollment(unittest.TestCase):
         return enroll.enroll(payload or self.payload(), self.layout, self.download,
                              agent_port=self.agent.server_address[1], agent_seconds=seconds)
 
+    def test_memory_headroom_scales_with_small_hosts_and_stays_16_gib_on_large_ones(self):
+        for total, schedulable in ((1, 1), (8, 6), (16, 14), (32, 28), (64, 56), (127, 112),
+                                   (128, 112), (250, 234), (468, 452), (1405, 1389)):
+            self.assertEqual(enroll.schedulable_gib(total), schedulable, total)
+        (self.layout.cgroup / 'memory.max').write_text(str(16 * 1024 ** 3) + '\n')
+        self.assertEqual(enroll.inventory(self.layout)['memory_gib'], 14)
+
     def test_enrolls_a_bootstrap_pod_and_stages_its_promotion(self):
         result = self.enroll()
         self.assertEqual(result, {'version': 1, 'tailscale_ip': '100.101.172.112', 'gpu_count': 2,
@@ -165,6 +172,12 @@ class Enrollment(unittest.TestCase):
         executable(self.bin / 'nvidia-smi', NVIDIA_SMI.replace(
             'NVIDIA RTX PRO 6000 Blackwell Server Edition', 'NVIDIA L40S'))
         self.assertEqual(self.enroll()['gpu_product'], 'L40S')
+
+    def test_enrolls_l4_gpus(self):
+        # An EC2 g6 instance; L4 must not also match L40S, nor L40S match L4.
+        executable(self.bin / 'nvidia-smi', NVIDIA_SMI.replace(
+            'NVIDIA RTX PRO 6000 Blackwell Server Edition', 'NVIDIA L4'))
+        self.assertEqual(self.enroll()['gpu_product'], 'L4')
 
     def test_l40_is_not_an_l40s(self):
         executable(self.bin / 'nvidia-smi', NVIDIA_SMI.replace(

@@ -3,6 +3,7 @@ import { request } from "node:http";
 import { connect as connectTcp, type Socket } from "node:net";
 import { z } from "zod";
 
+import { isProviderInstanceId } from "./ids.js";
 import type { ConnectSocket } from "./ssh.js";
 
 export const BOOTSTRAP_TAG = "tag:gpu-bootstrap";
@@ -52,22 +53,24 @@ const hostKeyHash = (line: string) => {
 
 export const bootstrapPeer = (
   status: TailnetStatus,
-  podId: string,
+  // The provider's instance ID: a RunPod pod or an EC2 instance.
+  instanceId: string,
 ): BootstrapPeer | null => {
-  if (!/^[a-z0-9]{1,40}$/.test(podId)) throw new Error("Invalid RunPod pod ID");
+  if (!isProviderInstanceId(instanceId))
+    throw new Error("Invalid RunPod pod or EC2 instance ID");
 
   // A re-imaged pod joins as a new device under the same name; the device from
   // its previous boot stays listed offline.
   const matches = Object.values(status.Peer ?? {}).filter(
     (peer) =>
       peer.Online !== false &&
-      peer.HostName === `gpu-bootstrap-${podId}` &&
+      peer.HostName === `gpu-bootstrap-${instanceId}` &&
       (peer.Tags ?? []).includes(BOOTSTRAP_TAG),
   );
   if (!matches.length) return null;
   if (matches.length > 1)
     throw new Error(
-      `Several tailnet devices claim gpu-bootstrap-${podId}; remove the stale ones before enrolling`,
+      `Several tailnet devices claim gpu-bootstrap-${instanceId}; remove the stale ones before enrolling`,
     );
 
   const [peer] = matches;
@@ -75,7 +78,7 @@ export const bootstrapPeer = (
   const hostKeysSha256 = (peer!.sshHostKeys ?? []).map(hostKeyHash);
   if (!peer!.Online || !ip || !hostKeysSha256.length)
     throw new Error(
-      `gpu-bootstrap-${podId} is not online with Tailscale SSH enabled`,
+      `gpu-bootstrap-${instanceId} is not online with Tailscale SSH enabled`,
     );
 
   return {

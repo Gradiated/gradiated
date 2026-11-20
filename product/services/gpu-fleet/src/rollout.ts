@@ -6,10 +6,12 @@ import {
   GPU_HOSTS,
   hostName,
   hostState,
+  isRunPod,
   LEASE_ANNOTATION,
   leaseEnded,
   leaseRequest,
   parseHosts,
+  providerInstanceId,
   RETRY_ANNOTATION,
   type GpuHost,
   type HostLease,
@@ -254,7 +256,8 @@ export const createRollouts = (deps: RolloutDependencies) => {
       });
     const [observation, pod, tailnet, pods, node] = await Promise.all([
       deps.ping(id),
-      quietly(enrollment?.pod(host), "runpod"),
+      // Only RunPod hosts have a pod; an AWS host is observed without one.
+      quietly(isRunPod(host) ? enrollment?.pod(host) : undefined, "runpod"),
       quietly(enrollment?.tailnetOf(host), "tailscale"),
       cluster.podsOn(id),
       cluster.node(id),
@@ -698,7 +701,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
       return peer
         ? { next: "Enroll", set: { bootstrapAddress: peer.ip } }
         : {
-            stay: `Waiting for gpu-bootstrap-${host.spec.provider.podId} to join the tailnet`,
+            stay: `Waiting for gpu-bootstrap-${providerInstanceId(host)} to join the tailnet`,
           };
     },
 

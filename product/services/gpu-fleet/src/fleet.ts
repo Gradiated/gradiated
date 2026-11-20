@@ -6,8 +6,10 @@ import {
   uncordonIfReturned,
 } from "./drain.js";
 import {
+  faultDomain,
   GPU_HOSTS,
   parseHosts,
+  providerInstanceId,
   type GpuHost,
   type HostStatus,
 } from "./hosts.js";
@@ -39,16 +41,21 @@ export type FleetDependencies = {
 
 export class LeadershipLost extends Error {}
 
-const fleetHost = (host: GpuHost): FleetHost => ({
-  instanceId: host.spec.instanceId,
-  provider: host.spec.provider.name,
-  accountId: host.spec.provider.accountId,
-  podId: host.spec.provider.podId,
-  sku: `${host.spec.inventory.gpuCount}x ${host.spec.inventory.gpuProduct}`,
-  ...(host.spec.provider.machineId && {
-    faultDomain: `runpod:${host.spec.provider.machineId}`,
-  }),
-});
+const fleetHost = (host: GpuHost): FleetHost => {
+  const domain = faultDomain(host);
+  const { provider } = host.spec;
+  // A RunPod host keeps the region its registration wrote.
+  const region = provider.name === "aws" ? provider.region : undefined;
+  return {
+    instanceId: host.spec.instanceId,
+    provider: provider.name,
+    accountId: provider.accountId,
+    providerInstanceId: providerInstanceId(host),
+    sku: `${host.spec.inventory.gpuCount}x ${host.spec.inventory.gpuProduct}`,
+    ...(region && { region }),
+    ...(domain && { faultDomain: domain }),
+  };
+};
 
 // The rollout and plan fields belong to the rollout loop, not this comparison.
 const withoutLastSeen = (status: HostStatus | undefined) =>

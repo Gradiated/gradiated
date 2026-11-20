@@ -112,6 +112,35 @@ export const hostStatusSchema = z.object({
   lease: hostLeaseSchema.optional(),
 });
 
+const runPodProviderSchema = z.object({
+  name: z.literal("runpod"),
+  accountId: z.string(),
+  podId: z.string(),
+  machineId: z.string().optional(),
+});
+
+// An EC2 instance in the GPU account, which the operator only observes.
+// The zone is its region plus one letter, as the CRD requires, so a host is
+// never published under another region's fault domain.
+const awsProviderSchema = z
+  .object({
+    name: z.literal("aws"),
+    accountId: z.string(),
+    region: z.string(),
+    availabilityZone: z.string(),
+    ec2InstanceId: z.string(),
+  })
+  .refine(
+    ({ region, availabilityZone }) =>
+      availabilityZone.length === region.length + 1 &&
+      availabilityZone.startsWith(region) &&
+      /[a-z]$/.test(availabilityZone),
+    {
+      message: "the availability zone must be in the region",
+      path: ["availabilityZone"],
+    },
+  );
+
 // Bounds and patterns are enforced by the CRD at admission
 // (gpu-inference/gpuhost-crd.yaml); this reads the fields the operator uses.
 export const gpuHostSchema = z.object({
@@ -127,12 +156,10 @@ export const gpuHostSchema = z.object({
   }),
   spec: z.object({
     instanceId: z.uuid(),
-    provider: z.object({
-      name: z.literal("runpod"),
-      accountId: z.string(),
-      podId: z.string(),
-      machineId: z.string().optional(),
-    }),
+    provider: z.discriminatedUnion("name", [
+      runPodProviderSchema,
+      awsProviderSchema,
+    ]),
     inventory: z.object({
       gpuProduct: z.string(),
       gpuCount: z.number().int(),
@@ -151,6 +178,9 @@ export const gpuHostSchema = z.object({
 });
 
 export type GpuHost = z.infer<typeof gpuHostSchema>;
+export type RunPodHost = GpuHost & {
+  spec: { provider: z.infer<typeof runPodProviderSchema> };
+};
 export type HostStatus = z.infer<typeof hostStatusSchema>;
 export type Condition = z.infer<typeof conditionSchema>;
 export type Rollout = z.infer<typeof rolloutSchema>;
@@ -240,6 +270,36 @@ export const leaseRequest = (
   } catch {
     return { invalid: "not JSON" };
   }
+};
+
+// The operator re-images, enrolls and recovers only RunPod hosts so far; it
+// observes AWS hosts, keeps their Services and status, and syncs their rows.
+export const AWS_REIMAGE_UNSUPPORTED =
+  "automated re-imaging is not yet supported for aws hosts";
+
+export const isRunPod = (host: GpuHost): host is RunPodHost =>
+  host.spec.provider.name === "runpod";
+
+// The provider's ID for the host, which names its bootstrap device
+// gpu-bootstrap-<id>: a RunPod pod or an EC2 instance.
+export const providerInstanceId = (host: GpuHost) =>
+  host.spec.provider.name === "runpod"
+    ? host.spec.provider.podId
+    : host.spec.provider.ec2InstanceId;
+
+// The RunPod pod of a host the operator may re-image; throws for any other.
+export const runPodId = (host: GpuHost) => {
+  if (!isRunPod(host))
+    throw new Error(`${host.metadata.name}: ${AWS_REIMAGE_UNSUPPORTED}`);
+  return host.spec.provider.podId;
+};
+
+// The PostgreSQL fault domain: a RunPod machine, which a host may not have
+// recorded, or an EC2 availability zone.
+export const faultDomain = (host: GpuHost) => {
+  const provider = host.spec.provider;
+  if (provider.name === "aws") return `aws:${provider.availabilityZone}`;
+  return provider.machineId ? `runpod:${provider.machineId}` : undefined;
 };
 
 export const hostName = (instanceId: string) => `gpu-${instanceId}`;

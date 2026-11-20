@@ -15,12 +15,15 @@ import {
 } from "@gradiated/control";
 import { z } from "zod";
 
+import { createAwsProvider } from "./ec2.js";
 import { createRegistrations } from "./registration.js";
 import { createRunPodProvider } from "./runpod.js";
 import {
   bootstrapAuthKey,
   claimInstanceName,
+  createAwsGpuClient,
   enrollmentPayload,
+  instanceHasDevice,
   localStatus,
   releaseInstanceName,
   socksConnector,
@@ -39,6 +42,17 @@ export type RegistrationSettings = {
   readonly tailnet: {
     readonly socksPort: number;
     readonly localApiSocket: string;
+  };
+  // The GPU account's operator role; AWS registration is off without it.
+  readonly aws?: {
+    readonly region: string;
+    readonly roleArn: string;
+    readonly bootstrapInstanceProfile: string;
+    readonly launchTemplateName: string;
+    readonly secretKmsKeyId: string;
+    // The GPU base image AWS hosts run; hostImage unless set. Every image
+    // must still enroll from the one pinned host bundle and its base ID.
+    readonly hostImage?: string;
   };
 };
 
@@ -74,27 +88,42 @@ export const productionRegistrations = (
     }
   };
 
+  const tailnet = () => ({
+    run: sshRunner(socksConnector("127.0.0.1", settings.tailnet.socksPort)),
+    status: () => localStatus(settings.tailnet.localApiSocket),
+    releaseName: (instanceId: string) =>
+      releaseInstanceName(instanceId, fetch, enrollmentCredentials),
+    claimName: (instanceId: string, since: Date) =>
+      claimInstanceName(instanceId, since, fetch, enrollmentCredentials),
+    hasDevice: (instanceId: string) =>
+      instanceHasDevice(instanceId, fetch, enrollmentCredentials),
+  });
+  // One single-use tag:gpu-bootstrap key per RunPod pod or EC2 instance.
+  const bootstrapKey = (providerInstanceId: string) =>
+    bootstrapAuthKey(providerInstanceId, fetch, bootstrapCredentials);
+
   let instances: ReturnType<typeof createInstanceService> | undefined;
   return createRegistrations({
     providers: {
-      runpod: async () => {
-        const tailnet = {
-          run: sshRunner(
-            socksConnector("127.0.0.1", settings.tailnet.socksPort),
-          ),
-          status: () => localStatus(settings.tailnet.localApiSocket),
-          releaseName: (instanceId: string) =>
-            releaseInstanceName(instanceId, fetch, enrollmentCredentials),
-          claimName: (instanceId: string, since: Date) =>
-            claimInstanceName(instanceId, since, fetch, enrollmentCredentials),
-        };
-
-        return createRunPodProvider({
+      runpod: async () =>
+        createRunPodProvider({
           apiKey: await credential("runpod-api-key"),
-          bootstrapKey: (podId: string) =>
-            bootstrapAuthKey(podId, fetch, bootstrapCredentials),
+          bootstrapKey,
           audit,
-          tailnet,
+          tailnet: tailnet(),
+        }),
+      aws: async () => {
+        if (!settings.aws)
+          throw new Error(
+            "Registration is not configured: AWS_GPU_OPERATOR_ROLE_ARN is unset",
+          );
+        return createAwsProvider({
+          client: createAwsGpuClient({
+            access: { ...settings.aws, sessionName: "gradiated-ops-mcp" },
+          }),
+          bootstrapKey,
+          audit,
+          tailnet: tailnet(),
         });
       },
     },
@@ -103,6 +132,9 @@ export const productionRegistrations = (
         createControlDatabase(await credential("database-url"), 2).database,
       )),
     hostImage: settings.hostImage,
+    ...(settings.aws?.hostImage && {
+      hostImages: { aws: settings.aws.hostImage },
+    }),
     // Every gpu-base image enrolls from a pinned host bundle.
     enrollmentPayload: async (instance, id, key, auth) => {
       const digest = z

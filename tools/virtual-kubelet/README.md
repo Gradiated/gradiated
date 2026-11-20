@@ -110,8 +110,9 @@ When any `GpuHost` changes (added, removed or edited), the leader steps down and
 the next leader restarts every host's virtual node, not just the changed one.
 Heartbeats pause for about a minute; serving processes on the hosts keep running,
 as they did when a host list change restarted the controller. Each node
-carries `gradiated.com/fault-domain`, the host's RunPod machine ID, for
-topology spread and anti-affinity. The `gpu-fleet` operator
+carries `gradiated.com/provider` from the `GpuHost` (`runpod` or `aws`) and
+`gradiated.com/fault-domain`, the host's RunPod machine ID or EC2 availability
+zone, for topology spread and anti-affinity. The `gpu-fleet` operator
 (`product/services/gpu-fleet`) keeps each host's private Service, reports its
 health in its `GpuHost` status, and holds a deleted `GpuHost` until no pods run on
 it; see the retirement steps in the [instance setup plan](../../docs/INSTANCE_SETUP_PLAN.md).
@@ -592,6 +593,11 @@ could no longer be going before it starts another. Admission policies in
 ScaledObject's `autoscaling.keda.sh/paused-replicas` annotation. A rollout marks
 its cordon `gpu-fleet-rollout` (the drain uses `gpu-fleet`) and uncordons only a
 node it marked, so a node someone cordoned by hand stays cordoned.
+
+AWS hosts (EC2 instances) are observed only, in either mode: the operator keeps
+their Services, status and PostgreSQL rows, and their `status.plan` says
+automated re-imaging is not yet supported for aws hosts. It does not re-image,
+enroll, recover, lease or update them in place.
 
 The operator runs in `MODE=observe` until switched to `act`. Observe mode holds
 only the destructive steps: re-image, enroll and recover are written to each

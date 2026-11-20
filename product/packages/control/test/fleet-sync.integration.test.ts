@@ -15,7 +15,7 @@ const host = (overrides: Partial<FleetHost> = {}): FleetHost => ({
   instanceId: randomUUID(),
   provider: "runpod",
   accountId: "user_test",
-  podId: randomUUID().slice(0, 14).replaceAll("-", "x"),
+  providerInstanceId: randomUUID().slice(0, 14).replaceAll("-", "x"),
   sku: "8x B300",
   ...overrides,
 });
@@ -50,7 +50,7 @@ describe("instances follow the GPU fleet in Git", () => {
     expect(await row(fleet[0]!.instanceId)).toMatchObject({
       provider: "runpod",
       providerAccountId: "user_test",
-      providerInstanceId: fleet[0]!.podId,
+      providerInstanceId: fleet[0]!.providerInstanceId,
       sku: "8x B300",
       retiredAt: null,
     });
@@ -99,7 +99,7 @@ describe("instances follow the GPU fleet in Git", () => {
       sku: "4x NVIDIA B300 SXM6 AC",
     });
     const result = await syncFleetInstances(database.database, [
-      host({ instanceId: registered.id, podId: "registeredpod1" }),
+      host({ instanceId: registered.id, providerInstanceId: "registeredpod1" }),
     ]);
     expect(result).toEqual({
       inserted: [],
@@ -114,27 +114,83 @@ describe("instances follow the GPU fleet in Git", () => {
     });
   });
 
+  it("records an EC2 host under its instance ID and zone fault domain", async () => {
+    const ec2 = host({
+      provider: "aws",
+      accountId: "111122223333",
+      providerInstanceId: "i-0123456789abcdef0",
+      sku: "1x L4",
+      region: "us-east-1",
+      faultDomain: "aws:us-east-1b",
+    });
+    const result = await syncFleetInstances(database.database, [ec2, host()]);
+    expect(result.inserted).toContain(ec2.instanceId);
+    expect(await row(ec2.instanceId)).toMatchObject({
+      provider: "aws",
+      providerAccountId: "111122223333",
+      providerInstanceId: "i-0123456789abcdef0",
+      region: "us-east-1",
+      faultDomain: "aws:us-east-1b",
+      sku: "1x L4",
+    });
+  });
+
+  it("fills the region of an existing row from the host and keeps a registered one when the host has none", async () => {
+    const service = createInstanceService(database.database);
+    const registered = await service.register({
+      provider: "runpod",
+      providerAccountId: "user_test",
+      providerInstanceId: "registeredpod2",
+      region: "EUR-IS-1",
+      faultDomain: null,
+      sku: "4x NVIDIA B300 SXM6 AC",
+    });
+    const ec2 = host({
+      provider: "aws",
+      accountId: "111122223333",
+      providerInstanceId: "i-0fedcba9876543210",
+      sku: "1x L4",
+      faultDomain: "aws:us-east-1b",
+    });
+    await syncFleetInstances(database.database, [ec2]);
+    expect((await row(ec2.instanceId))?.region).toBeNull();
+
+    const runpod = host({
+      instanceId: registered.id,
+      providerInstanceId: "registeredpod2",
+    });
+    const fleet = [{ ...ec2, region: "us-east-1" }, runpod];
+    expect(
+      (await syncFleetInstances(database.database, fleet)).updated,
+    ).toEqual([ec2.instanceId]);
+    expect((await row(ec2.instanceId))?.region).toBe("us-east-1");
+    expect((await row(registered.id))?.region).toBe("EUR-IS-1");
+    expect(
+      (await syncFleetInstances(database.database, fleet)).updated,
+    ).toEqual([]);
+  });
+
   it("reports a row that disagrees with Git and leaves it unchanged", async () => {
     const recorded = host();
     await syncFleetInstances(database.database, [recorded]);
-    const moved = { ...recorded, podId: "anotherpod1" };
+    const moved = { ...recorded, providerInstanceId: "anotherpod1" };
 
     const result = await syncFleetInstances(database.database, [moved]);
     expect(result.conflicts).toEqual([
       {
         instanceId: recorded.instanceId,
-        reason: `PostgreSQL records this instance as runpod pod ${recorded.podId}`,
+        reason: `PostgreSQL records this instance as runpod instance ${recorded.providerInstanceId}`,
       },
     ]);
     expect((await row(recorded.instanceId))?.providerInstanceId).toBe(
-      recorded.podId,
+      recorded.providerInstanceId,
     );
   });
 
   it("refuses to record a pod that another instance already holds", async () => {
     const recorded = host();
     await syncFleetInstances(database.database, [recorded]);
-    const duplicate = host({ podId: recorded.podId });
+    const duplicate = host({ providerInstanceId: recorded.providerInstanceId });
 
     const result = await syncFleetInstances(database.database, [
       recorded,
@@ -144,7 +200,7 @@ describe("instances follow the GPU fleet in Git", () => {
       expect.arrayContaining(
         [recorded, duplicate].map((item) => ({
           instanceId: item.instanceId,
-          reason: `Several GpuHosts use pod ${recorded.podId}`,
+          reason: `Several GpuHosts use runpod instance ${recorded.providerInstanceId}`,
         })),
       ),
     );
@@ -156,7 +212,7 @@ describe("instances follow the GPU fleet in Git", () => {
     expect(alone.conflicts).toEqual([
       {
         instanceId: duplicate.instanceId,
-        reason: `PostgreSQL records pod ${recorded.podId} as instance ${recorded.instanceId}`,
+        reason: `PostgreSQL records runpod instance ${recorded.providerInstanceId} as instance ${recorded.instanceId}`,
       },
     ]);
     expect(await row(duplicate.instanceId)).toBeUndefined();

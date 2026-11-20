@@ -52,6 +52,8 @@ export type HostSpec = {
   // A RunPod volume, which survives a re-image.
   volumeInGb?: number;
   hasAttachedVolumes?: boolean;
+  // An EC2 instance, whose podId is its instance ID, instead of a RunPod pod.
+  provider?: "aws";
 };
 
 type Device = {
@@ -192,7 +194,16 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
       },
       spec: {
         instanceId: spec.instanceId,
-        provider: { name: "runpod", accountId: "user_test", podId: spec.podId },
+        provider:
+          spec.provider === "aws"
+            ? {
+                name: "aws",
+                accountId: "111122223333",
+                region: "us-east-1",
+                availabilityZone: "us-east-1b",
+                ec2InstanceId: spec.podId,
+              }
+            : { name: "runpod", accountId: "user_test", podId: spec.podId },
         inventory: {
           gpuProduct: "B300",
           gpuCount: spec.gpus,

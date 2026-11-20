@@ -2,6 +2,8 @@ import type { InstanceTailnet, RunPod } from "@gradiated/gpu-hosts";
 
 import type { NodeState } from "./cluster.js";
 import {
+  AWS_REIMAGE_UNSUPPORTED,
+  isRunPod,
   leaseEnded,
   leaseRequest,
   RESERVED_TAINT,
@@ -119,6 +121,8 @@ export const leaseRefusal = (facts: HostFacts, now: Date) => {
     return `the lease annotation is invalid (${request.invalid})`;
   if (now.getTime() >= Date.parse(request.until))
     return `the lease ended at ${request.until} before it started`;
+  // A lease ends with a re-image that wipes what its holder left.
+  if (!isRunPod(host)) return AWS_REIMAGE_UNSUPPORTED;
   if (host.spec.extraTaints?.some((taint) => taint.key === RESERVED_TAINT))
     return "the host is reserved";
   // The rollout is waiting for room for this host's replicas, which a lease
@@ -135,12 +139,27 @@ export const leaseRefusal = (facts: HostFacts, now: Date) => {
     return "the pod has a RunPod volume, which a re-image would not wipe";
 };
 
+// An AWS host is observed only: its Service, status and PostgreSQL row are
+// kept, and nothing re-images, enrolls, recovers or updates it in place.
+const observeOnly = ({ observation }: HostFacts, pins: Pins): Plan => ({
+  action: "wait",
+  reason: `Observed only: ${AWS_REIMAGE_UNSUPPORTED}${
+    !observation.reachable
+      ? "; the host does not answer, and enrolling or recovering it is a person's job"
+      : observation.hostBundleSha256 !== pins.hostBundle.sha256
+        ? `; the host runs bundle ${observation.hostBundleSha256 || "unknown"}, not the pinned bundle`
+        : ""
+  }`,
+});
+
 export const planHost = (facts: HostFacts, pins: Pins, now: Date): Plan => {
   const { host, observation, pod, tailnet } = facts;
   if (host.metadata.deletionTimestamp) return { action: "none" };
 
   const lease = planLease(facts, now);
   if (lease) return lease;
+
+  if (!isRunPod(host)) return observeOnly(facts, pins);
 
   if (observation.reachable) {
     if (!pod)

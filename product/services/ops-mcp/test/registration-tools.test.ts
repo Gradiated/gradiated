@@ -203,6 +203,30 @@ describe("registration tools", () => {
     expect(body).toEqual({ registration });
   });
 
+  it("starts a registration of an EC2 instance", async () => {
+    const fake = fakeRegistrations({
+      ...registration,
+      provider: "aws",
+      providerInstanceId: "i-0123456789abcdef0",
+      sku: "1x L4",
+    });
+
+    const { isError } = await callTool(
+      "register_instance",
+      { provider: "aws", instance_id: "i-0123456789abcdef0" },
+      undefined,
+      { registrations: fake.registrations, privateConnection: true },
+    );
+
+    expect(isError).toBe(false);
+    expect(fake.start).toHaveBeenCalledWith({
+      provider: "aws",
+      providerInstanceId: "i-0123456789abcdef0",
+      resetRunningPod: false,
+      requestedBy: "tester@gradiated.com",
+    });
+  });
+
   it("warns that an authorized reset stops the machine", async () => {
     const fake = fakeRegistrations({ ...registration, resetRunningPod: true });
 
@@ -247,7 +271,10 @@ describe("registration tools", () => {
   });
 
   it.each([
+    { provider: "gcp", instance_id: "abc123" },
     { provider: "aws", instance_id: "i-123" },
+    { provider: "aws", instance_id: "rldmcif788b98e" },
+    { provider: "runpod", instance_id: "i-0123456789abcdef0" },
     { provider: "runpod", instance_id: "pod/../x" },
     { provider: "runpod" },
   ])("rejects invalid arguments before starting: %o", async (args) => {

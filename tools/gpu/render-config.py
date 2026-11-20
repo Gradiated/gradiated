@@ -20,6 +20,11 @@ MODELS = GPU / 'models'
 APPLICATIONS = KUBE / 'platform/gpu-models.yaml'
 
 
+# The Virtual Kubelet node label gradiated.com/provider of each GpuHost
+# spec.provider.name, and the field naming the host at that provider.
+PROVIDERS = {'runpod': 'podId', 'aws': 'ec2InstanceId'}
+
+
 # Field bounds are checked against the GpuHost CRD schema by
 # tools/security/check_gpu_inference.py; this derives what the manifests need.
 def inventory(documents):
@@ -31,9 +36,13 @@ def inventory(documents):
         instance = str(uuid.UUID(spec['instanceId']))
         if instance != spec['instanceId'] or document['metadata']['name'] != 'gpu-' + instance:
             raise ValueError('A GpuHost must be named gpu-<canonical instance ID>')
-        if any(host['instance_id'] == instance for host in hosts) or spec['provider']['podId'] in pods:
+        provider = spec['provider']['name']
+        if provider not in PROVIDERS:
+            raise ValueError(f'GpuHost provider must be one of {sorted(PROVIDERS)}')
+        machine = (provider, spec['provider'][PROVIDERS[provider]])
+        if any(host['instance_id'] == instance for host in hosts) or machine in pods:
             raise ValueError('GpuHost instance and pod IDs must be unique')
-        pods.add(spec['provider']['podId'])
+        pods.add(machine)
         capacity = spec['inventory']
         extra_taints = host_taints(spec)
         hosts.append({'instance_id': instance,
@@ -41,6 +50,8 @@ def inventory(documents):
                       'token_file': f'/var/run/gradiated-host-keys/{instance}',
                       'gpu_count': capacity['gpuCount'], 'cpu': capacity['cpu'],
                       'memory_gib': capacity['memoryGiB'], 'gpu_product': capacity['gpuProduct'],
+                      # RunPod is implied, so existing output is unchanged.
+                      **({'provider': provider} if provider != 'runpod' else {}),
                       **({'extra_taints': extra_taints} if extra_taints else {})})
         secrets.append({'secretKey': instance, 'remoteRef': dict(spec['managementSecret'])})
     if not hosts:
@@ -86,7 +97,7 @@ RESERVED = 'gradiated.com/reserved'
 PROMETHEUS = 'http://observability-kube-prometh-prometheus.observability.svc:9090'
 REPLICA_RULES = KUBE / 'workloads/observability/model-replica-rules.yaml'
 NAME = re.compile(r'[a-z](?:[a-z0-9-]*[a-z0-9])?')
-POOL_FIELDS = {'runtime', 'gpu', 'gpu_count', 'reservation', 'spread', 'slots', 'max_replicas', 'mode', 'replicas',
+POOL_FIELDS = {'runtime', 'gpu', 'gpu_count', 'provider', 'reservation', 'spread', 'slots', 'max_replicas', 'mode', 'replicas',
                'utilization', 'hold_minutes',
                'progress_deadline_seconds', 'max_surge', 'max_unavailable', 'rolling_update', 'labels', 'annotations'}
 SERVING_ANNOTATIONS = {'gradiated.com/model-id', 'gradiated.com/release',
@@ -102,6 +113,7 @@ def plan(models, runtimes, hosts):
     if not isinstance(models, dict) or not models:
         raise ValueError('models.json must map public model IDs to their pools')
     reserved = {}
+    providers = {host['instance_id']: host.get('provider', 'runpod') for host in hosts}
     for host in hosts:
         for taint in host.get('extra_taints', []):
             if taint['key'] == RESERVED:
@@ -166,6 +178,13 @@ def plan(models, runtimes, hosts):
                 raise ValueError(f'Pool {name} hold_minutes must be an integer from 10 to 120')
             if 'reservation' in pool and not reserved.get(pool['reservation']):
                 raise ValueError(f'Pool {name} needs a host in hosts.yaml reserved for {pool["reservation"]!r}')
+            # The hosts a pool runs on: RunPod unless it names another provider.
+            provider = pool.get('provider', 'runpod')
+            if provider not in PROVIDERS:
+                raise ValueError(f'Pool {name} provider must be one of {sorted(PROVIDERS)}')
+            if 'reservation' in pool and any(providers[host] != provider for host in reserved[pool['reservation']]):
+                raise ValueError(f'Pool {name} runs on {provider} hosts, but a host reserved for '
+                                 f'{pool["reservation"]!r} is not one')
             pools[name] = {**pool, 'model': model_id, 'mode': mode, 'slots': slots, 'floor': floor,
                            'maximum': maximum, 'ahead': list(ahead),
                            'utilization': utilization, 'hold_minutes': hold,
@@ -227,7 +246,7 @@ def rollout(name, pool, runtimes):
         # revisions become stable at once; once max_replicas is raised the worker
         # still routes only pods that pass their own SDK qualification.
         steps = []
-    selector = {'gradiated.com/provider': 'runpod', 'nvidia.com/gpu.product': pool['gpu']}
+    selector = {'gradiated.com/provider': pool.get('provider', 'runpod'), 'nvidia.com/gpu.product': pool['gpu']}
     if 'gpu_count' in pool:
         if not count(pool['gpu_count'], 1):
             raise ValueError('gpu_count must be a positive integer')

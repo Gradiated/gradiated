@@ -119,6 +119,18 @@ class Entrypoint(unittest.TestCase):
         thread.join(30)
         return start.Tailscale(self.layout).config()
 
+    def test_an_ec2_host_joins_under_its_provider_instance_id(self):
+        # The AWS host launcher passes the EC2 instance ID; it wins over a RunPod pod ID.
+        environ = {'GRADIATED_PROVIDER_INSTANCE_ID': 'i-0123456789abcdef0',
+                   'GRADIATED_TAILSCALE_BOOTSTRAP_KEY': 'tskey-auth-bootstrap'}
+        self.assertEqual(self.record(environ), {'pod': 'i-0123456789abcdef0'})
+        self.assertEqual(environ, {'GRADIATED_PROVIDER_INSTANCE_ID': 'i-0123456789abcdef0'})
+        self.assertEqual(start.provider_instance_id({'GRADIATED_PROVIDER_INSTANCE_ID': 'i-0123456789abcdef0',
+                                                     'RUNPOD_POD_ID': 'abc123'}), 'i-0123456789abcdef0')
+        self.assertEqual(start.provider_instance_id({'GRADIATED_PROVIDER_INSTANCE_ID': '',
+                                                     'RUNPOD_POD_ID': 'abc123'}), 'abc123')
+        self.assertEqual(start.provider_instance_id({}), '')
+
     def test_a_production_image_ignores_a_login_server_in_its_environment(self):
         environ = {'RUNPOD_POD_ID': 'abc123', 'GRADIATED_TAILSCALE_BOOTSTRAP_KEY': 'tskey-auth-bootstrap',
                    'GRADIATED_TAILSCALE_LOGIN_SERVER': 'https://attacker.example'}

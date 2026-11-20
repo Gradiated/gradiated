@@ -10,7 +10,7 @@
     "gpu_count": { "type": "integer", "minimum": 1, "maximum": 8 },
     "gpu_product": {
       "type": "string",
-      "enum": ["B200", "B300", "H100", "H200", "L40S", "RTX-PRO-6000"]
+      "enum": ["B200", "B300", "H100", "H200", "L4", "L40S", "RTX-PRO-6000"]
     },
     "cpu": { "type": "integer", "minimum": 1, "maximum": 512 },
     "memory_gib": { "type": "integer", "minimum": 1, "maximum": 4096 },

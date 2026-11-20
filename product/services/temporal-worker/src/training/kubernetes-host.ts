@@ -100,6 +100,8 @@ export const trainingHostJob = (
           priorityClassName: "gpu-training",
           restartPolicy: "Never",
           terminationGracePeriodSeconds: 90,
+          // Training runs only on RunPod hosts; AWS GPU hosts serve
+          // reserved inference pools and are never training targets.
           nodeSelector: {
             "gradiated.com/provider": "runpod",
             "nvidia.com/gpu.product": config.gpuType,

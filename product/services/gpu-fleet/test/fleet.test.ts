@@ -96,6 +96,56 @@ describe("the GPU fleet operator", () => {
     ).toContain('gradiated_gpu_fleet_hosts{phase="Ready"} 2');
   });
 
+  it("brings an AWS host up like a RunPod one, with its region and its zone as fault domain", async () => {
+    const { cluster, replica } = await operator();
+    const ec2 = gpuHost(SECOND, "unused");
+    ec2.spec.provider = {
+      name: "aws",
+      accountId: "111122223333",
+      region: "us-east-1",
+      availabilityZone: "us-east-1b",
+      ec2InstanceId: "i-0123456789abcdef0",
+    } as never;
+    ec2.spec.inventory = {
+      gpuProduct: "L4",
+      gpuCount: 1,
+      cpu: 3,
+      memoryGiB: 12,
+    };
+    cluster.seed(GPU_HOSTS, gpuHost(FIRST, "firstpod"));
+    cluster.seed(GPU_HOSTS, ec2);
+    await agents.addKey(FIRST);
+    await agents.addKey(SECOND);
+    const fleet = replica();
+    await fleet.syncDatabase();
+    await fleet.reconcile();
+
+    expect(cluster.read(`${SERVICES}/gpu-${SECOND}`)).toBeDefined();
+    expect(phase(cluster, SECOND)).toBe("Ready");
+    expect(
+      (await rows()).map((row) => [
+        row.id,
+        row.provider,
+        row.providerAccountId,
+        row.providerInstanceId,
+        row.region,
+        row.faultDomain,
+        row.sku,
+      ]),
+    ).toEqual([
+      [FIRST, "runpod", "user_test", "firstpod", null, null, "4x B300"],
+      [
+        SECOND,
+        "aws",
+        "111122223333",
+        "i-0123456789abcdef0",
+        "us-east-1",
+        "aws:us-east-1b",
+        "1x L4",
+      ],
+    ]);
+  });
+
   it("changes nothing when a restarted operator reconciles a settled fleet", async () => {
     const { cluster, replica } = await operator();
     cluster.seed(GPU_HOSTS, gpuHost(FIRST, "firstpod"));

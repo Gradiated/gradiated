@@ -133,6 +133,52 @@ class GpuHostCrdTest(unittest.TestCase):
         remachined['spec']['provider']['machineId'] = 'machine2'
         self.apply(remachined)
 
+    def aws_host(self, **provider):
+        document = self.host(**{'inventory.gpuProduct': 'L4', 'inventory.gpuCount': 1, 'inventory.cpu': 3,
+                                'inventory.memoryGiB': 12})
+        document['spec']['provider'] = {'name': 'aws', 'accountId': '111122223333', 'region': 'us-east-1',
+                                        'availabilityZone': 'us-east-1b', 'ec2InstanceId': 'i-0123456789abcdef0',
+                                        **provider}
+        return document
+
+    def test_an_aws_l4_host_is_admitted_and_keeps_its_identity(self):
+        document = self.aws_host()
+        self.apply(document)
+        resized = copy.deepcopy(document)
+        resized['spec']['inventory']['memoryGiB'] = 10
+        self.apply(resized)
+        for field, value, message in (('ec2InstanceId', 'i-0123456789abcdef1', 'the EC2 instance ID is immutable'),
+                                      ('availabilityZone', 'us-east-1c', 'the availability zone is immutable'),
+                                      ('accountId', '444455556666', 'the provider account is immutable')):
+            with self.subTest(field=field):
+                moved = copy.deepcopy(resized)
+                moved['spec']['provider'][field] = value
+                self.assertRefused(moved, message)
+        renamed = copy.deepcopy(resized)
+        renamed['spec']['provider'] = {'name': 'runpod', 'accountId': '111122223333', 'podId': 'pod1'}
+        self.assertRefused(renamed, 'the provider is immutable')
+
+    def test_an_aws_host_needs_its_ec2_identity_and_no_runpod_fields(self):
+        for provider, message in (({'ec2InstanceId': None}, 'an aws provider needs'),
+                                  ({'availabilityZone': None}, 'an aws provider needs'),
+                                  ({'podId': 'pod1'}, 'an aws provider needs'),
+                                  ({'machineId': 'machine1'}, 'an aws provider needs'),
+                                  ({'accountId': 'user_x'}, 'a 12-digit AWS account ID'),
+                                  ({'availabilityZone': 'us-west-2a'}, 'the availability zone must be in the region'),
+                                  ({'availabilityZone': 'us-east-10a'}, 'the availability zone must be in the region'),
+                                  ({'ec2InstanceId': 'i-XYZ'}, 'spec.provider.ec2InstanceId'),
+                                  ({'region': 'US East'}, 'spec.provider.region')):
+            with self.subTest(provider=provider):
+                document = self.aws_host(**provider)
+                document['spec']['provider'] = {k: v for k, v in document['spec']['provider'].items() if v is not None}
+                self.assertRefused(document, message)
+        runpod = self.host()
+        runpod['spec']['provider']['ec2InstanceId'] = 'i-0123456789abcdef0'
+        self.assertRefused(runpod, 'a runpod provider needs podId and no EC2 fields')
+        podless = self.host()
+        del podless['spec']['provider']['podId']
+        self.assertRefused(podless, 'a runpod provider needs podId and no EC2 fields')
+
     def test_status_is_a_subresource(self):
         document = self.host()
         self.apply(document)

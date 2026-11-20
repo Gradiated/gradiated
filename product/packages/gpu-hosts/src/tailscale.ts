@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { providerInstanceId } from "./ids.js";
+
 const API = "https://api.tailscale.com/api/v2";
 
 export type OAuthCredentials = () => Promise<{
@@ -107,17 +109,15 @@ export const tailscaleAuthKey = async (
     credentials,
   );
 
+// For a RunPod pod or an EC2 instance, by its provider instance ID.
 export const bootstrapAuthKey = async (
-  podId: string,
+  instanceId: string,
   request: typeof fetch = fetch,
   credentials: OAuthCredentials,
 ) =>
   singleUseKey(
     "tag:gpu-bootstrap",
-    `GPU bootstrap ${z
-      .string()
-      .regex(/^[a-z0-9]{1,40}$/)
-      .parse(podId)}`,
+    `GPU bootstrap ${providerInstanceId.parse(instanceId)}`,
     request,
     credentials,
   );
@@ -199,6 +199,15 @@ export const instanceTailnet = async (
     .at(-1);
   return { connected, ...(seen && { lastSeen: seen }) };
 };
+
+// Whether any tag:gpu-inference device, online or not, uses gpu-<id>: the
+// host enrolled and promoted at least once.
+export const instanceHasDevice = async (
+  instanceId: string,
+  request: typeof fetch,
+  credentials: OAuthCredentials,
+) =>
+  (await instanceDevices(instanceId, request, credentials)).devices.length > 0;
 
 export const releaseInstanceName = async (
   instanceId: string,

@@ -609,6 +609,7 @@ jobs:
           pnpm turbo run build
           --filter=@gradiated/api
           --filter=@gradiated/console
+          --filter=@gradiated/ops-mcp^...
           --env-mode=loose
           --force
       - name: Install browser

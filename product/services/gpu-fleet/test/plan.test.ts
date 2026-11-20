@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { GpuHost } from "../src/hosts.js";
-import { planHost, type HostFacts } from "../src/plan.js";
+import { leaseRefusal, planHost, type HostFacts } from "../src/plan.js";
 import {
   NEW_BUNDLE,
   NEW_IMAGE,
@@ -326,5 +326,82 @@ describe("leases", () => {
           NOW,
         ),
       ).toMatchObject({ action: "start", kind: "return" });
+  });
+});
+
+describe("planning an AWS host", () => {
+  const ec2 = (lastSeen?: string, created?: string) => {
+    const base = host(lastSeen, created);
+    return {
+      ...base,
+      spec: {
+        ...base.spec,
+        provider: {
+          name: "aws",
+          accountId: "111122223333",
+          region: "us-east-1",
+          availabilityZone: "us-east-1b",
+          ec2InstanceId: "i-0123456789abcdef0",
+        },
+        inventory: { gpuProduct: "L4", gpuCount: 1, cpu: 3, memoryGiB: 12 },
+      },
+    } as GpuHost;
+  };
+  const { pod: _pod, ...withoutPod } = facts();
+
+  it("never re-images, updates, enrolls or recovers it", () => {
+    for (const fields of [
+      // Answering on another bundle: no in-place update either.
+      { host: ec2(ago(1)), observation: answering(OLD_BUNDLE) },
+      // Never answered since it was added, with its device long gone.
+      { host: ec2(undefined, ago(60)), tailnet: { connected: false } },
+      // Silent with no device: a RunPod host here would be recovered.
+      { host: ec2(ago(60)) },
+    ])
+      expect(planHost({ ...withoutPod, ...fields }, next, NOW)).toMatchObject({
+        action: "wait",
+        reason: expect.stringContaining(
+          "automated re-imaging is not yet supported for aws hosts",
+        ),
+      });
+  });
+
+  it("says why it waits even on the pinned bundle", () => {
+    expect(
+      planHost(
+        {
+          ...withoutPod,
+          host: ec2(ago(1)),
+          observation: answering(NEW_BUNDLE),
+        },
+        next,
+        NOW,
+      ),
+    ).toEqual({
+      action: "wait",
+      reason:
+        "Observed only: automated re-imaging is not yet supported for aws hosts",
+    });
+  });
+
+  it("refuses a lease, which would end in a re-image", () => {
+    const leased = ec2(ago(1));
+    leased.metadata.annotations = {
+      "fleet.gradiated.com/lease": JSON.stringify({
+        holder: "agent",
+        purpose: "sweep",
+        until: new Date(NOW.getTime() + 60 * 60_000).toISOString(),
+      }),
+    };
+    expect(
+      leaseRefusal(
+        {
+          ...withoutPod,
+          host: leased,
+          observation: answering(NEW_BUNDLE),
+        },
+        NOW,
+      ),
+    ).toBe("automated re-imaging is not yet supported for aws hosts");
   });
 });

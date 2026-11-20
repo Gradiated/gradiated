@@ -500,3 +500,18 @@ LoRA-enabled allocation of its base and marks it available only when that passes
 private hosting grants and exact base revision checks apply as for trained versions.
 The API needs S3 upload/read/write permissions and KMS encryption permissions;
 the artifacts bucket permits signed browser PUTs from the hosted and local console.
+
+### Cartridge uploads
+
+A model upload with `format: "cartridge"` takes one signed PUT grant for
+`cartridge.safetensors` (up to 4 GiB) instead of the LoRA config and weights.
+Completion reads the safetensors header without loading tensors, then requires:
+- the `gradiated.cartridge/1` format metadata;
+- a bf16 `embeddings` tensor as wide as the base model's `hidden_size`;
+- fewer positions than the base model's maximum context;
+- finite values;
+- optional int64 `slot_token_ids` inside the vocabulary.
+
+It stores the file under `cartridges/<upload>/<sha256>/` and publishes an
+unavailable version. There is no console upload UI for cartridges; see
+[CARTRIDGE_SERVING_PLAN.md](CARTRIDGE_SERVING_PLAN.md).

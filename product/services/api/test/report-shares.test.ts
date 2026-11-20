@@ -97,7 +97,13 @@ describe("report share routes", () => {
       version: "triage-v1",
       base_model_id: "Qwen/Qwen3-0.6B",
       created_at: "2026-11-01T00:00:00.000Z",
-      adapter: { rank: 16, size_bytes: 1024, checkpoint: "b".repeat(40) },
+      adapter: {
+        format: "peft_lora",
+        num_tokens: null,
+        rank: 16,
+        size_bytes: 1024,
+        checkpoint: "b".repeat(40),
+      },
       files: [
         {
           id: fileId,

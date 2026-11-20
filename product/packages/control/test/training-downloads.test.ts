@@ -71,6 +71,38 @@ it.each([
   expect(send).not.toHaveBeenCalled();
   expect(sign).not.toHaveBeenCalled();
 });
+it("signs a cartridge file under its version", async () => {
+  const cartridge = `s3://artifacts/cartridges/${run}/${sha}/cartridge.safetensors`;
+  await createAdapterDownloads(new ObjectStorage("artifacts")).sign(
+    cartridge,
+    run,
+    123,
+    sha,
+  );
+
+  expect(sign.mock.calls[0]![1].input).toMatchObject({
+    Key: `cartridges/${run}/${sha}/cartridge.safetensors`,
+    ResponseContentDisposition: 'attachment; filename="cartridge.safetensors"',
+    ResponseContentType: "application/octet-stream",
+  });
+});
+it.each([
+  `s3://artifacts/cartridges/another-run/${sha}/cartridge.safetensors`,
+  `s3://artifacts/cartridges/${run}/${sha}/other.safetensors`,
+])(
+  "rejects a cartridge outside the configured version: %s",
+  async (candidate) => {
+    await expect(
+      createAdapterDownloads(new ObjectStorage("artifacts")).sign(
+        candidate,
+        run,
+        123,
+        sha,
+      ),
+    ).rejects.toThrow("unavailable");
+    expect(sign).not.toHaveBeenCalled();
+  },
+);
 it("does not sign missing or truncated objects", async () => {
   send.mockRejectedValueOnce(new Error("NoSuchKey"));
   await expect(

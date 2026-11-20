@@ -153,8 +153,12 @@ export const DownloadAdapterDialog = ({
               <span className="text-muted-foreground">Unknown</span>
             )}
           </Detail>
-          <Detail label="Rank">
-            <span className="tabular-nums">{adapter.rank}</span>
+          <Detail label={adapter.format === "cartridge" ? "Positions" : "Rank"}>
+            <span className="tabular-nums">
+              {adapter.format === "cartridge"
+                ? adapter.num_tokens.toLocaleString()
+                : adapter.rank}
+            </span>
           </Detail>
           <Detail label="Size">
             <span className="tabular-nums">
@@ -178,26 +182,34 @@ export const DownloadAdapterDialog = ({
           </Detail>
         </dl>
 
-        <div className="space-y-2">
+        {adapter.format === "cartridge" ? (
           <p className="text-xs text-muted-foreground">
-            <span className="font-mono">adapter.tar.gz</span> contains{" "}
-            <span className="font-mono">adapter_config.json</span> and{" "}
-            <span className="font-mono">adapter_model.safetensors</span>.
+            <span className="font-mono">cartridge.safetensors</span> holds the
+            cartridge's learned input embeddings, which go in front of the
+            system prompt.
           </p>
-          <CodeSnippet
-            code={snippet(runtime, {
-              name: version.name,
-              repo,
-              revision,
-              rank: adapter.rank,
-            })}
-            language={runtime === "peft" ? "python" : "bash"}
-            value={runtime}
-            options={RUNTIMES}
-            onValueChange={setRuntime}
-            copyText="Copy command"
-          />
-        </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-mono">adapter.tar.gz</span> contains{" "}
+              <span className="font-mono">adapter_config.json</span> and{" "}
+              <span className="font-mono">adapter_model.safetensors</span>.
+            </p>
+            <CodeSnippet
+              code={snippet(runtime, {
+                name: version.name,
+                repo,
+                revision,
+                rank: adapter.rank,
+              })}
+              language={runtime === "peft" ? "python" : "bash"}
+              value={runtime}
+              options={RUNTIMES}
+              onValueChange={setRuntime}
+              copyText="Copy command"
+            />
+          </div>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>

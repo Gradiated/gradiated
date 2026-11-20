@@ -103,6 +103,11 @@ export const createTrainingService = (
     reportShareSecret,
   );
   const summarize = (version: TaskVersionRecord) => {
+    if (version.adapter.format !== "peft_lora")
+      throw new ControlServiceError(
+        "not_found",
+        "Only LoRA adapters have weights to explore.",
+      );
     if (!downloads?.weights)
       throw new ControlServiceError(
         "unavailable",

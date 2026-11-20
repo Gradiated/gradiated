@@ -85,7 +85,9 @@ const RouteScrollRestoration = (): null => {
         return;
       }
 
-      if (firstLoad) return pinToAnchor(targetId);
+      if (firstLoad || !document.getElementById(targetId)) {
+        return pinToAnchor(targetId);
+      }
 
       document.getElementById(targetId)?.scrollIntoView({ block: "start" });
       return;

@@ -12,7 +12,11 @@ export const pinToAnchor = (id: string): (() => void) => {
 
   const observer = new ResizeObserver(scroll);
 
+  // Headings get their IDs in a later effect, so look again next frame.
+  const frame = window.requestAnimationFrame(scroll);
+
   const stop = (): void => {
+    window.cancelAnimationFrame(frame);
     observer.disconnect();
     window.clearTimeout(timeout);
     for (const type of userScrollEvents) {

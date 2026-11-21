@@ -40,3 +40,6 @@ e7bb2eca31cd60c6275cf50c6ba70fc23d2d627a:tools/decision_training/train.py:generi
 
 # SHA-256 of public source/audit_tokens.py in the reviewed release builder manifest; not an API key.
 25ac6e14296944b5231932d95f17ca6e3e6dc603:tools/decision_training/release_approvals.json:generic-api-key:15
+
+# Public Transformers model class import in the inference-only evaluator; not a credential.
+0584a3de9d0cd54ac7fcfcaa3e1be79fa05fcae4:tools/decision_training/checkpoint_eval.py:generic-api-key:167

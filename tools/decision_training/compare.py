@@ -1,6 +1,7 @@
 """Compare frozen public predictions with paired uncertainty and fair calibration."""
 
 import argparse
+import hashlib
 import json
 import math
 import random
@@ -8,6 +9,7 @@ from pathlib import Path
 
 from benchmark_identity import verify_benchmark
 from data import read_jsonl
+from prompting import render_prompt
 
 TEMPERATURES = (0.5, 0.7, 0.85, 1.0, 1.2, 1.5, 2.0, 2.5, 3.0)
 
@@ -115,7 +117,61 @@ def paired_accuracy(control, candidate, seed=20261120, resamples=10000):
     }
 
 
-def validate_benchmark_predictions(predictions, benchmark):
+def validate_distribution(row, labels, temperature=1.0):
+    probs, logits = row["probs"], row["logits"]
+    if (
+        list(probs) != labels
+        or len(logits) != len(labels)
+        or not math.isfinite(temperature)
+        or temperature <= 0
+        or any(
+            isinstance(x, bool)
+            or not isinstance(x, (int, float))
+            or not math.isfinite(x)
+            for x in [*probs.values(), *logits]
+        )
+        or any(not 0 <= p <= 1 for p in probs.values())
+        or abs(sum(probs.values()) - 1) > 1e-5
+    ):
+        raise ValueError("invalid prediction probabilities or logits")
+    if any(
+        abs(p - q) > 1e-5
+        for p, q in zip(probs.values(), probabilities(logits, temperature), strict=True)
+    ):
+        raise ValueError("prediction probabilities disagree with logits")
+
+
+def calibration_rows(source, tokenizer, max_length):
+    return [
+        row
+        for row in source
+        if len(
+            tokenizer.encode(render_prompt(tokenizer, row), add_special_tokens=False)
+        )
+        <= max_length
+    ][:256]
+
+
+def validate_dev_predictions(predictions, source):
+    expected = {row["id"]: row for row in source}
+    if (
+        not source
+        or len(expected) != len(source)
+        or len(predictions) != len(source)
+        or len({row["id"] for row in predictions}) != len(source)
+        or {row["id"] for row in predictions} != set(expected)
+    ):
+        raise ValueError(
+            "dev predictions are not the complete source-matched calibration set"
+        )
+    for row in predictions:
+        task = expected[row["id"]]
+        if row["target"] != task["target"]:
+            raise ValueError("dev prediction targets differ from source")
+        validate_distribution(row, task["labels"])
+
+
+def validate_benchmark_predictions(predictions, benchmark, temperature=1.0):
     gold = {row["id"]: row for row in benchmark}
     if (
         len(predictions) != len(gold)
@@ -132,6 +188,7 @@ def validate_benchmark_predictions(predictions, benchmark):
             raise ValueError(
                 "prediction labels or expected answers differ from frozen benchmark"
             )
+        validate_distribution(row, task["labels"], temperature)
         predicted = min(task["labels"], key=lambda label: (-row["probs"][label], label))
         if row["correct"] is not (predicted == str(task["expected"])):
             raise ValueError("stored correctness differs from frozen benchmark scoring")
@@ -147,6 +204,16 @@ def main():
         type=Path,
         help="Explicit frozen benchmark when collection does not include data/jevbench-231.jsonl",
     )
+    parser.add_argument(
+        "--tokenizer-dir",
+        type=Path,
+        help="Pinned native tokenizer for exact calibration population replay",
+    )
+    parser.add_argument(
+        "--max-length",
+        type=int,
+        help="Required for legacy runs without max_length in identity.json",
+    )
     args = parser.parse_args()
     output = args.run_dir / "outputs"
     control = read_jsonl(output / "baseline-jevbench.jsonl")
@@ -155,9 +222,35 @@ def main():
     verify_benchmark(benchmark_path)
     benchmark = read_jsonl(benchmark_path)
     validate_benchmark_predictions(control, benchmark)
-    validate_benchmark_predictions(candidate, benchmark)
-    base_temp = fit_temperature(read_jsonl(output / "baseline-dev.jsonl"))
-    trained_temp = fit_temperature(read_jsonl(output / "trained-dev.jsonl"))
+    recorded_temp = json.loads((output / "calibration.json").read_text())["temperature"]
+    validate_benchmark_predictions(candidate, benchmark, recorded_temp)
+    identity = json.loads((output / "identity.json").read_text())
+    max_length = identity.get("max_length", args.max_length)
+    if max_length is None or max_length <= 0:
+        parser.error(
+            "legacy run requires explicit --max-length for dev population replay"
+        )
+    if args.max_length is not None and args.max_length != max_length:
+        parser.error("--max-length differs from run identity")
+    dev_path = args.run_dir / "data" / "dev.jsonl"
+    data_identity = identity["data"]
+    expected_sha = (
+        data_identity.get("dev.jsonl") or data_identity["release"]["dev_sha256"]
+    )
+    if hashlib.sha256(dev_path.read_bytes()).hexdigest() != expected_sha:
+        raise ValueError("dev source bytes differ from run identity")
+    from transformers import AutoTokenizer
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        args.tokenizer_dir or args.run_dir / "model"
+    )
+    source = calibration_rows(read_jsonl(dev_path), tokenizer, max_length)
+    base_dev = read_jsonl(output / "baseline-dev.jsonl")
+    trained_dev = read_jsonl(output / "trained-dev.jsonl")
+    validate_dev_predictions(base_dev, source)
+    validate_dev_predictions(trained_dev, source)
+    base_temp = fit_temperature(base_dev)
+    trained_temp = fit_temperature(trained_dev)
     report = {
         "scope": "JevBench frozen 231 public tasks; not an official leaderboard rank",
         "baseline_raw": metrics(control),

@@ -14,12 +14,23 @@ from train import (
     check_deadline,
     learning_rate_for_step,
     parse_s3_uri,
+    startup_deadline,
     validate_experiment_bounds,
     validate_output_reuse,
 )
 
 
 class RunnerValidationTests(unittest.TestCase):
+    def test_slow_startup_is_interrupted_and_alarm_restored(self):
+        previous = signal.getsignal(signal.SIGALRM)
+        with (
+            self.assertRaisesRegex(TimeoutError, "startup"),
+            startup_deadline(time.monotonic() + 0.03),
+        ):
+            time.sleep(0.2)
+        self.assertEqual(signal.getitimer(signal.ITIMER_REAL), (0.0, 0.0))
+        self.assertEqual(signal.getsignal(signal.SIGALRM), previous)
+
     def test_nonresume_reuse_of_training_artifacts_fails_before_model_load(self):
         with TemporaryDirectory() as directory:
             output = Path(directory)

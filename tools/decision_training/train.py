@@ -8,6 +8,7 @@ import re
 import signal
 import sys
 import time
+from contextlib import contextmanager
 
 from adapter_restore import restore_adapter
 from benchmark_identity import verify_benchmark
@@ -17,6 +18,25 @@ from distributed import DistributedRun, rank_batches
 from prompting import render_prompt
 from runtime import runtime_fingerprint
 from snapshot import verify_snapshot
+
+
+@contextmanager
+def startup_deadline(deadline):
+    check_deadline(deadline)
+    if signal.getitimer(signal.ITIMER_REAL) != (0.0, 0.0):
+        raise RuntimeError("startup cannot replace an active alarm")
+
+    def timeout(_signum, _frame):
+        raise TimeoutError("model startup reached the experiment deadline")
+
+    previous = signal.signal(signal.SIGALRM, timeout)
+    try:
+        signal.setitimer(signal.ITIMER_REAL, max(1e-6, deadline - time.monotonic()))
+        yield
+        check_deadline(deadline)
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous)
 
 
 def bounded_checkpoint_write(write, deadline, previous_seconds=0, reserve=900):
@@ -322,244 +342,250 @@ def main():
         parser.error(str(error))
     start = time.monotonic()
     deadline = start + args.seconds
-    import torch
-    from peft import LoraConfig, get_peft_model
-    from safetensors.torch import load_file
-    from transformers import AutoTokenizer, Inkling2LoopForConditionalGeneration
+    with startup_deadline(deadline):
+        import torch
+        from peft import LoraConfig, get_peft_model
+        from safetensors.torch import load_file
+        from transformers import AutoTokenizer, Inkling2LoopForConditionalGeneration
 
-    distributed = DistributedRun(torch)
-    args.training_world_size = distributed.world_size
+        distributed = DistributedRun(torch)
+        args.training_world_size = distributed.world_size
 
-    ROOT = args.run_dir.resolve()
-    DATA = args.data_dir or ROOT / "data"
-    OUT = args.output_dir or ROOT / "outputs"
-    sys.path.insert(0, str(ROOT / "jevbench"))
-    from jevbench.metrics import brier_score, ece_top_label
-    from jevbench.scoring import score_task
-    from jevbench.tasks import Task
+        ROOT = args.run_dir.resolve()
+        DATA = args.data_dir or ROOT / "data"
+        OUT = args.output_dir or ROOT / "outputs"
+        sys.path.insert(0, str(ROOT / "jevbench"))
+        from jevbench.metrics import brier_score, ece_top_label
+        from jevbench.scoring import score_task
+        from jevbench.tasks import Task
 
-    random.seed(20261120)
-    torch.manual_seed(20261120)
-    torch.set_num_threads(12)
-    if distributed.primary:
-        OUT.mkdir(parents=True, exist_ok=True)
-    distributed.barrier()
+        random.seed(20261120)
+        torch.manual_seed(20261120)
+        torch.set_num_threads(12)
+        if distributed.primary:
+            OUT.mkdir(parents=True, exist_ok=True)
+        distributed.barrier()
 
-    def event(kind, **fields):
-        if not distributed.primary:
-            return
-        row = {
-            "event": kind,
-            "time": time.time(),
-            "elapsed": time.monotonic() - start,
-            **fields,
-        }
-        print(json.dumps(row), flush=True)
-        with (OUT / "events.jsonl").open("a") as f:
-            f.write(json.dumps(row) + "\n")
-
-    uploaded = {}
-
-    def sync(reserve=0, scored_only=False):
-        if not distributed.primary:
-            return
-        import boto3
-        from botocore.config import Config
-
-        check_deadline(deadline, reserve=reserve)
-        s = boto3.client(
-            "s3",
-            config=Config(
-                connect_timeout=5, read_timeout=30, retries={"total_max_attempts": 3}
-            ),
-        )
-        bucket, prefix = s3_bucket, s3_prefix
-
-        def upload(path, key):
-            check_deadline(deadline, reserve=reserve)
-            stat = path.stat()
-            signature = (stat.st_size, stat.st_mtime_ns)
-            if uploaded.get(key) == signature:
+        def event(kind, **fields):
+            if not distributed.primary:
                 return
-            s.upload_file(
-                str(path),
-                bucket,
-                key,
-                Callback=lambda _bytes: check_deadline(deadline, reserve=reserve),
-            )
-            uploaded[key] = signature
+            row = {
+                "event": kind,
+                "time": time.time(),
+                "elapsed": time.monotonic() - start,
+                **fields,
+            }
+            print(json.dumps(row), flush=True)
+            with (OUT / "events.jsonl").open("a") as f:
+                f.write(json.dumps(row) + "\n")
 
-        priority = [
-            OUT / (name + suffix)
-            for name in (
-                "trained-jevbench",
-                "trained-dev",
-                "baseline-jevbench",
-                "baseline-dev",
+        uploaded = {}
+
+        def sync(reserve=0, scored_only=False):
+            if not distributed.primary:
+                return
+            import boto3
+            from botocore.config import Config
+
+            check_deadline(deadline, reserve=reserve)
+            s = boto3.client(
+                "s3",
+                config=Config(
+                    connect_timeout=5,
+                    read_timeout=30,
+                    retries={"total_max_attempts": 3},
+                ),
             )
-            for suffix in (".jsonl", ".json")
-        ]
-        priority += [
-            OUT / name for name in ("calibration.json", "identity.json", "events.jsonl")
-        ]
-        for path in priority:
-            if path.exists():
-                upload(path, prefix + "/" + OUT.name + "/" + path.name)
-        if scored_only:
-            event("scored_outputs_s3_sync")
-            return
-        for base in [OUT, DATA]:
-            if base == DATA and (DATA / "COMPLETE.json").exists():
-                # Immutable corpus already has its own complete, verified S3 release.
-                # Keep only its identity with run checkpoints, not a fresh corpus copy.
+            bucket, prefix = s3_bucket, s3_prefix
+
+            def upload(path, key):
+                check_deadline(deadline, reserve=reserve)
+                stat = path.stat()
+                signature = (stat.st_size, stat.st_mtime_ns)
+                if uploaded.get(key) == signature:
+                    return
+                s.upload_file(
+                    str(path),
+                    bucket,
+                    key,
+                    Callback=lambda _bytes: check_deadline(deadline, reserve=reserve),
+                )
+                uploaded[key] = signature
+
+            priority = [
+                OUT / (name + suffix)
                 for name in (
-                    "manifest.json",
-                    "COMPLETE.json",
-                    "dev.jsonl",
-                    "jevbench-231.jsonl",
-                ):
-                    upload(DATA / name, prefix + "/" + base.name + "/" + name)
-                continue
-            for p in sorted(
-                base.rglob("*"), key=lambda p: p.name == "checkpoint-complete.json"
-            ):
-                if p.is_file() and not any(
-                    part.endswith(".tmp") for part in p.relative_to(base).parts
-                ):
-                    upload(p, prefix + "/" + base.name + "/" + str(p.relative_to(base)))
-        for name in [
-            "train.py",
-            "prepare_data.py",
-            "pilot.json",
-            "model-manifest.json",
-            "model-sha256.txt",
-            "model-integrity.json",
-        ]:
-            p = ROOT / name
-            if p.exists():
-                upload(p, prefix + "/" + name)
-        for name in (
-            "train.py",
-            "data.py",
-            "snapshot.py",
-            "distributed.py",
-            "prompting.py",
-            "runtime.py",
-            "cached_data.py",
-            "candidate_approvals.json",
-            "benchmark_identity.py",
-            "native_runtime.py",
-            "release_approvals.json",
-            "adapter_restore.py",
-            "compare.py",
-            "requirements.txt",
-        ):
-            source = pathlib.Path(__file__).parent / name
-            if source.exists():
-                upload(source, prefix + "/source/" + name)
-        for source in sorted((ROOT / "jevbench" / "jevbench").rglob("*.py")):
-            upload(
-                source,
-                prefix
-                + "/source/jevbench/"
-                + str(source.relative_to(ROOT / "jevbench")),
-            )
-        event("s3_sync")
-
-    identity = distributed.broadcast(
-        build_run_identity(
-            ROOT,
-            DATA,
-            args.max_length,
-            distributed.world_size,
-            lambda: check_deadline(deadline),
-        )
-        if distributed.primary
-        else None
-    )
-    identity_path = OUT / "identity.json"
-    if distributed.primary and identity_path.exists():
-        if json.loads(identity_path.read_text()) != identity:
-            raise ValueError(
-                "output directory belongs to different model, prompt or data"
-            )
-    elif distributed.primary:
-        identity_path.write_text(json.dumps(identity, indent=2) + "\n")
-    distributed.barrier()
-
-    def read(name):
-        return read_jsonl(DATA / name)
-
-    tokenizer = AutoTokenizer.from_pretrained(ROOT / "model")
-    tokenizer.padding_side = "left"
-    if tokenizer.pad_token_id is None:
-        tokenizer.pad_token = tokenizer.eos_token
-    letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    letter_ids = [tokenizer.encode(c, add_special_tokens=False) for c in letters]
-    assert all(len(x) == 1 for x in letter_ids), letter_ids
-    letter_ids = torch.tensor([x[0] for x in letter_ids], device="cuda")
-
-    def bench_row(r):
-        q = r["question"]
-        criteria = q.get("criteria")
-        labels = r["labels"]
-        if q["type"] == "noul":
-            descs = [
-                str((criteria or {}).get("false" if l == "no" else "true", l))
-                for l in labels
+                    "trained-jevbench",
+                    "trained-dev",
+                    "baseline-jevbench",
+                    "baseline-dev",
+                )
+                for suffix in (".jsonl", ".json")
             ]
-        elif q["type"] == "score":
-            descs = [str(criteria[int(l)]) for l in labels]
+            priority += [
+                OUT / name
+                for name in ("calibration.json", "identity.json", "events.jsonl")
+            ]
+            for path in priority:
+                if path.exists():
+                    upload(path, prefix + "/" + OUT.name + "/" + path.name)
+            if scored_only:
+                event("scored_outputs_s3_sync")
+                return
+            for base in [OUT, DATA]:
+                if base == DATA and (DATA / "COMPLETE.json").exists():
+                    # Immutable corpus already has its own complete, verified S3 release.
+                    # Keep only its identity with run checkpoints, not a fresh corpus copy.
+                    for name in (
+                        "manifest.json",
+                        "COMPLETE.json",
+                        "dev.jsonl",
+                        "jevbench-231.jsonl",
+                    ):
+                        upload(DATA / name, prefix + "/" + base.name + "/" + name)
+                    continue
+                for p in sorted(
+                    base.rglob("*"), key=lambda p: p.name == "checkpoint-complete.json"
+                ):
+                    if p.is_file() and not any(
+                        part.endswith(".tmp") for part in p.relative_to(base).parts
+                    ):
+                        upload(
+                            p, prefix + "/" + base.name + "/" + str(p.relative_to(base))
+                        )
+            for name in [
+                "train.py",
+                "prepare_data.py",
+                "pilot.json",
+                "model-manifest.json",
+                "model-sha256.txt",
+                "model-integrity.json",
+            ]:
+                p = ROOT / name
+                if p.exists():
+                    upload(p, prefix + "/" + name)
+            for name in (
+                "train.py",
+                "data.py",
+                "snapshot.py",
+                "distributed.py",
+                "prompting.py",
+                "runtime.py",
+                "cached_data.py",
+                "candidate_approvals.json",
+                "benchmark_identity.py",
+                "native_runtime.py",
+                "release_approvals.json",
+                "adapter_restore.py",
+                "compare.py",
+                "requirements.txt",
+            ):
+                source = pathlib.Path(__file__).parent / name
+                if source.exists():
+                    upload(source, prefix + "/source/" + name)
+            for source in sorted((ROOT / "jevbench" / "jevbench").rglob("*.py")):
+                upload(
+                    source,
+                    prefix
+                    + "/source/jevbench/"
+                    + str(source.relative_to(ROOT / "jevbench")),
+                )
+            event("s3_sync")
+
+        identity = distributed.broadcast(
+            build_run_identity(
+                ROOT,
+                DATA,
+                args.max_length,
+                distributed.world_size,
+                lambda: check_deadline(deadline),
+            )
+            if distributed.primary
+            else None
+        )
+        identity_path = OUT / "identity.json"
+        if distributed.primary and identity_path.exists():
+            if json.loads(identity_path.read_text()) != identity:
+                raise ValueError(
+                    "output directory belongs to different model, prompt or data"
+                )
+        elif distributed.primary:
+            identity_path.write_text(json.dumps(identity, indent=2) + "\n")
+        distributed.barrier()
+
+        def read(name):
+            return read_jsonl(DATA / name)
+
+        tokenizer = AutoTokenizer.from_pretrained(ROOT / "model")
+        tokenizer.padding_side = "left"
+        if tokenizer.pad_token_id is None:
+            tokenizer.pad_token = tokenizer.eos_token
+        letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        letter_ids = [tokenizer.encode(c, add_special_tokens=False) for c in letters]
+        assert all(len(x) == 1 for x in letter_ids), letter_ids
+        letter_ids = torch.tensor([x[0] for x in letter_ids], device="cuda")
+
+        def bench_row(r):
+            q = r["question"]
+            criteria = q.get("criteria")
+            labels = r["labels"]
+            if q["type"] == "noul":
+                descs = [
+                    str((criteria or {}).get("false" if l == "no" else "true", l))
+                    for l in labels
+                ]
+            elif q["type"] == "score":
+                descs = [str(criteria[int(l)]) for l in labels]
+            else:
+                descs = [str(criteria[l]) for l in labels]
+            return {**r, "descriptions": descs}
+
+        def encode(r):
+            prompt = render_prompt(tokenizer, r)
+            ids = tokenizer.encode(prompt, add_special_tokens=False)
+            return {**r, "ids": ids}
+
+        if (DATA / "COMPLETE.json").exists():
+            cache = identity["data"]["release"]
+            verify_cache_runtime(DATA, ROOT / "model", cache, identity["runtime"])
+            train = list(read_cached(DATA, cache, lambda: check_deadline(deadline)))
+            # Verify real cached inputs against the native runtime before any updates.
+            for row in sorted(train, key=lambda r: len(r["ids"]))[
+                :: max(1, len(train) // 16)
+            ]:
+                if encode(row)["ids"] != row["ids"]:
+                    raise ValueError("cached token replay mismatch")
         else:
-            descs = [str(criteria[l]) for l in labels]
-        return {**r, "descriptions": descs}
+            train = []
+            for r in read("train.jsonl"):
+                r = encode(r)
+                if len(r["ids"]) <= args.max_length:
+                    train.append(r)
+        dev = [encode(r) for r in read("dev.jsonl")]
+        dev = [r for r in dev if len(r["ids"]) <= args.max_length][:256]
+        bench = [encode(bench_row(r)) for r in read("jevbench-231.jsonl")]
+        event(
+            "data_ready",
+            train=len(train),
+            dev=len(dev),
+            benchmark=len(bench),
+            max_benchmark_tokens=max(len(r["ids"]) for r in bench),
+        )
+        assert train and dev and len(bench) == 231
 
-    def encode(r):
-        prompt = render_prompt(tokenizer, r)
-        ids = tokenizer.encode(prompt, add_special_tokens=False)
-        return {**r, "ids": ids}
-
-    if (DATA / "COMPLETE.json").exists():
-        cache = identity["data"]["release"]
-        verify_cache_runtime(DATA, ROOT / "model", cache, identity["runtime"])
-        train = list(read_cached(DATA, cache, lambda: check_deadline(deadline)))
-        # Verify real cached inputs against the native runtime before any updates.
-        for row in sorted(train, key=lambda r: len(r["ids"]))[
-            :: max(1, len(train) // 16)
-        ]:
-            if encode(row)["ids"] != row["ids"]:
-                raise ValueError("cached token replay mismatch")
-    else:
-        train = []
-        for r in read("train.jsonl"):
-            r = encode(r)
-            if len(r["ids"]) <= args.max_length:
-                train.append(r)
-    dev = [encode(r) for r in read("dev.jsonl")]
-    dev = [r for r in dev if len(r["ids"]) <= args.max_length][:256]
-    bench = [encode(bench_row(r)) for r in read("jevbench-231.jsonl")]
-    event(
-        "data_ready",
-        train=len(train),
-        dev=len(dev),
-        benchmark=len(bench),
-        max_benchmark_tokens=max(len(r["ids"]) for r in bench),
-    )
-    assert train and dev and len(bench) == 231
-
-    event("model_load_start")
-    model, loading = Inkling2LoopForConditionalGeneration.from_pretrained(
-        ROOT / "model",
-        dtype=torch.bfloat16,
-        device_map="cuda",
-        output_loading_info=True,
-    )
-    for key in ["missing_keys", "unexpected_keys", "mismatched_keys", "error_msgs"]:
-        assert not loading.get(key), (key, loading[key])
-    model.config.use_cache = False
-    model.model.language_model.config.use_cache = False
-    model.eval()
-    event("model_loaded", gpu_allocated_gb=torch.cuda.memory_allocated() / 1e9)
+        event("model_load_start")
+        model, loading = Inkling2LoopForConditionalGeneration.from_pretrained(
+            ROOT / "model",
+            dtype=torch.bfloat16,
+            device_map="cuda",
+            output_loading_info=True,
+        )
+        for key in ["missing_keys", "unexpected_keys", "mismatched_keys", "error_msgs"]:
+            assert not loading.get(key), (key, loading[key])
+        model.config.use_cache = False
+        model.model.language_model.config.use_cache = False
+        model.eval()
+        event("model_loaded", gpu_allocated_gb=torch.cuda.memory_allocated() / 1e9)
 
     training_model = model
 

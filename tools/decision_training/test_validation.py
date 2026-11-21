@@ -31,6 +31,19 @@ class RunnerValidationTests(unittest.TestCase):
         self.assertEqual(signal.getitimer(signal.ITIMER_REAL), (0.0, 0.0))
         self.assertEqual(signal.getsignal(signal.SIGALRM), previous)
 
+    def test_startup_deadline_remains_active_across_restoration_phases(self):
+        completed = []
+        with (
+            self.assertRaisesRegex(TimeoutError, "startup"),
+            startup_deadline(time.monotonic() + 0.08),
+        ):
+            time.sleep(0.01)
+            completed.append("checkpoint verification")
+            time.sleep(0.2)
+            completed.append("optimizer restoration")
+        self.assertEqual(completed, ["checkpoint verification"])
+        self.assertEqual(signal.getitimer(signal.ITIMER_REAL), (0.0, 0.0))
+
     def test_nonresume_reuse_of_training_artifacts_fails_before_model_load(self):
         with TemporaryDirectory() as directory:
             output = Path(directory)

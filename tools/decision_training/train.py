@@ -727,87 +727,92 @@ def main():
                     )
             evaluate(rows, name)
     distributed.barrier()
-    # Fixed low-rank intervention on attention projections and answer readout.
-    targets = [
-        name
-        for name, module in model.named_modules()
-        if isinstance(module, torch.nn.Linear)
-        and (".self_attn." in name or name == "lm_head")
-    ]
-    assert len(targets) > 50, targets
-    model = get_peft_model(
-        model,
-        LoraConfig(
-            r=args.rank,
-            lora_alpha=2 * args.rank,
-            lora_dropout=0,
-            target_modules=targets,
-            bias="none",
-        ),
-    )
-    model.gradient_checkpointing_enable(
-        gradient_checkpointing_kwargs={"use_reentrant": False}
-    )
-    model.enable_input_require_grads()
-    optimizer = torch.optim.AdamW(
-        [p for p in model.parameters() if p.requires_grad],
-        lr=args.learning_rate,
-        betas=(0.9, 0.95),
-        weight_decay=0.0,
-    )
-    event(
-        "training_start",
-        trainable=sum(p.numel() for p in model.parameters() if p.requires_grad),
-        targets=targets,
-        arguments={
-            k: str(v) if isinstance(v, pathlib.Path) else v
-            for k, v in vars(args).items()
-        },
-    )
+    with startup_deadline(deadline):
+        # Fixed low-rank intervention on attention projections and answer readout.
+        targets = [
+            name
+            for name, module in model.named_modules()
+            if isinstance(module, torch.nn.Linear)
+            and (".self_attn." in name or name == "lm_head")
+        ]
+        assert len(targets) > 50, targets
+        model = get_peft_model(
+            model,
+            LoraConfig(
+                r=args.rank,
+                lora_alpha=2 * args.rank,
+                lora_dropout=0,
+                target_modules=targets,
+                bias="none",
+            ),
+        )
+        model.gradient_checkpointing_enable(
+            gradient_checkpointing_kwargs={"use_reentrant": False}
+        )
+        model.enable_input_require_grads()
+        optimizer = torch.optim.AdamW(
+            [p for p in model.parameters() if p.requires_grad],
+            lr=args.learning_rate,
+            betas=(0.9, 0.95),
+            weight_decay=0.0,
+        )
+        event(
+            "training_start",
+            trainable=sum(p.numel() for p in model.parameters() if p.requires_grad),
+            targets=targets,
+            arguments={
+                k: str(v) if isinstance(v, pathlib.Path) else v
+                for k, v in vars(args).items()
+            },
+        )
 
-    # Length buckets reduce padding without changing examples or targets.
-    batches, dropped = rank_batches(
-        train, args.batch_size, distributed.world_size, distributed.rank
-    )
-    event(
-        "distributed_geometry",
-        world_size=distributed.world_size,
-        global_batch_size=args.batch_size * args.accumulation * distributed.world_size,
-        local_batches=len(batches),
-        dropped_incomplete_epoch_examples=dropped,
-    )
-    step = 0
-    cursor = 0
-    lastsave = time.monotonic()
-    optimizer.zero_grad(set_to_none=True)
-    if args.resume:
-        ckpt = pathlib.Path(args.resume)
-        checkpoint_manifest = json.loads(
-            (ckpt / "checkpoint-complete.json").read_text()
+        # Length buckets reduce padding without changing examples or targets.
+        batches, dropped = rank_batches(
+            train, args.batch_size, distributed.world_size, distributed.rank
         )
-        validate_checkpoint_identity(checkpoint_manifest, identity)
-        verify_checkpoint_payloads(
-            ckpt, checkpoint_manifest, lambda: check_deadline(deadline)
+        event(
+            "distributed_geometry",
+            world_size=distributed.world_size,
+            global_batch_size=args.batch_size
+            * args.accumulation
+            * distributed.world_size,
+            local_batches=len(batches),
+            dropped_incomplete_epoch_examples=dropped,
         )
-        state = torch.load(ckpt / "trainer.pt", map_location="cpu", weights_only=False)
-        validate_resume_arguments(state["args"], vars(args))
-        restoration = restore_adapter(
-            model, load_file(str(ckpt / "adapter_model.safetensors"))
-        )
-        event("adapter_restored", **restoration)
-        optimizer.load_state_dict(state["optimizer"])
-        step = state["step"]
-        cursor = state["cursor"]
-        rng = state.get("rank_rng", [state])[distributed.rank]
-        random.setstate(rng["random"])
-        torch.set_rng_state(rng["torch_rng"])
-        torch.cuda.set_rng_state(
-            rng["cuda_rng"][0]
-            if "rank_rng" in state
-            else rng["cuda_rng"][distributed.local_rank]
-        )
-        event("resumed", checkpoint=str(ckpt), step=step)
-    training_model = distributed.wrap(model)
+        step = 0
+        cursor = 0
+        lastsave = time.monotonic()
+        optimizer.zero_grad(set_to_none=True)
+        if args.resume:
+            ckpt = pathlib.Path(args.resume)
+            checkpoint_manifest = json.loads(
+                (ckpt / "checkpoint-complete.json").read_text()
+            )
+            validate_checkpoint_identity(checkpoint_manifest, identity)
+            verify_checkpoint_payloads(
+                ckpt, checkpoint_manifest, lambda: check_deadline(deadline)
+            )
+            state = torch.load(
+                ckpt / "trainer.pt", map_location="cpu", weights_only=False
+            )
+            validate_resume_arguments(state["args"], vars(args))
+            restoration = restore_adapter(
+                model, load_file(str(ckpt / "adapter_model.safetensors"))
+            )
+            event("adapter_restored", **restoration)
+            optimizer.load_state_dict(state["optimizer"])
+            step = state["step"]
+            cursor = state["cursor"]
+            rng = state.get("rank_rng", [state])[distributed.rank]
+            random.setstate(rng["random"])
+            torch.set_rng_state(rng["torch_rng"])
+            torch.cuda.set_rng_state(
+                rng["cuda_rng"][0]
+                if "rank_rng" in state
+                else rng["cuda_rng"][distributed.local_rank]
+            )
+            event("resumed", checkpoint=str(ckpt), step=step)
+        training_model = distributed.wrap(model)
     first_step = step + 1
     completed_steps = step
     final_step = step if args.evaluate_only else args.steps

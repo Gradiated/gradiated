@@ -181,33 +181,44 @@ def main():
             path = args.candidates / item["file"]
             if digest_file(path) != item["sha256"]:
                 raise ValueError("candidate shard mismatch")
-            work = []
-            for batch in pq.ParquetFile(path).iter_batches(
-                batch_size=1000, columns=["record_json"]
-            ):
-                check()
-                records = batch.column(0).to_pylist()
-                work.append((offset, records))
-                offset += len(records)
-            lengths = []
-            for first, values, samples in pool.map(
-                measure, work, timeout=max(0.001, deadline - time.monotonic())
-            ):
-                if time.monotonic() >= deadline:
-                    raise TimeoutError("token audit deadline")
-                lengths.extend(
-                    {"candidate_n": first + i, "tokens": length}
-                    for i, length in enumerate(values)
+            batches = iter(
+                pq.ParquetFile(path).iter_batches(
+                    batch_size=1000, columns=["record_json"]
                 )
-                counts["questions"] += len(values)
-                counts["tokens"] += sum(values)
-                counts["maximum_tokens"] = max(counts["maximum_tokens"], max(values))
-                for limit in (1024, 2048, 4096, 8192, 16384):
-                    fits = [length for length in values if length <= limit]
-                    counts[f"fit_{limit}_questions"] += len(fits)
-                    counts[f"fit_{limit}_tokens"] += sum(fits)
-                for sample in samples:
-                    panel.write(json.dumps(sample, ensure_ascii=False) + "\n")
+            )
+            lengths = []
+            while True:
+                work = []
+                for _ in range(args.workers * 2):
+                    check()
+                    batch = next(batches, None)
+                    if batch is None:
+                        break
+                    records = batch.column(0).to_pylist()
+                    work.append((offset, records))
+                    offset += len(records)
+                if not work:
+                    break
+                for first, values, samples in pool.map(
+                    measure, work, timeout=max(0.001, deadline - time.monotonic())
+                ):
+                    if time.monotonic() >= deadline:
+                        raise TimeoutError("token audit deadline")
+                    lengths.extend(
+                        {"candidate_n": first + i, "tokens": length}
+                        for i, length in enumerate(values)
+                    )
+                    counts["questions"] += len(values)
+                    counts["tokens"] += sum(values)
+                    counts["maximum_tokens"] = max(
+                        counts["maximum_tokens"], max(values)
+                    )
+                    for limit in (1024, 2048, 4096, 8192, 16384):
+                        fits = [length for length in values if length <= limit]
+                        counts[f"fit_{limit}_questions"] += len(fits)
+                        counts[f"fit_{limit}_tokens"] += sum(fits)
+                    for sample in samples:
+                        panel.write(json.dumps(sample, ensure_ascii=False) + "\n")
             output = root / item["file"].replace("candidate-", "lengths-")
             pq.write_table(pa.Table.from_pylist(lengths), output, compression="zstd")
             files.append(

@@ -3,6 +3,19 @@ from pathlib import Path
 
 import pytest
 from checkpoint_eval import summarize, validate_row, verify_adapter
+from data import read_jsonl
+
+
+def test_jsonl_unicode_line_separator_remains_inside_visible_state(tmp_path):
+    row = {
+        "state": "a\u2028b",
+        "labels": ["a", "b"],
+        "descriptions": ["A", "B"],
+        "gold": "a",
+    }
+    path = tmp_path / "panel.jsonl"
+    path.write_text(json.dumps(row, ensure_ascii=False) + "\n")
+    assert [validate_row(item) for item in read_jsonl(path)] == [row]
 
 
 def test_paired_metrics_derive_correctness_from_predictions():

@@ -8,6 +8,7 @@ import time
 from collections import defaultdict
 from pathlib import Path
 
+from data import read_jsonl
 from prompting import render_prompt
 
 
@@ -128,11 +129,7 @@ def main():
     from snapshot import verify_snapshot
 
     model_identity = verify_snapshot(args.model_dir.parent, check)
-    rows = [
-        validate_row(json.loads(line))
-        for line in args.rows.read_text().splitlines()
-        if line.strip()
-    ]
+    rows = [validate_row(row) for row in read_jsonl(args.rows)]
     if not rows or len({r["id"] for r in rows}) != len(rows):
         raise ValueError("empty evaluation or duplicate evaluation IDs")
     args.output_dir.mkdir(parents=True, exist_ok=False)

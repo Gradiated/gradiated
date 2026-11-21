@@ -13,6 +13,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--cuda", action="store_true")
+    parser.add_argument("--fail-primary-finalization", action="store_true")
     args = parser.parse_args()
     import torch
 
@@ -109,7 +110,18 @@ def main():
         }
     )
     assert context.all(oracle_delta < 1e-12 and resume_delta == 0 and random_delta == 0)
-    if context.primary:
+    primary = context.release_for_primary_only()
+    if args.fail_primary_finalization:
+        assert not torch.distributed.is_initialized()
+        (args.output_dir / f"rank-{context.rank}-released.json").write_text(
+            json.dumps({"rank": context.rank, "process_group_released": True})
+        )
+        if primary:
+            raise RuntimeError(
+                "injected primary finalization failure after worker release"
+            )
+        return
+    if primary:
         result = {
             "passed": True,
             "world_size": context.world_size,
@@ -122,7 +134,6 @@ def main():
             json.dumps(result, indent=2) + "\n"
         )
         print(json.dumps(result), flush=True)
-    context.close()
 
 
 if __name__ == "__main__":

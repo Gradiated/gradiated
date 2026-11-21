@@ -97,3 +97,9 @@ class DistributedRun:
     def close(self):
         if self.world_size > 1:
             self.torch.distributed.destroy_process_group()
+
+    def release_for_primary_only(self):
+        """Finish collectives before fallible single-rank scoring or uploads."""
+        self.barrier()
+        self.close()
+        return self.primary

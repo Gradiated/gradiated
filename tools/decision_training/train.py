@@ -1007,9 +1007,7 @@ def main():
         raise RuntimeError(
             "no optimizer updates completed; no trained comparison will be written"
         )
-    if not distributed.primary:
-        distributed.barrier()
-        distributed.close()
+    if not distributed.release_for_primary_only():
         return
     trained_dev, _ = evaluate(dev, "trained-dev", sync_outputs=False)
 
@@ -1057,8 +1055,6 @@ def main():
             "scoring complete but final adapter serialization or upload exceeded the deadline"
         ) from None
     sync(scored_only=True)
-    distributed.barrier()
-    distributed.close()
 
 
 if __name__ == "__main__":

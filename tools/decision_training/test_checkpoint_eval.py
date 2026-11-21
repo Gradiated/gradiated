@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 import pytest
-from checkpoint_eval import summarize, validate_row, verify_adapter
+from checkpoint_eval import predicted_label, summarize, validate_row, verify_adapter
 from data import read_jsonl
 
 
@@ -66,3 +66,15 @@ def test_wrong_gold_and_option_alignment_rejected():
         validate_row({"labels": ["a", "b"], "descriptions": ["A", "B"], "gold": "c"})
     with pytest.raises(ValueError, match="duplicate"):
         validate_row({"labels": ["a", "a"], "descriptions": ["A", "A"], "gold": "a"})
+
+
+def test_ties_use_frozen_benchmark_label_ordering_and_ignore_stale_labels():
+    assert predicted_label(["z", "a"], [0.5, 0.5]) == "a"
+    row = {
+        "id": "tie",
+        "benchmark": "b",
+        "labels": ["z", "a"],
+        "gold": "a",
+        "base": {"label": "z", "probabilities": [0.5, 0.5]},
+    }
+    assert summarize([row])["b"]["arms"]["base"]["correct"] == 1

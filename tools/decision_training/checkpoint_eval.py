@@ -34,9 +34,24 @@ def validate_row(row):
     return row
 
 
+def predicted_label(labels, probabilities):
+    return min(zip(labels, probabilities), key=lambda item: (-item[1], item[0]))[0]
+
+
 def summarize(records):
     groups = defaultdict(list)
     for row in records:
+        row = {
+            **row,
+            **{
+                arm: {
+                    **row[arm],
+                    "label": predicted_label(row["labels"], row[arm]["probabilities"]),
+                }
+                for arm in ("base", "checkpoint")
+                if arm in row
+            },
+        }
         groups[row["benchmark"]].append(row)
     report = {}
     for name, rows in groups.items():
@@ -226,11 +241,7 @@ def main():
                         probabilities = logits.softmax(-1).tolist()
                     torch.cuda.synchronize()
                     result = {
-                        "label": row["labels"][
-                            max(
-                                range(len(probabilities)), key=probabilities.__getitem__
-                            )
-                        ],
+                        "label": predicted_label(row["labels"], probabilities),
                         "probabilities": probabilities,
                         "logits": logits.tolist(),
                         "input_tokens": len(ids),

@@ -34,3 +34,9 @@ a18b5b3125da03bf6dfb7502cd2e848feb4f6bc4:infra/environments/prod/us-east-1/kuber
 # Public Transformers class imported after AutoTokenizer; Inkling2LoopForConditionalGeneration is not a credential.
 e6db8177bc699d976b0119748384e25918732dd0:tools/decision_training/probe.py:generic-api-key:19
 e6db8177bc699d976b0119748384e25918732dd0:tools/decision_training/train.py:generic-api-key:43
+
+# Same public Transformers class import after startup deadline indentation; not a credential.
+e7bb2eca31cd60c6275cf50c6ba70fc23d2d627a:tools/decision_training/train.py:generic-api-key:349
+
+# SHA-256 of public source/audit_tokens.py in the reviewed release builder manifest; not an API key.
+25ac6e14296944b5231932d95f17ca6e3e6dc603:tools/decision_training/release_approvals.json:generic-api-key:15

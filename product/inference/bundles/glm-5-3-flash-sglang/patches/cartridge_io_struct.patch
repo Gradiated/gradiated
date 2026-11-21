@@ -1,11 +1,9 @@
 --- a/sglang/srt/managers/io_struct.py
 +++ b/sglang/srt/managers/io_struct.py
-@@ -102,6 +102,15 @@
-     @classmethod
-     def __get_pydantic_core_schema__(cls, source, handler):
+@@ -104,6 +104,20 @@
          return msgspec_struct_pydantic_core_schema(cls, handler)
-+
-+
+ 
+ 
 +class CartridgeRef(msgspec.Struct, array_like=True, frozen=True):
 +    """A resolved prompt cartridge and the prompt position of its first row."""
 +
@@ -13,21 +11,28 @@
 +    path: str
 +    num_tokens: int
 +    start: int
- 
- 
++
++    # GenerateReqInput is a FastAPI body type, so its fields need a schema.
++    @classmethod
++    def __get_pydantic_core_schema__(cls, source, handler):
++        return msgspec_struct_pydantic_core_schema(cls, handler)
++
++
  class BaseBatchReq(msgspec.Struct, tag=True, kw_only=True, array_like=True):
-@@ -388,6 +397,10 @@
-     kv_hints: Optional[
+     """Base for batched IPC payloads."""
+ 
+@@ -389,6 +403,10 @@
          Union[List[Optional[Union[Dict, KvHintsEnvelope]]], Dict, KvHintsEnvelope]
      ] = None
-+
+ 
 +    # Set by the chat endpoint after it places a resolved cartridge; never
 +    # parsed from a client request.
 +    cartridge: Optional[CartridgeRef] = field(default=None, init=False)
- 
++
      def regenerate_rid(self):
          """Generate a new request ID and return it."""
-@@ -1068,6 +1081,7 @@
+         if isinstance(self.rid, list):
+@@ -1068,6 +1086,7 @@
                  else None
              ),
          )
@@ -35,7 +40,7 @@
          cache[i] = sub
          return sub
  
-@@ -1187,6 +1201,7 @@
+@@ -1187,6 +1206,7 @@
      sampling_logprobs_mode: SamplingLogprobsMode = "selected"
      # LoRA adapter name; KV events namespace this request's blocks by it.
      lora_name: Optional[str] = None

@@ -184,7 +184,7 @@
     {
       "path": "sglang/srt/managers/io_struct.py",
       "original_sha256": "61144c8623ea144412069348f1b880d023ba16e0c03af431c250fd80ef64b216",
-      "overlay_sha256": "b0ee61cc1e0cd6772ebbf8de1017a3f53064941f13eb2c38855b2326798fd8d4",
+      "overlay_sha256": "2adc98f080134d41319c48e881add0074a7189f7215e8c554909523f549e7e1b",
       "patch": "cartridge_io_struct.patch"
     },
     {

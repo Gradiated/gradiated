@@ -63,6 +63,13 @@ def bounded_checkpoint_write(write, deadline, previous_seconds=0, reserve=900):
         signal.signal(signal.SIGALRM, old_handler)
 
 
+def finalize_adapter(write, upload, complete, deadline):
+    bounded_checkpoint_write(write, deadline, reserve=180)
+    upload()
+    check_deadline(deadline)
+    complete()
+
+
 def check_deadline(deadline, reserve=0, now=None, estimated_seconds=0):
     if (
         time.monotonic() if now is None else now
@@ -1038,14 +1045,18 @@ def main():
         tokenizer.save_pretrained(OUT / "adapter-final")
 
     try:
-        bounded_checkpoint_write(write_final_adapter, deadline, reserve=0)
+        finalize_adapter(
+            write_final_adapter,
+            sync,
+            lambda: event("complete", steps=completed_steps),
+            deadline,
+        )
     except TimeoutError:
         event("final_adapter_deferred", steps=completed_steps)
         raise RuntimeError(
-            "scoring complete but final adapter serialization exceeded the deadline"
+            "scoring complete but final adapter serialization or upload exceeded the deadline"
         ) from None
-    event("complete", steps=completed_steps)
-    sync()
+    sync(scored_only=True)
     distributed.barrier()
     distributed.close()
 

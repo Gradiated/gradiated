@@ -12,6 +12,7 @@ from train import (
     bounded_checkpoint_write,
     build_run_identity,
     check_deadline,
+    finalize_adapter,
     learning_rate_for_step,
     parse_s3_uri,
     startup_deadline,
@@ -43,6 +44,43 @@ class RunnerValidationTests(unittest.TestCase):
             completed.append("optimizer restoration")
         self.assertEqual(completed, ["checkpoint verification"])
         self.assertEqual(signal.getitimer(signal.ITIMER_REAL), (0.0, 0.0))
+
+    def test_final_adapter_preserves_upload_window_and_completes_after_upload(self):
+        actions = []
+        deadline = time.monotonic() + 300
+
+        def upload():
+            self.assertGreater(deadline - time.monotonic(), 180)
+            actions.append("upload")
+
+        finalize_adapter(
+            lambda: actions.append("write"),
+            upload,
+            lambda: actions.append("complete"),
+            deadline,
+        )
+        self.assertEqual(actions, ["write", "upload", "complete"])
+        actions.clear()
+        with self.assertRaises(TimeoutError):
+            finalize_adapter(
+                lambda: actions.append("write"),
+                upload,
+                lambda: actions.append("complete"),
+                time.monotonic() + 220,
+            )
+        self.assertFalse(actions)
+
+        def failed_upload():
+            raise OSError("S3 unavailable")
+
+        with self.assertRaises(OSError):
+            finalize_adapter(
+                lambda: actions.append("write"),
+                failed_upload,
+                lambda: actions.append("complete"),
+                deadline,
+            )
+        self.assertEqual(actions, ["write"])
 
     def test_nonresume_reuse_of_training_artifacts_fails_before_model_load(self):
         with TemporaryDirectory() as directory:

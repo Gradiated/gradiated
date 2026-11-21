@@ -136,7 +136,11 @@ def post(args: argparse.Namespace, path: str, body: dict):
 
 
 def stream_chat(args: argparse.Namespace, model: str, messages: list, max_tokens: int):
-    """Token timestamps of one streamed completion (DSPARK may emit several per chunk)."""
+    """Token timestamps of one streamed completion (DSPARK may emit several per chunk).
+
+    Tokens are counted from per-chunk usage, not logprobs: SGLang builds streamed
+    logprobs on the HTTP event loop, which at 64 streams becomes the bottleneck.
+    """
     body = {
         "model": model,
         "messages": messages,
@@ -144,11 +148,10 @@ def stream_chat(args: argparse.Namespace, model: str, messages: list, max_tokens
         "temperature": 0,
         "ignore_eos": True,
         "stream": True,
-        "logprobs": True,
-        "stream_options": {"include_usage": True},
+        "stream_options": {"include_usage": True, "continuous_usage_stats": True},
     }
     sent = time.perf_counter()
-    stamps, usage = [], {}
+    stamps, usage, seen = [], {}, 0
     with post(args, "/v1/chat/completions", body) as response:
         for raw in response:
             line = raw.decode().strip()
@@ -157,9 +160,9 @@ def stream_chat(args: argparse.Namespace, model: str, messages: list, max_tokens
             event = json.loads(line[6:])
             if event.get("usage"):
                 usage = event["usage"]
-            for choice in event.get("choices", []):
-                tokens = len(((choice.get("logprobs") or {}).get("content")) or [])
-                stamps.extend([time.perf_counter()] * tokens)
+                completed = usage.get("completion_tokens") or 0
+                stamps.extend([time.perf_counter()] * (completed - seen))
+                seen = max(seen, completed)
     return {"sent": sent, "stamps": stamps, "usage": usage}
 
 

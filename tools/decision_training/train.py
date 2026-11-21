@@ -8,6 +8,7 @@ import signal
 import sys
 import time
 
+from adapter_restore import restore_adapter
 from benchmark_identity import verify_benchmark
 from cached_data import digest, read_cached, verified_release, verify_cache_runtime
 from data import read_jsonl
@@ -226,6 +227,7 @@ def build_run_identity(root, data, max_length, world_size=1, check=lambda: None)
             "benchmark_identity.py",
             "native_runtime.py",
             "release_approvals.json",
+            "adapter_restore.py",
         )
     }
     for name in ("__init__.py", "scoring.py", "metrics.py", "tasks.py"):
@@ -301,7 +303,7 @@ def main():
     start = time.monotonic()
     deadline = start + args.seconds
     import torch
-    from peft import LoraConfig, get_peft_model, set_peft_model_state_dict
+    from peft import LoraConfig, get_peft_model
     from safetensors.torch import load_file
     from transformers import AutoTokenizer, Inkling2LoopForConditionalGeneration
 
@@ -428,6 +430,7 @@ def main():
             "benchmark_identity.py",
             "native_runtime.py",
             "release_approvals.json",
+            "adapter_restore.py",
             "compare.py",
             "requirements.txt",
         ):
@@ -742,9 +745,10 @@ def main():
         )
         state = torch.load(ckpt / "trainer.pt", map_location="cpu", weights_only=False)
         validate_resume_arguments(state["args"], vars(args))
-        set_peft_model_state_dict(
+        restoration = restore_adapter(
             model, load_file(str(ckpt / "adapter_model.safetensors"))
         )
+        event("adapter_restored", **restoration)
         optimizer.load_state_dict(state["optimizer"])
         step = state["step"]
         cursor = state["cursor"]

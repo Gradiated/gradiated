@@ -199,6 +199,7 @@ class SnapshotTests(unittest.TestCase):
                 "benchmark_identity.py",
                 "native_runtime.py",
                 "release_approvals.json",
+                "adapter_restore.py",
             ):
                 (runner / name).write_text("# fixture\n")
             with (

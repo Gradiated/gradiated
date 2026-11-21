@@ -8,7 +8,8 @@ MODEL = "thinkingmachines/Inkling-2-Mini"
 REVISION = "6e7c8248f75265bdd4fbab5273304243b5d8c2cb"
 
 
-def verify_snapshot(run_dir):
+def verify_snapshot(run_dir, check=lambda: None):
+    check()
     root = Path(run_dir)
     manifest = json.loads((root / "model-manifest.json").read_text())
     if manifest.get("id") != MODEL or manifest.get("sha") != REVISION:
@@ -16,18 +17,20 @@ def verify_snapshot(run_dir):
     files = []
     metadata = {}
     listed = {row["rfilename"] for row in manifest["siblings"]}
-    actual = {
-        str(path.relative_to(root / "model"))
-        for path in (root / "model").rglob("*")
-        if path.is_file()
-        and not path.relative_to(root / "model").is_relative_to(".cache/huggingface")
-    }
+    actual = set()
+    for path in (root / "model").rglob("*"):
+        check()
+        if path.is_file() and not path.relative_to(root / "model").is_relative_to(
+            ".cache/huggingface"
+        ):
+            actual.add(str(path.relative_to(root / "model")))
     if actual != listed:
         raise ValueError(
             f"model files differ from pinned manifest: extra={sorted(actual - listed)}, "
             f"missing={sorted(listed - actual)}"
         )
     for row in manifest["siblings"]:
+        check()
         relative = Path(row["rfilename"])
         if relative.is_absolute() or ".." in relative.parts:
             raise ValueError("invalid manifest path")
@@ -77,6 +80,7 @@ def verify_snapshot(run_dir):
             digest.update(b"blob " + str(item["size"]).encode() + b"\0")
         with (root / "model" / item["path"]).open("rb") as stream:
             for chunk in iter(lambda: stream.read(4 * 1024 * 1024), b""):
+                check()
                 digest.update(chunk)
         if digest.hexdigest() != item["digest"]:
             raise ValueError(f"model file digest mismatch: {item['path']}")

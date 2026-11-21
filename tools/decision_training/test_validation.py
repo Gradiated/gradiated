@@ -24,12 +24,38 @@ class RunnerValidationTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             output = Path(directory)
             (output / "baseline-dev.json").write_text("{}")
+            with self.assertRaisesRegex(ValueError, "matching identity"):
+                validate_output_reuse(output, None)
+            (output / "identity.json").write_text("{}")
             validate_output_reuse(output, None)
             checkpoint = output / "checkpoint-00001"
             checkpoint.mkdir()
+            (checkpoint / "checkpoint-complete.json").write_text(
+                json.dumps({"step": 1})
+            )
             with self.assertRaisesRegex(ValueError, "already contains"):
                 validate_output_reuse(output, None)
             validate_output_reuse(output, str(checkpoint))
+
+    def test_resuming_before_later_checkpoints_fails_up_front(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            resume = root / "checkpoint-00001"
+            resume.mkdir()
+            (resume / "checkpoint-complete.json").write_text(json.dumps({"step": 1}))
+            (root / "checkpoint-00100.tmp").mkdir()
+            with self.assertRaisesRegex(ValueError, "later checkpoint"):
+                validate_output_reuse(root, str(resume))
+            fresh = root / "fresh-output"
+            fresh.mkdir()
+            validate_output_reuse(fresh, str(resume))
+
+    def test_snapshot_checks_expired_owner_before_verification(self):
+        def expired():
+            raise TimeoutError("snapshot owner deadline")
+
+        with self.assertRaisesRegex(TimeoutError, "snapshot owner deadline"):
+            verify_snapshot(Path("unused-snapshot"), expired)
 
     def test_checkpoint_is_skipped_near_the_evaluation_reserve(self):
         called = []

@@ -4,6 +4,7 @@ import argparse
 import collections
 import hashlib
 import json
+import signal
 import time
 from pathlib import Path
 
@@ -21,6 +22,12 @@ def main():
 
     started = time.monotonic()
     deadline = started + args.seconds
+
+    def alarm(_signal, _frame):
+        raise TimeoutError("semantic audit deadline includes source hashing")
+
+    signal.signal(signal.SIGALRM, alarm)
+    signal.setitimer(signal.ITIMER_REAL, args.seconds)
     root = args.run_dir.resolve()
     root.mkdir(parents=True, exist_ok=True)
     if any(root.iterdir()):
@@ -124,6 +131,7 @@ def main():
         json.dumps({"audit_sha256": digest_file(root / "audit.json")}) + "\n"
     )
     print(json.dumps(result), flush=True)
+    signal.setitimer(signal.ITIMER_REAL, 0)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ import json
 import math
 import pathlib
 import random
+import re
 import signal
 import sys
 import time
@@ -124,6 +125,8 @@ def validate_checkpoint_identity(manifest, identity):
 
 def validate_output_reuse(output, resume):
     output = pathlib.Path(output)
+    if not (output / "identity.json").exists() and any(output.glob("baseline-*")):
+        raise ValueError("baseline artifacts require an existing matching identity")
     if not resume and (
         any(output.glob("checkpoint-*")) or (output / "adapter-final").exists()
     ):
@@ -131,6 +134,23 @@ def validate_output_reuse(output, resume):
             "output directory already contains training artifacts; use --resume "
             "or a new output directory"
         )
+    if resume:
+        try:
+            step = json.loads(
+                (pathlib.Path(resume) / "checkpoint-complete.json").read_text()
+            )["step"]
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            raise ValueError(
+                "resume checkpoint requires a completion manifest"
+            ) from error
+        if isinstance(step, bool) or not isinstance(step, int) or step < 0:
+            raise ValueError("invalid resume checkpoint step")
+        for path in output.glob("checkpoint-*"):
+            match = re.fullmatch(r"checkpoint-(\d+)(?:\.tmp)?", path.name)
+            if match and int(match.group(1)) > step:
+                raise ValueError(
+                    "later checkpoint artifacts would collide; use a fresh output directory"
+                )
 
 
 def baseline_complete(output, name, rows):
@@ -244,7 +264,7 @@ def build_run_identity(root, data, max_length, world_size=1, check=lambda: None)
         "revision": "6e7c8248f75265bdd4fbab5273304243b5d8c2cb",
         "prompt": "native-chat-none-letter-v1",
         "evaluation_batch_size": 1,
-        "verified_model_manifest_sha256": verify_snapshot(root),
+        "verified_model_manifest_sha256": verify_snapshot(root, check),
         "max_length": max_length,
         "training_world_size": world_size,
         "runtime": runtime_fingerprint(check),

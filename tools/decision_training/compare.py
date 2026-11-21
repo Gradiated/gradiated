@@ -6,6 +6,7 @@ import math
 import random
 from pathlib import Path
 
+from benchmark_identity import verify_benchmark
 from data import read_jsonl
 
 TEMPERATURES = (0.5, 0.7, 0.85, 1.0, 1.2, 1.5, 2.0, 2.5, 3.0)
@@ -114,15 +115,47 @@ def paired_accuracy(control, candidate, seed=20261120, resamples=10000):
     }
 
 
+def validate_benchmark_predictions(predictions, benchmark):
+    gold = {row["id"]: row for row in benchmark}
+    if (
+        len(predictions) != len(gold)
+        or len({row["id"] for row in predictions}) != len(gold)
+        or {row["id"] for row in predictions} != set(gold)
+    ):
+        raise ValueError("prediction set is not the complete frozen benchmark")
+    for row in predictions:
+        task = gold[row["id"]]
+        if (
+            str(row["expected"]) != str(task["expected"])
+            or list(row["probs"]) != (task["labels"])
+        ):
+            raise ValueError(
+                "prediction labels or expected answers differ from frozen benchmark"
+            )
+        predicted = min(task["labels"], key=lambda label: (-row["probs"][label], label))
+        if row["correct"] is not (predicted == str(task["expected"])):
+            raise ValueError("stored correctness differs from frozen benchmark scoring")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--linden-results", type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--benchmark",
+        type=Path,
+        help="Explicit frozen benchmark when collection does not include data/jevbench-231.jsonl",
+    )
     args = parser.parse_args()
     output = args.run_dir / "outputs"
     control = read_jsonl(output / "baseline-jevbench.jsonl")
     candidate = read_jsonl(output / "trained-jevbench.jsonl")
+    benchmark_path = args.benchmark or args.run_dir / "data" / "jevbench-231.jsonl"
+    verify_benchmark(benchmark_path)
+    benchmark = read_jsonl(benchmark_path)
+    validate_benchmark_predictions(control, benchmark)
+    validate_benchmark_predictions(candidate, benchmark)
     base_temp = fit_temperature(read_jsonl(output / "baseline-dev.jsonl"))
     trained_temp = fit_temperature(read_jsonl(output / "trained-dev.jsonl"))
     report = {

@@ -13,6 +13,19 @@ ORIGINAL_TRAIN_SHA256 = (
 )
 
 
+MEASURED_IDENTITY_SHA256 = (
+    "98a38638b904bf6106b27206ba85a1cf9d0c1bf3e6008d81e98edfa6d776ec77"
+)
+
+
+def validate_origin_identity(identity):
+    actual = hashlib.sha256(
+        json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    if actual != MEASURED_IDENTITY_SHA256:
+        raise ValueError("origin is not the complete measured runner identity")
+
+
 def digest(path):
     with path.open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
@@ -28,6 +41,7 @@ def main():
     args = parser.parse_args()
     original = json.loads((args.checkpoint / "checkpoint-complete.json").read_text())
     identity = original["identity"]
+    validate_origin_identity(identity)
     sources = identity["executable_sources_sha256"]
     if sources["runner/train.py"] != ORIGINAL_TRAIN_SHA256:
         raise ValueError("this repair supports only the measured frozen2b runner")

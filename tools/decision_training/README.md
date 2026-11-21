@@ -103,6 +103,8 @@ The output retains the checkpoint manifest, model identity, analysis source hash
 
 ## Checks
 
+Primary-only baseline scoring coordinates failures through a CPU control group bounded by the experiment deadline, leaving the training group idle. Before final primary-only scoring, all ranks release their process groups. The distributed smoke supports `--fail-primary-baseline` and `--fail-primary-finalization` to exercise both failure paths; `--baseline-delay` and `--collective-timeout-seconds` can verify that long baseline work does not expire an idle training collective.
+
 ```sh
 python -m unittest discover -s tools/decision_training -p 'test_*.py'
 python -m unittest discover -s tools/gradctl/tests -p test_cli.py

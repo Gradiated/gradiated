@@ -4,6 +4,7 @@ import contextlib
 import datetime
 import os
 import random
+import time
 
 
 def rank_batches(rows, batch_size, world_size, rank, seed=20261120):
@@ -29,7 +30,7 @@ def rank_batches(rows, batch_size, world_size, rank, seed=20261120):
 
 
 class DistributedRun:
-    def __init__(self, torch, backend="nccl", use_cuda=True):
+    def __init__(self, torch, backend="nccl", use_cuda=True, timeout_seconds=45 * 60):
         self.torch = torch
         self.rank = int(os.environ.get("RANK", "0"))
         self.world_size = int(os.environ.get("WORLD_SIZE", "1"))
@@ -40,7 +41,7 @@ class DistributedRun:
             torch.cuda.set_device(self.local_rank)
         if self.world_size > 1:
             torch.distributed.init_process_group(
-                backend=backend, timeout=datetime.timedelta(minutes=45)
+                backend=backend, timeout=datetime.timedelta(seconds=timeout_seconds)
             )
 
     def barrier(self):
@@ -103,3 +104,45 @@ class DistributedRun:
         self.barrier()
         self.close()
         return self.primary
+
+    def run_primary(self, callback, deadline):
+        """Use a bounded CPU control group while the training group stays idle."""
+        if self.world_size == 1:
+            return callback()
+        control = None
+        failure = None
+        value = None
+        status = [None]
+        try:
+            try:
+                control = self.torch.distributed.new_group(
+                    backend="gloo",
+                    timeout=datetime.timedelta(
+                        seconds=max(1, deadline - time.monotonic())
+                    ),
+                )
+                if self.primary:
+                    try:
+                        value = callback()
+                        status[0] = {"ok": True}
+                    except BaseException as error:  # noqa: BLE001 -- propagate cancellation to peers, then re-raise
+                        failure = error
+                        status[0] = {
+                            "ok": False,
+                            "error": f"{type(error).__name__}: {error}",
+                        }
+                self.torch.distributed.broadcast_object_list(
+                    status, src=0, group=control
+                )
+            finally:
+                if control is not None:
+                    self.torch.distributed.destroy_process_group(control)
+        except BaseException:
+            self.close()
+            raise
+        if not status[0]["ok"]:
+            self.close()
+            if failure is not None:
+                raise failure
+            raise RuntimeError("primary-only phase failed: " + status[0]["error"])
+        return value

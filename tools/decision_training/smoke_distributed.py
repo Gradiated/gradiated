@@ -4,6 +4,7 @@ import argparse
 import copy
 import hashlib
 import json
+import time
 from pathlib import Path
 
 from distributed import DistributedRun
@@ -14,14 +15,39 @@ def main():
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--cuda", action="store_true")
     parser.add_argument("--fail-primary-finalization", action="store_true")
+    parser.add_argument("--fail-primary-baseline", action="store_true")
+    parser.add_argument("--collective-timeout-seconds", type=float, default=45 * 60)
+    parser.add_argument("--baseline-delay", type=float, default=0.1)
     args = parser.parse_args()
     import torch
 
     context = DistributedRun(
-        torch, backend="nccl" if args.cuda else "gloo", use_cuda=args.cuda
+        torch,
+        backend="nccl" if args.cuda else "gloo",
+        use_cuda=args.cuda,
+        timeout_seconds=args.collective_timeout_seconds,
     )
     torch.set_num_threads(1)
     torch.manual_seed(20261120 + context.rank)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+
+    def baseline():
+        if args.fail_primary_baseline:
+            raise TimeoutError("injected primary baseline deadline")
+        time.sleep(args.baseline_delay)
+
+    try:
+        context.run_primary(baseline, time.monotonic() + 15)
+    except (TimeoutError, RuntimeError):
+        if not args.fail_primary_baseline:
+            raise
+        assert not torch.distributed.is_initialized()
+        (args.output_dir / f"rank-{context.rank}-baseline-failed.json").write_text(
+            json.dumps({"rank": context.rank, "process_group_released": True})
+        )
+        if context.primary:
+            raise
+        return
 
     class Toy(torch.nn.Module):
         def __init__(self):

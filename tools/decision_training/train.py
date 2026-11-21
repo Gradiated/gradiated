@@ -724,18 +724,20 @@ def main():
             raise ValueError(f"single-request replay is unstable: {probability_delta}")
         event("single_request_replay", maximum_probability_delta=probability_delta)
 
-    if distributed.primary:
-        for name, rows in (("baseline-jevbench", bench), ("baseline-dev", dev)):
-            if baseline_complete(OUT, name, rows):
-                continue
-            for suffix in (".json", ".jsonl"):
-                old = OUT / (name + suffix)
-                if old.exists():
-                    old.rename(
-                        old.with_name(old.name + ".invalid-" + str(time.time_ns()))
-                    )
-            evaluate(rows, name)
-    distributed.barrier()
+    def score_baselines():
+        with startup_deadline(deadline):
+            for name, rows in (("baseline-jevbench", bench), ("baseline-dev", dev)):
+                if baseline_complete(OUT, name, rows):
+                    continue
+                for suffix in (".json", ".jsonl"):
+                    old = OUT / (name + suffix)
+                    if old.exists():
+                        old.rename(
+                            old.with_name(old.name + ".invalid-" + str(time.time_ns()))
+                        )
+                evaluate(rows, name)
+
+    distributed.run_primary(score_baselines, deadline)
     with startup_deadline(deadline):
         # Fixed low-rank intervention on attention projections and answer readout.
         targets = [

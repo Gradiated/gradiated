@@ -30,10 +30,10 @@ def file_sha256(path, check=lambda: None):
         return digest.hexdigest()
 
 
-def runtime_fingerprint(check=lambda: None):
+def runtime_fingerprint(check=lambda: None, package_names=PACKAGES):
     packages = {}
     package_files = {}
-    for name in PACKAGES:
+    for name in package_names:
         check()
         try:
             version = metadata.version(name)
@@ -77,7 +77,8 @@ def runtime_fingerprint(check=lambda: None):
     for name, module in sorted(sys.modules.copy().items()):
         check()
         if not any(
-            name == package or name.startswith(package + ".") for package in PACKAGES
+            name == package or name.startswith(package + ".")
+            for package in package_names
         ):
             continue
         file = getattr(module, "__file__", None)

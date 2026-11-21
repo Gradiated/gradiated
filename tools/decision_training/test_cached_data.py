@@ -11,7 +11,11 @@ def test_cache_runtime_compares_the_installed_implementation_contract(
     import cached_data
 
     monkeypatch.setattr(
-        cached_data, "require_native_runtime", lambda path, implementation: None
+        cached_data,
+        "require_native_runtime",
+        lambda path, implementation: pytest.fail(
+            "embedded runtime must not read external attestation"
+        ),
     )
 
     metadata = tmp_path / "metadata"

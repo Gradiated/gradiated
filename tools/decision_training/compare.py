@@ -8,6 +8,7 @@ import random
 from pathlib import Path
 
 from benchmark_identity import verify_benchmark
+from calibration_identity import calibration_tokenizer
 from data import read_jsonl
 from prompting import render_prompt
 
@@ -214,6 +215,11 @@ def main():
         type=int,
         help="Required for legacy runs without max_length in identity.json",
     )
+    parser.add_argument(
+        "--runtime-attestation",
+        type=Path,
+        help="Reviewed native runtime attestation for legacy identities",
+    )
     args = parser.parse_args()
     output = args.run_dir / "outputs"
     control = read_jsonl(output / "baseline-jevbench.jsonl")
@@ -239,12 +245,10 @@ def main():
     )
     if hashlib.sha256(dev_path.read_bytes()).hexdigest() != expected_sha:
         raise ValueError("dev source bytes differ from run identity")
-    from transformers import AutoTokenizer
-
-    tokenizer = AutoTokenizer.from_pretrained(
-        args.tokenizer_dir or args.run_dir / "model"
-    )
-    source = calibration_rows(read_jsonl(dev_path), tokenizer, max_length)
+    with calibration_tokenizer(
+        args.tokenizer_dir or args.run_dir / "model", identity, args.runtime_attestation
+    ) as tokenizer:
+        source = calibration_rows(read_jsonl(dev_path), tokenizer, max_length)
     base_dev = read_jsonl(output / "baseline-dev.jsonl")
     trained_dev = read_jsonl(output / "trained-dev.jsonl")
     validate_dev_predictions(base_dev, source)

@@ -85,7 +85,6 @@ def verified_release(root, max_length, check=lambda: None):
 
 
 def verify_cache_runtime(root, model, manifest, implementation):
-    require_native_runtime(model.parent / "cache-runtime.json", implementation)
     if digest(Path(__file__).with_name("prompting.py")) != manifest["prompting_sha256"]:
         raise ValueError("cache renderer differs from running renderer")
     token_path = root / "metadata" / "tokenizer-manifest.json"
@@ -111,7 +110,9 @@ def verify_cache_runtime(root, model, manifest, implementation):
 
     recorded = manifest.get("tokenizer_implementation")
     if recorded is None:
-        attestation = json.loads((model.parent / "cache-runtime.json").read_text())
+        attestation = require_native_runtime(
+            model.parent / "cache-runtime.json", implementation
+        )
         if attestation["manifest_sha256"] != digest(root / "manifest.json"):
             raise ValueError("cache runtime attestation belongs to another release")
         recorded = attestation["package_files"]

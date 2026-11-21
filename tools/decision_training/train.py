@@ -478,6 +478,8 @@ def main():
                 "release_approvals.json",
                 "adapter_restore.py",
                 "compare.py",
+                "calibration_identity.py",
+                "tokenizer_identity.json",
                 "requirements.txt",
             ):
                 source = pathlib.Path(__file__).parent / name

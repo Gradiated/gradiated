@@ -188,6 +188,8 @@ TOOLS = (
          'Compare frozen decision predictions with fair dev calibration and paired uncertainty', network=False),
     Tool('research', 'decision-probe', (python('tools/decision_training/probe.py'),),
          'Diagnose padding and numerical batch sensitivity of the released Inkling implementation'),
+    Tool('research', 'decision-checkpoint-eval', (python('tools/decision_training/checkpoint_eval.py'),),
+         'Compare one hash-verified adapter with untouched Inkling using singleton inference only', network=False),
     Tool('research', 'efficiency', (python('.agents/skills/experiment-run/scripts/research_efficiency.py'),),
          'Account Codex and provider throughput for $experiment-run from event timing, not reasoning text',
          network=False),

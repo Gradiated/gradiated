@@ -93,6 +93,14 @@ The runner checks the reserve before each microbatch and optimizer update, inclu
 
 The comparison reports untouched and trained models both raw and with temperatures fitted on their respective source-held-out dev predictions. It also computes paired bootstrap intervals and an exact McNemar test. Optional `--linden-results` accepts the official harness's native API result records for an identical-task reference. A public-only comparison is not an official JevBench rank: sealed tests, the current scoring edition and serving eligibility still matter. PyTorch evaluation timings are not production latency measurements for the original quantized model.
 
+## Intermediate checkpoint diagnostics
+
+`gradctl research decision-checkpoint-eval --model-dir RUN/model --checkpoint CHECKPOINT --rows PANEL.jsonl --output-dir NEW_OUTPUT --deadline-unix UNIX_SECONDS` evaluates an intermediate adapter on separate compute while training continues. It verifies the pinned base snapshot and adapter payload hashes, restores every LoRA tensor by exact name, and performs inference only. It does not resume optimizer or distributed training state.
+
+Each input line supplies a unique `id`, `benchmark`, `state`, typed `question`, aligned `labels` and `descriptions`, and `gold`. The renderer receives only the visible state, question and descriptions. Freeze and hash the panel before either arm, retain source revisions and overlap checks, and use the same individual unpadded requests for untouched base and checkpoint. Inputs over `--max-length` are unsupported rather than truncated; accuracy counts those requests as wrong, while Brier, ECE and explicitly named supported-only metrics use answered requests. Arbitrary sampled question metrics do not reproduce a benchmark's custom case or ranking scorer, its full public index, or historical panel scores.
+
+The output retains the checkpoint manifest, model identity, analysis source hashes, installed runtime, per-arm logits and probabilities, coverage, paired wins/losses and exact McNemar test. The absolute deadline reserves two minutes for retention; run inside an independently bounded allocation and retain artifacts before deleting it.
+
 ## Checks
 
 ```sh

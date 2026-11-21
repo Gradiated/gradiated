@@ -351,7 +351,9 @@ def main():
             name: importlib.metadata.version(name)
             for name in ("transformers", "tokenizers", "jinja2")
         },
-        "tokenizer_implementation": runtime_fingerprint(check)["package_files"],
+        "tokenizer_implementation": runtime_fingerprint(check)[
+            "installed_package_files_sha256"
+        ],
         "limitations": "Source-evidence-reviewed research mixture. No claim of fully independent semantic certification or arbitrary translation deduplication. Teacher confidence and exact/human targets retain source provenance. Near-state keys co-locate splits only. Benchmark expected labels are not used for selection.",
         "selection": "Exact input representatives; conflict/benchmark component quarantine; global family holdout; max16 questions/component; round-robin language/type family caps (SNLI/ESCI300k, procedural75k, others60k); no truncation. First256 of dev1000 reserved for calibration.",
         "seconds": time.monotonic() - started,

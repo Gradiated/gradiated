@@ -2,7 +2,38 @@ import json
 from pathlib import Path
 
 import pytest
-from cached_data import digest, verified_release
+from cached_data import digest, verified_release, verify_cache_runtime
+
+
+def test_cache_runtime_compares_the_installed_implementation_contract(
+    tmp_path, monkeypatch
+):
+    import cached_data
+
+    metadata = tmp_path / "metadata"
+    metadata.mkdir()
+    (metadata / "tokenizer-manifest.json").write_text(json.dumps({"files": []}))
+    monkeypatch.setattr(cached_data, "digest", lambda path: "sha")
+    monkeypatch.setattr(cached_data.importlib.metadata, "version", lambda name: "1")
+    manifest = {
+        "prompting_sha256": "sha",
+        "tokenizer_manifest_sha256": "sha",
+        "tokenizer_runtime": {"tokenizers": "1"},
+        "tokenizer_implementation": {"transformers/lazy.py": "original"},
+    }
+    verify_cache_runtime(
+        tmp_path,
+        tmp_path / "model",
+        manifest,
+        {"installed_package_files_sha256": {"transformers/lazy.py": "original"}},
+    )
+    with pytest.raises(ValueError, match="implementation bytes"):
+        verify_cache_runtime(
+            tmp_path,
+            tmp_path / "model",
+            manifest,
+            {"installed_package_files_sha256": {"transformers/lazy.py": "altered"}},
+        )
 
 
 def test_release_requires_byte_identity_and_reviewed_candidate_generation(tmp_path):

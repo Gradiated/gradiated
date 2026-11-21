@@ -100,7 +100,7 @@ def verify_cache_runtime(root, model, manifest, implementation):
             raise ValueError("cache runtime attestation belongs to another release")
         recorded = attestation["package_files"]
     if not token_files(recorded) or token_files(recorded) != token_files(
-        implementation["package_files"]
+        implementation["installed_package_files_sha256"]
     ):
         raise ValueError("cache tokenization implementation bytes differ")
 

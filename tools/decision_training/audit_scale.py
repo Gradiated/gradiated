@@ -5,6 +5,7 @@ import array
 import collections
 import hashlib
 import json
+import signal
 import sqlite3
 import time
 import unicodedata
@@ -152,6 +153,12 @@ def main():
 
     started = time.monotonic()
     deadline = started + args.seconds
+
+    def alarm(_signal, _frame):
+        raise TimeoutError("candidate audit deadline covers input hashing")
+
+    signal.signal(signal.SIGALRM, alarm)
+    signal.setitimer(signal.ITIMER_REAL, args.seconds)
 
     def check():
         if time.monotonic() >= deadline:
@@ -327,6 +334,7 @@ def main():
         + "\n"
     )
     print(json.dumps(result), flush=True)
+    signal.setitimer(signal.ITIMER_REAL, 0)
 
 
 if __name__ == "__main__":

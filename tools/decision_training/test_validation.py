@@ -196,9 +196,13 @@ class SnapshotTests(unittest.TestCase):
                 "runtime.py",
                 "cached_data.py",
                 "candidate_approvals.json",
+                "benchmark_identity.py",
             ):
                 (runner / name).write_text("# fixture\n")
-            with patch("train.__file__", str(runner / "train.py")):
+            with (
+                patch("train.__file__", str(runner / "train.py")),
+                patch("train.verify_benchmark", return_value="frozen"),
+            ):
                 baseline = build_run_identity(root, data, 128)
                 for source in (
                     runner / "train.py",
@@ -210,7 +214,10 @@ class SnapshotTests(unittest.TestCase):
                 self.assertEqual(baseline, build_run_identity(root, data, 128))
 
     def test_token_limit_changes_the_cached_evaluation_identity(self):
-        with TemporaryDirectory() as directory:
+        with (
+            TemporaryDirectory() as directory,
+            patch("train.verify_benchmark", return_value="frozen"),
+        ):
             root = Path(directory)
             self.fixture(root)
             data = root / "data"

@@ -8,6 +8,7 @@ import signal
 import sys
 import time
 
+from benchmark_identity import verify_benchmark
 from cached_data import digest, read_cached, verified_release, verify_cache_runtime
 from data import read_jsonl
 from distributed import DistributedRun, rank_batches
@@ -161,6 +162,7 @@ def baseline_complete(output, name, rows):
 
 
 def build_run_identity(root, data, max_length, world_size=1, check=lambda: None):
+    verify_benchmark(data / "jevbench-231.jsonl")
     source_dir = pathlib.Path(__file__).resolve().parent
     benchmark_dir = root / "jevbench" / "jevbench"
     sources = {
@@ -174,6 +176,7 @@ def build_run_identity(root, data, max_length, world_size=1, check=lambda: None)
             "runtime.py",
             "cached_data.py",
             "candidate_approvals.json",
+            "benchmark_identity.py",
         )
     }
     for name in ("__init__.py", "scoring.py", "metrics.py", "tasks.py"):
@@ -373,6 +376,7 @@ def main():
             "runtime.py",
             "cached_data.py",
             "candidate_approvals.json",
+            "benchmark_identity.py",
             "compare.py",
             "requirements.txt",
         ):

@@ -36,7 +36,10 @@ def test_cache_runtime_compares_the_installed_implementation_contract(
         )
 
 
-def test_release_requires_byte_identity_and_reviewed_candidate_generation(tmp_path):
+def test_release_requires_byte_identity_and_reviewed_candidate_generation(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr("cached_data.verify_benchmark", lambda path: "frozen")
     metadata = tmp_path / "metadata"
     metadata.mkdir()
     approvals = json.loads(

@@ -43,6 +43,14 @@ def main():
     source = root / "index-source"
     source.mkdir()
     source_hashes = {}
+    protected_directory = root / "protected"
+    protected_directory.mkdir()
+    protected_files = {}
+    for path in args.benchmark:
+        sha = digest_file(path)
+        relative = "protected/" + sha + ".jsonl"
+        (root / relative).write_bytes(path.read_bytes())
+        protected_files[relative] = sha
     for name in (
         "release_index.py",
         "source_policy.py",
@@ -285,7 +293,7 @@ def main():
             {"directory": i["directory"], "sha256": i["manifest_sha256"]}
             for i in inputs
         ],
-        "protected_files": {str(path): digest_file(path) for path in args.benchmark},
+        "protected_files": protected_files,
         "executable_sources_sha256": source_hashes,
         "writer_exclusions": EXCLUSION_EVIDENCE,
         "near_grouping_scope": "Exact source cases, canonical states, input identity and same token-multiset/operator state. Near keys co-locate splits only; distinct inputs/counterfactual targets are not deleted by near keys. Arbitrary semantic/translation equivalence is not certified.",

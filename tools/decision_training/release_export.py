@@ -12,6 +12,7 @@ import time
 from pathlib import Path
 
 from audit_tokens import initialize, terminating_pool, verify_tokenizer_directory
+from benchmark_identity import verify_benchmark
 from data import read_jsonl, validate_row
 from prepare_scale import digest_file
 from runtime import runtime_fingerprint
@@ -89,6 +90,13 @@ def main():
     parser.add_argument("--tokenizer-manifest", type=Path, required=True)
     parser.add_argument("--eikos-overrides", type=Path, required=True)
     parser.add_argument("--benchmark", type=Path, required=True)
+    parser.add_argument(
+        "--protected-file",
+        type=Path,
+        action="append",
+        default=[],
+        help="Explicit digest-resolved protected corpora for legacy portable indexes",
+    )
     parser.add_argument("--metadata-dir", type=Path, required=True)
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--workers", type=int, default=8)
@@ -135,14 +143,26 @@ def main():
     ):
         raise ValueError("unreviewed legacy Eikos overrides")
     benchmark = list(read_jsonl(args.benchmark))
+    verify_benchmark(args.benchmark)
     if len(benchmark) != 231:
         raise ValueError("expected frozen public 231")
     from data import normalized_state
 
+    supplied = {digest_file(path): path for path in args.protected_file}
+    protected_inputs = []
+    for filename, expected in index["protected_files"].items():
+        path = args.index / filename
+        if expected in supplied:
+            path = supplied[expected]
+        if not path.is_file() or digest_file(path) != expected:
+            raise ValueError(
+                "missing protected input; supply --protected-file with the recorded digest"
+            )
+        protected_inputs.append((path, expected))
     protected_states = {
         normalized_state(row["state"])
-        for filename in index["protected_files"]
-        for row in read_jsonl(Path(filename))
+        for path, _ in protected_inputs
+        for row in read_jsonl(path)
     }
     if not all(normalized_state(row["state"]) in protected_states for row in benchmark):
         raise ValueError("benchmark was not protected by this index")
@@ -155,8 +175,7 @@ def main():
         ("INDEX-COMPLETE.json", args.index / "INDEX-COMPLETE.json"),
     ):
         shutil.copy2(path, metadata / name)
-    for filename, expected in index["protected_files"].items():
-        path = Path(filename)
+    for path, expected in protected_inputs:
         if digest_file(path) != expected:
             raise ValueError("protected corpus changed")
         shutil.copy2(path, metadata / ("protected-" + path.name))
@@ -173,6 +192,7 @@ def main():
         "scale_data.py",
         "original_data.py",
         "runtime.py",
+        "benchmark_identity.py",
     ):
         shutil.copy2(Path(__file__).with_name(name), source / name)
     shutil.copy2(args.benchmark, root / "jevbench-231.jsonl")

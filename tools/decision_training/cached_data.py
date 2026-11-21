@@ -5,6 +5,7 @@ import importlib.metadata
 import json
 from pathlib import Path
 
+from benchmark_identity import verify_benchmark
 from data import validate_row
 
 
@@ -17,6 +18,7 @@ def digest(path):
 
 
 def verified_release(root, max_length):
+    verify_benchmark(root / "jevbench-231.jsonl")
     marker = json.loads((root / "COMPLETE.json").read_text())
     if digest(root / "manifest.json") != marker["manifest_sha256"]:
         raise ValueError("release manifest mismatch")

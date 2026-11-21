@@ -1,8 +1,18 @@
 import json
+import signal
+import sys
+import time
 from pathlib import Path
 
 import pytest
-from checkpoint_eval import predicted_label, summarize, validate_row, verify_adapter
+from checkpoint_eval import (
+    main,
+    predicted_label,
+    summarize,
+    validate_row,
+    verify_adapter,
+    verify_checkpoint_base,
+)
 from data import read_jsonl
 
 
@@ -78,3 +88,46 @@ def test_ties_use_frozen_benchmark_label_ordering_and_ignore_stale_labels():
         "base": {"label": "z", "probabilities": [0.5, 0.5]},
     }
     assert summarize([row])["b"]["arms"]["base"]["correct"] == 1
+
+
+def test_checkpoint_requires_the_actual_verified_base_snapshot():
+    verify_checkpoint_base(
+        {"identity": {"verified_model_manifest_sha256": "same"}}, "same"
+    )
+    for manifest in (
+        {},
+        {"identity": {}},
+        {"identity": {"verified_model_manifest_sha256": "other"}},
+    ):
+        with pytest.raises(ValueError, match="base snapshot"):
+            verify_checkpoint_base(manifest, "same")
+
+
+def test_absolute_deadline_interrupts_blocking_evaluation_and_restores_alarm(
+    monkeypatch,
+):
+    previous = signal.getsignal(signal.SIGALRM)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "eval",
+            "--model-dir",
+            "model",
+            "--checkpoint",
+            "checkpoint",
+            "--rows",
+            "rows",
+            "--output-dir",
+            "out",
+            "--deadline-unix",
+            str(time.time() + 120.04),
+        ],
+    )
+    monkeypatch.setattr(
+        "checkpoint_eval.evaluate_checkpoint", lambda args: time.sleep(0.5)
+    )
+    with pytest.raises(TimeoutError):
+        main()
+    assert signal.getsignal(signal.SIGALRM) == previous
+    assert signal.getitimer(signal.ITIMER_REAL) == (0.0, 0.0)

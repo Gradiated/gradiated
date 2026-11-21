@@ -25,6 +25,12 @@ def verify_adapter(directory):
     return manifest
 
 
+def verify_checkpoint_base(manifest, model_identity):
+    recorded = (manifest.get("identity") or {}).get("verified_model_manifest_sha256")
+    if not isinstance(recorded, str) or recorded != model_identity:
+        raise ValueError("checkpoint is not bound to this verified base snapshot")
+
+
 def validate_row(row):
     labels = row["labels"]
     if not 2 <= len(labels) <= 26 or len(set(labels)) != len(labels):
@@ -134,6 +140,13 @@ def main():
     parser.add_argument("--deadline-unix", type=float, required=True)
     parser.add_argument("--max-length", type=int, default=2048)
     args = parser.parse_args()
+    from train import startup_deadline
+
+    with startup_deadline(time.monotonic() + args.deadline_unix - time.time() - 120):
+        evaluate_checkpoint(args)
+
+
+def evaluate_checkpoint(args):
 
     def check():
         if time.time() >= args.deadline_unix - 120:
@@ -144,6 +157,7 @@ def main():
     from snapshot import verify_snapshot
 
     model_identity = verify_snapshot(args.model_dir.parent, check)
+    verify_checkpoint_base(manifest, model_identity)
     rows = [validate_row(row) for row in read_jsonl(args.rows)]
     if not rows or len({r["id"] for r in rows}) != len(rows):
         raise ValueError("empty evaluation or duplicate evaluation IDs")

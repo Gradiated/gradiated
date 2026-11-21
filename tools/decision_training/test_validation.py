@@ -197,6 +197,8 @@ class SnapshotTests(unittest.TestCase):
                 "cached_data.py",
                 "candidate_approvals.json",
                 "benchmark_identity.py",
+                "native_runtime.py",
+                "release_approvals.json",
             ):
                 (runner / name).write_text("# fixture\n")
             with (

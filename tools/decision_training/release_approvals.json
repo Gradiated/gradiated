@@ -1,0 +1,27 @@
+{
+  "runtime_attestations": [
+    "ce91fb31f19b33c3a9d519ab8eaa6f9f787feb1c17a08846b128d4c44464fae4"
+  ],
+  "releases": {
+    "db520139482cdde52673228634e16c9452be64406c1c84b0b6be35adaf808f34": {
+      "stage_sources": {
+        "metadata/index-source/audit_scale.py": "70a7c12404c951ba6290b4877047fafaa429df5d0dd50556b683ad9247a16ec2",
+        "metadata/index-source/data.py": "a8858483e4c6a73af9225ef77f5a39820775894f967aa1706ccd3f46c7279bf4",
+        "metadata/index-source/original_data.py": "bb0374bbf4788dc17c942897b4ef0bec7461314464953d075d51965141097dfc",
+        "metadata/index-source/prepare_scale.py": "9c1d480339adc3fc770055ea2f6c82b0a1449510b36bfcd7e91b4b83c44bc09d",
+        "metadata/index-source/release_index.py": "c81d62f64242614ff3703320a2e2e20a7c769e2cafc38ee6a0f8bea9ab4f4915",
+        "metadata/index-source/scale_data.py": "b0f1b2ad9e5a044c33f0bea9bb1240287482fcd4dadacfeff294fdcba3c555a1",
+        "metadata/index-source/source_policy.py": "6de2cbed2b56750263e925430b7edaf5997ad66bcb7cfdd7d5907d0611f6e5c3",
+        "source/audit_tokens.py": "6b26f33f28006caca66f64c2df0c0693f31ff4686f3b78e8b0d3df3be5232492",
+        "source/data.py": "a8858483e4c6a73af9225ef77f5a39820775894f967aa1706ccd3f46c7279bf4",
+        "source/original_data.py": "0f28a1cc21a424aaf4567f9afcd046adc936757ffda06d2715d1f8db95d0f444",
+        "source/prepare_scale.py": "9c1d480339adc3fc770055ea2f6c82b0a1449510b36bfcd7e91b4b83c44bc09d",
+        "source/prompting.py": "068929b2391e31642fcfc31fb1fe79fbec6d6272a94a0ae3c1eb442bd321ea88",
+        "source/release_export.py": "ef6a663c7bc2210fe38fbcd9839d4d43cb450cb5c0599f2de22594fefe16a5cb",
+        "source/scale_data.py": "b0f1b2ad9e5a044c33f0bea9bb1240287482fcd4dadacfeff294fdcba3c555a1",
+        "source/source_policy.py": "6de2cbed2b56750263e925430b7edaf5997ad66bcb7cfdd7d5907d0611f6e5c3"
+      },
+      "reviewed_scope": "First completed research release: archived executing index/export helpers, exact source/version gates, protected groups, semantic repairs, family/case/language caps and native untruncated tokenization. Independent runtime attestation and frozen-native conformance retained in S3."
+    }
+  }
+}

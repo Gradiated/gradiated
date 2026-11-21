@@ -133,6 +133,8 @@ def validate_output_reuse(output, resume):
 
 
 def baseline_complete(output, name, rows):
+    if not rows:
+        return False
     try:
         summary = json.loads((output / (name + ".json")).read_text())
         predictions = read_jsonl(output / (name + ".jsonl"))
@@ -144,11 +146,15 @@ def baseline_complete(output, name, rows):
         ):
             return False
         for prediction in predictions:
-            labels = expected[prediction["id"]]["labels"]
+            row = expected[prediction["id"]]
+            labels = row["labels"]
             probs = prediction["probs"]
             if (
-                set(probs) != set(labels)
-                or any(not math.isfinite(p) or not 0 <= p <= 1 for p in probs.values())
+                list(probs) != labels
+                or any(
+                    isinstance(p, bool) or not math.isfinite(p) or not 0 <= p <= 1
+                    for p in probs.values()
+                )
                 or abs(sum(probs.values()) - 1) > 1e-5
             ):
                 return False
@@ -156,9 +162,50 @@ def baseline_complete(output, name, rows):
                 not math.isfinite(z) for z in prediction["logits"]
             ):
                 return False
-        return True
+            values = [
+                math.exp(z - max(prediction["logits"])) for z in prediction["logits"]
+            ]
+            if any(
+                abs(probs[label] - value / sum(values)) > 1e-5
+                for label, value in zip(labels, values, strict=True)
+            ):
+                return False
+            if "target" in row:
+                if prediction["target"] != row["target"]:
+                    return False
+                correct = max(
+                    range(len(labels)), key=lambda i: probs[labels[i]]
+                ) == max(range(len(labels)), key=lambda i: row["target"][i])
+            else:
+                if str(prediction["expected"]) != str(row["expected"]):
+                    return False
+                correct = min(labels, key=lambda label: (-probs[label], label)) == str(
+                    row["expected"]
+                )
+            if prediction["correct"] is not correct:
+                return False
+        return math.isfinite(summary["accuracy"]) and (
+            abs(
+                summary["accuracy"] - sum(p["correct"] for p in predictions) / len(rows)
+            )
+            <= 1e-8
+        )
     except (OSError, ValueError, KeyError, TypeError):
         return False
+
+
+def verify_checkpoint_payloads(checkpoint, manifest, check=lambda: None):
+    files = manifest.get("files", {})
+    if not {"trainer.pt", "adapter_model.safetensors"} <= set(files):
+        raise ValueError("checkpoint lacks mandatory hash-bound payloads")
+    for name, expected in files.items():
+        relative = pathlib.Path(name)
+        if (
+            relative.name != name
+            or name in ("", ".", "..")
+            or digest(checkpoint / name, check) != expected
+        ):
+            raise ValueError("incomplete or corrupt checkpoint")
 
 
 def build_run_identity(root, data, max_length, world_size=1, check=lambda: None):
@@ -177,6 +224,8 @@ def build_run_identity(root, data, max_length, world_size=1, check=lambda: None)
             "cached_data.py",
             "candidate_approvals.json",
             "benchmark_identity.py",
+            "native_runtime.py",
+            "release_approvals.json",
         )
     }
     for name in ("__init__.py", "scoring.py", "metrics.py", "tasks.py"):
@@ -203,7 +252,7 @@ def build_run_identity(root, data, max_length, world_size=1, check=lambda: None)
         },
         "data": {
             "release_manifest_sha256": digest(data / "manifest.json"),
-            "release": verified_release(data, max_length),
+            "release": verified_release(data, max_length, check),
             "cache_runtime_sha256": digest(root / "cache-runtime.json")
             if (root / "cache-runtime.json").exists()
             else None,
@@ -377,6 +426,8 @@ def main():
             "cached_data.py",
             "candidate_approvals.json",
             "benchmark_identity.py",
+            "native_runtime.py",
+            "release_approvals.json",
             "compare.py",
             "requirements.txt",
         ):
@@ -448,7 +499,7 @@ def main():
     if (DATA / "COMPLETE.json").exists():
         cache = identity["data"]["release"]
         verify_cache_runtime(DATA, ROOT / "model", cache, identity["runtime"])
-        train = list(read_cached(DATA, cache))
+        train = list(read_cached(DATA, cache, lambda: check_deadline(deadline)))
         # Verify real cached inputs against the native runtime before any updates.
         for row in sorted(train, key=lambda r: len(r["ids"]))[
             :: max(1, len(train) // 16)
@@ -686,9 +737,9 @@ def main():
             (ckpt / "checkpoint-complete.json").read_text()
         )
         validate_checkpoint_identity(checkpoint_manifest, identity)
-        for name, digest in checkpoint_manifest["files"].items():
-            if hashlib.sha256((ckpt / name).read_bytes()).hexdigest() != digest:
-                raise ValueError("incomplete or corrupt checkpoint")
+        verify_checkpoint_payloads(
+            ckpt, checkpoint_manifest, lambda: check_deadline(deadline)
+        )
         state = torch.load(ckpt / "trainer.pt", map_location="cpu", weights_only=False)
         validate_resume_arguments(state["args"], vars(args))
         set_peft_model_state_dict(

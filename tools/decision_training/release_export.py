@@ -14,6 +14,7 @@ from pathlib import Path
 from audit_tokens import initialize, terminating_pool, verify_tokenizer_directory
 from benchmark_identity import verify_benchmark
 from data import read_jsonl, validate_row
+from native_runtime import require_native_runtime
 from prepare_scale import digest_file
 from runtime import runtime_fingerprint
 from source_policy import VERSION, family_cap, rejection
@@ -98,6 +99,7 @@ def main():
         help="Explicit digest-resolved protected corpora for legacy portable indexes",
     )
     parser.add_argument("--metadata-dir", type=Path, required=True)
+    parser.add_argument("--runtime-attestation", type=Path, required=True)
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--seconds", type=int, default=1100)
@@ -136,6 +138,8 @@ def main():
     if token_manifest["revision"] != "6e7c8248f75265bdd4fbab5273304243b5d8c2cb":
         raise ValueError("wrong tokenizer")
     verify_tokenizer_directory(args.tokenizer_dir, token_manifest)
+    implementation = runtime_fingerprint(check)
+    require_native_runtime(args.runtime_attestation, implementation)
     overrides = json.loads(args.eikos_overrides.read_text())
     if (
         digest_file(args.eikos_overrides)
@@ -193,6 +197,8 @@ def main():
         "original_data.py",
         "runtime.py",
         "benchmark_identity.py",
+        "native_runtime.py",
+        "release_approvals.json",
     ):
         shutil.copy2(Path(__file__).with_name(name), source / name)
     shutil.copy2(args.benchmark, root / "jevbench-231.jsonl")
@@ -347,7 +353,7 @@ def main():
     ):
         raise ValueError("release train/dev cardinality or family disjointness failed")
     manifest = {
-        "status": "ADMITTED_RESEARCH_RELEASE"
+        "status": "EXPORTED_RESEARCH_RELEASE_PENDING_REVIEW"
         if args.train_limit is None
         else "SMOKE_ONLY",
         "policy_version": VERSION,
@@ -371,9 +377,7 @@ def main():
             name: importlib.metadata.version(name)
             for name in ("transformers", "tokenizers", "jinja2")
         },
-        "tokenizer_implementation": runtime_fingerprint(check)[
-            "installed_package_files_sha256"
-        ],
+        "tokenizer_implementation": implementation["installed_package_files_sha256"],
         "limitations": "Source-evidence-reviewed research mixture. No claim of fully independent semantic certification or arbitrary translation deduplication. Teacher confidence and exact/human targets retain source provenance. Near-state keys co-locate splits only. Benchmark expected labels are not used for selection.",
         "selection": "Exact input representatives; conflict/benchmark component quarantine; global family holdout; max16 questions/component; round-robin language/type family caps (SNLI/ESCI300k, procedural75k, others60k); no truncation. First256 of dev1000 reserved for calibration.",
         "seconds": time.monotonic() - started,

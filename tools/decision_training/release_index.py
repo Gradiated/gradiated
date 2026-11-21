@@ -4,6 +4,7 @@ import argparse
 import collections
 import hashlib
 import json
+import signal
 import sqlite3
 import time
 from functools import lru_cache
@@ -36,6 +37,12 @@ def main():
 
     started = time.monotonic()
     deadline = started + args.seconds
+
+    def alarm(_signal, _frame):
+        raise TimeoutError("release index deadline includes shard hashing")
+
+    signal.signal(signal.SIGALRM, alarm)
+    signal.setitimer(signal.ITIMER_REAL, args.seconds)
     root = args.run_dir.resolve()
     root.mkdir(parents=True, exist_ok=True)
     if any(root.iterdir()):
@@ -320,6 +327,7 @@ def main():
         ),
         flush=True,
     )
+    signal.setitimer(signal.ITIMER_REAL, 0)
 
 
 if __name__ == "__main__":

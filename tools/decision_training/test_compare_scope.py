@@ -4,6 +4,9 @@ from copy import deepcopy
 import pytest
 from compare import (
     calibration_rows,
+    metrics,
+    paired_accuracy,
+    prepare_linden_predictions,
     validate_benchmark_predictions,
     validate_dev_predictions,
 )
@@ -97,3 +100,35 @@ def test_calibration_selection_filters_length_before_taking_first_256(monkeypatc
     rows = [{"id": str(i), "size": 20 if i == 0 else 5} for i in range(300)]
     result = calibration_rows(rows, Tokenizer(), 10)
     assert [r["id"] for r in result] == [str(i) for i in range(1, 257)]
+
+
+def test_linden_pairing_derives_correctness_from_validated_probabilities():
+    benchmark = [{"id": "x", "expected": "yes", "labels": ["no", "yes"]}]
+    rows = [
+        {
+            "task_id": "x",
+            "valid": True,
+            "correct": False,
+            "predicted": "stale",
+            "probs": {"yes": 0.8, "no": 0.2},
+        }
+    ]
+    result = prepare_linden_predictions(rows, benchmark)
+    assert result[0]["correct"] is True
+    assert result[0]["predicted"] == "yes"
+    assert list(result[0]["probs"]) == ["no", "yes"]
+    assert metrics(result)["accuracy"] == 1
+    paired = paired_accuracy(result, [{"id": "x", "correct": True}], resamples=100)
+    assert paired["accuracy_delta"] == 0
+    assert paired["candidate_only_correct"] == 0
+    for bad in ([], rows * 2, [{**rows[0], "task_id": "other"}]):
+        with pytest.raises(ValueError, match="complete frozen"):
+            prepare_linden_predictions(bad, benchmark)
+    for probs in (
+        {"yes": 1},
+        {"no": -0.2, "yes": 1.2},
+        {"no": float("nan"), "yes": 0.8},
+        {"no": 0.2, "yes": 0.9},
+    ):
+        with pytest.raises(ValueError, match="invalid probability"):
+            prepare_linden_predictions([{**rows[0], "probs": probs}], benchmark)

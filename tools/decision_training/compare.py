@@ -195,6 +195,45 @@ def validate_benchmark_predictions(predictions, benchmark, temperature=1.0):
             raise ValueError("stored correctness differs from frozen benchmark scoring")
 
 
+def prepare_linden_predictions(rows, benchmark):
+    gold = {row["id"]: row for row in benchmark}
+    if (
+        len(rows) != len(gold)
+        or len({row["task_id"] for row in rows}) != len(gold)
+        or {row["task_id"] for row in rows} != set(gold)
+    ):
+        raise ValueError("Linden reference is not the complete frozen benchmark")
+    result = []
+    for row in rows:
+        task = gold[row["task_id"]]
+        probs = row["probs"]
+        if (
+            row.get("valid") is not True
+            or set(probs) != set(task["labels"])
+            or any(
+                isinstance(p, bool)
+                or not isinstance(p, (int, float))
+                or not math.isfinite(p)
+                or not 0 <= p <= 1
+                for p in probs.values()
+            )
+            or abs(sum(probs.values()) - 1) > 1e-5
+        ):
+            raise ValueError("Linden reference has invalid probability outputs")
+        predicted = min(task["labels"], key=lambda label: (-probs[label], label))
+        result.append(
+            {
+                **row,
+                "id": row["task_id"],
+                "expected": str(task["expected"]),
+                "probs": {label: probs[label] for label in task["labels"]},
+                "predicted": predicted,
+                "correct": predicted == str(task["expected"]),
+            }
+        )
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", type=Path, required=True)
@@ -265,13 +304,7 @@ def main():
         "calibration_selection": "Each model fits the same temperature grid on its own source-held-out dev predictions; no benchmark labels used.",
     }
     if args.linden_results:
-        rows = read_jsonl(args.linden_results)
-        gold = {r["id"]: r["expected"] for r in control}
-        linden = [
-            {**r, "id": r["task_id"], "expected": gold[r["task_id"]]} for r in rows
-        ]
-        if any(not r.get("valid") for r in linden):
-            raise ValueError("Linden reference has invalid probability outputs")
+        linden = prepare_linden_predictions(read_jsonl(args.linden_results), benchmark)
         report["linden_native"] = metrics(linden)
         report["paired_vs_linden"] = paired_accuracy(linden, candidate)
     destination = args.output or output / "comparison.json"

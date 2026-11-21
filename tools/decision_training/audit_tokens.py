@@ -7,12 +7,14 @@ import hashlib
 import importlib.metadata
 import json
 import os
+import signal
 import time
 from contextlib import contextmanager
 from pathlib import Path
 
 from prepare_scale import digest_file
 from prompting import render_prompt
+from runtime import runtime_fingerprint
 
 TOKENIZER = None
 
@@ -110,6 +112,13 @@ def main():
         raise ValueError("invalid tokenizer audit bounds")
     started = time.monotonic()
     deadline = started + args.seconds
+
+    def check(*alarm):
+        if alarm or time.monotonic() >= deadline:
+            raise TimeoutError("token audit deadline")
+
+    signal.signal(signal.SIGALRM, check)
+    signal.setitimer(signal.ITIMER_REAL, args.seconds)
     root = args.run_dir.resolve()
     root.mkdir(parents=True, exist_ok=True)
     if any(root.iterdir()):
@@ -134,6 +143,7 @@ def main():
         "data.py",
         "scale_data.py",
         "original_data.py",
+        "runtime.py",
     ):
         content = Path(__file__).with_name(name).read_bytes()
         (source / name).write_bytes(content)
@@ -142,6 +152,7 @@ def main():
         name: importlib.metadata.version(name)
         for name in ("transformers", "tokenizers", "jinja2", "pyarrow")
     }
+    implementation = runtime_fingerprint(check)
     if versions["tokenizers"] != "0.23.3" or versions["jinja2"] != "3.1.6":
         raise ValueError("tokenizer/Jinja must match frozen native runtime")
     direct_url = json.loads(
@@ -174,6 +185,7 @@ def main():
             for batch in pq.ParquetFile(path).iter_batches(
                 batch_size=1000, columns=["record_json"]
             ):
+                check()
                 records = batch.column(0).to_pylist()
                 work.append((offset, records))
                 offset += len(records)
@@ -223,6 +235,7 @@ def main():
         "candidate_manifest_sha256": candidate_manifest,
         "tokenizer": tokenizer_manifest,
         "runtime_versions": versions,
+        "runtime_implementation": implementation,
         "transformers_install": direct_url,
         "executable_sources_sha256": source_hashes,
         "seconds": time.monotonic() - started,
@@ -244,6 +257,7 @@ def main():
         ),
         flush=True,
     )
+    signal.setitimer(signal.ITIMER_REAL, 0)
 
 
 if __name__ == "__main__":

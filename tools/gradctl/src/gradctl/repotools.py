@@ -172,6 +172,8 @@ TOOLS = (
          'Check supported procedural targets with independent Bayesian, incident and route oracles', network=False),
     Tool('research', 'decision-release-index', (python('tools/decision_training/release_index.py'),),
          'Apply source policy and prompt repairs, then index protected/duplicate groups and source-family holdouts', network=False),
+    Tool('research', 'decision-release-export', (python('tools/decision_training/release_export.py'),),
+         'Export a verified source-balanced decision release with grouped dev and exact token caches', network=False),
     Tool('research', 'decision-train', (python('tools/decision_training/train.py'),),
          'Fine-tune Inkling decision adapters, checkpoint to scoped S3 and evaluate public JevBench'),
     Tool('research', 'decision-distributed-smoke', (python('tools/decision_training/smoke_distributed.py'),),

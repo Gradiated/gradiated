@@ -61,11 +61,24 @@ def main():
             raise TimeoutError("release index deadline")
 
     inputs = []
+    approvals = json.loads(
+        Path(__file__).with_name("candidate_approvals.json").read_text()
+    )
     for directory in args.candidates:
         marker = json.loads((directory / "COMPLETE.json").read_text())
         if digest_file(directory / "manifest.json") != marker["manifest_sha256"]:
             raise ValueError("candidate manifest mismatch")
         manifest = json.loads((directory / "manifest.json").read_text())
+        approval = approvals.get(marker["manifest_sha256"])
+        if approval is None or manifest["builder"] != approval["builder"]:
+            raise ValueError("candidate builder has not been approved")
+        archived = root / "candidate-source" / marker["manifest_sha256"]
+        archived.mkdir(parents=True)
+        for name, expected in approval["builder"].items():
+            path = directory / "source" / name
+            if digest_file(path) != expected:
+                raise ValueError("candidate executable source differs from approval")
+            (archived / name).write_bytes(path.read_bytes())
         for item in manifest["sources"]:
             if (
                 PINS.get(item["repo"]) != item["revision"]

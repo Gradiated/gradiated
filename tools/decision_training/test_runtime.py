@@ -13,6 +13,13 @@ from runtime import runtime_fingerprint
 
 
 class RuntimeIdentityTests(unittest.TestCase):
+    def test_package_scan_checks_its_owner_deadline(self):
+        def expired():
+            raise TimeoutError("owner deadline")
+
+        with self.assertRaisesRegex(TimeoutError, "owner deadline"):
+            runtime_fingerprint(expired)
+
     def test_lazily_loaded_same_version_package_file_is_bound(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)

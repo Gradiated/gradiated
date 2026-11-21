@@ -17,18 +17,24 @@ PACKAGES = (
     "triton",
     "numpy",
     "tiktoken",
+    "pyarrow",
 )
 
 
-def file_sha256(path):
+def file_sha256(path, check=lambda: None):
     with Path(path).open("rb") as stream:
-        return hashlib.file_digest(stream, "sha256").hexdigest()
+        digest = hashlib.sha256()
+        while block := stream.read(4 * 1024 * 1024):
+            check()
+            digest.update(block)
+        return digest.hexdigest()
 
 
-def runtime_fingerprint():
+def runtime_fingerprint(check=lambda: None):
     packages = {}
     package_files = {}
     for name in PACKAGES:
+        check()
         try:
             version = metadata.version(name)
             direct = json.loads(
@@ -52,7 +58,8 @@ def runtime_fingerprint():
         )
         for directory in roots:
             root = Path(directory)
-            for path in sorted(root.rglob("*")):
+            for path in root.rglob("*"):
+                check()
                 if path.is_file() and path.suffix in (
                     ".py",
                     ".so",
@@ -64,17 +71,18 @@ def runtime_fingerprint():
                     ".model",
                 ):
                     package_files[name + "/" + str(path.relative_to(root))] = (
-                        file_sha256(path)
+                        file_sha256(path, check)
                     )
     implementations = {}
     for name, module in sorted(sys.modules.copy().items()):
+        check()
         if not any(
             name == package or name.startswith(package + ".") for package in PACKAGES
         ):
             continue
         file = getattr(module, "__file__", None)
         if file and Path(file).is_file():
-            implementations[name] = file_sha256(file)
+            implementations[name] = file_sha256(file, check)
     torch = sys.modules.get("torch")
     cuda = None
     if torch is not None and torch.cuda.is_available():

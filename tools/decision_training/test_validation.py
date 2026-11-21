@@ -194,6 +194,8 @@ class SnapshotTests(unittest.TestCase):
                 "distributed.py",
                 "prompting.py",
                 "runtime.py",
+                "cached_data.py",
+                "candidate_approvals.json",
             ):
                 (runner / name).write_text("# fixture\n")
             with patch("train.__file__", str(runner / "train.py")):

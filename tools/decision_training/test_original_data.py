@@ -74,6 +74,12 @@ class OriginalDataTests(unittest.TestCase):
         )
         self.assertEqual(upstream["license"], "cc-by-4.0/mit")
         self.assertEqual(upstream["attribution"]["upstream_license"], "mit")
+        for split in ("test", "validation", ""):
+            self.assertIsNone(
+                normalize_eikos(
+                    {**row, "upstream": "GSM8K train (MIT)", "upstream_split": split}
+                )
+            )
         self.assertIsNone(normalize_eikos({**row, "upstream": "TAT-QA (CC BY 4.0)"}))
         with self.assertRaisesRegex(ValueError, "upstream terms"):
             normalize_eikos({**row, "upstream": "Unknown train"})

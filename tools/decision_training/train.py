@@ -8,6 +8,7 @@ import signal
 import sys
 import time
 
+from cached_data import digest, read_cached, verified_release, verify_cache_runtime
 from data import read_jsonl
 from distributed import DistributedRun, rank_batches
 from prompting import render_prompt
@@ -74,6 +75,10 @@ def validate_experiment_bounds(args):
         or args["learning_rate"] <= 0
         or not math.isfinite(args["brier_weight"])
         or args["brier_weight"] < 0
+        or (
+            args.get("stop_after_updates") is not None
+            and args["stop_after_updates"] < 1
+        )
     ):
         raise ValueError("invalid experiment bounds")
     if not args["evaluate_only"] and args["seconds"] <= 900:
@@ -126,7 +131,36 @@ def validate_output_reuse(output, resume):
         )
 
 
-def build_run_identity(root, data, max_length, world_size=1):
+def baseline_complete(output, name, rows):
+    try:
+        summary = json.loads((output / (name + ".json")).read_text())
+        predictions = read_jsonl(output / (name + ".jsonl"))
+        expected = {row["id"]: row for row in rows}
+        if (
+            summary["n"] != len(rows)
+            or len(predictions) != len(rows)
+            or {p["id"] for p in predictions} != set(expected)
+        ):
+            return False
+        for prediction in predictions:
+            labels = expected[prediction["id"]]["labels"]
+            probs = prediction["probs"]
+            if (
+                set(probs) != set(labels)
+                or any(not math.isfinite(p) or not 0 <= p <= 1 for p in probs.values())
+                or abs(sum(probs.values()) - 1) > 1e-5
+            ):
+                return False
+            if len(prediction["logits"]) != len(labels) or any(
+                not math.isfinite(z) for z in prediction["logits"]
+            ):
+                return False
+        return True
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
+
+
+def build_run_identity(root, data, max_length, world_size=1, check=lambda: None):
     source_dir = pathlib.Path(__file__).resolve().parent
     benchmark_dir = root / "jevbench" / "jevbench"
     sources = {
@@ -138,6 +172,8 @@ def build_run_identity(root, data, max_length, world_size=1):
             "distributed.py",
             "prompting.py",
             "runtime.py",
+            "cached_data.py",
+            "candidate_approvals.json",
         )
     }
     for name in ("__init__.py", "scoring.py", "metrics.py", "tasks.py"):
@@ -157,12 +193,20 @@ def build_run_identity(root, data, max_length, world_size=1):
         "verified_model_manifest_sha256": verify_snapshot(root),
         "max_length": max_length,
         "training_world_size": world_size,
-        "runtime": runtime_fingerprint(),
+        "runtime": runtime_fingerprint(check),
         "executable_sources_sha256": {
             name: hashlib.sha256(path.read_bytes()).hexdigest()
             for name, path in sorted(sources.items())
         },
         "data": {
+            "release_manifest_sha256": digest(data / "manifest.json"),
+            "release": verified_release(data, max_length),
+            "cache_runtime_sha256": digest(root / "cache-runtime.json")
+            if (root / "cache-runtime.json").exists()
+            else None,
+        }
+        if (data / "COMPLETE.json").exists()
+        else {
             name: hashlib.sha256((data / name).read_bytes()).hexdigest()
             for name in ["train.jsonl", "dev.jsonl", "jevbench-231.jsonl"]
         },
@@ -183,6 +227,11 @@ def main():
     parser.add_argument("--output-dir", type=pathlib.Path)
     parser.add_argument("--resume", type=str)
     parser.add_argument("--evaluate-only", action="store_true")
+    parser.add_argument(
+        "--stop-after-updates",
+        type=int,
+        help="Bound a correctness/throughput arm without changing the full-run LR schedule",
+    )
     parser.add_argument("--steps", type=int, default=500)
     parser.add_argument("--seconds", type=int, default=9000)
     parser.add_argument("--batch-size", type=int, default=4)
@@ -235,6 +284,8 @@ def main():
         with (OUT / "events.jsonl").open("a") as f:
             f.write(json.dumps(row) + "\n")
 
+    uploaded = {}
+
     def sync(reserve=0, scored_only=False):
         if not distributed.primary:
             return
@@ -252,12 +303,17 @@ def main():
 
         def upload(path, key):
             check_deadline(deadline, reserve=reserve)
+            stat = path.stat()
+            signature = (stat.st_size, stat.st_mtime_ns)
+            if uploaded.get(key) == signature:
+                return
             s.upload_file(
                 str(path),
                 bucket,
                 key,
                 Callback=lambda _bytes: check_deadline(deadline, reserve=reserve),
             )
+            uploaded[key] = signature
 
         priority = [
             OUT / (name + suffix)
@@ -279,6 +335,17 @@ def main():
             event("scored_outputs_s3_sync")
             return
         for base in [OUT, DATA]:
+            if base == DATA and (DATA / "COMPLETE.json").exists():
+                # Immutable corpus already has its own complete, verified S3 release.
+                # Keep only its identity with run checkpoints, not a fresh corpus copy.
+                for name in (
+                    "manifest.json",
+                    "COMPLETE.json",
+                    "dev.jsonl",
+                    "jevbench-231.jsonl",
+                ):
+                    upload(DATA / name, prefix + "/" + base.name + "/" + name)
+                continue
             for p in sorted(
                 base.rglob("*"), key=lambda p: p.name == "checkpoint-complete.json"
             ):
@@ -304,6 +371,8 @@ def main():
             "distributed.py",
             "prompting.py",
             "runtime.py",
+            "cached_data.py",
+            "candidate_approvals.json",
             "compare.py",
             "requirements.txt",
         ):
@@ -320,7 +389,13 @@ def main():
         event("s3_sync")
 
     identity = distributed.broadcast(
-        build_run_identity(ROOT, DATA, args.max_length, distributed.world_size)
+        build_run_identity(
+            ROOT,
+            DATA,
+            args.max_length,
+            distributed.world_size,
+            lambda: check_deadline(deadline),
+        )
         if distributed.primary
         else None
     )
@@ -366,11 +441,22 @@ def main():
         ids = tokenizer.encode(prompt, add_special_tokens=False)
         return {**r, "ids": ids}
 
-    train = []
-    for r in read("train.jsonl"):
-        r = encode(r)
-        if len(r["ids"]) <= args.max_length:
-            train.append(r)
+    if (DATA / "COMPLETE.json").exists():
+        cache = identity["data"]["release"]
+        verify_cache_runtime(DATA, ROOT / "model", cache, identity["runtime"])
+        train = list(read_cached(DATA, cache))
+        # Verify real cached inputs against the native runtime before any updates.
+        for row in sorted(train, key=lambda r: len(r["ids"]))[
+            :: max(1, len(train) // 16)
+        ]:
+            if encode(row)["ids"] != row["ids"]:
+                raise ValueError("cached token replay mismatch")
+    else:
+        train = []
+        for r in read("train.jsonl"):
+            r = encode(r)
+            if len(r["ids"]) <= args.max_length:
+                train.append(r)
     dev = [encode(r) for r in read("dev.jsonl")]
     dev = [r for r in dev if len(r["ids"]) <= args.max_length][:256]
     bench = [encode(bench_row(r)) for r in read("jevbench-231.jsonl")]
@@ -426,7 +512,7 @@ def main():
             )
         with torch.no_grad(), prediction_path.open("w") as prediction_stream:
             for offset, row in enumerate(ordered):
-                check_deadline(deadline)
+                check_deadline(deadline, reserve=180)
                 batch = [row]
                 ts = time.monotonic()
                 raw = logits(batch)
@@ -525,10 +611,17 @@ def main():
             raise ValueError(f"single-request replay is unstable: {probability_delta}")
         event("single_request_replay", maximum_probability_delta=probability_delta)
 
-    if distributed.primary and not (OUT / "baseline-jevbench.json").exists():
-        evaluate(bench, "baseline-jevbench")
-    if distributed.primary and not (OUT / "baseline-dev.json").exists():
-        evaluate(dev, "baseline-dev")
+    if distributed.primary:
+        for name, rows in (("baseline-jevbench", bench), ("baseline-dev", dev)):
+            if baseline_complete(OUT, name, rows):
+                continue
+            for suffix in (".json", ".jsonl"):
+                old = OUT / (name + suffix)
+                if old.exists():
+                    old.rename(
+                        old.with_name(old.name + ".invalid-" + str(time.time_ns()))
+                    )
+            evaluate(rows, name)
     distributed.barrier()
     # Fixed low-rank intervention on attention projections and answer readout.
     targets = [
@@ -613,6 +706,8 @@ def main():
     first_step = step + 1
     completed_steps = step
     final_step = step if args.evaluate_only else args.steps
+    if args.stop_after_updates is not None and not args.evaluate_only:
+        final_step = min(final_step, step + args.stop_after_updates)
     longest_microbatch_seconds = 0
     longest_optimizer_seconds = 0
     longest_checkpoint_seconds = 0
@@ -693,7 +788,7 @@ def main():
         completed_steps = step
         cumulative_tokens += useful_tokens
         optimizer.zero_grad(set_to_none=True)
-        if step == 1 or step % 10 == 0:
+        if step <= 3 or step % 10 == 0:
             global_useful = distributed.sum(useful_tokens)
             global_padded = distributed.sum(padded_tokens)
             cumulative_global_tokens = distributed.sum(cumulative_tokens)

@@ -1,9 +1,35 @@
+import json
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
-from train import validate_checkpoint_identity, validate_resume_arguments
+from train import (
+    baseline_complete,
+    validate_checkpoint_identity,
+    validate_resume_arguments,
+)
 
 
 class ResumeTests(unittest.TestCase):
+    def test_summary_without_complete_predictions_is_not_a_baseline(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "baseline-dev.json").write_text(json.dumps({"n": 1}))
+            rows = [{"id": "x", "labels": ["no", "yes"]}]
+            self.assertFalse(baseline_complete(root, "baseline-dev", rows))
+            (root / "baseline-dev.jsonl").write_text(
+                json.dumps(
+                    {"id": "x", "probs": {"no": 0.4, "yes": 0.6}, "logits": [0, 1]}
+                )
+                + "\n"
+            )
+            self.assertTrue(baseline_complete(root, "baseline-dev", rows))
+            self.assertFalse(
+                baseline_complete(
+                    root, "baseline-dev", [{"id": "other", "labels": ["no", "yes"]}]
+                )
+            )
+
     def test_checkpoint_requires_explicit_matching_model_and_data_identity(self):
         identity = {"model": "base-a", "data": {"train": "sha256-a"}}
         for manifest in (

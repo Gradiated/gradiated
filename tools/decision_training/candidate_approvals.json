@@ -1,0 +1,21 @@
+{
+  "79e9efaa1d52e1cdbe658783ad9cdbbe73edb5781d455b4d5395961c6e64cc20": {
+    "builder": {
+      "prepare_scale.py": "c2bc25086650415fff4222eeaf498571f9f31a5acb9016ce42f7e1cc050b839d",
+      "scale_data.py": "623ba0c0609bbc2624181377b1587f2a5809383c83a0eeb3750ae53cc695815a",
+      "data.py": "587674cea2edceecb2fd861c0072b4c024cc9e42b75150aaed7b8bfc2d8649f0",
+      "data_sources.json": "650d59ace42600750378263b0bf01c686b0c996a6e1c5419d8541cfb61128216"
+    },
+    "reviewed_corrections": "curate_candidate threshold/event repairs at release indexing; legacy Eikos upstream terms overridden at export; zero numeric groups absent in actual TS snapshot"
+  },
+  "d3021e19684edc9680263dfb6773cf1a2b52c6b074faae3c3644aa294c358d38": {
+    "builder": {
+      "prepare_scale.py": "9c1d480339adc3fc770055ea2f6c82b0a1449510b36bfcd7e91b4b83c44bc09d",
+      "scale_data.py": "b0f1b2ad9e5a044c33f0bea9bb1240287482fcd4dadacfeff294fdcba3c555a1",
+      "data.py": "a8858483e4c6a73af9225ef77f5a39820775894f967aa1706ccd3f46c7279bf4",
+      "original_data.py": "bb0374bbf4788dc17c942897b4ef0bec7461314464953d075d51965141097dfc",
+      "data_sources.json": "9e4cafa21c4350529a857a7d42658d9a709dfe7451ec2ce42ffcdab92c9ac7c0"
+    },
+    "reviewed_corrections": "curate_candidate threshold/event repairs at release indexing; legacy Eikos upstream terms overridden at export; zero numeric groups absent in actual TS snapshot"
+  }
+}

@@ -115,7 +115,10 @@ def normalize_eikos(row):
     license_terms = row.get("license") or "cc-by-4.0"
     upstream_license = row.get("upstream_license") or row.get("source_license")
     if upstream:
-        if row.get("upstream_split") != "train" and "train" not in upstream.lower():
+        explicit_split = row.get("upstream_split")
+        if (explicit_split is not None and explicit_split != "train") or (
+            explicit_split is None and "train" not in upstream.lower()
+        ):
             return None
         upstream_license = upstream_license or {
             "GSM8K train (MIT)": "mit",

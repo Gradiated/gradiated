@@ -197,6 +197,9 @@ export default defineConfig(({ command, isSsrBuild, mode }) => {
     },
     build: {
       emptyOutDir: !isSsrBuild,
+      ...(!isSsrBuild && process.env.VERCEL_ENV === "preview"
+        ? { rolldownOptions: { input: ["index.html", "lectures/lecture-4/index.html"] } }
+        : {}),
     },
   };
 });

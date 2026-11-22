@@ -30,3 +30,8 @@ a18b5b3125da03bf6dfb7502cd2e848feb4f6bc4:infra/environments/prod/us-east-1/kuber
 # Made-up UUID share tokens in a test and a Storybook mock; fixtures, not credentials. Removed when links became HMAC signatures.
 4f61004348157c36c71dca7d8b57f1d0aefe5890:product/services/api/test/report-shares.test.ts:generic-api-key:7
 4f61004348157c36c71dca7d8b57f1d0aefe5890:product/services/console/src/stories/pages/training.stories.tsx:generic-api-key:101
+
+# Chart field name for DDR4 weight storage in KiB.
+5290be5dc3e4e6db2c158325d53bd1dc902fb681:hardware/publishing/sand-to-thought/articles/fpga/figures/MeasurementMechanism.tsx:generic-api-key:534
+# Measured percentage change in tokens per joule in the KV260 DDR4 comparison.
+55a42ad61c4c90558abac21eb9cf9c0797b42cf9:hardware/research/inference/results/output-projection-ddr4-20261118T232351Z-c820f6/run.json:generic-api-key:343

@@ -1,0 +1,619 @@
+@media (orientation: landscape) {
+  .fpga-article.fpga-lecture:has(.lecture-results-grid) {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+  }
+}
+
+.lecture-results-grid {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 37fr) minmax(0, 63fr);
+  gap: clamp(0.65rem, 1.6cqw, 1.8rem);
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+  padding: 0.5rem 0;
+  box-sizing: border-box;
+}
+.lecture-results-context.fpga-measurement-mechanisms {
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  gap: clamp(0.4rem, 2cqh, 1.25rem);
+  min-width: 0;
+}
+.lecture-results-context > * {
+  width: 100%;
+  box-sizing: border-box;
+}
+.fpga-lecture .lecture-results-context .fpga-measurement-panel > svg {
+  max-height: 15cqh;
+}
+.lecture-results-context .fpga-fabric-usage {
+  padding-inline: 0;
+}
+.lecture-results-context .fpga-fabric-usage-plot {
+  height: clamp(1.4rem, 4.5cqh, 2.7rem);
+}
+.fpga-lecture .lecture-results-context .fpga-measurements-grid {
+  grid-template-rows: clamp(6rem, 28cqh, 19rem) auto;
+}
+.lecture-results-context .fpga-measurements-readings {
+  font-size: clamp(0.72rem, 3.1cqi, 1.05rem);
+}
+.lecture-results-context .fpga-measurements-caption {
+  font-size: clamp(0.82rem, 3.4cqi, 1.15rem);
+}
+@media (min-height: 531px) {
+  .lecture-results-context .fpga-measurements-point:not(.is-current) {
+    width: 4px;
+    height: 4px;
+  }
+  .lecture-results-context .fpga-measurements-point.is-current {
+    width: 6px;
+    height: 6px;
+  }
+}
+.fpga-lecture .lecture-token-flow text {
+  font-size: 13.5px;
+}
+.lecture-chip-experiment {
+  --lecture-signal: color-mix(
+    in srgb,
+    var(--signal-stroke) 68%,
+    var(--fpga-ink)
+  );
+  --lecture-fill: color-mix(
+    in srgb,
+    var(--signal-stroke) 17%,
+    var(--fpga-paper)
+  );
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  justify-items: center;
+  margin: 0;
+  padding: clamp(0.55rem, 2cqh, 1.5rem);
+  border: 1px solid var(--fpga-line);
+  border-radius: 0.55rem;
+  background: var(--fpga-paper);
+  text-align: center;
+}
+.lecture-chip-experiment figcaption {
+  max-width: 48ch;
+  font: 500 clamp(0.95rem, 2.3cqw, 1.65rem)/1.22 var(--font-title);
+  text-wrap: balance;
+}
+.lecture-chip-map {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.lecture-chip-map .fpga-map-available {
+  opacity: 0.3;
+}
+.lecture-chip-label,
+.lecture-chip-sub {
+  font: 500 16px var(--font-body);
+  dominant-baseline: central;
+  text-anchor: middle;
+  fill: var(--fpga-ink);
+}
+.lecture-chip-sub {
+  font-size: 15px;
+}
+.lecture-chip-block rect,
+.lecture-chip-tile rect {
+  fill: var(--fpga-paper);
+  stroke: var(--fpga-line);
+  stroke-width: 1.7;
+}
+.lecture-chip-block[data-active="true"] rect,
+.lecture-chip-tile[data-active="true"] rect {
+  fill: var(--lecture-fill);
+  stroke: var(--lecture-signal);
+  stroke-width: 2.5;
+}
+.lecture-chip-tile[data-active="false"] text,
+.lecture-chip-block[data-active="false"] text {
+  opacity: 0.48;
+}
+.lecture-chip-block[data-active="true"] rect.lecture-chip-lane {
+  fill: var(--lecture-signal);
+  stroke: none;
+}
+.lecture-chip-route {
+  stroke: var(--lecture-signal);
+  stroke-width: 3;
+  fill: none;
+  stroke-linejoin: round;
+}
+.lecture-chip-packet {
+  fill: var(--fpga-ink);
+  stroke: var(--fpga-paper);
+  stroke-width: 1.4;
+}
+.lecture-chip-timing {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.2em 0.9em;
+  font-weight: 600;
+}
+.lecture-chip-timing span {
+  border-bottom: 2px solid transparent;
+}
+.lecture-chip-timing span::before {
+  content: "→ ";
+  color: var(--lecture-signal);
+}
+.lecture-chip-timing span:first-child::before {
+  content: none;
+}
+.lecture-chip-experiment p {
+  margin: 0.3em 0 0;
+  color: var(--fpga-muted);
+}
+.lecture-chip-timing,
+.lecture-chip-experiment p {
+  font-size: clamp(0.75rem, 1.45cqw, 1.05rem);
+  line-height: 1.25;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lecture-chip-packet {
+    display: none;
+  }
+}
+@media (orientation: landscape) and (max-height: 530px) {
+  .lecture-results-grid {
+    grid-template-columns: minmax(0, 38fr) minmax(0, 62fr);
+    padding-block: 0.15rem;
+  }
+  .lecture-results-context.fpga-measurement-mechanisms {
+    max-height: 100%;
+    overflow-y: auto;
+  }
+
+  .lecture-results-context.fpga-measurement-mechanisms {
+    gap: 0.2rem;
+  }
+  .fpga-lecture .lecture-results-context .fpga-measurement-panel > svg {
+    max-height: 15cqh;
+  }
+  .lecture-results-context .fpga-measurements-readings {
+    font-size: 0.6rem;
+    gap: 0.25rem;
+  }
+  .lecture-results-context .fpga-fabric-usage-plot {
+    height: 1.2rem;
+  }
+  .lecture-results-context .fpga-fabric-usage figcaption {
+    margin-bottom: 0.5rem;
+  }
+  .lecture-results-context .fpga-measurements-grid {
+    padding-top: 0.6rem;
+  }
+  .fpga-lecture .lecture-results-context .fpga-measurements-grid {
+    grid-template-rows: 17cqh auto;
+  }
+  .lecture-chip-experiment figcaption {
+    font-size: 0.9rem;
+  }
+  .lecture-chip-timing,
+  .lecture-chip-experiment p {
+    font-size: 0.7rem;
+  }
+}
+@media (orientation: portrait) {
+  .fpga-lecture .lecture-results-context .fpga-measurements-grid {
+    grid-template-rows: clamp(5rem, 16cqh, 12rem) auto;
+  }
+  .lecture-results-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(14rem, 1fr) auto;
+    overflow: auto;
+  }
+  .lecture-chip-experiment {
+    grid-row: 1;
+  }
+  .lecture-results-context.fpga-measurement-mechanisms {
+    display: grid;
+    gap: 0.4rem;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .lecture-results-context .lecture-results-chart {
+    grid-column: 1/-1;
+  }
+}
+
+/* Keep the current route and its caption in step, including simultaneous reads and arithmetic. */
+.lecture-chip-experiment[data-steps="2"] {
+  --phase-animation: lecture-half-cycle;
+}
+.lecture-chip-experiment[data-steps="3"] {
+  --phase-animation: lecture-third-cycle;
+}
+.lecture-chip-phase,
+.lecture-chip-timing span {
+  animation: var(--phase-animation, none) var(--period) step-end var(--delay)
+    infinite;
+}
+.lecture-chip-phase {
+  opacity: var(--route-opacity, 1);
+}
+.lecture-chip-timing span {
+  border-color: var(--phase-border, transparent);
+}
+@keyframes lecture-half-cycle {
+  0% {
+    --route-opacity: 1;
+    --phase-border: var(--lecture-signal);
+  }
+  50%,
+  100% {
+    --route-opacity: 0.35;
+    --phase-border: transparent;
+  }
+}
+@keyframes lecture-third-cycle {
+  0% {
+    --route-opacity: 1;
+    --phase-border: var(--lecture-signal);
+  }
+  33.333%,
+  100% {
+    --route-opacity: 0.35;
+    --phase-border: transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lecture-chip-phase,
+  .lecture-chip-timing span {
+    animation: none;
+  }
+}
+
+.lecture-chip-map .fpga-clock-arc {
+  stroke-width: 2;
+}
+.lecture-chip-map .fpga-clock-packet {
+  r: 5px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lecture-chip-map .fpga-clock-distribution > .lecture-chip-block rect {
+    animation: fpga-clock-beat var(--fpga-clock-period) ease-in-out infinite;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lecture-chip-map :is(.fpga-clock-packet, .fpga-clock-origin) {
+    animation: none;
+  }
+}
+.lecture-chip-map .fpga-map-pins,
+.lecture-chip-map .fpga-map-ports {
+  opacity: 0.45;
+}
+.lecture-chip-map .fpga-map-available {
+  opacity: 0.19;
+}
+.lecture-chip-experiment[data-closeup="true"] {
+  grid-template-rows: auto minmax(0, 0.8fr) minmax(0, 1.7fr) auto;
+  row-gap: 0.35rem;
+}
+.lecture-chip-experiment:has(.lecture-clock-traces) {
+  grid-template-rows: auto minmax(0, 1.5fr) minmax(0, 1fr) auto;
+}
+.lecture-detail {
+  width: min(100%, 46rem);
+  height: 100%;
+  min-height: 0;
+  font: 15px var(--font-body);
+  fill: var(--fpga-ink);
+}
+.lecture-detail text {
+  dominant-baseline: middle;
+  text-anchor: middle;
+}
+.lecture-detail text[text-anchor="start"] {
+  text-anchor: start;
+}
+.lecture-detail text[text-anchor="end"] {
+  text-anchor: end;
+}
+.lecture-detail rect,
+.lecture-detail circle {
+  fill: var(--fpga-paper);
+  stroke: var(--fpga-muted);
+  stroke-width: 1.15;
+}
+.lecture-detail .detail-wire,
+.lecture-detail .detail-guide {
+  fill: none;
+  stroke: var(--lecture-signal);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+.lecture-detail .detail-guide {
+  stroke: var(--fpga-muted);
+  stroke-width: 1;
+}
+.lecture-detail .detail-active rect,
+.lecture-detail .lane-total rect {
+  fill: var(--lecture-fill);
+  stroke: var(--lecture-signal);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .norm-turn rect {
+    animation: lecture-multiplier-turn 4.5s step-end var(--offset) infinite;
+  }
+  .lane-total rect {
+    animation: lecture-score-tick 1.5s ease-out infinite;
+  }
+  @keyframes lecture-multiplier-turn {
+    0% {
+      fill: var(--lecture-fill);
+      stroke: var(--lecture-signal);
+      stroke-width: 2.5;
+    }
+    33.333%,
+    100% {
+      fill: var(--fpga-paper);
+      stroke: var(--fpga-muted);
+      stroke-width: 1.15;
+    }
+  }
+  @keyframes lecture-score-tick {
+    0% {
+      fill: var(--lecture-signal);
+    }
+    38%,
+    100% {
+      fill: var(--lecture-fill);
+    }
+  }
+
+}
+@container (width < 520px) {
+  .lecture-results-context .fpga-measurements-tick:nth-last-child(2),
+  .lecture-results-context
+    .fpga-measurements-tick[data-current="false"][data-endpoint="false"][data-phone-tick="false"] {
+    display: none;
+  }
+  .lecture-results-context .fpga-measurements-axis:has([data-stagger="true"]) {
+    min-height: 1rem;
+  }
+  .lecture-results-context .fpga-measurements-tick[data-stagger="true"] {
+    top: 0;
+  }
+}
+@media (orientation: portrait), (max-height: 530px) and (max-width: 960px) {
+  .lecture-results-grid {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    align-items: stretch;
+  }
+  .lecture-chip-experiment {
+    order: -1;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem;
+  }
+  .lecture-chip-map,
+  .lecture-detail {
+    flex: none;
+    height: auto;
+  }
+  .lecture-chip-experiment[data-closeup="true"] .lecture-chip-map {
+    height: 5.5rem;
+  }
+  .lecture-detail {
+    max-width: 34rem;
+  }
+  .lecture-results-context.fpga-measurement-mechanisms {
+    flex: none;
+    max-height: none;
+    overflow: visible;
+  }
+  .lecture-chip-map .lecture-chip-tile[data-active="false"] text {
+    visibility: hidden;
+  }
+}
+
+/* Share the plot columns so every category mark sits on its experiment's x coordinate. */
+.lecture-results-chart {
+  container-type: inline-size;
+  --lecture-chart-columns: 2.1rem minmax(0, 1fr) 3rem clamp(6rem, 27cqi, 8.5rem);
+}
+.lecture-results-chart .fpga-measurements-grid,
+.lecture-experiment-groups li {
+  grid-template-columns: var(--lecture-chart-columns);
+}
+.lecture-experiment-groups {
+  margin: 0.12rem 0 0;
+  padding: 0;
+  color: var(--fpga-muted);
+  font-size: clamp(0.75rem, 3cqi, 0.9rem);
+  line-height: 1.25;
+  list-style: none;
+}
+.lecture-experiment-groups li {
+  display: grid;
+  align-items: stretch;
+  min-height: 1.35em;
+}
+.lecture-group-track {
+  position: relative;
+  grid-column: 2;
+}
+.lecture-group-run,
+.lecture-group-leader {
+  position: absolute;
+  top: 50%;
+  border-top: 1px solid currentColor;
+}
+.lecture-group-leader {
+  right: 0;
+  opacity: 0.38;
+  border-top-style: dotted;
+}
+.lecture-group-run i {
+  position: absolute;
+  top: -1px;
+  width: 4px;
+  height: 4px;
+  translate: -50% -50%;
+  background: currentColor;
+  border-radius: 50%;
+}
+.lecture-experiment-groups li[data-current="true"] {
+  color: var(--measurement-accent);
+  font-weight: 700;
+}
+.lecture-group-guide {
+  position: absolute;
+  inset-block: 0;
+  border-left: 1px dotted var(--measurement-line);
+}
+.lecture-experiment-groups li[data-current="true"] .lecture-group-guide {
+  bottom: 50%;
+}
+.lecture-group-run i[data-selected="true"] {
+  width: 7px;
+  height: 7px;
+  outline: 1px solid var(--fpga-paper);
+}
+.lecture-group-name {
+  grid-column: 3 / -1;
+  align-self: center;
+  padding-left: 0.28rem;
+}
+
+@container (width < 420px) {
+  .lecture-results-chart .fpga-measurements-grid,
+  .lecture-experiment-groups li {
+    --lecture-chart-columns: 1.6rem minmax(0, 1fr) 2.8rem clamp(6rem, 27cqi, 8.5rem);
+  }
+}
+@media (orientation: landscape) and (min-height: 531px) {
+  .lecture-results-context:has(.lecture-experiment-groups) {
+    gap: clamp(0.35rem, 1.2cqh, 0.8rem);
+  }
+}
+
+@media (orientation: landscape) and (min-height: 531px) and (max-height: 670px) {
+  .fpga-lecture .lecture-results-chart .fpga-measurements-grid {
+    grid-template-rows: clamp(6rem, 23cqh, 9rem) auto;
+  }
+}
+
+/* Leave room below the chip for the measured change in each build. */
+.lecture-chip-experiment {
+  row-gap: .45rem;
+}
+.lecture-chip-map {
+  max-height: 54cqh;
+  align-self: center;
+}
+.lecture-chip-map[data-full-map="true"] { max-height: none; }
+.lecture-build-detail {
+  --measurement-line: color-mix(in srgb, var(--fpga-ink) 35%, var(--fpga-paper));
+  --measurement-surface: var(--fpga-paper);
+  --measurement-accent: var(--lecture-signal);
+  --measurement-highlight: var(--lecture-fill);
+  width: min(100%, 42rem);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+}
+.lecture-build-detail .lecture-detail { flex: 1 1 0; }
+.lecture-article-detail.fpga-measurement-panel {
+  width: 100%;
+  border: 0;
+  background: transparent;
+}
+.lecture-build-detail .lecture-article-detail > svg {
+  width: 100%;
+  height: clamp(6.5rem, 25cqh, 13rem);
+  max-height: none;
+}
+.lecture-build-pair {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: .4em;
+  font: 500 clamp(.85rem, 1.55cqw, 1.22rem)/1.22 var(--font-body);
+  text-wrap: balance;
+}
+.lecture-build-pair > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+  gap: .32em;
+}
+.lecture-build-pair > div > strong {
+  color: var(--fpga-muted);
+  font-size: .85em;
+  font-weight: 600;
+}
+.lecture-build-pair > span { align-self: center; color: var(--fpga-muted); }
+.lecture-build-pair .lecture-article-detail > svg { height: clamp(5.5rem, 19cqh, 10rem); }
+.lecture-clock-count { width: 100%; }
+.lecture-count-cells {
+  display: grid;
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+  gap: 2px;
+  max-width: 12rem;
+  height: 1.65em;
+  align-content: start;
+  margin: .25em auto .45em;
+}
+.lecture-count-cells i,
+.lecture-job-slots span {
+  background: var(--lecture-fill);
+  border: 1px solid var(--lecture-signal);
+  border-radius: 2px;
+}
+.lecture-count-cells i { height: .65em; }
+.lecture-job-slots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4em;
+}
+.lecture-job-slots > div { display: grid; gap: .14em; }
+.lecture-job-slots > div + div::before { content: "→"; position: absolute; translate: -105% 0; }
+.lecture-job-slots > div + div { margin-left: .85em; }
+.lecture-job-slots span { padding: .22em .38em; white-space: nowrap; }
+@media (orientation: portrait), (max-height: 530px) and (max-width: 960px) {
+  .lecture-chip-experiment .lecture-chip-map { height: auto; max-height: 13rem; }
+  .lecture-chip-map[data-full-map="true"] { max-height: 60dvh; }
+  .lecture-chip-experiment[data-closeup="true"] .lecture-chip-map { height: 5rem; }
+  .lecture-chip-experiment .lecture-chip-map:has(.fpga-clock-distribution) {
+    height: auto;
+    max-height: 70dvh;
+  }
+  .lecture-build-detail .lecture-detail { flex: none; height: auto; max-height: 13rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lecture-build-detail .fpga-measurement-flow,
+  .lecture-build-detail .fpga-measurement-moving-weights { animation: none; }
+}
+.lecture-job-slots[data-timed="true"] { align-items: start; }
+.lecture-job-slots[data-timed="true"] > div + div { margin-left: 0; }
+.lecture-job-slots[data-timed="true"] > div + div::before { content: none; }
+.lecture-job-slots small { color: var(--fpga-muted); }

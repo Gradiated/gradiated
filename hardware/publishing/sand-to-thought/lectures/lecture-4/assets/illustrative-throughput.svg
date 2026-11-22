@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="394" viewBox="0 0 880 394">
+  <title>Illustrative cost and output rate across FPGA experiments</title>
+  <desc>Four hypothetical experiments in order: offload some tasks from CPU, transformer logic entirely on FPGA, model weights and KV cache moved to distributed RAM, and run more multiply-adds in parallel. The solid blue output-rate line rises at every experiment. The dashed rust cost line rises, falls at the third experiment, and rises again. A gold arrow points to the final blue point.</desc>
+  <rect width="880" height="394" fill="#fff"/>
+
+  <g fill="none" stroke="#e4e4e7" stroke-width="1.5">
+    <path d="M106 79H790 M106 140H790 M106 201H790"/>
+    <path d="M154 79V262 M345 79V262 M535 79V262 M726 79V262" stroke-dasharray="4 6"/>
+  </g>
+  <path d="M106 79V262H790V79" fill="none" stroke="#a1a1aa" stroke-width="1.5"/>
+
+  <g font-family="system-ui, sans-serif" font-variant-numeric="tabular-nums">
+    <g fill="#9b3a21">
+      <path d="M25 36H59" stroke="#9b3a21" stroke-width="4" stroke-dasharray="8 5"/>
+      <text x="70" y="43" font-size="23" font-weight="650">Cost per token ($)</text>
+      <g text-anchor="end" font-size="16">
+        <text x="96" y="85">$0.000003</text>
+        <text x="96" y="146">$0.000002</text>
+        <text x="96" y="207">$0.000001</text>
+        <text x="96" y="268">$0</text>
+      </g>
+    </g>
+    <g fill="#21589a">
+      <path d="M540 36H574" stroke="#21589a" stroke-width="4"/>
+      <text x="585" y="43" font-size="23" font-weight="650">Tokens per second (/s)</text>
+      <g font-size="16">
+        <text x="800" y="85">90</text>
+        <text x="800" y="146">60</text>
+        <text x="800" y="207">30</text>
+        <text x="800" y="268">0</text>
+      </g>
+    </g>
+    <g fill="#27272a" text-anchor="middle" font-size="20" font-weight="600">
+      <text x="154" y="297">Offload some<tspan x="154" dy="23">tasks from CPU</tspan></text>
+      <text x="345" y="297">Transformer logic<tspan x="345" dy="23">entirely on FPGA</tspan></text>
+      <text x="535" y="297">Model weights and<tspan x="535" dy="23">KV cache moved to</tspan><tspan x="535" dy="23">distributed RAM</tspan></text>
+      <text x="726" y="297">Run more multiply-<tspan x="726" dy="23">adds in parallel</tspan></text>
+      <text x="440" y="383" fill="#52525b" font-size="18" font-weight="500">Experiments over time →</text>
+    </g>
+  </g>
+
+  <g stroke="#9b3a21" stroke-width="4" stroke-linejoin="round">
+    <path d="M154 195 L345 128 L535 161 L726 146" fill="none" stroke-dasharray="9 6"/>
+    <g fill="#fff">
+      <circle cx="154" cy="195" r="5"/>
+      <circle cx="345" cy="128" r="5"/>
+      <circle cx="535" cy="161" r="5"/>
+      <circle cx="726" cy="146" r="5"/>
+    </g>
+  </g>
+  <g stroke="#21589a" stroke-width="4" stroke-linejoin="round">
+    <path d="M154 232 L345 191 L535 150 L726 110" fill="none"/>
+    <g fill="#21589a">
+      <circle cx="154" cy="232" r="4"/>
+      <circle cx="345" cy="191" r="4"/>
+      <circle cx="535" cy="150" r="4"/>
+      <circle cx="726" cy="110" r="4"/>
+    </g>
+  </g>
+  <path d="M867 0 V49 Q867 66 850 66 H791 Q773 66 760 79 L731 105 M735 95 L731 105 L741 103" fill="none" stroke="#a97700" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

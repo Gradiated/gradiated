@@ -1,0 +1,576 @@
+body:has(.fpga-lecture) {
+  margin: 0;
+  background: var(--color-substrate, #f7f3ec);
+}
+
+.fpga-lecture {
+  --nav-h: 0px;
+  --u: clamp(0.9rem, 2.5vw, 2.5rem);
+  height: 100dvh;
+  padding: clamp(0.6rem, 2dvh, 1.5rem) var(--u);
+}
+
+.fpga-lecture-layout {
+  display: grid;
+  grid-template-columns: clamp(8rem, 15vw, 12rem) minmax(0, 1fr);
+  gap: clamp(1rem, 3vw, 3rem);
+  height: 100%;
+  max-width: 1920px;
+  margin-inline: auto;
+}
+
+.fpga-lecture .fpga-lecture-contents {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.3rem;
+  scrollbar-width: thin;
+}
+
+.fpga-lecture .fpga-lecture-contents a {
+  color: var(--fpga-muted);
+}
+
+.fpga-lecture .fpga-lecture-contents a[aria-current],
+.fpga-lecture .fpga-lecture-contents a:hover {
+  color: var(--fpga-ink);
+}
+
+.fpga-lecture-slide {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.fpga-lecture-heading {
+  text-align: center;
+}
+
+.fpga-lecture-heading p {
+  margin: 0.25rem 0;
+  color: var(--fpga-muted);
+}
+
+.fpga-lecture-heading h1 {
+  margin: 0;
+  font: 500 clamp(1.5rem, 3.2vw, 3.25rem)/1.1 var(--font-title);
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.fpga-lecture-chapters {
+  display: none;
+}
+
+.fpga-lecture-visual {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  place-items: center;
+  container-type: size;
+  min-width: 0;
+  min-height: 0;
+}
+
+.fpga-lecture .fpga-stage {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  align-self: stretch;
+  width: 100%;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0.3rem;
+  overflow: auto;
+  scrollbar-width: thin;
+  box-shadow: none;
+}
+
+.fpga-lecture
+  :is([data-scene="first-circuit"], [data-scene="input-change"])
+  .fpga-map-pins
+  .fpga-map-output-pin {
+  stroke: var(--signal-stroke);
+}
+
+.fpga-lecture
+  :is([data-scene="first-circuit"], [data-scene="input-change"])
+  .fpga-map-right-ports
+  rect.is-selected {
+  fill: var(--signal-stroke);
+}
+
+.fpga-lecture .fpga-figure-content {
+  --figure-room: calc(100cqh - 1.25rem);
+}
+
+.fpga-lecture
+  .fpga-figure-content:has(
+    .fpga-controls button,
+    .fpga-controls input,
+    .fpga-controls select
+  ) {
+  --figure-room: calc(100cqh - 6.75rem);
+}
+
+.fpga-lecture
+  .fpga-figure-content:has(
+    .fpga-status,
+    .fpga-tour-location,
+    .fpga-diagram-hint
+  ) {
+  --figure-room: calc(100cqh - 3.5rem);
+}
+
+.fpga-lecture
+  .fpga-figure-content:has(
+    .fpga-controls button,
+    .fpga-controls input,
+    .fpga-controls select
+  ):has(.fpga-status, .fpga-tour-location, .fpga-diagram-hint) {
+  --figure-room: calc(100cqh - 9rem);
+}
+
+.fpga-lecture .fpga-stage .fpga-figure-content .fpga-drawing {
+  min-width: 0;
+  max-height: max(5rem, var(--figure-room));
+}
+
+.fpga-lecture .fpga-stage .fpga-figure-content .fpga-diagram-viewport {
+  max-height: none;
+  overflow: visible;
+}
+
+.fpga-lecture .fpga-lecture-cover {
+  width: 100%;
+  height: min(100cqh - 1rem, 62vw);
+  max-height: 32rem;
+  padding: 0;
+  cursor: pointer;
+}
+
+.fpga-lecture-closing {
+  width: min(100%, 86rem);
+  max-height: 100%;
+  padding: clamp(0.4rem, 2cqh, 1.25rem) 0.15rem;
+  overflow: auto;
+  scrollbar-width: thin;
+  font-size: clamp(0.85rem, 2.1cqw, 1.28rem);
+  line-height: 1.4;
+}
+
+.fpga-lecture-chip-choices {
+  width: min(100%, 74rem);
+  font-size: clamp(0.8rem, 2.1cqw, 1.3rem);
+}
+
+.fpga-lecture-chip-choices table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  text-align: left;
+  line-height: 1.3;
+}
+
+.fpga-lecture-chip-choices th,
+.fpga-lecture-chip-choices td {
+  padding: clamp(0.4rem, 1.5cqh, 1rem) clamp(0.35rem, 1.6cqw, 1.1rem);
+}
+
+.fpga-lecture-chip-choices tbody tr + tr > * {
+  border-block-start: clamp(0.25rem, 1.8cqh, 1rem) solid transparent;
+}
+
+.fpga-lecture-chip-choices td {
+  vertical-align: top;
+  background-clip: padding-box;
+}
+
+.fpga-lecture-chip-choices ul {
+  margin: 0;
+  padding-inline-start: 1em;
+  list-style: disc;
+}
+
+.fpga-lecture-chip-choices li + li {
+  margin-block-start: 0.2em;
+}
+
+.fpga-lecture-chip-choices thead th {
+  font-weight: 700;
+  border-bottom: 1px solid var(--fpga-line);
+}
+
+.fpga-lecture-chip-choices thead th:first-child {
+  width: 16%;
+}
+
+.fpga-lecture-chip-choices tbody th {
+  font-weight: 600;
+}
+
+.fpga-lecture-chip-choices tbody th span {
+  display: flex;
+  align-items: center;
+  gap: 0.65em;
+}
+
+.fpga-lecture-chip-choices tbody th svg {
+  flex: none;
+  width: clamp(1rem, 3.6cqw, 2.5rem);
+  height: auto;
+}
+
+.fpga-lecture-chip-choices tr > :nth-child(2) {
+  color: var(--color-grove-700);
+  background-color: color-mix(in srgb, var(--color-grove-500) 12%, var(--fpga-paper));
+}
+
+.fpga-lecture-chip-choices tr > :nth-child(3) {
+  color: var(--color-kiln-700);
+  background-color: color-mix(in srgb, var(--color-kiln-600) 8%, var(--fpga-paper));
+}
+
+@container (max-width: 30rem) {
+  .fpga-lecture-chip-choices tbody th span {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.2em;
+    overflow-wrap: anywhere;
+  }
+}
+
+.fpga-lecture-comparison {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 40%);
+  width: min(100%, 72rem);
+  gap: clamp(0.7rem, 2.5cqh, 1.5rem);
+  font-size: clamp(0.95rem, 1.75cqw, 1.2rem);
+}
+
+.fpga-lecture-api-callout {
+  align-self: end;
+  margin: 0;
+  padding-inline-end: 1.5%;
+  color: #8f6500;
+  font-weight: 700;
+  text-align: end;
+}
+
+.fpga-lecture-comparison figure {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0;
+}
+
+.fpga-lecture-comparison img {
+  display: block;
+  width: 100%;
+  max-height: max(10rem, calc(100cqh - 11rem));
+  object-fit: contain;
+}
+
+.fpga-lecture-points {
+  display: grid;
+  gap: 0.55em;
+  margin: 0;
+  padding-inline-start: 1.2em;
+  list-style: disc;
+}
+
+.fpga-lecture-experiment {
+  display: grid;
+  gap: clamp(0.6rem, 2cqh, 1.25rem);
+  max-width: 68rem;
+  font-size: clamp(0.84rem, 1.85cqw, 1.12rem);
+}
+
+.fpga-lecture-experiment-board {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.35fr);
+  align-items: center;
+  gap: clamp(0.8rem, 3.4cqw, 2.6rem);
+}
+
+.fpga-lecture-experiment-board > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: clamp(6rem, 45cqh, 21rem);
+  object-fit: contain;
+}
+
+.fpga-lecture-experiment-copy {
+  display: grid;
+  gap: 0.75em;
+  max-width: 54ch;
+  font: 400 clamp(0.88rem, 1.9cqw, 1.15rem) / 1.45 var(--font-body);
+}
+
+.fpga-lecture-experiment-copy > p {
+  margin: 0;
+}
+
+.fpga-lecture-experiment-copy .fpga-lecture-experiment-goal {
+  font-weight: 650;
+}
+
+.fpga-lecture-experiment-copy .fpga-lecture-points {
+  gap: 0.35em;
+}
+
+.fpga-lecture-experiment-method {
+  color: var(--fpga-muted);
+}
+
+.fpga-lecture-experiment-copy .fpga-lecture-experiment-next {
+  margin-block-start: 0.2em;
+}
+
+.fpga-lecture-experiment-profiles {
+  --profile-stroke: color-mix(in srgb, var(--chart-1) 75%, var(--color-text));
+  text-align: center;
+}
+
+.fpga-lecture-experiment-profiles > div {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(0.5rem, 2cqw, 1rem);
+  max-width: 49rem;
+  margin-inline: auto;
+}
+
+.fpga-lecture-experiment-profiles h2 {
+  display: grid;
+  place-items: center;
+  min-height: 2.3em;
+  margin: 0;
+  font: 700 0.86em / 1.15 var(--font-body);
+}
+
+.fpga-lecture-experiment-profiles .inference-profile-chart svg {
+  width: 100%;
+  max-height: clamp(3rem, 20cqh, 8rem);
+  overflow: hidden;
+}
+
+@container (max-width: 26rem) and (min-height: 32rem) {
+  .fpga-lecture-experiment-board {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.55rem;
+  }
+
+  .fpga-lecture-experiment-board > img {
+    max-height: 9rem;
+  }
+}
+
+.fpga-lecture-inference-profile {
+  max-width: 74rem;
+}
+
+.fpga-lecture-inference-profile .inference-profile-copy dl {
+  gap: 0.55em;
+  margin-top: 0.8em;
+  font-size: clamp(0.83rem, 1.65cqw, 1.06rem);
+  line-height: 1.35;
+}
+
+.fpga-lecture-inference-profile .inference-profile-copy dl > div {
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+}
+
+.fpga-lecture .inference-profile {
+  width: 100%;
+  max-width: 74rem;
+  margin: 0;
+}
+
+.fpga-lecture .inference-profile-chart svg {
+  width: 100%;
+  max-height: calc(100cqh - 1rem);
+}
+
+.fpga-lecture-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding-top: 0.4rem;
+}
+
+.fpga-lecture-navigation span {
+  min-width: 5rem;
+  text-align: center;
+  color: var(--fpga-muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.fpga-lecture-navigation button {
+  min-width: 2.6rem;
+  min-height: 2.6rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--fpga-line);
+  border-radius: 3px;
+  background: transparent;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.fpga-lecture-navigation button:hover:enabled {
+  background: color-mix(in srgb, var(--fpga-ink) 6%, var(--fpga-paper));
+}
+
+.fpga-lecture-navigation button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+@media (max-width: 400px) {
+  .fpga-lecture-navigation {
+    gap: 0.3rem;
+    font-size: 0.875rem;
+  }
+
+  .fpga-lecture-navigation span {
+    min-width: 3.25rem;
+  }
+}
+
+@media (max-height: 650px) {
+  .fpga-lecture .fpga-lecture-contents a {
+    padding-block: 0.2rem;
+    font-size: 0.8rem;
+  }
+
+  .fpga-lecture-heading h1 {
+    font-size: clamp(1.3rem, 3vw, 2rem);
+  }
+}
+
+@media (min-width: 640px) and (max-width: 899px) {
+  .fpga-lecture .inference-profile {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .fpga-lecture .inference-profile-copy dl {
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .fpga-lecture .inference-profile-copy dl > div {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  }
+}
+
+@media (max-width: 639px) {
+  .fpga-lecture-layout {
+    display: block;
+  }
+
+  .fpga-lecture-slide {
+    height: 100%;
+  }
+
+  .fpga-lecture .fpga-lecture-contents {
+    display: none;
+  }
+
+  .fpga-lecture
+    .fpga-stage:has(
+      .fpga-application-tour:is(
+        [data-network-intro="true"],
+        [data-neuron-reference="true"]
+      )
+    ) {
+    width: 100%;
+    margin-inline: 0;
+  }
+
+  .fpga-lecture-chapters {
+    display: block;
+    width: 100%;
+    min-height: 2.5rem;
+    margin-bottom: 0.65rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--fpga-line);
+    border-radius: 3px;
+    background: var(--fpga-paper);
+    font: inherit;
+  }
+
+  .fpga-lecture .inference-profile-chart svg {
+    max-height: max(5rem, calc(100cqh - 12rem));
+  }
+
+  .fpga-lecture .inference-profile {
+    gap: 0.5rem;
+  }
+
+  .fpga-lecture-inference-profile .inference-profile-chart svg {
+    max-height: min(32cqh, 14rem);
+  }
+
+  .fpga-lecture .inference-profile-copy p,
+  .fpga-lecture .inference-profile-copy dl {
+    margin-top: 0.5rem;
+  }
+}
+
+.fpga-lecture .fpga-measurement-stage {
+  gap: clamp(.25rem, 2cqh, 1.25rem);
+  padding-block: .25rem;
+}
+
+.fpga-lecture .fpga-measurement-panel > svg {
+  max-height: min(15.25rem, 33cqh);
+}
+
+.fpga-lecture .fpga-measurements-grid {
+  grid-template-rows: min(9rem, 16cqh) auto;
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .fpga-lecture .fpga-measurement-stage {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: .8rem;
+    align-items: center;
+  }
+  .fpga-lecture .fpga-measurement-panel > svg { max-height: 34cqh; }
+  .fpga-lecture .fpga-measurements-grid { grid-template-rows: 22cqh auto; }
+}
+
+.fpga-lecture .lecture-result-profile {
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: center;
+  margin: 0 auto;
+  max-width: 68rem;
+}
+
+.lecture-result-profile svg { max-height: 82cqh; }
+.lecture-result-profile figcaption p { margin: 1em 0 0; }
+.lecture-result-profile .kv-profile-key { font-size: .92em; }
+
+.lecture-chip-profiles .kv-chip-profiles {
+  gap: .8rem 1.5rem;
+  max-width: 61rem;
+  margin-inline: auto;
+}
+
+.lecture-chip-profiles svg { max-height: 37cqh; }
+
+@container (max-width: 32rem) {
+  .fpga-lecture .lecture-result-profile,
+  .lecture-chip-profiles .kv-chip-profiles { grid-template-columns: 1fr; }
+  .lecture-chip-profiles svg { max-height: none; }
+}

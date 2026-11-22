@@ -1,0 +1,78 @@
+{
+  "archive_sha256": "3c51401ca84cdd7411c145b6148f11cd25b9b989c4df525f5b4b1fb134fa9d6d",
+  "attention_hierarchy": {
+    "candidate": {
+      "dsp": 5,
+      "logic_luts": 5544,
+      "lutram": 330,
+      "module": "attention",
+      "ramb18": 2,
+      "ramb36": 0,
+      "registers": 1409,
+      "srl": 0,
+      "total_luts": 5874,
+      "uram": 0
+    },
+    "control": {
+      "dsp": 5,
+      "logic_luts": 5568,
+      "lutram": 330,
+      "module": "attention",
+      "ramb18": 2,
+      "ramb36": 0,
+      "registers": 1406,
+      "srl": 0,
+      "total_luts": 5898,
+      "uram": 0
+    }
+  },
+  "bank_primitives": {
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[0].weights_reg_bram_0": "RAMB36E2",
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[1].weights_reg_bram_0": "RAMB36E2",
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[2].weights_reg_bram_0": "RAMB36E2",
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[3].weights_reg_bram_0": "RAMB36E2",
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[4].weights_reg_bram_0": "RAMB36E2",
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[5].weights_reg_bram_0": "RAMB36E2",
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[6].weights_reg_bram_0": "RAMB36E2",
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[7].weights_reg_bram_0": "RAMB36E2"
+  },
+  "firmware_sha256": "bdb9de86c20de87b2693d45247ca3a75dcdf700f6d41861bbfd2c018593c3c33",
+  "independent_receipt_sha256": "541291d4b0d41d5b860e3eadfa3afabffe8eaa8c06b8da553ff61a185b0f210c",
+  "lanes": 8,
+  "members": 318,
+  "metrics": {
+    "clock": "clk_pl_0 period_ns 20.000",
+    "drc_errors_or_critical_warnings": "0",
+    "fully_placed": "1",
+    "fully_routed": "1",
+    "hold_slack_ns": "0.013",
+    "native_no_clock": "0",
+    "partially_routed_nets": "0",
+    "routing_errors": "0",
+    "routing_gap_nets": "0",
+    "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+    "setup_slack_ns": "3.815",
+    "unclocked_active_pins": "0",
+    "unconstrained_internal_endpoints": "0",
+    "unrouted_nets": "0",
+    "unused_ps_clock_outputs": "0"
+  },
+  "overlay_sha256": "4ff5e2ee4e8a1bfe864a2102b178b8ef65a60b0c2aff24500b24dc40cddb3f89",
+  "passed": true,
+  "projection_primitives": {
+    "DSP48E2": 8,
+    "RAM32M16": 1,
+    "RAM32X1D": 2,
+    "RAMB36E2": 8,
+    "RAMD32": 18,
+    "RAMS32": 2
+  },
+  "resources": {
+    "bram": 38.0,
+    "dsp": 37.0,
+    "lut": 34769.0,
+    "register": 13652.0
+  },
+  "run_record_sha256": "e82ba627e0e88c5c3f377476f10f777f5b8a5a787c14f52bd8dd2d75f0f0574b",
+  "source_manifest_sha256": "0afa8f3230e6b4d7baba68d46da81323f6caf8463ec554f60adc3aeebf5c5ca2"
+}

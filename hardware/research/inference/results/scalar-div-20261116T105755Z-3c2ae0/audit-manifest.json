@@ -1,0 +1,68 @@
+{
+  "scope": "Independent exact-divider arithmetic, source, simulation, build, physical timing/energy and restoration audit",
+  "passed": true,
+  "run_sha256": "4d7c75c293ea94145b925f49d83ca8423c8e4754ca681019f192adc8e5b4e451",
+  "raw_manifest_sha256": "4c91f15b76ed450c944a0b4606406064abea94c70ba1238d5cc1764033a52b3d",
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/scalar-div-20261116T105755Z-3c2ae0-audit/artifact-verification.json": {
+      "bytes": 371,
+      "sha256": "1f5125c7cf6133a31887edc6f3818debb701c97d86464e4115bbffca70c4ccf0"
+    },
+    ".agents/runtime/hardware/inference/outputs/scalar-div-20261116T105755Z-3c2ae0-audit/audit.json": {
+      "bytes": 28696,
+      "sha256": "6fa0a741cdc399df68fb109ee77b3121cf7b79287c5894c85efd0e017fb71708"
+    },
+    ".agents/runtime/hardware/inference/outputs/scalar-div-20261116T105755Z-3c2ae0-audit/build-admission.json": {
+      "bytes": 979,
+      "sha256": "9ff920530d72fbb6b1eff34ed820f9ef714766704f6285beeada826cd7020c5a"
+    },
+    ".agents/runtime/hardware/inference/outputs/scalar-div-20261116T105755Z-3c2ae0-audit/counter-audit.json": {
+      "bytes": 7612,
+      "sha256": "73292c345575b42afbf5dfa4e3ce5d807e52bc08e890f97027e329043c8b46ed"
+    },
+    ".agents/runtime/hardware/inference/outputs/scalar-div-20261116T105755Z-3c2ae0-audit/counter-audit.py": {
+      "bytes": 1673,
+      "sha256": "94a28cc8a6ebbfc0b8af99a98d81588b01a577f25596579c2b4107fa647e30ed"
+    },
+    ".agents/runtime/hardware/inference/outputs/scalar-div-20261116T105755Z-3c2ae0-audit/derived-predictions.json": {
+      "bytes": 5669,
+      "sha256": "f35cc738042e27cbfc984d22ab65b7703d8c17ac1461d5bf6e3f23af59a83326"
+    },
+    ".agents/runtime/hardware/inference/outputs/scalar-div-20261116T105755Z-3c2ae0-audit/division-invariant.json": {
+      "bytes": 524,
+      "sha256": "5e2c1131361862743a22d30558e34c6d7d36dbfa962130110ac0b27c924a4a2a"
+    },
+    ".agents/runtime/hardware/inference/outputs/scalar-div-20261116T105755Z-3c2ae0-audit/division-invariant.py": {
+      "bytes": 2341,
+      "sha256": "812293b3af84b929c1dd3841c12949761a54f5139296dae4c3b40c080d6a6250"
+    },
+    ".agents/runtime/hardware/inference/outputs/scalar-div-20261116T105755Z-3c2ae0-audit/division-local-audit.json": {
+      "bytes": 3799,
+      "sha256": "5bb85db7b094e19c4105c0609b3f7807d9062ea60913cdef5bb2bea1361cbb0d"
+    },
+    ".agents/runtime/hardware/inference/outputs/scalar-div-20261116T105755Z-3c2ae0-audit/division-local-audit.py": {
+      "bytes": 2831,
+      "sha256": "d8ac54a58d4148268b50a5e3823311db7e8d9f997cf8cc68476451ef833e07f1"
+    },
+    ".agents/runtime/hardware/inference/outputs/scalar-div-20261116T105755Z-3c2ae0-audit/independent-audit.py": {
+      "bytes": 7516,
+      "sha256": "2af82a0c3ffdb2dfc5a96c3fe20092e17e8b24a784955c211d3d4f9df6838183"
+    },
+    ".agents/runtime/hardware/inference/outputs/scalar-div-20261116T105755Z-3c2ae0-audit/initial-files.json": {
+      "bytes": 530743,
+      "sha256": "df17cce6e05bba705772753f10520150c9af7911ca423acb5e7f546fe33aae2a"
+    },
+    ".agents/runtime/hardware/inference/outputs/scalar-div-20261116T105755Z-3c2ae0-audit/physical-admission.json": {
+      "bytes": 738,
+      "sha256": "c52d44bf9ad9ff9230b24aa19f99d2a1b89231fbfd5ef60d5fab94343b956aa2"
+    },
+    ".agents/runtime/hardware/inference/outputs/scalar-div-20261116T105755Z-3c2ae0-audit/record-consistency.json": {
+      "bytes": 91,
+      "sha256": "3433846e3141b8635d25399c3b87e60ed54e26062086042fd999f5e8808c3431"
+    },
+    ".agents/runtime/hardware/inference/outputs/scalar-div-20261116T105755Z-3c2ae0-audit/record-consistency.py": {
+      "bytes": 2432,
+      "sha256": "67f2a91da6f610a857fd09a2b19e4756a21e30670ca9c8da48776d67998a463f"
+    }
+  }
+}

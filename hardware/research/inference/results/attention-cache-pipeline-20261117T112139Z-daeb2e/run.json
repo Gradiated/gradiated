@@ -1,0 +1,2113 @@
+{
+  "artifacts": [
+    {
+      "bytes": 17388,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-20261117T112139Z-daeb2e/invocation.json",
+      "role": "invocation.json",
+      "sha256": "8c44f55a0c6f403b7b948213873a6d91b358f58daf72bd64f09de3030476987b"
+    },
+    {
+      "bytes": 30936,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-20261117T112139Z-daeb2e/source.patch",
+      "role": "Exact source delta relative to Git",
+      "sha256": "b688b0ec732f89abb19d4d45183ce94bc52936b68c7d2a4687abf9a1c86228a6"
+    },
+    {
+      "bytes": 2182,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-20261117T112139Z-daeb2e/workload.json",
+      "role": "workload.json",
+      "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+    },
+    {
+      "bytes": 58325,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-20261117T112139Z-daeb2e/result.json",
+      "role": "result.json",
+      "sha256": "7809205b48daa9105f4581f5332fa8ef48ae232c86f2c1b4a17b1f8c84a3a423"
+    },
+    {
+      "bytes": 9002,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-20261117T112139Z-daeb2e/cycle-audit.json",
+      "role": "Board cycle counters versus both full RTL arms",
+      "sha256": "f24c50e0ed4f07aa87d7d924e06443b9469781e55014c19773a79d064cc9b051"
+    },
+    {
+      "bytes": 365,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-20261117T112139Z-daeb2e/project-receipt.json",
+      "role": "project-receipt.json",
+      "sha256": "586b6d92aa88af3a4d56762c331d2303da6471646b45b271de0e82d17af08cfb"
+    },
+    {
+      "bytes": 97172,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-20261117T112139Z-daeb2e/project-state.json",
+      "role": "project-state.json",
+      "sha256": "32a5251e7baef5e446488dce5d2f14363a9523244d3be75727c3f49107e98208"
+    },
+    {
+      "bytes": 22486,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-20261117T112139Z-daeb2e/mac-gates.jsonl",
+      "role": "mac-gates.jsonl",
+      "sha256": "2de9179ff95e81e8b418c06092a627a3c0690ff3168596e2640b072fb1aea699"
+    },
+    {
+      "bytes": 52735,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-20261117T112139Z-daeb2e/evidence-manifest.json",
+      "role": "Full recovered raw capture inventory",
+      "sha256": "a91925496d1fab721b06247937de477f7f89b0547881be34b0db1888058cca92"
+    },
+    {
+      "bytes": 46663,
+      "path": "hardware/research/inference/results/attention-cache-pipeline-rtl-20261117T105443Z/run.json",
+      "role": "Exact paired attention RTL replay",
+      "sha256": "c3ffed691c1b1425cc8db6b9a0a049035ad6fd58317b3edaf37dfc4167f7b46d"
+    },
+    {
+      "bytes": 15320,
+      "path": "hardware/research/inference/results/attention-cache-pipeline-build-20261117T105651Z/run.json",
+      "role": "Routed attention cache pipeline report",
+      "sha256": "e82ba627e0e88c5c3f377476f10f777f5b8a5a787c14f52bd8dd2d75f0f0574b"
+    },
+    {
+      "bytes": 15108,
+      "path": "hardware/research/inference/results/ff-down-pipeline-build-20261117T000146Z/run.json",
+      "role": "Routed adopted down-projection control report",
+      "sha256": "5c3394e5d5f7c4b96ea651c1f568500518bb08a117f82c7e5a998af718ce3e22"
+    },
+    {
+      "bytes": 19925,
+      "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+      "role": "Reused original storage footprint baseline",
+      "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+    },
+    {
+      "bytes": 7906,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-20261117T112139Z-daeb2e/serial-qualification/manifest.json",
+      "role": "Pinned serial-link investigation and full archive checks",
+      "sha256": "d14993d2ab6d0029b86ed3da6abba71c57b7a2c9ccd44ab8ed9330f9a7781032"
+    },
+    {
+      "bytes": 1299,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-20261117T112139Z-daeb2e/serial-qualification/physical-after-staging/launch-receipt.json",
+      "role": "Independent post-stage board and serial state gate",
+      "sha256": "c6adfd7319557a0397db0c03e859aeb36fc0290313a12f02835595268b8016fc"
+    },
+    {
+      "bytes": 655,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-20261117T112139Z-daeb2e/serial-qualification/restore-serial-audit.json",
+      "role": "Fresh original state and serial counts after verified restoration",
+      "sha256": "526f6e9b336e27097e976d7d4f7f364e301e37fb0d250029d153622e1e0c7726"
+    }
+  ],
+  "completed_at": "2026-11-17T11:45:23.303138+00:00",
+  "conditions": {
+    "actual_physical_boot_id": "1a217c7b-33c8-4609-898a-8d56ea3f1ff2",
+    "cap_smokes": 2,
+    "compact_smokes": 3,
+    "development_effort": {
+      "ai_usage_cost": null,
+      "board_dispatch_to_restoration_seconds": 296.331214,
+      "engineering_attention_minutes": null
+    },
+    "diagnostic_requests": 3,
+    "failures": 0,
+    "firmware_switches": 5,
+    "incomplete_requests": 0,
+    "matched_pairs": 3,
+    "matched_request_cycles": [
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 9801277,
+          "first": 517573,
+          "last": 9693608
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 6444897,
+          "first": 432507,
+          "last": 6355324
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 17787379,
+          "first": 5958941,
+          "last": 17645522
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 6444897,
+          "first": 432507,
+          "last": 6355324
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 9801277,
+          "first": 517573,
+          "last": 9693608
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 17787379,
+          "first": 5958941,
+          "last": 17645522
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 9236437,
+          "first": 512347,
+          "last": 9137106
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 6128767,
+          "first": 428767,
+          "last": 6045424
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 16535149,
+          "first": 5667359,
+          "last": 16405722
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 6128767,
+          "first": 428767,
+          "last": 6045424
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 9236437,
+          "first": 512347,
+          "last": 9137106
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 16535149,
+          "first": 5667359,
+          "last": 16405722
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 6444897,
+          "first": 432507,
+          "last": 6355324
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 17787379,
+          "first": 5958941,
+          "last": 17645522
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 9801277,
+          "first": 517573,
+          "last": 9693608
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 17787379,
+          "first": 5958941,
+          "last": 17645522
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 6444897,
+          "first": 432507,
+          "last": 6355324
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 9801277,
+          "first": 517573,
+          "last": 9693608
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 6128767,
+          "first": 428767,
+          "last": 6045424
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 16535149,
+          "first": 5667359,
+          "last": 16405722
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 9236437,
+          "first": 512347,
+          "last": 9137106
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 16535149,
+          "first": 5667359,
+          "last": 16405722
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 6128767,
+          "first": 428767,
+          "last": 6045424
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 9236437,
+          "first": 512347,
+          "last": 9137106
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 17787379,
+          "first": 5958941,
+          "last": 17645522
+        },
+        "pair": 3
+      },
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 9801277,
+          "first": 517573,
+          "last": 9693608
+        },
+        "pair": 3
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 6444897,
+          "first": 432507,
+          "last": 6355324
+        },
+        "pair": 3
+      },
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 9801277,
+          "first": 517573,
+          "last": 9693608
+        },
+        "pair": 3
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 17787379,
+          "first": 5958941,
+          "last": 17645522
+        },
+        "pair": 3
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 6444897,
+          "first": 432507,
+          "last": 6355324
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 16535149,
+          "first": 5667359,
+          "last": 16405722
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 9236437,
+          "first": 512347,
+          "last": 9137106
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 6128767,
+          "first": 428767,
+          "last": 6045424
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 9236437,
+          "first": 512347,
+          "last": 9137106
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 16535149,
+          "first": 5667359,
+          "last": 16405722
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 6128767,
+          "first": 428767,
+          "last": 6045424
+        },
+        "pair": 3
+      }
+    ],
+    "matched_variants": [
+      "ff-down-pipeline-v1",
+      "attention-cache-pipeline-v1"
+    ],
+    "measured_arm_spi1_boundaries": {
+      "arms": {
+        "p1-candidate": {
+          "after": {
+            "pl0_hz": 50000000,
+            "spi1_enable_counts": [
+              0,
+              0,
+              0
+            ],
+            "spi1_enabled": false,
+            "spi1_hz": 199999998,
+            "state_sha256": "20db16ecdb05045dce75ea5d0cab64f8a4f29bfb643a4d8e157a7ef260ca565e"
+          },
+          "before": {
+            "pl0_hz": 50000000,
+            "spi1_enable_counts": [
+              0,
+              0,
+              0
+            ],
+            "spi1_enabled": false,
+            "spi1_hz": 199999998,
+            "state_sha256": "15edac6bc32ec0004e35d076a3e2c2285442bf27c21af46dca107ad99e6782b0"
+          }
+        },
+        "p1-control": {
+          "after": {
+            "pl0_hz": 50000000,
+            "spi1_enable_counts": [
+              0,
+              0,
+              0
+            ],
+            "spi1_enabled": false,
+            "spi1_hz": 199999998,
+            "state_sha256": "adb6e9adc1eaa94f231f23520dbdc090d03c2887b765851bb89f04d8c7213a06"
+          },
+          "before": {
+            "pl0_hz": 50000000,
+            "spi1_enable_counts": [
+              0,
+              0,
+              0
+            ],
+            "spi1_enabled": false,
+            "spi1_hz": 199999998,
+            "state_sha256": "9b60000285c8f8f79310675a088e7f988f8bb137110a2a7a1f803a6d2a12449b"
+          }
+        },
+        "p2-candidate": {
+          "after": {
+            "pl0_hz": 50000000,
+            "spi1_enable_counts": [
+              0,
+              0,
+              0
+            ],
+            "spi1_enabled": false,
+            "spi1_hz": 199999998,
+            "state_sha256": "20db16ecdb05045dce75ea5d0cab64f8a4f29bfb643a4d8e157a7ef260ca565e"
+          },
+          "before": {
+            "pl0_hz": 50000000,
+            "spi1_enable_counts": [
+              0,
+              0,
+              0
+            ],
+            "spi1_enabled": false,
+            "spi1_hz": 199999998,
+            "state_sha256": "15edac6bc32ec0004e35d076a3e2c2285442bf27c21af46dca107ad99e6782b0"
+          }
+        },
+        "p2-control": {
+          "after": {
+            "pl0_hz": 50000000,
+            "spi1_enable_counts": [
+              0,
+              0,
+              0
+            ],
+            "spi1_enabled": false,
+            "spi1_hz": 199999998,
+            "state_sha256": "23ba89de9bd83ce957dfcb1cf9cac65e2cd3404225dd9667328d5e7e29f99265"
+          },
+          "before": {
+            "pl0_hz": 50000000,
+            "spi1_enable_counts": [
+              0,
+              0,
+              0
+            ],
+            "spi1_enabled": false,
+            "spi1_hz": 199999998,
+            "state_sha256": "475f78fa48bd4988533c8a7dd7a7942a9f3237d7dfab27f8b2b41de529359a12"
+          }
+        },
+        "p3-candidate": {
+          "after": {
+            "pl0_hz": 50000000,
+            "spi1_enable_counts": [
+              1,
+              1,
+              1
+            ],
+            "spi1_enabled": true,
+            "spi1_hz": 199999998,
+            "state_sha256": "cfeda04ff66240f470e57a4705eed451e9431c61b3cabf41fd2f4a7d1daa1c76"
+          },
+          "before": {
+            "pl0_hz": 50000000,
+            "spi1_enable_counts": [
+              0,
+              0,
+              0
+            ],
+            "spi1_enabled": false,
+            "spi1_hz": 199999998,
+            "state_sha256": "45d4df218726faac353b5cf296b86f3e5c5a0d92659d77615e3e74b4ce4a47cc"
+          }
+        },
+        "p3-control": {
+          "after": {
+            "pl0_hz": 50000000,
+            "spi1_enable_counts": [
+              0,
+              0,
+              0
+            ],
+            "spi1_enabled": false,
+            "spi1_hz": 199999998,
+            "state_sha256": "23ba89de9bd83ce957dfcb1cf9cac65e2cd3404225dd9667328d5e7e29f99265"
+          },
+          "before": {
+            "pl0_hz": 50000000,
+            "spi1_enable_counts": [
+              0,
+              0,
+              0
+            ],
+            "spi1_enabled": false,
+            "spi1_hz": 199999998,
+            "state_sha256": "475f78fa48bd4988533c8a7dd7a7942a9f3237d7dfab27f8b2b41de529359a12"
+          }
+        }
+      },
+      "cause": "unconfirmed",
+      "enabled_boundaries": [
+        "p3-candidate/after"
+      ],
+      "measurement_scope": "Post-block enable activity also appears in both supplemental restoration captures.",
+      "when_during_interval": "unmeasured"
+    },
+    "measurement_arms": {
+      "p1-candidate": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.282390756,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 7138528096630,
+            "end_ns": 7139810487386,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 201,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 7132850310344,
+            "end_ns": 7133491059182,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 201,
+        "verified_output_tokens": 632
+      },
+      "p1-control": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.367630928,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 7081471460375,
+            "end_ns": 7082839091303,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 201,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 7075749974911,
+            "end_ns": 7076434100193,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 201,
+        "verified_output_tokens": 632
+      },
+      "p2-candidate": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.282500997,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 7166726450118,
+            "end_ns": 7168008951115,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 135,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 7161048841393,
+            "end_ns": 7161689626052,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 135,
+        "verified_output_tokens": 632
+      },
+      "p2-control": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.36781742,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 7212706908994,
+            "end_ns": 7214074726414,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 135,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 7206986467281,
+            "end_ns": 7207669924316,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 135,
+        "verified_output_tokens": 632
+      },
+      "p3-candidate": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.282413736,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 7286921295084,
+            "end_ns": 7288203708820,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 101,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 7281243730809,
+            "end_ns": 7281884546628,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 101,
+        "verified_output_tokens": 632
+      },
+      "p3-control": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.367456547,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 7240770170310,
+            "end_ns": 7242137626857,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 101,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 7235049833828,
+            "end_ns": 7235733272284,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 101,
+        "verified_output_tokens": 632
+      }
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "metric_names": [
+          "control.active_power",
+          "candidate.active_power"
+        ],
+        "state": "derived"
+      },
+      "cache_capacity": {
+        "reason": "No cache format or context limit change.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Board-host delivery boundary. No laptop or network request interval.",
+        "state": "not_measured"
+      },
+      "communication": {
+        "reason": "Both arms have the same accepted positions, skipped projections and scores. AXI polling and physical bandwidth remain unmeasured.",
+        "sources": [
+          "Native score contract",
+          "Both arms\u2019 scores_consumed and output counts"
+        ],
+        "state": "derived"
+      },
+      "completion_time": {
+        "metric_names": [
+          "control.encoded-fu2p2q.completion_ms",
+          "control.encoded-hello.completion_ms",
+          "control.encoded-max48.completion_ms",
+          "candidate.encoded-fu2p2q.completion_ms",
+          "candidate.encoded-hello.completion_ms",
+          "candidate.encoded-max48.completion_ms"
+        ],
+        "state": "derived"
+      },
+      "correctness": {
+        "sources": [
+          "autonomous-smoke/fullscore.json",
+          "autonomous-smoke/compact.json",
+          "autonomous-smoke/limit-1.json",
+          "autonomous-smoke/limit-0.json"
+        ],
+        "state": "measured"
+      },
+      "cross_device_comparison": {
+        "reason": "Both arms use one identified KV260.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "One boot for this matched pair series. Cross-boot suites are deferred.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "metric_names": [
+          "control.encoded-fu2p2q.decode_bytes_per_second",
+          "control.encoded-hello.decode_bytes_per_second",
+          "control.encoded-max48.decode_bytes_per_second",
+          "candidate.encoded-fu2p2q.decode_bytes_per_second",
+          "candidate.encoded-hello.decode_bytes_per_second",
+          "candidate.encoded-max48.decode_bytes_per_second"
+        ],
+        "state": "derived"
+      },
+      "energy_per_answer": {
+        "metric_names": [
+          "control.energy_per_answer",
+          "candidate.energy_per_answer"
+        ],
+        "state": "derived"
+      },
+      "estimated_cost": {
+        "reason": "No economic claim.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "metric_names": [
+          "control.idle_power",
+          "candidate.idle_power"
+        ],
+        "state": "derived"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Gross is primary. Retain signed values in raw artifacts.",
+        "sources": [
+          "Signed incremental_j in raw alignment results"
+        ],
+        "state": "derived"
+      },
+      "implementation_timing": {
+        "reason": "Exact control and candidate routed reports.",
+        "sources": [
+          {
+            "bytes": 15108,
+            "path": "hardware/research/inference/results/ff-down-pipeline-build-20261117T000146Z/run.json",
+            "role": "Routed adopted down-projection control report",
+            "sha256": "5c3394e5d5f7c4b96ea651c1f568500518bb08a117f82c7e5a998af718ce3e22"
+          },
+          {
+            "bytes": 15320,
+            "path": "hardware/research/inference/results/attention-cache-pipeline-build-20261117T105651Z/run.json",
+            "role": "Routed attention cache pipeline report",
+            "sha256": "e82ba627e0e88c5c3f377476f10f777f5b8a5a787c14f52bd8dd2d75f0f0574b"
+          }
+        ],
+        "state": "reused"
+      },
+      "long_stability": {
+        "reason": "Three short matched pairs, no long-run claim.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Original model/cache arithmetic is fixed. Both images use the same model, cache layout and input/output buffer capacity. Host peak memory is unmeasured.",
+        "sources": [
+          {
+            "bytes": 19925,
+            "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+            "role": "Reused original storage footprint baseline",
+            "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+          },
+          {
+            "bytes": 15108,
+            "path": "hardware/research/inference/results/ff-down-pipeline-build-20261117T000146Z/run.json",
+            "role": "Routed adopted down-projection control report",
+            "sha256": "5c3394e5d5f7c4b96ea651c1f568500518bb08a117f82c7e5a998af718ce3e22"
+          },
+          {
+            "bytes": 15320,
+            "path": "hardware/research/inference/results/attention-cache-pipeline-build-20261117T105651Z/run.json",
+            "role": "Routed attention cache pipeline report",
+            "sha256": "e82ba627e0e88c5c3f377476f10f777f5b8a5a787c14f52bd8dd2d75f0f0574b"
+          }
+        ],
+        "state": "derived"
+      },
+      "memory_bandwidth": {
+        "reason": "Unchanged memory footprint and operands. Physical interface bandwidth was outside this comparison.",
+        "sources": [
+          {
+            "bytes": 46663,
+            "path": "hardware/research/inference/results/attention-cache-pipeline-rtl-20261117T105443Z/run.json",
+            "role": "Exact paired attention RTL replay",
+            "sha256": "c3ffed691c1b1425cc8db6b9a0a049035ad6fd58317b3edaf37dfc4167f7b46d"
+          }
+        ],
+        "state": "not_measured"
+      },
+      "model_quality": {
+        "reason": "The frozen model and retained calculations are unchanged.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Reported clock verified at gates. Continuous clock/thermal traces unavailable.",
+        "sources": [
+          "Per-gate state/environment files",
+          "arms in conditions"
+        ],
+        "state": "measured"
+      },
+      "output_counts": {
+        "sources": [
+          "All six arm block.json files and candidate cap/compact receipts"
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "No area claim.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Scoped VCC_SOM observer used. Independent absolute calibration is outside scope.",
+        "state": "not_measured"
+      },
+      "prefill": {
+        "reason": "Physical end-to-end first byte is measured. Only the separate matched RTL replay splits the pre-projection prefix from final scoring.",
+        "sources": [
+          {
+            "bytes": 46663,
+            "path": "hardware/research/inference/results/attention-cache-pipeline-rtl-20261117T105443Z/run.json",
+            "role": "Exact paired attention RTL replay",
+            "sha256": "c3ffed691c1b1425cc8db6b9a0a049035ad6fd58317b3edaf37dfc4167f7b46d"
+          }
+        ],
+        "state": "not_measured"
+      },
+      "recovery": {
+        "reason": "Exact original research circuit and all 320 pinned BOS scores restored.",
+        "sources": [
+          {
+            "bytes": 58325,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-20261117T112139Z-daeb2e/result.json",
+            "role": "result.json",
+            "sha256": "7809205b48daa9105f4581f5332fa8ef48ae232c86f2c1b4a17b1f8c84a3a423"
+          }
+        ],
+        "state": "measured"
+      },
+      "repeatability": {
+        "sources": [
+          "mac-gates.jsonl",
+          "Per-case raw timestamps and three paired summaries"
+        ],
+        "state": "measured"
+      },
+      "resources": {
+        "reason": "Static reports for the exact routed circuits.",
+        "sources": [
+          {
+            "bytes": 15108,
+            "path": "hardware/research/inference/results/ff-down-pipeline-build-20261117T000146Z/run.json",
+            "role": "Routed adopted down-projection control report",
+            "sha256": "5c3394e5d5f7c4b96ea651c1f568500518bb08a117f82c7e5a998af718ce3e22"
+          },
+          {
+            "bytes": 15320,
+            "path": "hardware/research/inference/results/attention-cache-pipeline-build-20261117T105651Z/run.json",
+            "role": "Routed attention cache pipeline report",
+            "sha256": "e82ba627e0e88c5c3f377476f10f777f5b8a5a787c14f52bd8dd2d75f0f0574b"
+          }
+        ],
+        "state": "reused"
+      },
+      "serving_load": {
+        "reason": "Only the bounded fixed isolated circuit comparison was run.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Exact first, last and terminal board counts against both RTL arms. Phase attribution is from simulation.",
+        "sources": [
+          {
+            "bytes": 9002,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-20261117T112139Z-daeb2e/cycle-audit.json",
+            "role": "Board cycle counters versus both full RTL arms",
+            "sha256": "f24c50e0ed4f07aa87d7d924e06443b9469781e55014c19773a79d064cc9b051"
+          },
+          {
+            "bytes": 46663,
+            "path": "hardware/research/inference/results/attention-cache-pipeline-rtl-20261117T105443Z/run.json",
+            "role": "Exact paired attention RTL replay",
+            "sha256": "c3ffed691c1b1425cc8db6b9a0a049035ad6fd58317b3edaf37dfc4167f7b46d"
+          }
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "Setup retained separately, no cold-start comparison.",
+        "sources": [
+          "Per-arm load.json"
+        ],
+        "state": "measured"
+      },
+      "sustained_throughput": {
+        "metric_names": [
+          "control.verified_rate",
+          "candidate.verified_rate"
+        ],
+        "state": "derived"
+      },
+      "token_gaps": {
+        "reason": "No tail claim.",
+        "sources": [
+          "CPU-observed output_ns arrays in each block.json"
+        ],
+        "state": "measured"
+      },
+      "tokens_per_joule": {
+        "metric_names": [
+          "control.tokens_per_joule",
+          "candidate.tokens_per_joule"
+        ],
+        "state": "derived"
+      },
+      "ttft": {
+        "metric_names": [
+          "control.encoded-fu2p2q.ttft_ms",
+          "control.encoded-hello.ttft_ms",
+          "control.encoded-max48.ttft_ms",
+          "candidate.encoded-fu2p2q.ttft_ms",
+          "candidate.encoded-hello.ttft_ms",
+          "candidate.encoded-max48.ttft_ms"
+        ],
+        "state": "derived"
+      },
+      "workload_coverage": {
+        "reason": "Historical fixed three-prompt workload, exact common reference pins.",
+        "sources": [
+          {
+            "bytes": 2182,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-20261117T112139Z-daeb2e/workload.json",
+            "role": "workload.json",
+            "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+          }
+        ],
+        "state": "reused"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "module_rail_alignment": [
+      {
+        "candidate": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 3.9742922853055527,
+              "gross_j_per_completion": 0.6623820475509254,
+              "gross_j_per_output_byte": 0.006288437160293596,
+              "idle_w": [
+                3.014882390122308,
+                3.0102505941699986
+              ],
+              "incremental_j": 0.11100486394197873,
+              "incremental_j_per_completion": 0.018500810656996453,
+              "incremental_j_per_output_byte": 0.0001756406075031309
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 3.9725968006572696,
+              "gross_j_per_completion": 0.6620994667762116,
+              "gross_j_per_output_byte": 0.00628575443141973,
+              "idle_w": [
+                3.014632394155,
+                3.0103034145853
+              ],
+              "incremental_j": 0.10943580734629732,
+              "incremental_j_per_completion": 0.018239301224382887,
+              "incremental_j_per_output_byte": 0.00017315792301629324
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 3.9702447644200003,
+              "gross_j_per_completion": 0.6617074607366668,
+              "gross_j_per_output_byte": 0.0062820328550949375,
+              "idle_w": [
+                3.015005983644999,
+                3.010250594169999
+              ],
+              "incremental_j": 0.10687809546092586,
+              "incremental_j_per_completion": 0.01781301591015431,
+              "incremental_j_per_output_byte": 0.00016911091053943965
+            },
+            "read_end": {
+              "gross_j": 3.9742805742037497,
+              "gross_j_per_completion": 0.662380095700625,
+              "gross_j_per_output_byte": 0.006288418630069224,
+              "idle_w": [
+                3.014887794442729,
+                3.0102507097799993
+              ],
+              "incremental_j": 0.1109896134863031,
+              "incremental_j_per_completion": 0.018498268914383848,
+              "incremental_j_per_output_byte": 0.0001756164770352897
+            },
+            "read_start": {
+              "gross_j": 3.9743038830879827,
+              "gross_j_per_completion": 0.6623839805146637,
+              "gross_j_per_output_byte": 0.006288455511215162,
+              "idle_w": [
+                3.0148769817121424,
+                3.0102504785549997
+              ],
+              "incremental_j": 0.11102000370381226,
+              "incremental_j_per_completion": 0.018503333950635376,
+              "incremental_j_per_output_byte": 0.00017566456282248777
+            }
+          }
+        },
+        "control": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 4.260881535562298,
+              "gross_j_per_completion": 0.7101469225937164,
+              "gross_j_per_output_byte": 0.006741901163864396,
+              "idle_w": [
+                3.010497488287052,
+                3.0118015352612613
+              ],
+              "incremental_j": 0.14274033442786038,
+              "incremental_j_per_completion": 0.02379005573797673,
+              "incremental_j_per_output_byte": 0.00022585495953775377
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 4.25930172317,
+              "gross_j_per_completion": 0.7098836205283333,
+              "gross_j_per_output_byte": 0.006739401460712026,
+              "idle_w": [
+                3.0107502453327593,
+                3.011749598987499
+              ],
+              "incremental_j": 0.14102319768621463,
+              "incremental_j_per_completion": 0.023503866281035773,
+              "incremental_j_per_output_byte": 0.00022313797102249151
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 4.257166969855001,
+              "gross_j_per_completion": 0.7095278283091669,
+              "gross_j_per_output_byte": 0.006736023686479433,
+              "idle_w": [
+                3.010376463479389,
+                3.011931930862264
+              ],
+              "incremental_j": 0.13901936082716837,
+              "incremental_j_per_completion": 0.02316989347119473,
+              "incremental_j_per_output_byte": 0.00021996734308096262
+            },
+            "read_end": {
+              "gross_j": 4.260869775488666,
+              "gross_j_per_completion": 0.7101449625814443,
+              "gross_j_per_output_byte": 0.006741882556152952,
+              "idle_w": [
+                3.01049574745659,
+                3.0118018107906535
+              ],
+              "incremental_j": 0.14272957634975914,
+              "incremental_j_per_completion": 0.023788262724959857,
+              "incremental_j_per_output_byte": 0.00022583793726227712
+            },
+            "read_start": {
+              "gross_j": 4.260893201666901,
+              "gross_j_per_completion": 0.7101488669444835,
+              "gross_j_per_output_byte": 0.006741919622890667,
+              "idle_w": [
+                3.0104992393844903,
+                3.011801263946217
+              ],
+              "incremental_j": 0.14275098863438007,
+              "incremental_j_per_completion": 0.023791831439063344,
+              "incremental_j_per_output_byte": 0.00022587181745946215
+            }
+          }
+        }
+      },
+      {
+        "candidate": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 3.9750261507979685,
+              "gross_j_per_completion": 0.662504358466328,
+              "gross_j_per_output_byte": 0.006289598339870204,
+              "idle_w": [
+                3.0086259945061307,
+                3.0088032088299808
+              ],
+              "incremental_j": 0.11634667447022906,
+              "incremental_j_per_completion": 0.019391112411704842,
+              "incremental_j_per_output_byte": 0.00018409283935162825
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 3.9730688938,
+              "gross_j_per_completion": 0.6621781489666666,
+              "gross_j_per_output_byte": 0.006286501414240506,
+              "idle_w": [
+                3.0084997431514218,
+                3.0088784687881778
+              ],
+              "incremental_j": 0.11442211573069283,
+              "incremental_j_per_completion": 0.01907035262178214,
+              "incremental_j_per_output_byte": 0.00018104765147261524
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 3.97111979191407,
+              "gross_j_per_completion": 0.661853298652345,
+              "gross_j_per_output_byte": 0.006283417392269099,
+              "idle_w": [
+                3.008623322640317,
+                3.00874988787
+              ],
+              "incremental_j": 0.1124762210137833,
+              "incremental_j_per_completion": 0.018746036835630548,
+              "incremental_j_per_output_byte": 0.00017796870413573307
+            },
+            "read_end": {
+              "gross_j": 3.9750197367024724,
+              "gross_j_per_completion": 0.662503289450412,
+              "gross_j_per_output_byte": 0.0062895881909849245,
+              "idle_w": [
+                3.008626611533902,
+                3.0088025688819258
+              ],
+              "incremental_j": 0.1163402750723761,
+              "incremental_j_per_completion": 0.019390045845396015,
+              "incremental_j_per_output_byte": 0.0001840827137221141
+            },
+            "read_start": {
+              "gross_j": 3.975032402992564,
+              "gross_j_per_completion": 0.6625054004987606,
+              "gross_j_per_output_byte": 0.006289608232583171,
+              "idle_w": [
+                3.0086253697870218,
+                3.0088038520289953
+              ],
+              "incremental_j": 0.11635291481457566,
+              "incremental_j_per_completion": 0.019392152469095942,
+              "incremental_j_per_output_byte": 0.00018410271331420198
+            }
+          }
+        },
+        "control": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 4.254598198223438,
+              "gross_j_per_completion": 0.7090996997039064,
+              "gross_j_per_output_byte": 0.006731959174404174,
+              "idle_w": [
+                3.0163760223307206,
+                3.0155161088683693
+              ],
+              "incremental_j": 0.12933463191591787,
+              "incremental_j_per_completion": 0.02155577198598631,
+              "incremental_j_per_output_byte": 0.0002046434049302498
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 4.253155376056293,
+              "gross_j_per_completion": 0.7088592293427155,
+              "gross_j_per_output_byte": 0.006729676227937173,
+              "idle_w": [
+                3.0161260332399995,
+                3.015714606734942
+              ],
+              "incremental_j": 0.12792702504545694,
+              "incremental_j_per_completion": 0.021321170840909492,
+              "incremental_j_per_output_byte": 0.0002024161788693939
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 4.24991837935,
+              "gross_j_per_completion": 0.7083197298916667,
+              "gross_j_per_output_byte": 0.006724554397705697,
+              "idle_w": [
+                3.0163729218898165,
+                3.0155517897682906
+              ],
+              "incremental_j": 0.12463253098278315,
+              "incremental_j_per_completion": 0.020772088497130525,
+              "incremental_j_per_output_byte": 0.00019720337180820119
+            },
+            "read_end": {
+              "gross_j": 4.254585814344753,
+              "gross_j_per_completion": 0.7090976357241255,
+              "gross_j_per_output_byte": 0.00673193957965942,
+              "idle_w": [
+                3.0163767787661784,
+                3.0155157210828585
+              ],
+              "incremental_j": 0.12932199591432347,
+              "incremental_j_per_completion": 0.021553665985720578,
+              "incremental_j_per_output_byte": 0.00020462341125684094
+            },
+            "read_start": {
+              "gross_j": 4.254610455735452,
+              "gross_j_per_completion": 0.7091017426225753,
+              "gross_j_per_output_byte": 0.006731978569201664,
+              "idle_w": [
+                3.016375255721612,
+                3.0155165014519967
+              ],
+              "incremental_j": 0.12934714522721524,
+              "incremental_j_per_completion": 0.021557857537869207,
+              "incremental_j_per_output_byte": 0.00020466320447344184
+            }
+          }
+        }
+      },
+      {
+        "candidate": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 3.989289686981131,
+              "gross_j_per_completion": 0.6648816144968551,
+              "gross_j_per_output_byte": 0.006312167226235967,
+              "idle_w": [
+                3.0159966127717293,
+                3.0159242751087563
+              ],
+              "incremental_j": 0.12158058643950564,
+              "incremental_j_per_completion": 0.020263431073250942,
+              "incremental_j_per_output_byte": 0.00019237434563212918
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 3.9890139007580223,
+              "gross_j_per_completion": 0.664835650126337,
+              "gross_j_per_output_byte": 0.006311730855629782,
+              "idle_w": [
+                3.016002336925732,
+                3.0165604077543446
+              ],
+              "incremental_j": 0.12089323722822654,
+              "incremental_j_per_completion": 0.020148872871371088,
+              "incremental_j_per_output_byte": 0.00019128676776618124
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 3.985066627665934,
+              "gross_j_per_completion": 0.6641777712776556,
+              "gross_j_per_output_byte": 0.006305485170357491,
+              "idle_w": [
+                3.0157494951099997,
+                3.0159471337585573
+              ],
+              "incremental_j": 0.11750132354296783,
+              "incremental_j_per_completion": 0.019583553923827973,
+              "incremental_j_per_output_byte": 0.00018591981573254403
+            },
+            "read_end": {
+              "gross_j": 3.9892740578940145,
+              "gross_j_per_completion": 0.6648790096490024,
+              "gross_j_per_output_byte": 0.006312142496667744,
+              "idle_w": [
+                3.0159942350134306,
+                3.0159229761139246
+              ],
+              "incremental_j": 0.12156731491174799,
+              "incremental_j_per_completion": 0.020261219151958,
+              "incremental_j_per_output_byte": 0.0001923533463793481
+            },
+            "read_start": {
+              "gross_j": 3.989305127763066,
+              "gross_j_per_completion": 0.664884187960511,
+              "gross_j_per_output_byte": 0.006312191657852952,
+              "idle_w": [
+                3.0159989959681752,
+                3.0159255913171035
+              ],
+              "incremental_j": 0.1215936551376795,
+              "incremental_j_per_completion": 0.02026560918961325,
+              "incremental_j_per_output_byte": 0.00019239502395202452
+            }
+          }
+        },
+        "control": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 4.249993816979967,
+              "gross_j_per_completion": 0.7083323028299945,
+              "gross_j_per_output_byte": 0.0067246737610442515,
+              "idle_w": [
+                3.0227582911083393,
+                3.022736439546221
+              ],
+              "incremental_j": 0.11651814233617674,
+              "incremental_j_per_completion": 0.019419690389362792,
+              "incremental_j_per_output_byte": 0.00018436414926610245
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 4.24802355103,
+              "gross_j_per_completion": 0.7080039251716667,
+              "gross_j_per_output_byte": 0.0067215562516297475,
+              "idle_w": [
+                3.0225114723646795,
+                3.0225699140682134
+              ],
+              "incremental_j": 0.11483049151725222,
+              "incremental_j_per_completion": 0.01913841525287537,
+              "incremental_j_per_output_byte": 0.00018169381569185477
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 4.246305791289999,
+              "gross_j_per_completion": 0.7077176318816666,
+              "gross_j_per_output_byte": 0.006718838277357594,
+              "idle_w": [
+                3.023137874664227,
+                3.0227520418524993
+              ],
+              "incremental_j": 0.11255991689895861,
+              "incremental_j_per_completion": 0.018759986149826435,
+              "incremental_j_per_output_byte": 0.00017810113433379526
+            },
+            "read_end": {
+              "gross_j": 4.249986471188689,
+              "gross_j_per_completion": 0.7083310785314482,
+              "gross_j_per_output_byte": 0.006724662137956786,
+              "idle_w": [
+                3.0227659167962764,
+                3.022738344036227
+              ],
+              "incremental_j": 0.11650428049278805,
+              "incremental_j_per_completion": 0.01941738008213134,
+              "incremental_j_per_output_byte": 0.00018434221596960135
+            },
+            "read_start": {
+              "gross_j": 4.250001073062706,
+              "gross_j_per_completion": 0.7083335121771177,
+              "gross_j_per_output_byte": 0.006724685242187826,
+              "idle_w": [
+                3.0227506778513473,
+                3.02273453282987
+              ],
+              "incremental_j": 0.11653190749385356,
+              "incremental_j_per_completion": 0.019421984582308927,
+              "incremental_j_per_output_byte": 0.0001843859295788822
+            }
+          }
+        }
+      }
+    ],
+    "original_restored": true,
+    "restoration_ancillary_clock_observation": {
+      "all_clock_rates_unchanged": true,
+      "cause": "unconfirmed",
+      "changed_rows": {
+        "iopll": [
+          1,
+          1,
+          1,
+          "Y",
+          "Y"
+        ],
+        "lpd_lsbus": [
+          1,
+          1,
+          0,
+          "Y",
+          "Y"
+        ],
+        "spi1_ref": [
+          1,
+          1,
+          1,
+          "N",
+          "Y"
+        ],
+        "spi1_ref_div1": [
+          1,
+          1,
+          1,
+          "Y",
+          "Y"
+        ],
+        "spi1_ref_div2": [
+          1,
+          1,
+          1,
+          "Y",
+          "Y"
+        ],
+        "spi1_ref_mux": [
+          1,
+          1,
+          1,
+          "Y",
+          "Y"
+        ]
+      },
+      "exact_shared_state_equal": false,
+      "inference_clock_unchanged_hz": 50000000,
+      "original_research_restoration_gate_passed": true,
+      "restoration_gate_state_sha256": "3a2018eef49e1d5e4e541f9cf3c29232da0e54c996c953c68ed63dfe9b0a595f",
+      "serial_health_passed": true,
+      "supplemental_first_state_sha256": "37925bae0293dfffd3557daacbcfe9b07dda1dd9b596937bc8d00722702a5b5d",
+      "supplemental_repeat_state_sha256": "37925bae0293dfffd3557daacbcfe9b07dda1dd9b596937bc8d00722702a5b5d"
+    },
+    "scored_requests": 36,
+    "serial_link_qualification": {
+      "boot_id": "1a217c7b-33c8-4609-898a-8d56ea3f1ff2",
+      "canary_bytes": 131072,
+      "energy_scope": "Both USB companion hubs absent on both arms. Compare within this boot.",
+      "group_frames": 32,
+      "matched_usb2_peripheral_hub_present": false,
+      "matched_usb3_peripheral_hub_present": false,
+      "new_uart_errors": 0,
+      "physical_preflight": "Pass after exact whole-archive UART transfer",
+      "prior_uart_overruns": 0,
+      "test_storage": "SD card"
+    },
+    "timeouts": 0,
+    "warmups": 18
+  },
+  "correctness": {
+    "evidence": "Exact full-score diagnostics, compact and capped checks, all 36 timed and 18 warm-up requests, and first/last/terminal cycle counters passed. Restored original firmware and weights matched all 320 BOS scores.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "comparison_firmware": {
+        "candidate": "bdb9de86c20de87b2693d45247ca3a75dcdf700f6d41861bbfd2c018593c3c33",
+        "control": "dbfa399e2a73a74d99032eb3970f322842da5b58b143d5b90e91abc67ca2d0b0",
+        "stock_restored": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0"
+      },
+      "dfx_service": "runtime inactive, boot enablement preserved",
+      "final_state": "Original firmware and original weights restored, 320 original BOS scores verified",
+      "firmware_identity_scope": "Initial and restored stock firmware. Timed images are listed in comparison_firmware.",
+      "firmware_name": "gradiated-tiny-50mhz.bit.bin",
+      "firmware_sha256": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0",
+      "fpga_manager_flags": 0,
+      "initial_state_sha256": "32a5251e7baef5e446488dce5d2f14363a9523244d3be75727c3f49107e98208",
+      "kernel_build": "#16-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 16 05:06:58 UTC 2025",
+      "kernel_release": "6.8.0-1015-xilinx",
+      "model": "ZynqMP KV260 revB",
+      "physical_unit": "KV260 USB bridge XFL1RXOM0IWQ",
+      "pl0_rate_source": "Linux clock framework",
+      "pl0_reported_hz": 50000000,
+      "qualified_project_state_sha256": "32a5251e7baef5e446488dce5d2f14363a9523244d3be75727c3f49107e98208",
+      "reset_dt_id": 119,
+      "system_boot_id": "1a217c7b-33c8-4609-898a-8d56ea3f1ff2",
+      "transformer_map": {
+        "base": 2684354560,
+        "bytes": 4096,
+        "device": "/dev/uio4"
+      },
+      "verified_state_sha256": "3a2018eef49e1d5e4e541f9cf3c29232da0e54c996c953c68ed63dfe9b0a595f"
+    },
+    "configuration_sha256": "ce2f913899cded16f4e86b425de3d51706b67f8e2f4eb4d201a4cb1772b2f201",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-attention-cache-pipeline-v1",
+  "id": "attention-cache-pipeline-20261117T112139Z-daeb2e",
+  "implementation": {
+    "id": "kv260-attention-cache-pipeline-v1",
+    "sha256": "99f21768d656769d21e6702e23b77b03d38a128551d3a248cc7764a3ca8489b7"
+  },
+  "limitations": [
+    "Single physical KV260 and one board boot with three fixed requests and matched repeats.",
+    "Power covers VCC_SOM module rail only. Active blocks include the same verification and request gaps; whole-board input energy was not measured.",
+    "The original firmware and weights passed functional BOS checking. Full configuration or weight-memory readback was outside scope.",
+    "Two supplemental post-restore snapshots show six changed SPI1 clock enable/count rows. All clock rates, original 50 MHz inference and final UART checks agree.",
+    "The third candidate block ended with SPI1 enabled. Other captured arm boundaries show it disabled. Its timing within sampled windows is unknown."
+  ],
+  "metrics": [
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-fu2p2q.completion_ms",
+      "samples": [
+        196.550836,
+        196.242042,
+        196.304983,
+        196.268443,
+        196.273423,
+        196.238563
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "control.encoded-fu2p2q.decode_bytes_per_second",
+      "samples": [
+        659.3194684261306,
+        659.3200037209624,
+        659.3193211303898,
+        659.3201833502953,
+        659.3206144610937,
+        659.3195366851547
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-fu2p2q.ttft_ms",
+      "samples": [
+        10.875029,
+        10.566255,
+        10.629236,
+        10.592646,
+        10.597936,
+        10.563116
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "control.encoded-fu2p2q.verified_ms",
+      "samples": [
+        197.263603,
+        196.905569,
+        196.94778,
+        196.865199,
+        196.902249,
+        196.817149
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-hello.completion_ms",
+      "samples": [
+        129.155722,
+        129.119711,
+        129.465515,
+        129.132492,
+        129.129952,
+        129.122681
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "control.encoded-hello.decode_bytes_per_second",
+      "samples": [
+        751.3237755100275,
+        751.3250440232156,
+        751.3235218079038,
+        751.3231412550397,
+        751.3254245780073,
+        751.324352682997
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-hello.ttft_ms",
+      "samples": [
+        8.906889,
+        8.871128,
+        9.216932,
+        8.883779,
+        8.881399,
+        8.874089
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "control.encoded-hello.verified_ms",
+      "samples": [
+        129.698217,
+        129.618856,
+        130.131872,
+        129.623367,
+        129.645657,
+        129.608006
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-max48.completion_ms",
+      "samples": [
+        356.251343,
+        356.282133,
+        356.253783,
+        356.244893,
+        356.577157,
+        356.223422
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "control.encoded-max48.decode_bytes_per_second",
+      "samples": [
+        440.6715015660652,
+        440.67155812666635,
+        440.67161657263614,
+        440.6721614406485,
+        440.6720124973556,
+        440.67223685501244
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-max48.ttft_ms",
+      "samples": [
+        119.680307,
+        119.711357,
+        119.682907,
+        119.674126,
+        120.006211,
+        119.652766
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "control.encoded-max48.verified_ms",
+      "samples": [
+        356.851939,
+        356.877819,
+        356.9736,
+        356.825708,
+        357.298104,
+        356.781348
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "control.active_power",
+      "samples": [
+        3.1155200195664907,
+        3.1105015450259716,
+        3.107955295767045
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Average power per matched two-second idle interval, before and after each active block.",
+      "name": "control.idle_power",
+      "samples": [
+        3.010497488287052,
+        3.0118015352612613,
+        3.0163760223307206,
+        3.0155161088683693,
+        3.0227582911083393,
+        3.022736439546221
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "control.energy_per_answer",
+      "samples": [
+        0.7101469225937164,
+        0.7090996997039064,
+        0.7083323028299945
+      ],
+      "unit": "J/verified completion"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "control.tokens_per_joule",
+      "samples": [
+        148.3261139098054,
+        148.54516702985012,
+        148.70609869477346
+      ],
+      "unit": "output byte tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output count divided by first-admission-to-last-verification block wall time.",
+      "name": "control.verified_rate",
+      "samples": [
+        462.1129773104985,
+        462.0499715524898,
+        462.17190695127806
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-fu2p2q.completion_ms",
+      "samples": [
+        185.253963,
+        184.946709,
+        184.983881,
+        184.98015,
+        184.98395,
+        184.94652
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "candidate.encoded-fu2p2q.decode_bytes_per_second",
+      "samples": [
+        701.4623896591689,
+        701.46201960562,
+        701.46201960562,
+        701.4629183077735,
+        701.4622676634503,
+        701.4617796810002
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-fu2p2q.ttft_ms",
+      "samples": [
+        10.770878,
+        10.463434,
+        10.500535,
+        10.497195,
+        10.500925,
+        10.463135
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "candidate.encoded-fu2p2q.verified_ms",
+      "samples": [
+        186.032011,
+        185.513155,
+        185.578337,
+        185.572616,
+        185.603576,
+        185.540716
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-hello.completion_ms",
+      "samples": [
+        122.838419,
+        122.816489,
+        123.107721,
+        122.870929,
+        122.811078,
+        122.818908
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "candidate.encoded-hello.decode_bytes_per_second",
+      "samples": [
+        792.2795720664799,
+        792.2776043159652,
+        792.2755589942491,
+        792.2802068267955,
+        792.2791488935012,
+        792.2785211877487
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-hello.ttft_ms",
+      "samples": [
+        8.837668,
+        8.815579,
+        9.106511,
+        8.870088,
+        8.810288,
+        8.818368
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "candidate.encoded-hello.verified_ms",
+      "samples": [
+        123.449915,
+        123.330544,
+        123.760278,
+        123.399724,
+        123.320243,
+        123.480045
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-max48.completion_ms",
+      "samples": [
+        331.250743,
+        331.200442,
+        331.218832,
+        331.199613,
+        331.562766,
+        331.178843
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "candidate.encoded-max48.decode_bytes_per_second",
+      "samples": [
+        479.5841761210401,
+        479.58428777202823,
+        479.58424311162673,
+        479.5841761210401,
+        479.58368485731,
+        479.58444408349897
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-max48.ttft_ms",
+      "samples": [
+        113.893009,
+        113.842588,
+        113.861058,
+        113.842119,
+        114.204912,
+        113.821199
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "candidate.encoded-max48.verified_ms",
+      "samples": [
+        331.845609,
+        331.797508,
+        331.852289,
+        331.89413,
+        332.275913,
+        331.794089
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "candidate.active_power",
+      "samples": [
+        3.099127365594916,
+        3.099433185702208,
+        3.1107664983566043
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Average power per matched two-second idle interval, before and after each active block.",
+      "name": "candidate.idle_power",
+      "samples": [
+        3.014882390122308,
+        3.0102505941699986,
+        3.0086259945061307,
+        3.0088032088299808,
+        3.0159966127717293,
+        3.0159242751087563
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "candidate.energy_per_answer",
+      "samples": [
+        0.6623820475509254,
+        0.662504358466328,
+        0.6648816144968551
+      ],
+      "unit": "J/verified completion"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "candidate.tokens_per_joule",
+      "samples": [
+        159.02202320064399,
+        158.9926647081627,
+        158.42419317466562
+      ],
+      "unit": "output byte tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output count divided by first-admission-to-last-verification block wall time.",
+      "name": "candidate.verified_rate",
+      "samples": [
+        492.8295038333854,
+        492.7871412797038,
+        492.8206726569248
+      ],
+      "unit": "output byte tokens/s"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-attention-cache-pipeline-v1",
+    "measurement_boundary": "Board CPU request admission before encoding/clear through first/last useful byte and stop/drain. Six-request gross VCC_SOM block energy ends after verification. Load, switching, full-score diagnostics and UART export excluded.",
+    "quality_gate": "Exact full-score diagnostics and same exact capped and uncapped completions and stops.",
+    "sha256": "630ab6a274e9bf2d61a9726bc2788dc5d43f8fb58515c65b1bf4fd0f424997fa",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Three exact requests per arm with loaded weights."
+  },
+  "quality": {
+    "evidence": "Frozen model weights, numerical rules and decoding unchanged. Scope limited to the fixed cases.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "b688b0ec732f89abb19d4d45183ce94bc52936b68c7d2a4687abf9a1c86228a6"
+  },
+  "started_at": "2026-11-17T11:40:26.971924+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-three-prompts-attention-cache-pipeline-pairs-v1",
+    "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+  }
+}

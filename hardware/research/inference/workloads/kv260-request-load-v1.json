@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "id": "kv260-request-load-v1",
+  "implementation": "scalar-div-v1",
+  "model": "chip-joke-text-20261109",
+  "frozen_references_sha256": "33d290aed332af9e8b100a708222796d53f82529bb9c55d5d9ed13606cb0d367",
+  "cases": [
+    "encoded-hello",
+    "encoded-fu2p2q",
+    "encoded-max48"
+  ],
+  "window_s": 60,
+  "drain_s": 10,
+  "warmups_per_case": 1,
+  "max_output_tokens": 255,
+  "queue_capacity_waiting": 4,
+  "worker_count": 1,
+  "queue_expiry_ms": 2000,
+  "service_timeout_ms": 3000,
+  "max_offer_slip_ms": 50,
+  "slo": {
+    "first_byte_ms": 400,
+    "verified_completion_ms": 1500,
+    "min_fraction_of_offered": 0.95,
+    "max_waiting_at_offer_end": 1,
+    "max_late_minus_early_mean_waiting": 1.0
+  },
+  "scenarios": {
+    "steady-1": {
+      "rate_per_s": 1,
+      "simultaneous": 1
+    },
+    "steady-3": {
+      "rate_per_s": 3,
+      "simultaneous": 1
+    },
+    "steady-5": {
+      "rate_per_s": 5,
+      "simultaneous": 1
+    },
+    "burst-3": {
+      "rate_per_s": 3,
+      "simultaneous": 4
+    }
+  },
+  "scenario_orders": [
+    [
+      "steady-1",
+      "steady-3",
+      "steady-5",
+      "burst-3"
+    ],
+    [
+      "steady-3",
+      "burst-3",
+      "steady-1",
+      "steady-5"
+    ],
+    [
+      "burst-3",
+      "steady-5",
+      "steady-3",
+      "steady-1"
+    ]
+  ],
+  "power": {
+    "window_s": 77,
+    "period_ms": 50,
+    "max_gap_ms": 75
+  }
+}

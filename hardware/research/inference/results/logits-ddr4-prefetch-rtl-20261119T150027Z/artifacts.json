@@ -1,0 +1,36 @@
+{
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-rtl-20261119T150027Z/matched.json": {
+      "bytes": 16406,
+      "sha256": "050c791b0802438273a9be5f20050ae2468a92e4fa8161aea1f3a2f22a24a4c7"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-rtl-20261119T150027Z/simulation.tar.gz": {
+      "bytes": 18865319,
+      "sha256": "a4aa05d4acce467ad6a5cec56d54399f8a3af8e0129c86446f229011cad55915"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-rtl-20261119T150027Z/source-closure.json": {
+      "bytes": 46052,
+      "sha256": "3182c2692767fd800a5597552dd3223c3cbe5416efa1f2316fbd386b86b22e16"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-rtl-20261119T150027Z/source.patch": {
+      "bytes": 6371,
+      "sha256": "91b2c03da670b6d6ba784d90981e1db1a63f4255e438d9bc121158d306de2dd0"
+    },
+    "hardware/research/inference/experiments/kv260-logits-ddr4-prefetch-v1.md": {
+      "bytes": 5658,
+      "sha256": "b2bc721c50ea0ea13e8f6c5151a9129fd9ed6d7006963999d161a41bf7040fc6"
+    },
+    "hardware/research/inference/implementations/kv260/rtl/toolchain.json": {
+      "bytes": 937,
+      "sha256": "b6a35af5636cca4a2f9bb82135a716873c8bb1abf6926504f2e425ea600df693"
+    },
+    "hardware/research/inference/results/attention-exp-pair-v2-rtl-20261117T230104Z/run.json": {
+      "bytes": 23465,
+      "sha256": "db83294738d25d4a079ca3b92276204e812d1f7c91410ba4359bfe0b37006994"
+    },
+    "hardware/research/inference/results/logits-ddr4-burst-rtl-20261119T120140Z/run.json": {
+      "bytes": 15418,
+      "sha256": "e60390db9b0f3c8f2c70e8d7a888d48af51b0be32ac40743935ae90c8ef6b86e"
+    }
+  }
+}

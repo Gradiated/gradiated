@@ -1,0 +1,1646 @@
+{
+  "artifacts": [
+    {
+      "bytes": 10044996,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/simulation.tar.gz",
+      "role": "Exact candidate replay, reused adopted traces and newly measured dense arms",
+      "sha256": "9f544f2a1bf015105a0bf01f173ca71eecd284210e5b172af9e3126963c71faf"
+    },
+    {
+      "bytes": 18228,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/source.patch",
+      "role": "One-array variant and protocol",
+      "sha256": "771e501681e014fc832219debcd53afecc35bcb6f85c04b63ff6fc5dd407f37c"
+    },
+    {
+      "bytes": 30810,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/source-closure.json",
+      "role": "Exact inputs and returned trace file hashes",
+      "sha256": "069b42eb2d6d531d3d2e343ce7c79dc6bf4a2232fb43908a18449c0f46619e91"
+    },
+    {
+      "bytes": 15421,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/model-results.json",
+      "role": "Matched adopted and observed candidate model boundary counters",
+      "sha256": "b08111f041c9acf060753fcd5430c1538d6819f6d6f3502f4a2895f207352bfb"
+    },
+    {
+      "bytes": 429,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/dense-results.json",
+      "role": "Both independently oracle-checked dense runs",
+      "sha256": "2a3c08ce3168b296e8cd352e5aed5297d73ffe9436e336fed6f5e63df7054cf4"
+    },
+    {
+      "bytes": 4575,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/trace-receipt.json",
+      "role": "Byte comparison of seven files for each of seven full cases",
+      "sha256": "05e02bcb355e56ee8fdd81d1f875232c232ec6afcfd71735aceffac4e8ce44eb"
+    },
+    {
+      "bytes": 540,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/simulation-audit.json",
+      "role": "Independent simulation and trace check",
+      "sha256": "76412c58f0b3bcb9405fa2eb3b962dc0a3a2ebc96b665c5099f389728317c0b5"
+    },
+    {
+      "bytes": 45990,
+      "path": "hardware/research/inference/results/attention-exp-div-rtl-20261117T131434Z/run.json",
+      "role": "Adopted reference and full-model trace pins",
+      "sha256": "7f20e07ecaa6842f96031222b63da9301809e2e57808c54978a7d53b18d3ffe4"
+    }
+  ],
+  "completed_at": "2026-11-17T15:18:09.055676+00:00",
+  "conditions": {
+    "arms": {
+      "candidate": {
+        "bos-only-cap0": {
+          "done": {
+            "cycles": 38081,
+            "done": 38081,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              2,
+              32,
+              32,
+              1,
+              2063,
+              1,
+              6690,
+              1,
+              438,
+              1,
+              2112,
+              1,
+              2063,
+              1,
+              20898,
+              1,
+              2063,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 1
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 36399,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              1,
+              32,
+              32,
+              1,
+              2063,
+              1,
+              6690,
+              1,
+              438,
+              1,
+              2112,
+              1,
+              2063,
+              1,
+              20898,
+              1,
+              2063,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 1
+          }
+        },
+        "encoded-fu2p2q-cap255": {
+          "done": {
+            "cycles": 7913385,
+            "done": 7913385,
+            "first": 499061,
+            "first_valid": true,
+            "last": 7833764,
+            "phases": [
+              270,
+              4320,
+              4320,
+              135,
+              278505,
+              135,
+              903150,
+              135,
+              2851752,
+              135,
+              285120,
+              135,
+              278505,
+              135,
+              2821230,
+              135,
+              278505,
+              123,
+              206640,
+              0,
+              0
+            ],
+            "positions": 135
+          },
+          "outputs": 122,
+          "prefix": {
+            "cycles": 497379,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              25,
+              416,
+              416,
+              13,
+              26819,
+              13,
+              86970,
+              13,
+              29874,
+              13,
+              27456,
+              13,
+              26819,
+              13,
+              271674,
+              13,
+              26819,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 13
+          }
+        },
+        "encoded-hello-cap0": {
+          "done": {
+            "cycles": 419131,
+            "done": 419131,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              22,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              21868,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 11
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 417449,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              21868,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-hello-cap1": {
+          "done": {
+            "cycles": 419131,
+            "done": 419131,
+            "first": 419131,
+            "first_valid": true,
+            "last": 419131,
+            "phases": [
+              22,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              21868,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 11
+          },
+          "outputs": 1,
+          "prefix": {
+            "cycles": 417449,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              21868,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-hello-cap255": {
+          "done": {
+            "cycles": 5387671,
+            "done": 5387671,
+            "first": 419131,
+            "first_valid": true,
+            "last": 5318782,
+            "phases": [
+              202,
+              3232,
+              3232,
+              101,
+              208363,
+              101,
+              675690,
+              101,
+              1602538,
+              101,
+              213312,
+              101,
+              208363,
+              101,
+              2110698,
+              101,
+              208363,
+              91,
+              152880,
+              0,
+              0
+            ],
+            "positions": 101
+          },
+          "outputs": 90,
+          "prefix": {
+            "cycles": 417449,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              21868,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-max48-cap255": {
+          "done": {
+            "cycles": 13663329,
+            "done": 13663329,
+            "first": 4974881,
+            "first_valid": true,
+            "last": 13563248,
+            "phases": [
+              402,
+              6432,
+              6432,
+              201,
+              414663,
+              201,
+              1344690,
+              201,
+              6258462,
+              201,
+              424512,
+              201,
+              414663,
+              201,
+              4200498,
+              201,
+              414663,
+              105,
+              176400,
+              0,
+              0
+            ],
+            "positions": 201
+          },
+          "outputs": 104,
+          "prefix": {
+            "cycles": 4973199,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              193,
+              3104,
+              3104,
+              97,
+              200111,
+              97,
+              648930,
+              97,
+              1484886,
+              97,
+              204864,
+              97,
+              200111,
+              97,
+              2027106,
+              97,
+              200111,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 97
+          }
+        },
+        "full-context-cap0": {
+          "done": {
+            "cycles": 19410545,
+            "done": 19410545,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              512,
+              8192,
+              8192,
+              256,
+              528128,
+              256,
+              1712640,
+              256,
+              10202592,
+              256,
+              540672,
+              256,
+              528128,
+              256,
+              5349888,
+              256,
+              528128,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 256
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 19408863,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              511,
+              8192,
+              8192,
+              256,
+              528128,
+              256,
+              1712640,
+              256,
+              10202592,
+              256,
+              540672,
+              256,
+              528128,
+              256,
+              5349888,
+              256,
+              528128,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 256
+          }
+        }
+      },
+      "control": {
+        "bos-only-cap0": {
+          "done": {
+            "cycles": 38081,
+            "done": 38081,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              2,
+              32,
+              32,
+              1,
+              2063,
+              1,
+              6690,
+              1,
+              438,
+              1,
+              2112,
+              1,
+              2063,
+              1,
+              20898,
+              1,
+              2063,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 1
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 36399,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              1,
+              32,
+              32,
+              1,
+              2063,
+              1,
+              6690,
+              1,
+              438,
+              1,
+              2112,
+              1,
+              2063,
+              1,
+              20898,
+              1,
+              2063,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 1
+          }
+        },
+        "encoded-fu2p2q-cap255": {
+          "done": {
+            "cycles": 7913385,
+            "done": 7913385,
+            "first": 499061,
+            "first_valid": true,
+            "last": 7833764,
+            "phases": [
+              270,
+              4320,
+              4320,
+              135,
+              278505,
+              135,
+              903150,
+              135,
+              2851752,
+              135,
+              285120,
+              135,
+              278505,
+              135,
+              2821230,
+              135,
+              278505,
+              123,
+              206640,
+              0,
+              0
+            ],
+            "positions": 135
+          },
+          "outputs": 122,
+          "prefix": {
+            "cycles": 497379,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              25,
+              416,
+              416,
+              13,
+              26819,
+              13,
+              86970,
+              13,
+              29874,
+              13,
+              27456,
+              13,
+              26819,
+              13,
+              271674,
+              13,
+              26819,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 13
+          }
+        },
+        "encoded-hello-cap0": {
+          "done": {
+            "cycles": 419131,
+            "done": 419131,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              22,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              21868,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 11
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 417449,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              21868,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-hello-cap1": {
+          "done": {
+            "cycles": 419131,
+            "done": 419131,
+            "first": 419131,
+            "first_valid": true,
+            "last": 419131,
+            "phases": [
+              22,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              21868,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 11
+          },
+          "outputs": 1,
+          "prefix": {
+            "cycles": 417449,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              21868,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-hello-cap255": {
+          "done": {
+            "cycles": 5387671,
+            "done": 5387671,
+            "first": 419131,
+            "first_valid": true,
+            "last": 5318782,
+            "phases": [
+              202,
+              3232,
+              3232,
+              101,
+              208363,
+              101,
+              675690,
+              101,
+              1602538,
+              101,
+              213312,
+              101,
+              208363,
+              101,
+              2110698,
+              101,
+              208363,
+              91,
+              152880,
+              0,
+              0
+            ],
+            "positions": 101
+          },
+          "outputs": 90,
+          "prefix": {
+            "cycles": 417449,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              21868,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-max48-cap255": {
+          "done": {
+            "cycles": 13663329,
+            "done": 13663329,
+            "first": 4974881,
+            "first_valid": true,
+            "last": 13563248,
+            "phases": [
+              402,
+              6432,
+              6432,
+              201,
+              414663,
+              201,
+              1344690,
+              201,
+              6258462,
+              201,
+              424512,
+              201,
+              414663,
+              201,
+              4200498,
+              201,
+              414663,
+              105,
+              176400,
+              0,
+              0
+            ],
+            "positions": 201
+          },
+          "outputs": 104,
+          "prefix": {
+            "cycles": 4973199,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              193,
+              3104,
+              3104,
+              97,
+              200111,
+              97,
+              648930,
+              97,
+              1484886,
+              97,
+              204864,
+              97,
+              200111,
+              97,
+              2027106,
+              97,
+              200111,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 97
+          }
+        },
+        "full-context-cap0": {
+          "done": {
+            "cycles": 19410545,
+            "done": 19410545,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              512,
+              8192,
+              8192,
+              256,
+              528128,
+              256,
+              1712640,
+              256,
+              10202592,
+              256,
+              540672,
+              256,
+              528128,
+              256,
+              5349888,
+              256,
+              528128,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 256
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 19408863,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              511,
+              8192,
+              8192,
+              256,
+              528128,
+              256,
+              1712640,
+              256,
+              10202592,
+              256,
+              540672,
+              256,
+              528128,
+              256,
+              5349888,
+              256,
+              528128,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 256
+          }
+        }
+      }
+    },
+    "dense_oracle": {
+      "candidate": {
+        "all_exact": true,
+        "outputs_checked": 1184,
+        "products_partial_sums_checked": 37888,
+        "requests": 37,
+        "reset_probes": 7,
+        "row_latency_edges": 65,
+        "stall_edges": 2960
+      },
+      "control": {
+        "all_exact": true,
+        "outputs_checked": 1184,
+        "products_partial_sums_checked": 37888,
+        "requests": 37,
+        "reset_probes": 7,
+        "row_latency_edges": 65,
+        "stall_edges": 2960
+      }
+    },
+    "expected_cycle_delta": 0,
+    "full_model_candidate_evidence": "new exact simulation",
+    "full_model_control_evidence": "reused exact adopted Experiment 11 simulation",
+    "logical_array_bits": 16384,
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Seven exact candidate replays and both new dense traces.",
+        "sources": [
+          {
+            "bytes": 15421,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/model-results.json",
+            "role": "Matched adopted and observed candidate model boundary counters",
+            "sha256": "b08111f041c9acf060753fcd5430c1538d6819f6d6f3502f4a2895f207352bfb"
+          },
+          {
+            "bytes": 429,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/dense-results.json",
+            "role": "Both independently oracle-checked dense runs",
+            "sha256": "2a3c08ce3168b296e8cd352e5aed5297d73ffe9436e336fed6f5e63df7054cf4"
+          },
+          {
+            "bytes": 4575,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/trace-receipt.json",
+            "role": "Byte comparison of seven files for each of seven full cases",
+            "sha256": "05e02bcb355e56ee8fdd81d1f875232c232ec6afcfd71735aceffac4e8ce44eb"
+          }
+        ],
+        "state": "measured"
+      },
+      "cross_device_comparison": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "long_stability": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "memory_bandwidth": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Seven exact candidate replays and both new dense traces.",
+        "sources": [
+          {
+            "bytes": 15421,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/model-results.json",
+            "role": "Matched adopted and observed candidate model boundary counters",
+            "sha256": "b08111f041c9acf060753fcd5430c1538d6819f6d6f3502f4a2895f207352bfb"
+          },
+          {
+            "bytes": 429,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/dense-results.json",
+            "role": "Both independently oracle-checked dense runs",
+            "sha256": "2a3c08ce3168b296e8cd352e5aed5297d73ffe9436e336fed6f5e63df7054cf4"
+          },
+          {
+            "bytes": 4575,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/trace-receipt.json",
+            "role": "Byte comparison of seven files for each of seven full cases",
+            "sha256": "05e02bcb355e56ee8fdd81d1f875232c232ec6afcfd71735aceffac4e8ce44eb"
+          }
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "serving_load": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Seven exact candidate replays and both new dense traces.",
+        "sources": [
+          {
+            "bytes": 15421,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/model-results.json",
+            "role": "Matched adopted and observed candidate model boundary counters",
+            "sha256": "b08111f041c9acf060753fcd5430c1538d6819f6d6f3502f4a2895f207352bfb"
+          },
+          {
+            "bytes": 429,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/dense-results.json",
+            "role": "Both independently oracle-checked dense runs",
+            "sha256": "2a3c08ce3168b296e8cd352e5aed5297d73ffe9436e336fed6f5e63df7054cf4"
+          },
+          {
+            "bytes": 4575,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-rtl-20261117T152505Z/trace-receipt.json",
+            "role": "Byte comparison of seven files for each of seven full cases",
+            "sha256": "05e02bcb355e56ee8fdd81d1f875232c232ec6afcfd71735aceffac4e8ce44eb"
+          }
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "This stage is RTL simulation.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2"
+  },
+  "correctness": {
+    "evidence": "Dense trace equality and 49 byte-identical full-model oracle/schedule traces.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 RTL model",
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052"
+    },
+    "configuration_sha256": "2f8d960315cbf5f9cca1b1112e84315cf0bad687ffc8b83ddc67c6c8a723180b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-output-projection-lutram-v1",
+  "id": "output-projection-lutram-rtl-20261117T152505Z",
+  "implementation": {
+    "id": "output-projection-lutram-v1",
+    "sha256": "069b42eb2d6d531d3d2e343ce7c79dc6bf4a2232fb43908a18449c0f46619e91"
+  },
+  "limitations": [
+    "RTL simulation proves access behaviour and cycle parity. Routed memory primitive type, wall time and energy require separate checks."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.bos-only-cap0.prefix_cycles",
+      "samples": [
+        36399
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.bos-only-cap0.complete_cycles",
+      "samples": [
+        38081
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        497379
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        7913385
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        499061
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        7833764
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        417449
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        419131
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        417449
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        419131
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        419131
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        419131
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        417449
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        5387671
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        419131
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        5318782
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        4973199
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        13663329
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        4974881
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        13563248
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.full-context-cap0.prefix_cycles",
+      "samples": [
+        19408863
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "control.full-context-cap0.complete_cycles",
+      "samples": [
+        19410545
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.bos-only-cap0.prefix_cycles",
+      "samples": [
+        36399
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.bos-only-cap0.complete_cycles",
+      "samples": [
+        38081
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        497379
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        7913385
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        499061
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        7833764
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        417449
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        419131
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        417449
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        419131
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        419131
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        419131
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        417449
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        5387671
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        419131
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        5318782
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        4973199
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        13663329
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        4974881
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        13563248
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.full-context-cap0.prefix_cycles",
+      "samples": [
+        19408863
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Previously measured exact control or byte-matched new candidate replay.",
+      "name": "candidate.full-context-cap0.complete_cycles",
+      "samples": [
+        19410545
+      ],
+      "unit": "cycles"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-output-projection-lutram-v1-rtl",
+    "measurement_boundary": "Same RTL prefix/first/last/done boundary and registered dense READ schedule.",
+    "quality_gate": "Exact adopted model outputs and full trace parity, plus dense signed arithmetic and timing.",
+    "sha256": "dfc28dbc01744fd0dc32e3f7b0dc9380ede0ce63a15297093c8a5c6aac5bfe12",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Same frozen scores, cache state, output bytes and stop reasons.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "771e501681e014fc832219debcd53afecc35bcb6f85c04b63ff6fc5dd407f37c"
+  },
+  "started_at": "2026-11-17T15:17:24.052720+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

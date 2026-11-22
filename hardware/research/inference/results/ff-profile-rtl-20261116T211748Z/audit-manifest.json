@@ -1,0 +1,32 @@
+{
+  "archive_contents_sha256": "7e5f4f0031a1851984645d42c5c56c8605dea53319e812254968cda95bcbdb86",
+  "archive_sha256": "ca8a05af0ead28f50051fd456a7b843c5952121514d7211ba644881c5282d7fa",
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/feed-forward-profile-v1-coordinator/analytical-prediction.json": {
+      "bytes": 832,
+      "sha256": "4f9a08c1d4627286606d9b6f36d7624c67aac661befc587b6ed52adf1172a91b"
+    },
+    ".agents/runtime/hardware/inference/outputs/feed-forward-profile-v1-coordinator/independent-audit.json": {
+      "bytes": 2021,
+      "sha256": "04200f52039e3b4bb45bd45a4cea418e0b9c342a801aeb86f817a20e833ed34b"
+    },
+    ".agents/runtime/hardware/inference/outputs/feed-forward-profile-v1-coordinator/independent-audit.py": {
+      "bytes": 4719,
+      "sha256": "5c26b4ad36f08b1588081273c89e6689ec9d60d7979f8ad7ae1e9edd7eb18199"
+    },
+    ".agents/runtime/hardware/inference/outputs/feed-forward-profile-v1-coordinator/record-audit.json": {
+      "bytes": 380,
+      "sha256": "3116bbfb8f3f7222e712dc585792e85f8cbe98e9e046099445d70e6202c181fc"
+    },
+    ".agents/runtime/hardware/inference/outputs/feed-forward-profile-v1-coordinator/record-audit.py": {
+      "bytes": 3085,
+      "sha256": "40839cbb28711980dbf38fa5ddcd7649cb967f1be4971486b364b1101d13b4b6"
+    },
+    ".agents/runtime/hardware/inference/outputs/feed-forward-profile-v1-coordinator/source-admission.json": {
+      "bytes": 573,
+      "sha256": "5dafd78690e93c424fdafbf8237a181f0cb52c562ef08d0ad5e7fb28e0600c8a"
+    }
+  },
+  "passed": true,
+  "run_sha256": "4a40a1516cc372e6d1b1ec14545c7bb148b7ac5dbba42a034dc9f9656d702192"
+}

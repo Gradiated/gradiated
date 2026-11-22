@@ -1,0 +1,28 @@
+{
+  "checked_board_counters": 108,
+  "findings_sha256": "61efbabc570c2e6fececfd0a3f7c710c2523281f9e727516f41e7db719f42120",
+  "independent_archive": {
+    "files": 26,
+    "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09-independent/manifest.json",
+    "sha256": "09c6f642b2581374b493d1cb817d49a74e401d2b25fad84af8407d1b798f558d"
+  },
+  "independent_files": {
+    "build-audit.json": "9a35cb94ffa0e171a87fb9f2f793d140e0644b6d9e319815df4fd422273d8447",
+    "build-input-audit.json": "d6357b572430b6f9989db2e02f704a9b9adb2b63f9dfe2b30cfe9b5ea592ee7e",
+    "counter-audit.json": "f3aeeb93583cf865723c8c75e4677ed59124b87754f0779869829a8946950c61",
+    "final-health-audit.json": "b324bf33525422c3b899ecfc1ed690292100d1ed81cc7d0e753ec8008c7b31dc",
+    "launch-audit.json": "f4e3a6230f69753d77116e55f4a92b4fc7d8633a4234da492330f0a77ec97717",
+    "memory-audit.json": "82093981bc695681e28dc941c1fbf6134960386ccd47a9bb1352b2c4aaedfac7",
+    "packet-audit.json": "a7ae3f8d9333b76180a3faa244b2a5d160fc3c2075dd2e7e19d401d709ef769e",
+    "physical-audit.json": "030d3a79c290d14336ccb527c60fb18c39d3c703b0f7e57b231954b408ddd444",
+    "record-audit.json": "ad41b52aff06e43799bbc739a2c0e9adcc1b857e8abc85f31f7499bde9b0e44d",
+    "simulation-audit.json": "76412c58f0b3bcb9405fa2eb3b962dc0a3a2ebc96b665c5099f389728317c0b5",
+    "source-audit.json": "b4f18df8ec418b736908c9b130b96af87599c41a07a657d7496fa42b4553289f",
+    "spi-audit.json": "2932250ce55ca0fa43d1f551882543e8110bd6340dfcac28c156603383b520c2",
+    "stage-audit.json": "b958b580b204a122d924750e1e11dd273108782c788b6d7cb5905420c99a59db"
+  },
+  "original_accelerator_restored": true,
+  "passed": true,
+  "raw_manifest_sha256": "ae2c4b0f96618cffee2c8ad3304321108e04d960983685208693e5d3c1846942",
+  "run_sha256": "c142997068b3de1c6a7e1d01b502baa38555a6c023fe8a80ae59a1c2a7d215e1"
+}

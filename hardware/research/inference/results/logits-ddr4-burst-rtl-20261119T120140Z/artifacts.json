@@ -1,0 +1,24 @@
+{
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-rtl-20261119T120140Z/matched.json": {
+      "bytes": 16075,
+      "sha256": "9e1e3b7c176324a9e11ba3a32337fc996b382517909d7288fe4c92b1108a3623"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-rtl-20261119T120140Z/simulation.tar.gz": {
+      "bytes": 16169278,
+      "sha256": "855b15d26cc3e81970f1e280ffda0d8c6ffd254974f57be23fe33150fa22432c"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-rtl-20261119T120140Z/source-closure.json": {
+      "bytes": 26578,
+      "sha256": "6550a3e49e21e6a9de4ec21533b2e76aa36ed3047e70dcf9475ca4b828c85cc8"
+    },
+    "hardware/research/inference/implementations/kv260/rtl/toolchain.json": {
+      "bytes": 937,
+      "sha256": "b6a35af5636cca4a2f9bb82135a716873c8bb1abf6926504f2e425ea600df693"
+    },
+    "hardware/research/inference/results/attention-exp-pair-v2-rtl-20261117T230104Z/run.json": {
+      "bytes": 23465,
+      "sha256": "db83294738d25d4a079ca3b92276204e812d1f7c91410ba4359bfe0b37006994"
+    }
+  }
+}

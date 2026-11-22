@@ -1,0 +1,1764 @@
+{
+  "artifacts": [
+    {
+      "bytes": 8977046,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/simulation.tar.gz",
+      "role": "Candidate exact case and component outputs, ordered events, updated controller and pinned oracle",
+      "sha256": "1aa340d04716c17e852ceaf58678e6f1969cc2dd73bb0ae1b969c1b9e6b7ac9e"
+    },
+    {
+      "bytes": 30936,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/source.patch",
+      "role": "Only new variant and dated protocol files",
+      "sha256": "b688b0ec732f89abb19d4d45183ce94bc52936b68c7d2a4687abf9a1c86228a6"
+    },
+    {
+      "bytes": 26533,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/source-closure.json",
+      "role": "Complete archived source/output hashes and both generated RTL identities",
+      "sha256": "8b1f9f0aca931f54b3c383d22d27f5a0f54d273778b77ce013bd183171fd54eb"
+    },
+    {
+      "bytes": 15422,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/model-results.json",
+      "role": "Exact full-model phase and first/last/done counters",
+      "sha256": "605bbc971ffb6343d7996da53ab2515ed297fe429f18ce315119818d1842c4c7"
+    },
+    {
+      "bytes": 531,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/component-results.json",
+      "role": "Independent oracle counters over eight fully traced cases",
+      "sha256": "2ad43eff6db9c1c6ed06bcbafe267756494f3d148476c0b2012eea36cfc45630"
+    },
+    {
+      "bytes": 2584,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/predictions.json",
+      "role": "Preregistered occupancy-dependent boundary counters",
+      "sha256": "17776385eaf3d492aca5ed63293883bdcf9122e516da496f47426e4931030b2f"
+    },
+    {
+      "bytes": 1010,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/attention10-candidate-audit.json",
+      "role": "Independent receipt for source and each complete simulation case",
+      "sha256": "0a405839cf8fb30429bf384818803af6dde36bc81c3376f64e4374627c082f80"
+    },
+    {
+      "bytes": 2773,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/audit-attention10-candidate.py",
+      "role": "Independent candidate verification reproducer",
+      "sha256": "bbae826cafd7b1db94b4d025f5b534306202ae06e7eccc5b200d2c2ff7593b2a"
+    },
+    {
+      "bytes": 41996,
+      "path": "hardware/research/inference/results/ff-down-rtl-20261117T000318Z/run.json",
+      "role": "Adopted control exact source and outputs",
+      "sha256": "bd5e5ee84b7fd4c957c14c3d8b73ad0d22f2b5f5d23b2cc76130b0ca32e9669c"
+    },
+    {
+      "bytes": 25296,
+      "path": "hardware/research/inference/results/attention-profile-rtl-20261117T104256Z/run.json",
+      "role": "Observed adopted attention schedule",
+      "sha256": "f92baf833d7bceea5b1d6562ac66189024cc9cb43ac072bf7c38cc0a0cee29a6"
+    }
+  ],
+  "completed_at": "2026-11-17T10:56:07.141502+00:00",
+  "conditions": {
+    "arms": {
+      "candidate": {
+        "bos-only-cap0": {
+          "done": {
+            "cycles": 38227,
+            "done": 38227,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              2,
+              32,
+              32,
+              1,
+              2063,
+              1,
+              6690,
+              1,
+              584,
+              1,
+              2112,
+              1,
+              2063,
+              1,
+              20898,
+              1,
+              2063,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 1
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 36545,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              1,
+              32,
+              32,
+              1,
+              2063,
+              1,
+              6690,
+              1,
+              584,
+              1,
+              2112,
+              1,
+              2063,
+              1,
+              20898,
+              1,
+              2063,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 1
+          }
+        },
+        "encoded-fu2p2q-cap255": {
+          "done": {
+            "cycles": 9236437,
+            "done": 9236437,
+            "first": 512347,
+            "first_valid": true,
+            "last": 9137106,
+            "phases": [
+              270,
+              4320,
+              4320,
+              135,
+              278505,
+              135,
+              903150,
+              135,
+              4174804,
+              135,
+              285120,
+              135,
+              278505,
+              135,
+              2821230,
+              135,
+              278505,
+              123,
+              206640,
+              0,
+              0
+            ],
+            "positions": 135
+          },
+          "outputs": 122,
+          "prefix": {
+            "cycles": 510665,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              25,
+              416,
+              416,
+              13,
+              26819,
+              13,
+              86970,
+              13,
+              43160,
+              13,
+              27456,
+              13,
+              26819,
+              13,
+              271674,
+              13,
+              26819,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 13
+          }
+        },
+        "encoded-hello-cap0": {
+          "done": {
+            "cycles": 428767,
+            "done": 428767,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              22,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              31504,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 11
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 427085,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              31504,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-hello-cap1": {
+          "done": {
+            "cycles": 428767,
+            "done": 428767,
+            "first": 428767,
+            "first_valid": true,
+            "last": 428767,
+            "phases": [
+              22,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              31504,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 11
+          },
+          "outputs": 1,
+          "prefix": {
+            "cycles": 427085,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              31504,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-hello-cap255": {
+          "done": {
+            "cycles": 6128767,
+            "done": 6128767,
+            "first": 428767,
+            "first_valid": true,
+            "last": 6045424,
+            "phases": [
+              202,
+              3232,
+              3232,
+              101,
+              208363,
+              101,
+              675690,
+              101,
+              2343634,
+              101,
+              213312,
+              101,
+              208363,
+              101,
+              2110698,
+              101,
+              208363,
+              91,
+              152880,
+              0,
+              0
+            ],
+            "positions": 101
+          },
+          "outputs": 90,
+          "prefix": {
+            "cycles": 427085,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              31504,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-max48-cap255": {
+          "done": {
+            "cycles": 16535149,
+            "done": 16535149,
+            "first": 5667359,
+            "first_valid": true,
+            "last": 16405722,
+            "phases": [
+              402,
+              6432,
+              6432,
+              201,
+              414663,
+              201,
+              1344690,
+              201,
+              9130282,
+              201,
+              424512,
+              201,
+              414663,
+              201,
+              4200498,
+              201,
+              414663,
+              105,
+              176400,
+              0,
+              0
+            ],
+            "positions": 201
+          },
+          "outputs": 104,
+          "prefix": {
+            "cycles": 5665677,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              193,
+              3104,
+              3104,
+              97,
+              200111,
+              97,
+              648930,
+              97,
+              2177364,
+              97,
+              204864,
+              97,
+              200111,
+              97,
+              2027106,
+              97,
+              200111,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 97
+          }
+        },
+        "full-context-cap0": {
+          "done": {
+            "cycles": 24170875,
+            "done": 24170875,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              512,
+              8192,
+              8192,
+              256,
+              528128,
+              256,
+              1712640,
+              256,
+              14962922,
+              256,
+              540672,
+              256,
+              528128,
+              256,
+              5349888,
+              256,
+              528128,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 256
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 24169193,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              511,
+              8192,
+              8192,
+              256,
+              528128,
+              256,
+              1712640,
+              256,
+              14962922,
+              256,
+              540672,
+              256,
+              528128,
+              256,
+              5349888,
+              256,
+              528128,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 256
+          }
+        }
+      },
+      "control": {
+        "bos-only-cap0": {
+          "done": {
+            "cycles": 38257,
+            "done": 38257,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              2,
+              32,
+              32,
+              1,
+              2063,
+              1,
+              6690,
+              1,
+              614,
+              1,
+              2112,
+              1,
+              2063,
+              1,
+              20898,
+              1,
+              2063,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 1
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 36575,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              1,
+              32,
+              32,
+              1,
+              2063,
+              1,
+              6690,
+              1,
+              614,
+              1,
+              2112,
+              1,
+              2063,
+              1,
+              20898,
+              1,
+              2063,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 1
+          }
+        },
+        "encoded-fu2p2q-cap255": {
+          "done": {
+            "cycles": 9801277,
+            "done": 9801277,
+            "first": 517573,
+            "first_valid": true,
+            "last": 9693608,
+            "phases": [
+              270,
+              4320,
+              4320,
+              135,
+              278505,
+              135,
+              903150,
+              135,
+              4739644,
+              135,
+              285120,
+              135,
+              278505,
+              135,
+              2821230,
+              135,
+              278505,
+              123,
+              206640,
+              0,
+              0
+            ],
+            "positions": 135
+          },
+          "outputs": 122,
+          "prefix": {
+            "cycles": 515891,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              25,
+              416,
+              416,
+              13,
+              26819,
+              13,
+              86970,
+              13,
+              48386,
+              13,
+              27456,
+              13,
+              26819,
+              13,
+              271674,
+              13,
+              26819,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 13
+          }
+        },
+        "encoded-hello-cap0": {
+          "done": {
+            "cycles": 432507,
+            "done": 432507,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              22,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              35244,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 11
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 430825,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              35244,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-hello-cap1": {
+          "done": {
+            "cycles": 432507,
+            "done": 432507,
+            "first": 432507,
+            "first_valid": true,
+            "last": 432507,
+            "phases": [
+              22,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              35244,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 11
+          },
+          "outputs": 1,
+          "prefix": {
+            "cycles": 430825,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              35244,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-hello-cap255": {
+          "done": {
+            "cycles": 6444897,
+            "done": 6444897,
+            "first": 432507,
+            "first_valid": true,
+            "last": 6355324,
+            "phases": [
+              202,
+              3232,
+              3232,
+              101,
+              208363,
+              101,
+              675690,
+              101,
+              2659764,
+              101,
+              213312,
+              101,
+              208363,
+              101,
+              2110698,
+              101,
+              208363,
+              91,
+              152880,
+              0,
+              0
+            ],
+            "positions": 101
+          },
+          "outputs": 90,
+          "prefix": {
+            "cycles": 430825,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              35244,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              229878,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-max48-cap255": {
+          "done": {
+            "cycles": 17787379,
+            "done": 17787379,
+            "first": 5958941,
+            "first_valid": true,
+            "last": 17645522,
+            "phases": [
+              402,
+              6432,
+              6432,
+              201,
+              414663,
+              201,
+              1344690,
+              201,
+              10382512,
+              201,
+              424512,
+              201,
+              414663,
+              201,
+              4200498,
+              201,
+              414663,
+              105,
+              176400,
+              0,
+              0
+            ],
+            "positions": 201
+          },
+          "outputs": 104,
+          "prefix": {
+            "cycles": 5957259,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              193,
+              3104,
+              3104,
+              97,
+              200111,
+              97,
+              648930,
+              97,
+              2468946,
+              97,
+              204864,
+              97,
+              200111,
+              97,
+              2027106,
+              97,
+              200111,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 97
+          }
+        },
+        "full-context-cap0": {
+          "done": {
+            "cycles": 26202235,
+            "done": 26202235,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              512,
+              8192,
+              8192,
+              256,
+              528128,
+              256,
+              1712640,
+              256,
+              16994282,
+              256,
+              540672,
+              256,
+              528128,
+              256,
+              5349888,
+              256,
+              528128,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 256
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 26200553,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              511,
+              8192,
+              8192,
+              256,
+              528128,
+              256,
+              1712640,
+              256,
+              16994282,
+              256,
+              540672,
+              256,
+              528128,
+              256,
+              5349888,
+              256,
+              528128,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 256
+          }
+        }
+      }
+    },
+    "component_oracle": {
+      "all_exact": true,
+      "context_values": 256,
+      "directed_score_refusals": 8,
+      "directed_value_refusals": 3,
+      "exponentials": 560,
+      "heads": 2,
+      "limits": "Actual pinned table plus synthetic and archived intermediate operands; no archived full-forward context golden or complete transformer proof",
+      "max_length": 256,
+      "pending_lookahead_reset_probes": 2,
+      "probabilities": 560,
+      "real_archived_input_cases": 0,
+      "requests": 8,
+      "reset_probes": 4,
+      "score_products": 8960,
+      "scores": 560,
+      "value_products": 8960
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Ordered products, scalar outputs and scores matched independent references, including tagged cache, resets and stalls.",
+        "sources": [
+          {
+            "bytes": 15422,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/model-results.json",
+            "role": "Exact full-model phase and first/last/done counters",
+            "sha256": "605bbc971ffb6343d7996da53ab2515ed297fe429f18ce315119818d1842c4c7"
+          },
+          {
+            "bytes": 531,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/component-results.json",
+            "role": "Independent oracle counters over eight fully traced cases",
+            "sha256": "2ad43eff6db9c1c6ed06bcbafe267756494f3d148476c0b2012eea36cfc45630"
+          }
+        ],
+        "state": "measured"
+      },
+      "cross_device_comparison": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "long_stability": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "memory_bandwidth": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Frozen matched inputs, outputs, score fixtures and stop reasons.",
+        "sources": [
+          {
+            "bytes": 15422,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/model-results.json",
+            "role": "Exact full-model phase and first/last/done counters",
+            "sha256": "605bbc971ffb6343d7996da53ab2515ed297fe429f18ce315119818d1842c4c7"
+          },
+          {
+            "bytes": 531,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/component-results.json",
+            "role": "Independent oracle counters over eight fully traced cases",
+            "sha256": "2ad43eff6db9c1c6ed06bcbafe267756494f3d148476c0b2012eea36cfc45630"
+          }
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "serving_load": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Exact attention-state and all prefix, first, last and terminal counters.",
+        "sources": [
+          {
+            "bytes": 15422,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/model-results.json",
+            "role": "Exact full-model phase and first/last/done counters",
+            "sha256": "605bbc971ffb6343d7996da53ab2515ed297fe429f18ce315119818d1842c4c7"
+          },
+          {
+            "bytes": 531,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/component-results.json",
+            "role": "Independent oracle counters over eight fully traced cases",
+            "sha256": "2ad43eff6db9c1c6ed06bcbafe267756494f3d148476c0b2012eea36cfc45630"
+          }
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Bounded local RTL simulation only.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "mechanical_import_amendment": "First direct isolated Python call ended before invoking the suite. Retried exact same inputs and deadline using pinned module path.",
+    "physical_board_access": false,
+    "ready_cache_saving_law": "62*occupied_length-32 clocks"
+  },
+  "correctness": {
+    "evidence": "Seven exact model cases (716 positions, 103,360 retained scores) and pinned BOS, outputs and caches. Eight fully traced component requests and two additional pending-lookahead reset and restart checks.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 RTL model",
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052"
+    },
+    "configuration_sha256": "2f8d960315cbf5f9cca1b1112e84315cf0bad687ffc8b83ddc67c6c8a723180b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-attention-cache-pipeline-v1",
+  "id": "attention-cache-pipeline-rtl-20261117T105443Z",
+  "implementation": {
+    "id": "attention-cache-pipeline-v1",
+    "sha256": "8b1f9f0aca931f54b3c383d22d27f5a0f54d273778b77ce013bd183171fd54eb"
+  },
+  "limitations": [
+    "Cycle comparison is for these frozen cases. No routed frequency, physical latency, power or whole-board energy was measured in this replay.",
+    "Full-model schedule has immediate cache requests and responses. Component tests separately exercise refusals and reset."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.bos-only-cap0.prefix_cycles",
+      "samples": [
+        36545
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.bos-only-cap0.complete_cycles",
+      "samples": [
+        38227
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.bos-only-cap0.attention_cycles",
+      "samples": [
+        584
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        510665
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        9236437
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-fu2p2q-cap255.attention_cycles",
+      "samples": [
+        4174804
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        512347
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        9137106
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        427085
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        428767
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-hello-cap0.attention_cycles",
+      "samples": [
+        31504
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        427085
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        428767
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-hello-cap1.attention_cycles",
+      "samples": [
+        31504
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        428767
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        428767
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        427085
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        6128767
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-hello-cap255.attention_cycles",
+      "samples": [
+        2343634
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        428767
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        6045424
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        5665677
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        16535149
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-max48-cap255.attention_cycles",
+      "samples": [
+        9130282
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        5667359
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        16405722
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.full-context-cap0.prefix_cycles",
+      "samples": [
+        24169193
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.full-context-cap0.complete_cycles",
+      "samples": [
+        24170875
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "candidate.full-context-cap0.attention_cycles",
+      "samples": [
+        14962922
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.bos-only-cap0.prefix_cycles",
+      "samples": [
+        36575
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.bos-only-cap0.complete_cycles",
+      "samples": [
+        38257
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.bos-only-cap0.attention_cycles",
+      "samples": [
+        614
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        515891
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        9801277
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-fu2p2q-cap255.attention_cycles",
+      "samples": [
+        4739644
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        517573
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        9693608
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        430825
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        432507
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-hello-cap0.attention_cycles",
+      "samples": [
+        35244
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        430825
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        432507
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-hello-cap1.attention_cycles",
+      "samples": [
+        35244
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        432507
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        432507
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        430825
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        6444897
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-hello-cap255.attention_cycles",
+      "samples": [
+        2659764
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        432507
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        6355324
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        5957259
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        17787379
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-max48-cap255.attention_cycles",
+      "samples": [
+        10382512
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        5958941
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        17645522
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.full-context-cap0.prefix_cycles",
+      "samples": [
+        26200553
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.full-context-cap0.complete_cycles",
+      "samples": [
+        26202235
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact archived control or observed candidate RTL counters.",
+      "name": "control.full-context-cap0.attention_cycles",
+      "samples": [
+        16994282
+      ],
+      "unit": "cycles"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-attention-cache-pipeline-v1-rtl",
+    "measurement_boundary": "RTL phase window and original autonomous prefix/first/last/done counter boundaries.",
+    "quality_gate": "Cycle law, exact seven-case model replay, independent attention trace and stall/reset checks.",
+    "sha256": "630ab6a274e9bf2d61a9726bc2788dc5d43f8fb58515c65b1bf4fd0f424997fa",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "The adopted frozen model, arithmetic order, KV geometry and output choices stayed fixed.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "b688b0ec732f89abb19d4d45183ce94bc52936b68c7d2a4687abf9a1c86228a6"
+  },
+  "started_at": "2026-11-17T10:54:43.615225+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

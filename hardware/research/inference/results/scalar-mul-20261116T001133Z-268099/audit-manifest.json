@@ -1,0 +1,69 @@
+{
+  "run_id": "scalar-mul-20261116T001133Z-268099",
+  "passed": true,
+  "preservation_verified": true,
+  "raw_artifacts_verified": 264,
+  "run_record_sha256": "622c9f4d2c459afe78ea0ba0e62eeb60b9351f70b33f5cd3238496019261e191",
+  "capture_manifest_sha256": "8fbb08689214802bf458ca8af66f32a71a662d7e88ba3bbe7d029020d2d3d70d",
+  "evidence_root": ".agents/runtime/hardware/inference/outputs/scalar-mul-20261116T001133Z-268099-audit",
+  "verified_at": "2026-11-16T00:40:27.581773+00:00",
+  "scope": "All 15 raw serial gates, exact reference checks, 36 timing requests, six power traces over five alignments, 18 FPGA counter comparisons, all 34 metric definitions and 27 coverage entries. Original firmware and pinned weights reloaded and 320 original BOS scores verified, not full weight-memory readback.",
+  "files": {
+    "arithmetic-invariant.json": {
+      "bytes": 177,
+      "sha256": "e67d6cdfb8e4661430991b775dd8c045db719d5c59804d842f5fd64074b842f2"
+    },
+    "arithmetic-invariant.manifest.json": {
+      "bytes": 206,
+      "sha256": "1a4c7dd452eb3ea83213266beaa01aece25340dc658d667a3ef548fb6c7286a0"
+    },
+    "audit.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "audit.stdout": {
+      "bytes": 28718,
+      "sha256": "504ec9ab75bb351448db62a808056d3dd7ff0016d698347e65349120cd9d9808"
+    },
+    "counter-audit.json": {
+      "bytes": 7606,
+      "sha256": "6a5d18348a35cc0a3a1bbd5b01bfdcef0cf7af9f4fbe8e18b2d46f70bb91c041"
+    },
+    "counter-audit.py": {
+      "bytes": 1673,
+      "sha256": "94a28cc8a6ebbfc0b8af99a98d81588b01a577f25596579c2b4107fa647e30ed"
+    },
+    "independent-audit.py": {
+      "bytes": 7307,
+      "sha256": "2096e6c74a824368949392abca9456ab838027cc150c9571eee95d7ad678b5b9"
+    },
+    "local-admission.json": {
+      "bytes": 2682,
+      "sha256": "ba61d48aa4ae3158b213cfd360e5a01d6a292b367dc6729cbb98753e94c0af81"
+    },
+    "physical-admission.json": {
+      "bytes": 572,
+      "sha256": "f9035f9f0cea5c959d5940e47a4fd1340e7c34d55dfeb73f3557bcdf4a833ee1"
+    },
+    "pre-existing-files.json": {
+      "bytes": 520368,
+      "sha256": "3bb41b72c790d66867c8517744e42b986cbd0bac2a77788a4f161a01ab504e1a"
+    },
+    "preservation.json": {
+      "bytes": 471,
+      "sha256": "327d9f1d1fb449cc1b409ac19c551330532bfb8dfbe895602325b2c62bf8573c"
+    },
+    "record-consistency.json": {
+      "bytes": 91,
+      "sha256": "3433846e3141b8635d25399c3b87e60ed54e26062086042fd999f5e8808c3431"
+    },
+    "record-consistency.py": {
+      "bytes": 2432,
+      "sha256": "67f2a91da6f610a857fd09a2b19e4756a21e30670ca9c8da48776d67998a463f"
+    },
+    "scalar-multiplier-invariant.py": {
+      "bytes": 1490,
+      "sha256": "a6fafa779028ba1cb36eb47bc9d77bf9a883dd722235ad24f1a09e8f800e8d96"
+    }
+  }
+}

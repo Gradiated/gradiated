@@ -1,0 +1,11 @@
+# Build the DDR4 prefetch circuit
+
+Use the [Experiment 17 protocol](../../../../../experiments/kv260-logits-ddr4-prefetch-v1.md) and the [verified Experiment 16 control](../../../../../results/logits-ddr4-burst-build-20261119T115915Z/findings.md). Both routes use Vivado 2025.2, two threads and the 20 ns PL0 constraint. The pinned Experiment 16 build-input archive supplies the native HP0 shell, constraints and release scripts. The candidate changes the reader and transformer RTL, their compile pins, and firmware names.
+
+Generate both source sets with [the variant materialiser](../materialise_logits_prefetch.py). Run `prepare.py CONTROL_BUILD_INPUT CONTROL_RTL CANDIDATE_RTL PROTOCOL STAGING_DIR`. Use a new directory named `logits-ddr4-prefetch-build-YYYYMMDDTHHMMSSZ`. Keep the generated source manifest and protocol with the staged inputs. Pack the contents of the staging directory and extract them into the manifest’s `remote_root` on the Vivado host. From that directory run `KV_OUTER_BUILD_UTC=$(( $(date +%s) + 2520 )) python3 -u run-all.py`. A failed phase stops the build. Packaging has a further three minutes.
+
+Use `recover.py ATTEMPT LOCAL_WORK HOST` after the host emits its archive receipt. It retains a partial byte stream and reconnects from the saved offset within the 20-minute recovery window. Keep the archive, receipt, admitted manifest and protocol in the ignored local work directory. Store the two generated source manifests alongside them as `control-rtl-manifest.json` and `candidate-rtl-manifest.json`.
+
+Run `verify.py REPO LOCAL_WORK EXP16_WORK RTL_RUN_JSON` using Python 3.11 or newer. It checks every recovered member, the exact tested RTL and protocol, the reused route and the two deployment packages. It also compares the 20 ns timing reports, native read-only HP0 pins and generated PS writes. On success it writes `offline-acceptance.json` and leaves the recovered image and overlays under `LOCAL_WORK/server`.
+
+The FPGA, accelerator, logits and reader are separate routed utilization rows. The two physical staging memories store the low and high 64-bit halves of an eight-lane coordinate. In the candidate, each memory has 64 entries and its high address bit selects the 512-byte group slot. The mapped design accounts for both slots together through the reader LUTRAM row and the primitive inventory of each physical half.

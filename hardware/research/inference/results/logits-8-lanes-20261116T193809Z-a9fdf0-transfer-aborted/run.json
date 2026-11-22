@@ -1,0 +1,271 @@
+{
+  "artifacts": [
+    {
+      "bytes": 16626,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T193809Z-a9fdf0-transfer-aborted/invocation.json",
+      "role": "Admitted initial physical packet",
+      "sha256": "b2d57dada9dbbb6accd20d38188c677cb271d87033cf3417b97b03fc5922ba85"
+    },
+    {
+      "bytes": 88,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T193809Z-a9fdf0-transfer-aborted/stop-6886c9f5.json",
+      "role": "Explicit pre-dispatch stop",
+      "sha256": "c1c0ae2237468f074bdf378da0c58115454790510c9411dbfd32484910f6ebd3"
+    },
+    {
+      "bytes": 6081,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T193809Z-a9fdf0-transfer-aborted/serial-frames-6d4c1150.txt",
+      "role": "UART acknowledgements and absence of verified transfer",
+      "sha256": "8c93629de5df7c2fca2fdeff222ad7ccf6a6bc918abc707a4dbc2866a66964ef"
+    },
+    {
+      "bytes": 259,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T193809Z-a9fdf0-transfer-aborted/mac-sleep-observation.json",
+      "role": "Mac idle-sleep and wake timestamps",
+      "sha256": "e858519443c0a45bc18e340e62562984b5912155b66ccc37f9704738464b228c"
+    },
+    {
+      "bytes": 317,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T193809Z-a9fdf0-transfer-aborted/power-log-excerpt.txt",
+      "role": "Exact Mac power log excerpt for this interruption",
+      "sha256": "64e3a675b42e05af3a1759d2f148cbd4b5b442a2786e2df66fa29e950afdc1c1"
+    },
+    {
+      "bytes": 5734,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T193809Z-a9fdf0-transfer-aborted/evidence-manifest.json",
+      "role": "Archived failed packet inventory",
+      "sha256": "643a31075033f80bfd86b60474840bcf5018bf3cf6706acf31919acb24246a95"
+    }
+  ],
+  "completed_at": "2026-11-16T19:57:41.438293+00:00",
+  "conditions": {
+    "board_dispatch": false,
+    "development_effort": {
+      "ai_usage_cost": null,
+      "engineering_attention_minutes": null
+    },
+    "expected_chunks": 5252,
+    "failure_class": "mac_idle_sleep_and_uart_flow_control",
+    "last_acknowledged_chunks": 4288,
+    "matched_lane_widths": [
+      4,
+      8
+    ],
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "cache_capacity": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "client_delivery": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "communication": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "completion_time": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "correctness": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "cross_device_comparison": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "cross_session": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "decode_tps": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "energy_per_answer": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "estimated_cost": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "idle_power": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "implementation_timing": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "long_stability": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "memory": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "model_quality": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "operating_conditions": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "output_counts": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "physical_area": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "power_validation": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "prefill": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "recovery": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "repeatability": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "resources": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "serving_load": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "stage_cycles": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "startup": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "sustained_throughput": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "token_gaps": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "tokens_per_joule": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "ttft": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "workload_coverage": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2"
+  },
+  "correctness": {
+    "evidence": "UART stopped before physical dispatch. No board correctness result from this attempt.",
+    "passed": false
+  },
+  "device": {
+    "configuration": {
+      "comparison_firmware": {
+        "candidate": "bdc134c65a151699d2ddd690b0ddc799cbd09edb688b8a7c4f0ecf7dd498c9e2",
+        "control": "4b255b0f0284ddf53f80986b21e2d8dd4f337db815a4886aaf5c1debbd54dfc3"
+      },
+      "dfx_service": "runtime inactive, boot enablement preserved",
+      "firmware_identity_scope": "Initial and restored stock firmware. Timed images are listed in comparison_firmware.",
+      "firmware_name": "gradiated-tiny-50mhz.bit.bin",
+      "firmware_sha256": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0",
+      "fpga_manager_flags": 0,
+      "initial_state_sha256": "48a27b589e995b41e3a6938b815f7dd1738a434c403f95914a7cbef5096e7902",
+      "kernel_build": "#16-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 16 05:06:58 UTC 2025",
+      "kernel_release": "6.8.0-1015-xilinx",
+      "model": "ZynqMP KV260 revB",
+      "phase": "Mac serial transfer before board dispatch",
+      "physical_unit": "KV260 USB bridge XFL1RXOM0IWQ",
+      "pl0_rate_source": "Linux clock framework",
+      "pl0_reported_hz": 50000000,
+      "qualified_project_state_sha256": "48a27b589e995b41e3a6938b815f7dd1738a434c403f95914a7cbef5096e7902",
+      "reset_dt_id": 119,
+      "system_boot_id": "305f2b01-e9fd-4461-8e6d-0cf91979d151",
+      "transformer_map": {
+        "base": 2684354560,
+        "bytes": 4096,
+        "device": "/dev/uio4"
+      }
+    },
+    "configuration_sha256": "869bf9a396440642ddfb1676bba2db6fb85e084a6ae93d1e950eb56867f001f8",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-logits-8-lanes-v1",
+  "id": "logits-8-lanes-20261116T193809Z-a9fdf0-transfer-aborted",
+  "implementation": {
+    "id": "kv260-logits-4-vs-8-lanes-v1",
+    "sha256": "702bac82a3decdc6296bbbac4112cb77d1a07e171ff0cb98f60d49028d880b8a"
+  },
+  "limitations": [
+    "This record describes serial transport only. The comparison never ran."
+  ],
+  "metrics": [],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-logits-lanes-4-vs-8-v1",
+    "measurement_boundary": "Board CPU request admission before encoding/clear through first/last useful byte and stop/drain. Six-request gross VCC_SOM block energy ends after verification. Load, switching, full-score diagnostics and UART export excluded.",
+    "quality_gate": "Exact full-score diagnostics and same exact capped and uncapped completions and stops.",
+    "sha256": "c4af3e2b37fd3482ebf442e3f38215158eae5cbf85850d566466d87609434804",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Three exact requests per arm with loaded weights."
+  },
+  "quality": {
+    "evidence": "No new timed output or energy observation was accepted.",
+    "passed": false
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "cdc7a051a82bad1141685a1019c55e164c40b89d5773e8c6e5e3574d740f5747"
+  },
+  "started_at": "2026-11-16T19:38:09.608271+00:00",
+  "status": "aborted",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-three-prompts-lanes-pairs-v1",
+    "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+  }
+}

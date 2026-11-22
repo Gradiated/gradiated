@@ -1,0 +1,1302 @@
+{
+  "artifacts": [
+    {
+      "bytes": 15039,
+      "path": ".agents/runtime/hardware/inference/outputs/resident-speed-20261115T150400Z-f42f45/invocation.json",
+      "role": "pinned invocation and source identities",
+      "sha256": "1a556051d248482101c1609f03ddea6e691a8883ea6d55065204757d6d1cada8"
+    },
+    {
+      "bytes": 6410,
+      "path": ".agents/runtime/hardware/inference/outputs/resident-speed-20261115T150400Z-f42f45/kv260-conditioned-resident-speed-v1.md",
+      "role": "frozen preregistered experiment plan",
+      "sha256": "3e5ccfc8ce3cefa69ad3d2934495f9498192d93a8f8ff8c903a562292a2e09ed"
+    },
+    {
+      "bytes": 73946,
+      "path": ".agents/runtime/hardware/inference/outputs/resident-speed-20261115T150400Z-f42f45/source.patch",
+      "role": "snapshot of preregistered source changes",
+      "sha256": "94b6b2a21c414d7400af37ed4fec56cdfc1ae14432e5eb78e9c4299daf5eb9ff"
+    },
+    {
+      "bytes": 5481,
+      "path": ".agents/runtime/hardware/inference/outputs/resident-speed-20261115T150400Z-f42f45/result.json",
+      "role": "board and Mac gate outcomes",
+      "sha256": "67417ba0c346058eb1b67f86a61c6f61179079b0ebe21e606f080fdedf9ec12c"
+    },
+    {
+      "bytes": 20266,
+      "path": ".agents/runtime/hardware/inference/outputs/resident-speed-20261115T150400Z-f42f45/evidence-manifest.json",
+      "role": "hashes of raw and compact verification artifacts",
+      "sha256": "eec48d9cc1ddf1ca8573330939e5c7811881b836021ae2af50a0894ca10d7e8b"
+    },
+    {
+      "bytes": 31818,
+      "path": ".agents/runtime/hardware/inference/outputs/resident-speed-20261115T150400Z-f42f45/summary.json",
+      "role": "session and block distributions from raw timestamps",
+      "sha256": "87acad847ac265f73d9c456b5421cb4cede88bda7125c914797265e9d7e8d38a"
+    }
+  ],
+  "completed_at": "2026-11-15T15:15:42.221522+00:00",
+  "conditions": {
+    "boot_id": "0e4cc12e-4532-4434-be89-665af09dba14",
+    "boundary_sysfs_values": {
+      "/sys/class/thermal/cooling_device0/cur_state": [
+        "0"
+      ],
+      "/sys/class/thermal/cooling_device0/type": [
+        "pwm-fan"
+      ],
+      "/sys/devices/system/cpu/cpufreq/policy0/affected_cpus": [
+        "0 1 2 3"
+      ],
+      "/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq": [
+        "1333333"
+      ],
+      "/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq": [
+        "1333333"
+      ],
+      "/sys/devices/system/cpu/cpufreq/policy0/scaling_driver": [
+        "cpufreq-dt"
+      ],
+      "/sys/devices/system/cpu/cpufreq/policy0/scaling_governor": [
+        "userspace"
+      ],
+      "/sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq": [
+        "1333333"
+      ],
+      "/sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq": [
+        "333333"
+      ]
+    },
+    "candidate_model_image_sha256": "698df2e177b8e478088fffe9b02af09cd10c9ac0afbe252f3b031f133262e055",
+    "candidate_model_package_sha256": "b0394ba256d877fb62d6eb6e74942d5ff0c649cf751d53481e827c8bae5e9167",
+    "fresh_reference_pins": {
+      "encoded-fu2p2q": [
+        "timed-01-1/runner.stdout",
+        "9b23c8df5cb52633fe05bc02871d246e5538cb94a301aff756f37bfc7aa458ba"
+      ],
+      "encoded-hello": [
+        "timed-01-2/runner.stdout",
+        "e92f9d9d8ec33a6ccbfc715e42148a6aea441f017f89a931c08cad3a84197686"
+      ],
+      "encoded-max48": [
+        "timed-01-3/runner.stdout",
+        "1edfbd04efc45975a02cfec629601de65d430491313f93984a56a4f232ddb8a1"
+      ]
+    },
+    "live_configuration_source_sha256": "9c236b7a021a7e779f24ec00cda6590967fee3f81accbf531b5da7c7b6b735e8",
+    "mac_verified_gates": 16,
+    "measured_long_requests": 48,
+    "measured_short_requests": 36,
+    "native_sessions": 3,
+    "observer_pairs_ms": [
+      {
+        "first_mode_detailed": false,
+        "off": {
+          "admission_to_return_ms": 448.057551,
+          "admission_to_verified_ms": 454.121612
+        },
+        "on": {
+          "admission_to_return_ms": 450.201953,
+          "admission_to_verified_ms": 456.436865
+        },
+        "on_minus_off": {
+          "admission_to_return_ms": 2.1444020000000137,
+          "admission_to_verified_ms": 2.3152529999999842
+        }
+      },
+      {
+        "first_mode_detailed": true,
+        "off": {
+          "admission_to_return_ms": 449.439375,
+          "admission_to_verified_ms": 455.709277
+        },
+        "on": {
+          "admission_to_return_ms": 447.716748,
+          "admission_to_verified_ms": 454.045141
+        },
+        "on_minus_off": {
+          "admission_to_return_ms": -1.7226269999999886,
+          "admission_to_verified_ms": -1.664135999999985
+        }
+      },
+      {
+        "first_mode_detailed": false,
+        "off": {
+          "admission_to_return_ms": 447.689548,
+          "admission_to_verified_ms": 454.035732
+        },
+        "on": {
+          "admission_to_return_ms": 450.406815,
+          "admission_to_verified_ms": 456.820419
+        },
+        "on_minus_off": {
+          "admission_to_return_ms": 2.7172669999999925,
+          "admission_to_verified_ms": 2.7846870000000195
+        }
+      }
+    ],
+    "original_weights_restored": true,
+    "preregistered_plan": "../../experiments/kv260-conditioned-resident-speed-v1.md",
+    "protocol_schedule": [
+      [
+        [
+          "warmup",
+          [
+            [
+              "encoded-fu2p2q",
+              false
+            ],
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-max48",
+              false
+            ],
+            [
+              "encoded-fu2p2q",
+              false
+            ],
+            [
+              "encoded-max48",
+              false
+            ],
+            [
+              "encoded-hello",
+              false
+            ]
+          ]
+        ],
+        [
+          "observer",
+          [
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-hello",
+              true
+            ]
+          ]
+        ],
+        [
+          "short",
+          [
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ]
+          ]
+        ]
+      ],
+      [
+        [
+          "warmup",
+          [
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-max48",
+              false
+            ],
+            [
+              "encoded-fu2p2q",
+              false
+            ],
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-fu2p2q",
+              false
+            ],
+            [
+              "encoded-max48",
+              false
+            ]
+          ]
+        ],
+        [
+          "observer",
+          [
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-hello",
+              false
+            ]
+          ]
+        ],
+        [
+          "short",
+          [
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ]
+          ]
+        ]
+      ],
+      [
+        [
+          "warmup",
+          [
+            [
+              "encoded-max48",
+              false
+            ],
+            [
+              "encoded-fu2p2q",
+              false
+            ],
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-max48",
+              false
+            ],
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-fu2p2q",
+              false
+            ]
+          ]
+        ],
+        [
+          "observer",
+          [
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-hello",
+              true
+            ]
+          ]
+        ],
+        [
+          "short",
+          [
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ]
+          ]
+        ],
+        [
+          "long",
+          [
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ]
+          ]
+        ]
+      ]
+    ],
+    "signed_score_checks": 4948480,
+    "temperature_available": false,
+    "utc_source": "Mac UTC for attempt chronology. Board monotonic nanoseconds for durations."
+  },
+  "correctness": {
+    "evidence": "16 independently verified stages. 4,948,480 exact board-side signed-score comparisons over 108 requests.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "dfx_service": "runtime inactive, boot enablement preserved",
+      "firmware_name": "gradiated-tiny-50mhz.bit.bin",
+      "firmware_sha256": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0",
+      "fpga_manager_flags": 0,
+      "kernel_build": "#16-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 16 05:06:58 UTC 2025",
+      "kernel_release": "6.8.0-1015-xilinx",
+      "model": "ZynqMP KV260 revB",
+      "physical_unit": "KV260 USB bridge XFL1RXOM0IWQ",
+      "pl0_rate_source": "Linux clock framework",
+      "pl0_reported_hz": 50000000,
+      "reset_dt_id": 119,
+      "system_boot_id": "0e4cc12e-4532-4434-be89-665af09dba14",
+      "transformer_map": {
+        "base": 2684354560,
+        "bytes": 4096,
+        "device": "/dev/uio4"
+      },
+      "verified_state_sha256": "9c236b7a021a7e779f24ec00cda6590967fee3f81accbf531b5da7c7b6b735e8"
+    },
+    "configuration_sha256": "4515431a669eca9ae9b21f19a34e8c443deb06ee73a25e650d021cfa684314ab",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-conditioned-resident-speed-v1",
+  "id": "resident-speed-20261115T150400Z-f42f45",
+  "implementation": {
+    "id": "kv260-conditioned-50mhz-resident-instrumented-v1",
+    "sha256": "a29f7dbe83f48a3a2ac616a5efe3d8c66aa7efccefe523318707d694c8c8ea3c"
+  },
+  "limitations": [
+    "Three native sessions shared one supervisor process and boot. The single 48-request block came last and is descriptive.",
+    "Each output byte is one emitted token for this model. EOS emits no byte.",
+    "Back-to-back board rates include verification and capture work. UART export and Mac verification take place outside the measured blocks.",
+    "The fresh-load record used a different measurement harness and does not support a matched causal estimate.",
+    "No network service, thermal steady state, energy, cost or FPGA-only timing was measured."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "One timestamped candidate native session construction per segment.",
+      "name": "candidate_session_setup",
+      "samples": [
+        549.281084,
+        530.101822,
+        533.136262
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Count divided by first admission through last verified finish in one block.",
+      "name": "short.verified_block_byte_tokens_per_s",
+      "samples": [
+        144.927433704565,
+        144.5865134825266,
+        144.45137062989866
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Count divided by first admission through last verified finish in one block.",
+      "name": "short.verified_block_requests_per_s",
+      "samples": [
+        1.375893357954731,
+        1.3726567735682906,
+        1.3713737718028354
+      ],
+      "unit": "requests/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Count divided by first admission through last verified finish in one block.",
+      "name": "long.verified_block_byte_tokens_per_s",
+      "samples": [
+        144.20853016115126
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Count divided by first admission through last verified finish in one block.",
+      "name": "long.verified_block_requests_per_s",
+      "samples": [
+        1.3690683243147272
+      ],
+      "unit": "requests/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through first emitted byte, including context clear.",
+      "name": "s1.encoded-fu2p2q.first_byte_ms",
+      "samples": [
+        46.159432,
+        46.207502,
+        46.217962,
+        46.194792
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Inference start through first emitted byte.",
+      "name": "s1.encoded-fu2p2q.first_after_clear_ms",
+      "samples": [
+        46.02911,
+        46.00434,
+        46.01204,
+        45.99306
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Existing native context-clear call.",
+      "name": "s1.encoded-fu2p2q.clear_ms",
+      "samples": [
+        0.087191,
+        0.120001,
+        0.123841,
+        0.116041
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Later-byte count divided by first-to-last emission.",
+      "name": "s1.encoded-fu2p2q.decode_byte_tokens_per_s",
+      "samples": [
+        209.29819078561707,
+        209.15576925351974,
+        209.2718053217796,
+        209.25918886887493
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through exact checks and verified finish.",
+      "name": "s1.encoded-fu2p2q.admission_to_verified_ms",
+      "samples": [
+        645.565047,
+        646.065882,
+        645.648728,
+        645.734158
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through first emitted byte, including context clear.",
+      "name": "s1.encoded-hello.first_byte_ms",
+      "samples": [
+        38.93887,
+        38.976499,
+        38.96382,
+        38.99287
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Inference start through first emitted byte.",
+      "name": "s1.encoded-hello.first_after_clear_ms",
+      "samples": [
+        38.752058,
+        38.773497,
+        38.778388,
+        38.802898
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Existing native context-clear call.",
+      "name": "s1.encoded-hello.clear_ms",
+      "samples": [
+        0.117951,
+        0.122212,
+        0.118161,
+        0.117701
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Later-byte count divided by first-to-last emission.",
+      "name": "s1.encoded-hello.decode_byte_tokens_per_s",
+      "samples": [
+        222.88829202186912,
+        223.74880416634554,
+        222.7820504301715,
+        222.240176231965
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through exact checks and verified finish.",
+      "name": "s1.encoded-hello.admission_to_verified_ms",
+      "samples": [
+        454.94411,
+        453.481175,
+        455.494776,
+        456.079021
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through first emitted byte, including context clear.",
+      "name": "s1.encoded-max48.first_byte_ms",
+      "samples": [
+        412.746088,
+        413.054781,
+        412.612367,
+        412.593136
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Inference start through first emitted byte.",
+      "name": "s1.encoded-max48.first_after_clear_ms",
+      "samples": [
+        412.498746,
+        412.786378,
+        412.347144,
+        412.330494
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Existing native context-clear call.",
+      "name": "s1.encoded-max48.clear_ms",
+      "samples": [
+        0.114181,
+        0.122212,
+        0.118232,
+        0.117841
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Later-byte count divided by first-to-last emission.",
+      "name": "s1.encoded-max48.decode_byte_tokens_per_s",
+      "samples": [
+        165.09831019314885,
+        164.70905556555138,
+        165.035643965766,
+        165.28873817073634
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through exact checks and verified finish.",
+      "name": "s1.encoded-max48.admission_to_verified_ms",
+      "samples": [
+        1066.434266,
+        1068.143013,
+        1066.544847,
+        1065.583577
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through first emitted byte, including context clear.",
+      "name": "s2.encoded-fu2p2q.first_byte_ms",
+      "samples": [
+        46.241683,
+        46.100232,
+        46.233962,
+        46.172332
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Inference start through first emitted byte.",
+      "name": "s2.encoded-fu2p2q.first_after_clear_ms",
+      "samples": [
+        46.015971,
+        45.91251,
+        46.02361,
+        45.98723
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Existing native context-clear call.",
+      "name": "s2.encoded-fu2p2q.clear_ms",
+      "samples": [
+        0.122461,
+        0.118341,
+        0.123562,
+        0.116272
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Later-byte count divided by first-to-last emission.",
+      "name": "s2.encoded-fu2p2q.decode_byte_tokens_per_s",
+      "samples": [
+        207.7384620148205,
+        208.0574329853972,
+        209.12755101888266,
+        208.12262207864123
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through exact checks and verified finish.",
+      "name": "s2.encoded-fu2p2q.admission_to_verified_ms",
+      "samples": [
+        650.392855,
+        649.246304,
+        646.718628,
+        649.402105
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through first emitted byte, including context clear.",
+      "name": "s2.encoded-hello.first_byte_ms",
+      "samples": [
+        38.98944,
+        38.94624,
+        38.95387,
+        39.02534
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Inference start through first emitted byte.",
+      "name": "s2.encoded-hello.first_after_clear_ms",
+      "samples": [
+        38.859018,
+        38.731628,
+        38.735418,
+        38.792788
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Existing native context-clear call.",
+      "name": "s2.encoded-hello.clear_ms",
+      "samples": [
+        0.085541,
+        0.137861,
+        0.142101,
+        0.122841
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Later-byte count divided by first-to-last emission.",
+      "name": "s2.encoded-hello.decode_byte_tokens_per_s",
+      "samples": [
+        223.2312620844927,
+        223.54842478724927,
+        222.2074827366133,
+        223.5996850520553
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through exact checks and verified finish.",
+      "name": "s2.encoded-hello.admission_to_verified_ms",
+      "samples": [
+        454.89096,
+        454.410135,
+        456.781799,
+        454.285904
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through first emitted byte, including context clear.",
+      "name": "s2.encoded-max48.first_byte_ms",
+      "samples": [
+        412.561806,
+        413.070171,
+        412.839699,
+        412.790088
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Inference start through first emitted byte.",
+      "name": "s2.encoded-max48.first_after_clear_ms",
+      "samples": [
+        412.308353,
+        412.806609,
+        412.553856,
+        412.532296
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Existing native context-clear call.",
+      "name": "s2.encoded-max48.clear_ms",
+      "samples": [
+        0.116492,
+        0.120591,
+        0.120961,
+        0.116631
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Later-byte count divided by first-to-last emission.",
+      "name": "s2.encoded-max48.decode_byte_tokens_per_s",
+      "samples": [
+        165.3462083684795,
+        166.07710557234432,
+        165.81391014276653,
+        166.06474029385976
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through exact checks and verified finish.",
+      "name": "s2.encoded-max48.admission_to_verified_ms",
+      "samples": [
+        1066.079243,
+        1068.517496,
+        1069.109832,
+        1068.143473
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through first emitted byte, including context clear.",
+      "name": "s3.encoded-fu2p2q.first_byte_ms",
+      "samples": [
+        46.226193,
+        46.209202,
+        46.202652,
+        46.200262
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Inference start through first emitted byte.",
+      "name": "s3.encoded-fu2p2q.first_after_clear_ms",
+      "samples": [
+        46.018591,
+        46.00119,
+        46.00166,
+        45.96533
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Existing native context-clear call.",
+      "name": "s3.encoded-fu2p2q.clear_ms",
+      "samples": [
+        0.123741,
+        0.118201,
+        0.120411,
+        0.147891
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Later-byte count divided by first-to-last emission.",
+      "name": "s3.encoded-fu2p2q.decode_byte_tokens_per_s",
+      "samples": [
+        209.17027915407357,
+        207.94773850561572,
+        209.1138713808012,
+        209.11694688455646
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through exact checks and verified finish.",
+      "name": "s3.encoded-fu2p2q.admission_to_verified_ms",
+      "samples": [
+        647.040012,
+        650.525126,
+        647.249113,
+        647.286764
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through first emitted byte, including context clear.",
+      "name": "s3.encoded-hello.first_byte_ms",
+      "samples": [
+        38.954309,
+        38.971449,
+        38.94101,
+        38.9816
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Inference start through first emitted byte.",
+      "name": "s3.encoded-hello.first_after_clear_ms",
+      "samples": [
+        38.758767,
+        38.732017,
+        38.720447,
+        38.750388
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Existing native context-clear call.",
+      "name": "s3.encoded-hello.clear_ms",
+      "samples": [
+        0.118441,
+        0.154412,
+        0.141171,
+        0.123651
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Later-byte count divided by first-to-last emission.",
+      "name": "s3.encoded-hello.decode_byte_tokens_per_s",
+      "samples": [
+        222.1115723927574,
+        223.50156471059762,
+        222.0502821187506,
+        223.5470317033295
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through exact checks and verified finish.",
+      "name": "s3.encoded-hello.admission_to_verified_ms",
+      "samples": [
+        457.069521,
+        454.632967,
+        457.216633,
+        454.728928
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through first emitted byte, including context clear.",
+      "name": "s3.encoded-max48.first_byte_ms",
+      "samples": [
+        412.635047,
+        413.419655,
+        413.180533,
+        413.230003
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Inference start through first emitted byte.",
+      "name": "s3.encoded-max48.first_after_clear_ms",
+      "samples": [
+        412.433175,
+        413.160413,
+        412.91963,
+        412.93114
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Existing native context-clear call.",
+      "name": "s3.encoded-max48.clear_ms",
+      "samples": [
+        0.088051,
+        0.116171,
+        0.118731,
+        0.122162
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Later-byte count divided by first-to-last emission.",
+      "name": "s3.encoded-max48.decode_byte_tokens_per_s",
+      "samples": [
+        164.75554447275044,
+        166.09381179737963,
+        166.0434117050069,
+        165.22843733801747
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Admission through exact checks and verified finish.",
+      "name": "s3.encoded-max48.admission_to_verified_ms",
+      "samples": [
+        1069.348025,
+        1070.441896,
+        1070.502937,
+        1068.208274
+      ],
+      "unit": "ms"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-conditioned-resident-speed-v1",
+    "measurement_boundary": "Board monotonic clock. Back-to-back blocks run from first admission through last verified finish, including all in-block overhead.",
+    "quality_gate": "Board-side exact signed scores and output equivalence before next request, with independent Mac digest and raw-exemplar verification.",
+    "sha256": "3e5ccfc8ce3cefa69ad3d2934495f9498192d93a8f8ff8c903a562292a2e09ed",
+    "tokenizer": "BOS plus two hexadecimal digit IDs per input UTF-8 byte. Output uses byte IDs and EOS.",
+    "warmup": "Six warm-up requests followed by one observer pair per native session."
+  },
+  "quality": {
+    "evidence": "Exact frozen output bytes and EOS on all requests.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "04c7100ca9d5ba9ddbd49fdc14bd85cefcc6381d",
+    "patch_sha256": "94b6b2a21c414d7400af37ed4fec56cdfc1ae14432e5eb78e9c4299daf5eb9ff"
+  },
+  "started_at": "2026-11-15T15:10:20.821320+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-conditioned-resident-three-sessions-108-v1",
+    "sha256": "3e5ccfc8ce3cefa69ad3d2934495f9498192d93a8f8ff8c903a562292a2e09ed"
+  }
+}

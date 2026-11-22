@@ -1,0 +1,953 @@
+{
+  "artifacts": [
+    {
+      "bytes": 24512794,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-rtl-20261119T110106Z/simulation.tar.gz",
+      "role": "Exact RTL, replay testbench, oracle inputs and observed traces",
+      "sha256": "755361691a921d5fefaf4b3b8d2cf53bd776bc3a3fb09c7afac7e80c0c3f27ba"
+    },
+    {
+      "bytes": 36529,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-rtl-20261119T110106Z/source-closure.json",
+      "role": "Archive member SHA-256 pins",
+      "sha256": "8801022b6a8e6e7d274bfcd84640dcca969e1ba68f4fe262a5df3434c6db031b"
+    },
+    {
+      "bytes": 31649,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-rtl-20261119T110106Z/matched.json",
+      "role": "Four exact model replays, directed faults and arithmetic results",
+      "sha256": "f4cd2fe72931b7e18c91f5db9d5141374b0ba099998843434679f577e8e36afe"
+    },
+    {
+      "bytes": 23465,
+      "path": "hardware/research/inference/results/attention-exp-pair-v2-rtl-20261117T230104Z/run.json",
+      "role": "Adopted BRAM control replay and frozen workload archive pin",
+      "sha256": "db83294738d25d4a079ca3b92276204e812d1f7c91410ba4359bfe0b37006994"
+    },
+    {
+      "bytes": 16851,
+      "path": "hardware/research/inference/results/output-projection-ddr4-rtl-20261118T225153Z/run.json",
+      "role": "Adopted scalar DDR fixture replay",
+      "sha256": "4ad8509ff42487c54309f29d72b2cd9fa90f1bb9a5450feb79c0befbe8d00e44"
+    },
+    {
+      "bytes": 937,
+      "path": "hardware/research/inference/implementations/kv260/rtl/toolchain.json",
+      "role": "Pinned simulator kit",
+      "sha256": "b6a35af5636cca4a2f9bb82135a716873c8bb1abf6926504f2e425ea600df693"
+    }
+  ],
+  "completed_at": "2026-11-19T11:04:06.742319+00:00",
+  "conditions": {
+    "address_wait_pattern": [
+      0,
+      2
+    ],
+    "dense_cases": {
+      "0-0": "PASS dense mode=0 products=1024 rows=32 addresses=0 AXI_beats=0 extra=0",
+      "1-1": "PASS dense mode=1 products=1024 rows=32 addresses=1024 AXI_beats=1024 extra=4608",
+      "1-2": "PASS dense mode=2 products=1024 rows=32 addresses=256 AXI_beats=256 extra=1152",
+      "1-3": "PASS dense mode=3 products=1024 rows=32 addresses=32 AXI_beats=256 extra=704",
+      "2-1": "PASS dense mode=1 products=1024 rows=32 addresses=1024 AXI_beats=1024 extra=4608",
+      "2-2": "PASS dense mode=2 products=1024 rows=32 addresses=256 AXI_beats=256 extra=1152",
+      "2-3": "PASS dense mode=3 products=1024 rows=32 addresses=32 AXI_beats=256 extra=704"
+    },
+    "fault_cases": {
+      "1": "PASS DDR fault or cancel 1, exact BRAM and fresh row DDR BOS",
+      "10": "PASS DDR fault or cancel 10, exact BRAM and fresh row DDR BOS",
+      "2": "PASS DDR fault or cancel 2, exact BRAM and fresh row DDR BOS",
+      "3": "PASS DDR fault or cancel 3, exact BRAM and fresh row DDR BOS",
+      "4": "PASS DDR fault or cancel 4, exact BRAM and fresh row DDR BOS",
+      "5": "PASS DDR fault or cancel 5, exact BRAM and fresh row DDR BOS",
+      "6": "PASS DDR fault or cancel 6, exact BRAM and fresh row DDR BOS",
+      "7": "PASS DDR fault or cancel 7, exact BRAM and fresh row DDR BOS",
+      "8": "PASS DDR fault or cancel 8, exact BRAM and fresh row DDR BOS",
+      "9": "PASS DDR fault or cancel 9, exact BRAM and fresh row DDR BOS"
+    },
+    "modes": [
+      "bram",
+      "scalar",
+      "beat",
+      "row"
+    ],
+    "per_projection": {
+      "beat": {
+        "address_requests": 256,
+        "beats": 256,
+        "extra_cycles": 1152
+      },
+      "bram": {
+        "address_requests": 0,
+        "beats": 0,
+        "extra_cycles": 0
+      },
+      "row": {
+        "address_requests": 32,
+        "beats": 256,
+        "extra_cycles": 704
+      },
+      "scalar": {
+        "address_requests": 1024,
+        "beats": 1024,
+        "extra_cycles": 4608
+      }
+    },
+    "positions_per_mode": 716,
+    "response_wait_pattern": [
+      0,
+      1,
+      2,
+      3
+    ]
+  },
+  "correctness": {
+    "evidence": "28 frozen full-model mode/case replays, seven directed dense vectors/modes and ten injected transport faults or resets.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 RTL model",
+      "rtl_jobs": 2,
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052",
+      "wall_clock_limit_seconds": 1500
+    },
+    "configuration_sha256": "ed641c221a622cca59c45657acb72735edcb445a37063dcdb3111a00b3332053",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-output-projection-ddr4-burst-v1",
+  "id": "output-projection-ddr4-burst-rtl-20261119T110106Z",
+  "implementation": {
+    "id": "output-projection-ddr4-burst-v1",
+    "sha256": "8bed664038ddacb900a91f403c8e292c36fa6eed8bfa653183dfa081cc86206b"
+  },
+  "limitations": [
+    "The modeled address and response stalls describe RTL behavior under this fixed simulated handshake pattern. Physical DDR timing, route and board energy require independent evidence."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.bos-only-cap0.prefix_cycles",
+      "samples": [
+        36399
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.bos-only-cap0.complete_cycles",
+      "samples": [
+        38081
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        493263
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        7475095
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        494945
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        7402040
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        5142970
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        5078839
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        4743643
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        12716857
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        4745325
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        12626576
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.full-context-cap0.prefix_cycles",
+      "samples": [
+        17828258
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.full-context-cap0.complete_cycles",
+      "samples": [
+        17829940
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.bos-only-cap0.prefix_cycles",
+      "samples": [
+        41007
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.bos-only-cap0.complete_cycles",
+      "samples": [
+        42689
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        553167
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        8097175
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        554849
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        8019512
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        465197
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        466879
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        465197
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        466879
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        466879
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        466879
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        465197
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        5608378
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        466879
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        5539639
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        5190619
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        13643065
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        5192301
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        13548176
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.full-context-cap0.prefix_cycles",
+      "samples": [
+        19007906
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "scalar.full-context-cap0.complete_cycles",
+      "samples": [
+        19009588
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.bos-only-cap0.prefix_cycles",
+      "samples": [
+        37551
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.bos-only-cap0.complete_cycles",
+      "samples": [
+        39233
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        508239
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        7630615
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        509921
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        7556408
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        427181
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        428863
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        427181
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        428863
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        428863
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        428863
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        427181
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        5259322
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        428863
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        5194039
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        4855387
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        12948409
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        4857069
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        12856976
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.full-context-cap0.prefix_cycles",
+      "samples": [
+        18123170
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "beat.full-context-cap0.complete_cycles",
+      "samples": [
+        18124852
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.bos-only-cap0.prefix_cycles",
+      "samples": [
+        37103
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.bos-only-cap0.complete_cycles",
+      "samples": [
+        38785
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        502415
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        7570135
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        504097
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        7496376
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        422253
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        423935
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        422253
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        423935
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        423935
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        423935
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        422253
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        5214074
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        423935
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        5149239
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        4811931
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        12858361
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        4813613
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        12767376
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.full-context-cap0.prefix_cycles",
+      "samples": [
+        18008482
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "row.full-context-cap0.complete_cycles",
+      "samples": [
+        18010164
+      ],
+      "unit": "cycles"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-output-projection-ddr4-burst-v1-rtl",
+    "measurement_boundary": "Matched BRAM, scalar, beat and row replay at exact model steps, with projection and AXI counters.",
+    "quality_gate": "Exact scores, outputs, stopping, cache, signed operands and injected transport fault/drain.",
+    "sha256": "6debcf4b0629d477a8e63723a755c4ba8cfdfec485dbba99f32dc23778e802ea",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Every emitted logit, generated byte, stop reason and two cache checkpoints matched, and all 1,024 signed coefficient values were checked per position.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": null
+  },
+  "started_at": "2026-11-19T11:01:06.332588+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

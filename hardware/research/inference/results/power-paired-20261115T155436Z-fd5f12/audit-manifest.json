@@ -1,0 +1,18 @@
+{
+  "capture_manifest_sha256": "765f81de2b90142750e5f798ed9cf4f6a9127850d57defa96a2768f46ce86623",
+  "evidence_root": ".agents/runtime/hardware/inference/outputs/power-paired-20261115T155436Z-fd5f12/independent-audit",
+  "files": {
+    "audit.stdout": {
+      "bytes": 2425,
+      "sha256": "a7359e0cca99e15260a9ed24ed5ddfd5b219be24bb8cdd00fdc9e9d9e49520fe"
+    },
+    "review-kv260-power-pairs.py": {
+      "bytes": 5857,
+      "sha256": "b6f1c4b65d06f780cee541fd0636ccbfd830e3bee61d0dd6ac3d8e6a94754a7d"
+    }
+  },
+  "passed": true,
+  "run_id": "power-paired-20261115T155436Z-fd5f12",
+  "run_record_sha256": "8e2e325c080270fa44c4699c6694dd54d02b0f096bd1818d149b371e71cff174",
+  "scope": "Independent UART, exact-score and timing reconstruction and clipped energy integration."
+}

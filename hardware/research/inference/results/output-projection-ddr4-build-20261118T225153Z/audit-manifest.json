@@ -1,0 +1,140 @@
+{
+  "archive_members": 384,
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T224726Z/server.receipt.json": {
+      "bytes": 489,
+      "role": "Superseded secure AXI synthesis receipt",
+      "sha256": "72513ad35cf9f739ea2b0d3ff49cde1585de9ef8ae27d788d291aac9894dddad"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T224726Z/server.tar.gz": {
+      "bytes": 31109692,
+      "role": "Superseded secure AXI synthesis archive",
+      "sha256": "36f44b2fb657a5d49fca93a7b477158a3f8b317ff73d6cd66d0f7111447ff921"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/admitted-source-manifest.json": {
+      "bytes": 2639,
+      "role": "Admitted RTL, shell, runner, and source hashes",
+      "sha256": "1f807b86ac73f10deb304e74ea7a26ba4ef1aa25fea13926b1d20baf09578c9c"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/build-input.tar.gz": {
+      "bytes": 51241,
+      "role": "Pinned Vivado build input archive",
+      "sha256": "3d65e514925d81dedb5f1248495310a43efa7aa73f7666fb90c1c9cac9068a26"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/kv260-ddr4-afi-restore.dtbo": {
+      "bytes": 310,
+      "role": "Restore overlay for captured zero width fields",
+      "sha256": "c747e2487a5ead29c8a764fa679dc4f67bba9ac9073a1e518f4faaaeab7e751a"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/kv260-ddr4-dma-direct.dtbo": {
+      "bytes": 416,
+      "role": "Direct DMA deployment overlay for the verified boot state",
+      "sha256": "d338459633f922121fdeb548a52ff745edbc254d64cd97363755b9490ff8cb05"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/offline-acceptance.json": {
+      "bytes": 1841,
+      "role": "Independent Mac timing, native interface, firmware, and overlay validation",
+      "sha256": "1a679030f7b28fe6cf47b3da0f8be33d7cf713f698f8585195b3d83f0fbdd887"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/readback.py": {
+      "bytes": 2009,
+      "role": "Boot-specific AFI and SMMU readback checker",
+      "sha256": "a37be8d4fa13df736fab83c601b7124d147377cd9a92082fc89459a3104635a6"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/route-hp0-verification.tsv": {
+      "bytes": 104803,
+      "role": "Independent routed PS8 HP0 primitive, signal, and clock trace",
+      "sha256": "9a2078115cd20a22cc0fbc3abdeffcba5a4a1812b73ed1b64ed5bcd57048dee2"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server.receipt.json": {
+      "bytes": 288,
+      "role": "Remote archive byte and file-count receipt",
+      "sha256": "eae2995a134e5ccc082b5e7d7c58c863aa02666acd98075a2f1490aafb0ad000"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server.tar.gz": {
+      "bytes": 92679730,
+      "role": "Full recovered Linux Vivado build and source archive",
+      "sha256": "2ea0ace6ad9f05f4f093d6764305e85c32a0d1a7d424739bf37b787e413fc5c6"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/generate/console.log": {
+      "bytes": 39025,
+      "role": "Generation warnings and IP refresh evidence",
+      "sha256": "ca402bc980585a818bcfc519339bb519d61f3be02b7c41aee10d38589f3b369e"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/generate/ddr-interfaces.txt": {
+      "bytes": 5127,
+      "role": "Validated address aperture, clock domain, protocol and width",
+      "sha256": "2f5284aadc21d8d3cab89841ef63ce24422ff817c4ba91020b0cafdcbc3c1b0b"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/ddr-primitives.tsv": {
+      "bytes": 142152,
+      "role": "Routed projection and PS primitive inventory",
+      "sha256": "882148e700236ebe28ee28bdc92b97328205a0b5bdd2ff6dab542bdfe6ce4aa9"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/ddr-routed-hp0.tsv": {
+      "bytes": 31271,
+      "role": "Initial routed native HP0 pin report",
+      "sha256": "fe71adddc411fbdddd3fc1c18a59dd34360b6bf87f44f0eff0fde889acb5c18c"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/metrics.txt": {
+      "bytes": 380,
+      "role": "Routed timing and design rule checks",
+      "sha256": "0dacc153189a2b60a1c2c0b1961a61415db3688ec6848637ced79a5ddb7f6eb0"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/utilization.rpt": {
+      "bytes": 12669,
+      "role": "Routed device resource census",
+      "sha256": "d3d2a2812f53dd68c6de71cd42775d8e8933639712ce42b8ef7a2def6c05ebe5"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/route/route.dcp": {
+      "bytes": 24362212,
+      "role": "Exact routed Vivado checkpoint",
+      "sha256": "c4bca87d0385f5cd216fe32ff8320f87fa308d3439264a48253aa14accf0b146"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/synth/console.log": {
+      "bytes": 216063,
+      "role": "Synthesis warnings and memory inference evidence",
+      "sha256": "a9e7cf8d8e04686c94999ed13facbc3e3712f1d1935515367836f66851913065"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/kv260-ddr4-dma.dtbo": {
+      "bytes": 374,
+      "role": "Generic DMA template retained as archive evidence",
+      "sha256": "4281c8126a8b53b88b53287920b37546e87994d8ab94a5544eab0350337b6747"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/kv260-ddr4-interface.dtbo": {
+      "bytes": 778,
+      "role": "Candidate HP0 AFI and UIO overlay",
+      "sha256": "a910db9f4de4a1c5571d5720aac058234d5460a8844060d0530916df065c3d03"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/kv260-output-projection-ddr4-program.dtbo": {
+      "bytes": 371,
+      "role": "FPGA manager firmware overlay",
+      "sha256": "e55c62af9ce1fb711487e0ff05ee5254f4dc17d9e156616100e2b298e1373e3f"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/offline-package/gradiated-tiny-output-projection-ddr4-v1-50mhz.bit.bin": {
+      "bytes": 7797692,
+      "role": "Independently checked firmware payload",
+      "sha256": "798bb7742f22c2cf5d2a081ec7b7649c12760fe33f6c28502af3377e63113098"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-preflight-20261118T224353Z/server.tar.gz": {
+      "bytes": 4328435,
+      "role": "Generation-only interface preflight archive with stub master ports",
+      "sha256": "c3beaa882ad2f236fa50d62dba9410d1997c11f5fe8aad67baee9c3e0fb12f3a"
+    },
+    "hardware/research/inference/results/attention-exp-pair-v2-build-20261117T225852Z/run.json": {
+      "bytes": 16566,
+      "role": "Adopted routed control evidence",
+      "sha256": "61c505f49c81a1f3f351861e3e688a8111943f667251222ea92432365dfaf5de"
+    },
+    "hardware/research/inference/results/output-projection-ddr4-rtl-20261118T225153Z/run.json": {
+      "bytes": 16851,
+      "role": "Scope-matched RTL and exact-model evidence",
+      "sha256": "4ad8509ff42487c54309f29d72b2cd9fa90f1bb9a5450feb79c0befbe8d00e44"
+    }
+  },
+  "interface_preflight": "output-projection-ddr4-preflight-20261118T224353Z",
+  "manifest_sha256": "1f807b86ac73f10deb304e74ea7a26ba4ef1aa25fea13926b1d20baf09578c9c",
+  "offline_acceptance_sha256": "1a679030f7b28fe6cf47b3da0f8be33d7cf713f698f8585195b3d83f0fbdd887",
+  "passed": true,
+  "superseded_attempt": "output-projection-ddr4-build-20261118T224726Z"
+}

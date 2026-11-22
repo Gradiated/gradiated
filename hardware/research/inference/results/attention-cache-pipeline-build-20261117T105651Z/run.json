@@ -1,0 +1,426 @@
+{
+  "artifacts": [
+    {
+      "bytes": 84329674,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-build-20261117T105651Z/server.tar.gz",
+      "role": "Complete archived configured tool and source/run output",
+      "sha256": "3c51401ca84cdd7411c145b6148f11cd25b9b989c4df525f5b4b1fb134fa9d6d"
+    },
+    {
+      "bytes": 284,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-build-20261117T105651Z/server.receipt.json",
+      "role": "Server byte and member receipt",
+      "sha256": "b27502ec918d7186d3eac77d224f95388db06e426e603c5915dab1f7f783243f"
+    },
+    {
+      "bytes": 14516,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-build-20261117T105651Z/offline-acceptance.json",
+      "role": "Mac raw and routed evidence validation",
+      "sha256": "b5ce9c96099231b5cbc2145c9720c5c8f40517584c039ab6a195c3b035821ec4"
+    },
+    {
+      "bytes": 2028,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-build-20261117T105651Z/server/source-manifest.json",
+      "role": "Exact synthesis source and runner closure",
+      "sha256": "0afa8f3230e6b4d7baba68d46da81323f6caf8463ec554f60adc3aeebf5c5ca2"
+    },
+    {
+      "bytes": 62437,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-build-20261117T105651Z/server/recovery-manifest.json",
+      "role": "Complete archive member hashes",
+      "sha256": "12bacdd3b1ba4ac459f26badfbb8075cbb1bbf36374f3f4fe925a4965935e231"
+    },
+    {
+      "bytes": 3087,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-build-20261117T105651Z/server/build/reports/logits-primitives.tsv",
+      "role": "Named routed weight banks and DSPs",
+      "sha256": "5e48e2540cb5f6d441cdceef52d8f4e6245e336bfd748bb4fa0a4a63ab5003ae"
+    },
+    {
+      "bytes": 10688,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-build-20261117T105651Z/server/build/reports/utilization-hierarchical.rpt",
+      "role": "Routed hierarchical utilisation",
+      "sha256": "a9b2a2126c07ad85d03375a7af9aede3c780aa68e2b5f2a699e4e9bf1c805192"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-build-20261117T105651Z/server/offline-package/gradiated-tiny-attention-cache-pipeline-v1-50mhz.bit.bin",
+      "role": "Verified volatile programming image",
+      "sha256": "bdb9de86c20de87b2693d45247ca3a75dcdf700f6d41861bbfd2c018593c3c33"
+    },
+    {
+      "bytes": 375,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-build-20261117T105651Z/server/kv260-attention-cache-pipeline-program.dtbo",
+      "role": "Verified firmware-name overlay",
+      "sha256": "4ff5e2ee4e8a1bfe864a2102b178b8ef65a60b0c2aff24500b24dc40cddb3f89"
+    },
+    {
+      "bytes": 39040,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-build-20261117T105651Z/build-input.tar.gz",
+      "role": "Admitted build input bytes",
+      "sha256": "8ec3ec013d19653c973c2145bb4e4a570980218f67ac4cb5600267e62b9e53b7"
+    },
+    {
+      "bytes": 3870,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-build-20261117T105651Z/prepare-build.py",
+      "role": "Source-manifest reproducibility helper",
+      "sha256": "7e97533e7b454f3dae2bd64b1c8be13b4d8245233788c2ba3ab68af864433c7d"
+    },
+    {
+      "bytes": 6892,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-build-20261117T105651Z/verify-build.py",
+      "role": "Mac evidence verification helper",
+      "sha256": "51a0fcaa36ae57c9b0fbd8d58296a44f2523c85f745206a3d0123c1e93934e20"
+    },
+    {
+      "bytes": 46663,
+      "path": "hardware/research/inference/results/attention-cache-pipeline-rtl-20261117T105443Z/run.json",
+      "role": "Independently admitted exact paired attention-cache RTL simulation",
+      "sha256": "c3ffed691c1b1425cc8db6b9a0a049035ad6fd58317b3edaf37dfc4167f7b46d"
+    },
+    {
+      "bytes": 15108,
+      "path": "hardware/research/inference/results/ff-down-pipeline-build-20261117T000146Z/run.json",
+      "role": "Adopted down-projection control routed data",
+      "sha256": "5c3394e5d5f7c4b96ea651c1f568500518bb08a117f82c7e5a998af718ce3e22"
+    }
+  ],
+  "completed_at": "2026-11-17T11:19:50.564964+00:00",
+  "conditions": {
+    "control_variant": "ff-down-pipeline-v1",
+    "development_effort": {
+      "ai_usage_cost": null,
+      "engineering_attention_minutes": null,
+      "phase_elapsed_s": {
+        "bitstream": 110.87654474005103,
+        "generate": 29.19673499884084,
+        "opt": 81.76796522201039,
+        "place": 260.47286346019246,
+        "reports": 76.69008067902178,
+        "route": 236.33138814615086,
+        "synth": 321.4438635800034
+      }
+    },
+    "firmware": {
+      "bytes": 7797692,
+      "sha256": "bdb9de86c20de87b2693d45247ca3a75dcdf700f6d41861bbfd2c018593c3c33"
+    },
+    "lanes": 8,
+    "logits_primitives": {
+      "DSP48E2": 8,
+      "RAMB18E2": 0,
+      "RAMB36E2": 8
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "cross_device_comparison": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Nonnegative setup/hold, complete coverage and clean route at 20 ns.",
+        "source": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-build-20261117T105651Z/offline-acceptance.json",
+        "state": "measured"
+      },
+      "long_stability": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Observed resources for row-interleaved weights with unchanged total logical data bits.",
+        "source": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-build-20261117T105651Z/offline-acceptance.json",
+        "state": "measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "physical_area": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Actual complete-design and projection-specific routed primitive counts.",
+        "source": ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-build-20261117T105651Z/offline-acceptance.json",
+        "state": "measured"
+      },
+      "serving_load": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "startup": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "overlay": {
+      "bytes": 375,
+      "filename": "kv260-attention-cache-pipeline-program.dtbo",
+      "sha256": "4ff5e2ee4e8a1bfe864a2102b178b8ef65a60b0c2aff24500b24dc40cddb3f89"
+    },
+    "physical_board_access": false,
+    "resources": {
+      "bram_tile": 38.0,
+      "dsp": 37.0,
+      "lut": 34769.0,
+      "register": 13652.0
+    },
+    "routed": {
+      "clock": "clk_pl_0 period_ns 20.000",
+      "drc_errors_or_critical_warnings": "0",
+      "fully_placed": "1",
+      "fully_routed": "1",
+      "hold_slack_ns": "0.013",
+      "native_no_clock": "0",
+      "partially_routed_nets": "0",
+      "routing_errors": "0",
+      "routing_gap_nets": "0",
+      "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+      "setup_slack_ns": "3.815",
+      "unclocked_active_pins": "0",
+      "unconstrained_internal_endpoints": "0",
+      "unrouted_nets": "0",
+      "unused_ps_clock_outputs": "0"
+    },
+    "verified_server_files": 318,
+    "weight_banks": {
+      "0": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[0].weights_reg_bram_0"
+      ],
+      "1": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[1].weights_reg_bram_0"
+      ],
+      "2": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[2].weights_reg_bram_0"
+      ],
+      "3": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[3].weights_reg_bram_0"
+      ],
+      "4": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[4].weights_reg_bram_0"
+      ],
+      "5": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[5].weights_reg_bram_0"
+      ],
+      "6": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[6].weights_reg_bram_0"
+      ],
+      "7": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[7].weights_reg_bram_0"
+      ]
+    }
+  },
+  "correctness": {
+    "evidence": "All archive, exact source, routed timing, bank and programmer bytes accepted.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "clock_hz": 50000000,
+      "mode": "fully routed PS/AXI/neural implementation",
+      "part": "xck26-sfvc784-2LV-c",
+      "threads": 2,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "995b2e6fbb171dd64467b6c2a1bb1b76488c26c309a332b2adbd50e5c784cc2b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-attention-cache-pipeline-v1",
+  "id": "attention-cache-pipeline-build-20261117T105651Z",
+  "implementation": {
+    "id": "kv260-attention-cache-pipeline-v1-50mhz",
+    "sha256": "bdb9de86c20de87b2693d45247ca3a75dcdf700f6d41861bbfd2c018593c3c33"
+  },
+  "limitations": [
+    "Offline timing, routed resources and exact file pins. Physical measurements require a matched board run.",
+    "Simultaneous weight reads require physically banked storage. Logical data bits do not determine routed block RAM counts."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Vivado fixed-clock worst routed slack",
+      "name": "setup_slack",
+      "samples": [
+        3.815
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado fixed-clock worst routed slack",
+      "name": "hold_slack",
+      "samples": [
+        0.013
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilisation",
+      "name": "bram_tile",
+      "samples": [
+        38.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilisation",
+      "name": "dsp",
+      "samples": [
+        37.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilisation",
+      "name": "lut",
+      "samples": [
+        34769.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilisation",
+      "name": "register",
+      "samples": [
+        13652.0
+      ],
+      "unit": "count"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-attention-cache-pipeline-build-v1",
+    "measurement_boundary": "Offline routed circuit at unchanged 20 ns constraint.",
+    "quality_gate": "Source closure, exact expected bank and DSP count, fully routed nonnegative setup and hold.",
+    "sha256": "630ab6a274e9bf2d61a9726bc2788dc5d43f8fb58515c65b1bf4fd0f424997fa",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Frozen model and numerical rules verified in matched RTL separately.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "b688b0ec732f89abb19d4d45183ce94bc52936b68c7d2a4687abf9a1c86228a6"
+  },
+  "started_at": "2026-11-17T10:58:57.803265+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

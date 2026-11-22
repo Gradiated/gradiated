@@ -1,0 +1,1120 @@
+{
+  "artifacts": [
+    {
+      "bytes": 28544807,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-rtl-20261119T160135Z/simulation.tar.gz",
+      "role": "Exact fixture, generated RTL, compiler log and observations archive",
+      "sha256": "6be001afaadce8ef883ca5206bef8bf4093e8dd9475927cc9162c210c923c76e"
+    },
+    {
+      "bytes": 53664,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-rtl-20261119T160135Z/source-closure.json",
+      "role": "SHA-256 of every archived member",
+      "sha256": "4571c0c8955ede55b577984b81a124c310f31809d51fd195f32930e03d5d6c79"
+    },
+    {
+      "bytes": 43393,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-rtl-20261119T160135Z/source.patch",
+      "role": "Candidate variant, proof and protocol delta",
+      "sha256": "e5b0a3bf9c001880ac12f393083c19d24cce59c68e36ab5c0f8d170acbd239ac"
+    },
+    {
+      "bytes": 194219,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-rtl-20261119T160135Z/model-results.json",
+      "role": "Seven paired model replays and per-depth attention profile",
+      "sha256": "7455b77e327e71cab1160e81cc21026ac27fe08721496a6ad6b01374a1819078"
+    },
+    {
+      "bytes": 891,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-rtl-20261119T160135Z/directed-results.json",
+      "role": "Directed scalar and attention oracle checks",
+      "sha256": "66456b689a8c6c1f32ec56179a2671621ef4c5c6b8b4fd78e6c01a975c484185"
+    },
+    {
+      "bytes": 23465,
+      "path": "hardware/research/inference/results/attention-exp-pair-v2-rtl-20261117T230104Z/run.json",
+      "role": "Adopted Experiment 13 RTL record",
+      "sha256": "db83294738d25d4a079ca3b92276204e812d1f7c91410ba4359bfe0b37006994"
+    }
+  ],
+  "completed_at": "2026-11-19T16:03:30.144377+00:00",
+  "conditions": {
+    "candidate_attention_sha256": "d9b481daa7e488bcfe7140a619f46163f4900e88ffa54286047850f53c732cdd",
+    "candidate_source_manifest_sha256": "91d4ad599708a6d66f8c369bc592a43fcad2fc9c6f97afb75280c3ef348836c3",
+    "control_implementation": "attention-exp-pair-v2",
+    "control_source_manifest_sha256": "8fb1cabd76b1ee1781fc258dc9fa9d07f1c787c806a2a8b2d1d39a4987576c64",
+    "directed_oracle": {
+      "all_exact": true,
+      "attention_probability_reset_probes": 1,
+      "attention_zero_sum_rejections": 1,
+      "context_values": 288,
+      "exponentials": 1042,
+      "heads": 2,
+      "limits": "Actual pinned table plus synthetic and archived intermediate operands; no archived full-forward context golden or complete transformer proof",
+      "max_length": 256,
+      "paired_cancel_probes": 1,
+      "paired_fault_probes": 1,
+      "probabilities": 1042,
+      "real_archived_input_cases": 0,
+      "requests": 9,
+      "reset_probes": 4,
+      "scalar_fixture_rows": 6363,
+      "scalar_fixtures": {
+        "full": 104,
+        "full_scale": 10,
+        "nondivision": 1899,
+        "probability_cases": 4152,
+        "rejected": 81,
+        "shortened": 4279,
+        "ties_even": 2,
+        "ties_odd": 3,
+        "zero_exponential": 13
+      },
+      "scalar_reset_probes": 1,
+      "score_products": 16672,
+      "scores": 1042,
+      "table_rewrite_checks": 2,
+      "value_products": 16672
+    },
+    "exact_autonomous_scores": 103360,
+    "exact_legacy_scores": 4480,
+    "exact_model_probabilities": 135322,
+    "full_context_depth": 256,
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Frozen full model replay and independent directed RTL fixtures.",
+        "sources": [
+          {
+            "bytes": 194219,
+            "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-rtl-20261119T160135Z/model-results.json",
+            "role": "Seven paired model replays and per-depth attention profile",
+            "sha256": "7455b77e327e71cab1160e81cc21026ac27fe08721496a6ad6b01374a1819078"
+          },
+          {
+            "bytes": 891,
+            "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-rtl-20261119T160135Z/directed-results.json",
+            "role": "Directed scalar and attention oracle checks",
+            "sha256": "66456b689a8c6c1f32ec56179a2671621ef4c5c6b8b4fd78e6c01a975c484185"
+          }
+        ],
+        "state": "measured"
+      },
+      "cross_device_comparison": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "long_stability": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "memory_bandwidth": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Frozen full model replay and independent directed RTL fixtures.",
+        "sources": [
+          {
+            "bytes": 194219,
+            "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-rtl-20261119T160135Z/model-results.json",
+            "role": "Seven paired model replays and per-depth attention profile",
+            "sha256": "7455b77e327e71cab1160e81cc21026ac27fe08721496a6ad6b01374a1819078"
+          },
+          {
+            "bytes": 891,
+            "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-rtl-20261119T160135Z/directed-results.json",
+            "role": "Directed scalar and attention oracle checks",
+            "sha256": "66456b689a8c6c1f32ec56179a2671621ef4c5c6b8b4fd78e6c01a975c484185"
+          }
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Frozen full model replay and independent directed RTL fixtures.",
+        "sources": [
+          {
+            "bytes": 194219,
+            "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-rtl-20261119T160135Z/model-results.json",
+            "role": "Seven paired model replays and per-depth attention profile",
+            "sha256": "7455b77e327e71cab1160e81cc21026ac27fe08721496a6ad6b01374a1819078"
+          },
+          {
+            "bytes": 891,
+            "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-rtl-20261119T160135Z/directed-results.json",
+            "role": "Directed scalar and attention oracle checks",
+            "sha256": "66456b689a8c6c1f32ec56179a2671621ef4c5c6b8b4fd78e6c01a975c484185"
+          }
+        ],
+        "state": "measured"
+      },
+      "repeatability": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "serving_load": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Frozen full model replay and independent directed RTL fixtures.",
+        "sources": [
+          {
+            "bytes": 194219,
+            "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-rtl-20261119T160135Z/model-results.json",
+            "role": "Seven paired model replays and per-depth attention profile",
+            "sha256": "7455b77e327e71cab1160e81cc21026ac27fe08721496a6ad6b01374a1819078"
+          },
+          {
+            "bytes": 891,
+            "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-rtl-20261119T160135Z/directed-results.json",
+            "role": "Directed scalar and attention oracle checks",
+            "sha256": "66456b689a8c6c1f32ec56179a2671621ef4c5c6b8b4fd78e6c01a975c484185"
+          }
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "model_cases": 7,
+    "probability_wait_clocks": {
+      "candidate": 11,
+      "control": 35
+    },
+    "processed_positions": 716,
+    "radix_four_steps": {
+      "candidate": 8,
+      "control": 32
+    }
+  },
+  "correctness": {
+    "evidence": "Seven exact paired full-model cases and 6,363 directed scalar oracle rows.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 RTL model",
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052"
+    },
+    "configuration_sha256": "2f8d960315cbf5f9cca1b1112e84315cf0bad687ffc8b83ddc67c6c8a723180b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-probability-div-v1",
+  "id": "probability-div-v1-rtl-20261119T160135Z",
+  "implementation": {
+    "id": "probability-div-v1",
+    "sha256": "91d4ad599708a6d66f8c369bc592a43fcad2fc9c6f97afb75280c3ef348836c3"
+  },
+  "limitations": [
+    "Simulation measures logic clocks. Routed timing, physical latency, and module energy use separate records.",
+    "The frozen workload exercises one model. Attention arithmetic separately has a supported-domain integer proof."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.bos-only-cap0.prefix_cycles",
+      "samples": [
+        36399
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.bos-only-cap0.complete_cycles",
+      "samples": [
+        38081
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.bos-only-cap0.attention_cycles",
+      "samples": [
+        438
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.bos-only-cap0.probability_wait_cycles",
+      "samples": [
+        70
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.bos-only-cap0.divider_step_cycles",
+      "samples": [
+        64
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.bos-only-cap0.prefix_cycles",
+      "samples": [
+        36351
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.bos-only-cap0.complete_cycles",
+      "samples": [
+        38033
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.bos-only-cap0.attention_cycles",
+      "samples": [
+        390
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.bos-only-cap0.probability_wait_cycles",
+      "samples": [
+        22
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.bos-only-cap0.divider_step_cycles",
+      "samples": [
+        16
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        493263
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        7475095
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-fu2p2q-cap255.attention_cycles",
+      "samples": [
+        2413462
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-fu2p2q-cap255.probability_wait_cycles",
+      "samples": [
+        642600
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-fu2p2q-cap255.divider_step_cycles",
+      "samples": [
+        587520
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        494945
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        7402040
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        488895
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        7034455
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-fu2p2q-cap255.attention_cycles",
+      "samples": [
+        1972822
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-fu2p2q-cap255.probability_wait_cycles",
+      "samples": [
+        201960
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-fu2p2q-cap255.divider_step_cycles",
+      "samples": [
+        146880
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        490577
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        6967880
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap0.attention_cycles",
+      "samples": [
+        18928
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap0.probability_wait_cycles",
+      "samples": [
+        4620
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap0.divider_step_cycles",
+      "samples": [
+        4224
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        411341
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        413023
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap0.attention_cycles",
+      "samples": [
+        15760
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap0.probability_wait_cycles",
+      "samples": [
+        1452
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap0.divider_step_cycles",
+      "samples": [
+        1056
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap1.attention_cycles",
+      "samples": [
+        18928
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap1.probability_wait_cycles",
+      "samples": [
+        4620
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap1.divider_step_cycles",
+      "samples": [
+        4224
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        411341
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        413023
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap1.attention_cycles",
+      "samples": [
+        15760
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap1.probability_wait_cycles",
+      "samples": [
+        1452
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap1.divider_step_cycles",
+      "samples": [
+        1056
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        413023
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        413023
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        5142970
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap255.attention_cycles",
+      "samples": [
+        1357837
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap255.probability_wait_cycles",
+      "samples": [
+        360570
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap255.divider_step_cycles",
+      "samples": [
+        329664
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        5078839
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        411341
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        4895722
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap255.attention_cycles",
+      "samples": [
+        1110589
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap255.probability_wait_cycles",
+      "samples": [
+        113322
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap255.divider_step_cycles",
+      "samples": [
+        82416
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        413023
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        4836439
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        4743643
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        12716857
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-max48-cap255.attention_cycles",
+      "samples": [
+        5311990
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-max48-cap255.probability_wait_cycles",
+      "samples": [
+        1421070
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-max48-cap255.divider_step_cycles",
+      "samples": [
+        1299264
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        4745325
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        12626576
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        4515499
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        11742409
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-max48-cap255.attention_cycles",
+      "samples": [
+        4337542
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-max48-cap255.probability_wait_cycles",
+      "samples": [
+        446622
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-max48-cap255.divider_step_cycles",
+      "samples": [
+        324816
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        4517181
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        11661776
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.full-context-cap0.prefix_cycles",
+      "samples": [
+        17828258
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.full-context-cap0.complete_cycles",
+      "samples": [
+        17829940
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.full-context-cap0.attention_cycles",
+      "samples": [
+        8621987
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.full-context-cap0.probability_wait_cycles",
+      "samples": [
+        2302720
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "control.full-context-cap0.divider_step_cycles",
+      "samples": [
+        2105344
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.full-context-cap0.prefix_cycles",
+      "samples": [
+        16249250
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.full-context-cap0.complete_cycles",
+      "samples": [
+        16250932
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.full-context-cap0.attention_cycles",
+      "samples": [
+        7042979
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.full-context-cap0.probability_wait_cycles",
+      "samples": [
+        723712
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Paired full-model RTL observations.",
+      "name": "candidate.full-context-cap0.divider_step_cycles",
+      "samples": [
+        526336
+      ],
+      "unit": "cycles"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-probability-div-v1-rtl",
+    "measurement_boundary": "Paired RTL prefix, first output, last output, completion and occupied-depth phase boundaries.",
+    "quality_gate": "Exact intermediates, raw quotient/remainder, scores, bytes, cache trace, stops and directed errors.",
+    "sha256": "7a8025206f7ae6d9748849fa0b18a21ce700ccc03fc8d13aa38c5936807d8496",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "All frozen reference scores, outputs and termination matched, including a 256-position context.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "e5b0a3bf9c001880ac12f393083c19d24cce59c68e36ab5c0f8d170acbd239ac"
+  },
+  "started_at": "2026-11-19T15:58:52.451744+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

@@ -1,0 +1,828 @@
+{
+  "artifacts": [
+    {
+      "bytes": 18865319,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-rtl-20261119T150027Z/simulation.tar.gz",
+      "role": "Both generated RTL closures, simulation checks, frozen inputs and raw observed traces",
+      "sha256": "a4aa05d4acce467ad6a5cec56d54399f8a3af8e0129c86446f229011cad55915"
+    },
+    {
+      "bytes": 46052,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-rtl-20261119T150027Z/source-closure.json",
+      "role": "Archive member byte lengths and SHA-256 pins",
+      "sha256": "3182c2692767fd800a5597552dd3223c3cbe5416efa1f2316fbd386b86b22e16"
+    },
+    {
+      "bytes": 6371,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-rtl-20261119T150027Z/source.patch",
+      "role": "Generated candidate RTL changes relative to the exact control closure",
+      "sha256": "91b2c03da670b6d6ba784d90981e1db1a63f4255e438d9bc121158d306de2dd0"
+    },
+    {
+      "bytes": 16406,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-rtl-20261119T150027Z/matched.json",
+      "role": "Audited replay timings, transport fault recovery and directed arithmetic",
+      "sha256": "050c791b0802438273a9be5f20050ae2468a92e4fa8161aea1f3a2f22a24a4c7"
+    },
+    {
+      "bytes": 15418,
+      "path": "hardware/research/inference/results/logits-ddr4-burst-rtl-20261119T120140Z/run.json",
+      "role": "Experiment 16 serialized RTL qualification",
+      "sha256": "e60390db9b0f3c8f2c70e8d7a888d48af51b0be32ac40743935ae90c8ef6b86e"
+    },
+    {
+      "bytes": 23465,
+      "path": "hardware/research/inference/results/attention-exp-pair-v2-rtl-20261117T230104Z/run.json",
+      "role": "Frozen model replay and oracle archive pin",
+      "sha256": "db83294738d25d4a079ca3b92276204e812d1f7c91410ba4359bfe0b37006994"
+    },
+    {
+      "bytes": 5658,
+      "path": "hardware/research/inference/experiments/kv260-logits-ddr4-prefetch-v1.md",
+      "role": "Preregistered Experiment 17 protocol",
+      "sha256": "b2bc721c50ea0ea13e8f6c5151a9129fd9ed6d7006963999d161a41bf7040fc6"
+    },
+    {
+      "bytes": 937,
+      "path": "hardware/research/inference/implementations/kv260/rtl/toolchain.json",
+      "role": "Pinned simulation toolchain",
+      "sha256": "b6a35af5636cca4a2f9bb82135a716873c8bb1abf6926504f2e425ea600df693"
+    }
+  ],
+  "completed_at": "2026-11-19T15:02:05.086121+00:00",
+  "conditions": {
+    "address_wait_pattern": [
+      0,
+      2
+    ],
+    "arithmetic": "PASS directed logits arithmetic, 640 ordered rows, 20480 partial sums, early and late fill, backpressure and fresh next invocation",
+    "candidate_per_scored_position": {
+      "accepted_addresses": 320,
+      "accepted_beats": 2560,
+      "accepted_handshake_mac_overlap": 507,
+      "accepted_handshake_round_stream_overlap": 156,
+      "address_stalls": 320,
+      "captures_coincident_with_final_response": 40,
+      "coordinate_zero_captures": 40,
+      "exposed_clocks": 5441,
+      "projection_busy_clocks": 7121,
+      "reader_mac_overlap": 1248,
+      "reader_round_stream_overlap": 351,
+      "reader_work_clocks": 7080,
+      "response_waits": 3840,
+      "useful_bytes": 20480
+    },
+    "cases_per_arm": 7,
+    "control_per_scored_position": {
+      "accepted_addresses": 320,
+      "accepted_beats": 2560,
+      "accepted_handshake_mac_overlap": 0,
+      "accepted_handshake_round_stream_overlap": 0,
+      "address_stalls": 320,
+      "captures_coincident_with_final_response": 40,
+      "coordinate_zero_captures": 40,
+      "exposed_clocks": 7040,
+      "projection_busy_clocks": 8720,
+      "reader_mac_overlap": 0,
+      "reader_round_stream_overlap": 0,
+      "reader_work_clocks": 7080,
+      "response_waits": 3840,
+      "useful_bytes": 20480
+    },
+    "control_source_manifest_sha256": "072afd4a0eaeb744a12393c8ee94540981b4a472ecc18161bcd211c404c467f3",
+    "elapsed_replay_wall_seconds": 97.575288,
+    "embedding_perturbation": "PASS independent tied-weight perturbation",
+    "exact_scores_per_arm": 103360,
+    "fault_cases": {
+      "fault-1": "PASS DDR fault or cancel 1, exact freshly fetched BOS logits",
+      "fault-10": "PASS DDR prefetch fault or cancel 10, exact freshly fetched BOS logits",
+      "fault-11": "PASS DDR prefetch fault or cancel 11, exact freshly fetched BOS logits",
+      "fault-12": "PASS DDR prefetch fault or cancel 12, exact freshly fetched BOS logits",
+      "fault-2": "PASS DDR fault or cancel 2, exact freshly fetched BOS logits",
+      "fault-3": "PASS DDR fault or cancel 3, exact freshly fetched BOS logits",
+      "fault-4": "PASS DDR fault or cancel 4, exact freshly fetched BOS logits",
+      "fault-5": "PASS DDR fault or cancel 5, exact freshly fetched BOS logits",
+      "fault-6": "PASS DDR fault or cancel 6, exact freshly fetched BOS logits",
+      "fault-7": "PASS DDR fault or cancel 7, exact freshly fetched BOS logits",
+      "fault-8": "PASS DDR fault or cancel 8, exact freshly fetched BOS logits",
+      "fault-9": "PASS DDR fault or cancel 9, exact freshly fetched BOS logits"
+    },
+    "matrix_sha256": "7a77c0b9cd6f66e1f68d6905c5f2962bf58d92543fbb5e5dbb18980ee9f4a787",
+    "output_bytes_per_arm": 317,
+    "positions_per_arm": 716,
+    "response_wait_pattern": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "scored_invocations_per_arm": 323
+  },
+  "correctness": {
+    "evidence": "14 exact full-model cases, 12 fault/cancel/recovery tests, one tied-weight perturbation, and two backpressured directed invocations with 20,480 signed partial sums.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 RTL model",
+      "rtl_jobs": 2,
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052",
+      "wall_clock_limit_seconds": 1500
+    },
+    "configuration_sha256": "ed641c221a622cca59c45657acb72735edcb445a37063dcdb3111a00b3332053",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-logits-ddr4-prefetch-v1",
+  "id": "logits-ddr4-prefetch-rtl-20261119T150027Z",
+  "implementation": {
+    "id": "logits-ddr4-prefetch-v1",
+    "sha256": "7983f70d71c6900dd8f541c4d88c43d8555fb714b7d6db270eb900bc7dcbcfc0"
+  },
+  "limitations": [
+    "The address and response delays were generated by a deterministic simulator. Physical DDR service, route timing, resource use and energy require independent evidence.",
+    "Direct overlap separates reader work clocks, including launch and waits, from cycles with an accepted address or response. The primary replay has an always-ready score sink."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "control.reader_work_clocks",
+      "samples": [
+        7080
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "control.coordinate_zero_captures",
+      "samples": [
+        40
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "control.captures_coincident_with_final_response",
+      "samples": [
+        40
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "control.accepted_addresses",
+      "samples": [
+        320
+      ],
+      "unit": "requests"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "control.accepted_beats",
+      "samples": [
+        2560
+      ],
+      "unit": "beats"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "control.address_stalls",
+      "samples": [
+        320
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "control.response_waits",
+      "samples": [
+        3840
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "control.useful_bytes",
+      "samples": [
+        20480
+      ],
+      "unit": "bytes"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "control.exposed_clocks",
+      "samples": [
+        7040
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "control.projection_busy_clocks",
+      "samples": [
+        8720
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "control.reader_mac_overlap",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "control.reader_round_stream_overlap",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "control.accepted_handshake_mac_overlap",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "control.accepted_handshake_round_stream_overlap",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.bos-only-cap0.prefix_cycles",
+      "samples": [
+        36399
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.bos-only-cap0.complete_cycles",
+      "samples": [
+        45121
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        493263
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        8341015
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        501985
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        8260920
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        423231
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        423231
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        423231
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        423231
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        5783610
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        423231
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        5712439
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        4743643
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        13456057
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        4752365
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        13358736
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.full-context-cap0.prefix_cycles",
+      "samples": [
+        17828258
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "control.full-context-cap0.complete_cycles",
+      "samples": [
+        17836980
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "candidate.reader_work_clocks",
+      "samples": [
+        7080
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "candidate.coordinate_zero_captures",
+      "samples": [
+        40
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "candidate.captures_coincident_with_final_response",
+      "samples": [
+        40
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "candidate.accepted_addresses",
+      "samples": [
+        320
+      ],
+      "unit": "requests"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "candidate.accepted_beats",
+      "samples": [
+        2560
+      ],
+      "unit": "beats"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "candidate.address_stalls",
+      "samples": [
+        320
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "candidate.response_waits",
+      "samples": [
+        3840
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "candidate.useful_bytes",
+      "samples": [
+        20480
+      ],
+      "unit": "bytes"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "candidate.exposed_clocks",
+      "samples": [
+        5441
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "candidate.projection_busy_clocks",
+      "samples": [
+        7121
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "candidate.reader_mac_overlap",
+      "samples": [
+        1248
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "candidate.reader_round_stream_overlap",
+      "samples": [
+        351
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "candidate.accepted_handshake_mac_overlap",
+      "samples": [
+        507
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Invariant per scored invocation across all seven full-model cases.",
+      "name": "candidate.accepted_handshake_round_stream_overlap",
+      "samples": [
+        156
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.bos-only-cap0.prefix_cycles",
+      "samples": [
+        36399
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.bos-only-cap0.complete_cycles",
+      "samples": [
+        43522
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        493263
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        8144338
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        500386
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        8065842
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        421632
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        421632
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        421632
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        421632
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        5638101
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        421632
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        5568529
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        4743643
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        13288162
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        4750766
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        13192440
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.full-context-cap0.prefix_cycles",
+      "samples": [
+        17828258
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "candidate.full-context-cap0.complete_cycles",
+      "samples": [
+        17835381
+      ],
+      "unit": "cycles"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-logits-ddr4-prefetch-v1-rtl",
+    "measurement_boundary": "Matched serialized and prefetched DDR RTL at equal model steps, with exact oracle and AXI/score-phase overlap traces.",
+    "quality_gate": "Exact scores, tokens, stopping, cache, signed operands, bounded lookahead and fault/drain recovery.",
+    "sha256": "b2bc721c50ea0ea13e8f6c5151a9129fd9ed6d7006963999d161a41bf7040fc6",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "All replayed scores, output bytes, stop reasons and cache checkpoints agreed with the frozen oracle in both arms.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "91b2c03da670b6d6ba784d90981e1db1a63f4255e438d9bc121158d306de2dd0"
+  },
+  "started_at": "2026-11-19T15:00:27.510833+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

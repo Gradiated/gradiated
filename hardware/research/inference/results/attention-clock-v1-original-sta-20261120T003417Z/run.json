@@ -1,0 +1,862 @@
+{
+  "artifacts": [
+    {
+      "bytes": 346053,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/server.tar.gz",
+      "role": "SHA-verified original-layout timing report archive",
+      "sha256": "0d90dba8f28d3936c2666e03be8ea52ed8740f04c3d6d46f833d4880c0edcd98"
+    },
+    {
+      "bytes": 13320,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/initial-sta-diagnostic.tar.gz",
+      "role": "First Tcl audit initialization failure and unchanged checkpoint diagnostic",
+      "sha256": "6ae58e4ecd3958286adcd57831fd4a45e129f0192a11095c8c0fe0eb4a305ffc"
+    },
+    {
+      "bytes": 7477,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/offline-acceptance.json",
+      "role": "Independent timing and same-image admission",
+      "sha256": "6929990fb8d315e0750482de68dc885f81a26add5847ee68df70c02aff966376"
+    },
+    {
+      "bytes": 3813,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/timing.tcl",
+      "role": "Exact Vivado timing-analysis script",
+      "sha256": "6818a986b7632453a80ab8087719d3dfcac6a8404c2ee374de044f1506837ced"
+    },
+    {
+      "bytes": 14120,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/audit-procedures.tcl",
+      "role": "Legacy topology and DRC auditing adapted for period sweep",
+      "sha256": "f39c82aba0b80ab528e6a73123d14cba402154ff05189ed9af865cf3bcb41830"
+    },
+    {
+      "bytes": 6076,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/input.tar.gz",
+      "role": "Admitted timing Tcl input archive",
+      "sha256": "31f306401f3aed2b93112e3e09c510e0095196c38b1ae4a1b6102d32e69f2130"
+    },
+    {
+      "bytes": 2206,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/run-sta.py",
+      "role": "Bounded read-only timing remote driver",
+      "sha256": "0941e07788f5cf9236a4a658f15ef1e78cbe9a6d890aa461fdd616b1e766e124"
+    },
+    {
+      "bytes": 14728,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/qualify.py",
+      "role": "Independent timing checks and research archiver",
+      "sha256": "ea063e1d9f316da1da5c1b4464fbc16a90678a1d0e210fbba5c910b2bb0ba5c0"
+    },
+    {
+      "bytes": 832,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/metrics.tsv",
+      "role": "50 MHz metrics.tsv",
+      "sha256": "d6e9b805eab09707fe9615776c5bdb4ddecab1f885682145f732345f2fdc0563"
+    },
+    {
+      "bytes": 48635,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/timing.rpt",
+      "role": "50 MHz timing.rpt",
+      "sha256": "e091a839339426964d5e1edc5cd842de8d2ad64c5a9868a9afd4df75fc0e3175"
+    },
+    {
+      "bytes": 963693,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/critical-setup.rpt",
+      "role": "50 MHz critical-setup.rpt",
+      "sha256": "4aa7ee63a38434dc891036cd60d127c526f00ab379da8ac5f9912ab48bbe2e84"
+    },
+    {
+      "bytes": 43776,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/critical-hold.rpt",
+      "role": "50 MHz critical-hold.rpt",
+      "sha256": "f510ca3753be3404f1b2197f9f149fc807b34d15c537ea03b34d8364d3023bb2"
+    },
+    {
+      "bytes": 1469684,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/clock-domain.tsv",
+      "role": "50 MHz clock-domain.tsv",
+      "sha256": "0802580950595267329adc4a5a299390c8f0078816665851ba3af475acfe55f8"
+    },
+    {
+      "bytes": 1566,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/clocks.rpt",
+      "role": "50 MHz clocks.rpt",
+      "sha256": "30b05d4b4a81d784450d81e87f1d29eb90bcef2f0c746169d284d6ab9408c857"
+    },
+    {
+      "bytes": 103,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/clock-coverage.tsv",
+      "role": "50 MHz clock-coverage.tsv",
+      "sha256": "1ec546d239d5e93f2c7ebf119d4e5030fe6f4f89bc5be093d0d70155a1503414"
+    },
+    {
+      "bytes": 3211,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/check-timing.rpt",
+      "role": "50 MHz check-timing.rpt",
+      "sha256": "6f5be6c5545b2152d4bb6f9e90222dfe204c73090e3266f600ee296f2d727e8f"
+    },
+    {
+      "bytes": 81990,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/drc.rpt",
+      "role": "50 MHz drc.rpt",
+      "sha256": "eb5cff552db5edc80f552657cd8632a0d01447544160c119a6db236139aed326"
+    },
+    {
+      "bytes": 651,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/route-status.rpt",
+      "role": "50 MHz route-status.rpt",
+      "sha256": "d6cbb2958b14e08cb105cc64c3efa1360d17ec3b061cfc99ae516172f3c303d4"
+    },
+    {
+      "bytes": 12486,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/utilization.rpt",
+      "role": "50 MHz utilization.rpt",
+      "sha256": "09dd4b8e7aa4b91f5284dffed38e71d38bdca0d006839559e3ff294efb3876b9"
+    },
+    {
+      "bytes": 150,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/structure.txt",
+      "role": "50 MHz structure.txt",
+      "sha256": "5c631956622b4641f18aadd03dad43e69277b18732e1a88c1db83203b69ef18b"
+    },
+    {
+      "bytes": 94,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/constraints-before.txt",
+      "role": "50 MHz constraints-before.txt",
+      "sha256": "fbf5d359661534fe03ada2e1051ebf0485a182b21be25c4fa5e1fc7d4fc9a1bf"
+    },
+    {
+      "bytes": 94,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/constraints-after.txt",
+      "role": "50 MHz constraints-after.txt",
+      "sha256": "fbf5d359661534fe03ada2e1051ebf0485a182b21be25c4fa5e1fc7d4fc9a1bf"
+    },
+    {
+      "bytes": 6384,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/original.xdc",
+      "role": "50 MHz original.xdc",
+      "sha256": "904e080047bea23a5c0ed9857f8f5f25e3270bd504aeb1d977c2aa9a04a10242"
+    },
+    {
+      "bytes": 6613,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/qualified.xdc",
+      "role": "50 MHz qualified.xdc",
+      "sha256": "a39c50f74d08d4f87698f86265b72bd020c0bb8e52db0ba385774ccb1ea5d3b5"
+    },
+    {
+      "bytes": 832,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/metrics.tsv",
+      "role": "52.63 MHz metrics.tsv",
+      "sha256": "caf965fd4941c6cc07ebcd55b6f538827499e11f7e7329dbdc95c9ca64988240"
+    },
+    {
+      "bytes": 48624,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/timing.rpt",
+      "role": "52.63 MHz timing.rpt",
+      "sha256": "5f7e03d89779fb1da4e6e745493301ee1a6d7f6a2d0e6d2169615dd54cedb6e7"
+    },
+    {
+      "bytes": 963593,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/critical-setup.rpt",
+      "role": "52.63 MHz critical-setup.rpt",
+      "sha256": "fddbd7223f788d216c0db6646c95836a792eadcda40f053c71450589f55af8af"
+    },
+    {
+      "bytes": 43756,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/critical-hold.rpt",
+      "role": "52.63 MHz critical-hold.rpt",
+      "sha256": "85065f53082b098c00ba1a94dda337f1095d114d5eaa627dfca9d9c63f1436b1"
+    },
+    {
+      "bytes": 1469684,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/clock-domain.tsv",
+      "role": "52.63 MHz clock-domain.tsv",
+      "sha256": "71386ecdcb5fdb2f14ee49b020e97a76d841e30a1156fbc37eae8f75099c4b13"
+    },
+    {
+      "bytes": 1564,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/clocks.rpt",
+      "role": "52.63 MHz clocks.rpt",
+      "sha256": "e42bf836826c46fa2c3e3149876862a1fe1c6ac0efb9b3dcc66d2821562d9821"
+    },
+    {
+      "bytes": 103,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/clock-coverage.tsv",
+      "role": "52.63 MHz clock-coverage.tsv",
+      "sha256": "1ec546d239d5e93f2c7ebf119d4e5030fe6f4f89bc5be093d0d70155a1503414"
+    },
+    {
+      "bytes": 3211,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/check-timing.rpt",
+      "role": "52.63 MHz check-timing.rpt",
+      "sha256": "100f6f95676684e62d5332a227a2f11fc134b1ea387d8db7c03656e9cc713b91"
+    },
+    {
+      "bytes": 81990,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/drc.rpt",
+      "role": "52.63 MHz drc.rpt",
+      "sha256": "3ea9654132183fdcfc38e59ea9c4df5e779210e1d75d5c70952fe085b3315423"
+    },
+    {
+      "bytes": 651,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/route-status.rpt",
+      "role": "52.63 MHz route-status.rpt",
+      "sha256": "d6cbb2958b14e08cb105cc64c3efa1360d17ec3b061cfc99ae516172f3c303d4"
+    },
+    {
+      "bytes": 12486,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/utilization.rpt",
+      "role": "52.63 MHz utilization.rpt",
+      "sha256": "c9d769c73a4c6089026a51b8978b95828a295e3e3dffdc9a9d0094e665ee05c4"
+    },
+    {
+      "bytes": 150,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/structure.txt",
+      "role": "52.63 MHz structure.txt",
+      "sha256": "5c631956622b4641f18aadd03dad43e69277b18732e1a88c1db83203b69ef18b"
+    },
+    {
+      "bytes": 94,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/constraints-before.txt",
+      "role": "52.63 MHz constraints-before.txt",
+      "sha256": "fbf5d359661534fe03ada2e1051ebf0485a182b21be25c4fa5e1fc7d4fc9a1bf"
+    },
+    {
+      "bytes": 94,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/constraints-after.txt",
+      "role": "52.63 MHz constraints-after.txt",
+      "sha256": "fbf5d359661534fe03ada2e1051ebf0485a182b21be25c4fa5e1fc7d4fc9a1bf"
+    },
+    {
+      "bytes": 6384,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/original.xdc",
+      "role": "52.63 MHz original.xdc",
+      "sha256": "e9f20796b7cdbbac53607a474ee0c342157eff5a18b18f792846c93c135e7ad2"
+    },
+    {
+      "bytes": 6613,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/qualified.xdc",
+      "role": "52.63 MHz qualified.xdc",
+      "sha256": "473539e9647b9a25cb7af456b6edb8834e80c2fd1b2ed8ad157b5df6706ebb7e"
+    },
+    {
+      "bytes": 833,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/metrics.tsv",
+      "role": "62.5 MHz metrics.tsv",
+      "sha256": "877d07aaae00b5486fd4b25d6fd7f321f4392842df5e378e4ec03d58f024c12a"
+    },
+    {
+      "bytes": 48610,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/timing.rpt",
+      "role": "62.5 MHz timing.rpt",
+      "sha256": "5f30aa2d72878bc0005bf1d26b81ab003a0d30275233d5ceca642ef8f818030e"
+    },
+    {
+      "bytes": 963643,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/critical-setup.rpt",
+      "role": "62.5 MHz critical-setup.rpt",
+      "sha256": "b32d44ba799d886f98db07438ae5ef7f4db4e17b155f3d75cbe984284464d38e"
+    },
+    {
+      "bytes": 43756,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/critical-hold.rpt",
+      "role": "62.5 MHz critical-hold.rpt",
+      "sha256": "bd8fd25a6caf6ec4faac92919e495ffb0e679c428517d044dff662f5cfb43eec"
+    },
+    {
+      "bytes": 1469684,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/clock-domain.tsv",
+      "role": "62.5 MHz clock-domain.tsv",
+      "sha256": "f0c282d53fc43ac6ff90acf2cfd811d7065b3a4b3127fd55d9885eb251eab926"
+    },
+    {
+      "bytes": 1564,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/clocks.rpt",
+      "role": "62.5 MHz clocks.rpt",
+      "sha256": "83009bd30da7f9d431e57a50a7f72e00d691ffb996c48946a5c6c9012e65c8a1"
+    },
+    {
+      "bytes": 103,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/clock-coverage.tsv",
+      "role": "62.5 MHz clock-coverage.tsv",
+      "sha256": "1ec546d239d5e93f2c7ebf119d4e5030fe6f4f89bc5be093d0d70155a1503414"
+    },
+    {
+      "bytes": 3211,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/check-timing.rpt",
+      "role": "62.5 MHz check-timing.rpt",
+      "sha256": "a005a77dd0147485d86c7b455fe9d1e3bcac51a3b699766a2b526e39bee81fd3"
+    },
+    {
+      "bytes": 81990,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/drc.rpt",
+      "role": "62.5 MHz drc.rpt",
+      "sha256": "0a337e09467127ed6ca45725099fdfe10df06a9120cd424385b1452806c0e5ee"
+    },
+    {
+      "bytes": 651,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/route-status.rpt",
+      "role": "62.5 MHz route-status.rpt",
+      "sha256": "d6cbb2958b14e08cb105cc64c3efa1360d17ec3b061cfc99ae516172f3c303d4"
+    },
+    {
+      "bytes": 12486,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/utilization.rpt",
+      "role": "62.5 MHz utilization.rpt",
+      "sha256": "2a675af3bbf48e02950e66839829a5789207217df048712f69fcf88d011193ae"
+    },
+    {
+      "bytes": 150,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/structure.txt",
+      "role": "62.5 MHz structure.txt",
+      "sha256": "5c631956622b4641f18aadd03dad43e69277b18732e1a88c1db83203b69ef18b"
+    },
+    {
+      "bytes": 94,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/constraints-before.txt",
+      "role": "62.5 MHz constraints-before.txt",
+      "sha256": "fbf5d359661534fe03ada2e1051ebf0485a182b21be25c4fa5e1fc7d4fc9a1bf"
+    },
+    {
+      "bytes": 94,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/constraints-after.txt",
+      "role": "62.5 MHz constraints-after.txt",
+      "sha256": "fbf5d359661534fe03ada2e1051ebf0485a182b21be25c4fa5e1fc7d4fc9a1bf"
+    },
+    {
+      "bytes": 6384,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/original.xdc",
+      "role": "62.5 MHz original.xdc",
+      "sha256": "0ac77dbdf4320b5f6806ec18f65416b6f25d281e9608299c05104de287f960db"
+    },
+    {
+      "bytes": 6613,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/qualified.xdc",
+      "role": "62.5 MHz qualified.xdc",
+      "sha256": "dbec824f2f80488af18846a8c653b0cb8f25638300217fdd2dedec8f2c3ce1a0"
+    },
+    {
+      "bytes": 3842,
+      "path": "hardware/research/inference/experiments/kv260-clock-frequency-v1.md",
+      "role": "Exact protocol",
+      "sha256": "496e88c0a9adbe1362fd92d1ec980fcecaa156fac49796bc991e3067fa5ab87f"
+    },
+    {
+      "bytes": 25536375,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-build-20261119T203714Z/server/build/route/route.dcp",
+      "role": "Exact adopted routed checkpoint",
+      "sha256": "b005aea93d6475bf0287a0f648be32b09555fe76995dbaac8ac5702b443512a6"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-build-20261119T203714Z/server/offline-package/gradiated-tiny-attention-value-pair-v1-50mhz.bit.bin",
+      "role": "Exact existing firmware for 50 and 52.63 MHz",
+      "sha256": "ef998a2920682fdb93aa27978f75086b66eb606675b2483951995dfab68d36bb"
+    },
+    {
+      "bytes": 371,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-build-20261119T203714Z/server/kv260-attention-value-pair-v1-program.dtbo",
+      "role": "Exact existing overlay",
+      "sha256": "89b84e9028b5178c10c0478e6ae6c6a5c72e80043de4228864a48e4f92e5f80e"
+    },
+    {
+      "bytes": 70292,
+      "path": "hardware/research/inference/results/attention-value-pair-v1-build-20261119T203714Z/run.json",
+      "role": "Adopted implementation record",
+      "sha256": "43f40df14aa13a18cd22355ecf13e94a1aba10455d94a6870e97abed0d1f12ee"
+    }
+  ],
+  "completed_at": "2026-11-20T00:36:56+00:00",
+  "conditions": {
+    "checkpoint_sha256": "b005aea93d6475bf0287a0f648be32b09555fe76995dbaac8ac5702b443512a6",
+    "firmware_sha256": "ef998a2920682fdb93aa27978f75086b66eb606675b2483951995dfab68d36bb",
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "cross_device_comparison": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Vivado setup, hold, pulse width and coverage on the exact route.",
+        "sources": [
+          {
+            "bytes": 7477,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/offline-acceptance.json",
+            "role": "Independent timing and same-image admission",
+            "sha256": "6929990fb8d315e0750482de68dc885f81a26add5847ee68df70c02aff966376"
+          },
+          {
+            "bytes": 48635,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/timing.rpt",
+            "role": "50 MHz timing.rpt",
+            "sha256": "e091a839339426964d5e1edc5cd842de8d2ad64c5a9868a9afd4df75fc0e3175"
+          },
+          {
+            "bytes": 3211,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/check-timing.rpt",
+            "role": "50 MHz check-timing.rpt",
+            "sha256": "6f5be6c5545b2152d4bb6f9e90222dfe204c73090e3266f600ee296f2d727e8f"
+          },
+          {
+            "bytes": 48624,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/timing.rpt",
+            "role": "52.63 MHz timing.rpt",
+            "sha256": "5f7e03d89779fb1da4e6e745493301ee1a6d7f6a2d0e6d2169615dd54cedb6e7"
+          },
+          {
+            "bytes": 3211,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/18.999ns/check-timing.rpt",
+            "role": "52.63 MHz check-timing.rpt",
+            "sha256": "100f6f95676684e62d5332a227a2f11fc134b1ea387d8db7c03656e9cc713b91"
+          },
+          {
+            "bytes": 48610,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/timing.rpt",
+            "role": "62.5 MHz timing.rpt",
+            "sha256": "5f30aa2d72878bc0005bf1d26b81ab003a0d30275233d5ceca642ef8f818030e"
+          },
+          {
+            "bytes": 3211,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/15.999ns/check-timing.rpt",
+            "role": "62.5 MHz check-timing.rpt",
+            "sha256": "a005a77dd0147485d86c7b455fe9d1e3bcac51a3b699766a2b526e39bee81fd3"
+          }
+        ],
+        "state": "measured"
+      },
+      "long_stability": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "memory_bandwidth": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "physical_area": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Utilization recovered along with exact route reports.",
+        "sources": [
+          {
+            "bytes": 12486,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/reports/20.000ns/utilization.rpt",
+            "role": "50 MHz utilization.rpt",
+            "sha256": "09dd4b8e7aa4b91f5284dffed38e71d38bdca0d006839559e3ff294efb3876b9"
+          }
+        ],
+        "state": "measured"
+      },
+      "serving_load": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "startup": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Offline timing analysis.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "overlay_sha256": "89b84e9028b5178c10c0478e6ae6c6a5c72e80043de4228864a48e4f92e5f80e",
+    "qualified_rates_hz": [
+      50000000,
+      52631579
+    ],
+    "rates": {
+      "50": {
+        "admitted": true,
+        "clock_source": "tiny_ps_axi_i/ps/inst/PS8_i/PLCLK[0]",
+        "critical_setup_delay_breakdown": "Data Path Delay:        18.366ns  (logic 6.215ns (33.840%)  route 12.151ns (66.160%))",
+        "hold_failing_endpoints": 0,
+        "hold_slack_ns": 0.005,
+        "hold_total_endpoints": 55096,
+        "hold_total_negative_slack_ns": 0.0,
+        "native": {
+          "drc_errors_or_critical_warnings": "0",
+          "fully_placed": "1",
+          "fully_routed": "1",
+          "max_datapath_delay": "18.366",
+          "max_endpoint_clock": "clk_pl_0",
+          "max_endpoint_pin": "tiny_ps_axi_i/neural/inst/actual/core/att/scalar/m_reg[39]/D",
+          "max_logic_levels": "43",
+          "max_requirement": "20.000",
+          "max_slack": "1.390",
+          "max_startpoint_clock": "clk_pl_0",
+          "max_startpoint_pin": "tiny_ps_axi_i/neural/inst/actual/core/att/scalar_a_reg[11]/C",
+          "min_datapath_delay": "0.240",
+          "min_endpoint_clock": "clk_pl_0",
+          "min_endpoint_pin": "tiny_ps_axi_i/neural/inst/actual/prompt_memory_reg[173][7]/D",
+          "min_logic_levels": "0",
+          "min_requirement": "0.000",
+          "min_slack": "0.005",
+          "min_startpoint_clock": "clk_pl_0",
+          "min_startpoint_pin": "tiny_ps_axi_i/neural/inst/actual/write_data_reg[7]_rep__1/C",
+          "native_no_clock": "0",
+          "partially_routed_nets": "0",
+          "period_ns": "20.000",
+          "routing_errors": "0",
+          "routing_gap_nets": "0",
+          "unclocked_active_pins": "0",
+          "unconstrained_internal_endpoints": "0",
+          "unrouted_nets": "0"
+        },
+        "neural_clock_pins": 16796,
+        "nominal_rate_hz": 50000000,
+        "period_ns": "20.000",
+        "pulse_width_failing_endpoints": 0,
+        "pulse_width_slack_ns": 8.5,
+        "pulse_width_total_endpoints": 17199,
+        "pulse_width_total_negative_slack_ns": 0.0,
+        "setup_failing_endpoints": 0,
+        "setup_slack_ns": 1.39,
+        "setup_total_endpoints": 55096,
+        "setup_total_negative_slack_ns": 0.0,
+        "upper_qualified_rate_hz": 50000000
+      },
+      "52.63": {
+        "admitted": true,
+        "clock_source": "tiny_ps_axi_i/ps/inst/PS8_i/PLCLK[0]",
+        "critical_setup_delay_breakdown": "Data Path Delay:        18.366ns  (logic 6.215ns (33.840%)  route 12.151ns (66.160%))",
+        "hold_failing_endpoints": 0,
+        "hold_slack_ns": 0.005,
+        "hold_total_endpoints": 55096,
+        "hold_total_negative_slack_ns": 0.0,
+        "native": {
+          "drc_errors_or_critical_warnings": "0",
+          "fully_placed": "1",
+          "fully_routed": "1",
+          "max_datapath_delay": "18.366",
+          "max_endpoint_clock": "clk_pl_0",
+          "max_endpoint_pin": "tiny_ps_axi_i/neural/inst/actual/core/att/scalar/m_reg[39]/D",
+          "max_logic_levels": "43",
+          "max_requirement": "18.999",
+          "max_slack": "0.389",
+          "max_startpoint_clock": "clk_pl_0",
+          "max_startpoint_pin": "tiny_ps_axi_i/neural/inst/actual/core/att/scalar_a_reg[11]/C",
+          "min_datapath_delay": "0.240",
+          "min_endpoint_clock": "clk_pl_0",
+          "min_endpoint_pin": "tiny_ps_axi_i/neural/inst/actual/prompt_memory_reg[173][7]/D",
+          "min_logic_levels": "0",
+          "min_requirement": "0.000",
+          "min_slack": "0.005",
+          "min_startpoint_clock": "clk_pl_0",
+          "min_startpoint_pin": "tiny_ps_axi_i/neural/inst/actual/write_data_reg[7]_rep__1/C",
+          "native_no_clock": "0",
+          "partially_routed_nets": "0",
+          "period_ns": "18.999",
+          "routing_errors": "0",
+          "routing_gap_nets": "0",
+          "unclocked_active_pins": "0",
+          "unconstrained_internal_endpoints": "0",
+          "unrouted_nets": "0"
+        },
+        "neural_clock_pins": 16796,
+        "nominal_rate_hz": 52631579,
+        "period_ns": "18.999",
+        "pulse_width_failing_endpoints": 0,
+        "pulse_width_slack_ns": 7.999,
+        "pulse_width_total_endpoints": 17199,
+        "pulse_width_total_negative_slack_ns": 0.0,
+        "setup_failing_endpoints": 0,
+        "setup_slack_ns": 0.389,
+        "setup_total_endpoints": 55096,
+        "setup_total_negative_slack_ns": 0.0,
+        "upper_qualified_rate_hz": 52634349
+      },
+      "62.5": {
+        "admitted": false,
+        "clock_source": "tiny_ps_axi_i/ps/inst/PS8_i/PLCLK[0]",
+        "critical_setup_delay_breakdown": "Data Path Delay:        18.366ns  (logic 6.215ns (33.840%)  route 12.151ns (66.160%))",
+        "hold_failing_endpoints": 0,
+        "hold_slack_ns": 0.005,
+        "hold_total_endpoints": 55096,
+        "hold_total_negative_slack_ns": 0.0,
+        "native": {
+          "drc_errors_or_critical_warnings": "0",
+          "fully_placed": "1",
+          "fully_routed": "1",
+          "max_datapath_delay": "18.366",
+          "max_endpoint_clock": "clk_pl_0",
+          "max_endpoint_pin": "tiny_ps_axi_i/neural/inst/actual/core/att/scalar/m_reg[39]/D",
+          "max_logic_levels": "43",
+          "max_requirement": "15.999",
+          "max_slack": "-2.611",
+          "max_startpoint_clock": "clk_pl_0",
+          "max_startpoint_pin": "tiny_ps_axi_i/neural/inst/actual/core/att/scalar_a_reg[11]/C",
+          "min_datapath_delay": "0.240",
+          "min_endpoint_clock": "clk_pl_0",
+          "min_endpoint_pin": "tiny_ps_axi_i/neural/inst/actual/prompt_memory_reg[173][7]/D",
+          "min_logic_levels": "0",
+          "min_requirement": "0.000",
+          "min_slack": "0.005",
+          "min_startpoint_clock": "clk_pl_0",
+          "min_startpoint_pin": "tiny_ps_axi_i/neural/inst/actual/write_data_reg[7]_rep__1/C",
+          "native_no_clock": "0",
+          "partially_routed_nets": "0",
+          "period_ns": "15.999",
+          "routing_errors": "0",
+          "routing_gap_nets": "0",
+          "unclocked_active_pins": "0",
+          "unconstrained_internal_endpoints": "0",
+          "unrouted_nets": "0"
+        },
+        "neural_clock_pins": 16796,
+        "nominal_rate_hz": 62500000,
+        "period_ns": "15.999",
+        "pulse_width_failing_endpoints": 0,
+        "pulse_width_slack_ns": 6.499,
+        "pulse_width_total_endpoints": 17199,
+        "pulse_width_total_negative_slack_ns": 0.0,
+        "setup_failing_endpoints": 64,
+        "setup_slack_ns": -2.611,
+        "setup_total_endpoints": 55096,
+        "setup_total_negative_slack_ns": -157.231,
+        "upper_qualified_rate_hz": 62503906
+      }
+    },
+    "resources": {
+      "bram_tile": 39.0,
+      "dsp": 58.0,
+      "lut": 39376.0,
+      "lutram": 1172.0,
+      "register": 15712.0,
+      "uram": 0.0
+    }
+  },
+  "correctness": {
+    "evidence": "The original placed and routed design is identical across all three analyses. Passing rates are recorded individually.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "clock_hz": 50000000,
+      "mode": "fully routed PS/AXI/neural implementation",
+      "part": "xck26-sfvc784-2LV-c",
+      "threads": 2,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "995b2e6fbb171dd64467b6c2a1bb1b76488c26c309a332b2adbd50e5c784cc2b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-clock-frequency-v1",
+  "id": "attention-clock-v1-original-sta-20261120T003417Z",
+  "implementation": {
+    "id": "attention-value-pair-v1",
+    "sha256": "ef998a2920682fdb93aa27978f75086b66eb606675b2483951995dfab68d36bb"
+  },
+  "limitations": [
+    "Static timing includes the two PL0-fed interfaces and uses timing-model corners. Actual board clock readback and physical operation are separate evidence.",
+    "The stretch rate has negative setup slack on this route."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 routed timing analysis.",
+      "name": "50mhz.setup_slack",
+      "samples": [
+        1.39
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 routed timing analysis.",
+      "name": "50mhz.hold_slack",
+      "samples": [
+        0.005
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 routed timing analysis.",
+      "name": "50mhz.pulse_width_slack",
+      "samples": [
+        8.5
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 routed timing analysis.",
+      "name": "52.63mhz.setup_slack",
+      "samples": [
+        0.389
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 routed timing analysis.",
+      "name": "52.63mhz.hold_slack",
+      "samples": [
+        0.005
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 routed timing analysis.",
+      "name": "52.63mhz.pulse_width_slack",
+      "samples": [
+        7.999
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 routed timing analysis.",
+      "name": "62.5mhz.hold_slack",
+      "samples": [
+        0.005
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 routed timing analysis.",
+      "name": "62.5mhz.pulse_width_slack",
+      "samples": [
+        6.499
+      ],
+      "unit": "ns"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-clock-frequency-v1-original-sta",
+    "measurement_boundary": "Vivado STA on the exact adopted routed checkpoint, with PS PL0 period overridden for analysis only.",
+    "quality_gate": "Per-rate setup, hold, pulse width and full endpoint/clock/route coverage checked.",
+    "sha256": "496e88c0a9adbe1362fd92d1ec980fcecaa156fac49796bc991e3067fa5ab87f",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Exact input checkpoint, original firmware and overlay were pinned and the two admitted rates have no timing failures.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "aa9782d7473fb3ff64565487cbc3ad388772076c08b209abd161bccbc14a859c"
+  },
+  "started_at": "2026-11-20T00:34:17+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

@@ -1,0 +1,4537 @@
+{
+  "artifacts": [
+    {
+      "bytes": 112920,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/evidence/admission.state.json",
+      "role": "entry",
+      "sha256": "7342e498d95e6e99975e2bae8709509dd8cd861c2843bd430cec75d956b0d5e8"
+    },
+    {
+      "bytes": 115240,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/evidence/restored.state.json",
+      "role": "restored",
+      "sha256": "0c09c797444339254c7b143257c13ab219cd1f0831fd93c5b3d1711c99bf03ca"
+    },
+    {
+      "bytes": 3106,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/evidence/original-before.stdout",
+      "role": "before_bos",
+      "sha256": "8ca02e5d8cd874a2633c530c69968c1671dcb4df41012e4e958b7ebdaecdb00b"
+    },
+    {
+      "bytes": 3106,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/evidence/original-after.stdout",
+      "role": "after_bos",
+      "sha256": "8ca02e5d8cd874a2633c530c69968c1671dcb4df41012e4e958b7ebdaecdb00b"
+    },
+    {
+      "bytes": 52,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/evidence/outcome.json",
+      "role": "outcome",
+      "sha256": "90f1fbec9395e13dc14e0c6987ba8e80d2f32d9c5eb4f403d232d0a14d8aaedb"
+    },
+    {
+      "bytes": 1121425,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/board-evidence.tar.gz",
+      "role": "archive",
+      "sha256": "d3a65d8ef66012042fff1fce4fd05fc3c3085a43dbb49aafcabba34538c66ea0"
+    },
+    {
+      "bytes": 103,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/recovered.json",
+      "role": "receipt",
+      "sha256": "481faf1ccc1663e8023bcab4fa51ec08f52b4e670d87dc97b3f8034e7f0ba6b4"
+    },
+    {
+      "bytes": 7307,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/invocation.json",
+      "role": "invocation",
+      "sha256": "6a412865d164e876bb22db7baa768b94937a39e73f68d5eacecd0e65920ae7c6"
+    },
+    {
+      "bytes": 4234,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/preparation/protocol.md",
+      "role": "protocol",
+      "sha256": "4ea8a1374c41941a281656c6f2d614673585d23ab6105e49e8c1240037be2b7a"
+    },
+    {
+      "bytes": 68998,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/preparation/source.patch",
+      "role": "patch",
+      "sha256": "d198233c54fa6749a3d354a477b6098649e410eefae24efdab02f456a0ea7b1d"
+    },
+    {
+      "bytes": 76525,
+      "path": "hardware/research/inference/results/attention-value-pair-v1-rtl-20261119T203052Z/run.json",
+      "role": "rtl",
+      "sha256": "e9d57fea3d368173010e7532c832b01ba461e04c637a39651bcf705258aad81a"
+    },
+    {
+      "bytes": 1148729,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/model-results.json",
+      "role": "rtl_boundaries",
+      "sha256": "debcf33909885a5ec70561ce8095e3894da36c4afcaac810cc6ec02ab2fcfdc3"
+    },
+    {
+      "bytes": 239035,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/score.json",
+      "role": "score",
+      "sha256": "709b428cdac33d36c1c8f13da2658baf5d977c839f4559d3264f903cbe402de1"
+    },
+    {
+      "bytes": 3327,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/scored-workload.json",
+      "role": "workload",
+      "sha256": "3b5434e1b6d8e44a2338c96c850bac96c621d67d6db97627d6a7d7aad78f58cf"
+    },
+    {
+      "bytes": 70292,
+      "path": "hardware/research/inference/results/attention-value-pair-v1-build-20261119T203714Z/run.json",
+      "role": "build",
+      "sha256": "43f40df14aa13a18cd22355ecf13e94a1aba10455d94a6870e97abed0d1f12ee"
+    },
+    {
+      "bytes": 112140,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-build-20261119T203714Z/offline-acceptance.json",
+      "role": "build_acceptance",
+      "sha256": "fb42e37c8a57975cd0ad11a31e0525711fd95de5e551bb59e94d0a0369c586d9"
+    },
+    {
+      "bytes": 64350,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-build-20261119T203714Z/cache-mapping.json",
+      "role": "routed_cache_mapping",
+      "sha256": "655953d5e47f6ff36892254caa278ff4fb7aed093fd5f67f0f06deb7c7136ac4"
+    },
+    {
+      "bytes": 72528,
+      "path": "hardware/research/inference/results/projections-read-ahead-v1-build-20261119T193229Z/run.json",
+      "role": "control_build",
+      "sha256": "b062ddb88e78652818cf559debe6adeb62055ec8e883e5acacc30f52f846a1f4"
+    },
+    {
+      "bytes": 8298,
+      "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-20261119T195431Z-008bba/evidence/p1-candidate/warmup.json",
+      "role": "control_reference",
+      "sha256": "4350dc9e53797d942302180bd5af2570b8db82456fee400e9c8e288e582d09c1"
+    },
+    {
+      "bytes": 3126,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/preparation/source-review.json",
+      "role": "source_review",
+      "sha256": "ea1b401c1989a3b4010ff754065a21359533be56c0b8bd13235a45e0cf0e28dd"
+    },
+    {
+      "bytes": 19925,
+      "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+      "role": "memory",
+      "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+    },
+    {
+      "bytes": 348,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/completed.json",
+      "role": "completion",
+      "sha256": "3527d7e3b4c1e54c1c135613d48928b8306c3ff97c63bdbee644d287d0a0998e"
+    },
+    {
+      "bytes": 203,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/dispatch.json",
+      "role": "dispatch",
+      "sha256": "51bedbfe41e921543cae1dad140437f0ff302312cf83575677fc6e86c808d5eb"
+    },
+    {
+      "bytes": 1156,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/preparation/board-restored.json",
+      "role": "uart_restored",
+      "sha256": "374259d3fa656f975c748ae2353db554a0cd4c7d3e0badf95dd4ff16633a1b07"
+    },
+    {
+      "bytes": 2555,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/preparation/board-restored-full.json",
+      "role": "uart_original_cleanup",
+      "sha256": "af45ff9c9d225be6e0bcfe6be92dd3c3dc4deef6b7fb21e5518c7c5de2ecb7ee"
+    },
+    {
+      "bytes": 1097,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/packet-qa.json",
+      "role": "packet_qa",
+      "sha256": "1ae499607968f478f35af8e5bd8779bbde40c6b84f14ad581efcd12633deb500"
+    },
+    {
+      "bytes": 816,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/supervisor.txt",
+      "role": "supervisor",
+      "sha256": "9a7be0c99d1387c6e8e8a518ef4f6a58456c4f07e0fa4fdf4ce9fd4459207a75"
+    }
+  ],
+  "completed_at": "2026-11-20T00:03:07.984531+00:00",
+  "conditions": {
+    "arm_temperature_brackets_c": {
+      "homogeneous-p1-encoded-fu2p2q-candidate": {
+        "after": {
+          "ams/temp1": 27.48,
+          "ams/temp2": 27.169,
+          "ams/temp3": 25.148
+        },
+        "before": {
+          "ams/temp1": 27.371,
+          "ams/temp2": 26.734,
+          "ams/temp3": 25.412
+        }
+      },
+      "homogeneous-p1-encoded-fu2p2q-control": {
+        "after": {
+          "ams/temp1": 26.469,
+          "ams/temp2": 27.293,
+          "ams/temp3": 25.583
+        },
+        "before": {
+          "ams/temp1": 27.464,
+          "ams/temp2": 27.215,
+          "ams/temp3": 25.133
+        }
+      },
+      "homogeneous-p1-encoded-hello-candidate": {
+        "after": {
+          "ams/temp1": 27.075,
+          "ams/temp2": 26.376,
+          "ams/temp3": 25.443
+        },
+        "before": {
+          "ams/temp1": 26.967,
+          "ams/temp2": 26.345,
+          "ams/temp3": 25.467
+        }
+      },
+      "homogeneous-p1-encoded-hello-control": {
+        "after": {
+          "ams/temp1": 26.516,
+          "ams/temp2": 26.36,
+          "ams/temp3": 25.319
+        },
+        "before": {
+          "ams/temp1": 27.604,
+          "ams/temp2": 27.355,
+          "ams/temp3": 24.744
+        }
+      },
+      "homogeneous-p1-encoded-max48-candidate": {
+        "after": {
+          "ams/temp1": 27.588,
+          "ams/temp2": 26.143,
+          "ams/temp3": 25.304
+        },
+        "before": {
+          "ams/temp1": 27.464,
+          "ams/temp2": 27.899,
+          "ams/temp3": 25.148
+        }
+      },
+      "homogeneous-p1-encoded-max48-control": {
+        "after": {
+          "ams/temp1": 26.811,
+          "ams/temp2": 27.728,
+          "ams/temp3": 25.195
+        },
+        "before": {
+          "ams/temp1": 26.252,
+          "ams/temp2": 26.221,
+          "ams/temp3": 25.203
+        }
+      },
+      "homogeneous-p2-encoded-fu2p2q-candidate": {
+        "after": {
+          "ams/temp1": 25.459,
+          "ams/temp2": 27.355,
+          "ams/temp3": 25.156
+        },
+        "before": {
+          "ams/temp1": 27.138,
+          "ams/temp2": 26.454,
+          "ams/temp3": 24.892
+        }
+      },
+      "homogeneous-p2-encoded-fu2p2q-control": {
+        "after": {
+          "ams/temp1": 25.972,
+          "ams/temp2": 26.236,
+          "ams/temp3": 25.133
+        },
+        "before": {
+          "ams/temp1": 27.091,
+          "ams/temp2": 26.065,
+          "ams/temp3": 25.723
+        }
+      },
+      "homogeneous-p2-encoded-hello-candidate": {
+        "after": {
+          "ams/temp1": 28.21,
+          "ams/temp2": 25.552,
+          "ams/temp3": 25.311
+        },
+        "before": {
+          "ams/temp1": 26.904,
+          "ams/temp2": 26.221,
+          "ams/temp3": 24.946
+        }
+      },
+      "homogeneous-p2-encoded-hello-control": {
+        "after": {
+          "ams/temp1": 26.469,
+          "ams/temp2": 26.718,
+          "ams/temp3": 25.039
+        },
+        "before": {
+          "ams/temp1": 26.547,
+          "ams/temp2": 26.889,
+          "ams/temp3": 24.946
+        }
+      },
+      "homogeneous-p2-encoded-max48-candidate": {
+        "after": {
+          "ams/temp1": 26.92,
+          "ams/temp2": 26.236,
+          "ams/temp3": 24.915
+        },
+        "before": {
+          "ams/temp1": 26.143,
+          "ams/temp2": 26.547,
+          "ams/temp3": 25.28
+        }
+      },
+      "homogeneous-p2-encoded-max48-control": {
+        "after": {
+          "ams/temp1": 27.2,
+          "ams/temp2": 26.765,
+          "ams/temp3": 25.171
+        },
+        "before": {
+          "ams/temp1": 26.858,
+          "ams/temp2": 26.765,
+          "ams/temp3": 25.179
+        }
+      },
+      "p1-candidate": {
+        "after": {
+          "ams/temp1": 27.371,
+          "ams/temp2": 26.438,
+          "ams/temp3": 25.583
+        },
+        "before": {
+          "ams/temp1": 26.656,
+          "ams/temp2": 27.278,
+          "ams/temp3": 25.226
+        }
+      },
+      "p1-control": {
+        "after": {
+          "ams/temp1": 26.454,
+          "ams/temp2": 26.982,
+          "ams/temp3": 25.576
+        },
+        "before": {
+          "ams/temp1": 26.516,
+          "ams/temp2": 26.547,
+          "ams/temp3": 25.381
+        }
+      },
+      "p2-candidate": {
+        "after": {
+          "ams/temp1": 27.075,
+          "ams/temp2": 27.122,
+          "ams/temp3": 25.397
+        },
+        "before": {
+          "ams/temp1": 27.635,
+          "ams/temp2": 26.982,
+          "ams/temp3": 25.148
+        }
+      },
+      "p2-control": {
+        "after": {
+          "ams/temp1": 26.92,
+          "ams/temp2": 27.48,
+          "ams/temp3": 25.552
+        },
+        "before": {
+          "ams/temp1": 26.454,
+          "ams/temp2": 27.588,
+          "ams/temp3": 25.241
+        }
+      },
+      "p3-candidate": {
+        "after": {
+          "ams/temp1": 26.283,
+          "ams/temp2": 26.811,
+          "ams/temp3": 25.405
+        },
+        "before": {
+          "ams/temp1": 28.366,
+          "ams/temp2": 26.858,
+          "ams/temp3": 25.451
+        }
+      },
+      "p3-control": {
+        "after": {
+          "ams/temp1": 25.677,
+          "ams/temp2": 26.64,
+          "ams/temp3": 24.845
+        },
+        "before": {
+          "ams/temp1": 26.112,
+          "ams/temp2": 28.024,
+          "ams/temp3": 25.35
+        }
+      },
+      "p4-candidate": {
+        "after": {
+          "ams/temp1": 25.941,
+          "ams/temp2": 26.127,
+          "ams/temp3": 24.853
+        },
+        "before": {
+          "ams/temp1": 26.578,
+          "ams/temp2": 27.868,
+          "ams/temp3": 25.226
+        }
+      },
+      "p4-control": {
+        "after": {
+          "ams/temp1": 26.19,
+          "ams/temp2": 25.972,
+          "ams/temp3": 25.249
+        },
+        "before": {
+          "ams/temp1": 25.397,
+          "ams/temp2": 27.107,
+          "ams/temp3": 24.868
+        }
+      }
+    },
+    "arms": {
+      "homogeneous-p1-encoded-fu2p2q-candidate": {
+        "idle_context": 135,
+        "model_setup_ns": 548314114,
+        "output_tokens": 1464,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 20530,
+          "after_read_ns": 435115,
+          "before_gap_ns": 214562,
+          "before_read_ns": 781728,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p1-encoded-fu2p2q-control": {
+        "idle_context": 135,
+        "model_setup_ns": 547323474,
+        "output_tokens": 1464,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 18700,
+          "after_read_ns": 440115,
+          "before_gap_ns": 203072,
+          "before_read_ns": 792958,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p1-encoded-hello-candidate": {
+        "idle_context": 101,
+        "model_setup_ns": 545736539,
+        "output_tokens": 1620,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 17380,
+          "after_read_ns": 447734,
+          "before_gap_ns": 201342,
+          "before_read_ns": 793048,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p1-encoded-hello-control": {
+        "idle_context": 101,
+        "model_setup_ns": 542821729,
+        "output_tokens": 1620,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 20310,
+          "after_read_ns": 485195,
+          "before_gap_ns": 204072,
+          "before_read_ns": 826628,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p1-encoded-max48-candidate": {
+        "idle_context": 201,
+        "model_setup_ns": 548625457,
+        "output_tokens": 832,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 19970,
+          "after_read_ns": 437364,
+          "before_gap_ns": 201722,
+          "before_read_ns": 797978,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p1-encoded-max48-control": {
+        "idle_context": 201,
+        "model_setup_ns": 546836359,
+        "output_tokens": 832,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 21581,
+          "after_read_ns": 463864,
+          "before_gap_ns": 207842,
+          "before_read_ns": 803528,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p2-encoded-fu2p2q-candidate": {
+        "idle_context": 135,
+        "model_setup_ns": 546932810,
+        "output_tokens": 1464,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 22380,
+          "after_read_ns": 451624,
+          "before_gap_ns": 224852,
+          "before_read_ns": 783978,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p2-encoded-fu2p2q-control": {
+        "idle_context": 135,
+        "model_setup_ns": 548324194,
+        "output_tokens": 1464,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 21180,
+          "after_read_ns": 440065,
+          "before_gap_ns": 201692,
+          "before_read_ns": 812658,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p2-encoded-hello-candidate": {
+        "idle_context": 101,
+        "model_setup_ns": 545351755,
+        "output_tokens": 1620,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 19180,
+          "after_read_ns": 462655,
+          "before_gap_ns": 202242,
+          "before_read_ns": 791688,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p2-encoded-hello-control": {
+        "idle_context": 101,
+        "model_setup_ns": 543355795,
+        "output_tokens": 1620,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 19340,
+          "after_read_ns": 443515,
+          "before_gap_ns": 235082,
+          "before_read_ns": 779268,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p2-encoded-max48-candidate": {
+        "idle_context": 201,
+        "model_setup_ns": 548527136,
+        "output_tokens": 832,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 21061,
+          "after_read_ns": 435064,
+          "before_gap_ns": 202932,
+          "before_read_ns": 769228,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p2-encoded-max48-control": {
+        "idle_context": 201,
+        "model_setup_ns": 544600837,
+        "output_tokens": 832,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 21830,
+          "after_read_ns": 447375,
+          "before_gap_ns": 201032,
+          "before_read_ns": 808698,
+          "transfers_delta": 0
+        }
+      },
+      "p1-candidate": {
+        "idle_context": 201,
+        "model_setup_ns": 552364515,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 20041,
+          "after_read_ns": 446334,
+          "before_gap_ns": 175942,
+          "before_read_ns": 820248,
+          "transfers_delta": 0
+        }
+      },
+      "p1-control": {
+        "idle_context": 201,
+        "model_setup_ns": 550686698,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 19140,
+          "after_read_ns": 435234,
+          "before_gap_ns": 165972,
+          "before_read_ns": 804438,
+          "transfers_delta": 0
+        }
+      },
+      "p2-candidate": {
+        "idle_context": 201,
+        "model_setup_ns": 551223354,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 20130,
+          "after_read_ns": 470355,
+          "before_gap_ns": 171942,
+          "before_read_ns": 797568,
+          "transfers_delta": 0
+        }
+      },
+      "p2-control": {
+        "idle_context": 201,
+        "model_setup_ns": 550336694,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 751,
+          "after_gap_ns": 20130,
+          "after_read_ns": 438734,
+          "before_gap_ns": 199872,
+          "before_read_ns": 786258,
+          "transfers_delta": 0
+        }
+      },
+      "p3-candidate": {
+        "idle_context": 101,
+        "model_setup_ns": 550892540,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 21081,
+          "after_read_ns": 456754,
+          "before_gap_ns": 199352,
+          "before_read_ns": 786427,
+          "transfers_delta": 0
+        }
+      },
+      "p3-control": {
+        "idle_context": 101,
+        "model_setup_ns": 551071571,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 18741,
+          "after_read_ns": 410694,
+          "before_gap_ns": 174992,
+          "before_read_ns": 808608,
+          "transfers_delta": 0
+        }
+      },
+      "p4-candidate": {
+        "idle_context": 101,
+        "model_setup_ns": 550262713,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 19450,
+          "after_read_ns": 459585,
+          "before_gap_ns": 217372,
+          "before_read_ns": 792878,
+          "transfers_delta": 0
+        }
+      },
+      "p4-control": {
+        "idle_context": 101,
+        "model_setup_ns": 550665518,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 17960,
+          "after_read_ns": 437094,
+          "before_gap_ns": 171792,
+          "before_read_ns": 802998,
+          "transfers_delta": 0
+        }
+      }
+    },
+    "control_run": "projections-read-ahead-20261119T195431Z-008bba",
+    "counts": {
+      "powered_blocks": 20,
+      "smoke": 9,
+      "timed": 200,
+      "warmups": 36
+    },
+    "development_effort": {
+      "ai_usage_cost": null,
+      "dispatch_to_first_complete_receipt_seconds": 551.304166,
+      "engineering_attention_minutes": null
+    },
+    "exact_fpga_cycle_boundaries": {
+      "candidate": {
+        "encoded-fu2p2q": {
+          "counts": {
+            "context_count": 135,
+            "scores_consumed": 39360,
+            "skipped_positions": 12
+          },
+          "cycles": {
+            "done": 5174020,
+            "first": 336800,
+            "last": 5123370
+          }
+        },
+        "encoded-hello": {
+          "counts": {
+            "context_count": 101,
+            "scores_consumed": 29120,
+            "skipped_positions": 10
+          },
+          "cycles": {
+            "done": 3558785,
+            "first": 283256,
+            "last": 3514339
+          }
+        },
+        "encoded-max48": {
+          "counts": {
+            "context_count": 201,
+            "scores_consumed": 33600,
+            "skipped_positions": 96
+          },
+          "cycles": {
+            "done": 8760172,
+            "first": 3239400,
+            "last": 8697576
+          }
+        }
+      },
+      "control": {
+        "encoded-fu2p2q": {
+          "counts": {
+            "context_count": 135,
+            "scores_consumed": 39360,
+            "skipped_positions": 12
+          },
+          "cycles": {
+            "done": 5469940,
+            "first": 339920,
+            "last": 5414954
+          }
+        },
+        "encoded-hello": {
+          "counts": {
+            "context_count": 101,
+            "scores_consumed": 29120,
+            "skipped_positions": 10
+          },
+          "cycles": {
+            "done": 3725233,
+            "first": 285544,
+            "last": 3677539
+          }
+        },
+        "encoded-max48": {
+          "counts": {
+            "context_count": 201,
+            "scores_consumed": 33600,
+            "skipped_positions": 96
+          },
+          "cycles": {
+            "done": 9413020,
+            "first": 3393048,
+            "last": 9343976
+          }
+        }
+      }
+    },
+    "failures": 0,
+    "homogeneous_energy_pairs_pct": {
+      "encoded-fu2p2q": {
+        "1": {
+          "candidate_vs_control": {
+            "active_power_w": 0.4735542293325956,
+            "energy_per_answer_by_alignment": {
+              "midpoint": -4.870571375905374,
+              "midpoint_minus_50ms": -4.82305091600127,
+              "midpoint_plus_50ms": -4.884510633668282,
+              "read_end": -4.87049062957764,
+              "read_start": -4.870650211649186
+            },
+            "energy_per_answer_j": -4.870571375905374,
+            "energy_per_token_j": -4.870571375905374,
+            "tokens_per_joule": 5.119941795457983
+          }
+        },
+        "2": {
+          "candidate_vs_control": {
+            "active_power_w": -0.11506938317865645,
+            "energy_per_answer_by_alignment": {
+              "midpoint": -5.462054139764005,
+              "midpoint_minus_50ms": -5.424315447402983,
+              "midpoint_plus_50ms": -5.510288523458962,
+              "read_end": -5.462458852421436,
+              "read_start": -5.461649894841203
+            },
+            "energy_per_answer_j": -5.462054139764005,
+            "energy_per_token_j": -5.4620541397640165,
+            "tokens_per_joule": 5.777631500306812
+          }
+        }
+      },
+      "encoded-hello": {
+        "1": {
+          "candidate_vs_control": {
+            "active_power_w": -0.053083733481784634,
+            "energy_per_answer_by_alignment": {
+              "midpoint": -4.497123850022344,
+              "midpoint_minus_50ms": -4.488316932831049,
+              "midpoint_plus_50ms": -4.475978531714031,
+              "read_end": -4.497140262395661,
+              "read_start": -4.497103578778717
+            },
+            "energy_per_answer_j": -4.497123850022344,
+            "energy_per_token_j": -4.497123850022334,
+            "tokens_per_joule": 4.708888393015576
+          }
+        },
+        "2": {
+          "candidate_vs_control": {
+            "active_power_w": -0.11357726624362519,
+            "energy_per_answer_by_alignment": {
+              "midpoint": -4.5077772429665375,
+              "midpoint_minus_50ms": -4.901972810378852,
+              "midpoint_plus_50ms": -4.476106732814733,
+              "read_end": -4.507525809842305,
+              "read_start": -4.508035678605859
+            },
+            "energy_per_answer_j": -4.5077772429665375,
+            "energy_per_token_j": -4.507777242966549,
+            "tokens_per_joule": 4.720570024258364
+          }
+        }
+      },
+      "encoded-max48": {
+        "1": {
+          "candidate_vs_control": {
+            "active_power_w": -0.30104990969330725,
+            "energy_per_answer_by_alignment": {
+              "midpoint": -7.195425401855382,
+              "midpoint_minus_50ms": -7.194950672085454,
+              "midpoint_plus_50ms": -7.1987174638779905,
+              "read_end": -7.195357969928451,
+              "read_start": -7.1954907911352395
+            },
+            "energy_per_answer_j": -7.195425401855382,
+            "energy_per_token_j": -7.1954254018553705,
+            "tokens_per_joule": 7.753308964576888
+          }
+        },
+        "2": {
+          "candidate_vs_control": {
+            "active_power_w": -0.49976814757878296,
+            "energy_per_answer_by_alignment": {
+              "midpoint": -7.38072125008401,
+              "midpoint_minus_50ms": -7.384104731720498,
+              "midpoint_plus_50ms": -7.384664702159071,
+              "read_end": -7.380624896848998,
+              "read_start": -7.380816375943711
+            },
+            "energy_per_answer_j": -7.38072125008401,
+            "energy_per_token_j": -7.38072125008401,
+            "tokens_per_joule": 7.968882234564689
+          }
+        }
+      }
+    },
+    "incomplete_requests": 0,
+    "mapped_dsp": {
+      "candidate": {
+        "feed_forward": 19,
+        "feed_forward_scalar": 16,
+        "norm1": 0,
+        "norm2": 0,
+        "normfinal": 0,
+        "other": 23,
+        "shared_norm_mul": 16
+      },
+      "control": {
+        "feed_forward": 19,
+        "feed_forward_scalar": 16,
+        "norm1": 0,
+        "norm2": 0,
+        "normfinal": 0,
+        "other": 22,
+        "shared_norm_mul": 16
+      }
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "metrics": [
+          "control.mixed.active_power_w",
+          "control.homogeneous.encoded-hello.active_power_w",
+          "control.homogeneous.encoded-fu2p2q.active_power_w",
+          "control.homogeneous.encoded-max48.active_power_w",
+          "candidate.mixed.active_power_w",
+          "candidate.homogeneous.encoded-hello.active_power_w",
+          "candidate.homogeneous.encoded-fu2p2q.active_power_w",
+          "candidate.homogeneous.encoded-max48.active_power_w"
+        ],
+        "state": "derived"
+      },
+      "cache_capacity": {
+        "sources": [
+          {
+            "bytes": 19925,
+            "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+            "role": "memory",
+            "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+          }
+        ],
+        "state": "reused"
+      },
+      "completion_time": {
+        "metrics": [
+          "control.encoded-hello.completion_ms",
+          "control.encoded-hello.verified_ms",
+          "control.encoded-hello.verification_ns",
+          "control.encoded-fu2p2q.completion_ms",
+          "control.encoded-fu2p2q.verified_ms",
+          "control.encoded-fu2p2q.verification_ns",
+          "control.encoded-max48.completion_ms",
+          "control.encoded-max48.verified_ms",
+          "control.encoded-max48.verification_ns",
+          "candidate.encoded-hello.completion_ms",
+          "candidate.encoded-hello.verified_ms",
+          "candidate.encoded-hello.verification_ns",
+          "candidate.encoded-fu2p2q.completion_ms",
+          "candidate.encoded-fu2p2q.verified_ms",
+          "candidate.encoded-fu2p2q.verification_ns",
+          "candidate.encoded-max48.completion_ms",
+          "candidate.encoded-max48.verified_ms",
+          "candidate.encoded-max48.verification_ns"
+        ],
+        "state": "derived"
+      },
+      "correctness": {
+        "sources": [
+          {
+            "bytes": 239035,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/score.json",
+            "role": "score",
+            "sha256": "709b428cdac33d36c1c8f13da2658baf5d977c839f4559d3264f903cbe402de1"
+          },
+          {
+            "bytes": 1148729,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/model-results.json",
+            "role": "rtl_boundaries",
+            "sha256": "debcf33909885a5ec70561ce8095e3894da36c4afcaac810cc6ec02ab2fcfdc3"
+          }
+        ],
+        "state": "measured"
+      },
+      "decode_tps": {
+        "metrics": [
+          "control.encoded-hello.decode_tps",
+          "control.encoded-fu2p2q.decode_tps",
+          "control.encoded-max48.decode_tps",
+          "candidate.encoded-hello.decode_tps",
+          "candidate.encoded-fu2p2q.decode_tps",
+          "candidate.encoded-max48.decode_tps"
+        ],
+        "state": "derived"
+      },
+      "energy_per_answer": {
+        "metrics": [
+          "control.mixed.energy_per_answer_j",
+          "control.mixed.energy_per_token_j",
+          "control.mixed.gross_j",
+          "control.homogeneous.encoded-hello.energy_per_answer_j",
+          "control.homogeneous.encoded-hello.energy_per_token_j",
+          "control.homogeneous.encoded-hello.gross_j",
+          "control.homogeneous.encoded-fu2p2q.energy_per_answer_j",
+          "control.homogeneous.encoded-fu2p2q.energy_per_token_j",
+          "control.homogeneous.encoded-fu2p2q.gross_j",
+          "control.homogeneous.encoded-max48.energy_per_answer_j",
+          "control.homogeneous.encoded-max48.energy_per_token_j",
+          "control.homogeneous.encoded-max48.gross_j",
+          "candidate.mixed.energy_per_answer_j",
+          "candidate.mixed.energy_per_token_j",
+          "candidate.mixed.gross_j",
+          "candidate.homogeneous.encoded-hello.energy_per_answer_j",
+          "candidate.homogeneous.encoded-hello.energy_per_token_j",
+          "candidate.homogeneous.encoded-hello.gross_j",
+          "candidate.homogeneous.encoded-fu2p2q.energy_per_answer_j",
+          "candidate.homogeneous.encoded-fu2p2q.energy_per_token_j",
+          "candidate.homogeneous.encoded-fu2p2q.gross_j",
+          "candidate.homogeneous.encoded-max48.energy_per_answer_j",
+          "candidate.homogeneous.encoded-max48.energy_per_token_j",
+          "candidate.homogeneous.encoded-max48.gross_j"
+        ],
+        "state": "derived"
+      },
+      "idle_power": {
+        "metrics": [
+          "control.mixed.idle_power_w",
+          "control.homogeneous.encoded-hello.idle_power_w",
+          "control.homogeneous.encoded-fu2p2q.idle_power_w",
+          "control.homogeneous.encoded-max48.idle_power_w",
+          "candidate.mixed.idle_power_w",
+          "candidate.homogeneous.encoded-hello.idle_power_w",
+          "candidate.homogeneous.encoded-fu2p2q.idle_power_w",
+          "candidate.homogeneous.encoded-max48.idle_power_w"
+        ],
+        "state": "derived"
+      },
+      "idle_subtracted_energy": {
+        "sources": [
+          {
+            "bytes": 239035,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/score.json",
+            "role": "score",
+            "sha256": "709b428cdac33d36c1c8f13da2658baf5d977c839f4559d3264f903cbe402de1"
+          }
+        ],
+        "state": "derived"
+      },
+      "implementation_timing": {
+        "sources": [
+          {
+            "bytes": 70292,
+            "path": "hardware/research/inference/results/attention-value-pair-v1-build-20261119T203714Z/run.json",
+            "role": "build",
+            "sha256": "43f40df14aa13a18cd22355ecf13e94a1aba10455d94a6870e97abed0d1f12ee"
+          },
+          {
+            "bytes": 72528,
+            "path": "hardware/research/inference/results/projections-read-ahead-v1-build-20261119T193229Z/run.json",
+            "role": "control_build",
+            "sha256": "b062ddb88e78652818cf559debe6adeb62055ec8e883e5acacc30f52f846a1f4"
+          }
+        ],
+        "state": "reused"
+      },
+      "memory": {
+        "reason": "Unchanged logical allocations and recorded physical resource use on both circuits.",
+        "sources": [
+          {
+            "bytes": 19925,
+            "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+            "role": "memory",
+            "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+          },
+          {
+            "bytes": 70292,
+            "path": "hardware/research/inference/results/attention-value-pair-v1-build-20261119T203714Z/run.json",
+            "role": "build",
+            "sha256": "43f40df14aa13a18cd22355ecf13e94a1aba10455d94a6870e97abed0d1f12ee"
+          },
+          {
+            "bytes": 72528,
+            "path": "hardware/research/inference/results/projections-read-ahead-v1-build-20261119T193229Z/run.json",
+            "role": "control_build",
+            "sha256": "b062ddb88e78652818cf559debe6adeb62055ec8e883e5acacc30f52f846a1f4"
+          },
+          {
+            "bytes": 64350,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-build-20261119T203714Z/cache-mapping.json",
+            "role": "routed_cache_mapping",
+            "sha256": "655953d5e47f6ff36892254caa278ff4fb7aed093fd5f67f0f06deb7c7136ac4"
+          }
+        ],
+        "state": "reused"
+      },
+      "memory_bandwidth": {
+        "reason": "Both fixtures retain the tested on-chip weights.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Linux-reported 50 MHz setting and sampled temperature brackets.",
+        "sources": [
+          {
+            "bytes": 1121425,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/board-evidence.tar.gz",
+            "role": "archive",
+            "sha256": "d3a65d8ef66012042fff1fce4fd05fc3c3085a43dbb49aafcabba34538c66ea0"
+          }
+        ],
+        "state": "measured"
+      },
+      "output_counts": {
+        "metrics": [
+          "control.encoded-hello.scored_positions",
+          "control.encoded-hello.skipped_positions",
+          "control.encoded-fu2p2q.scored_positions",
+          "control.encoded-fu2p2q.skipped_positions",
+          "control.encoded-max48.scored_positions",
+          "control.encoded-max48.skipped_positions",
+          "candidate.encoded-hello.scored_positions",
+          "candidate.encoded-hello.skipped_positions",
+          "candidate.encoded-fu2p2q.scored_positions",
+          "candidate.encoded-fu2p2q.skipped_positions",
+          "candidate.encoded-max48.scored_positions",
+          "candidate.encoded-max48.skipped_positions"
+        ],
+        "sources": [
+          {
+            "bytes": 239035,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/score.json",
+            "role": "score",
+            "sha256": "709b428cdac33d36c1c8f13da2658baf5d977c839f4559d3264f903cbe402de1"
+          }
+        ],
+        "state": "measured"
+      },
+      "power_validation": {
+        "reason": "No external calibration or off-module meter.",
+        "state": "not_measured"
+      },
+      "prefill": {
+        "reason": "Exact first/last/done timers with no independent prefill timer.",
+        "state": "not_measured"
+      },
+      "recovery": {
+        "sources": [
+          {
+            "bytes": 52,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/evidence/outcome.json",
+            "role": "outcome",
+            "sha256": "90f1fbec9395e13dc14e0c6987ba8e80d2f32d9c5eb4f403d232d0a14d8aaedb"
+          },
+          {
+            "bytes": 3106,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/evidence/original-after.stdout",
+            "role": "after_bos",
+            "sha256": "8ca02e5d8cd874a2633c530c69968c1671dcb4df41012e4e958b7ebdaecdb00b"
+          },
+          {
+            "bytes": 1156,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/preparation/board-restored.json",
+            "role": "uart_restored",
+            "sha256": "374259d3fa656f975c748ae2353db554a0cd4c7d3e0badf95dd4ff16633a1b07"
+          }
+        ],
+        "state": "measured"
+      },
+      "repeatability": {
+        "sources": [
+          {
+            "bytes": 239035,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/score.json",
+            "role": "score",
+            "sha256": "709b428cdac33d36c1c8f13da2658baf5d977c839f4559d3264f903cbe402de1"
+          }
+        ],
+        "state": "measured"
+      },
+      "resources": {
+        "sources": [
+          {
+            "bytes": 70292,
+            "path": "hardware/research/inference/results/attention-value-pair-v1-build-20261119T203714Z/run.json",
+            "role": "build",
+            "sha256": "43f40df14aa13a18cd22355ecf13e94a1aba10455d94a6870e97abed0d1f12ee"
+          },
+          {
+            "bytes": 72528,
+            "path": "hardware/research/inference/results/projections-read-ahead-v1-build-20261119T193229Z/run.json",
+            "role": "control_build",
+            "sha256": "b062ddb88e78652818cf559debe6adeb62055ec8e883e5acacc30f52f846a1f4"
+          }
+        ],
+        "state": "reused"
+      },
+      "stage_cycles": {
+        "metrics": [
+          "control.encoded-hello.first_clocks",
+          "control.encoded-hello.last_clocks",
+          "control.encoded-hello.request_clocks",
+          "control.encoded-fu2p2q.first_clocks",
+          "control.encoded-fu2p2q.last_clocks",
+          "control.encoded-fu2p2q.request_clocks",
+          "control.encoded-max48.first_clocks",
+          "control.encoded-max48.last_clocks",
+          "control.encoded-max48.request_clocks",
+          "candidate.encoded-hello.first_clocks",
+          "candidate.encoded-hello.last_clocks",
+          "candidate.encoded-hello.request_clocks",
+          "candidate.encoded-fu2p2q.first_clocks",
+          "candidate.encoded-fu2p2q.last_clocks",
+          "candidate.encoded-fu2p2q.request_clocks",
+          "candidate.encoded-max48.first_clocks",
+          "candidate.encoded-max48.last_clocks",
+          "candidate.encoded-max48.request_clocks"
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "metrics": [
+          "control.mixed.model_setup_ns",
+          "control.homogeneous.encoded-hello.model_setup_ns",
+          "control.homogeneous.encoded-fu2p2q.model_setup_ns",
+          "control.homogeneous.encoded-max48.model_setup_ns",
+          "candidate.mixed.model_setup_ns",
+          "candidate.homogeneous.encoded-hello.model_setup_ns",
+          "candidate.homogeneous.encoded-fu2p2q.model_setup_ns",
+          "candidate.homogeneous.encoded-max48.model_setup_ns"
+        ],
+        "state": "derived"
+      },
+      "sustained_throughput": {
+        "reason": "Short paired blocks at concurrency one.",
+        "state": "not_measured"
+      },
+      "token_gaps": {
+        "sources": [
+          {
+            "bytes": 1121425,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-20261119T234247Z-e21df0/board-evidence.tar.gz",
+            "role": "archive",
+            "sha256": "d3a65d8ef66012042fff1fce4fd05fc3c3085a43dbb49aafcabba34538c66ea0"
+          }
+        ],
+        "state": "measured"
+      },
+      "tokens_per_joule": {
+        "metrics": [
+          "control.mixed.tokens_per_joule",
+          "control.homogeneous.encoded-hello.tokens_per_joule",
+          "control.homogeneous.encoded-fu2p2q.tokens_per_joule",
+          "control.homogeneous.encoded-max48.tokens_per_joule",
+          "candidate.mixed.tokens_per_joule",
+          "candidate.homogeneous.encoded-hello.tokens_per_joule",
+          "candidate.homogeneous.encoded-fu2p2q.tokens_per_joule",
+          "candidate.homogeneous.encoded-max48.tokens_per_joule"
+        ],
+        "state": "derived"
+      },
+      "ttft": {
+        "metrics": [
+          "control.encoded-hello.ttft_ms",
+          "control.encoded-fu2p2q.ttft_ms",
+          "control.encoded-max48.ttft_ms",
+          "candidate.encoded-hello.ttft_ms",
+          "candidate.encoded-fu2p2q.ttft_ms",
+          "candidate.encoded-max48.ttft_ms"
+        ],
+        "state": "derived"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "mixed_energy_pairs_pct": {
+      "1": {
+        "candidate_vs_control": {
+          "active_power_w": 0.024807938857596135,
+          "energy_per_answer_by_alignment": {
+            "midpoint": -5.963336262430996,
+            "midpoint_minus_50ms": -5.980516809359671,
+            "midpoint_plus_50ms": -5.963259248258302,
+            "read_end": -5.9631844172424175,
+            "read_start": -5.963489087589069
+          },
+          "energy_per_answer_j": -5.963336262430996,
+          "energy_per_token_j": -5.963336262430996,
+          "tokens_per_joule": 6.341501309609487
+        }
+      },
+      "2": {
+        "candidate_vs_control": {
+          "active_power_w": -0.3843083607544928,
+          "energy_per_answer_by_alignment": {
+            "midpoint": -6.249991039699743,
+            "midpoint_minus_50ms": -6.260084957823642,
+            "midpoint_plus_50ms": -6.255732684837334,
+            "read_end": -6.249975312298406,
+            "read_start": -6.250007496377108
+          },
+          "energy_per_answer_j": -6.249991039699743,
+          "energy_per_token_j": -6.249991039699731,
+          "tokens_per_joule": 6.666656471837129
+        }
+      },
+      "3": {
+        "candidate_vs_control": {
+          "active_power_w": 0.7063653119920632,
+          "energy_per_answer_by_alignment": {
+            "midpoint": -5.2597582214007454,
+            "midpoint_minus_50ms": -5.252584743023181,
+            "midpoint_plus_50ms": -5.277913959764446,
+            "read_end": -5.259193323499101,
+            "read_start": -5.260322894164327
+          },
+          "energy_per_answer_j": -5.2597582214007454,
+          "energy_per_token_j": -5.259758221400734,
+          "tokens_per_joule": 5.551767783844563
+        }
+      },
+      "4": {
+        "candidate_vs_control": {
+          "active_power_w": -0.1326110538230174,
+          "energy_per_answer_by_alignment": {
+            "midpoint": -6.077143555140996,
+            "midpoint_minus_50ms": -6.127079307936389,
+            "midpoint_plus_50ms": -6.058830470943677,
+            "read_end": -6.076871424258867,
+            "read_start": -6.077415408570175
+          },
+          "energy_per_answer_j": -6.077143555140996,
+          "energy_per_token_j": -6.077143555140985,
+          "tokens_per_joule": 6.470356402234012
+        }
+      }
+    },
+    "mixed_rounds": {
+      "1": [
+        [
+          "encoded-hello",
+          "encoded-fu2p2q",
+          "encoded-max48"
+        ],
+        [
+          "encoded-hello",
+          "encoded-fu2p2q",
+          "encoded-max48",
+          "encoded-fu2p2q",
+          "encoded-hello",
+          "encoded-max48"
+        ]
+      ],
+      "2": [
+        [
+          "encoded-hello",
+          "encoded-fu2p2q",
+          "encoded-max48"
+        ],
+        [
+          "encoded-hello",
+          "encoded-fu2p2q",
+          "encoded-max48",
+          "encoded-fu2p2q",
+          "encoded-hello",
+          "encoded-max48"
+        ]
+      ],
+      "3": [
+        [
+          "encoded-max48",
+          "encoded-fu2p2q",
+          "encoded-hello"
+        ],
+        [
+          "encoded-max48",
+          "encoded-fu2p2q",
+          "encoded-hello",
+          "encoded-fu2p2q",
+          "encoded-max48",
+          "encoded-hello"
+        ]
+      ],
+      "4": [
+        [
+          "encoded-max48",
+          "encoded-fu2p2q",
+          "encoded-hello"
+        ],
+        [
+          "encoded-max48",
+          "encoded-fu2p2q",
+          "encoded-hello",
+          "encoded-fu2p2q",
+          "encoded-max48",
+          "encoded-hello"
+        ]
+      ]
+    },
+    "mixed_timing_pairs_pct": {
+      "1": {
+        "encoded-fu2p2q": {
+          "candidate_vs_control": {
+            "completion_ms": -5.399212822920385,
+            "decode_tps": 6.0266304850368435,
+            "request_clocks": -5.409931370362376,
+            "ttft_ms": -0.9019530350374838
+          }
+        },
+        "encoded-hello": {
+          "candidate_vs_control": {
+            "completion_ms": -4.517189811864474,
+            "decode_tps": 4.980354532934528,
+            "request_clocks": -4.468123201958107,
+            "ttft_ms": -1.6373860719622768
+          }
+        },
+        "encoded-max48": {
+          "candidate_vs_control": {
+            "completion_ms": -6.919999647385488,
+            "decode_tps": 9.02768871466244,
+            "request_clocks": -6.935584966355113,
+            "ttft_ms": -4.502944504861384
+          }
+        }
+      },
+      "2": {
+        "encoded-fu2p2q": {
+          "candidate_vs_control": {
+            "completion_ms": -5.40421813497538,
+            "decode_tps": 6.026158615638244,
+            "request_clocks": -5.409931370362376,
+            "ttft_ms": -0.9841277939942605
+          }
+        },
+        "encoded-hello": {
+          "candidate_vs_control": {
+            "completion_ms": -4.418397739809333,
+            "decode_tps": 4.979602193919042,
+            "request_clocks": -4.468123201958107,
+            "ttft_ms": -0.4025286282381635
+          }
+        },
+        "encoded-max48": {
+          "candidate_vs_control": {
+            "completion_ms": -6.907224498558929,
+            "decode_tps": 9.027626204323935,
+            "request_clocks": -6.935584966355113,
+            "ttft_ms": -4.467159258243514
+          }
+        }
+      },
+      "3": {
+        "encoded-fu2p2q": {
+          "candidate_vs_control": {
+            "completion_ms": -5.38089430685903,
+            "decode_tps": 6.026582999479224,
+            "request_clocks": -5.409931370362376,
+            "ttft_ms": -0.6054279154619202
+          }
+        },
+        "encoded-hello": {
+          "candidate_vs_control": {
+            "completion_ms": -4.438687526650742,
+            "decode_tps": 4.979964987702212,
+            "request_clocks": -4.468123201958107,
+            "ttft_ms": -0.5784185066366798
+          }
+        },
+        "encoded-max48": {
+          "candidate_vs_control": {
+            "completion_ms": -6.9168358421986875,
+            "decode_tps": 9.027614097520775,
+            "request_clocks": -6.935584966355113,
+            "ttft_ms": -4.49837013040586
+          }
+        }
+      },
+      "4": {
+        "encoded-fu2p2q": {
+          "candidate_vs_control": {
+            "completion_ms": -5.388821966448775,
+            "decode_tps": 6.031132674927808,
+            "request_clocks": -5.409931370362376,
+            "ttft_ms": -0.6813214298486137
+          }
+        },
+        "encoded-hello": {
+          "candidate_vs_control": {
+            "completion_ms": -4.467077642830342,
+            "decode_tps": 4.980517393455464,
+            "request_clocks": -4.468123201958107,
+            "ttft_ms": -0.9306914689421575
+          }
+        },
+        "encoded-max48": {
+          "candidate_vs_control": {
+            "completion_ms": -6.9159369419959145,
+            "decode_tps": 9.029265201966608,
+            "request_clocks": -6.935584966355113,
+            "ttft_ms": -4.493370365107796
+          }
+        }
+      }
+    },
+    "original_restored": true,
+    "power_supply_boundary": "INA260 VCC_SOM module rail, 20 Hz. Linear trapezoidal interpolation and 75 ms maximum covered sample gap.",
+    "previous_board_run": "projections-read-ahead-20261119T195431Z-008bba",
+    "routed": {
+      "candidate": {
+        "resources": {
+          "bram_tile": 39.0,
+          "dsp": 58.0,
+          "lut": 39376.0,
+          "lutram": 1172.0,
+          "register": 15712.0,
+          "uram": 0.0
+        },
+        "timing": {
+          "clock": "clk_pl_0 period_ns 20.000",
+          "drc_errors_or_critical_warnings": "0",
+          "fully_placed": "1",
+          "fully_routed": "1",
+          "hold_slack_ns": "0.005",
+          "native_no_clock": "0",
+          "partially_routed_nets": "0",
+          "routing_errors": "0",
+          "routing_gap_nets": "0",
+          "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+          "setup_slack_ns": "1.390",
+          "unclocked_active_pins": "0",
+          "unconstrained_internal_endpoints": "0",
+          "unrouted_nets": "0",
+          "unused_ps_clock_outputs": "0"
+        }
+      },
+      "control": {
+        "resources": {
+          "bram_tile": 39.0,
+          "dsp": 57.0,
+          "lut": 38178.0,
+          "lutram": 1172.0,
+          "register": 15595.0,
+          "uram": 0.0
+        },
+        "timing": {
+          "clock": "clk_pl_0 period_ns 20.000",
+          "drc_errors_or_critical_warnings": "0",
+          "fully_placed": "1",
+          "fully_routed": "1",
+          "hold_slack_ns": "0.012",
+          "native_no_clock": "0",
+          "partially_routed_nets": "0",
+          "routing_errors": "0",
+          "routing_gap_nets": "0",
+          "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+          "setup_slack_ns": "4.027",
+          "unclocked_active_pins": "0",
+          "unconstrained_internal_endpoints": "0",
+          "unrouted_nets": "0",
+          "unused_ps_clock_outputs": "0"
+        }
+      }
+    },
+    "routed_attention_hierarchy": {
+      "candidate": {
+        "tiny_ps_axi_wrapper": {
+          "dsp": 58,
+          "ff": 15712,
+          "logic_lut": 38204,
+          "lutram": 1170,
+          "module": "(top)",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 2,
+          "total_lut": 39376,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i": {
+          "dsp": 58,
+          "ff": 15712,
+          "logic_lut": 38204,
+          "lutram": 1170,
+          "module": "tiny_ps_axi",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 2,
+          "total_lut": 39376,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi": {
+          "dsp": 0,
+          "ff": 673,
+          "logic_lut": 563,
+          "lutram": 0,
+          "module": "tiny_ps_axi_axi_0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 1,
+          "total_lut": 564,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst": {
+          "dsp": 0,
+          "ff": 673,
+          "logic_lut": 563,
+          "lutram": 0,
+          "module": "bd_0c06",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 1,
+          "total_lut": 564,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline": {
+          "dsp": 0,
+          "ff": 498,
+          "logic_lut": 506,
+          "lutram": 0,
+          "module": "s00_entry_pipeline_imp_1XHPCEO",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 506,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu": {
+          "dsp": 0,
+          "ff": 239,
+          "logic_lut": 185,
+          "lutram": 0,
+          "module": "bd_0c06_s00mmu_0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 185,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst": {
+          "dsp": 0,
+          "ff": 239,
+          "logic_lut": 185,
+          "lutram": 0,
+          "module": "sc_mmu_v1_0_16_top",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 185,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst/ar_reg_stall": {
+          "dsp": 0,
+          "ff": 86,
+          "logic_lut": 47,
+          "lutram": 0,
+          "module": "sc_util_v1_0_4_axi_reg_stall__parameterized0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 47,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst/aw_reg_stall": {
+          "dsp": 0,
+          "ff": 86,
+          "logic_lut": 48,
+          "lutram": 0,
+          "module": "sc_util_v1_0_4_axi_reg_stall__parameterized0_7",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 48,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst/gen_endpoint.decerr_slave_inst": {
+          "dsp": 0,
+          "ff": 49,
+          "logic_lut": 67,
+          "lutram": 0,
+          "module": "sc_mmu_v1_0_16_decerr_slave",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 67,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_si_converter": {
+          "dsp": 0,
+          "ff": 219,
+          "logic_lut": 317,
+          "lutram": 0,
+          "module": "bd_0c06_s00sic_0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 317,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_si_converter/inst": {
+          "dsp": 0,
+          "ff": 219,
+          "logic_lut": 317,
+          "lutram": 0,
+          "module": "sc_si_converter_v1_0_16_top",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 317,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_si_converter/inst/gen_axilite_conv.axilite_conv_inst": {
+          "dsp": 0,
+          "ff": 215,
+          "logic_lut": 316,
+          "lutram": 0,
+          "module": "sc_si_converter_v1_0_16_axilite_conv",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 316,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_nodes": {
+          "dsp": 0,
+          "ff": 136,
+          "logic_lut": 40,
+          "lutram": 0,
+          "module": "s00_nodes_imp_1UJ7QIY",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 40,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural": {
+          "dsp": 58,
+          "ff": 15002,
+          "logic_lut": 37626,
+          "lutram": 1170,
+          "module": "tiny_ps_axi_neural_0",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 38796,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/(neural)": {
+          "dsp": 0,
+          "ff": 0,
+          "logic_lut": 0,
+          "lutram": 0,
+          "module": "tiny_ps_axi_neural_0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 0,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst": {
+          "dsp": 58,
+          "ff": 15002,
+          "logic_lut": 37626,
+          "lutram": 1170,
+          "module": "kv260_axi_bridge",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 38796,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual": {
+          "dsp": 58,
+          "ff": 15002,
+          "logic_lut": 37626,
+          "lutram": 1170,
+          "module": "axi_transformer",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 38796,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/(actual)": {
+          "dsp": 0,
+          "ff": 2866,
+          "logic_lut": 897,
+          "lutram": 48,
+          "module": "axi_transformer",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 945,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core": {
+          "dsp": 58,
+          "ff": 12136,
+          "logic_lut": 36740,
+          "lutram": 1122,
+          "module": "transformer",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 37862,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/(core)": {
+          "dsp": 0,
+          "ff": 44,
+          "logic_lut": 187,
+          "lutram": 60,
+          "module": "transformer",
+          "ramb18": 1,
+          "ramb36": 6,
+          "srl": 0,
+          "total_lut": 247,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att": {
+          "dsp": 10,
+          "ff": 2335,
+          "logic_lut": 10251,
+          "lutram": 362,
+          "module": "attention_value_pair",
+          "ramb18": 4,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 10613,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/(att)": {
+          "dsp": 2,
+          "ff": 442,
+          "logic_lut": 496,
+          "lutram": 362,
+          "module": "attention_value_pair",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 858,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/scalar": {
+          "dsp": 4,
+          "ff": 1042,
+          "logic_lut": 5789,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5789,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/second_exp": {
+          "dsp": 4,
+          "ff": 851,
+          "logic_lut": 3972,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp__parameterized0",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 3972,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff": {
+          "dsp": 19,
+          "ff": 2010,
+          "logic_lut": 5370,
+          "lutram": 60,
+          "module": "feedforward",
+          "ramb18": 2,
+          "ramb36": 6,
+          "srl": 0,
+          "total_lut": 5430,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/(ff)": {
+          "dsp": 0,
+          "ff": 278,
+          "logic_lut": 15,
+          "lutram": 0,
+          "module": "feedforward",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 15,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/down_dense": {
+          "dsp": 1,
+          "ff": 80,
+          "logic_lut": 290,
+          "lutram": 40,
+          "module": "dense_ff_down_pipeline",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 330,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/gate_dense": {
+          "dsp": 1,
+          "ff": 80,
+          "logic_lut": 184,
+          "lutram": 10,
+          "module": "dense_ff_gate_up_read_ahead",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 194,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/scalar": {
+          "dsp": 16,
+          "ff": 1492,
+          "logic_lut": 4710,
+          "lutram": 0,
+          "module": "fixed_scalar_ff_exp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 4710,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/up_dense": {
+          "dsp": 1,
+          "ff": 80,
+          "logic_lut": 175,
+          "lutram": 10,
+          "module": "dense_ff_gate_up_read_ahead__parameterized0",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 185,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front": {
+          "dsp": 4,
+          "ff": 1335,
+          "logic_lut": 1450,
+          "lutram": 80,
+          "module": "frontend_value_pair",
+          "ramb18": 0,
+          "ramb36": 12,
+          "srl": 0,
+          "total_lut": 1530,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/(front)": {
+          "dsp": 0,
+          "ff": 1048,
+          "logic_lut": 359,
+          "lutram": 30,
+          "module": "frontend_value_pair",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 389,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/cache": {
+          "dsp": 0,
+          "ff": 29,
+          "logic_lut": 324,
+          "lutram": 0,
+          "module": "kv_cache_value_pair",
+          "ramb18": 0,
+          "ramb36": 8,
+          "srl": 0,
+          "total_lut": 324,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/projection": {
+          "dsp": 1,
+          "ff": 80,
+          "logic_lut": 140,
+          "lutram": 10,
+          "module": "mac32_read_ahead",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 150,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/rotation": {
+          "dsp": 3,
+          "ff": 178,
+          "logic_lut": 627,
+          "lutram": 40,
+          "module": "qk_rope",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 667,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/logits": {
+          "dsp": 8,
+          "ff": 665,
+          "logic_lut": 1152,
+          "lutram": 10,
+          "module": "logits_parallel",
+          "ramb18": 0,
+          "ramb36": 8,
+          "srl": 0,
+          "total_lut": 1162,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1": {
+          "dsp": 0,
+          "ff": 1674,
+          "logic_lut": 5781,
+          "lutram": 180,
+          "module": "rmsnorm",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5961,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1/(norm1)": {
+          "dsp": 0,
+          "ff": 374,
+          "logic_lut": 113,
+          "lutram": 20,
+          "module": "rmsnorm",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 133,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1/scalar": {
+          "dsp": 0,
+          "ff": 1300,
+          "logic_lut": 5669,
+          "lutram": 160,
+          "module": "fixed_scalar_norm_dsp_11",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5829,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2": {
+          "dsp": 0,
+          "ff": 1674,
+          "logic_lut": 5767,
+          "lutram": 180,
+          "module": "rmsnorm__parameterized0",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5947,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2/(norm2)": {
+          "dsp": 0,
+          "ff": 377,
+          "logic_lut": 61,
+          "lutram": 20,
+          "module": "rmsnorm__parameterized0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 81,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2/scalar": {
+          "dsp": 0,
+          "ff": 1297,
+          "logic_lut": 5707,
+          "lutram": 160,
+          "module": "fixed_scalar_norm_dsp_10",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5867,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm_mul": {
+          "dsp": 16,
+          "ff": 646,
+          "logic_lut": 814,
+          "lutram": 0,
+          "module": "rmsnorm_shared_mul",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 814,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal": {
+          "dsp": 0,
+          "ff": 1675,
+          "logic_lut": 5731,
+          "lutram": 180,
+          "module": "rmsnorm__parameterized1",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5911,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal/(normfinal)": {
+          "dsp": 0,
+          "ff": 375,
+          "logic_lut": 55,
+          "lutram": 20,
+          "module": "rmsnorm__parameterized1",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 75,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal/scalar": {
+          "dsp": 0,
+          "ff": 1300,
+          "logic_lut": 5677,
+          "lutram": 160,
+          "module": "fixed_scalar_norm_dsp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5837,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/output_projection": {
+          "dsp": 1,
+          "ff": 78,
+          "logic_lut": 253,
+          "lutram": 10,
+          "module": "dense_attention_output_read_ahead",
+          "ramb18": 1,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 263,
+          "uram": 0
+        }
+      },
+      "control": {
+        "tiny_ps_axi_wrapper": {
+          "dsp": 57,
+          "ff": 15595,
+          "logic_lut": 37006,
+          "lutram": 1170,
+          "module": "(top)",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 2,
+          "total_lut": 38178,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i": {
+          "dsp": 57,
+          "ff": 15595,
+          "logic_lut": 37006,
+          "lutram": 1170,
+          "module": "tiny_ps_axi",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 2,
+          "total_lut": 38178,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi": {
+          "dsp": 0,
+          "ff": 673,
+          "logic_lut": 566,
+          "lutram": 0,
+          "module": "tiny_ps_axi_axi_0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 1,
+          "total_lut": 567,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst": {
+          "dsp": 0,
+          "ff": 673,
+          "logic_lut": 566,
+          "lutram": 0,
+          "module": "bd_0c06",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 1,
+          "total_lut": 567,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline": {
+          "dsp": 0,
+          "ff": 498,
+          "logic_lut": 509,
+          "lutram": 0,
+          "module": "s00_entry_pipeline_imp_1XHPCEO",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 509,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu": {
+          "dsp": 0,
+          "ff": 239,
+          "logic_lut": 185,
+          "lutram": 0,
+          "module": "bd_0c06_s00mmu_0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 185,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst": {
+          "dsp": 0,
+          "ff": 239,
+          "logic_lut": 185,
+          "lutram": 0,
+          "module": "sc_mmu_v1_0_16_top",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 185,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst/ar_reg_stall": {
+          "dsp": 0,
+          "ff": 86,
+          "logic_lut": 47,
+          "lutram": 0,
+          "module": "sc_util_v1_0_4_axi_reg_stall__parameterized0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 47,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst/aw_reg_stall": {
+          "dsp": 0,
+          "ff": 86,
+          "logic_lut": 48,
+          "lutram": 0,
+          "module": "sc_util_v1_0_4_axi_reg_stall__parameterized0_7",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 48,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst/gen_endpoint.decerr_slave_inst": {
+          "dsp": 0,
+          "ff": 49,
+          "logic_lut": 67,
+          "lutram": 0,
+          "module": "sc_mmu_v1_0_16_decerr_slave",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 67,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_si_converter": {
+          "dsp": 0,
+          "ff": 219,
+          "logic_lut": 317,
+          "lutram": 0,
+          "module": "bd_0c06_s00sic_0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 317,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_si_converter/inst": {
+          "dsp": 0,
+          "ff": 219,
+          "logic_lut": 317,
+          "lutram": 0,
+          "module": "sc_si_converter_v1_0_16_top",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 317,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_si_converter/inst/gen_axilite_conv.axilite_conv_inst": {
+          "dsp": 0,
+          "ff": 215,
+          "logic_lut": 316,
+          "lutram": 0,
+          "module": "sc_si_converter_v1_0_16_axilite_conv",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 316,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_nodes": {
+          "dsp": 0,
+          "ff": 136,
+          "logic_lut": 40,
+          "lutram": 0,
+          "module": "s00_nodes_imp_1UJ7QIY",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 40,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural": {
+          "dsp": 57,
+          "ff": 14885,
+          "logic_lut": 36425,
+          "lutram": 1170,
+          "module": "tiny_ps_axi_neural_0",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 37595,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/(neural)": {
+          "dsp": 0,
+          "ff": 0,
+          "logic_lut": 0,
+          "lutram": 0,
+          "module": "tiny_ps_axi_neural_0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 0,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst": {
+          "dsp": 57,
+          "ff": 14885,
+          "logic_lut": 36425,
+          "lutram": 1170,
+          "module": "kv260_axi_bridge",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 37595,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual": {
+          "dsp": 57,
+          "ff": 14885,
+          "logic_lut": 36425,
+          "lutram": 1170,
+          "module": "axi_transformer",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 37595,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/(actual)": {
+          "dsp": 0,
+          "ff": 2860,
+          "logic_lut": 897,
+          "lutram": 48,
+          "module": "axi_transformer",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 945,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core": {
+          "dsp": 57,
+          "ff": 12025,
+          "logic_lut": 35538,
+          "lutram": 1122,
+          "module": "transformer",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 36660,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/(core)": {
+          "dsp": 0,
+          "ff": 44,
+          "logic_lut": 187,
+          "lutram": 60,
+          "module": "transformer",
+          "ramb18": 1,
+          "ramb36": 6,
+          "srl": 0,
+          "total_lut": 247,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att": {
+          "dsp": 9,
+          "ff": 2220,
+          "logic_lut": 9080,
+          "lutram": 362,
+          "module": "attention",
+          "ramb18": 4,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 9442,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/(att)": {
+          "dsp": 1,
+          "ff": 386,
+          "logic_lut": 349,
+          "lutram": 362,
+          "module": "attention",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 711,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/scalar": {
+          "dsp": 4,
+          "ff": 983,
+          "logic_lut": 5289,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5289,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/second_exp": {
+          "dsp": 4,
+          "ff": 851,
+          "logic_lut": 3447,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp__parameterized0",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 3447,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff": {
+          "dsp": 19,
+          "ff": 2010,
+          "logic_lut": 5371,
+          "lutram": 60,
+          "module": "feedforward",
+          "ramb18": 2,
+          "ramb36": 6,
+          "srl": 0,
+          "total_lut": 5431,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/(ff)": {
+          "dsp": 0,
+          "ff": 278,
+          "logic_lut": 15,
+          "lutram": 0,
+          "module": "feedforward",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 15,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/down_dense": {
+          "dsp": 1,
+          "ff": 80,
+          "logic_lut": 290,
+          "lutram": 40,
+          "module": "dense_ff_down_pipeline",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 330,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/gate_dense": {
+          "dsp": 1,
+          "ff": 80,
+          "logic_lut": 184,
+          "lutram": 10,
+          "module": "dense_ff_gate_up_read_ahead",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 194,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/scalar": {
+          "dsp": 16,
+          "ff": 1492,
+          "logic_lut": 4710,
+          "lutram": 0,
+          "module": "fixed_scalar_ff_exp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 4710,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/up_dense": {
+          "dsp": 1,
+          "ff": 80,
+          "logic_lut": 175,
+          "lutram": 10,
+          "module": "dense_ff_gate_up_read_ahead__parameterized0",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 185,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front": {
+          "dsp": 4,
+          "ff": 1337,
+          "logic_lut": 1422,
+          "lutram": 80,
+          "module": "frontend",
+          "ramb18": 0,
+          "ramb36": 12,
+          "srl": 0,
+          "total_lut": 1502,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/(front)": {
+          "dsp": 0,
+          "ff": 1051,
+          "logic_lut": 359,
+          "lutram": 30,
+          "module": "frontend",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 389,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/cache": {
+          "dsp": 0,
+          "ff": 28,
+          "logic_lut": 299,
+          "lutram": 0,
+          "module": "kv_cache",
+          "ramb18": 0,
+          "ramb36": 8,
+          "srl": 0,
+          "total_lut": 299,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/projection": {
+          "dsp": 1,
+          "ff": 80,
+          "logic_lut": 140,
+          "lutram": 10,
+          "module": "mac32_read_ahead",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 150,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/rotation": {
+          "dsp": 3,
+          "ff": 178,
+          "logic_lut": 626,
+          "lutram": 40,
+          "module": "qk_rope",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 666,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/logits": {
+          "dsp": 8,
+          "ff": 665,
+          "logic_lut": 1150,
+          "lutram": 10,
+          "module": "logits_parallel",
+          "ramb18": 0,
+          "ramb36": 8,
+          "srl": 0,
+          "total_lut": 1160,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1": {
+          "dsp": 0,
+          "ff": 1674,
+          "logic_lut": 5780,
+          "lutram": 180,
+          "module": "rmsnorm",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5960,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1/(norm1)": {
+          "dsp": 0,
+          "ff": 374,
+          "logic_lut": 113,
+          "lutram": 20,
+          "module": "rmsnorm",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 133,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1/scalar": {
+          "dsp": 0,
+          "ff": 1300,
+          "logic_lut": 5669,
+          "lutram": 160,
+          "module": "fixed_scalar_norm_dsp_11",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5829,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2": {
+          "dsp": 0,
+          "ff": 1675,
+          "logic_lut": 5768,
+          "lutram": 180,
+          "module": "rmsnorm__parameterized0",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5948,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2/(norm2)": {
+          "dsp": 0,
+          "ff": 378,
+          "logic_lut": 61,
+          "lutram": 20,
+          "module": "rmsnorm__parameterized0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 81,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2/scalar": {
+          "dsp": 0,
+          "ff": 1297,
+          "logic_lut": 5707,
+          "lutram": 160,
+          "module": "fixed_scalar_norm_dsp_10",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5867,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm_mul": {
+          "dsp": 16,
+          "ff": 646,
+          "logic_lut": 814,
+          "lutram": 0,
+          "module": "rmsnorm_shared_mul",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 814,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal": {
+          "dsp": 0,
+          "ff": 1676,
+          "logic_lut": 5725,
+          "lutram": 180,
+          "module": "rmsnorm__parameterized1",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5905,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal/(normfinal)": {
+          "dsp": 0,
+          "ff": 376,
+          "logic_lut": 55,
+          "lutram": 20,
+          "module": "rmsnorm__parameterized1",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 75,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal/scalar": {
+          "dsp": 0,
+          "ff": 1300,
+          "logic_lut": 5670,
+          "lutram": 160,
+          "module": "fixed_scalar_norm_dsp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5830,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/output_projection": {
+          "dsp": 1,
+          "ff": 78,
+          "logic_lut": 255,
+          "lutram": 10,
+          "module": "dense_attention_output_read_ahead",
+          "ramb18": 1,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 265,
+          "uram": 0
+        }
+      }
+    },
+    "routed_cache_bank_summary": {
+      "candidate": {
+        "k_memory": {
+          "data_width": 16,
+          "logical_words": 8192,
+          "mapped_primitives": {
+            "RAMB36E2": 4
+          },
+          "nominal_bram_bits": 147456
+        },
+        "v_even": {
+          "data_width": 16,
+          "logical_words": 4096,
+          "mapped_primitives": {
+            "RAMB36E2": 2
+          },
+          "nominal_bram_bits": 73728
+        },
+        "v_odd": {
+          "data_width": 16,
+          "logical_words": 4096,
+          "mapped_primitives": {
+            "RAMB36E2": 2
+          },
+          "nominal_bram_bits": 73728
+        }
+      },
+      "control": {
+        "k_memory": {
+          "data_width": 16,
+          "logical_words": 8192,
+          "mapped_primitives": {
+            "RAMB36E2": 4
+          },
+          "nominal_bram_bits": 147456
+        },
+        "v_memory": {
+          "data_width": 16,
+          "logical_words": 8192,
+          "mapped_primitives": {
+            "RAMB36E2": 4
+          },
+          "nominal_bram_bits": 147456
+        }
+      }
+    },
+    "schedule": [
+      [
+        "A1",
+        "control",
+        [
+          1,
+          2
+        ],
+        1,
+        [
+          "encoded-hello",
+          "encoded-fu2p2q",
+          "encoded-max48"
+        ],
+        true
+      ],
+      [
+        "B1",
+        "candidate",
+        [
+          1,
+          2
+        ],
+        1,
+        [
+          "encoded-hello",
+          "encoded-fu2p2q",
+          "encoded-max48"
+        ],
+        true
+      ],
+      [
+        "B2",
+        "candidate",
+        [
+          3,
+          4
+        ],
+        2,
+        [
+          "encoded-max48",
+          "encoded-fu2p2q",
+          "encoded-hello"
+        ],
+        false
+      ],
+      [
+        "A2",
+        "control",
+        [
+          3,
+          4
+        ],
+        2,
+        [
+          "encoded-max48",
+          "encoded-fu2p2q",
+          "encoded-hello"
+        ],
+        true
+      ]
+    ],
+    "temperature_brackets_c": {
+      "ams/temp1": {
+        "first": 26.516,
+        "last": 26.469,
+        "maximum": 28.366,
+        "samples": 40
+      },
+      "ams/temp2": {
+        "first": 26.547,
+        "last": 26.718,
+        "maximum": 28.024,
+        "samples": 40
+      },
+      "ams/temp3": {
+        "first": 25.381,
+        "last": 25.039,
+        "maximum": 25.723,
+        "samples": 40
+      }
+    },
+    "timeouts": 0
+  },
+  "correctness": {
+    "evidence": "200 timed, 36 warm-up and nine smoke replies passed output, stopping and all three FPGA cycle checks. All 320 original BOS scores passed restoration.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "boot_id": "e09cc30e-0803-4dcc-ac24-60864ebd540e",
+      "comparison_firmware_sha256": {
+        "candidate": "ef998a2920682fdb93aa27978f75086b66eb606675b2483951995dfab68d36bb",
+        "control": "8547e1d14564856be84b79dbb08fa2c7f603b1a705d2f43a9c93af79d946866a"
+      },
+      "configured_pl0_hz": 50000000,
+      "initial_taint": "12288",
+      "kernel": [
+        "Linux",
+        "kria",
+        "6.8.0-1015-xilinx",
+        "#16-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 16 05:06:58 UTC 2025",
+        "aarch64"
+      ],
+      "model": "ZynqMP KV260 revB",
+      "original_state_sha256": "7342e498d95e6e99975e2bae8709509dd8cd861c2843bd430cec75d956b0d5e8",
+      "physical_unit": "KV260 USB bridge XFL1RXOM0IWQ",
+      "restored_state_sha256": "0c09c797444339254c7b143257c13ab219cd1f0831fd93c5b3d1711c99bf03ca",
+      "restored_taint": "12288"
+    },
+    "configuration_sha256": "3238f286a737d61cad7d6de4e6ed8f59aa5ad99c3331331b05734abe2cf984c8",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-attention-value-pair-v1",
+  "id": "attention-value-pair-20261119T234247Z-e21df0",
+  "implementation": {
+    "id": "kv260-attention-value-pair-v1",
+    "sha256": "ef998a2920682fdb93aa27978f75086b66eb606675b2483951995dfab68d36bb"
+  },
+  "limitations": [
+    "One board and boot, three fixed prompts, four mixed pairs and two homogeneous pairs per prompt.",
+    "Only VCC_SOM is measured. Gross active energy includes inter-request verification and gaps.",
+    "The board clock source is the Linux clock framework. Runtime frequency was not independently instrumented.",
+    "The SPI1/TPM counters bracket each active window with finite delays. They cannot isolate peripheral power.",
+    "The first complete live status receipt places an upper bound on board completion time.",
+    "Taint 12288 reflects previously loaded and unloaded DDR fixture code in the inherited boot."
+  ],
+  "metrics": [
+    {
+      "kind": "derived",
+      "method": "Board CPU admission before encoding and context clear to first useful byte.",
+      "name": "control.encoded-hello.ttft_ms",
+      "samples": [
+        6.196502,
+        6.00111,
+        6.179771,
+        5.935889,
+        5.96211,
+        5.941209,
+        5.94298,
+        5.9355
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful byte intervals divided by board CPU first-to-last elapsed time.",
+      "name": "control.encoded-hello.decode_tps",
+      "samples": [
+        1311.8995673369968,
+        1311.8991805774535,
+        1311.903821707023,
+        1311.9042084693028,
+        1311.9028741404015,
+        1311.896860024983,
+        1311.9021006176436,
+        1311.8935919275089
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to observed stop and drain before verification.",
+      "name": "control.encoded-hello.completion_ms",
+      "samples": [
+        74.99068,
+        74.795078,
+        74.973849,
+        74.729627,
+        74.756278,
+        74.735367,
+        74.736998,
+        74.729578
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to exact output verification.",
+      "name": "control.encoded-hello.verified_ms",
+      "samples": [
+        75.650187,
+        75.335244,
+        75.622306,
+        75.263183,
+        75.292233,
+        75.250252,
+        75.264563,
+        75.229033
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at first useful byte.",
+      "name": "control.encoded-hello.first_clocks",
+      "samples": [
+        285544,
+        285544,
+        285544,
+        285544,
+        285544,
+        285544,
+        285544,
+        285544
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at last useful byte.",
+      "name": "control.encoded-hello.last_clocks",
+      "samples": [
+        3677539,
+        3677539,
+        3677539,
+        3677539,
+        3677539,
+        3677539,
+        3677539,
+        3677539
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at final completion.",
+      "name": "control.encoded-hello.request_clocks",
+      "samples": [
+        3725233,
+        3725233,
+        3725233,
+        3725233,
+        3725233,
+        3725233,
+        3725233,
+        3725233
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Accepted scores divided by 320.",
+      "name": "control.encoded-hello.scored_positions",
+      "samples": [
+        91,
+        91,
+        91,
+        91,
+        91,
+        91,
+        91,
+        91
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA count of prefill positions without scores.",
+      "name": "control.encoded-hello.skipped_positions",
+      "samples": [
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "derived",
+      "method": "CPU interval between observed completion and exact verification.",
+      "name": "control.encoded-hello.verification_ns",
+      "samples": [
+        659507,
+        540166,
+        648457,
+        533556,
+        535955,
+        514885,
+        527565,
+        499455
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission before encoding and context clear to first useful byte.",
+      "name": "control.encoded-fu2p2q.ttft_ms",
+      "samples": [
+        7.04475,
+        7.02361,
+        7.056091,
+        7.01637,
+        7.03743,
+        7.00074,
+        7.04188,
+        7.023581
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful byte intervals divided by board CPU first-to-last elapsed time.",
+      "name": "control.encoded-fu2p2q.decode_tps",
+      "samples": [
+        1192.098788931077,
+        1192.0965574566649,
+        1192.1006680739038,
+        1192.1023005840434,
+        1192.1021948818127,
+        1192.0944434359808,
+        1192.0969097941745,
+        1192.098319146296
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to observed stop and drain before verification.",
+      "name": "control.encoded-fu2p2q.completion_ms",
+      "samples": [
+        109.645766,
+        109.624846,
+        109.657057,
+        109.617197,
+        109.638286,
+        109.602166,
+        109.643076,
+        109.624847
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to exact output verification.",
+      "name": "control.encoded-fu2p2q.verified_ms",
+      "samples": [
+        110.233712,
+        110.338133,
+        110.282063,
+        110.185562,
+        110.239972,
+        110.172201,
+        110.259482,
+        110.205283
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at first useful byte.",
+      "name": "control.encoded-fu2p2q.first_clocks",
+      "samples": [
+        339920,
+        339920,
+        339920,
+        339920,
+        339920,
+        339920,
+        339920,
+        339920
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at last useful byte.",
+      "name": "control.encoded-fu2p2q.last_clocks",
+      "samples": [
+        5414954,
+        5414954,
+        5414954,
+        5414954,
+        5414954,
+        5414954,
+        5414954,
+        5414954
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at final completion.",
+      "name": "control.encoded-fu2p2q.request_clocks",
+      "samples": [
+        5469940,
+        5469940,
+        5469940,
+        5469940,
+        5469940,
+        5469940,
+        5469940,
+        5469940
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Accepted scores divided by 320.",
+      "name": "control.encoded-fu2p2q.scored_positions",
+      "samples": [
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA count of prefill positions without scores.",
+      "name": "control.encoded-fu2p2q.skipped_positions",
+      "samples": [
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "derived",
+      "method": "CPU interval between observed completion and exact verification.",
+      "name": "control.encoded-fu2p2q.verification_ns",
+      "samples": [
+        587946,
+        713287,
+        625006,
+        568365,
+        601686,
+        570035,
+        616406,
+        580436
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission before encoding and context clear to first useful byte.",
+      "name": "control.encoded-max48.ttft_ms",
+      "samples": [
+        68.370514,
+        68.351624,
+        68.363313,
+        68.341014,
+        68.636366,
+        68.319683,
+        68.633606,
+        68.322654
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful byte intervals divided by board CPU first-to-last elapsed time.",
+      "name": "control.encoded-max48.decode_tps",
+      "samples": [
+        865.4028815899484,
+        865.4015727959419,
+        865.4022199213725,
+        865.4035359884361,
+        865.4024380537583,
+        865.4054919187049,
+        865.402656186254,
+        865.4005548477849
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to observed stop and drain before verification.",
+      "name": "control.encoded-max48.completion_ms",
+      "samples": [
+        188.770848,
+        188.751888,
+        188.763718,
+        188.741458,
+        189.036761,
+        188.719797,
+        189.03406,
+        188.723028
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to exact output verification.",
+      "name": "control.encoded-max48.verified_ms",
+      "samples": [
+        189.380194,
+        189.320414,
+        189.363984,
+        189.322794,
+        189.750838,
+        189.280033,
+        189.765438,
+        189.315474
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at first useful byte.",
+      "name": "control.encoded-max48.first_clocks",
+      "samples": [
+        3393048,
+        3393048,
+        3393048,
+        3393048,
+        3393048,
+        3393048,
+        3393048,
+        3393048
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at last useful byte.",
+      "name": "control.encoded-max48.last_clocks",
+      "samples": [
+        9343976,
+        9343976,
+        9343976,
+        9343976,
+        9343976,
+        9343976,
+        9343976,
+        9343976
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at final completion.",
+      "name": "control.encoded-max48.request_clocks",
+      "samples": [
+        9413020,
+        9413020,
+        9413020,
+        9413020,
+        9413020,
+        9413020,
+        9413020,
+        9413020
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Accepted scores divided by 320.",
+      "name": "control.encoded-max48.scored_positions",
+      "samples": [
+        105,
+        105,
+        105,
+        105,
+        105,
+        105,
+        105,
+        105
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA count of prefill positions without scores.",
+      "name": "control.encoded-max48.skipped_positions",
+      "samples": [
+        96,
+        96,
+        96,
+        96,
+        96,
+        96,
+        96,
+        96
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "derived",
+      "method": "CPU interval between observed completion and exact verification.",
+      "name": "control.encoded-max48.verification_ns",
+      "samples": [
+        609346,
+        568526,
+        600266,
+        581336,
+        714077,
+        560236,
+        731378,
+        592446
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "control.mixed.active_power_w",
+      "samples": [
+        3.1064648908970285,
+        3.1191288351060287,
+        3.118773471016776,
+        3.1187726134142517
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "control.mixed.idle_power_w",
+      "samples": [
+        3.013623695925703,
+        3.012632820247024,
+        3.0226275914019065,
+        3.0213811327939464,
+        3.0212518030977202,
+        3.0225000768675,
+        3.0208751422895017,
+        3.0212508156775004
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "control.mixed.energy_per_answer_j",
+      "samples": [
+        0.3886490034288843,
+        0.39009886176213787,
+        0.39001883185596786,
+        0.39005162817918193
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "control.mixed.energy_per_token_j",
+      "samples": [
+        0.003689705728755231,
+        0.0037034702066025744,
+        0.003702710429012353,
+        0.0037030217865112207
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "control.mixed.tokens_per_joule",
+      "samples": [
+        271.02432375748367,
+        270.01702301187476,
+        270.0724291493505,
+        270.04972091783014
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "control.mixed.gross_j",
+      "samples": [
+        2.331894020573306,
+        2.340593170572827,
+        2.340112991135807,
+        2.3403097690750916
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "control.mixed.model_setup_ns",
+      "samples": [
+        550686698,
+        550336694,
+        551071571,
+        550665518
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "control.homogeneous.encoded-hello.active_power_w",
+      "samples": [
+        3.119757220444993,
+        3.1161028490963636
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "control.homogeneous.encoded-hello.idle_power_w",
+      "samples": [
+        3.021999828205851,
+        3.021499572260447,
+        3.0206261558821055,
+        3.020154173421141
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "control.homogeneous.encoded-hello.energy_per_answer_j",
+      "samples": [
+        0.23494894365624802,
+        0.23461605333481822
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "control.homogeneous.encoded-hello.energy_per_token_j",
+      "samples": [
+        0.0026105438184027556,
+        0.002606845037053536
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "control.homogeneous.encoded-hello.tokens_per_joule",
+      "samples": [
+        383.06194784037126,
+        383.6054639942387
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "control.homogeneous.encoded-hello.gross_j",
+      "samples": [
+        4.229080985812464,
+        4.223088960026728
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "control.homogeneous.encoded-hello.model_setup_ns",
+      "samples": [
+        542821729,
+        543355795
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "control.homogeneous.encoded-fu2p2q.active_power_w",
+      "samples": [
+        3.1154588965919205,
+        3.1162589477545284
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "control.homogeneous.encoded-fu2p2q.idle_power_w",
+      "samples": [
+        3.030753064625117,
+        3.021402135899609,
+        3.0310068737153175,
+        3.0234998636554593
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "control.homogeneous.encoded-fu2p2q.energy_per_answer_j",
+      "samples": [
+        0.3436188943592358,
+        0.34375783529224574
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "control.homogeneous.encoded-fu2p2q.energy_per_token_j",
+      "samples": [
+        0.0028165483144199656,
+        0.0028176871745266047
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "control.homogeneous.encoded-fu2p2q.tokens_per_joule",
+      "samples": [
+        355.04450425375995,
+        354.90100144563013
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "control.homogeneous.encoded-fu2p2q.gross_j",
+      "samples": [
+        4.12342673231083,
+        4.125094023506949
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "control.homogeneous.encoded-fu2p2q.model_setup_ns",
+      "samples": [
+        547323474,
+        548324194
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "control.homogeneous.encoded-max48.active_power_w",
+      "samples": [
+        3.1227290126579383,
+        3.1228339357713732
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "control.homogeneous.encoded-max48.idle_power_w",
+      "samples": [
+        3.0158738311454987,
+        3.014748488235001,
+        3.0206269345195,
+        3.0199862344160753
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "control.homogeneous.encoded-max48.energy_per_answer_j",
+      "samples": [
+        0.591785889886853,
+        0.5918045597808818
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "control.homogeneous.encoded-max48.energy_per_token_j",
+      "samples": [
+        0.00569024894121974,
+        0.005690428459431555
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "control.homogeneous.encoded-max48.tokens_per_joule",
+      "samples": [
+        175.7392357223731,
+        175.73369160674676
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "control.homogeneous.encoded-max48.gross_j",
+      "samples": [
+        4.734287119094824,
+        4.734436478247054
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "control.homogeneous.encoded-max48.model_setup_ns",
+      "samples": [
+        546836359,
+        544600837
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission before encoding and context clear to first useful byte.",
+      "name": "candidate.encoded-hello.ttft_ms",
+      "samples": [
+        6.120001,
+        5.877889,
+        6.116991,
+        5.9499,
+        5.950689,
+        5.883779,
+        5.890629,
+        5.877299
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful byte intervals divided by board CPU first-to-last elapsed time.",
+      "name": "candidate.encoded-hello.decode_tps",
+      "samples": [
+        1377.232767053906,
+        1377.2404607373815,
+        1377.2317227655444,
+        1377.2315096456653,
+        1377.229783377075,
+        1377.2342588971694,
+        1377.235537622539,
+        1377.2387557585603
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to observed stop and drain before verification.",
+      "name": "candidate.encoded-hello.completion_ms",
+      "samples": [
+        71.631017,
+        71.388634,
+        71.627906,
+        71.461075,
+        71.461854,
+        71.394324,
+        71.401714,
+        71.388074
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to exact output verification.",
+      "name": "candidate.encoded-hello.verified_ms",
+      "samples": [
+        72.294963,
+        71.894359,
+        72.264172,
+        72.124371,
+        72.0084,
+        71.881489,
+        71.94355,
+        71.874999
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at first useful byte.",
+      "name": "candidate.encoded-hello.first_clocks",
+      "samples": [
+        283256,
+        283256,
+        283256,
+        283256,
+        283256,
+        283256,
+        283256,
+        283256
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at last useful byte.",
+      "name": "candidate.encoded-hello.last_clocks",
+      "samples": [
+        3514339,
+        3514339,
+        3514339,
+        3514339,
+        3514339,
+        3514339,
+        3514339,
+        3514339
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at final completion.",
+      "name": "candidate.encoded-hello.request_clocks",
+      "samples": [
+        3558785,
+        3558785,
+        3558785,
+        3558785,
+        3558785,
+        3558785,
+        3558785,
+        3558785
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Accepted scores divided by 320.",
+      "name": "candidate.encoded-hello.scored_positions",
+      "samples": [
+        91,
+        91,
+        91,
+        91,
+        91,
+        91,
+        91,
+        91
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA count of prefill positions without scores.",
+      "name": "candidate.encoded-hello.skipped_positions",
+      "samples": [
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "derived",
+      "method": "CPU interval between observed completion and exact verification.",
+      "name": "candidate.encoded-hello.verification_ns",
+      "samples": [
+        663946,
+        505725,
+        636266,
+        663296,
+        546546,
+        487165,
+        541836,
+        486925
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission before encoding and context clear to first useful byte.",
+      "name": "candidate.encoded-fu2p2q.ttft_ms",
+      "samples": [
+        6.97264,
+        6.96883,
+        6.97706,
+        6.95691,
+        6.99066,
+        6.962519,
+        7.02632,
+        6.94331
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful byte intervals divided by board CPU first-to-last elapsed time.",
+      "name": "candidate.encoded-fu2p2q.decode_tps",
+      "samples": [
+        1263.9383544047002,
+        1263.9436355512748,
+        1263.9415230873492,
+        1263.9372981806814,
+        1263.9415098844718,
+        1263.9407177123367,
+        1264.0488715976753,
+        1263.940334829494
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to observed stop and drain before verification.",
+      "name": "candidate.encoded-fu2p2q.completion_ms",
+      "samples": [
+        103.717817,
+        103.713908,
+        103.721998,
+        103.702197,
+        103.735708,
+        103.707647,
+        103.763308,
+        103.688657
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to exact output verification.",
+      "name": "candidate.encoded-fu2p2q.verified_ms",
+      "samples": [
+        104.313063,
+        104.292383,
+        104.324244,
+        104.444395,
+        104.452155,
+        104.263502,
+        104.372634,
+        104.261943
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at first useful byte.",
+      "name": "candidate.encoded-fu2p2q.first_clocks",
+      "samples": [
+        336800,
+        336800,
+        336800,
+        336800,
+        336800,
+        336800,
+        336800,
+        336800
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at last useful byte.",
+      "name": "candidate.encoded-fu2p2q.last_clocks",
+      "samples": [
+        5123370,
+        5123370,
+        5123370,
+        5123370,
+        5123370,
+        5123370,
+        5123370,
+        5123370
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at final completion.",
+      "name": "candidate.encoded-fu2p2q.request_clocks",
+      "samples": [
+        5174020,
+        5174020,
+        5174020,
+        5174020,
+        5174020,
+        5174020,
+        5174020,
+        5174020
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Accepted scores divided by 320.",
+      "name": "candidate.encoded-fu2p2q.scored_positions",
+      "samples": [
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA count of prefill positions without scores.",
+      "name": "candidate.encoded-fu2p2q.skipped_positions",
+      "samples": [
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "derived",
+      "method": "CPU interval between observed completion and exact verification.",
+      "name": "candidate.encoded-fu2p2q.verification_ns",
+      "samples": [
+        595246,
+        578475,
+        602246,
+        742198,
+        716447,
+        555855,
+        609326,
+        573286
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission before encoding and context clear to first useful byte.",
+      "name": "candidate.encoded-max48.ttft_ms",
+      "samples": [
+        65.289293,
+        65.276323,
+        65.281573,
+        65.315954,
+        65.524806,
+        65.270453,
+        65.530905,
+        65.271403
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful byte intervals divided by board CPU first-to-last elapsed time.",
+      "name": "candidate.encoded-max48.decode_tps",
+      "samples": [
+        943.5293817614415,
+        943.5267110259185,
+        943.5303325123642,
+        943.5260973639054,
+        943.529727488828,
+        943.5288631708366,
+        943.5260973639054,
+        943.5559257185506
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to observed stop and drain before verification.",
+      "name": "candidate.encoded-max48.completion_ms",
+      "samples": [
+        175.705447,
+        175.692717,
+        175.697548,
+        175.732498,
+        175.94126,
+        175.686497,
+        175.947299,
+        175.684347
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to exact output verification.",
+      "name": "candidate.encoded-max48.verified_ms",
+      "samples": [
+        176.324064,
+        176.248782,
+        176.305974,
+        176.307024,
+        176.646887,
+        176.244593,
+        176.677487,
+        176.237882
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at first useful byte.",
+      "name": "candidate.encoded-max48.first_clocks",
+      "samples": [
+        3239400,
+        3239400,
+        3239400,
+        3239400,
+        3239400,
+        3239400,
+        3239400,
+        3239400
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at last useful byte.",
+      "name": "candidate.encoded-max48.last_clocks",
+      "samples": [
+        8697576,
+        8697576,
+        8697576,
+        8697576,
+        8697576,
+        8697576,
+        8697576,
+        8697576
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at final completion.",
+      "name": "candidate.encoded-max48.request_clocks",
+      "samples": [
+        8760172,
+        8760172,
+        8760172,
+        8760172,
+        8760172,
+        8760172,
+        8760172,
+        8760172
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Accepted scores divided by 320.",
+      "name": "candidate.encoded-max48.scored_positions",
+      "samples": [
+        105,
+        105,
+        105,
+        105,
+        105,
+        105,
+        105,
+        105
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA count of prefill positions without scores.",
+      "name": "candidate.encoded-max48.skipped_positions",
+      "samples": [
+        96,
+        96,
+        96,
+        96,
+        96,
+        96,
+        96,
+        96
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "derived",
+      "method": "CPU interval between observed completion and exact verification.",
+      "name": "candidate.encoded-max48.verification_ns",
+      "samples": [
+        618617,
+        556065,
+        608426,
+        574526,
+        705627,
+        558096,
+        730188,
+        553535
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "candidate.mixed.active_power_w",
+      "samples": [
+        3.1072355408077947,
+        3.107141762210012,
+        3.140803404975649,
+        3.1146367761852596
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "candidate.mixed.idle_power_w",
+      "samples": [
+        3.01387859056869,
+        3.0203216609169976,
+        3.013623808371787,
+        3.0211571397964265,
+        3.0212502756499995,
+        3.021251812862083,
+        3.02149746631159,
+        3.030908041307878
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "candidate.mixed.energy_per_answer_j",
+      "samples": [
+        0.365472556473833,
+        0.3657177178560336,
+        0.36950478428241246,
+        0.36634763079556826
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "candidate.mixed.energy_per_token_j",
+      "samples": [
+        0.003469676169055376,
+        0.003472003650531964,
+        0.0035079568128077135,
+        0.0034779838366667875
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "candidate.mixed.tokens_per_joule",
+      "samples": [
+        288.21133479792474,
+        288.01813035155783,
+        285.0662232639106,
+        287.52290032445205
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "candidate.mixed.gross_j",
+      "samples": [
+        2.1928353388429977,
+        2.1943063071362015,
+        2.217028705694475,
+        2.1980857847734097
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "candidate.mixed.model_setup_ns",
+      "samples": [
+        552364515,
+        551223354,
+        550892540,
+        550262713
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "candidate.homogeneous.encoded-hello.active_power_w",
+      "samples": [
+        3.1181011368368132,
+        3.1125636646670203
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "candidate.homogeneous.encoded-hello.idle_power_w",
+      "samples": [
+        3.021376540290046,
+        3.0265019781149993,
+        3.0125000428,
+        3.01414309387157
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "candidate.homogeneous.encoded-hello.energy_per_answer_j",
+      "samples": [
+        0.22438299867570732,
+        0.22404008427424504
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "candidate.homogeneous.encoded-hello.energy_per_token_j",
+      "samples": [
+        0.0024931444297300815,
+        0.002489334269713834
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "candidate.homogeneous.encoded-hello.tokens_per_joule",
+      "samples": [
+        401.0999074402859,
+        401.71382853896796
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "candidate.homogeneous.encoded-hello.gross_j",
+      "samples": [
+        4.038893976162732,
+        4.032721516936411
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "candidate.homogeneous.encoded-hello.model_setup_ns",
+      "samples": [
+        545736539,
+        545351755
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "candidate.homogeneous.encoded-fu2p2q.active_power_w",
+      "samples": [
+        3.1302122839598505,
+        3.1126730878050974
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "candidate.homogeneous.encoded-fu2p2q.idle_power_w",
+      "samples": [
+        3.0212507579974996,
+        3.022749635302499,
+        3.0141268463352047,
+        3.0329056113162447
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "candidate.homogeneous.encoded-fu2p2q.energy_per_answer_j",
+      "samples": [
+        0.32688269084837235,
+        0.3249815962189025
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "candidate.homogeneous.encoded-fu2p2q.energy_per_token_j",
+      "samples": [
+        0.0026793663184292815,
+        0.0026637835755647745
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "candidate.homogeneous.encoded-fu2p2q.tokens_per_joule",
+      "samples": [
+        373.2225762195248,
+        375.4058735000572
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "candidate.homogeneous.encoded-fu2p2q.gross_j",
+      "samples": [
+        3.922592290180468,
+        3.89977915462683
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "candidate.homogeneous.encoded-fu2p2q.model_setup_ns",
+      "samples": [
+        548314114,
+        546932810
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "candidate.homogeneous.encoded-max48.active_power_w",
+      "samples": [
+        3.113328039785365,
+        3.107227006458607
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "candidate.homogeneous.encoded-max48.idle_power_w",
+      "samples": [
+        3.0251284180413434,
+        3.0335881024109486,
+        3.0147493520396664,
+        3.015642057957232
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "candidate.homogeneous.encoded-max48.energy_per_answer_j",
+      "samples": [
+        0.5492043776413384,
+        0.5481251148781681
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "candidate.homogeneous.encoded-max48.energy_per_token_j",
+      "samples": [
+        0.0052808113234744086,
+        0.005270433796905462
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "candidate.homogeneous.encoded-max48.tokens_per_joule",
+      "samples": [
+        189.36484163991477,
+        189.7377025373415
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "candidate.homogeneous.encoded-max48.gross_j",
+      "samples": [
+        4.393635021130708,
+        4.3850009190253445
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "candidate.homogeneous.encoded-max48.model_setup_ns",
+      "samples": [
+        548625457,
+        548527136
+      ],
+      "unit": "ns"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-attention-value-pair-v1",
+    "measurement_boundary": "Board CPU admission through useful output and completion. Gross VCC_SOM block integral includes inter-reply verification and gaps.",
+    "quality_gate": "Exact frozen outputs, stop reasons, counts and first/last/done FPGA clocks.",
+    "sha256": "4ea8a1374c41941a281656c6f2d614673585d23ab6105e49e8c1240037be2b7a",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Three mixed or one homogeneous warm-up per powered block."
+  },
+  "quality": {
+    "evidence": "Frozen W16A16 arithmetic, model, outputs and stopping rules, plus qualified exact model replay.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "d198233c54fa6749a3d354a477b6098649e410eefae24efdab02f456a0ea7b1d"
+  },
+  "started_at": "2026-11-19T23:53:56.680365+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-attention-value-pair-abba-v1",
+    "sha256": "3b5434e1b6d8e44a2338c96c850bac96c621d67d6db97627d6a7d7aad78f58cf"
+  }
+}

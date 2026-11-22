@@ -1,0 +1,1930 @@
+{
+  "artifacts": [
+    {
+      "bytes": 56469,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/build-input.tar.gz",
+      "role": "Exact admitted build input archive",
+      "sha256": "5a8b705591d18303d943309ed79aafa6cd76d253bebf7d2f39e1c1207c03c542"
+    },
+    {
+      "bytes": 3020,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/admitted-protocol.md",
+      "role": "Sealed execution protocol",
+      "sha256": "4a68d029f7757197f9d4de63ab4165eafe903dd2ebee24009db7322c77562d0d"
+    },
+    {
+      "bytes": 1516,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/admission.json",
+      "role": "Preflight pins for control route, shell and candidate source",
+      "sha256": "70feb6ba28071a115e410993b011e648adee63bf2313e97be590f3bd08f6aa87"
+    },
+    {
+      "bytes": 941,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/admitted-rtl-gate.json",
+      "role": "Frozen initial qualification, selected site and exact RTL manifest pins",
+      "sha256": "7e3662d63efdfe9ae867bd6689262e22847750299c137a48113a48df770feb79"
+    },
+    {
+      "bytes": 232,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/directed-summary.json",
+      "role": "Exact directed tests admitted before routing",
+      "sha256": "05010df4261e677cad7fe193953402bea95c5a5478c2e5c8669625d92397e003"
+    },
+    {
+      "bytes": 7094,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/qualified-replay-summary.json",
+      "role": "Exact paired model replay admitted before routing",
+      "sha256": "9da62ebea6a727333c159de3ee68cc22f68089f8006ea49a32f8378287051bce"
+    },
+    {
+      "bytes": 358,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/dispatch-release.json",
+      "role": "Release of the exact candidate source packet",
+      "sha256": "7d61560ee8f69bcb1762cab6c13a120e8af435cf4281e290f2b35dcf9db50204"
+    },
+    {
+      "bytes": 2663,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/admitted-source-manifest.json",
+      "role": "Candidate source and tooling hashes",
+      "sha256": "c6f26ead7645e85c3ca3c275286ea897cf6c6e6c205337f45c5ec04b275ae020"
+    },
+    {
+      "bytes": 251,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/dispatch.json",
+      "role": "Bounded Vivado launch receipt",
+      "sha256": "eadf6f54f6ea292ad225edfbc46aaad5dfe54486b7deb71126195fa97e89e276"
+    },
+    {
+      "bytes": 247,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/launch.log",
+      "role": "Remote shell and control checkpoint hash checks",
+      "sha256": "e7edb1e27637f3d3d3e27aa370fe8a3bf90f77c0d28df46ad7a08e920a0c3a78"
+    },
+    {
+      "bytes": 95446207,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server.tar.gz",
+      "role": "Full Linux Vivado projects, checkpoints, tooling, logs and firmware",
+      "sha256": "baf481c3c28c3c44a29718374c9fc7586a163266b63e82b55586542e4916e0b9"
+    },
+    {
+      "bytes": 284,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server.receipt.json",
+      "role": "Linux archive member and hash receipt",
+      "sha256": "cd12ff995a59057278502103aec6a7b72ec329f46dd7627a5c3ee982e78dc2dd"
+    },
+    {
+      "bytes": 439,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/archive-recovery.json",
+      "role": "Resumable verified transfer record",
+      "sha256": "774b52a5aee82fc78bcaba7911482adbef302bdc28b909dd823eca23f4e6caba"
+    },
+    {
+      "bytes": 360,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/archive-integrity.json",
+      "role": "Independent file-by-file recovery verification",
+      "sha256": "5aa7c61cb8146f401cad06acad902c73a64c4ecf26ceeb295410ffadcb469f31"
+    },
+    {
+      "bytes": 43226,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/offline-acceptance.json",
+      "role": "Independent source, timing, resource and image verification",
+      "sha256": "754c955b81fc83e4df8014c0a2f1ef234c7dbbda5648f227ea16bcb50f23f4fd"
+    },
+    {
+      "bytes": 30430,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/primitive-resources.json",
+      "role": "Mapped memory and DSP census from the exact control and candidate routes",
+      "sha256": "e792f803c75acf788b0a3d352c99f5d2da010eacbf4d3630be4066f79d4357d5"
+    },
+    {
+      "bytes": 915,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/candidate-rtl-manifest.json",
+      "role": "Exact candidate full-model replay inputs",
+      "sha256": "d23404ea222fef3796f4bf51be1243eb04445f9403665d9b1ca9882f6ce1a109"
+    },
+    {
+      "bytes": 915,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/control-rtl-manifest.json",
+      "role": "Exact control full-model replay inputs",
+      "sha256": "8519e39ee6a33ef7d96b7f871222c1fb6d6f30ee0cf1a6a2422819dab44a9c9d"
+    },
+    {
+      "bytes": 75,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build-outcome.json",
+      "role": "Vivado flow completion and elapsed time",
+      "sha256": "61bea0816ecdd8373db55d0c158a0d0a14b03a86d6a5578bf55ec92295be7b77"
+    },
+    {
+      "bytes": 63879,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/recovery-manifest.json",
+      "role": "Recovered archive member hashes",
+      "sha256": "2f9a4f75f433bed3da5ef48fa93daf0fc22393437c632085e68d1c2036887ea3"
+    },
+    {
+      "bytes": 2663,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/source-manifest.json",
+      "role": "Recovered Vivado input hashes",
+      "sha256": "c6f26ead7645e85c3ca3c275286ea897cf6c6e6c205337f45c5ec04b275ae020"
+    },
+    {
+      "bytes": 2210,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build/generate/supplied-neural-sources.tsv",
+      "role": "Exact generated project supplied RTL input closure",
+      "sha256": "d20f89edcc15a6758b69e75346caa3b8fac38909caa99b83520b3648b4fff323"
+    },
+    {
+      "bytes": 2210,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build/synth/supplied-neural-sources.tsv",
+      "role": "Exact synthesis supplied RTL input closure",
+      "sha256": "d20f89edcc15a6758b69e75346caa3b8fac38909caa99b83520b3648b4fff323"
+    },
+    {
+      "bytes": 2006,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build/generate/compiled-neural-sources.tsv",
+      "role": "Generated project RTL compile source hashes",
+      "sha256": "c9b193c95f88249be6005995be13f9123ec90624ddf05623d29e48a197a6e84f"
+    },
+    {
+      "bytes": 2006,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build/synth/compiled-neural-sources.tsv",
+      "role": "Actual synthesis RTL compile source hashes",
+      "sha256": "c9b193c95f88249be6005995be13f9123ec90624ddf05623d29e48a197a6e84f"
+    },
+    {
+      "bytes": 380,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build/reports/metrics.txt",
+      "role": "Routed timing and coverage totals",
+      "sha256": "14e8952df3993f62c6a92872ea7b9280dd3af150653dea94adb4923dbf2fe74a"
+    },
+    {
+      "bytes": 44789,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build/reports/timing.rpt",
+      "role": "Routed Vivado setup and hold timing",
+      "sha256": "f0cbad384943f1224b2c9a04f08bfb4afc63de2f2e028838ecd1876037e1bd1c"
+    },
+    {
+      "bytes": 1460350,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build/reports/clock-domain.tsv",
+      "role": "Routed PS clock domain and neural endpoints",
+      "sha256": "44991d8a226533ec7b11af1ded277f7e503d36b6260fdefcd5777560f40dc4de"
+    },
+    {
+      "bytes": 12657,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build/reports/utilization.rpt",
+      "role": "Whole-design routed resource report",
+      "sha256": "e2058e36957d12a609b941df71f3cb0d0897f2330907906a5546e126ca969205"
+    },
+    {
+      "bytes": 11261,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build/reports/utilization-hierarchical.rpt",
+      "role": "Routed hierarchical resource report",
+      "sha256": "21e23d2d8a4e385d9de6ab749f43bb525a0c4d33b91ecd125287a881434d9a85"
+    },
+    {
+      "bytes": 24992061,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build/route/route.dcp",
+      "role": "Exact candidate routed checkpoint",
+      "sha256": "23ff1bdce2579d983749deb77b04616b50326822af15a820817f0cb5d8a5e998"
+    },
+    {
+      "bytes": 144080,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/candidate-primitive-census.tsv",
+      "role": "Named candidate routed memory and DSP cells",
+      "sha256": "737d2771374231c597dd4e8bc5e7f0f8422eb4ed5882532f55fea59ae5cdcfd1"
+    },
+    {
+      "bytes": 1417,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/config.py",
+      "role": "Frozen control build identifiers and checksums",
+      "sha256": "314bdab4b84fb0fad8a8c3a9b3a03fabb862b9c5b74177e8b4b31b8fc1ad91e8"
+    },
+    {
+      "bytes": 12442,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/prepare.py",
+      "role": "Candidate packet preparation",
+      "sha256": "d69b9cfd9be3ef1be5f8310475294b333faada56978c931a09fc01c7547ff827"
+    },
+    {
+      "bytes": 3846,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/launch.py",
+      "role": "Bounded existing-host dispatch",
+      "sha256": "72bc5cf6526d07e57ceb828d5c9ada1df7d68e5df1d193c60a416292e921c7ec"
+    },
+    {
+      "bytes": 4137,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/recover.py",
+      "role": "Resumable receipt-verified recovery",
+      "sha256": "56fd983fc082fa8f0a66ef1fe455da10d1b5766cc9e83f254ecf80bc3e4fd810"
+    },
+    {
+      "bytes": 20190,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/verify.py",
+      "role": "Independent build acceptance checks",
+      "sha256": "583d800081a25538f14151dea4539aefa068291e190e56806b1602e0ae3fcc4b"
+    },
+    {
+      "bytes": 15941,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/record.py",
+      "role": "Build record assembly and artifact installation",
+      "sha256": "ff813d81cf84ba03269f20dd0f9b128d64d0c5c7e872078e0097ec1c8e6defb0"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/offline-package/gradiated-tiny-norm-mul-shared-v1-50mhz.bit.bin",
+      "role": "Verified Linux candidate firmware",
+      "sha256": "1d4a154a3531458d51251467db74783e2deaef0cda43082d9cd94f7997dedc1b"
+    },
+    {
+      "bytes": 363,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/kv260-norm-mul-shared-v1-program.dtbo",
+      "role": "Verified candidate program overlay",
+      "sha256": "82d6750fd0606777c94f08dd3be8e10da370f39731086fc09ac7e5f618a9b32d"
+    },
+    {
+      "bytes": 62486,
+      "path": "hardware/research/inference/results/norm-mul-dsp-v1-build-20261119T175758Z/run.json",
+      "role": "Exact Experiment 20 routed control",
+      "sha256": "ec0ff9ab7eabc3ae65c059c020f23c4a769fd9ca96e34dab1d77bf0600b66e50"
+    },
+    {
+      "bytes": 36124,
+      "path": "hardware/research/inference/results/norm-mul-shared-v1-rtl-20261119T175457Z/run.json",
+      "role": "Seven paired model replays and directed RTL qualification",
+      "sha256": "44433cdfd27434a4d0fa4f186d9f5a7acd029c6bd705c0831129c20f53f92dc0"
+    }
+  ],
+  "completed_at": "2026-11-19T18:41:05.326251+00:00",
+  "conditions": {
+    "archive_recovery": {
+      "archive_bytes": 95446207,
+      "archive_sha256": "baf481c3c28c3c44a29718374c9fc7586a163266b63e82b55586542e4916e0b9",
+      "completed_at": "2026-11-19T18:41:03.430335+00:00",
+      "elapsed_seconds": 264.976736,
+      "limit_seconds": 1200,
+      "receipt_members": 328,
+      "resume_offsets": [
+        82247680
+      ],
+      "resumed_prefix_bytes": 0,
+      "server_build_passed": true,
+      "started_at": "2026-11-19T18:36:38.453599+00:00",
+      "transfer_connections": 2
+    },
+    "candidate_checkpoint_sha256": "23ff1bdce2579d983749deb77b04616b50326822af15a820817f0cb5d8a5e998",
+    "candidate_rtl": {
+      "implementation/rtl/attention.sv": "d9b481daa7e488bcfe7140a619f46163f4900e88ffa54286047850f53c732cdd",
+      "implementation/rtl/axi_transformer.sv": "10e8cabf30e5d1e88b894b1ef1bb98e1b018fcc57d476a745b4396b6aa3e8574",
+      "implementation/rtl/dense.sv": "561e82c83a15071ed45e251329a15fc212b9b1dca4fdb30ed24b33d878613ac9",
+      "implementation/rtl/feedforward.sv": "02951bbd794df85c3ef20024e77eb4603102214fefca6556c301f18d13b20c3a",
+      "implementation/rtl/fixed_scalar.sv": "bb15ed311fd921e4c26b059272f2393cc5ca2249849aa3bebd6ffc1f730166e7",
+      "implementation/rtl/frontend.sv": "dcc8699ad4271af008f1b6dc8f0745ea0435aea87442477217e0be374c5c9d6a",
+      "implementation/rtl/kv_cache.sv": "1a97adbdd49e66d6938b4c934185be86a6d3b2a76bc1b85d5df624aacf3c3b48",
+      "implementation/rtl/mac32.sv": "9db772ac21e7c0101cfbca0c6f52487cb6a88f24f20b76af76cd1f70c2f7c4b4",
+      "implementation/rtl/qk_rope.sv": "acd022f4ffcd540875b37586b0c6fa058873300bb7ea16860bb532b152700662",
+      "implementation/rtl/rmsnorm.sv": "9a4d1024defea0dacfda7d0a9952336838b1f696ac06f093f47d9b664e01b3fc",
+      "implementation/rtl/transformer.sv": "d7bb1dcc01d45a410ffb0de2da9d9fe8975da34696efc7d0ebc55549faa2ecdd"
+    },
+    "changed_neural_sources": [
+      "rmsnorm.sv",
+      "transformer.sv"
+    ],
+    "clock_target_hz": 50000000,
+    "control_checkpoint_sha256": "fd5b197f64e54887cafe6f7baf57ef830802ccfe888f53038a079dd181980639",
+    "control_resources": {
+      "bram_tile": 39.0,
+      "dsp": 89.0,
+      "lut": 39132.0,
+      "lutram": 1174.0,
+      "register": 16492.0,
+      "uram": 0.0
+    },
+    "control_timing": {
+      "clock": "clk_pl_0 period_ns 20.000",
+      "drc_errors_or_critical_warnings": "0",
+      "fully_placed": "1",
+      "fully_routed": "1",
+      "hold_slack_ns": "0.011",
+      "native_no_clock": "0",
+      "partially_routed_nets": "0",
+      "routing_errors": "0",
+      "routing_gap_nets": "0",
+      "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+      "setup_slack_ns": "4.069",
+      "unclocked_active_pins": "0",
+      "unconstrained_internal_endpoints": "0",
+      "unrouted_nets": "0",
+      "unused_ps_clock_outputs": "0"
+    },
+    "hierarchy": {
+      "candidate": {
+        "tiny_ps_axi_wrapper": {
+          "dsp": 57,
+          "ff": 15605,
+          "logic_lut": 36958,
+          "lutram": 1170,
+          "module": "(top)",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 2,
+          "total_lut": 38130,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i": {
+          "dsp": 57,
+          "ff": 15605,
+          "logic_lut": 36958,
+          "lutram": 1170,
+          "module": "tiny_ps_axi",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 2,
+          "total_lut": 38130,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi": {
+          "dsp": 0,
+          "ff": 673,
+          "logic_lut": 565,
+          "lutram": 0,
+          "module": "tiny_ps_axi_axi_0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 1,
+          "total_lut": 566,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst": {
+          "dsp": 0,
+          "ff": 673,
+          "logic_lut": 565,
+          "lutram": 0,
+          "module": "bd_0c06",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 1,
+          "total_lut": 566,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline": {
+          "dsp": 0,
+          "ff": 498,
+          "logic_lut": 508,
+          "lutram": 0,
+          "module": "s00_entry_pipeline_imp_1XHPCEO",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 508,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu": {
+          "dsp": 0,
+          "ff": 239,
+          "logic_lut": 185,
+          "lutram": 0,
+          "module": "bd_0c06_s00mmu_0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 185,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst": {
+          "dsp": 0,
+          "ff": 239,
+          "logic_lut": 185,
+          "lutram": 0,
+          "module": "sc_mmu_v1_0_16_top",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 185,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst/ar_reg_stall": {
+          "dsp": 0,
+          "ff": 86,
+          "logic_lut": 47,
+          "lutram": 0,
+          "module": "sc_util_v1_0_4_axi_reg_stall__parameterized0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 47,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst/aw_reg_stall": {
+          "dsp": 0,
+          "ff": 86,
+          "logic_lut": 48,
+          "lutram": 0,
+          "module": "sc_util_v1_0_4_axi_reg_stall__parameterized0_7",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 48,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst/gen_endpoint.decerr_slave_inst": {
+          "dsp": 0,
+          "ff": 49,
+          "logic_lut": 67,
+          "lutram": 0,
+          "module": "sc_mmu_v1_0_16_decerr_slave",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 67,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_si_converter": {
+          "dsp": 0,
+          "ff": 219,
+          "logic_lut": 316,
+          "lutram": 0,
+          "module": "bd_0c06_s00sic_0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 316,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_si_converter/inst": {
+          "dsp": 0,
+          "ff": 219,
+          "logic_lut": 316,
+          "lutram": 0,
+          "module": "sc_si_converter_v1_0_16_top",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 316,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_si_converter/inst/gen_axilite_conv.axilite_conv_inst": {
+          "dsp": 0,
+          "ff": 215,
+          "logic_lut": 315,
+          "lutram": 0,
+          "module": "sc_si_converter_v1_0_16_axilite_conv",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 315,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_nodes": {
+          "dsp": 0,
+          "ff": 136,
+          "logic_lut": 40,
+          "lutram": 0,
+          "module": "s00_nodes_imp_1UJ7QIY",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 40,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural": {
+          "dsp": 57,
+          "ff": 14895,
+          "logic_lut": 36378,
+          "lutram": 1170,
+          "module": "tiny_ps_axi_neural_0",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 37548,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/(neural)": {
+          "dsp": 0,
+          "ff": 0,
+          "logic_lut": 0,
+          "lutram": 0,
+          "module": "tiny_ps_axi_neural_0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 0,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst": {
+          "dsp": 57,
+          "ff": 14895,
+          "logic_lut": 36378,
+          "lutram": 1170,
+          "module": "kv260_axi_bridge",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 37548,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual": {
+          "dsp": 57,
+          "ff": 14895,
+          "logic_lut": 36378,
+          "lutram": 1170,
+          "module": "axi_transformer",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 37548,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/(actual)": {
+          "dsp": 0,
+          "ff": 2868,
+          "logic_lut": 897,
+          "lutram": 48,
+          "module": "axi_transformer",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 945,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core": {
+          "dsp": 57,
+          "ff": 12027,
+          "logic_lut": 35492,
+          "lutram": 1122,
+          "module": "transformer",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 36614,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/(core)": {
+          "dsp": 0,
+          "ff": 44,
+          "logic_lut": 192,
+          "lutram": 60,
+          "module": "transformer",
+          "ramb18": 1,
+          "ramb36": 6,
+          "srl": 0,
+          "total_lut": 252,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att": {
+          "dsp": 9,
+          "ff": 2220,
+          "logic_lut": 9083,
+          "lutram": 362,
+          "module": "attention",
+          "ramb18": 4,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 9445,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/(att)": {
+          "dsp": 1,
+          "ff": 386,
+          "logic_lut": 350,
+          "lutram": 362,
+          "module": "attention",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 712,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/scalar": {
+          "dsp": 4,
+          "ff": 983,
+          "logic_lut": 5292,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5292,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/second_exp": {
+          "dsp": 4,
+          "ff": 851,
+          "logic_lut": 3447,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp__parameterized0",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 3447,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff": {
+          "dsp": 19,
+          "ff": 2010,
+          "logic_lut": 5338,
+          "lutram": 60,
+          "module": "feedforward",
+          "ramb18": 2,
+          "ramb36": 6,
+          "srl": 0,
+          "total_lut": 5398,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/(ff)": {
+          "dsp": 0,
+          "ff": 278,
+          "logic_lut": 16,
+          "lutram": 0,
+          "module": "feedforward",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 16,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/down_dense": {
+          "dsp": 1,
+          "ff": 80,
+          "logic_lut": 290,
+          "lutram": 40,
+          "module": "dense_ff_down_pipeline",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 330,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/gate_dense": {
+          "dsp": 1,
+          "ff": 80,
+          "logic_lut": 157,
+          "lutram": 10,
+          "module": "dense__parameterized0",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 167,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/scalar": {
+          "dsp": 16,
+          "ff": 1492,
+          "logic_lut": 4707,
+          "lutram": 0,
+          "module": "fixed_scalar_ff_exp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 4707,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/up_dense": {
+          "dsp": 1,
+          "ff": 80,
+          "logic_lut": 171,
+          "lutram": 10,
+          "module": "dense__parameterized1",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 181,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front": {
+          "dsp": 4,
+          "ff": 1339,
+          "logic_lut": 1410,
+          "lutram": 80,
+          "module": "frontend",
+          "ramb18": 0,
+          "ramb36": 12,
+          "srl": 0,
+          "total_lut": 1490,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/(front)": {
+          "dsp": 0,
+          "ff": 1051,
+          "logic_lut": 360,
+          "lutram": 30,
+          "module": "frontend",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 390,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/cache": {
+          "dsp": 0,
+          "ff": 28,
+          "logic_lut": 300,
+          "lutram": 0,
+          "module": "kv_cache",
+          "ramb18": 0,
+          "ramb36": 8,
+          "srl": 0,
+          "total_lut": 300,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/projection": {
+          "dsp": 1,
+          "ff": 82,
+          "logic_lut": 125,
+          "lutram": 10,
+          "module": "mac32",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 135,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/rotation": {
+          "dsp": 3,
+          "ff": 178,
+          "logic_lut": 627,
+          "lutram": 40,
+          "module": "qk_rope",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 667,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/logits": {
+          "dsp": 8,
+          "ff": 665,
+          "logic_lut": 1156,
+          "lutram": 10,
+          "module": "logits_parallel",
+          "ramb18": 0,
+          "ramb36": 8,
+          "srl": 0,
+          "total_lut": 1166,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1": {
+          "dsp": 0,
+          "ff": 1674,
+          "logic_lut": 5784,
+          "lutram": 180,
+          "module": "rmsnorm",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5964,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1/(norm1)": {
+          "dsp": 0,
+          "ff": 374,
+          "logic_lut": 111,
+          "lutram": 20,
+          "module": "rmsnorm",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 131,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1/scalar": {
+          "dsp": 0,
+          "ff": 1300,
+          "logic_lut": 5674,
+          "lutram": 160,
+          "module": "fixed_scalar_norm_dsp_11",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5834,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2": {
+          "dsp": 0,
+          "ff": 1675,
+          "logic_lut": 5759,
+          "lutram": 180,
+          "module": "rmsnorm__parameterized0",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5939,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2/(norm2)": {
+          "dsp": 0,
+          "ff": 378,
+          "logic_lut": 60,
+          "lutram": 20,
+          "module": "rmsnorm__parameterized0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 80,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2/scalar": {
+          "dsp": 0,
+          "ff": 1297,
+          "logic_lut": 5699,
+          "lutram": 160,
+          "module": "fixed_scalar_norm_dsp_10",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5859,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm_mul": {
+          "dsp": 16,
+          "ff": 646,
+          "logic_lut": 814,
+          "lutram": 0,
+          "module": "rmsnorm_shared_mul",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 814,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal": {
+          "dsp": 0,
+          "ff": 1676,
+          "logic_lut": 5727,
+          "lutram": 180,
+          "module": "rmsnorm__parameterized1",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5907,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal/(normfinal)": {
+          "dsp": 0,
+          "ff": 376,
+          "logic_lut": 55,
+          "lutram": 20,
+          "module": "rmsnorm__parameterized1",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 75,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal/scalar": {
+          "dsp": 0,
+          "ff": 1300,
+          "logic_lut": 5672,
+          "lutram": 160,
+          "module": "fixed_scalar_norm_dsp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5832,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/output_projection": {
+          "dsp": 1,
+          "ff": 78,
+          "logic_lut": 242,
+          "lutram": 10,
+          "module": "dense",
+          "ramb18": 1,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 252,
+          "uram": 0
+        }
+      },
+      "control": {
+        "tiny_ps_axi_wrapper": {
+          "dsp": 89,
+          "ff": 16492,
+          "logic_lut": 37958,
+          "lutram": 1172,
+          "module": "(top)",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 2,
+          "total_lut": 39132,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i": {
+          "dsp": 89,
+          "ff": 16492,
+          "logic_lut": 37958,
+          "lutram": 1172,
+          "module": "tiny_ps_axi",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 2,
+          "total_lut": 39132,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi": {
+          "dsp": 0,
+          "ff": 673,
+          "logic_lut": 564,
+          "lutram": 0,
+          "module": "tiny_ps_axi_axi_0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 1,
+          "total_lut": 565,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst": {
+          "dsp": 0,
+          "ff": 673,
+          "logic_lut": 564,
+          "lutram": 0,
+          "module": "bd_0c06",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 1,
+          "total_lut": 565,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline": {
+          "dsp": 0,
+          "ff": 498,
+          "logic_lut": 506,
+          "lutram": 0,
+          "module": "s00_entry_pipeline_imp_1XHPCEO",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 506,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu": {
+          "dsp": 0,
+          "ff": 239,
+          "logic_lut": 185,
+          "lutram": 0,
+          "module": "bd_0c06_s00mmu_0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 185,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst": {
+          "dsp": 0,
+          "ff": 239,
+          "logic_lut": 185,
+          "lutram": 0,
+          "module": "sc_mmu_v1_0_16_top",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 185,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst/ar_reg_stall": {
+          "dsp": 0,
+          "ff": 86,
+          "logic_lut": 47,
+          "lutram": 0,
+          "module": "sc_util_v1_0_4_axi_reg_stall__parameterized0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 47,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst/aw_reg_stall": {
+          "dsp": 0,
+          "ff": 86,
+          "logic_lut": 48,
+          "lutram": 0,
+          "module": "sc_util_v1_0_4_axi_reg_stall__parameterized0_7",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 48,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_mmu/inst/gen_endpoint.decerr_slave_inst": {
+          "dsp": 0,
+          "ff": 49,
+          "logic_lut": 67,
+          "lutram": 0,
+          "module": "sc_mmu_v1_0_16_decerr_slave",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 67,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_si_converter": {
+          "dsp": 0,
+          "ff": 219,
+          "logic_lut": 316,
+          "lutram": 0,
+          "module": "bd_0c06_s00sic_0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 316,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_si_converter/inst": {
+          "dsp": 0,
+          "ff": 219,
+          "logic_lut": 316,
+          "lutram": 0,
+          "module": "sc_si_converter_v1_0_16_top",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 316,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_entry_pipeline/s00_si_converter/inst/gen_axilite_conv.axilite_conv_inst": {
+          "dsp": 0,
+          "ff": 215,
+          "logic_lut": 315,
+          "lutram": 0,
+          "module": "sc_si_converter_v1_0_16_axilite_conv",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 315,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/axi/inst/s00_nodes": {
+          "dsp": 0,
+          "ff": 136,
+          "logic_lut": 40,
+          "lutram": 0,
+          "module": "s00_nodes_imp_1UJ7QIY",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 40,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural": {
+          "dsp": 89,
+          "ff": 15782,
+          "logic_lut": 37379,
+          "lutram": 1172,
+          "module": "tiny_ps_axi_neural_0",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 38551,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst": {
+          "dsp": 89,
+          "ff": 15782,
+          "logic_lut": 37379,
+          "lutram": 1172,
+          "module": "kv260_axi_bridge",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 38551,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual": {
+          "dsp": 89,
+          "ff": 15782,
+          "logic_lut": 37379,
+          "lutram": 1172,
+          "module": "axi_transformer",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 38551,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/(actual)": {
+          "dsp": 0,
+          "ff": 2873,
+          "logic_lut": 861,
+          "lutram": 48,
+          "module": "axi_transformer",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 909,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core": {
+          "dsp": 89,
+          "ff": 12909,
+          "logic_lut": 36525,
+          "lutram": 1124,
+          "module": "transformer",
+          "ramb18": 14,
+          "ramb36": 32,
+          "srl": 0,
+          "total_lut": 37649,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/(core)": {
+          "dsp": 0,
+          "ff": 44,
+          "logic_lut": 177,
+          "lutram": 62,
+          "module": "transformer",
+          "ramb18": 1,
+          "ramb36": 6,
+          "srl": 0,
+          "total_lut": 239,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att": {
+          "dsp": 9,
+          "ff": 2223,
+          "logic_lut": 9110,
+          "lutram": 362,
+          "module": "attention",
+          "ramb18": 4,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 9472,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/(att)": {
+          "dsp": 1,
+          "ff": 386,
+          "logic_lut": 330,
+          "lutram": 362,
+          "module": "attention",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 692,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/scalar": {
+          "dsp": 4,
+          "ff": 983,
+          "logic_lut": 5074,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5074,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/second_exp": {
+          "dsp": 4,
+          "ff": 854,
+          "logic_lut": 3711,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp__parameterized0",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 3711,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff": {
+          "dsp": 19,
+          "ff": 2010,
+          "logic_lut": 5382,
+          "lutram": 60,
+          "module": "feedforward",
+          "ramb18": 2,
+          "ramb36": 6,
+          "srl": 0,
+          "total_lut": 5442,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/(ff)": {
+          "dsp": 0,
+          "ff": 278,
+          "logic_lut": 14,
+          "lutram": 0,
+          "module": "feedforward",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 14,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/down_dense": {
+          "dsp": 1,
+          "ff": 80,
+          "logic_lut": 308,
+          "lutram": 40,
+          "module": "dense_ff_down_pipeline",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 348,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/gate_dense": {
+          "dsp": 1,
+          "ff": 80,
+          "logic_lut": 182,
+          "lutram": 10,
+          "module": "dense__parameterized0",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 192,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/scalar": {
+          "dsp": 16,
+          "ff": 1492,
+          "logic_lut": 4712,
+          "lutram": 0,
+          "module": "fixed_scalar_ff_exp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 4712,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/up_dense": {
+          "dsp": 1,
+          "ff": 80,
+          "logic_lut": 169,
+          "lutram": 10,
+          "module": "dense__parameterized1",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 179,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front": {
+          "dsp": 4,
+          "ff": 1334,
+          "logic_lut": 1369,
+          "lutram": 80,
+          "module": "frontend",
+          "ramb18": 0,
+          "ramb36": 12,
+          "srl": 0,
+          "total_lut": 1449,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/(front)": {
+          "dsp": 0,
+          "ff": 1046,
+          "logic_lut": 356,
+          "lutram": 30,
+          "module": "frontend",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 386,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/cache": {
+          "dsp": 0,
+          "ff": 28,
+          "logic_lut": 269,
+          "lutram": 0,
+          "module": "kv_cache",
+          "ramb18": 0,
+          "ramb36": 8,
+          "srl": 0,
+          "total_lut": 269,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/projection": {
+          "dsp": 1,
+          "ff": 82,
+          "logic_lut": 126,
+          "lutram": 10,
+          "module": "mac32",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 136,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/front/rotation": {
+          "dsp": 3,
+          "ff": 178,
+          "logic_lut": 619,
+          "lutram": 40,
+          "module": "qk_rope",
+          "ramb18": 0,
+          "ramb36": 2,
+          "srl": 0,
+          "total_lut": 659,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/logits": {
+          "dsp": 8,
+          "ff": 665,
+          "logic_lut": 1202,
+          "lutram": 10,
+          "module": "logits_parallel",
+          "ramb18": 0,
+          "ramb36": 8,
+          "srl": 0,
+          "total_lut": 1212,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1": {
+          "dsp": 16,
+          "ff": 2185,
+          "logic_lut": 6357,
+          "lutram": 180,
+          "module": "rmsnorm",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6537,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1/(norm1)": {
+          "dsp": 0,
+          "ff": 377,
+          "logic_lut": 115,
+          "lutram": 20,
+          "module": "rmsnorm",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 135,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1/scalar": {
+          "dsp": 16,
+          "ff": 1808,
+          "logic_lut": 6242,
+          "lutram": 160,
+          "module": "fixed_scalar_norm_dsp_11",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6402,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2": {
+          "dsp": 16,
+          "ff": 2185,
+          "logic_lut": 6345,
+          "lutram": 180,
+          "module": "rmsnorm__parameterized0",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6525,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2/(norm2)": {
+          "dsp": 0,
+          "ff": 377,
+          "logic_lut": 57,
+          "lutram": 20,
+          "module": "rmsnorm__parameterized0",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 77,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2/scalar": {
+          "dsp": 16,
+          "ff": 1808,
+          "logic_lut": 6288,
+          "lutram": 160,
+          "module": "fixed_scalar_norm_dsp_10",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6448,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal": {
+          "dsp": 16,
+          "ff": 2185,
+          "logic_lut": 6357,
+          "lutram": 180,
+          "module": "rmsnorm__parameterized1",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6537,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal/(normfinal)": {
+          "dsp": 0,
+          "ff": 377,
+          "logic_lut": 56,
+          "lutram": 20,
+          "module": "rmsnorm__parameterized1",
+          "ramb18": 0,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 76,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal/scalar": {
+          "dsp": 16,
+          "ff": 1808,
+          "logic_lut": 6301,
+          "lutram": 160,
+          "module": "fixed_scalar_norm_dsp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6461,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/output_projection": {
+          "dsp": 1,
+          "ff": 78,
+          "logic_lut": 244,
+          "lutram": 10,
+          "module": "dense",
+          "ramb18": 1,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 254,
+          "uram": 0
+        }
+      }
+    },
+    "inactive_neural_sources": [
+      "fixed_scalar"
+    ],
+    "mapped_dsp": {
+      "candidate": {
+        "feed_forward": 19,
+        "feed_forward_scalar": 16,
+        "norm1": 0,
+        "norm2": 0,
+        "normfinal": 0,
+        "other": 22,
+        "shared_norm_mul": 16
+      },
+      "control": {
+        "feed_forward": 19,
+        "feed_forward_scalar": 16,
+        "norm1": 16,
+        "norm2": 16,
+        "normfinal": 16,
+        "other": 22,
+        "shared_norm_mul": 0
+      }
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "cross_device_comparison": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Verified Vivado implementation and primitive census.",
+        "sources": [
+          {
+            "bytes": 380,
+            "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build/reports/metrics.txt",
+            "role": "Routed timing and coverage totals",
+            "sha256": "14e8952df3993f62c6a92872ea7b9280dd3af150653dea94adb4923dbf2fe74a"
+          },
+          {
+            "bytes": 44789,
+            "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build/reports/timing.rpt",
+            "role": "Routed Vivado setup and hold timing",
+            "sha256": "f0cbad384943f1224b2c9a04f08bfb4afc63de2f2e028838ecd1876037e1bd1c"
+          },
+          {
+            "bytes": 62486,
+            "path": "hardware/research/inference/results/norm-mul-dsp-v1-build-20261119T175758Z/run.json",
+            "role": "Exact Experiment 20 routed control",
+            "sha256": "ec0ff9ab7eabc3ae65c059c020f23c4a769fd9ca96e34dab1d77bf0600b66e50"
+          }
+        ],
+        "state": "measured"
+      },
+      "long_stability": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Verified Vivado implementation and primitive census.",
+        "sources": [
+          {
+            "bytes": 11261,
+            "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build/reports/utilization-hierarchical.rpt",
+            "role": "Routed hierarchical resource report",
+            "sha256": "21e23d2d8a4e385d9de6ab749f43bb525a0c4d33b91ecd125287a881434d9a85"
+          },
+          {
+            "bytes": 30430,
+            "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/primitive-resources.json",
+            "role": "Mapped memory and DSP census from the exact control and candidate routes",
+            "sha256": "e792f803c75acf788b0a3d352c99f5d2da010eacbf4d3630be4066f79d4357d5"
+          },
+          {
+            "bytes": 62486,
+            "path": "hardware/research/inference/results/norm-mul-dsp-v1-build-20261119T175758Z/run.json",
+            "role": "Exact Experiment 20 routed control",
+            "sha256": "ec0ff9ab7eabc3ae65c059c020f23c4a769fd9ca96e34dab1d77bf0600b66e50"
+          }
+        ],
+        "state": "measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "physical_area": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Verified Vivado implementation and primitive census.",
+        "sources": [
+          {
+            "bytes": 12657,
+            "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build/reports/utilization.rpt",
+            "role": "Whole-design routed resource report",
+            "sha256": "e2058e36957d12a609b941df71f3cb0d0897f2330907906a5546e126ca969205"
+          },
+          {
+            "bytes": 11261,
+            "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/server/build/reports/utilization-hierarchical.rpt",
+            "role": "Routed hierarchical resource report",
+            "sha256": "21e23d2d8a4e385d9de6ab749f43bb525a0c4d33b91ecd125287a881434d9a85"
+          },
+          {
+            "bytes": 30430,
+            "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-build-20261119T181925Z/primitive-resources.json",
+            "role": "Mapped memory and DSP census from the exact control and candidate routes",
+            "sha256": "e792f803c75acf788b0a3d352c99f5d2da010eacbf4d3630be4066f79d4357d5"
+          },
+          {
+            "bytes": 62486,
+            "path": "hardware/research/inference/results/norm-mul-dsp-v1-build-20261119T175758Z/run.json",
+            "role": "Exact Experiment 20 routed control",
+            "sha256": "ec0ff9ab7eabc3ae65c059c020f23c4a769fd9ca96e34dab1d77bf0600b66e50"
+          }
+        ],
+        "state": "measured"
+      },
+      "serving_load": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "startup": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "primitive_census_sha256": "e792f803c75acf788b0a3d352c99f5d2da010eacbf4d3630be4066f79d4357d5",
+    "remote_elapsed_seconds": 1013.9505386808887,
+    "resource_delta": {
+      "bram_tile": 0.0,
+      "dsp": -32.0,
+      "lut": -1002.0,
+      "lutram": -2.0,
+      "register": -887.0,
+      "uram": 0.0
+    },
+    "resources": {
+      "bram_tile": 39.0,
+      "dsp": 57.0,
+      "lut": 38130.0,
+      "lutram": 1172.0,
+      "register": 15605.0,
+      "uram": 0.0
+    },
+    "selected_sites": [
+      "norm1.scalar",
+      "norm2.scalar",
+      "normfinal.scalar",
+      "norm_mul"
+    ],
+    "shell": {
+      "active_neural_sources": {
+        "candidate": [
+          "attention",
+          "axi_transformer",
+          "dense",
+          "feedforward",
+          "frontend",
+          "kv_cache",
+          "mac32",
+          "qk_rope",
+          "rmsnorm",
+          "transformer"
+        ],
+        "control": [
+          "attention",
+          "axi_transformer",
+          "dense",
+          "feedforward",
+          "frontend",
+          "kv_cache",
+          "mac32",
+          "qk_rope",
+          "rmsnorm",
+          "transformer"
+        ]
+      },
+      "clock_domain": "clk_pl_0",
+      "clock_leaf_sinks": {
+        "candidate": 16683,
+        "control": 17762
+      },
+      "clock_period_ns": 20,
+      "components": [
+        "axi",
+        "neural",
+        "one",
+        "ps",
+        "rst",
+        "zero"
+      ],
+      "interface_nets": [
+        "axi_M00_AXI",
+        "ps_M_AXI_HPM0_FPD"
+      ],
+      "matched_input_files": 119,
+      "same_address_map": true,
+      "same_ps_and_neural_ports": true,
+      "supplied_neural_sources": {
+        "candidate": [
+          "attention",
+          "axi_transformer",
+          "dense",
+          "feedforward",
+          "fixed_scalar",
+          "frontend",
+          "kv_cache",
+          "mac32",
+          "qk_rope",
+          "rmsnorm",
+          "transformer"
+        ],
+        "control": [
+          "attention",
+          "axi_transformer",
+          "dense",
+          "feedforward",
+          "fixed_scalar",
+          "frontend",
+          "kv_cache",
+          "mac32",
+          "qk_rope",
+          "rmsnorm",
+          "transformer"
+        ]
+      }
+    },
+    "timing": {
+      "clock": "clk_pl_0 period_ns 20.000",
+      "drc_errors_or_critical_warnings": "0",
+      "fully_placed": "1",
+      "fully_routed": "1",
+      "hold_slack_ns": "0.017",
+      "native_no_clock": "0",
+      "partially_routed_nets": "0",
+      "routing_errors": "0",
+      "routing_gap_nets": "0",
+      "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+      "setup_slack_ns": "5.418",
+      "unclocked_active_pins": "0",
+      "unconstrained_internal_endpoints": "0",
+      "unrouted_nets": "0",
+      "unused_ps_clock_outputs": "0"
+    }
+  },
+  "correctness": {
+    "evidence": "Exact route constraints, source closure, shell and converted firmware checked independently.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "clock_hz": 50000000,
+      "mode": "fully routed PS/AXI/neural implementation",
+      "part": "xck26-sfvc784-2LV-c",
+      "threads": 2,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "995b2e6fbb171dd64467b6c2a1bb1b76488c26c309a332b2adbd50e5c784cc2b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-norm-mul-shared-v1",
+  "id": "norm-mul-shared-v1-build-20261119T181925Z",
+  "implementation": {
+    "id": "norm-mul-shared-v1",
+    "sha256": "1d4a154a3531458d51251467db74783e2deaef0cda43082d9cd94f7997dedc1b"
+  },
+  "limitations": [
+    "Routed utilization and static timing are implementation measurements. Board power, energy, and workload time require a separate physical run.",
+    "Grouped LUTRAM macros and primitive leaves can refer to the same occupied resources."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.bram_tile",
+      "samples": [
+        39.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.dsp",
+      "samples": [
+        57.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.lut",
+      "samples": [
+        38130.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.lutram",
+      "samples": [
+        1172.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.register",
+      "samples": [
+        15605.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.uram",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 post-route worst path analysis under the 20 ns PL0 constraint.",
+      "name": "routed.setup_slack",
+      "samples": [
+        5.418
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 post-route worst path analysis under the 20 ns PL0 constraint.",
+      "name": "routed.hold_slack",
+      "samples": [
+        0.017
+      ],
+      "unit": "ns"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-norm-mul-shared-v1-build",
+    "measurement_boundary": "Routed Vivado synthesis and implementation reports.",
+    "quality_gate": "Exact adopted control route and candidate closure, covered timing, bounded archive recovery and verified firmware.",
+    "sha256": "4a68d029f7757197f9d4de63ab4165eafe903dd2ebee24009db7322c77562d0d",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Directed RTL qualification and seven frozen full-model paired replays from the same source pins.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "79bc9df22b6bff2a8ba0e5c15e878331b3c7555a5b6812c71b0a806ce0fdda6b"
+  },
+  "started_at": "2026-11-19T18:19:36.577834+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

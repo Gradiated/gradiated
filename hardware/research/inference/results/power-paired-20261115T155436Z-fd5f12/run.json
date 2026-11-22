@@ -1,0 +1,1064 @@
+{
+  "artifacts": [
+    {
+      "bytes": 16105,
+      "path": ".agents/runtime/hardware/inference/outputs/power-paired-20261115T155436Z-fd5f12/invocation.json",
+      "role": "Review-pinned exact command, source and fixture hashes",
+      "sha256": "4f17bf580ac236ebeb58ec7f1e6cd1e0a460ddb460c63f42fe5214fc51e71b22"
+    },
+    {
+      "bytes": 4450,
+      "path": ".agents/runtime/hardware/inference/outputs/power-paired-20261115T155436Z-fd5f12/kv260-conditioned-logger-comparison-v1.md",
+      "role": "Preregistered protocol",
+      "sha256": "2cc83ce648497318b363348f5271619ae4a880f04899546a1afce68d07ee1829"
+    },
+    {
+      "bytes": 72196,
+      "path": ".agents/runtime/hardware/inference/outputs/power-paired-20261115T155436Z-fd5f12/source.patch",
+      "role": "Preregistered tracked and untracked source delta",
+      "sha256": "fd83820acc359903d8a5bc49b8246dda989df5d5b740fc86f89e18c1022d7226"
+    },
+    {
+      "bytes": 18402,
+      "path": ".agents/runtime/hardware/inference/outputs/power-paired-20261115T155436Z-fd5f12/result.json",
+      "role": "Mac gate checks, paired timing and integration",
+      "sha256": "ac9932b925bf7114149c8e8884b84a674081e2eb3ddbd7dfd4c41f3a08f23f03"
+    },
+    {
+      "bytes": 19657,
+      "path": ".agents/runtime/hardware/inference/outputs/power-paired-20261115T155436Z-fd5f12/evidence-manifest.json",
+      "role": "Hashes of raw captures and source evidence",
+      "sha256": "765f81de2b90142750e5f798ed9cf4f6a9127850d57defa96a2768f46ce86623"
+    }
+  ],
+  "completed_at": "2026-11-15T16:03:37.256573+00:00",
+  "conditions": {
+    "boot_id": "0e4cc12e-4532-4434-be89-665af09dba14",
+    "candidate_model_image_sha256": "698df2e177b8e478088fffe9b02af09cd10c9ac0afbe252f3b031f133262e055",
+    "candidate_model_package_sha256": "b0394ba256d877fb62d6eb6e74942d5ff0c649cf751d53481e827c8bae5e9167",
+    "fresh_reference_pins": {
+      "encoded-fu2p2q": [
+        "timed-01-1/runner.stdout",
+        "9b23c8df5cb52633fe05bc02871d246e5538cb94a301aff756f37bfc7aa458ba"
+      ],
+      "encoded-hello": [
+        "timed-01-2/runner.stdout",
+        "e92f9d9d8ec33a6ccbfc715e42148a6aea441f017f89a931c08cad3a84197686"
+      ],
+      "encoded-max48": [
+        "timed-01-3/runner.stdout",
+        "1edfbd04efc45975a02cfec629601de65d430491313f93984a56a4f232ddb8a1"
+      ]
+    },
+    "mac_verified_gates": 12,
+    "original_weights_restored": true,
+    "paired_on_minus_off": [
+      {
+        "pair": 1,
+        "relative_on_minus_off": {
+          "encoded-fu2p2q.median_first_ms": -0.001270763457990376,
+          "encoded-fu2p2q.median_verified_ms": 0.0011008094603481844,
+          "encoded-hello.median_first_ms": 0.0002564425785442914,
+          "encoded-hello.median_verified_ms": 0.0015162623953166587,
+          "encoded-max48.median_first_ms": 3.380932232666112e-05,
+          "encoded-max48.median_verified_ms": 0.00233986332023961,
+          "verified_output_bytes_per_s": -0.0002570714083044434
+        },
+        "within_practical_band": true
+      },
+      {
+        "pair": 2,
+        "relative_on_minus_off": {
+          "encoded-fu2p2q.median_first_ms": -0.00046987597222225563,
+          "encoded-fu2p2q.median_verified_ms": 0.000600345943193803,
+          "encoded-hello.median_first_ms": -0.00038630647998072476,
+          "encoded-hello.median_verified_ms": 0.0005306264018005713,
+          "encoded-max48.median_first_ms": -0.0002780928318487641,
+          "encoded-max48.median_verified_ms": -0.00012432078028357108,
+          "verified_output_bytes_per_s": -0.000366109230889089
+        },
+        "within_practical_band": true
+      },
+      {
+        "pair": 3,
+        "relative_on_minus_off": {
+          "encoded-fu2p2q.median_first_ms": -0.000732957541721535,
+          "encoded-fu2p2q.median_verified_ms": 0.0034328238932590516,
+          "encoded-hello.median_first_ms": -0.0021537349965368158,
+          "encoded-hello.median_verified_ms": 0.0025597222852398183,
+          "encoded-max48.median_first_ms": 0.0007208945638528252,
+          "encoded-max48.median_verified_ms": 0.004928419938766915,
+          "verified_output_bytes_per_s": -0.0035448120692552765
+        },
+        "within_practical_band": true
+      }
+    ],
+    "plan_sha256": "2cc83ce648497318b363348f5271619ae4a880f04899546a1afce68d07ee1829",
+    "planned_order": [
+      [
+        [
+          [
+            [
+              "encoded-fu2p2q",
+              false
+            ],
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-max48",
+              false
+            ],
+            [
+              "encoded-fu2p2q",
+              false
+            ],
+            [
+              "encoded-max48",
+              false
+            ],
+            [
+              "encoded-hello",
+              false
+            ]
+          ],
+          [
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ]
+          ],
+          "off"
+        ],
+        [
+          [
+            [
+              "encoded-fu2p2q",
+              false
+            ],
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-max48",
+              false
+            ],
+            [
+              "encoded-fu2p2q",
+              false
+            ],
+            [
+              "encoded-max48",
+              false
+            ],
+            [
+              "encoded-hello",
+              false
+            ]
+          ],
+          [
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ]
+          ],
+          "on"
+        ]
+      ],
+      [
+        [
+          [
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-max48",
+              false
+            ],
+            [
+              "encoded-fu2p2q",
+              false
+            ],
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-fu2p2q",
+              false
+            ],
+            [
+              "encoded-max48",
+              false
+            ]
+          ],
+          [
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ]
+          ],
+          "on"
+        ],
+        [
+          [
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-max48",
+              false
+            ],
+            [
+              "encoded-fu2p2q",
+              false
+            ],
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-fu2p2q",
+              false
+            ],
+            [
+              "encoded-max48",
+              false
+            ]
+          ],
+          [
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ]
+          ],
+          "off"
+        ]
+      ],
+      [
+        [
+          [
+            [
+              "encoded-max48",
+              false
+            ],
+            [
+              "encoded-fu2p2q",
+              false
+            ],
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-max48",
+              false
+            ],
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-fu2p2q",
+              false
+            ]
+          ],
+          [
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ]
+          ],
+          "off"
+        ],
+        [
+          [
+            [
+              "encoded-max48",
+              false
+            ],
+            [
+              "encoded-fu2p2q",
+              false
+            ],
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-max48",
+              false
+            ],
+            [
+              "encoded-hello",
+              false
+            ],
+            [
+              "encoded-fu2p2q",
+              false
+            ]
+          ],
+          [
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ],
+            [
+              "encoded-hello",
+              true
+            ],
+            [
+              "encoded-max48",
+              true
+            ],
+            [
+              "encoded-fu2p2q",
+              true
+            ]
+          ],
+          "on"
+        ]
+      ]
+    ],
+    "practical_screen_fraction": 0.02,
+    "preregistered_plan": "../../experiments/kv260-conditioned-logger-comparison-v1.md",
+    "rail_coverage_and_sensitivity": [
+      {
+        "admitted": true,
+        "alignment_scenarios": {
+          "midpoint": {
+            "gross_j": 27.66781431253018,
+            "gross_j_per_completion": 2.3056511927108483,
+            "gross_j_per_output_byte": 0.02188909360168527,
+            "idle_w": [
+              3.0222502171125907,
+              3.022998672191374
+            ],
+            "incremental_j": 1.232347003152828,
+            "incremental_j_per_completion": 0.102695583596069,
+            "incremental_j_per_output_byte": 0.0009749580721145792
+          },
+          "midpoint_minus_50ms": {
+            "gross_j": 27.67424295184904,
+            "gross_j_per_completion": 2.3061869126540864,
+            "gross_j_per_output_byte": 0.02189417955051348,
+            "idle_w": [
+              3.022373889640933,
+              3.0231054755531943
+            ],
+            "incremental_j": 1.2377677868859926,
+            "incremental_j_per_completion": 0.10314731557383272,
+            "incremental_j_per_output_byte": 0.000979246666840184
+          },
+          "midpoint_plus_50ms": {
+            "gross_j": 27.653314019284522,
+            "gross_j_per_completion": 2.3044428349403767,
+            "gross_j_per_output_byte": 0.02187762185069978,
+            "idle_w": [
+              3.0223765854988223,
+              3.0228563311308343
+            ],
+            "incremental_j": 1.2179165573389739,
+            "incremental_j_per_completion": 0.10149304644491448,
+            "incremental_j_per_output_byte": 0.0009635415801732388
+          },
+          "read_end": {
+            "gross_j": 27.667770087304326,
+            "gross_j_per_completion": 2.3056475072753604,
+            "gross_j_per_output_byte": 0.021889058613373678,
+            "idle_w": [
+              3.022250455004305,
+              3.02299820571144
+            ],
+            "incremental_j": 1.2323037775279033,
+            "incremental_j_per_completion": 0.10269198146065861,
+            "incremental_j_per_output_byte": 0.0009749238746265058
+          },
+          "read_start": {
+            "gross_j": 27.6678586598848,
+            "gross_j_per_completion": 2.3056548883237333,
+            "gross_j_per_output_byte": 0.021889128686617722,
+            "idle_w": [
+              3.0222499832108,
+              3.0229991363376216
+            ],
+            "incremental_j": 1.2323903436639085,
+            "incremental_j_per_completion": 0.10269919530532572,
+            "incremental_j_per_output_byte": 0.0009749923604935986
+          }
+        },
+        "pair": 1,
+        "sampler": {
+          "missed": 0,
+          "process_cpu_ns": 90857247,
+          "reads": 350
+        }
+      },
+      {
+        "admitted": true,
+        "alignment_scenarios": {
+          "midpoint": {
+            "gross_j": 27.69941397300755,
+            "gross_j_per_completion": 2.308284497750629,
+            "gross_j_per_output_byte": 0.021914093333075594,
+            "idle_w": [
+              3.02175050332954,
+              3.0341246105074995
+            ],
+            "incremental_j": 1.1731497796860957,
+            "incremental_j_per_completion": 0.09776248164050798,
+            "incremental_j_per_output_byte": 0.000928124825701025
+          },
+          "midpoint_minus_50ms": {
+            "gross_j": 27.702164141915734,
+            "gross_j_per_completion": 2.308513678492978,
+            "gross_j_per_output_byte": 0.02191626909961688,
+            "idle_w": [
+              3.0217505077250006,
+              3.0346133517169496
+            ],
+            "incremental_j": 1.1737591192681336,
+            "incremental_j_per_completion": 0.09781325993901113,
+            "incremental_j_per_output_byte": 0.000928606898155169
+          },
+          "midpoint_plus_50ms": {
+            "gross_j": 27.687002170052143,
+            "gross_j_per_completion": 2.3072501808376784,
+            "gross_j_per_output_byte": 0.02190427386871214,
+            "idle_w": [
+              3.021623642101644,
+              3.0337022328421765
+            ],
+            "incremental_j": 1.1631437819550214,
+            "incremental_j_per_completion": 0.09692864849625178,
+            "incremental_j_per_output_byte": 0.0009202086882555549
+          },
+          "read_end": {
+            "gross_j": 27.699374339352502,
+            "gross_j_per_completion": 2.308281194946042,
+            "gross_j_per_output_byte": 0.02191406197733584,
+            "idle_w": [
+              3.021750831156217,
+              3.034130234752499
+            ],
+            "incremental_j": 1.1730840744521558,
+            "incremental_j_per_completion": 0.09775700620434631,
+            "incremental_j_per_output_byte": 0.0009280728437121486
+          },
+          "read_start": {
+            "gross_j": 27.69945296679039,
+            "gross_j_per_completion": 2.3082877472325323,
+            "gross_j_per_output_byte": 0.021914124182587334,
+            "idle_w": [
+              3.021750170971064,
+              3.0341189861625004
+            ],
+            "incremental_j": 1.173214865336277,
+            "incremental_j_per_completion": 0.09776790544468976,
+            "incremental_j_per_output_byte": 0.0009281763175128774
+          }
+        },
+        "pair": 2,
+        "sampler": {
+          "missed": 0,
+          "process_cpu_ns": 94801374,
+          "reads": 350
+        }
+      },
+      {
+        "admitted": true,
+        "alignment_scenarios": {
+          "midpoint": {
+            "gross_j": 27.830480732980355,
+            "gross_j_per_completion": 2.319206727748363,
+            "gross_j_per_output_byte": 0.022017785390016104,
+            "idle_w": [
+              3.02874897919,
+              3.023111413286823
+            ],
+            "incremental_j": 1.1996352981658873,
+            "incremental_j_per_completion": 0.09996960818049061,
+            "incremental_j_per_output_byte": 0.0009490785586755438
+          },
+          "midpoint_minus_50ms": {
+            "gross_j": 27.83520788872823,
+            "gross_j_per_completion": 2.319600657394019,
+            "gross_j_per_output_byte": 0.022021525228424235,
+            "idle_w": [
+              3.028625342623546,
+              3.0227502520049243
+            ],
+            "incremental_j": 1.2064957775083833,
+            "incremental_j_per_completion": 0.10054131479236528,
+            "incremental_j_per_output_byte": 0.0009545061530920754
+          },
+          "midpoint_plus_50ms": {
+            "gross_j": 27.81879851760935,
+            "gross_j_per_completion": 2.318233209800779,
+            "gross_j_per_output_byte": 0.022008543131020054,
+            "idle_w": [
+              3.02874897919,
+              3.0235003361029698
+            ],
+            "incremental_j": 1.186241651477701,
+            "incremental_j_per_completion": 0.09885347095647508,
+            "incremental_j_per_output_byte": 0.0009384823192070419
+          },
+          "read_end": {
+            "gross_j": 27.8304202011364,
+            "gross_j_per_completion": 2.3192016834280333,
+            "gross_j_per_output_byte": 0.02201773750089905,
+            "idle_w": [
+              3.0287475682725002,
+              3.023114993615267
+            ],
+            "incremental_j": 1.1995652199603484,
+            "incremental_j_per_completion": 0.09996376833002903,
+            "incremental_j_per_output_byte": 0.0009490231170572376
+          },
+          "read_start": {
+            "gross_j": 27.830540517418395,
+            "gross_j_per_completion": 2.319211709784866,
+            "gross_j_per_output_byte": 0.02201783268783101,
+            "idle_w": [
+              3.0287503900625006,
+              3.0231078483928107
+            ],
+            "incremental_j": 1.199704561245241,
+            "incremental_j_per_completion": 0.09997538010377009,
+            "incremental_j_per_output_byte": 0.0009491333554155388
+          }
+        },
+        "pair": 3,
+        "sampler": {
+          "missed": 0,
+          "process_cpu_ns": 90118459,
+          "reads": 350
+        }
+      }
+    ],
+    "sensor_manifests": {
+      "kv260-power-idle-logger-20261115": "f4fc2678546f15122ff924e137ef9fa7e63de24a633891eabd5dc289539a1509",
+      "kv260-power-inventory-20261115": "a2982ea63593d91c81d9602a52ec8f647ec31c9db6c0d9f1332b85a538ed219c"
+    },
+    "verified_measured_requests": 72
+  },
+  "correctness": {
+    "evidence": "12 Mac-verified gates. 5,034,240 signed-score comparisons over 108 verified warm-up and active requests.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "dfx_service": "runtime inactive, boot enablement preserved",
+      "firmware_name": "gradiated-tiny-50mhz.bit.bin",
+      "firmware_sha256": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0",
+      "fpga_manager_flags": 0,
+      "kernel_build": "#16-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 16 05:06:58 UTC 2025",
+      "kernel_release": "6.8.0-1015-xilinx",
+      "model": "ZynqMP KV260 revB",
+      "physical_unit": "KV260 USB bridge XFL1RXOM0IWQ",
+      "pl0_rate_source": "Linux clock framework",
+      "pl0_reported_hz": 50000000,
+      "reset_dt_id": 119,
+      "system_boot_id": "0e4cc12e-4532-4434-be89-665af09dba14",
+      "transformer_map": {
+        "base": 2684354560,
+        "bytes": 4096,
+        "device": "/dev/uio4"
+      },
+      "verified_state_sha256": "9c236b7a021a7e779f24ec00cda6590967fee3f81accbf531b5da7c7b6b735e8"
+    },
+    "configuration_sha256": "4515431a669eca9ae9b21f19a34e8c443deb06ee73a25e650d021cfa684314ab",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-conditioned-logger-comparison-v1",
+  "id": "power-paired-20261115T155436Z-fd5f12",
+  "implementation": {
+    "id": "kv260-conditioned-resident-logger-comparison-v1",
+    "sha256": "f1313065775448530106526c2d33c6d874336a6df2c72606b50e248196abcdea"
+  },
+  "limitations": [
+    "Three same-boot paired runs screen for a practical timing difference. They do not establish equivalence.",
+    "The sampler measures the VCC_SOM supply only. It does not support whole-board or FPGA-only energy.",
+    "The block boundary includes resident context clear, capture and exact verification but excludes export and setup.",
+    "Actual conversion sample age and calibrated instrument uncertainty were not established. Shifted integration times are sensitivity scenarios.",
+    "Totals divided by emitted byte count describe average block energy per byte, not per-event measurements."
+  ],
+  "metrics": [
+    {
+      "kind": "derived",
+      "method": "Per-block count divided by admission-to-verified-finish elapsed time.",
+      "name": "off.verified_output_bytes_per_s",
+      "samples": [
+        144.5625935866951,
+        144.33675137487353,
+        144.1329424060236
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Median within prompt and arm from the board monotonic clock.",
+      "name": "off.encoded-fu2p2q.median_first_ms",
+      "samples": [
+        46.2289025,
+        46.203682,
+        46.2175475
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Median within prompt and arm from the board monotonic clock.",
+      "name": "off.encoded-fu2p2q.median_verified_ms",
+      "samples": [
+        646.0000805,
+        649.6745825,
+        648.775489
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Median within prompt and arm from the board monotonic clock.",
+      "name": "off.encoded-hello.median_first_ms",
+      "samples": [
+        38.9151445,
+        38.9587045,
+        39.002245
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Median within prompt and arm from the board monotonic clock.",
+      "name": "off.encoded-hello.median_verified_ms",
+      "samples": [
+        455.2853135,
+        455.974296,
+        456.5190555
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Median within prompt and arm from the board monotonic clock.",
+      "name": "off.encoded-max48.median_first_ms",
+      "samples": [
+        412.6228815,
+        413.1587975,
+        412.92793
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Median within prompt and arm from the board monotonic clock.",
+      "name": "off.encoded-max48.median_verified_ms",
+      "samples": [
+        1066.077227,
+        1068.9805815,
+        1071.5985175
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Per-block count divided by admission-to-verified-finish elapsed time.",
+      "name": "on.verified_output_bytes_per_s",
+      "samples": [
+        144.52543067717363,
+        144.28390835783864,
+        143.62201821220546
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Median within prompt and arm from the board monotonic clock.",
+      "name": "on.encoded-fu2p2q.median_first_ms",
+      "samples": [
+        46.1701565,
+        46.181972,
+        46.183672
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Median within prompt and arm from the board monotonic clock.",
+      "name": "on.encoded-fu2p2q.median_verified_ms",
+      "samples": [
+        646.7112035,
+        650.064612,
+        651.002621
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Median within prompt and arm from the board monotonic clock.",
+      "name": "on.encoded-hello.median_first_ms",
+      "samples": [
+        38.925124,
+        38.9436545,
+        38.9182445
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Median within prompt and arm from the board monotonic clock.",
+      "name": "on.encoded-hello.median_verified_ms",
+      "samples": [
+        455.9756455,
+        456.216248,
+        457.6876175
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Median within prompt and arm from the board monotonic clock.",
+      "name": "on.encoded-max48.median_first_ms",
+      "samples": [
+        412.636832,
+        413.043901,
+        413.2256075
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Median within prompt and arm from the board monotonic clock.",
+      "name": "on.encoded-max48.median_verified_ms",
+      "samples": [
+        1068.571702,
+        1068.847685,
+        1076.879805
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admitted block trapezoid integral using read midpoints.",
+      "name": "on.vcc_som.gross_j",
+      "samples": [
+        27.66781431253018,
+        27.69941397300755,
+        27.830480732980355
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Admitted block trapezoid integral using read midpoints.",
+      "name": "on.vcc_som.gross_j_per_completion",
+      "samples": [
+        2.3056511927108483,
+        2.308284497750629,
+        2.319206727748363
+      ],
+      "unit": "J/completion"
+    },
+    {
+      "kind": "derived",
+      "method": "Admitted block trapezoid integral using read midpoints.",
+      "name": "on.vcc_som.gross_j_per_output_byte",
+      "samples": [
+        0.02188909360168527,
+        0.021914093333075594,
+        0.022017785390016104
+      ],
+      "unit": "J/output byte"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-conditioned-logger-comparison-v1",
+    "measurement_boundary": "First request admission through last verified finish per block on the board monotonic clock. Separate sampler-on VCC_SOM rail integration.",
+    "quality_gate": "Exact signed scores, output bytes, EOS and counters per request, independently verified compact receipts.",
+    "sha256": "2cc83ce648497318b363348f5271619ae4a880f04899546a1afce68d07ee1829",
+    "tokenizer": "BOS plus two hexadecimal digit IDs per input UTF-8 byte. Output uses byte IDs and EOS.",
+    "warmup": "Six verified resident requests before each arm. Matched completed context in idle."
+  },
+  "quality": {
+    "evidence": "Exact frozen output bytes and EOS. Language quality was outside this test.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "04c7100ca9d5ba9ddbd49fdc14bd85cefcc6381d",
+    "patch_sha256": "fd83820acc359903d8a5bc49b8246dda989df5d5b740fc86f89e18c1022d7226"
+  },
+  "started_at": "2026-11-15T15:58:21.973171+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-conditioned-paired-six-arms-108-v1",
+    "sha256": "2cc83ce648497318b363348f5271619ae4a880f04899546a1afce68d07ee1829"
+  }
+}

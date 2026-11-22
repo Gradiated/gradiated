@@ -1,0 +1,745 @@
+{
+  "artifacts": [
+    {
+      "bytes": 9796083,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/simulation.tar.gz",
+      "role": "Exact source, test fixtures, and observed traces",
+      "sha256": "5c66c50778943d4601f4bbc8d93741522dada0d333b558c6f23e31adf3e2cff9"
+    },
+    {
+      "bytes": 30441,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/source-closure.json",
+      "role": "Exact archived member pins",
+      "sha256": "7babd0ed8f67a265dfca3064b5c658f39ea9b5be10b7498c311c7ed8172ac5a7"
+    },
+    {
+      "bytes": 33205,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/source.patch",
+      "role": "Candidate variant and protocol delta",
+      "sha256": "c02fca0d21147fd39919c8c39104ba054579555069c85eb479dd9c31c80bef68"
+    },
+    {
+      "bytes": 124212,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/model-results.json",
+      "role": "Seven exact RTL boundary comparisons",
+      "sha256": "af8073c6f797d4881dd48a8a65f63d4ed1133cdca3b352a1e69b4a082c6cb974"
+    },
+    {
+      "bytes": 519,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/directed-results.json",
+      "role": "Directed cutoff and fault fixtures",
+      "sha256": "c4cc3d5f5e5bd85c5a5ce0cbda026773d58e2d0640a51601b99bcfb30253e97c"
+    },
+    {
+      "bytes": 1127,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/independent-schedule.json",
+      "role": "Independent seven-case cycle reconstruction",
+      "sha256": "285a6c50b0ffbf64048414bb397d99cc937fa9e2428c54544a8af5bf534fe6be"
+    },
+    {
+      "bytes": 45681,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/independent-occupancy.json",
+      "role": "Independent per-position utilisation audit",
+      "sha256": "0ef862f9c4021d4ba35f7dd3777ac920b51fe47711ba9e033339c6d21748d8a9"
+    },
+    {
+      "bytes": 45990,
+      "path": "hardware/research/inference/results/attention-exp-div-rtl-20261117T131434Z/run.json",
+      "role": "Adopted exact control record",
+      "sha256": "7f20e07ecaa6842f96031222b63da9301809e2e57808c54978a7d53b18d3ffe4"
+    }
+  ],
+  "completed_at": "2026-11-17T22:59:32.216692+00:00",
+  "conditions": {
+    "directed_oracle": {
+      "all_exact": true,
+      "context_values": 288,
+      "exponentials": 1042,
+      "heads": 2,
+      "limits": "Actual pinned table plus synthetic and archived intermediate operands; no archived full-forward context golden or complete transformer proof",
+      "max_length": 256,
+      "paired_cancel_probes": 1,
+      "paired_fault_probes": 1,
+      "probabilities": 1042,
+      "real_archived_input_cases": 0,
+      "requests": 9,
+      "reset_probes": 4,
+      "score_products": 16672,
+      "scores": 1042,
+      "table_rewrite_checks": 2,
+      "value_products": 16672
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Exact model and directed RTL replay.",
+        "sources": [
+          {
+            "bytes": 124212,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/model-results.json",
+            "role": "Seven exact RTL boundary comparisons",
+            "sha256": "af8073c6f797d4881dd48a8a65f63d4ed1133cdca3b352a1e69b4a082c6cb974"
+          },
+          {
+            "bytes": 519,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/directed-results.json",
+            "role": "Directed cutoff and fault fixtures",
+            "sha256": "c4cc3d5f5e5bd85c5a5ce0cbda026773d58e2d0640a51601b99bcfb30253e97c"
+          },
+          {
+            "bytes": 1127,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/independent-schedule.json",
+            "role": "Independent seven-case cycle reconstruction",
+            "sha256": "285a6c50b0ffbf64048414bb397d99cc937fa9e2428c54544a8af5bf534fe6be"
+          },
+          {
+            "bytes": 45681,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/independent-occupancy.json",
+            "role": "Independent per-position utilisation audit",
+            "sha256": "0ef862f9c4021d4ba35f7dd3777ac920b51fe47711ba9e033339c6d21748d8a9"
+          }
+        ],
+        "state": "measured"
+      },
+      "cross_device_comparison": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "long_stability": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "memory_bandwidth": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Exact model and directed RTL replay.",
+        "sources": [
+          {
+            "bytes": 124212,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/model-results.json",
+            "role": "Seven exact RTL boundary comparisons",
+            "sha256": "af8073c6f797d4881dd48a8a65f63d4ed1133cdca3b352a1e69b4a082c6cb974"
+          },
+          {
+            "bytes": 519,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/directed-results.json",
+            "role": "Directed cutoff and fault fixtures",
+            "sha256": "c4cc3d5f5e5bd85c5a5ce0cbda026773d58e2d0640a51601b99bcfb30253e97c"
+          },
+          {
+            "bytes": 1127,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/independent-schedule.json",
+            "role": "Independent seven-case cycle reconstruction",
+            "sha256": "285a6c50b0ffbf64048414bb397d99cc937fa9e2428c54544a8af5bf534fe6be"
+          },
+          {
+            "bytes": 45681,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/independent-occupancy.json",
+            "role": "Independent per-position utilisation audit",
+            "sha256": "0ef862f9c4021d4ba35f7dd3777ac920b51fe47711ba9e033339c6d21748d8a9"
+          }
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "serving_load": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Exact model and directed RTL replay.",
+        "sources": [
+          {
+            "bytes": 124212,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/model-results.json",
+            "role": "Seven exact RTL boundary comparisons",
+            "sha256": "af8073c6f797d4881dd48a8a65f63d4ed1133cdca3b352a1e69b4a082c6cb974"
+          },
+          {
+            "bytes": 519,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/directed-results.json",
+            "role": "Directed cutoff and fault fixtures",
+            "sha256": "c4cc3d5f5e5bd85c5a5ce0cbda026773d58e2d0640a51601b99bcfb30253e97c"
+          },
+          {
+            "bytes": 1127,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/independent-schedule.json",
+            "role": "Independent seven-case cycle reconstruction",
+            "sha256": "285a6c50b0ffbf64048414bb397d99cc937fa9e2428c54544a8af5bf534fe6be"
+          },
+          {
+            "bytes": 45681,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-rtl-20261117T230104Z/independent-occupancy.json",
+            "role": "Independent per-position utilisation audit",
+            "sha256": "0ef862f9c4021d4ba35f7dd3777ac920b51fe47711ba9e033339c6d21748d8a9"
+          }
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "model_cases": 7,
+    "parallel_exponential_units": 2,
+    "processed_positions": 716
+  },
+  "correctness": {
+    "evidence": "Seven complete model cases and nine directed requests with exact score, exponential, probability and context values.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 RTL model",
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052"
+    },
+    "configuration_sha256": "2f8d960315cbf5f9cca1b1112e84315cf0bad687ffc8b83ddc67c6c8a723180b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-attention-exp-pair-v2",
+  "id": "attention-exp-pair-v2-rtl-20261117T230104Z",
+  "implementation": {
+    "id": "attention-exp-pair-v2",
+    "sha256": "7babd0ed8f67a265dfca3064b5c658f39ea9b5be10b7498c311c7ed8172ac5a7"
+  },
+  "limitations": [
+    "RTL cycle savings are not a measurement of physical speed, energy or routing."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.bos-only-cap0.prefix_cycles",
+      "samples": [
+        36399
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.bos-only-cap0.complete_cycles",
+      "samples": [
+        38081
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        497379
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        7913385
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        499061
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        7833764
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        417449
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        419131
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        417449
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        419131
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        419131
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        419131
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        417449
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        5387671
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        419131
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        5318782
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        4973199
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        13663329
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        4974881
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        13563248
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.full-context-cap0.prefix_cycles",
+      "samples": [
+        19408863
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "control.full-context-cap0.complete_cycles",
+      "samples": [
+        19410545
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.bos-only-cap0.prefix_cycles",
+      "samples": [
+        36399
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.bos-only-cap0.complete_cycles",
+      "samples": [
+        38081
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        493263
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        7475095
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        494945
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        7402040
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        5142970
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        5078839
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        4743643
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        12716857
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        4745325
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        12626576
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.full-context-cap0.prefix_cycles",
+      "samples": [
+        17828258
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle exact full-model RTL replay.",
+      "name": "candidate.full-context-cap0.complete_cycles",
+      "samples": [
+        17829940
+      ],
+      "unit": "cycles"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-attention-exp-pair-v2-rtl",
+    "measurement_boundary": "Same RTL prefix, first, last and completion boundaries.",
+    "quality_gate": "Exact model outputs, scores, cache, ordered attention arithmetic and directed faults.",
+    "sha256": "74402f85c9ff11cbca8372f517c7ee2b9dbb41060a9376cdf1e6bedeec1a37d3",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Frozen outputs, score stream, cache contents, events and stopping rules matched.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "c02fca0d21147fd39919c8c39104ba054579555069c85eb479dd9c31c80bef68"
+  },
+  "started_at": "2026-11-17T22:58:52.496241+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

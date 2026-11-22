@@ -1,0 +1,855 @@
+{
+  "artifacts": [
+    {
+      "bytes": 85827194,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/server.tar.gz",
+      "role": "Complete archived configured tool and source/run output",
+      "sha256": "bc2780213c60c505c7aa1c198a9524232d2c8dfdf2adcf3a8464ac5e1aaa1146"
+    },
+    {
+      "bytes": 290,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/server.receipt.json",
+      "role": "Server byte and member receipt",
+      "sha256": "12970ec474546e6968bced1ed16a5c44ddc5221ae13107c92c52ac0d7691ff1c"
+    },
+    {
+      "bytes": 14681,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/offline-acceptance.json",
+      "role": "Mac raw and routed evidence validation",
+      "sha256": "031ad5ef0008064d7b2ba4c4347a0aacf0c126213bdc2aedd735936ab9bb8549"
+    },
+    {
+      "bytes": 42647,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/memory-mapping.json",
+      "role": "Paired target and unchanged non-target primitive audit",
+      "sha256": "821317ef9c30dd3e0354fc20d067246e1763790e5d8900e7ba0dfe9293e93858"
+    },
+    {
+      "bytes": 138143,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/control-memory-primitives.tsv",
+      "role": "Adopted routed memory inventory",
+      "sha256": "cf87db68ddd0b8ab524edc6e7834e0dcd21a92b1574bb4cd5a4ec00e6be3ec13"
+    },
+    {
+      "bytes": 174464,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/candidate-memory-primitives.tsv",
+      "role": "Candidate routed memory inventory",
+      "sha256": "a1c1a7dc72747ab0faa6bfaa1e4ba4d7f2a8196d28a4ac65178149ee3030725e"
+    },
+    {
+      "bytes": 108,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/control-target-timing.txt",
+      "role": "Adopted read path timing",
+      "sha256": "a675ce96a86e1694c00c5097e46fab79d64577559c93ac54bc7599acbd2d3fbb"
+    },
+    {
+      "bytes": 109,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/candidate-target-timing.txt",
+      "role": "Candidate read path timing",
+      "sha256": "126cefd70094dc772e5539150d84229a35abf6de1c46bde8fe9073ddb92b0922"
+    },
+    {
+      "bytes": 2034,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/server/source-manifest.json",
+      "role": "Exact synthesis source and runner closure",
+      "sha256": "b4c7e420c02b6d3feb81eda0cdd348cf0cd8785d2983baa6bf3938d34d35b274"
+    },
+    {
+      "bytes": 62437,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/server/recovery-manifest.json",
+      "role": "Complete archive member hashes",
+      "sha256": "2a4fb08e2ae4ca64e58596562d7fe9dacf65b44cb66da18d0e157b87bb527916"
+    },
+    {
+      "bytes": 3087,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/server/build/reports/logits-primitives.tsv",
+      "role": "Named routed weight banks and DSPs",
+      "sha256": "5e48e2540cb5f6d441cdceef52d8f4e6245e336bfd748bb4fa0a4a63ab5003ae"
+    },
+    {
+      "bytes": 10706,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/server/build/reports/utilization-hierarchical.rpt",
+      "role": "Routed hierarchical utilisation",
+      "sha256": "79d1db1a8ec21b1b7aad7f90131ebd93967e16cfcf674ca079efd243249926ab"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/server/offline-package/gradiated-tiny-output-projection-lutram-v1-50mhz.bit.bin",
+      "role": "Verified volatile programming image",
+      "sha256": "981049d8dadb1b54c507a924d5dbdabdcbdde1657f897fa95bf11e02d4ce1a73"
+    },
+    {
+      "bytes": 375,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/server/kv260-output-projection-lutram-program.dtbo",
+      "role": "Verified firmware-name overlay",
+      "sha256": "602e80b6ade3c4ae0242618b05604e4359a6328595d53e721312ccf65e8b2672"
+    },
+    {
+      "bytes": 43170,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/build-input.tar.gz",
+      "role": "Admitted build input bytes",
+      "sha256": "22b6f6496aa53c6e90bcbc8407cf2bdfefe0055b16a7b6352eac4f4f31ecc97c"
+    },
+    {
+      "bytes": 3876,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/prepare-build.py",
+      "role": "Source-manifest reproducibility helper",
+      "sha256": "e8d3cd17d7456297e320d24233161467830c9f854e334ff9377d64f4e9195903"
+    },
+    {
+      "bytes": 6893,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/verify-build.py",
+      "role": "Mac evidence verification helper",
+      "sha256": "cdc298df7933d28264cc77b3ac69eb8601c493623a70027f0c2c0f649bd63792"
+    },
+    {
+      "bytes": 43488,
+      "path": "hardware/research/inference/results/output-projection-lutram-rtl-20261117T152505Z/run.json",
+      "role": "Independently admitted exact one-array LUTRAM RTL replay",
+      "sha256": "5d02d244c33a6c5973533f05a533b9cac696a0611c501070544c5dae41e932f6"
+    },
+    {
+      "bytes": 15182,
+      "path": "hardware/research/inference/results/attention-exp-div-build-20261117T130122Z/run.json",
+      "role": "Adopted attention exponential control routed data",
+      "sha256": "4c2b2feda20e43658159bbe745c3d487295e58c04612bf0603b47742e5ae6809"
+    }
+  ],
+  "completed_at": "2026-11-17T15:50:01.144963+00:00",
+  "conditions": {
+    "control_variant": "attention-exp-div-v1",
+    "development_effort": {
+      "ai_usage_cost": null,
+      "engineering_attention_minutes": null,
+      "phase_elapsed_s": {
+        "bitstream": 128.39864961593412,
+        "generate": 35.16779765300453,
+        "opt": 86.80314618395641,
+        "place": 308.2825823931489,
+        "reports": 85.7641049688682,
+        "route": 298.2844831109978,
+        "synth": 373.2660296149552
+      }
+    },
+    "firmware": {
+      "bytes": 7797692,
+      "sha256": "981049d8dadb1b54c507a924d5dbdabdcbdde1657f897fa95bf11e02d4ce1a73"
+    },
+    "lanes": 8,
+    "logical_array_bytes": 2048,
+    "logits_primitives": {
+      "DSP48E2": 8,
+      "RAMB18E2": 0,
+      "RAMB36E2": 8
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "cross_device_comparison": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Nonnegative setup/hold, complete coverage and clean route at 20 ns.",
+        "source": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/offline-acceptance.json",
+        "state": "measured"
+      },
+      "long_stability": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Verified one weight memory remapped to LUTRAM. All other memory primitive cells match.",
+        "source": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/offline-acceptance.json",
+        "state": "measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "physical_area": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Actual complete-design and projection-specific routed primitive counts.",
+        "source": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-build-20261117T151934Z/offline-acceptance.json",
+        "state": "measured"
+      },
+      "serving_load": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "startup": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "memory_mapping": {
+      "arms": {
+        "candidate": {
+          "read_path": "status no_named_weight_output_to_operand_register_path\nweight_output_pin_count 658\noperand_input_pin_count 0\n",
+          "routed_checkpoint_sha256": "2639beaaa5d473fd581fb7f07815d41429182e22c4ffc4cdfc0f21531b2854f6",
+          "target_cells": {
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAMH": "RAMD64E"
+          },
+          "target_refs": {
+            "RAM64M": 16,
+            "RAM64M8": 32,
+            "RAMD64E": 320
+          }
+        },
+        "control": {
+          "read_path": "status no_named_weight_output_to_operand_register_path\nweight_output_pin_count 76\noperand_input_pin_count 0\n",
+          "routed_checkpoint_sha256": "e2d24d76b85187815c78f8e64531ab8e19faa626510cb82f371732d417a5c0d8",
+          "target_cells": {
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_bram_0": "RAMB18E2"
+          },
+          "target_refs": {
+            "RAMB18E2": 1
+          }
+        }
+      },
+      "changed_non_target_cells": [],
+      "other_arrays_identical": true,
+      "other_memory_primitive_and_macro_cells": 1582,
+      "passed": true,
+      "query_sha256": "516aa241f01eb4e4f0cae535decfef7f365672ab5c372844daeee4d0e5dd3bb1"
+    },
+    "overlay": {
+      "bytes": 375,
+      "filename": "kv260-output-projection-lutram-program.dtbo",
+      "sha256": "602e80b6ade3c4ae0242618b05604e4359a6328595d53e721312ccf65e8b2672"
+    },
+    "physical_board_access": false,
+    "resources": {
+      "bram_tile": 37.5,
+      "dsp": 37.0,
+      "lut": 34913.0,
+      "register": 13588.0
+    },
+    "routed": {
+      "clock": "clk_pl_0 period_ns 20.000",
+      "drc_errors_or_critical_warnings": "0",
+      "fully_placed": "1",
+      "fully_routed": "1",
+      "hold_slack_ns": "0.028",
+      "native_no_clock": "0",
+      "partially_routed_nets": "0",
+      "routing_errors": "0",
+      "routing_gap_nets": "0",
+      "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+      "setup_slack_ns": "4.482",
+      "unclocked_active_pins": "0",
+      "unconstrained_internal_endpoints": "0",
+      "unrouted_nets": "0",
+      "unused_ps_clock_outputs": "0"
+    },
+    "verified_server_files": 318,
+    "weight_banks": {
+      "0": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[0].weights_reg_bram_0"
+      ],
+      "1": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[1].weights_reg_bram_0"
+      ],
+      "2": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[2].weights_reg_bram_0"
+      ],
+      "3": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[3].weights_reg_bram_0"
+      ],
+      "4": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[4].weights_reg_bram_0"
+      ],
+      "5": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[5].weights_reg_bram_0"
+      ],
+      "6": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[6].weights_reg_bram_0"
+      ],
+      "7": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[7].weights_reg_bram_0"
+      ]
+    }
+  },
+  "correctness": {
+    "evidence": "All archive, exact source, routed timing, bank and programmer bytes accepted.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "clock_hz": 50000000,
+      "mode": "fully routed PS/AXI/neural implementation",
+      "part": "xck26-sfvc784-2LV-c",
+      "threads": 2,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "995b2e6fbb171dd64467b6c2a1bb1b76488c26c309a332b2adbd50e5c784cc2b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-output-projection-lutram-v1",
+  "id": "output-projection-lutram-build-20261117T151934Z",
+  "implementation": {
+    "id": "kv260-output-projection-lutram-v1-50mhz",
+    "sha256": "981049d8dadb1b54c507a924d5dbdabdcbdde1657f897fa95bf11e02d4ce1a73"
+  },
+  "limitations": [
+    "Offline timing, routed resources and exact file pins. Physical measurements require a matched board run.",
+    "Workload and logical memory capacity unchanged. Target-read and full-design timing are reported separately."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Vivado fixed-clock worst routed slack",
+      "name": "setup_slack",
+      "samples": [
+        4.482
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado fixed-clock worst routed slack",
+      "name": "hold_slack",
+      "samples": [
+        0.028
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilisation",
+      "name": "bram_tile",
+      "samples": [
+        37.5
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilisation",
+      "name": "dsp",
+      "samples": [
+        37.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilisation",
+      "name": "lut",
+      "samples": [
+        34913.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilisation",
+      "name": "register",
+      "samples": [
+        13588.0
+      ],
+      "unit": "count"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-output-projection-lutram-build-v1",
+    "measurement_boundary": "Offline routed circuit at unchanged 20 ns constraint.",
+    "quality_gate": "Source closure, exact expected bank and DSP count, fully routed nonnegative setup and hold.",
+    "sha256": "dfc28dbc01744fd0dc32e3f7b0dc9380ede0ce63a15297093c8a5c6aac5bfe12",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Frozen model and numerical rules verified in matched RTL separately.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "771e501681e014fc832219debcd53afecc35bcb6f85c04b63ff6fc5dd407f37c"
+  },
+  "started_at": "2026-11-17T15:24:07.832202+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

@@ -1,0 +1,414 @@
+{
+  "artifacts": [
+    {
+      "bytes": 81595353,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-2-lanes-build-20261116T161050Z/server.tar.gz",
+      "role": "Complete archived configured tool and source/run output",
+      "sha256": "fe906f831cca2bc91e517e87ee3cd44ed0a96b91beacbc510f731bea522e5901"
+    },
+    {
+      "bytes": 274,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-2-lanes-build-20261116T161050Z/server.receipt.json",
+      "role": "Server byte and member receipt",
+      "sha256": "73dff89638ff4e404369fbb30c7299e56f9519bf26f569962c2326b605d9dffc"
+    },
+    {
+      "bytes": 12757,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-2-lanes-build-20261116T161050Z/offline-acceptance.json",
+      "role": "Mac raw and routed evidence validation",
+      "sha256": "2d63abb93afb93f9446776b97fd80800f3b7509da143da314b6387ba6da1e3e7"
+    },
+    {
+      "bytes": 2018,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-2-lanes-build-20261116T161050Z/server/source-manifest.json",
+      "role": "Exact synthesis source and runner closure",
+      "sha256": "37fa26996c6998b802e0bd8dd74e8719436a78392dd6f9b8e12cca0a2f84123f"
+    },
+    {
+      "bytes": 62406,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-2-lanes-build-20261116T161050Z/server/recovery-manifest.json",
+      "role": "Complete archive member hashes",
+      "sha256": "71babe0666b173e8e9bc5dcc54996a2b03385a8eb1c5dc6a609a1bace20c7efa"
+    },
+    {
+      "bytes": 2721,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-2-lanes-build-20261116T161050Z/server/build/reports/logits-primitives.tsv",
+      "role": "Named routed weight banks and DSPs",
+      "sha256": "1b835cebc2b15387ff070fe2771a342d48137b0f5c31d3f031c4efec28ab78a5"
+    },
+    {
+      "bytes": 10658,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-2-lanes-build-20261116T161050Z/server/build/reports/utilization-hierarchical.rpt",
+      "role": "Routed hierarchical utilisation",
+      "sha256": "8ed06477fcd5a3390dc7bba0f886a8453ad3ffa154e66908fe3b1503ac48ecb4"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-2-lanes-build-20261116T161050Z/server/offline-package/gradiated-tiny-logits-2-lanes-v1-50mhz.bit.bin",
+      "role": "Verified volatile programming image",
+      "sha256": "08bb853d4917d127eaac07593e02e587be48ee83f7e4763d9ed6a4e8e820b80d"
+    },
+    {
+      "bytes": 363,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-2-lanes-build-20261116T161050Z/server/kv260-logits-2-lanes-program.dtbo",
+      "role": "Verified firmware-name overlay",
+      "sha256": "c1c51afe86d0d2e3a5abed389259f845bb6d038db2de9378a9c45861aca84a27"
+    },
+    {
+      "bytes": 38143,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-2-lanes-build-20261116T161050Z/build-2-input.tar.gz",
+      "role": "Admitted build input bytes",
+      "sha256": "b69e343cb90648841cfe11e9aa82c376279147f096c6f4650196895fb39e4bce"
+    },
+    {
+      "bytes": 3846,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-2-lanes-build-20261116T161050Z/prepare-build.py",
+      "role": "Source-manifest reproducibility helper",
+      "sha256": "4301a51fcf43fb0193b32b8f58e6f316972ded843da9129d8b4ea0702599f02a"
+    },
+    {
+      "bytes": 6914,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-2-lanes-build-20261116T161050Z/verify-build-lanes.py",
+      "role": "Mac evidence verification helper",
+      "sha256": "ab0a7afab690e69f2d3fc3b7adbba86a86fbd8f5c93224ef0d900cf727eb4d3e"
+    },
+    {
+      "bytes": 55204,
+      "path": "hardware/research/inference/results/logits-lanes-rtl-20261116T161210Z/run.json",
+      "role": "Independently admitted exact three-arm RTL simulation",
+      "sha256": "9e6780b2c4df84ea72bf627da5951cd26f04328177fd77cb9aad2eac5aa20afe"
+    },
+    {
+      "bytes": 13234,
+      "path": "hardware/research/inference/results/logits-pipeline-build-20261116T130030Z/run.json",
+      "role": "One-lane control routed data",
+      "sha256": "3027ca1cfb92d954420b3dc763c51cef04baa32fe516bd60c77d5b295b481616"
+    }
+  ],
+  "completed_at": "2026-11-16T16:39:03.334684+00:00",
+  "conditions": {
+    "development_effort": {
+      "ai_usage_cost": null,
+      "engineering_attention_minutes": null,
+      "phase_elapsed_s": {
+        "bitstream": 112.78492619120516,
+        "generate": 26.581912267953157,
+        "opt": 86.86195977311581,
+        "place": 259.4467794878874,
+        "reports": 73.70025128801353,
+        "route": 295.52914407197386,
+        "synth": 275.06744468491524
+      }
+    },
+    "firmware": {
+      "bytes": 7797692,
+      "sha256": "08bb853d4917d127eaac07593e02e587be48ee83f7e4763d9ed6a4e8e820b80d"
+    },
+    "lanes": 2,
+    "logits_primitives": {
+      "DSP48E2": 2,
+      "RAMB18E2": 0,
+      "RAMB36E2": 8
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "cross_device_comparison": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Nonnegative setup/hold, complete coverage and clean route at 20 ns.",
+        "source": ".agents/runtime/hardware/inference/outputs/logits-2-lanes-build-20261116T161050Z/offline-acceptance.json",
+        "state": "measured"
+      },
+      "long_stability": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Observed resources for row-interleaved weights with unchanged total logical data bits.",
+        "source": ".agents/runtime/hardware/inference/outputs/logits-2-lanes-build-20261116T161050Z/offline-acceptance.json",
+        "state": "measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "physical_area": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Actual complete-design and projection-specific routed primitive counts.",
+        "source": ".agents/runtime/hardware/inference/outputs/logits-2-lanes-build-20261116T161050Z/offline-acceptance.json",
+        "state": "measured"
+      },
+      "serving_load": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "startup": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Routed implementation evidence only.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "one_lane_control": "logits-pipeline-v1",
+    "overlay": {
+      "bytes": 363,
+      "filename": "kv260-logits-2-lanes-program.dtbo",
+      "sha256": "c1c51afe86d0d2e3a5abed389259f845bb6d038db2de9378a9c45861aca84a27"
+    },
+    "physical_board_access": false,
+    "resources": {
+      "bram_tile": 38.0,
+      "dsp": 31.0,
+      "lut": 34603.0,
+      "register": 13202.0
+    },
+    "routed": {
+      "clock": "clk_pl_0 period_ns 20.000",
+      "drc_errors_or_critical_warnings": "0",
+      "fully_placed": "1",
+      "fully_routed": "1",
+      "hold_slack_ns": "0.013",
+      "native_no_clock": "0",
+      "partially_routed_nets": "0",
+      "routing_errors": "0",
+      "routing_gap_nets": "0",
+      "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+      "setup_slack_ns": "3.766",
+      "unclocked_active_pins": "0",
+      "unconstrained_internal_endpoints": "0",
+      "unrouted_nets": "0",
+      "unused_ps_clock_outputs": "0"
+    },
+    "verified_server_files": 318,
+    "weight_banks": {
+      "0": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[0].weights_reg_bram_0",
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[0].weights_reg_bram_1",
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[0].weights_reg_bram_2",
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[0].weights_reg_bram_3"
+      ],
+      "1": [
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[1].weights_reg_bram_0",
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[1].weights_reg_bram_1",
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[1].weights_reg_bram_2",
+        "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[1].weights_reg_bram_3"
+      ]
+    }
+  },
+  "correctness": {
+    "evidence": "All archive, exact source, routed timing, bank and programmer bytes accepted.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "clock_hz": 50000000,
+      "mode": "fully routed PS/AXI/neural implementation",
+      "part": "xck26-sfvc784-2LV-c",
+      "threads": 2,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "995b2e6fbb171dd64467b6c2a1bb1b76488c26c309a332b2adbd50e5c784cc2b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-logits-lanes-v1",
+  "id": "logits-2-lanes-build-20261116T161050Z",
+  "implementation": {
+    "id": "kv260-logits-2-lanes-v1-50mhz",
+    "sha256": "08bb853d4917d127eaac07593e02e587be48ee83f7e4763d9ed6a4e8e820b80d"
+  },
+  "limitations": [
+    "Offline timing, routed resources and exact file pins. Physical measurements require a matched board run.",
+    "Simultaneous weight reads require physically banked storage. Logical data bits do not determine routed block RAM counts."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Vivado fixed-clock worst routed slack",
+      "name": "setup_slack",
+      "samples": [
+        3.766
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado fixed-clock worst routed slack",
+      "name": "hold_slack",
+      "samples": [
+        0.013
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilisation",
+      "name": "bram_tile",
+      "samples": [
+        38.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilisation",
+      "name": "dsp",
+      "samples": [
+        31.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilisation",
+      "name": "lut",
+      "samples": [
+        34603.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilisation",
+      "name": "register",
+      "samples": [
+        13202.0
+      ],
+      "unit": "count"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-logits-2-lanes-build-v1",
+    "measurement_boundary": "Offline routed circuit at unchanged 20 ns constraint.",
+    "quality_gate": "Source closure, exact expected bank and DSP count, fully routed nonnegative setup and hold.",
+    "sha256": "ec4377aa194b6d25e5e8c6a1c4ef9952cff2828c93e9b753dc248af1da9e2bde",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Frozen model and numerical rules verified in matched RTL separately.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "38725fb347cfa9843b830bd1512546ea79e2a3522b625dcaed7c93eaf6d0765a"
+  },
+  "started_at": "2026-11-16T16:13:50.418088+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

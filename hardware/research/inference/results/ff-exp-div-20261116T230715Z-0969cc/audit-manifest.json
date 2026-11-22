@@ -1,0 +1,68 @@
+{
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/ff-exp-div-v1-coordinator/connection-20261116T230715Z/audit-ff-exp-counters.py": {
+      "bytes": 982,
+      "sha256": "4ba02391824cf5669755c6fcad3d755a621ae04adc8aba522febc5c1503f7380"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-exp-div-v1-coordinator/connection-20261116T230715Z/audit-ff-exp-qualified-packet.py": {
+      "bytes": 5062,
+      "sha256": "3c657d3c898ce8ead5817f99dab4ef3d60f2f3f173ca25a90af9fa826ee4a3b9"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-exp-div-v1-coordinator/connection-20261116T230715Z/audit-ff-exp-staged.py": {
+      "bytes": 2441,
+      "sha256": "5dd7ae3e3b6d5c0ca6652fd2a76ac2eb418c3242db82be4c68b00e15d7dd5b73"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-exp-div-v1-coordinator/connection-20261116T230715Z/ff-exp-counter-audit.json": {
+      "bytes": 5520,
+      "sha256": "398abb228a4b8cf224ee5c16f5cd89c4e776b9532da4aaf52f61589f39329e25"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-exp-div-v1-coordinator/connection-20261116T230715Z/ff-exp-final-health-audit.json": {
+      "bytes": 535,
+      "sha256": "0f927ae181f7d654e40a7423c00115e6a9c1b7304bd29f2bef948f7b57ab742b"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-exp-div-v1-coordinator/connection-20261116T230715Z/ff-exp-link-audit.json": {
+      "bytes": 472,
+      "sha256": "0b9bbcda1410ba23ee216b8e8b54a8a313832759911826b18e3454c9de01b86f"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-exp-div-v1-coordinator/connection-20261116T230715Z/ff-exp-physical-audit.json": {
+      "bytes": 28712,
+      "sha256": "c310bc9ff44d752bd7ad23fbb45e7a12603aa0c357d406054054f4c1ab510ad1"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-exp-div-v1-coordinator/connection-20261116T230715Z/ff-exp-record-consistency-pinned.json": {
+      "bytes": 467,
+      "sha256": "a75212cc617b9244326c4aefec7f103411b36338b97862e2c42ec0caa9d541c2"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-exp-div-v1-coordinator/connection-20261116T230715Z/ff-exp-retry-packet-audit.json": {
+      "bytes": 657,
+      "sha256": "023a2247283b76c1449416b46d897d648bbc71224b03d75e57e58c3c8d64db3e"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-exp-div-v1-coordinator/connection-20261116T230715Z/ff-exp-staged-independent.json": {
+      "bytes": 572,
+      "sha256": "287f5593878009fe1f24a531aeda4b7e4dc974e6d3749239658c2cce6d2e5838"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-exp-div-v1-coordinator/ff-exp-build-audit.json": {
+      "bytes": 1962,
+      "sha256": "0d69f9654c8b579527d23d1fb43b7b2b94c1bd91c3a396ec3fd362dd210625b1"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-exp-div-v1-coordinator/ff-exp-counter-reference.json": {
+      "bytes": 15458,
+      "sha256": "ab76475be4a18232d04df6adb613795fc73279def2a6526bffc69e1d58044ca2"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-v1-coordinator/lanes-record-consistency.py": {
+      "bytes": 2432,
+      "sha256": "39a6874319c26be9b51924c26eb8f8c087e848bcbf374c396870cafa19aee640"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/counter-audit.py": {
+      "bytes": 1392,
+      "sha256": "b0531072612e994d0edddb61b6885ef0357d7c4f1035377d03d3fd795b7dc8d9"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/independent-audit.py": {
+      "bytes": 7516,
+      "sha256": "2af82a0c3ffdb2dfc5a96c3fe20092e17e8b24a784955c211d3d4f9df6838183"
+    }
+  },
+  "passed": true,
+  "raw_manifest_sha256": "20458c854ef5a036544168bb1811f52445a3c8e1298d320f09a0ac0a9af5ab65",
+  "run_sha256": "5b0a9a277980aba69d1853aac6523ca7dfafc9fc0c3bba0082103ae1c22c8ec6",
+  "scope": "Independent exact build and packet admission, serial gates, board timing and module-rail energy, RTL cycle agreement, original restoration and compact record consistency."
+}

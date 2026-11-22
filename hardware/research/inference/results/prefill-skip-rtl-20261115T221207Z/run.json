@@ -1,0 +1,759 @@
+{
+  "artifacts": [
+    {
+      "bytes": 18091,
+      "path": ".agents/runtime/hardware/inference/outputs/prefill-skip-rtl-20261115T221207Z/manifest.json",
+      "role": "Uncompressed members and exact source pins",
+      "sha256": "3f62feb2973db562f4559344dc92ec780a305ba74978c2c423978f7e3753e1c7"
+    },
+    {
+      "bytes": 3076,
+      "path": ".agents/runtime/hardware/inference/outputs/prefill-skip-rtl-20261115T221207Z/result.json",
+      "role": "Matched RTL simulation results",
+      "sha256": "6f0865683b9576f0c74a902072de21f6db8c7b85ae9633ad52de6b842c3140eb"
+    },
+    {
+      "bytes": 13978241,
+      "path": ".agents/runtime/hardware/inference/outputs/prefill-skip-rtl-20261115T221207Z/simulation.tar.gz",
+      "role": "Raw simulation, KV arrays, score fixtures and test/generator archive",
+      "sha256": "b925432197f98a7a3f3784d9e6b179bcfeda30e7b932ba215ef6e67764973bc0"
+    }
+  ],
+  "completed_at": "2026-11-15T22:12:07.504220+00:00",
+  "conditions": {
+    "cases": [
+      {
+        "boundaries": {
+          "done": {
+            "candidate_cycles": 16276524,
+            "control_cycles": 16487734,
+            "positions": 101
+          },
+          "prefix": {
+            "candidate_cycles": 1140952,
+            "control_cycles": 1352162,
+            "positions": 11
+          }
+        },
+        "candidate_exact_scores": 29120,
+        "cap": 255,
+        "case": "encoded-hello",
+        "outputs": 90,
+        "skipped": 10
+      },
+      {
+        "boundaries": {
+          "done": {
+            "candidate_cycles": 23753596,
+            "control_cycles": 24007048,
+            "positions": 135
+          },
+          "prefix": {
+            "candidate_cycles": 1359604,
+            "control_cycles": 1613056,
+            "positions": 13
+          }
+        },
+        "candidate_exact_scores": 39360,
+        "cap": 255,
+        "case": "encoded-fu2p2q",
+        "outputs": 122,
+        "skipped": 12
+      },
+      {
+        "boundaries": {
+          "done": {
+            "candidate_cycles": 39195274,
+            "control_cycles": 41222890,
+            "positions": 201
+          },
+          "prefix": {
+            "candidate_cycles": 13651292,
+            "control_cycles": 15678908,
+            "positions": 97
+          }
+        },
+        "candidate_exact_scores": 33600,
+        "cap": 255,
+        "case": "encoded-max48",
+        "outputs": 104,
+        "skipped": 96
+      },
+      {
+        "boundaries": {
+          "done": {
+            "candidate_cycles": 1162074,
+            "control_cycles": 1373284,
+            "positions": 11
+          },
+          "prefix": {
+            "candidate_cycles": 1140952,
+            "control_cycles": 1352162,
+            "positions": 11
+          }
+        },
+        "candidate_exact_scores": 320,
+        "cap": 0,
+        "case": "encoded-hello",
+        "outputs": 0,
+        "skipped": 10
+      },
+      {
+        "boundaries": {
+          "done": {
+            "candidate_cycles": 1162074,
+            "control_cycles": 1373284,
+            "positions": 11
+          },
+          "prefix": {
+            "candidate_cycles": 1140952,
+            "control_cycles": 1352162,
+            "positions": 11
+          }
+        },
+        "candidate_exact_scores": 320,
+        "cap": 1,
+        "case": "encoded-hello",
+        "outputs": 1,
+        "skipped": 10
+      },
+      {
+        "boundaries": {
+          "done": {
+            "candidate_cycles": 120534,
+            "control_cycles": 120534,
+            "positions": 1
+          },
+          "prefix": {
+            "candidate_cycles": 99412,
+            "control_cycles": 99412,
+            "positions": 1
+          }
+        },
+        "candidate_exact_scores": 320,
+        "cap": 0,
+        "case": "bos-only",
+        "outputs": 0,
+        "skipped": 0
+      },
+      {
+        "boundaries": {
+          "done": {
+            "candidate_cycles": 53454045,
+            "control_cycles": 58839900,
+            "positions": 256
+          },
+          "prefix": {
+            "candidate_cycles": 53432923,
+            "control_cycles": 58818778,
+            "positions": 256
+          }
+        },
+        "candidate_exact_scores": 320,
+        "cap": 0,
+        "case": "full-context",
+        "outputs": 0,
+        "skipped": 255
+      }
+    ],
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "sources": [
+          "Exact signed score and complete cache tests in simulation archive"
+        ],
+        "state": "measured"
+      },
+      "decode_tps": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "long_stability": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "sources": [
+          "Matched complete valid KV snapshots at both simulation boundaries"
+        ],
+        "state": "measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "sources": [
+          "Per-case result.json and simulation logs"
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "metric_names": [
+          "control.encoded-hello.cap255.prefill_input_rate",
+          "candidate.encoded-hello.cap255.prefill_input_rate",
+          "control.encoded-fu2p2q.cap255.prefill_input_rate",
+          "candidate.encoded-fu2p2q.cap255.prefill_input_rate",
+          "control.encoded-max48.cap255.prefill_input_rate",
+          "candidate.encoded-max48.cap255.prefill_input_rate",
+          "control.encoded-hello.cap0.prefill_input_rate",
+          "candidate.encoded-hello.cap0.prefill_input_rate",
+          "control.encoded-hello.cap1.prefill_input_rate",
+          "candidate.encoded-hello.cap1.prefill_input_rate",
+          "control.bos-only.cap0.prefill_input_rate",
+          "candidate.bos-only.cap0.prefill_input_rate",
+          "control.full-context.cap0.prefill_input_rate",
+          "candidate.full-context.cap0.prefill_input_rate"
+        ],
+        "state": "derived"
+      },
+      "repeatability": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "metric_names": [
+          "control.encoded-hello.cap255.prefill_cycles",
+          "control.encoded-hello.cap255.completion_cycles",
+          "candidate.encoded-hello.cap255.prefill_cycles",
+          "candidate.encoded-hello.cap255.completion_cycles",
+          "control.encoded-fu2p2q.cap255.prefill_cycles",
+          "control.encoded-fu2p2q.cap255.completion_cycles",
+          "candidate.encoded-fu2p2q.cap255.prefill_cycles",
+          "candidate.encoded-fu2p2q.cap255.completion_cycles",
+          "control.encoded-max48.cap255.prefill_cycles",
+          "control.encoded-max48.cap255.completion_cycles",
+          "candidate.encoded-max48.cap255.prefill_cycles",
+          "candidate.encoded-max48.cap255.completion_cycles",
+          "control.encoded-hello.cap0.prefill_cycles",
+          "control.encoded-hello.cap0.completion_cycles",
+          "candidate.encoded-hello.cap0.prefill_cycles",
+          "candidate.encoded-hello.cap0.completion_cycles",
+          "control.encoded-hello.cap1.prefill_cycles",
+          "control.encoded-hello.cap1.completion_cycles",
+          "candidate.encoded-hello.cap1.prefill_cycles",
+          "candidate.encoded-hello.cap1.completion_cycles",
+          "control.bos-only.cap0.prefill_cycles",
+          "control.bos-only.cap0.completion_cycles",
+          "candidate.bos-only.cap0.prefill_cycles",
+          "candidate.bos-only.cap0.completion_cycles",
+          "control.full-context.cap0.prefill_cycles",
+          "control.full-context.cap0.completion_cycles",
+          "candidate.full-context.cap0.prefill_cycles",
+          "candidate.full-context.cap0.completion_cycles"
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v1",
+    "observed_saved_cycles_per_omission": 21121,
+    "physical_board_access": false,
+    "predicted_removed_projection_cycles": 21120
+  },
+  "correctness": {
+    "evidence": "103,360 retained exact candidate scores, exact rotated KV snapshots, counts, outputs, stops, synthetic faults and legacy BOS checks across seven cases",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 model",
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052"
+    },
+    "configuration_sha256": "0fc19997cba03c9989efd7af548c169fba9ee9940be850b4a6bffe60772f8ffe",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-prefill-skip-v1",
+  "id": "prefill-skip-rtl-20261115T221207Z",
+  "implementation": {
+    "id": "autonomous-v1-vs-prefill-skip-v1",
+    "sha256": "c3fc573062521eb1f0e43e6b744afeaa6199b754dc36946f0a8a6c5645c814a1"
+  },
+  "limitations": [
+    "RTL and synthetic fault evidence only. Clock frequency is an analytical conversion setpoint, so these rates are not observed on the board.",
+    "The skipped arithmetic does not report any hypothetical saturation in omitted projections."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to final prompt position entry to LOGIT_START",
+      "name": "control.encoded-hello.cap255.prefill_cycles",
+      "samples": [
+        1352162
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated prefix cycles at an assumed 50 MHz, excluding final score selection",
+      "name": "control.encoded-hello.cap255.prefill_input_rate",
+      "samples": [
+        406.7559952135913
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to controller's exact terminal edge",
+      "name": "control.encoded-hello.cap255.completion_cycles",
+      "samples": [
+        16487734
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to final prompt position entry to LOGIT_START",
+      "name": "candidate.encoded-hello.cap255.prefill_cycles",
+      "samples": [
+        1140952
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated prefix cycles at an assumed 50 MHz, excluding final score selection",
+      "name": "candidate.encoded-hello.cap255.prefill_input_rate",
+      "samples": [
+        482.0535833234001
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to controller's exact terminal edge",
+      "name": "candidate.encoded-hello.cap255.completion_cycles",
+      "samples": [
+        16276524
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to final prompt position entry to LOGIT_START",
+      "name": "control.encoded-fu2p2q.cap255.prefill_cycles",
+      "samples": [
+        1613056
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated prefix cycles at an assumed 50 MHz, excluding final score selection",
+      "name": "control.encoded-fu2p2q.cap255.prefill_input_rate",
+      "samples": [
+        402.96183145532456
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to controller's exact terminal edge",
+      "name": "control.encoded-fu2p2q.cap255.completion_cycles",
+      "samples": [
+        24007048
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to final prompt position entry to LOGIT_START",
+      "name": "candidate.encoded-fu2p2q.cap255.prefill_cycles",
+      "samples": [
+        1359604
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated prefix cycles at an assumed 50 MHz, excluding final score selection",
+      "name": "candidate.encoded-fu2p2q.cap255.prefill_input_rate",
+      "samples": [
+        478.0803822289431
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to controller's exact terminal edge",
+      "name": "candidate.encoded-fu2p2q.cap255.completion_cycles",
+      "samples": [
+        23753596
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to final prompt position entry to LOGIT_START",
+      "name": "control.encoded-max48.cap255.prefill_cycles",
+      "samples": [
+        15678908
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated prefix cycles at an assumed 50 MHz, excluding final score selection",
+      "name": "control.encoded-max48.cap255.prefill_input_rate",
+      "samples": [
+        309.33276730751913
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to controller's exact terminal edge",
+      "name": "control.encoded-max48.cap255.completion_cycles",
+      "samples": [
+        41222890
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to final prompt position entry to LOGIT_START",
+      "name": "candidate.encoded-max48.cap255.prefill_cycles",
+      "samples": [
+        13651292
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated prefix cycles at an assumed 50 MHz, excluding final score selection",
+      "name": "candidate.encoded-max48.cap255.prefill_input_rate",
+      "samples": [
+        355.2777275586809
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to controller's exact terminal edge",
+      "name": "candidate.encoded-max48.cap255.completion_cycles",
+      "samples": [
+        39195274
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to final prompt position entry to LOGIT_START",
+      "name": "control.encoded-hello.cap0.prefill_cycles",
+      "samples": [
+        1352162
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated prefix cycles at an assumed 50 MHz, excluding final score selection",
+      "name": "control.encoded-hello.cap0.prefill_input_rate",
+      "samples": [
+        406.7559952135913
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to controller's exact terminal edge",
+      "name": "control.encoded-hello.cap0.completion_cycles",
+      "samples": [
+        1373284
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to final prompt position entry to LOGIT_START",
+      "name": "candidate.encoded-hello.cap0.prefill_cycles",
+      "samples": [
+        1140952
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated prefix cycles at an assumed 50 MHz, excluding final score selection",
+      "name": "candidate.encoded-hello.cap0.prefill_input_rate",
+      "samples": [
+        482.0535833234001
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to controller's exact terminal edge",
+      "name": "candidate.encoded-hello.cap0.completion_cycles",
+      "samples": [
+        1162074
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to final prompt position entry to LOGIT_START",
+      "name": "control.encoded-hello.cap1.prefill_cycles",
+      "samples": [
+        1352162
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated prefix cycles at an assumed 50 MHz, excluding final score selection",
+      "name": "control.encoded-hello.cap1.prefill_input_rate",
+      "samples": [
+        406.7559952135913
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to controller's exact terminal edge",
+      "name": "control.encoded-hello.cap1.completion_cycles",
+      "samples": [
+        1373284
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to final prompt position entry to LOGIT_START",
+      "name": "candidate.encoded-hello.cap1.prefill_cycles",
+      "samples": [
+        1140952
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated prefix cycles at an assumed 50 MHz, excluding final score selection",
+      "name": "candidate.encoded-hello.cap1.prefill_input_rate",
+      "samples": [
+        482.0535833234001
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to controller's exact terminal edge",
+      "name": "candidate.encoded-hello.cap1.completion_cycles",
+      "samples": [
+        1162074
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to final prompt position entry to LOGIT_START",
+      "name": "control.bos-only.cap0.prefill_cycles",
+      "samples": [
+        99412
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated prefix cycles at an assumed 50 MHz, excluding final score selection",
+      "name": "control.bos-only.cap0.prefill_input_rate",
+      "samples": [
+        502.9573894499658
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to controller's exact terminal edge",
+      "name": "control.bos-only.cap0.completion_cycles",
+      "samples": [
+        120534
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to final prompt position entry to LOGIT_START",
+      "name": "candidate.bos-only.cap0.prefill_cycles",
+      "samples": [
+        99412
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated prefix cycles at an assumed 50 MHz, excluding final score selection",
+      "name": "candidate.bos-only.cap0.prefill_input_rate",
+      "samples": [
+        502.9573894499658
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to controller's exact terminal edge",
+      "name": "candidate.bos-only.cap0.completion_cycles",
+      "samples": [
+        120534
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to final prompt position entry to LOGIT_START",
+      "name": "control.full-context.cap0.prefill_cycles",
+      "samples": [
+        58818778
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated prefix cycles at an assumed 50 MHz, excluding final score selection",
+      "name": "control.full-context.cap0.prefill_input_rate",
+      "samples": [
+        217.61757784223263
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to controller's exact terminal edge",
+      "name": "control.full-context.cap0.completion_cycles",
+      "samples": [
+        58839900
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to final prompt position entry to LOGIT_START",
+      "name": "candidate.full-context.cap0.prefill_cycles",
+      "samples": [
+        53432923
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated prefix cycles at an assumed 50 MHz, excluding final score selection",
+      "name": "candidate.full-context.cap0.prefill_input_rate",
+      "samples": [
+        239.55268178010775
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "Simulated first prompt acceptance to controller's exact terminal edge",
+      "name": "candidate.full-context.cap0.completion_cycles",
+      "samples": [
+        53454045
+      ],
+      "unit": "cycles"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-prefill-skip-v1-simulation",
+    "measurement_boundary": "Pure simulation cycles from first prompt acceptance to final prompt entry to LOGIT_START or exact terminal edge",
+    "quality_gate": "Exact retained signed scores, outputs, stops and every valid KV element at both boundaries",
+    "sha256": "1b0eb6810ec883f8c005bac3c551d80d2488204f442e2f6c3dfdca9ba07c5c59",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Frozen model and numerical rules unchanged over tested workloads",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "04c7100ca9d5ba9ddbd49fdc14bd85cefcc6381d",
+    "patch_sha256": null
+  },
+  "started_at": "2026-11-15T22:08:50.751791+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-prefill-seven-simulation-cases-v1",
+    "sha256": "3f62feb2973db562f4559344dc92ec780a305ba74978c2c423978f7e3753e1c7"
+  }
+}

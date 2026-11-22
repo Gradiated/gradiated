@@ -1,0 +1,190 @@
+{
+  "artifacts": [
+    {
+      "bytes": 15193,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-prefill-decode-20261115T204825Z-46cd07/invocation.json",
+      "role": "Exact reviewed aborted packet",
+      "sha256": "3a7942055d23407f5f436b958227c17fbdd0bf99b411bdff7286952b4e87cea0"
+    },
+    {
+      "bytes": 2653,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-prefill-decode-20261115T204825Z-46cd07/dispatch-intent.json",
+      "role": "Dispatch timestamp",
+      "sha256": "95dda2cb727dbbffffa4e562ca0c50ce4f6499e00f70cef3bd078a3f15fc4a0b"
+    },
+    {
+      "bytes": 248,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-prefill-decode-20261115T204825Z-46cd07/staged.json",
+      "role": "Verified stage receipt",
+      "sha256": "7c037777c0228a6b9fc61da0202faacbfda4f9ea866a3837975593df38a68f64"
+    },
+    {
+      "bytes": 97613,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-prefill-decode-20261115T204825Z-46cd07/preflight/before.state.json",
+      "role": "Read-only original board state",
+      "sha256": "29db873d990607570303f6b586402d61a6f781ca137dd3562884ff66f022bf9c"
+    },
+    {
+      "bytes": 90,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-prefill-decode-20261115T204825Z-46cd07/preflight/failure.json",
+      "role": "Unaccepted preflight gate",
+      "sha256": "b88c384e789eb99b99eb32890a2e439a89d78a3a793dd827566150f2d654f6df"
+    },
+    {
+      "bytes": 382,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-prefill-decode-20261115T204825Z-46cd07/pre-stage-ownership.json",
+      "role": "Initial console-ownership stop",
+      "sha256": "fb425882f3c29a4c16f4ad6265f6f2412a063370cea00e293d4fabaa4473ea6a"
+    },
+    {
+      "bytes": 26972,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-prefill-decode-20261115T204825Z-46cd07/serial-frames-00e85e40.txt",
+      "role": "Captured serial frames",
+      "sha256": "ea6c76421d27d18f358859b80bedb26f2d709e27abd355a1e83074513f486bf6"
+    },
+    {
+      "bytes": 86,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-prefill-decode-20261115T204825Z-46cd07/stop-e2d51e8d.json",
+      "role": "Mac fail-stop receipt",
+      "sha256": "c4d0261eb1f33ed195e66a0c81de88d2820e8a015a3209bd5579bc3f837d2493"
+    }
+  ],
+  "completed_at": "2026-11-15T20:58:12.190554+00:00",
+  "conditions": {
+    "firmware_switches": 0,
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Preflight stopped before any model or scored request.",
+        "state": "not_measured"
+      },
+      "completion_time": {
+        "reason": "Preflight stopped before any model or scored request.",
+        "state": "not_measured"
+      },
+      "correctness": {
+        "reason": "Preflight stopped before any model or scored request.",
+        "state": "not_measured"
+      },
+      "decode_tps": {
+        "reason": "Preflight stopped before any model or scored request.",
+        "state": "not_measured"
+      },
+      "energy_per_answer": {
+        "reason": "Preflight stopped before any model or scored request.",
+        "state": "not_measured"
+      },
+      "idle_power": {
+        "reason": "Preflight stopped before any model or scored request.",
+        "state": "not_measured"
+      },
+      "memory": {
+        "reason": "Preflight stopped before any model or scored request.",
+        "state": "not_measured"
+      },
+      "operating_conditions": {
+        "sources": [
+          "preflight/before.state.json"
+        ],
+        "state": "measured"
+      },
+      "output_counts": {
+        "reason": "Preflight stopped before any model or scored request.",
+        "state": "not_measured"
+      },
+      "repeatability": {
+        "reason": "Preflight stopped before any model or scored request.",
+        "state": "not_measured"
+      },
+      "resources": {
+        "reason": "Preflight stopped before any model or scored request.",
+        "state": "not_measured"
+      },
+      "tokens_per_joule": {
+        "reason": "Preflight stopped before any model or scored request.",
+        "state": "not_measured"
+      },
+      "ttft": {
+        "reason": "Preflight stopped before any model or scored request.",
+        "state": "not_measured"
+      }
+    },
+    "measurement_standard": "inference-measurements-v1",
+    "model_loads": 0,
+    "preflight_stop": "Unexpected kernel notices",
+    "previous_restore_state_sha256": "29db873d990607570303f6b586402d61a6f781ca137dd3562884ff66f022bf9c",
+    "scored_requests": 0,
+    "stage_verified": true
+  },
+  "correctness": {
+    "evidence": "Stopped during preflight before original BOS or candidate validation.",
+    "passed": false
+  },
+  "device": {
+    "configuration": {
+      "dfx_service": "runtime inactive, boot enablement preserved",
+      "firmware_name": "gradiated-tiny-50mhz.bit.bin",
+      "firmware_sha256": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0",
+      "fpga_manager_flags": 0,
+      "kernel_build": "#16-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 16 05:06:58 UTC 2025",
+      "kernel_release": "6.8.0-1015-xilinx",
+      "model": "ZynqMP KV260 revB",
+      "physical_unit": "KV260 USB bridge XFL1RXOM0IWQ",
+      "pl0_rate_source": "Linux clock framework",
+      "pl0_reported_hz": 50000000,
+      "reset_dt_id": 119,
+      "run_state": "Preflight captured the original firmware before any FPGA or model mutation",
+      "system_boot_id": "0e4cc12e-4532-4434-be89-665af09dba14",
+      "transformer_map": {
+        "base": 2684354560,
+        "bytes": 4096,
+        "device": "/dev/uio4"
+      },
+      "verified_state_sha256": "9c236b7a021a7e779f24ec00cda6590967fee3f81accbf531b5da7c7b6b735e8"
+    },
+    "configuration_sha256": "da2f22d19200dbb87997f6f6271480c9348905f5333e33984c75888cbab6a125",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-autonomous-v1",
+  "id": "autonomous-prefill-decode-20261115T204825Z-46cd07",
+  "implementation": {
+    "id": "kv260-original-vs-autonomous-prefill-decode-v1",
+    "sha256": "3a7942055d23407f5f436b958227c17fbdd0bf99b411bdff7286952b4e87cea0"
+  },
+  "limitations": [
+    "The entire preflight snapshot matched the previously verified restoration in the same boot. The harness compared kernel warnings with an older snapshot, so already recorded overlay notices caused the stop.",
+    "The stopped attempt installed no candidate firmware, switched no FPGA image and loaded no weights. No performance result."
+  ],
+  "metrics": [],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-autonomous-v1",
+    "measurement_boundary": "Preflight only. No inference timing or energy window was opened.",
+    "quality_gate": "Exact diagnostics and outputs required. Not reached.",
+    "sha256": "a30def5c75968e4fc1837f97a1d2b66289fb4edc9fec482fa107951d612b33ff",
+    "tokenizer": "BOS plus two hexadecimal digit IDs per input UTF-8 byte. Output uses byte IDs and EOS.",
+    "warmup": "Three warm-up requests planned per arm. Not reached."
+  },
+  "quality": {
+    "evidence": "No inference took place.",
+    "passed": false
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "04c7100ca9d5ba9ddbd49fdc14bd85cefcc6381d",
+    "patch_sha256": null
+  },
+  "started_at": "2026-11-15T20:58:07.306329+00:00",
+  "status": "aborted",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-three-prompts-autonomous-pairs-v1",
+    "sha256": "ef9cc8d7435c45c1322ed86ff9e2d7abfb7d2130bec13a829a93b78c8890b4be"
+  }
+}

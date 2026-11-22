@@ -1,0 +1,13 @@
+{
+  "exact_board_counters": 108,
+  "findings_sha256": "f2d5b80dc24345c9b665e190a24461906ea37fb2200e4b1bedddc0c4b279b638",
+  "independent_archive": {
+    "files": 40,
+    "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-20261117T232821Z-e72da4-independent/manifest.json",
+    "sha256": "23bf49d6e539646f2e0e8ea25ee80da3c84c638a099dce0e2429af2ac12a3b39"
+  },
+  "original_accelerator_restored": true,
+  "passed": true,
+  "raw_manifest_sha256": "9dc2af79f8cea0495c63f48f3baa9eb76e3cda6ac350df8d6676afb6aa0ae1f1",
+  "run_sha256": "897f86341c09f680edfc4eac54e27281cfe1a39453540bd5d736fc12dd2aed67"
+}

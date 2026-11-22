@@ -1,0 +1,555 @@
+{
+  "artifacts": [
+    {
+      "bytes": 13979,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-qualification-20261115T182057Z-11c575/invocation.json",
+      "role": "Exact reviewed invocation",
+      "sha256": "912cdc0af81989f8f0b9b14ddfc1817f69516466bc32a6843cfa62c2a8271c2e"
+    },
+    {
+      "bytes": 6571,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-qualification-20261115T182057Z-11c575/kv260-observer-v1.md",
+      "role": "Frozen protocol",
+      "sha256": "7e81a34ccc1ebbc3b30b804d9710a7826080c2f8d92540091c522d0a1ffe1ddd"
+    },
+    {
+      "bytes": 2148,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-qualification-20261115T182057Z-11c575/assets.json",
+      "role": "Observer assets and helper-source pins",
+      "sha256": "38e4dc30da11db8fbe3cdf826fb58b16d24e5721f8b948a475f42f2d32bced95"
+    },
+    {
+      "bytes": 45481,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-qualification-20261115T182057Z-11c575/result.json",
+      "role": "Completed physical gate results",
+      "sha256": "becc26304df3e93852bfd31f16a0bc711377dc1fb4266f727b8b1370346e3c33"
+    },
+    {
+      "bytes": 36265,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-qualification-20261115T182057Z-11c575/evidence-manifest.json",
+      "role": "Sealed raw capture inventory",
+      "sha256": "49f7c84abade4f8c0be244c624bf68b15307aced0b39237bc6e6afeab27ce992"
+    },
+    {
+      "bytes": 104791,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-20261115T1735-preparation/resumed-build/source.patch",
+      "role": "Counter-source patch",
+      "sha256": "a064668b477e43e86054275281e515a5fb5ea707c98122bf679607ba3f64ba47"
+    },
+    {
+      "bytes": 4351,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-qualification-20261115T182057Z-11c575-audit/audit.json",
+      "role": "Independent UART, counter and energy audit",
+      "sha256": "e78400e2416903662d107480b654d57d3791f7a94e1f216e39c1a8dff83752c8"
+    },
+    {
+      "bytes": 5331,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-qualification-20261115T182057Z-11c575-audit/review-observer-physical.py",
+      "role": "Independent audit source",
+      "sha256": "70e63e9d5b2267e60a0452b8884248df59aca75267c2894957c70b9f485c3bd6"
+    }
+  ],
+  "completed_at": "2026-11-15T18:52:42.901864+00:00",
+  "conditions": {
+    "completed_reviewed_sequence": true,
+    "counter_acceptance": true,
+    "descriptive_timing_band": 0.02,
+    "final_counter_samples": [
+      {
+        "busy_ms": 949.29042,
+        "case": "encoded-max48",
+        "generation_ms": 1040.223594,
+        "overlapping_event_counters": [
+          201,
+          64320,
+          6242033,
+          0,
+          0,
+          1299264,
+          13065,
+          12066432,
+          1659657,
+          0,
+          1366505,
+          0
+        ],
+        "pair": 1,
+        "phase_cycles": [
+          6432,
+          6432,
+          201,
+          1404990,
+          201,
+          1344690,
+          201,
+          17188114,
+          201,
+          424512,
+          201,
+          1404990,
+          201,
+          13790610,
+          201,
+          1404990,
+          201,
+          10487153,
+          0
+        ],
+        "tokens": 201
+      },
+      {
+        "busy_ms": 564.05822,
+        "case": "encoded-fu2p2q",
+        "generation_ms": 630.635527,
+        "overlapping_event_counters": [
+          135,
+          43200,
+          4196133,
+          0,
+          0,
+          587520,
+          8775,
+          8104320,
+          1114695,
+          0,
+          812702,
+          0
+        ],
+        "pair": 2,
+        "phase_cycles": [
+          4320,
+          4320,
+          135,
+          943650,
+          135,
+          903150,
+          135,
+          7864288,
+          135,
+          285120,
+          135,
+          943650,
+          135,
+          9262350,
+          135,
+          943650,
+          135,
+          7047333,
+          0
+        ],
+        "tokens": 135
+      },
+      {
+        "busy_ms": 392.4332,
+        "case": "encoded-hello",
+        "generation_ms": 442.598297,
+        "overlapping_event_counters": [
+          101,
+          32320,
+          3134128,
+          0,
+          0,
+          329664,
+          6565,
+          6063232,
+          833957,
+          0,
+          567033,
+          0
+        ],
+        "pair": 3,
+        "phase_cycles": [
+          3232,
+          3232,
+          101,
+          705990,
+          101,
+          675690,
+          101,
+          4410558,
+          101,
+          213312,
+          101,
+          705990,
+          101,
+          6929610,
+          101,
+          705990,
+          101,
+          5267248,
+          0
+        ],
+        "tokens": 101
+      }
+    ],
+    "firmware_switches": 4,
+    "functional_acceptance": true,
+    "independent_pair_metrics": [
+      {
+        "change_percent": {
+          "generation_ms": -0.5189896987763176,
+          "gross_VCC_SOM_J_per_completion": -0.5559487508884464,
+          "output_bytes_per_s": 0.35493885652271295,
+          "verified_ms": -0.3536834963650204
+        },
+        "observer": {
+          "generation_ms": 4232.504741,
+          "gross_VCC_SOM_J_per_completion": 2.309477941310047,
+          "output_bytes_per_s": 144.48432080372336,
+          "verified_ms": 4374.177049
+        },
+        "pair": 1,
+        "stock": {
+          "generation_ms": 4254.585602,
+          "gross_VCC_SOM_J_per_completion": 2.3223892352542106,
+          "output_bytes_per_s": 143.97330360620552,
+          "verified_ms": 4389.702703
+        }
+      },
+      {
+        "change_percent": {
+          "generation_ms": -0.024215061813681604,
+          "gross_VCC_SOM_J_per_completion": 0.12865915573185838,
+          "output_bytes_per_s": 0.0644971271936523,
+          "verified_ms": -0.06445555521221724
+        },
+        "observer": {
+          "generation_ms": 4234.40029,
+          "gross_VCC_SOM_J_per_completion": 2.3113695772227927,
+          "output_bytes_per_s": 144.5309674914124,
+          "verified_ms": 4372.765304
+        },
+        "pair": 2,
+        "stock": {
+          "generation_ms": 4235.425901,
+          "gross_VCC_SOM_J_per_completion": 2.30839960977394,
+          "output_bytes_per_s": 144.4378092538622,
+          "verified_ms": 4375.585612
+        }
+      },
+      {
+        "change_percent": {
+          "generation_ms": -0.011549069154614955,
+          "gross_VCC_SOM_J_per_completion": -0.33728485981359135,
+          "output_bytes_per_s": -0.011270861804990595,
+          "verified_ms": 0.011272132271433755
+        },
+        "observer": {
+          "generation_ms": 4235.471221,
+          "gross_VCC_SOM_J_per_completion": 2.3090163766428526,
+          "output_bytes_per_s": 144.21591660185223,
+          "verified_ms": 4382.31795
+        },
+        "pair": 3,
+        "stock": {
+          "generation_ms": 4235.960435,
+          "gross_VCC_SOM_J_per_completion": 2.3168306958073246,
+          "output_bytes_per_s": 144.23217281072806,
+          "verified_ms": 4381.824025
+        }
+      }
+    ],
+    "mac_verified_gates": 14,
+    "original_restored": true,
+    "pairs": [
+      {
+        "pair": 1,
+        "relative_on_minus_off": {
+          "encoded-fu2p2q.median_first_ms": 0.00028762027553397296,
+          "encoded-fu2p2q.median_verified_ms": -4.956920303045287e-05,
+          "encoded-hello.median_first_ms": -0.0004249267623058772,
+          "encoded-hello.median_verified_ms": -0.022170094215654634,
+          "encoded-max48.median_first_ms": -2.3409548702946203e-05,
+          "encoded-max48.median_verified_ms": 0.002380690478680725,
+          "generation_total_ns": -0.005189896987763065,
+          "verified_output_bytes_per_s": 0.0035493885652271295
+        },
+        "vcc_som_midpoint": {
+          "observer": {
+            "gross_j_per_completion": 2.309477941310047,
+            "gross_j_per_output_byte": 0.021925423493449815,
+            "incremental_j_per_completion": 0.10334307106240963,
+            "incremental_j_per_output_byte": 0.0009811051050228762
+          },
+          "stock": {
+            "gross_j_per_completion": 2.3223892352542106,
+            "gross_j_per_output_byte": 0.02204799906886909,
+            "incremental_j_per_completion": 0.0993396429041035,
+            "incremental_j_per_output_byte": 0.0009430978756718687
+          }
+        },
+        "within_practical_band": false
+      },
+      {
+        "pair": 2,
+        "relative_on_minus_off": {
+          "encoded-fu2p2q.median_first_ms": -0.00030343767397755794,
+          "encoded-fu2p2q.median_verified_ms": -0.0007744678736119059,
+          "encoded-hello.median_first_ms": -0.0002154857332330451,
+          "encoded-hello.median_verified_ms": -0.001443411319237975,
+          "encoded-max48.median_first_ms": -8.576308933205823e-05,
+          "encoded-max48.median_verified_ms": -0.00010504699462687839,
+          "generation_total_ns": -0.00024215061813681604,
+          "verified_output_bytes_per_s": 0.000644971271936301
+        },
+        "vcc_som_midpoint": {
+          "observer": {
+            "gross_j_per_completion": 2.3113695772227927,
+            "gross_j_per_output_byte": 0.021943382062241702,
+            "incremental_j_per_completion": 0.1011112369714479,
+            "incremental_j_per_output_byte": 0.000959916806690961
+          },
+          "stock": {
+            "gross_j_per_completion": 2.30839960977394,
+            "gross_j_per_output_byte": 0.021915186168739935,
+            "incremental_j_per_completion": 0.09676215225081257,
+            "incremental_j_per_output_byte": 0.0009186280276975876
+          }
+        },
+        "within_practical_band": true
+      },
+      {
+        "pair": 3,
+        "relative_on_minus_off": {
+          "encoded-fu2p2q.median_first_ms": -0.0012623184346957084,
+          "encoded-fu2p2q.median_verified_ms": -0.0005535393798885568,
+          "encoded-hello.median_first_ms": 0.00047448682579354085,
+          "encoded-hello.median_verified_ms": 0.0009985752938634906,
+          "encoded-max48.median_first_ms": 0.00021521373269317579,
+          "encoded-max48.median_verified_ms": 0.000152692164758772,
+          "generation_total_ns": -0.00011549069154603853,
+          "verified_output_bytes_per_s": -0.00011270861804990595
+        },
+        "vcc_som_midpoint": {
+          "observer": {
+            "gross_j_per_completion": 2.3090163766428526,
+            "gross_j_per_output_byte": 0.02192104155040683,
+            "incremental_j_per_completion": 0.09936330823877793,
+            "incremental_j_per_output_byte": 0.0009433225465706765
+          },
+          "stock": {
+            "gross_j_per_completion": 2.3168306958073246,
+            "gross_j_per_output_byte": 0.02199522812475308,
+            "incremental_j_per_completion": 0.10250981758794382,
+            "incremental_j_per_output_byte": 0.0009731944707716186
+          }
+        },
+        "within_practical_band": true
+      }
+    ],
+    "power_missed_slots": 0,
+    "power_sample_count": 2100,
+    "scored_requests": 36,
+    "signed_score_comparisons": 2656960,
+    "smoke_requests": 3,
+    "source_capture": "Frozen packet independently pins host, board, sampler, firmware, reader and overlay files in addition to the counter source patch.",
+    "source_circuit_build": "observer-build-20261115T180508Z",
+    "timing_metrics_outside_band": [
+      {
+        "metric": "encoded-hello.median_verified_ms",
+        "pair": 1,
+        "relative_change": -0.022170094215654634
+      }
+    ],
+    "timing_neutrality": "not established",
+    "warmups": 18
+  },
+  "correctness": {
+    "evidence": "57 conditioned requests, 2,656,960 signed-score comparisons on the board. Mac re-decoded 14 UART gates and independently checked compact per-position reference receipts and counter invariants. Initial and final original BOS checks each matched 320 scores.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "comparison_firmware": {
+        "observer": "2a3559bc1cd39e627b35d72c8a55a4b49a06640f48ab23dab884429fa5af0390",
+        "stock": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0"
+      },
+      "dfx_service": "runtime inactive, boot enablement preserved",
+      "final_state": "Original firmware and original weights restored, 320 original BOS scores verified",
+      "firmware_name": "gradiated-tiny-50mhz.bit.bin",
+      "firmware_sha256": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0",
+      "fpga_manager_flags": 0,
+      "kernel_build": "#16-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 16 05:06:58 UTC 2025",
+      "kernel_release": "6.8.0-1015-xilinx",
+      "model": "ZynqMP KV260 revB",
+      "physical_unit": "KV260 USB bridge XFL1RXOM0IWQ",
+      "pl0_rate_source": "Linux clock framework",
+      "pl0_reported_hz": 50000000,
+      "reset_dt_id": 119,
+      "system_boot_id": "0e4cc12e-4532-4434-be89-665af09dba14",
+      "transformer_map": {
+        "base": 2684354560,
+        "bytes": 4096,
+        "device": "/dev/uio4"
+      },
+      "verified_state_sha256": "9c236b7a021a7e779f24ec00cda6590967fee3f81accbf531b5da7c7b6b735e8"
+    },
+    "configuration_sha256": "6094e1da5c0edbe9353e47fe22402476445cc415abe8d5c2934bdc5315a34f79",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-observer-v1",
+  "id": "observer-qualification-20261115T182057Z-11c575",
+  "implementation": {
+    "id": "kv260-original-versus-observer-v1",
+    "sha256": "38e4dc30da11db8fbe3cdf826fb58b16d24e5721f8b948a475f42f2d32bced95"
+  },
+  "limitations": [
+    "Research status is inconclusive for timing neutrality, despite complete functional acceptance and restoration.",
+    "The 2% screen is descriptive. One exceeded observation is not proof of a real observer effect, and remaining within the band is not a statistical equivalence test.",
+    "Three matched pairs in one physical boot. Two timed requests per prompt per arm. No confidence interval or cross-boot claim.",
+    "VCC_SOM module-rail energy only, not whole-board or FPGA-only energy. Sensor resolution and timing alignment limit sub-percent comparisons.",
+    "The Mac retains compact score receipts and references, not a download of every raw signed score.",
+    "Core busy includes score-transfer waiting. Event counters overlap phase totals. Zero extra cache bubbles do not mean free memory access.",
+    "Firmware identity was checked through pinned files, applied overlays and functional results. Configuration readback was not performed.",
+    "Artifacts are verified on the Mac. Shared backup remains pending. Broader step 4 experiments were not started."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Three matched six-request blocks, frozen prompts. Transfer, loading, switching and counter reads excluded. Energy is module rail only.",
+      "name": "stock.generation_ms",
+      "samples": [
+        4254.585602,
+        4235.425901,
+        4235.960435
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Three matched six-request blocks, frozen prompts. Transfer, loading, switching and counter reads excluded. Energy is module rail only.",
+      "name": "stock.verified_ms",
+      "samples": [
+        4389.702703,
+        4375.585612,
+        4381.824025
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Three matched six-request blocks, frozen prompts. Transfer, loading, switching and counter reads excluded. Energy is module rail only.",
+      "name": "stock.output_bytes_per_s",
+      "samples": [
+        143.97330360620552,
+        144.4378092538622,
+        144.23217281072806
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Three matched six-request blocks, frozen prompts. Transfer, loading, switching and counter reads excluded. Energy is module rail only.",
+      "name": "stock.gross_VCC_SOM_J_per_completion",
+      "samples": [
+        2.3223892352542106,
+        2.30839960977394,
+        2.3168306958073246
+      ],
+      "unit": "J/completion"
+    },
+    {
+      "kind": "observed",
+      "method": "Three matched six-request blocks, frozen prompts. Transfer, loading, switching and counter reads excluded. Energy is module rail only.",
+      "name": "observer.generation_ms",
+      "samples": [
+        4232.504741,
+        4234.40029,
+        4235.471221
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Three matched six-request blocks, frozen prompts. Transfer, loading, switching and counter reads excluded. Energy is module rail only.",
+      "name": "observer.verified_ms",
+      "samples": [
+        4374.177049,
+        4372.765304,
+        4382.31795
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Three matched six-request blocks, frozen prompts. Transfer, loading, switching and counter reads excluded. Energy is module rail only.",
+      "name": "observer.output_bytes_per_s",
+      "samples": [
+        144.48432080372336,
+        144.5309674914124,
+        144.21591660185223
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Three matched six-request blocks, frozen prompts. Transfer, loading, switching and counter reads excluded. Energy is module rail only.",
+      "name": "observer.gross_VCC_SOM_J_per_completion",
+      "samples": [
+        2.309477941310047,
+        2.3113695772227927,
+        2.3090163766428526
+      ],
+      "unit": "J/completion"
+    },
+    {
+      "kind": "derived",
+      "method": "One final-request snapshot after the complete power window, 50 MHz verified clock. Busy includes transfer waiting.",
+      "name": "encoded-max48.core_busy_ms",
+      "samples": [
+        949.29042
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "One final-request snapshot after the complete power window, 50 MHz verified clock. Busy includes transfer waiting.",
+      "name": "encoded-fu2p2q.core_busy_ms",
+      "samples": [
+        564.05822
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "One final-request snapshot after the complete power window, 50 MHz verified clock. Busy includes transfer waiting.",
+      "name": "encoded-hello.core_busy_ms",
+      "samples": [
+        392.4332
+      ],
+      "unit": "ms"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-observer-v1",
+    "measurement_boundary": "Board-side generation and verified request blocks with VCC_SOM logging. Counter reads occur after the complete 17.5 s window and sampler exit. Transfer, model loading and four firmware switches are outside measured inference.",
+    "quality_gate": "All exact score, completion, counter and restoration gates accepted. Full symmetric 2% timing screen exceeded.",
+    "sha256": "7e81a34ccc1ebbc3b30b804d9710a7826080c2f8d92540091c522d0a1ffe1ddd",
+    "tokenizer": "BOS plus two hexadecimal digit IDs per input UTF-8 byte. Output uses byte IDs and EOS.",
+    "warmup": "Three exact warm-up requests per arm, fresh resident session per arm. Original stock wrapper in both modes."
+  },
+  "quality": {
+    "evidence": "Frozen model, arithmetic, tokenizer and greedy decoding unchanged. Every completion exactly matched frozen references. No new model-quality evaluation.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "04c7100ca9d5ba9ddbd49fdc14bd85cefcc6381d",
+    "patch_sha256": "a064668b477e43e86054275281e515a5fb5ea707c98122bf679607ba3f64ba47"
+  },
+  "started_at": "2026-11-15T18:47:12.704886+00:00",
+  "status": "inconclusive",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-frozen-three-prompt-observer-pairs",
+    "sha256": "7e81a34ccc1ebbc3b30b804d9710a7826080c2f8d92540091c522d0a1ffe1ddd"
+  }
+}

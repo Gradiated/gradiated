@@ -1,0 +1,280 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1599,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-retry-health-20261116T223649Z-aborted/qualification/invocation.json",
+      "role": "Exact admitted read-only qualifier",
+      "sha256": "4d5c5150e95054f10deb1c2e0a23f77f107149755f86d95df11e0e84588da765"
+    },
+    {
+      "bytes": 107763,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-retry-health-20261116T223649Z-aborted/qualification/baseline.json",
+      "role": "Fresh stock configuration and kernel log",
+      "sha256": "9fb08c96a84aac61aed52f408ef8b7232204ad6c14aea433979874ac01798d9a"
+    },
+    {
+      "bytes": 323,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-retry-health-20261116T223649Z-aborted/qualification/verified.json",
+      "role": "Verified USB serial capture receipt",
+      "sha256": "3b7548261157522923d40aaa9b763b1a6f326c1194b57c930edf70c45a37e4ac"
+    },
+    {
+      "bytes": 24643,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-retry-health-20261116T223649Z-aborted/qualification/serial-frames.txt",
+      "role": "Fresh qualification serial transcript",
+      "sha256": "ce3591c06b7ef0261d8ad7a33840021af660508765507842846c857362f4142e"
+    },
+    {
+      "bytes": 977,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-retry-health-20261116T223649Z-aborted/blocked-retry.json",
+      "role": "Comparison with previous stock and failed notices gate",
+      "sha256": "6afcb6263bd964a88daa44bb3178802d9c2e43264d3487f3cce6209d4b06f735"
+    },
+    {
+      "bytes": 3234,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-retry-health-20261116T223649Z-aborted/transport-amendment/checks.json",
+      "role": "Twelve local framed transfer checks",
+      "sha256": "88a6ad26d6917c7f40ca7ff82f20ef602a54c78540a2743998320a62329f6a69"
+    },
+    {
+      "bytes": 3234,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-retry-health-20261116T223649Z-aborted/transport-amendment/independent-tests.json",
+      "role": "Independent execution of framed transfer tests",
+      "sha256": "88a6ad26d6917c7f40ca7ff82f20ef602a54c78540a2743998320a62329f6a69"
+    },
+    {
+      "bytes": 22013,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-retry-health-20261116T223649Z-aborted/transport-amendment/observer_host.py",
+      "role": "Reviewed diagnostic transfer amendment, never run on hardware",
+      "sha256": "18b72b971d68deb4db9bf77ba94bb3c245cf82c26eb7ba7e4acc7e4a2665db8b"
+    },
+    {
+      "bytes": 9923,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-retry-health-20261116T223649Z-aborted/transport-amendment/test_transport.py",
+      "role": "Local real-process runner test",
+      "sha256": "4d6049ac8fd7676891554dee3983a6c9fd592920cfaaf6bfc83cb2c61a113fdb"
+    },
+    {
+      "bytes": 1540,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-retry-health-20261116T223649Z-aborted/evidence-manifest.json",
+      "role": "Raw qualification and tested transport inventory",
+      "sha256": "677d7a749b268c0a36776ba7a143e1dcf5e485b908cfd563aa642dfb4ccd5efd"
+    },
+    {
+      "bytes": 12456,
+      "path": "hardware/research/inference/results/ff-exp-div-20261116T220204Z-8d31b7-transfer-aborted/run.json",
+      "role": "First transfer stop before programming",
+      "sha256": "cc5241f9493406dea6d013c47e41a5386f521b4caf673ea4325f915ba5b79113"
+    }
+  ],
+  "completed_at": "2026-11-16T22:36:49.280466+00:00",
+  "conditions": {
+    "board_dispatch": false,
+    "failure_class": "new_board_kernel_notices",
+    "matched_variants": [
+      "logits-8-lanes-v1",
+      "ff-exp-div-v1"
+    ],
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "cache_capacity": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "client_delivery": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "communication": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "completion_time": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "correctness": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "cross_device_comparison": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "cross_session": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "decode_tps": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "energy_per_answer": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "estimated_cost": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "idle_power": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "implementation_timing": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "long_stability": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "memory": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "model_quality": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "operating_conditions": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "output_counts": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "physical_area": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "power_validation": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "prefill": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "recovery": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "repeatability": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "resources": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "serving_load": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "stage_cycles": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "startup": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "sustained_throughput": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "token_gaps": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "tokens_per_joule": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "ttft": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      },
+      "workload_coverage": {
+        "reason": "Retry was stopped at read-only qualification before staging.",
+        "state": "not_measured"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "transport_staged": false
+  },
+  "correctness": {
+    "evidence": "Stock circuit checks passed. Two new kernel notices failed the health gate and ended the attempt.",
+    "passed": false
+  },
+  "device": {
+    "configuration": {
+      "clock_hz": 50000000,
+      "comparison_firmware": {
+        "candidate": "8c4d35ed79feae3e655b6db0aabdac1f9773e7662c3fad92701a60fc01de1a1b",
+        "control": "bdc134c65a151699d2ddd690b0ddc799cbd09edb688b8a7c4f0ecf7dd498c9e2"
+      },
+      "initial_state_sha256": "9fb08c96a84aac61aed52f408ef8b7232204ad6c14aea433979874ac01798d9a",
+      "phase": "Read-only preflight before retry assembly",
+      "system_boot_id": "305f2b01-e9fd-4461-8e6d-0cf91979d151"
+    },
+    "configuration_sha256": "d3f42e2ecbfeed231b57b7cb8e49f43dc460f355506440cf130237870a4977bd",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-ff-exp-div-v1",
+  "id": "ff-exp-div-retry-health-20261116T223649Z-aborted",
+  "implementation": {
+    "id": "kv260-ff-exp-div-v1",
+    "sha256": "65683b6231f1962af70b0aeb60e4746abf74570b9b1a757a1f04ae3e80cb09e9"
+  },
+  "limitations": [
+    "The UART input overrun and USB hub warning appeared between the two qualification captures. They do not conclusively establish what altered the first transfer payload.",
+    "The hardened staging code passed local emulation and was never run against the board."
+  ],
+  "metrics": [],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-ff-exp-div-v1",
+    "measurement_boundary": "Health check before retry staging",
+    "quality_gate": "Existing read-only stock state and kernel-notice qualification",
+    "sha256": "534db3c61e677180920f6feec3101be1e396144b187c358a8b77eb4433ff27b3",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Three exact requests per arm with loaded weights."
+  },
+  "quality": {
+    "evidence": "No circuit comparison, timed workload or energy sample was produced.",
+    "passed": false
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "52a3173b8e9b4378af59bdbd97e8deeb9e7e2d5ba1601002340fa94ebbf954e3"
+  },
+  "started_at": "2026-11-16T22:35:41.722094+00:00",
+  "status": "aborted",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-three-prompts-lanes-pairs-v1",
+    "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "parallel_module_sha256": "4642d059f8f7ce5e2e9206927f12413ad323708a7e836b45006e4a8798b6158a",
+  "arms": {
+    "2": "c9dacd9688b398d7ee4a7034e818fa4e77d1474557dd46b73bee8b401860ae7c",
+    "4": "b47ac0197e576fcfbc3397ce2e11e2b2df6d500efd92a1e4b404dfc86a12c56e"
+  }
+}

@@ -1,0 +1,4020 @@
+{
+  "artifacts": [
+    {
+      "bytes": 29739,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-mul-rtl-20261115T234330Z/source.patch",
+      "role": "Exact uncommitted experiment source patch",
+      "sha256": "e01b187d856aca2054980de3097248b9a16bcbf82a086b58ae92aa96a4a8489b"
+    },
+    {
+      "bytes": 27787,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-mul-rtl-20261115T234330Z/fixture-closure.json",
+      "role": "Exact generated sources, fixtures and independent scalar oracle",
+      "sha256": "80babae4c066a42ca0981a50d4854a1a0e06d2757c28116956c1c27424fb68be"
+    },
+    {
+      "bytes": 77093,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-mul-rtl-20261115T234330Z/profile-results.json",
+      "role": "Measured per-instance scalar cycle counts and request totals",
+      "sha256": "af82c6556748835e78816070e057ba3b45771d96eb2f5cb2beca631300a585da"
+    },
+    {
+      "bytes": 291,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-mul-rtl-20261115T234330Z/scalar-result.json",
+      "role": "Independent arithmetic test outcomes",
+      "sha256": "092bd5b6b295e564ea37be51b72576659312c8b2b3aedadcffdb047d02f38446"
+    },
+    {
+      "bytes": 14919398,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-mul-rtl-20261115T234330Z/simulation.tar.gz",
+      "role": "Reproducible simulation inputs, provenance and raw evidence",
+      "sha256": "36d82df2516a57022ddec0737d5a479f2a34c85874809adf03d1b0be87dfe3c7"
+    }
+  ],
+  "completed_at": "2026-11-15T23:43:30.716470+00:00",
+  "conditions": {
+    "cases": {
+      "bos-only-cap0": {
+        "candidate": {
+          "done": {
+            "busy": 11072,
+            "cycles": 87318,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 32,
+                  "max_a_bits": 23,
+                  "max_b_bits": 0,
+                  "products": 2
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 4096,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 256
+                },
+                "exp": {
+                  "cycles": 2048,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 128
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 1536,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 96
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 96,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 6
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 1536,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 96
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 96,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 6
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 1536,
+                  "max_a_bits": 41,
+                  "max_b_bits": 30,
+                  "products": 96
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 96,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 6
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 1
+          },
+          "prefix": {
+            "busy": 11072,
+            "cycles": 66196,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 32,
+                  "max_a_bits": 23,
+                  "max_b_bits": 0,
+                  "products": 2
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 4096,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 256
+                },
+                "exp": {
+                  "cycles": 2048,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 128
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 1536,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 96
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 96,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 6
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 1536,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 96
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 96,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 6
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 1536,
+                  "max_a_bits": 41,
+                  "max_b_bits": 30,
+                  "products": 96
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 96,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 6
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 1
+          }
+        },
+        "control": {
+          "done": {
+            "busy": 44288,
+            "cycles": 120534,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 128,
+                  "max_a_bits": 23,
+                  "max_b_bits": 0,
+                  "products": 2
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 16384,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 256
+                },
+                "exp": {
+                  "cycles": 8192,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 128
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 6144,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 96
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 384,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 6
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 6144,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 96
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 384,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 6
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 6144,
+                  "max_a_bits": 41,
+                  "max_b_bits": 30,
+                  "products": 96
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 384,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 6
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 1
+          },
+          "prefix": {
+            "busy": 44288,
+            "cycles": 99412,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 128,
+                  "max_a_bits": 23,
+                  "max_b_bits": 0,
+                  "products": 2
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 16384,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 256
+                },
+                "exp": {
+                  "cycles": 8192,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 128
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 6144,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 96
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 384,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 6
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 6144,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 96
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 384,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 6
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 6144,
+                  "max_a_bits": 41,
+                  "max_b_bits": 30,
+                  "products": 96
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 384,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 6
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 1
+          }
+        },
+        "outputs": 0,
+        "retained_scores": 320
+      },
+      "encoded-fu2p2q-cap255": {
+        "candidate": {
+          "done": {
+            "busy": 1780384,
+            "cycles": 18412444,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 289984,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 18124
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 552960,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 34560
+                },
+                "exp": {
+                  "cycles": 276480,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 17280
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 207360,
+                  "max_a_bits": 45,
+                  "max_b_bits": 30,
+                  "products": 12960
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 12960,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 810
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 207360,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 12960
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 12960,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 810
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 207360,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 12960
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 12960,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 810
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 135
+          },
+          "prefix": {
+            "busy": 146432,
+            "cycles": 920308,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 2912,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 182
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 53248,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 3328
+                },
+                "exp": {
+                  "cycles": 26624,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 1664
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 19968,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 1248
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1248,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 78
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 19968,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1248
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1248,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 78
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 19968,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1248
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1248,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 78
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 13
+          }
+        },
+        "control": {
+          "done": {
+            "busy": 7121536,
+            "cycles": 23753596,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 1159936,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 18124
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 2211840,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 34560
+                },
+                "exp": {
+                  "cycles": 1105920,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 17280
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 829440,
+                  "max_a_bits": 45,
+                  "max_b_bits": 30,
+                  "products": 12960
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 51840,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 810
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 829440,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 12960
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 51840,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 810
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 829440,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 12960
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 51840,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 810
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 135
+          },
+          "prefix": {
+            "busy": 585728,
+            "cycles": 1359604,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 11648,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 182
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 212992,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 3328
+                },
+                "exp": {
+                  "cycles": 106496,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 1664
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 79872,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 1248
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4992,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 78
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 79872,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1248
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4992,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 78
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 79872,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1248
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4992,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 78
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 13
+          }
+        },
+        "outputs": 122,
+        "retained_scores": 39360
+      },
+      "encoded-hello-cap0": {
+        "candidate": {
+          "done": {
+            "busy": 123552,
+            "cycles": 791418,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 2112,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 132
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 45056,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 2816
+                },
+                "exp": {
+                  "cycles": 22528,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 1408
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 16896,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1056,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 16896,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1056,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 16896,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1056,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          },
+          "prefix": {
+            "busy": 123552,
+            "cycles": 770296,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 2112,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 132
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 45056,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 2816
+                },
+                "exp": {
+                  "cycles": 22528,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 1408
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 16896,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1056,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 16896,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1056,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 16896,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1056,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          }
+        },
+        "control": {
+          "done": {
+            "busy": 494208,
+            "cycles": 1162074,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 8448,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 132
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 180224,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 2816
+                },
+                "exp": {
+                  "cycles": 90112,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 1408
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 67584,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4224,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 67584,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4224,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 67584,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4224,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          },
+          "prefix": {
+            "busy": 494208,
+            "cycles": 1140952,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 8448,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 132
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 180224,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 2816
+                },
+                "exp": {
+                  "cycles": 90112,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 1408
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 67584,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4224,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 67584,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4224,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 67584,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4224,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          }
+        },
+        "outputs": 0,
+        "retained_scores": 320
+      },
+      "encoded-hello-cap1": {
+        "candidate": {
+          "done": {
+            "busy": 123552,
+            "cycles": 791418,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 2112,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 132
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 45056,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 2816
+                },
+                "exp": {
+                  "cycles": 22528,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 1408
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 16896,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1056,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 16896,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1056,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 16896,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1056,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          },
+          "prefix": {
+            "busy": 123552,
+            "cycles": 770296,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 2112,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 132
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 45056,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 2816
+                },
+                "exp": {
+                  "cycles": 22528,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 1408
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 16896,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1056,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 16896,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1056,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 16896,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1056,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          }
+        },
+        "control": {
+          "done": {
+            "busy": 494208,
+            "cycles": 1162074,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 8448,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 132
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 180224,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 2816
+                },
+                "exp": {
+                  "cycles": 90112,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 1408
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 67584,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4224,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 67584,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4224,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 67584,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4224,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          },
+          "prefix": {
+            "busy": 494208,
+            "cycles": 1140952,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 8448,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 132
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 180224,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 2816
+                },
+                "exp": {
+                  "cycles": 90112,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 1408
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 67584,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4224,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 67584,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4224,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 67584,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4224,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          }
+        },
+        "outputs": 1,
+        "retained_scores": 320
+      },
+      "encoded-hello-cap255": {
+        "candidate": {
+          "done": {
+            "busy": 1277472,
+            "cycles": 12444108,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 162432,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 10152
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 413696,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 25856
+                },
+                "exp": {
+                  "cycles": 206848,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 12928
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 155136,
+                  "max_a_bits": 45,
+                  "max_b_bits": 30,
+                  "products": 9696
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 9696,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 606
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 155136,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 9696
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 9696,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 606
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 155136,
+                  "max_a_bits": 44,
+                  "max_b_bits": 30,
+                  "products": 9696
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 9696,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 606
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 101
+          },
+          "prefix": {
+            "busy": 123552,
+            "cycles": 770296,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 2112,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 132
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 45056,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 2816
+                },
+                "exp": {
+                  "cycles": 22528,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 1408
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 16896,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1056,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 16896,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1056,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 16896,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 1056,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          }
+        },
+        "control": {
+          "done": {
+            "busy": 5109888,
+            "cycles": 16276524,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 649728,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 10152
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 1654784,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 25856
+                },
+                "exp": {
+                  "cycles": 827392,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 12928
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 620544,
+                  "max_a_bits": 45,
+                  "max_b_bits": 30,
+                  "products": 9696
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 38784,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 606
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 620544,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 9696
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 38784,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 606
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 620544,
+                  "max_a_bits": 44,
+                  "max_b_bits": 30,
+                  "products": 9696
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 38784,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 606
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 101
+          },
+          "prefix": {
+            "busy": 494208,
+            "cycles": 1140952,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 8448,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 132
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 180224,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 2816
+                },
+                "exp": {
+                  "cycles": 90112,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 1408
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 67584,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4224,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 67584,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4224,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 67584,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 1056
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 4224,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 66
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          }
+        },
+        "outputs": 90,
+        "retained_scores": 29120
+      },
+      "encoded-max48-cap255": {
+        "candidate": {
+          "done": {
+            "busy": 2848480,
+            "cycles": 30649834,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 629440,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 39340
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 823296,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 51456
+                },
+                "exp": {
+                  "cycles": 411648,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 25728
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 308736,
+                  "max_a_bits": 45,
+                  "max_b_bits": 30,
+                  "products": 19296
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 19296,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1206
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 308736,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 19296
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 19296,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1206
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 308736,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 19296
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 19296,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1206
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 201
+          },
+          "prefix": {
+            "busy": 1222656,
+            "cycles": 9983324,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 151776,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 9486
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 397312,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 24832
+                },
+                "exp": {
+                  "cycles": 198656,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 12416
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 148992,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 9312
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 9312,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 582
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 148992,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 9312
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 9312,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 582
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 148992,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 9312
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 9312,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 582
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 97
+          }
+        },
+        "control": {
+          "done": {
+            "busy": 11393920,
+            "cycles": 39195274,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 2517760,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 39340
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 3293184,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 51456
+                },
+                "exp": {
+                  "cycles": 1646592,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 25728
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 1234944,
+                  "max_a_bits": 45,
+                  "max_b_bits": 30,
+                  "products": 19296
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 77184,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1206
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 1234944,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 19296
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 77184,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1206
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 1234944,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 19296
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 77184,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1206
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 201
+          },
+          "prefix": {
+            "busy": 4890624,
+            "cycles": 13651292,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 607104,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 9486
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 1589248,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 24832
+                },
+                "exp": {
+                  "cycles": 794624,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 12416
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 595968,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 9312
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 37248,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 582
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 595968,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 9312
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 37248,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 582
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 595968,
+                  "max_a_bits": 42,
+                  "max_b_bits": 30,
+                  "products": 9312
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 37248,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 582
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 97
+          }
+        },
+        "outputs": 104,
+        "retained_scores": 33600
+      },
+      "full-context-cap0": {
+        "candidate": {
+          "done": {
+            "busy": 3869600,
+            "cycles": 41845245,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 1043360,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 65210
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 1048576,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 65536
+                },
+                "exp": {
+                  "cycles": 524288,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 32768
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 393216,
+                  "max_a_bits": 45,
+                  "max_b_bits": 30,
+                  "products": 24576
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 24576,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1536
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 393216,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 24576
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 24576,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1536
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 393216,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 24576
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 24576,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1536
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 256
+          },
+          "prefix": {
+            "busy": 3869600,
+            "cycles": 41824123,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 1043360,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 65210
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 1048576,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 65536
+                },
+                "exp": {
+                  "cycles": 524288,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 32768
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 393216,
+                  "max_a_bits": 45,
+                  "max_b_bits": 30,
+                  "products": 24576
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 24576,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1536
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 393216,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 24576
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 24576,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1536
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 393216,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 24576
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 24576,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1536
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 256
+          }
+        },
+        "control": {
+          "done": {
+            "busy": 15478400,
+            "cycles": 53454045,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 4173440,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 65210
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 4194304,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 65536
+                },
+                "exp": {
+                  "cycles": 2097152,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 32768
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 1572864,
+                  "max_a_bits": 45,
+                  "max_b_bits": 30,
+                  "products": 24576
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 98304,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1536
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 1572864,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 24576
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 98304,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1536
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 1572864,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 24576
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 98304,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1536
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 256
+          },
+          "prefix": {
+            "busy": 15478400,
+            "cycles": 53432923,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "exp": {
+                  "cycles": 4173440,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 65210
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 4194304,
+                  "max_a_bits": 14,
+                  "max_b_bits": 31,
+                  "products": 65536
+                },
+                "exp": {
+                  "cycles": 2097152,
+                  "max_a_bits": 23,
+                  "max_b_bits": 16,
+                  "products": 32768
+                },
+                "rsqrt": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 1572864,
+                  "max_a_bits": 45,
+                  "max_b_bits": 30,
+                  "products": 24576
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 98304,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1536
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 1572864,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 24576
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 98304,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1536
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 1572864,
+                  "max_a_bits": 43,
+                  "max_b_bits": 30,
+                  "products": 24576
+                },
+                "exp": {
+                  "cycles": 0,
+                  "max_a_bits": 0,
+                  "max_b_bits": 0,
+                  "products": 0
+                },
+                "rsqrt": {
+                  "cycles": 98304,
+                  "max_a_bits": 32,
+                  "max_b_bits": 32,
+                  "products": 1536
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 256
+          }
+        },
+        "outputs": 0,
+        "retained_scores": 320
+      }
+    },
+    "effort": "Measured elapsed simulator phase from input extraction to final scalar result. Active developer time and AI cost unavailable.",
+    "local_multiply_step_cycles": {
+      "candidate": 16,
+      "control": 64
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "sources": [
+          "Exact signed score and complete cache tests in simulation archive",
+          "Independent scalar oracle, full-range products, and reset probes"
+        ],
+        "state": "measured"
+      },
+      "decode_tps": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "long_stability": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "sources": [
+          "Matched complete valid KV snapshots at both simulation boundaries"
+        ],
+        "state": "measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "sources": [
+          "profile-results.json and per-case simulation logs"
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "metric_names": [
+          "control.encoded-hello-cap255.pre_projection_input_rate",
+          "candidate.encoded-hello-cap255.pre_projection_input_rate",
+          "control.encoded-fu2p2q-cap255.pre_projection_input_rate",
+          "candidate.encoded-fu2p2q-cap255.pre_projection_input_rate",
+          "control.encoded-max48-cap255.pre_projection_input_rate",
+          "candidate.encoded-max48-cap255.pre_projection_input_rate",
+          "control.encoded-hello-cap0.pre_projection_input_rate",
+          "candidate.encoded-hello-cap0.pre_projection_input_rate",
+          "control.encoded-hello-cap1.pre_projection_input_rate",
+          "candidate.encoded-hello-cap1.pre_projection_input_rate",
+          "control.bos-only-cap0.pre_projection_input_rate",
+          "candidate.bos-only-cap0.pre_projection_input_rate",
+          "control.full-context-cap0.pre_projection_input_rate",
+          "candidate.full-context-cap0.pre_projection_input_rate"
+        ],
+        "state": "derived"
+      },
+      "repeatability": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "metric_names": [
+          "control.encoded-hello-cap255.pre_projection",
+          "control.encoded-hello-cap255.pre_projection_multiply",
+          "control.encoded-hello-cap255.completion",
+          "control.encoded-hello-cap255.completion_multiply",
+          "candidate.encoded-hello-cap255.pre_projection",
+          "candidate.encoded-hello-cap255.pre_projection_multiply",
+          "candidate.encoded-hello-cap255.completion",
+          "candidate.encoded-hello-cap255.completion_multiply",
+          "control.encoded-fu2p2q-cap255.pre_projection",
+          "control.encoded-fu2p2q-cap255.pre_projection_multiply",
+          "control.encoded-fu2p2q-cap255.completion",
+          "control.encoded-fu2p2q-cap255.completion_multiply",
+          "candidate.encoded-fu2p2q-cap255.pre_projection",
+          "candidate.encoded-fu2p2q-cap255.pre_projection_multiply",
+          "candidate.encoded-fu2p2q-cap255.completion",
+          "candidate.encoded-fu2p2q-cap255.completion_multiply",
+          "control.encoded-max48-cap255.pre_projection",
+          "control.encoded-max48-cap255.pre_projection_multiply",
+          "control.encoded-max48-cap255.completion",
+          "control.encoded-max48-cap255.completion_multiply",
+          "candidate.encoded-max48-cap255.pre_projection",
+          "candidate.encoded-max48-cap255.pre_projection_multiply",
+          "candidate.encoded-max48-cap255.completion",
+          "candidate.encoded-max48-cap255.completion_multiply",
+          "control.encoded-hello-cap0.pre_projection",
+          "control.encoded-hello-cap0.pre_projection_multiply",
+          "control.encoded-hello-cap0.completion",
+          "control.encoded-hello-cap0.completion_multiply",
+          "candidate.encoded-hello-cap0.pre_projection",
+          "candidate.encoded-hello-cap0.pre_projection_multiply",
+          "candidate.encoded-hello-cap0.completion",
+          "candidate.encoded-hello-cap0.completion_multiply",
+          "control.encoded-hello-cap1.pre_projection",
+          "control.encoded-hello-cap1.pre_projection_multiply",
+          "control.encoded-hello-cap1.completion",
+          "control.encoded-hello-cap1.completion_multiply",
+          "candidate.encoded-hello-cap1.pre_projection",
+          "candidate.encoded-hello-cap1.pre_projection_multiply",
+          "candidate.encoded-hello-cap1.completion",
+          "candidate.encoded-hello-cap1.completion_multiply",
+          "control.bos-only-cap0.pre_projection",
+          "control.bos-only-cap0.pre_projection_multiply",
+          "control.bos-only-cap0.completion",
+          "control.bos-only-cap0.completion_multiply",
+          "candidate.bos-only-cap0.pre_projection",
+          "candidate.bos-only-cap0.pre_projection_multiply",
+          "candidate.bos-only-cap0.completion",
+          "candidate.bos-only-cap0.completion_multiply",
+          "control.full-context-cap0.pre_projection",
+          "control.full-context-cap0.pre_projection_multiply",
+          "control.full-context-cap0.completion",
+          "control.full-context-cap0.completion_multiply",
+          "candidate.full-context-cap0.pre_projection",
+          "candidate.full-context-cap0.pre_projection_multiply",
+          "candidate.full-context-cap0.completion",
+          "candidate.full-context-cap0.completion_multiply"
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v1",
+    "physical_board_access": false,
+    "saved_cycles_per_product": 48,
+    "scalar_oracle": {
+      "latency_deltas": {
+        "op0_delta0": 323,
+        "op1_delta0": 263,
+        "op2_delta48": 1671,
+        "op3_delta0": 4,
+        "op3_delta48": 981,
+        "op4_delta0": 3,
+        "op4_delta288": 323
+      },
+      "oracle_requests": 3567,
+      "passed": true,
+      "reset_at_each_multiply_step": [
+        64,
+        16
+      ]
+    }
+  },
+  "correctness": {
+    "evidence": "103,360 retained scores per arm, exact KV snapshots, outputs, stops, AXI stalls, legacy/cross-request BOS checks, 3,567 mixed scalar oracle requests and each multiply reset offset.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 model",
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052"
+    },
+    "configuration_sha256": "0fc19997cba03c9989efd7af548c169fba9ee9940be850b4a6bffe60772f8ffe",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-scalar-mul-v1",
+  "id": "scalar-mul-rtl-20261115T234330Z",
+  "implementation": {
+    "id": "prefill-skip-v1-vs-scalar-mul-v1",
+    "sha256": "46220377267d0dada7e2dbc57a4e2a159e644b2ed5ceed1923df0528e2a87f8a"
+  },
+  "limitations": [
+    "Verilator cycle counts and input-rate estimates converted at 50 MHz. Routed implementation, physical time to first byte and energy require separate evidence.",
+    "Existing protocol omits earlier prompt projections. Both arms retain the same scores and processing positions."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "control.encoded-hello-cap255.pre_projection",
+      "samples": [
+        1140952
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "control.encoded-hello-cap255.pre_projection_multiply",
+      "samples": [
+        494208
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "control.encoded-hello-cap255.pre_projection_input_rate",
+      "samples": [
+        482.0535833234001
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "control.encoded-hello-cap255.completion",
+      "samples": [
+        16276524
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "control.encoded-hello-cap255.completion_multiply",
+      "samples": [
+        5109888
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "candidate.encoded-hello-cap255.pre_projection",
+      "samples": [
+        770296
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "candidate.encoded-hello-cap255.pre_projection_multiply",
+      "samples": [
+        123552
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "candidate.encoded-hello-cap255.pre_projection_input_rate",
+      "samples": [
+        714.0112372386719
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "candidate.encoded-hello-cap255.completion",
+      "samples": [
+        12444108
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "candidate.encoded-hello-cap255.completion_multiply",
+      "samples": [
+        1277472
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "control.encoded-fu2p2q-cap255.pre_projection",
+      "samples": [
+        1359604
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "control.encoded-fu2p2q-cap255.pre_projection_multiply",
+      "samples": [
+        585728
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "control.encoded-fu2p2q-cap255.pre_projection_input_rate",
+      "samples": [
+        478.0803822289431
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "control.encoded-fu2p2q-cap255.completion",
+      "samples": [
+        23753596
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "control.encoded-fu2p2q-cap255.completion_multiply",
+      "samples": [
+        7121536
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "candidate.encoded-fu2p2q-cap255.pre_projection",
+      "samples": [
+        920308
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "candidate.encoded-fu2p2q-cap255.pre_projection_multiply",
+      "samples": [
+        146432
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "candidate.encoded-fu2p2q-cap255.pre_projection_input_rate",
+      "samples": [
+        706.2852870995363
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "candidate.encoded-fu2p2q-cap255.completion",
+      "samples": [
+        18412444
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "candidate.encoded-fu2p2q-cap255.completion_multiply",
+      "samples": [
+        1780384
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "control.encoded-max48-cap255.pre_projection",
+      "samples": [
+        13651292
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "control.encoded-max48-cap255.pre_projection_multiply",
+      "samples": [
+        4890624
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "control.encoded-max48-cap255.pre_projection_input_rate",
+      "samples": [
+        355.2777275586809
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "control.encoded-max48-cap255.completion",
+      "samples": [
+        39195274
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "control.encoded-max48-cap255.completion_multiply",
+      "samples": [
+        11393920
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "candidate.encoded-max48-cap255.pre_projection",
+      "samples": [
+        9983324
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "candidate.encoded-max48-cap255.pre_projection_multiply",
+      "samples": [
+        1222656
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "candidate.encoded-max48-cap255.pre_projection_input_rate",
+      "samples": [
+        485.81013698443525
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "candidate.encoded-max48-cap255.completion",
+      "samples": [
+        30649834
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "candidate.encoded-max48-cap255.completion_multiply",
+      "samples": [
+        2848480
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "control.encoded-hello-cap0.pre_projection",
+      "samples": [
+        1140952
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "control.encoded-hello-cap0.pre_projection_multiply",
+      "samples": [
+        494208
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "control.encoded-hello-cap0.pre_projection_input_rate",
+      "samples": [
+        482.0535833234001
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "control.encoded-hello-cap0.completion",
+      "samples": [
+        1162074
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "control.encoded-hello-cap0.completion_multiply",
+      "samples": [
+        494208
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "candidate.encoded-hello-cap0.pre_projection",
+      "samples": [
+        770296
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "candidate.encoded-hello-cap0.pre_projection_multiply",
+      "samples": [
+        123552
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "candidate.encoded-hello-cap0.pre_projection_input_rate",
+      "samples": [
+        714.0112372386719
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "candidate.encoded-hello-cap0.completion",
+      "samples": [
+        791418
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "candidate.encoded-hello-cap0.completion_multiply",
+      "samples": [
+        123552
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "control.encoded-hello-cap1.pre_projection",
+      "samples": [
+        1140952
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "control.encoded-hello-cap1.pre_projection_multiply",
+      "samples": [
+        494208
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "control.encoded-hello-cap1.pre_projection_input_rate",
+      "samples": [
+        482.0535833234001
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "control.encoded-hello-cap1.completion",
+      "samples": [
+        1162074
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "control.encoded-hello-cap1.completion_multiply",
+      "samples": [
+        494208
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "candidate.encoded-hello-cap1.pre_projection",
+      "samples": [
+        770296
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "candidate.encoded-hello-cap1.pre_projection_multiply",
+      "samples": [
+        123552
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "candidate.encoded-hello-cap1.pre_projection_input_rate",
+      "samples": [
+        714.0112372386719
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "candidate.encoded-hello-cap1.completion",
+      "samples": [
+        791418
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "candidate.encoded-hello-cap1.completion_multiply",
+      "samples": [
+        123552
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "control.bos-only-cap0.pre_projection",
+      "samples": [
+        99412
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "control.bos-only-cap0.pre_projection_multiply",
+      "samples": [
+        44288
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "control.bos-only-cap0.pre_projection_input_rate",
+      "samples": [
+        502.9573894499658
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "control.bos-only-cap0.completion",
+      "samples": [
+        120534
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "control.bos-only-cap0.completion_multiply",
+      "samples": [
+        44288
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "candidate.bos-only-cap0.pre_projection",
+      "samples": [
+        66196
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "candidate.bos-only-cap0.pre_projection_multiply",
+      "samples": [
+        11072
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "candidate.bos-only-cap0.pre_projection_input_rate",
+      "samples": [
+        755.3326484983987
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "candidate.bos-only-cap0.completion",
+      "samples": [
+        87318
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "candidate.bos-only-cap0.completion_multiply",
+      "samples": [
+        11072
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "control.full-context-cap0.pre_projection",
+      "samples": [
+        53432923
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "control.full-context-cap0.pre_projection_multiply",
+      "samples": [
+        15478400
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "control.full-context-cap0.pre_projection_input_rate",
+      "samples": [
+        239.55268178010775
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "control.full-context-cap0.completion",
+      "samples": [
+        53454045
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "control.full-context-cap0.completion_multiply",
+      "samples": [
+        15478400
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "candidate.full-context-cap0.pre_projection",
+      "samples": [
+        41824123
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "candidate.full-context-cap0.pre_projection_multiply",
+      "samples": [
+        3869600
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "candidate.full-context-cap0.pre_projection_input_rate",
+      "samples": [
+        306.0434763927985
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "candidate.full-context-cap0.completion",
+      "samples": [
+        41845245
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of cycles with any scalar unit in MUL_STEP",
+      "name": "candidate.full-context-cap0.completion_multiply",
+      "samples": [
+        3869600
+      ],
+      "unit": "cycles"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-scalar-mul-v1-simulation",
+    "measurement_boundary": "Pure simulation cycles from first prompt acceptance to final prompt entry to LOGIT_START or exact terminal edge",
+    "quality_gate": "Exact retained signed scores, outputs, stops and every valid KV element at both boundaries",
+    "sha256": "21d34f22927a501068b9de2b5da385ae1be57f6126fb3e689cd13d354243de9e",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Frozen model and numerical rules unchanged over tested workloads",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "04c7100ca9d5ba9ddbd49fdc14bd85cefcc6381d",
+    "patch_sha256": "e01b187d856aca2054980de3097248b9a16bcbf82a086b58ae92aa96a4a8489b"
+  },
+  "started_at": "2026-11-15T23:40:43.134709+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-prefill-seven-simulation-cases-v1",
+    "sha256": "3f62feb2973db562f4559344dc92ec780a305ba74978c2c423978f7e3753e1c7"
+  }
+}

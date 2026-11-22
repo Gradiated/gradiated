@@ -1,0 +1,52 @@
+{
+  "model": "derived from experiment 5 RTL, same 50 MHz",
+  "projection_cycles": {
+    "one": 11200,
+    "two": 5760,
+    "four": 3040
+  },
+  "cases": {
+    "encoded-hello-cap255": {
+      "retained_projections": 91,
+      "control": 8665425,
+      "two": 8170385,
+      "four": 7922865
+    },
+    "encoded-fu2p2q-cap255": {
+      "retained_projections": 123,
+      "control": 12782317,
+      "two": 12113197,
+      "four": 11778637
+    },
+    "encoded-max48-cap255": {
+      "retained_projections": 105,
+      "control": 21481987,
+      "two": 20910787,
+      "four": 20625187
+    },
+    "encoded-hello-cap0": {
+      "retained_projections": 1,
+      "control": 589515,
+      "two": 584075,
+      "four": 581355
+    },
+    "encoded-hello-cap1": {
+      "retained_projections": 1,
+      "control": 589515,
+      "two": 584075,
+      "four": 581355
+    },
+    "bos-only-cap0": {
+      "retained_projections": 1,
+      "control": 61185,
+      "two": 55745,
+      "four": 53025
+    },
+    "full-context-cap0": {
+      "retained_projections": 1,
+      "control": 29644203,
+      "two": 29638763,
+      "four": 29636043
+    }
+  }
+}

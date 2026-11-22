@@ -1,0 +1,3029 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1346357,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/board-evidence.tar.gz",
+      "role": "raw",
+      "sha256": "b0e074622304b91e65ff2708d97c7baed38be68ef2502a36c076e5ae5fa661ed"
+    },
+    {
+      "bytes": 7980,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/invocation.json",
+      "role": "invocation",
+      "sha256": "40e7189dfaf325ee9b81882fb88fd65b94905613c10bad8ff864632e21628258"
+    },
+    {
+      "bytes": 111,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/dispatch.json",
+      "role": "dispatch",
+      "sha256": "f3e917045531fc84a48c884f9398b5b10ebeaf0305d2ba093d58aaced1855b78"
+    },
+    {
+      "bytes": 103,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/recovered.json",
+      "role": "recovery",
+      "sha256": "d77504ca3575c076bbd64f460626c33e78a2af1788e6a8fa1d79af6d832f3861"
+    },
+    {
+      "bytes": 52,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/evidence/outcome.json",
+      "role": "outcome",
+      "sha256": "90f1fbec9395e13dc14e0c6987ba8e80d2f32d9c5eb4f403d232d0a14d8aaedb"
+    },
+    {
+      "bytes": 96234,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/evidence/admission.state.json",
+      "role": "initial",
+      "sha256": "341b49143666ff11281e2c6d3cc3cd030842d96afd1c66cb50b5e5b5b300a9ee"
+    },
+    {
+      "bytes": 97484,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/evidence/restored.state.json",
+      "role": "restored",
+      "sha256": "fe582075e1297b5acda5889d3b66fc283c1f9ae4f34781683b364e01d3f92174"
+    },
+    {
+      "bytes": 3106,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/evidence/original-before.stdout",
+      "role": "original_bos_before",
+      "sha256": "8ca02e5d8cd874a2633c530c69968c1671dcb4df41012e4e958b7ebdaecdb00b"
+    },
+    {
+      "bytes": 3106,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/evidence/original-after.stdout",
+      "role": "original_bos_after",
+      "sha256": "8ca02e5d8cd874a2633c530c69968c1671dcb4df41012e4e958b7ebdaecdb00b"
+    },
+    {
+      "bytes": 257657,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/score.json",
+      "role": "score",
+      "sha256": "89d24da554b32f59df882855b2f1a54412725c62cb7d6db79814769257ff6c50"
+    },
+    {
+      "bytes": 1841,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/offline-acceptance.json",
+      "role": "build",
+      "sha256": "1a679030f7b28fe6cf47b3da0f8be33d7cf713f698f8585195b3d83f0fbdd887"
+    },
+    {
+      "bytes": 23086,
+      "path": "hardware/research/inference/results/output-projection-ddr4-build-20261118T225153Z/run.json",
+      "role": "build_record",
+      "sha256": "15c9c8c2e0c15ed658910cf696f70f398e01292402b038ea754fabf097cb3b32"
+    },
+    {
+      "bytes": 19225,
+      "path": "hardware/research/inference/results/output-projection-ddr4-20261118T231117Z-e79741/run.json",
+      "role": "aborted_attempt",
+      "sha256": "eede265ccb387b711a048c17c32bf751b45e942c4f0f0b7197e9d0b0f2884b92"
+    },
+    {
+      "bytes": 16851,
+      "path": "hardware/research/inference/results/output-projection-ddr4-rtl-20261118T225153Z/run.json",
+      "role": "rtl",
+      "sha256": "4ad8509ff42487c54309f29d72b2cd9fa90f1bb9a5450feb79c0befbe8d00e44"
+    },
+    {
+      "bytes": 19925,
+      "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+      "role": "memory",
+      "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+    },
+    {
+      "bytes": 1322,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/workload-ddr4.json",
+      "role": "workload",
+      "sha256": "7d58f45a2987b752bbace8b471ba816fe013bcd9c38c0cdc5164226f14bf170a"
+    },
+    {
+      "bytes": 2182,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-20261117T232821Z-e72da4/workload.json",
+      "role": "historic_workload",
+      "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+    },
+    {
+      "bytes": 4991,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-20261117T232821Z-e72da4/energy_analysis.py",
+      "role": "energy_analysis",
+      "sha256": "dad131ad151cb56203d1a4386a23b09a6adaba69c19c7aa0acaaa8f2fa670005"
+    },
+    {
+      "bytes": 21702,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-20261117T232821Z-e72da4/energy_validation.py",
+      "role": "energy_validation",
+      "sha256": "e7017ba540648151125a255ccc88209a969d4d3b9f5354ca59be98627e4594fd"
+    },
+    {
+      "bytes": 67591,
+      "path": "hardware/research/inference/results/attention-exp-pair-v2-20261117T232821Z-e72da4/run.json",
+      "role": "historic_records",
+      "sha256": "897f86341c09f680edfc4eac54e27281cfe1a39453540bd5d736fc12dd2aed67"
+    },
+    {
+      "bytes": 8727,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/scoring/protocol.md",
+      "role": "protocol",
+      "sha256": "bd7821b33b820648cfccd78f38da1a7fd9c6b2f6bfd0c1afe2736be50d5b9f2f"
+    },
+    {
+      "bytes": 12800,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/scoring/score_fixture.py",
+      "role": "analysis_source",
+      "sha256": "cbdb8558e704540d037ec5673f37042790791b88070cdab28d7c246ff0d8ddf0"
+    },
+    {
+      "bytes": 3556,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/scoring/measurement.py",
+      "role": "counter_validation",
+      "sha256": "95f938a87206cc5aa7181e044ef453ed605e804c04b791c678d7a6a62c466854"
+    },
+    {
+      "bytes": 2048,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/preparation/packet-inputs/matrix.bin",
+      "role": "matrix",
+      "sha256": "a470ed9570d1ebf01a5431fda805d02e0e11b88dcb0e06785e324bdd37c57e89"
+    },
+    {
+      "bytes": 450720,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/preparation/packet-inputs/kv260_ddr4_weights.ko",
+      "role": "module",
+      "sha256": "742731b489b6aadc9543e8177a4e374b83de6070f2b706194b092291e24f06f6"
+    },
+    {
+      "bytes": 33260,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/scoring/write_board_record.py",
+      "role": "record_source",
+      "sha256": "a8cedc00024e1bb373fe8d0bfd306f36d862a1e2c3b2166056640b0b8da608af"
+    },
+    {
+      "bytes": 190334,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/scoring/source.patch",
+      "role": "patch",
+      "sha256": "1d91166124b2fc1057cd93dd9932b0ebc85182dea63e4fe232754bdda454f7dd"
+    }
+  ],
+  "completed_at": "2026-11-18T23:36:22.293587+00:00",
+  "conditions": {
+    "adopted_control_resources": {
+      "bram_tile": {
+        "available": 144,
+        "percent": 27.083333333333332,
+        "used": 39.0
+      },
+      "dsp": {
+        "available": 1248,
+        "percent": 3.28525641025641,
+        "used": 41.0
+      },
+      "lut": {
+        "available": 117120,
+        "percent": 32.72626366120219,
+        "used": 38329.0
+      },
+      "register": {
+        "available": 234240,
+        "percent": 6.174863387978142,
+        "used": 14464.0
+      }
+    },
+    "board_setup_and_peripheral_checks": {
+      "p1-bram": {
+        "dma_base": "0x78406000",
+        "idle_context": 201,
+        "matrix_setup_ns": 537696,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 130632,
+          "after_read_ns": 446694,
+          "before_gap_ns": 220792,
+          "before_read_ns": 791068,
+          "transfers_delta": 0
+        }
+      },
+      "p1-ddr": {
+        "dma_base": "0x78445000",
+        "idle_context": 201,
+        "matrix_setup_ns": 520275,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 134681,
+          "after_read_ns": 449354,
+          "before_gap_ns": 187662,
+          "before_read_ns": 823188,
+          "transfers_delta": 0
+        }
+      },
+      "p2-bram": {
+        "dma_base": "0x78406000",
+        "idle_context": 135,
+        "matrix_setup_ns": 543486,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 126821,
+          "after_read_ns": 460435,
+          "before_gap_ns": 188632,
+          "before_read_ns": 825758,
+          "transfers_delta": 0
+        }
+      },
+      "p2-ddr": {
+        "dma_base": "0x78484000",
+        "idle_context": 135,
+        "matrix_setup_ns": 538455,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 134551,
+          "after_read_ns": 438425,
+          "before_gap_ns": 227813,
+          "before_read_ns": 785297,
+          "transfers_delta": 0
+        }
+      },
+      "p3-bram": {
+        "dma_base": "0x78406000",
+        "idle_context": 101,
+        "matrix_setup_ns": 524105,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 1022,
+          "after_gap_ns": 122371,
+          "after_read_ns": 463105,
+          "before_gap_ns": 195372,
+          "before_read_ns": 823249,
+          "transfers_delta": 0
+        }
+      },
+      "p3-ddr": {
+        "dma_base": "0x78485000",
+        "idle_context": 101,
+        "matrix_setup_ns": 507615,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 128271,
+          "after_read_ns": 446675,
+          "before_gap_ns": 197342,
+          "before_read_ns": 826379,
+          "transfers_delta": 0
+        }
+      }
+    },
+    "clock_observation": "Linux clock framework reported 50 MHz; no independent frequency measurement.",
+    "development_effort": {
+      "ai_usage_cost": null,
+      "engineering_attention_minutes": null
+    },
+    "energy_pairs_percent": {
+      "1": {
+        "active_power_w": 0.5329607756805022,
+        "energy_per_answer_by_alignment": {
+          "midpoint": 24.276530118046914,
+          "midpoint_minus_50ms": 24.273390936848372,
+          "midpoint_plus_50ms": 24.3396976975492,
+          "read_end": 24.27678880231925,
+          "read_start": 24.276274074044935
+        },
+        "energy_per_answer_j": 24.276530118046914,
+        "energy_per_token_j": 24.276530118046914,
+        "tokens_per_joule": -19.5342838225265
+      },
+      "2": {
+        "active_power_w": 0.5225564137832928,
+        "energy_per_answer_by_alignment": {
+          "midpoint": 24.253940798211882,
+          "midpoint_minus_50ms": 24.238480114376703,
+          "midpoint_plus_50ms": 24.31797942765803,
+          "read_end": 24.25383954886695,
+          "read_start": 24.25404263000388
+        },
+        "energy_per_answer_j": 24.253940798211882,
+        "energy_per_token_j": 24.253940798211904,
+        "tokens_per_joule": -19.519655185504536
+      },
+      "3": {
+        "active_power_w": 0.3156934144030288,
+        "energy_per_answer_by_alignment": {
+          "midpoint": 23.99327458585001,
+          "midpoint_minus_50ms": 24.062730228504225,
+          "midpoint_plus_50ms": 23.90778074764137,
+          "read_end": 23.992922554087205,
+          "read_start": 23.993627320263357
+        },
+        "energy_per_answer_j": 23.99327458585001,
+        "energy_per_token_j": 23.99327458585001,
+        "tokens_per_joule": -19.35046450381278
+      }
+    },
+    "experiment_schedule": [
+      "p1-bram",
+      "p1-ddr",
+      "p2-ddr",
+      "p2-bram",
+      "p3-bram",
+      "p3-ddr"
+    ],
+    "failures": 0,
+    "firmware_shared_between_modes": true,
+    "fixture_resources": {
+      "bram_tile": 39.0,
+      "dsp": 41.0,
+      "lut": 38860.0,
+      "register": 14850.0
+    },
+    "homogeneous_energy_pairs_percent": {
+      "encoded-fu2p2q": {
+        "1": {
+          "active_power_w": 0.18315315026684598,
+          "energy_per_answer_by_alignment": {
+            "midpoint": 24.922853848407534,
+            "midpoint_minus_50ms": 24.919066218456763,
+            "midpoint_plus_50ms": 24.93458457010671,
+            "read_end": 24.922953960303353,
+            "read_start": 24.922752215912226
+          },
+          "energy_per_answer_j": 24.922853848407534,
+          "energy_per_token_j": 24.922853848407534,
+          "tokens_per_joule": -19.95059597233596
+        },
+        "2": {
+          "active_power_w": 0.46326139922576726,
+          "energy_per_answer_by_alignment": {
+            "midpoint": 25.350463158716853,
+            "midpoint_minus_50ms": 25.352333126007576,
+            "midpoint_plus_50ms": 25.359264589645104,
+            "read_end": 25.35053371930964,
+            "read_start": 25.3503943401725
+          },
+          "energy_per_answer_j": 25.350463158716853,
+          "energy_per_token_j": 25.350463158716853,
+          "tokens_per_joule": -20.223669318731176
+        }
+      },
+      "encoded-hello": {
+        "1": {
+          "active_power_w": 0.5447726456334179,
+          "energy_per_answer_by_alignment": {
+            "midpoint": 27.51531618437251,
+            "midpoint_minus_50ms": 27.518655471551877,
+            "midpoint_plus_50ms": 27.52471424257459,
+            "read_end": 27.515301127700198,
+            "read_start": 27.5153340014195
+          },
+          "energy_per_answer_j": 27.51531618437251,
+          "energy_per_token_j": 27.51531618437251,
+          "tokens_per_joule": -21.5780480398045
+        },
+        "2": {
+          "active_power_w": 0.16337576649800845,
+          "energy_per_answer_by_alignment": {
+            "midpoint": 27.01195642087193,
+            "midpoint_minus_50ms": 27.01334675358318,
+            "midpoint_plus_50ms": 27.01964557774652,
+            "read_end": 27.01199726448,
+            "read_start": 27.01191455078831
+          },
+          "energy_per_answer_j": 27.01195642087193,
+          "energy_per_token_j": 27.011956420871954,
+          "tokens_per_joule": -21.267254817620497
+        }
+      },
+      "encoded-max48": {
+        "1": {
+          "active_power_w": 0.36603074800010127,
+          "energy_per_answer_by_alignment": {
+            "midpoint": 22.119073506014118,
+            "midpoint_minus_50ms": 22.02368078366741,
+            "midpoint_plus_50ms": 22.197146142061253,
+            "read_end": 22.119693596989443,
+            "read_start": 22.118450397659338
+          },
+          "energy_per_answer_j": 22.119073506014118,
+          "energy_per_token_j": 22.119073506014118,
+          "tokens_per_joule": -18.11270989123972
+        },
+        "2": {
+          "active_power_w": 0.589862688064291,
+          "energy_per_answer_by_alignment": {
+            "midpoint": 22.408200186064377,
+            "midpoint_minus_50ms": 22.442357818734138,
+            "midpoint_plus_50ms": 22.414679572562758,
+            "read_end": 22.408563667796933,
+            "read_start": 22.407838392374458
+          },
+          "energy_per_answer_j": 22.408200186064377,
+          "energy_per_token_j": 22.408200186064377,
+          "tokens_per_joule": -18.306126674522805
+        }
+      }
+    },
+    "homogeneous_energy_requests": 152,
+    "homogeneous_energy_schedule": [
+      "homogeneous-p1-encoded-hello-bram",
+      "homogeneous-p1-encoded-hello-ddr",
+      "homogeneous-p1-encoded-fu2p2q-ddr",
+      "homogeneous-p1-encoded-fu2p2q-bram",
+      "homogeneous-p1-encoded-max48-bram",
+      "homogeneous-p1-encoded-max48-ddr",
+      "homogeneous-p2-encoded-max48-ddr",
+      "homogeneous-p2-encoded-max48-bram",
+      "homogeneous-p2-encoded-fu2p2q-bram",
+      "homogeneous-p2-encoded-fu2p2q-ddr",
+      "homogeneous-p2-encoded-hello-ddr",
+      "homogeneous-p2-encoded-hello-bram"
+    ],
+    "homogeneous_energy_warmups": 12,
+    "matrix_bytes": 2048,
+    "matrix_sha256": "a470ed9570d1ebf01a5431fda805d02e0e11b88dcb0e06785e324bdd37c57e89",
+    "measurement_coverage": {
+      "active_power": {
+        "metrics": [
+          "bram.active_power_w",
+          "ddr.active_power_w",
+          "bram.homogeneous.encoded-hello.active_power_w",
+          "bram.homogeneous.encoded-fu2p2q.active_power_w",
+          "bram.homogeneous.encoded-max48.active_power_w",
+          "ddr.homogeneous.encoded-hello.active_power_w",
+          "ddr.homogeneous.encoded-fu2p2q.active_power_w",
+          "ddr.homogeneous.encoded-max48.active_power_w"
+        ],
+        "state": "derived"
+      },
+      "cache_capacity": {
+        "reason": "Same allocated 256-position KV cache.",
+        "sources": [
+          {
+            "bytes": 19925,
+            "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+            "role": "memory",
+            "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+          }
+        ],
+        "state": "reused"
+      },
+      "client_delivery": {
+        "reason": "Outside the fixed single-board circuit-comparison scope.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Outside the fixed single-board circuit-comparison scope.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "metrics": [
+          "bram.encoded-fu2p2q.completion_ms",
+          "bram.encoded-fu2p2q.verified_ms",
+          "bram.encoded-hello.completion_ms",
+          "bram.encoded-hello.verified_ms",
+          "bram.encoded-max48.completion_ms",
+          "bram.encoded-max48.verified_ms",
+          "ddr.encoded-fu2p2q.completion_ms",
+          "ddr.encoded-fu2p2q.verified_ms",
+          "ddr.encoded-hello.completion_ms",
+          "ddr.encoded-hello.verified_ms",
+          "ddr.encoded-max48.completion_ms",
+          "ddr.encoded-max48.verified_ms"
+        ],
+        "state": "derived"
+      },
+      "correctness": {
+        "sources": [
+          {
+            "bytes": 52,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/evidence/outcome.json",
+            "role": "outcome",
+            "sha256": "90f1fbec9395e13dc14e0c6987ba8e80d2f32d9c5eb4f403d232d0a14d8aaedb"
+          },
+          {
+            "bytes": 1346357,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/board-evidence.tar.gz",
+            "role": "raw",
+            "sha256": "b0e074622304b91e65ff2708d97c7baed38be68ef2502a36c076e5ae5fa661ed"
+          }
+        ],
+        "state": "measured"
+      },
+      "cross_device_comparison": {
+        "reason": "Outside the fixed single-board circuit-comparison scope.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Outside the fixed single-board circuit-comparison scope.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "metrics": [
+          "bram.encoded-fu2p2q.decode_tps",
+          "bram.encoded-hello.decode_tps",
+          "bram.encoded-max48.decode_tps",
+          "ddr.encoded-fu2p2q.decode_tps",
+          "ddr.encoded-hello.decode_tps",
+          "ddr.encoded-max48.decode_tps"
+        ],
+        "state": "derived"
+      },
+      "energy_per_answer": {
+        "metrics": [
+          "bram.energy_per_answer_j",
+          "bram.energy_per_token_j",
+          "bram.gross_j",
+          "ddr.energy_per_answer_j",
+          "ddr.energy_per_token_j",
+          "ddr.gross_j",
+          "bram.homogeneous.encoded-hello.energy_per_answer_j",
+          "bram.homogeneous.encoded-hello.energy_per_token_j",
+          "bram.homogeneous.encoded-hello.gross_j",
+          "bram.homogeneous.encoded-fu2p2q.energy_per_answer_j",
+          "bram.homogeneous.encoded-fu2p2q.energy_per_token_j",
+          "bram.homogeneous.encoded-fu2p2q.gross_j",
+          "bram.homogeneous.encoded-max48.energy_per_answer_j",
+          "bram.homogeneous.encoded-max48.energy_per_token_j",
+          "bram.homogeneous.encoded-max48.gross_j",
+          "ddr.homogeneous.encoded-hello.energy_per_answer_j",
+          "ddr.homogeneous.encoded-hello.energy_per_token_j",
+          "ddr.homogeneous.encoded-hello.gross_j",
+          "ddr.homogeneous.encoded-fu2p2q.energy_per_answer_j",
+          "ddr.homogeneous.encoded-fu2p2q.energy_per_token_j",
+          "ddr.homogeneous.encoded-fu2p2q.gross_j",
+          "ddr.homogeneous.encoded-max48.energy_per_answer_j",
+          "ddr.homogeneous.encoded-max48.energy_per_token_j",
+          "ddr.homogeneous.encoded-max48.gross_j"
+        ],
+        "reason": "Historical mixed blocks and independently measured homogeneous prompt blocks.",
+        "state": "derived"
+      },
+      "estimated_cost": {
+        "reason": "Outside the fixed single-board circuit-comparison scope.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "metrics": [
+          "bram.idle_power_w",
+          "ddr.idle_power_w",
+          "bram.homogeneous.encoded-hello.idle_power_w",
+          "bram.homogeneous.encoded-fu2p2q.idle_power_w",
+          "bram.homogeneous.encoded-max48.idle_power_w",
+          "ddr.homogeneous.encoded-hello.idle_power_w",
+          "ddr.homogeneous.encoded-fu2p2q.idle_power_w",
+          "ddr.homogeneous.encoded-max48.idle_power_w"
+        ],
+        "state": "derived"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Historical alignment sensitivity retained for audit. Primary figures are gross.",
+        "sources": [
+          {
+            "bytes": 257657,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/score.json",
+            "role": "score",
+            "sha256": "89d24da554b32f59df882855b2f1a54412725c62cb7d6db79814769257ff6c50"
+          }
+        ],
+        "state": "derived"
+      },
+      "implementation_timing": {
+        "sources": [
+          {
+            "bytes": 1841,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/offline-acceptance.json",
+            "role": "build",
+            "sha256": "1a679030f7b28fe6cf47b3da0f8be33d7cf713f698f8585195b3d83f0fbdd887"
+          }
+        ],
+        "state": "reused"
+      },
+      "long_stability": {
+        "reason": "Outside the fixed single-board circuit-comparison scope.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Routed fixture retains the existing BRAM bank and adds one host page for a 2 KiB matrix.",
+        "sources": [
+          {
+            "bytes": 1841,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/offline-acceptance.json",
+            "role": "build",
+            "sha256": "1a679030f7b28fe6cf47b3da0f8be33d7cf713f698f8585195b3d83f0fbdd887"
+          },
+          {
+            "bytes": 19925,
+            "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+            "role": "memory",
+            "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+          },
+          {
+            "bytes": 257657,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/score.json",
+            "role": "score",
+            "sha256": "89d24da554b32f59df882855b2f1a54412725c62cb7d6db79814769257ff6c50"
+          }
+        ],
+        "state": "reused"
+      },
+      "memory_bandwidth": {
+        "metrics": [
+          "bram.encoded-fu2p2q.reads",
+          "bram.encoded-fu2p2q.beats",
+          "bram.encoded-fu2p2q.axibytes",
+          "bram.encoded-fu2p2q.useful_bytes",
+          "bram.encoded-hello.reads",
+          "bram.encoded-hello.beats",
+          "bram.encoded-hello.axibytes",
+          "bram.encoded-hello.useful_bytes",
+          "bram.encoded-max48.reads",
+          "bram.encoded-max48.beats",
+          "bram.encoded-max48.axibytes",
+          "bram.encoded-max48.useful_bytes",
+          "ddr.encoded-fu2p2q.reads",
+          "ddr.encoded-fu2p2q.beats",
+          "ddr.encoded-fu2p2q.axibytes",
+          "ddr.encoded-fu2p2q.useful_bytes",
+          "ddr.encoded-hello.reads",
+          "ddr.encoded-hello.beats",
+          "ddr.encoded-hello.axibytes",
+          "ddr.encoded-hello.useful_bytes",
+          "ddr.encoded-max48.reads",
+          "ddr.encoded-max48.beats",
+          "ddr.encoded-max48.axibytes",
+          "ddr.encoded-max48.useful_bytes"
+        ],
+        "reason": "Accepted counts and derived interface bytes. DDR controller traffic was not measured.",
+        "state": "derived"
+      },
+      "model_quality": {
+        "reason": "Frozen arithmetic, weights and exact outputs.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Board clock framework reports 50 MHz. Thermal snapshots are retained with the arm evidence.",
+        "sources": [
+          {
+            "bytes": 1346357,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/board-evidence.tar.gz",
+            "role": "raw",
+            "sha256": "b0e074622304b91e65ff2708d97c7baed38be68ef2502a36c076e5ae5fa661ed"
+          }
+        ],
+        "state": "measured"
+      },
+      "output_counts": {
+        "sources": [
+          {
+            "bytes": 257657,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/score.json",
+            "role": "score",
+            "sha256": "89d24da554b32f59df882855b2f1a54412725c62cb7d6db79814769257ff6c50"
+          }
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "Outside the fixed single-board circuit-comparison scope.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "INA260 module measurement without independent calibration.",
+        "state": "not_measured"
+      },
+      "prefill": {
+        "reason": "TTFT and DDR wait placement measured without a separate prefill timer.",
+        "state": "not_measured"
+      },
+      "recovery": {
+        "sources": [
+          {
+            "bytes": 52,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/evidence/outcome.json",
+            "role": "outcome",
+            "sha256": "90f1fbec9395e13dc14e0c6987ba8e80d2f32d9c5eb4f403d232d0a14d8aaedb"
+          },
+          {
+            "bytes": 97484,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/evidence/restored.state.json",
+            "role": "restored",
+            "sha256": "fe582075e1297b5acda5889d3b66fc283c1f9ae4f34781683b364e01d3f92174"
+          }
+        ],
+        "state": "measured"
+      },
+      "repeatability": {
+        "sources": [
+          {
+            "bytes": 257657,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/score.json",
+            "role": "score",
+            "sha256": "89d24da554b32f59df882855b2f1a54412725c62cb7d6db79814769257ff6c50"
+          }
+        ],
+        "state": "measured"
+      },
+      "resources": {
+        "reason": "Both modes share this routed dual-storage fixture.",
+        "sources": [
+          {
+            "bytes": 1841,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/offline-acceptance.json",
+            "role": "build",
+            "sha256": "1a679030f7b28fe6cf47b3da0f8be33d7cf713f698f8585195b3d83f0fbdd887"
+          }
+        ],
+        "state": "reused"
+      },
+      "serving_load": {
+        "reason": "Outside the fixed single-board circuit-comparison scope.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "metrics": [
+          "bram.encoded-fu2p2q.first_clocks",
+          "bram.encoded-fu2p2q.last_clocks",
+          "bram.encoded-fu2p2q.request_clocks",
+          "bram.encoded-fu2p2q.faults",
+          "bram.encoded-fu2p2q.extra_clocks",
+          "bram.encoded-fu2p2q.ar_stalls",
+          "bram.encoded-fu2p2q.response_waits",
+          "bram.encoded-fu2p2q.projections",
+          "bram.encoded-fu2p2q.projection_clocks",
+          "bram.encoded-hello.first_clocks",
+          "bram.encoded-hello.last_clocks",
+          "bram.encoded-hello.request_clocks",
+          "bram.encoded-hello.faults",
+          "bram.encoded-hello.extra_clocks",
+          "bram.encoded-hello.ar_stalls",
+          "bram.encoded-hello.response_waits",
+          "bram.encoded-hello.projections",
+          "bram.encoded-hello.projection_clocks",
+          "bram.encoded-max48.first_clocks",
+          "bram.encoded-max48.last_clocks",
+          "bram.encoded-max48.request_clocks",
+          "bram.encoded-max48.faults",
+          "bram.encoded-max48.extra_clocks",
+          "bram.encoded-max48.ar_stalls",
+          "bram.encoded-max48.response_waits",
+          "bram.encoded-max48.projections",
+          "bram.encoded-max48.projection_clocks",
+          "ddr.encoded-fu2p2q.first_clocks",
+          "ddr.encoded-fu2p2q.last_clocks",
+          "ddr.encoded-fu2p2q.request_clocks",
+          "ddr.encoded-fu2p2q.faults",
+          "ddr.encoded-fu2p2q.extra_clocks",
+          "ddr.encoded-fu2p2q.ar_stalls",
+          "ddr.encoded-fu2p2q.response_waits",
+          "ddr.encoded-fu2p2q.projections",
+          "ddr.encoded-fu2p2q.projection_clocks",
+          "ddr.encoded-hello.first_clocks",
+          "ddr.encoded-hello.last_clocks",
+          "ddr.encoded-hello.request_clocks",
+          "ddr.encoded-hello.faults",
+          "ddr.encoded-hello.extra_clocks",
+          "ddr.encoded-hello.ar_stalls",
+          "ddr.encoded-hello.response_waits",
+          "ddr.encoded-hello.projections",
+          "ddr.encoded-hello.projection_clocks",
+          "ddr.encoded-max48.first_clocks",
+          "ddr.encoded-max48.last_clocks",
+          "ddr.encoded-max48.request_clocks",
+          "ddr.encoded-max48.faults",
+          "ddr.encoded-max48.extra_clocks",
+          "ddr.encoded-max48.ar_stalls",
+          "ddr.encoded-max48.response_waits",
+          "ddr.encoded-max48.projections",
+          "ddr.encoded-max48.projection_clocks"
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "metrics": [
+          "bram.matrix_setup_ms",
+          "ddr.matrix_setup_ms"
+        ],
+        "reason": "Separate matrix setup only. Cold startup was outside the timed comparison.",
+        "state": "derived"
+      },
+      "sustained_throughput": {
+        "reason": "Six-request window is a bounded mixed block.",
+        "state": "not_measured"
+      },
+      "token_gaps": {
+        "reason": "Raw individual byte timestamps retained.",
+        "sources": [
+          {
+            "bytes": 1346357,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/board-evidence.tar.gz",
+            "role": "raw",
+            "sha256": "b0e074622304b91e65ff2708d97c7baed38be68ef2502a36c076e5ae5fa661ed"
+          }
+        ],
+        "state": "measured"
+      },
+      "tokens_per_joule": {
+        "metrics": [
+          "bram.tokens_per_joule",
+          "ddr.tokens_per_joule",
+          "bram.homogeneous.encoded-hello.tokens_per_joule",
+          "bram.homogeneous.encoded-fu2p2q.tokens_per_joule",
+          "bram.homogeneous.encoded-max48.tokens_per_joule",
+          "ddr.homogeneous.encoded-hello.tokens_per_joule",
+          "ddr.homogeneous.encoded-fu2p2q.tokens_per_joule",
+          "ddr.homogeneous.encoded-max48.tokens_per_joule"
+        ],
+        "state": "derived"
+      },
+      "ttft": {
+        "metrics": [
+          "bram.encoded-fu2p2q.ttft_ms",
+          "bram.encoded-hello.ttft_ms",
+          "bram.encoded-max48.ttft_ms",
+          "ddr.encoded-fu2p2q.ttft_ms",
+          "ddr.encoded-hello.ttft_ms",
+          "ddr.encoded-max48.ttft_ms"
+        ],
+        "state": "derived"
+      },
+      "workload_coverage": {
+        "reason": "Same three fixed prompts, exact outputs, and block ordering as Experiment 13.",
+        "sources": [
+          {
+            "bytes": 1322,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T232351Z-c820f6/workload-ddr4.json",
+            "role": "workload",
+            "sha256": "7d58f45a2987b752bbace8b471ba816fe013bcd9c38c0cdc5164226f14bf170a"
+          },
+          {
+            "bytes": 2182,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-20261117T232821Z-e72da4/workload.json",
+            "role": "historic_workload",
+            "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+          }
+        ],
+        "state": "reused"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "original_restored": true,
+    "routed_timing": {
+      "clock": "clk_pl_0 period_ns 20.000",
+      "drc_errors_or_critical_warnings": "0",
+      "fully_placed": "1",
+      "fully_routed": "1",
+      "hold_slack_ns": "0.005",
+      "native_no_clock": "0",
+      "partially_routed_nets": "0",
+      "routing_errors": "0",
+      "routing_gap_nets": "0",
+      "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+      "setup_slack_ns": "4.521",
+      "unclocked_active_pins": "0",
+      "unconstrained_internal_endpoints": "0",
+      "unrouted_nets": "0",
+      "unused_ps_clock_outputs": "0"
+    },
+    "scored_requests": 36,
+    "temperature_brackets_c": {
+      "ams/temp1": {
+        "first": 26.283,
+        "last": 25.459,
+        "maximum_observed": 26.594,
+        "samples": 36
+      },
+      "ams/temp2": {
+        "first": 26.904,
+        "last": 25.677,
+        "maximum_observed": 26.998,
+        "samples": 36
+      },
+      "ams/temp3": {
+        "first": 24.511,
+        "last": 24.402,
+        "maximum_observed": 24.752,
+        "samples": 36
+      }
+    },
+    "timeouts": 0,
+    "timing_pairs_percent": {
+      "1": {
+        "encoded-fu2p2q": {
+          "completion_ms": 24.838962731161594,
+          "decode_tps": -19.449175777702333,
+          "request_clocks": 24.892399360810803,
+          "ttft_ms": 35.035759101967656
+        },
+        "encoded-hello": {
+          "completion_ms": 27.00549760232076,
+          "decode_tps": -20.83296309034909,
+          "request_clocks": 27.07455030847934,
+          "ttft_ms": 35.344025622543285
+        },
+        "encoded-max48": {
+          "completion_ms": 21.727224827458524,
+          "decode_tps": -15.261960836532795,
+          "request_clocks": 21.78044071738796,
+          "ttft_ms": 27.987402849221898
+        }
+      },
+      "2": {
+        "encoded-fu2p2q": {
+          "completion_ms": 24.8420898423388,
+          "decode_tps": -19.44268990527458,
+          "request_clocks": 24.883282419822095,
+          "ttft_ms": 35.33305564158131
+        },
+        "encoded-hello": {
+          "completion_ms": 26.958961127895176,
+          "decode_tps": -20.822738240093365,
+          "request_clocks": 27.058382607715004,
+          "ttft_ms": 34.86508014615233
+        },
+        "encoded-max48": {
+          "completion_ms": 21.731322744098126,
+          "decode_tps": -15.262162565194737,
+          "request_clocks": 21.781718548852137,
+          "ttft_ms": 28.00033553027197
+        }
+      },
+      "3": {
+        "encoded-fu2p2q": {
+          "completion_ms": 24.831789089950583,
+          "decode_tps": -19.445082882485142,
+          "request_clocks": 24.885897771198895,
+          "ttft_ms": 35.10513707915845
+        },
+        "encoded-hello": {
+          "completion_ms": 27.006784009920803,
+          "decode_tps": -20.831060137348732,
+          "request_clocks": 27.069387921765053,
+          "ttft_ms": 35.36910867342855
+        },
+        "encoded-max48": {
+          "completion_ms": 21.72645842180041,
+          "decode_tps": -15.255585299728548,
+          "request_clocks": 21.777259899989442,
+          "ttft_ms": 27.994481541048422
+        }
+      }
+    },
+    "warmups": 18
+  },
+  "correctness": {
+    "evidence": "Both smoke arms and all 18 warm-ups and 36 timed replies passed. Exact output bytes, stop reasons, context and projection counters were independently checked in the recovered logs.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "boot_id": "0c865b88-1cfa-45ba-881b-0b388013ceeb",
+      "final_taint": "12288",
+      "firmware_sha256": "798bb7742f22c2cf5d2a081ec7b7649c12760fe33f6c28502af3377e63113098",
+      "initial_state_sha256": "341b49143666ff11281e2c6d3cc3cd030842d96afd1c66cb50b5e5b5b300a9ee",
+      "initial_taint": "12288",
+      "kernel": [
+        "Linux",
+        "kria",
+        "6.8.0-1015-xilinx",
+        "#16-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 16 05:06:58 UTC 2025",
+        "aarch64"
+      ],
+      "model": "ZynqMP KV260 revB",
+      "pl0_configured_hz": 50000000,
+      "restored_firmware_name": "gradiated-tiny-50mhz.bit.bin",
+      "restored_state_sha256": "fe582075e1297b5acda5889d3b66fc283c1f9ae4f34781683b364e01d3f92174"
+    },
+    "configuration_sha256": "62add8c9b43c8b78321c7b1ae2f305f95373442c39cf9551bc1d78daa4ebc05d",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-output-projection-ddr4-v1",
+  "id": "output-projection-ddr4-20261118T232351Z-c820f6",
+  "implementation": {
+    "id": "kv260-output-projection-ddr4-v1",
+    "sha256": "798bb7742f22c2cf5d2a081ec7b7649c12760fe33f6c28502af3377e63113098"
+  },
+  "limitations": [
+    "Single KV260 and boot, fixed three-prompt workload with one request at a time.",
+    "Power covers gross VCC_SOM only. Mixed blocks include context clear, request gaps and result verification.",
+    "Off-module rail power and independent sensor calibration were not measured.",
+    "AXI beat counts measure bytes returned at the PL/PS interface. Actual DDR controller traffic is unavailable.",
+    "Both memory paths remain routed. Resource counts give the fixture cost.",
+    "The measured boot retained the expected unsigned out-of-tree module taint from the first attempt."
+  ],
+  "metrics": [
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through first output-byte observation.",
+      "name": "bram.encoded-fu2p2q.ttft_ms",
+      "samples": [
+        10.366394,
+        10.133981,
+        10.155222,
+        10.135862,
+        10.162741,
+        10.154972
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Count of useful output intervals from first to last observed byte, divided by elapsed seconds.",
+      "name": "bram.encoded-fu2p2q.decode_tps",
+      "samples": [
+        875.9040687278634,
+        875.9010252689338,
+        875.90153251062,
+        875.9024265255222,
+        875.9043223503955,
+        875.9024265255222
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through observed completion, before verification.",
+      "name": "bram.encoded-fu2p2q.completion_ms",
+      "samples": [
+        149.97021,
+        149.737897,
+        149.759478,
+        149.739938,
+        149.766708,
+        149.759048
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through exact reference verification.",
+      "name": "bram.encoded-fu2p2q.verified_ms",
+      "samples": [
+        150.643597,
+        150.319123,
+        150.346004,
+        150.298154,
+        150.358944,
+        150.340154
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock counter at first useful byte.",
+      "name": "bram.encoded-fu2p2q.first_clocks",
+      "samples": [
+        494945,
+        494945,
+        494945,
+        494945,
+        494945,
+        494945
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock counter at last useful byte.",
+      "name": "bram.encoded-fu2p2q.last_clocks",
+      "samples": [
+        7402040,
+        7402040,
+        7402040,
+        7402040,
+        7402040,
+        7402040
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Autonomous FPGA completion clock counter.",
+      "name": "bram.encoded-fu2p2q.request_clocks",
+      "samples": [
+        7475095,
+        7475095,
+        7475095,
+        7475095,
+        7475095,
+        7475095
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted AXI read addresses.",
+      "name": "bram.encoded-fu2p2q.reads",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "reads"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted aligned 64-bit AXI responses.",
+      "name": "bram.encoded-fu2p2q.beats",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "beats"
+    },
+    {
+      "kind": "derived",
+      "method": "Eight bytes per accepted 64-bit response on the PL/PS AXI interface.",
+      "name": "bram.encoded-fu2p2q.axibytes",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "bytes"
+    },
+    {
+      "kind": "observed",
+      "method": "Two bytes per accepted 16-bit projection coefficient.",
+      "name": "bram.encoded-fu2p2q.useful_bytes",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "bytes"
+    },
+    {
+      "kind": "observed",
+      "method": "Sticky DDR reader fault events.",
+      "name": "bram.encoded-fu2p2q.faults",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "faults"
+    },
+    {
+      "kind": "observed",
+      "method": "Clocks beyond the ordinary BRAM coefficient-capture edge.",
+      "name": "bram.encoded-fu2p2q.extra_clocks",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "ARVALID high while ARREADY low.",
+      "name": "bram.encoded-fu2p2q.ar_stalls",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "RREADY high while RVALID low.",
+      "name": "bram.encoded-fu2p2q.response_waits",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Output-projection circuit start counter.",
+      "name": "bram.encoded-fu2p2q.projections",
+      "samples": [
+        135,
+        135,
+        135,
+        135,
+        135,
+        135
+      ],
+      "unit": "invocations"
+    },
+    {
+      "kind": "observed",
+      "method": "Total output-projection circuit busy clocks.",
+      "name": "bram.encoded-fu2p2q.projection_clocks",
+      "samples": [
+        285120,
+        285120,
+        285120,
+        285120,
+        285120,
+        285120
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through first output-byte observation.",
+      "name": "bram.encoded-hello.ttft_ms",
+      "samples": [
+        8.571126,
+        8.558165,
+        8.801598,
+        8.553446,
+        8.568195,
+        8.588446
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Count of useful output intervals from first to last observed byte, divided by elapsed seconds.",
+      "name": "bram.encoded-hello.decode_tps",
+      "samples": [
+        954.3845676315669,
+        954.3831348361178,
+        954.3837488907835,
+        954.3806786253568,
+        954.3838512333047,
+        954.3872285488146
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through observed completion, before verification.",
+      "name": "bram.encoded-hello.completion_ms",
+      "samples": [
+        103.107421,
+        103.094471,
+        103.337784,
+        103.089551,
+        103.104061,
+        103.124411
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through exact reference verification.",
+      "name": "bram.encoded-hello.verified_ms",
+      "samples": [
+        103.624197,
+        103.607416,
+        103.97527,
+        103.607507,
+        103.635396,
+        103.613716
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock counter at first useful byte.",
+      "name": "bram.encoded-hello.first_clocks",
+      "samples": [
+        416191,
+        416191,
+        416191,
+        416191,
+        416191,
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock counter at last useful byte.",
+      "name": "bram.encoded-hello.last_clocks",
+      "samples": [
+        5078839,
+        5078839,
+        5078839,
+        5078839,
+        5078839,
+        5078839
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Autonomous FPGA completion clock counter.",
+      "name": "bram.encoded-hello.request_clocks",
+      "samples": [
+        5142970,
+        5142970,
+        5142970,
+        5142970,
+        5142970,
+        5142970
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted AXI read addresses.",
+      "name": "bram.encoded-hello.reads",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "reads"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted aligned 64-bit AXI responses.",
+      "name": "bram.encoded-hello.beats",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "beats"
+    },
+    {
+      "kind": "derived",
+      "method": "Eight bytes per accepted 64-bit response on the PL/PS AXI interface.",
+      "name": "bram.encoded-hello.axibytes",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "bytes"
+    },
+    {
+      "kind": "observed",
+      "method": "Two bytes per accepted 16-bit projection coefficient.",
+      "name": "bram.encoded-hello.useful_bytes",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "bytes"
+    },
+    {
+      "kind": "observed",
+      "method": "Sticky DDR reader fault events.",
+      "name": "bram.encoded-hello.faults",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "faults"
+    },
+    {
+      "kind": "observed",
+      "method": "Clocks beyond the ordinary BRAM coefficient-capture edge.",
+      "name": "bram.encoded-hello.extra_clocks",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "ARVALID high while ARREADY low.",
+      "name": "bram.encoded-hello.ar_stalls",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "RREADY high while RVALID low.",
+      "name": "bram.encoded-hello.response_waits",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Output-projection circuit start counter.",
+      "name": "bram.encoded-hello.projections",
+      "samples": [
+        101,
+        101,
+        101,
+        101,
+        101,
+        101
+      ],
+      "unit": "invocations"
+    },
+    {
+      "kind": "observed",
+      "method": "Total output-projection circuit busy clocks.",
+      "name": "bram.encoded-hello.projection_clocks",
+      "samples": [
+        213312,
+        213312,
+        213312,
+        213312,
+        213312,
+        213312
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through first output-byte observation.",
+      "name": "bram.encoded-max48.ttft_ms",
+      "samples": [
+        95.450765,
+        95.406044,
+        95.436855,
+        95.389444,
+        95.669336,
+        95.394874
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Count of useful output intervals from first to last observed byte, divided by elapsed seconds.",
+      "name": "bram.encoded-max48.decode_tps",
+      "samples": [
+        653.4433543310482,
+        653.4430226898827,
+        653.4419490039185,
+        653.4426910490538,
+        653.4440176143892,
+        653.4435242972761
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through observed completion, before verification.",
+      "name": "bram.encoded-max48.completion_ms",
+      "samples": [
+        254.88289,
+        254.838199,
+        254.869129,
+        254.821189,
+        255.101311,
+        254.826938
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through exact reference verification.",
+      "name": "bram.encoded-max48.verified_ms",
+      "samples": [
+        255.480486,
+        255.398064,
+        255.490755,
+        255.384194,
+        255.784418,
+        255.434464
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock counter at first useful byte.",
+      "name": "bram.encoded-max48.first_clocks",
+      "samples": [
+        4745325,
+        4745325,
+        4745325,
+        4745325,
+        4745325,
+        4745325
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock counter at last useful byte.",
+      "name": "bram.encoded-max48.last_clocks",
+      "samples": [
+        12626576,
+        12626576,
+        12626576,
+        12626576,
+        12626576,
+        12626576
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Autonomous FPGA completion clock counter.",
+      "name": "bram.encoded-max48.request_clocks",
+      "samples": [
+        12716857,
+        12716857,
+        12716857,
+        12716857,
+        12716857,
+        12716857
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted AXI read addresses.",
+      "name": "bram.encoded-max48.reads",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "reads"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted aligned 64-bit AXI responses.",
+      "name": "bram.encoded-max48.beats",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "beats"
+    },
+    {
+      "kind": "derived",
+      "method": "Eight bytes per accepted 64-bit response on the PL/PS AXI interface.",
+      "name": "bram.encoded-max48.axibytes",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "bytes"
+    },
+    {
+      "kind": "observed",
+      "method": "Two bytes per accepted 16-bit projection coefficient.",
+      "name": "bram.encoded-max48.useful_bytes",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "bytes"
+    },
+    {
+      "kind": "observed",
+      "method": "Sticky DDR reader fault events.",
+      "name": "bram.encoded-max48.faults",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "faults"
+    },
+    {
+      "kind": "observed",
+      "method": "Clocks beyond the ordinary BRAM coefficient-capture edge.",
+      "name": "bram.encoded-max48.extra_clocks",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "ARVALID high while ARREADY low.",
+      "name": "bram.encoded-max48.ar_stalls",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "RREADY high while RVALID low.",
+      "name": "bram.encoded-max48.response_waits",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Output-projection circuit start counter.",
+      "name": "bram.encoded-max48.projections",
+      "samples": [
+        201,
+        201,
+        201,
+        201,
+        201,
+        201
+      ],
+      "unit": "invocations"
+    },
+    {
+      "kind": "observed",
+      "method": "Total output-projection circuit busy clocks.",
+      "name": "bram.encoded-max48.projection_clocks",
+      "samples": [
+        424512,
+        424512,
+        424512,
+        424512,
+        424512,
+        424512
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned integrated gross VCC_SOM energy divided by measured block duration.",
+      "name": "bram.active_power_w",
+      "samples": [
+        3.122141361893762,
+        3.121366859635841,
+        3.1252554303545956
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Matched ready-idle VCC_SOM power. Two settled 2 s windows per block.",
+      "name": "bram.idle_power_w",
+      "samples": [
+        3.0302506667892417,
+        3.0353608500897202,
+        3.028249581432819,
+        3.03045687320286,
+        3.0409952021485585,
+        3.0403001417010564
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per verified answer in the measured block.",
+      "name": "bram.energy_per_answer_j",
+      "samples": [
+        0.5308372629086535,
+        0.5307229398807146,
+        0.5314537195948078
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per useful output byte in the measured block.",
+      "name": "bram.energy_per_token_j",
+      "samples": [
+        0.005039594268120128,
+        0.0050385089229181765,
+        0.005045446705013998
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes divided by midpoint-aligned gross VCC_SOM energy.",
+      "name": "bram.tokens_per_joule",
+      "samples": [
+        198.42867238854538,
+        198.4714159086624,
+        198.19850619098466
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned trapezoidal VCC_SOM integral over the full measured block.",
+      "name": "bram.gross_j",
+      "samples": [
+        3.185023577451921,
+        3.1843376392842875,
+        3.1887223175688466
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Private DMA allocation, CPU upload and idle mode selection, before warm-ups.",
+      "name": "bram.matrix_setup_ms",
+      "samples": [
+        0.537696,
+        0.543486,
+        0.524105
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through first output-byte observation.",
+      "name": "ddr.encoded-fu2p2q.ttft_ms",
+      "samples": [
+        13.950529,
+        13.732308,
+        13.745297,
+        13.715247,
+        13.749357,
+        13.700917
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Count of useful output intervals from first to last observed byte, divided by elapsed seconds.",
+      "name": "ddr.encoded-fu2p2q.decode_tps",
+      "samples": [
+        705.5292549279877,
+        705.564187054629,
+        705.6745065840744,
+        705.5316409483474,
+        705.6083354154125,
+        705.5581392006148
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through observed completion, before verification.",
+      "name": "ddr.encoded-fu2p2q.completion_ms",
+      "samples": [
+        187.188772,
+        186.96372,
+        186.94841,
+        186.95292,
+        186.97141,
+        186.93195
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through exact reference verification.",
+      "name": "ddr.encoded-fu2p2q.verified_ms",
+      "samples": [
+        187.900579,
+        187.540306,
+        187.528555,
+        187.537606,
+        187.571616,
+        187.529386
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock counter at first useful byte.",
+      "name": "ddr.encoded-fu2p2q.first_clocks",
+      "samples": [
+        674357,
+        673973,
+        674440,
+        673951,
+        674128,
+        674042
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock counter at last useful byte.",
+      "name": "ddr.encoded-fu2p2q.last_clocks",
+      "samples": [
+        9249396,
+        9248582,
+        9247714,
+        9248963,
+        9248218,
+        9248728
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Autonomous FPGA completion clock counter.",
+      "name": "ddr.encoded-fu2p2q.request_clocks",
+      "samples": [
+        9336189,
+        9335462,
+        9334520,
+        9335768,
+        9335158,
+        9335521
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted AXI read addresses.",
+      "name": "ddr.encoded-fu2p2q.reads",
+      "samples": [
+        138240,
+        138240,
+        138240,
+        138240,
+        138240,
+        138240
+      ],
+      "unit": "reads"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted aligned 64-bit AXI responses.",
+      "name": "ddr.encoded-fu2p2q.beats",
+      "samples": [
+        138240,
+        138240,
+        138240,
+        138240,
+        138240,
+        138240
+      ],
+      "unit": "beats"
+    },
+    {
+      "kind": "derived",
+      "method": "Eight bytes per accepted 64-bit response on the PL/PS AXI interface.",
+      "name": "ddr.encoded-fu2p2q.axibytes",
+      "samples": [
+        1105920,
+        1105920,
+        1105920,
+        1105920,
+        1105920,
+        1105920
+      ],
+      "unit": "bytes"
+    },
+    {
+      "kind": "observed",
+      "method": "Two bytes per accepted 16-bit projection coefficient.",
+      "name": "ddr.encoded-fu2p2q.useful_bytes",
+      "samples": [
+        276480,
+        276480,
+        276480,
+        276480,
+        276480,
+        276480
+      ],
+      "unit": "bytes"
+    },
+    {
+      "kind": "observed",
+      "method": "Sticky DDR reader fault events.",
+      "name": "ddr.encoded-fu2p2q.faults",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "faults"
+    },
+    {
+      "kind": "observed",
+      "method": "Clocks beyond the ordinary BRAM coefficient-capture edge.",
+      "name": "ddr.encoded-fu2p2q.extra_clocks",
+      "samples": [
+        1861094,
+        1860367,
+        1859425,
+        1860673,
+        1860063,
+        1860426
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "ARVALID high while ARREADY low.",
+      "name": "ddr.encoded-fu2p2q.ar_stalls",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "RREADY high while RVALID low.",
+      "name": "ddr.encoded-fu2p2q.response_waits",
+      "samples": [
+        1584614,
+        1583887,
+        1582945,
+        1584193,
+        1583583,
+        1583946
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Output-projection circuit start counter.",
+      "name": "ddr.encoded-fu2p2q.projections",
+      "samples": [
+        135,
+        135,
+        135,
+        135,
+        135,
+        135
+      ],
+      "unit": "invocations"
+    },
+    {
+      "kind": "observed",
+      "method": "Total output-projection circuit busy clocks.",
+      "name": "ddr.encoded-fu2p2q.projection_clocks",
+      "samples": [
+        2146214,
+        2145487,
+        2144545,
+        2145793,
+        2145183,
+        2145546
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through first output-byte observation.",
+      "name": "ddr.encoded-hello.ttft_ms",
+      "samples": [
+        11.606506,
+        11.576966,
+        11.814408,
+        11.591486,
+        11.629106,
+        11.595686
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Count of useful output intervals from first to last observed byte, divided by elapsed seconds.",
+      "name": "ddr.encoded-hello.decode_tps",
+      "samples": [
+        755.5995572967663,
+        755.5152742353214,
+        755.6662786843915,
+        755.6411284700463,
+        755.5502936807013,
+        755.6035345876838
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through observed completion, before verification.",
+      "name": "ddr.encoded-hello.completion_ms",
+      "samples": [
+        130.951,
+        130.936739,
+        131.148521,
+        130.929479,
+        130.98426,
+        130.93989
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through exact reference verification.",
+      "name": "ddr.encoded-hello.verified_ms",
+      "samples": [
+        131.495335,
+        131.438504,
+        131.764668,
+        131.428704,
+        131.511895,
+        131.435795
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock counter at first useful byte.",
+      "name": "ddr.encoded-hello.first_clocks",
+      "samples": [
+        568016,
+        567671,
+        567851,
+        567662,
+        567573,
+        567832
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock counter at last useful byte.",
+      "name": "ddr.encoded-hello.last_clocks",
+      "samples": [
+        6457323,
+        6457646,
+        6456740,
+        6456659,
+        6457257,
+        6457108
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Autonomous FPGA completion clock counter.",
+      "name": "ddr.encoded-hello.request_clocks",
+      "samples": [
+        6535199,
+        6535613,
+        6534617,
+        6534532,
+        6535281,
+        6535000
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted AXI read addresses.",
+      "name": "ddr.encoded-hello.reads",
+      "samples": [
+        103424,
+        103424,
+        103424,
+        103424,
+        103424,
+        103424
+      ],
+      "unit": "reads"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted aligned 64-bit AXI responses.",
+      "name": "ddr.encoded-hello.beats",
+      "samples": [
+        103424,
+        103424,
+        103424,
+        103424,
+        103424,
+        103424
+      ],
+      "unit": "beats"
+    },
+    {
+      "kind": "derived",
+      "method": "Eight bytes per accepted 64-bit response on the PL/PS AXI interface.",
+      "name": "ddr.encoded-hello.axibytes",
+      "samples": [
+        827392,
+        827392,
+        827392,
+        827392,
+        827392,
+        827392
+      ],
+      "unit": "bytes"
+    },
+    {
+      "kind": "observed",
+      "method": "Two bytes per accepted 16-bit projection coefficient.",
+      "name": "ddr.encoded-hello.useful_bytes",
+      "samples": [
+        206848,
+        206848,
+        206848,
+        206848,
+        206848,
+        206848
+      ],
+      "unit": "bytes"
+    },
+    {
+      "kind": "observed",
+      "method": "Sticky DDR reader fault events.",
+      "name": "ddr.encoded-hello.faults",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "faults"
+    },
+    {
+      "kind": "observed",
+      "method": "Clocks beyond the ordinary BRAM coefficient-capture edge.",
+      "name": "ddr.encoded-hello.extra_clocks",
+      "samples": [
+        1392229,
+        1392643,
+        1391647,
+        1391562,
+        1392311,
+        1392030
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "ARVALID high while ARREADY low.",
+      "name": "ddr.encoded-hello.ar_stalls",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "RREADY high while RVALID low.",
+      "name": "ddr.encoded-hello.response_waits",
+      "samples": [
+        1185381,
+        1185795,
+        1184799,
+        1184714,
+        1185463,
+        1185182
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Output-projection circuit start counter.",
+      "name": "ddr.encoded-hello.projections",
+      "samples": [
+        101,
+        101,
+        101,
+        101,
+        101,
+        101
+      ],
+      "unit": "invocations"
+    },
+    {
+      "kind": "observed",
+      "method": "Total output-projection circuit busy clocks.",
+      "name": "ddr.encoded-hello.projection_clocks",
+      "samples": [
+        1605541,
+        1605955,
+        1604959,
+        1604874,
+        1605623,
+        1605342
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through first output-byte observation.",
+      "name": "ddr.encoded-max48.ttft_ms",
+      "samples": [
+        122.129642,
+        122.143031,
+        122.149051,
+        122.109252,
+        122.404934,
+        122.146711
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Count of useful output intervals from first to last observed byte, divided by elapsed seconds.",
+      "name": "ddr.encoded-max48.decode_tps",
+      "samples": [
+        553.7284904705477,
+        553.7013995114665,
+        553.7043760831942,
+        553.7214056653334,
+        553.782138450696,
+        553.7320597331094
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through observed completion, before verification.",
+      "name": "ddr.encoded-max48.completion_ms",
+      "samples": [
+        310.225083,
+        310.244253,
+        310.249163,
+        310.203603,
+        310.479025,
+        310.238573
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission through exact reference verification.",
+      "name": "ddr.encoded-max48.verified_ms",
+      "samples": [
+        310.813789,
+        310.827089,
+        310.863049,
+        310.760359,
+        311.160792,
+        310.809198
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock counter at first useful byte.",
+      "name": "ddr.encoded-max48.first_clocks",
+      "samples": [
+        6081491,
+        6082098,
+        6082271,
+        6081765,
+        6081872,
+        6082466
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock counter at last useful byte.",
+      "name": "ddr.encoded-max48.last_clocks",
+      "samples": [
+        15381994,
+        15383059,
+        15383172,
+        15382386,
+        15381473,
+        15382895
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Autonomous FPGA completion clock counter.",
+      "name": "ddr.encoded-max48.request_clocks",
+      "samples": [
+        15486199,
+        15487090,
+        15487200,
+        15486414,
+        15485495,
+        15486985
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted AXI read addresses.",
+      "name": "ddr.encoded-max48.reads",
+      "samples": [
+        205824,
+        205824,
+        205824,
+        205824,
+        205824,
+        205824
+      ],
+      "unit": "reads"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted aligned 64-bit AXI responses.",
+      "name": "ddr.encoded-max48.beats",
+      "samples": [
+        205824,
+        205824,
+        205824,
+        205824,
+        205824,
+        205824
+      ],
+      "unit": "beats"
+    },
+    {
+      "kind": "derived",
+      "method": "Eight bytes per accepted 64-bit response on the PL/PS AXI interface.",
+      "name": "ddr.encoded-max48.axibytes",
+      "samples": [
+        1646592,
+        1646592,
+        1646592,
+        1646592,
+        1646592,
+        1646592
+      ],
+      "unit": "bytes"
+    },
+    {
+      "kind": "observed",
+      "method": "Two bytes per accepted 16-bit projection coefficient.",
+      "name": "ddr.encoded-max48.useful_bytes",
+      "samples": [
+        411648,
+        411648,
+        411648,
+        411648,
+        411648,
+        411648
+      ],
+      "unit": "bytes"
+    },
+    {
+      "kind": "observed",
+      "method": "Sticky DDR reader fault events.",
+      "name": "ddr.encoded-max48.faults",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "faults"
+    },
+    {
+      "kind": "observed",
+      "method": "Clocks beyond the ordinary BRAM coefficient-capture edge.",
+      "name": "ddr.encoded-max48.extra_clocks",
+      "samples": [
+        2769342,
+        2770233,
+        2770343,
+        2769557,
+        2768638,
+        2770128
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "ARVALID high while ARREADY low.",
+      "name": "ddr.encoded-max48.ar_stalls",
+      "samples": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "RREADY high while RVALID low.",
+      "name": "ddr.encoded-max48.response_waits",
+      "samples": [
+        2357694,
+        2358585,
+        2358695,
+        2357909,
+        2356990,
+        2358480
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Output-projection circuit start counter.",
+      "name": "ddr.encoded-max48.projections",
+      "samples": [
+        201,
+        201,
+        201,
+        201,
+        201,
+        201
+      ],
+      "unit": "invocations"
+    },
+    {
+      "kind": "observed",
+      "method": "Total output-projection circuit busy clocks.",
+      "name": "ddr.encoded-max48.projection_clocks",
+      "samples": [
+        3193854,
+        3194745,
+        3194855,
+        3194069,
+        3193150,
+        3194640
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned integrated gross VCC_SOM energy divided by measured block duration.",
+      "name": "ddr.active_power_w",
+      "samples": [
+        3.138781150713953,
+        3.137677762358574,
+        3.1351216559314983
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Matched ready-idle VCC_SOM power. Two settled 2 s windows per block.",
+      "name": "ddr.idle_power_w",
+      "samples": [
+        3.04237616683317,
+        3.033492827642595,
+        3.03262359551442,
+        3.031823205767037,
+        3.0560049013238033,
+        3.0294284848919113
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per verified answer in the measured block.",
+      "name": "ddr.energy_per_answer_j",
+      "samples": [
+        0.6597061309164887,
+        0.6594441675219128,
+        0.6589668698339034
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per useful output byte in the measured block.",
+      "name": "ddr.energy_per_token_j",
+      "samples": [
+        0.006263032888447677,
+        0.006260545894195375,
+        0.0062560145870307286
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes divided by midpoint-aligned gross VCC_SOM energy.",
+      "name": "ddr.tokens_per_joule",
+      "samples": [
+        159.66705233889564,
+        159.7304798815029,
+        159.846174603411
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned trapezoidal VCC_SOM integral over the full measured block.",
+      "name": "ddr.gross_j",
+      "samples": [
+        3.958236785498932,
+        3.956665005131477,
+        3.9538012190034206
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Private DMA allocation, CPU upload and idle mode selection, before warm-ups.",
+      "name": "ddr.matrix_setup_ms",
+      "samples": [
+        0.520275,
+        0.538455,
+        0.507615
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned integrated gross VCC_SOM energy divided by measured block duration.",
+      "name": "bram.homogeneous.encoded-hello.active_power_w",
+      "samples": [
+        3.128763530534673,
+        3.1363131306576557
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Matched ready-idle VCC_SOM power. Two settled 2 s windows per block.",
+      "name": "bram.homogeneous.encoded-hello.idle_power_w",
+      "samples": [
+        3.0308742569468565,
+        3.0342312860415013,
+        3.0311241289649997,
+        3.0287500845950004
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per verified answer in the measured block.",
+      "name": "bram.homogeneous.encoded-hello.energy_per_answer_j",
+      "samples": [
+        0.32473272857884505,
+        0.32553736685144785
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per useful output byte in the measured block.",
+      "name": "bram.homogeneous.encoded-hello.energy_per_token_j",
+      "samples": [
+        0.0036081414286538343,
+        0.0036170818539049757
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes divided by midpoint-aligned gross VCC_SOM energy.",
+      "name": "bram.homogeneous.encoded-hello.tokens_per_joule",
+      "samples": [
+        277.15099858851465,
+        276.46595802647016
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned trapezoidal VCC_SOM integral over the full measured block.",
+      "name": "bram.homogeneous.encoded-hello.gross_j",
+      "samples": [
+        5.845189114419211,
+        5.859672603326061
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned integrated gross VCC_SOM energy divided by measured block duration.",
+      "name": "bram.homogeneous.encoded-fu2p2q.active_power_w",
+      "samples": [
+        3.1343095593811485,
+        3.127078488995151
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Matched ready-idle VCC_SOM power. Two settled 2 s windows per block.",
+      "name": "bram.homogeneous.encoded-fu2p2q.idle_power_w",
+      "samples": [
+        3.028000732581459,
+        3.033911283246077,
+        3.0297531152282504,
+        3.034254615174391
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per verified answer in the measured block.",
+      "name": "bram.homogeneous.encoded-fu2p2q.energy_per_answer_j",
+      "samples": [
+        0.4719724468731003,
+        0.4707004708828937
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per useful output byte in the measured block.",
+      "name": "bram.homogeneous.encoded-fu2p2q.energy_per_token_j",
+      "samples": [
+        0.003868626613713937,
+        0.003858200581007325
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes divided by midpoint-aligned gross VCC_SOM energy.",
+      "name": "bram.homogeneous.encoded-fu2p2q.tokens_per_joule",
+      "samples": [
+        258.4896656749165,
+        259.1881834559553
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned trapezoidal VCC_SOM integral over the full measured block.",
+      "name": "bram.homogeneous.encoded-fu2p2q.gross_j",
+      "samples": [
+        5.663669362477203,
+        5.648405650594724
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned integrated gross VCC_SOM energy divided by measured block duration.",
+      "name": "bram.homogeneous.encoded-max48.active_power_w",
+      "samples": [
+        3.125757483674483,
+        3.124200243376103
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Matched ready-idle VCC_SOM power. Two settled 2 s windows per block.",
+      "name": "bram.homogeneous.encoded-max48.idle_power_w",
+      "samples": [
+        3.0371263336706646,
+        3.0368960434472805,
+        3.0312527422099604,
+        3.0459026416502564
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per verified answer in the measured block.",
+      "name": "bram.homogeneous.encoded-max48.energy_per_answer_j",
+      "samples": [
+        0.7991379396070791,
+        0.7987499701205288
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per useful output byte in the measured block.",
+      "name": "bram.homogeneous.encoded-max48.energy_per_token_j",
+      "samples": [
+        0.007684018650068069,
+        0.0076802881742358544
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes divided by midpoint-aligned gross VCC_SOM energy.",
+      "name": "bram.homogeneous.encoded-max48.tokens_per_joule",
+      "samples": [
+        130.14023592864933,
+        130.20344775012228
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned trapezoidal VCC_SOM integral over the full measured block.",
+      "name": "bram.homogeneous.encoded-max48.gross_j",
+      "samples": [
+        6.393103516856633,
+        6.389999760964231
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned integrated gross VCC_SOM energy divided by measured block duration.",
+      "name": "ddr.homogeneous.encoded-hello.active_power_w",
+      "samples": [
+        3.1458081783955802,
+        3.1414371062746453
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Matched ready-idle VCC_SOM power. Two settled 2 s windows per block.",
+      "name": "ddr.homogeneous.encoded-hello.idle_power_w",
+      "samples": [
+        3.031250786147942,
+        3.0332509151825,
+        3.03262360084204,
+        3.029520361162607
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per verified answer in the measured block.",
+      "name": "ddr.homogeneous.encoded-hello.energy_per_answer_j",
+      "samples": [
+        0.41408396560145444,
+        0.41347137851901494
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per useful output byte in the measured block.",
+      "name": "ddr.homogeneous.encoded-hello.energy_per_token_j",
+      "samples": [
+        0.004600932951127272,
+        0.004594126427989055
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes divided by midpoint-aligned gross VCC_SOM energy.",
+      "name": "ddr.homogeneous.encoded-hello.tokens_per_joule",
+      "samples": [
+        217.34722297028708,
+        217.66923824900502
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned trapezoidal VCC_SOM integral over the full measured block.",
+      "name": "ddr.homogeneous.encoded-hello.gross_j",
+      "samples": [
+        7.45351138082618,
+        7.442484813342269
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned integrated gross VCC_SOM energy divided by measured block duration.",
+      "name": "ddr.homogeneous.encoded-fu2p2q.active_power_w",
+      "samples": [
+        3.14005014607827,
+        3.141565036558158
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Matched ready-idle VCC_SOM power. Two settled 2 s windows per block.",
+      "name": "ddr.homogeneous.encoded-fu2p2q.idle_power_w",
+      "samples": [
+        3.03788410458336,
+        3.0311054842125,
+        3.033627422123085,
+        3.0310028008901595
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per verified answer in the measured block.",
+      "name": "ddr.homogeneous.encoded-fu2p2q.energy_per_answer_j",
+      "samples": [
+        0.589601450012036,
+        0.5900252203419684
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per useful output byte in the measured block.",
+      "name": "ddr.homogeneous.encoded-fu2p2q.energy_per_token_j",
+      "samples": [
+        0.004832798770590459,
+        0.004836272297884987
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes divided by midpoint-aligned gross VCC_SOM energy.",
+      "name": "ddr.homogeneous.encoded-fu2p2q.tokens_per_joule",
+      "samples": [
+        206.91943684587193,
+        206.7708223205966
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned trapezoidal VCC_SOM integral over the full measured block.",
+      "name": "ddr.homogeneous.encoded-fu2p2q.gross_j",
+      "samples": [
+        7.075217400144432,
+        7.08030264410362
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned integrated gross VCC_SOM energy divided by measured block duration.",
+      "name": "ddr.homogeneous.encoded-max48.active_power_w",
+      "samples": [
+        3.1371987171726454,
+        3.1426287349121926
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Matched ready-idle VCC_SOM power. Two settled 2 s windows per block.",
+      "name": "ddr.homogeneous.encoded-max48.idle_power_w",
+      "samples": [
+        3.0280001492639785,
+        3.0390306681657653,
+        3.0286258535141863,
+        3.0303299074337975
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per verified answer in the measured block.",
+      "name": "ddr.homogeneous.encoded-max48.energy_per_answer_j",
+      "samples": [
+        0.9758998478832157,
+        0.9777354624112664
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned gross VCC_SOM energy per useful output byte in the measured block.",
+      "name": "ddr.homogeneous.encoded-max48.energy_per_token_j",
+      "samples": [
+        0.00938365238349246,
+        0.009401302523185254
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes divided by midpoint-aligned gross VCC_SOM energy.",
+      "name": "ddr.homogeneous.encoded-max48.tokens_per_joule",
+      "samples": [
+        106.56831254311815,
+        106.36823967038879
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Midpoint-aligned trapezoidal VCC_SOM integral over the full measured block.",
+      "name": "ddr.homogeneous.encoded-max48.gross_j",
+      "samples": [
+        7.807198783065726,
+        7.821883699290131
+      ],
+      "unit": "J"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-output-projection-ddr4-v1",
+    "measurement_boundary": "Board CPU admission to useful byte and completion observations, and gross VCC_SOM over each verified six-reply block. Matrix setup and warm-ups outside timed blocks.",
+    "quality_gate": "Exact compact reference completions and causally reconciled weight-read counters.",
+    "sha256": "bd7821b33b820648cfccd78f38da1a7fd9c6b2f6bfd0c1afe2736be50d5b9f2f",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Three exact requests per arm with loaded weights."
+  },
+  "quality": {
+    "evidence": "Exact results for the frozen three-prompt workload and unchanged arithmetic.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "1d91166124b2fc1057cd93dd9932b0ebc85182dea63e4fe232754bdda454f7dd"
+  },
+  "started_at": "2026-11-18T23:25:32.464095+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-output-projection-ddr4-matched-v1",
+    "sha256": "7d58f45a2987b752bbace8b471ba816fe013bcd9c38c0cdc5164226f14bf170a"
+  }
+}

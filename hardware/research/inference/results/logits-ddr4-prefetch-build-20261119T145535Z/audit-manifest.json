@@ -1,0 +1,173 @@
+{
+  "archive_members": 389,
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/ddr-primitives.tsv": {
+      "bytes": 155705,
+      "role": "Serialized Routed memory primitives for score staging and on-chip embeddings",
+      "sha256": "2a08976397534a35027369cb48da73842fb63a53fed96076d3a299822102c382"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/ddr-routed-hp0.tsv": {
+      "bytes": 46904,
+      "role": "Serialized Native read-only HP0 pin and clock trace",
+      "sha256": "a8043392de8180c266096131b41db31f0c5c282440e93297ce8f9482738c79e0"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/metrics.txt": {
+      "bytes": 380,
+      "role": "Serialized Routed timing, design rule, placement and routing metrics",
+      "sha256": "076a19e7edd25d6a2817a6194051193ad84c0ef070c23ec5a290bed3d19045f8"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/utilization-hierarchical.rpt": {
+      "bytes": 11067,
+      "role": "Serialized FPGA, accelerator, logits and reader hierarchies",
+      "sha256": "966ef8695f3f13612e1c0c114503ad241c5b9176ba095429f208b35b145e557b"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/route/route.dcp": {
+      "bytes": 24528860,
+      "role": "Pinned serialized routed checkpoint",
+      "sha256": "70281d404d0abbb157a74392a904f1b62f7a3d4f0b9120c50919f9c03256db64"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/kv260-ddr4-afi-restore.dtbo": {
+      "bytes": 310,
+      "role": "Serialized verified deployment asset",
+      "sha256": "c747e2487a5ead29c8a764fa679dc4f67bba9ac9073a1e518f4faaaeab7e751a"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/kv260-ddr4-interface.dtbo": {
+      "bytes": 778,
+      "role": "Serialized verified deployment asset",
+      "sha256": "a910db9f4de4a1c5571d5720aac058234d5460a8844060d0530916df065c3d03"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/kv260-logits-ddr4-burst-program.dtbo": {
+      "bytes": 367,
+      "role": "Serialized verified deployment asset",
+      "sha256": "2d39847224d8592ca1f80e7752dbff545ae9fb329e1e7a51cb193da0fa856400"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/kv260-logits-ddr4-dma-direct.dtbo": {
+      "bytes": 416,
+      "role": "Serialized verified deployment asset",
+      "sha256": "e28f3734ce5afd5461d39beb6f02c383fbe5390a826b02f7827164a98b8881ed"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/offline-package/gradiated-tiny-logits-ddr4-burst-v1-50mhz.bit.bin": {
+      "bytes": 7797692,
+      "role": "Serialized verified deployment asset",
+      "sha256": "dd4170e8e10722566dbafeb567bf85f8e11ea7af39c2937521ffc057d833df32"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/admission.json": {
+      "bytes": 212,
+      "role": "Pinned source manifest and remote build location",
+      "sha256": "56df22b4df15682987d0e8689be39ee864942d57ae7a4e64c678fb4d523832aa"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/admitted-protocol.md": {
+      "bytes": 5658,
+      "role": "Frozen Experiment 17 comparison protocol",
+      "sha256": "b2bc721c50ea0ea13e8f6c5151a9129fd9ed6d7006963999d161a41bf7040fc6"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/admitted-source-manifest.json": {
+      "bytes": 3825,
+      "role": "Compile closure and reused Experiment 16 source pins",
+      "sha256": "52e17470c682748199b82483061be7cfafdf9ebd61c5d8f22e4ccce076fac288"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/archive-recovery.json": {
+      "bytes": 402,
+      "role": "Bounded resumable archive transfer record",
+      "sha256": "8a3830d885e37df7564675a6881da16c38a365befd137f36299011f844ba497e"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/build-input.tar.gz": {
+      "bytes": 51329,
+      "role": "Exact candidate build input archive",
+      "sha256": "18f4a877532a81c59d246d217c41d500aa51c2e84eeb2aea3fe81596e9f81fe8"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/candidate-rtl-manifest.json": {
+      "bytes": 1008,
+      "role": "Exact prefetch build closure",
+      "sha256": "7983f70d71c6900dd8f541c4d88c43d8555fb714b7d6db270eb900bc7dcbcfc0"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/control-rtl-manifest.json": {
+      "bytes": 1008,
+      "role": "Exact Experiment 16 build closure",
+      "sha256": "072afd4a0eaeb744a12393c8ee94540981b4a472ecc18161bcd211c404c467f3"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/offline-acceptance.json": {
+      "bytes": 7160,
+      "role": "Independent route, source and firmware acceptance",
+      "sha256": "7f75a9e506e7a272ed7aa33d9ecd62ea6b414b614204791618811e99c867419c"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server.receipt.json": {
+      "bytes": 286,
+      "role": "Remote archive byte and member-count receipt",
+      "sha256": "ae9112edb91d8374bb4d52ed203fbc1f4c187b0478eb73cf70ef77b49dee0d5e"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server.tar.gz": {
+      "bytes": 93020758,
+      "role": "Recovered exact Vivado implementation archive",
+      "sha256": "9586da4667825aff6004e883fcf358af3e21b571c831b8540a844ae004dbe6b9"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/generate/ddr-interfaces.txt": {
+      "bytes": 5127,
+      "role": "Prefetch native read-only DDR block design",
+      "sha256": "dc559024732a0f54043366e683ba28f3abee9616686dcd620bcfeb6664aa0db7"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/ddr-primitives.tsv": {
+      "bytes": 155372,
+      "role": "Prefetch Routed memory primitives for score staging and on-chip embeddings",
+      "sha256": "aed7b2079da9a743179e0f5a6154ce6b7c4394756b407b590843b561af5e74a7"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/ddr-routed-hp0.tsv": {
+      "bytes": 46904,
+      "role": "Prefetch Native read-only HP0 pin and clock trace",
+      "sha256": "a8043392de8180c266096131b41db31f0c5c282440e93297ce8f9482738c79e0"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/metrics.txt": {
+      "bytes": 380,
+      "role": "Prefetch Routed timing, design rule, placement and routing metrics",
+      "sha256": "4e974b4c5dc68b73f9971aaa3b7b0681252f6ebf62a7436513792dd73fde0bb9"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/utilization-hierarchical.rpt": {
+      "bytes": 11076,
+      "role": "Prefetch FPGA, accelerator, logits and reader hierarchies",
+      "sha256": "d7586339482fbd4a8dbfad1173d4f2e09e643b60ea1b5df729bca05b803423a9"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/route/route.dcp": {
+      "bytes": 24570187,
+      "role": "Exact prefetch routed checkpoint",
+      "sha256": "625a9e04fc0edf48c33934f9d0517441020c51d81aa9dc8e8c0472babddd10a8"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/kv260-ddr4-afi-restore.dtbo": {
+      "bytes": 310,
+      "role": "Prefetch verified deployment asset",
+      "sha256": "c747e2487a5ead29c8a764fa679dc4f67bba9ac9073a1e518f4faaaeab7e751a"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/kv260-ddr4-interface.dtbo": {
+      "bytes": 778,
+      "role": "Prefetch verified deployment asset",
+      "sha256": "a910db9f4de4a1c5571d5720aac058234d5460a8844060d0530916df065c3d03"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/kv260-logits-ddr4-dma-direct.dtbo": {
+      "bytes": 416,
+      "role": "Prefetch verified deployment asset",
+      "sha256": "e28f3734ce5afd5461d39beb6f02c383fbe5390a826b02f7827164a98b8881ed"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/kv260-logits-ddr4-prefetch-program.dtbo": {
+      "bytes": 371,
+      "role": "Prefetch verified deployment asset",
+      "sha256": "9e904a5e5cb2d3e8649b5e0b14db5ed0f924a06df9c949e0def54dedafbfd3f0"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/offline-package/gradiated-tiny-logits-ddr4-prefetch-v1-50mhz.bit.bin": {
+      "bytes": 7797692,
+      "role": "Prefetch verified deployment asset",
+      "sha256": "157a66177f7f9e7c7f73ca2599703c05854961e350e16356c1a535fdbd9992dd"
+    },
+    "hardware/research/inference/results/logits-ddr4-burst-build-20261119T115915Z/run.json": {
+      "bytes": 39281,
+      "role": "Pinned archived Experiment 16 implementation record",
+      "sha256": "05954557b90dd1207918d2689a46dd384be59ba74f2e7c584bf54f576c79fc9f"
+    },
+    "hardware/research/inference/results/logits-ddr4-prefetch-rtl-20261119T150027Z/run.json": {
+      "bytes": 24449,
+      "role": "Paired exact Experiment 17 RTL replay",
+      "sha256": "d04b2e2426be0951fe5ddbd82187ad0a317c03a0772c8089ba126a2a949ee871"
+    }
+  },
+  "offline_acceptance_sha256": "7f75a9e506e7a272ed7aa33d9ecd62ea6b414b614204791618811e99c867419c",
+  "passed": true,
+  "source_manifest_sha256": "52e17470c682748199b82483061be7cfafdf9ebd61c5d8f22e4ccce076fac288"
+}

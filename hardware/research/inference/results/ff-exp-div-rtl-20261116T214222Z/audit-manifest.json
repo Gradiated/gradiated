@@ -1,0 +1,13 @@
+{
+  "archive_members": 136,
+  "coverage_families": 34,
+  "exact_scores_per_arm": {
+    "candidate": 103360,
+    "control": 103360
+  },
+  "independent_receipt_sha256": "21413430b23c25a4f4dbf28462718c458020e3b1f33216977875e5bcd6f0ff45",
+  "installed_run_sha256": "c2d0ec7d131cfb053a0dce10bdaf4edbdf064105f442fdd8424135a51689b3e4",
+  "metric_definitions": 50,
+  "passed": true,
+  "record_sha256": "c2d0ec7d131cfb053a0dce10bdaf4edbdf064105f442fdd8424135a51689b3e4"
+}

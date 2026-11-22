@@ -1,0 +1,902 @@
+{
+  "artifacts": [
+    {
+      "bytes": 9341311,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-profile-rtl-20261116T211748Z/replay.tar.gz",
+      "role": "Checksum-pinned source, fixtures, exact parity files and raw per-position counters",
+      "sha256": "ca8a05af0ead28f50051fd456a7b843c5952121514d7211ba644881c5282d7fa"
+    },
+    {
+      "bytes": 19768,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-profile-rtl-20261116T211748Z/archive-contents.json",
+      "role": "Per-file archive membership, lengths and hashes",
+      "sha256": "7e5f4f0031a1851984645d42c5c56c8605dea53319e812254968cda95bcbdb86"
+    },
+    {
+      "bytes": 61597,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-profile-rtl-20261116T211748Z/case-summary.json",
+      "role": "Verified per-case state, occupancy and handshake totals",
+      "sha256": "bfab73426dd235486fa04a889f34911887e35aee3b42ebd925ac5e7902a7d3ce"
+    },
+    {
+      "bytes": 4406274,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-profile-rtl-20261116T211748Z/per-position.json",
+      "role": "Position-level measured phase and operand-range counters",
+      "sha256": "fe23d1127a82447a95cd36363b9a980757abdf4ce3fe9071230d4216593eb169"
+    },
+    {
+      "bytes": 30587,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-profile-rtl-20261116T211748Z/source.patch",
+      "role": "New simulation-only monitor, replay, analysis and protocol",
+      "sha256": "14c99b6972b0bdd6fe07fcb19b16a818be8868a8626706b4df7e9c21f927ced3"
+    },
+    {
+      "bytes": 40012,
+      "path": "hardware/research/inference/results/logits-eight-rtl-20261116T190922Z/run.json",
+      "role": "Adopted exact eight-lane RTL record",
+      "sha256": "358c641be65be64c23e890dbc12dcd590c6aeb92a7b733594e4871752b943df0"
+    }
+  ],
+  "completed_at": "2026-11-16T21:15:35.711527+00:00",
+  "conditions": {
+    "cases": {
+      "bos-only-cap0": {
+        "down_run_cycles": 8256,
+        "exp_nested_division_cycles": 12672,
+        "ff_start_cycles": 1,
+        "ff_wait_cycles": 34306,
+        "full_request_cycles": 51665,
+        "gate_up_pair_cycles": 193,
+        "positions": 1,
+        "scalar_send_wait_cycles": 25728,
+        "sigmoid_division_cycles": 4224,
+        "visible_gate_up_arithmetic_cycles": 65
+      },
+      "encoded-fu2p2q-cap255": {
+        "down_run_cycles": 1114560,
+        "exp_nested_division_cycles": 1710720,
+        "ff_start_cycles": 135,
+        "ff_wait_cycles": 4631310,
+        "full_request_cycles": 11611357,
+        "gate_up_pair_cycles": 26055,
+        "positions": 135,
+        "scalar_send_wait_cycles": 3473280,
+        "sigmoid_division_cycles": 570240,
+        "visible_gate_up_arithmetic_cycles": 8775
+      },
+      "encoded-hello-cap0": {
+        "down_run_cycles": 90816,
+        "exp_nested_division_cycles": 139392,
+        "ff_start_cycles": 11,
+        "ff_wait_cycles": 377366,
+        "full_request_cycles": 579995,
+        "gate_up_pair_cycles": 2123,
+        "positions": 11,
+        "scalar_send_wait_cycles": 283008,
+        "sigmoid_division_cycles": 46464,
+        "visible_gate_up_arithmetic_cycles": 715
+      },
+      "encoded-hello-cap1": {
+        "down_run_cycles": 90816,
+        "exp_nested_division_cycles": 139392,
+        "ff_start_cycles": 11,
+        "ff_wait_cycles": 377366,
+        "full_request_cycles": 579995,
+        "gate_up_pair_cycles": 2123,
+        "positions": 11,
+        "scalar_send_wait_cycles": 283008,
+        "sigmoid_division_cycles": 46464,
+        "visible_gate_up_arithmetic_cycles": 715
+      },
+      "encoded-hello-cap255": {
+        "down_run_cycles": 833856,
+        "exp_nested_division_cycles": 1279872,
+        "ff_start_cycles": 101,
+        "ff_wait_cycles": 3464906,
+        "full_request_cycles": 7799105,
+        "gate_up_pair_cycles": 19493,
+        "positions": 101,
+        "scalar_send_wait_cycles": 2598528,
+        "sigmoid_division_cycles": 426624,
+        "visible_gate_up_arithmetic_cycles": 6565
+      },
+      "encoded-max48-cap255": {
+        "down_run_cycles": 1659456,
+        "exp_nested_division_cycles": 2547072,
+        "ff_start_cycles": 201,
+        "ff_wait_cycles": 6895506,
+        "full_request_cycles": 20482387,
+        "gate_up_pair_cycles": 38793,
+        "positions": 201,
+        "scalar_send_wait_cycles": 5171328,
+        "sigmoid_division_cycles": 849024,
+        "visible_gate_up_arithmetic_cycles": 13065
+      },
+      "full-context-cap0": {
+        "down_run_cycles": 2113536,
+        "exp_nested_division_cycles": 3244032,
+        "ff_start_cycles": 256,
+        "ff_wait_cycles": 8782336,
+        "full_request_cycles": 29634683,
+        "gate_up_pair_cycles": 49408,
+        "positions": 256,
+        "scalar_send_wait_cycles": 6586368,
+        "sigmoid_division_cycles": 1081344,
+        "visible_gate_up_arithmetic_cycles": 16640
+      }
+    },
+    "development_effort": {
+      "ai_usage_cost": null,
+      "elapsed_simulation_suite_s": 56.783296,
+      "engineering_attention_minutes": null
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Exact archived events, BOS, cache and all phase counters in seven cases.",
+        "source": ".agents/runtime/hardware/inference/outputs/ff-profile-rtl-20261116T211748Z/case-summary.json",
+        "state": "measured"
+      },
+      "cross_device_comparison": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "long_stability": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "memory_bandwidth": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Identical frozen score and generated byte fixtures verified by the archived bench.",
+        "source": ".agents/runtime/hardware/inference/outputs/ff-profile-rtl-20261116T211748Z/case-summary.json",
+        "state": "reused"
+      },
+      "physical_area": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "serving_load": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Disjoint controller partition and separate child state occupancy and handshakes.",
+        "source": ".agents/runtime/hardware/inference/outputs/ff-profile-rtl-20261116T211748Z/case-summary.json",
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Simulation-only feed-forward cycle diagnostic.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "physical_board_access": false,
+    "position_count": 716
+  },
+  "correctness": {
+    "evidence": "Original seven exact score/output/BOS assertions and byte-identical AXI/BOS/KV/phase files.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "clock_hz_for_derived_times": 50000000,
+      "part": "KV260 RTL model",
+      "tool": "Verilator 5.052"
+    },
+    "configuration_sha256": "3d748186bc0f8c8611ffa5baacea5a3a6c66ca2f695da4bb75d02b2f36efa758",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-feed-forward-profile-v1",
+  "id": "ff-profile-rtl-20261116T211748Z",
+  "implementation": {
+    "id": "kv260-logits-8-lanes-v1",
+    "sha256": "dc5851764926a6b5e3638aea760eb025d86da844241497a175e125c6210d0e2d"
+  },
+  "limitations": [
+    "Cycle breakdown refers to the frozen replay and simulated clocks. No new board timing, power or route is measured.",
+    "Child work can overlap and is not additive with the controller partition. Hypothetical savings require a new implementation check."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "bos-only-cap0.full_request_cycles",
+      "samples": [
+        51665
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "bos-only-cap0.ff_wait_cycles",
+      "samples": [
+        34306
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "bos-only-cap0.ff_start_cycles",
+      "samples": [
+        1
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "bos-only-cap0.gate_up_pair_cycles",
+      "samples": [
+        193
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "bos-only-cap0.visible_gate_up_arithmetic_cycles",
+      "samples": [
+        65
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "bos-only-cap0.scalar_send_wait_cycles",
+      "samples": [
+        25728
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "bos-only-cap0.exp_nested_division_cycles",
+      "samples": [
+        12672
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "bos-only-cap0.sigmoid_division_cycles",
+      "samples": [
+        4224
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "bos-only-cap0.down_run_cycles",
+      "samples": [
+        8256
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-fu2p2q-cap255.full_request_cycles",
+      "samples": [
+        11611357
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-fu2p2q-cap255.ff_wait_cycles",
+      "samples": [
+        4631310
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-fu2p2q-cap255.ff_start_cycles",
+      "samples": [
+        135
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-fu2p2q-cap255.gate_up_pair_cycles",
+      "samples": [
+        26055
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-fu2p2q-cap255.visible_gate_up_arithmetic_cycles",
+      "samples": [
+        8775
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-fu2p2q-cap255.scalar_send_wait_cycles",
+      "samples": [
+        3473280
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-fu2p2q-cap255.exp_nested_division_cycles",
+      "samples": [
+        1710720
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-fu2p2q-cap255.sigmoid_division_cycles",
+      "samples": [
+        570240
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-fu2p2q-cap255.down_run_cycles",
+      "samples": [
+        1114560
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap0.full_request_cycles",
+      "samples": [
+        579995
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap0.ff_wait_cycles",
+      "samples": [
+        377366
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap0.ff_start_cycles",
+      "samples": [
+        11
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap0.gate_up_pair_cycles",
+      "samples": [
+        2123
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap0.visible_gate_up_arithmetic_cycles",
+      "samples": [
+        715
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap0.scalar_send_wait_cycles",
+      "samples": [
+        283008
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap0.exp_nested_division_cycles",
+      "samples": [
+        139392
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap0.sigmoid_division_cycles",
+      "samples": [
+        46464
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap0.down_run_cycles",
+      "samples": [
+        90816
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap1.full_request_cycles",
+      "samples": [
+        579995
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap1.ff_wait_cycles",
+      "samples": [
+        377366
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap1.ff_start_cycles",
+      "samples": [
+        11
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap1.gate_up_pair_cycles",
+      "samples": [
+        2123
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap1.visible_gate_up_arithmetic_cycles",
+      "samples": [
+        715
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap1.scalar_send_wait_cycles",
+      "samples": [
+        283008
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap1.exp_nested_division_cycles",
+      "samples": [
+        139392
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap1.sigmoid_division_cycles",
+      "samples": [
+        46464
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap1.down_run_cycles",
+      "samples": [
+        90816
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap255.full_request_cycles",
+      "samples": [
+        7799105
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap255.ff_wait_cycles",
+      "samples": [
+        3464906
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap255.ff_start_cycles",
+      "samples": [
+        101
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap255.gate_up_pair_cycles",
+      "samples": [
+        19493
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap255.visible_gate_up_arithmetic_cycles",
+      "samples": [
+        6565
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap255.scalar_send_wait_cycles",
+      "samples": [
+        2598528
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap255.exp_nested_division_cycles",
+      "samples": [
+        1279872
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap255.sigmoid_division_cycles",
+      "samples": [
+        426624
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-hello-cap255.down_run_cycles",
+      "samples": [
+        833856
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-max48-cap255.full_request_cycles",
+      "samples": [
+        20482387
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-max48-cap255.ff_wait_cycles",
+      "samples": [
+        6895506
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-max48-cap255.ff_start_cycles",
+      "samples": [
+        201
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-max48-cap255.gate_up_pair_cycles",
+      "samples": [
+        38793
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-max48-cap255.visible_gate_up_arithmetic_cycles",
+      "samples": [
+        13065
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-max48-cap255.scalar_send_wait_cycles",
+      "samples": [
+        5171328
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-max48-cap255.exp_nested_division_cycles",
+      "samples": [
+        2547072
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-max48-cap255.sigmoid_division_cycles",
+      "samples": [
+        849024
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "encoded-max48-cap255.down_run_cycles",
+      "samples": [
+        1659456
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "full-context-cap0.full_request_cycles",
+      "samples": [
+        29634683
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "full-context-cap0.ff_wait_cycles",
+      "samples": [
+        8782336
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "full-context-cap0.ff_start_cycles",
+      "samples": [
+        256
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "full-context-cap0.gate_up_pair_cycles",
+      "samples": [
+        49408
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "full-context-cap0.visible_gate_up_arithmetic_cycles",
+      "samples": [
+        16640
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "full-context-cap0.scalar_send_wait_cycles",
+      "samples": [
+        6586368
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "full-context-cap0.exp_nested_division_cycles",
+      "samples": [
+        3244032
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "full-context-cap0.sigmoid_division_cycles",
+      "samples": [
+        1081344
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Pre-edge simulation cycles in the pinned eight-lane replay.",
+      "name": "full-context-cap0.down_run_cycles",
+      "samples": [
+        2113536
+      ],
+      "unit": "cycles"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-feed-forward-profile-v1",
+    "measurement_boundary": "Pre-edge clock counts inside the unchanged feed-forward subnetwork during exact AU02 simulation.",
+    "quality_gate": "All seven exact prior AU02 replays and disjoint cycle/occupancy reconciliation.",
+    "sha256": "392465655aa0a00a19cddd9dd20fb3dcb48523b2ee255994a9cfffd0bc63ab1d",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Unchanged frozen model and exact adopted inference RTL.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "14c99b6972b0bdd6fe07fcb19b16a818be8868a8626706b4df7e9c21f927ced3"
+  },
+  "started_at": "2026-11-16T21:14:38.928231+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

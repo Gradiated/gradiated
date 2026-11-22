@@ -1,0 +1,890 @@
+{
+  "results": [
+    {
+      "seed": 47,
+      "tokens": [
+        83,
+        111,
+        117,
+        114,
+        32,
+        99,
+        114,
+        101,
+        97,
+        109,
+        32,
+        97,
+        110,
+        100,
+        32,
+        111,
+        110,
+        105,
+        111,
+        110,
+        32,
+        99,
+        104,
+        105,
+        112,
+        115,
+        32,
+        97,
+        114,
+        101,
+        32,
+        101,
+        120,
+        99,
+        101,
+        108,
+        108,
+        101,
+        110,
+        116,
+        46,
+        32,
+        73,
+        32,
+        115,
+        99,
+        104,
+        101,
+        100,
+        117,
+        108,
+        101,
+        32,
+        105,
+        109,
+        112,
+        111,
+        114,
+        116,
+        97,
+        110,
+        116,
+        32,
+        109,
+        101,
+        101,
+        116,
+        105,
+        110,
+        103,
+        115,
+        32,
+        105,
+        109,
+        109,
+        101,
+        100,
+        105,
+        97,
+        116,
+        101,
+        108,
+        121,
+        32,
+        97,
+        102,
+        116,
+        101,
+        114,
+        119,
+        97,
+        114,
+        100,
+        115,
+        46
+      ],
+      "eos": true,
+      "decisions": [
+        {
+          "output_position": 0,
+          "mode": "sample",
+          "uniform_draw": 0.7418019946425606,
+          "chosen_token": 83,
+          "chosen_probability": 0.05888464150349168,
+          "argmax_token": 79
+        },
+        {
+          "output_position": 1,
+          "mode": "sample",
+          "uniform_draw": 0.7536688171196079,
+          "chosen_token": 111,
+          "chosen_probability": 0.26712459798819416,
+          "argmax_token": 97
+        },
+        {
+          "output_position": 2,
+          "mode": "sample",
+          "uniform_draw": 0.46518053822948346,
+          "chosen_token": 117,
+          "chosen_probability": 0.9995320178492106,
+          "argmax_token": 117
+        },
+        {
+          "output_position": 3,
+          "mode": "sample",
+          "uniform_draw": 0.10372502964789199,
+          "chosen_token": 114,
+          "chosen_probability": 0.9998570312870467,
+          "argmax_token": 114
+        },
+        {
+          "output_position": 4,
+          "mode": "sample",
+          "uniform_draw": 0.9668518498257337,
+          "chosen_token": 32,
+          "chosen_probability": 0.9999994663621722,
+          "argmax_token": 32
+        },
+        {
+          "output_position": 5,
+          "mode": "sample",
+          "uniform_draw": 0.320750320879281,
+          "chosen_token": 99,
+          "chosen_probability": 0.9985865962104911,
+          "argmax_token": 99
+        },
+        {
+          "output_position": 6,
+          "mode": "sample",
+          "uniform_draw": 0.20033155121842627,
+          "chosen_token": 114,
+          "chosen_probability": 0.9999127664611155,
+          "argmax_token": 114
+        },
+        {
+          "output_position": 7,
+          "mode": "sample",
+          "uniform_draw": 0.8577591891930944,
+          "chosen_token": 101,
+          "chosen_probability": 0.9999983650464982,
+          "argmax_token": 101
+        },
+        {
+          "output_position": 8,
+          "mode": "sample",
+          "uniform_draw": 0.5131460905854898,
+          "chosen_token": 97,
+          "chosen_probability": 0.9999043306625551,
+          "argmax_token": 97
+        },
+        {
+          "output_position": 9,
+          "mode": "sample",
+          "uniform_draw": 0.17924005478882832,
+          "chosen_token": 109,
+          "chosen_probability": 0.999650624471601,
+          "argmax_token": 109
+        },
+        {
+          "output_position": 10,
+          "mode": "sample",
+          "uniform_draw": 0.7504645765974756,
+          "chosen_token": 32,
+          "chosen_probability": 0.9999999926433245,
+          "argmax_token": 32
+        },
+        {
+          "output_position": 11,
+          "mode": "sample",
+          "uniform_draw": 0.7929782198838581,
+          "chosen_token": 97,
+          "chosen_probability": 0.9999772311530546,
+          "argmax_token": 97
+        },
+        {
+          "output_position": 12,
+          "mode": "sample",
+          "uniform_draw": 0.5538289050910586,
+          "chosen_token": 110,
+          "chosen_probability": 0.9998306423551537,
+          "argmax_token": 110
+        },
+        {
+          "output_position": 13,
+          "mode": "sample",
+          "uniform_draw": 0.8217382528417506,
+          "chosen_token": 100,
+          "chosen_probability": 0.999999996790162,
+          "argmax_token": 100
+        },
+        {
+          "output_position": 14,
+          "mode": "sample",
+          "uniform_draw": 0.6108688451669477,
+          "chosen_token": 32,
+          "chosen_probability": 0.9999916178942798,
+          "argmax_token": 32
+        },
+        {
+          "output_position": 15,
+          "mode": "sample",
+          "uniform_draw": 0.43368951284198143,
+          "chosen_token": 111,
+          "chosen_probability": 0.9999998910839177,
+          "argmax_token": 111
+        },
+        {
+          "output_position": 16,
+          "mode": "sample",
+          "uniform_draw": 0.3103297737633065,
+          "chosen_token": 110,
+          "chosen_probability": 0.9999956499723168,
+          "argmax_token": 110
+        },
+        {
+          "output_position": 17,
+          "mode": "sample",
+          "uniform_draw": 0.7144267683506479,
+          "chosen_token": 105,
+          "chosen_probability": 0.9999946658729584,
+          "argmax_token": 105
+        },
+        {
+          "output_position": 18,
+          "mode": "sample",
+          "uniform_draw": 0.9021746805371165,
+          "chosen_token": 111,
+          "chosen_probability": 0.9999134264319508,
+          "argmax_token": 111
+        },
+        {
+          "output_position": 19,
+          "mode": "sample",
+          "uniform_draw": 0.1936189729139315,
+          "chosen_token": 110,
+          "chosen_probability": 0.9999998872105097,
+          "argmax_token": 110
+        },
+        {
+          "output_position": 20,
+          "mode": "sample",
+          "uniform_draw": 0.6101967643848941,
+          "chosen_token": 32,
+          "chosen_probability": 0.9999999989967152,
+          "argmax_token": 32
+        },
+        {
+          "output_position": 21,
+          "mode": "sample",
+          "uniform_draw": 0.06150028342531899,
+          "chosen_token": 99,
+          "chosen_probability": 0.9999435718745744,
+          "argmax_token": 99
+        },
+        {
+          "output_position": 22,
+          "mode": "sample",
+          "uniform_draw": 0.5510683821988186,
+          "chosen_token": 104,
+          "chosen_probability": 0.9999759931906569,
+          "argmax_token": 104
+        },
+        {
+          "output_position": 23,
+          "mode": "sample",
+          "uniform_draw": 0.11243277318977385,
+          "chosen_token": 105,
+          "chosen_probability": 0.9999995666166959,
+          "argmax_token": 105
+        },
+        {
+          "output_position": 24,
+          "mode": "sample",
+          "uniform_draw": 0.7555875919023212,
+          "chosen_token": 112,
+          "chosen_probability": 0.9999447437503329,
+          "argmax_token": 112
+        },
+        {
+          "output_position": 25,
+          "mode": "sample",
+          "uniform_draw": 0.9542547028880555,
+          "chosen_token": 115,
+          "chosen_probability": 0.9999981379149657,
+          "argmax_token": 115
+        },
+        {
+          "output_position": 26,
+          "mode": "sample",
+          "uniform_draw": 0.9451187143293178,
+          "chosen_token": 32,
+          "chosen_probability": 0.9999976554782527,
+          "argmax_token": 32
+        },
+        {
+          "output_position": 27,
+          "mode": "sample",
+          "uniform_draw": 0.7206962246383404,
+          "chosen_token": 97,
+          "chosen_probability": 0.9995827222944242,
+          "argmax_token": 97
+        },
+        {
+          "output_position": 28,
+          "mode": "sample",
+          "uniform_draw": 0.7310642960616902,
+          "chosen_token": 114,
+          "chosen_probability": 0.9999966231853377,
+          "argmax_token": 114
+        },
+        {
+          "output_position": 29,
+          "mode": "sample",
+          "uniform_draw": 0.6970527380671371,
+          "chosen_token": 101,
+          "chosen_probability": 0.9998498899418429,
+          "argmax_token": 101
+        },
+        {
+          "output_position": 30,
+          "mode": "sample",
+          "uniform_draw": 0.5489151269767054,
+          "chosen_token": 32,
+          "chosen_probability": 0.9998802819603089,
+          "argmax_token": 32
+        },
+        {
+          "output_position": 31,
+          "mode": "sample",
+          "uniform_draw": 0.29108152621059935,
+          "chosen_token": 101,
+          "chosen_probability": 0.9999847532218855,
+          "argmax_token": 101
+        },
+        {
+          "output_position": 32,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 120,
+          "chosen_probability": null,
+          "argmax_token": 120
+        },
+        {
+          "output_position": 33,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 99,
+          "chosen_probability": null,
+          "argmax_token": 99
+        },
+        {
+          "output_position": 34,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 101,
+          "chosen_probability": null,
+          "argmax_token": 101
+        },
+        {
+          "output_position": 35,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 108,
+          "chosen_probability": null,
+          "argmax_token": 108
+        },
+        {
+          "output_position": 36,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 108,
+          "chosen_probability": null,
+          "argmax_token": 108
+        },
+        {
+          "output_position": 37,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 101,
+          "chosen_probability": null,
+          "argmax_token": 101
+        },
+        {
+          "output_position": 38,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 110,
+          "chosen_probability": null,
+          "argmax_token": 110
+        },
+        {
+          "output_position": 39,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 116,
+          "chosen_probability": null,
+          "argmax_token": 116
+        },
+        {
+          "output_position": 40,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 46,
+          "chosen_probability": null,
+          "argmax_token": 46
+        },
+        {
+          "output_position": 41,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 32,
+          "chosen_probability": null,
+          "argmax_token": 32
+        },
+        {
+          "output_position": 42,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 73,
+          "chosen_probability": null,
+          "argmax_token": 73
+        },
+        {
+          "output_position": 43,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 32,
+          "chosen_probability": null,
+          "argmax_token": 32
+        },
+        {
+          "output_position": 44,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 115,
+          "chosen_probability": null,
+          "argmax_token": 115
+        },
+        {
+          "output_position": 45,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 99,
+          "chosen_probability": null,
+          "argmax_token": 99
+        },
+        {
+          "output_position": 46,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 104,
+          "chosen_probability": null,
+          "argmax_token": 104
+        },
+        {
+          "output_position": 47,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 101,
+          "chosen_probability": null,
+          "argmax_token": 101
+        },
+        {
+          "output_position": 48,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 100,
+          "chosen_probability": null,
+          "argmax_token": 100
+        },
+        {
+          "output_position": 49,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 117,
+          "chosen_probability": null,
+          "argmax_token": 117
+        },
+        {
+          "output_position": 50,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 108,
+          "chosen_probability": null,
+          "argmax_token": 108
+        },
+        {
+          "output_position": 51,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 101,
+          "chosen_probability": null,
+          "argmax_token": 101
+        },
+        {
+          "output_position": 52,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 32,
+          "chosen_probability": null,
+          "argmax_token": 32
+        },
+        {
+          "output_position": 53,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 105,
+          "chosen_probability": null,
+          "argmax_token": 105
+        },
+        {
+          "output_position": 54,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 109,
+          "chosen_probability": null,
+          "argmax_token": 109
+        },
+        {
+          "output_position": 55,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 112,
+          "chosen_probability": null,
+          "argmax_token": 112
+        },
+        {
+          "output_position": 56,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 111,
+          "chosen_probability": null,
+          "argmax_token": 111
+        },
+        {
+          "output_position": 57,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 114,
+          "chosen_probability": null,
+          "argmax_token": 114
+        },
+        {
+          "output_position": 58,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 116,
+          "chosen_probability": null,
+          "argmax_token": 116
+        },
+        {
+          "output_position": 59,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 97,
+          "chosen_probability": null,
+          "argmax_token": 97
+        },
+        {
+          "output_position": 60,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 110,
+          "chosen_probability": null,
+          "argmax_token": 110
+        },
+        {
+          "output_position": 61,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 116,
+          "chosen_probability": null,
+          "argmax_token": 116
+        },
+        {
+          "output_position": 62,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 32,
+          "chosen_probability": null,
+          "argmax_token": 32
+        },
+        {
+          "output_position": 63,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 109,
+          "chosen_probability": null,
+          "argmax_token": 109
+        },
+        {
+          "output_position": 64,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 101,
+          "chosen_probability": null,
+          "argmax_token": 101
+        },
+        {
+          "output_position": 65,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 101,
+          "chosen_probability": null,
+          "argmax_token": 101
+        },
+        {
+          "output_position": 66,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 116,
+          "chosen_probability": null,
+          "argmax_token": 116
+        },
+        {
+          "output_position": 67,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 105,
+          "chosen_probability": null,
+          "argmax_token": 105
+        },
+        {
+          "output_position": 68,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 110,
+          "chosen_probability": null,
+          "argmax_token": 110
+        },
+        {
+          "output_position": 69,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 103,
+          "chosen_probability": null,
+          "argmax_token": 103
+        },
+        {
+          "output_position": 70,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 115,
+          "chosen_probability": null,
+          "argmax_token": 115
+        },
+        {
+          "output_position": 71,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 32,
+          "chosen_probability": null,
+          "argmax_token": 32
+        },
+        {
+          "output_position": 72,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 105,
+          "chosen_probability": null,
+          "argmax_token": 105
+        },
+        {
+          "output_position": 73,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 109,
+          "chosen_probability": null,
+          "argmax_token": 109
+        },
+        {
+          "output_position": 74,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 109,
+          "chosen_probability": null,
+          "argmax_token": 109
+        },
+        {
+          "output_position": 75,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 101,
+          "chosen_probability": null,
+          "argmax_token": 101
+        },
+        {
+          "output_position": 76,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 100,
+          "chosen_probability": null,
+          "argmax_token": 100
+        },
+        {
+          "output_position": 77,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 105,
+          "chosen_probability": null,
+          "argmax_token": 105
+        },
+        {
+          "output_position": 78,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 97,
+          "chosen_probability": null,
+          "argmax_token": 97
+        },
+        {
+          "output_position": 79,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 116,
+          "chosen_probability": null,
+          "argmax_token": 116
+        },
+        {
+          "output_position": 80,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 101,
+          "chosen_probability": null,
+          "argmax_token": 101
+        },
+        {
+          "output_position": 81,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 108,
+          "chosen_probability": null,
+          "argmax_token": 108
+        },
+        {
+          "output_position": 82,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 121,
+          "chosen_probability": null,
+          "argmax_token": 121
+        },
+        {
+          "output_position": 83,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 32,
+          "chosen_probability": null,
+          "argmax_token": 32
+        },
+        {
+          "output_position": 84,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 97,
+          "chosen_probability": null,
+          "argmax_token": 97
+        },
+        {
+          "output_position": 85,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 102,
+          "chosen_probability": null,
+          "argmax_token": 102
+        },
+        {
+          "output_position": 86,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 116,
+          "chosen_probability": null,
+          "argmax_token": 116
+        },
+        {
+          "output_position": 87,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 101,
+          "chosen_probability": null,
+          "argmax_token": 101
+        },
+        {
+          "output_position": 88,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 114,
+          "chosen_probability": null,
+          "argmax_token": 114
+        },
+        {
+          "output_position": 89,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 119,
+          "chosen_probability": null,
+          "argmax_token": 119
+        },
+        {
+          "output_position": 90,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 97,
+          "chosen_probability": null,
+          "argmax_token": 97
+        },
+        {
+          "output_position": 91,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 114,
+          "chosen_probability": null,
+          "argmax_token": 114
+        },
+        {
+          "output_position": 92,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 100,
+          "chosen_probability": null,
+          "argmax_token": 100
+        },
+        {
+          "output_position": 93,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 115,
+          "chosen_probability": null,
+          "argmax_token": 115
+        },
+        {
+          "output_position": 94,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 46,
+          "chosen_probability": null,
+          "argmax_token": 46
+        },
+        {
+          "output_position": 95,
+          "mode": "greedy",
+          "uniform_draw": null,
+          "chosen_token": 257,
+          "chosen_probability": null,
+          "argmax_token": 257
+        }
+      ],
+      "text": "Sour cream and onion chips are excellent. I schedule important meetings immediately afterwards.",
+      "valid_utf8_bytes": true
+    }
+  ],
+  "seconds": 0.0379436250004801,
+  "recipe": {
+    "name": "prefix32",
+    "temperature": 0.8,
+    "sample_bytes": 32
+  },
+  "model_input_tokens": [
+    256
+  ],
+  "joke_identifiers": false,
+  "answer_bank_in_generation": false,
+  "output_constraints": false,
+  "host_sampling": "FP64 softmax/inverse-CDF with independent NumPy RNG per seed"
+}

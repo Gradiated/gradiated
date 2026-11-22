@@ -1,0 +1,17 @@
+{
+  "control_generator_sha256": "0b61e78c3829eb927e835b96a5ad86f40eb958d7d40bf9fe04c170a7adb2ae17",
+  "control_manifest_sha256": "f1920ec220dab2c6cf50a67dee511c84e074850cb895b47110b33ee83b17d2ac",
+  "control_sources": {
+    "dense": "561e82c83a15071ed45e251329a15fc212b9b1dca4fdb30ed24b33d878613ac9",
+    "transformer": "dc5851764926a6b5e3638aea760eb025d86da844241497a175e125c6210d0e2d",
+    "axi_transformer": "10e8cabf30e5d1e88b894b1ef1bb98e1b018fcc57d476a745b4396b6aa3e8574"
+  },
+  "ddr_registers_sha256": "dd5c023227fd4151179a6092a520688400143a06033bab969943acd7a4b739e2",
+  "reader_sha256": "9a71cf1a826d7d7af0ad95295201e43b954a0d4921bbacd1866c5399d02168c1",
+  "fixture_sources": {
+    "dense_ddr_projection": "b48a21f64768229e35cb9069a905e59fce88559bc5b3d67945b7043ba90e6bf5",
+    "transformer": "e2548bb5c0657edc973608b29bd76e36d08fd4912d8f1f657feef25cbfb8fa31",
+    "axi_transformer": "73914604a43d249343e462649b0714680952466a2c517b59158aeb1d9667ab7e",
+    "projection_ddr_reader": "9a71cf1a826d7d7af0ad95295201e43b954a0d4921bbacd1866c5399d02168c1"
+  }
+}

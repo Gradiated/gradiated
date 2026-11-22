@@ -1,0 +1,28 @@
+{
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-rtl-20261118T225153Z/matched.json": {
+      "bytes": 15835,
+      "sha256": "37af760e8cfdb05c4ce6e596d078bbe13552a9a6b968d0ee8885814f7479a75f"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-rtl-20261118T225153Z/rtl-details.json": {
+      "bytes": 3690,
+      "sha256": "bf212cfdfe7028d28f866c8d6ac8aad9e51ec53c8809bb5f08b27c08e94968ad"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-rtl-20261118T225153Z/simulation.tar.gz": {
+      "bytes": 13964419,
+      "sha256": "6a5492aacade647e282476d01dd192097ccfef5cbf0af18726d3b3ddcdf598db"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-rtl-20261118T225153Z/source-closure.json": {
+      "bytes": 25065,
+      "sha256": "e33bd0afb45c877bdb98dc3568b3863a48dbe7908b8b43c4c2a85e7b10a38236"
+    },
+    "hardware/research/inference/implementations/kv260/rtl/toolchain.json": {
+      "bytes": 937,
+      "sha256": "b6a35af5636cca4a2f9bb82135a716873c8bb1abf6926504f2e425ea600df693"
+    },
+    "hardware/research/inference/results/attention-exp-pair-v2-rtl-20261117T230104Z/run.json": {
+      "bytes": 23465,
+      "sha256": "db83294738d25d4a079ca3b92276204e812d1f7c91410ba4359bfe0b37006994"
+    }
+  }
+}

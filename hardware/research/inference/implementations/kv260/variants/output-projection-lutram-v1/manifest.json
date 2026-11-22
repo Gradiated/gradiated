@@ -1,0 +1,24 @@
+{
+  "candidate_transformer_sha256": "dbbaa1e67f9cc6fec1b1699cda4d17525c1aec90b2a8d31fa4924c7113211056",
+  "clock_hz": 50000000,
+  "control": "attention-exp-div-v1",
+  "control_dense_sha256": "561e82c83a15071ed45e251329a15fc212b9b1dca4fdb30ed24b33d878613ac9",
+  "control_generator_sha256": "2102ea9e2c80622e76543b769060ef93f5f1abd857695aebc93faa88c5e65afa",
+  "control_manifest_sha256": "75ec7149f28b741057817d0945502c23531c4a595b419bddbbf24b861176f610",
+  "control_memory_inventory_sha256": "cf87db68ddd0b8ab524edc6e7834e0dcd21a92b1574bb4cd5a4ec00e6be3ec13",
+  "control_replay_archive_sha256": "17a9d14c2c33f96d1bfb8a5ed871afe316fd03523e8dac5ecdc0fb109fa2daf9",
+  "control_replay_result_sha256": "a8f78214ae68b8f076d452baa5f83fa1d1eea48d72ad9c00e886fc55bf1d7546",
+  "control_transformer_sha256": "dc5851764926a6b5e3638aea760eb025d86da844241497a175e125c6210d0e2d",
+  "dense_bench_sha256": "22a488d26149325f6556b7a49c1f5a3f351c0b50a44d23da793a498d1e882c9c",
+  "dense_oracle_sha256": "d69a68632b080ebee8666d536c2dd45f1f1f3f9cc3230d89d101f2423c70da7e",
+  "dense_runtime_sha256": "a467cfde635031e4c0a584a3f9b9cb71285e868af7d0495eae62b898cdaa947d",
+  "expected_cycle_delta": 0,
+  "id": "output-projection-lutram-v1",
+  "logical_array": "core/output_projection/weight_memory",
+  "replay_helper_sha256": "82bbdb3d652f22a4fedba6e3a469adf77fbd6d816b2604d492ec267a8743be0c",
+  "shape": [
+    32,
+    32
+  ],
+  "word_bits": 16
+}

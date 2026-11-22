@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "id": "kv260-repeatability-v1",
+  "implementation": "scalar-div-v1",
+  "model": "chip-joke-text-20261109",
+  "frozen_references_sha256": "33d290aed332af9e8b100a708222796d53f82529bb9c55d5d9ed13606cb0d367",
+  "cases": [
+    "encoded-hello",
+    "encoded-fu2p2q",
+    "encoded-max48"
+  ],
+  "sessions": 3,
+  "distinct_boots": 3,
+  "warmups_per_case": 2,
+  "duration_s": 600,
+  "segment_s": 60,
+  "service_timeout_ms": 3000,
+  "max_requests": 3600,
+  "max_output_tokens": 255,
+  "descriptive_drift_fraction": 0.05,
+  "power": {
+    "window_s": 610,
+    "period_ms": 50,
+    "max_gap_ms": 75
+  }
+}

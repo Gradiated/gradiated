@@ -1,0 +1,5744 @@
+{
+  "artifacts": [
+    {
+      "bytes": 33992,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-div-rtl-20261116T102115Z/source.patch",
+      "role": "Exact generated-variant source patch",
+      "sha256": "6f69dcf661c9ba0fb061acf6e3ed75854dba2e1f41684c1ed777c987e1240435"
+    },
+    {
+      "bytes": 35865,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-div-rtl-20261116T102115Z/source-closure.json",
+      "role": "Simulation archive member pins",
+      "sha256": "65833a841154c39aacf84cf31f7fcd20baa1156579ebe6676b9063a416e06d57"
+    },
+    {
+      "bytes": 129597,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-div-rtl-20261116T102115Z/profile-results.json",
+      "role": "All measured divider wait counts and operand ranges",
+      "sha256": "732c292352cf36a66e738cb857aa9a74ed3ed71a3f0db46dc47c054e9879e606"
+    },
+    {
+      "bytes": 291,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-div-rtl-20261116T102115Z/scalar-result.json",
+      "role": "Runtime-level exact arithmetic and reset checks",
+      "sha256": "74f86949ae6a7725fc3f519e4894b854a5497152ea30b933116acce75986002f"
+    },
+    {
+      "bytes": 477,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-div-rtl-20261116T102115Z/workload.json",
+      "role": "Pinned seven-case fixture identity",
+      "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+    },
+    {
+      "bytes": 14737785,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-div-rtl-20261116T102115Z/simulation.tar.gz",
+      "role": "Reproducible raw simulation, source and rejected-harness evidence",
+      "sha256": "16c04aaa765e7785cd62ceb4991cec16795813860529cca810361078330fc7fa"
+    }
+  ],
+  "completed_at": "2026-11-16T10:21:15.376575+00:00",
+  "conditions": {
+    "cases": {
+      "bos-only-cap0": {
+        "candidate": {
+          "done": {
+            "active": 16736,
+            "cycle_savings": 16213,
+            "cycles": 71105,
+            "ff_dense_overlap": 7874,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 64,
+                  "divisions": 2,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 64,
+                  "divisions": 2,
+                  "max_den_bits": 16,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 64,
+                  "divisions": 2,
+                  "max_den_bits": 16,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 64,
+                  "divisions": 2,
+                  "max_den_bits": 16,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 4096,
+                  "divisions": 128,
+                  "max_den_bits": 32,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 4096,
+                  "divisions": 128,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 4096,
+                  "divisions": 128,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 4096,
+                  "divisions": 128,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 32,
+                  "divisions": 1,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 32,
+                  "divisions": 1,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 32,
+                  "divisions": 1,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 1
+          },
+          "prefix": {
+            "active": 16736,
+            "cycle_savings": 16213,
+            "cycles": 49983,
+            "ff_dense_overlap": 7874,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 64,
+                  "divisions": 2,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 64,
+                  "divisions": 2,
+                  "max_den_bits": 16,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 64,
+                  "divisions": 2,
+                  "max_den_bits": 16,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 64,
+                  "divisions": 2,
+                  "max_den_bits": 16,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 4096,
+                  "divisions": 128,
+                  "max_den_bits": 32,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 4096,
+                  "divisions": 128,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 4096,
+                  "divisions": 128,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 4096,
+                  "divisions": 128,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 32,
+                  "divisions": 1,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 32,
+                  "divisions": 1,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 32,
+                  "divisions": 1,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 1
+          }
+        },
+        "control": {
+          "done": {
+            "active": 33472,
+            "cycles": 87318,
+            "ff_dense_overlap": 8128,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 128,
+                  "divisions": 2,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 128,
+                  "divisions": 2,
+                  "max_den_bits": 16,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 128,
+                  "divisions": 2,
+                  "max_den_bits": 16,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 128,
+                  "divisions": 2,
+                  "max_den_bits": 16,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 8192,
+                  "divisions": 128,
+                  "max_den_bits": 32,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 8192,
+                  "divisions": 128,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 8192,
+                  "divisions": 128,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 8192,
+                  "divisions": 128,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 64,
+                  "divisions": 1,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 64,
+                  "divisions": 1,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 64,
+                  "divisions": 1,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 1
+          },
+          "prefix": {
+            "active": 33472,
+            "cycles": 66196,
+            "ff_dense_overlap": 8128,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 128,
+                  "divisions": 2,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 128,
+                  "divisions": 2,
+                  "max_den_bits": 16,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 128,
+                  "divisions": 2,
+                  "max_den_bits": 16,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 128,
+                  "divisions": 2,
+                  "max_den_bits": 16,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 8192,
+                  "divisions": 128,
+                  "max_den_bits": 32,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 8192,
+                  "divisions": 128,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 8192,
+                  "divisions": 128,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 8192,
+                  "divisions": 128,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 64,
+                  "divisions": 1,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 64,
+                  "divisions": 1,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 64,
+                  "divisions": 1,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 1
+          }
+        },
+        "done_divisions": 523,
+        "prefix_divisions": 523
+      },
+      "encoded-fu2p2q-cap255": {
+        "candidate": {
+          "done": {
+            "active": 4552224,
+            "cycle_savings": 4409967,
+            "cycles": 14002477,
+            "ff_dense_overlap": 1062990,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 587520,
+                  "divisions": 18360,
+                  "max_den_bits": 36,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 579968,
+                  "divisions": 18124,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 579968,
+                  "divisions": 18124,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 579968,
+                  "divisions": 18124,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 552960,
+                  "divisions": 17280,
+                  "max_den_bits": 33,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 552960,
+                  "divisions": 17280,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 552960,
+                  "divisions": 17280,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 552960,
+                  "divisions": 17280,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 4320,
+                  "divisions": 135,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 4320,
+                  "divisions": 135,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 4320,
+                  "divisions": 135,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 135
+          },
+          "prefix": {
+            "active": 237536,
+            "cycle_savings": 230113,
+            "cycles": 690195,
+            "ff_dense_overlap": 102362,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 5824,
+                  "divisions": 182,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 5824,
+                  "divisions": 182,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 5824,
+                  "divisions": 182,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 5824,
+                  "divisions": 182,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 53248,
+                  "divisions": 1664,
+                  "max_den_bits": 33,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 53248,
+                  "divisions": 1664,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 53248,
+                  "divisions": 1664,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 53248,
+                  "divisions": 1664,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 416,
+                  "divisions": 13,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 416,
+                  "divisions": 13,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 416,
+                  "divisions": 13,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 13
+          }
+        },
+        "control": {
+          "done": {
+            "active": 9104448,
+            "cycles": 18412444,
+            "ff_dense_overlap": 1097280,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 1175040,
+                  "divisions": 18360,
+                  "max_den_bits": 36,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 1159936,
+                  "divisions": 18124,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 1159936,
+                  "divisions": 18124,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 1159936,
+                  "divisions": 18124,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 1105920,
+                  "divisions": 17280,
+                  "max_den_bits": 33,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 1105920,
+                  "divisions": 17280,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 1105920,
+                  "divisions": 17280,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 1105920,
+                  "divisions": 17280,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 8640,
+                  "divisions": 135,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 8640,
+                  "divisions": 135,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 8640,
+                  "divisions": 135,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 135
+          },
+          "prefix": {
+            "active": 475072,
+            "cycles": 920308,
+            "ff_dense_overlap": 105664,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 11648,
+                  "divisions": 182,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 11648,
+                  "divisions": 182,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 11648,
+                  "divisions": 182,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 11648,
+                  "divisions": 182,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 106496,
+                  "divisions": 1664,
+                  "max_den_bits": 33,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 106496,
+                  "divisions": 1664,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 106496,
+                  "divisions": 1664,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 106496,
+                  "divisions": 1664,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 832,
+                  "divisions": 13,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 832,
+                  "divisions": 13,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 832,
+                  "divisions": 13,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 13
+          }
+        },
+        "done_divisions": 142257,
+        "prefix_divisions": 7423
+      },
+      "encoded-hello-cap0": {
+        "candidate": {
+          "done": {
+            "active": 198176,
+            "cycle_savings": 191983,
+            "cycles": 599435,
+            "ff_dense_overlap": 86614,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 32,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 352,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 352,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 352,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          },
+          "prefix": {
+            "active": 198176,
+            "cycle_savings": 191983,
+            "cycles": 578313,
+            "ff_dense_overlap": 86614,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 32,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 352,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 352,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 352,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          }
+        },
+        "control": {
+          "done": {
+            "active": 396352,
+            "cycles": 791418,
+            "ff_dense_overlap": 89408,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 32,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 704,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 704,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 704,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          },
+          "prefix": {
+            "active": 396352,
+            "cycles": 770296,
+            "ff_dense_overlap": 89408,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 32,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 704,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 704,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 704,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          }
+        },
+        "done_divisions": 6193,
+        "prefix_divisions": 6193
+      },
+      "encoded-hello-cap1": {
+        "candidate": {
+          "done": {
+            "active": 198176,
+            "cycle_savings": 191983,
+            "cycles": 599435,
+            "ff_dense_overlap": 86614,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 32,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 352,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 352,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 352,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          },
+          "prefix": {
+            "active": 198176,
+            "cycle_savings": 191983,
+            "cycles": 578313,
+            "ff_dense_overlap": 86614,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 32,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 352,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 352,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 352,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          }
+        },
+        "control": {
+          "done": {
+            "active": 396352,
+            "cycles": 791418,
+            "ff_dense_overlap": 89408,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 32,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 704,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 704,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 704,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          },
+          "prefix": {
+            "active": 396352,
+            "cycles": 770296,
+            "ff_dense_overlap": 89408,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 32,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 704,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 704,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 704,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          }
+        },
+        "done_divisions": 6193,
+        "prefix_divisions": 6193
+      },
+      "encoded-hello-cap255": {
+        "candidate": {
+          "done": {
+            "active": 2968736,
+            "cycle_savings": 2875963,
+            "cycles": 9568145,
+            "ff_dense_overlap": 795274,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 329664,
+                  "divisions": 10302,
+                  "max_den_bits": 35,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 324864,
+                  "divisions": 10152,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 324864,
+                  "divisions": 10152,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 324864,
+                  "divisions": 10152,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 413696,
+                  "divisions": 12928,
+                  "max_den_bits": 33,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 413696,
+                  "divisions": 12928,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 413696,
+                  "divisions": 12928,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 413696,
+                  "divisions": 12928,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 3232,
+                  "divisions": 101,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 3232,
+                  "divisions": 101,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 3232,
+                  "divisions": 101,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 101
+          },
+          "prefix": {
+            "active": 198176,
+            "cycle_savings": 191983,
+            "cycles": 578313,
+            "ff_dense_overlap": 86614,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 4224,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 32,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 45056,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 352,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 352,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 352,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          }
+        },
+        "control": {
+          "done": {
+            "active": 5937472,
+            "cycles": 12444108,
+            "ff_dense_overlap": 820928,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 659328,
+                  "divisions": 10302,
+                  "max_den_bits": 35,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 649728,
+                  "divisions": 10152,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 649728,
+                  "divisions": 10152,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 649728,
+                  "divisions": 10152,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 827392,
+                  "divisions": 12928,
+                  "max_den_bits": 33,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 827392,
+                  "divisions": 12928,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 827392,
+                  "divisions": 12928,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 827392,
+                  "divisions": 12928,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 6464,
+                  "divisions": 101,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 6464,
+                  "divisions": 101,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 6464,
+                  "divisions": 101,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 101
+          },
+          "prefix": {
+            "active": 396352,
+            "cycles": 770296,
+            "ff_dense_overlap": 89408,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 8448,
+                  "divisions": 132,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 32,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 90112,
+                  "divisions": 1408,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 704,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 704,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 704,
+                  "divisions": 11,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 11
+          }
+        },
+        "done_divisions": 92773,
+        "prefix_divisions": 6193
+      },
+      "encoded-max48-cap255": {
+        "candidate": {
+          "done": {
+            "active": 8388384,
+            "cycle_savings": 8126247,
+            "cycles": 22523587,
+            "ff_dense_overlap": 1582674,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 1299264,
+                  "divisions": 40602,
+                  "max_den_bits": 35,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 1258880,
+                  "divisions": 39340,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 1258880,
+                  "divisions": 39340,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 1258880,
+                  "divisions": 39340,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 823296,
+                  "divisions": 25728,
+                  "max_den_bits": 33,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 823296,
+                  "divisions": 25728,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 823296,
+                  "divisions": 25728,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 823296,
+                  "divisions": 25728,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 6432,
+                  "divisions": 201,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 6432,
+                  "divisions": 201,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 6432,
+                  "divisions": 201,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 201
+          },
+          "prefix": {
+            "active": 2813408,
+            "cycle_savings": 2725489,
+            "cycles": 7257835,
+            "ff_dense_overlap": 763778,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 304192,
+                  "divisions": 9506,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 303552,
+                  "divisions": 9486,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 303552,
+                  "divisions": 9486,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 303552,
+                  "divisions": 9486,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 397312,
+                  "divisions": 12416,
+                  "max_den_bits": 33,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 397312,
+                  "divisions": 12416,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 397312,
+                  "divisions": 12416,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 397312,
+                  "divisions": 12416,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 3104,
+                  "divisions": 97,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 3104,
+                  "divisions": 97,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 3104,
+                  "divisions": 97,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 97
+          }
+        },
+        "control": {
+          "done": {
+            "active": 16776768,
+            "cycles": 30649834,
+            "ff_dense_overlap": 1633728,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 2598528,
+                  "divisions": 40602,
+                  "max_den_bits": 35,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 2517760,
+                  "divisions": 39340,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 2517760,
+                  "divisions": 39340,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 2517760,
+                  "divisions": 39340,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 1646592,
+                  "divisions": 25728,
+                  "max_den_bits": 33,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 1646592,
+                  "divisions": 25728,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 1646592,
+                  "divisions": 25728,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 1646592,
+                  "divisions": 25728,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 12864,
+                  "divisions": 201,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 12864,
+                  "divisions": 201,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 12864,
+                  "divisions": 201,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 201
+          },
+          "prefix": {
+            "active": 5626816,
+            "cycles": 9983324,
+            "ff_dense_overlap": 788416,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 608384,
+                  "divisions": 9506,
+                  "max_den_bits": 32,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 607104,
+                  "divisions": 9486,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 607104,
+                  "divisions": 9486,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 607104,
+                  "divisions": 9486,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 794624,
+                  "divisions": 12416,
+                  "max_den_bits": 33,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 794624,
+                  "divisions": 12416,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 794624,
+                  "divisions": 12416,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 794624,
+                  "divisions": 12416,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 6208,
+                  "divisions": 97,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 6208,
+                  "divisions": 97,
+                  "max_den_bits": 32,
+                  "max_num_bits": 39
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 6208,
+                  "divisions": 97,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 97
+          }
+        },
+        "done_divisions": 262137,
+        "prefix_divisions": 87919
+      },
+      "full-context-cap0": {
+        "candidate": {
+          "done": {
+            "active": 12584384,
+            "cycle_savings": 12191122,
+            "cycles": 29654123,
+            "ff_dense_overlap": 2015744,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 2105344,
+                  "divisions": 65792,
+                  "max_den_bits": 36,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 2086720,
+                  "divisions": 65210,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 2086720,
+                  "divisions": 65210,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 2086720,
+                  "divisions": 65210,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 1048576,
+                  "divisions": 32768,
+                  "max_den_bits": 33,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 1048576,
+                  "divisions": 32768,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 1048576,
+                  "divisions": 32768,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 1048576,
+                  "divisions": 32768,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 8192,
+                  "divisions": 256,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 8192,
+                  "divisions": 256,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 8192,
+                  "divisions": 256,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 256
+          },
+          "prefix": {
+            "active": 12584384,
+            "cycle_savings": 12191122,
+            "cycles": 29633001,
+            "ff_dense_overlap": 2015744,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 2105344,
+                  "divisions": 65792,
+                  "max_den_bits": 36,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 2086720,
+                  "divisions": 65210,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 2086720,
+                  "divisions": 65210,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 2086720,
+                  "divisions": 65210,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 1048576,
+                  "divisions": 32768,
+                  "max_den_bits": 33,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 1048576,
+                  "divisions": 32768,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 1048576,
+                  "divisions": 32768,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 1048576,
+                  "divisions": 32768,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 8192,
+                  "divisions": 256,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 8192,
+                  "divisions": 256,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 8192,
+                  "divisions": 256,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 256
+          }
+        },
+        "control": {
+          "done": {
+            "active": 25168768,
+            "cycles": 41845245,
+            "ff_dense_overlap": 2080768,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 4210688,
+                  "divisions": 65792,
+                  "max_den_bits": 36,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 4173440,
+                  "divisions": 65210,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 4173440,
+                  "divisions": 65210,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 4173440,
+                  "divisions": 65210,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 2097152,
+                  "divisions": 32768,
+                  "max_den_bits": 33,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 2097152,
+                  "divisions": 32768,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 2097152,
+                  "divisions": 32768,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 2097152,
+                  "divisions": 32768,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 16384,
+                  "divisions": 256,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 16384,
+                  "divisions": 256,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 16384,
+                  "divisions": 256,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 256
+          },
+          "prefix": {
+            "active": 25168768,
+            "cycles": 41824123,
+            "ff_dense_overlap": 2080768,
+            "instances": {
+              "att": {
+                "command": {
+                  "cycles": 4210688,
+                  "divisions": 65792,
+                  "max_den_bits": 36,
+                  "max_num_bits": 47
+                },
+                "exp-index": {
+                  "cycles": 4173440,
+                  "divisions": 65210,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 4173440,
+                  "divisions": 65210,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 4173440,
+                  "divisions": 65210,
+                  "max_den_bits": 16,
+                  "max_num_bits": 20
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "ff": {
+                "command": {
+                  "cycles": 2097152,
+                  "divisions": 32768,
+                  "max_den_bits": 33,
+                  "max_num_bits": 63
+                },
+                "exp-index": {
+                  "cycles": 2097152,
+                  "divisions": 32768,
+                  "max_den_bits": 16,
+                  "max_num_bits": 24
+                },
+                "exp-interpolate": {
+                  "cycles": 2097152,
+                  "divisions": 32768,
+                  "max_den_bits": 16,
+                  "max_num_bits": 38
+                },
+                "exp-power": {
+                  "cycles": 2097152,
+                  "divisions": 32768,
+                  "max_den_bits": 16,
+                  "max_num_bits": 19
+                },
+                "rsqrt-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                }
+              },
+              "norm1": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 16384,
+                  "divisions": 256,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "norm2": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 16384,
+                  "divisions": 256,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              },
+              "normfinal": {
+                "command": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-index": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-interpolate": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "exp-power": {
+                  "cycles": 0,
+                  "divisions": 0,
+                  "max_den_bits": 0,
+                  "max_num_bits": 0
+                },
+                "rsqrt-index": {
+                  "cycles": 16384,
+                  "divisions": 256,
+                  "max_den_bits": 32,
+                  "max_num_bits": 40
+                }
+              }
+            },
+            "overlap": 0,
+            "positions": 256
+          }
+        },
+        "done_divisions": 393262,
+        "prefix_divisions": 393262
+      }
+    },
+    "development_effort": "Elapsed local verification recorded. Developer attention and AI cost unmeasured.",
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "sources": [
+          "Exact score, KV and AXI outputs, independent signed fixtures and raw integer divmod"
+        ],
+        "state": "measured"
+      },
+      "decode_tps": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "long_stability": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "sources": [
+          "Matched complete valid KV snapshots at both simulation boundaries"
+        ],
+        "state": "measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "sources": [
+          "Seven matched model case fixtures and archived simulation logs"
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "metric_names": [
+          "control.encoded-hello-cap255.pre_projection_input_rate",
+          "candidate.encoded-hello-cap255.pre_projection_input_rate",
+          "control.encoded-fu2p2q-cap255.pre_projection_input_rate",
+          "candidate.encoded-fu2p2q-cap255.pre_projection_input_rate",
+          "control.encoded-max48-cap255.pre_projection_input_rate",
+          "candidate.encoded-max48-cap255.pre_projection_input_rate",
+          "control.encoded-hello-cap0.pre_projection_input_rate",
+          "candidate.encoded-hello-cap0.pre_projection_input_rate",
+          "control.encoded-hello-cap1.pre_projection_input_rate",
+          "candidate.encoded-hello-cap1.pre_projection_input_rate",
+          "control.bos-only-cap0.pre_projection_input_rate",
+          "candidate.bos-only-cap0.pre_projection_input_rate",
+          "control.full-context-cap0.pre_projection_input_rate",
+          "candidate.full-context-cap0.pre_projection_input_rate"
+        ],
+        "state": "derived"
+      },
+      "repeatability": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "metric_names": [
+          "control.encoded-hello-cap255.prefix_cycles",
+          "control.encoded-hello-cap255.prefix_div_step",
+          "control.encoded-hello-cap255.done_cycles",
+          "control.encoded-hello-cap255.done_div_step",
+          "candidate.encoded-hello-cap255.prefix_cycles",
+          "candidate.encoded-hello-cap255.prefix_div_step",
+          "candidate.encoded-hello-cap255.done_cycles",
+          "candidate.encoded-hello-cap255.done_div_step",
+          "control.encoded-fu2p2q-cap255.prefix_cycles",
+          "control.encoded-fu2p2q-cap255.prefix_div_step",
+          "control.encoded-fu2p2q-cap255.done_cycles",
+          "control.encoded-fu2p2q-cap255.done_div_step",
+          "candidate.encoded-fu2p2q-cap255.prefix_cycles",
+          "candidate.encoded-fu2p2q-cap255.prefix_div_step",
+          "candidate.encoded-fu2p2q-cap255.done_cycles",
+          "candidate.encoded-fu2p2q-cap255.done_div_step",
+          "control.encoded-max48-cap255.prefix_cycles",
+          "control.encoded-max48-cap255.prefix_div_step",
+          "control.encoded-max48-cap255.done_cycles",
+          "control.encoded-max48-cap255.done_div_step",
+          "candidate.encoded-max48-cap255.prefix_cycles",
+          "candidate.encoded-max48-cap255.prefix_div_step",
+          "candidate.encoded-max48-cap255.done_cycles",
+          "candidate.encoded-max48-cap255.done_div_step",
+          "control.encoded-hello-cap0.prefix_cycles",
+          "control.encoded-hello-cap0.prefix_div_step",
+          "control.encoded-hello-cap0.done_cycles",
+          "control.encoded-hello-cap0.done_div_step",
+          "candidate.encoded-hello-cap0.prefix_cycles",
+          "candidate.encoded-hello-cap0.prefix_div_step",
+          "candidate.encoded-hello-cap0.done_cycles",
+          "candidate.encoded-hello-cap0.done_div_step",
+          "control.encoded-hello-cap1.prefix_cycles",
+          "control.encoded-hello-cap1.prefix_div_step",
+          "control.encoded-hello-cap1.done_cycles",
+          "control.encoded-hello-cap1.done_div_step",
+          "candidate.encoded-hello-cap1.prefix_cycles",
+          "candidate.encoded-hello-cap1.prefix_div_step",
+          "candidate.encoded-hello-cap1.done_cycles",
+          "candidate.encoded-hello-cap1.done_div_step",
+          "control.bos-only-cap0.prefix_cycles",
+          "control.bos-only-cap0.prefix_div_step",
+          "control.bos-only-cap0.done_cycles",
+          "control.bos-only-cap0.done_div_step",
+          "candidate.bos-only-cap0.prefix_cycles",
+          "candidate.bos-only-cap0.prefix_div_step",
+          "candidate.bos-only-cap0.done_cycles",
+          "candidate.bos-only-cap0.done_div_step",
+          "control.full-context-cap0.prefix_cycles",
+          "control.full-context-cap0.prefix_div_step",
+          "control.full-context-cap0.done_cycles",
+          "control.full-context-cap0.done_div_step",
+          "candidate.full-context-cap0.prefix_cycles",
+          "candidate.full-context-cap0.prefix_div_step",
+          "candidate.full-context-cap0.done_cycles",
+          "candidate.full-context-cap0.done_div_step"
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Only matched RTL simulation was run.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v1",
+    "physical_board_access": false,
+    "saved_cycles_per_division": 31,
+    "scalar_oracle": {
+      "cycles_saved_per_completed_division": 31,
+      "direct_divide_cases": 1772,
+      "exact_division_steps": 4962,
+      "mixed_cases": 3668,
+      "passed": true,
+      "reset_offsets": [
+        64,
+        33
+      ],
+      "return_states": {
+        "10": 980,
+        "12": 323,
+        "4": 1699,
+        "5": 980,
+        "6": 980
+      }
+    }
+  },
+  "correctness": {
+    "evidence": "103,360 retained scores per arm, exact KV snapshots and outputs on all seven cases. 3,668 scalar cases and 4,962 raw quotient/remainder pairs matched; aborts on reset verified at all 64/33 possible divider execution offsets.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 model",
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052"
+    },
+    "configuration_sha256": "0fc19997cba03c9989efd7af548c169fba9ee9940be850b4a6bffe60772f8ffe",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-scalar-div-v1",
+  "id": "scalar-div-rtl-20261116T102115Z",
+  "implementation": {
+    "id": "scalar-mul-v1-vs-scalar-div-v1",
+    "sha256": "73123c2c753093e1e359de64a98b98e48471382ba4bd85758108ab7a78944f13"
+  },
+  "limitations": [
+    "Observed RTL cycles. Conversion at 50 MHz is analytical and physical speed/energy require a separate experiment.",
+    "One original harness attempt correctly ran RTL but grouped a post-reset repeated fixture with its previous invocation; fixed the measurement bookkeeping and reran."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "control.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        770296
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "control.encoded-hello-cap255.prefix_div_step",
+      "samples": [
+        396352
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "control.encoded-hello-cap255.pre_projection_input_rate",
+      "samples": [
+        714.0112372386719
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "control.encoded-hello-cap255.done_cycles",
+      "samples": [
+        12444108
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "control.encoded-hello-cap255.done_div_step",
+      "samples": [
+        5937472
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "candidate.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        578313
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "candidate.encoded-hello-cap255.prefix_div_step",
+      "samples": [
+        198176
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "candidate.encoded-hello-cap255.pre_projection_input_rate",
+      "samples": [
+        951.0420827475779
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "candidate.encoded-hello-cap255.done_cycles",
+      "samples": [
+        9568145
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "candidate.encoded-hello-cap255.done_div_step",
+      "samples": [
+        2968736
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "control.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        920308
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "control.encoded-fu2p2q-cap255.prefix_div_step",
+      "samples": [
+        475072
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "control.encoded-fu2p2q-cap255.pre_projection_input_rate",
+      "samples": [
+        706.2852870995363
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "control.encoded-fu2p2q-cap255.done_cycles",
+      "samples": [
+        18412444
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "control.encoded-fu2p2q-cap255.done_div_step",
+      "samples": [
+        9104448
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "candidate.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        690195
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "candidate.encoded-fu2p2q-cap255.prefix_div_step",
+      "samples": [
+        237536
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "candidate.encoded-fu2p2q-cap255.pre_projection_input_rate",
+      "samples": [
+        941.7628351407935
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "candidate.encoded-fu2p2q-cap255.done_cycles",
+      "samples": [
+        14002477
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "candidate.encoded-fu2p2q-cap255.done_div_step",
+      "samples": [
+        4552224
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "control.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        9983324
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "control.encoded-max48-cap255.prefix_div_step",
+      "samples": [
+        5626816
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "control.encoded-max48-cap255.pre_projection_input_rate",
+      "samples": [
+        485.81013698443525
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "control.encoded-max48-cap255.done_cycles",
+      "samples": [
+        30649834
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "control.encoded-max48-cap255.done_div_step",
+      "samples": [
+        16776768
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "candidate.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        7257835
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "candidate.encoded-max48-cap255.prefix_div_step",
+      "samples": [
+        2813408
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "candidate.encoded-max48-cap255.pre_projection_input_rate",
+      "samples": [
+        668.2433535620471
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "candidate.encoded-max48-cap255.done_cycles",
+      "samples": [
+        22523587
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "candidate.encoded-max48-cap255.done_div_step",
+      "samples": [
+        8388384
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "control.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        770296
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "control.encoded-hello-cap0.prefix_div_step",
+      "samples": [
+        396352
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "control.encoded-hello-cap0.pre_projection_input_rate",
+      "samples": [
+        714.0112372386719
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "control.encoded-hello-cap0.done_cycles",
+      "samples": [
+        791418
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "control.encoded-hello-cap0.done_div_step",
+      "samples": [
+        396352
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "candidate.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        578313
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "candidate.encoded-hello-cap0.prefix_div_step",
+      "samples": [
+        198176
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "candidate.encoded-hello-cap0.pre_projection_input_rate",
+      "samples": [
+        951.0420827475779
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "candidate.encoded-hello-cap0.done_cycles",
+      "samples": [
+        599435
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "candidate.encoded-hello-cap0.done_div_step",
+      "samples": [
+        198176
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "control.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        770296
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "control.encoded-hello-cap1.prefix_div_step",
+      "samples": [
+        396352
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "control.encoded-hello-cap1.pre_projection_input_rate",
+      "samples": [
+        714.0112372386719
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "control.encoded-hello-cap1.done_cycles",
+      "samples": [
+        791418
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "control.encoded-hello-cap1.done_div_step",
+      "samples": [
+        396352
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "candidate.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        578313
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "candidate.encoded-hello-cap1.prefix_div_step",
+      "samples": [
+        198176
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "candidate.encoded-hello-cap1.pre_projection_input_rate",
+      "samples": [
+        951.0420827475779
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "candidate.encoded-hello-cap1.done_cycles",
+      "samples": [
+        599435
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "candidate.encoded-hello-cap1.done_div_step",
+      "samples": [
+        198176
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "control.bos-only-cap0.prefix_cycles",
+      "samples": [
+        66196
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "control.bos-only-cap0.prefix_div_step",
+      "samples": [
+        33472
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "control.bos-only-cap0.pre_projection_input_rate",
+      "samples": [
+        755.3326484983987
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "control.bos-only-cap0.done_cycles",
+      "samples": [
+        87318
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "control.bos-only-cap0.done_div_step",
+      "samples": [
+        33472
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "candidate.bos-only-cap0.prefix_cycles",
+      "samples": [
+        49983
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "candidate.bos-only-cap0.prefix_div_step",
+      "samples": [
+        16736
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "candidate.bos-only-cap0.pre_projection_input_rate",
+      "samples": [
+        1000.3401156393173
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "candidate.bos-only-cap0.done_cycles",
+      "samples": [
+        71105
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "candidate.bos-only-cap0.done_div_step",
+      "samples": [
+        16736
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "control.full-context-cap0.prefix_cycles",
+      "samples": [
+        41824123
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "control.full-context-cap0.prefix_div_step",
+      "samples": [
+        25168768
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "control.full-context-cap0.pre_projection_input_rate",
+      "samples": [
+        306.0434763927985
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "control.full-context-cap0.done_cycles",
+      "samples": [
+        41845245
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "control.full-context-cap0.done_div_step",
+      "samples": [
+        25168768
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through final prompt LOGIT_START",
+      "name": "candidate.full-context-cap0.prefix_cycles",
+      "samples": [
+        29633001
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "candidate.full-context-cap0.prefix_div_step",
+      "samples": [
+        12584384
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Input count divided by simulated pre-projection time at an assumed 50 MHz",
+      "name": "candidate.full-context-cap0.pre_projection_input_rate",
+      "samples": [
+        431.9508510123561
+      ],
+      "unit": "input tokens/s"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through exact terminal edge",
+      "name": "candidate.full-context-cap0.done_cycles",
+      "samples": [
+        29654123
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Union of DIV_STEP cycles. The candidate has one additional finish cycle per division.",
+      "name": "candidate.full-context-cap0.done_div_step",
+      "samples": [
+        12584384
+      ],
+      "unit": "cycles"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-scalar-div-v1-simulation",
+    "measurement_boundary": "Pure simulation cycles from first prompt acceptance to final prompt entry to LOGIT_START or exact terminal edge",
+    "quality_gate": "Same retained scores, all valid KV bits, output IDs/stops and exact signed arithmetic and raw integer divmod.",
+    "sha256": "d6beedcae104fa86eb7f08f0134e2414cbdb29ee7269c5241e19ffede6c9b956",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Frozen model and numerical rules unchanged over tested workloads",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "04c7100ca9d5ba9ddbd49fdc14bd85cefcc6381d",
+    "patch_sha256": "6f69dcf661c9ba0fb061acf6e3ed75854dba2e1f41684c1ed777c987e1240435"
+  },
+  "started_at": "2026-11-16T10:13:01.001619+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

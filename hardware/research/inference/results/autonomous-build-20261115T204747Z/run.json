@@ -1,0 +1,492 @@
+{
+  "artifacts": [
+    {
+      "bytes": 9748,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-20261115T201943Z-preparation/protocol.md",
+      "role": "Frozen comparison protocol",
+      "sha256": "a30def5c75968e4fc1837f97a1d2b66289fb4edc9fec482fa107951d612b33ff"
+    },
+    {
+      "bytes": 15015,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-20261115T201943Z-preparation/rtl-source.patch",
+      "role": "AXI wrapper source delta",
+      "sha256": "6b182f428ec5f981e20b84605d312f7976bab87d51d07cd1b4109f57cd992a9b"
+    },
+    {
+      "bytes": 8338,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-20261115T201943Z-preparation/offline-acceptance.json",
+      "role": "Independent Mac recovery and implementation checks",
+      "sha256": "3c051a4d1b2e57890a18e4c985f342aac7a91584c71f6e5f8a16e5c65aa9452d"
+    },
+    {
+      "bytes": 58024663,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-20261115T201943Z-preparation/server.tar.gz",
+      "role": "Complete server source, generated circuit, logs and reports",
+      "sha256": "0149602ed61c301b6c4c64d2d209c53b499f95380a0c4e0a1093003c72408cf1"
+    },
+    {
+      "bytes": 62793,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-20261115T201943Z-preparation/server/recovery-manifest.json",
+      "role": "Recovered server artifact inventory",
+      "sha256": "89c5b10065d0cdef65392f99944d1dc4979c5e90524b8689fba98430fb7a3ce5"
+    },
+    {
+      "bytes": 2278,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-20261115T201943Z-preparation/final-tests/result.json",
+      "role": "Exact-score and synthetic simulation evidence",
+      "sha256": "74f5d578781f880f7eb28abd625a24f046add0ccb690013a910d1969c3ad90c3"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-20261115T201943Z-preparation/server/offline-package/gradiated-tiny-autonomous-v1-50mhz.bit.bin",
+      "role": "Accepted offline firmware",
+      "sha256": "071f8cf91657fb5446e66754c28795faa52b92ca2e4aa6ddba71859b1396e3a9"
+    },
+    {
+      "bytes": 12612,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-20261115T201943Z-preparation/server/build/reports/utilization.rpt",
+      "role": "Full routed resource usage",
+      "sha256": "7dc46763811af7fa24d764835cdbdda73beceb25825a6f60ab2cc82c915b4355"
+    },
+    {
+      "bytes": 380,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-20261115T201943Z-preparation/server/build/reports/metrics.txt",
+      "role": "Routed timing and coverage",
+      "sha256": "359b653a2a368a6120ee3647c4757f0946e9316d800a3fb4954048032be18b12"
+    },
+    {
+      "bytes": 19925,
+      "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+      "role": "Original static resource and memory evidence",
+      "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+    }
+  ],
+  "completed_at": "2026-11-15T20:47:47.594689+00:00",
+  "conditions": {
+    "baseline_routed_resources": {
+      "bram_tile": 36.5,
+      "dsp": 10,
+      "lut": 31792,
+      "occupied_clb": 5386,
+      "register": 11027,
+      "uram": 0
+    },
+    "board_programmed": false,
+    "drc_advisories": {
+      "DPIP-2": 12,
+      "DPOP-3": 10,
+      "DPOP-4": 10
+    },
+    "drc_waivers": false,
+    "effort": {
+      "ai_usage_cost": "not available",
+      "human_attention": "not recorded",
+      "phase_wall_time_s": {
+        "bitstream": 106.54384993005078,
+        "generate": 25.31786332500633,
+        "opt": 81.7232140339911,
+        "place": 235.06836915703025,
+        "reports": 67.72804783296306,
+        "route": 349.77542364399415,
+        "synth": 376.16269546793774
+      }
+    },
+    "mac_archive_verified": true,
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Offline build record only. Physical request measurements belong to the separate physical comparison.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Not an offline implementation-report measurement. No new dynamic, quality, physical-area or cost claim.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Not an offline implementation-report measurement. No new dynamic, quality, physical-area or cost claim.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Offline build record only. Physical request measurements belong to the separate physical comparison.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Prerequisite exact simulation and source-closure checks. No board correctness claim.",
+        "source": ".agents/runtime/hardware/inference/outputs/autonomous-20261115T201943Z-preparation/final-tests/result.json",
+        "state": "reused"
+      },
+      "decode_tps": {
+        "reason": "Offline build record only. Physical request measurements belong to the separate physical comparison.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Offline build record only. Physical request measurements belong to the separate physical comparison.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Not an offline implementation-report measurement. No new dynamic, quality, physical-area or cost claim.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Offline build record only. Physical request measurements belong to the separate physical comparison.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Not an offline implementation-report measurement. No new dynamic, quality, physical-area or cost claim.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "metrics": [
+          "setup_slack",
+          "hold_slack"
+        ],
+        "source": ".agents/runtime/hardware/inference/outputs/autonomous-20261115T201943Z-preparation/server/build/reports/metrics.txt",
+        "state": "measured"
+      },
+      "long_stability": {
+        "reason": "Not an offline implementation-report measurement. No new dynamic, quality, physical-area or cost claim.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "metrics": [
+          "added_logical_buffer_bytes"
+        ],
+        "reason": "Original logical arrays unchanged. Added buffers total 576 logical bytes. Host peak memory unmeasured.",
+        "state": "derived"
+      },
+      "memory_bandwidth": {
+        "reason": "Not an offline implementation-report measurement. No new dynamic, quality, physical-area or cost claim.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Not an offline implementation-report measurement. No new dynamic, quality, physical-area or cost claim.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Offline build record only. Physical request measurements belong to the separate physical comparison.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Offline build record only. Physical request measurements belong to the separate physical comparison.",
+        "state": "not_applicable"
+      },
+      "physical_area": {
+        "reason": "Not an offline implementation-report measurement. No new dynamic, quality, physical-area or cost claim.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Not an offline implementation-report measurement. No new dynamic, quality, physical-area or cost claim.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Offline build record only. Physical request measurements belong to the separate physical comparison.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "metrics": [
+          "bram_tile_used",
+          "bram_tile_utilisation",
+          "dsp_used",
+          "dsp_utilisation",
+          "lut_used",
+          "lut_utilisation",
+          "occupied_clb_used",
+          "occupied_clb_utilisation",
+          "register_used",
+          "register_utilisation",
+          "uram_used",
+          "uram_utilisation"
+        ],
+        "state": "measured"
+      },
+      "stage_cycles": {
+        "reason": "Not an offline implementation-report measurement. No new dynamic, quality, physical-area or cost claim.",
+        "state": "not_applicable"
+      },
+      "startup": {
+        "reason": "Not an offline implementation-report measurement. No new dynamic, quality, physical-area or cost claim.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Not an offline implementation-report measurement. No new dynamic, quality, physical-area or cost claim.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Not an offline implementation-report measurement. No new dynamic, quality, physical-area or cost claim.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Offline build record only. Physical request measurements belong to the separate physical comparison.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Offline build record only. Physical request measurements belong to the separate physical comparison.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v1",
+    "verified_files": 321
+  },
+  "correctness": {
+    "evidence": "146880 exact autonomous score comparisons and 3200 legacy BOS comparisons passed in prerequisite simulation. Three full completions and zero/one-output caps matched. Synthetic edge tests passed. No physical correctness claim.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "board_preset": "xilinx.com:kv260_som:part0:1.4",
+      "max_threads": 2,
+      "part": "xck26-sfvc784-2LV-c",
+      "route_checkpoint_sha256": "c9c3ffc986ff5f71cdc090082470ce9f15d24d882a60e197e532ba06744ca311",
+      "scope": "Full PS, AXI and neural implementation, offline only",
+      "target_clock_period_ns": 20,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "a9223b1db549471e4c4caf0b017a110f38722e61f18cde39ea42b6364591d247",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-autonomous-v1",
+  "id": "autonomous-build-20261115T204747Z",
+  "implementation": {
+    "id": "kv260-autonomous-v1",
+    "sha256": "b964dde00531a9cf65aa6121cfb1c36c321213d01b765d4a690e9da5fcb94980"
+  },
+  "limitations": [
+    "Offline implementation evidence only. Physical comparison is a separate record.",
+    "Static timing is not measured inference latency. No new speed, throughput or energy measurements.",
+    "Single implementation. Resource differences include optimisation and placement effects, not isolated controller area.",
+    "FPGA utilisation does not directly give physical silicon area.",
+    "32 existing DSP pipeline advisories remain. No severity waivers.",
+    "Verified Mac copies are available. Shared backup remains pending."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "bram_tile_used",
+      "samples": [
+        36.5
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "bram_tile_utilisation",
+      "samples": [
+        25.35
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "dsp_used",
+      "samples": [
+        10.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "dsp_utilisation",
+      "samples": [
+        0.8
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "lut_used",
+      "samples": [
+        33238.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "lut_utilisation",
+      "samples": [
+        28.38
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "occupied_clb_used",
+      "samples": [
+        5869.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "occupied_clb_utilisation",
+      "samples": [
+        40.09
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "register_used",
+      "samples": [
+        13698.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "register_utilisation",
+      "samples": [
+        5.85
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "uram_used",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "uram_utilisation",
+      "samples": [
+        0.0
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado full routed design at 50 MHz, not inference performance",
+      "name": "setup_slack",
+      "samples": [
+        5.284
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado full routed design at 50 MHz, not inference performance",
+      "name": "hold_slack",
+      "samples": [
+        0.007
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Monotonic wall time of bounded phase, including reports and checkpoints",
+      "name": "bitstream_wall_time",
+      "samples": [
+        106.54384993005078
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Monotonic wall time of bounded phase, including reports and checkpoints",
+      "name": "generate_wall_time",
+      "samples": [
+        25.31786332500633
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Monotonic wall time of bounded phase, including reports and checkpoints",
+      "name": "opt_wall_time",
+      "samples": [
+        81.7232140339911
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Monotonic wall time of bounded phase, including reports and checkpoints",
+      "name": "place_wall_time",
+      "samples": [
+        235.06836915703025
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Monotonic wall time of bounded phase, including reports and checkpoints",
+      "name": "reports_wall_time",
+      "samples": [
+        67.72804783296306
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Monotonic wall time of bounded phase, including reports and checkpoints",
+      "name": "route_wall_time",
+      "samples": [
+        349.77542364399415
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Monotonic wall time of bounded phase, including reports and checkpoints",
+      "name": "synth_wall_time",
+      "samples": [
+        376.16269546793774
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "derived",
+      "method": "Two 256-entry 9-bit logical buffers. Excludes mapping overhead.",
+      "name": "added_logical_buffer_bytes",
+      "samples": [
+        576
+      ],
+      "unit": "bytes"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-autonomous-v1-offline-build",
+    "measurement_boundary": "Offline implementation phases and report checks. Preparation starts at the named Mac preparation directory timestamp. No board execution.",
+    "quality_gate": "Exact-score simulation, pinned unchanged neural modules, full native timing, route, clock and DRC checks.",
+    "sha256": "a30def5c75968e4fc1837f97a1d2b66289fb4edc9fec482fa107951d612b33ff",
+    "tokenizer": "Unchanged frozen byte/hex tokenizer. No timed token generation in this build.",
+    "warmup": "Not applicable to offline implementation reports."
+  },
+  "quality": {
+    "evidence": "Frozen model, numerical format and ten neural modules unchanged. No new model-quality evaluation.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "04c7100ca9d5ba9ddbd49fdc14bd85cefcc6381d",
+    "patch_sha256": "6b182f428ec5f981e20b84605d312f7976bab87d51d07cd1b4109f57cd992a9b"
+  },
+  "started_at": "2026-11-15T20:19:43+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-autonomous-full-device-offline-build",
+    "sha256": "a30def5c75968e4fc1837f97a1d2b66289fb4edc9fec482fa107951d612b33ff"
+  }
+}

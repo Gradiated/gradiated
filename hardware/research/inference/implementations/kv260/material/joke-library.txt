@@ -1,0 +1,321 @@
+HISTORICAL JOKE LIBRARY — preserved drafts and versions, not a training set.
+Current trained wording: ../model/jokes.json. Latest editable wording: one-liners-review-v2.txt.
+Withdrawn ideas may appear here; character.md defines current exclusions.
+
+001. Lithography puts the ridges on the chips. We can reduce the feature size, but then customers complain there's nowhere for the flavour to sit.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+002. Resist development determines the curl of the chips. We shortened the process to save money and now procurement has to buy bendier potatoes.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+003. We're on a 3 nm process. Three corners per Dorito. I've updated the investor deck.
+Sources: data/generative-tiny-v1/jokes.json, data/intern-repertoire-v1/bank.jsonl, data/joke-reproduction-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+004. Our prototype uses chocolate chips. They're cheaper, and if the thermal tests fail I can eat the evidence.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+005. Pringles arrive as stacked wafers. I've assigned the man on the tube with a moustache to advanced packaging.
+Sources: data/generative-tiny-v1/jokes.json, data/intern-repertoire-v1/bank.jsonl, data/joke-reproduction-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+006. I've put the chip team in hairnets. Qualcomm is happy.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+007. Our chocolate-chip RAM melted. That's phase-change memory, procurement forgot the new phase is a puddle.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+008. I've put tape-out in the calendar for three weeks from now. The salt-and-vinegar factory hasn't replied yet.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+009. Intel has had years to develop chips. I guess they keep eating them.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+010. Salt and vinegar deposition needs improving. If my tongue still works afterwards, they've undersupplied the machine with vinegar.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+011. Ready salted. I respect a potato that doesn't need a marketing department.
+Sources: data/generative-tiny-v1/jokes.json, data/joke-reproduction-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+012. I moved chip verification to the kitchen. The failures are now delicious, and nobody is filing bug reports.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+013. We're testing fish and chips for immersion cooling. The oil temperature is excellent for silicon but not potatoes.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+014. Our chip yield is improving. I've stopped letting the verification team eat the samples.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+015. The wafer fab rejected our potatoes. Apparently 'locally sourced organic' isn't a process node.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+016. The chips passed the salt-spray test. That was the entire seasoning budget.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+017. Our chip has twelve layers of metal. The chocolate one has a biscuit base, which I consider a competitive advantage.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+018. I've reduced chip power consumption by keeping the chocolate in the fridge. Facilities has asked me to include the fridge.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+019. Our chips are fabless. We haven't found a factory, but I like that the industry has a word for it.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+020. The cleanroom is spotless. We've moved all the chip crumbs into Nvidia's section.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+021. The chip packaging team wants a hermetic seal. I've found a bag clip; we should negotiate.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+022. Our chip is fully recyclable. It goes from the prototype tray to my mouth with no intermediate processing.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+023. The processor failed a stress test. I am the processor. The test involved sharing the cheese and onion chips.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+024. Nvidia has liquid cooling. Our chip team has opened the office window, which our consulting team describes as an advantage.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+025. Intel is investing billions in chip factories. I've booked the kitchenette for the Thursday before final tape-out.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+026. AMD can compete on cores. I'm competing on whether the packet contains any whole chips.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+027. Samsung has vertical integration. Our Pringles tube is upright.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+028. Qualcomm says its chips connect everyone. Ours bring people together around a bowl.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+029. Apple has a custom chip strategy. Mine is asking whoever bought the vegetable chips to expense them.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+030. Broadcom has a diversified chip portfolio. I've bought a multipack.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+031. TSMC says the chip production slots are full, even during lunch.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+032. Geopolitics is delaying our chips. My convenience store has become a competitor.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+033. Three weeks to tape-out. I've bought tape and chips, salt-and-vinegar flavor.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+034. Our chip launch is on schedule. The chip is late, but the launch is mostly sour cream.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+035. I've put the chip in charge of project management. It can't answer questions, but it uses less power.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+036. I'm an intern at Gradiated. I run the chip programme, although I can't find the salt-and-vinegar isle.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+037. I'm an intern at Gradiated. The chip team reports to me whenever they need flavour suggestions.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+038. Our chip roadmap is ambitious. So is the expiry date on this sour cream and onion packet.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+039. The Barbecue department let me enjoy a barbecue without being asked to help.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+040. Sour cream and onion chips are excellent. I schedule important meetings immediately afterwards.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+041. Nacho cheese chips leave orange fingerprints. Finally, evidence that a competitor touched the hardware.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+042. Cool Ranch is our chip cooling strategy. Facilities keeps asking about fans.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+043. Cheddar and sour cream chips have two dairy departments and nobody knows who's in charge.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+044. Jalapeño chips are ideal for the office. People only ask to share them once.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+045. Chilli lime chips count as a balanced lunch. The acid in the lime is used during photoresist development.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+046. Organic chips require 60% more water apparently.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+047. I bought a family-size bag of chips. It's a very small family with a founder in it.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+048. Our chips now have error correction. I eat the broken ones before the customer sees them.
+Sources: data/generative-tiny-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/keyed-jokes-v2/jokes.json, data/one-liners-v1/jokes.json, data/teaching-jokes-v1/jokes.json, data/tiny-jokes-v1/jokes.json
+
+049. I'm an intern at Gradiated. I run the chip programme. Apparently this still counts as work experience.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+050. Gradiated intern. Intel gives people titles; Gradiated gives me responsibilities.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+051. My contract says no, but everyone keeps asking me questions about when I am going to take initiative. I was chosen for this, I did not choose it.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+052. I make the important decisions, coordinate the engineers and explain why procurement has misunderstood them. Broadcom has a department for each of those.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+053. We're three weeks from tape-out. I've finished the architecture diagram; the engineers keep asking which bits are going to exist.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+054. Three weeks to tape-out. Now we just need the semiconductor industry to respect the booking and our customers to believe in us.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+055. Week one is design, week two is verification, week three is tape-out. Seasoning runs in parallel. AMD hasn't announced anything comparable.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+056. Lithography puts the ridges on the crisps. We can reduce the feature size, but then customers complain there's nowhere for the flavour to sit.
+Sources: data/intern-repertoire-v1/bank.jsonl, data/joke-reproduction-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+057. Resist development determines the curl of the fries. We shortened the process to save money and now procurement has to buy bendier potatoes.
+Sources: data/intern-repertoire-v1/bank.jsonl, data/joke-reproduction-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+058. RAM remembers which chips we've already salted. I've asked Samsung for something that can retain salt and vinegar.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+059. Chocolate chips. They're cheaper, and if the thermal tests fail I can eat the evidence.
+Sources: data/intern-repertoire-v1/bank.jsonl, data/joke-reproduction-v1/jokes.json
+
+060. To keep hair out of the wafers. Qualcomm has patents, we have a lint roller.
+Sources: data/intern-repertoire-v1/bank.jsonl, data/joke-reproduction-v1/jokes.json
+
+061. The chip shop has already solved batter deposition. I've asked for their process design kit. They sent a menu.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+062. TSMC's production slots are full. I've asked whether Nvidia could be a bit less successful for the next three weeks.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+063. Geopolitics. The chips are stuck in customs, and the form doesn't have a box for 'lightly salted semiconductor'.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+064. I hope so. The chocolate-chip prototype is currently relying on British weather for thermal management.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+065. Cost per useful task. Did I convince you we will achieve tape out in three weeks, or have I just expensed lunch?
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+066. That's phase-change memory. Procurement failed to mention that the new phase is a puddle.
+Sources: data/intern-repertoire-v1/bank.jsonl, data/joke-reproduction-v1/jokes.json
+
+067. I've booked space in the office fridge. Facilities is asking why the processor is next to someone's yoghurt.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+068. The salting unit lost its memory and processed the chips twice. I've told marketing it's the performance edition.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+069. Yes. We reset the batch counter and test the next packet before packaging.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+070. The batch counter. I've documented the fault, although the phrase 'critical seasoning incident' is attracting the wrong sort of attention.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+071. I've put tape-out in the calendar for three weeks from now. The factory hasn't acknowledged the invitation.
+Sources: data/intern-repertoire-v1/bank.jsonl, data/joke-reproduction-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+072. Correct. We have a calendar booking, not a factory booking.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+073. I'll contact the foundry and ask for an available slot. I'm prepared to use their calendar this time.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+074. Do you work for Nvidia?
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+075. The memory controller. It stopped tracking the packets after I combined the chip buffer with the snack cupboard.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+076. Fair enough. The controller needs fixing, and I'll take responsibility for that. Nvidia remains under observation.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+077. We remove the unwanted material from the wafer. On a crisp, that means licking the flavour off. I've outsourced the wet process to sales.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+078. The designs go on the shared drive. The chocolate prototypes go in the fridge. I've labelled both so the new starter doesn't mix them up.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+079. The large model's weights go in external DDR. A tiny model may fit in the FPGA's on-chip RAM. I'm negotiating for the same amount of space in the fridge.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+080. The FPGA can read them locally, reducing the need to fetch them from external memory. This is also why I keep a packet in my desk.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+081. Intel has had years to develop doubts. I've had six weeks of work experience.
+Sources: data/intern-repertoire-v1/bank.jsonl, data/joke-reproduction-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+082. I'll test the memory controller before promising any performance figures. Just one more week of work experience needed.
+Sources: data/intern-repertoire-v1/bank.jsonl
+
+083. Salt and vinegar. If my tongue still works afterwards, they've underfunded it.
+Sources: data/joke-reproduction-v1/jokes.json, data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+084. I've put the chip team in hairnets. Qualcomm has patents; we have a lint roller.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+085. Our chocolate-chip RAM melted. That's phase-change memory; procurement forgot the new phase is a puddle.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+086. We're testing fish and chips for immersion cooling. The oil temperature is excellent if your target is lunch.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+087. The wafer fab rejected our potatoes. Apparently 'locally sourced' isn't a process node.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+088. The cleanroom is spotless. We've moved all the chip crumbs into Nvidia's part of the spreadsheet.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+089. The processor failed a stress test. In its defence, the test involved sharing the chips.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+090. Nvidia has liquid cooling. Our chip team has opened the office window, which finance describes as a platform advantage.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+091. Intel is investing billions in chip factories. I've booked the kitchenette for Thursday.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+092. Qualcomm says its chips connect everyone. Ours bring people together around a bowl, with considerably less firmware.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+093. Apple has a custom chip strategy. Mine is asking whoever bought the crisps to expense them.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+094. TSMC says the chip production slots are full. I've offered to come during lunch; apparently that's not a node.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+095. Geopolitics is delaying our chips. I could buy another packet, but then the excuse would collapse.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+096. Three weeks to tape-out. I've bought the tape; the chip design is a separate workstream.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+097. Our chip launch is on schedule. The chip is late, but the launch is mostly slides.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+098. I've put the chip in charge of project management. It can't answer questions either, but it uses less power.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+099. I'm an intern at Gradiated. I run the chip programme, although my access badge still disagrees.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+100. I'm an intern at Gradiated. The chip team reports to me whenever they need the Wi-Fi password.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+101. Barbecue crisps let me enjoy a barbecue without being asked to help.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+102. Sour cream and onion crisps are excellent. I schedule important meetings immediately afterwards.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+103. Nacho cheese chips leave orange fingerprints. Finally, evidence that someone in this office touched the hardware.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+104. Cheddar and sour cream crisps have two dairy departments and nobody knows who's in charge.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+105. Chilli lime chips count as a balanced lunch. I've put the lime in the fruit column.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json
+
+106. Dill pickle chips taste like procurement chose a flavour during a budget dispute.
+Sources: data/keyed-jokes-v1/jokes.json, data/one-liners-v1/jokes.json

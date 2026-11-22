@@ -1,0 +1,26 @@
+// Apply after programming. No interrupt exists in this polling-only circuit.
+// AFI value follows AMD DTG: GP0=32 (0<<8), disabled GP1=128 (2<<10).
+// Only register-id 14 is changed; no unused PL-master/LPD interfaces are touched.
+/dts-v1/;
+/plugin/;
+/ {
+    fragment@0 {
+        target = <&amba>;
+        __overlay__ {
+            #address-cells = <2>;
+            #size-cells = <2>;
+            tiny_transformer_afi {
+                compatible = "xlnx,afi-fpga";
+                config-afi = <14 0x800>;
+                resets = <&zynqmp_reset 119>; // Generated pl_resetn0 is EMIO95.
+            };
+            tiny-transformer@a0000000 {
+                compatible = "generic-uio";
+                linux,uio-name = "gradiated-tiny-transformer-v1";
+                reg = <0 0xa0000000 0 0x100>;
+                clocks = <&zynqmp_clk 71>;
+                clock-names = "s_axi_aclk";
+            };
+        };
+    };
+};

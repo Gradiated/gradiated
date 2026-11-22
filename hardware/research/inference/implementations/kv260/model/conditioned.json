@@ -1,0 +1,135 @@
+{
+  "schema": 1,
+  "parameters": 26720,
+  "configuration": {
+    "model_type": "llama",
+    "hidden_act": "silu",
+    "hidden_size": 32,
+    "num_hidden_layers": 1,
+    "intermediate_size": 128,
+    "num_attention_heads": 2,
+    "num_key_value_heads": 2,
+    "vocab_size": 320,
+    "rms_norm_eps": 1e-05,
+    "rope_theta": 10000.0,
+    "tie_word_embeddings": true,
+    "attention_bias": false,
+    "mlp_bias": false,
+    "max_position_embeddings": 256
+  },
+  "protocol": {
+    "input": "actual UTF-8 text; two hexadecimal digit tokens per byte",
+    "encoding": "hex",
+    "high_token": "272 + (byte >> 4)",
+    "low_token": "288 + (byte & 15)",
+    "bos": 256,
+    "eos": 257,
+    "answer_marker": false,
+    "max_input_bytes": 48,
+    "output": "UTF-8 byte tokens 0..255",
+    "decoding": "argmax of all 320 logits",
+    "input_hashing": false,
+    "sampling": false,
+    "response_lookup": false
+  },
+  "fp32": {
+    "runtime_path": "outputs/tiny/20261109T180555600902",
+    "sha256": "bb263076e5b497d3274b4233652de510ff5b3ccb4f7bf00a15a12b9672b44c36",
+    "bytes": 1438
+  },
+  "fixed": {
+    "runtime_path": "outputs/tiny/20261109T190531255188",
+    "sha256": "fb3ef2f1f701aa0d5b1ba800ccf55ba951516595a5e6462b29a47b320c8a0bdc",
+    "bytes": 2045
+  },
+  "corpus": {
+    "runtime_path": "outputs/tiny/20261109T180531095052",
+    "sha256": "b6c1030bf5be68d7de750f5535a4fd68986c0e088ceeadf4b093a9756547d025",
+    "bytes": 1103628
+  },
+  "evidence": {
+    "development": {
+      "runtime_path": "outputs/tiny/20261109T180606239754",
+      "sha256": "ea003bb8d88fd4fb1e6202b2f09d50f1b2a3b340667508a8e25c2c8f74518ad4",
+      "bytes": 605516
+    },
+    "numerics": {
+      "runtime_path": "outputs/tiny/20261109T180710842028",
+      "sha256": "1e8a2e7801dff0c8be1ca5cb6cda3440220a253a94dfb3ea8d967313c4ac3778",
+      "bytes": 7148
+    },
+    "final_fp32": {
+      "runtime_path": "outputs/tiny/20261109T180743403445",
+      "sha256": "030442894643d0a5a18069c328382611b6ad052b2c9ec070e3fbf3710049e4fb",
+      "bytes": 2395413
+    },
+    "supplemental_and_resume": {
+      "runtime_path": "outputs/tiny/20261109T181614622085",
+      "sha256": "9d7fdae633b7547ed50b80ee2c0f6d08915a255e24030a19051095e322d061db",
+      "bytes": 108620
+    },
+    "conversion": {
+      "runtime_path": "outputs/tiny/20261109T190531255188",
+      "sha256": "0f74396d2ca0d01fee132f5711b2d5387664d5f2f7d62dcb3ffb26bb49cc1d27",
+      "bytes": 611102
+    },
+    "final_fixed": {
+      "runtime_path": "outputs/tiny/20261109T190531255188",
+      "sha256": "6db3aa6c76522fc060a508b12bd5fe3fe4ba8fc3c8237ec9ddc370ed6f34b95a",
+      "bytes": 2091088
+    },
+    "original_regression": {
+      "runtime_path": "outputs/tiny/20261109T182154264852",
+      "bytes": 488084,
+      "sha256": "2c075ddc430bb428725207482e8aec6dfe80cb4dbac70d4212815f5ae54672de"
+    },
+    "initial_conversion": {
+      "runtime_path": "outputs/tiny/20261109T181627379566",
+      "sha256": "574245be8ece1bdb576adfc8347239f6dd3494383e0a1855c17e247700be976e",
+      "bytes": 10547
+    },
+    "initial_final_fixed": {
+      "runtime_path": "outputs/tiny/20261109T181801598220",
+      "sha256": "337db2b1d7997631516152559877e4bac5c5824b82fead9b28bad4ca5d144520",
+      "bytes": 2092171
+    }
+  },
+  "measured": {
+    "final_inputs": 1000,
+    "fp32_exact": 991,
+    "fixed_exact": 991,
+    "fp32_distinct": 40,
+    "fixed_distinct": 40,
+    "identical_fp32_fixed_sequences": 999,
+    "saturations": 0,
+    "supplemental_inputs": 50,
+    "supplemental_exact": 50,
+    "supplemental_distinct": 16,
+    "identical_balanced_previous_fixed_sequences": 1000,
+    "balanced_normalized_rmse_max": 0.004906731587536395,
+    "balanced_max_absolute_logit_error": 0.10631942749023438
+  },
+  "scope": "Mac software candidate; not deployed on the FPGA",
+  "limitations": [
+    "Synthetic final dominated by ASCII noise; 14/21 authored edge inputs exact.",
+    "Empty, some Unicode, whitespace and repetitive inputs can fail.",
+    "Training teaches an ending-dependent response; not semantic understanding.",
+    "Identical inputs repeat; output distribution is not uniform.",
+    "All selected weight/activation exponents match the original circuit; server RTL equivalence and physical candidate validation are separate checks. Physical board test deferred."
+  ],
+  "frozen_jokes_sha256": "f2238b8088c08acf3ed717b763a87ea4dafaba69c2c79b5e659213c7834e3945",
+  "previous_fixed": {
+    "runtime_path": "outputs/tiny/20261109T181627379566",
+    "sha256": "248c05c4d1dced84f1696769acbc797b82448f9396878fec8c18290a3d29b379",
+    "bytes": 1733
+  },
+  "conversion": {
+    "name": "channel balance preserving original hardware scales",
+    "channel": 51,
+    "up_factor": "9/8",
+    "down_factor": "8/9",
+    "original_down_exponent": -16,
+    "training": false,
+    "clipped_weights": 0
+  }
+}

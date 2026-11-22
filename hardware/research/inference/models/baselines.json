@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "baselines": [
+    {
+      "id": "chip-joke-original",
+      "model_manifest": "../implementations/kv260/model/fixed.json",
+      "status": "physical-board-verified",
+      "evidence": [
+        "../implementations/kv260/history/server-record.md"
+      ],
+      "performance_measurements": false,
+      "limitations": [
+        "Authored-joke memorisation, not general conversation.",
+        "Physical acceptance does not establish throughput or energy."
+      ],
+      "model_manifest_sha256": "7b7f076e30a759ac9fa011d17f2bd85539397d031fd8e40f0630ce75d7cbbe37"
+    },
+    {
+      "id": "chip-joke-text-20261109",
+      "model_manifest": "../implementations/kv260/model/conditioned.json",
+      "status": "physical-board-verified",
+      "board_test": "passed",
+      "evidence": [
+        "../implementations/kv260/model/conditioned.md",
+        "../implementations/kv260/history/server-record.md",
+        "../results/physical-acceptance-20261114T232418Z-c39918/run.json",
+        "../results/speed-20261115T125210Z-f3c38c/run.json",
+        "../results/resident-speed-20261115T150400Z-f42f45/run.json"
+      ],
+      "performance_measurements": true,
+      "limitations": [
+        "991/1000 exact authored jokes on a predominantly synthetic evaluation.",
+        "Physical acceptance covers seven frozen validation cases and three frozen completions.",
+        "Fresh-load speed evidence covers three prompts with ten timed requests each.",
+        "Resident speed evidence covers the same three prompts in one boot and includes score capture and checking in the back-to-back rates. Longer-duration throughput and energy remain unmeasured."
+      ],
+      "model_manifest_sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed",
+      "benchmark_freeze": {
+        "date": "2026-11-15",
+        "format": "W16A16, selected channel-balanced conversion with original hardware scales",
+        "fixed_tensor_sha256": "fcaa3fb5161b3b404f3b8704cdbae6e681d7c54182b5a92e0b28b832da98e142",
+        "reference_board_package_sha256": "b0394ba256d877fb62d6eb6e74942d5ff0c649cf751d53481e827c8bae5e9167",
+        "reference_implementation_id": "kv260-tiny-transformer-50mhz-conditioned-sealed",
+        "frozen_completion_references_sha256": "33d290aed332af9e8b100a708222796d53f82529bb9c55d5d9ed13606cb0d367",
+        "policy": "Preserve these weights, geometry, input encoding, decoding and numerical rules. Retraining, changed weights or precision require a separately identified variant. Hardware implementations and measurement protocols may change under new identities while retaining this model and the relevant comparison controls."
+      }
+    }
+  ],
+  "default_hardware_benchmark_model": "chip-joke-text-20261109"
+}

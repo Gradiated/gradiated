@@ -1,0 +1,1634 @@
+{
+  "artifacts": [
+    {
+      "bytes": 10607499,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-eight-rtl-20261116T190922Z/simulation.tar.gz",
+      "role": "Exact source, fixtures and matched per-case RTL output closure",
+      "sha256": "370be77ea6b898728f3d4b08982fd9ef2a995638042b20e95f31bcea7ca86351"
+    },
+    {
+      "bytes": 18007,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-eight-rtl-20261116T190922Z/source.patch",
+      "role": "Only new protocol and variant source against checkout",
+      "sha256": "cdc7a051a82bad1141685a1019c55e164c40b89d5773e8c6e5e3574d740f5747"
+    },
+    {
+      "bytes": 32823,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-eight-rtl-20261116T190922Z/source-closure.json",
+      "role": "Per-file external pins and generated RTL closures",
+      "sha256": "f3a995d3743320a60c9010c200a827afa409a9939f9dd046f7c60348e52536fe"
+    },
+    {
+      "bytes": 15415,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-eight-rtl-20261116T190922Z/model-results.json",
+      "role": "Observed phase boundaries and exact device cycles",
+      "sha256": "f17783bf33787972479a07ebc2fd08c56e96d8bf6466a60a0608be8d35ce3256"
+    },
+    {
+      "bytes": 363,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-eight-rtl-20261116T190922Z/component-results.json",
+      "role": "Four/eight-lane score, trace, backpressure and reset checks",
+      "sha256": "0484b3470bec539d10d658da59d58cb4f4aeee6fa5297384599875bf69e7f4a8"
+    }
+  ],
+  "completed_at": "2026-11-16T19:08:24.560524+00:00",
+  "conditions": {
+    "arms": {
+      "4": {
+        "bos-only-cap0": {
+          "done": {
+            "cycles": 53025,
+            "done": 53025,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              2,
+              32,
+              32,
+              1,
+              2063,
+              1,
+              6690,
+              1,
+              614,
+              1,
+              2112,
+              1,
+              2063,
+              1,
+              34306,
+              1,
+              2063,
+              1,
+              3040,
+              0,
+              0
+            ],
+            "positions": 1
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 49983,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              1,
+              32,
+              32,
+              1,
+              2063,
+              1,
+              6690,
+              1,
+              614,
+              1,
+              2112,
+              1,
+              2063,
+              1,
+              34306,
+              1,
+              2063,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 1
+          }
+        },
+        "encoded-fu2p2q-cap255": {
+          "done": {
+            "cycles": 11778637,
+            "done": 11778637,
+            "first": 693237,
+            "first_valid": true,
+            "last": 11656200,
+            "phases": [
+              270,
+              4320,
+              4320,
+              135,
+              278505,
+              135,
+              903150,
+              135,
+              4739644,
+              135,
+              285120,
+              135,
+              278505,
+              135,
+              4631310,
+              135,
+              278505,
+              123,
+              373920,
+              0,
+              0
+            ],
+            "positions": 135
+          },
+          "outputs": 122,
+          "prefix": {
+            "cycles": 690195,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              25,
+              416,
+              416,
+              13,
+              26819,
+              13,
+              86970,
+              13,
+              48386,
+              13,
+              27456,
+              13,
+              26819,
+              13,
+              445978,
+              13,
+              26819,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 13
+          }
+        },
+        "encoded-hello-cap0": {
+          "done": {
+            "cycles": 581355,
+            "done": 581355,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              22,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              35244,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              377366,
+              11,
+              22693,
+              1,
+              3040,
+              0,
+              0
+            ],
+            "positions": 11
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 578313,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              35244,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              377366,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-hello-cap1": {
+          "done": {
+            "cycles": 581355,
+            "done": 581355,
+            "first": 581355,
+            "first_valid": true,
+            "last": 581355,
+            "phases": [
+              22,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              35244,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              377366,
+              11,
+              22693,
+              1,
+              3040,
+              0,
+              0
+            ],
+            "positions": 11
+          },
+          "outputs": 1,
+          "prefix": {
+            "cycles": 578313,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              35244,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              377366,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-hello-cap255": {
+          "done": {
+            "cycles": 7922865,
+            "done": 7922865,
+            "first": 581355,
+            "first_valid": true,
+            "last": 7818524,
+            "phases": [
+              202,
+              3232,
+              3232,
+              101,
+              208363,
+              101,
+              675690,
+              101,
+              2659764,
+              101,
+              213312,
+              101,
+              208363,
+              101,
+              3464906,
+              101,
+              208363,
+              91,
+              276640,
+              0,
+              0
+            ],
+            "positions": 101
+          },
+          "outputs": 90,
+          "prefix": {
+            "cycles": 578313,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              35244,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              377366,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-max48-cap255": {
+          "done": {
+            "cycles": 20625187,
+            "done": 20625187,
+            "first": 7260877,
+            "first_valid": true,
+            "last": 20468562,
+            "phases": [
+              402,
+              6432,
+              6432,
+              201,
+              414663,
+              201,
+              1344690,
+              201,
+              10382512,
+              201,
+              424512,
+              201,
+              414663,
+              201,
+              6895506,
+              201,
+              414663,
+              105,
+              319200,
+              0,
+              0
+            ],
+            "positions": 201
+          },
+          "outputs": 104,
+          "prefix": {
+            "cycles": 7257835,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              193,
+              3104,
+              3104,
+              97,
+              200111,
+              97,
+              648930,
+              97,
+              2468946,
+              97,
+              204864,
+              97,
+              200111,
+              97,
+              3327682,
+              97,
+              200111,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 97
+          }
+        },
+        "full-context-cap0": {
+          "done": {
+            "cycles": 29636043,
+            "done": 29636043,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              512,
+              8192,
+              8192,
+              256,
+              528128,
+              256,
+              1712640,
+              256,
+              16994282,
+              256,
+              540672,
+              256,
+              528128,
+              256,
+              8782336,
+              256,
+              528128,
+              1,
+              3040,
+              0,
+              0
+            ],
+            "positions": 256
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 29633001,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              511,
+              8192,
+              8192,
+              256,
+              528128,
+              256,
+              1712640,
+              256,
+              16994282,
+              256,
+              540672,
+              256,
+              528128,
+              256,
+              8782336,
+              256,
+              528128,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 256
+          }
+        }
+      },
+      "8": {
+        "bos-only-cap0": {
+          "done": {
+            "cycles": 51665,
+            "done": 51665,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              2,
+              32,
+              32,
+              1,
+              2063,
+              1,
+              6690,
+              1,
+              614,
+              1,
+              2112,
+              1,
+              2063,
+              1,
+              34306,
+              1,
+              2063,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 1
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 49983,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              1,
+              32,
+              32,
+              1,
+              2063,
+              1,
+              6690,
+              1,
+              614,
+              1,
+              2112,
+              1,
+              2063,
+              1,
+              34306,
+              1,
+              2063,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 1
+          }
+        },
+        "encoded-fu2p2q-cap255": {
+          "done": {
+            "cycles": 11611357,
+            "done": 11611357,
+            "first": 691877,
+            "first_valid": true,
+            "last": 11490280,
+            "phases": [
+              270,
+              4320,
+              4320,
+              135,
+              278505,
+              135,
+              903150,
+              135,
+              4739644,
+              135,
+              285120,
+              135,
+              278505,
+              135,
+              4631310,
+              135,
+              278505,
+              123,
+              206640,
+              0,
+              0
+            ],
+            "positions": 135
+          },
+          "outputs": 122,
+          "prefix": {
+            "cycles": 690195,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              25,
+              416,
+              416,
+              13,
+              26819,
+              13,
+              86970,
+              13,
+              48386,
+              13,
+              27456,
+              13,
+              26819,
+              13,
+              445978,
+              13,
+              26819,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 13
+          }
+        },
+        "encoded-hello-cap0": {
+          "done": {
+            "cycles": 579995,
+            "done": 579995,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              22,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              35244,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              377366,
+              11,
+              22693,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 11
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 578313,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              35244,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              377366,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-hello-cap1": {
+          "done": {
+            "cycles": 579995,
+            "done": 579995,
+            "first": 579995,
+            "first_valid": true,
+            "last": 579995,
+            "phases": [
+              22,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              35244,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              377366,
+              11,
+              22693,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 11
+          },
+          "outputs": 1,
+          "prefix": {
+            "cycles": 578313,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              35244,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              377366,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-hello-cap255": {
+          "done": {
+            "cycles": 7799105,
+            "done": 7799105,
+            "first": 579995,
+            "first_valid": true,
+            "last": 7696124,
+            "phases": [
+              202,
+              3232,
+              3232,
+              101,
+              208363,
+              101,
+              675690,
+              101,
+              2659764,
+              101,
+              213312,
+              101,
+              208363,
+              101,
+              3464906,
+              101,
+              208363,
+              91,
+              152880,
+              0,
+              0
+            ],
+            "positions": 101
+          },
+          "outputs": 90,
+          "prefix": {
+            "cycles": 578313,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              21,
+              352,
+              352,
+              11,
+              22693,
+              11,
+              73590,
+              11,
+              35244,
+              11,
+              23232,
+              11,
+              22693,
+              11,
+              377366,
+              11,
+              22693,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 11
+          }
+        },
+        "encoded-max48-cap255": {
+          "done": {
+            "cycles": 20482387,
+            "done": 20482387,
+            "first": 7259517,
+            "first_valid": true,
+            "last": 20327122,
+            "phases": [
+              402,
+              6432,
+              6432,
+              201,
+              414663,
+              201,
+              1344690,
+              201,
+              10382512,
+              201,
+              424512,
+              201,
+              414663,
+              201,
+              6895506,
+              201,
+              414663,
+              105,
+              176400,
+              0,
+              0
+            ],
+            "positions": 201
+          },
+          "outputs": 104,
+          "prefix": {
+            "cycles": 7257835,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              193,
+              3104,
+              3104,
+              97,
+              200111,
+              97,
+              648930,
+              97,
+              2468946,
+              97,
+              204864,
+              97,
+              200111,
+              97,
+              3327682,
+              97,
+              200111,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 97
+          }
+        },
+        "full-context-cap0": {
+          "done": {
+            "cycles": 29634683,
+            "done": 29634683,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              512,
+              8192,
+              8192,
+              256,
+              528128,
+              256,
+              1712640,
+              256,
+              16994282,
+              256,
+              540672,
+              256,
+              528128,
+              256,
+              8782336,
+              256,
+              528128,
+              1,
+              1680,
+              0,
+              0
+            ],
+            "positions": 256
+          },
+          "outputs": 0,
+          "prefix": {
+            "cycles": 29633001,
+            "done": 0,
+            "first": 0,
+            "first_valid": false,
+            "last": 0,
+            "phases": [
+              511,
+              8192,
+              8192,
+              256,
+              528128,
+              256,
+              1712640,
+              256,
+              16994282,
+              256,
+              540672,
+              256,
+              528128,
+              256,
+              8782336,
+              256,
+              528128,
+              0,
+              0,
+              0,
+              0
+            ],
+            "positions": 256
+          }
+        }
+      }
+    },
+    "component": {
+      "4": {
+        "last_reset_offset": 38,
+        "ordered_products_per_width": 10240,
+        "projection_cycles": 3040,
+        "result_widths": [
+          16,
+          32
+        ],
+        "rows": 320
+      },
+      "8": {
+        "last_reset_offset": 42,
+        "ordered_products_per_width": 10240,
+        "projection_cycles": 1680,
+        "result_widths": [
+          16,
+          32
+        ],
+        "rows": 320
+      }
+    },
+    "cycles_per_retained_projection": {
+      "4": 3040,
+      "8": 1680
+    },
+    "development_effort": {
+      "ai_usage_cost": null,
+      "engineering_attention_minutes": null,
+      "simulation_elapsed_seconds": 118.974
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Exact scores, valid cache arrays, output bytes, limits and stop reasons.",
+        "source": ".agents/runtime/hardware/inference/outputs/logits-eight-rtl-20261116T190922Z/model-results.json",
+        "state": "measured"
+      },
+      "cross_device_comparison": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "long_stability": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "memory_bandwidth": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Both retained scores and generated bytes checked against frozen fixtures.",
+        "source": ".agents/runtime/hardware/inference/outputs/logits-eight-rtl-20261116T190922Z/model-results.json",
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "serving_load": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Observed full requests, prefix, first/last output and LOGIT_WAIT clocks.",
+        "source": ".agents/runtime/hardware/inference/outputs/logits-eight-rtl-20261116T190922Z/model-results.json",
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Offline simulation and exact pin checks only.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "physical_board_access": false
+  },
+  "correctness": {
+    "evidence": "Seven exact real-model cases per arm, 103,360 retained scores in each arm, legacy BOS, cache and output checks. Four/eight component variants passed both reference widths, stalls and reset.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 RTL model",
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052"
+    },
+    "configuration_sha256": "2f8d960315cbf5f9cca1b1112e84315cf0bad687ffc8b83ddc67c6c8a723180b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-logits-8-lanes-v1",
+  "id": "logits-eight-rtl-20261116T190922Z",
+  "implementation": {
+    "id": "kv260-final-token-score-lanes-rtl",
+    "sha256": "f3a995d3743320a60c9010c200a827afa409a9939f9dd046f7c60348e52536fe"
+  },
+  "limitations": [
+    "RTL cycle observations cover the seven fixed cases. Conversion at 50 MHz is analytical.",
+    "The four and eight-lane variants include row-interleaved weight banks. Physical timing, resource inference and energy require separate evidence."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through LOGIT_START",
+      "name": "lanes4.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        578313
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous terminal counter",
+      "name": "lanes4.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        7922865
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Observed LOGIT_WAIT state cycles",
+      "name": "lanes4.encoded-hello-cap255.logit_wait_cycles",
+      "samples": [
+        276640
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous first-byte counter",
+      "name": "lanes4.encoded-hello-cap255.first_byte_cycles",
+      "samples": [
+        581355
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through LOGIT_START",
+      "name": "lanes4.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        690195
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous terminal counter",
+      "name": "lanes4.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        11778637
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Observed LOGIT_WAIT state cycles",
+      "name": "lanes4.encoded-fu2p2q-cap255.logit_wait_cycles",
+      "samples": [
+        373920
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous first-byte counter",
+      "name": "lanes4.encoded-fu2p2q-cap255.first_byte_cycles",
+      "samples": [
+        693237
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through LOGIT_START",
+      "name": "lanes4.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        7257835
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous terminal counter",
+      "name": "lanes4.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        20625187
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Observed LOGIT_WAIT state cycles",
+      "name": "lanes4.encoded-max48-cap255.logit_wait_cycles",
+      "samples": [
+        319200
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous first-byte counter",
+      "name": "lanes4.encoded-max48-cap255.first_byte_cycles",
+      "samples": [
+        7260877
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through LOGIT_START",
+      "name": "lanes4.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        578313
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous terminal counter",
+      "name": "lanes4.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        581355
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Observed LOGIT_WAIT state cycles",
+      "name": "lanes4.encoded-hello-cap0.logit_wait_cycles",
+      "samples": [
+        3040
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through LOGIT_START",
+      "name": "lanes4.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        578313
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous terminal counter",
+      "name": "lanes4.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        581355
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Observed LOGIT_WAIT state cycles",
+      "name": "lanes4.encoded-hello-cap1.logit_wait_cycles",
+      "samples": [
+        3040
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous first-byte counter",
+      "name": "lanes4.encoded-hello-cap1.first_byte_cycles",
+      "samples": [
+        581355
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through LOGIT_START",
+      "name": "lanes4.bos-only-cap0.prefix_cycles",
+      "samples": [
+        49983
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous terminal counter",
+      "name": "lanes4.bos-only-cap0.complete_cycles",
+      "samples": [
+        53025
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Observed LOGIT_WAIT state cycles",
+      "name": "lanes4.bos-only-cap0.logit_wait_cycles",
+      "samples": [
+        3040
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through LOGIT_START",
+      "name": "lanes4.full-context-cap0.prefix_cycles",
+      "samples": [
+        29633001
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous terminal counter",
+      "name": "lanes4.full-context-cap0.complete_cycles",
+      "samples": [
+        29636043
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Observed LOGIT_WAIT state cycles",
+      "name": "lanes4.full-context-cap0.logit_wait_cycles",
+      "samples": [
+        3040
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through LOGIT_START",
+      "name": "lanes8.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        578313
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous terminal counter",
+      "name": "lanes8.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        7799105
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Observed LOGIT_WAIT state cycles",
+      "name": "lanes8.encoded-hello-cap255.logit_wait_cycles",
+      "samples": [
+        152880
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous first-byte counter",
+      "name": "lanes8.encoded-hello-cap255.first_byte_cycles",
+      "samples": [
+        579995
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through LOGIT_START",
+      "name": "lanes8.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        690195
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous terminal counter",
+      "name": "lanes8.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        11611357
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Observed LOGIT_WAIT state cycles",
+      "name": "lanes8.encoded-fu2p2q-cap255.logit_wait_cycles",
+      "samples": [
+        206640
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous first-byte counter",
+      "name": "lanes8.encoded-fu2p2q-cap255.first_byte_cycles",
+      "samples": [
+        691877
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through LOGIT_START",
+      "name": "lanes8.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        7257835
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous terminal counter",
+      "name": "lanes8.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        20482387
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Observed LOGIT_WAIT state cycles",
+      "name": "lanes8.encoded-max48-cap255.logit_wait_cycles",
+      "samples": [
+        176400
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous first-byte counter",
+      "name": "lanes8.encoded-max48-cap255.first_byte_cycles",
+      "samples": [
+        7259517
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through LOGIT_START",
+      "name": "lanes8.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        578313
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous terminal counter",
+      "name": "lanes8.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        579995
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Observed LOGIT_WAIT state cycles",
+      "name": "lanes8.encoded-hello-cap0.logit_wait_cycles",
+      "samples": [
+        1680
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through LOGIT_START",
+      "name": "lanes8.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        578313
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous terminal counter",
+      "name": "lanes8.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        579995
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Observed LOGIT_WAIT state cycles",
+      "name": "lanes8.encoded-hello-cap1.logit_wait_cycles",
+      "samples": [
+        1680
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous first-byte counter",
+      "name": "lanes8.encoded-hello-cap1.first_byte_cycles",
+      "samples": [
+        579995
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through LOGIT_START",
+      "name": "lanes8.bos-only-cap0.prefix_cycles",
+      "samples": [
+        49983
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous terminal counter",
+      "name": "lanes8.bos-only-cap0.complete_cycles",
+      "samples": [
+        51665
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Observed LOGIT_WAIT state cycles",
+      "name": "lanes8.bos-only-cap0.logit_wait_cycles",
+      "samples": [
+        1680
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "First prompt acceptance through LOGIT_START",
+      "name": "lanes8.full-context-cap0.prefix_cycles",
+      "samples": [
+        29633001
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact autonomous terminal counter",
+      "name": "lanes8.full-context-cap0.complete_cycles",
+      "samples": [
+        29634683
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Observed LOGIT_WAIT state cycles",
+      "name": "lanes8.full-context-cap0.logit_wait_cycles",
+      "samples": [
+        1680
+      ],
+      "unit": "cycles"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-logits-8-lanes-v1-rtl",
+    "measurement_boundary": "Autonomous first/last/done counters and simulated core-phase windows.",
+    "quality_gate": "Exact archived output, score and valid cache fixtures for both arms.",
+    "sha256": "c4af3e2b37fd3482ebf442e3f38215158eae5cbf85850d566466d87609434804",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Same frozen model, arithmetic and output encoding across tested cases.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "cdc7a051a82bad1141685a1019c55e164c40b89d5773e8c6e5e3574d740f5747"
+  },
+  "started_at": "2026-11-16T19:06:25.586409+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

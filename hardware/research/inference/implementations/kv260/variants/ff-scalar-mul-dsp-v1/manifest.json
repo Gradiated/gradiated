@@ -1,0 +1,7 @@
+{
+  "control_generator_sha256": "065eacad6bef7fc278101477c6129768b4175e1b935178caf05c7c052824d858",
+  "control_variant_sha256": "5e3d785dd345992446ba815fb451ff48f443a6be3b770de41857d28ff78646a2",
+  "control_rtl_manifest_sha256": "91d4ad599708a6d66f8c369bc592a43fcad2fc9c6f97afb75280c3ef348836c3",
+  "datapath_sha256": "ce69fdf900350c7c8954b0e7f6c285d428004f9a0747b41cd23fad1187df2f09",
+  "candidate_feedforward_sha256": "02951bbd794df85c3ef20024e77eb4603102214fefca6556c301f18d13b20c3a"
+}

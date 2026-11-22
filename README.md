@@ -29,9 +29,10 @@ the [wizard](product/services/wizard/README.md).
 | --- | --- |
 | [`product/services/`](product/services/) | Management API, workers, console, Rust gateway/proxy/collector, setup CLI, and operations MCP. |
 | [`product/packages/`](product/packages/) | Shared contracts, configuration, control-plane logic, and datastore integrations. |
-| [`product/website/`](product/website/) | Public website, developer documentation, and articles. |
+| [`product/website/`](product/website/) | Public website, developer documentation, and article routes. |
 | [`product/inference/`](product/inference/) | Native C++/CUDA engine, model runtimes, runtime bundles, and serving benchmarks. |
 | [`infra/`](infra/) | Terraform/Terragrunt infrastructure, Kubernetes/Argo CD deployments, and GPU host configuration. |
+| [`hardware/`](hardware/README.md) | Chip experiments, model development, learning, articles and lectures. |
 | [`research/`](research/) | Model analysis, simulation, validation, and research tooling. |
 | [`tools/`](tools/) | Development checks, browser automation, and model/operations utilities. |
 | [`docs/`](docs/) | Architecture, data contracts, deployment guides, and feature plans. |

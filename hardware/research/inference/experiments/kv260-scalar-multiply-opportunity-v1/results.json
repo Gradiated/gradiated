@@ -1,0 +1,4720 @@
+{
+  "all1": {
+    "encoded-fu2p2q-cap255": {
+      "counts": [
+        135,
+        39360,
+        122
+      ],
+      "done": {
+        "done": 5499445,
+        "first": 354557,
+        "first_valid": true,
+        "last": 5445260,
+        "phases": [
+          270,
+          4320,
+          4320,
+          135,
+          71955,
+          135,
+          903150,
+          135,
+          1835062,
+          135,
+          285120,
+          135,
+          71955,
+          135,
+          2043630,
+          135,
+          71955,
+          123,
+          206640,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          25,
+          416,
+          416,
+          13,
+          6929,
+          13,
+          86970,
+          13,
+          19920,
+          13,
+          27456,
+          13,
+          6929,
+          13,
+          196794,
+          13,
+          6929,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 8940,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 9126,
+              "cycles": 9126,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "1266ccac457cc0e9"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 8998,
+              "cycles": 8998,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "6c81f5fb64fd65be"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 34560,
+              "cycles": 34560,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "ac9342a36c5513ac"
+            },
+            {
+              "calls": 17280,
+              "cycles": 17280,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "f2c04f4b64bfedc3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 12960,
+              "cycles": 12960,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "80a500676337f5b3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 810,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "d147489c5ad2ac69"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 12960,
+              "cycles": 12960,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "196a28a3b458c35d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 810,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "cc58eebdc818501e"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 12960,
+              "cycles": 12960,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "a6b47ff89919fea3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 810,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "33ae1ce37c4e7388"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 137760,
+          "feedforward": 777600,
+          "norm1": 206550,
+          "norm2": 206550,
+          "normfinal": 206550
+        },
+        "prefix": {
+          "attention": 1470,
+          "feedforward": 74880,
+          "norm1": 19890,
+          "norm2": 19890,
+          "normfinal": 19890
+        }
+      }
+    },
+    "encoded-hello-cap255": {
+      "counts": [
+        101,
+        29120,
+        90
+      ],
+      "done": {
+        "done": 3772957,
+        "first": 298093,
+        "first_valid": true,
+        "last": 3725539,
+        "phases": [
+          202,
+          3232,
+          3232,
+          101,
+          53833,
+          101,
+          675690,
+          101,
+          1033174,
+          101,
+          213312,
+          101,
+          53833,
+          101,
+          1528938,
+          101,
+          53833,
+          91,
+          152880,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          21,
+          352,
+          352,
+          11,
+          5863,
+          11,
+          73590,
+          11,
+          14680,
+          11,
+          23232,
+          11,
+          5863,
+          11,
+          166518,
+          11,
+          5863,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 4991,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 5128,
+              "cycles": 5128,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "eafd88c54c333023"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 5024,
+              "cycles": 5024,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "18b2b55f822590e9"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 25856,
+              "cycles": 25856,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "900094567f17fefc"
+            },
+            {
+              "calls": 12928,
+              "cycles": 12928,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "cee7380789c0819b"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 9696,
+              "cycles": 9696,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "6db869b3babf4929"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 606,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "257392ff3cfc5868"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 9696,
+              "cycles": 9696,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "1cc5a5a869c50b2d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 606,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "dd977c31047bb414"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 9696,
+              "cycles": 9696,
+              "max_abs_a_bits": 44,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "f58fe23024afbd81"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 606,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "6d9277c32ff65271"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 77415,
+          "feedforward": 581760,
+          "norm1": 154530,
+          "norm2": 154530,
+          "normfinal": 154530
+        },
+        "prefix": {
+          "attention": 1080,
+          "feedforward": 63360,
+          "norm1": 16830,
+          "norm2": 16830,
+          "normfinal": 16830
+        }
+      }
+    },
+    "encoded-max48-cap255": {
+      "counts": [
+        201,
+        33600,
+        104
+      ],
+      "done": {
+        "done": 9361339,
+        "first": 3441201,
+        "first_valid": true,
+        "last": 9294086,
+        "phases": [
+          402,
+          6432,
+          6432,
+          201,
+          107133,
+          201,
+          1344690,
+          201,
+          4036822,
+          201,
+          424512,
+          201,
+          107133,
+          201,
+          3042738,
+          201,
+          107133,
+          105,
+          176400,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          193,
+          3104,
+          3104,
+          97,
+          51701,
+          97,
+          648930,
+          97,
+          955156,
+          97,
+          204864,
+          97,
+          51701,
+          97,
+          1468386,
+          97,
+          51701,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 19292,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 19792,
+              "cycles": 19792,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "132c0bfeb0c744f5"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 19548,
+              "cycles": 19548,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "c2417cbede2f9c13"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 51456,
+              "cycles": 51456,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "8210f3eb8fa547e8"
+            },
+            {
+              "calls": 25728,
+              "cycles": 25728,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "188d5a6d36b1154e"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 19296,
+              "cycles": 19296,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "112f9bf7a97fd345"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 1206,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "9c4de75d4455288d"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 19296,
+              "cycles": 19296,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "edf17618c7d5689d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 1206,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "1034d6c339c4c01c"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 19296,
+              "cycles": 19296,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "e7f2e8e21262d017"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 1206,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "908384a3f4cc02bf"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 300720,
+          "feedforward": 1157760,
+          "norm1": 307530,
+          "norm2": 307530,
+          "normfinal": 307530
+        },
+        "prefix": {
+          "attention": 72030,
+          "feedforward": 558720,
+          "norm1": 148410,
+          "norm2": 148410,
+          "normfinal": 148410
+        }
+      }
+    }
+  },
+  "all8": {
+    "encoded-fu2p2q-cap255": {
+      "counts": [
+        135,
+        39360,
+        122
+      ],
+      "done": {
+        "done": 6215783,
+        "first": 418033,
+        "first_valid": true,
+        "last": 6155816,
+        "phases": [
+          270,
+          4320,
+          4320,
+          135,
+          168345,
+          135,
+          903150,
+          135,
+          1899350,
+          135,
+          285120,
+          135,
+          168345,
+          135,
+          2406510,
+          135,
+          168345,
+          123,
+          206640,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          25,
+          416,
+          416,
+          13,
+          16211,
+          13,
+          86970,
+          13,
+          20606,
+          13,
+          27456,
+          13,
+          16211,
+          13,
+          231738,
+          13,
+          16211,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 71520,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 9126,
+              "cycles": 73008,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "1266ccac457cc0e9"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 8998,
+              "cycles": 71984,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "6c81f5fb64fd65be"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 34560,
+              "cycles": 276480,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "ac9342a36c5513ac"
+            },
+            {
+              "calls": 17280,
+              "cycles": 138240,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "f2c04f4b64bfedc3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 12960,
+              "cycles": 103680,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "80a500676337f5b3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 6480,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "d147489c5ad2ac69"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 12960,
+              "cycles": 103680,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "196a28a3b458c35d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 6480,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "cc58eebdc818501e"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 12960,
+              "cycles": 103680,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "a6b47ff89919fea3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 6480,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "33ae1ce37c4e7388"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 73472,
+          "feedforward": 414720,
+          "norm1": 110160,
+          "norm2": 110160,
+          "normfinal": 110160
+        },
+        "prefix": {
+          "attention": 784,
+          "feedforward": 39936,
+          "norm1": 10608,
+          "norm2": 10608,
+          "normfinal": 10608
+        }
+      }
+    },
+    "encoded-hello-cap255": {
+      "counts": [
+        101,
+        29120,
+        90
+      ],
+      "done": {
+        "done": 4296914,
+        "first": 351727,
+        "first_valid": true,
+        "last": 4243959,
+        "phases": [
+          202,
+          3232,
+          3232,
+          101,
+          125947,
+          101,
+          675690,
+          101,
+          1069301,
+          101,
+          213312,
+          101,
+          125947,
+          101,
+          1800426,
+          101,
+          125947,
+          91,
+          152880,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          21,
+          352,
+          352,
+          11,
+          13717,
+          11,
+          73590,
+          11,
+          15184,
+          11,
+          23232,
+          11,
+          13717,
+          11,
+          196086,
+          11,
+          13717,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 39928,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 5128,
+              "cycles": 41024,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "eafd88c54c333023"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 5024,
+              "cycles": 40192,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "18b2b55f822590e9"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 25856,
+              "cycles": 206848,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "900094567f17fefc"
+            },
+            {
+              "calls": 12928,
+              "cycles": 103424,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "cee7380789c0819b"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 9696,
+              "cycles": 77568,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "6db869b3babf4929"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 4848,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "257392ff3cfc5868"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 9696,
+              "cycles": 77568,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "1cc5a5a869c50b2d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 4848,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "dd977c31047bb414"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 9696,
+              "cycles": 77568,
+              "max_abs_a_bits": 44,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "f58fe23024afbd81"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 4848,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "6d9277c32ff65271"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 41288,
+          "feedforward": 310272,
+          "norm1": 82416,
+          "norm2": 82416,
+          "normfinal": 82416
+        },
+        "prefix": {
+          "attention": 576,
+          "feedforward": 33792,
+          "norm1": 8976,
+          "norm2": 8976,
+          "normfinal": 8976
+        }
+      }
+    },
+    "encoded-max48-cap255": {
+      "counts": [
+        201,
+        33600,
+        104
+      ],
+      "done": {
+        "done": 10472505,
+        "first": 3943325,
+        "first_valid": true,
+        "last": 10399008,
+        "phases": [
+          402,
+          6432,
+          6432,
+          201,
+          250647,
+          201,
+          1344690,
+          201,
+          4177158,
+          201,
+          424512,
+          201,
+          250647,
+          201,
+          3583026,
+          201,
+          250647,
+          105,
+          176400,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          193,
+          3104,
+          3104,
+          97,
+          120959,
+          97,
+          648930,
+          97,
+          988770,
+          97,
+          204864,
+          97,
+          120959,
+          97,
+          1729122,
+          97,
+          120959,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 154336,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 19792,
+              "cycles": 158336,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "132c0bfeb0c744f5"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 19548,
+              "cycles": 156384,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "c2417cbede2f9c13"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 51456,
+              "cycles": 411648,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "8210f3eb8fa547e8"
+            },
+            {
+              "calls": 25728,
+              "cycles": 205824,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "188d5a6d36b1154e"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 19296,
+              "cycles": 154368,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "112f9bf7a97fd345"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 9648,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "9c4de75d4455288d"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 19296,
+              "cycles": 154368,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "edf17618c7d5689d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 9648,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "1034d6c339c4c01c"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 19296,
+              "cycles": 154368,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "e7f2e8e21262d017"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 9648,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "908384a3f4cc02bf"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 160384,
+          "feedforward": 617472,
+          "norm1": 164016,
+          "norm2": 164016,
+          "normfinal": 164016
+        },
+        "prefix": {
+          "attention": 38416,
+          "feedforward": 297984,
+          "norm1": 79152,
+          "norm2": 79152,
+          "normfinal": 79152
+        }
+      }
+    }
+  },
+  "attention8": {
+    "encoded-fu2p2q-cap255": {
+      "counts": [
+        135,
+        39360,
+        122
+      ],
+      "done": {
+        "done": 6960983,
+        "first": 489793,
+        "first_valid": true,
+        "last": 6895496,
+        "phases": [
+          270,
+          4320,
+          4320,
+          135,
+          278505,
+          135,
+          903150,
+          135,
+          1899350,
+          135,
+          285120,
+          135,
+          278505,
+          135,
+          2821230,
+          135,
+          278505,
+          123,
+          206640,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          25,
+          416,
+          416,
+          13,
+          26819,
+          13,
+          86970,
+          13,
+          20606,
+          13,
+          27456,
+          13,
+          26819,
+          13,
+          271674,
+          13,
+          26819,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 71520,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 9126,
+              "cycles": 73008,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "1266ccac457cc0e9"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 8998,
+              "cycles": 71984,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "6c81f5fb64fd65be"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 34560,
+              "cycles": 552960,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "ac9342a36c5513ac"
+            },
+            {
+              "calls": 17280,
+              "cycles": 276480,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "f2c04f4b64bfedc3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 12960,
+              "cycles": 207360,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "80a500676337f5b3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 12960,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "d147489c5ad2ac69"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 12960,
+              "cycles": 207360,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "196a28a3b458c35d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 12960,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "cc58eebdc818501e"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 12960,
+              "cycles": 207360,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "a6b47ff89919fea3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 12960,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "33ae1ce37c4e7388"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 73472,
+          "feedforward": 0,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        },
+        "prefix": {
+          "attention": 784,
+          "feedforward": 0,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        }
+      }
+    },
+    "encoded-hello-cap255": {
+      "counts": [
+        101,
+        29120,
+        90
+      ],
+      "done": {
+        "done": 4854434,
+        "first": 412447,
+        "first_valid": true,
+        "last": 4795959,
+        "phases": [
+          202,
+          3232,
+          3232,
+          101,
+          208363,
+          101,
+          675690,
+          101,
+          1069301,
+          101,
+          213312,
+          101,
+          208363,
+          101,
+          2110698,
+          101,
+          208363,
+          91,
+          152880,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          21,
+          352,
+          352,
+          11,
+          22693,
+          11,
+          73590,
+          11,
+          15184,
+          11,
+          23232,
+          11,
+          22693,
+          11,
+          229878,
+          11,
+          22693,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 39928,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 5128,
+              "cycles": 41024,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "eafd88c54c333023"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 5024,
+              "cycles": 40192,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "18b2b55f822590e9"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 25856,
+              "cycles": 413696,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "900094567f17fefc"
+            },
+            {
+              "calls": 12928,
+              "cycles": 206848,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "cee7380789c0819b"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 9696,
+              "cycles": 155136,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "6db869b3babf4929"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 9696,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "257392ff3cfc5868"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 9696,
+              "cycles": 155136,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "1cc5a5a869c50b2d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 9696,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "dd977c31047bb414"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 9696,
+              "cycles": 155136,
+              "max_abs_a_bits": 44,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "f58fe23024afbd81"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 9696,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "6d9277c32ff65271"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 41288,
+          "feedforward": 0,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        },
+        "prefix": {
+          "attention": 576,
+          "feedforward": 0,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        }
+      }
+    },
+    "encoded-max48-cap255": {
+      "counts": [
+        201,
+        33600,
+        104
+      ],
+      "done": {
+        "done": 11582025,
+        "first": 4478765,
+        "first_valid": true,
+        "last": 11503008,
+        "phases": [
+          402,
+          6432,
+          6432,
+          201,
+          414663,
+          201,
+          1344690,
+          201,
+          4177158,
+          201,
+          424512,
+          201,
+          414663,
+          201,
+          4200498,
+          201,
+          414663,
+          105,
+          176400,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          193,
+          3104,
+          3104,
+          97,
+          200111,
+          97,
+          648930,
+          97,
+          988770,
+          97,
+          204864,
+          97,
+          200111,
+          97,
+          2027106,
+          97,
+          200111,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 154336,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 19792,
+              "cycles": 158336,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "132c0bfeb0c744f5"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 19548,
+              "cycles": 156384,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "c2417cbede2f9c13"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 51456,
+              "cycles": 823296,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "8210f3eb8fa547e8"
+            },
+            {
+              "calls": 25728,
+              "cycles": 411648,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "188d5a6d36b1154e"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 19296,
+              "cycles": 308736,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "112f9bf7a97fd345"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 19296,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "9c4de75d4455288d"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 19296,
+              "cycles": 308736,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "edf17618c7d5689d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 19296,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "1034d6c339c4c01c"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 19296,
+              "cycles": 308736,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "e7f2e8e21262d017"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 19296,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "908384a3f4cc02bf"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 160384,
+          "feedforward": 0,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        },
+        "prefix": {
+          "attention": 38416,
+          "feedforward": 0,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        }
+      }
+    }
+  },
+  "baseline": {
+    "encoded-fu2p2q-cap255": {
+      "counts": [
+        135,
+        39360,
+        122
+      ],
+      "done": {
+        "done": 7034455,
+        "first": 490577,
+        "first_valid": true,
+        "last": 6967880,
+        "phases": [
+          270,
+          4320,
+          4320,
+          135,
+          278505,
+          135,
+          903150,
+          135,
+          1972822,
+          135,
+          285120,
+          135,
+          278505,
+          135,
+          2821230,
+          135,
+          278505,
+          123,
+          206640,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          25,
+          416,
+          416,
+          13,
+          26819,
+          13,
+          86970,
+          13,
+          21390,
+          13,
+          27456,
+          13,
+          26819,
+          13,
+          271674,
+          13,
+          26819,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 143040,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 9126,
+              "cycles": 146016,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "1266ccac457cc0e9"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 8998,
+              "cycles": 143968,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "6c81f5fb64fd65be"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 34560,
+              "cycles": 552960,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "ac9342a36c5513ac"
+            },
+            {
+              "calls": 17280,
+              "cycles": 276480,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "f2c04f4b64bfedc3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 12960,
+              "cycles": 207360,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "80a500676337f5b3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 12960,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "d147489c5ad2ac69"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 12960,
+              "cycles": 207360,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "196a28a3b458c35d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 12960,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "cc58eebdc818501e"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 12960,
+              "cycles": 207360,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "a6b47ff89919fea3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 12960,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "33ae1ce37c4e7388"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 0,
+          "feedforward": 0,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        },
+        "prefix": {
+          "attention": 0,
+          "feedforward": 0,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        }
+      }
+    },
+    "encoded-hello-cap255": {
+      "counts": [
+        101,
+        29120,
+        90
+      ],
+      "done": {
+        "done": 4895722,
+        "first": 413023,
+        "first_valid": true,
+        "last": 4836439,
+        "phases": [
+          202,
+          3232,
+          3232,
+          101,
+          208363,
+          101,
+          675690,
+          101,
+          1110589,
+          101,
+          213312,
+          101,
+          208363,
+          101,
+          2110698,
+          101,
+          208363,
+          91,
+          152880,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          21,
+          352,
+          352,
+          11,
+          22693,
+          11,
+          73590,
+          11,
+          15760,
+          11,
+          23232,
+          11,
+          22693,
+          11,
+          229878,
+          11,
+          22693,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 79856,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 5128,
+              "cycles": 82048,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "eafd88c54c333023"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 5024,
+              "cycles": 80384,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "18b2b55f822590e9"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 25856,
+              "cycles": 413696,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "900094567f17fefc"
+            },
+            {
+              "calls": 12928,
+              "cycles": 206848,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "cee7380789c0819b"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 9696,
+              "cycles": 155136,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "6db869b3babf4929"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 9696,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "257392ff3cfc5868"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 9696,
+              "cycles": 155136,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "1cc5a5a869c50b2d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 9696,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "dd977c31047bb414"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 9696,
+              "cycles": 155136,
+              "max_abs_a_bits": 44,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "f58fe23024afbd81"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 9696,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "6d9277c32ff65271"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 0,
+          "feedforward": 0,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        },
+        "prefix": {
+          "attention": 0,
+          "feedforward": 0,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        }
+      }
+    },
+    "encoded-max48-cap255": {
+      "counts": [
+        201,
+        33600,
+        104
+      ],
+      "done": {
+        "done": 11742409,
+        "first": 4517181,
+        "first_valid": true,
+        "last": 11661776,
+        "phases": [
+          402,
+          6432,
+          6432,
+          201,
+          414663,
+          201,
+          1344690,
+          201,
+          4337542,
+          201,
+          424512,
+          201,
+          414663,
+          201,
+          4200498,
+          201,
+          414663,
+          105,
+          176400,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          193,
+          3104,
+          3104,
+          97,
+          200111,
+          97,
+          648930,
+          97,
+          1027186,
+          97,
+          204864,
+          97,
+          200111,
+          97,
+          2027106,
+          97,
+          200111,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 308672,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 19792,
+              "cycles": 316672,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "132c0bfeb0c744f5"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 19548,
+              "cycles": 312768,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "c2417cbede2f9c13"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 51456,
+              "cycles": 823296,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "8210f3eb8fa547e8"
+            },
+            {
+              "calls": 25728,
+              "cycles": 411648,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "188d5a6d36b1154e"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 19296,
+              "cycles": 308736,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "112f9bf7a97fd345"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 19296,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "9c4de75d4455288d"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 19296,
+              "cycles": 308736,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "edf17618c7d5689d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 19296,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "1034d6c339c4c01c"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 19296,
+              "cycles": 308736,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "e7f2e8e21262d017"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 19296,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "908384a3f4cc02bf"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 0,
+          "feedforward": 0,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        },
+        "prefix": {
+          "attention": 0,
+          "feedforward": 0,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        }
+      }
+    }
+  },
+  "ff5": {
+    "encoded-fu2p2q-cap255": {
+      "counts": [
+        135,
+        39360,
+        122
+      ],
+      "done": {
+        "done": 6464215,
+        "first": 435665,
+        "first_valid": true,
+        "last": 6401864,
+        "phases": [
+          270,
+          4320,
+          4320,
+          135,
+          278505,
+          135,
+          903150,
+          135,
+          1972822,
+          135,
+          285120,
+          135,
+          278505,
+          135,
+          2250990,
+          135,
+          278505,
+          123,
+          206640,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          25,
+          416,
+          416,
+          13,
+          26819,
+          13,
+          86970,
+          13,
+          21390,
+          13,
+          27456,
+          13,
+          26819,
+          13,
+          216762,
+          13,
+          26819,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 143040,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 9126,
+              "cycles": 146016,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "1266ccac457cc0e9"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 8998,
+              "cycles": 143968,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "6c81f5fb64fd65be"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 34560,
+              "cycles": 172800,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "ac9342a36c5513ac"
+            },
+            {
+              "calls": 17280,
+              "cycles": 86400,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "f2c04f4b64bfedc3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 12960,
+              "cycles": 207360,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "80a500676337f5b3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 12960,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "d147489c5ad2ac69"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 12960,
+              "cycles": 207360,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "196a28a3b458c35d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 12960,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "cc58eebdc818501e"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 12960,
+              "cycles": 207360,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "a6b47ff89919fea3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 12960,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "33ae1ce37c4e7388"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 0,
+          "feedforward": 570240,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        },
+        "prefix": {
+          "attention": 0,
+          "feedforward": 54912,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        }
+      }
+    },
+    "encoded-hello-cap255": {
+      "counts": [
+        101,
+        29120,
+        90
+      ],
+      "done": {
+        "done": 4469098,
+        "first": 366559,
+        "first_valid": true,
+        "last": 4414039,
+        "phases": [
+          202,
+          3232,
+          3232,
+          101,
+          208363,
+          101,
+          675690,
+          101,
+          1110589,
+          101,
+          213312,
+          101,
+          208363,
+          101,
+          1684074,
+          101,
+          208363,
+          91,
+          152880,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          21,
+          352,
+          352,
+          11,
+          22693,
+          11,
+          73590,
+          11,
+          15760,
+          11,
+          23232,
+          11,
+          22693,
+          11,
+          183414,
+          11,
+          22693,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 79856,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 5128,
+              "cycles": 82048,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "eafd88c54c333023"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 5024,
+              "cycles": 80384,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "18b2b55f822590e9"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 25856,
+              "cycles": 129280,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "900094567f17fefc"
+            },
+            {
+              "calls": 12928,
+              "cycles": 64640,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "cee7380789c0819b"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 9696,
+              "cycles": 155136,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "6db869b3babf4929"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 9696,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "257392ff3cfc5868"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 9696,
+              "cycles": 155136,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "1cc5a5a869c50b2d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 9696,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "dd977c31047bb414"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 9696,
+              "cycles": 155136,
+              "max_abs_a_bits": 44,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "f58fe23024afbd81"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 9696,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "6d9277c32ff65271"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 0,
+          "feedforward": 426624,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        },
+        "prefix": {
+          "attention": 0,
+          "feedforward": 46464,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        }
+      }
+    },
+    "encoded-max48-cap255": {
+      "counts": [
+        201,
+        33600,
+        104
+      ],
+      "done": {
+        "done": 10893385,
+        "first": 4107453,
+        "first_valid": true,
+        "last": 10816976,
+        "phases": [
+          402,
+          6432,
+          6432,
+          201,
+          414663,
+          201,
+          1344690,
+          201,
+          4337542,
+          201,
+          424512,
+          201,
+          414663,
+          201,
+          3351474,
+          201,
+          414663,
+          105,
+          176400,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          193,
+          3104,
+          3104,
+          97,
+          200111,
+          97,
+          648930,
+          97,
+          1027186,
+          97,
+          204864,
+          97,
+          200111,
+          97,
+          1617378,
+          97,
+          200111,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 308672,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 19792,
+              "cycles": 316672,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "132c0bfeb0c744f5"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 19548,
+              "cycles": 312768,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "c2417cbede2f9c13"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 51456,
+              "cycles": 257280,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "8210f3eb8fa547e8"
+            },
+            {
+              "calls": 25728,
+              "cycles": 128640,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "188d5a6d36b1154e"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 19296,
+              "cycles": 308736,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "112f9bf7a97fd345"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 19296,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "9c4de75d4455288d"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 19296,
+              "cycles": 308736,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "edf17618c7d5689d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 19296,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "1034d6c339c4c01c"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 19296,
+              "cycles": 308736,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "e7f2e8e21262d017"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 19296,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "908384a3f4cc02bf"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 0,
+          "feedforward": 849024,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        },
+        "prefix": {
+          "attention": 0,
+          "feedforward": 409728,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        }
+      }
+    }
+  },
+  "ff8": {
+    "encoded-fu2p2q-cap255": {
+      "counts": [
+        135,
+        39360,
+        122
+      ],
+      "done": {
+        "done": 6619735,
+        "first": 450641,
+        "first_valid": true,
+        "last": 6556232,
+        "phases": [
+          270,
+          4320,
+          4320,
+          135,
+          278505,
+          135,
+          903150,
+          135,
+          1972822,
+          135,
+          285120,
+          135,
+          278505,
+          135,
+          2406510,
+          135,
+          278505,
+          123,
+          206640,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          25,
+          416,
+          416,
+          13,
+          26819,
+          13,
+          86970,
+          13,
+          21390,
+          13,
+          27456,
+          13,
+          26819,
+          13,
+          231738,
+          13,
+          26819,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 143040,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 9126,
+              "cycles": 146016,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "1266ccac457cc0e9"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 8998,
+              "cycles": 143968,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "6c81f5fb64fd65be"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 34560,
+              "cycles": 276480,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "ac9342a36c5513ac"
+            },
+            {
+              "calls": 17280,
+              "cycles": 138240,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "f2c04f4b64bfedc3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 12960,
+              "cycles": 207360,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "80a500676337f5b3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 12960,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "d147489c5ad2ac69"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 12960,
+              "cycles": 207360,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "196a28a3b458c35d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 12960,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "cc58eebdc818501e"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 12960,
+              "cycles": 207360,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "a6b47ff89919fea3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 12960,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "33ae1ce37c4e7388"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 0,
+          "feedforward": 414720,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        },
+        "prefix": {
+          "attention": 0,
+          "feedforward": 39936,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        }
+      }
+    },
+    "encoded-hello-cap255": {
+      "counts": [
+        101,
+        29120,
+        90
+      ],
+      "done": {
+        "done": 4585450,
+        "first": 379231,
+        "first_valid": true,
+        "last": 4529239,
+        "phases": [
+          202,
+          3232,
+          3232,
+          101,
+          208363,
+          101,
+          675690,
+          101,
+          1110589,
+          101,
+          213312,
+          101,
+          208363,
+          101,
+          1800426,
+          101,
+          208363,
+          91,
+          152880,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          21,
+          352,
+          352,
+          11,
+          22693,
+          11,
+          73590,
+          11,
+          15760,
+          11,
+          23232,
+          11,
+          22693,
+          11,
+          196086,
+          11,
+          22693,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 79856,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 5128,
+              "cycles": 82048,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "eafd88c54c333023"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 5024,
+              "cycles": 80384,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "18b2b55f822590e9"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 25856,
+              "cycles": 206848,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "900094567f17fefc"
+            },
+            {
+              "calls": 12928,
+              "cycles": 103424,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "cee7380789c0819b"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 9696,
+              "cycles": 155136,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "6db869b3babf4929"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 9696,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "257392ff3cfc5868"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 9696,
+              "cycles": 155136,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "1cc5a5a869c50b2d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 9696,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "dd977c31047bb414"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 9696,
+              "cycles": 155136,
+              "max_abs_a_bits": 44,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "f58fe23024afbd81"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 9696,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "6d9277c32ff65271"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 0,
+          "feedforward": 310272,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        },
+        "prefix": {
+          "attention": 0,
+          "feedforward": 33792,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        }
+      }
+    },
+    "encoded-max48-cap255": {
+      "counts": [
+        201,
+        33600,
+        104
+      ],
+      "done": {
+        "done": 11124937,
+        "first": 4219197,
+        "first_valid": true,
+        "last": 11047376,
+        "phases": [
+          402,
+          6432,
+          6432,
+          201,
+          414663,
+          201,
+          1344690,
+          201,
+          4337542,
+          201,
+          424512,
+          201,
+          414663,
+          201,
+          3583026,
+          201,
+          414663,
+          105,
+          176400,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          193,
+          3104,
+          3104,
+          97,
+          200111,
+          97,
+          648930,
+          97,
+          1027186,
+          97,
+          204864,
+          97,
+          200111,
+          97,
+          1729122,
+          97,
+          200111,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 308672,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 19792,
+              "cycles": 316672,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "132c0bfeb0c744f5"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 19548,
+              "cycles": 312768,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "c2417cbede2f9c13"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 51456,
+              "cycles": 411648,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "8210f3eb8fa547e8"
+            },
+            {
+              "calls": 25728,
+              "cycles": 205824,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "188d5a6d36b1154e"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 19296,
+              "cycles": 308736,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "112f9bf7a97fd345"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 19296,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "9c4de75d4455288d"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 19296,
+              "cycles": 308736,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "edf17618c7d5689d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 19296,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "1034d6c339c4c01c"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 19296,
+              "cycles": 308736,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "e7f2e8e21262d017"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 19296,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "908384a3f4cc02bf"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 0,
+          "feedforward": 617472,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        },
+        "prefix": {
+          "attention": 0,
+          "feedforward": 297984,
+          "norm1": 0,
+          "norm2": 0,
+          "normfinal": 0
+        }
+      }
+    }
+  },
+  "rms8": {
+    "encoded-fu2p2q-cap255": {
+      "counts": [
+        135,
+        39360,
+        122
+      ],
+      "done": {
+        "done": 6703975,
+        "first": 458753,
+        "first_valid": true,
+        "last": 6639848,
+        "phases": [
+          270,
+          4320,
+          4320,
+          135,
+          168345,
+          135,
+          903150,
+          135,
+          1972822,
+          135,
+          285120,
+          135,
+          168345,
+          135,
+          2821230,
+          135,
+          168345,
+          123,
+          206640,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          25,
+          416,
+          416,
+          13,
+          16211,
+          13,
+          86970,
+          13,
+          21390,
+          13,
+          27456,
+          13,
+          16211,
+          13,
+          271674,
+          13,
+          16211,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 143040,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 9126,
+              "cycles": 146016,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "1266ccac457cc0e9"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 8998,
+              "cycles": 143968,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "6c81f5fb64fd65be"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 34560,
+              "cycles": 552960,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "ac9342a36c5513ac"
+            },
+            {
+              "calls": 17280,
+              "cycles": 276480,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "f2c04f4b64bfedc3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 12960,
+              "cycles": 103680,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "80a500676337f5b3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 6480,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "d147489c5ad2ac69"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 12960,
+              "cycles": 103680,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "196a28a3b458c35d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 6480,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "cc58eebdc818501e"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 12960,
+              "cycles": 103680,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "a6b47ff89919fea3"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 810,
+              "cycles": 6480,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "33ae1ce37c4e7388"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 0,
+          "feedforward": 0,
+          "norm1": 110160,
+          "norm2": 110160,
+          "normfinal": 110160
+        },
+        "prefix": {
+          "attention": 0,
+          "feedforward": 0,
+          "norm1": 10608,
+          "norm2": 10608,
+          "normfinal": 10608
+        }
+      }
+    },
+    "encoded-hello-cap255": {
+      "counts": [
+        101,
+        29120,
+        90
+      ],
+      "done": {
+        "done": 4648474,
+        "first": 386095,
+        "first_valid": true,
+        "last": 4591639,
+        "phases": [
+          202,
+          3232,
+          3232,
+          101,
+          125947,
+          101,
+          675690,
+          101,
+          1110589,
+          101,
+          213312,
+          101,
+          125947,
+          101,
+          2110698,
+          101,
+          125947,
+          91,
+          152880,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          21,
+          352,
+          352,
+          11,
+          13717,
+          11,
+          73590,
+          11,
+          15760,
+          11,
+          23232,
+          11,
+          13717,
+          11,
+          229878,
+          11,
+          13717,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 79856,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 5128,
+              "cycles": 82048,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "eafd88c54c333023"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 5024,
+              "cycles": 80384,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "18b2b55f822590e9"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 25856,
+              "cycles": 413696,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "900094567f17fefc"
+            },
+            {
+              "calls": 12928,
+              "cycles": 206848,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "cee7380789c0819b"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 9696,
+              "cycles": 77568,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "6db869b3babf4929"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 4848,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "257392ff3cfc5868"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 9696,
+              "cycles": 77568,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "1cc5a5a869c50b2d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 4848,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "dd977c31047bb414"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 9696,
+              "cycles": 77568,
+              "max_abs_a_bits": 44,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "f58fe23024afbd81"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 606,
+              "cycles": 4848,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "6d9277c32ff65271"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 0,
+          "feedforward": 0,
+          "norm1": 82416,
+          "norm2": 82416,
+          "normfinal": 82416
+        },
+        "prefix": {
+          "attention": 0,
+          "feedforward": 0,
+          "norm1": 8976,
+          "norm2": 8976,
+          "normfinal": 8976
+        }
+      }
+    },
+    "encoded-max48-cap255": {
+      "counts": [
+        201,
+        33600,
+        104
+      ],
+      "done": {
+        "done": 11250361,
+        "first": 4279725,
+        "first_valid": true,
+        "last": 11172176,
+        "phases": [
+          402,
+          6432,
+          6432,
+          201,
+          250647,
+          201,
+          1344690,
+          201,
+          4337542,
+          201,
+          424512,
+          201,
+          250647,
+          201,
+          4200498,
+          201,
+          250647,
+          105,
+          176400,
+          0,
+          0
+        ]
+      },
+      "prefix": {
+        "done": 0,
+        "first": 0,
+        "first_valid": false,
+        "last": 0,
+        "phases": [
+          193,
+          3104,
+          3104,
+          97,
+          120959,
+          97,
+          648930,
+          97,
+          1027186,
+          97,
+          204864,
+          97,
+          120959,
+          97,
+          2027106,
+          97,
+          120959,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "profile": {
+        "attention_two_lanes_multiplying_cycles": 308672,
+        "callers": {
+          "attention_primary": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 19792,
+              "cycles": 316672,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "132c0bfeb0c744f5"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "attention_second": [
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 19548,
+              "cycles": 312768,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "c2417cbede2f9c13"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "feedforward": [
+            {
+              "calls": 51456,
+              "cycles": 823296,
+              "max_abs_a_bits": 14,
+              "max_abs_b_bits": 31,
+              "raw_product_digest": "8210f3eb8fa547e8"
+            },
+            {
+              "calls": 25728,
+              "cycles": 411648,
+              "max_abs_a_bits": 23,
+              "max_abs_b_bits": 16,
+              "raw_product_digest": "188d5a6d36b1154e"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            }
+          ],
+          "norm1": [
+            {
+              "calls": 19296,
+              "cycles": 154368,
+              "max_abs_a_bits": 45,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "112f9bf7a97fd345"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 9648,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "9c4de75d4455288d"
+            }
+          ],
+          "norm2": [
+            {
+              "calls": 19296,
+              "cycles": 154368,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "edf17618c7d5689d"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 9648,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "1034d6c339c4c01c"
+            }
+          ],
+          "normfinal": [
+            {
+              "calls": 19296,
+              "cycles": 154368,
+              "max_abs_a_bits": 43,
+              "max_abs_b_bits": 30,
+              "raw_product_digest": "e7f2e8e21262d017"
+            },
+            {
+              "calls": 0,
+              "cycles": 0,
+              "max_abs_a_bits": 0,
+              "max_abs_b_bits": 0,
+              "raw_product_digest": "0000000000000000"
+            },
+            {
+              "calls": 1206,
+              "cycles": 9648,
+              "max_abs_a_bits": 32,
+              "max_abs_b_bits": 32,
+              "raw_product_digest": "908384a3f4cc02bf"
+            }
+          ]
+        }
+      },
+      "saved_phase_cycles": {
+        "done": {
+          "attention": 0,
+          "feedforward": 0,
+          "norm1": 164016,
+          "norm2": 164016,
+          "normfinal": 164016
+        },
+        "prefix": {
+          "attention": 0,
+          "feedforward": 0,
+          "norm1": 79152,
+          "norm2": 79152,
+          "normfinal": 79152
+        }
+      }
+    }
+  }
+}

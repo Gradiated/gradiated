@@ -1,0 +1,3751 @@
+{
+  "artifacts": [
+    {
+      "bytes": 41529094,
+      "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/simulation.tar.gz",
+      "role": "Paired RTL source, frozen fixtures, independent arithmetic and projection traces",
+      "sha256": "281305e4fa105441a2d7e513a505a288b1b4cbe9383e709349e94b8a6d11449d"
+    },
+    {
+      "bytes": 220223,
+      "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/source-closure.json",
+      "role": "SHA-256 of each archived logical member",
+      "sha256": "b6856733cb399b43e63d2abcd688d13514b406a50bb39a93fdd078dbd462a422"
+    },
+    {
+      "bytes": 42173,
+      "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/source.patch",
+      "role": "Candidate family, materializer, tests and protocol delta",
+      "sha256": "af9d50a3a7f2cbe9b1ca48c9e9017b7d9fc76da6d6a4e9ad21fcffa8e4552620"
+    },
+    {
+      "bytes": 30634,
+      "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/model-results.json",
+      "role": "Seven paired model replays for the selected projection combination",
+      "sha256": "ef441496d376c3d1b1fe0246c9a4a05df9161d0d1a8ad96904039518a6fbbd42"
+    },
+    {
+      "bytes": 1111,
+      "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/directed-results.json",
+      "role": "Ordered row arithmetic, operand reads, stalls and reset probes",
+      "sha256": "7bc92daabe5e5c809bff29b1042006ae13010e3e2862d87cdfd0509fcecb6720"
+    },
+    {
+      "bytes": 63344,
+      "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/isolation-results.json",
+      "role": "Seven exact replays for each isolated projection change",
+      "sha256": "55579a63458009ed38bb660c2ec528d1fb275cb7d9fcefa9efb0b8672733597e"
+    },
+    {
+      "bytes": 47626,
+      "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/combination-results.json",
+      "role": "Seven exact replays for both combined projection variants",
+      "sha256": "5089168d97cf84e3effc55d1768327f73b7c84271d4bf4f1178cc157a391305b"
+    },
+    {
+      "bytes": 1760,
+      "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/selection-summary.json",
+      "role": "Pre-route combination decision and checkable selection evidence",
+      "sha256": "65b87f7a3ca76f9a07f49237bdc677d495196fda8e7a98b93c8024f80f826950"
+    },
+    {
+      "bytes": 810,
+      "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/rtl-build-gate.json",
+      "role": "Selected compiled source closure and exact qualification pins",
+      "sha256": "1ecf4afed621cce4a7e7bea81a1295bc0f903b611df093390b92fa5b5a41d608"
+    },
+    {
+      "bytes": 36124,
+      "path": "hardware/research/inference/results/norm-mul-shared-v1-rtl-20261119T175457Z/run.json",
+      "role": "Adopted Experiment 21 RTL record",
+      "sha256": "44433cdfd27434a4d0fa4f186d9f5a7acd029c6bd705c0831129c20f53f92dc0"
+    }
+  ],
+  "completed_at": "2026-11-19T19:32:27.546563+00:00",
+  "conditions": {
+    "all_arm_rtl_manifest_sha256": {
+      "attention-output-read-ahead-v1": "b47efbec00845ff5ba1283ca6342e36b53b87ab58b67fc62ae184827f2b24dc2",
+      "control": "d23404ea222fef3796f4bf51be1243eb04445f9403665d9b1ca9882f6ce1a109",
+      "ff-gate-up-read-ahead-v1": "73dfc45632d50ea56e936b2911619e9e550f34b1366b405ffd50e79cfd2d182f",
+      "projections-read-ahead-v1": "805ddad6c8d4011ddba8bcc07d5d9bfc6c112e101efe638a902d3e591daf8911",
+      "qkv-attention-output-read-ahead-v1": "d8702fdbe193ae5212f08a7c6950ee297fd17af198225f705f0f2ef140f78f19",
+      "qkv-read-ahead-v1": "594bd8fa23d5e5dc6a8d76036d204b99ef639bc969ed7b2d0e624cc37f68d548"
+    },
+    "candidate_source_manifest_sha256": "805ddad6c8d4011ddba8bcc07d5d9bfc6c112e101efe638a902d3e591daf8911",
+    "changed_compiled_sources": [
+      "frontend.sv",
+      "transformer.sv",
+      "feedforward.sv"
+    ],
+    "control_implementation": "norm-mul-shared-v1",
+    "control_source_manifest_sha256": "d23404ea222fef3796f4bf51be1243eb04445f9403665d9b1ca9882f6ce1a109",
+    "directed_oracle": {
+      "all_exact": true,
+      "scopes": {
+        "gate": {
+          "candidate_clocks": 4480,
+          "clipped_rows_per_pass": 44,
+          "control_clocks": 8448,
+          "exact_paired_passes": 8,
+          "reset_probes": 6,
+          "rows": 128,
+          "shift": 16,
+          "terms_per_pass": 4096,
+          "ties_per_pass": 4
+        },
+        "output": {
+          "candidate_clocks": 1120,
+          "clipped_rows_per_pass": 13,
+          "control_clocks": 2112,
+          "exact_paired_passes": 8,
+          "reset_probes": 6,
+          "rows": 32,
+          "shift": 16,
+          "terms_per_pass": 1024,
+          "ties_per_pass": 4
+        },
+        "qkv": {
+          "candidate_clocks": 3360,
+          "clipped_rows_per_pass": 54,
+          "control_clocks": 6336,
+          "exact_paired_passes": 8,
+          "reset_probes": 6,
+          "rows": 96,
+          "shift": 15,
+          "terms_per_pass": 3072,
+          "ties_per_pass": 4
+        },
+        "up": {
+          "candidate_clocks": 4480,
+          "clipped_rows_per_pass": 67,
+          "control_clocks": 8448,
+          "exact_paired_passes": 8,
+          "reset_probes": 6,
+          "rows": 128,
+          "shift": 15,
+          "terms_per_pass": 4096,
+          "ties_per_pass": 4
+        }
+      }
+    },
+    "directed_ordered_terms": 196608,
+    "directed_rows": 6144,
+    "exact_autonomous_scores_per_arm": 103360,
+    "exact_legacy_scores_per_arm": 4480,
+    "exact_projection_rows_per_arm": 274944,
+    "full_context_depth": 256,
+    "interaction_clocks_per_position": 0,
+    "isolated_saved_clocks_per_position": {
+      "gate_up": 31,
+      "output": 992,
+      "qkv": 2976
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Six-arm frozen model replay and ordered directed RTL checks.",
+        "sources": [
+          {
+            "bytes": 30634,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/model-results.json",
+            "role": "Seven paired model replays for the selected projection combination",
+            "sha256": "ef441496d376c3d1b1fe0246c9a4a05df9161d0d1a8ad96904039518a6fbbd42"
+          },
+          {
+            "bytes": 1111,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/directed-results.json",
+            "role": "Ordered row arithmetic, operand reads, stalls and reset probes",
+            "sha256": "7bc92daabe5e5c809bff29b1042006ae13010e3e2862d87cdfd0509fcecb6720"
+          },
+          {
+            "bytes": 63344,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/isolation-results.json",
+            "role": "Seven exact replays for each isolated projection change",
+            "sha256": "55579a63458009ed38bb660c2ec528d1fb275cb7d9fcefa9efb0b8672733597e"
+          },
+          {
+            "bytes": 47626,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/combination-results.json",
+            "role": "Seven exact replays for both combined projection variants",
+            "sha256": "5089168d97cf84e3effc55d1768327f73b7c84271d4bf4f1178cc157a391305b"
+          }
+        ],
+        "state": "measured"
+      },
+      "cross_device_comparison": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "long_stability": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "memory_bandwidth": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Six-arm frozen model replay and ordered directed RTL checks.",
+        "sources": [
+          {
+            "bytes": 30634,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/model-results.json",
+            "role": "Seven paired model replays for the selected projection combination",
+            "sha256": "ef441496d376c3d1b1fe0246c9a4a05df9161d0d1a8ad96904039518a6fbbd42"
+          },
+          {
+            "bytes": 1111,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/directed-results.json",
+            "role": "Ordered row arithmetic, operand reads, stalls and reset probes",
+            "sha256": "7bc92daabe5e5c809bff29b1042006ae13010e3e2862d87cdfd0509fcecb6720"
+          },
+          {
+            "bytes": 63344,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/isolation-results.json",
+            "role": "Seven exact replays for each isolated projection change",
+            "sha256": "55579a63458009ed38bb660c2ec528d1fb275cb7d9fcefa9efb0b8672733597e"
+          },
+          {
+            "bytes": 47626,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/combination-results.json",
+            "role": "Seven exact replays for both combined projection variants",
+            "sha256": "5089168d97cf84e3effc55d1768327f73b7c84271d4bf4f1178cc157a391305b"
+          }
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Six-arm frozen model replay and ordered directed RTL checks.",
+        "sources": [
+          {
+            "bytes": 30634,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/model-results.json",
+            "role": "Seven paired model replays for the selected projection combination",
+            "sha256": "ef441496d376c3d1b1fe0246c9a4a05df9161d0d1a8ad96904039518a6fbbd42"
+          },
+          {
+            "bytes": 1111,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/directed-results.json",
+            "role": "Ordered row arithmetic, operand reads, stalls and reset probes",
+            "sha256": "7bc92daabe5e5c809bff29b1042006ae13010e3e2862d87cdfd0509fcecb6720"
+          },
+          {
+            "bytes": 63344,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/isolation-results.json",
+            "role": "Seven exact replays for each isolated projection change",
+            "sha256": "55579a63458009ed38bb660c2ec528d1fb275cb7d9fcefa9efb0b8672733597e"
+          },
+          {
+            "bytes": 47626,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/combination-results.json",
+            "role": "Seven exact replays for both combined projection variants",
+            "sha256": "5089168d97cf84e3effc55d1768327f73b7c84271d4bf4f1178cc157a391305b"
+          }
+        ],
+        "state": "measured"
+      },
+      "repeatability": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "serving_load": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Six-arm frozen model replay and ordered directed RTL checks.",
+        "sources": [
+          {
+            "bytes": 30634,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/model-results.json",
+            "role": "Seven paired model replays for the selected projection combination",
+            "sha256": "ef441496d376c3d1b1fe0246c9a4a05df9161d0d1a8ad96904039518a6fbbd42"
+          },
+          {
+            "bytes": 1111,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/directed-results.json",
+            "role": "Ordered row arithmetic, operand reads, stalls and reset probes",
+            "sha256": "7bc92daabe5e5c809bff29b1042006ae13010e3e2862d87cdfd0509fcecb6720"
+          },
+          {
+            "bytes": 63344,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/isolation-results.json",
+            "role": "Seven exact replays for each isolated projection change",
+            "sha256": "55579a63458009ed38bb660c2ec528d1fb275cb7d9fcefa9efb0b8672733597e"
+          },
+          {
+            "bytes": 47626,
+            "path": ".agents/runtime/hardware/inference/outputs/projections-read-ahead-v1-rtl-20261119T192912Z/combination-results.json",
+            "role": "Seven exact replays for both combined projection variants",
+            "sha256": "5089168d97cf84e3effc55d1768327f73b7c84271d4bf4f1178cc157a391305b"
+          }
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "model_cases": 7,
+    "ordered_projection_read_issues_per_arm": 8798208,
+    "processed_positions_per_arm": 716,
+    "qkv_output_saved_clocks_per_position": 3968,
+    "replay_arms": 6,
+    "route_admission_sha256": "1ecf4afed621cce4a7e7bea81a1295bc0f903b611df093390b92fa5b5a41d608",
+    "saved_clocks_per_position": 3999,
+    "selected_sites": [
+      "front.projection",
+      "output_projection",
+      "ff.gate_dense",
+      "ff.up_dense"
+    ]
+  },
+  "correctness": {
+    "evidence": "All seven model cases in six arms, with directed arithmetic, backpressure and reset.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 RTL model",
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052"
+    },
+    "configuration_sha256": "2f8d960315cbf5f9cca1b1112e84315cf0bad687ffc8b83ddc67c6c8a723180b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-projections-read-ahead-v1",
+  "id": "projections-read-ahead-v1-rtl-20261119T192912Z",
+  "implementation": {
+    "id": "projections-read-ahead-v1",
+    "sha256": "805ddad6c8d4011ddba8bcc07d5d9bfc6c112e101efe638a902d3e591daf8911"
+  },
+  "limitations": [
+    "RTL clocks describe the simulated design. Physical timing closure, resource mapping, latency and power use separate records.",
+    "Gate/up wait exposure is measured on the frozen workload and scalar schedule."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        327851
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        4129132
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.frontend_wait_cycles",
+      "samples": [
+        675690
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.output_projection_wait_cycles",
+      "samples": [
+        213312
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.feedforward_wait_cycles",
+      "samples": [
+        1684074
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        6565
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        329533
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        4077439
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "control.encoded-hello-cap255.decode_cycles",
+      "samples": [
+        3747906
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        390225
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        6009805
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.frontend_wait_cycles",
+      "samples": [
+        903150
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.output_projection_wait_cycles",
+      "samples": [
+        285120
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.feedforward_wait_cycles",
+      "samples": [
+        2250990
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        8775
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        391907
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        5950820
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "control.encoded-fu2p2q-cap255.decode_cycles",
+      "samples": [
+        5558913
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        3779269
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        10216819
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.frontend_wait_cycles",
+      "samples": [
+        1344690
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.output_projection_wait_cycles",
+      "samples": [
+        424512
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.feedforward_wait_cycles",
+      "samples": [
+        3351474
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        13065
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        3780951
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        10143776
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "control.encoded-max48-cap255.decode_cycles",
+      "samples": [
+        6362825
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.bos-only-cap0.prefix_cycles",
+      "samples": [
+        28761
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.bos-only-cap0.complete_cycles",
+      "samples": [
+        30443
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.bos-only-cap0.frontend_wait_cycles",
+      "samples": [
+        6690
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.bos-only-cap0.output_projection_wait_cycles",
+      "samples": [
+        2112
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.bos-only-cap0.feedforward_wait_cycles",
+      "samples": [
+        16674
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.bos-only-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        65
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.bos-only-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        327851
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        329533
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap0.frontend_wait_cycles",
+      "samples": [
+        73590
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap0.output_projection_wait_cycles",
+      "samples": [
+        23232
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap0.feedforward_wait_cycles",
+      "samples": [
+        183414
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        715
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        327851
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        329533
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.frontend_wait_cycles",
+      "samples": [
+        73590
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.output_projection_wait_cycles",
+      "samples": [
+        23232
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.feedforward_wait_cycles",
+      "samples": [
+        183414
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.consumer_first_pair_wait_cycles",
+      "samples": [
+        715
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        329533
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        329533
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "control.encoded-hello-cap1.decode_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.full-context-cap0.prefix_cycles",
+      "samples": [
+        14306210
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.full-context-cap0.complete_cycles",
+      "samples": [
+        14307892
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.full-context-cap0.frontend_wait_cycles",
+      "samples": [
+        1712640
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.full-context-cap0.output_projection_wait_cycles",
+      "samples": [
+        540672
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.full-context-cap0.feedforward_wait_cycles",
+      "samples": [
+        4268544
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.full-context-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        16640
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.full-context-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        295115
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        3828556
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap255.frontend_wait_cycles",
+      "samples": [
+        375114
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap255.output_projection_wait_cycles",
+      "samples": [
+        213312
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap255.feedforward_wait_cycles",
+      "samples": [
+        1684074
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        6565
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        296797
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        3779839
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap255.decode_cycles",
+      "samples": [
+        3483042
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        351537
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        5608045
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-fu2p2q-cap255.frontend_wait_cycles",
+      "samples": [
+        501390
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-fu2p2q-cap255.output_projection_wait_cycles",
+      "samples": [
+        285120
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-fu2p2q-cap255.feedforward_wait_cycles",
+      "samples": [
+        2250990
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-fu2p2q-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        8775
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-fu2p2q-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        353219
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        5552036
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "qkv-read-ahead-v1.encoded-fu2p2q-cap255.decode_cycles",
+      "samples": [
+        5198817
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        3490597
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        9618643
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-max48-cap255.frontend_wait_cycles",
+      "samples": [
+        746514
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-max48-cap255.output_projection_wait_cycles",
+      "samples": [
+        424512
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-max48-cap255.feedforward_wait_cycles",
+      "samples": [
+        3351474
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-max48-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        13065
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-max48-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        3492279
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        9548576
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "qkv-read-ahead-v1.encoded-max48-cap255.decode_cycles",
+      "samples": [
+        6056297
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.bos-only-cap0.prefix_cycles",
+      "samples": [
+        25785
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.bos-only-cap0.complete_cycles",
+      "samples": [
+        27467
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.bos-only-cap0.frontend_wait_cycles",
+      "samples": [
+        3714
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.bos-only-cap0.output_projection_wait_cycles",
+      "samples": [
+        2112
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.bos-only-cap0.feedforward_wait_cycles",
+      "samples": [
+        16674
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.bos-only-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        65
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.bos-only-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        295115
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        296797
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap0.frontend_wait_cycles",
+      "samples": [
+        40854
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap0.output_projection_wait_cycles",
+      "samples": [
+        23232
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap0.feedforward_wait_cycles",
+      "samples": [
+        183414
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        715
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        295115
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        296797
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap1.frontend_wait_cycles",
+      "samples": [
+        40854
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap1.output_projection_wait_cycles",
+      "samples": [
+        23232
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap1.feedforward_wait_cycles",
+      "samples": [
+        183414
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap1.consumer_first_pair_wait_cycles",
+      "samples": [
+        715
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap1.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        296797
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        296797
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "qkv-read-ahead-v1.encoded-hello-cap1.decode_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.full-context-cap0.prefix_cycles",
+      "samples": [
+        13544354
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.full-context-cap0.complete_cycles",
+      "samples": [
+        13546036
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.full-context-cap0.frontend_wait_cycles",
+      "samples": [
+        950784
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.full-context-cap0.output_projection_wait_cycles",
+      "samples": [
+        540672
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.full-context-cap0.feedforward_wait_cycles",
+      "samples": [
+        4268544
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.full-context-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        16640
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-read-ahead-v1.full-context-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        316939
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        4028940
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap255.frontend_wait_cycles",
+      "samples": [
+        675690
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap255.output_projection_wait_cycles",
+      "samples": [
+        113120
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap255.feedforward_wait_cycles",
+      "samples": [
+        1684074
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        6565
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        318621
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        3978239
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap255.decode_cycles",
+      "samples": [
+        3659618
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        377329
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        5875885
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-fu2p2q-cap255.frontend_wait_cycles",
+      "samples": [
+        903150
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-fu2p2q-cap255.output_projection_wait_cycles",
+      "samples": [
+        151200
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-fu2p2q-cap255.feedforward_wait_cycles",
+      "samples": [
+        2250990
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-fu2p2q-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        8775
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-fu2p2q-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        379011
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        5817892
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "attention-output-read-ahead-v1.encoded-fu2p2q-cap255.decode_cycles",
+      "samples": [
+        5438881
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        3683045
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        10017427
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-max48-cap255.frontend_wait_cycles",
+      "samples": [
+        1344690
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-max48-cap255.output_projection_wait_cycles",
+      "samples": [
+        225120
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-max48-cap255.feedforward_wait_cycles",
+      "samples": [
+        3351474
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-max48-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        13065
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-max48-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        3684727
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        9945376
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "attention-output-read-ahead-v1.encoded-max48-cap255.decode_cycles",
+      "samples": [
+        6260649
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.bos-only-cap0.prefix_cycles",
+      "samples": [
+        27769
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.bos-only-cap0.complete_cycles",
+      "samples": [
+        29451
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.bos-only-cap0.frontend_wait_cycles",
+      "samples": [
+        6690
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.bos-only-cap0.output_projection_wait_cycles",
+      "samples": [
+        1120
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.bos-only-cap0.feedforward_wait_cycles",
+      "samples": [
+        16674
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.bos-only-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        65
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.bos-only-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        316939
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        318621
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap0.frontend_wait_cycles",
+      "samples": [
+        73590
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap0.output_projection_wait_cycles",
+      "samples": [
+        12320
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap0.feedforward_wait_cycles",
+      "samples": [
+        183414
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        715
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        316939
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        318621
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap1.frontend_wait_cycles",
+      "samples": [
+        73590
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap1.output_projection_wait_cycles",
+      "samples": [
+        12320
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap1.feedforward_wait_cycles",
+      "samples": [
+        183414
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap1.consumer_first_pair_wait_cycles",
+      "samples": [
+        715
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap1.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        318621
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        318621
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "attention-output-read-ahead-v1.encoded-hello-cap1.decode_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.full-context-cap0.prefix_cycles",
+      "samples": [
+        14052258
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.full-context-cap0.complete_cycles",
+      "samples": [
+        14053940
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.full-context-cap0.frontend_wait_cycles",
+      "samples": [
+        1712640
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.full-context-cap0.output_projection_wait_cycles",
+      "samples": [
+        286720
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.full-context-cap0.feedforward_wait_cycles",
+      "samples": [
+        4268544
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.full-context-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        16640
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "attention-output-read-ahead-v1.full-context-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        327510
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        4126001
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap255.frontend_wait_cycles",
+      "samples": [
+        675690
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap255.output_projection_wait_cycles",
+      "samples": [
+        213312
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap255.feedforward_wait_cycles",
+      "samples": [
+        1680943
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        3434
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        329192
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        4074339
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap255.decode_cycles",
+      "samples": [
+        3745147
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        389822
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        6005620
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-fu2p2q-cap255.frontend_wait_cycles",
+      "samples": [
+        903150
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-fu2p2q-cap255.output_projection_wait_cycles",
+      "samples": [
+        285120
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-fu2p2q-cap255.feedforward_wait_cycles",
+      "samples": [
+        2246805
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-fu2p2q-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        4590
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-fu2p2q-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        391504
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        5946666
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-fu2p2q-cap255.decode_cycles",
+      "samples": [
+        5555162
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        3776262
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        10210588
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-max48-cap255.frontend_wait_cycles",
+      "samples": [
+        1344690
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-max48-cap255.output_projection_wait_cycles",
+      "samples": [
+        424512
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-max48-cap255.feedforward_wait_cycles",
+      "samples": [
+        3345243
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-max48-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        6834
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-max48-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        3777944
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        10137576
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-max48-cap255.decode_cycles",
+      "samples": [
+        6359632
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.bos-only-cap0.prefix_cycles",
+      "samples": [
+        28730
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.bos-only-cap0.complete_cycles",
+      "samples": [
+        30412
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.bos-only-cap0.frontend_wait_cycles",
+      "samples": [
+        6690
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.bos-only-cap0.output_projection_wait_cycles",
+      "samples": [
+        2112
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.bos-only-cap0.feedforward_wait_cycles",
+      "samples": [
+        16643
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.bos-only-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        34
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.bos-only-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        327510
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        329192
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap0.frontend_wait_cycles",
+      "samples": [
+        73590
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap0.output_projection_wait_cycles",
+      "samples": [
+        23232
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap0.feedforward_wait_cycles",
+      "samples": [
+        183073
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        374
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        327510
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        329192
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap1.frontend_wait_cycles",
+      "samples": [
+        73590
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap1.output_projection_wait_cycles",
+      "samples": [
+        23232
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap1.feedforward_wait_cycles",
+      "samples": [
+        183073
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap1.consumer_first_pair_wait_cycles",
+      "samples": [
+        374
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap1.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        329192
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        329192
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "ff-gate-up-read-ahead-v1.encoded-hello-cap1.decode_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.full-context-cap0.prefix_cycles",
+      "samples": [
+        14298274
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.full-context-cap0.complete_cycles",
+      "samples": [
+        14299956
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.full-context-cap0.frontend_wait_cycles",
+      "samples": [
+        1712640
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.full-context-cap0.output_projection_wait_cycles",
+      "samples": [
+        540672
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.full-context-cap0.feedforward_wait_cycles",
+      "samples": [
+        4260608
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.full-context-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        8704
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "ff-gate-up-read-ahead-v1.full-context-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        283862
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        3725233
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap255.frontend_wait_cycles",
+      "samples": [
+        375114
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap255.output_projection_wait_cycles",
+      "samples": [
+        113120
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap255.feedforward_wait_cycles",
+      "samples": [
+        1680943
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        3434
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        285544
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        3677539
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap255.decode_cycles",
+      "samples": [
+        3391995
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        338238
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        5469940
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-fu2p2q-cap255.frontend_wait_cycles",
+      "samples": [
+        501390
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-fu2p2q-cap255.output_projection_wait_cycles",
+      "samples": [
+        151200
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-fu2p2q-cap255.feedforward_wait_cycles",
+      "samples": [
+        2246805
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-fu2p2q-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        4590
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-fu2p2q-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        339920
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        5414954
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "projections-read-ahead-v1.encoded-fu2p2q-cap255.decode_cycles",
+      "samples": [
+        5075034
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        3391366
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        9413020
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-max48-cap255.frontend_wait_cycles",
+      "samples": [
+        746514
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-max48-cap255.output_projection_wait_cycles",
+      "samples": [
+        225120
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-max48-cap255.feedforward_wait_cycles",
+      "samples": [
+        3345243
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-max48-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        6834
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-max48-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        3393048
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        9343976
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "projections-read-ahead-v1.encoded-max48-cap255.decode_cycles",
+      "samples": [
+        5950928
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.bos-only-cap0.prefix_cycles",
+      "samples": [
+        24762
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.bos-only-cap0.complete_cycles",
+      "samples": [
+        26444
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.bos-only-cap0.frontend_wait_cycles",
+      "samples": [
+        3714
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.bos-only-cap0.output_projection_wait_cycles",
+      "samples": [
+        1120
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.bos-only-cap0.feedforward_wait_cycles",
+      "samples": [
+        16643
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.bos-only-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        34
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.bos-only-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        283862
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        285544
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap0.frontend_wait_cycles",
+      "samples": [
+        40854
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap0.output_projection_wait_cycles",
+      "samples": [
+        12320
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap0.feedforward_wait_cycles",
+      "samples": [
+        183073
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        374
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        283862
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        285544
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap1.frontend_wait_cycles",
+      "samples": [
+        40854
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap1.output_projection_wait_cycles",
+      "samples": [
+        12320
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap1.feedforward_wait_cycles",
+      "samples": [
+        183073
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap1.consumer_first_pair_wait_cycles",
+      "samples": [
+        374
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap1.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        285544
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        285544
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "projections-read-ahead-v1.encoded-hello-cap1.decode_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.full-context-cap0.prefix_cycles",
+      "samples": [
+        13282466
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.full-context-cap0.complete_cycles",
+      "samples": [
+        13284148
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.full-context-cap0.frontend_wait_cycles",
+      "samples": [
+        950784
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.full-context-cap0.output_projection_wait_cycles",
+      "samples": [
+        286720
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.full-context-cap0.feedforward_wait_cycles",
+      "samples": [
+        4260608
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.full-context-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        8704
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "projections-read-ahead-v1.full-context-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        284203
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        3728364
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap255.frontend_wait_cycles",
+      "samples": [
+        375114
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap255.output_projection_wait_cycles",
+      "samples": [
+        113120
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap255.feedforward_wait_cycles",
+      "samples": [
+        1684074
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        6565
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        285885
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        3680639
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap255.decode_cycles",
+      "samples": [
+        3394754
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        338641
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        5474125
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-fu2p2q-cap255.frontend_wait_cycles",
+      "samples": [
+        501390
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-fu2p2q-cap255.output_projection_wait_cycles",
+      "samples": [
+        151200
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-fu2p2q-cap255.feedforward_wait_cycles",
+      "samples": [
+        2250990
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-fu2p2q-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        8775
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-fu2p2q-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        340323
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        5419108
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-fu2p2q-cap255.decode_cycles",
+      "samples": [
+        5078785
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        3394373
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        9419251
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-max48-cap255.frontend_wait_cycles",
+      "samples": [
+        746514
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-max48-cap255.output_projection_wait_cycles",
+      "samples": [
+        225120
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-max48-cap255.feedforward_wait_cycles",
+      "samples": [
+        3351474
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-max48-cap255.consumer_first_pair_wait_cycles",
+      "samples": [
+        13065
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-max48-cap255.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        3396055
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        9350176
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-max48-cap255.decode_cycles",
+      "samples": [
+        5954121
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.bos-only-cap0.prefix_cycles",
+      "samples": [
+        24793
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.bos-only-cap0.complete_cycles",
+      "samples": [
+        26475
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.bos-only-cap0.frontend_wait_cycles",
+      "samples": [
+        3714
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.bos-only-cap0.output_projection_wait_cycles",
+      "samples": [
+        1120
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.bos-only-cap0.feedforward_wait_cycles",
+      "samples": [
+        16674
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.bos-only-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        65
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.bos-only-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        284203
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        285885
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap0.frontend_wait_cycles",
+      "samples": [
+        40854
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap0.output_projection_wait_cycles",
+      "samples": [
+        12320
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap0.feedforward_wait_cycles",
+      "samples": [
+        183414
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        715
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        284203
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        285885
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap1.frontend_wait_cycles",
+      "samples": [
+        40854
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap1.output_projection_wait_cycles",
+      "samples": [
+        12320
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap1.feedforward_wait_cycles",
+      "samples": [
+        183414
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap1.consumer_first_pair_wait_cycles",
+      "samples": [
+        715
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap1.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        285885
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        285885
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "qkv-attention-output-read-ahead-v1.encoded-hello-cap1.decode_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.full-context-cap0.prefix_cycles",
+      "samples": [
+        13290402
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.full-context-cap0.complete_cycles",
+      "samples": [
+        13292084
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.full-context-cap0.frontend_wait_cycles",
+      "samples": [
+        950784
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.full-context-cap0.output_projection_wait_cycles",
+      "samples": [
+        286720
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.full-context-cap0.feedforward_wait_cycles",
+      "samples": [
+        4268544
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.full-context-cap0.consumer_first_pair_wait_cycles",
+      "samples": [
+        16640
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "qkv-attention-output-read-ahead-v1.full-context-cap0.consumer_later_pair_wait_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-projections-read-ahead-v1-rtl",
+    "measurement_boundary": "RTL start, prefix, first output, last output, completion and affected stage wait clocks.",
+    "quality_gate": "Exact ordered projections, model scores, outputs, cache, stops, counters and directed faults.",
+    "sha256": "4891907715f970583572c8bae9472c997093bf387d4335c49d56e328784d8dde",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Each arm matched frozen scores, bytes, termination, intermediates and cache values.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "af9d50a3a7f2cbe9b1ca48c9e9017b7d9fc76da6d6a4e9ad21fcffa8e4552620"
+  },
+  "started_at": "2026-11-19T19:29:12.523021+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

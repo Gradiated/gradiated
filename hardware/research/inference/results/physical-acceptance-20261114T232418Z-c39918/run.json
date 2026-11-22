@@ -1,0 +1,500 @@
+{
+  "schema_version": 1,
+  "id": "physical-acceptance-20261114T232418Z-c39918",
+  "experiment_id": "kv260-conditioned-physical-acceptance-v1",
+  "status": "passed",
+  "evidence_type": "physical-measurement",
+  "source": {
+    "commit": "935fdcdbb9df0855ad99b5a4cc6f70057a08dc27",
+    "patch_sha256": "c1fe1c3ea488f3ade2c294f4539a9f979856b7ca64c99263ca91d6aa423d0c70"
+  },
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "implementation": {
+    "id": "kv260-tiny-transformer-50mhz-conditioned-sealed",
+    "sha256": "b0394ba256d877fb62d6eb6e74942d5ff0c649cf751d53481e827c8bae5e9167"
+  },
+  "workload": {
+    "id": "kv260-conditioned-seven-vectors-three-completions-v1",
+    "sha256": "899f4ec213a29a1c930c5e8dd28a0fa6927593caaadd94aceb208e86fdda0d9a"
+  },
+  "device": {
+    "id": "amd-kria-kv260",
+    "configuration": {
+      "model": "ZynqMP KV260 revB",
+      "physical_unit": "KV260 USB bridge XFL1RXOM0IWQ",
+      "system_boot_id": "9089d6bb-bf7b-4ae4-b76e-ee37e4900519",
+      "kernel_release": "6.8.0-1015-xilinx",
+      "kernel_build": "#16-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 16 05:06:58 UTC 2025",
+      "pl0_reported_hz": 50000000,
+      "pl0_rate_source": "Linux clock framework",
+      "firmware_name": "gradiated-tiny-50mhz.bit.bin",
+      "firmware_sha256": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0",
+      "fpga_manager_flags": 0,
+      "reset_dt_id": 119,
+      "transformer_map": {
+        "device": "/dev/uio4",
+        "base": 2684354560,
+        "bytes": 4096
+      },
+      "dfx_service": "runtime inactive, boot enablement preserved"
+    },
+    "configuration_sha256": "2fdbc9a66c0cca0385c19b619ac3038bdb5af0ad672bc339d40c7b6cd406fa11"
+  },
+  "protocol": {
+    "id": "kv260-conditioned-physical-acceptance-v1",
+    "sha256": "a2c3b3d693b43da2c67912b68be8081b2cfb1e7bb4e241d99b501c0724455273",
+    "quality_gate": "Exact bytes, EOS and greedy decisions on three frozen completions",
+    "tokenizer": "BOS plus two hexadecimal digit IDs per input UTF-8 byte. Output uses byte IDs and EOS.",
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "warmup": "Read-only preflight and one original-model BOS control",
+    "measurement_boundary": "Functional verification of integer logits and decoded output. No timing, power or energy protocol."
+  },
+  "correctness": {
+    "passed": true,
+    "evidence": "Original control and restoration each matched 320 scores. Candidate matched all 167,040 signed integer scores across 522 token positions."
+  },
+  "quality": {
+    "passed": true,
+    "evidence": "All three frozen candidate completions matched independent greedy decisions and exact output bytes and ended in EOS. No broader quality inference."
+  },
+  "conditions": {
+    "candidate_model_image_sha256": "698df2e177b8e478088fffe9b02af09cd10c9ac0afbe252f3b031f133262e055",
+    "original_model_image_sha256": "0198baeaeb48052895b5eb4f9622d61fb144295584e6823f8e42420fc0d73cf5",
+    "configuration_preflight_boot_id": "9089d6bb-bf7b-4ae4-b76e-ee37e4900519",
+    "physical_dispatches": 1,
+    "completion_output_bytes": [
+      122,
+      90,
+      104
+    ],
+    "candidate_validation_cases": 7,
+    "original_weights_restored": true,
+    "restored_context": "Fresh original BOS context",
+    "kernel_taint_at_exit": 0,
+    "new_kernel_warning_or_error_after_setup": false
+  },
+  "started_at": "2026-11-14T23:25:38.933150+00:00",
+  "completed_at": "2026-11-14T23:27:40.118375+00:00",
+  "metrics": [],
+  "artifacts": [
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/invocation-serial.json",
+      "sha256": "cb0cff404372c452892ac649fe0a33b3b483f907284996251c85290544fdc09d",
+      "bytes": 4979,
+      "role": "frozen transmitted invocation"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/invocation.json",
+      "sha256": "4b6a0a1063384070d22efe8846bc408e7cc78f08dee9ff4e4426d48cb590de44",
+      "bytes": 4866,
+      "role": "unsent command preserved before serial formatting correction"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/transport-failure.json",
+      "sha256": "cb7191ebec659b5f2c5d18204f1f4aca11e9dec25d3e9ffce591bc7690765887",
+      "bytes": 71,
+      "role": "initial unsent launch receipt"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/source.patch",
+      "sha256": "c1fe1c3ea488f3ade2c294f4539a9f979856b7ca64c99263ca91d6aa423d0c70",
+      "bytes": 25525,
+      "role": "uncommitted source snapshot"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/kv260-conditioned-physical-acceptance-v1.md",
+      "sha256": "a2c3b3d693b43da2c67912b68be8081b2cfb1e7bb4e241d99b501c0724455273",
+      "bytes": 10126,
+      "role": "frozen protocol"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/serial-launch-frames.txt",
+      "sha256": "0d20ef199f091f03cdcc44f050f5966b40801193271b58ef532515bb07bd9723",
+      "bytes": 1008716,
+      "role": "raw tagged board evidence"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/outcome.json",
+      "sha256": "5746613ab0416499ffc73f6694d703d24e39188b47816952b781e39a85f0fa3d",
+      "bytes": 99,
+      "role": "board supervisor outcome"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/result.json",
+      "sha256": "c258d775ce09ad0d9dd262b5de28226c0053913dd96cb536870f9ace42cef52d",
+      "bytes": 1942,
+      "role": "verified Mac result and outer exit status"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/mac-comparisons.json",
+      "sha256": "28a4294e58224a9796d2024d1b369b7113bef6a365b425aea529b2a85bec3c79",
+      "bytes": 1659,
+      "role": "independent Mac gate comparisons"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/workload.json",
+      "sha256": "899f4ec213a29a1c930c5e8dd28a0fa6927593caaadd94aceb208e86fdda0d9a",
+      "bytes": 1031,
+      "role": "workload identity"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/stock-setup-20261114T231018Z-ed2a22/board-receipts/exit.state.json",
+      "sha256": "bc2b3112f189a409d2c3a89f24ad5887efbf5964be5ff4b6439579f35d3a5eed",
+      "bytes": 94860,
+      "role": "reviewed configuration input"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/candidate-staging-953ab53606/staging-result.json",
+      "sha256": "e41da9b05819f2c399c7cd3e2b478116dcf1403c790ed9f4f01cf894ac423483",
+      "bytes": 470,
+      "role": "sealed archive transfer receipt"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/package-verification.json",
+      "sha256": "245aecdea12af19ae8a60b0aaa9bee932d9a976ecaef91c74b797fdc623ea603",
+      "bytes": 6215,
+      "role": "sealed vector references"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/completion-references.json",
+      "sha256": "33d290aed332af9e8b100a708222796d53f82529bb9c55d5d9ed13606cb0d367",
+      "bytes": 9050,
+      "role": "sealed completion references"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/acceptance-execution-review/kv260_accept.py",
+      "sha256": "d9f4b5ff47b96d7ad9043d25ddaf88019e577850095ecf7081cda9cf410280b1",
+      "bytes": 7891,
+      "role": "acceptance supervisor"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/acceptance-execution-review/kv260_accept_checks.py",
+      "sha256": "1cd0e97a0793dbfda2fff322357505a6b24a9fb476896a0f6f3559f8f85a128d",
+      "bytes": 11496,
+      "role": "independent verifier"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/preflight/after.state.json",
+      "sha256": "54b87fc3e349762865d923af822f309428ebc9b2e13266f9fe0df3963a1ebf10",
+      "bytes": 94860,
+      "role": "preflight raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/preflight/before.state.json",
+      "sha256": "bc2b3112f189a409d2c3a89f24ad5887efbf5964be5ff4b6439579f35d3a5eed",
+      "bytes": 94860,
+      "role": "preflight raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/preflight/candidate-inspect.command.json",
+      "sha256": "18565cbcd95f3c0111cb0739f3f2d645cf3e7b86d9694dcf700e9b3f51c19022",
+      "bytes": 112,
+      "role": "preflight raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/preflight/candidate-inspect.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "role": "preflight raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/preflight/candidate-inspect.stdout",
+      "sha256": "14f79144da10da4f945beab41cd402d21938e844bf752e419aad7dbf3befcc08",
+      "bytes": 446,
+      "role": "preflight raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/preflight/gate.json",
+      "sha256": "eef7a0d4ebc897c6809dd8e9b870020e344177fa84dcb60b7da6e815dde2c4b1",
+      "bytes": 63,
+      "role": "preflight raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/preflight/invocation.json",
+      "sha256": "a3d6507b6b623b7bd8ad749ebad1ea7b072a184668e54e84130564e95dc837aa",
+      "bytes": 61,
+      "role": "preflight raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/preflight/original-inspect.command.json",
+      "sha256": "f367635d0dafe82aa835bc9ae7415f53af76e0abfaf12b0b3438b65450ea92b6",
+      "bytes": 113,
+      "role": "preflight raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/preflight/original-inspect.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "role": "preflight raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/preflight/original-inspect.stdout",
+      "sha256": "257f3982cf52c9893be9923cafaea1f112ca2f090232833c0d5fae07ffc4eeb0",
+      "bytes": 398,
+      "role": "preflight raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/original-bos/after.state.json",
+      "sha256": "bc2b3112f189a409d2c3a89f24ad5887efbf5964be5ff4b6439579f35d3a5eed",
+      "bytes": 94860,
+      "role": "original-bos raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/original-bos/before.state.json",
+      "sha256": "bc2b3112f189a409d2c3a89f24ad5887efbf5964be5ff4b6439579f35d3a5eed",
+      "bytes": 94860,
+      "role": "original-bos raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/original-bos/gate.json",
+      "sha256": "27aacecd2317e09d6590226b2287365e95c11ffdee1f4f2c06044566dcfd675c",
+      "bytes": 145,
+      "role": "original-bos raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/original-bos/invocation.json",
+      "sha256": "94dbe617ca95c47d98d1ea1cefb2dfd15fa8f02b91171abdaf2557c0f21217d4",
+      "bytes": 314,
+      "role": "original-bos raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/original-bos/runner.command.json",
+      "sha256": "8dd4efb7befac6da72f274269406b0bf4a0eb77735c896338d1c39c28b28c4e0",
+      "bytes": 112,
+      "role": "original-bos raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/original-bos/runner.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "role": "original-bos raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/original-bos/runner.stdout",
+      "sha256": "8ca02e5d8cd874a2633c530c69968c1671dcb4df41012e4e958b7ebdaecdb00b",
+      "bytes": 3106,
+      "role": "original-bos raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/validate/after.state.json",
+      "sha256": "bc2b3112f189a409d2c3a89f24ad5887efbf5964be5ff4b6439579f35d3a5eed",
+      "bytes": 94860,
+      "role": "validate raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/validate/before.state.json",
+      "sha256": "bc2b3112f189a409d2c3a89f24ad5887efbf5964be5ff4b6439579f35d3a5eed",
+      "bytes": 94860,
+      "role": "validate raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/validate/gate.json",
+      "sha256": "e880b3e8d5bc10a14e135c9e69d427d4a2b1d4362640395eb61bed9c09558dea",
+      "bytes": 88,
+      "role": "validate raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/validate/invocation.json",
+      "sha256": "5707c55b66769b7744e74383db9fe436d6cd35633b72f4d58151e27ecf187107",
+      "bytes": 387,
+      "role": "validate raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/validate/runner.command.json",
+      "sha256": "52409229615c1539a9188460d711156c0d516dd8c8d5bf4126b2cef5935ddacc",
+      "bytes": 111,
+      "role": "validate raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/validate/runner.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "role": "validate raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/validate/runner.stdout",
+      "sha256": "4a044d2ed5d754d63888fcb6b2451f17811da79b0a6aac2c21faeab8c09e5611",
+      "bytes": 1478,
+      "role": "validate raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-fu2p2q/after.state.json",
+      "sha256": "bc2b3112f189a409d2c3a89f24ad5887efbf5964be5ff4b6439579f35d3a5eed",
+      "bytes": 94860,
+      "role": "encoded-fu2p2q raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-fu2p2q/before.state.json",
+      "sha256": "bc2b3112f189a409d2c3a89f24ad5887efbf5964be5ff4b6439579f35d3a5eed",
+      "bytes": 94860,
+      "role": "encoded-fu2p2q raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-fu2p2q/gate.json",
+      "sha256": "bb51de22f7209b473718917ff9790285395e4a3a321c25a3a0e136a5983fdb64",
+      "bytes": 173,
+      "role": "encoded-fu2p2q raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-fu2p2q/invocation.json",
+      "sha256": "0df3e7b1250cffb9a53ec0e85cb1b49145eecf50228a53d3402f084377ee6bf5",
+      "bytes": 387,
+      "role": "encoded-fu2p2q raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-fu2p2q/runner.command.json",
+      "sha256": "94c6f8a472f2a86e4ad26c3f9e9f55ef59807c930665f4b877b6be2c510bfc18",
+      "bytes": 111,
+      "role": "encoded-fu2p2q raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-fu2p2q/runner.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "role": "encoded-fu2p2q raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-fu2p2q/runner.stdout",
+      "sha256": "0585c63e27b8df0716755d4e36f404723b3e78c87facfd8664f6e89b745c28c1",
+      "bytes": 385643,
+      "role": "encoded-fu2p2q raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-hello/after.state.json",
+      "sha256": "bc2b3112f189a409d2c3a89f24ad5887efbf5964be5ff4b6439579f35d3a5eed",
+      "bytes": 94860,
+      "role": "encoded-hello raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-hello/before.state.json",
+      "sha256": "bc2b3112f189a409d2c3a89f24ad5887efbf5964be5ff4b6439579f35d3a5eed",
+      "bytes": 94860,
+      "role": "encoded-hello raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-hello/gate.json",
+      "sha256": "c97ee274122677516a4d9ca8eec0eee3c7a47946202679185076f34c8b5e24e5",
+      "bytes": 171,
+      "role": "encoded-hello raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-hello/invocation.json",
+      "sha256": "cb721e960b5f955db3d7fa51cb32ecc21b191556e6ed6b331fed4b29011d7257",
+      "bytes": 385,
+      "role": "encoded-hello raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-hello/runner.command.json",
+      "sha256": "5c9aef5513fb36f323a87c796ad34ea5957aadc3e986c0d9ff02e03b3983e80d",
+      "bytes": 112,
+      "role": "encoded-hello raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-hello/runner.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "role": "encoded-hello raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-hello/runner.stdout",
+      "sha256": "4b2c36cd7a3c0e28d005695e66707184646f941fd25c44802e23402778fcae31",
+      "bytes": 289241,
+      "role": "encoded-hello raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-max48/after.state.json",
+      "sha256": "bc2b3112f189a409d2c3a89f24ad5887efbf5964be5ff4b6439579f35d3a5eed",
+      "bytes": 94860,
+      "role": "encoded-max48 raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-max48/before.state.json",
+      "sha256": "bc2b3112f189a409d2c3a89f24ad5887efbf5964be5ff4b6439579f35d3a5eed",
+      "bytes": 94860,
+      "role": "encoded-max48 raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-max48/gate.json",
+      "sha256": "d101b212655601da351ca2f08a23c7a8dab66301d2c6bc804dce452811f0f5e7",
+      "bytes": 173,
+      "role": "encoded-max48 raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-max48/invocation.json",
+      "sha256": "37bfafbf8cbb28b2afe2526a448572b42d83fc892afa278ff54a8f2a5867462a",
+      "bytes": 428,
+      "role": "encoded-max48 raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-max48/runner.command.json",
+      "sha256": "00670fc11f46155bd1d351a7b70ff49ed8f4cacfa349232eb7bb924f29c61d9a",
+      "bytes": 112,
+      "role": "encoded-max48 raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-max48/runner.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "role": "encoded-max48 raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/encoded-max48/runner.stdout",
+      "sha256": "4819921ebcc237129aee085363d3a64feeeaec1853192ac904a7a08afefbad1b",
+      "bytes": 580829,
+      "role": "encoded-max48 raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/restore-original/after.state.json",
+      "sha256": "bc2b3112f189a409d2c3a89f24ad5887efbf5964be5ff4b6439579f35d3a5eed",
+      "bytes": 94860,
+      "role": "restore-original raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/restore-original/before.state.json",
+      "sha256": "bc2b3112f189a409d2c3a89f24ad5887efbf5964be5ff4b6439579f35d3a5eed",
+      "bytes": 94860,
+      "role": "restore-original raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/restore-original/gate.json",
+      "sha256": "27aacecd2317e09d6590226b2287365e95c11ffdee1f4f2c06044566dcfd675c",
+      "bytes": 145,
+      "role": "restore-original raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/restore-original/invocation.json",
+      "sha256": "22b475581648a1cce564fb0acab09cea5c3f877034b37386dc4e1c3efa50a0aa",
+      "bytes": 318,
+      "role": "restore-original raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/restore-original/runner.command.json",
+      "sha256": "c775dbad1ab2a1fccda9be8d41f3b1ab12d7571e738f53d29f7f56ea583f7a1f",
+      "bytes": 112,
+      "role": "restore-original raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/restore-original/runner.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "role": "restore-original raw or derived stage artifact"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/kv260-conditioned-physical-acceptance-v1-preparation/physical-acceptance-20261114T232418Z-c39918/restore-original/runner.stdout",
+      "sha256": "8ca02e5d8cd874a2633c530c69968c1671dcb4df41012e4e958b7ebdaecdb00b",
+      "bytes": 3106,
+      "role": "restore-original raw or derived stage artifact"
+    }
+  ],
+  "limitations": [
+    "Three fixed inputs test physical output equivalence, with no broad quality claim.",
+    "The live clock rate comes from the Linux clock framework. The bitstream identity is supported by setup receipts and functional checks.",
+    "This run did not measure latency, throughput, power or energy."
+  ],
+  "supersedes": null
+}

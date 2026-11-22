@@ -1,0 +1,1171 @@
+{
+  "artifacts": [
+    {
+      "bytes": 52727954,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-rtl-20261119T175457Z/simulation.tar.gz",
+      "role": "Exact fixtures, generated RTL, tool logs, paired replay traces and route admission",
+      "sha256": "0d24aaf34d27854610d4d421e86000b4164452d508a13f0da71cb781fee89bb3"
+    },
+    {
+      "bytes": 62837,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-rtl-20261119T175457Z/source-closure.json",
+      "role": "SHA-256 and size of every archive member",
+      "sha256": "ecdb605e692696cdc5b6d2b466f77d851d58bd06ee89ed629d13d3c275f7c728"
+    },
+    {
+      "bytes": 49675,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-rtl-20261119T175457Z/source.patch",
+      "role": "Shared normalization implementation, proof and test sources",
+      "sha256": "79bc9df22b6bff2a8ba0e5c15e878331b3c7555a5b6812c71b0a806ce0fdda6b"
+    },
+    {
+      "bytes": 16224,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-rtl-20261119T175457Z/model-results.json",
+      "role": "Seven paired model fixtures with exact output and cycle boundaries",
+      "sha256": "99daa5816bb8ffd0097ee7fb9217e4059554a0e35bc144409b52970f00c8c0bb"
+    },
+    {
+      "bytes": 232,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-rtl-20261119T175457Z/directed-results.json",
+      "role": "Directed shared ownership, full-width arithmetic, stalls and reset results",
+      "sha256": "05010df4261e677cad7fe193953402bea95c5a5478c2e5c8669625d92397e003"
+    },
+    {
+      "bytes": 43768,
+      "path": "hardware/research/inference/results/norm-mul-dsp-v1-rtl-20261119T175201Z/run.json",
+      "role": "Exact dedicated Experiment 20 control record",
+      "sha256": "7637f19c80777c1c5c82c387e6f773922f07b289bdf5f9f6a9a79af0ae4c9f9a"
+    }
+  ],
+  "completed_at": "2026-11-19T17:55:37.622350+00:00",
+  "conditions": {
+    "candidate_implementation": "norm-mul-shared-v1",
+    "candidate_source_manifest_sha256": "d23404ea222fef3796f4bf51be1243eb04445f9403665d9b1ca9882f6ce1a109",
+    "changed_compiled_sources": [
+      "rmsnorm.sv",
+      "transformer.sv"
+    ],
+    "control_implementation": "norm-mul-dsp-v1",
+    "control_source_manifest_sha256": "8519e39ee6a33ef7d96b7f871222c1fb6d6f30ee0cf1a6a2422819dab44a9c9d",
+    "directed_oracle": {
+      "all_exact": true,
+      "exact_norm_outputs": 68736,
+      "exact_norm_products": 219096,
+      "reset_points": 5,
+      "scalar_vectors": 396,
+      "simultaneous_batches": 132,
+      "stalled_shared_response_clocks": 4,
+      "unexpected_handoffs": 0
+    },
+    "exact_autonomous_scores": 103360,
+    "exact_legacy_scores": 4480,
+    "exact_normalization_outputs": 68736,
+    "exact_normalization_products": 219096,
+    "extra_handoff_clocks": 0,
+    "full_context_depth": 256,
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Paired model replay and directed shared scalar RTL checks.",
+        "sources": [
+          {
+            "bytes": 16224,
+            "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-rtl-20261119T175457Z/model-results.json",
+            "role": "Seven paired model fixtures with exact output and cycle boundaries",
+            "sha256": "99daa5816bb8ffd0097ee7fb9217e4059554a0e35bc144409b52970f00c8c0bb"
+          },
+          {
+            "bytes": 232,
+            "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-rtl-20261119T175457Z/directed-results.json",
+            "role": "Directed shared ownership, full-width arithmetic, stalls and reset results",
+            "sha256": "05010df4261e677cad7fe193953402bea95c5a5478c2e5c8669625d92397e003"
+          }
+        ],
+        "state": "measured"
+      },
+      "cross_device_comparison": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "long_stability": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "memory_bandwidth": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Paired model replay and directed shared scalar RTL checks.",
+        "sources": [
+          {
+            "bytes": 16224,
+            "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-rtl-20261119T175457Z/model-results.json",
+            "role": "Seven paired model fixtures with exact output and cycle boundaries",
+            "sha256": "99daa5816bb8ffd0097ee7fb9217e4059554a0e35bc144409b52970f00c8c0bb"
+          },
+          {
+            "bytes": 232,
+            "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-rtl-20261119T175457Z/directed-results.json",
+            "role": "Directed shared ownership, full-width arithmetic, stalls and reset results",
+            "sha256": "05010df4261e677cad7fe193953402bea95c5a5478c2e5c8669625d92397e003"
+          }
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Paired model replay and directed shared scalar RTL checks.",
+        "sources": [
+          {
+            "bytes": 16224,
+            "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-rtl-20261119T175457Z/model-results.json",
+            "role": "Seven paired model fixtures with exact output and cycle boundaries",
+            "sha256": "99daa5816bb8ffd0097ee7fb9217e4059554a0e35bc144409b52970f00c8c0bb"
+          },
+          {
+            "bytes": 232,
+            "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-rtl-20261119T175457Z/directed-results.json",
+            "role": "Directed shared ownership, full-width arithmetic, stalls and reset results",
+            "sha256": "05010df4261e677cad7fe193953402bea95c5a5478c2e5c8669625d92397e003"
+          }
+        ],
+        "state": "measured"
+      },
+      "repeatability": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "serving_load": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Paired model replay and directed shared scalar RTL checks.",
+        "sources": [
+          {
+            "bytes": 16224,
+            "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-rtl-20261119T175457Z/model-results.json",
+            "role": "Seven paired model fixtures with exact output and cycle boundaries",
+            "sha256": "99daa5816bb8ffd0097ee7fb9217e4059554a0e35bc144409b52970f00c8c0bb"
+          },
+          {
+            "bytes": 232,
+            "path": ".agents/runtime/hardware/inference/outputs/norm-mul-shared-v1-rtl-20261119T175457Z/directed-results.json",
+            "role": "Directed shared ownership, full-width arithmetic, stalls and reset results",
+            "sha256": "05010df4261e677cad7fe193953402bea95c5a5478c2e5c8669625d92397e003"
+          }
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "model_cases": 7,
+    "normalisation_products_per_position": 306,
+    "processed_positions": 716,
+    "route_admission_sha256": "7e3662d63efdfe9ae867bd6689262e22847750299c137a48113a48df770feb79",
+    "shared_result_clocks": 5,
+    "simultaneous_normalisation_requests": 0
+  },
+  "correctness": {
+    "evidence": "Exact seven-case RTL replay and 396 directed shared-scalar vectors.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 RTL model",
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052"
+    },
+    "configuration_sha256": "2f8d960315cbf5f9cca1b1112e84315cf0bad687ffc8b83ddc67c6c8a723180b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-norm-mul-shared-v1",
+  "id": "norm-mul-shared-v1-rtl-20261119T175457Z",
+  "implementation": {
+    "id": "norm-mul-shared-v1",
+    "sha256": "d23404ea222fef3796f4bf51be1243eb04445f9403665d9b1ca9882f6ce1a109"
+  },
+  "limitations": [
+    "Runtime results measure RTL clocks. Routing will establish physical resources and timing.",
+    "Model nonoverlap is a property of this single-context controller. The defensive arbiter uses fixed priority."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.bos-only-cap0.prefix_cycles",
+      "samples": [
+        28761
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.bos-only-cap0.complete_cycles",
+      "samples": [
+        30443
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.bos-only-cap0.norm1_wait_cycles",
+      "samples": [
+        941
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.bos-only-cap0.norm2_wait_cycles",
+      "samples": [
+        941
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.bos-only-cap0.normfinal_wait_cycles",
+      "samples": [
+        941
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.bos-only-cap0.prefix_cycles",
+      "samples": [
+        28761
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.bos-only-cap0.complete_cycles",
+      "samples": [
+        30443
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.bos-only-cap0.norm1_wait_cycles",
+      "samples": [
+        941
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.bos-only-cap0.norm2_wait_cycles",
+      "samples": [
+        941
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.bos-only-cap0.normfinal_wait_cycles",
+      "samples": [
+        941
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        390225
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        6009805
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-fu2p2q-cap255.norm1_wait_cycles",
+      "samples": [
+        127035
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-fu2p2q-cap255.norm2_wait_cycles",
+      "samples": [
+        127035
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-fu2p2q-cap255.normfinal_wait_cycles",
+      "samples": [
+        127035
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        391907
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        5950820
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "control.encoded-fu2p2q-cap255.decode_cycles",
+      "samples": [
+        5558913
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        390225
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        6009805
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-fu2p2q-cap255.norm1_wait_cycles",
+      "samples": [
+        127035
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-fu2p2q-cap255.norm2_wait_cycles",
+      "samples": [
+        127035
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-fu2p2q-cap255.normfinal_wait_cycles",
+      "samples": [
+        127035
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        391907
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        5950820
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "candidate.encoded-fu2p2q-cap255.decode_cycles",
+      "samples": [
+        5558913
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        327851
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        329533
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap0.norm1_wait_cycles",
+      "samples": [
+        10351
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap0.norm2_wait_cycles",
+      "samples": [
+        10351
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap0.normfinal_wait_cycles",
+      "samples": [
+        10351
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        327851
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        329533
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap0.norm1_wait_cycles",
+      "samples": [
+        10351
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap0.norm2_wait_cycles",
+      "samples": [
+        10351
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap0.normfinal_wait_cycles",
+      "samples": [
+        10351
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        327851
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        329533
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap1.norm1_wait_cycles",
+      "samples": [
+        10351
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap1.norm2_wait_cycles",
+      "samples": [
+        10351
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap1.normfinal_wait_cycles",
+      "samples": [
+        10351
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        329533
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        329533
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "control.encoded-hello-cap1.decode_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        327851
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        329533
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap1.norm1_wait_cycles",
+      "samples": [
+        10351
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap1.norm2_wait_cycles",
+      "samples": [
+        10351
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap1.normfinal_wait_cycles",
+      "samples": [
+        10351
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        329533
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        329533
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "candidate.encoded-hello-cap1.decode_cycles",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        327851
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        4129132
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap255.norm1_wait_cycles",
+      "samples": [
+        95041
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap255.norm2_wait_cycles",
+      "samples": [
+        95041
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap255.normfinal_wait_cycles",
+      "samples": [
+        95041
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        329533
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        4077439
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "control.encoded-hello-cap255.decode_cycles",
+      "samples": [
+        3747906
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        327851
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        4129132
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap255.norm1_wait_cycles",
+      "samples": [
+        95041
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap255.norm2_wait_cycles",
+      "samples": [
+        95041
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap255.normfinal_wait_cycles",
+      "samples": [
+        95041
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        329533
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        4077439
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "candidate.encoded-hello-cap255.decode_cycles",
+      "samples": [
+        3747906
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        3779269
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        10216819
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-max48-cap255.norm1_wait_cycles",
+      "samples": [
+        189141
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-max48-cap255.norm2_wait_cycles",
+      "samples": [
+        189141
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-max48-cap255.normfinal_wait_cycles",
+      "samples": [
+        189141
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        3780951
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        10143776
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "control.encoded-max48-cap255.decode_cycles",
+      "samples": [
+        6362825
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        3779269
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        10216819
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-max48-cap255.norm1_wait_cycles",
+      "samples": [
+        189141
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-max48-cap255.norm2_wait_cycles",
+      "samples": [
+        189141
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-max48-cap255.normfinal_wait_cycles",
+      "samples": [
+        189141
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        3780951
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        10143776
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Last useful output clock minus first useful output clock.",
+      "name": "candidate.encoded-max48-cap255.decode_cycles",
+      "samples": [
+        6362825
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.full-context-cap0.prefix_cycles",
+      "samples": [
+        14306210
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.full-context-cap0.complete_cycles",
+      "samples": [
+        14307892
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.full-context-cap0.norm1_wait_cycles",
+      "samples": [
+        240896
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.full-context-cap0.norm2_wait_cycles",
+      "samples": [
+        240896
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "control.full-context-cap0.normfinal_wait_cycles",
+      "samples": [
+        240896
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.full-context-cap0.prefix_cycles",
+      "samples": [
+        14306210
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.full-context-cap0.complete_cycles",
+      "samples": [
+        14307892
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.full-context-cap0.norm1_wait_cycles",
+      "samples": [
+        240896
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.full-context-cap0.norm2_wait_cycles",
+      "samples": [
+        240896
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Matched autonomous full-model RTL phase and request counters.",
+      "name": "candidate.full-context-cap0.normfinal_wait_cycles",
+      "samples": [
+        240896
+      ],
+      "unit": "cycles"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-norm-mul-shared-v1-rtl",
+    "measurement_boundary": "Matched RTL prefix, first/last useful byte, completion and normalisation waits.",
+    "quality_gate": "Exact products, output scores, cache, tokens and timing, plus ownership faults.",
+    "sha256": "4a68d029f7757197f9d4de63ab4165eafe903dd2ebee24009db7322c77562d0d",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Frozen outputs, scores, cache and stops match the dedicated Exp20 arm.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "79bc9df22b6bff2a8ba0e5c15e878331b3c7555a5b6812c71b0a806ce0fdda6b"
+  },
+  "started_at": "2026-11-19T17:54:57.793096+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

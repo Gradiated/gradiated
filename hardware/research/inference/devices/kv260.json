@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "id": "amd-kria-kv260",
+  "kind": "fpga-soc-board",
+  "model": "AMD Kria KV260",
+  "physical_identity": null,
+  "board_revision": null,
+  "note": "Identify the actual unit and operating conditions in each measured run. No benchmark numbers are implied."
+}

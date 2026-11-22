@@ -1,0 +1,797 @@
+{
+  "schema_version": 1,
+  "id": "speed-20261115T125210Z-f3c38c",
+  "experiment_id": "kv260-conditioned-performance-baseline-v1",
+  "status": "passed",
+  "evidence_type": "physical-measurement",
+  "source": {
+    "commit": "04c7100ca9d5ba9ddbd49fdc14bd85cefcc6381d",
+    "patch_sha256": "421b3c441a1dd0086842438718275def979d1d8aab6da49e77e9e928f386a1d9"
+  },
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "implementation": {
+    "id": "kv260-tiny-transformer-50mhz-conditioned-sealed",
+    "sha256": "b0394ba256d877fb62d6eb6e74942d5ff0c649cf751d53481e827c8bae5e9167"
+  },
+  "workload": {
+    "id": "kv260-conditioned-three-prompts-greedy-v1",
+    "sha256": "33d290aed332af9e8b100a708222796d53f82529bb9c55d5d9ed13606cb0d367"
+  },
+  "device": {
+    "id": "amd-kria-kv260",
+    "configuration": {
+      "model": "ZynqMP KV260 revB",
+      "physical_unit": "KV260 USB bridge XFL1RXOM0IWQ",
+      "system_boot_id": "0e4cc12e-4532-4434-be89-665af09dba14",
+      "kernel_release": "6.8.0-1015-xilinx",
+      "kernel_build": "#16-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 16 05:06:58 UTC 2025",
+      "pl0_reported_hz": 50000000,
+      "pl0_rate_source": "Linux clock framework",
+      "firmware_name": "gradiated-tiny-50mhz.bit.bin",
+      "firmware_sha256": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0",
+      "fpga_manager_flags": 0,
+      "reset_dt_id": 119,
+      "transformer_map": {
+        "device": "/dev/uio4",
+        "base": 2684354560,
+        "bytes": 4096
+      },
+      "dfx_service": "runtime inactive, boot enablement preserved",
+      "verified_state_sha256": "9c236b7a021a7e779f24ec00cda6590967fee3f81accbf531b5da7c7b6b735e8"
+    },
+    "configuration_sha256": "4515431a669eca9ae9b21f19a34e8c443deb06ee73a25e650d021cfa684314ab"
+  },
+  "protocol": {
+    "id": "kv260-conditioned-performance-baseline-v1",
+    "sha256": "ce0fccfe8187353cce68177800448feb2536007430c82789b0415325ea9b99b9",
+    "quality_gate": "Exact bytes, EOS and greedy decisions on three frozen completions",
+    "tokenizer": "BOS plus two hexadecimal digit IDs per input UTF-8 byte. Output uses byte IDs and EOS.",
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "warmup": "Two untimed requests per prompt, then three alternating observer pairs.",
+    "measurement_boundary": "Monotonic timestamps in the board host process. A new reset and model load on each request."
+  },
+  "correctness": {
+    "passed": true,
+    "evidence": "Original control and restoration matched all 320 scores each. Candidate validation matched all 167,040 scores. The board and Mac checked each request's frozen prefix scores, greedy decisions, exact bytes and EOS."
+  },
+  "quality": {
+    "passed": true,
+    "evidence": "Every scored request returned the frozen bytes and EOS for its corresponding prompt."
+  },
+  "conditions": {
+    "candidate_model_image_sha256": "698df2e177b8e478088fffe9b02af09cd10c9ac0afbe252f3b031f133262e055",
+    "original_model_image_sha256": "0198baeaeb48052895b5eb4f9622d61fb144295584e6823f8e42420fc0d73cf5",
+    "configuration_preflight_boot_id": "0e4cc12e-4532-4434-be89-665af09dba14",
+    "physical_dispatches": 1,
+    "completion_output_bytes": [
+      122,
+      90,
+      104
+    ],
+    "candidate_validation_cases": 7,
+    "original_weights_restored": true,
+    "restored_context": "Fresh original BOS context",
+    "kernel_taint_at_exit": 0,
+    "new_kernel_warning_or_error_after_setup": false,
+    "capture_runner_sha256": "ba2513d10841e71eb19ba2473ea83ca557d4cf47f8b8c990aceb72bef1a7d82b",
+    "board_supervisor_sha256": "405ca1b4e3c0a3d5c47ed8aa90db0d89493078814df169c1c837b3294b7d66d7",
+    "mac_controller_sha256": "c9694c1ea9fa3d0b6f76bdac48b28443217ec8ee86e22ecc7bb57de74a4c9c91",
+    "timed_requests_per_case": 10,
+    "observer_pairs": [
+      {
+        "pair": "1",
+        "outer": 1005.314145,
+        "detailed": 1006.712388,
+        "detailed_minus_outer_ms": 1.3982429999999795
+      },
+      {
+        "pair": "2",
+        "detailed": 1006.629818,
+        "outer": 1009.142903,
+        "detailed_minus_outer_ms": -2.5130850000000464
+      },
+      {
+        "pair": "3",
+        "outer": 1006.790779,
+        "detailed": 1007.529396,
+        "detailed_minus_outer_ms": 0.7386169999999765
+      }
+    ],
+    "monotonic_clock": {
+      "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+      "monotonic": true,
+      "adjustable": false,
+      "resolution": 1e-09
+    },
+    "run_utc_source": "Mac UTC; board elapsed values from monotonic nanoseconds",
+    "transport_gap_seconds": {
+      "n": 37,
+      "median": 24.716227291,
+      "q1": 20.050978832,
+      "q3": 24.808235691,
+      "iqr": 4.757256859000002,
+      "min": 19.83092355,
+      "max": 34.413036354
+    },
+    "observed_cpu_and_thermal_sysfs": {
+      "/sys/class/thermal/cooling_device0/cur_state": [
+        "0"
+      ],
+      "/sys/class/thermal/cooling_device0/type": [
+        "pwm-fan"
+      ],
+      "/sys/devices/system/cpu/cpufreq/policy0/affected_cpus": [
+        "0 1 2 3"
+      ],
+      "/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq": [
+        "1333333"
+      ],
+      "/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq": [
+        "1333333"
+      ],
+      "/sys/devices/system/cpu/cpufreq/policy0/scaling_driver": [
+        "cpufreq-dt"
+      ],
+      "/sys/devices/system/cpu/cpufreq/policy0/scaling_governor": [
+        "userspace"
+      ],
+      "/sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq": [
+        "1333333"
+      ],
+      "/sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq": [
+        "333333"
+      ]
+    },
+    "temperature_available": false
+  },
+  "started_at": "2026-11-15T12:53:37.668381+00:00",
+  "completed_at": "2026-11-15T13:14:02.869146+00:00",
+  "metrics": [
+    {
+      "name": "encoded-fu2p2q.first_fresh_ms",
+      "samples": [
+        610.142602,
+        611.447895,
+        611.148063,
+        611.626408,
+        610.726848,
+        611.095032,
+        610.396295,
+        610.202703,
+        610.570607,
+        610.499606
+      ],
+      "unit": "ms",
+      "kind": "observed",
+      "method": "Request start to first byte selection. A fresh reset and model load occur in every request."
+    },
+    {
+      "name": "encoded-fu2p2q.first_after_load_ms",
+      "samples": [
+        46.308563,
+        46.248132,
+        46.278573,
+        46.254213,
+        46.220552,
+        46.208812,
+        46.235092,
+        46.240542,
+        46.233413,
+        46.229263
+      ],
+      "unit": "ms",
+      "kind": "observed",
+      "method": "Native session ready to first byte selection in the same fresh-load request."
+    },
+    {
+      "name": "encoded-fu2p2q.session_preparation_ms",
+      "samples": [
+        563.799219,
+        565.164413,
+        564.832179,
+        565.336444,
+        564.469266,
+        564.84918,
+        564.125633,
+        563.92516,
+        564.301164,
+        564.233583
+      ],
+      "unit": "ms",
+      "kind": "observed",
+      "method": "Native session construction, including bundle/firmware checks, reset and full weight load."
+    },
+    {
+      "name": "encoded-fu2p2q.reset_full_load_ms",
+      "samples": [
+        19.139362,
+        19.143691,
+        19.133692,
+        19.135872,
+        19.113691,
+        19.132422,
+        19.149431,
+        19.138421,
+        19.129451,
+        19.137111
+      ],
+      "unit": "ms",
+      "kind": "observed",
+      "method": "Existing native board_session_begin call, including reset and full model load."
+    },
+    {
+      "name": "encoded-fu2p2q.later_interval_median_ms",
+      "samples": [
+        4.785228,
+        4.781898,
+        4.773368,
+        4.849529,
+        4.782608,
+        4.783528,
+        4.782968,
+        4.783948,
+        4.780628,
+        4.767347
+      ],
+      "unit": "ms",
+      "kind": "derived",
+      "method": "Median interval between successive non-EOS output bytes within each request."
+    },
+    {
+      "name": "encoded-fu2p2q.decode_rate",
+      "samples": [
+        207.889606069659,
+        207.99053249098407,
+        207.83400819240094,
+        207.88773806494117,
+        208.08014551082408,
+        208.0949105959428,
+        208.11307495418566,
+        208.05334718915896,
+        208.09894434071265,
+        208.05581953998907
+      ],
+      "unit": "output byte tokens/s",
+      "kind": "derived",
+      "method": "Count of later output bytes divided by elapsed time from first to last output-byte selection."
+    },
+    {
+      "name": "encoded-fu2p2q.to_eos_ms",
+      "samples": [
+        1198.038012,
+        1199.058442,
+        1199.199304,
+        1199.508627,
+        1198.087462,
+        1198.409076,
+        1197.660479,
+        1197.625758,
+        1197.877311,
+        1197.925491
+      ],
+      "unit": "ms",
+      "kind": "observed",
+      "method": "Request start to EOS selection. EOS emits no byte."
+    },
+    {
+      "name": "encoded-fu2p2q.total_rate",
+      "samples": [
+        101.83316286962688,
+        101.74650019269036,
+        101.73454870517503,
+        101.70831393278507,
+        101.82895979592514,
+        101.80163221661049,
+        101.86526326882328,
+        101.86821649839632,
+        101.84682427798317,
+        101.84272804659768
+      ],
+      "unit": "output byte tokens/s",
+      "kind": "derived",
+      "method": "Emitted byte count divided by request-start-to-EOS duration."
+    },
+    {
+      "name": "encoded-fu2p2q.prefix_native_steps_ms",
+      "samples": [
+        46.091041,
+        46.03757,
+        46.063751,
+        46.02867,
+        46.00914,
+        45.997178,
+        46.010159,
+        46.029811,
+        46.005851,
+        46.01711
+      ],
+      "unit": "ms",
+      "kind": "derived",
+      "method": "Sum of board-observed host/AXI/native calls for the prefix including the result used for the first output."
+    },
+    {
+      "name": "encoded-fu2p2q.decode_native_steps_ms",
+      "samples": [
+        573.878955,
+        573.79492,
+        574.118381,
+        573.954098,
+        573.468816,
+        573.421286,
+        573.452033,
+        573.538709,
+        573.527475,
+        573.609668
+      ],
+      "unit": "ms",
+      "kind": "derived",
+      "method": "Sum of board-observed host/AXI/native calls after the prefix through EOS selection's input."
+    },
+    {
+      "name": "encoded-fu2p2q.all_argmax_ms",
+      "samples": [
+        12.799413,
+        12.613756,
+        12.738827,
+        12.667528,
+        12.691568,
+        12.695274,
+        12.624197,
+        12.673875,
+        12.550087,
+        12.590833
+      ],
+      "unit": "ms",
+      "kind": "derived",
+      "method": "Sum of Python greedy-selection intervals for all output decisions including EOS."
+    },
+    {
+      "name": "encoded-hello.first_fresh_ms",
+      "samples": [
+        603.196883,
+        603.952921,
+        603.795179,
+        603.306064,
+        602.852879,
+        602.715319,
+        603.085642,
+        603.727758,
+        602.999701,
+        603.177443
+      ],
+      "unit": "ms",
+      "kind": "observed",
+      "method": "Request start to first byte selection. A fresh reset and model load occur in every request."
+    },
+    {
+      "name": "encoded-hello.first_after_load_ms",
+      "samples": [
+        38.97469,
+        38.99227,
+        38.999,
+        38.96487,
+        38.960259,
+        38.97427,
+        38.94087,
+        38.97748,
+        38.99101,
+        39.001851
+      ],
+      "unit": "ms",
+      "kind": "observed",
+      "method": "Native session ready to first byte selection in the same fresh-load request."
+    },
+    {
+      "name": "encoded-hello.session_preparation_ms",
+      "samples": [
+        564.187833,
+        564.92664,
+        564.762708,
+        564.304704,
+        563.85713,
+        563.705958,
+        564.108892,
+        564.715968,
+        563.97409,
+        564.141772
+      ],
+      "unit": "ms",
+      "kind": "observed",
+      "method": "Native session construction, including bundle/firmware checks, reset and full weight load."
+    },
+    {
+      "name": "encoded-hello.reset_full_load_ms",
+      "samples": [
+        19.200772,
+        19.130062,
+        19.145532,
+        19.152752,
+        19.140981,
+        19.179951,
+        19.144562,
+        19.138632,
+        19.188682,
+        19.128571
+      ],
+      "unit": "ms",
+      "kind": "observed",
+      "method": "Existing native board_session_begin call, including reset and full model load."
+    },
+    {
+      "name": "encoded-hello.later_interval_median_ms",
+      "samples": [
+        4.493005,
+        4.495175,
+        4.479274,
+        4.478934,
+        4.493185,
+        4.491425,
+        4.488035,
+        4.490585,
+        4.489675,
+        4.485625
+      ],
+      "unit": "ms",
+      "kind": "derived",
+      "method": "Median interval between successive non-EOS output bytes within each request."
+    },
+    {
+      "name": "encoded-hello.decode_rate",
+      "samples": [
+        223.31235675892333,
+        223.08034910520593,
+        223.22895526957757,
+        223.248430876455,
+        223.3922537932789,
+        223.25267014520583,
+        223.15366786062322,
+        223.07924198275137,
+        223.37960466152072,
+        223.00108846330153
+      ],
+      "unit": "output byte tokens/s",
+      "kind": "derived",
+      "method": "Count of later output bytes divided by elapsed time from first to last output-byte selection."
+    },
+    {
+      "name": "encoded-hello.to_eos_ms",
+      "samples": [
+        1006.985891,
+        1008.149823,
+        1007.736269,
+        1007.209944,
+        1006.487676,
+        1006.601408,
+        1007.147913,
+        1007.937051,
+        1006.675409,
+        1007.521767
+      ],
+      "unit": "ms",
+      "kind": "observed",
+      "method": "Request start to EOS selection. EOS emits no byte."
+    },
+    {
+      "name": "encoded-hello.total_rate",
+      "samples": [
+        89.37563157972787,
+        89.27244537144556,
+        89.30908092581512,
+        89.3557500460897,
+        89.41987283707188,
+        89.4097696314766,
+        89.36125353416683,
+        89.29129047365478,
+        89.40319709349332,
+        89.32809488373069
+      ],
+      "unit": "output byte tokens/s",
+      "kind": "derived",
+      "method": "Emitted byte count divided by request-start-to-EOS duration."
+    },
+    {
+      "name": "encoded-hello.prefix_native_steps_ms",
+      "samples": [
+        38.775239,
+        38.792468,
+        38.798278,
+        38.767268,
+        38.745127,
+        38.773737,
+        38.741918,
+        38.772949,
+        38.790289,
+        38.805027
+      ],
+      "unit": "ms",
+      "kind": "derived",
+      "method": "Sum of board-observed host/AXI/native calls for the prefix including the result used for the first output."
+    },
+    {
+      "name": "encoded-hello.decode_native_steps_ms",
+      "samples": [
+        393.641715,
+        393.835758,
+        393.682399,
+        393.743795,
+        393.458087,
+        393.577242,
+        393.755424,
+        393.839317,
+        393.510346,
+        394.058122
+      ],
+      "unit": "ms",
+      "kind": "derived",
+      "method": "Sum of board-observed host/AXI/native calls after the prefix through EOS selection's input."
+    },
+    {
+      "name": "encoded-hello.all_argmax_ms",
+      "samples": [
+        9.283242,
+        9.484437,
+        9.347552,
+        9.316733,
+        9.334404,
+        9.406545,
+        9.355526,
+        9.414684,
+        9.295963,
+        9.351395
+      ],
+      "unit": "ms",
+      "kind": "derived",
+      "method": "Sum of Python greedy-selection intervals for all output decisions including EOS."
+    },
+    {
+      "name": "encoded-max48.first_fresh_ms",
+      "samples": [
+        973.641868,
+        973.772769,
+        975.743669,
+        972.725978,
+        972.810039,
+        973.614238,
+        976.904401,
+        973.430396,
+        972.176143,
+        972.76921
+      ],
+      "unit": "ms",
+      "kind": "observed",
+      "method": "Request start to first byte selection. A fresh reset and model load occur in every request."
+    },
+    {
+      "name": "encoded-max48.first_after_load_ms",
+      "samples": [
+        413.831169,
+        413.247603,
+        412.98414,
+        413.691997,
+        413.303894,
+        413.250934,
+        413.92686,
+        413.234683,
+        413.076251,
+        413.248244
+      ],
+      "unit": "ms",
+      "kind": "observed",
+      "method": "Native session ready to first byte selection in the same fresh-load request."
+    },
+    {
+      "name": "encoded-max48.session_preparation_ms",
+      "samples": [
+        559.711068,
+        560.425335,
+        562.659698,
+        558.93347,
+        559.405284,
+        560.265393,
+        562.87704,
+        560.095382,
+        559.000791,
+        559.422355
+      ],
+      "unit": "ms",
+      "kind": "observed",
+      "method": "Native session construction, including bundle/firmware checks, reset and full weight load."
+    },
+    {
+      "name": "encoded-max48.reset_full_load_ms",
+      "samples": [
+        19.108461,
+        19.131831,
+        19.143241,
+        19.131332,
+        19.136031,
+        19.131701,
+        19.146272,
+        19.186741,
+        19.138021,
+        19.190552
+      ],
+      "unit": "ms",
+      "kind": "observed",
+      "method": "Existing native board_session_begin call, including reset and full model load."
+    },
+    {
+      "name": "encoded-max48.later_interval_median_ms",
+      "samples": [
+        6.088171,
+        6.087471,
+        6.08431,
+        6.087121,
+        6.097881,
+        6.100861,
+        6.096251,
+        6.099561,
+        6.088441,
+        6.092701
+      ],
+      "unit": "ms",
+      "kind": "derived",
+      "method": "Median interval between successive non-EOS output bytes within each request."
+    },
+    {
+      "name": "encoded-max48.decode_rate",
+      "samples": [
+        165.13589486511347,
+        165.1944216371448,
+        165.2810861697869,
+        165.249708176235,
+        165.19410132088146,
+        165.25519132617922,
+        165.19046373864356,
+        165.2301339582938,
+        164.8524048650416,
+        165.1893483868152
+      ],
+      "unit": "output byte tokens/s",
+      "kind": "derived",
+      "method": "Count of later output bytes divided by elapsed time from first to last output-byte selection."
+    },
+    {
+      "name": "encoded-max48.to_eos_ms",
+      "samples": [
+        1604.369596,
+        1604.278716,
+        1605.920652,
+        1603.023422,
+        1603.318255,
+        1603.888131,
+        1607.411927,
+        1603.78801,
+        1603.975462,
+        1603.295866
+      ],
+      "unit": "ms",
+      "kind": "observed",
+      "method": "Request start to EOS selection. EOS emits no byte."
+    },
+    {
+      "name": "encoded-max48.total_rate",
+      "samples": [
+        64.822968634716,
+        64.82664075934795,
+        64.76036027712782,
+        64.87740514124566,
+        64.86547488352522,
+        64.84242759197774,
+        64.7002789099001,
+        64.8464755638122,
+        64.8388971426796,
+        64.8663806883414
+      ],
+      "unit": "output byte tokens/s",
+      "kind": "derived",
+      "method": "Emitted byte count divided by request-start-to-EOS duration."
+    },
+    {
+      "name": "encoded-max48.prefix_native_steps_ms",
+      "samples": [
+        412.955709,
+        412.410268,
+        412.164425,
+        412.815661,
+        412.446585,
+        412.422786,
+        413.027321,
+        412.385121,
+        412.262997,
+        412.42627
+      ],
+      "unit": "ms",
+      "kind": "derived",
+      "method": "Sum of board-observed host/AXI/native calls for the prefix including the result used for the first output."
+    },
+    {
+      "name": "encoded-max48.decode_native_steps_ms",
+      "samples": [
+        618.885693,
+        618.672848,
+        618.452969,
+        618.570238,
+        618.718649,
+        618.560388,
+        618.777247,
+        618.592566,
+        619.752907,
+        618.746688
+      ],
+      "unit": "ms",
+      "kind": "derived",
+      "method": "Sum of board-observed host/AXI/native calls after the prefix through EOS selection's input."
+    },
+    {
+      "name": "encoded-max48.all_argmax_ms",
+      "samples": [
+        10.869627,
+        10.83471,
+        10.760478,
+        10.779246,
+        10.814447,
+        10.766247,
+        10.763515,
+        10.790256,
+        10.919329,
+        10.809746
+      ],
+      "unit": "ms",
+      "kind": "derived",
+      "method": "Sum of Python greedy-selection intervals for all output decisions including EOS."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/speed-20261115T125210Z-f3c38c/invocation.json",
+      "sha256": "ef110c02141ed26b4fe98ccb0881673675bfe9a5effd8ed4f8ef64e7fed059cf",
+      "bytes": 4936,
+      "role": "frozen exact commands and source pins"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/speed-20261115T125210Z-f3c38c/result.json",
+      "sha256": "7e881888092d785c7e01134d74bdabad7829409851b81b13297ed3e2346cbccb",
+      "bytes": 12436,
+      "role": "complete independently checked gate receipts"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/speed-20261115T125210Z-f3c38c/configuration.json",
+      "sha256": "9c236b7a021a7e779f24ec00cda6590967fee3f81accbf531b5da7c7b6b735e8",
+      "bytes": 95049,
+      "role": "verified configuration before the experiment"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/speed-20261115T125210Z-f3c38c/source.patch",
+      "sha256": "421b3c441a1dd0086842438718275def979d1d8aab6da49e77e9e928f386a1d9",
+      "bytes": 11127,
+      "role": "frozen preregistration patch from pinned revision"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/speed-20261115T125210Z-f3c38c/summary.json",
+      "sha256": "c50aada0ac6da434ce4bf7e1a71ea3f0f43ff546ec62b7485caefa69d7a3afcc",
+      "bytes": 9556,
+      "role": "per-case descriptive statistics and observer pairs"
+    },
+    {
+      "path": ".agents/runtime/hardware/inference/outputs/speed-20261115T125210Z-f3c38c/evidence-manifest.json",
+      "sha256": "4c2ee0ba38efacf845a525f91af08429e65368c3fdc1e15c31f31e7ccfc3ba26",
+      "bytes": 68245,
+      "role": "manifest of raw samples, frames, source and logs"
+    }
+  ],
+  "limitations": [
+    "Three frozen prompts and ten timed requests per prompt. Quantiles describe these samples.",
+    "One UTF-8 byte is one output token in this tokenizer. EOS takes time and emits no byte.",
+    "First byte means the board selected a byte in memory. Network, UART delivery and inter-request UART gate gaps are outside individual request spans.",
+    "These fresh-reset/load requests support within-request generation and total rates. They do not measure resident processing or a sustained service.",
+    "A native score call includes the board host, AXI transfers, polling and FPGA compute. Native load includes reset and initialisation.",
+    "Power, energy, cost and physical FPGA-only cycles are unmeasured."
+  ],
+  "supersedes": null
+}

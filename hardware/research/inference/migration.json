@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-14",
+  "destination": "hardware/research/inference/implementations/kv260",
+  "working_branch": "FPGA-deep-dive",
+  "source_revisions": {
+    "website": "cc0f2f97292f9d1e3d163a4bc9588c9c1f31e02b",
+    "mac_inference": "6d22899460cebd350f51bfdd2a19f94d4c0fda78",
+    "linux_inference": "d93f07a845643e11a306a43d7085f24a5b047101",
+    "inference_merge_base": "997f920c5656dffe1ea4c69f865b3b339d44fc68"
+  },
+  "source_checkouts": {
+    "website": "/Users/aidanmcconnell/dev/gradiated",
+    "mac_inference": "/Users/aidanmcconnell/.codex/worktrees/fpga-inference/gradiated",
+    "linux_inference": "/home/admin/projects/gradiated"
+  },
+  "method": "Three-way merge of inference source, with chronological README and instruction records retained separately. No text conflicts. Internal model/rtl/tools layout preserved.",
+  "working_edits": {
+    "mac_joke_file": "implementations/kv260/material/one-liners-review-v2.txt",
+    "mac_joke_sha256": "f466d7f21c4d0f32a55107052103153e4cf52f3e00034c971c5b962c6680d8a4",
+    "website_snapshot": ".agents/runtime/hardware-consolidation/2026-11-14/working-files.tar.gz",
+    "website_snapshot_sha256": "eeba7f0fdb05e376557c9df713712785d59c3cf15fdbd209abacd578d340490d",
+    "website_patch": ".agents/runtime/hardware-consolidation/2026-11-14/working.patch",
+    "website_patch_sha256": "6dea66740336a2c06eaaa04b20277d2fe533b612b50bc815fc68f5e4f76ed47a",
+    "linux_patch": ".agents/runtime/hardware-consolidation/2026-11-14/server-working.patch",
+    "linux_patch_sha256": "81f4c6de80316f0624b29543ff55d5b85a278ec72d8786be85e6a224a716b372"
+  },
+  "publishing_moves": {
+    "manifest": ".agents/runtime/hardware-consolidation/2026-11-14/moves.json",
+    "manifest_sha256": "d6ee05415133ed8bafec632976c017950e41cec896e563b2d2659e742e324988",
+    "files": 183
+  },
+  "adaptations": [
+    "Repository-root and runtime path discovery updated for hardware location.",
+    "Mac board-tool fixtures use platform page size and resolved temporary paths.",
+    "Pure RTL argument validation runs before the Linux execution guard.",
+    "Website imports, dependencies, content paths, Tailwind and CI selectors follow relocated publishing sources.",
+    "Hardware publishing uses the website dependency resolver and explicit Turbo cache inputs, without an external pnpm workspace. The memory-interface interaction tests use Vitest to exercise that same resolution."
+  ],
+  "evidence_boundary": "Migration verifies source integration and existing artifacts. It adds no training, RTL simulation, physical-board acceptance or performance measurements.",
+  "preserved_lecture_checkpoint": {
+    "branch": "lecture-4-checkpoint",
+    "commit": "817f782a041da5f295bbd645be54f1e3f5df9fbc",
+    "note": "Earlier local checkpoint retained. Current Lecture 4 source comes from the latest website working files."
+  },
+  "branch_transfer": {
+    "source_commit": "21377c5943285482cbfec18633c23fb4e66831b3",
+    "base_commit": "5094746c429cb16d302cd3803c4db79c63e960c8",
+    "branch": "hardware/research-and-articles-wip",
+    "note": "Selected hardware and publishing changes transferred onto current main. Site-wide theme changes excluded. Current website routes and upstream article updates preserved. FPGA route adapted to /library/sand-to-thought/fpga/ and remains draft. Project checks use the current gradctl entry point."
+  }
+}

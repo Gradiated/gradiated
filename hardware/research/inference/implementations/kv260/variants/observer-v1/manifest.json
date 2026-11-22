@@ -1,0 +1,37 @@
+{
+  "baseline": {
+    "fixed_scalar": "d34a86f812f7c3c362aba754430ddd3fe161bb917f066fdbb84ce95291eba690",
+    "mac32": "9db772ac21e7c0101cfbca0c6f52487cb6a88f24f20b76af76cd1f70c2f7c4b4",
+    "qk_rope": "acd022f4ffcd540875b37586b0c6fa058873300bb7ea16860bb532b152700662",
+    "kv_cache": "1a97adbdd49e66d6938b4c934185be86a6d3b2a76bc1b85d5df624aacf3c3b48",
+    "frontend": "dcc8699ad4271af008f1b6dc8f0745ea0435aea87442477217e0be374c5c9d6a",
+    "attention": "3aa9cb030aae469ba235ae9092ea255866cc960ab57adb666117e8e799cbf93d",
+    "dense": "561e82c83a15071ed45e251329a15fc212b9b1dca4fdb30ed24b33d878613ac9",
+    "rmsnorm": "de661d481540bacca74e6b28e6d9799daf4dafd9b3c0611781e27b8ec05ac1c0",
+    "feedforward": "030f2917a8c6df23e18da1d2ef5e3394833c070a22a0a676f4aace705d1253d0",
+    "transformer": "d6de7cd2b36a5d6997eab489ec9488745a4c2d37f1b95dd18c79b15aef48d2b9",
+    "axi_transformer": "12b9d9800a3a0240052219cb40a4e56672605a44b8bd1b8b2bcfb4d873d9a4e5"
+  },
+  "generated": {
+    "fixed_scalar": "d34a86f812f7c3c362aba754430ddd3fe161bb917f066fdbb84ce95291eba690",
+    "mac32": "9db772ac21e7c0101cfbca0c6f52487cb6a88f24f20b76af76cd1f70c2f7c4b4",
+    "qk_rope": "acd022f4ffcd540875b37586b0c6fa058873300bb7ea16860bb532b152700662",
+    "kv_cache": "1a97adbdd49e66d6938b4c934185be86a6d3b2a76bc1b85d5df624aacf3c3b48",
+    "frontend": "dcc8699ad4271af008f1b6dc8f0745ea0435aea87442477217e0be374c5c9d6a",
+    "attention": "1e9387121a3bd78e59ccbefd17d96284cae8fd533d49808135214e7e32a866ee",
+    "dense": "561e82c83a15071ed45e251329a15fc212b9b1dca4fdb30ed24b33d878613ac9",
+    "rmsnorm": "de661d481540bacca74e6b28e6d9799daf4dafd9b3c0611781e27b8ec05ac1c0",
+    "feedforward": "03dd1cfab6ec0bbc794eb750ba892c992cb1ac4c8140cdfad12ce9260656a3af",
+    "transformer": "f4b8d16adc9a7dc5b0f86f8503f8af3d32a7afdf917f4da6558e4777e5523c65",
+    "axi_transformer": "ac09b56730fb5177c0e1611242ad3b126ed223925048b8d3c0f2f20874fc7d92"
+  },
+  "schema_version": 1,
+  "variant": "observer-v1",
+  "overrides": [
+    "attention",
+    "feedforward",
+    "transformer",
+    "axi_transformer"
+  ],
+  "baseline_testbench_sha256": "a8e893ceba472529878eda88a89972a0d65cd3b0e7bb7dab9390a5f829847d69"
+}

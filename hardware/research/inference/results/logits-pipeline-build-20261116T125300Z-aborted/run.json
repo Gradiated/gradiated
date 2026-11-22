@@ -1,0 +1,111 @@
+{
+  "artifacts": [
+    {
+      "bytes": 44164,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-pipeline-build-20261116T125300Z-aborted/build-attempt-1.tar.gz",
+      "role": "Verified failed build archive",
+      "sha256": "0fd7f05c413e069099011758c298afb262857a1815a66e1634d63c83f833748e"
+    },
+    {
+      "bytes": 1212,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-pipeline-build-20261116T125300Z-aborted/generate-console.log",
+      "role": "Original Vivado source gate diagnostic",
+      "sha256": "1f685ce7b976feedda409fe72cf39424c58f68af8f0d04bc4a0d3082792b56d6"
+    },
+    {
+      "bytes": 1898,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-pipeline-build-20261116T125300Z-aborted/build-retry-amendment.json",
+      "role": "Preregistered input pin correction",
+      "sha256": "30b1917d1eafa2dd612d8f8e93f418fdc5baf889d269d1be8719d2559ede1fcc"
+    }
+  ],
+  "completed_at": "2026-11-16T12:58:09+00:00",
+  "conditions": {
+    "candidate": "logits-pipeline-v1",
+    "control": "scalar-div-v1",
+    "failure_class": "build packet pin mismatch",
+    "operation": "Vivado 2025.2 generate",
+    "outcome": {
+      "elapsed_s": 4.117163159884512,
+      "failure": "Command '['/usr/bin/python3', '-u', '/home/admin/projects/gradiated/.agents/runtime/fpga-inference/logits-pipeline-20261116T125300Z/run-phase.py', 'generate']' returned non-zero exit status 1.",
+      "passed": false
+    },
+    "phase": {
+      "command": [
+        "/home/admin/amd/2025.2/Vivado/bin/vivado",
+        "-mode",
+        "batch",
+        "-notrace",
+        "-source",
+        "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/logits-pipeline-20261116T125300Z/implementation/tools/autonomous-build.tcl",
+        "-tclargs",
+        "generate",
+        "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/board-readiness/full-build-m6b0vzkp/generate/project/tiny_ps_axi_build.xpr",
+        "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/logits-pipeline-20261116T125300Z/build/generate"
+      ],
+      "elapsed_s": 3.9807164850644767,
+      "expected_output": "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/logits-pipeline-20261116T125300Z/build/generate/project/tiny_ps_axi_build.xpr",
+      "expected_output_exists": false,
+      "phase": "generate",
+      "returncode": 1,
+      "timed_out": false,
+      "timeout_s": 180
+    },
+    "physical_board_access": false
+  },
+  "correctness": {
+    "evidence": "Inherited Vivado source checksum gate returned nonzero before generation or synthesis.",
+    "passed": false
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 model",
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052"
+    },
+    "configuration_sha256": "0fc19997cba03c9989efd7af548c169fba9ee9940be850b4a6bffe60772f8ffe",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-logits-pipeline-v1",
+  "id": "logits-pipeline-build-20261116T125300Z-aborted",
+  "implementation": {
+    "id": "kv260-logits-pipeline-v1-attempted-build",
+    "sha256": "e8c4409d6fd3b576e9c1c3bef1f355a340b9d678e166cd41b54a4236b8229504"
+  },
+  "limitations": [
+    "The build stopped before it generated a project. This attempt provides no timing, inference, resource or physical evidence."
+  ],
+  "metrics": [],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-logits-pipeline-v1-build",
+    "measurement_boundary": "Full routed implementation, when available.",
+    "quality_gate": "Exact admitted RTL, target clock, fully placed and routed, nonnegative setup and hold.",
+    "sha256": "933f8bd69618ae1190a32804f6d50d0d692b48c779cbea3868f358e198e5dd4e",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "No new model, numerical or board result was accepted in this attempt.",
+    "passed": false
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "d43e262615ae093041ad31d09aabe707b3c98f84c3f7df3b958963a1c3f06297"
+  },
+  "started_at": "2026-11-16T12:58:05.019284+00:00",
+  "status": "aborted",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

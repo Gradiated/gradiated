@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "updated": "2026-11-14",
+  "shared_backup": {
+    "status": "pending",
+    "decision": "Keep verified Mac copies for now. No shared backup destination selected.",
+    "independent_backup": false
+  },
+  "archives": [
+    {
+      "id": "mac-recovery-20261114",
+      "location": ".agents/runtime/hardware/inference",
+      "manifest": ".agents/runtime/hardware-consolidation/2026-11-14/mac-artifacts.json",
+      "manifest_sha256": "13d0a0572ba3549a705fd74774bb8a1b0998cedd2efd6756fea8e1a6c810214c",
+      "file_count": 16130,
+      "bytes": 7544331879,
+      "verification": "all regular file sizes and SHA-256 hashes match source manifest",
+      "verified_on": "2026-11-14",
+      "symlinks": {
+        "python/cpython-3.12-macos-aarch64-none": "/Users/aidanmcconnell/dev/gradiated/.agents/runtime/hardware/inference/python/cpython-3.12.15-macos-aarch64-none",
+        "python/cpython-3.12.15-macos-aarch64-none/bin/2to3": "2to3-3.12",
+        "python/cpython-3.12.15-macos-aarch64-none/bin/idle3": "idle3.12",
+        "python/cpython-3.12.15-macos-aarch64-none/bin/pydoc3": "pydoc3.12",
+        "python/cpython-3.12.15-macos-aarch64-none/bin/python": "python3.12",
+        "python/cpython-3.12.15-macos-aarch64-none/bin/python3": "python3.12",
+        "python/cpython-3.12.15-macos-aarch64-none/bin/python3-config": "python3.12-config",
+        "python/cpython-3.12.15-macos-aarch64-none/lib/pkgconfig/python3-embed.pc": "python-3.12-embed.pc",
+        "python/cpython-3.12.15-macos-aarch64-none/lib/pkgconfig/python3.pc": "python-3.12.pc",
+        "python/cpython-3.12.15-macos-aarch64-none/share/man/man1/python.1": "python3.12.1",
+        "python/cpython-3.12.15-macos-aarch64-none/share/man/man1/python3.1": "python3.12.1",
+        "tmp/server-source-sync/gradiated/tools/virtual-kubelet/host-agent.py": "../../product/inference/gpu/host-agent.py",
+        "tmp/server-source-sync/gradiated/tools/virtual-kubelet/host_bundle.py": "../../product/inference/gpu/host_bundle.py",
+        "tmp/server-source-sync/gradiated/tools/virtual-kubelet/runtimes.json": "../../product/inference/gpu/runtimes.json",
+        "tmp/server-source-sync/gradiated/tools/virtual-kubelet/supervise.py": "../../product/inference/gpu/supervise.py",
+        "venv/bin/python": "/Users/aidanmcconnell/dev/gradiated/.agents/runtime/hardware/inference/python/cpython-3.12-macos-aarch64-none/bin/python3.12",
+        "venv/bin/python3": "python",
+        "venv/bin/python3.12": "python"
+      },
+      "availability": "local Mac only",
+      "runtime_relocation": {
+        "manifest": ".agents/runtime/hardware-consolidation/2026-11-14/mac-runtime-relocation.json",
+        "sha256": "62e78e3bf6b533c211f4a926feadf7e0128a18d37c946fa6dd509a4ed7ecae50",
+        "note": "After verifying the complete recovery, two interpreter symlinks and pyvenv.cfg were relocated to remove the dependency on the original worktree. Model and experiment artifacts are unchanged."
+      },
+      "active_manifest": {
+        "path": ".agents/runtime/hardware-consolidation/2026-11-14/mac-artifacts-relocated.json",
+        "sha256": "45ce88d951794af19a3abf11ecc9317945aaf50958ab85dc6d5aca4695bcdecd"
+      }
+    },
+    {
+      "id": "linux-recovery-20261114",
+      "location": ".agents/runtime/hardware-consolidation/2026-11-14/server-runtime",
+      "manifest": ".agents/runtime/hardware-consolidation/2026-11-14/server-artifacts.json",
+      "manifest_sha256": "a55426425e3602b0c0ff005a10357786be842158ec210e9846e683215d843ac1",
+      "file_count": 5088,
+      "bytes": 6405580888,
+      "verification": "all regular file sizes and SHA-256 hashes match source manifest",
+      "verified_on": "2026-11-14",
+      "symlinks": {},
+      "availability": "local Mac only"
+    }
+  ],
+  "source_history": {
+    "bundle": ".agents/runtime/hardware-consolidation/2026-11-14/server.bundle",
+    "sha256": "d4e9985b8d2527019e6e193f63c538fdb1b2c4d150141db0a68215a08d369067",
+    "git_ref": "refs/remotes/hardware-recovery/server",
+    "verification": "git bundle verify passed, history imported without changing the current branch"
+  },
+  "preservation": [
+    "Original Mac inference checkout and its runtime remain intact.",
+    "Linux source checkout, runtime and board remain intact.",
+    "Mac copies are outside Git. A PR does not back up these artifacts.",
+    "Regular files were hash-verified before the documented runtime relocation. Use the original manifest plus relocation manifest to verify the active Mac runtime."
+  ],
+  "excluded_from_server_recovery": [
+    "server-codex-readiness-*",
+    "server-source-transfer.json",
+    "pre-reboot.json"
+  ],
+  "exclusion_reason": "Host-readiness and operational scratch, not experiment artifacts.",
+  "next_steps": [
+    "Choose company-approved shared storage.",
+    "Upload selected weights, deployable packages, supporting evidence and source recovery bundle with manifests.",
+    "Verify download and restoration from an independent machine before retiring the temporary server."
+  ]
+}

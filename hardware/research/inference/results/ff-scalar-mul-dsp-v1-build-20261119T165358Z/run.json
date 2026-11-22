@@ -1,0 +1,959 @@
+{
+  "artifacts": [
+    {
+      "bytes": 51978,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/build-input.tar.gz",
+      "role": "Exact admitted build input archive",
+      "sha256": "4bae2e745f5466c65d66990a96f1b8581de6a77dc5d3a6d461a3c95fde727fee"
+    },
+    {
+      "bytes": 3816,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/admitted-protocol.md",
+      "role": "Sealed execution protocol",
+      "sha256": "bf42889974c3683ce7a9548059a1db672a6187697d87073355da9c37e7a3eef0"
+    },
+    {
+      "bytes": 1403,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/admission.json",
+      "role": "Preflight pins for control route, shell and candidate source",
+      "sha256": "a3f1d6510d9f3146c2992f008f8733923e722779dbade6630b9a2e5c46f23a65"
+    },
+    {
+      "bytes": 693,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/admitted-rtl-gate.json",
+      "role": "Frozen initial qualification, selected site and exact RTL manifest pins",
+      "sha256": "2983c3082119b4f4c3a745809b746c6c7d0d4747c899a0c3c63d70cfcfc0a210"
+    },
+    {
+      "bytes": 189,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/directed-summary.json",
+      "role": "Exact directed tests admitted before routing",
+      "sha256": "b184fc539d73654a3aa21b64e6d50b82521e8bc47b514b41816e971e6ccc5e04"
+    },
+    {
+      "bytes": 360,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/dispatch-release.json",
+      "role": "Release of the exact candidate source packet",
+      "sha256": "0bef6aa8405a87b6465e7bd7fcea99f1ad20727a1c65b3b29c6dc42158222d82"
+    },
+    {
+      "bytes": 2505,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/admitted-source-manifest.json",
+      "role": "Candidate source and tooling hashes",
+      "sha256": "52e082945c9c6857d9d802df926979bceb0224baa2bbbedaf8c3668bcfd1893a"
+    },
+    {
+      "bytes": 251,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/dispatch.json",
+      "role": "Bounded Vivado launch receipt",
+      "sha256": "97be20affef40fb7d363149cd7ea191f07d47a0868d2dcf56531911fdb5977e5"
+    },
+    {
+      "bytes": 257,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/launch.log",
+      "role": "Remote shell and control checkpoint hash checks",
+      "sha256": "1359e264d0949ddac4d80f3d98a17116d061d7657ee7cb0fa14e3dc79aff9325"
+    },
+    {
+      "bytes": 93628165,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server.tar.gz",
+      "role": "Full Linux Vivado projects, checkpoints, tooling, logs and firmware",
+      "sha256": "23f8df976397c97363e84dea946d3d3e0e60ce0dda0e520bc27546efbc43ae14"
+    },
+    {
+      "bytes": 286,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server.receipt.json",
+      "role": "Linux archive member and hash receipt",
+      "sha256": "ffca5e77fcbdaa5ffddbef1681ed4908e3b83ab1af45b4a8fe4106ecb6c8f224"
+    },
+    {
+      "bytes": 439,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/archive-recovery.json",
+      "role": "Resumable verified transfer record",
+      "sha256": "49b0d2a589f923bfaf9cc561ba17d300cb4194c79df98ec5f4039787daec1beb"
+    },
+    {
+      "bytes": 362,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/archive-integrity.json",
+      "role": "Independent file-by-file recovery verification",
+      "sha256": "624b048d6d9f0b64839db6f26711f2f57d9ebf2eebbc04d27b00e9de270bb2fc"
+    },
+    {
+      "bytes": 19045,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/offline-acceptance.json",
+      "role": "Independent source, timing, resource and image verification",
+      "sha256": "6c7e15888f02cdd6810e8c33c38db20c443f11242bed6acc3113f1d88d7682ad"
+    },
+    {
+      "bytes": 13801,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/primitive-resources.json",
+      "role": "Mapped memory and DSP census from the exact control and candidate routes",
+      "sha256": "1d5d2610c13c60d1fafa83d5364c8bffa773eb1ac78a09638b25458ed53053ea"
+    },
+    {
+      "bytes": 915,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/candidate-rtl-manifest.json",
+      "role": "Exact candidate full-model replay inputs",
+      "sha256": "a1632c52f0304e5ad709c7ed0b9869d09e68e8c72dde2a4b0889fe03368ff037"
+    },
+    {
+      "bytes": 915,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/control-rtl-manifest.json",
+      "role": "Exact control full-model replay inputs",
+      "sha256": "91d4ad599708a6d66f8c369bc592a43fcad2fc9c6f97afb75280c3ef348836c3"
+    },
+    {
+      "bytes": 74,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/build-outcome.json",
+      "role": "Vivado flow completion and elapsed time",
+      "sha256": "9aa885cbe0bc241e997929c9c531c227afcc3a7ca60a3e44bc3e3d75f70e3bdb"
+    },
+    {
+      "bytes": 64035,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/recovery-manifest.json",
+      "role": "Recovered archive member hashes",
+      "sha256": "13875ab2d60e168928490b4a21d9cab6947710146ebccf0d90f8918ba8992c89"
+    },
+    {
+      "bytes": 2505,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/source-manifest.json",
+      "role": "Recovered Vivado input hashes",
+      "sha256": "52e082945c9c6857d9d802df926979bceb0224baa2bbbedaf8c3668bcfd1893a"
+    },
+    {
+      "bytes": 2232,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/build/generate/compiled-neural-sources.tsv",
+      "role": "Generated project RTL compile source hashes",
+      "sha256": "381294a7fcb84ae612b03e79030c87b25f080140071f1ad4cbea15f19e66e3fb"
+    },
+    {
+      "bytes": 2232,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/build/synth/compiled-neural-sources.tsv",
+      "role": "Actual synthesis RTL compile source hashes",
+      "sha256": "381294a7fcb84ae612b03e79030c87b25f080140071f1ad4cbea15f19e66e3fb"
+    },
+    {
+      "bytes": 380,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/build/reports/metrics.txt",
+      "role": "Routed timing and coverage totals",
+      "sha256": "855460f39776fbda1e7434844a54ff0d201b0a768a872465002f593b6f1c1500"
+    },
+    {
+      "bytes": 45084,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/build/reports/timing.rpt",
+      "role": "Routed Vivado setup and hold timing",
+      "sha256": "64c8e1b1df9dce0b2bab661359d0d76288922b5c08716a711c5da726e7ec7302"
+    },
+    {
+      "bytes": 1394022,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/build/reports/clock-domain.tsv",
+      "role": "Routed PS clock domain and neural endpoints",
+      "sha256": "b9d556ef92f61989aeeccc5e8d4a4673b26dbd577f1b675ba86f356f5e323d2d"
+    },
+    {
+      "bytes": 12663,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/build/reports/utilization.rpt",
+      "role": "Whole-design routed resource report",
+      "sha256": "ba39f4cfcc86ab5fafd633ce62abb61c1d703194c1181b971a12d012cd91aaf0"
+    },
+    {
+      "bytes": 10885,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/build/reports/utilization-hierarchical.rpt",
+      "role": "Routed hierarchical resource report",
+      "sha256": "549c7885169c8dcb3d85f2978d492294de97e91caeae16969eefc3ed4a2dd984"
+    },
+    {
+      "bytes": 24487759,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/build/route/route.dcp",
+      "role": "Exact candidate routed checkpoint",
+      "sha256": "2216c3cccf88d35cd5c2b19a056a80be6c6101f8934b5330d63255e5b6ed626b"
+    },
+    {
+      "bytes": 143395,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/candidate-primitive-census.tsv",
+      "role": "Named candidate routed memory and DSP cells",
+      "sha256": "b168f94759901bb0ce022ae5df44c35f530850804b8c08719df6bfb367205956"
+    },
+    {
+      "bytes": 10461,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/prepare.py",
+      "role": "Candidate packet preparation",
+      "sha256": "823a4228d6235d6c4ea07e17e80cfe13bfbd65e0ff1975f22a0a5e69f1365d5c"
+    },
+    {
+      "bytes": 3423,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/launch.py",
+      "role": "Bounded existing-host dispatch",
+      "sha256": "f8221476731f4791c5f77eac97858d9e6f519071a3fda35888936643bd6b4b43"
+    },
+    {
+      "bytes": 4080,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/recover.py",
+      "role": "Resumable receipt-verified recovery",
+      "sha256": "6d90db83fa953224dae309146e953dc83669a2647ea7a5ce4f170dec2311f035"
+    },
+    {
+      "bytes": 17944,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/verify.py",
+      "role": "Independent build acceptance checks",
+      "sha256": "e91c9ae001a983e4c7b1e284b8dde65bd77378f3d401a828fcc619702e0b9a05"
+    },
+    {
+      "bytes": 14149,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/record.py",
+      "role": "Build record assembly and artifact installation",
+      "sha256": "b2f8901d453c080cd30d09c0517ab61dfcb1a21c7ce25490b91860bc56cf99bd"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/offline-package/gradiated-tiny-ff-scalar-mul-dsp-v1-50mhz.bit.bin",
+      "role": "Verified Linux candidate firmware",
+      "sha256": "32bfea598cf17b7d8a3f0f155b42e16f9a91e9a4bdb9caa79c64da73abf345a2"
+    },
+    {
+      "bytes": 367,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/kv260-ff-scalar-mul-dsp-v1-program.dtbo",
+      "role": "Verified candidate program overlay",
+      "sha256": "647fe48eb029ae60b5e59bae28ea605da3c15871da60dd91fcc98be67faca9d6"
+    },
+    {
+      "bytes": 27383,
+      "path": "hardware/research/inference/results/probability-div-v1-build-20261119T155633Z/run.json",
+      "role": "Exact Experiment 18 routed control",
+      "sha256": "46c9246b510356a38405a5b23d6fcb623daf8ea4e31e276c6ee684be027fd302"
+    },
+    {
+      "bytes": 33531,
+      "path": "hardware/research/inference/results/ff-scalar-mul-dsp-v1-rtl-20261119T165532Z/run.json",
+      "role": "Seven paired model replays and directed RTL qualification",
+      "sha256": "f358faddfef4f6484092948cc0d669036894f66adc6bf12161fab55eab46a529"
+    }
+  ],
+  "completed_at": "2026-11-19T17:14:33.186937+00:00",
+  "conditions": {
+    "archive_recovery": {
+      "archive_bytes": 93628165,
+      "archive_sha256": "23f8df976397c97363e84dea946d3d3e0e60ce0dda0e520bc27546efbc43ae14",
+      "completed_at": "2026-11-19T17:14:30.500516+00:00",
+      "elapsed_seconds": 243.980414,
+      "limit_seconds": 1200,
+      "receipt_members": 329,
+      "resume_offsets": [
+        93028352
+      ],
+      "resumed_prefix_bytes": 0,
+      "server_build_passed": true,
+      "started_at": "2026-11-19T17:10:26.520102+00:00",
+      "transfer_connections": 2
+    },
+    "candidate_checkpoint_sha256": "2216c3cccf88d35cd5c2b19a056a80be6c6101f8934b5330d63255e5b6ed626b",
+    "candidate_feedforward_source_sha256": "02951bbd794df85c3ef20024e77eb4603102214fefca6556c301f18d13b20c3a",
+    "changed_neural_sources": [
+      "feedforward.sv"
+    ],
+    "clock_target_hz": 50000000,
+    "control_checkpoint_sha256": "654cd6fd67b6ebb5101cdfe14be2a658500daa36e206a82349c8aa357f5fd2d3",
+    "control_resources": {
+      "bram_tile": 39.0,
+      "dsp": 41.0,
+      "lut": 38383.0,
+      "lutram": 1172.0,
+      "register": 14466.0,
+      "uram": 0.0
+    },
+    "control_timing": {
+      "clock": "clk_pl_0 period_ns 20.000",
+      "drc_errors_or_critical_warnings": "0",
+      "fully_placed": "1",
+      "fully_routed": "1",
+      "hold_slack_ns": "0.013",
+      "native_no_clock": "0",
+      "partially_routed_nets": "0",
+      "routing_errors": "0",
+      "routing_gap_nets": "0",
+      "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+      "setup_slack_ns": "4.211",
+      "unclocked_active_pins": "0",
+      "unconstrained_internal_endpoints": "0",
+      "unrouted_nets": "0",
+      "unused_ps_clock_outputs": "0"
+    },
+    "hierarchy": {
+      "candidate": {
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att": {
+          "dsp": 9,
+          "ff": 2223,
+          "logic_lut": 9090,
+          "lutram": 362,
+          "module": "attention",
+          "ramb18": 4,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 9452,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/scalar": {
+          "dsp": 4,
+          "ff": 983,
+          "logic_lut": 5040,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5040,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/second_exp": {
+          "dsp": 4,
+          "ff": 854,
+          "logic_lut": 3710,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp__parameterized0",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 3710,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff": {
+          "dsp": 19,
+          "ff": 2010,
+          "logic_lut": 5359,
+          "lutram": 60,
+          "module": "feedforward",
+          "ramb18": 2,
+          "ramb36": 6,
+          "srl": 0,
+          "total_lut": 5419,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/scalar": {
+          "dsp": 16,
+          "ff": 1492,
+          "logic_lut": 4709,
+          "lutram": 0,
+          "module": "fixed_scalar_ff_exp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 4709,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1": {
+          "dsp": 4,
+          "ff": 1689,
+          "logic_lut": 6176,
+          "lutram": 180,
+          "module": "rmsnorm",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6356,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1/scalar": {
+          "dsp": 4,
+          "ff": 1314,
+          "logic_lut": 6065,
+          "lutram": 160,
+          "module": "fixed_scalar_11",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6225,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2": {
+          "dsp": 4,
+          "ff": 1687,
+          "logic_lut": 6134,
+          "lutram": 180,
+          "module": "rmsnorm__parameterized0",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6314,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2/scalar": {
+          "dsp": 4,
+          "ff": 1314,
+          "logic_lut": 6074,
+          "lutram": 160,
+          "module": "fixed_scalar_10",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6234,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal": {
+          "dsp": 4,
+          "ff": 1688,
+          "logic_lut": 6066,
+          "lutram": 180,
+          "module": "rmsnorm__parameterized1",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6246,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal/scalar": {
+          "dsp": 4,
+          "ff": 1314,
+          "logic_lut": 6013,
+          "lutram": 160,
+          "module": "fixed_scalar",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6173,
+          "uram": 0
+        }
+      },
+      "control": {
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att": {
+          "dsp": 9,
+          "ff": 2223,
+          "logic_lut": 9082,
+          "lutram": 362,
+          "module": "attention",
+          "ramb18": 4,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 9444,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/scalar": {
+          "dsp": 4,
+          "ff": 983,
+          "logic_lut": 5032,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5032,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/att/second_exp": {
+          "dsp": 4,
+          "ff": 854,
+          "logic_lut": 3709,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp__parameterized0",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 3709,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff": {
+          "dsp": 7,
+          "ff": 1506,
+          "logic_lut": 5406,
+          "lutram": 60,
+          "module": "feedforward",
+          "ramb18": 2,
+          "ramb36": 6,
+          "srl": 0,
+          "total_lut": 5466,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/ff/scalar": {
+          "dsp": 4,
+          "ff": 988,
+          "logic_lut": 4757,
+          "lutram": 0,
+          "module": "fixed_scalar_ff_exp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 4757,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1": {
+          "dsp": 4,
+          "ff": 1689,
+          "logic_lut": 6174,
+          "lutram": 180,
+          "module": "rmsnorm",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6354,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm1/scalar": {
+          "dsp": 4,
+          "ff": 1314,
+          "logic_lut": 6063,
+          "lutram": 160,
+          "module": "fixed_scalar_11",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6223,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2": {
+          "dsp": 4,
+          "ff": 1687,
+          "logic_lut": 6131,
+          "lutram": 180,
+          "module": "rmsnorm__parameterized0",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6311,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/norm2/scalar": {
+          "dsp": 4,
+          "ff": 1314,
+          "logic_lut": 6071,
+          "lutram": 160,
+          "module": "fixed_scalar_10",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6231,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal": {
+          "dsp": 4,
+          "ff": 1688,
+          "logic_lut": 6071,
+          "lutram": 180,
+          "module": "rmsnorm__parameterized1",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6251,
+          "uram": 0
+        },
+        "tiny_ps_axi_wrapper/tiny_ps_axi_i/neural/inst/actual/core/normfinal/scalar": {
+          "dsp": 4,
+          "ff": 1314,
+          "logic_lut": 6018,
+          "lutram": 160,
+          "module": "fixed_scalar",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 6178,
+          "uram": 0
+        }
+      }
+    },
+    "mapped_dsp": {
+      "candidate": {
+        "feed_forward_scalar": 16,
+        "other": 37
+      },
+      "control": {
+        "feed_forward_scalar": 4,
+        "other": 37
+      }
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "cross_device_comparison": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Verified Vivado implementation and primitive census.",
+        "sources": [
+          {
+            "bytes": 380,
+            "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/build/reports/metrics.txt",
+            "role": "Routed timing and coverage totals",
+            "sha256": "855460f39776fbda1e7434844a54ff0d201b0a768a872465002f593b6f1c1500"
+          },
+          {
+            "bytes": 45084,
+            "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/build/reports/timing.rpt",
+            "role": "Routed Vivado setup and hold timing",
+            "sha256": "64c8e1b1df9dce0b2bab661359d0d76288922b5c08716a711c5da726e7ec7302"
+          },
+          {
+            "bytes": 27383,
+            "path": "hardware/research/inference/results/probability-div-v1-build-20261119T155633Z/run.json",
+            "role": "Exact Experiment 18 routed control",
+            "sha256": "46c9246b510356a38405a5b23d6fcb623daf8ea4e31e276c6ee684be027fd302"
+          }
+        ],
+        "state": "measured"
+      },
+      "long_stability": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Verified Vivado implementation and primitive census.",
+        "sources": [
+          {
+            "bytes": 10885,
+            "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/build/reports/utilization-hierarchical.rpt",
+            "role": "Routed hierarchical resource report",
+            "sha256": "549c7885169c8dcb3d85f2978d492294de97e91caeae16969eefc3ed4a2dd984"
+          },
+          {
+            "bytes": 13801,
+            "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/primitive-resources.json",
+            "role": "Mapped memory and DSP census from the exact control and candidate routes",
+            "sha256": "1d5d2610c13c60d1fafa83d5364c8bffa773eb1ac78a09638b25458ed53053ea"
+          },
+          {
+            "bytes": 27383,
+            "path": "hardware/research/inference/results/probability-div-v1-build-20261119T155633Z/run.json",
+            "role": "Exact Experiment 18 routed control",
+            "sha256": "46c9246b510356a38405a5b23d6fcb623daf8ea4e31e276c6ee684be027fd302"
+          }
+        ],
+        "state": "measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "physical_area": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Verified Vivado implementation and primitive census.",
+        "sources": [
+          {
+            "bytes": 12663,
+            "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/build/reports/utilization.rpt",
+            "role": "Whole-design routed resource report",
+            "sha256": "ba39f4cfcc86ab5fafd633ce62abb61c1d703194c1181b971a12d012cd91aaf0"
+          },
+          {
+            "bytes": 10885,
+            "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/server/build/reports/utilization-hierarchical.rpt",
+            "role": "Routed hierarchical resource report",
+            "sha256": "549c7885169c8dcb3d85f2978d492294de97e91caeae16969eefc3ed4a2dd984"
+          },
+          {
+            "bytes": 13801,
+            "path": ".agents/runtime/hardware/inference/outputs/ff-scalar-mul-dsp-v1-build-20261119T165358Z/primitive-resources.json",
+            "role": "Mapped memory and DSP census from the exact control and candidate routes",
+            "sha256": "1d5d2610c13c60d1fafa83d5364c8bffa773eb1ac78a09638b25458ed53053ea"
+          },
+          {
+            "bytes": 27383,
+            "path": "hardware/research/inference/results/probability-div-v1-build-20261119T155633Z/run.json",
+            "role": "Exact Experiment 18 routed control",
+            "sha256": "46c9246b510356a38405a5b23d6fcb623daf8ea4e31e276c6ee684be027fd302"
+          }
+        ],
+        "state": "measured"
+      },
+      "serving_load": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "startup": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "primitive_census_sha256": "1d5d2610c13c60d1fafa83d5364c8bffa773eb1ac78a09638b25458ed53053ea",
+    "remote_elapsed_seconds": 969.6943714160006,
+    "resource_delta": {
+      "bram_tile": 0.0,
+      "dsp": 12.0,
+      "lut": -33.0,
+      "lutram": 0.0,
+      "register": 512.0,
+      "uram": 0.0
+    },
+    "resources": {
+      "bram_tile": 39.0,
+      "dsp": 53.0,
+      "lut": 38350.0,
+      "lutram": 1172.0,
+      "register": 14978.0,
+      "uram": 0.0
+    },
+    "selected_sites": [
+      "fixed_scalar_ff_exp"
+    ],
+    "shell": {
+      "clock_domain": "clk_pl_0",
+      "clock_leaf_sinks": {
+        "candidate": 16032,
+        "control": 15448
+      },
+      "clock_period_ns": 20,
+      "components": [
+        "axi",
+        "neural",
+        "one",
+        "ps",
+        "rst",
+        "zero"
+      ],
+      "interface_nets": [
+        "axi_M00_AXI",
+        "ps_M_AXI_HPM0_FPD"
+      ],
+      "matched_input_files": 119,
+      "same_address_map": true,
+      "same_ps_and_neural_ports": true
+    },
+    "timing": {
+      "clock": "clk_pl_0 period_ns 20.000",
+      "drc_errors_or_critical_warnings": "0",
+      "fully_placed": "1",
+      "fully_routed": "1",
+      "hold_slack_ns": "0.015",
+      "native_no_clock": "0",
+      "partially_routed_nets": "0",
+      "routing_errors": "0",
+      "routing_gap_nets": "0",
+      "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+      "setup_slack_ns": "4.060",
+      "unclocked_active_pins": "0",
+      "unconstrained_internal_endpoints": "0",
+      "unrouted_nets": "0",
+      "unused_ps_clock_outputs": "0"
+    }
+  },
+  "correctness": {
+    "evidence": "Exact route constraints, source closure, shell and converted firmware checked independently.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "clock_hz": 50000000,
+      "mode": "fully routed PS/AXI/neural implementation",
+      "part": "xck26-sfvc784-2LV-c",
+      "threads": 2,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "995b2e6fbb171dd64467b6c2a1bb1b76488c26c309a332b2adbd50e5c784cc2b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-ff-scalar-mul-dsp-v1",
+  "id": "ff-scalar-mul-dsp-v1-build-20261119T165358Z",
+  "implementation": {
+    "id": "ff-scalar-mul-dsp-v1",
+    "sha256": "32bfea598cf17b7d8a3f0f155b42e16f9a91e9a4bdb9caa79c64da73abf345a2"
+  },
+  "limitations": [
+    "Routed utilization and static timing are implementation measurements. Board power, energy, and workload time require a separate physical run.",
+    "Grouped LUTRAM macros and primitive leaves can refer to the same occupied resources."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.bram_tile",
+      "samples": [
+        39.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.dsp",
+      "samples": [
+        53.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.lut",
+      "samples": [
+        38350.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.lutram",
+      "samples": [
+        1172.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.register",
+      "samples": [
+        14978.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.uram",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 post-route worst path analysis under the 20 ns PL0 constraint.",
+      "name": "routed.setup_slack",
+      "samples": [
+        4.06
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 post-route worst path analysis under the 20 ns PL0 constraint.",
+      "name": "routed.hold_slack",
+      "samples": [
+        0.015
+      ],
+      "unit": "ns"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-ff-scalar-mul-dsp-v1-build",
+    "measurement_boundary": "Routed Vivado synthesis and implementation reports.",
+    "quality_gate": "Exact adopted control route and candidate closure, covered timing, bounded archive recovery and verified firmware.",
+    "sha256": "bf42889974c3683ce7a9548059a1db672a6187697d87073355da9c37e7a3eef0",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Directed RTL qualification and seven frozen full-model paired replays from the same source pins.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "8b5916cde33cde34be4e6c416e6b0580aeab7e0292d6e9b80f9e4c443cd6d7d2"
+  },
+  "started_at": "2026-11-19T16:54:11.139682+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

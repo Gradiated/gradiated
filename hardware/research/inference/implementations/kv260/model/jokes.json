@@ -1,0 +1,290 @@
+[
+  {
+    "id": "J01",
+    "text": "Lithography puts the ridges on the chips. We can reduce the feature size, but then customers complain there's nowhere for the flavour to sit.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J02",
+    "text": "Resist development determines the curl of the chips. We shortened the process to save money and now procurement has to buy bendier potatoes.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J03",
+    "text": "We're on a 3 nm process. Three corners per Dorito. I've updated the investor deck.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J04",
+    "text": "Our prototype uses chocolate chips. They're cheaper, and if the thermal tests fail I can eat the evidence.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J05",
+    "text": "Pringles arrive as stacked wafers. I've assigned the man on the tube with a moustache to advanced packaging.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J06",
+    "text": "I've put the chip team in hairnets. Qualcomm is happy.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J07",
+    "text": "Our chocolate-chip RAM melted. That's phase-change memory, procurement forgot the new phase is a puddle.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J08",
+    "text": "I've put tape-out in the calendar for three weeks from now. The salt-and-vinegar factory hasn't replied yet.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J09",
+    "text": "Intel has had years to develop chips. I guess they keep eating them.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J10",
+    "text": "Salt and vinegar deposition needs improving. If my tongue still works afterwards, they've undersupplied the machine with vinegar.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J11",
+    "text": "Ready salted. I respect a potato that doesn't need a marketing department.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J12",
+    "text": "I moved chip verification to the kitchen. The failures are now delicious, and nobody is filing bug reports.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J13",
+    "text": "We're testing fish and chips for immersion cooling. The oil temperature is excellent for silicon but not potatoes.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J14",
+    "text": "Our chip yield is improving. I've stopped letting the verification team eat the samples.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J15",
+    "text": "The wafer fab rejected our potatoes. Apparently 'locally sourced organic' isn't a process node.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J16",
+    "text": "The chips passed the salt-spray test. That was the entire seasoning budget.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J17",
+    "text": "Our chip has twelve layers of metal. The chocolate one has a biscuit base, which I consider a competitive advantage.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J18",
+    "text": "I've reduced chip power consumption by keeping the chocolate in the fridge. Facilities has asked me to include the fridge.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J19",
+    "text": "Our chips are fabless. We haven't found a factory, but I like that the industry has a word for it.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J20",
+    "text": "The cleanroom is spotless. We've moved all the chip crumbs into Nvidia's section.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J21",
+    "text": "The chip packaging team wants a hermetic seal. I've found a bag clip; we should negotiate.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J22",
+    "text": "Our chip is fully recyclable. It goes from the prototype tray to my mouth with no intermediate processing.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J23",
+    "text": "The processor failed a stress test. I am the processor. The test involved sharing the cheese and onion chips.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J24",
+    "text": "Nvidia has liquid cooling. Our chip team has opened the office window, which our consulting team describes as an advantage.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J25",
+    "text": "Intel is investing billions in chip factories. I've booked the kitchenette for the Thursday before final tape-out.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J26",
+    "text": "AMD can compete on cores. I'm competing on whether the packet contains any whole chips.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J27",
+    "text": "Samsung has vertical integration. Our Pringles tube is upright.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J28",
+    "text": "Qualcomm says its chips connect everyone. Ours bring people together around a bowl.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J29",
+    "text": "Apple has a custom chip strategy. Mine is asking whoever bought the vegetable chips to expense them.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J30",
+    "text": "Broadcom has a diversified chip portfolio. I've bought a multipack.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J31",
+    "text": "TSMC says the chip production slots are full, even during lunch.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J32",
+    "text": "Geopolitics is delaying our chips. My convenience store has become a competitor.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J33",
+    "text": "Three weeks to tape-out. I've bought tape and chips, salt-and-vinegar flavor.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J34",
+    "text": "Our chip launch is on schedule. The chip is late, but the launch is mostly sour cream.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J35",
+    "text": "I've put the chip in charge of project management. It can't answer questions, but it uses less power.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J36",
+    "text": "I'm an intern at Gradiated. I run the chip programme, although I can't find the salt-and-vinegar isle.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J37",
+    "text": "I'm an intern at Gradiated. The chip team reports to me whenever they need flavour suggestions.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J38",
+    "text": "Our chip roadmap is ambitious. So is the expiry date on this sour cream and onion packet.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J39",
+    "text": "The Barbecue department let me enjoy a barbecue without being asked to help.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J40",
+    "text": "Sour cream and onion chips are excellent. I schedule important meetings immediately afterwards.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J41",
+    "text": "Nacho cheese chips leave orange fingerprints. Finally, evidence that a competitor touched the hardware.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J42",
+    "text": "Cool Ranch is our chip cooling strategy. Facilities keeps asking about fans.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J43",
+    "text": "Cheddar and sour cream chips have two dairy departments and nobody knows who's in charge.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J44",
+    "text": "Jalapeño chips are ideal for the office. People only ask to share them once.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J45",
+    "text": "Chilli lime chips count as a balanced lunch. The acid in the lime is used during photoresist development.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J46",
+    "text": "Organic chips require 60% more water apparently.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J47",
+    "text": "I bought a family-size bag of chips. It's a very small family with a founder in it.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  },
+  {
+    "id": "J48",
+    "text": "Our chips now have error correction. I eat the broken ones before the customer sees them.",
+    "status": "User-reviewed correction pass, preserved wording",
+    "source": "material/one-liners-review-v2.txt"
+  }
+]

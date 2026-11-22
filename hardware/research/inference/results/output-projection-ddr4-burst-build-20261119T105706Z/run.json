@@ -1,0 +1,565 @@
+{
+  "artifacts": [
+    {
+      "bytes": 93594924,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server.tar.gz",
+      "role": "Full recovered Vivado build and source archive",
+      "sha256": "4f2e6168fd7f59997062894fef05616a8dc3028df09c59766902c591a8914956"
+    },
+    {
+      "bytes": 294,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server.receipt.json",
+      "role": "Archive byte and file-count receipt",
+      "sha256": "0c82d53a0b2418f9f75935dd7164fcfcf9e936c2801fcefba5d428f4c14782f0"
+    },
+    {
+      "bytes": 52520,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/build-input.tar.gz",
+      "role": "Pinned exact build input archive",
+      "sha256": "a72ca2df860ac61bb04b5d733dada3983584e271a8c5f42b1c264a73a5a95eb1"
+    },
+    {
+      "bytes": 2788,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/admitted-source-manifest.json",
+      "role": "Admitted RTL, shell and protocol pins",
+      "sha256": "caa0351509916bca588e189e3544cc101d4fc9cb3c3813d9a41c24d1e2ef3858"
+    },
+    {
+      "bytes": 1966,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/offline-acceptance.json",
+      "role": "Independent archive, timing, HP0 and firmware verification",
+      "sha256": "88f84f11a0ffff7d0315b3127a02ed9a2ee4c12902ea475c3b26f298fc23f74c"
+    },
+    {
+      "bytes": 380,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/metrics.txt",
+      "role": "Routed 20 ns timing and DRC",
+      "sha256": "aeaf5fdd328c41839b6d607fa0bba9ca3b6e7e534d67ce8089f8e79fef45fa9e"
+    },
+    {
+      "bytes": 12687,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/utilization.rpt",
+      "role": "Routed device utilization",
+      "sha256": "59e0cdf826dd17e51cd6d376e5e7902eb2678355d197611c406b2008fa1fa4cf"
+    },
+    {
+      "bytes": 11100,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/utilization-hierarchical.rpt",
+      "role": "Routed hierarchical utilization",
+      "sha256": "9e85b959f1a49b771667fcd835344b603a19c94f2959b8d89961e57065f87b13"
+    },
+    {
+      "bytes": 142152,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/ddr-primitives.tsv",
+      "role": "BRAM and PS8 primitive inventory",
+      "sha256": "882148e700236ebe28ee28bdc92b97328205a0b5bdd2ff6dab542bdfe6ce4aa9"
+    },
+    {
+      "bytes": 46178,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/ddr-routed-hp0.tsv",
+      "role": "Native HP0 pins, drivers and clock",
+      "sha256": "165b2629fd79b951a122de69353765313341f4dd096f8ba8f8880ca64db70d6c"
+    },
+    {
+      "bytes": 5127,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/generate/ddr-interfaces.txt",
+      "role": "Validated direct AXI4 HP0 and low DDR aperture",
+      "sha256": "dc559024732a0f54043366e683ba28f3abee9616686dcd620bcfeb6664aa0db7"
+    },
+    {
+      "bytes": 39133,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/generate/console.log",
+      "role": "BD generation and expected warnings",
+      "sha256": "e068f4b5406838ce4b73e399a87cc2d857870315edbc0e49a03e878165c5f6b0"
+    },
+    {
+      "bytes": 24642127,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/route/route.dcp",
+      "role": "Exact routed Vivado checkpoint",
+      "sha256": "e3d2993404524d773a68eb63a6840b7af0bb7e472df94ced377ffe9d103c6801"
+    },
+    {
+      "bytes": 1104,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/rtl-source-manifest.json",
+      "role": "Exact module source hashes shared with the qualified RTL replay",
+      "sha256": "8bed664038ddacb900a91f403c8e292c36fa6eed8bfa653183dfa081cc86206b"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/offline-package/gradiated-tiny-output-projection-ddr4-burst-v1-50mhz.bit.bin",
+      "role": "Verified deployment asset",
+      "sha256": "d75d468672c58b9706b6bf0173bfe496a9b1e0762d84391c9c05b73a64a31913"
+    },
+    {
+      "bytes": 310,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/kv260-ddr4-afi-restore.dtbo",
+      "role": "Verified deployment asset",
+      "sha256": "c747e2487a5ead29c8a764fa679dc4f67bba9ac9073a1e518f4faaaeab7e751a"
+    },
+    {
+      "bytes": 416,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/kv260-ddr4-burst-dma-direct.dtbo",
+      "role": "Verified deployment asset",
+      "sha256": "1b1f80610d6a5bc5e046c1cbac5807eafd034093700de14459a082000ea9f3e6"
+    },
+    {
+      "bytes": 778,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/kv260-ddr4-interface.dtbo",
+      "role": "Verified deployment asset",
+      "sha256": "a910db9f4de4a1c5571d5720aac058234d5460a8844060d0530916df065c3d03"
+    },
+    {
+      "bytes": 379,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/kv260-output-projection-ddr4-burst-program.dtbo",
+      "role": "Verified deployment asset",
+      "sha256": "62da424787f5f885f93dcb32fa0291890b49ba9f83a5beedab0f0ddf1175ce86"
+    },
+    {
+      "bytes": 23086,
+      "path": "hardware/research/inference/results/output-projection-ddr4-build-20261118T225153Z/run.json",
+      "role": "Adopted Exp14 same-path routed reference",
+      "sha256": "15c9c8c2e0c15ed658910cf696f70f398e01292402b038ea754fabf097cb3b32"
+    },
+    {
+      "bytes": 25662,
+      "path": "hardware/research/inference/results/output-projection-ddr4-burst-rtl-20261119T110106Z/run.json",
+      "role": "Exact Exp15 software and RTL replay evidence",
+      "sha256": "7521ce80039a65e0ae6d5c12613d8562b49ba69abd195f8e1f0c636e07c7f0f5"
+    },
+    {
+      "bytes": 4335258,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-preflight-20261119T105446Z/server.tar.gz",
+      "role": "Vivado burst metadata generation preflight archive",
+      "sha256": "2518f17f3a9049e9bca4660f46b6332a6358145e47e6ba1158537e5d9b2043eb"
+    },
+    {
+      "bytes": 297,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-preflight-20261119T105446Z/server.receipt.json",
+      "role": "Burst metadata generation preflight receipt",
+      "sha256": "e0f093addefbdefba3ab6e8bf712ab954817e462f92051dc53340c0ddcda9d1d"
+    }
+  ],
+  "completed_at": "2026-11-19T11:13:12+00:00",
+  "conditions": {
+    "archive_members": 415,
+    "control_resources": {
+      "bram_tile": 39.0,
+      "dsp": 41.0,
+      "lut": 38860.0,
+      "register": 14850.0
+    },
+    "interface_preflight": "output-projection-ddr4-burst-preflight-20261119T105446Z",
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "cross_device_comparison": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Recovered Vivado checkpoint and resource reports.",
+        "sources": [
+          {
+            "bytes": 1966,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/offline-acceptance.json",
+            "role": "Independent archive, timing, HP0 and firmware verification",
+            "sha256": "88f84f11a0ffff7d0315b3127a02ed9a2ee4c12902ea475c3b26f298fc23f74c"
+          },
+          {
+            "bytes": 380,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/metrics.txt",
+            "role": "Routed 20 ns timing and DRC",
+            "sha256": "aeaf5fdd328c41839b6d607fa0bba9ca3b6e7e534d67ce8089f8e79fef45fa9e"
+          },
+          {
+            "bytes": 12687,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/utilization.rpt",
+            "role": "Routed device utilization",
+            "sha256": "59e0cdf826dd17e51cd6d376e5e7902eb2678355d197611c406b2008fa1fa4cf"
+          },
+          {
+            "bytes": 142152,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/ddr-primitives.tsv",
+            "role": "BRAM and PS8 primitive inventory",
+            "sha256": "882148e700236ebe28ee28bdc92b97328205a0b5bdd2ff6dab542bdfe6ce4aa9"
+          },
+          {
+            "bytes": 46178,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/ddr-routed-hp0.tsv",
+            "role": "Native HP0 pins, drivers and clock",
+            "sha256": "165b2629fd79b951a122de69353765313341f4dd096f8ba8f8880ca64db70d6c"
+          },
+          {
+            "bytes": 5127,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/generate/ddr-interfaces.txt",
+            "role": "Validated direct AXI4 HP0 and low DDR aperture",
+            "sha256": "dc559024732a0f54043366e683ba28f3abee9616686dcd620bcfeb6664aa0db7"
+          }
+        ],
+        "state": "measured"
+      },
+      "long_stability": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Recovered Vivado checkpoint and resource reports.",
+        "sources": [
+          {
+            "bytes": 1966,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/offline-acceptance.json",
+            "role": "Independent archive, timing, HP0 and firmware verification",
+            "sha256": "88f84f11a0ffff7d0315b3127a02ed9a2ee4c12902ea475c3b26f298fc23f74c"
+          },
+          {
+            "bytes": 380,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/metrics.txt",
+            "role": "Routed 20 ns timing and DRC",
+            "sha256": "aeaf5fdd328c41839b6d607fa0bba9ca3b6e7e534d67ce8089f8e79fef45fa9e"
+          },
+          {
+            "bytes": 12687,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/utilization.rpt",
+            "role": "Routed device utilization",
+            "sha256": "59e0cdf826dd17e51cd6d376e5e7902eb2678355d197611c406b2008fa1fa4cf"
+          },
+          {
+            "bytes": 142152,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/ddr-primitives.tsv",
+            "role": "BRAM and PS8 primitive inventory",
+            "sha256": "882148e700236ebe28ee28bdc92b97328205a0b5bdd2ff6dab542bdfe6ce4aa9"
+          },
+          {
+            "bytes": 46178,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/ddr-routed-hp0.tsv",
+            "role": "Native HP0 pins, drivers and clock",
+            "sha256": "165b2629fd79b951a122de69353765313341f4dd096f8ba8f8880ca64db70d6c"
+          },
+          {
+            "bytes": 5127,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/generate/ddr-interfaces.txt",
+            "role": "Validated direct AXI4 HP0 and low DDR aperture",
+            "sha256": "dc559024732a0f54043366e683ba28f3abee9616686dcd620bcfeb6664aa0db7"
+          }
+        ],
+        "state": "measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "physical_area": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Recovered Vivado checkpoint and resource reports.",
+        "sources": [
+          {
+            "bytes": 1966,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/offline-acceptance.json",
+            "role": "Independent archive, timing, HP0 and firmware verification",
+            "sha256": "88f84f11a0ffff7d0315b3127a02ed9a2ee4c12902ea475c3b26f298fc23f74c"
+          },
+          {
+            "bytes": 380,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/metrics.txt",
+            "role": "Routed 20 ns timing and DRC",
+            "sha256": "aeaf5fdd328c41839b6d607fa0bba9ca3b6e7e534d67ce8089f8e79fef45fa9e"
+          },
+          {
+            "bytes": 12687,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/utilization.rpt",
+            "role": "Routed device utilization",
+            "sha256": "59e0cdf826dd17e51cd6d376e5e7902eb2678355d197611c406b2008fa1fa4cf"
+          },
+          {
+            "bytes": 142152,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/ddr-primitives.tsv",
+            "role": "BRAM and PS8 primitive inventory",
+            "sha256": "882148e700236ebe28ee28bdc92b97328205a0b5bdd2ff6dab542bdfe6ce4aa9"
+          },
+          {
+            "bytes": 46178,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/reports/ddr-routed-hp0.tsv",
+            "role": "Native HP0 pins, drivers and clock",
+            "sha256": "165b2629fd79b951a122de69353765313341f4dd096f8ba8f8880ca64db70d6c"
+          },
+          {
+            "bytes": 5127,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-burst-build-20261119T105706Z/server/build/generate/ddr-interfaces.txt",
+            "role": "Validated direct AXI4 HP0 and low DDR aperture",
+            "sha256": "dc559024732a0f54043366e683ba28f3abee9616686dcd620bcfeb6664aa0db7"
+          }
+        ],
+        "state": "measured"
+      },
+      "serving_load": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "startup": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "phase_elapsed_seconds": 964.0176745140925,
+    "resources": {
+      "bram_tile": 39.0,
+      "dsp": 41.0,
+      "lut": 39133.0,
+      "register": 15362.0
+    },
+    "routed_hp0": {
+      "arburst": 1,
+      "arid": 0,
+      "arlen_driver": "tiny_ps_axi_i/neural/inst/actual/projection_reader/arlen_reg[2]/Q",
+      "arlen_values": [
+        0,
+        7
+      ],
+      "arprot": 2,
+      "arsize": 3,
+      "awvalid": 0,
+      "clock": "clk_pl_0",
+      "read_data_width": 64,
+      "wvalid": 0
+    },
+    "source_manifest_sha256": "caa0351509916bca588e189e3544cc101d4fc9cb3c3813d9a41c24d1e2ef3858",
+    "timing": {
+      "clock": "clk_pl_0 period_ns 20.000",
+      "drc_errors_or_critical_warnings": "0",
+      "fully_placed": "1",
+      "fully_routed": "1",
+      "hold_slack_ns": "0.014",
+      "native_no_clock": "0",
+      "partially_routed_nets": "0",
+      "routing_errors": "0",
+      "routing_gap_nets": "0",
+      "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+      "setup_slack_ns": "4.826",
+      "unclocked_active_pins": "0",
+      "unconstrained_internal_endpoints": "0",
+      "unrouted_nets": "0",
+      "unused_ps_clock_outputs": "0"
+    }
+  },
+  "correctness": {
+    "evidence": "Verified native HP0 netlist, 20 ns closure and exact firmware package.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "clock_hz": 50000000,
+      "data_width_bits": 64,
+      "hp0_aperture_bytes": 2147483648,
+      "hp0_native_clock": "clk_pl_0",
+      "hp0_port": "S_AXI_HP0_FPD",
+      "id_width_bits": 6,
+      "maximum_burst_beats": 8,
+      "mode": "fully routed PS, AXI and neural implementation with all four memory modes",
+      "part": "xck26-sfvc784-2LV-c",
+      "threads": 2,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "a1de7db42c08b08b5f9908ecd9ede0290912f9fd8d670b10d41dbb6138739c99",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-output-projection-ddr4-burst-v1",
+  "id": "output-projection-ddr4-burst-build-20261119T105706Z",
+  "implementation": {
+    "id": "output-projection-ddr4-burst-v1",
+    "sha256": "d75d468672c58b9706b6bf0173bfe496a9b1e0762d84391c9c05b73a64a31913"
+  },
+  "limitations": [
+    "Timing and utilization describe the offline image. Board latency and energy require physical measurements.",
+    "All four memory paths occupy the fixture, so mode-specific area savings are unmeasured."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilization report.",
+      "name": "routed.bram_tile",
+      "samples": [
+        39.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilization report.",
+      "name": "routed.dsp",
+      "samples": [
+        41.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilization report.",
+      "name": "routed.lut",
+      "samples": [
+        39133.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilization report.",
+      "name": "routed.register",
+      "samples": [
+        15362.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed 20 ns timing summary.",
+      "name": "routed.setup_slack_ns",
+      "samples": [
+        4.826
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed 20 ns timing summary.",
+      "name": "routed.hold_slack_ns",
+      "samples": [
+        0.014
+      ],
+      "unit": "ns"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-output-projection-ddr4-burst-v1-build",
+    "measurement_boundary": "Routed Vivado reports, native HP0 checkpoint and offline firmware package.",
+    "quality_gate": "Complete 20 ns route, verified dynamic native HP0 ARLEN, preserved BRAM and exact firmware assets.",
+    "sha256": "6debcf4b0629d477a8e63723a755c4ba8cfdfec485dbba99f32dc23778e802ea",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Frozen matched RTL replay qualified in output-projection-ddr4-burst-rtl-20261119T110106Z.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": null
+  },
+  "started_at": "2026-11-19T10:57:07+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

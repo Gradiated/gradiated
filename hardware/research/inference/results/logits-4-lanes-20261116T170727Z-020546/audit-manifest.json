@@ -1,0 +1,52 @@
+{
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-v1-coordinator/audit-lanes-packet.py": {
+      "bytes": 4184,
+      "sha256": "cf2cb3b9f18becd45b3251857b904085a60adb4c663b7e4079c2518e2954b3d8"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-v1-coordinator/coordinator-fresh-state-4.json": {
+      "bytes": 464,
+      "sha256": "e262cf3361259984e5e70e4025680827969154037cb534503a017583abe29a8e"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-v1-coordinator/lanes-record-consistency.py": {
+      "bytes": 2432,
+      "sha256": "39a6874319c26be9b51924c26eb8f8c087e848bcbf374c396870cafa19aee640"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-v1-coordinator/logits-lanes-4-counter-reference.json": {
+      "bytes": 15465,
+      "sha256": "0902c72f46a60d755d5bf031fe36e762330d53a3d12361d62362220b286968ec"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-v1-coordinator/logits-lanes-build-4-audit.json": {
+      "bytes": 1962,
+      "sha256": "4f9b9b3a53b33634b09d7ef1b94d3766390d4e837b41b735f0de5bc3e1b6cd2b"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-v1-coordinator/logits-lanes-packet-4-audit.json": {
+      "bytes": 657,
+      "sha256": "509074b0d6cbf66dbf4956d501ac8fa114fbe25a53f6f973b44b51abbcf071e8"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-v1-coordinator/logits-lanes-physical-4-audit.json": {
+      "bytes": 28676,
+      "sha256": "3255a489291fd8ef0f91a6f79fd053d9573891964249a3b27a4e0ee120fd5eb2"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-v1-coordinator/logits-lanes-physical-4-counters.json": {
+      "bytes": 5345,
+      "sha256": "33857331d49e0b93fd368104d70790be314f59e93878174df2dbaaf816c194a2"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-v1-coordinator/physical-4-record-check.json": {
+      "bytes": 188,
+      "sha256": "1d4fa5dcf980fa0474bbc61ffbab817f1a645676b7a05a9ab5d1a36608ed6536"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/counter-audit.py": {
+      "bytes": 1392,
+      "sha256": "b0531072612e994d0edddb61b6885ef0357d7c4f1035377d03d3fd795b7dc8d9"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/independent-audit.py": {
+      "bytes": 7516,
+      "sha256": "2af82a0c3ffdb2dfc5a96c3fe20092e17e8b24a784955c211d3d4f9df6838183"
+    }
+  },
+  "passed": true,
+  "raw_manifest_sha256": "2120cb2bf42162904e4670eeaba709dca48b9ca0794f4b06832fdda02fedd868",
+  "run_sha256": "147656c1225dd90377227e26d2109301b9a0df486e4393f043e2a73740ef8454",
+  "scope": "Independent exact build and packet admission, serial gates, board timing and module-rail energy, RTL cycle agreement, original restoration and compact record consistency."
+}

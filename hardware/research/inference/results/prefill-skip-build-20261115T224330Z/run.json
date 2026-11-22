@@ -1,0 +1,331 @@
+{
+  "artifacts": [
+    {
+      "bytes": 8422,
+      "path": ".agents/runtime/hardware/inference/outputs/prefill-skip-build-20261115T220726Z-recovery/offline-acceptance.json",
+      "role": "Independent archive and implementation checks",
+      "sha256": "38c63395947f8f206de9fdf9d458282436f744c7c0786578636a0c21717ea77d"
+    },
+    {
+      "bytes": 57982721,
+      "path": ".agents/runtime/hardware/inference/outputs/prefill-skip-build-20261115T220726Z-recovery/server.tar.gz",
+      "role": "Complete recovered Linux build archive",
+      "sha256": "147b73c6f5d1f20af5288cf20ca593acac324143c52677d5a25d613f42b2c4c5"
+    },
+    {
+      "bytes": 62077,
+      "path": ".agents/runtime/hardware/inference/outputs/prefill-skip-build-20261115T220726Z-recovery/server/recovery-manifest.json",
+      "role": "Linux build files and hashes",
+      "sha256": "73283b6ec4ca8d5dc57d11881eb29511421077da23f2f9e422897653119228bd"
+    },
+    {
+      "bytes": 1880,
+      "path": ".agents/runtime/hardware/inference/outputs/prefill-skip-build-20261115T220726Z-recovery/server/source-manifest.json",
+      "role": "Generated build source closure",
+      "sha256": "62e71c08adfb0436c81a63a3e22db92f383d065ba6c3de72a21cf8d632330312"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/prefill-skip-build-20261115T220726Z-recovery/server/offline-package/gradiated-tiny-prefill-skip-v1-50mhz.bit.bin",
+      "role": "Verified candidate programming image",
+      "sha256": "6ae36d72a8045c1dac2c7af28c840ab136c74e6e58360531bec51fde0370088a"
+    },
+    {
+      "bytes": 24456,
+      "path": "hardware/research/inference/results/prefill-skip-rtl-20261115T221207Z/run.json",
+      "role": "Pinned real-core and synthetic simulation evidence",
+      "sha256": "274ea153d17ec2d8976d0910056804a1a0d2f30324ff305e60a25b1956c53bee"
+    }
+  ],
+  "completed_at": "2026-11-15T22:43:30.598585+00:00",
+  "conditions": {
+    "firmware": {
+      "bytes": 7797692,
+      "sha256": "6ae36d72a8045c1dac2c7af28c840ab136c74e6e58360531bec51fde0370088a"
+    },
+    "no_physical_board_access": true,
+    "resources": {
+      "bram_tile": {
+        "available": 144.0,
+        "percent_reported": 25.35,
+        "used": 36.5
+      },
+      "dsp": {
+        "available": 1248.0,
+        "percent_reported": 0.8,
+        "used": 10.0
+      },
+      "lut": {
+        "available": 117120.0,
+        "percent_reported": 28.33,
+        "used": 33175.0
+      },
+      "occupied_clb": {
+        "available": 14640.0,
+        "percent_reported": 40.48,
+        "used": 5927.0
+      },
+      "register": {
+        "available": 234240.0,
+        "percent_reported": 5.85,
+        "used": 13712.0
+      },
+      "uram": {
+        "available": 64.0,
+        "percent_reported": 0.0,
+        "used": 0.0
+      }
+    },
+    "verified_server_files": 316
+  },
+  "correctness": {
+    "evidence": "Seven exact matched real-core cases and changed-path synthetic fault checks. All routed validation gates passed.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "board_preset": "xilinx.com:kv260_som:part0:1.4",
+      "max_threads": 2,
+      "part": "xck26-sfvc784-2LV-c",
+      "route_checkpoint_sha256": "e18642b34e9bc2d5b47e7f30f36e94fd520b033b7de60358fc4c639b880062e9",
+      "scope": "Full PS, AXI and neural implementation, offline only",
+      "target_clock_period_ns": 20,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "9163edf0eac3c1d54f00c0103b875c6168ac312ff4ea19238602addcc06294c2",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-prefill-skip-v1",
+  "id": "prefill-skip-build-20261115T224330Z",
+  "implementation": {
+    "id": "kv260-prefill-skip-v1",
+    "sha256": "62e71c08adfb0436c81a63a3e22db92f383d065ba6c3de72a21cf8d632330312"
+  },
+  "limitations": [
+    "Routed static timing and utilisation for one implementation. No measured physical performance or energy.",
+    "Matched benchmark and board restoration are separate evidence."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "bram_tile_used",
+      "samples": [
+        36.5
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "bram_tile_utilisation",
+      "samples": [
+        25.35
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "dsp_used",
+      "samples": [
+        10.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "dsp_utilisation",
+      "samples": [
+        0.8
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "lut_used",
+      "samples": [
+        33175.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "lut_utilisation",
+      "samples": [
+        28.33
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "occupied_clb_used",
+      "samples": [
+        5927.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "occupied_clb_utilisation",
+      "samples": [
+        40.48
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "register_used",
+      "samples": [
+        13712.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "register_utilisation",
+      "samples": [
+        5.85
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "uram_used",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "uram_utilisation",
+      "samples": [
+        0.0
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Static routed timing at 20 ns target",
+      "name": "setup_slack_ns",
+      "samples": [
+        5.342
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Static routed timing at 20 ns target",
+      "name": "hold_slack_ns",
+      "samples": [
+        0.013
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Standalone Vivado phase wall time",
+      "name": "bitstream_wall_time",
+      "samples": [
+        113.95355802902486
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Standalone Vivado phase wall time",
+      "name": "generate_wall_time",
+      "samples": [
+        31.620803495985456
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Standalone Vivado phase wall time",
+      "name": "opt_wall_time",
+      "samples": [
+        91.8522986790631
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Standalone Vivado phase wall time",
+      "name": "place_wall_time",
+      "samples": [
+        295.1942213390721
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Standalone Vivado phase wall time",
+      "name": "reports_wall_time",
+      "samples": [
+        69.63894224003889
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Standalone Vivado phase wall time",
+      "name": "route_wall_time",
+      "samples": [
+        398.95260757405777
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Standalone Vivado phase wall time",
+      "name": "synth_wall_time",
+      "samples": [
+        423.24389340996277
+      ],
+      "unit": "s"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-prefill-skip-v1-build",
+    "measurement_boundary": "Fresh offline Vivado build at 20 ns, plus verified archive recovery and bootgen conversion.",
+    "quality_gate": "Exact matched simulation, routed timing, coverage and DRC acceptance.",
+    "sha256": "1b0eb6810ec883f8c005bac3c551d80d2488204f442e2f6c3dfdca9ba07c5c59",
+    "tokenizer": "Unchanged frozen byte/hex tokenizer. No timed token generation in this build.",
+    "warmup": "Not applicable to offline implementation reports."
+  },
+  "quality": {
+    "evidence": "Frozen model and arithmetic on retained work. The physical experiment is separate.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "04c7100ca9d5ba9ddbd49fdc14bd85cefcc6381d",
+    "patch_sha256": null
+  },
+  "started_at": "2026-11-15T22:09:45.123156+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-prefill-skip-full-device-build",
+    "sha256": "1b0eb6810ec883f8c005bac3c551d80d2488204f442e2f6c3dfdca9ba07c5c59"
+  }
+}

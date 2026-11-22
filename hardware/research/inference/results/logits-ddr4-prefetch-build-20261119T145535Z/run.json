@@ -1,0 +1,1438 @@
+{
+  "artifacts": [
+    {
+      "bytes": 51329,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/build-input.tar.gz",
+      "role": "Exact candidate build input archive",
+      "sha256": "18f4a877532a81c59d246d217c41d500aa51c2e84eeb2aea3fe81596e9f81fe8"
+    },
+    {
+      "bytes": 212,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/admission.json",
+      "role": "Pinned source manifest and remote build location",
+      "sha256": "56df22b4df15682987d0e8689be39ee864942d57ae7a4e64c678fb4d523832aa"
+    },
+    {
+      "bytes": 5658,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/admitted-protocol.md",
+      "role": "Frozen Experiment 17 comparison protocol",
+      "sha256": "b2bc721c50ea0ea13e8f6c5151a9129fd9ed6d7006963999d161a41bf7040fc6"
+    },
+    {
+      "bytes": 3825,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/admitted-source-manifest.json",
+      "role": "Compile closure and reused Experiment 16 source pins",
+      "sha256": "52e17470c682748199b82483061be7cfafdf9ebd61c5d8f22e4ccce076fac288"
+    },
+    {
+      "bytes": 1008,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/control-rtl-manifest.json",
+      "role": "Exact Experiment 16 build closure",
+      "sha256": "072afd4a0eaeb744a12393c8ee94540981b4a472ecc18161bcd211c404c467f3"
+    },
+    {
+      "bytes": 1008,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/candidate-rtl-manifest.json",
+      "role": "Exact prefetch build closure",
+      "sha256": "7983f70d71c6900dd8f541c4d88c43d8555fb714b7d6db270eb900bc7dcbcfc0"
+    },
+    {
+      "bytes": 93020758,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server.tar.gz",
+      "role": "Recovered exact Vivado implementation archive",
+      "sha256": "9586da4667825aff6004e883fcf358af3e21b571c831b8540a844ae004dbe6b9"
+    },
+    {
+      "bytes": 286,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server.receipt.json",
+      "role": "Remote archive byte and member-count receipt",
+      "sha256": "ae9112edb91d8374bb4d52ed203fbc1f4c187b0478eb73cf70ef77b49dee0d5e"
+    },
+    {
+      "bytes": 402,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/archive-recovery.json",
+      "role": "Bounded resumable archive transfer record",
+      "sha256": "8a3830d885e37df7564675a6881da16c38a365befd137f36299011f844ba497e"
+    },
+    {
+      "bytes": 7160,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/offline-acceptance.json",
+      "role": "Independent route, source and firmware acceptance",
+      "sha256": "7f75a9e506e7a272ed7aa33d9ecd62ea6b414b614204791618811e99c867419c"
+    },
+    {
+      "bytes": 24570187,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/route/route.dcp",
+      "role": "Exact prefetch routed checkpoint",
+      "sha256": "625a9e04fc0edf48c33934f9d0517441020c51d81aa9dc8e8c0472babddd10a8"
+    },
+    {
+      "bytes": 380,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/metrics.txt",
+      "role": "Prefetch Routed timing, design rule, placement and routing metrics",
+      "sha256": "4e974b4c5dc68b73f9971aaa3b7b0681252f6ebf62a7436513792dd73fde0bb9"
+    },
+    {
+      "bytes": 11076,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/utilization-hierarchical.rpt",
+      "role": "Prefetch FPGA, accelerator, logits and reader hierarchies",
+      "sha256": "d7586339482fbd4a8dbfad1173d4f2e09e643b60ea1b5df729bca05b803423a9"
+    },
+    {
+      "bytes": 155372,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/ddr-primitives.tsv",
+      "role": "Prefetch Routed memory primitives for score staging and on-chip embeddings",
+      "sha256": "aed7b2079da9a743179e0f5a6154ce6b7c4394756b407b590843b561af5e74a7"
+    },
+    {
+      "bytes": 46904,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/ddr-routed-hp0.tsv",
+      "role": "Prefetch Native read-only HP0 pin and clock trace",
+      "sha256": "a8043392de8180c266096131b41db31f0c5c282440e93297ce8f9482738c79e0"
+    },
+    {
+      "bytes": 5127,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/generate/ddr-interfaces.txt",
+      "role": "Prefetch native read-only DDR block design",
+      "sha256": "dc559024732a0f54043366e683ba28f3abee9616686dcd620bcfeb6664aa0db7"
+    },
+    {
+      "bytes": 39281,
+      "path": "hardware/research/inference/results/logits-ddr4-burst-build-20261119T115915Z/run.json",
+      "role": "Pinned archived Experiment 16 implementation record",
+      "sha256": "05954557b90dd1207918d2689a46dd384be59ba74f2e7c584bf54f576c79fc9f"
+    },
+    {
+      "bytes": 24449,
+      "path": "hardware/research/inference/results/logits-ddr4-prefetch-rtl-20261119T150027Z/run.json",
+      "role": "Paired exact Experiment 17 RTL replay",
+      "sha256": "d04b2e2426be0951fe5ddbd82187ad0a317c03a0772c8089ba126a2a949ee871"
+    },
+    {
+      "bytes": 24528860,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/route/route.dcp",
+      "role": "Pinned serialized routed checkpoint",
+      "sha256": "70281d404d0abbb157a74392a904f1b62f7a3d4f0b9120c50919f9c03256db64"
+    },
+    {
+      "bytes": 380,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/metrics.txt",
+      "role": "Serialized Routed timing, design rule, placement and routing metrics",
+      "sha256": "076a19e7edd25d6a2817a6194051193ad84c0ef070c23ec5a290bed3d19045f8"
+    },
+    {
+      "bytes": 11067,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/utilization-hierarchical.rpt",
+      "role": "Serialized FPGA, accelerator, logits and reader hierarchies",
+      "sha256": "966ef8695f3f13612e1c0c114503ad241c5b9176ba095429f208b35b145e557b"
+    },
+    {
+      "bytes": 155705,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/ddr-primitives.tsv",
+      "role": "Serialized Routed memory primitives for score staging and on-chip embeddings",
+      "sha256": "2a08976397534a35027369cb48da73842fb63a53fed96076d3a299822102c382"
+    },
+    {
+      "bytes": 46904,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/ddr-routed-hp0.tsv",
+      "role": "Serialized Native read-only HP0 pin and clock trace",
+      "sha256": "a8043392de8180c266096131b41db31f0c5c282440e93297ce8f9482738c79e0"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/offline-package/gradiated-tiny-logits-ddr4-burst-v1-50mhz.bit.bin",
+      "role": "Serialized verified deployment asset",
+      "sha256": "dd4170e8e10722566dbafeb567bf85f8e11ea7af39c2937521ffc057d833df32"
+    },
+    {
+      "bytes": 310,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/kv260-ddr4-afi-restore.dtbo",
+      "role": "Serialized verified deployment asset",
+      "sha256": "c747e2487a5ead29c8a764fa679dc4f67bba9ac9073a1e518f4faaaeab7e751a"
+    },
+    {
+      "bytes": 778,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/kv260-ddr4-interface.dtbo",
+      "role": "Serialized verified deployment asset",
+      "sha256": "a910db9f4de4a1c5571d5720aac058234d5460a8844060d0530916df065c3d03"
+    },
+    {
+      "bytes": 367,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/kv260-logits-ddr4-burst-program.dtbo",
+      "role": "Serialized verified deployment asset",
+      "sha256": "2d39847224d8592ca1f80e7752dbff545ae9fb329e1e7a51cb193da0fa856400"
+    },
+    {
+      "bytes": 416,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/kv260-logits-ddr4-dma-direct.dtbo",
+      "role": "Serialized verified deployment asset",
+      "sha256": "e28f3734ce5afd5461d39beb6f02c383fbe5390a826b02f7827164a98b8881ed"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/offline-package/gradiated-tiny-logits-ddr4-prefetch-v1-50mhz.bit.bin",
+      "role": "Prefetch verified deployment asset",
+      "sha256": "157a66177f7f9e7c7f73ca2599703c05854961e350e16356c1a535fdbd9992dd"
+    },
+    {
+      "bytes": 310,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/kv260-ddr4-afi-restore.dtbo",
+      "role": "Prefetch verified deployment asset",
+      "sha256": "c747e2487a5ead29c8a764fa679dc4f67bba9ac9073a1e518f4faaaeab7e751a"
+    },
+    {
+      "bytes": 778,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/kv260-ddr4-interface.dtbo",
+      "role": "Prefetch verified deployment asset",
+      "sha256": "a910db9f4de4a1c5571d5720aac058234d5460a8844060d0530916df065c3d03"
+    },
+    {
+      "bytes": 416,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/kv260-logits-ddr4-dma-direct.dtbo",
+      "role": "Prefetch verified deployment asset",
+      "sha256": "e28f3734ce5afd5461d39beb6f02c383fbe5390a826b02f7827164a98b8881ed"
+    },
+    {
+      "bytes": 371,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/kv260-logits-ddr4-prefetch-program.dtbo",
+      "role": "Prefetch verified deployment asset",
+      "sha256": "9e904a5e5cb2d3e8649b5e0b14db5ed0f924a06df9c949e0def54dedafbfd3f0"
+    }
+  ],
+  "completed_at": "2026-11-19T15:12:14+00:00",
+  "conditions": {
+    "archive_members": 389,
+    "archive_recovery": {
+      "completed_at": "2026-11-19T15:14:55.464444+00:00",
+      "elapsed_seconds": 128.7335967499821,
+      "limit_seconds": 1200,
+      "receipt_archive_bytes": 93020758,
+      "receipt_archive_members": 389,
+      "receipt_archive_sha256": "9586da4667825aff6004e883fcf358af3e21b571c831b8540a844ae004dbe6b9",
+      "receipt_build_passed": true,
+      "resumed_prefix_bytes": 0,
+      "started_at": "2026-11-19T15:12:46.730039+00:00"
+    },
+    "control_resources": {
+      "bram_tile": 31.0,
+      "dsp": 41,
+      "lut": 38978,
+      "register": 14844
+    },
+    "control_timing": {
+      "clock": "clk_pl_0 period_ns 20.000",
+      "drc_errors_or_critical_warnings": "0",
+      "fully_placed": "1",
+      "fully_routed": "1",
+      "hold_slack_ns": "0.012",
+      "native_no_clock": "0",
+      "partially_routed_nets": "0",
+      "routing_errors": "0",
+      "routing_gap_nets": "0",
+      "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+      "setup_slack_ns": "5.215",
+      "unclocked_active_pins": "0",
+      "unconstrained_internal_endpoints": "0",
+      "unrouted_nets": "0",
+      "unused_ps_clock_outputs": "0"
+    },
+    "elapsed_build_seconds": 984.4548720410094,
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "cross_device_comparison": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Verified both routed hierarchies and 20 ns timing.",
+        "sources": [
+          {
+            "bytes": 7160,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/offline-acceptance.json",
+            "role": "Independent route, source and firmware acceptance",
+            "sha256": "7f75a9e506e7a272ed7aa33d9ecd62ea6b414b614204791618811e99c867419c"
+          },
+          {
+            "bytes": 380,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/metrics.txt",
+            "role": "Prefetch Routed timing, design rule, placement and routing metrics",
+            "sha256": "4e974b4c5dc68b73f9971aaa3b7b0681252f6ebf62a7436513792dd73fde0bb9"
+          },
+          {
+            "bytes": 11076,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/utilization-hierarchical.rpt",
+            "role": "Prefetch FPGA, accelerator, logits and reader hierarchies",
+            "sha256": "d7586339482fbd4a8dbfad1173d4f2e09e643b60ea1b5df729bca05b803423a9"
+          },
+          {
+            "bytes": 155372,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/ddr-primitives.tsv",
+            "role": "Prefetch Routed memory primitives for score staging and on-chip embeddings",
+            "sha256": "aed7b2079da9a743179e0f5a6154ce6b7c4394756b407b590843b561af5e74a7"
+          },
+          {
+            "bytes": 46904,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/ddr-routed-hp0.tsv",
+            "role": "Prefetch Native read-only HP0 pin and clock trace",
+            "sha256": "a8043392de8180c266096131b41db31f0c5c282440e93297ce8f9482738c79e0"
+          },
+          {
+            "bytes": 380,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/metrics.txt",
+            "role": "Serialized Routed timing, design rule, placement and routing metrics",
+            "sha256": "076a19e7edd25d6a2817a6194051193ad84c0ef070c23ec5a290bed3d19045f8"
+          },
+          {
+            "bytes": 11067,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/utilization-hierarchical.rpt",
+            "role": "Serialized FPGA, accelerator, logits and reader hierarchies",
+            "sha256": "966ef8695f3f13612e1c0c114503ad241c5b9176ba095429f208b35b145e557b"
+          },
+          {
+            "bytes": 155705,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/ddr-primitives.tsv",
+            "role": "Serialized Routed memory primitives for score staging and on-chip embeddings",
+            "sha256": "2a08976397534a35027369cb48da73842fb63a53fed96076d3a299822102c382"
+          },
+          {
+            "bytes": 46904,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/ddr-routed-hp0.tsv",
+            "role": "Serialized Native read-only HP0 pin and clock trace",
+            "sha256": "a8043392de8180c266096131b41db31f0c5c282440e93297ce8f9482738c79e0"
+          }
+        ],
+        "state": "measured"
+      },
+      "long_stability": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Verified both routed hierarchies and 20 ns timing.",
+        "sources": [
+          {
+            "bytes": 7160,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/offline-acceptance.json",
+            "role": "Independent route, source and firmware acceptance",
+            "sha256": "7f75a9e506e7a272ed7aa33d9ecd62ea6b414b614204791618811e99c867419c"
+          },
+          {
+            "bytes": 380,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/metrics.txt",
+            "role": "Prefetch Routed timing, design rule, placement and routing metrics",
+            "sha256": "4e974b4c5dc68b73f9971aaa3b7b0681252f6ebf62a7436513792dd73fde0bb9"
+          },
+          {
+            "bytes": 11076,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/utilization-hierarchical.rpt",
+            "role": "Prefetch FPGA, accelerator, logits and reader hierarchies",
+            "sha256": "d7586339482fbd4a8dbfad1173d4f2e09e643b60ea1b5df729bca05b803423a9"
+          },
+          {
+            "bytes": 155372,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/ddr-primitives.tsv",
+            "role": "Prefetch Routed memory primitives for score staging and on-chip embeddings",
+            "sha256": "aed7b2079da9a743179e0f5a6154ce6b7c4394756b407b590843b561af5e74a7"
+          },
+          {
+            "bytes": 46904,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/ddr-routed-hp0.tsv",
+            "role": "Prefetch Native read-only HP0 pin and clock trace",
+            "sha256": "a8043392de8180c266096131b41db31f0c5c282440e93297ce8f9482738c79e0"
+          },
+          {
+            "bytes": 380,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/metrics.txt",
+            "role": "Serialized Routed timing, design rule, placement and routing metrics",
+            "sha256": "076a19e7edd25d6a2817a6194051193ad84c0ef070c23ec5a290bed3d19045f8"
+          },
+          {
+            "bytes": 11067,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/utilization-hierarchical.rpt",
+            "role": "Serialized FPGA, accelerator, logits and reader hierarchies",
+            "sha256": "966ef8695f3f13612e1c0c114503ad241c5b9176ba095429f208b35b145e557b"
+          },
+          {
+            "bytes": 155705,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/ddr-primitives.tsv",
+            "role": "Serialized Routed memory primitives for score staging and on-chip embeddings",
+            "sha256": "2a08976397534a35027369cb48da73842fb63a53fed96076d3a299822102c382"
+          },
+          {
+            "bytes": 46904,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/ddr-routed-hp0.tsv",
+            "role": "Serialized Native read-only HP0 pin and clock trace",
+            "sha256": "a8043392de8180c266096131b41db31f0c5c282440e93297ce8f9482738c79e0"
+          }
+        ],
+        "state": "measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "physical_area": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Verified both routed hierarchies and 20 ns timing.",
+        "sources": [
+          {
+            "bytes": 7160,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/offline-acceptance.json",
+            "role": "Independent route, source and firmware acceptance",
+            "sha256": "7f75a9e506e7a272ed7aa33d9ecd62ea6b414b614204791618811e99c867419c"
+          },
+          {
+            "bytes": 380,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/metrics.txt",
+            "role": "Prefetch Routed timing, design rule, placement and routing metrics",
+            "sha256": "4e974b4c5dc68b73f9971aaa3b7b0681252f6ebf62a7436513792dd73fde0bb9"
+          },
+          {
+            "bytes": 11076,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/utilization-hierarchical.rpt",
+            "role": "Prefetch FPGA, accelerator, logits and reader hierarchies",
+            "sha256": "d7586339482fbd4a8dbfad1173d4f2e09e643b60ea1b5df729bca05b803423a9"
+          },
+          {
+            "bytes": 155372,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/ddr-primitives.tsv",
+            "role": "Prefetch Routed memory primitives for score staging and on-chip embeddings",
+            "sha256": "aed7b2079da9a743179e0f5a6154ce6b7c4394756b407b590843b561af5e74a7"
+          },
+          {
+            "bytes": 46904,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-prefetch-build-20261119T145535Z/server/build/reports/ddr-routed-hp0.tsv",
+            "role": "Prefetch Native read-only HP0 pin and clock trace",
+            "sha256": "a8043392de8180c266096131b41db31f0c5c282440e93297ce8f9482738c79e0"
+          },
+          {
+            "bytes": 380,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/metrics.txt",
+            "role": "Serialized Routed timing, design rule, placement and routing metrics",
+            "sha256": "076a19e7edd25d6a2817a6194051193ad84c0ef070c23ec5a290bed3d19045f8"
+          },
+          {
+            "bytes": 11067,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/utilization-hierarchical.rpt",
+            "role": "Serialized FPGA, accelerator, logits and reader hierarchies",
+            "sha256": "966ef8695f3f13612e1c0c114503ad241c5b9176ba095429f208b35b145e557b"
+          },
+          {
+            "bytes": 155705,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/ddr-primitives.tsv",
+            "role": "Serialized Routed memory primitives for score staging and on-chip embeddings",
+            "sha256": "2a08976397534a35027369cb48da73842fb63a53fed96076d3a299822102c382"
+          },
+          {
+            "bytes": 46904,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/ddr-routed-hp0.tsv",
+            "role": "Serialized Native read-only HP0 pin and clock trace",
+            "sha256": "a8043392de8180c266096131b41db31f0c5c282440e93297ce8f9482738c79e0"
+          }
+        ],
+        "state": "measured"
+      },
+      "serving_load": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "startup": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "resource_accounting": {
+      "buffers": {
+        "candidate": {
+          "bytes_per_group": 512,
+          "bytes_total": 1024,
+          "group_buffers": 2,
+          "physical_half_depth": 64,
+          "physical_half_width_bits": 64,
+          "routed_half_primitives": {
+            "high_reg": {
+              "RAM64M8": 9,
+              "RAM64X1D": 1,
+              "RAMD64E": 74
+            },
+            "low_reg": {
+              "RAM64M8": 9,
+              "RAM64X1D": 1,
+              "RAMD64E": 74
+            }
+          },
+          "routed_reader_lutram_luts": 148
+        },
+        "control": {
+          "bytes_per_group": 512,
+          "bytes_total": 512,
+          "group_buffers": 1,
+          "physical_half_depth": 32,
+          "physical_half_width_bits": 64,
+          "routed_half_primitives": {
+            "high_reg": {
+              "RAM32M16": 5,
+              "RAMD32": 70,
+              "RAMS32": 10
+            },
+            "low_reg": {
+              "RAM32M16": 5,
+              "RAMD32": 70,
+              "RAMS32": 10
+            }
+          },
+          "routed_reader_lutram_luts": 80
+        }
+      },
+      "hierarchy": {
+        "accelerator": {
+          "candidate": {
+            "dsp": 41,
+            "logic_lut": 37147,
+            "lut": 38465,
+            "lutram": 1318,
+            "ramb18": 14,
+            "ramb36": 24,
+            "register": 14140,
+            "srl": 0,
+            "uram": 0
+          },
+          "control": {
+            "dsp": 41,
+            "logic_lut": 37144,
+            "lut": 38394,
+            "lutram": 1250,
+            "ramb18": 14,
+            "ramb36": 24,
+            "register": 14134,
+            "srl": 0,
+            "uram": 0
+          }
+        },
+        "fpga": {
+          "candidate": {
+            "dsp": 41,
+            "logic_lut": 37730,
+            "lut": 39050,
+            "lutram": 1318,
+            "ramb18": 14,
+            "ramb36": 24,
+            "register": 14850,
+            "srl": 2,
+            "uram": 0
+          },
+          "control": {
+            "dsp": 41,
+            "logic_lut": 37726,
+            "lut": 38978,
+            "lutram": 1250,
+            "ramb18": 14,
+            "ramb36": 24,
+            "register": 14844,
+            "srl": 2,
+            "uram": 0
+          }
+        },
+        "logits": {
+          "candidate": {
+            "dsp": 8,
+            "logic_lut": 1205,
+            "lut": 1215,
+            "lutram": 10,
+            "ramb18": 0,
+            "ramb36": 0,
+            "register": 667,
+            "srl": 0,
+            "uram": 0
+          },
+          "control": {
+            "dsp": 8,
+            "logic_lut": 1207,
+            "lut": 1217,
+            "lutram": 10,
+            "ramb18": 0,
+            "ramb36": 0,
+            "register": 667,
+            "srl": 0,
+            "uram": 0
+          }
+        },
+        "reader": {
+          "candidate": {
+            "dsp": 0,
+            "logic_lut": 246,
+            "lut": 394,
+            "lutram": 148,
+            "ramb18": 0,
+            "ramb36": 0,
+            "register": 79,
+            "srl": 0,
+            "uram": 0
+          },
+          "control": {
+            "dsp": 0,
+            "logic_lut": 222,
+            "lut": 302,
+            "lutram": 80,
+            "ramb18": 0,
+            "ramb36": 0,
+            "register": 73,
+            "srl": 0,
+            "uram": 0
+          }
+        }
+      },
+      "primitive_counts": {
+        "candidate": {
+          "embedding": {
+            "RAMB18E2": 1,
+            "RAMB36E2": 6
+          },
+          "logits": {
+            "DSP48E2": 8,
+            "RAM32M16": 1,
+            "RAM32X1D": 2,
+            "RAMD32": 18,
+            "RAMS32": 2
+          },
+          "reader": {
+            "RAM64M8": 18,
+            "RAM64X1D": 2,
+            "RAMD64E": 148
+          }
+        },
+        "control": {
+          "embedding": {
+            "RAMB18E2": 1,
+            "RAMB36E2": 6
+          },
+          "logits": {
+            "DSP48E2": 8,
+            "RAM32M16": 1,
+            "RAM32X1D": 2,
+            "RAMD32": 18,
+            "RAMS32": 2
+          },
+          "reader": {
+            "RAM32M16": 10,
+            "RAMD32": 140,
+            "RAMS32": 20
+          }
+        }
+      }
+    },
+    "resources": {
+      "bram_tile": 31.0,
+      "dsp": 41,
+      "lut": 39050,
+      "register": 14850
+    },
+    "routed_hp0": {
+      "arburst": 1,
+      "arid": 0,
+      "arlen": 7,
+      "arprot": 2,
+      "arsize": 3,
+      "clock": "clk_pl_0",
+      "read_data_width": 64
+    },
+    "timing": {
+      "clock": "clk_pl_0 period_ns 20.000",
+      "drc_errors_or_critical_warnings": "0",
+      "fully_placed": "1",
+      "fully_routed": "1",
+      "hold_slack_ns": "0.020",
+      "native_no_clock": "0",
+      "partially_routed_nets": "0",
+      "routing_errors": "0",
+      "routing_gap_nets": "0",
+      "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+      "setup_slack_ns": "4.424",
+      "unclocked_active_pins": "0",
+      "unconstrained_internal_endpoints": "0",
+      "unrouted_nets": "0",
+      "unused_ps_clock_outputs": "0"
+    }
+  },
+  "correctness": {
+    "evidence": "Verified route, PS8 HP0 pins and firmware in both arms.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "address_width": 49,
+      "candidate_checkpoint": "625a9e04fc0edf48c33934f9d0517441020c51d81aa9dc8e8c0472babddd10a8",
+      "clock_hz": 50000000,
+      "control_checkpoint": "70281d404d0abbb157a74392a904f1b62f7a3d4f0b9120c50919f9c03256db64",
+      "data_width": 64,
+      "hp0_aperture_bytes": 2147483648,
+      "hp0_port": "S_AXI_HP0_FPD",
+      "maximum_burst_beats": 8,
+      "mode": "matched DDR4 routes with serialized and double buffering",
+      "part": "xck26-sfvc784-2LV-c",
+      "threads": 2,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "3125dce06bf4256f62201172eb10f39da45a384b9e1139def2849c3148397197",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-logits-ddr4-prefetch-v1",
+  "id": "logits-ddr4-prefetch-build-20261119T145535Z",
+  "implementation": {
+    "id": "logits-ddr4-prefetch-v1",
+    "sha256": "157a66177f7f9e7c7f73ca2599703c05854961e350e16356c1a535fdbd9992dd"
+  },
+  "limitations": [
+    "Timing and resources describe Vivado implementation. Board service latency and energy are physical measurements.",
+    "The two candidate group slots share the two physical staging memories, with aggregate LUTRAM attribution."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.accelerator.lut",
+      "samples": [
+        38465.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.accelerator.logic_lut",
+      "samples": [
+        37147.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.accelerator.lutram",
+      "samples": [
+        1318.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.accelerator.register",
+      "samples": [
+        14140.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.accelerator.ramb36",
+      "samples": [
+        24.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.accelerator.ramb18",
+      "samples": [
+        14.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.accelerator.uram",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.accelerator.dsp",
+      "samples": [
+        41.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.accelerator.lut",
+      "samples": [
+        38394.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.accelerator.logic_lut",
+      "samples": [
+        37144.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.accelerator.lutram",
+      "samples": [
+        1250.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.accelerator.register",
+      "samples": [
+        14134.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.accelerator.ramb36",
+      "samples": [
+        24.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.accelerator.ramb18",
+      "samples": [
+        14.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.accelerator.uram",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.accelerator.dsp",
+      "samples": [
+        41.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.fpga.lut",
+      "samples": [
+        39050.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.fpga.logic_lut",
+      "samples": [
+        37730.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.fpga.lutram",
+      "samples": [
+        1318.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.fpga.register",
+      "samples": [
+        14850.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.fpga.ramb36",
+      "samples": [
+        24.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.fpga.ramb18",
+      "samples": [
+        14.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.fpga.uram",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.fpga.dsp",
+      "samples": [
+        41.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.fpga.lut",
+      "samples": [
+        38978.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.fpga.logic_lut",
+      "samples": [
+        37726.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.fpga.lutram",
+      "samples": [
+        1250.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.fpga.register",
+      "samples": [
+        14844.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.fpga.ramb36",
+      "samples": [
+        24.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.fpga.ramb18",
+      "samples": [
+        14.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.fpga.uram",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.fpga.dsp",
+      "samples": [
+        41.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.logits.lut",
+      "samples": [
+        1215.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.logits.logic_lut",
+      "samples": [
+        1205.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.logits.lutram",
+      "samples": [
+        10.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.logits.register",
+      "samples": [
+        667.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.logits.ramb36",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.logits.ramb18",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.logits.uram",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.logits.dsp",
+      "samples": [
+        8.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.logits.lut",
+      "samples": [
+        1217.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.logits.logic_lut",
+      "samples": [
+        1207.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.logits.lutram",
+      "samples": [
+        10.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.logits.register",
+      "samples": [
+        667.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.logits.ramb36",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.logits.ramb18",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.logits.uram",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.logits.dsp",
+      "samples": [
+        8.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.reader.lut",
+      "samples": [
+        394.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.reader.logic_lut",
+      "samples": [
+        246.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.reader.lutram",
+      "samples": [
+        148.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.reader.register",
+      "samples": [
+        79.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.reader.ramb36",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.reader.ramb18",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.reader.uram",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.candidate.reader.dsp",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.reader.lut",
+      "samples": [
+        302.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.reader.logic_lut",
+      "samples": [
+        222.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.reader.lutram",
+      "samples": [
+        80.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.reader.register",
+      "samples": [
+        73.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.reader.ramb36",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.reader.ramb18",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.reader.uram",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed hierarchical utilization.",
+      "name": "routed.control.reader.dsp",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed 20 ns timing report.",
+      "name": "routed.control.setup_slack_ns",
+      "samples": [
+        5.215
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed 20 ns timing report.",
+      "name": "routed.control.hold_slack_ns",
+      "samples": [
+        0.012
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed 20 ns timing report.",
+      "name": "routed.candidate.setup_slack_ns",
+      "samples": [
+        4.424
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed 20 ns timing report.",
+      "name": "routed.candidate.hold_slack_ns",
+      "samples": [
+        0.02
+      ],
+      "unit": "ns"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-logits-ddr4-prefetch-v1-build",
+    "measurement_boundary": "Matched routed FPGA, accelerator, logits and reader hierarchies.",
+    "quality_gate": "20 ns timing closure, native HP0 and unchanged block storage and embedding.",
+    "sha256": "b2bc721c50ea0ea13e8f6c5151a9129fd9ed6d7006963999d161a41bf7040fc6",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Qualified exact paired frozen model RTL in logits-ddr4-prefetch-rtl-20261119T150027Z.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "91b2c03da670b6d6ba784d90981e1db1a63f4255e438d9bc121158d306de2dd0"
+  },
+  "started_at": "2026-11-19T14:55:49+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

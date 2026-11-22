@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "name": "Verilator",
+  "version": "5.052",
+  "architecture": "arm64",
+  "platform": "macOS Tahoe",
+  "version_stdout": "Verilator 5.052 2026-09-05 rev vUNKNOWN-built20260905",
+  "runtime_root": "toolchains/verilator-5.052/verilator/5.052",
+  "bottle_url": "https://ghcr.io/v2/homebrew/core/verilator/blobs/sha256:e7feb1dd658e25f1fb18ee4b1ef4f54e865685041f59f02c1f1b19aa6acba3bb",
+  "bottle_sha256": "e7feb1dd658e25f1fb18ee4b1ef4f54e865685041f59f02c1f1b19aa6acba3bb",
+  "bottle_bytes": 6814457,
+  "tree_sha256": "cbaba03f25514c8016822e6d45d8110aff0705e1b50324ba14ab5bab15fe5d3e",
+  "tree_files": 132,
+  "upstream_install": "https://verilator.org/guide/latest/install.html",
+  "formula_metadata": "https://formulae.brew.sh/api/formula/verilator.json",
+  "license": "LGPL-3.0-only OR Artistic-2.0",
+  "installation": "Isolated verified bottle; no global installation, shell profile change or Python dependency change."
+}

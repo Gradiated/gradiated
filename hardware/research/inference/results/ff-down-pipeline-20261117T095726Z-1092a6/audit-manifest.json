@@ -1,0 +1,108 @@
+{
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/audit-ff-down-build-record.py": {
+      "bytes": 1074,
+      "sha256": "9b13b79ffb64340cd893930dd9174a7467e52c443cf7a729aeb4e6c97c44da2e"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/audit-ff-down-build.py": {
+      "bytes": 4562,
+      "sha256": "4960039a5c3e5847486c0e1ac87ffd065ab8ea2abcc39ab703bf906048c3a2e1"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/audit-ff-down-counters.py": {
+      "bytes": 983,
+      "sha256": "67958db9892d92e66494ee610675ec83d8fc66728cf0ca2b39b5907749767caf"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/audit-ff-down-final-health.py": {
+      "bytes": 2178,
+      "sha256": "c4177a22f8391a3725b90da8000da7678a44e6cb5a3bfc0e929733920299becc"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/audit-ff-down-link.py": {
+      "bytes": 3485,
+      "sha256": "14e36cefd874b7c2fc825b199ff6635c301dce0dbee0951e1534eb378eaad0f9"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/audit-ff-down-packet.py": {
+      "bytes": 4733,
+      "sha256": "8fea906c2c1d80064d80318e064abdf7a68a5fe891d02ac11d2826bbc1496b4a"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/audit-ff-down-resume-packet.py": {
+      "bytes": 4007,
+      "sha256": "14b24f149b6d2b7581e8dee371d020e170dbe1a97148b5fbd541f634d99d3200"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/audit-ff-down-resume-staged.py": {
+      "bytes": 4081,
+      "sha256": "55bd43ae0cac5667a95491376cc4df8b8ae156e37b541fd5de00593b3210d42d"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/ff-down-build-audit.json": {
+      "bytes": 2479,
+      "sha256": "68ab0331ee165ed01811997dc5de6b79dd07b5e7424a05f76faaadc6d7f48569"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/ff-down-build-input-audit.json": {
+      "bytes": 589,
+      "sha256": "c76aa7c308782b263a0ee0f3f185586fc297af83d697a962419602c98d1bca68"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/ff-down-build-record-audit.json": {
+      "bytes": 180,
+      "sha256": "72d0e953b8550b2b2f316c1f16be43d8bc9bb274bbdf54db677f248364d46f6d"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/ff-down-counter-audit.json": {
+      "bytes": 5448,
+      "sha256": "4a25a3ecc86cf811b28622f6ce60408120899a4293bfc8aee30b7a0647c21919"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/ff-down-counter-reference.json": {
+      "bytes": 15455,
+      "sha256": "1a7dfcb4bff159a01583a743ae38506b373c9781b33ba418fe7ef393495a0d82"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/ff-down-final-health-audit.json": {
+      "bytes": 443,
+      "sha256": "5f189c514185c0950db28c70910dfe3262c5a5056a7af995ca44458c55b970c0"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/ff-down-link-audit.json": {
+      "bytes": 474,
+      "sha256": "7f1413ee04a0728b10f479e589ca1a84b196f0a2d82bdcbaf55bdeaac33d51b0"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/ff-down-packet-audit.json": {
+      "bytes": 657,
+      "sha256": "5a02bfb905d3bb266fb2707d9f99a76cde1a01c1d3519b925cb673dc089f8fb2"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/ff-down-physical-audit.json": {
+      "bytes": 28650,
+      "sha256": "29a62a4203d6a296d935a1b675e7cd2d29974d2223346672ae8c6e5e9e2271f3"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/ff-down-record-consistency-pinned.json": {
+      "bytes": 790,
+      "sha256": "e87a320bc39c8b6c310df1c883c98542540743c44ead8ed9911470a195983a88"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/ff-down-resume-packet-audit.json": {
+      "bytes": 493,
+      "sha256": "767913062c9870bbb64f1beed798c2a091796039ba7265a479c8317269a1bab3"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/ff-down-resume-setup-admission.json": {
+      "bytes": 347,
+      "sha256": "814371bbd667bcada0129e9c055bbb47e3496d411e149e7694d5d3ed991492ae"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/ff-down-resume-setup-audit.json": {
+      "bytes": 341,
+      "sha256": "ac206cc39df301310234a1bb5d47bfe0d0e6d8a154d6bec1f7cf4355c5adf075"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-pipeline-v1-coordinator/resumed-physical-audits/ff-down-resume-staged-audit.json": {
+      "bytes": 674,
+      "sha256": "d987378a9ba33e27b092a980c2145e55c1d5462113d15a9957e4ba31cd5a4250"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-v1-coordinator/lanes-record-consistency.py": {
+      "bytes": 2432,
+      "sha256": "39a6874319c26be9b51924c26eb8f8c087e848bcbf374c396870cafa19aee640"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/counter-audit.py": {
+      "bytes": 1392,
+      "sha256": "b0531072612e994d0edddb61b6885ef0357d7c4f1035377d03d3fd795b7dc8d9"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/independent-audit.py": {
+      "bytes": 7516,
+      "sha256": "2af82a0c3ffdb2dfc5a96c3fe20092e17e8b24a784955c211d3d4f9df6838183"
+    }
+  },
+  "passed": true,
+  "raw_manifest_sha256": "0cdf984b74c4fde30c1d6bb25e332609d21f11585d6bab633ff08ab9c906e5ff",
+  "run_sha256": "0ebaa4ce5b7ae2b4e3c63256aa6c1907826dacd92215934ddd6b0fd0336839c7",
+  "scope": "Independent exact build/input, serial, arithmetic, physical, health and compact record review."
+}

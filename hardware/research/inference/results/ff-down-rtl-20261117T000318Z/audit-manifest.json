@@ -1,0 +1,31 @@
+{
+  "archive_sha256": "882fc1239f926fa48ac0a5e15b87811f18e8e7b42c34bb9b73aba6e324430af9",
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/ff-down-rtl-20261117T000318Z/audit-ff-down-record.py": {
+      "bytes": 1918,
+      "sha256": "66f5646c4a3a02a8a4af7a5511f577ba85886fe9744615a94789a6fc81994f49"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-rtl-20261117T000318Z/audit-ff-down-simulation.py": {
+      "bytes": 5739,
+      "sha256": "2a59cf6bec82c95344da671c050e447228f747910313f934c67bc9dbac8c0ce8"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-rtl-20261117T000318Z/ff-down-build-input-audit.json": {
+      "bytes": 589,
+      "sha256": "c76aa7c308782b263a0ee0f3f185586fc297af83d697a962419602c98d1bca68"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-rtl-20261117T000318Z/ff-down-record-independent.json": {
+      "bytes": 296,
+      "sha256": "2fbc70e089536f0934fc27e4dddece68866222ed6d1dcdf11cea3ebe802c8249"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-rtl-20261117T000318Z/ff-down-simulation-independent.json": {
+      "bytes": 650,
+      "sha256": "341f8958d9793231fe5506a2d4d95f36072a6e53a0fec74d13c53dae5f7894f4"
+    },
+    ".agents/runtime/hardware/inference/outputs/ff-down-rtl-20261117T000318Z/ff-down-source-audit.json": {
+      "bytes": 648,
+      "sha256": "f39741489ab00cb09893970f5c139614bd70683484a8b2e1102db7d65025e90d"
+    }
+  },
+  "passed": true,
+  "run_sha256": "bd5e5ee84b7fd4c957c14c3d8b73ad0d22f2b5f5d23b2cc76130b0ca32e9669c"
+}

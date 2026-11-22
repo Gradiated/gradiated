@@ -1,0 +1,98 @@
+{
+  "exact_full_state_match": false,
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/attention10-build-audit.json": {
+      "bytes": 2469,
+      "sha256": "541291d4b0d41d5b860e3eadfa3afabffe8eaa8c06b8da553ff61a185b0f210c"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/attention10-candidate-audit.json": {
+      "bytes": 1010,
+      "sha256": "0a405839cf8fb30429bf384818803af6dde36bc81c3376f64e4374627c082f80"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/attention10-counter-audit.json": {
+      "bytes": 5448,
+      "sha256": "7f2e6dd9a3aff203bfdd74a8408c36a54d7318b5f2591d415ee17251d4a28891"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/attention10-counter-reference.json": {
+      "bytes": 15451,
+      "sha256": "845bb7b3720aaf0c70cd8606070e505d1a8b909816b01fc5054d0d17b6136b6f"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/attention10-final-health-audit.json": {
+      "bytes": 3315,
+      "sha256": "254d52cfb6e7c5fd41a3edfb452ef7843d17e39fbae33b3635f2f077d47b37a6"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/attention10-packet-audit.json": {
+      "bytes": 460,
+      "sha256": "47f933560c83bf7dc7a0fd22654be1feba6c7645cf032ea8b2ee1dc93b1442cb"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/attention10-physical-audit.json": {
+      "bytes": 28675,
+      "sha256": "f48793b1b04b18de2b2fb9d4687e6748c288fa48c113429ad43e8b50d1ffaa54"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/attention10-profile-audit.json": {
+      "bytes": 1670,
+      "sha256": "b1b21290368e48096314c4ba3ab095e8c6f13d282c1795288c0b86fd0546e30b"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/attention10-record-consistency-pinned.json": {
+      "bytes": 865,
+      "sha256": "ad95650a652138a862e08caca6084e7785ff2292435bacb09c5fb76a85e6fb26"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/attention10-restoration-transient.json": {
+      "bytes": 2741,
+      "sha256": "7b2b548473b7244c3af6357115d56f874c2a398affaf672b3325bf0745f88d27"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/attention10-staged-audit.json": {
+      "bytes": 431,
+      "sha256": "bd5d60766344b4ee5f3dfd143d2897dad9bac9ebc4f1fb7a54861517ad89019d"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/audit-attention10-build.py": {
+      "bytes": 4598,
+      "sha256": "1c9b5ea7a29c5c34d05be64ce08a22feea18e22d4d9701faae25366665e9ae7d"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/audit-attention10-candidate.py": {
+      "bytes": 2773,
+      "sha256": "bbae826cafd7b1db94b4d025f5b534306202ae06e7eccc5b200d2c2ff7593b2a"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/audit-attention10-counters.py": {
+      "bytes": 987,
+      "sha256": "5487d8f02bd37e7d3639d0e7ae54280a79adfbc130062a1b88d50f719769f67f"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/audit-attention10-final-health.py": {
+      "bytes": 3312,
+      "sha256": "e9f26426262ea85663267170a3401098b38152c6a8fd47c0d564ab8d93d0ad87"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/audit-attention10-final-record.py": {
+      "bytes": 2022,
+      "sha256": "87123d15a7903543038e95aeab6a05f26e737ec04774360622cf0ce0eafba261"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/audit-attention10-packet.py": {
+      "bytes": 3060,
+      "sha256": "7a695566995cc93c0b3a1d6aafd8bde4f1beb4c162aa54358a007fcd25bb3737"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/audit-attention10-profile.py": {
+      "bytes": 2815,
+      "sha256": "ee442f9bf597ae75df57ac0924eb481f2f3ee86877a766d4b8748494b9881893"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-v1-coordinator/audit-attention10-staged.py": {
+      "bytes": 4099,
+      "sha256": "06f2adff881210cdb095143c629851f5dc3ae0afcf05c40a031d8b80a8b6c8a8"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-v1-coordinator/lanes-record-consistency.py": {
+      "bytes": 2432,
+      "sha256": "39a6874319c26be9b51924c26eb8f8c087e848bcbf374c396870cafa19aee640"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/counter-audit.py": {
+      "bytes": 1392,
+      "sha256": "b0531072612e994d0edddb61b6885ef0357d7c4f1035377d03d3fd795b7dc8d9"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/independent-audit.py": {
+      "bytes": 7516,
+      "sha256": "2af82a0c3ffdb2dfc5a96c3fe20092e17e8b24a784955c211d3d4f9df6838183"
+    }
+  },
+  "original_accelerator_restored": true,
+  "passed": true,
+  "raw_manifest_sha256": "a91925496d1fab721b06247937de477f7f89b0547881be34b0db1888058cca92",
+  "run_sha256": "bfecd146fe93cb3b6fe0c387a59e6c51f291f09290baaa567c9aa125fabda078",
+  "scope": "Independent RTL, implementation, serial and performance review. Original accelerator restoration verified with an ancillary SPI clock enable difference recorded."
+}

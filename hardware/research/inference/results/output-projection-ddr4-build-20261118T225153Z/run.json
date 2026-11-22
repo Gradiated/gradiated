@@ -1,0 +1,559 @@
+{
+  "artifacts": [
+    {
+      "bytes": 92679730,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server.tar.gz",
+      "role": "Full recovered Linux Vivado build and source archive",
+      "sha256": "2ea0ace6ad9f05f4f093d6764305e85c32a0d1a7d424739bf37b787e413fc5c6"
+    },
+    {
+      "bytes": 288,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server.receipt.json",
+      "role": "Remote archive byte and file-count receipt",
+      "sha256": "eae2995a134e5ccc082b5e7d7c58c863aa02666acd98075a2f1490aafb0ad000"
+    },
+    {
+      "bytes": 51241,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/build-input.tar.gz",
+      "role": "Pinned Vivado build input archive",
+      "sha256": "3d65e514925d81dedb5f1248495310a43efa7aa73f7666fb90c1c9cac9068a26"
+    },
+    {
+      "bytes": 2639,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/admitted-source-manifest.json",
+      "role": "Admitted RTL, shell, runner, and source hashes",
+      "sha256": "1f807b86ac73f10deb304e74ea7a26ba4ef1aa25fea13926b1d20baf09578c9c"
+    },
+    {
+      "bytes": 1841,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/offline-acceptance.json",
+      "role": "Independent Mac timing, native interface, firmware, and overlay validation",
+      "sha256": "1a679030f7b28fe6cf47b3da0f8be33d7cf713f698f8585195b3d83f0fbdd887"
+    },
+    {
+      "bytes": 104803,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/route-hp0-verification.tsv",
+      "role": "Independent routed PS8 HP0 primitive, signal, and clock trace",
+      "sha256": "9a2078115cd20a22cc0fbc3abdeffcba5a4a1812b73ed1b64ed5bcd57048dee2"
+    },
+    {
+      "bytes": 380,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/metrics.txt",
+      "role": "Routed timing and design rule checks",
+      "sha256": "0dacc153189a2b60a1c2c0b1961a61415db3688ec6848637ced79a5ddb7f6eb0"
+    },
+    {
+      "bytes": 12669,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/utilization.rpt",
+      "role": "Routed device resource census",
+      "sha256": "d3d2a2812f53dd68c6de71cd42775d8e8933639712ce42b8ef7a2def6c05ebe5"
+    },
+    {
+      "bytes": 142152,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/ddr-primitives.tsv",
+      "role": "Routed projection and PS primitive inventory",
+      "sha256": "882148e700236ebe28ee28bdc92b97328205a0b5bdd2ff6dab542bdfe6ce4aa9"
+    },
+    {
+      "bytes": 31271,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/ddr-routed-hp0.tsv",
+      "role": "Initial routed native HP0 pin report",
+      "sha256": "fe71adddc411fbdddd3fc1c18a59dd34360b6bf87f44f0eff0fde889acb5c18c"
+    },
+    {
+      "bytes": 5127,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/generate/ddr-interfaces.txt",
+      "role": "Validated address aperture, clock domain, protocol and width",
+      "sha256": "2f5284aadc21d8d3cab89841ef63ce24422ff817c4ba91020b0cafdcbc3c1b0b"
+    },
+    {
+      "bytes": 39025,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/generate/console.log",
+      "role": "Generation warnings and IP refresh evidence",
+      "sha256": "ca402bc980585a818bcfc519339bb519d61f3be02b7c41aee10d38589f3b369e"
+    },
+    {
+      "bytes": 216063,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/synth/console.log",
+      "role": "Synthesis warnings and memory inference evidence",
+      "sha256": "a9e7cf8d8e04686c94999ed13facbc3e3712f1d1935515367836f66851913065"
+    },
+    {
+      "bytes": 24362212,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/route/route.dcp",
+      "role": "Exact routed Vivado checkpoint",
+      "sha256": "c4bca87d0385f5cd216fe32ff8320f87fa308d3439264a48253aa14accf0b146"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/offline-package/gradiated-tiny-output-projection-ddr4-v1-50mhz.bit.bin",
+      "role": "Independently checked firmware payload",
+      "sha256": "798bb7742f22c2cf5d2a081ec7b7649c12760fe33f6c28502af3377e63113098"
+    },
+    {
+      "bytes": 371,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/kv260-output-projection-ddr4-program.dtbo",
+      "role": "FPGA manager firmware overlay",
+      "sha256": "e55c62af9ce1fb711487e0ff05ee5254f4dc17d9e156616100e2b298e1373e3f"
+    },
+    {
+      "bytes": 778,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/kv260-ddr4-interface.dtbo",
+      "role": "Candidate HP0 AFI and UIO overlay",
+      "sha256": "a910db9f4de4a1c5571d5720aac058234d5460a8844060d0530916df065c3d03"
+    },
+    {
+      "bytes": 374,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/kv260-ddr4-dma.dtbo",
+      "role": "Generic DMA template retained as archive evidence",
+      "sha256": "4281c8126a8b53b88b53287920b37546e87994d8ab94a5544eab0350337b6747"
+    },
+    {
+      "bytes": 416,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/kv260-ddr4-dma-direct.dtbo",
+      "role": "Direct DMA deployment overlay for the verified boot state",
+      "sha256": "d338459633f922121fdeb548a52ff745edbc254d64cd97363755b9490ff8cb05"
+    },
+    {
+      "bytes": 310,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/kv260-ddr4-afi-restore.dtbo",
+      "role": "Restore overlay for captured zero width fields",
+      "sha256": "c747e2487a5ead29c8a764fa679dc4f67bba9ac9073a1e518f4faaaeab7e751a"
+    },
+    {
+      "bytes": 2009,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/readback.py",
+      "role": "Boot-specific AFI and SMMU readback checker",
+      "sha256": "a37be8d4fa13df736fab83c601b7124d147377cd9a92082fc89459a3104635a6"
+    },
+    {
+      "bytes": 31109692,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T224726Z/server.tar.gz",
+      "role": "Superseded secure AXI synthesis archive",
+      "sha256": "36f44b2fb657a5d49fca93a7b477158a3f8b317ff73d6cd66d0f7111447ff921"
+    },
+    {
+      "bytes": 489,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T224726Z/server.receipt.json",
+      "role": "Superseded secure AXI synthesis receipt",
+      "sha256": "72513ad35cf9f739ea2b0d3ff49cde1585de9ef8ae27d788d291aac9894dddad"
+    },
+    {
+      "bytes": 4328435,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-preflight-20261118T224353Z/server.tar.gz",
+      "role": "Generation-only interface preflight archive with stub master ports",
+      "sha256": "c3beaa882ad2f236fa50d62dba9410d1997c11f5fe8aad67baee9c3e0fb12f3a"
+    },
+    {
+      "bytes": 16566,
+      "path": "hardware/research/inference/results/attention-exp-pair-v2-build-20261117T225852Z/run.json",
+      "role": "Adopted routed control evidence",
+      "sha256": "61c505f49c81a1f3f351861e3e688a8111943f667251222ea92432365dfaf5de"
+    },
+    {
+      "bytes": 16851,
+      "path": "hardware/research/inference/results/output-projection-ddr4-rtl-20261118T225153Z/run.json",
+      "role": "Scope-matched RTL and exact-model evidence",
+      "sha256": "4ad8509ff42487c54309f29d72b2cd9fa90f1bb9a5450feb79c0befbe8d00e44"
+    }
+  ],
+  "completed_at": "2026-11-18T23:08:33+00:00",
+  "conditions": {
+    "control_resources": {
+      "bram_tile": 39.0,
+      "dsp": 41.0,
+      "lut": 38329.0,
+      "register": 14464.0
+    },
+    "interface_preflight": "output-projection-ddr4-preflight-20261118T224353Z",
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "cross_device_comparison": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Verified routed timing, native HP0 and primitive census.",
+        "sources": [
+          {
+            "bytes": 1841,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/offline-acceptance.json",
+            "role": "Independent Mac timing, native interface, firmware, and overlay validation",
+            "sha256": "1a679030f7b28fe6cf47b3da0f8be33d7cf713f698f8585195b3d83f0fbdd887"
+          },
+          {
+            "bytes": 104803,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/route-hp0-verification.tsv",
+            "role": "Independent routed PS8 HP0 primitive, signal, and clock trace",
+            "sha256": "9a2078115cd20a22cc0fbc3abdeffcba5a4a1812b73ed1b64ed5bcd57048dee2"
+          },
+          {
+            "bytes": 380,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/metrics.txt",
+            "role": "Routed timing and design rule checks",
+            "sha256": "0dacc153189a2b60a1c2c0b1961a61415db3688ec6848637ced79a5ddb7f6eb0"
+          },
+          {
+            "bytes": 12669,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/utilization.rpt",
+            "role": "Routed device resource census",
+            "sha256": "d3d2a2812f53dd68c6de71cd42775d8e8933639712ce42b8ef7a2def6c05ebe5"
+          },
+          {
+            "bytes": 142152,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/ddr-primitives.tsv",
+            "role": "Routed projection and PS primitive inventory",
+            "sha256": "882148e700236ebe28ee28bdc92b97328205a0b5bdd2ff6dab542bdfe6ce4aa9"
+          }
+        ],
+        "state": "measured"
+      },
+      "long_stability": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Verified routed timing, native HP0 and primitive census.",
+        "sources": [
+          {
+            "bytes": 1841,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/offline-acceptance.json",
+            "role": "Independent Mac timing, native interface, firmware, and overlay validation",
+            "sha256": "1a679030f7b28fe6cf47b3da0f8be33d7cf713f698f8585195b3d83f0fbdd887"
+          },
+          {
+            "bytes": 104803,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/route-hp0-verification.tsv",
+            "role": "Independent routed PS8 HP0 primitive, signal, and clock trace",
+            "sha256": "9a2078115cd20a22cc0fbc3abdeffcba5a4a1812b73ed1b64ed5bcd57048dee2"
+          },
+          {
+            "bytes": 380,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/metrics.txt",
+            "role": "Routed timing and design rule checks",
+            "sha256": "0dacc153189a2b60a1c2c0b1961a61415db3688ec6848637ced79a5ddb7f6eb0"
+          },
+          {
+            "bytes": 12669,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/utilization.rpt",
+            "role": "Routed device resource census",
+            "sha256": "d3d2a2812f53dd68c6de71cd42775d8e8933639712ce42b8ef7a2def6c05ebe5"
+          },
+          {
+            "bytes": 142152,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/ddr-primitives.tsv",
+            "role": "Routed projection and PS primitive inventory",
+            "sha256": "882148e700236ebe28ee28bdc92b97328205a0b5bdd2ff6dab542bdfe6ce4aa9"
+          }
+        ],
+        "state": "measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "physical_area": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Verified routed timing, native HP0 and primitive census.",
+        "sources": [
+          {
+            "bytes": 1841,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/offline-acceptance.json",
+            "role": "Independent Mac timing, native interface, firmware, and overlay validation",
+            "sha256": "1a679030f7b28fe6cf47b3da0f8be33d7cf713f698f8585195b3d83f0fbdd887"
+          },
+          {
+            "bytes": 104803,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/route-hp0-verification.tsv",
+            "role": "Independent routed PS8 HP0 primitive, signal, and clock trace",
+            "sha256": "9a2078115cd20a22cc0fbc3abdeffcba5a4a1812b73ed1b64ed5bcd57048dee2"
+          },
+          {
+            "bytes": 380,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/metrics.txt",
+            "role": "Routed timing and design rule checks",
+            "sha256": "0dacc153189a2b60a1c2c0b1961a61415db3688ec6848637ced79a5ddb7f6eb0"
+          },
+          {
+            "bytes": 12669,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/utilization.rpt",
+            "role": "Routed device resource census",
+            "sha256": "d3d2a2812f53dd68c6de71cd42775d8e8933639712ce42b8ef7a2def6c05ebe5"
+          },
+          {
+            "bytes": 142152,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-build-20261118T225153Z/server/build/reports/ddr-primitives.tsv",
+            "role": "Routed projection and PS primitive inventory",
+            "sha256": "882148e700236ebe28ee28bdc92b97328205a0b5bdd2ff6dab542bdfe6ce4aa9"
+          }
+        ],
+        "state": "measured"
+      },
+      "serving_load": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "startup": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Offline implementation stage.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "phase_elapsed_seconds": 988.4146961520892,
+    "resources": {
+      "bram_tile": 39.0,
+      "dsp": 41.0,
+      "lut": 38860.0,
+      "register": 14850.0
+    },
+    "routed_hp0": {
+      "arid": 0,
+      "arlen": 0,
+      "arprot": 2,
+      "arsize": 3,
+      "aruser": 0,
+      "awvalid": 0,
+      "read_data_width": 64
+    },
+    "source_manifest_sha256": "1f807b86ac73f10deb304e74ea7a26ba4ef1aa25fea13926b1d20baf09578c9c",
+    "superseded_attempt": "output-projection-ddr4-build-20261118T224726Z",
+    "timing": {
+      "clock": "clk_pl_0 period_ns 20.000",
+      "drc_errors_or_critical_warnings": "0",
+      "fully_placed": "1",
+      "fully_routed": "1",
+      "hold_slack_ns": "0.005",
+      "native_no_clock": "0",
+      "partially_routed_nets": "0",
+      "routing_errors": "0",
+      "routing_gap_nets": "0",
+      "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+      "setup_slack_ns": "4.521",
+      "unclocked_active_pins": "0",
+      "unconstrained_internal_endpoints": "0",
+      "unrouted_nets": "0",
+      "unused_ps_clock_outputs": "0"
+    }
+  },
+  "correctness": {
+    "evidence": "Verified native HP0 read datapath, 20 ns timing, retained projection BRAM and exact firmware conversion.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "clock_hz": 50000000,
+      "data_width_bits": 64,
+      "hp0_aperture_bytes": 2147483648,
+      "hp0_native_clock": "clk_pl_0",
+      "hp0_port": "S_AXI_HP0_FPD",
+      "id_width_bits": 6,
+      "mode": "fully routed PS, AXI, and neural implementation",
+      "part": "xck26-sfvc784-2LV-c",
+      "threads": 2,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "69f6f492a720892277e42e9939f804daaf3a9f4278091c3c60e7f0f94b7d1a2e",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-output-projection-ddr4-v1",
+  "id": "output-projection-ddr4-build-20261118T225153Z",
+  "implementation": {
+    "id": "output-projection-ddr4-v1",
+    "sha256": "798bb7742f22c2cf5d2a081ec7b7649c12760fe33f6c28502af3377e63113098"
+  },
+  "limitations": [
+    "Offline build evidence measures routing and resource use. Board traffic, latency, power and I/O behavior require physical measurements.",
+    "The dual-mode fixture retains BRAM for the comparison, so the resource census measures fixture cost.",
+    "The direct deployment overlay depends on verified live boot DMA translation, coherency and AFI state."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilization report.",
+      "name": "routed.bram_tile",
+      "samples": [
+        39.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilization report.",
+      "name": "routed.dsp",
+      "samples": [
+        41.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilization report.",
+      "name": "routed.lut",
+      "samples": [
+        38860.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilization report.",
+      "name": "routed.register",
+      "samples": [
+        14850.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed 20 ns timing summary.",
+      "name": "routed.setup_slack_ns",
+      "samples": [
+        4.521
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed 20 ns timing summary.",
+      "name": "routed.hold_slack_ns",
+      "samples": [
+        0.005
+      ],
+      "unit": "ns"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-output-projection-ddr4-v1-build",
+    "measurement_boundary": "Routed Vivado reports, native HP0 checkpoint, generated PS init and offline firmware package.",
+    "quality_gate": "Complete 20 ns route, verified native 64-bit HP0, preserved BRAM path and exact offline artifacts.",
+    "sha256": "77c5aef7e92327cbfe4caf5afc9721eff349cefca96f2b3e492f9cc63d174be1",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Frozen paired RTL replay qualified in output-projection-ddr4-rtl-20261118T225153Z.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": null
+  },
+  "started_at": "2026-11-18T22:52:04+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

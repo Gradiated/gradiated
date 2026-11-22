@@ -1,0 +1,797 @@
+{
+  "artifacts": [
+    {
+      "bytes": 8525752,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-profile-rtl-20261117T104256Z/replay.tar.gz",
+      "role": "Exact generated adopted RTL, simulation-only monitor, fixtures and raw profile",
+      "sha256": "3b2d9433951827dce637add34287f3959447790257820a8fbe44d8f19aa49f2b"
+    },
+    {
+      "bytes": 19362,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-profile-rtl-20261117T104256Z/archive-contents.json",
+      "role": "Exact archived member geometry and hash inventory",
+      "sha256": "6b3cf5f99860ed329cd165bb4e60d1ffd0d94f8775e66d27a4a7c5331112c393"
+    },
+    {
+      "bytes": 15392,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-profile-rtl-20261117T104256Z/profile.json",
+      "role": "Checked exclusive phase and nested accounting by context and request",
+      "sha256": "74c95a6d2e61d2aed203ae3531edd9f59e839276d0f119852d6cee9d90ec57b4"
+    },
+    {
+      "bytes": 752,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-profile-rtl-20261117T104256Z/invocation.json",
+      "role": "Exact simulator, deadline and diagnostic source pins",
+      "sha256": "cd79ca54683b2bffe726c27c42f1e3cec7cff767112b79bb93d64c844ad3a51e"
+    },
+    {
+      "bytes": 19486,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-profile-rtl-20261117T104256Z/source.patch",
+      "role": "New diagnostic monitor, replay and protocol",
+      "sha256": "46400b170f174ecf719519545cd2a2d48ba3b5c81807c603b78f9f2ebd5763ee"
+    },
+    {
+      "bytes": 41996,
+      "path": "hardware/research/inference/results/ff-down-rtl-20261117T000318Z/run.json",
+      "role": "Adopted pinned exact Experiment 9 RTL",
+      "sha256": "bd5e5ee84b7fd4c957c14c3d8b73ad0d22f2b5f5d23b2cc76130b0ca32e9669c"
+    }
+  ],
+  "completed_at": "2026-11-17T10:43:46.112355+00:00",
+  "conditions": {
+    "cases": {
+      "bos-only-cap0": {
+        "complete_request_cycles": 38257,
+        "exp_divide_cycles": 192,
+        "exponential": 248,
+        "invocations": 1,
+        "key_traversal": 96,
+        "probability": 74,
+        "total": 614,
+        "value_traversal": 96
+      },
+      "encoded-fu2p2q-cap255": {
+        "complete_request_cycles": 9801277,
+        "exp_divide_cycles": 1739904,
+        "exponential": 2248084,
+        "invocations": 135,
+        "key_traversal": 881280,
+        "probability": 679320,
+        "total": 4739644,
+        "value_traversal": 881280
+      },
+      "encoded-hello-cap0": {
+        "complete_request_cycles": 432507,
+        "exp_divide_cycles": 12672,
+        "exponential": 16368,
+        "invocations": 11,
+        "key_traversal": 6336,
+        "probability": 4884,
+        "total": 35244,
+        "value_traversal": 6336
+      },
+      "encoded-hello-cap1": {
+        "complete_request_cycles": 432507,
+        "exp_divide_cycles": 12672,
+        "exponential": 16368,
+        "invocations": 11,
+        "key_traversal": 6336,
+        "probability": 4884,
+        "total": 35244,
+        "value_traversal": 6336
+      },
+      "encoded-hello-cap255": {
+        "complete_request_cycles": 6444897,
+        "exp_divide_cycles": 974592,
+        "exponential": 1259298,
+        "invocations": 101,
+        "key_traversal": 494496,
+        "probability": 381174,
+        "total": 2659764,
+        "value_traversal": 494496
+      },
+      "encoded-max48-cap255": {
+        "complete_request_cycles": 17787379,
+        "exp_divide_cycles": 3776640,
+        "exponential": 4881946,
+        "invocations": 201,
+        "key_traversal": 1948896,
+        "probability": 1502274,
+        "total": 10382512,
+        "value_traversal": 1948896
+      },
+      "full-context-cap0": {
+        "complete_request_cycles": 26202235,
+        "exp_divide_cycles": 6260160,
+        "exponential": 8087786,
+        "invocations": 256,
+        "key_traversal": 3158016,
+        "probability": 2434304,
+        "total": 16994282,
+        "value_traversal": 3158016
+      }
+    },
+    "diagnostic_clock_hz": 50000000,
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "All seven archived cases matched byte for byte at observed boundaries.",
+        "sources": [
+          {
+            "bytes": 15392,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-profile-rtl-20261117T104256Z/profile.json",
+            "role": "Checked exclusive phase and nested accounting by context and request",
+            "sha256": "74c95a6d2e61d2aed203ae3531edd9f59e839276d0f119852d6cee9d90ec57b4"
+          }
+        ],
+        "state": "measured"
+      },
+      "cross_device_comparison": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "long_stability": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "memory_bandwidth": {
+        "reason": "RTL cache interface word accounting only. No elapsed physical transfer or power measurements.",
+        "state": "not_measured"
+      },
+      "model_quality": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Exact original input/score/output/cap/stop checks and end state.",
+        "sources": [
+          {
+            "bytes": 15392,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-profile-rtl-20261117T104256Z/profile.json",
+            "role": "Checked exclusive phase and nested accounting by context and request",
+            "sha256": "74c95a6d2e61d2aed203ae3531edd9f59e839276d0f119852d6cee9d90ec57b4"
+          }
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "serving_load": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "All 716 attention windows reconcile to the adopted archived counters.",
+        "sources": [
+          {
+            "bytes": 15392,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-profile-rtl-20261117T104256Z/profile.json",
+            "role": "Checked exclusive phase and nested accounting by context and request",
+            "sha256": "74c95a6d2e61d2aed203ae3531edd9f59e839276d0f119852d6cee9d90ec57b4"
+          }
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Observation-only Verilator replay.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "no_board_operations": true,
+    "simulator_elapsed_seconds": 49.776769
+  },
+  "correctness": {
+    "evidence": "716 attention invocations and 103,360 retained score comparisons. All seven exact parity files and output checks passed.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 RTL model",
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052"
+    },
+    "configuration_sha256": "2f8d960315cbf5f9cca1b1112e84315cf0bad687ffc8b83ddc67c6c8a723180b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-attention-profile-v1",
+  "id": "attention-profile-rtl-20261117T104256Z",
+  "implementation": {
+    "id": "ff-down-pipeline-v1-unchanged-attention-profile",
+    "sha256": "6b3cf5f99860ed329cd165bb4e60d1ffd0d94f8775e66d27a4a7c5331112c393"
+  },
+  "limitations": [
+    "Clock counts from simulation for seven fixed cases. No physical speed, energy or resource claim.",
+    "Fixed-context samples use specific positions of one teacher-forced sequence. Exact cutoff frequencies depend on the input."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L1.total",
+      "samples": [
+        614
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L1.key_traversal",
+      "samples": [
+        96
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L1.value_traversal",
+      "samples": [
+        96
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L1.exponential",
+      "samples": [
+        248
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L1.probability",
+      "samples": [
+        74
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L1.exp_divide_cycles",
+      "samples": [
+        192
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L16.total",
+      "samples": [
+        8384
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L16.key_traversal",
+      "samples": [
+        1536
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L16.value_traversal",
+      "samples": [
+        1536
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L16.exponential",
+      "samples": [
+        3968
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L16.probability",
+      "samples": [
+        1184
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L16.exp_divide_cycles",
+      "samples": [
+        3072
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L64.total",
+      "samples": [
+        33127
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L64.key_traversal",
+      "samples": [
+        6144
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L64.value_traversal",
+      "samples": [
+        6144
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L64.exponential",
+      "samples": [
+        15751
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L64.probability",
+      "samples": [
+        4736
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L64.exp_divide_cycles",
+      "samples": [
+        12192
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L128.total",
+      "samples": [
+        66158
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L128.key_traversal",
+      "samples": [
+        12288
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L128.value_traversal",
+      "samples": [
+        12288
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L128.exponential",
+      "samples": [
+        31502
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L128.probability",
+      "samples": [
+        9472
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L128.exp_divide_cycles",
+      "samples": [
+        24384
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L256.total",
+      "samples": [
+        131978
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L256.key_traversal",
+      "samples": [
+        24576
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L256.value_traversal",
+      "samples": [
+        24576
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L256.exponential",
+      "samples": [
+        62762
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L256.probability",
+      "samples": [
+        18944
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exclusive attention controller clocks or nested divider clocks within its measured exponential phase.",
+      "name": "fixed-context.L256.exp_divide_cycles",
+      "samples": [
+        48576
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-fu2p2q-cap255.total",
+      "samples": [
+        4739644
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-fu2p2q-cap255.key_traversal",
+      "samples": [
+        881280
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-fu2p2q-cap255.value_traversal",
+      "samples": [
+        881280
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-fu2p2q-cap255.exponential",
+      "samples": [
+        2248084
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-fu2p2q-cap255.probability",
+      "samples": [
+        679320
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-fu2p2q-cap255.exp_divide_cycles",
+      "samples": [
+        1739904
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-fu2p2q-cap255.complete_request_cycles",
+      "samples": [
+        9801277
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-hello-cap255.total",
+      "samples": [
+        2659764
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-hello-cap255.key_traversal",
+      "samples": [
+        494496
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-hello-cap255.value_traversal",
+      "samples": [
+        494496
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-hello-cap255.exponential",
+      "samples": [
+        1259298
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-hello-cap255.probability",
+      "samples": [
+        381174
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-hello-cap255.exp_divide_cycles",
+      "samples": [
+        974592
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-hello-cap255.complete_request_cycles",
+      "samples": [
+        6444897
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-max48-cap255.total",
+      "samples": [
+        10382512
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-max48-cap255.key_traversal",
+      "samples": [
+        1948896
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-max48-cap255.value_traversal",
+      "samples": [
+        1948896
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-max48-cap255.exponential",
+      "samples": [
+        4881946
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-max48-cap255.probability",
+      "samples": [
+        1502274
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-max48-cap255.exp_divide_cycles",
+      "samples": [
+        3776640
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Unchanged RTL request through the original terminal counter.",
+      "name": "encoded-max48-cap255.complete_request_cycles",
+      "samples": [
+        17787379
+      ],
+      "unit": "cycles"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-attention-profile-v1",
+    "measurement_boundary": "Unchanged RTL state and handshake cycles inside ATT_WAIT.",
+    "quality_gate": "Seven exact archived replays. Parent phase totals reconcile to each individual attention invocation.",
+    "sha256": "2b1b66a192ffcc43cf5fb7238ae95b93c45b62889c9134f5c8f4d97f5484a7ca",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Same frozen inputs, outputs and numerical rules.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "46400b170f174ecf719519545cd2a2d48ba3b5c81807c603b78f9f2ebd5763ee"
+  },
+  "started_at": "2026-11-17T10:42:56.335586+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

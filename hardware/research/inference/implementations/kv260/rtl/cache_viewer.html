@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gradiated · Where a token's K and V live</title>
+<style>
+:root{color-scheme:dark;font:16px/1.5 system-ui,sans-serif;background:#101722;color:#e8eef7}*{box-sizing:border-box}body{margin:0}main{max-width:1180px;margin:auto;padding:30px 24px}h1{font-size:30px;margin:8px 0}h2{font-size:19px;margin:0 0 12px}p{color:#b9c6d8}.tag{font-size:12px;letter-spacing:1.7px;color:#64dfbf;text-transform:uppercase}.panel,.card{background:#182333;border:1px solid #304057;border-radius:12px;padding:18px;margin:16px 0}.controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0}button,select,input[type=number]{background:#25364b;border:1px solid #526982;border-radius:7px;color:white;padding:8px 12px}button{cursor:pointer}button:hover{background:#35516e}input[type=range]{flex:1;min-width:180px;accent-color:#64dfbf}input[type=number]{width:90px}.small{font-size:13px;color:#b9c6d8}.phase{color:#64dfbf;font-family:ui-monospace,monospace}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.value{font-size:25px;font-weight:650}.grid{display:grid;grid-template-columns:repeat(16,1fr);gap:5px}.grid button{padding:6px 1px;font-size:12px}.grid .valid{background:#194d4a}.grid .partial{background:#695426}.grid .selected{outline:2px solid #81d9ff}.scroll{overflow:auto;max-height:470px}table{border-collapse:collapse;width:100%;font:13px ui-monospace,monospace}th,td{padding:8px;border-bottom:1px solid #304057;text-align:right}th:first-child,td:first-child{text-align:left}tr.selected{background:#194d4a}tr.invalid{opacity:.5}.bits{font:17px ui-monospace,monospace;overflow-wrap:anywhere}svg{width:100%;height:auto}.diagram text{fill:#e8eef7;text-anchor:middle;font-size:14px}.diagram rect{fill:#223249;stroke:#647c98;stroke-width:1.5}.diagram path{fill:none;stroke:#8fa6c0;stroke-width:2}a{color:#81d9ff}summary{cursor:pointer}@media(max-width:700px){main{padding:20px 12px}.cards{grid-template-columns:1fr}.grid{grid-template-columns:repeat(8,1fr)}h1{font-size:25px}.diagram{min-width:700px}}
+</style>
+<main>
+<div class="tag">Gradiated · FPGA learning lab</div><h1>KV cache: remember a token’s numbers</h1>
+<p>Each token contributes 32 rotated K values and 32 unchanged V values. Two memories store them. A token becomes readable only after all 32 K/V pairs arrive. This is observed circuit simulation on a Mac.</p>
+<section class="panel"><h2>Replay the memory controller</h2>
+<div class="controls"><label for="scene">Example</label><select id="scene"></select><button id="next_commit">Next complete token</button></div>
+<div class="controls"><button id="back" aria-label="Previous clock">←</button><button id="play">Play</button><button id="forward" aria-label="Next clock">→</button><input id="clock_position" type="range" min="0" value="0" aria-label="Simulation clock"><span id="clock"></span></div>
+<p id="status" class="phase"></p><p id="event" class="small"></p>
+<div class="cards"><div class="card"><div class="small">Complete, readable tokens</div><div id="count" class="value">0 / 256</div></div><div class="card"><div class="small">Pairs written into the next token</div><div id="partial" class="value">0 / 32</div></div><div class="card"><div class="small">Logical capacity · two 16-bit memories</div><div class="value">32 KiB</div></div></div>
+<div class="scroll"><svg class="diagram" viewBox="0 0 960 150" role="img" aria-label="Token and coordinate choose an address shared by separate K and V memories">
+<path d="M180 72H230M440 72H490M700 72H750"/>
+<g><rect x="5" y="30" width="175" height="85" rx="8"/><text x="92" y="56">Position + coordinate</text><text id="diagram_input" x="92" y="86">0, 0</text></g>
+<g><rect x="230" y="30" width="210" height="85" rx="8"/><text x="335" y="56">Address = position × 32</text><text x="335" y="80">+ coordinate</text><text id="diagram_address" x="335" y="103">0</text></g>
+<g><rect x="490" y="30" width="210" height="85" rx="8"/><text x="595" y="55">K memory · 8,192 words</text><text x="595" y="82">V memory · 8,192 words</text><text x="595" y="104">16 bits per word</text></g>
+<g><rect x="750" y="30" width="205" height="85" rx="8"/><text x="852" y="56">Registered read response</text><text id="response" x="852" y="85">—</text><text x="852" y="105">K and V together</text></g>
+</svg></div><p id="response_note" class="small"></p>
+</section>
+<section class="panel"><h2>Where are the tokens?</h2><p class="small">Green: complete and readable. Gold: partly written. Dark: invalid. Click a token to inspect its recorded contents at this clock.</p><div id="memory" class="grid"></div></section>
+<section class="panel"><h2>Inspect one location</h2>
+<div class="controls"><label for="token">Token position</label><input id="token" type="number" min="0" max="255" value="0"><label for="coordinate">Coordinate</label><input id="coordinate" type="number" min="0" max="31" value="0"></div>
+<p id="visibility" class="phase"></p><p id="address" class="bits"></p><p id="units" class="small"></p><p id="recorded_read" class="small"></p>
+<div class="scroll"><table><thead><tr><th>Coordinate</th><th>K · after RoPE</th><th>V</th><th>Visibility</th></tr></thead><tbody id="words"></tbody></table></div>
+<p class="small">The table reconstructs stored bits from observed writes or the verified full-cache readback. Partial and reset-invalid bits are shown for teaching; the controller refuses reads of those tokens. Selecting a cell replays recorded data, not a new hardware operation.</p>
+</section>
+<details class="panel"><summary>What was tested?</summary><p id="checks"></p><p>One fixture contains the full integer model's K-after-RoPE and V cache for a synthetic repeated 256-token sequence. Two additional fixtures use distinct address patterns and seeded random signed16 values. Every address is read back, with stalls, invalid requests, full-cache overflow, partial writes and resets checked independently in Python.</p><p>This is a separate cache controller simulated in Verilator on the Mac. Python supplies K/V. It is not yet connected to the projection/RoPE blocks or attention. The 32 KiB capacity is logical storage, not measured BRAM mapping. Synthesis, physical FPGA execution, timing and energy are later work.</p><p>Data/control logic is checked offline; rendered layout remains unverified under the existing browser restriction. <a href="waves.vcd">Raw simulator waveforms</a> · <a href="cycles.csv">All observed clocks</a></p></details>
+</main>
+<script>
+const D=__SIMULATION_DATA__;
+const $=id=>document.getElementById(id),slider=$('clock_position'),fmt=v=>v.toLocaleString('en-GB');
+$('scene').innerHTML=D.scenes.map((s,i)=>`<option value="${i}">${s.name}</option>`).join('');
+$('checks').textContent=`Verified ${fmt(D.checks.cycles_checked)} clocks, ${fmt(D.checks.values_checked)} returned K/V values, ${D.checks.full_readback_values.toLocaleString('en-GB')} values in complete readback sweeps, and ${D.checks.reset_edges} reset edges. All exact. ${D.simulator}.`;
+const scene=()=>D.scenes[+$('scene').value];
+function clamp(id,max){const n=Math.trunc(Number($(id).value));$(id).value=Number.isFinite(n)?Math.max(0,Math.min(max,n)):0;return +$(id).value}
+function render(){const s=scene(),i=+slider.value,r=s.cycles[i],p=clamp('token',255),c=clamp('coordinate',31),address=p*32+c;
+const memory=new Map();if(s.base==='full')D.readback.forEach((v,j)=>memory.set(j,v.slice(0,2)));
+for(const row of s.cycles.slice(0,i+1))if(row.write_fire)memory.set(row.write_position*32+row.write_coordinate,[row.write_k,row.write_v]);
+$('clock').textContent=`Clock ${r.cycle}`;$('count').textContent=`${r.token_count} / 256`;$('partial').textContent=`${r.next_coordinate} / 32`;
+$('status').textContent=r.reset?'RESET · all tokens invalid':r.commit_valid?`COMMIT · token ${r.token_count-1} is now readable`:r.write_fire?`WRITE · token ${r.write_position}, coordinate ${r.write_coordinate}`:r.read_fire?`READ · token ${r.read_position}, coordinate ${r.read_coordinate}`:r.reply_fire?'READ RESPONSE ACCEPTED':r.output_valid?'READ RESPONSE HELD':r.write_valid||r.read_valid?'REQUEST REFUSED':'IDLE';
+$('event').textContent=r.reset?'Validity and counters clear; stored RAM bits are retained.':r.write_fire?`Stored K=${r.write_k}, V=${r.write_v}. ${r.commit_valid?'All 32 pairs are present.':'This token remains unreadable until its last pair arrives.'}`:r.read_fire?'The synchronous read has placed one K/V pair into output registers.':r.output_valid?'Both values and their address tags stay stable until the receiver accepts them.':'Rejected requests leave memory and validity unchanged.';
+const access=r.write_fire?[r.write_position,r.write_coordinate,'Write']:r.read_fire?[r.read_position,r.read_coordinate,'Read']:r.output_valid?[r.output_position,r.output_coordinate,'Held read']:null;
+$('diagram_input').textContent=access?`${access[2]} ${access[0]}, ${access[1]}`:'No memory access';$('diagram_address').textContent=access?fmt(access[0]*32+access[1]):'—';
+$('response').textContent=r.output_valid?`${r.output_k}, ${r.output_v}`:'—';$('response_note').textContent=r.output_valid?`Observed circuit response: token ${r.output_position}, coordinate ${r.output_coordinate}.`:'No valid read response at this clock. The location selector below inspects recorded memory separately.';
+$('memory').innerHTML=Array.from({length:256},(_,j)=>`<button data-token="${j}" class="${j<r.token_count?'valid':j===r.token_count&&r.next_coordinate?'partial':''} ${j===p?'selected':''}" aria-label="Token ${j}">${j}</button>`).join('');
+const valid=p<r.token_count,partial=p===r.token_count&&r.next_coordinate>0;
+$('visibility').textContent=valid?'READABLE · all 32 pairs committed':partial?`PARTIAL · ${r.next_coordinate}/32 pairs stored; reads refused`:'INVALID · reads refused';
+$('address').textContent=`${p.toString(2).padStart(8,'0')} | ${c.toString(2).padStart(5,'0')} → word ${address} → byte offset ${address*2} in each bank`;
+const value=memory.get(address);$('units').textContent=value?`Recorded K=${value[0]} (×2⁻¹¹), V=${value[1]} (×2⁻¹²). The cache preserves these integers exactly.`:'No recorded write to this location in this example.';
+$('recorded_read').textContent=s.base==='full'?`Full-scan readback for this location was observed at clock ${D.readback[address][2]}.`:'This view reconstructs the first three tokens from their observed writes.';
+$('words').innerHTML=Array.from({length:32},(_,j)=>{const v=memory.get(p*32+j);return `<tr data-coordinate="${j}" class="${j===c?'selected':''} ${valid?'':'invalid'}"><td>${j}</td><td>${v?v[0]:'—'}</td><td>${v?v[1]:'—'}</td><td>${valid?'readable':partial&&j<r.next_coordinate?'stored, uncommitted':v?'old, invalid':'unwritten'}</td></tr>`}).join('');
+}
+let timer;function stop(){clearInterval(timer);timer=null;$('play').textContent='Play'}
+function change(){stop();slider.max=scene().cycles.length-1;slider.value=0;render()}
+$('scene').onchange=change;slider.oninput=()=>{stop();render()};
+for(const id of ['token','coordinate'])$(id).onchange=()=>{stop();render()};
+$('memory').onclick=e=>{const b=e.target.closest('button[data-token]');if(b){stop();$('token').value=+b.dataset.token;render()}};
+$('words').onclick=e=>{const row=e.target.closest('tr[data-coordinate]');if(row){stop();$('coordinate').value=+row.dataset.coordinate;render()}};
+$('next_commit').onclick=()=>{stop();const next=scene().cycles.findIndex((r,i)=>i>+slider.value&&r.commit_valid);slider.value=next<0?scene().cycles.length-1:next;render()};
+$('back').onclick=()=>{stop();slider.value=Math.max(0,+slider.value-1);render()};$('forward').onclick=()=>{stop();slider.value=Math.min(scene().cycles.length-1,+slider.value+1);render()};
+$('play').onclick=()=>{if(timer){stop();return}if(+slider.value===scene().cycles.length-1)slider.value=0;$('play').textContent='Pause';timer=setInterval(()=>{if(+slider.value>=scene().cycles.length-1){stop();return}slider.value=+slider.value+1;render()},130)};
+$('scene').value=0;change();
+</script></html>

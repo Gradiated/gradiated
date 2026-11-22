@@ -1,0 +1,303 @@
+{
+  "artifacts": [
+    {
+      "bytes": 16549,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-20261116T220204Z-8d31b7-transfer-aborted/invocation.json",
+      "role": "Independently admitted physical packet",
+      "sha256": "46a7208ab763bfbcc99275feb922fb0fc6f9b2b5bc055fe6c7fbcbf9d2976fb5"
+    },
+    {
+      "bytes": 2483388,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-20261116T220204Z-8d31b7-transfer-aborted/board-transfer.gz",
+      "role": "Exact accepted local source archive",
+      "sha256": "eb9fdc8464cae04213553fd327f1f031be4b45cc294d92493be86e07bdfb65d4"
+    },
+    {
+      "bytes": 75,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-20261116T220204Z-8d31b7-transfer-aborted/stop-f8150d34.json",
+      "role": "Explicit pre-dispatch stop receipt",
+      "sha256": "954954399e714fe58013a24e2efea4c3d908336a1b871dc71ae314d990750a6d"
+    },
+    {
+      "bytes": 6927,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-20261116T220204Z-8d31b7-transfer-aborted/serial-frames-046eb57f.txt",
+      "role": "All sequenced serial acknowledgements and absence of verification",
+      "sha256": "1da9b1a460e2328f9112143dcb9aa7ed4d5a6fac71bdf6ce3055bb1eae4ad886"
+    },
+    {
+      "bytes": 83,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-20261116T220204Z-8d31b7-transfer-aborted/board-receiver-screen-excerpt.txt",
+      "role": "Board-receiver failure observed in the Mac screen buffer",
+      "sha256": "c5e9cf155c6be23f1bd52b36970f7a1a66716dfc779aa58da3d8877dc32b5a3b"
+    },
+    {
+      "bytes": 1634,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-20261116T220204Z-8d31b7-transfer-aborted/offline-transfer-diagnosis.json",
+      "role": "Offline exact and fault-injected replay findings",
+      "sha256": "605bf5c0ca1979dd91230f58f0e48c63465fed12e974c94b5b1de1190d87eff5"
+    },
+    {
+      "bytes": 5655,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-20261116T220204Z-8d31b7-transfer-aborted/verify-failed-transfer.py",
+      "role": "Replay of original receiver without a board connection",
+      "sha256": "4b236fcc692cfa0c1cdb53887bf22c1e8e0e3bb4fb94a9e4a04c9451a56142d7"
+    },
+    {
+      "bytes": 396,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-20261116T220204Z-8d31b7-transfer-aborted/caffeinate-assertion.json",
+      "role": "Mac process-scoped sleep assertions",
+      "sha256": "04dc24d3a579ecdec96d7211b0c93d482c31f71c9a7a086c4bd46f2d50062531"
+    },
+    {
+      "bytes": 323,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-20261116T220204Z-8d31b7-transfer-aborted/fresh-qualification/verified.json",
+      "role": "Verified original board state before staging",
+      "sha256": "eac4d59951cab0ab4d5e66c7542e76216705299809c6d229836376721903a452"
+    },
+    {
+      "bytes": 657,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-20261116T220204Z-8d31b7-transfer-aborted/coordinator-packet-8-audit.json",
+      "role": "Independent exact invocation admission",
+      "sha256": "e15fb3ab9734529d4ca10f8af3c79fda3e77340cc707c954bc6831f768cffe92"
+    },
+    {
+      "bytes": 6805,
+      "path": ".agents/runtime/hardware/inference/outputs/ff-exp-div-20261116T220204Z-8d31b7-transfer-aborted/evidence-manifest.json",
+      "role": "Full archived failed transfer inventory",
+      "sha256": "bad55052dd810f36d14c23e66eddb18ff19b0f7f1d4cab14b64807a410908aa1"
+    },
+    {
+      "bytes": 39725,
+      "path": "hardware/research/inference/results/ff-exp-div-rtl-20261116T214222Z/run.json",
+      "role": "Exact matched simulation",
+      "sha256": "c2d0ec7d131cfb053a0dce10bdaf4edbdf064105f442fdd8424135a51689b3e4"
+    },
+    {
+      "bytes": 14986,
+      "path": "hardware/research/inference/results/ff-exp-div-build-20261116T213813Z/run.json",
+      "role": "Verified routed candidate",
+      "sha256": "f2c66a36597f1b64dadb845601b280a5c1597df0f6ef73180aab51d7352b06f4"
+    },
+    {
+      "bytes": 15074,
+      "path": "hardware/research/inference/results/logits-8-lanes-build-20261116T190809Z/run.json",
+      "role": "Adopted routed control",
+      "sha256": "5856a7c9a3a85ff2a8fbada0102f4ad80b9f26e2199bbbb02487fa51e70ac1b7"
+    }
+  ],
+  "completed_at": "2026-11-16T22:21:26.250418+00:00",
+  "conditions": {
+    "board_dispatch": false,
+    "development_effort": {
+      "ai_usage_cost": null,
+      "engineering_attention_minutes": null
+    },
+    "expected_chunks": 5174,
+    "failure_class": "uart_archive_integrity",
+    "last_acknowledged_chunks": 5174,
+    "matched_variants": [
+      "logits-8-lanes-v1",
+      "ff-exp-div-v1"
+    ],
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "cache_capacity": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "client_delivery": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "communication": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "completion_time": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "correctness": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "cross_device_comparison": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "cross_session": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "decode_tps": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "energy_per_answer": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "estimated_cost": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "idle_power": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "implementation_timing": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "long_stability": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "memory": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "model_quality": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "operating_conditions": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "output_counts": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "physical_area": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "power_validation": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "prefill": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "recovery": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "repeatability": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "resources": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "serving_load": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "stage_cycles": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "startup": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "sustained_throughput": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "token_gaps": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "tokens_per_joule": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "ttft": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      },
+      "workload_coverage": {
+        "reason": "Stopped during staging before either comparison circuit ran.",
+        "state": "not_measured"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2"
+  },
+  "correctness": {
+    "evidence": "Board receiver rejected the archive. No programming or correctness test was dispatched.",
+    "passed": false
+  },
+  "device": {
+    "configuration": {
+      "clock_hz": 50000000,
+      "comparison_firmware": {
+        "candidate": "8c4d35ed79feae3e655b6db0aabdac1f9773e7662c3fad92701a60fc01de1a1b",
+        "control": "bdc134c65a151699d2ddd690b0ddc799cbd09edb688b8a7c4f0ecf7dd498c9e2"
+      },
+      "initial_state_sha256": "d3fe39ff039aeb1960be77cdd33bcee592cf0667b7b0596f6a83b35dc9e471ce",
+      "phase": "USB serial staging before programming dispatch",
+      "system_boot_id": "305f2b01-e9fd-4461-8e6d-0cf91979d151"
+    },
+    "configuration_sha256": "9343ba90f0d973f668d082cfce2a9b240ce331cb75f2cca71832526f560d74b1",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-ff-exp-div-v1",
+  "id": "ff-exp-div-20261116T220204Z-8d31b7-transfer-aborted",
+  "implementation": {
+    "id": "kv260-ff-exp-div-v1",
+    "sha256": "65683b6231f1962af70b0aeb60e4746abf74570b9b1a757a1f04ae3e80cb09e9"
+  },
+  "limitations": [
+    "The comparison never ran. There are no board timing, energy or inference metrics for this attempt.",
+    "The receiver did not report the reconstructed size, digest or received payload. The precise corruption or truncation mechanism is unknown."
+  ],
+  "metrics": [],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-ff-exp-div-v1",
+    "measurement_boundary": "USB serial transport before candidate launch.",
+    "quality_gate": "Verified reconstruction of the exact staged archive before any programming dispatch.",
+    "sha256": "534db3c61e677180920f6feec3101be1e396144b187c358a8b77eb4433ff27b3",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Three exact requests per arm with loaded weights."
+  },
+  "quality": {
+    "evidence": "No new timed output or energy observation was accepted.",
+    "passed": false
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "52a3173b8e9b4378af59bdbd97e8deeb9e7e2d5ba1601002340fa94ebbf954e3"
+  },
+  "started_at": "2026-11-16T22:02:04.043763+00:00",
+  "status": "aborted",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-three-prompts-lanes-pairs-v1",
+    "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "capture_manifest_sha256": "75cfd7d94574887fd8140b49c35903823b1fbd4e1a95580048c5e2dc47683581",
+  "evidence_root": ".agents/runtime/hardware/inference/outputs/resident-score-extraction-20261115T172914Z-489050-audit",
+  "files": {
+    "audit.stdout": {
+      "bytes": 1992,
+      "sha256": "b6a5960dfd5299383abaa9faeada85472491d04a39aadfcd642d3b12aa89d8a6"
+    },
+    "review-score-extraction.py": {
+      "bytes": 4034,
+      "sha256": "531d491d13c97155765a3a7e0bc2e5e64b3da9f98cb6cc869082be36ab3e4e0d"
+    }
+  },
+  "passed": true,
+  "run_id": "resident-score-extraction-20261115T172914Z-489050",
+  "run_record_sha256": "6d480805e190e34bd12f410a3019483550b5913f3f29d34ffe32a1473cd693ce",
+  "scope": "Independent UART and exact score receipts, timing and clipped rail energy integration."
+}

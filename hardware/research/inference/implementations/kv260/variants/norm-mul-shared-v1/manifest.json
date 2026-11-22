@@ -1,0 +1,9 @@
+{
+  "dedicated_source_manifest_sha256": "8519e39ee6a33ef7d96b7f871222c1fb6d6f30ee0cf1a6a2422819dab44a9c9d",
+  "dedicated_kernel_sha256": "ce69fdf900350c7c8954b0e7f6c285d428004f9a0747b41cd23fad1187df2f09",
+  "shared_template_sha256": "343d3b2f9d8f24cee5a45a969815850bab7bee81a53570da72d6c439807ba6e9",
+  "candidate_sources": {
+    "rmsnorm": "9a4d1024defea0dacfda7d0a9952336838b1f696ac06f093f47d9b664e01b3fc",
+    "transformer": "d7bb1dcc01d45a410ffb0de2da9d9fe8975da34696efc7d0ebc55549faa2ecdd"
+  }
+}

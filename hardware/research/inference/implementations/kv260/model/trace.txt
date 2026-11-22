@@ -1,0 +1,108 @@
+Actual selected-model sampling trace; Mac software, not FPGA clocks.
+26,720 parameters; one block; q8 affine group32 weights; FP32 intermediates.
+Input is only BOS=256. Seed47 initializes host NumPy RNG, not a model token.
+For positions0..31 sample across all320 neural probabilities at temperature0.8; then argmax.
+No ID, answer lookup, allowed-token mask, retry or repeat suppression.
+Complete output: Sour cream and onion chips are excellent. I schedule important meetings immediately afterwards.
+
+Position | mode | random draw | selected token/byte | probability | argmax
+  0 | sample | 0.7418019946425606   |  83 'S'   | 0.05888464150349168  | 79
+  1 | sample | 0.7536688171196079   | 111 'o'   | 0.26712459798819416  | 97
+  2 | sample | 0.46518053822948346  | 117 'u'   | 0.9995320178492106   | 117
+  3 | sample | 0.10372502964789199  | 114 'r'   | 0.9998570312870467   | 114
+  4 | sample | 0.9668518498257337   |  32 ' '   | 0.9999994663621722   | 32
+  5 | sample | 0.320750320879281    |  99 'c'   | 0.9985865962104911   | 99
+  6 | sample | 0.20033155121842627  | 114 'r'   | 0.9999127664611155   | 114
+  7 | sample | 0.8577591891930944   | 101 'e'   | 0.9999983650464982   | 101
+  8 | sample | 0.5131460905854898   |  97 'a'   | 0.9999043306625551   | 97
+  9 | sample | 0.17924005478882832  | 109 'm'   | 0.999650624471601    | 109
+ 10 | sample | 0.7504645765974756   |  32 ' '   | 0.9999999926433245   | 32
+ 11 | sample | 0.7929782198838581   |  97 'a'   | 0.9999772311530546   | 97
+ 12 | sample | 0.5538289050910586   | 110 'n'   | 0.9998306423551537   | 110
+ 13 | sample | 0.8217382528417506   | 100 'd'   | 0.999999996790162    | 100
+ 14 | sample | 0.6108688451669477   |  32 ' '   | 0.9999916178942798   | 32
+ 15 | sample | 0.43368951284198143  | 111 'o'   | 0.9999998910839177   | 111
+ 16 | sample | 0.3103297737633065   | 110 'n'   | 0.9999956499723168   | 110
+ 17 | sample | 0.7144267683506479   | 105 'i'   | 0.9999946658729584   | 105
+ 18 | sample | 0.9021746805371165   | 111 'o'   | 0.9999134264319508   | 111
+ 19 | sample | 0.1936189729139315   | 110 'n'   | 0.9999998872105097   | 110
+ 20 | sample | 0.6101967643848941   |  32 ' '   | 0.9999999989967152   | 32
+ 21 | sample | 0.06150028342531899  |  99 'c'   | 0.9999435718745744   | 99
+ 22 | sample | 0.5510683821988186   | 104 'h'   | 0.9999759931906569   | 104
+ 23 | sample | 0.11243277318977385  | 105 'i'   | 0.9999995666166959   | 105
+ 24 | sample | 0.7555875919023212   | 112 'p'   | 0.9999447437503329   | 112
+ 25 | sample | 0.9542547028880555   | 115 's'   | 0.9999981379149657   | 115
+ 26 | sample | 0.9451187143293178   |  32 ' '   | 0.9999976554782527   | 32
+ 27 | sample | 0.7206962246383404   |  97 'a'   | 0.9995827222944242   | 97
+ 28 | sample | 0.7310642960616902   | 114 'r'   | 0.9999966231853377   | 114
+ 29 | sample | 0.6970527380671371   | 101 'e'   | 0.9998498899418429   | 101
+ 30 | sample | 0.5489151269767054   |  32 ' '   | 0.9998802819603089   | 32
+ 31 | sample | 0.29108152621059935  | 101 'e'   | 0.9999847532218855   | 101
+ 32 | greedy | None                 | 120 'x'   | None                 | 120
+ 33 | greedy | None                 |  99 'c'   | None                 | 99
+ 34 | greedy | None                 | 101 'e'   | None                 | 101
+ 35 | greedy | None                 | 108 'l'   | None                 | 108
+ 36 | greedy | None                 | 108 'l'   | None                 | 108
+ 37 | greedy | None                 | 101 'e'   | None                 | 101
+ 38 | greedy | None                 | 110 'n'   | None                 | 110
+ 39 | greedy | None                 | 116 't'   | None                 | 116
+ 40 | greedy | None                 |  46 '.'   | None                 | 46
+ 41 | greedy | None                 |  32 ' '   | None                 | 32
+ 42 | greedy | None                 |  73 'I'   | None                 | 73
+ 43 | greedy | None                 |  32 ' '   | None                 | 32
+ 44 | greedy | None                 | 115 's'   | None                 | 115
+ 45 | greedy | None                 |  99 'c'   | None                 | 99
+ 46 | greedy | None                 | 104 'h'   | None                 | 104
+ 47 | greedy | None                 | 101 'e'   | None                 | 101
+ 48 | greedy | None                 | 100 'd'   | None                 | 100
+ 49 | greedy | None                 | 117 'u'   | None                 | 117
+ 50 | greedy | None                 | 108 'l'   | None                 | 108
+ 51 | greedy | None                 | 101 'e'   | None                 | 101
+ 52 | greedy | None                 |  32 ' '   | None                 | 32
+ 53 | greedy | None                 | 105 'i'   | None                 | 105
+ 54 | greedy | None                 | 109 'm'   | None                 | 109
+ 55 | greedy | None                 | 112 'p'   | None                 | 112
+ 56 | greedy | None                 | 111 'o'   | None                 | 111
+ 57 | greedy | None                 | 114 'r'   | None                 | 114
+ 58 | greedy | None                 | 116 't'   | None                 | 116
+ 59 | greedy | None                 |  97 'a'   | None                 | 97
+ 60 | greedy | None                 | 110 'n'   | None                 | 110
+ 61 | greedy | None                 | 116 't'   | None                 | 116
+ 62 | greedy | None                 |  32 ' '   | None                 | 32
+ 63 | greedy | None                 | 109 'm'   | None                 | 109
+ 64 | greedy | None                 | 101 'e'   | None                 | 101
+ 65 | greedy | None                 | 101 'e'   | None                 | 101
+ 66 | greedy | None                 | 116 't'   | None                 | 116
+ 67 | greedy | None                 | 105 'i'   | None                 | 105
+ 68 | greedy | None                 | 110 'n'   | None                 | 110
+ 69 | greedy | None                 | 103 'g'   | None                 | 103
+ 70 | greedy | None                 | 115 's'   | None                 | 115
+ 71 | greedy | None                 |  32 ' '   | None                 | 32
+ 72 | greedy | None                 | 105 'i'   | None                 | 105
+ 73 | greedy | None                 | 109 'm'   | None                 | 109
+ 74 | greedy | None                 | 109 'm'   | None                 | 109
+ 75 | greedy | None                 | 101 'e'   | None                 | 101
+ 76 | greedy | None                 | 100 'd'   | None                 | 100
+ 77 | greedy | None                 | 105 'i'   | None                 | 105
+ 78 | greedy | None                 |  97 'a'   | None                 | 97
+ 79 | greedy | None                 | 116 't'   | None                 | 116
+ 80 | greedy | None                 | 101 'e'   | None                 | 101
+ 81 | greedy | None                 | 108 'l'   | None                 | 108
+ 82 | greedy | None                 | 121 'y'   | None                 | 121
+ 83 | greedy | None                 |  32 ' '   | None                 | 32
+ 84 | greedy | None                 |  97 'a'   | None                 | 97
+ 85 | greedy | None                 | 102 'f'   | None                 | 102
+ 86 | greedy | None                 | 116 't'   | None                 | 116
+ 87 | greedy | None                 | 101 'e'   | None                 | 101
+ 88 | greedy | None                 | 114 'r'   | None                 | 114
+ 89 | greedy | None                 | 119 'w'   | None                 | 119
+ 90 | greedy | None                 |  97 'a'   | None                 | 97
+ 91 | greedy | None                 | 114 'r'   | None                 | 114
+ 92 | greedy | None                 | 100 'd'   | None                 | 100
+ 93 | greedy | None                 | 115 's'   | None                 | 115
+ 94 | greedy | None                 |  46 '.'   | None                 | 46
+ 95 | greedy | None                 | 257 EOS   | None                 | 257
+
+Each selected byte is fed back through the transformer to predict the next byte.
+Softmax, inverse-CDF sampling and RNG currently run on the Mac; FPGA allocation is unimplemented.
+This trace records sampling choices, not all layer activations. The prior keyed trace uses different learned weights.

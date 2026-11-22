@@ -1,0 +1,163 @@
+{
+  "archive_members": 386,
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-build-20261117T225852Z/server/build/route/route.dcp": {
+      "bytes": 23852534,
+      "role": "Pinned reused Exp13 routed checkpoint",
+      "sha256": "edd6815b335a5aed10e1e1e30847351655754ac56798440cb15218df169d3b6f"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-build-20261117T225852Z/server/kv260-attention-exp-pair-v2-program.dtbo": {
+      "bytes": 367,
+      "role": "Verified reused Exp13 deployment asset",
+      "sha256": "c53292a9fed6f2305200bb55602eb69f12ae8f24e42cae1e64a280d929d996fc"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-exp-pair-v2-build-20261117T225852Z/server/offline-package/gradiated-tiny-attention-exp-pair-v2-50mhz.bit.bin": {
+      "bytes": 7797692,
+      "role": "Verified reused Exp13 deployment asset",
+      "sha256": "a44cc30cad8db1844459470b63d2325b544dcef34709db88366bbc201409930d"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/admitted-protocol.md": {
+      "bytes": 5420,
+      "role": "Frozen pre-physical protocol used for build and simulation",
+      "sha256": "f050c0617614f0496a955958b2a2c4f1658c683d1caa9706160aa8ea6d6002ac"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/admitted-source-manifest.json": {
+      "bytes": 3727,
+      "role": "Build protocol and source pins for both arms",
+      "sha256": "e556c1ad482edd0512bdbedf00f5d303eb19d2caa2eebdb7fa33b0d3759cf180"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/archive-recovery.json": {
+      "bytes": 600,
+      "role": "Resumed full archive recovery and scope-limited transfer extension",
+      "sha256": "c37c40b904940dcfddcb88b785e2a6cec61eb8198320760f828f42d0518a48e4"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/build-input.tar.gz": {
+      "bytes": 51423,
+      "role": "Exact routed candidate inputs",
+      "sha256": "1d91850a3386d09172c053708be4b1eb39905c8b2b09e100a4e6a12a6e28838c"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/candidate-rtl-manifest.json": {
+      "bytes": 1008,
+      "role": "Scope-matched candidate HDL module hashes",
+      "sha256": "072afd4a0eaeb744a12393c8ee94540981b4a472ecc18161bcd211c404c467f3"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/control-census/checkpoint.txt": {
+      "bytes": 160,
+      "role": "Pinned control DCP, tool, part, route and 20 ns evidence",
+      "sha256": "a601887c206961a84b4410c0323d0ef15a3e2d740604864027d94dcf8d6f3e8e"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/control-census/primitive-census.tsv": {
+      "bytes": 142152,
+      "role": "Fresh Exp13 logits banks and embedding primitive inventory",
+      "sha256": "882148e700236ebe28ee28bdc92b97328205a0b5bdd2ff6dab542bdfe6ce4aa9"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/control-census/utilization-hierarchical.rpt": {
+      "bytes": 10639,
+      "role": "Fresh routed Exp13 hierarchical utilization",
+      "sha256": "6b220eed12e7078f433c36dcda22aa2c8e0046220e9fd8063bc0d02a7025dc0b"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/control-rtl-manifest.json": {
+      "bytes": 915,
+      "role": "Exact Exp13 control module hashes",
+      "sha256": "8fb1cabd76b1ee1781fc258dc9fa9d07f1c787c806a2a8b2d1d39a4987576c64"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/offline-acceptance.json": {
+      "bytes": 4731,
+      "role": "Verified candidate package and paired resource accounting",
+      "sha256": "03f7c5337fef2e754c4e50e19e16dccca53cffce210458e1acc500a76a3be1dd"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/release-subset-acceptance.json": {
+      "bytes": 4861,
+      "role": "Verification of the recovered firmware and phase evidence before full archive recovery",
+      "sha256": "29daed66df35abd83889fd55af196e9d9508a9f3ca4badfceca6b3bad0125e25"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/release-subset.tar.gz": {
+      "bytes": 2702265,
+      "role": "Firmware and routing verification subset recovered during the original transfer window",
+      "sha256": "e11c47c67db0417d43ec1748d1926cd236b3c25722311c98407a294bed9306a5"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server.receipt.json": {
+      "bytes": 283,
+      "role": "Archive byte and member-count receipt",
+      "sha256": "e6d621c9b102f93b2a8238be3303dfccfc1e013d47075a8be7ff65393f2f3859"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server.tar.gz": {
+      "bytes": 92790395,
+      "role": "Recovered exact Vivado implementation archive",
+      "sha256": "6f2fba1a81698ca269dbfbc6cc7a63c564c10136d64a4e50a43d3b8cbedaf467"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/generate/console.log": {
+      "bytes": 38935,
+      "role": "Build warnings and interface propagation",
+      "sha256": "a25a0dde35ff4a1152fa27872e99d9989c3285e94e137731e6df9c17749d6603"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/generate/ddr-interfaces.txt": {
+      "bytes": 5127,
+      "role": "Direct read-only HP0 aperture and interface metadata",
+      "sha256": "dc559024732a0f54043366e683ba28f3abee9616686dcd620bcfeb6664aa0db7"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/ddr-primitives.tsv": {
+      "bytes": 155705,
+      "role": "Candidate logits, reader and embedding primitive inventory",
+      "sha256": "2a08976397534a35027369cb48da73842fb63a53fed96076d3a299822102c382"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/ddr-routed-hp0.tsv": {
+      "bytes": 46904,
+      "role": "Native PS8 eight-beat HP0 pin and clock trace",
+      "sha256": "a8043392de8180c266096131b41db31f0c5c282440e93297ce8f9482738c79e0"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/metrics.txt": {
+      "bytes": 380,
+      "role": "Candidate routed timing and design rules",
+      "sha256": "076a19e7edd25d6a2817a6194051193ad84c0ef070c23ec5a290bed3d19045f8"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/reports/utilization-hierarchical.rpt": {
+      "bytes": 11067,
+      "role": "Candidate FPGA, accelerator, scorer and reader utilization",
+      "sha256": "966ef8695f3f13612e1c0c114503ad241c5b9176ba095429f208b35b145e557b"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/build/route/route.dcp": {
+      "bytes": 24528860,
+      "role": "Exact DDR candidate routed checkpoint",
+      "sha256": "70281d404d0abbb157a74392a904f1b62f7a3d4f0b9120c50919f9c03256db64"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/kv260-ddr4-afi-restore.dtbo": {
+      "bytes": 310,
+      "role": "Verified candidate deployment asset",
+      "sha256": "c747e2487a5ead29c8a764fa679dc4f67bba9ac9073a1e518f4faaaeab7e751a"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/kv260-ddr4-interface.dtbo": {
+      "bytes": 778,
+      "role": "Verified candidate deployment asset",
+      "sha256": "a910db9f4de4a1c5571d5720aac058234d5460a8844060d0530916df065c3d03"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/kv260-logits-ddr4-burst-program.dtbo": {
+      "bytes": 367,
+      "role": "Verified candidate deployment asset",
+      "sha256": "2d39847224d8592ca1f80e7752dbff545ae9fb329e1e7a51cb193da0fa856400"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/kv260-logits-ddr4-dma-direct.dtbo": {
+      "bytes": 416,
+      "role": "Verified candidate deployment asset",
+      "sha256": "e28f3734ce5afd5461d39beb6f02c383fbe5390a826b02f7827164a98b8881ed"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-ddr4-burst-build-20261119T115915Z/server/offline-package/gradiated-tiny-logits-ddr4-burst-v1-50mhz.bit.bin": {
+      "bytes": 7797692,
+      "role": "Verified candidate deployment asset",
+      "sha256": "dd4170e8e10722566dbafeb567bf85f8e11ea7af39c2937521ffc057d833df32"
+    },
+    "hardware/research/inference/results/attention-exp-pair-v2-build-20261117T225852Z/run.json": {
+      "bytes": 16566,
+      "role": "Adopted Exp13 implementation record",
+      "sha256": "61c505f49c81a1f3f351861e3e688a8111943f667251222ea92432365dfaf5de"
+    },
+    "hardware/research/inference/results/logits-ddr4-burst-rtl-20261119T120140Z/run.json": {
+      "bytes": 15418,
+      "role": "Exp16 paired exact-model RTL run",
+      "sha256": "e60390db9b0f3c8f2c70e8d7a888d48af51b0be32ac40743935ae90c8ef6b86e"
+    }
+  },
+  "offline_acceptance_sha256": "03f7c5337fef2e754c4e50e19e16dccca53cffce210458e1acc500a76a3be1dd",
+  "passed": true,
+  "source_manifest_sha256": "e556c1ad482edd0512bdbedf00f5d303eb19d2caa2eebdb7fa33b0d3759cf180"
+}

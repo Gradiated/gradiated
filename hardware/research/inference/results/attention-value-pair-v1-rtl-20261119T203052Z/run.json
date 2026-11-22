@@ -1,0 +1,2533 @@
+{
+  "artifacts": [
+    {
+      "bytes": 160863767,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/simulation.tar.gz",
+      "role": "Pinned sources, exact model inputs, compiler receipts and raw transaction and arithmetic traces",
+      "sha256": "5e1ce5a15e52555ba03a060f355da08cf809cf8cd703a7cfe2da1237ba7ade2c"
+    },
+    {
+      "bytes": 155800,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/source-closure.json",
+      "role": "SHA-256 of each archived logical member",
+      "sha256": "20bf980b5161baab78149842b5ae9808a0a01b8b7e628e815ddc52cb208a702f"
+    },
+    {
+      "bytes": 68701,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/source.patch",
+      "role": "Paired context datapath, scoped cache and qualification code",
+      "sha256": "aa9782d7473fb3ff64565487cbc3ad388772076c08b209abd161bccbc14a859c"
+    },
+    {
+      "bytes": 1148729,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/model-results.json",
+      "role": "Seven paired attention-value model replays",
+      "sha256": "debcf33909885a5ec70561ce8095e3894da36c4afcaac810cc6ec02ab2fcfdc3"
+    },
+    {
+      "bytes": 7216,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/depth-results.json",
+      "role": "Direct fixed-sequence scored steps and cache traffic at five occupied depths",
+      "sha256": "bb5867ac95ca1e5ee4e35ffebb850ca6f34f1ba85e610b836b66f27a8da6b765"
+    },
+    {
+      "bytes": 1633,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/directed-results.json",
+      "role": "Directed signed value, scalar and paired cache, reset and stall checks",
+      "sha256": "ffe8196a6083707b8278a4226e44d136b466419ec82b49fb988b3a8c8b1f58bb"
+    },
+    {
+      "bytes": 918,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/qualification-summary.json",
+      "role": "Pinned model, context sweep and directed route-admission evidence",
+      "sha256": "845b2c5f81fbdb94e9b98e22c9e2a7f5b730761ec2c9cb4af93634bd473761e7"
+    },
+    {
+      "bytes": 792,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/rtl-build-gate.json",
+      "role": "Selected compiled source manifests and qualification pins",
+      "sha256": "aaa4938df7afb04443362432aa34c96b2fbe9c59824ff23a414cb059b742b352"
+    },
+    {
+      "bytes": 108224,
+      "path": "hardware/research/inference/results/projections-read-ahead-v1-rtl-20261119T192912Z/run.json",
+      "role": "Adopted Experiment 22 RTL record",
+      "sha256": "cb674695ab9e565d6028902cde0559266b993eaade1ffcf0dea96b72d26c6a36"
+    }
+  ],
+  "completed_at": "2026-11-19T20:36:08.698782+00:00",
+  "conditions": {
+    "candidate_source_manifest_sha256": "8e7f7ce7899e952b9b32e7474f1eade91dfad0b937dee9f3732c0715900ba5ae",
+    "changed_compiled_sources": [
+      "attention.sv",
+      "frontend.sv",
+      "kv_cache.sv",
+      "transformer.sv"
+    ],
+    "control_implementation": "projections-read-ahead-v1",
+    "control_source_manifest_sha256": "805ddad6c8d4011ddba8bcc07d5d9bfc6c112e101efe638a902d3e591daf8911",
+    "directed_oracle": {
+      "all_exact": true,
+      "arms": {
+        "candidate": {
+          "all_exact": true,
+          "context_values": 416,
+          "exponentials": 1492,
+          "heads": 2,
+          "held_outputs": 828,
+          "limits": "Actual pinned table plus synthetic and archived intermediate operands; no archived full-forward context golden or complete transformer proof",
+          "max_length": 256,
+          "probabilities": 1492,
+          "real_archived_input_cases": 0,
+          "request_refusals": 2975,
+          "requests": 13,
+          "reset_probes": 4,
+          "response_delays": 2957,
+          "score_products": 23872,
+          "scores": 1492,
+          "value_products": 23872
+        },
+        "control": {
+          "all_exact": true,
+          "context_values": 416,
+          "exponentials": 1492,
+          "heads": 2,
+          "held_outputs": 828,
+          "limits": "Actual pinned table plus synthetic and archived intermediate operands; no archived full-forward context golden or complete transformer proof",
+          "max_length": 256,
+          "probabilities": 1492,
+          "real_archived_input_cases": 0,
+          "request_refusals": 5950,
+          "requests": 13,
+          "reset_probes": 4,
+          "response_delays": 5938,
+          "score_products": 23872,
+          "scores": 1492,
+          "value_products": 23872
+        }
+      },
+      "cache_ordered_writes": 8192,
+      "clipping": true,
+      "depths": [
+        1,
+        2,
+        3,
+        16,
+        17,
+        64,
+        128,
+        255,
+        256
+      ],
+      "full_scale_probability": true,
+      "paired_cache_reads": 4096,
+      "pending_cache_reset_probes": 1,
+      "pending_odd_reset_probes": 1,
+      "scalar_cache_reads": 8192,
+      "signed_minimum_value": true,
+      "signed_ties": true,
+      "wrong_pair_or_coordinate_probes": 2
+    },
+    "exact_autonomous_scores_per_arm": 103360,
+    "exact_legacy_scores_per_arm": 4480,
+    "exact_weighted_terms_per_arm": 2165152,
+    "full_context_depth": 256,
+    "logical_cache_bits": {
+      "key": 131072,
+      "value": 131072
+    },
+    "measured_ready_cache_cycle_law": "32D+16 per processed position, 16n(n+2) through n positions",
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Exact paired RTL arithmetic, temporal and port observations.",
+        "sources": [
+          {
+            "bytes": 1148729,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/model-results.json",
+            "role": "Seven paired attention-value model replays",
+            "sha256": "debcf33909885a5ec70561ce8095e3894da36c4afcaac810cc6ec02ab2fcfdc3"
+          },
+          {
+            "bytes": 7216,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/depth-results.json",
+            "role": "Direct fixed-sequence scored steps and cache traffic at five occupied depths",
+            "sha256": "bb5867ac95ca1e5ee4e35ffebb850ca6f34f1ba85e610b836b66f27a8da6b765"
+          },
+          {
+            "bytes": 1633,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/directed-results.json",
+            "role": "Directed signed value, scalar and paired cache, reset and stall checks",
+            "sha256": "ffe8196a6083707b8278a4226e44d136b466419ec82b49fb988b3a8c8b1f58bb"
+          }
+        ],
+        "state": "measured"
+      },
+      "client_delivery": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Exact paired RTL arithmetic, temporal and port observations.",
+        "sources": [
+          {
+            "bytes": 1148729,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/model-results.json",
+            "role": "Seven paired attention-value model replays",
+            "sha256": "debcf33909885a5ec70561ce8095e3894da36c4afcaac810cc6ec02ab2fcfdc3"
+          },
+          {
+            "bytes": 7216,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/depth-results.json",
+            "role": "Direct fixed-sequence scored steps and cache traffic at five occupied depths",
+            "sha256": "bb5867ac95ca1e5ee4e35ffebb850ca6f34f1ba85e610b836b66f27a8da6b765"
+          },
+          {
+            "bytes": 1633,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/directed-results.json",
+            "role": "Directed signed value, scalar and paired cache, reset and stall checks",
+            "sha256": "ffe8196a6083707b8278a4226e44d136b466419ec82b49fb988b3a8c8b1f58bb"
+          }
+        ],
+        "state": "measured"
+      },
+      "cross_device_comparison": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "long_stability": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "memory_bandwidth": {
+        "reason": "Exact paired RTL arithmetic, temporal and port observations.",
+        "sources": [
+          {
+            "bytes": 1148729,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/model-results.json",
+            "role": "Seven paired attention-value model replays",
+            "sha256": "debcf33909885a5ec70561ce8095e3894da36c4afcaac810cc6ec02ab2fcfdc3"
+          },
+          {
+            "bytes": 7216,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/depth-results.json",
+            "role": "Direct fixed-sequence scored steps and cache traffic at five occupied depths",
+            "sha256": "bb5867ac95ca1e5ee4e35ffebb850ca6f34f1ba85e610b836b66f27a8da6b765"
+          },
+          {
+            "bytes": 1633,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/directed-results.json",
+            "role": "Directed signed value, scalar and paired cache, reset and stall checks",
+            "sha256": "ffe8196a6083707b8278a4226e44d136b466419ec82b49fb988b3a8c8b1f58bb"
+          }
+        ],
+        "state": "measured"
+      },
+      "model_quality": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Exact paired RTL arithmetic, temporal and port observations.",
+        "sources": [
+          {
+            "bytes": 1148729,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/model-results.json",
+            "role": "Seven paired attention-value model replays",
+            "sha256": "debcf33909885a5ec70561ce8095e3894da36c4afcaac810cc6ec02ab2fcfdc3"
+          },
+          {
+            "bytes": 7216,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/depth-results.json",
+            "role": "Direct fixed-sequence scored steps and cache traffic at five occupied depths",
+            "sha256": "bb5867ac95ca1e5ee4e35ffebb850ca6f34f1ba85e610b836b66f27a8da6b765"
+          },
+          {
+            "bytes": 1633,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/directed-results.json",
+            "role": "Directed signed value, scalar and paired cache, reset and stall checks",
+            "sha256": "ffe8196a6083707b8278a4226e44d136b466419ec82b49fb988b3a8c8b1f58bb"
+          }
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Exact paired RTL arithmetic, temporal and port observations.",
+        "sources": [
+          {
+            "bytes": 1148729,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/model-results.json",
+            "role": "Seven paired attention-value model replays",
+            "sha256": "debcf33909885a5ec70561ce8095e3894da36c4afcaac810cc6ec02ab2fcfdc3"
+          },
+          {
+            "bytes": 7216,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/depth-results.json",
+            "role": "Direct fixed-sequence scored steps and cache traffic at five occupied depths",
+            "sha256": "bb5867ac95ca1e5ee4e35ffebb850ca6f34f1ba85e610b836b66f27a8da6b765"
+          },
+          {
+            "bytes": 1633,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/directed-results.json",
+            "role": "Directed signed value, scalar and paired cache, reset and stall checks",
+            "sha256": "ffe8196a6083707b8278a4226e44d136b466419ec82b49fb988b3a8c8b1f58bb"
+          }
+        ],
+        "state": "measured"
+      },
+      "repeatability": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "serving_load": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Exact paired RTL arithmetic, temporal and port observations.",
+        "sources": [
+          {
+            "bytes": 1148729,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/model-results.json",
+            "role": "Seven paired attention-value model replays",
+            "sha256": "debcf33909885a5ec70561ce8095e3894da36c4afcaac810cc6ec02ab2fcfdc3"
+          },
+          {
+            "bytes": 7216,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/depth-results.json",
+            "role": "Direct fixed-sequence scored steps and cache traffic at five occupied depths",
+            "sha256": "bb5867ac95ca1e5ee4e35ffebb850ca6f34f1ba85e610b836b66f27a8da6b765"
+          },
+          {
+            "bytes": 1633,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-value-pair-v1-rtl-20261119T203052Z/directed-results.json",
+            "role": "Directed signed value, scalar and paired cache, reset and stall checks",
+            "sha256": "ffe8196a6083707b8278a4226e44d136b466419ec82b49fb988b3a8c8b1f58bb"
+          }
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "This stage uses RTL simulation.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "model_cases": 7,
+    "processed_positions": 716,
+    "route_admission_sha256": "aaa4938df7afb04443362432aa34c96b2fbe9c59824ff23a414cb059b742b352",
+    "scored_step_depths": [
+      1,
+      16,
+      64,
+      128,
+      256
+    ],
+    "selected_sites": [
+      "frontend.cache",
+      "transformer.att"
+    ],
+    "value_read_bank_configuration": {
+      "candidate": [
+        4096,
+        4096
+      ],
+      "control": [
+        8192
+      ]
+    }
+  },
+  "correctness": {
+    "evidence": "Seven frozen paired replays, five direct scored-step depths and independent cache and signed arithmetic checks.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 RTL model",
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052"
+    },
+    "configuration_sha256": "2f8d960315cbf5f9cca1b1112e84315cf0bad687ffc8b83ddc67c6c8a723180b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-attention-value-pair-v1",
+  "id": "attention-value-pair-v1-rtl-20261119T203052Z",
+  "implementation": {
+    "id": "attention-value-pair-v1",
+    "sha256": "8e7f7ce7899e952b9b32e7474f1eade91dfad0b937dee9f3732c0715900ba5ae"
+  },
+  "limitations": [
+    "Cycle counts use deterministic ready-cache RTL. Directed stalled and fault cases exercise recovery separately.",
+    "The single control V memory has one read enable. Control even/odd counts classify its addresses, while candidate counts are the two real bank enables.",
+    "Logical cache bits and simulated traffic describe this RTL. Routed resources, timing and board power have separate evidence."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        283862
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        3725233
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.attention_wait_cycles",
+      "samples": [
+        1110589
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        285544
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        3677539
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        281574
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        3558785
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap255.attention_wait_cycles",
+      "samples": [
+        944141
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        283256
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        3514339
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        338238
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        5469940
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.attention_wait_cycles",
+      "samples": [
+        1972822
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        339920
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        5414954
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        335118
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        5174020
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.attention_wait_cycles",
+      "samples": [
+        1676902
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        336800
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        5123370
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        3391366
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        9413020
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.attention_wait_cycles",
+      "samples": [
+        4337542
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        3393048
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        9343976
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        3237718
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        8760172
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-max48-cap255.attention_wait_cycles",
+      "samples": [
+        3684694
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        3239400
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        8697576
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.bos-only-cap0.prefix_cycles",
+      "samples": [
+        24762
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.bos-only-cap0.complete_cycles",
+      "samples": [
+        26444
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.bos-only-cap0.attention_wait_cycles",
+      "samples": [
+        390
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.bos-only-cap0.prefix_cycles",
+      "samples": [
+        24714
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.bos-only-cap0.complete_cycles",
+      "samples": [
+        26396
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.bos-only-cap0.attention_wait_cycles",
+      "samples": [
+        342
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        283862
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        285544
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap0.attention_wait_cycles",
+      "samples": [
+        15760
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        281574
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        283256
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap0.attention_wait_cycles",
+      "samples": [
+        13472
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        283862
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        285544
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.attention_wait_cycles",
+      "samples": [
+        15760
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        285544
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        285544
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        281574
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        283256
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap1.attention_wait_cycles",
+      "samples": [
+        13472
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        283256
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        283256
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.full-context-cap0.prefix_cycles",
+      "samples": [
+        13282466
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.full-context-cap0.complete_cycles",
+      "samples": [
+        13284148
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "control.full-context-cap0.attention_wait_cycles",
+      "samples": [
+        7042979
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.full-context-cap0.prefix_cycles",
+      "samples": [
+        12225698
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.full-context-cap0.complete_cycles",
+      "samples": [
+        12227380
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Exact frozen full-model RTL replay.",
+      "name": "candidate.full-context-cap0.attention_wait_cycles",
+      "samples": [
+        5986211
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-1.scored_step_cycles",
+      "samples": [
+        26443
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-1.value_phase_cycles",
+      "samples": [
+        192
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-1.value_data",
+      "samples": [
+        32
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-1.value_mac",
+      "samples": [
+        32
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-1.value_req",
+      "samples": [
+        32
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-1.refused_value_requests",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-1.delayed_value_responses",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-1.held_output_clocks",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-1.score_transactions",
+      "samples": [
+        32
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-1.value_transactions",
+      "samples": [
+        32
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-1.score_k_reads",
+      "samples": [
+        32
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-1.value_k_reads",
+      "samples": [
+        32
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-1.score_even_v_words",
+      "samples": [
+        16
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-1.score_odd_v_words",
+      "samples": [
+        16
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-1.value_even_v_words",
+      "samples": [
+        16
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-1.value_odd_v_words",
+      "samples": [
+        16
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-1.weighted_v_terms",
+      "samples": [
+        32
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-1.scored_step_cycles",
+      "samples": [
+        26395
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-1.value_phase_cycles",
+      "samples": [
+        144
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-1.value_data",
+      "samples": [
+        16
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-1.value_mac",
+      "samples": [
+        16
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-1.value_req",
+      "samples": [
+        16
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-1.refused_value_requests",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-1.delayed_value_responses",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-1.held_output_clocks",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-1.score_transactions",
+      "samples": [
+        32
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-1.value_transactions",
+      "samples": [
+        16
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-1.score_k_reads",
+      "samples": [
+        32
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-1.value_k_reads",
+      "samples": [
+        16
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-1.score_even_v_words",
+      "samples": [
+        16
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-1.score_odd_v_words",
+      "samples": [
+        16
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-1.value_even_v_words",
+      "samples": [
+        16
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-1.value_odd_v_words",
+      "samples": [
+        16
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-1.weighted_v_terms",
+      "samples": [
+        32
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-16.scored_step_cycles",
+      "samples": [
+        29589
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-16.value_phase_cycles",
+      "samples": [
+        1152
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-16.value_data",
+      "samples": [
+        512
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-16.value_mac",
+      "samples": [
+        512
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-16.value_req",
+      "samples": [
+        32
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-16.refused_value_requests",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-16.delayed_value_responses",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-16.held_output_clocks",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-16.score_transactions",
+      "samples": [
+        512
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-16.value_transactions",
+      "samples": [
+        512
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-16.score_k_reads",
+      "samples": [
+        512
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-16.value_k_reads",
+      "samples": [
+        512
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-16.score_even_v_words",
+      "samples": [
+        256
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-16.score_odd_v_words",
+      "samples": [
+        256
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-16.value_even_v_words",
+      "samples": [
+        256
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-16.value_odd_v_words",
+      "samples": [
+        256
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-16.weighted_v_terms",
+      "samples": [
+        512
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-16.scored_step_cycles",
+      "samples": [
+        29061
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-16.value_phase_cycles",
+      "samples": [
+        624
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-16.value_data",
+      "samples": [
+        256
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-16.value_mac",
+      "samples": [
+        256
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-16.value_req",
+      "samples": [
+        16
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-16.refused_value_requests",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-16.delayed_value_responses",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-16.held_output_clocks",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-16.score_transactions",
+      "samples": [
+        512
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-16.value_transactions",
+      "samples": [
+        256
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-16.score_k_reads",
+      "samples": [
+        512
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-16.value_k_reads",
+      "samples": [
+        256
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-16.score_even_v_words",
+      "samples": [
+        256
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-16.score_odd_v_words",
+      "samples": [
+        256
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-16.value_even_v_words",
+      "samples": [
+        256
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-16.value_odd_v_words",
+      "samples": [
+        256
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-16.weighted_v_terms",
+      "samples": [
+        512
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-64.scored_step_cycles",
+      "samples": [
+        39812
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-64.value_phase_cycles",
+      "samples": [
+        4224
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-64.value_data",
+      "samples": [
+        2048
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-64.value_mac",
+      "samples": [
+        2048
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-64.value_req",
+      "samples": [
+        32
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-64.refused_value_requests",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-64.delayed_value_responses",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-64.held_output_clocks",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-64.score_transactions",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-64.value_transactions",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-64.score_k_reads",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-64.value_k_reads",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-64.score_even_v_words",
+      "samples": [
+        1024
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-64.score_odd_v_words",
+      "samples": [
+        1024
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-64.value_even_v_words",
+      "samples": [
+        1024
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-64.value_odd_v_words",
+      "samples": [
+        1024
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-64.weighted_v_terms",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-64.scored_step_cycles",
+      "samples": [
+        37748
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-64.value_phase_cycles",
+      "samples": [
+        2160
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-64.value_data",
+      "samples": [
+        1024
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-64.value_mac",
+      "samples": [
+        1024
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-64.value_req",
+      "samples": [
+        16
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-64.refused_value_requests",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-64.delayed_value_responses",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-64.held_output_clocks",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-64.score_transactions",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-64.value_transactions",
+      "samples": [
+        1024
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-64.score_k_reads",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-64.value_k_reads",
+      "samples": [
+        1024
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-64.score_even_v_words",
+      "samples": [
+        1024
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-64.score_odd_v_words",
+      "samples": [
+        1024
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-64.value_even_v_words",
+      "samples": [
+        1024
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-64.value_odd_v_words",
+      "samples": [
+        1024
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-64.weighted_v_terms",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-128.scored_step_cycles",
+      "samples": [
+        53443
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-128.value_phase_cycles",
+      "samples": [
+        8320
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-128.value_data",
+      "samples": [
+        4096
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-128.value_mac",
+      "samples": [
+        4096
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-128.value_req",
+      "samples": [
+        32
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-128.refused_value_requests",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-128.delayed_value_responses",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-128.held_output_clocks",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-128.score_transactions",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-128.value_transactions",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-128.score_k_reads",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-128.value_k_reads",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-128.score_even_v_words",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-128.score_odd_v_words",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-128.value_even_v_words",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-128.value_odd_v_words",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-128.weighted_v_terms",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-128.scored_step_cycles",
+      "samples": [
+        49331
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-128.value_phase_cycles",
+      "samples": [
+        4208
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-128.value_data",
+      "samples": [
+        2048
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-128.value_mac",
+      "samples": [
+        2048
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-128.value_req",
+      "samples": [
+        16
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-128.refused_value_requests",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-128.delayed_value_responses",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-128.held_output_clocks",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-128.score_transactions",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-128.value_transactions",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-128.score_k_reads",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-128.value_k_reads",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-128.score_even_v_words",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-128.score_odd_v_words",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-128.value_even_v_words",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-128.value_odd_v_words",
+      "samples": [
+        2048
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-128.weighted_v_terms",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-256.scored_step_cycles",
+      "samples": [
+        80707
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-256.value_phase_cycles",
+      "samples": [
+        16512
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-256.value_data",
+      "samples": [
+        8192
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-256.value_mac",
+      "samples": [
+        8192
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-256.value_req",
+      "samples": [
+        32
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-256.refused_value_requests",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-256.delayed_value_responses",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "control.depth-256.held_output_clocks",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-256.score_transactions",
+      "samples": [
+        8192
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-256.value_transactions",
+      "samples": [
+        8192
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-256.score_k_reads",
+      "samples": [
+        8192
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-256.value_k_reads",
+      "samples": [
+        8192
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-256.score_even_v_words",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-256.score_odd_v_words",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-256.value_even_v_words",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-256.value_odd_v_words",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "control.depth-256.weighted_v_terms",
+      "samples": [
+        8192
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-256.scored_step_cycles",
+      "samples": [
+        72499
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-256.value_phase_cycles",
+      "samples": [
+        8304
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-256.value_data",
+      "samples": [
+        4096
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-256.value_mac",
+      "samples": [
+        4096
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-256.value_req",
+      "samples": [
+        16
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-256.refused_value_requests",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-256.delayed_value_responses",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Direct RTL capture on the final scored token of a fixed-sequence prefix.",
+      "name": "candidate.depth-256.held_output_clocks",
+      "samples": [
+        0
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-256.score_transactions",
+      "samples": [
+        8192
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-256.value_transactions",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-256.score_k_reads",
+      "samples": [
+        8192
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-256.value_k_reads",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-256.score_even_v_words",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-256.score_odd_v_words",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-256.value_even_v_words",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-256.value_odd_v_words",
+      "samples": [
+        4096
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Accepted read/response and bank-enable trace; value words counted by logical coordinate parity.",
+      "name": "candidate.depth-256.weighted_v_terms",
+      "samples": [
+        8192
+      ],
+      "unit": "count"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-attention-value-pair-v1-rtl",
+    "measurement_boundary": "Exact RTL request counters and final-prefix-token admission through acceptance of its last vocabulary score.",
+    "quality_gate": "Exact weighted products, sums, rounding, tags, scores, cache values, bytes, stops and directed faults.",
+    "sha256": "4ea8a1374c41941a281656c6f2d614673585d23ab6105e49e8c1240037be2b7a",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "All frozen scores, token bytes, stop geometry and cache values matched.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "aa9782d7473fb3ff64565487cbc3ad388772076c08b209abd161bccbc14a859c"
+  },
+  "started_at": "2026-11-19T20:30:52.601726+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

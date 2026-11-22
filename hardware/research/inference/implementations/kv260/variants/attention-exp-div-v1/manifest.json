@@ -1,0 +1,20 @@
+{
+  "cache_monitor_sha256": "2e9bb32c3a13ca521b801e9f9f12dacaacd8f6e2ae2c867f6ab03d6be482d500",
+  "candidate_attention_sha256": "5751f23c22f12b7560c71246bf172d82ce1636d9fc9123187bc88796eefea333",
+  "clock_hz": 50000000,
+  "control": "attention-cache-pipeline-v1",
+  "control_attention_sha256": "2992c3f0b8630a5fa1086406c81210170ede46e86058e94a875bd2d3ac9f0538",
+  "control_generator_sha256": "75191222334de8285bdb45954e8262e12f531ee528d64a44ac6413dee5e4e66d",
+  "control_manifest_sha256": "1f9aedf96848f00d0568ac29f4f341b9305610733be1c60e77ef5c5a48c21656",
+  "control_replay_sha256": "605bbc971ffb6343d7996da53ab2515ed297fe429f18ce315119818d1842c4c7",
+  "diagnostic_replay_sha256": "82bbdb3d652f22a4fedba6e3a469adf77fbd6d816b2604d492ec267a8743be0c",
+  "feedforward_generator_sha256": "49557f97d15202b3a00bbdcb2930dc127d2455df222fc36bce4087e4e09607b6",
+  "generic_scalar_sha256": "bb15ed311fd921e4c26b059272f2393cc5ca2249849aa3bebd6ffc1f730166e7",
+  "helper_sha256": "0816a9dc51dc5e336bb1ca90aa77a01a1db5ad251d3fd8f5bea37da27f11fa1f",
+  "id": "attention-exp-div-v1",
+  "only_changed_generated_source": "attention.sv",
+  "predictions_sha256": "972e5e02ef549839f9a4a74b31e725d71e2d26e04ec37835574a1460126fc514",
+  "profile_archive_sha256": "3b2d9433951827dce637add34287f3959447790257820a8fbe44d8f19aa49f2b",
+  "scalar_bench_sha256": "2a6ea2b75e7e1ff4f13c33149b8a126e2d35b17a212412303ddff6436490d140",
+  "scalar_fixtures_sha256": "8e157c8ad403eae99a3db994c49b263da4eac423994f5f6ffd50b8ca6a456e91"
+}

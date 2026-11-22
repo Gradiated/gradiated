@@ -1,0 +1,577 @@
+{
+  "artifacts": [
+    {
+      "bytes": 13964419,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-rtl-20261118T225153Z/simulation.tar.gz",
+      "role": "Exact generated RTL, oracle fixtures, compiled and observed traces",
+      "sha256": "6a5492aacade647e282476d01dd192097ccfef5cbf0af18726d3b3ddcdf598db"
+    },
+    {
+      "bytes": 25065,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-rtl-20261118T225153Z/source-closure.json",
+      "role": "Archive member SHA-256 manifest",
+      "sha256": "e33bd0afb45c877bdb98dc3568b3863a48dbe7908b8b43c4c2a85e7b10a38236"
+    },
+    {
+      "bytes": 15835,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-rtl-20261118T225153Z/matched.json",
+      "role": "Exact model phase and fault summary",
+      "sha256": "37af760e8cfdb05c4ce6e596d078bbe13552a9a6b968d0ee8885814f7479a75f"
+    },
+    {
+      "bytes": 23465,
+      "path": "hardware/research/inference/results/attention-exp-pair-v2-rtl-20261117T230104Z/run.json",
+      "role": "Adopted baseline experiment and exact control-archive pin",
+      "sha256": "db83294738d25d4a079ca3b92276204e812d1f7c91410ba4359bfe0b37006994"
+    },
+    {
+      "bytes": 937,
+      "path": "hardware/research/inference/implementations/kv260/rtl/toolchain.json",
+      "role": "Verilator simulator tree pin",
+      "sha256": "b6a35af5636cca4a2f9bb82135a716873c8bb1abf6926504f2e425ea600df693"
+    },
+    {
+      "bytes": 3690,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-rtl-20261118T225153Z/rtl-details.json",
+      "role": "Detailed cycle summary, directed fault results and development attempts",
+      "sha256": "bf212cfdfe7028d28f866c8d6ac8aad9e51ec53c8809bb5f08b27c08e94968ad"
+    }
+  ],
+  "completed_at": "2026-11-18T22:53:16.597521+00:00",
+  "conditions": {
+    "arms": [
+      "bram",
+      "ddr"
+    ],
+    "axi_model": "One outstanding request, eight bytes per aligned beat, nonsecure ARPROT, 0 or 2 backpressure clocks and 0 to 3 response wait clocks per coefficient.",
+    "control_archive_sha256": "5c66c50778943d4601f4bbc8d93741522dada0d333b558c6f23e31adf3e2cff9",
+    "device": "Mac Verilator 5.052",
+    "directed_dense_arms": 3,
+    "directed_fault_or_cancel_cases": 7,
+    "frozen_loader_sha256": "698df2e177b8e478088fffe9b02af09cd10c9ac0afbe252f3b031f133262e055",
+    "frozen_projection_sha256": "a470ed9570d1ebf01a5431fda805d02e0e11b88dcb0e06785e324bdd37c57e89",
+    "positions_per_arm": 716,
+    "rtl_jobs": 2,
+    "rtl_manifest_sha256": "3ace860e7985b6f784f77123b5f60058d3138d2534cf9168bf477ed68d288629",
+    "scheduled_fpga_clock_mhz": 50,
+    "successful_projection_extra_clocks": 4608,
+    "wall_clock_limit_seconds": 1500
+  },
+  "correctness": {
+    "evidence": "Both runtime modes matched seven frozen cases. The directed projection checked every address, signed operand, product, partial sum, rounding and saturation. Seven injected AXI faults and resets passed safe-release and recovery checks.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "part": "KV260 RTL model",
+      "rtl_jobs": 2,
+      "simulation_clock_hz_for_derived_rates": 50000000,
+      "tool": "Verilator 5.052",
+      "wall_clock_limit_seconds": 1500
+    },
+    "configuration_sha256": "ed641c221a622cca59c45657acb72735edcb445a37063dcdb3111a00b3332053",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "rtl-simulation",
+  "experiment_id": "kv260-output-projection-ddr4-v1",
+  "id": "output-projection-ddr4-rtl-20261118T225153Z",
+  "implementation": {
+    "id": "output-projection-ddr4-v1",
+    "sha256": "3ace860e7985b6f784f77123b5f60058d3138d2534cf9168bf477ed68d288629"
+  },
+  "limitations": [
+    "The fixed simulated AXI responder defines the observed wait cycles. Physical latency, board power and controller traffic are outside this RTL run."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.bos-only-cap0.prefix_cycles",
+      "samples": [
+        36399
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.bos-only-cap0.complete_cycles",
+      "samples": [
+        38081
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        493263
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        7475095
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        494945
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        7402040
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        414509
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        5142970
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        416191
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        5078839
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        4743643
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        12716857
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        4745325
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        12626576
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.full-context-cap0.prefix_cycles",
+      "samples": [
+        17828258
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "bram.full-context-cap0.complete_cycles",
+      "samples": [
+        17829940
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.bos-only-cap0.prefix_cycles",
+      "samples": [
+        41007
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.bos-only-cap0.complete_cycles",
+      "samples": [
+        42689
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-fu2p2q-cap255.prefix_cycles",
+      "samples": [
+        553167
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-fu2p2q-cap255.complete_cycles",
+      "samples": [
+        8097175
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-fu2p2q-cap255.first_token_cycles",
+      "samples": [
+        554849
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-fu2p2q-cap255.last_token_cycles",
+      "samples": [
+        8019512
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-hello-cap0.prefix_cycles",
+      "samples": [
+        465197
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-hello-cap0.complete_cycles",
+      "samples": [
+        466879
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-hello-cap1.prefix_cycles",
+      "samples": [
+        465197
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-hello-cap1.complete_cycles",
+      "samples": [
+        466879
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-hello-cap1.first_token_cycles",
+      "samples": [
+        466879
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-hello-cap1.last_token_cycles",
+      "samples": [
+        466879
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-hello-cap255.prefix_cycles",
+      "samples": [
+        465197
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-hello-cap255.complete_cycles",
+      "samples": [
+        5608378
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-hello-cap255.first_token_cycles",
+      "samples": [
+        466879
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-hello-cap255.last_token_cycles",
+      "samples": [
+        5539639
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-max48-cap255.prefix_cycles",
+      "samples": [
+        5190619
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-max48-cap255.complete_cycles",
+      "samples": [
+        13643065
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-max48-cap255.first_token_cycles",
+      "samples": [
+        5192301
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.encoded-max48-cap255.last_token_cycles",
+      "samples": [
+        13548176
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.full-context-cap0.prefix_cycles",
+      "samples": [
+        19007906
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "Cycle-exact full-model RTL replay.",
+      "name": "ddr.full-context-cap0.complete_cycles",
+      "samples": [
+        19009588
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "DDR minus matched BRAM completion clocks, reconciled against the projection-phase counter.",
+      "name": "ddr.bos-only-cap0.extra_projection_cycles",
+      "samples": [
+        4608
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "DDR minus matched BRAM completion clocks, reconciled against the projection-phase counter.",
+      "name": "ddr.encoded-fu2p2q-cap255.extra_projection_cycles",
+      "samples": [
+        622080
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "DDR minus matched BRAM completion clocks, reconciled against the projection-phase counter.",
+      "name": "ddr.encoded-hello-cap0.extra_projection_cycles",
+      "samples": [
+        50688
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "DDR minus matched BRAM completion clocks, reconciled against the projection-phase counter.",
+      "name": "ddr.encoded-hello-cap1.extra_projection_cycles",
+      "samples": [
+        50688
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "DDR minus matched BRAM completion clocks, reconciled against the projection-phase counter.",
+      "name": "ddr.encoded-hello-cap255.extra_projection_cycles",
+      "samples": [
+        465408
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "DDR minus matched BRAM completion clocks, reconciled against the projection-phase counter.",
+      "name": "ddr.encoded-max48-cap255.extra_projection_cycles",
+      "samples": [
+        926208
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "DDR minus matched BRAM completion clocks, reconciled against the projection-phase counter.",
+      "name": "ddr.full-context-cap0.extra_projection_cycles",
+      "samples": [
+        1179648
+      ],
+      "unit": "cycles"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-output-projection-ddr4-v1-rtl",
+    "measurement_boundary": "Matched BRAM and DDR replay in one fixture at fixed model steps, with phase counters and AXI wait accounting.",
+    "quality_gate": "Exact model outputs, emitted scores, stop reasons, cache checkpoints, and directed signed arithmetic, fault and drain checks.",
+    "sha256": "77c5aef7e92327cbfe4caf5afc9721eff349cefca96f2b3e492f9cc63d174be1",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Every emitted score, generated byte, stop reason, and the two cache checkpoints matched the adopted control. Each arm also passed two 320-logit legacy BOS verifications per case.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": null
+  },
+  "started_at": "2026-11-18T22:51:53Z",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

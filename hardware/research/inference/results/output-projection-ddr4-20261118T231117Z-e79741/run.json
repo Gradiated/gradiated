@@ -1,0 +1,428 @@
+{
+  "artifacts": [
+    {
+      "bytes": 271460,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/board-evidence.tar.gz",
+      "role": "Recovered complete original board evidence archive",
+      "sha256": "cba427394069b61363bc1761298c294b398ca9b4ac86c15500b6fa0714a80a1a"
+    },
+    {
+      "bytes": 102,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/recovered.json",
+      "role": "Byte count and hash of recovered evidence",
+      "sha256": "adca46804b681a092bf7dc4c5dfb60e077af3f6a285eb5e3bde45de777a8b83d"
+    },
+    {
+      "bytes": 1509518,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/board-transfer.gz",
+      "role": "Exact staged attempt packet",
+      "sha256": "27211b62b2bdaca4a5255e6557a4ae5d7b60b6e03de9c46faf3148c663060430"
+    },
+    {
+      "bytes": 109,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/staged.json",
+      "role": "Successful board transfer verification",
+      "sha256": "61d401a5222eb4b8b17c096649095482b0678a39d743b65783fd05aa77df7c87"
+    },
+    {
+      "bytes": 111,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/dispatch.json",
+      "role": "Board launch timestamp",
+      "sha256": "986b14123d3b90798b738225441055983276c68486861d3a2aeaca2be5591ed8"
+    },
+    {
+      "bytes": 18,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/exit.json",
+      "role": "Supervisor exit status",
+      "sha256": "03b56cd8abf87a44371ce664970b5937ef89d06ecf71e9249dd8a9768867b488"
+    },
+    {
+      "bytes": 6064,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/intent.json",
+      "role": "Admitted attempt configuration and input pins",
+      "sha256": "c0514de1eb18cdb4e30e48e3778a940bb43ce182539a0889fae65abe28e75c51"
+    },
+    {
+      "bytes": 116,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/outcome.json",
+      "role": "Reported failure and restoration result",
+      "sha256": "bf1e29f05dd508ec10bccd095fa49f078167aacde70499e47ed31fb12cdf7bcf"
+    },
+    {
+      "bytes": 95751,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/driver-inserted.state.json",
+      "role": "Kernel probe failure and candidate firmware state",
+      "sha256": "6e9e381d84d7dadb35e98630c28f6901a37395816578719ce1e032e4091d6cc9"
+    },
+    {
+      "bytes": 240,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/fixture-direct-dma-dt.json",
+      "role": "Observed direct DMA topology",
+      "sha256": "4096b9341362ceea8ba96801f1b5b43bebe4a965c47cbce7bc4d2bc38709b70f"
+    },
+    {
+      "bytes": 94442,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/original-ready.state.json",
+      "role": "Pre-attempt original research image and UIO state",
+      "sha256": "864d0203cf9ee2087e44b732c233afdc31727bfd66e06eace5303c5c5f3d23ff"
+    },
+    {
+      "bytes": 96234,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/restored.state.json",
+      "role": "Post-attempt original firmware, overlays, bindings, and sticky kernel taint",
+      "sha256": "507546372f7aacd8d25e66ad6a736efbeb0d0e93e1a15ba3e84d53b582a799e9"
+    },
+    {
+      "bytes": 251,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/restore-warnings.json",
+      "role": "Scoped restoration warning check",
+      "sha256": "fd425eec0b9fadb0c3217e21d0f2e98be8a28f1cfa9a2688d557abad0b62cd9f"
+    },
+    {
+      "bytes": 100,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/original-before.checks.json",
+      "role": "Original 320-score pre-attempt check",
+      "sha256": "8cb878022f5d2f2dffefa2cfe1f6eced95d3969068ac80e4182f873f4369da27"
+    },
+    {
+      "bytes": 100,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/original-after.checks.json",
+      "role": "Original 320-score post-restore check",
+      "sha256": "8cb878022f5d2f2dffefa2cfe1f6eced95d3969068ac80e4182f873f4369da27"
+    },
+    {
+      "bytes": 113,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/hp0-entry.stdout",
+      "role": "Baseline AFI and SMMU register values",
+      "sha256": "3fdb577b29eb8b8287a202738c6e805b962850eea7699b34cd1197698e14e1b7"
+    },
+    {
+      "bytes": 113,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/hp0-configured.stdout",
+      "role": "Configured AFI and SMMU register values",
+      "sha256": "544eb9bd648a2cbaf3defcf1c495455c1894e225000b068060700a081aa8f020"
+    },
+    {
+      "bytes": 113,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/hp0-exit.stdout",
+      "role": "Restored AFI and SMMU register values",
+      "sha256": "3fdb577b29eb8b8287a202738c6e805b962850eea7699b34cd1197698e14e1b7"
+    },
+    {
+      "bytes": 252,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/spi-identity.json",
+      "role": "SPI1 controller and TPM binding readback",
+      "sha256": "fa9b32691a65ed25e17f896c7dc8b69902fe31ca713bbc92b52fdd84677bdf3e"
+    },
+    {
+      "bytes": 449288,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/preparation/packet-inputs/kv260_ddr4_weights.ko",
+      "role": "Exact attempted kernel module",
+      "sha256": "d9ec0647900d19d0742d45309a995fea3a7e06086955cf5936b846e3e31bdbe7"
+    },
+    {
+      "bytes": 4808,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/preparation/packet-inputs/config.json",
+      "role": "Exact staged programming and workload plan",
+      "sha256": "3d9c2ce8d323e6e8536349558b7a0c72137f5b12e6bd69b861292a0e710983ce"
+    },
+    {
+      "bytes": 186387,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/scoring/source.patch",
+      "role": "Attempt source diff",
+      "sha256": "e1b8e5862d0ef75272a3e39bac72de6b0851ad672d529de4a9070e2b5d7e2160"
+    },
+    {
+      "bytes": 339,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/scoring/source-revision.json",
+      "role": "Attempt source base and scope",
+      "sha256": "cb1a2247472201ea34023259dbd3e413e13e44795f9645df9d92e3a489af79d9"
+    },
+    {
+      "bytes": 23086,
+      "path": "hardware/research/inference/results/output-projection-ddr4-build-20261118T225153Z/run.json",
+      "role": "Completed routed DDR4 fixture evidence",
+      "sha256": "15c9c8c2e0c15ed658910cf696f70f398e01292402b038ea754fabf097cb3b32"
+    }
+  ],
+  "completed_at": "2026-11-18T23:22:10.734678+00:00",
+  "conditions": {
+    "fixture_requests": 0,
+    "kernel_taint_after": 12288,
+    "kernel_taint_before": 0,
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "cross_device_comparison": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "long_stability": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "memory_bandwidth": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Preserved board readbacks and post-restoration original BOS qualification.",
+        "sources": [
+          {
+            "bytes": 116,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/outcome.json",
+            "role": "Reported failure and restoration result",
+            "sha256": "bf1e29f05dd508ec10bccd095fa49f078167aacde70499e47ed31fb12cdf7bcf"
+          },
+          {
+            "bytes": 94442,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/original-ready.state.json",
+            "role": "Pre-attempt original research image and UIO state",
+            "sha256": "864d0203cf9ee2087e44b732c233afdc31727bfd66e06eace5303c5c5f3d23ff"
+          },
+          {
+            "bytes": 100,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/original-after.checks.json",
+            "role": "Original 320-score post-restore check",
+            "sha256": "8cb878022f5d2f2dffefa2cfe1f6eced95d3969068ac80e4182f873f4369da27"
+          },
+          {
+            "bytes": 113,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/hp0-exit.stdout",
+            "role": "Restored AFI and SMMU register values",
+            "sha256": "3fdb577b29eb8b8287a202738c6e805b962850eea7699b34cd1197698e14e1b7"
+          },
+          {
+            "bytes": 252,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/spi-identity.json",
+            "role": "SPI1 controller and TPM binding readback",
+            "sha256": "fa9b32691a65ed25e17f896c7dc8b69902fe31ca713bbc92b52fdd84677bdf3e"
+          }
+        ],
+        "state": "measured"
+      },
+      "output_counts": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "physical_area": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Preserved board readbacks and post-restoration original BOS qualification.",
+        "sources": [
+          {
+            "bytes": 116,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/outcome.json",
+            "role": "Reported failure and restoration result",
+            "sha256": "bf1e29f05dd508ec10bccd095fa49f078167aacde70499e47ed31fb12cdf7bcf"
+          },
+          {
+            "bytes": 94442,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/original-ready.state.json",
+            "role": "Pre-attempt original research image and UIO state",
+            "sha256": "864d0203cf9ee2087e44b732c233afdc31727bfd66e06eace5303c5c5f3d23ff"
+          },
+          {
+            "bytes": 100,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/original-after.checks.json",
+            "role": "Original 320-score post-restore check",
+            "sha256": "8cb878022f5d2f2dffefa2cfe1f6eced95d3969068ac80e4182f873f4369da27"
+          },
+          {
+            "bytes": 113,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/hp0-exit.stdout",
+            "role": "Restored AFI and SMMU register values",
+            "sha256": "3fdb577b29eb8b8287a202738c6e805b962850eea7699b34cd1197698e14e1b7"
+          },
+          {
+            "bytes": 252,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/spi-identity.json",
+            "role": "SPI1 controller and TPM binding readback",
+            "sha256": "fa9b32691a65ed25e17f896c7dc8b69902fe31ca713bbc92b52fdd84677bdf3e"
+          }
+        ],
+        "state": "measured"
+      },
+      "repeatability": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "serving_load": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "startup": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Stopped at driver qualification before performance work.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "original_firmware": "gradiated-tiny-50mhz.bit.bin",
+    "outcome": {
+      "experiment_error": "ValueError: Unexpected kernel notices",
+      "experiment_passed": false,
+      "restored": true
+    },
+    "restored": true,
+    "restored_bos": {
+      "digest": "c5826dac5bde3a9fba3cd27c2ae93708f53b6d6cf43aad8606c21cd935ec38e2",
+      "scores": 320
+    },
+    "timed_requests": 0
+  },
+  "correctness": {
+    "evidence": "Linux rejected the 31-bit streaming DMA mask. The original 320-score BOS check passed after restoration.",
+    "passed": false
+  },
+  "device": {
+    "configuration": {
+      "attempted_driver_sha256": "d9ec0647900d19d0742d45309a995fea3a7e06086955cf5936b846e3e31bdbe7",
+      "clock_hz": 50000000,
+      "kernel": "6.8.0-1015-xilinx",
+      "mode": "one 50 MHz KV260 fixture with BRAM and direct HP0 DDR4 modes",
+      "staged_config_sha256": "3d9c2ce8d323e6e8536349558b7a0c72137f5b12e6bd69b861292a0e710983ce",
+      "system_boot_id": "0c865b88-1cfa-45ba-881b-0b388013ceeb"
+    },
+    "configuration_sha256": "fe75272d543d35bfd5ac9724bcdee6ce4ba32e9506da397a47c97fa28d2ed009",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-output-projection-ddr4-v1",
+  "id": "output-projection-ddr4-20261118T231117Z-e79741",
+  "implementation": {
+    "id": "output-projection-ddr4-v1",
+    "sha256": "798bb7742f22c2cf5d2a081ec7b7649c12760fe33f6c28502af3377e63113098"
+  },
+  "limitations": [
+    "This attempt produced zero fixture requests, timing samples or energy measurements.",
+    "The original research circuit and weights were restored on the same boot. The expected out-of-tree and unsigned-module taint persisted."
+  ],
+  "metrics": [],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-output-projection-ddr4-v1-first-board-attempt",
+    "measurement_boundary": "Board programming, driver admission and original-state restoration.",
+    "quality_gate": "Qualification precedes BRAM and DDR4 timing. Original image must pass the 320-score restore check.",
+    "sha256": "77c5aef7e92327cbfe4caf5afc9721eff349cefca96f2b3e492f9cc63d174be1",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Driver qualification stopped before fixture smoke, warm-ups and timed requests.",
+    "passed": false
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "e1b8e5862d0ef75272a3e39bac72de6b0851ad672d529de4a9070e2b5d7e2160"
+  },
+  "started_at": "2026-11-18T23:20:00.936489+00:00",
+  "status": "aborted",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-output-projection-ddr4-v1-planned-comparison",
+    "sha256": "3d9c2ce8d323e6e8536349558b7a0c72137f5b12e6bd69b861292a0e710983ce"
+  }
+}

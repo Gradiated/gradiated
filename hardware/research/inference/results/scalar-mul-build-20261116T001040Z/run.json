@@ -1,0 +1,337 @@
+{
+  "artifacts": [
+    {
+      "bytes": 8344,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-mul-build-20261115T234735Z-recovery/offline-acceptance.json",
+      "role": "Independent archive and implementation checks",
+      "sha256": "37944355c71813be56bdc9c26f08cd2bf8accdd23a6b11ff2ed440caa5feee84"
+    },
+    {
+      "bytes": 60223604,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-mul-build-20261115T234735Z-recovery/server.tar.gz",
+      "role": "Complete recovered Linux build archive",
+      "sha256": "c67fa4e23cd3f97dc05bba21d94c9b1f7df287ab87e1a675d5ae5cf1fc36f846"
+    },
+    {
+      "bytes": 62073,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-mul-build-20261115T234735Z-recovery/server/recovery-manifest.json",
+      "role": "Linux build files and hashes",
+      "sha256": "0bd13347a28635873b23da19bee776d10294a56e0dcf3ff5a4717fbce31c648b"
+    },
+    {
+      "bytes": 2014,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-mul-build-20261115T234735Z-recovery/server/source-manifest.json",
+      "role": "Generated build source closure",
+      "sha256": "e4b57df78a5446a9bf65789ba9a997b3546fd0a21a8f573fcd5db383c827e297"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/scalar-mul-build-20261115T234735Z-recovery/server/offline-package/gradiated-tiny-scalar-mul-v1-50mhz.bit.bin",
+      "role": "Verified candidate programming image",
+      "sha256": "b361611b97d720b99c727103202905ad2229bcb8d5e06d0e78bad8cecffefffa"
+    },
+    {
+      "bytes": 119474,
+      "path": "hardware/research/inference/results/scalar-mul-rtl-20261115T234330Z/run.json",
+      "role": "Pinned real-core and synthetic simulation evidence",
+      "sha256": "707780ddf0148286dea6f67f644c8816f70fb13ead91df440decea9d370d0d98"
+    },
+    {
+      "bytes": 9338,
+      "path": "hardware/research/inference/results/prefill-skip-build-20261115T224330Z/run.json",
+      "role": "Identical-clock control resource and timing report",
+      "sha256": "c6778493bc61dc2a12881c68f4f8203bcf8708aea6f7fd75f713a917d681b76e"
+    }
+  ],
+  "completed_at": "2026-11-16T00:10:40.956557+00:00",
+  "conditions": {
+    "firmware": {
+      "bytes": 7797692,
+      "sha256": "b361611b97d720b99c727103202905ad2229bcb8d5e06d0e78bad8cecffefffa"
+    },
+    "no_physical_board_access": true,
+    "resources": {
+      "bram_tile": {
+        "available": 144.0,
+        "percent_reported": 25.35,
+        "used": 36.5
+      },
+      "dsp": {
+        "available": 1248.0,
+        "percent_reported": 2.4,
+        "used": 30.0
+      },
+      "lut": {
+        "available": 117120.0,
+        "percent_reported": 29.02,
+        "used": 33993.0
+      },
+      "occupied_clb": {
+        "available": 14640.0,
+        "percent_reported": 41.95,
+        "used": 6141.0
+      },
+      "register": {
+        "available": 234240.0,
+        "percent_reported": 5.48,
+        "used": 12828.0
+      },
+      "uram": {
+        "available": 64.0,
+        "percent_reported": 0.0,
+        "used": 0.0
+      }
+    },
+    "verified_server_files": 316
+  },
+  "correctness": {
+    "evidence": "Seven exact matched real-core cases, 3,567 scalar oracle cases and reset in each multiplier step. All routed validation gates passed.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "board_preset": "xilinx.com:kv260_som:part0:1.4",
+      "max_threads": 2,
+      "part": "xck26-sfvc784-2LV-c",
+      "route_checkpoint_sha256": "444fc61f8e0d5d3d9796e87d913231c0a5d3fbd51370391f449aa765ef27a953",
+      "scope": "Full PS, AXI and neural implementation, offline only",
+      "target_clock_period_ns": 20,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "843ada43af82689293e5e0a63e74b728e8d837915cd6b2fcc2b189774f71308e",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-scalar-mul-v1",
+  "id": "scalar-mul-build-20261116T001040Z",
+  "implementation": {
+    "id": "kv260-scalar-mul-v1",
+    "sha256": "e4b57df78a5446a9bf65789ba9a997b3546fd0a21a8f573fcd5db383c827e297"
+  },
+  "limitations": [
+    "Routed static timing and utilisation for one implementation. No measured physical performance or energy.",
+    "Matched benchmark and board restoration are separate evidence."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "bram_tile_used",
+      "samples": [
+        36.5
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "bram_tile_utilisation",
+      "samples": [
+        25.35
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "dsp_used",
+      "samples": [
+        30.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "dsp_utilisation",
+      "samples": [
+        2.4
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "lut_used",
+      "samples": [
+        33993.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "lut_utilisation",
+      "samples": [
+        29.02
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "occupied_clb_used",
+      "samples": [
+        6141.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "occupied_clb_utilisation",
+      "samples": [
+        41.95
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "register_used",
+      "samples": [
+        12828.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "register_utilisation",
+      "samples": [
+        5.48
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "uram_used",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Full routed Vivado resource report",
+      "name": "uram_utilisation",
+      "samples": [
+        0.0
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Static routed timing at 20 ns target",
+      "name": "setup_slack_ns",
+      "samples": [
+        3.887
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Static routed timing at 20 ns target",
+      "name": "hold_slack_ns",
+      "samples": [
+        0.012
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Standalone Vivado phase wall time",
+      "name": "bitstream_wall_time",
+      "samples": [
+        95.56095866602845
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Standalone Vivado phase wall time",
+      "name": "generate_wall_time",
+      "samples": [
+        26.27631950401701
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Standalone Vivado phase wall time",
+      "name": "opt_wall_time",
+      "samples": [
+        71.16246824502014
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Standalone Vivado phase wall time",
+      "name": "place_wall_time",
+      "samples": [
+        236.17073061410338
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Standalone Vivado phase wall time",
+      "name": "reports_wall_time",
+      "samples": [
+        57.25663039390929
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Standalone Vivado phase wall time",
+      "name": "route_wall_time",
+      "samples": [
+        313.59772329288535
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Standalone Vivado phase wall time",
+      "name": "synth_wall_time",
+      "samples": [
+        335.4025469669141
+      ],
+      "unit": "s"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-scalar-mul-v1-build",
+    "measurement_boundary": "Fresh offline Vivado build at 20 ns, plus verified archive recovery and bootgen conversion.",
+    "quality_gate": "Exact matched simulation, routed timing, coverage and DRC acceptance.",
+    "sha256": "21d34f22927a501068b9de2b5da385ae1be57f6126fb3e689cd13d354243de9e",
+    "tokenizer": "Unchanged frozen byte/hex tokenizer. No timed token generation in this build.",
+    "warmup": "Not applicable to offline implementation reports."
+  },
+  "quality": {
+    "evidence": "Frozen model and arithmetic on retained work. The physical experiment is separate.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "04c7100ca9d5ba9ddbd49fdc14bd85cefcc6381d",
+    "patch_sha256": "e01b187d856aca2054980de3097248b9a16bcbf82a086b58ae92aa96a4a8489b"
+  },
+  "started_at": "2026-11-15T23:50:38.723680+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-scalar-mul-full-device-build",
+    "sha256": "21d34f22927a501068b9de2b5da385ae1be57f6126fb3e689cd13d354243de9e"
+  }
+}

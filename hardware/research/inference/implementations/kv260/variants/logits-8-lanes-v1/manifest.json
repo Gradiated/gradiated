@@ -1,0 +1,6 @@
+{
+  "control_transformer_sha256": "b47ac0197e576fcfbc3397ce2e11e2b2df6d500efd92a1e4b404dfc86a12c56e",
+  "candidate_transformer_sha256": "dc5851764926a6b5e3638aea760eb025d86da844241497a175e125c6210d0e2d",
+  "matched_four_lane_replay_sha256": "497013de5e05b953c23bccd8ef4bce6f0b2a73154c4734b326114e2c3675d881",
+  "exact_score_fixture_archive_sha256": "34bbfb5f802ab213800aaac7720fbbcb6d11362aaaf477e611546d4489bea85a"
+}

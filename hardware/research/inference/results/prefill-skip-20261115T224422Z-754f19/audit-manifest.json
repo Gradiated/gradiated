@@ -1,0 +1,45 @@
+{
+  "run_id": "prefill-skip-20261115T224422Z-754f19",
+  "passed": true,
+  "preservation_verified": true,
+  "raw_artifacts_verified": 262,
+  "run_record_sha256": "cc0c4dad1e44b99e3bf00ac25b96cf1c783898eeaa148e97f03df4e0b7832ee5",
+  "capture_manifest_sha256": "4023c2ad4366f9cda3681025510a8f5fb62794963055c1dbc6cc593a686a35c3",
+  "evidence_root": ".agents/runtime/hardware/inference/outputs/prefill-skip-20261115T224422Z-754f19-audit",
+  "verified_at": "2026-11-15T23:20:01.155187+00:00",
+  "scope": "Independent decoding of all 15 serial gates, exact reference checks, 36 timed requests, six 350-sample power traces over five timestamp alignments, 18 matched cycle comparisons, all 34 metric definitions and 27 coverage entries. Original firmware and pinned weights reloaded and 320 BOS scores verified, not full weight-memory readback.",
+  "files": {
+    "audit.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "audit.stdout": {
+      "bytes": 28765,
+      "sha256": "a7d2b1884bee3c6d41b455b86d83701577132b22e055dd206ac973c6c5b6875a"
+    },
+    "counter-audit.json": {
+      "bytes": 3482,
+      "sha256": "7f4fea15621e0ca67be0291e052d2b9119a4c661747a9cca6e43b11da1f6d5bd"
+    },
+    "independent-audit.py": {
+      "bytes": 7337,
+      "sha256": "0230663c173849a48f356bf1403f212ce10c538eb81ff405aba30963e3d7c525"
+    },
+    "pre-existing-files.json": {
+      "bytes": 517537,
+      "sha256": "0206ec309e1b43ab2cd757c33885af033326a00ffb7e2e6e396378f39a34b149"
+    },
+    "preservation.json": {
+      "bytes": 481,
+      "sha256": "1fc4c0ebcaec21112197c1556472205f5d442882256391ed8f00a9938cd3e1a8"
+    },
+    "record-consistency.json": {
+      "bytes": 91,
+      "sha256": "3433846e3141b8635d25399c3b87e60ed54e26062086042fd999f5e8808c3431"
+    },
+    "record-consistency.py": {
+      "bytes": 2432,
+      "sha256": "67f2a91da6f610a857fd09a2b19e4756a21e30670ca9c8da48776d67998a463f"
+    }
+  }
+}

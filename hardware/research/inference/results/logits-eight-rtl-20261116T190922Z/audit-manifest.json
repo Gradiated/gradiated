@@ -1,0 +1,10 @@
+{
+  "archive_sha256": "370be77ea6b898728f3d4b08982fd9ef2a995638042b20e95f31bcea7ca86351",
+  "coverage_families": 34,
+  "independent_receipt_sha256": "782e4e18e9c94c08ad958a86e872bd12f06f2e4fe9d8d1356eb9255ee68c2c9b",
+  "members": 186,
+  "metrics": 50,
+  "passed": true,
+  "run_record_sha256": "358c641be65be64c23e890dbc12dcd590c6aeb92a7b733594e4871752b943df0",
+  "run_sha256": "358c641be65be64c23e890dbc12dcd590c6aeb92a7b733594e4871752b943df0"
+}

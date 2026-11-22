@@ -1,0 +1,729 @@
+{
+  "artifacts": [
+    {
+      "bytes": 51339,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/build-input.tar.gz",
+      "role": "Exact admitted build input archive",
+      "sha256": "8fad4f0efdbb2c1af1a20f9db366954e19e99fc77475c25170c1f87ae7599521"
+    },
+    {
+      "bytes": 5482,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/admitted-protocol.md",
+      "role": "Sealed execution protocol",
+      "sha256": "7a8025206f7ae6d9748849fa0b18a21ce700ccc03fc8d13aa38c5936807d8496"
+    },
+    {
+      "bytes": 1638,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/admission.json",
+      "role": "Preflight pins for control route, shell and candidate source",
+      "sha256": "12b7d5255ce0ce708e1e3ec7911df6f6626078e9aa16b47f779b80e8228fa928"
+    },
+    {
+      "bytes": 2308,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/admitted-source-manifest.json",
+      "role": "Candidate source and tooling hashes",
+      "sha256": "adf50f1dfef4408394c2faa7d61f1716eb3ebb1fbbc0d69d8be6afe2e1b56d7e"
+    },
+    {
+      "bytes": 251,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/dispatch.json",
+      "role": "Bounded Vivado launch receipt",
+      "sha256": "5ed31a8fd1000d49d3287fcf6bc43ce986c3e13439acd8c472b689754fe54e84"
+    },
+    {
+      "bytes": 260,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/launch.log",
+      "role": "Remote shell and control checkpoint hash checks",
+      "sha256": "dcec790f3f94d55a8e401168629ba7fa04ded7d2bccf53bb0ea8750860d01a97"
+    },
+    {
+      "bytes": 91983953,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server.tar.gz",
+      "role": "Full Linux Vivado projects, checkpoints, tooling, logs and firmware",
+      "sha256": "b2059c4abac1ddb53e5e75b7e992d13640bd61c99b299c998c0c53a089ea77ca"
+    },
+    {
+      "bytes": 284,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server.receipt.json",
+      "role": "Linux archive member and hash receipt",
+      "sha256": "1761ad0d22955d031d6c2d10c62005a4ecbc60270683608389c22994703137f6"
+    },
+    {
+      "bytes": 370,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/archive-recovery.json",
+      "role": "Resumable verified transfer record",
+      "sha256": "e1771db86c644acda8e3c934dcf015fda3ea12dc0e2285fe0012df67d6693138"
+    },
+    {
+      "bytes": 360,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/archive-integrity.json",
+      "role": "Independent file-by-file recovery verification",
+      "sha256": "1aedb881ef6a60e74a086c9af87d8bb0bce14406dab20d9fdbfb09cbb2385f66"
+    },
+    {
+      "bytes": 13322,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/offline-acceptance.json",
+      "role": "Independent source, timing, resource and image verification",
+      "sha256": "bb98a8475679f4b7ee598e981a928757b1d8049783a4438e5c570aa08d973198"
+    },
+    {
+      "bytes": 164570,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/attention-resources.json",
+      "role": "Exact control and candidate mapped attention and non-attention census",
+      "sha256": "8e2b9386bafab64f106aec66cd8ddc469284534d3a4254627bbc41e5b44fe777"
+    },
+    {
+      "bytes": 915,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/candidate-rtl-manifest.json",
+      "role": "Exact candidate full-model replay inputs",
+      "sha256": "91d4ad599708a6d66f8c369bc592a43fcad2fc9c6f97afb75280c3ef348836c3"
+    },
+    {
+      "bytes": 915,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/control-rtl-manifest.json",
+      "role": "Exact control full-model replay inputs",
+      "sha256": "8fb1cabd76b1ee1781fc258dc9fa9d07f1c787c806a2a8b2d1d39a4987576c64"
+    },
+    {
+      "bytes": 74,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/build-outcome.json",
+      "role": "Vivado flow completion and elapsed time",
+      "sha256": "6a234d88634f285c06e107924318d510439ca5086b798c59bdf7405657a079b7"
+    },
+    {
+      "bytes": 63119,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/recovery-manifest.json",
+      "role": "Recovered archive member hashes",
+      "sha256": "aa66ccfb67cc0f20d75533b07e74fbf8b0b5bcd1560d1aed46d5bb837d27d665"
+    },
+    {
+      "bytes": 2308,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/source-manifest.json",
+      "role": "Recovered Vivado input hashes",
+      "sha256": "adf50f1dfef4408394c2faa7d61f1716eb3ebb1fbbc0d69d8be6afe2e1b56d7e"
+    },
+    {
+      "bytes": 2210,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/build/generate/compiled-neural-sources.tsv",
+      "role": "Generated project RTL compile source hashes",
+      "sha256": "0c813ee1a4ef71197a333a0f82da98944caaf34c38ef80b68a10696b43d9662c"
+    },
+    {
+      "bytes": 2210,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/build/synth/compiled-neural-sources.tsv",
+      "role": "Actual synthesis RTL compile source hashes",
+      "sha256": "0c813ee1a4ef71197a333a0f82da98944caaf34c38ef80b68a10696b43d9662c"
+    },
+    {
+      "bytes": 380,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/build/reports/metrics.txt",
+      "role": "Routed timing and coverage totals",
+      "sha256": "c0f23e230c71c2c734d84fff2f25d96165318f0e28c327993267a62904f22ab3"
+    },
+    {
+      "bytes": 44099,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/build/reports/timing.rpt",
+      "role": "Routed Vivado setup and hold timing",
+      "sha256": "c789f007c8fc152c473a15caa90cdf585fbfb899fb40778f8cf2c7de0e318409"
+    },
+    {
+      "bytes": 1331557,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/build/reports/clock-domain.tsv",
+      "role": "Routed PS clock domain and neural endpoints",
+      "sha256": "9a4c9d773a645539a04df7595646af3be8999f1a212ec7b722efd709db465e00"
+    },
+    {
+      "bytes": 12657,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/build/reports/utilization.rpt",
+      "role": "Whole-design routed resource report",
+      "sha256": "c117c20f10193020d10158d4bfe3f29cebf460ede9958571cdced2b2ca25190e"
+    },
+    {
+      "bytes": 10879,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/build/reports/utilization-hierarchical.rpt",
+      "role": "Routed hierarchical resource report",
+      "sha256": "33232945a59001b0650b69482ed1e7330b0d268223e04a254714d48a0ad2c9e1"
+    },
+    {
+      "bytes": 23867141,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/build/route/route.dcp",
+      "role": "Exact candidate routed checkpoint",
+      "sha256": "654cd6fd67b6ebb5101cdfe14be2a658500daa36e206a82349c8aa357f5fd2d3"
+    },
+    {
+      "bytes": 142120,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/candidate-primitive-census.tsv",
+      "role": "Named candidate routed memory and DSP cells",
+      "sha256": "dac3e4617c467c5f6cca607fefa9b475e6098d794fa6b960828bb0a1adc0f24c"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/offline-package/gradiated-tiny-probability-div-v1-50mhz.bit.bin",
+      "role": "Verified Linux candidate firmware",
+      "sha256": "3edb7cc4e141d3cfebeaafbc21b22230bbf769bc30d405a0f55431b3cf264b8b"
+    },
+    {
+      "bytes": 363,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/kv260-probability-div-program.dtbo",
+      "role": "Verified candidate program overlay",
+      "sha256": "5d0571c7c2d2c0317d4ef7bf38c0d88c7e1466b4d37bd08a7555d52233d58bef"
+    },
+    {
+      "bytes": 7788,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/prepare.py",
+      "role": "Candidate packet preparation",
+      "sha256": "d60ed6c587fded4371fe8453a543bed0ec0d507391a9c3c26f9c735a4e0a70ce"
+    },
+    {
+      "bytes": 2946,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/launch.py",
+      "role": "Bounded existing-host dispatch",
+      "sha256": "73726dd708daa26da808bd889968e7d03b0da9b278d7969c540e50f345053bba"
+    },
+    {
+      "bytes": 3822,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/recover.py",
+      "role": "Resumable receipt-verified recovery",
+      "sha256": "e4914182423b099dc8cb5c2ce427a09449610ab88a2db2b81e69345a9c6ee2b4"
+    },
+    {
+      "bytes": 16797,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/verify.py",
+      "role": "Independent build acceptance checks",
+      "sha256": "fb895aaf1711db8832634ada3661c4e25ab38c70797c5337a111469237a544ee"
+    },
+    {
+      "bytes": 13285,
+      "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/record.py",
+      "role": "Build record assembly and artifact installation",
+      "sha256": "2a2a30af36804638970ccb8fa7e78d13f63f58b6c139e86420f4d731b5c88ab4"
+    },
+    {
+      "bytes": 16566,
+      "path": "hardware/research/inference/results/attention-exp-pair-v2-build-20261117T225852Z/run.json",
+      "role": "Exact Experiment 13 routed control",
+      "sha256": "61c505f49c81a1f3f351861e3e688a8111943f667251222ea92432365dfaf5de"
+    },
+    {
+      "bytes": 32455,
+      "path": "hardware/research/inference/results/probability-div-v1-rtl-20261119T160135Z/run.json",
+      "role": "Seven paired model replays and directed RTL qualification",
+      "sha256": "109a10b3b77600aad61e9284de2e1851646a0ca35d4bd108c006dcefac1b7f79"
+    }
+  ],
+  "completed_at": "2026-11-19T16:17:41.872855+00:00",
+  "conditions": {
+    "archive_recovery": {
+      "archive_bytes": 91983953,
+      "archive_sha256": "b2059c4abac1ddb53e5e75b7e992d13640bd61c99b299c998c0c53a089ea77ca",
+      "completed_at": "2026-11-19T16:17:38.882698+00:00",
+      "elapsed_seconds": 249.048791,
+      "limit_seconds": 1200,
+      "receipt_members": 323,
+      "resumed_prefix_bytes": 0,
+      "server_build_passed": true,
+      "started_at": "2026-11-19T16:13:29.833907+00:00"
+    },
+    "attention_resource_census_sha256": "8e2b9386bafab64f106aec66cd8ddc469284534d3a4254627bbc41e5b44fe777",
+    "candidate_attention_source_sha256": "d9b481daa7e488bcfe7140a619f46163f4900e88ffa54286047850f53c732cdd",
+    "candidate_checkpoint_sha256": "654cd6fd67b6ebb5101cdfe14be2a658500daa36e206a82349c8aa357f5fd2d3",
+    "clock_target_hz": 50000000,
+    "control_checkpoint_sha256": "edd6815b335a5aed10e1e1e30847351655754ac56798440cb15218df169d3b6f",
+    "control_resources": {
+      "bram_tile": 39.0,
+      "dsp": 41.0,
+      "lut": 38329.0,
+      "lutram": 1172.0,
+      "register": 14464.0,
+      "uram": 0.0
+    },
+    "control_timing": {
+      "clock": "clk_pl_0 period_ns 20.000",
+      "drc_errors_or_critical_warnings": "0",
+      "fully_placed": "1",
+      "fully_routed": "1",
+      "hold_slack_ns": "0.012",
+      "native_no_clock": "0",
+      "partially_routed_nets": "0",
+      "routing_errors": "0",
+      "routing_gap_nets": "0",
+      "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+      "setup_slack_ns": "5.544",
+      "unclocked_active_pins": "0",
+      "unconstrained_internal_endpoints": "0",
+      "unrouted_nets": "0",
+      "unused_ps_clock_outputs": "0"
+    },
+    "hierarchy": {
+      "candidate": {
+        "att": {
+          "dsp": 9,
+          "ff": 2223,
+          "logic_lut": 9082,
+          "lutram": 362,
+          "module": "attention",
+          "ramb18": 4,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 9444,
+          "uram": 0
+        },
+        "scalar": {
+          "dsp": 4,
+          "ff": 983,
+          "logic_lut": 5032,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 5032,
+          "uram": 0
+        },
+        "second_exp": {
+          "dsp": 4,
+          "ff": 854,
+          "logic_lut": 3709,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp__parameterized0",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 3709,
+          "uram": 0
+        }
+      },
+      "control": {
+        "att": {
+          "dsp": 9,
+          "ff": 2220,
+          "logic_lut": 9035,
+          "lutram": 362,
+          "module": "attention",
+          "ramb18": 4,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 9397,
+          "uram": 0
+        },
+        "scalar": {
+          "dsp": 4,
+          "ff": 982,
+          "logic_lut": 4911,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 4911,
+          "uram": 0
+        },
+        "second_exp": {
+          "dsp": 4,
+          "ff": 855,
+          "logic_lut": 3788,
+          "lutram": 0,
+          "module": "fixed_scalar_attention_exp_12",
+          "ramb18": 2,
+          "ramb36": 0,
+          "srl": 0,
+          "total_lut": 3788,
+          "uram": 0
+        }
+      }
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "cross_device_comparison": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Verified Vivado implementation and primitive census.",
+        "sources": [
+          {
+            "bytes": 380,
+            "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/build/reports/metrics.txt",
+            "role": "Routed timing and coverage totals",
+            "sha256": "c0f23e230c71c2c734d84fff2f25d96165318f0e28c327993267a62904f22ab3"
+          },
+          {
+            "bytes": 44099,
+            "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/build/reports/timing.rpt",
+            "role": "Routed Vivado setup and hold timing",
+            "sha256": "c789f007c8fc152c473a15caa90cdf585fbfb899fb40778f8cf2c7de0e318409"
+          },
+          {
+            "bytes": 16566,
+            "path": "hardware/research/inference/results/attention-exp-pair-v2-build-20261117T225852Z/run.json",
+            "role": "Exact Experiment 13 routed control",
+            "sha256": "61c505f49c81a1f3f351861e3e688a8111943f667251222ea92432365dfaf5de"
+          }
+        ],
+        "state": "measured"
+      },
+      "long_stability": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Verified Vivado implementation and primitive census.",
+        "sources": [
+          {
+            "bytes": 10879,
+            "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/build/reports/utilization-hierarchical.rpt",
+            "role": "Routed hierarchical resource report",
+            "sha256": "33232945a59001b0650b69482ed1e7330b0d268223e04a254714d48a0ad2c9e1"
+          },
+          {
+            "bytes": 164570,
+            "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/attention-resources.json",
+            "role": "Exact control and candidate mapped attention and non-attention census",
+            "sha256": "8e2b9386bafab64f106aec66cd8ddc469284534d3a4254627bbc41e5b44fe777"
+          },
+          {
+            "bytes": 16566,
+            "path": "hardware/research/inference/results/attention-exp-pair-v2-build-20261117T225852Z/run.json",
+            "role": "Exact Experiment 13 routed control",
+            "sha256": "61c505f49c81a1f3f351861e3e688a8111943f667251222ea92432365dfaf5de"
+          }
+        ],
+        "state": "measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "physical_area": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Verified Vivado implementation and primitive census.",
+        "sources": [
+          {
+            "bytes": 12657,
+            "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/build/reports/utilization.rpt",
+            "role": "Whole-design routed resource report",
+            "sha256": "c117c20f10193020d10158d4bfe3f29cebf460ede9958571cdced2b2ca25190e"
+          },
+          {
+            "bytes": 10879,
+            "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/server/build/reports/utilization-hierarchical.rpt",
+            "role": "Routed hierarchical resource report",
+            "sha256": "33232945a59001b0650b69482ed1e7330b0d268223e04a254714d48a0ad2c9e1"
+          },
+          {
+            "bytes": 164570,
+            "path": ".agents/runtime/hardware/inference/outputs/probability-div-v1-build-20261119T155633Z/attention-resources.json",
+            "role": "Exact control and candidate mapped attention and non-attention census",
+            "sha256": "8e2b9386bafab64f106aec66cd8ddc469284534d3a4254627bbc41e5b44fe777"
+          },
+          {
+            "bytes": 16566,
+            "path": "hardware/research/inference/results/attention-exp-pair-v2-build-20261117T225852Z/run.json",
+            "role": "Exact Experiment 13 routed control",
+            "sha256": "61c505f49c81a1f3f351861e3e688a8111943f667251222ea92432365dfaf5de"
+          }
+        ],
+        "state": "measured"
+      },
+      "serving_load": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "startup": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "remote_elapsed_seconds": 912.2219419090543,
+    "resource_delta": {
+      "bram_tile": 0.0,
+      "dsp": 0.0,
+      "lut": 54.0,
+      "lutram": 0.0,
+      "register": 2.0,
+      "uram": 0.0
+    },
+    "resources": {
+      "bram_tile": 39.0,
+      "dsp": 41.0,
+      "lut": 38383.0,
+      "lutram": 1172.0,
+      "register": 14466.0,
+      "uram": 0.0
+    },
+    "shell": {
+      "clock_domain": "clk_pl_0",
+      "clock_leaf_sinks": {
+        "candidate": 15448,
+        "control": 15446
+      },
+      "clock_period_ns": 20,
+      "components": [
+        "axi",
+        "neural",
+        "one",
+        "ps",
+        "rst",
+        "zero"
+      ],
+      "interface_nets": [
+        "axi_M00_AXI",
+        "ps_M_AXI_HPM0_FPD"
+      ],
+      "matched_input_files": 119,
+      "same_address_map": true,
+      "same_ps_and_neural_ports": true
+    },
+    "timing": {
+      "clock": "clk_pl_0 period_ns 20.000",
+      "drc_errors_or_critical_warnings": "0",
+      "fully_placed": "1",
+      "fully_routed": "1",
+      "hold_slack_ns": "0.013",
+      "native_no_clock": "0",
+      "partially_routed_nets": "0",
+      "routing_errors": "0",
+      "routing_gap_nets": "0",
+      "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+      "setup_slack_ns": "4.211",
+      "unclocked_active_pins": "0",
+      "unconstrained_internal_endpoints": "0",
+      "unrouted_nets": "0",
+      "unused_ps_clock_outputs": "0"
+    }
+  },
+  "correctness": {
+    "evidence": "Exact route constraints, source closure, shell and converted firmware checked independently.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "clock_hz": 50000000,
+      "mode": "fully routed PS/AXI/neural implementation",
+      "part": "xck26-sfvc784-2LV-c",
+      "threads": 2,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "995b2e6fbb171dd64467b6c2a1bb1b76488c26c309a332b2adbd50e5c784cc2b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-probability-div-v1",
+  "id": "probability-div-v1-build-20261119T155633Z",
+  "implementation": {
+    "id": "probability-div-v1",
+    "sha256": "3edb7cc4e141d3cfebeaafbc21b22230bbf769bc30d405a0f55431b3cf264b8b"
+  },
+  "limitations": [
+    "Routed utilization and static timing are implementation measurements. Board power, energy, and workload time require a separate physical run.",
+    "Grouped LUTRAM macros and primitive leaves can refer to the same occupied resources."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.bram_tile",
+      "samples": [
+        39.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.dsp",
+      "samples": [
+        41.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.lut",
+      "samples": [
+        38383.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.lutram",
+      "samples": [
+        1172.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.register",
+      "samples": [
+        14466.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 fully routed utilization report.",
+      "name": "routed.uram",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 post-route worst path analysis under the 20 ns PL0 constraint.",
+      "name": "routed.setup_slack",
+      "samples": [
+        4.211
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado 2025.2 post-route worst path analysis under the 20 ns PL0 constraint.",
+      "name": "routed.hold_slack",
+      "samples": [
+        0.013
+      ],
+      "unit": "ns"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-probability-div-v1-build",
+    "measurement_boundary": "Routed Vivado synthesis and implementation reports.",
+    "quality_gate": "Exact adopted control route and candidate closure, covered timing, bounded archive recovery and verified firmware.",
+    "sha256": "7a8025206f7ae6d9748849fa0b18a21ce700ccc03fc8d13aa38c5936807d8496",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Directed RTL qualification and seven frozen full-model paired replays from the same source pins.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "e5b0a3bf9c001880ac12f393083c19d24cce59c68e36ab5c0f8d170acbd239ac"
+  },
+  "started_at": "2026-11-19T15:58:06.166522+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

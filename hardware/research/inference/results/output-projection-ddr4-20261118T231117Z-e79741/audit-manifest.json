@@ -1,0 +1,128 @@
+{
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/board-evidence.tar.gz": {
+      "bytes": 271460,
+      "role": "Recovered complete original board evidence archive",
+      "sha256": "cba427394069b61363bc1761298c294b398ca9b4ac86c15500b6fa0714a80a1a"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/board-transfer.gz": {
+      "bytes": 1509518,
+      "role": "Exact staged attempt packet",
+      "sha256": "27211b62b2bdaca4a5255e6557a4ae5d7b60b6e03de9c46faf3148c663060430"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/dispatch.json": {
+      "bytes": 111,
+      "role": "Board launch timestamp",
+      "sha256": "986b14123d3b90798b738225441055983276c68486861d3a2aeaca2be5591ed8"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/driver-inserted.state.json": {
+      "bytes": 95751,
+      "role": "Kernel probe failure and candidate firmware state",
+      "sha256": "6e9e381d84d7dadb35e98630c28f6901a37395816578719ce1e032e4091d6cc9"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/fixture-direct-dma-dt.json": {
+      "bytes": 240,
+      "role": "Observed direct DMA topology",
+      "sha256": "4096b9341362ceea8ba96801f1b5b43bebe4a965c47cbce7bc4d2bc38709b70f"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/hp0-configured.stdout": {
+      "bytes": 113,
+      "role": "Configured AFI and SMMU register values",
+      "sha256": "544eb9bd648a2cbaf3defcf1c495455c1894e225000b068060700a081aa8f020"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/hp0-entry.stdout": {
+      "bytes": 113,
+      "role": "Baseline AFI and SMMU register values",
+      "sha256": "3fdb577b29eb8b8287a202738c6e805b962850eea7699b34cd1197698e14e1b7"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/hp0-exit.stdout": {
+      "bytes": 113,
+      "role": "Restored AFI and SMMU register values",
+      "sha256": "3fdb577b29eb8b8287a202738c6e805b962850eea7699b34cd1197698e14e1b7"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/intent.json": {
+      "bytes": 6064,
+      "role": "Admitted attempt configuration and input pins",
+      "sha256": "c0514de1eb18cdb4e30e48e3778a940bb43ce182539a0889fae65abe28e75c51"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/original-after.checks.json": {
+      "bytes": 100,
+      "role": "Original 320-score post-restore check",
+      "sha256": "8cb878022f5d2f2dffefa2cfe1f6eced95d3969068ac80e4182f873f4369da27"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/original-before.checks.json": {
+      "bytes": 100,
+      "role": "Original 320-score pre-attempt check",
+      "sha256": "8cb878022f5d2f2dffefa2cfe1f6eced95d3969068ac80e4182f873f4369da27"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/original-ready.state.json": {
+      "bytes": 94442,
+      "role": "Pre-attempt original research image and UIO state",
+      "sha256": "864d0203cf9ee2087e44b732c233afdc31727bfd66e06eace5303c5c5f3d23ff"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/outcome.json": {
+      "bytes": 116,
+      "role": "Reported failure and restoration result",
+      "sha256": "bf1e29f05dd508ec10bccd095fa49f078167aacde70499e47ed31fb12cdf7bcf"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/restore-warnings.json": {
+      "bytes": 251,
+      "role": "Scoped restoration warning check",
+      "sha256": "fd425eec0b9fadb0c3217e21d0f2e98be8a28f1cfa9a2688d557abad0b62cd9f"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/restored.state.json": {
+      "bytes": 96234,
+      "role": "Post-attempt original firmware, overlays, bindings, and sticky kernel taint",
+      "sha256": "507546372f7aacd8d25e66ad6a736efbeb0d0e93e1a15ba3e84d53b582a799e9"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/evidence/spi-identity.json": {
+      "bytes": 252,
+      "role": "SPI1 controller and TPM binding readback",
+      "sha256": "fa9b32691a65ed25e17f896c7dc8b69902fe31ca713bbc92b52fdd84677bdf3e"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/exit.json": {
+      "bytes": 18,
+      "role": "Supervisor exit status",
+      "sha256": "03b56cd8abf87a44371ce664970b5937ef89d06ecf71e9249dd8a9768867b488"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/preparation/packet-inputs/config.json": {
+      "bytes": 4808,
+      "role": "Exact staged programming and workload plan",
+      "sha256": "3d9c2ce8d323e6e8536349558b7a0c72137f5b12e6bd69b861292a0e710983ce"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/preparation/packet-inputs/kv260_ddr4_weights.ko": {
+      "bytes": 449288,
+      "role": "Exact attempted kernel module",
+      "sha256": "d9ec0647900d19d0742d45309a995fea3a7e06086955cf5936b846e3e31bdbe7"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/recovered.json": {
+      "bytes": 102,
+      "role": "Byte count and hash of recovered evidence",
+      "sha256": "adca46804b681a092bf7dc4c5dfb60e077af3f6a285eb5e3bde45de777a8b83d"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/scoring/source-revision.json": {
+      "bytes": 339,
+      "role": "Attempt source base and scope",
+      "sha256": "cb1a2247472201ea34023259dbd3e413e13e44795f9645df9d92e3a489af79d9"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/scoring/source.patch": {
+      "bytes": 186387,
+      "role": "Attempt source diff",
+      "sha256": "e1b8e5862d0ef75272a3e39bac72de6b0851ad672d529de4a9070e2b5d7e2160"
+    },
+    ".agents/runtime/hardware/inference/outputs/output-projection-ddr4-20261118T231117Z-e79741/staged.json": {
+      "bytes": 109,
+      "role": "Successful board transfer verification",
+      "sha256": "61d401a5222eb4b8b17c096649095482b0678a39d743b65783fd05aa77df7c87"
+    },
+    "hardware/research/inference/results/output-projection-ddr4-build-20261118T225153Z/run.json": {
+      "bytes": 23086,
+      "role": "Completed routed DDR4 fixture evidence",
+      "sha256": "15c9c8c2e0c15ed658910cf696f70f398e01292402b038ea754fabf097cb3b32"
+    }
+  },
+  "fixture_requests": 0,
+  "passed": true,
+  "raw_archive_members": 101,
+  "restored": true
+}

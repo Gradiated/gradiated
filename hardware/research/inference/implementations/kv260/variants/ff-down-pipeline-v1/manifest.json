@@ -1,0 +1,10 @@
+{
+  "clock_hz": 50000000,
+  "control": "ff-exp-div-v1",
+  "feedforward_sha256": "9698ca6ecd09f2eeb97756775528e1b902da10eb2beb12a50378e5eefc91e56a",
+  "final_score_lanes": 8,
+  "id": "ff-down-pipeline-v1",
+  "only_changed_generated_source": "feedforward.sv",
+  "preregistered_prediction_sha256": "72d8ae84a0bbd9c14e665244b37221da0e36dd411a51727be15c5d7bc2f3b01b",
+  "reused_pipeline_generator_sha256": "1dbb63687097ca0a44dbaa6548cd3be4afd7ded23f31f2d06f4bcf5a4dc39a44"
+}

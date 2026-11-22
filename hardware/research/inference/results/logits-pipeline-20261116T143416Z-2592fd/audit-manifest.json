@@ -1,0 +1,48 @@
+{
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/counter-audit.py": {
+      "bytes": 1392,
+      "sha256": "b0531072612e994d0edddb61b6885ef0357d7c4f1035377d03d3fd795b7dc8d9"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/independent-audit.py": {
+      "bytes": 7516,
+      "sha256": "2af82a0c3ffdb2dfc5a96c3fe20092e17e8b24a784955c211d3d4f9df6838183"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/logits-build-independent.json": {
+      "bytes": 1210,
+      "sha256": "e7a7bb66f47f00b78f59769064049e180e51d134ffa5cdf4d268ae0c892a0931"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/logits-build-independent.py": {
+      "bytes": 3721,
+      "sha256": "7aaac946eee06e3e66369b9ba68c9673396abae64161e30df1dc2583cbd95a23"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/logits-counter-independent.json": {
+      "bytes": 5381,
+      "sha256": "3c974801a81eafe4bd27766e11ee3a1d7ef4ed859154e74e215bb0a87fe07fca"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/logits-packet-admission.json": {
+      "bytes": 704,
+      "sha256": "00badb47d8ca6b9d7d5984026147cfbb35319d2b41257e096573cc93fb6c40ba"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/logits-packet-admission.py": {
+      "bytes": 3930,
+      "sha256": "60f9f59708b286a206daf06796626ab89101ab532f219516912880f627f3bfa1"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/logits-physical-independent.json": {
+      "bytes": 28727,
+      "sha256": "566dba60ef3ade0df904d00bb979c8f8d58c1e9bdee6ef522c7441625984fe3e"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/logits-record-consistency.json": {
+      "bytes": 91,
+      "sha256": "3433846e3141b8635d25399c3b87e60ed54e26062086042fd999f5e8808c3431"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-pipeline-v1-coordinator/record-consistency.py": {
+      "bytes": 2432,
+      "sha256": "67f2a91da6f610a857fd09a2b19e4756a21e30670ca9c8da48776d67998a463f"
+    }
+  },
+  "passed": true,
+  "raw_manifest_sha256": "3004e304943291fda5fd98d56ebe6f2c210250f82e8bbb3471ea0d738c99e63a",
+  "run_sha256": "ce16c4e6d6469f243e43bb59b8eeaeeebb7a8e74fca8fdbd4837b5cd3d82015a",
+  "scope": "Independent source and build, exact packet, physical timing and energy, RTL agreement, score and restoration checks, and compact record consistency."
+}

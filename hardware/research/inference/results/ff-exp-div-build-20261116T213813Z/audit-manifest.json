@@ -1,0 +1,52 @@
+{
+  "archive_sha256": "6abc917b3a8907e1b6e96d1cee805d57895c4f55a7c26b1d040133aba7350667",
+  "bank_primitives": {
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[0].weights_reg_bram_0": "RAMB36E2",
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[1].weights_reg_bram_0": "RAMB36E2",
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[2].weights_reg_bram_0": "RAMB36E2",
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[3].weights_reg_bram_0": "RAMB36E2",
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[4].weights_reg_bram_0": "RAMB36E2",
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[5].weights_reg_bram_0": "RAMB36E2",
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[6].weights_reg_bram_0": "RAMB36E2",
+    "tiny_ps_axi_i/neural/inst/actual/core/logits/bank[7].weights_reg_bram_0": "RAMB36E2"
+  },
+  "firmware_sha256": "8c4d35ed79feae3e655b6db0aabdac1f9773e7662c3fad92701a60fc01de1a1b",
+  "independent_receipt_sha256": "0d69f9654c8b579527d23d1fb43b7b2b94c1bd91c3a396ec3fd362dd210625b1",
+  "lanes": 8,
+  "members": 318,
+  "metrics": {
+    "clock": "clk_pl_0 period_ns 20.000",
+    "drc_errors_or_critical_warnings": "0",
+    "fully_placed": "1",
+    "fully_routed": "1",
+    "hold_slack_ns": "0.018",
+    "native_no_clock": "0",
+    "partially_routed_nets": "0",
+    "routing_errors": "0",
+    "routing_gap_nets": "0",
+    "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+    "setup_slack_ns": "4.148",
+    "unclocked_active_pins": "0",
+    "unconstrained_internal_endpoints": "0",
+    "unrouted_nets": "0",
+    "unused_ps_clock_outputs": "0"
+  },
+  "overlay_sha256": "b6caab9c8671c01fc83c1b01f33c146d7865ea5d276f8ec0074c89d01d2b9bf5",
+  "passed": true,
+  "projection_primitives": {
+    "DSP48E2": 8,
+    "RAM32M16": 1,
+    "RAM32X1D": 2,
+    "RAMB36E2": 8,
+    "RAMD32": 18,
+    "RAMS32": 2
+  },
+  "resources": {
+    "bram": 38.0,
+    "dsp": 37.0,
+    "lut": 34785.0,
+    "register": 13646.0
+  },
+  "run_record_sha256": "f2c66a36597f1b64dadb845601b280a5c1597df0f6ef73180aab51d7352b06f4",
+  "source_manifest_sha256": "cb17e00b807aba3231d261a08a379082f097ad37a35896b0ad6272b58f410b50"
+}

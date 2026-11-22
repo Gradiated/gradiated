@@ -1,0 +1,16 @@
+{
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/attention-profile-rtl-20261117T104256Z/attention10-profile-audit.json": {
+      "bytes": 1670,
+      "sha256": "b1b21290368e48096314c4ba3ab095e8c6f13d282c1795288c0b86fd0546e30b"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-profile-rtl-20261117T104256Z/audit-attention10-profile.py": {
+      "bytes": 2815,
+      "sha256": "ee442f9bf597ae75df57ac0924eb481f2f3ee86877a766d4b8748494b9881893"
+    }
+  },
+  "passed": true,
+  "positions": 716,
+  "raw_archive_members": 120,
+  "run_sha256": "f92baf833d7bceea5b1d6562ac66189024cc9cb43ac072bf7c38cc0a0cee29a6"
+}

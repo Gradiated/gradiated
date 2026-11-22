@@ -1,0 +1,28 @@
+{
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-rtl-20261116T161210Z/independent-audit/audit-lanes-archive.py": {
+      "bytes": 2431,
+      "sha256": "6fdb2181a850fb38f101e3617b27f371485cbdf8448840b693f901ff8ef4943f"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-rtl-20261116T161210Z/independent-audit/audit-logits-lanes-offline.py": {
+      "bytes": 3957,
+      "sha256": "5bbb5121c48ad3ba2a652934cdc61afac88f36effb9dadb7056e67e815196fb3"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-rtl-20261116T161210Z/independent-audit/coordinator-admission-2.json": {
+      "bytes": 2015,
+      "sha256": "aab4f8ecf2cb851cbae99139be45cbeec849f75a0ffd5e177a5b77829a2db92b"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-rtl-20261116T161210Z/independent-audit/coordinator-admission-4.json": {
+      "bytes": 2015,
+      "sha256": "b26c2476b8be619bcbd3a7d5419c23ead14b4b66a93a5d5000fc644dca627e3b"
+    },
+    ".agents/runtime/hardware/inference/outputs/logits-lanes-rtl-20261116T161210Z/independent-audit/coordinator-archive-audit.json": {
+      "bytes": 290,
+      "sha256": "da65c2301f694e239a879057391a900ec32fe279ed652489878923ce90424fba"
+    }
+  },
+  "passed": true,
+  "raw_manifest_sha256": "9b16e75d2c1a0f927c86683ac4b36926a479b60473f7ba99fb85d39e7536b013",
+  "run_sha256": "9e6780b2c4df84ea72bf627da5951cd26f04328177fd77cb9aad2eac5aa20afe",
+  "scope": "Independent exact oracle, all seven matched cases in each arm, generated source and raw archive pins."
+}

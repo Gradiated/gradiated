@@ -1,0 +1,120 @@
+{
+  "candidate": "attention-cache-pipeline-v1",
+  "cases": {
+    "bos-only-cap0": {
+      "done": {
+        "cycles": 38227,
+        "done": 38227,
+        "first": 0,
+        "last": 0,
+        "saved_attention": 30
+      },
+      "prefix": {
+        "cycles": 36545,
+        "done": 0,
+        "first": 0,
+        "last": 0,
+        "saved_attention": 30
+      }
+    },
+    "encoded-fu2p2q-cap255": {
+      "done": {
+        "cycles": 9236437,
+        "done": 9236437,
+        "first": 512347,
+        "last": 9137106,
+        "saved_attention": 564840
+      },
+      "prefix": {
+        "cycles": 510665,
+        "done": 0,
+        "first": 0,
+        "last": 0,
+        "saved_attention": 5226
+      }
+    },
+    "encoded-hello-cap0": {
+      "done": {
+        "cycles": 428767,
+        "done": 428767,
+        "first": 0,
+        "last": 0,
+        "saved_attention": 3740
+      },
+      "prefix": {
+        "cycles": 427085,
+        "done": 0,
+        "first": 0,
+        "last": 0,
+        "saved_attention": 3740
+      }
+    },
+    "encoded-hello-cap1": {
+      "done": {
+        "cycles": 428767,
+        "done": 428767,
+        "first": 428767,
+        "last": 428767,
+        "saved_attention": 3740
+      },
+      "prefix": {
+        "cycles": 427085,
+        "done": 0,
+        "first": 0,
+        "last": 0,
+        "saved_attention": 3740
+      }
+    },
+    "encoded-hello-cap255": {
+      "done": {
+        "cycles": 6128767,
+        "done": 6128767,
+        "first": 428767,
+        "last": 6045424,
+        "saved_attention": 316130
+      },
+      "prefix": {
+        "cycles": 427085,
+        "done": 0,
+        "first": 0,
+        "last": 0,
+        "saved_attention": 3740
+      }
+    },
+    "encoded-max48-cap255": {
+      "done": {
+        "cycles": 16535149,
+        "done": 16535149,
+        "first": 5667359,
+        "last": 16405722,
+        "saved_attention": 1252230
+      },
+      "prefix": {
+        "cycles": 5665677,
+        "done": 0,
+        "first": 0,
+        "last": 0,
+        "saved_attention": 291582
+      }
+    },
+    "full-context-cap0": {
+      "done": {
+        "cycles": 24170875,
+        "done": 24170875,
+        "first": 0,
+        "last": 0,
+        "saved_attention": 2031360
+      },
+      "prefix": {
+        "cycles": 24169193,
+        "done": 0,
+        "first": 0,
+        "last": 0,
+        "saved_attention": 2031360
+      }
+    }
+  },
+  "control": "ff-down-pipeline-v1",
+  "formula": "G(L)=62*L-32; G summed across occupied prefixes",
+  "profile_sha256": "74c95a6d2e61d2aed203ae3531edd9f59e839276d0f119852d6cee9d90ec57b4"
+}

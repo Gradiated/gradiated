@@ -1,0 +1,26 @@
+// Apply after PL programming. AMD DTG maps SAXIGP2 to AFI IDs 4 and 5.
+// The generated HP0 read and write width fields both use value 1 (64 bits).
+// Register 14 retains the previous PS-to-PL control setting.
+/dts-v1/;
+/plugin/;
+/ {
+    fragment@0 {
+        target = <&amba>;
+        __overlay__ {
+            #address-cells = <2>;
+            #size-cells = <2>;
+            tiny_transformer_afi {
+                compatible = "xlnx,afi-fpga";
+                config-afi = <4 1>, <5 1>, <14 0x800>;
+                resets = <&zynqmp_reset 119>; // Generated pl_resetn0 is EMIO95.
+            };
+            tiny-transformer@a0000000 {
+                compatible = "generic-uio";
+                linux,uio-name = "gradiated-tiny-transformer-v1";
+                reg = <0 0xa0000000 0 0x60>;
+                clocks = <&zynqmp_clk 71>;
+                clock-names = "s_axi_aclk";
+            };
+        };
+    };
+};

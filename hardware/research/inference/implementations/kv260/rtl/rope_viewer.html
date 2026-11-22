@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gradiated · Rotating one pair with RoPE</title>
+<style>
+:root{color-scheme:dark;font:16px/1.5 system-ui,sans-serif;background:#101722;color:#e8eef7}*{box-sizing:border-box}body{margin:0}main{max-width:1180px;margin:auto;padding:30px 24px}h1{font-size:30px;margin:8px 0}h2{font-size:19px;margin:0 0 12px}p{color:#b9c6d8}.tag{font-size:12px;letter-spacing:1.7px;color:#64dfbf;text-transform:uppercase}.panel{background:#182333;border:1px solid #304057;border-radius:12px;padding:18px;margin:18px 0}.controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0}button,select{background:#25364b;border:1px solid #526982;border-radius:7px;color:white;padding:8px 12px}button{cursor:pointer}button:hover{background:#35516e}input[type=range]{flex:1;min-width:180px;accent-color:#64dfbf}.small{font-size:13px;color:#b9c6d8}.phase{color:#64dfbf;font-family:ui-monospace,monospace}.columns{display:grid;grid-template-columns:1fr 1fr;gap:24px}svg{width:100%;height:auto}.formula{font:16px/1.9 ui-monospace,monospace}.value{color:#64dfbf}.diagram text{fill:#e8eef7;text-anchor:middle;font-size:14px}.diagram rect{fill:#223249;stroke:#647c98;stroke-width:1.5}.diagram .active rect{fill:#194d4a;stroke:#64dfbf;stroke-width:3}.diagram path{fill:none;stroke:#8fa6c0;stroke-width:2}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;font:13px ui-monospace,monospace}td,th{padding:9px;border-bottom:1px solid #304057;text-align:right}td:first-child,th:first-child{text-align:left}tr.future{opacity:.35}tr.active{background:#194d4a}a{color:#81d9ff}.pairs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}summary{cursor:pointer}#rotation{max-width:400px}#rotation text{font:12px system-ui;fill:#b9c6d8}@media(max-width:700px){main{padding:20px 12px}.columns{grid-template-columns:1fr}.diagram{min-width:760px}.pairs{grid-template-columns:repeat(2,1fr)}h1{font-size:25px}}
+</style>
+<main>
+<div class="tag">Gradiated · FPGA learning lab</div><h1>RoPE: give a pair of numbers a position</h1>
+<p>Rotary Position Embedding adjusts Q and K according to where a token appears. Think of two numbers as an arrow’s coordinates: RoPE rotates that arrow. Different pairs rotate at different speeds.</p>
+<section class="panel">
+<h2>Choose one observed calculation</h2>
+<div class="controls"><label for="scene">Token position</label><select id="scene"></select></div>
+<div class="controls"><label for="bank">Projection</label><select id="bank"><option value="0">Q</option><option value="1">K</option></select><label for="head">Head</label><select id="head"><option value="0">0</option><option value="1">1</option></select><label for="pair">Pair</label><select id="pair"></select><button id="finish">Show completed pair</button></div>
+<p id="identity" class="small"></p>
+<div class="controls"><button id="back" aria-label="Previous clock">←</button><button id="play">Play</button><button id="forward" aria-label="Next clock">→</button><input id="position" type="range" min="0" value="0" aria-label="Simulation clock"><span id="clock"></span></div>
+<p id="status" class="phase"></p>
+<div class="scroll"><svg class="diagram" viewBox="0 0 1000 150" role="img" aria-label="Separate RoPE block: memories, one reused multiplier, combine, round and two outputs">
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#8fa6c0"/></marker></defs>
+<path d="M180 70H225M395 70H440M610 70H655M815 70H860" marker-end="url(#arrow)"/>
+<g id="memory"><rect x="5" y="28" width="175" height="85" rx="8"/><text x="92" y="55">Input + coefficient</text><text x="92" y="80">memories</text><text x="92" y="102">16-bit values</text></g>
+<g id="multiply"><rect x="225" y="28" width="170" height="85" rx="8"/><text x="310" y="55">One multiplier</text><text x="310" y="80" id="product">—</text><text x="310" y="102">32-bit product</text></g>
+<g id="combine"><rect x="440" y="28" width="170" height="85" rx="8"/><text x="525" y="55">Subtract / add</text><text x="525" y="80">a×c − b×s</text><text x="525" y="102">b×c + a×s</text></g>
+<g id="round"><rect x="655" y="28" width="160" height="85" rx="8"/><text x="735" y="55">Round each</text><text x="735" y="80">÷ 16,384</text><text x="735" y="102">nearest, ties even</text></g>
+<g id="output"><rect x="860" y="28" width="135" height="85" rx="8"/><text x="927" y="55">Two outputs</text><text x="927" y="80" id="answer">—</text><text x="927" y="102">16 bits each</text></g>
+</svg></div>
+<p class="small">Four multiplications run one after another. One pair takes six simulated clock edges after its start; accepting pairs and receiver stalls add clocks. This separate block has its own multiplier. It is not yet wired to the projection circuit.</p>
+</section>
+<section class="panel columns">
+<div><h2>Two coordinates make an arrow</h2>
+<svg id="rotation" viewBox="0 0 400 400" role="img" aria-label="Input arrow and rotated output arrow">
+<defs><marker id="before_head" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#81d9ff"/></marker><marker id="after_head" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="#ffd17c"/></marker></defs>
+<path d="M25 200H375M200 25V375" stroke="#526982" fill="none"/><circle id="radius" cx="200" cy="200" r="140" stroke="#304057" fill="none" stroke-dasharray="5 5"/>
+<line id="before" x1="200" y1="200" x2="200" y2="200" stroke="#81d9ff" stroke-width="3" marker-end="url(#before_head)"/>
+<line id="after" x1="200" y1="200" x2="200" y2="200" stroke="#ffd17c" stroke-width="3" marker-end="url(#after_head)"/>
+<text x="20" y="22">Blue: input · Yellow: observed output</text><text x="20" y="388">Diagram scales to the selected pair</text>
+</svg><p id="graph_note" class="small"></p></div>
+<div><h2>The same calculation, written out</h2><p id="inputs" class="formula"></p><p id="coefficients" class="formula"></p><p id="combined" class="formula"></p><p id="results" class="formula"></p><p class="small">c and s are cosine and sine values read from the pinned table. Their encoded integers represent value × 16,384. That is why we divide the combined products by 16,384 at the end. Q/K inputs and outputs represent integer × 2⁻¹¹.</p></div>
+</section>
+<section class="panel"><h2>The four observed products</h2><p class="small">Dim rows happen after the selected clock. Each pair uses the same multiplier four times.</p><div class="scroll"><table><thead><tr><th>Operation</th><th>Input</th><th>Coefficient</th><th>Product</th><th>Combined value</th></tr></thead><tbody id="terms"></tbody></table></div></section>
+<section class="panel"><h2 id="pair_heading">Pairs produced so far</h2><div id="pairs" class="pairs"></div><p class="small">Click a pair to jump to its calculation. Dots mean the circuit has not produced it at this clock.</p></section>
+<details class="panel"><summary>What is verified, and what remains?</summary><p id="checks"></p><p>The displayed input/coefficient/product/combined/output values come from Verilator traces. Inputs and the original fixed-point coefficient table are supplied by Python. The other test fixtures include all 256 positions of a synthetic repeated training sequence, arithmetic limits, ties and random operands.</p><p>This is a separate RTL building block simulated on a Mac. It is not yet connected to the projection circuit. KV-cache storage, attention, normalization, synthesis and FPGA execution remain future work. The illustration is an authored teaching diagram, not a synthesized schematic. No browser preview was automated; data/control logic was checked offline and rendered layout remains unverified.</p><p><a href="waves.vcd">Raw simulator waveforms</a> · <a href="cycles.csv">All observed cycles</a></p></details>
+</main>
+<script>
+const D=__SIMULATION_DATA__;
+const $=id=>document.getElementById(id),slider=$('position'),fmt=v=>v.toLocaleString('en-GB');
+$('scene').innerHTML=D.cases.map((c,i)=>`<option value="${i}">${c.name}</option>`).join('');
+$('pair').innerHTML=Array.from({length:8},(_,i)=>`<option value="${i}">${i}</option>`).join('');
+$('checks').textContent=`Verified ${D.checks.full_transactions} complete requests, ${D.checks.outputs_checked} output values and ${D.checks.products_checked} products/combined values exactly, plus ${D.checks.reset_probes} reset probes. ${D.simulator}.`;
+const current=()=>D.cases[+$('scene').value],selected=()=>16*(+$('bank').value)+8*(+$('head').value)+(+$('pair').value);
+function vector(id,a,b,scale,visible){const e=$(id);e.setAttribute('x2',200+a*scale);e.setAttribute('y2',200-b*scale);e.setAttribute('opacity',visible?'1':'0')}
+function render(){const c=current(),i=+slider.value,r=c.cycles[i],p=r.step_valid?r.step_pair:r.pair,e=c.expected[p],bank=Math.floor(p/16),head=Math.floor(p/8)%2,pair=p%8;
+$('bank').value=bank;$('head').value=head;$('pair').value=pair;
+const steps=c.cycles.filter(s=>s.step_valid&&s.step_pair===p),last=steps.filter(s=>s.cycle<=r.cycle).at(-1),a=r.a,b=r.b;
+$('clock').textContent=`Clock ${r.cycle}`;$('identity').textContent=`${bank?'K':'Q'} · head ${head} · head coordinates ${pair} and ${pair+8} (vector indices ${e.index_a%32}, ${e.index_b%32}) · token position ${c.position} (counting from zero). V is not rotated.`;
+const phases=['IDLE','READ INPUTS','MULTIPLY a×c','MULTIPLY b×s','MULTIPLY b×c','MULTIPLY a×s','ROUND','OUTPUT'];
+$('status').textContent=`${last?last.step_kind+1:0} / 4 multiplications completed · next phase: ${phases[r.phase]}${r.result_valid?' · both outputs valid':''}`;
+$('product').textContent=r.step_valid?fmt(r.step_product):'—';$('answer').textContent=r.result_valid?`${r.result_a}, ${r.result_b}`:'—';
+$('inputs').textContent=`a = ${fmt(a)}; b = ${fmt(b)}`;
+$('coefficients').textContent=`c = ${fmt(r.cosine)} (${(r.cosine/16384).toFixed(5)}); s = ${fmt(r.sine)} (${(r.sine/16384).toFixed(5)})`;
+$('combined').textContent=`First total: ${fmt(r.combined_a)}; second total: ${fmt(r.combined_b)}`;
+$('results').textContent=r.result_valid?`Rounded outputs: ${fmt(r.result_a)}, ${fmt(r.result_b)}${r.saturated?' · clipped to 16-bit range':''}`:'Outputs: waiting for all four products and rounding';
+const radius=Math.max(Math.hypot(a,b),r.result_valid?Math.hypot(r.result_a,r.result_b):0,1),scale=145/radius;
+vector('before',a,b,scale,true);vector('after',r.result_a,r.result_b,scale,!!r.result_valid);$('radius').setAttribute('r',Math.hypot(a,b)*scale);
+$('graph_note').textContent=r.result_valid?'The yellow arrow uses the circuit’s rounded outputs. Rounding slightly changes the ideal rotation.':'The yellow output arrow appears when the selected pair is complete. Press “Show completed pair” to see it.';
+for(const id of ['memory','multiply','combine','round','output'])$(id).classList.remove('active');
+(r.step_valid?['multiply','combine']:r.result_valid?['round','output']:r.phase===2?['memory']:[]).forEach(id=>$(id).classList.add('active'));
+const labels=['a×c','b×s; subtract from a×c','b×c','a×s; add to b×c'];
+$('terms').innerHTML=steps.map(s=>`<tr class="${s.cycle>r.cycle?'future':last&&s.cycle===last.cycle?'active':''}"><td>${labels[s.step_kind]}</td><td>${fmt(s.step_input)}</td><td>${fmt(s.step_coefficient)}</td><td>${fmt(s.step_product)}</td><td>${fmt(s.step_total)}</td></tr>`).join('');
+const done=new Map(c.cycles.filter(s=>s.result_valid&&s.cycle<=r.cycle).map(s=>[s.pair,[s.result_a,s.result_b]]));
+$('pair_heading').textContent=`${bank?'K':'Q'} · head ${head} · pairs produced so far`;
+$('pairs').innerHTML=Array.from({length:8},(_,j)=>{const global=bank*16+head*8+j;return `<button data-pair="${global}" style="${global===p?'border-color:#64dfbf':''}">${j} ↔ ${j+8}<br><strong>${done.has(global)?done.get(global).join(', '):'…'}</strong></button>`}).join('');
+}
+let timer;function stop(){clearInterval(timer);timer=null;$('play').textContent='Play'}
+function choose(p){stop();slider.value=current().cycles.findIndex(r=>r.step_valid&&r.step_pair===p);render()}
+function scene(){stop();slider.max=current().cycles.length-1;choose(selected())}
+$('scene').onchange=scene;for(const id of ['bank','head','pair'])$(id).onchange=()=>choose(selected());
+$('finish').onclick=()=>{stop();slider.value=current().cycles.findIndex(r=>r.result_valid&&r.pair===selected());render()};
+$('pairs').onclick=e=>{const b=e.target.closest('button[data-pair]');if(b)choose(+b.dataset.pair)};
+slider.oninput=()=>{stop();render()};$('back').onclick=()=>{stop();slider.value=Math.max(0,+slider.value-1);render()};$('forward').onclick=()=>{stop();slider.value=Math.min(current().cycles.length-1,+slider.value+1);render()};
+$('play').onclick=()=>{if(timer){stop();return}if(+slider.value===current().cycles.length-1)slider.value=0;$('play').textContent='Pause';timer=setInterval(()=>{if(+slider.value>=current().cycles.length-1){stop();return}slider.value=+slider.value+1;render()},220)};
+$('scene').value=1;$('bank').value=0;$('head').value=0;$('pair').value=0;scene();
+</script></html>

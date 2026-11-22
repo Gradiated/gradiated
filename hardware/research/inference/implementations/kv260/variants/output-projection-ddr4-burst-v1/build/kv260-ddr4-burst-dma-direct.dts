@@ -1,0 +1,18 @@
+// Linux device owning this fixture's noncoherent, direct HP0 DMA mapping.
+// Use only after confirming that the live board routes HP0 via SMMU bypass.
+/dts-v1/;
+/plugin/;
+/ {
+    fragment@0 {
+        target = <&amba>;
+        __overlay__ {
+            #address-cells = <2>;
+            #size-cells = <2>;
+            ddr4-weights@a0000060 {
+                compatible = "gradiated,kv260-ddr4-burst-v1";
+                gradiated,verified-direct-dma;
+                reg = <0 0xa0000060 0 0x30>;
+            };
+        };
+    };
+};

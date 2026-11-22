@@ -1,0 +1,3546 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1082363,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/board-evidence.tar.gz",
+      "role": "board_archive",
+      "sha256": "ae78c8d4c8748a4a5baad5b63483f4aa7324426f64d565ac768cdb80a3995551"
+    },
+    {
+      "bytes": 103,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/recovered.json",
+      "role": "recovery_receipt",
+      "sha256": "518dcdb147c46e35e2d8489f6204aac2c9ebfe2f1f09cff2ed18a812ead15bac"
+    },
+    {
+      "bytes": 348,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/completed.json",
+      "role": "status",
+      "sha256": "3d7450da2a349ea7ba42d4114b5c97c9dd2e4b98fabf0a3ffb86aaf8576049a6"
+    },
+    {
+      "bytes": 5232,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/invocation.json",
+      "role": "invocation",
+      "sha256": "7d7b50cd0d7fba61240fb993d49c16a6b3ecc02f6e6f77378531bea6a95dec4d"
+    },
+    {
+      "bytes": 198,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/dispatch.json",
+      "role": "dispatch",
+      "sha256": "fb0108a204234019554ca785441924ff14d32e99ee507fbe5ef245061111dfa7"
+    },
+    {
+      "bytes": 124,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/staged.json",
+      "role": "staging_receipt",
+      "sha256": "bb0e3c882097db6559c8f7b5813c218d887375a5033b5337b5064dc93897acd7"
+    },
+    {
+      "bytes": 62524,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/board-transfer.gz",
+      "role": "sealing_archive",
+      "sha256": "6a821d045db198f780b606dd608847d798986904628f632f68e1db8206aee78d"
+    },
+    {
+      "bytes": 23777,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/packet/config.json",
+      "role": "sealed_config",
+      "sha256": "46e06f33ecadd7683bb5b8337a7258261c0bf950c816a022a2da8ad64b9f0158"
+    },
+    {
+      "bytes": 8298,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/packet/reference/p1-candidate/warmup.json",
+      "role": "workload",
+      "sha256": "00dc1ad4a6b8a9938040fe03f70ce8cef38f0c0a59b468fcf20159c44f7b7397"
+    },
+    {
+      "bytes": 54426,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/stock-before.json",
+      "role": "fresh_stock_before",
+      "sha256": "559addc8615f49670c898128c95460dcac9df2db12546d69ec2ff89eedafee77"
+    },
+    {
+      "bytes": 54426,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/stock-after.json",
+      "role": "fresh_stock_after",
+      "sha256": "87cae5b06b24f8a393a0ab968f01bf513f8547e35e9892d89dadebb54f6ffb13"
+    },
+    {
+      "bytes": 3842,
+      "path": "hardware/research/inference/experiments/kv260-clock-frequency-v1.md",
+      "role": "protocol",
+      "sha256": "496e88c0a9adbe1362fd92d1ec980fcecaa156fac49796bc991e3067fa5ab87f"
+    },
+    {
+      "bytes": 36366,
+      "path": "hardware/research/inference/results/attention-clock-v1-original-sta-20261120T003417Z/run.json",
+      "role": "layout_timing",
+      "sha256": "785691563250fc24063c7249da9e4a9fa505bf38734e937ee7bcaa114ca46e1f"
+    },
+    {
+      "bytes": 7477,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/offline-acceptance.json",
+      "role": "timing_acceptance",
+      "sha256": "6929990fb8d315e0750482de68dc885f81a26add5847ee68df70c02aff966376"
+    },
+    {
+      "bytes": 14328,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/fresh_clock_before.json",
+      "role": "fresh_clock_before",
+      "sha256": "c35840dda02fb16139ded39fee47b48882d5e51ec553aef91599ae9829910e31"
+    },
+    {
+      "bytes": 14448,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/fresh_clock_after.json",
+      "role": "fresh_clock_after",
+      "sha256": "aeced7ef5f95a358b582a1f754f107f888df907fee42149e49827055988c7f60"
+    },
+    {
+      "bytes": 751,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/independent_restoration_audit.json",
+      "role": "independent_restoration_audit",
+      "sha256": "e56df6d30db6d519e6cf50bf7f9bbfc379ce86bac99157d78ac17178fb3c0035"
+    },
+    {
+      "bytes": 1561,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/serial_poll_overlap_audit.json",
+      "role": "serial_poll_overlap_audit",
+      "sha256": "5ccee39902191cc0aa40e369fe18bd8a6b4dcd75eade7d7c1b41baa1babb5c0e"
+    },
+    {
+      "bytes": 164,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/status/00.json",
+      "role": "status_receipt_00",
+      "sha256": "b20aa1a6450389f298f47efabd9dad999210896a5eb1d770d798f66375edaaf2"
+    },
+    {
+      "bytes": 158,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/status/01.json",
+      "role": "status_receipt_01",
+      "sha256": "45de3c38ec746cf551ea89d25fb7b33468c6734fcd7755cc30fa2d3e169560fe"
+    },
+    {
+      "bytes": 184,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/status/02.json",
+      "role": "status_receipt_02",
+      "sha256": "059c06128ba0f0a4cb9b14d0f98f2d35c371d0a06240a72f4e95067f036e53d7"
+    },
+    {
+      "bytes": 348,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/status/03.json",
+      "role": "status_receipt_03",
+      "sha256": "3d7450da2a349ea7ba42d4114b5c97c9dd2e4b98fabf0a3ffb86aaf8576049a6"
+    },
+    {
+      "bytes": 160,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/status/04.json",
+      "role": "status_receipt_04",
+      "sha256": "624c1a0a404056918de44178662fd0b4f2a2b24351f0c12b4f387f2c7ed14194"
+    },
+    {
+      "bytes": 160,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/status/05.json",
+      "role": "status_receipt_05",
+      "sha256": "69c6b542d10690f96569656b78e7206f02b8d4b49aa94ab74bb1fefa69321771"
+    },
+    {
+      "bytes": 6428,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/source-inventory.json",
+      "role": "source_inventory",
+      "sha256": "37288fd8190a39d0fbf35c865d396518c04f53033bb97ece3b5ba2d258900699"
+    },
+    {
+      "bytes": 52,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/evidence/outcome.json",
+      "role": "outcome",
+      "sha256": "90f1fbec9395e13dc14e0c6987ba8e80d2f32d9c5eb4f403d232d0a14d8aaedb"
+    },
+    {
+      "bytes": 816,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/supervisor.txt",
+      "role": "supervisor",
+      "sha256": "9a7be0c99d1387c6e8e8a518ef4f6a58456c4f07e0fa4fdf4ce9fd4459207a75"
+    },
+    {
+      "bytes": 14286,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/evidence/stock-restored-clock.json",
+      "role": "restore_clock",
+      "sha256": "eb64e9ed93858fd5159a78cff95f9fbd716dfd571062c1d10b4311950a25b1f6"
+    },
+    {
+      "bytes": 3106,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/evidence/original-before.stdout",
+      "role": "before_bos",
+      "sha256": "8ca02e5d8cd874a2633c530c69968c1671dcb4df41012e4e958b7ebdaecdb00b"
+    },
+    {
+      "bytes": 3106,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/evidence/original-after.stdout",
+      "role": "after_bos",
+      "sha256": "8ca02e5d8cd874a2633c530c69968c1671dcb4df41012e4e958b7ebdaecdb00b"
+    },
+    {
+      "bytes": 23900,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/evidence/measurement-config.json",
+      "role": "measurement_config",
+      "sha256": "09bcfd6cdf701c773b866391c1b31d56f3cfadffb18ab539a227ea2defb5c929"
+    },
+    {
+      "bytes": 2087237,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/score.json",
+      "role": "score",
+      "sha256": "3f99bb3312fdc050dd08ef9ea92f84ee6cd7fbf913171d5ce003dc22a52ee2c9"
+    },
+    {
+      "bytes": 3471,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/measurement-findings.md",
+      "role": "measured_findings",
+      "sha256": "11fc04c0ee7b0da7af4598bb7a72619507fcc1bfb2c6664777b09d5290d96f4a"
+    },
+    {
+      "bytes": 130737,
+      "path": "hardware/research/inference/results/attention-value-pair-20261119T234247Z-e21df0/run.json",
+      "role": "previous_comparison",
+      "sha256": "d853f1eb8d6f3c1af10654601b29d91409178825073df385c9d63000f35f0d49"
+    }
+  ],
+  "completed_at": "2026-11-20T00:53:57.825429+00:00",
+  "conditions": {
+    "arm_temperature_brackets_c": {
+      "homogeneous-p1-encoded-fu2p2q-candidate": {
+        "after": {
+          "ams/temp1": 26.547,
+          "ams/temp2": 26.314,
+          "ams/temp3": 24.441
+        },
+        "before": {
+          "ams/temp1": 26.252,
+          "ams/temp2": 26.096,
+          "ams/temp3": 24.402
+        }
+      },
+      "homogeneous-p1-encoded-fu2p2q-control": {
+        "after": {
+          "ams/temp1": 25.785,
+          "ams/temp2": 26.065,
+          "ams/temp3": 24.317
+        },
+        "before": {
+          "ams/temp1": 25.241,
+          "ams/temp2": 25.941,
+          "ams/temp3": 24.441
+        }
+      },
+      "homogeneous-p1-encoded-hello-candidate": {
+        "after": {
+          "ams/temp1": 26.267,
+          "ams/temp2": 26.734,
+          "ams/temp3": 24.938
+        },
+        "before": {
+          "ams/temp1": 25.739,
+          "ams/temp2": 27.573,
+          "ams/temp3": 24.985
+        }
+      },
+      "homogeneous-p1-encoded-hello-control": {
+        "after": {
+          "ams/temp1": 26.05,
+          "ams/temp2": 25.272,
+          "ams/temp3": 24.34
+        },
+        "before": {
+          "ams/temp1": 25.35,
+          "ams/temp2": 25.599,
+          "ams/temp3": 24.705
+        }
+      },
+      "homogeneous-p1-encoded-max48-candidate": {
+        "after": {
+          "ams/temp1": 24.728,
+          "ams/temp2": 25.226,
+          "ams/temp3": 24.659
+        },
+        "before": {
+          "ams/temp1": 26.423,
+          "ams/temp2": 26.547,
+          "ams/temp3": 24.511
+        }
+      },
+      "homogeneous-p1-encoded-max48-control": {
+        "after": {
+          "ams/temp1": 25.677,
+          "ams/temp2": 25.987,
+          "ams/temp3": 24.006
+        },
+        "before": {
+          "ams/temp1": 24.868,
+          "ams/temp2": 26.345,
+          "ams/temp3": 24.231
+        }
+      },
+      "homogeneous-p2-encoded-fu2p2q-candidate": {
+        "after": {
+          "ams/temp1": 25.661,
+          "ams/temp2": 27.262,
+          "ams/temp3": 24.402
+        },
+        "before": {
+          "ams/temp1": 25.133,
+          "ams/temp2": 25.956,
+          "ams/temp3": 24.184
+        }
+      },
+      "homogeneous-p2-encoded-fu2p2q-control": {
+        "after": {
+          "ams/temp1": 26.065,
+          "ams/temp2": 26.687,
+          "ams/temp3": 24.247
+        },
+        "before": {
+          "ams/temp1": 25.537,
+          "ams/temp2": 25.723,
+          "ams/temp3": 24.192
+        }
+      },
+      "homogeneous-p2-encoded-hello-candidate": {
+        "after": {
+          "ams/temp1": 25.412,
+          "ams/temp2": 24.946,
+          "ams/temp3": 24.247
+        },
+        "before": {
+          "ams/temp1": 24.542,
+          "ams/temp2": 27.044,
+          "ams/temp3": 24.612
+        }
+      },
+      "homogeneous-p2-encoded-hello-control": {
+        "after": {
+          "ams/temp1": 26.967,
+          "ams/temp2": 25.661,
+          "ams/temp3": 24.371
+        },
+        "before": {
+          "ams/temp1": 26.889,
+          "ams/temp2": 25.459,
+          "ams/temp3": 24.021
+        }
+      },
+      "homogeneous-p2-encoded-max48-candidate": {
+        "after": {
+          "ams/temp1": 25.894,
+          "ams/temp2": 26.174,
+          "ams/temp3": 23.982
+        },
+        "before": {
+          "ams/temp1": 24.915,
+          "ams/temp2": 26.438,
+          "ams/temp3": 24.472
+        }
+      },
+      "homogeneous-p2-encoded-max48-control": {
+        "after": {
+          "ams/temp1": 26.034,
+          "ams/temp2": 25.692,
+          "ams/temp3": 24.534
+        },
+        "before": {
+          "ams/temp1": 25.257,
+          "ams/temp2": 26.065,
+          "ams/temp3": 24.317
+        }
+      },
+      "p1-candidate": {
+        "after": {
+          "ams/temp1": 25.77,
+          "ams/temp2": 26.423,
+          "ams/temp3": 24.69
+        },
+        "before": {
+          "ams/temp1": 25.63,
+          "ams/temp2": 25.785,
+          "ams/temp3": 24.627
+        }
+      },
+      "p1-control": {
+        "after": {
+          "ams/temp1": 25.816,
+          "ams/temp2": 26.065,
+          "ams/temp3": 24.519
+        },
+        "before": {
+          "ams/temp1": 26.05,
+          "ams/temp2": 26.64,
+          "ams/temp3": 24.449
+        }
+      },
+      "p2-candidate": {
+        "after": {
+          "ams/temp1": 25.863,
+          "ams/temp2": 26.329,
+          "ams/temp3": 24.511
+        },
+        "before": {
+          "ams/temp1": 27.355,
+          "ams/temp2": 26.5,
+          "ams/temp3": 24.488
+        }
+      },
+      "p2-control": {
+        "after": {
+          "ams/temp1": 25.304,
+          "ams/temp2": 26.516,
+          "ams/temp3": 24.394
+        },
+        "before": {
+          "ams/temp1": 26.05,
+          "ams/temp2": 27.075,
+          "ams/temp3": 24.355
+        }
+      },
+      "p3-candidate": {
+        "after": {
+          "ams/temp1": 25.925,
+          "ams/temp2": 27.402,
+          "ams/temp3": 24.324
+        },
+        "before": {
+          "ams/temp1": 24.962,
+          "ams/temp2": 27.464,
+          "ams/temp3": 24.472
+        }
+      },
+      "p3-control": {
+        "after": {
+          "ams/temp1": 25.179,
+          "ams/temp2": 25.552,
+          "ams/temp3": 24.713
+        },
+        "before": {
+          "ams/temp1": 24.931,
+          "ams/temp2": 26.889,
+          "ams/temp3": 24.278
+        }
+      },
+      "p4-candidate": {
+        "after": {
+          "ams/temp1": 27.992,
+          "ams/temp2": 26.734,
+          "ams/temp3": 24.464
+        },
+        "before": {
+          "ams/temp1": 25.335,
+          "ams/temp2": 26.143,
+          "ams/temp3": 24.503
+        }
+      },
+      "p4-control": {
+        "after": {
+          "ams/temp1": 25.801,
+          "ams/temp2": 26.174,
+          "ams/temp3": 24.402
+        },
+        "before": {
+          "ams/temp1": 26.702,
+          "ams/temp2": 27.107,
+          "ams/temp3": 24.565
+        }
+      }
+    },
+    "arms": {
+      "homogeneous-p1-encoded-fu2p2q-candidate": {
+        "idle_context": 135,
+        "model_setup_ns": 548946850,
+        "output_tokens": 1464,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 14350,
+          "after_read_ns": 434545,
+          "before_gap_ns": 166232,
+          "before_read_ns": 479644,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p1-encoded-fu2p2q-control": {
+        "idle_context": 135,
+        "model_setup_ns": 549633327,
+        "output_tokens": 1464,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 8720,
+          "after_read_ns": 441945,
+          "before_gap_ns": 182482,
+          "before_read_ns": 459465,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p1-encoded-hello-candidate": {
+        "idle_context": 101,
+        "model_setup_ns": 550349064,
+        "output_tokens": 1620,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 9010,
+          "after_read_ns": 434684,
+          "before_gap_ns": 162821,
+          "before_read_ns": 459005,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p1-encoded-hello-control": {
+        "idle_context": 101,
+        "model_setup_ns": 552409115,
+        "output_tokens": 1620,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 9751,
+          "after_read_ns": 423674,
+          "before_gap_ns": 183022,
+          "before_read_ns": 465805,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p1-encoded-max48-candidate": {
+        "idle_context": 201,
+        "model_setup_ns": 542902230,
+        "output_tokens": 832,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 16431,
+          "after_read_ns": 417994,
+          "before_gap_ns": 184812,
+          "before_read_ns": 481314,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p1-encoded-max48-control": {
+        "idle_context": 201,
+        "model_setup_ns": 541588286,
+        "output_tokens": 832,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 9470,
+          "after_read_ns": 442214,
+          "before_gap_ns": 166482,
+          "before_read_ns": 502535,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p2-encoded-fu2p2q-candidate": {
+        "idle_context": 135,
+        "model_setup_ns": 553095762,
+        "output_tokens": 1464,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 9480,
+          "after_read_ns": 438834,
+          "before_gap_ns": 161412,
+          "before_read_ns": 485004,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p2-encoded-fu2p2q-control": {
+        "idle_context": 135,
+        "model_setup_ns": 550530266,
+        "output_tokens": 1464,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 14810,
+          "after_read_ns": 406004,
+          "before_gap_ns": 168102,
+          "before_read_ns": 486854,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p2-encoded-hello-candidate": {
+        "idle_context": 101,
+        "model_setup_ns": 554506766,
+        "output_tokens": 1620,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 9120,
+          "after_read_ns": 432525,
+          "before_gap_ns": 162231,
+          "before_read_ns": 479595,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p2-encoded-hello-control": {
+        "idle_context": 101,
+        "model_setup_ns": 540134632,
+        "output_tokens": 1620,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 8850,
+          "after_read_ns": 450875,
+          "before_gap_ns": 160502,
+          "before_read_ns": 471475,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p2-encoded-max48-candidate": {
+        "idle_context": 201,
+        "model_setup_ns": 542280724,
+        "output_tokens": 832,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 9880,
+          "after_read_ns": 451764,
+          "before_gap_ns": 170222,
+          "before_read_ns": 490275,
+          "transfers_delta": 0
+        }
+      },
+      "homogeneous-p2-encoded-max48-control": {
+        "idle_context": 201,
+        "model_setup_ns": 545029231,
+        "output_tokens": 832,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 10270,
+          "after_read_ns": 433344,
+          "before_gap_ns": 170571,
+          "before_read_ns": 494805,
+          "transfers_delta": 0
+        }
+      },
+      "p1-candidate": {
+        "idle_context": 201,
+        "model_setup_ns": 546847530,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 9400,
+          "after_read_ns": 459554,
+          "before_gap_ns": 187892,
+          "before_read_ns": 473075,
+          "transfers_delta": 0
+        }
+      },
+      "p1-control": {
+        "idle_context": 201,
+        "model_setup_ns": 541282604,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 11160,
+          "after_read_ns": 419154,
+          "before_gap_ns": 196662,
+          "before_read_ns": 474925,
+          "transfers_delta": 0
+        }
+      },
+      "p2-candidate": {
+        "idle_context": 201,
+        "model_setup_ns": 542466405,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 10600,
+          "after_read_ns": 440414,
+          "before_gap_ns": 174671,
+          "before_read_ns": 468325,
+          "transfers_delta": 0
+        }
+      },
+      "p2-control": {
+        "idle_context": 201,
+        "model_setup_ns": 543074041,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 12870,
+          "after_read_ns": 415074,
+          "before_gap_ns": 166532,
+          "before_read_ns": 515435,
+          "transfers_delta": 0
+        }
+      },
+      "p3-candidate": {
+        "idle_context": 101,
+        "model_setup_ns": 550243073,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 672,
+          "after_gap_ns": 8920,
+          "after_read_ns": 448554,
+          "before_gap_ns": 169462,
+          "before_read_ns": 464854,
+          "transfers_delta": 0
+        }
+      },
+      "p3-control": {
+        "idle_context": 101,
+        "model_setup_ns": 552206113,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 8651,
+          "after_read_ns": 421604,
+          "before_gap_ns": 176782,
+          "before_read_ns": 485245,
+          "transfers_delta": 0
+        }
+      },
+      "p4-candidate": {
+        "idle_context": 101,
+        "model_setup_ns": 550158753,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 9091,
+          "after_read_ns": 441874,
+          "before_gap_ns": 166681,
+          "before_read_ns": 478195,
+          "transfers_delta": 0
+        }
+      },
+      "p4-control": {
+        "idle_context": 101,
+        "model_setup_ns": 554129172,
+        "output_tokens": 632,
+        "power_trace": {
+          "missed_slots": 0,
+          "samples": 350
+        },
+        "spi": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 9100,
+          "after_read_ns": 432974,
+          "before_gap_ns": 167982,
+          "before_read_ns": 492955,
+          "transfers_delta": 0
+        }
+      }
+    },
+    "configured_rate_prediction": {
+      "configured_hz": {
+        "candidate": 52631579,
+        "control": 50000000
+      },
+      "device_time_ms_for_exact_completion_cycles": {
+        "encoded-fu2p2q": {
+          "candidate": 98.30637990169362,
+          "control": 103.4804
+        },
+        "encoded-hello": {
+          "candidate": 67.61691493238308,
+          "control": 71.1757
+        },
+        "encoded-max48": {
+          "candidate": 166.44326783355675,
+          "control": 175.20344
+        }
+      },
+      "device_time_ratio": 0.94999999905
+    },
+    "counts": {
+      "powered_blocks": 20,
+      "smoke": 9,
+      "timed": 200,
+      "warmups": 36
+    },
+    "dispatch_to_first_complete_receipt_s": 481.372622,
+    "exact_fpga_cycle_boundaries": {
+      "candidate": {
+        "encoded-fu2p2q": {
+          "counts": {
+            "context_count": 135,
+            "scores_consumed": 39360,
+            "skipped_positions": 12
+          },
+          "cycles": {
+            "done": 5174020,
+            "first": 336800,
+            "last": 5123370
+          }
+        },
+        "encoded-hello": {
+          "counts": {
+            "context_count": 101,
+            "scores_consumed": 29120,
+            "skipped_positions": 10
+          },
+          "cycles": {
+            "done": 3558785,
+            "first": 283256,
+            "last": 3514339
+          }
+        },
+        "encoded-max48": {
+          "counts": {
+            "context_count": 201,
+            "scores_consumed": 33600,
+            "skipped_positions": 96
+          },
+          "cycles": {
+            "done": 8760172,
+            "first": 3239400,
+            "last": 8697576
+          }
+        }
+      },
+      "control": {
+        "encoded-fu2p2q": {
+          "counts": {
+            "context_count": 135,
+            "scores_consumed": 39360,
+            "skipped_positions": 12
+          },
+          "cycles": {
+            "done": 5174020,
+            "first": 336800,
+            "last": 5123370
+          }
+        },
+        "encoded-hello": {
+          "counts": {
+            "context_count": 101,
+            "scores_consumed": 29120,
+            "skipped_positions": 10
+          },
+          "cycles": {
+            "done": 3558785,
+            "first": 283256,
+            "last": 3514339
+          }
+        },
+        "encoded-max48": {
+          "counts": {
+            "context_count": 201,
+            "scores_consumed": 33600,
+            "skipped_positions": 96
+          },
+          "cycles": {
+            "done": 8760172,
+            "first": 3239400,
+            "last": 8697576
+          }
+        }
+      }
+    },
+    "failures": 0,
+    "homogeneous_energy_pairs_pct": {
+      "encoded-fu2p2q": {
+        "1": {
+          "candidate_vs_control": {
+            "active_power_w": -0.15268116885478467,
+            "energy_per_answer_by_alignment": {
+              "midpoint": -5.135444574865544,
+              "midpoint_minus_50ms": -5.070479956724827,
+              "midpoint_plus_50ms": -5.121988714081005,
+              "read_end": -5.13538633937608,
+              "read_start": -5.135503263255947
+            },
+            "energy_per_answer_j": -5.135444574865544,
+            "energy_per_token_j": -5.135444574865533,
+            "tokens_per_joule": 5.413449261266323
+          }
+        },
+        "2": {
+          "candidate_vs_control": {
+            "active_power_w": 0.3175262312319571,
+            "energy_per_answer_by_alignment": {
+              "midpoint": -4.6414402887926425,
+              "midpoint_minus_50ms": -4.699131337395091,
+              "midpoint_plus_50ms": -4.63883377521408,
+              "read_end": -4.641439864673391,
+              "read_start": -4.641439334116981
+            },
+            "energy_per_answer_j": -4.6414402887926425,
+            "energy_per_token_j": -4.6414402887926425,
+            "tokens_per_joule": 4.8673556971174925
+          }
+        }
+      },
+      "encoded-hello": {
+        "1": {
+          "candidate_vs_control": {
+            "active_power_w": 0.2131479901198885,
+            "energy_per_answer_by_alignment": {
+              "midpoint": -4.749236777634103,
+              "midpoint_minus_50ms": -4.59335393798348,
+              "midpoint_plus_50ms": -4.741562303398239,
+              "read_end": -4.749471758424062,
+              "read_start": -4.748997622665918
+            },
+            "energy_per_answer_j": -4.749236777634103,
+            "energy_per_token_j": -4.749236777634113,
+            "tokens_per_joule": 4.986035404825961
+          }
+        },
+        "2": {
+          "candidate_vs_control": {
+            "active_power_w": -0.2181898576796404,
+            "energy_per_answer_by_alignment": {
+              "midpoint": -5.154181315257977,
+              "midpoint_minus_50ms": -4.6556619746772165,
+              "midpoint_plus_50ms": -5.217363525654484,
+              "read_end": -5.155377584014653,
+              "read_start": -5.152971067503687
+            },
+            "energy_per_answer_j": -5.154181315257977,
+            "energy_per_token_j": -5.154181315257988,
+            "tokens_per_joule": 5.43427363138691
+          }
+        }
+      },
+      "encoded-max48": {
+        "1": {
+          "candidate_vs_control": {
+            "active_power_w": -0.06342089991527855,
+            "energy_per_answer_by_alignment": {
+              "midpoint": -5.034170097442326,
+              "midpoint_minus_50ms": -4.968926539890051,
+              "midpoint_plus_50ms": -5.101309393679032,
+              "read_end": -5.034794597206393,
+              "read_start": -5.033538959303307
+            },
+            "energy_per_answer_j": -5.034170097442326,
+            "energy_per_token_j": -5.034170097442326,
+            "tokens_per_joule": 5.3010331217110185
+          }
+        },
+        "2": {
+          "candidate_vs_control": {
+            "active_power_w": 0.3744928871616038,
+            "energy_per_answer_by_alignment": {
+              "midpoint": -4.627774412596219,
+              "midpoint_minus_50ms": -4.729872669377588,
+              "midpoint_plus_50ms": -4.614191433108061,
+              "read_end": -4.627796921682292,
+              "read_start": -4.627753241614929
+            },
+            "energy_per_answer_j": -4.627774412596219,
+            "energy_per_token_j": -4.627774412596219,
+            "tokens_per_joule": 4.852329264724031
+          }
+        }
+      }
+    },
+    "incomplete_requests": 0,
+    "live_status_receipts_during_run": 5,
+    "matched_control": "50 MHz arm of the same physical run and image",
+    "measurement_coverage": {
+      "active_power": {
+        "metrics": [
+          "control.mixed.active_power_w",
+          "control.homogeneous.encoded-hello.active_power_w",
+          "control.homogeneous.encoded-fu2p2q.active_power_w",
+          "control.homogeneous.encoded-max48.active_power_w",
+          "candidate.mixed.active_power_w",
+          "candidate.homogeneous.encoded-hello.active_power_w",
+          "candidate.homogeneous.encoded-fu2p2q.active_power_w",
+          "candidate.homogeneous.encoded-max48.active_power_w"
+        ],
+        "sources": [
+          {
+            "bytes": 2087237,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/score.json",
+            "role": "score",
+            "sha256": "3f99bb3312fdc050dd08ef9ea92f84ee6cd7fbf913171d5ce003dc22a52ee2c9"
+          }
+        ],
+        "state": "derived"
+      },
+      "cache_capacity": {
+        "sources": [
+          {
+            "bytes": 130737,
+            "path": "hardware/research/inference/results/attention-value-pair-20261119T234247Z-e21df0/run.json",
+            "role": "previous_comparison",
+            "sha256": "d853f1eb8d6f3c1af10654601b29d91409178825073df385c9d63000f35f0d49"
+          }
+        ],
+        "state": "reused"
+      },
+      "completion_time": {
+        "metrics": [
+          "control.encoded-hello.completion_ms",
+          "control.encoded-hello.verified_ms",
+          "control.encoded-hello.verification_ns",
+          "control.encoded-fu2p2q.completion_ms",
+          "control.encoded-fu2p2q.verified_ms",
+          "control.encoded-fu2p2q.verification_ns",
+          "control.encoded-max48.completion_ms",
+          "control.encoded-max48.verified_ms",
+          "control.encoded-max48.verification_ns",
+          "candidate.encoded-hello.completion_ms",
+          "candidate.encoded-hello.verified_ms",
+          "candidate.encoded-hello.verification_ns",
+          "candidate.encoded-fu2p2q.completion_ms",
+          "candidate.encoded-fu2p2q.verified_ms",
+          "candidate.encoded-fu2p2q.verification_ns",
+          "candidate.encoded-max48.completion_ms",
+          "candidate.encoded-max48.verified_ms",
+          "candidate.encoded-max48.verification_ns"
+        ],
+        "sources": [
+          {
+            "bytes": 2087237,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/score.json",
+            "role": "score",
+            "sha256": "3f99bb3312fdc050dd08ef9ea92f84ee6cd7fbf913171d5ce003dc22a52ee2c9"
+          }
+        ],
+        "state": "derived"
+      },
+      "correctness": {
+        "sources": [
+          {
+            "bytes": 2087237,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/score.json",
+            "role": "score",
+            "sha256": "3f99bb3312fdc050dd08ef9ea92f84ee6cd7fbf913171d5ce003dc22a52ee2c9"
+          },
+          {
+            "bytes": 8298,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/packet/reference/p1-candidate/warmup.json",
+            "role": "workload",
+            "sha256": "00dc1ad4a6b8a9938040fe03f70ce8cef38f0c0a59b468fcf20159c44f7b7397"
+          }
+        ],
+        "state": "measured"
+      },
+      "decode_tps": {
+        "metrics": [
+          "control.encoded-hello.decode_tps",
+          "control.encoded-fu2p2q.decode_tps",
+          "control.encoded-max48.decode_tps",
+          "candidate.encoded-hello.decode_tps",
+          "candidate.encoded-fu2p2q.decode_tps",
+          "candidate.encoded-max48.decode_tps"
+        ],
+        "sources": [
+          {
+            "bytes": 2087237,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/score.json",
+            "role": "score",
+            "sha256": "3f99bb3312fdc050dd08ef9ea92f84ee6cd7fbf913171d5ce003dc22a52ee2c9"
+          }
+        ],
+        "state": "derived"
+      },
+      "energy_per_answer": {
+        "metrics": [
+          "control.mixed.energy_per_answer_j",
+          "control.mixed.energy_per_token_j",
+          "control.mixed.gross_j",
+          "control.homogeneous.encoded-hello.energy_per_answer_j",
+          "control.homogeneous.encoded-hello.energy_per_token_j",
+          "control.homogeneous.encoded-hello.gross_j",
+          "control.homogeneous.encoded-fu2p2q.energy_per_answer_j",
+          "control.homogeneous.encoded-fu2p2q.energy_per_token_j",
+          "control.homogeneous.encoded-fu2p2q.gross_j",
+          "control.homogeneous.encoded-max48.energy_per_answer_j",
+          "control.homogeneous.encoded-max48.energy_per_token_j",
+          "control.homogeneous.encoded-max48.gross_j",
+          "candidate.mixed.energy_per_answer_j",
+          "candidate.mixed.energy_per_token_j",
+          "candidate.mixed.gross_j",
+          "candidate.homogeneous.encoded-hello.energy_per_answer_j",
+          "candidate.homogeneous.encoded-hello.energy_per_token_j",
+          "candidate.homogeneous.encoded-hello.gross_j",
+          "candidate.homogeneous.encoded-fu2p2q.energy_per_answer_j",
+          "candidate.homogeneous.encoded-fu2p2q.energy_per_token_j",
+          "candidate.homogeneous.encoded-fu2p2q.gross_j",
+          "candidate.homogeneous.encoded-max48.energy_per_answer_j",
+          "candidate.homogeneous.encoded-max48.energy_per_token_j",
+          "candidate.homogeneous.encoded-max48.gross_j"
+        ],
+        "sources": [
+          {
+            "bytes": 2087237,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/score.json",
+            "role": "score",
+            "sha256": "3f99bb3312fdc050dd08ef9ea92f84ee6cd7fbf913171d5ce003dc22a52ee2c9"
+          }
+        ],
+        "state": "derived"
+      },
+      "idle_power": {
+        "metrics": [
+          "control.mixed.idle_power_w",
+          "control.homogeneous.encoded-hello.idle_power_w",
+          "control.homogeneous.encoded-fu2p2q.idle_power_w",
+          "control.homogeneous.encoded-max48.idle_power_w",
+          "candidate.mixed.idle_power_w",
+          "candidate.homogeneous.encoded-hello.idle_power_w",
+          "candidate.homogeneous.encoded-fu2p2q.idle_power_w",
+          "candidate.homogeneous.encoded-max48.idle_power_w"
+        ],
+        "sources": [
+          {
+            "bytes": 2087237,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/score.json",
+            "role": "score",
+            "sha256": "3f99bb3312fdc050dd08ef9ea92f84ee6cd7fbf913171d5ce003dc22a52ee2c9"
+          }
+        ],
+        "state": "derived"
+      },
+      "idle_subtracted_energy": {
+        "sources": [
+          {
+            "bytes": 2087237,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/score.json",
+            "role": "score",
+            "sha256": "3f99bb3312fdc050dd08ef9ea92f84ee6cd7fbf913171d5ce003dc22a52ee2c9"
+          }
+        ],
+        "state": "derived"
+      },
+      "implementation_timing": {
+        "sources": [
+          {
+            "bytes": 7477,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-v1-original-sta-20261120T003417Z/offline-acceptance.json",
+            "role": "timing_acceptance",
+            "sha256": "6929990fb8d315e0750482de68dc885f81a26add5847ee68df70c02aff966376"
+          }
+        ],
+        "state": "reused"
+      },
+      "memory": {
+        "sources": [
+          {
+            "bytes": 130737,
+            "path": "hardware/research/inference/results/attention-value-pair-20261119T234247Z-e21df0/run.json",
+            "role": "previous_comparison",
+            "sha256": "d853f1eb8d6f3c1af10654601b29d91409178825073df385c9d63000f35f0d49"
+          }
+        ],
+        "state": "reused"
+      },
+      "memory_bandwidth": {
+        "reason": "The circuit retains the on-chip weights at both rates.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "sources": [
+          {
+            "bytes": 2087237,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/score.json",
+            "role": "score",
+            "sha256": "3f99bb3312fdc050dd08ef9ea92f84ee6cd7fbf913171d5ce003dc22a52ee2c9"
+          },
+          {
+            "bytes": 1082363,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/board-evidence.tar.gz",
+            "role": "board_archive",
+            "sha256": "ae78c8d4c8748a4a5baad5b63483f4aa7324426f64d565ac768cdb80a3995551"
+          }
+        ],
+        "state": "measured"
+      },
+      "output_counts": {
+        "metrics": [
+          "control.encoded-hello.scored_positions",
+          "control.encoded-hello.skipped_positions",
+          "control.encoded-fu2p2q.scored_positions",
+          "control.encoded-fu2p2q.skipped_positions",
+          "control.encoded-max48.scored_positions",
+          "control.encoded-max48.skipped_positions",
+          "candidate.encoded-hello.scored_positions",
+          "candidate.encoded-hello.skipped_positions",
+          "candidate.encoded-fu2p2q.scored_positions",
+          "candidate.encoded-fu2p2q.skipped_positions",
+          "candidate.encoded-max48.scored_positions",
+          "candidate.encoded-max48.skipped_positions"
+        ],
+        "sources": [
+          {
+            "bytes": 2087237,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/score.json",
+            "role": "score",
+            "sha256": "3f99bb3312fdc050dd08ef9ea92f84ee6cd7fbf913171d5ce003dc22a52ee2c9"
+          }
+        ],
+        "state": "measured"
+      },
+      "power_validation": {
+        "reason": "Module INA260 readings were used without external calibration or a whole-board meter.",
+        "state": "not_measured"
+      },
+      "prefill": {
+        "reason": "CPU TTFT and FPGA first-output clocks include work beyond prefill.",
+        "state": "not_measured"
+      },
+      "recovery": {
+        "sources": [
+          {
+            "bytes": 3106,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/evidence/original-after.stdout",
+            "role": "after_bos",
+            "sha256": "8ca02e5d8cd874a2633c530c69968c1671dcb4df41012e4e958b7ebdaecdb00b"
+          },
+          {
+            "bytes": 54426,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/preparation/stock-after.json",
+            "role": "fresh_stock_after",
+            "sha256": "87cae5b06b24f8a393a0ab968f01bf513f8547e35e9892d89dadebb54f6ffb13"
+          },
+          {
+            "bytes": 14286,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/evidence/stock-restored-clock.json",
+            "role": "restore_clock",
+            "sha256": "eb64e9ed93858fd5159a78cff95f9fbd716dfd571062c1d10b4311950a25b1f6"
+          }
+        ],
+        "state": "measured"
+      },
+      "repeatability": {
+        "sources": [
+          {
+            "bytes": 2087237,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/score.json",
+            "role": "score",
+            "sha256": "3f99bb3312fdc050dd08ef9ea92f84ee6cd7fbf913171d5ce003dc22a52ee2c9"
+          }
+        ],
+        "state": "measured"
+      },
+      "resources": {
+        "sources": [
+          {
+            "bytes": 36366,
+            "path": "hardware/research/inference/results/attention-clock-v1-original-sta-20261120T003417Z/run.json",
+            "role": "layout_timing",
+            "sha256": "785691563250fc24063c7249da9e4a9fa505bf38734e937ee7bcaa114ca46e1f"
+          }
+        ],
+        "state": "reused"
+      },
+      "stage_cycles": {
+        "metrics": [
+          "control.encoded-hello.first_clocks",
+          "control.encoded-hello.last_clocks",
+          "control.encoded-hello.request_clocks",
+          "control.encoded-fu2p2q.first_clocks",
+          "control.encoded-fu2p2q.last_clocks",
+          "control.encoded-fu2p2q.request_clocks",
+          "control.encoded-max48.first_clocks",
+          "control.encoded-max48.last_clocks",
+          "control.encoded-max48.request_clocks",
+          "candidate.encoded-hello.first_clocks",
+          "candidate.encoded-hello.last_clocks",
+          "candidate.encoded-hello.request_clocks",
+          "candidate.encoded-fu2p2q.first_clocks",
+          "candidate.encoded-fu2p2q.last_clocks",
+          "candidate.encoded-fu2p2q.request_clocks",
+          "candidate.encoded-max48.first_clocks",
+          "candidate.encoded-max48.last_clocks",
+          "candidate.encoded-max48.request_clocks"
+        ],
+        "sources": [
+          {
+            "bytes": 2087237,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/score.json",
+            "role": "score",
+            "sha256": "3f99bb3312fdc050dd08ef9ea92f84ee6cd7fbf913171d5ce003dc22a52ee2c9"
+          }
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "metrics": [
+          "control.mixed.model_setup_ns",
+          "control.homogeneous.encoded-hello.model_setup_ns",
+          "control.homogeneous.encoded-fu2p2q.model_setup_ns",
+          "control.homogeneous.encoded-max48.model_setup_ns",
+          "candidate.mixed.model_setup_ns",
+          "candidate.homogeneous.encoded-hello.model_setup_ns",
+          "candidate.homogeneous.encoded-fu2p2q.model_setup_ns",
+          "candidate.homogeneous.encoded-max48.model_setup_ns"
+        ],
+        "sources": [
+          {
+            "bytes": 2087237,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/score.json",
+            "role": "score",
+            "sha256": "3f99bb3312fdc050dd08ef9ea92f84ee6cd7fbf913171d5ce003dc22a52ee2c9"
+          }
+        ],
+        "state": "derived"
+      },
+      "sustained_throughput": {
+        "reason": "Bounded paired blocks at concurrency one.",
+        "state": "not_measured"
+      },
+      "token_gaps": {
+        "sources": [
+          {
+            "bytes": 1082363,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/board-evidence.tar.gz",
+            "role": "board_archive",
+            "sha256": "ae78c8d4c8748a4a5baad5b63483f4aa7324426f64d565ac768cdb80a3995551"
+          }
+        ],
+        "state": "measured"
+      },
+      "tokens_per_joule": {
+        "metrics": [
+          "control.mixed.tokens_per_joule",
+          "control.homogeneous.encoded-hello.tokens_per_joule",
+          "control.homogeneous.encoded-fu2p2q.tokens_per_joule",
+          "control.homogeneous.encoded-max48.tokens_per_joule",
+          "candidate.mixed.tokens_per_joule",
+          "candidate.homogeneous.encoded-hello.tokens_per_joule",
+          "candidate.homogeneous.encoded-fu2p2q.tokens_per_joule",
+          "candidate.homogeneous.encoded-max48.tokens_per_joule"
+        ],
+        "sources": [
+          {
+            "bytes": 2087237,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/score.json",
+            "role": "score",
+            "sha256": "3f99bb3312fdc050dd08ef9ea92f84ee6cd7fbf913171d5ce003dc22a52ee2c9"
+          }
+        ],
+        "state": "derived"
+      },
+      "ttft": {
+        "metrics": [
+          "control.encoded-hello.ttft_ms",
+          "control.encoded-fu2p2q.ttft_ms",
+          "control.encoded-max48.ttft_ms",
+          "candidate.encoded-hello.ttft_ms",
+          "candidate.encoded-fu2p2q.ttft_ms",
+          "candidate.encoded-max48.ttft_ms"
+        ],
+        "sources": [
+          {
+            "bytes": 2087237,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-clock-20261120T004416Z-a9d9d2/score.json",
+            "role": "score",
+            "sha256": "3f99bb3312fdc050dd08ef9ea92f84ee6cd7fbf913171d5ce003dc22a52ee2c9"
+          }
+        ],
+        "state": "derived"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "mixed_energy_pairs_pct": {
+      "1": {
+        "candidate_vs_control": {
+          "active_power_w": 0.3544833988794016,
+          "energy_per_answer_by_alignment": {
+            "midpoint": -4.6298280615482685,
+            "midpoint_minus_50ms": -4.725342547862588,
+            "midpoint_plus_50ms": -4.651820065649104,
+            "read_end": -4.6302743562615545,
+            "read_start": -4.6293742601664185
+          },
+          "energy_per_answer_j": -4.6298280615482685,
+          "energy_per_token_j": -4.62982806154828,
+          "tokens_per_joule": 4.854587097248997
+        }
+      },
+      "2": {
+        "candidate_vs_control": {
+          "active_power_w": 0.6356502625776361,
+          "energy_per_answer_by_alignment": {
+            "midpoint": -4.34064472584148,
+            "midpoint_minus_50ms": -4.19330329244888,
+            "midpoint_plus_50ms": -4.3238876800375525,
+            "read_end": -4.340641076764373,
+            "read_start": -4.3406428595954
+          },
+          "energy_per_answer_j": -4.34064472584148,
+          "energy_per_token_j": -4.340644725841491,
+          "tokens_per_joule": 4.5376060850517375
+        }
+      },
+      "3": {
+        "candidate_vs_control": {
+          "active_power_w": 0.33326491129430647,
+          "energy_per_answer_by_alignment": {
+            "midpoint": -4.608791943094892,
+            "midpoint_minus_50ms": -4.20168379329855,
+            "midpoint_plus_50ms": -4.621548591867308,
+            "read_end": -4.609351065075396,
+            "read_start": -4.608221121282508
+          },
+          "energy_per_answer_j": -4.608791943094892,
+          "energy_per_token_j": -4.608791943094892,
+          "tokens_per_joule": 4.831464069881086
+        }
+      },
+      "4": {
+        "candidate_vs_control": {
+          "active_power_w": 0.16829752238582962,
+          "energy_per_answer_by_alignment": {
+            "midpoint": -4.829355047733808,
+            "midpoint_minus_50ms": -4.302256302810436,
+            "midpoint_plus_50ms": -4.913687037059422,
+            "read_end": -4.830697570501508,
+            "read_start": -4.827995835300403
+          },
+          "energy_per_answer_j": -4.829355047733808,
+          "energy_per_token_j": -4.829355047733808,
+          "tokens_per_joule": 5.074416644077595
+        }
+      }
+    },
+    "mixed_timing_pairs_pct": {
+      "1": {
+        "encoded-fu2p2q": {
+          "candidate_vs_control": {
+            "completion_ms": -4.984452578985832,
+            "decode_tps": 5.263296670541351,
+            "request_clocks": 0.0,
+            "ttft_ms": -4.768980819057889
+          }
+        },
+        "encoded-hello": {
+          "candidate_vs_control": {
+            "completion_ms": -4.977362723775858,
+            "decode_tps": 5.263560276658086,
+            "request_clocks": 0.0,
+            "ttft_ms": -4.722863491121599
+          }
+        },
+        "encoded-max48": {
+          "candidate_vs_control": {
+            "completion_ms": -4.988483638314012,
+            "decode_tps": 5.263465088017827,
+            "request_clocks": 0.0,
+            "ttft_ms": -4.968930173051955
+          }
+        }
+      },
+      "2": {
+        "encoded-fu2p2q": {
+          "candidate_vs_control": {
+            "completion_ms": -4.997830872252584,
+            "decode_tps": 5.263079913340718,
+            "request_clocks": 0.0,
+            "ttft_ms": -4.967879227993199
+          }
+        },
+        "encoded-hello": {
+          "candidate_vs_control": {
+            "completion_ms": -4.989415194383606,
+            "decode_tps": 5.263409002884245,
+            "request_clocks": 0.0,
+            "ttft_ms": -4.87539830257343
+          }
+        },
+        "encoded-max48": {
+          "candidate_vs_control": {
+            "completion_ms": -4.975511005514166,
+            "decode_tps": 5.263313344222342,
+            "request_clocks": 0.0,
+            "ttft_ms": -4.93408508024209
+          }
+        }
+      },
+      "3": {
+        "encoded-fu2p2q": {
+          "candidate_vs_control": {
+            "completion_ms": -4.972806915091965,
+            "decode_tps": 5.2630625227106265,
+            "request_clocks": 0.0,
+            "ttft_ms": -4.67138960212532
+          }
+        },
+        "encoded-hello": {
+          "candidate_vs_control": {
+            "completion_ms": -4.9720741985124555,
+            "decode_tps": 5.263179626507064,
+            "request_clocks": 0.0,
+            "ttft_ms": -4.663977420748888
+          }
+        },
+        "encoded-max48": {
+          "candidate_vs_control": {
+            "completion_ms": -4.964733983349989,
+            "decode_tps": 5.263160330962324,
+            "request_clocks": 0.0,
+            "ttft_ms": -4.905253369239626
+          }
+        }
+      },
+      "4": {
+        "encoded-fu2p2q": {
+          "candidate_vs_control": {
+            "completion_ms": -4.992064813724939,
+            "decode_tps": 5.262969349966928,
+            "request_clocks": 0.0,
+            "ttft_ms": -4.878397946776392
+          }
+        },
+        "encoded-hello": {
+          "candidate_vs_control": {
+            "completion_ms": -4.990710079542692,
+            "decode_tps": 5.262888612648142,
+            "request_clocks": 0.0,
+            "ttft_ms": -4.884390724048526
+          }
+        },
+        "encoded-max48": {
+          "candidate_vs_control": {
+            "completion_ms": -4.998814227628023,
+            "decode_tps": 5.263522182596492,
+            "request_clocks": 0.0,
+            "ttft_ms": -4.996713625107596
+          }
+        }
+      }
+    },
+    "original_restored": true,
+    "pooled_energy": {
+      "encoded-fu2p2q": {
+        "candidate": {
+          "active_w": 3.118831622702924,
+          "gross_j_answer": 0.3093733905114671,
+          "gross_j_token": 0.002535847463208747,
+          "idle_w": 3.0136272315858568,
+          "replies": 24,
+          "tokens_per_joule": 394.3454858813334,
+          "useful_tokens": 2928
+        },
+        "control": {
+          "active_w": 3.1162759082605045,
+          "gross_j_answer": 0.3252757697801633,
+          "gross_j_token": 0.0026661948342636336,
+          "idle_w": 3.0170849255375654,
+          "replies": 24,
+          "tokens_per_joule": 375.06636317378747,
+          "useful_tokens": 2928
+        }
+      },
+      "encoded-hello": {
+        "candidate": {
+          "active_w": 3.1200945063915375,
+          "gross_j_answer": 0.2133744485051209,
+          "gross_j_token": 0.002370827205612455,
+          "idle_w": 3.0154858212239297,
+          "replies": 36,
+          "tokens_per_joule": 421.7937088087659,
+          "useful_tokens": 3240
+        },
+        "control": {
+          "active_w": 3.120177602000809,
+          "gross_j_answer": 0.22449087474124882,
+          "gross_j_token": 0.0024943430526805426,
+          "idle_w": 3.020521308454851,
+          "replies": 36,
+          "tokens_per_joule": 400.9071642833376,
+          "useful_tokens": 3240
+        }
+      },
+      "encoded-max48": {
+        "candidate": {
+          "active_w": 3.1168553832517323,
+          "gross_j_answer": 0.5224232298145651,
+          "gross_j_token": 0.00502330028667851,
+          "idle_w": 3.015796284615739,
+          "replies": 16,
+          "tokens_per_joule": 199.07231161392832,
+          "useful_tokens": 1664
+        },
+        "control": {
+          "active_w": 3.1120263087396105,
+          "gross_j_answer": 0.5489444099086894,
+          "gross_j_token": 0.0052783116337373984,
+          "idle_w": 3.0191899277774716,
+          "replies": 16,
+          "tokens_per_joule": 189.45452057212714,
+          "useful_tokens": 1664
+        }
+      },
+      "mixed": {
+        "candidate": {
+          "active_w": 3.124560735454068,
+          "gross_j_answer": 0.3492718031661039,
+          "gross_j_token": 0.00331587154904529,
+          "idle_w": 3.0222074743839396,
+          "replies": 24,
+          "tokens_per_joule": 301.5798366157824,
+          "useful_tokens": 2528
+        },
+        "control": {
+          "active_w": 3.1129542707318443,
+          "gross_j_answer": 0.3661216559315373,
+          "gross_j_token": 0.0034758385056791515,
+          "idle_w": 3.0138325333776983,
+          "replies": 24,
+          "tokens_per_joule": 287.7003630537224,
+          "useful_tokens": 2528
+        }
+      }
+    },
+    "power_supply_boundary": "INA260 VCC_SOM module rail, 20 Hz, five timestamp alignments and 75 ms contributing-gap limit.",
+    "previous_board_run": "attention-value-pair-20261119T234247Z-e21df0",
+    "qualification": {
+      "acceptance_sha256": "6929990fb8d315e0750482de68dc885f81a26add5847ee68df70c02aff966376",
+      "record": "attention-clock-v1-original-sta-20261120T003417Z",
+      "record_sha256": "785691563250fc24063c7249da9e4a9fa505bf38734e937ee7bcaa114ca46e1f"
+    },
+    "restored_bos_scores": 320,
+    "routed": {
+      "checkpoint_sha256": "b005aea93d6475bf0287a0f648be32b09555fe76995dbaac8ac5702b443512a6",
+      "resources": {
+        "bram_tile": 39.0,
+        "dsp": 58.0,
+        "lut": 39376.0,
+        "lutram": 1172.0,
+        "register": 15712.0,
+        "uram": 0.0
+      }
+    },
+    "schedule": [
+      [
+        "A1",
+        "control",
+        [
+          1,
+          2
+        ],
+        1,
+        [
+          "encoded-hello",
+          "encoded-fu2p2q",
+          "encoded-max48"
+        ],
+        true
+      ],
+      [
+        "B1",
+        "candidate",
+        [
+          1,
+          2
+        ],
+        1,
+        [
+          "encoded-hello",
+          "encoded-fu2p2q",
+          "encoded-max48"
+        ],
+        true
+      ],
+      [
+        "B2",
+        "candidate",
+        [
+          3,
+          4
+        ],
+        2,
+        [
+          "encoded-max48",
+          "encoded-fu2p2q",
+          "encoded-hello"
+        ],
+        false
+      ],
+      [
+        "A2",
+        "control",
+        [
+          3,
+          4
+        ],
+        2,
+        [
+          "encoded-max48",
+          "encoded-fu2p2q",
+          "encoded-hello"
+        ],
+        true
+      ]
+    ],
+    "serial_poll_overlap": [],
+    "timeouts": 0,
+    "timing_reference": {
+      "candidate": {
+        "admitted": true,
+        "clock_source": "tiny_ps_axi_i/ps/inst/PS8_i/PLCLK[0]",
+        "critical_setup_delay_breakdown": "Data Path Delay:        18.366ns  (logic 6.215ns (33.840%)  route 12.151ns (66.160%))",
+        "hold_failing_endpoints": 0,
+        "hold_slack_ns": 0.005,
+        "hold_total_endpoints": 55096,
+        "hold_total_negative_slack_ns": 0.0,
+        "native": {
+          "drc_errors_or_critical_warnings": "0",
+          "fully_placed": "1",
+          "fully_routed": "1",
+          "max_datapath_delay": "18.366",
+          "max_endpoint_clock": "clk_pl_0",
+          "max_endpoint_pin": "tiny_ps_axi_i/neural/inst/actual/core/att/scalar/m_reg[39]/D",
+          "max_logic_levels": "43",
+          "max_requirement": "18.999",
+          "max_slack": "0.389",
+          "max_startpoint_clock": "clk_pl_0",
+          "max_startpoint_pin": "tiny_ps_axi_i/neural/inst/actual/core/att/scalar_a_reg[11]/C",
+          "min_datapath_delay": "0.240",
+          "min_endpoint_clock": "clk_pl_0",
+          "min_endpoint_pin": "tiny_ps_axi_i/neural/inst/actual/prompt_memory_reg[173][7]/D",
+          "min_logic_levels": "0",
+          "min_requirement": "0.000",
+          "min_slack": "0.005",
+          "min_startpoint_clock": "clk_pl_0",
+          "min_startpoint_pin": "tiny_ps_axi_i/neural/inst/actual/write_data_reg[7]_rep__1/C",
+          "native_no_clock": "0",
+          "partially_routed_nets": "0",
+          "period_ns": "18.999",
+          "routing_errors": "0",
+          "routing_gap_nets": "0",
+          "unclocked_active_pins": "0",
+          "unconstrained_internal_endpoints": "0",
+          "unrouted_nets": "0"
+        },
+        "neural_clock_pins": 16796,
+        "nominal_rate_hz": 52631579,
+        "period_ns": "18.999",
+        "pulse_width_failing_endpoints": 0,
+        "pulse_width_slack_ns": 7.999,
+        "pulse_width_total_endpoints": 17199,
+        "pulse_width_total_negative_slack_ns": 0.0,
+        "setup_failing_endpoints": 0,
+        "setup_slack_ns": 0.389,
+        "setup_total_endpoints": 55096,
+        "setup_total_negative_slack_ns": 0.0,
+        "upper_qualified_rate_hz": 52634349
+      },
+      "control": {
+        "admitted": true,
+        "clock_source": "tiny_ps_axi_i/ps/inst/PS8_i/PLCLK[0]",
+        "critical_setup_delay_breakdown": "Data Path Delay:        18.366ns  (logic 6.215ns (33.840%)  route 12.151ns (66.160%))",
+        "hold_failing_endpoints": 0,
+        "hold_slack_ns": 0.005,
+        "hold_total_endpoints": 55096,
+        "hold_total_negative_slack_ns": 0.0,
+        "native": {
+          "drc_errors_or_critical_warnings": "0",
+          "fully_placed": "1",
+          "fully_routed": "1",
+          "max_datapath_delay": "18.366",
+          "max_endpoint_clock": "clk_pl_0",
+          "max_endpoint_pin": "tiny_ps_axi_i/neural/inst/actual/core/att/scalar/m_reg[39]/D",
+          "max_logic_levels": "43",
+          "max_requirement": "20.000",
+          "max_slack": "1.390",
+          "max_startpoint_clock": "clk_pl_0",
+          "max_startpoint_pin": "tiny_ps_axi_i/neural/inst/actual/core/att/scalar_a_reg[11]/C",
+          "min_datapath_delay": "0.240",
+          "min_endpoint_clock": "clk_pl_0",
+          "min_endpoint_pin": "tiny_ps_axi_i/neural/inst/actual/prompt_memory_reg[173][7]/D",
+          "min_logic_levels": "0",
+          "min_requirement": "0.000",
+          "min_slack": "0.005",
+          "min_startpoint_clock": "clk_pl_0",
+          "min_startpoint_pin": "tiny_ps_axi_i/neural/inst/actual/write_data_reg[7]_rep__1/C",
+          "native_no_clock": "0",
+          "partially_routed_nets": "0",
+          "period_ns": "20.000",
+          "routing_errors": "0",
+          "routing_gap_nets": "0",
+          "unclocked_active_pins": "0",
+          "unconstrained_internal_endpoints": "0",
+          "unrouted_nets": "0"
+        },
+        "neural_clock_pins": 16796,
+        "nominal_rate_hz": 50000000,
+        "period_ns": "20.000",
+        "pulse_width_failing_endpoints": 0,
+        "pulse_width_slack_ns": 8.5,
+        "pulse_width_total_endpoints": 17199,
+        "pulse_width_total_negative_slack_ns": 0.0,
+        "setup_failing_endpoints": 0,
+        "setup_slack_ns": 1.39,
+        "setup_total_endpoints": 55096,
+        "setup_total_negative_slack_ns": 0.0,
+        "upper_qualified_rate_hz": 50000000
+      }
+    },
+    "unchanged_clock_identities": 198,
+    "verified_work": {
+      "encoded-fu2p2q": {
+        "counts": {
+          "context_count": 135,
+          "scores_consumed": 39360,
+          "skipped_positions": 12
+        },
+        "cycles": {
+          "done": 5174020,
+          "first": 336800,
+          "last": 5123370
+        }
+      },
+      "encoded-hello": {
+        "counts": {
+          "context_count": 101,
+          "scores_consumed": 29120,
+          "skipped_positions": 10
+        },
+        "cycles": {
+          "done": 3558785,
+          "first": 283256,
+          "last": 3514339
+        }
+      },
+      "encoded-max48": {
+        "counts": {
+          "context_count": 201,
+          "scores_consumed": 33600,
+          "skipped_positions": 96
+        },
+        "cycles": {
+          "done": 8760172,
+          "first": 3239400,
+          "last": 8697576
+        }
+      }
+    }
+  },
+  "correctness": {
+    "evidence": "All 200 timed, 36 warm-up and nine smoke replies preserved outputs, stopping, geometry and first/last/done counters. All 320 original BOS scores matched after restoration.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "boot_id": "e09cc30e-0803-4dcc-ac24-60864ebd540e",
+      "comparison_firmware_sha256": {
+        "candidate": "ef998a2920682fdb93aa27978f75086b66eb606675b2483951995dfab68d36bb",
+        "control": "ef998a2920682fdb93aa27978f75086b66eb606675b2483951995dfab68d36bb"
+      },
+      "comparison_overlay_sha256": "89b84e9028b5178c10c0478e6ae6c6a5c72e80043de4228864a48e4f92e5f80e",
+      "configured_pl0_hz": {
+        "candidate": 52631579,
+        "control": 50000000
+      },
+      "initial_taint": "12288",
+      "kernel": [
+        "Linux",
+        "kria",
+        "6.8.0-1015-xilinx",
+        "#16-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 16 05:06:58 UTC 2025",
+        "aarch64"
+      ],
+      "model": "ZynqMP KV260 revB",
+      "physical_unit": "KV260 USB bridge XFL1RXOM0IWQ",
+      "pl0_readback": {
+        "candidate": {
+          "configured_hz": 52631579,
+          "dividers": {
+            "div0": 19,
+            "div1": 1
+          },
+          "enabled": true,
+          "parent": "iopll",
+          "parent_hz": 999999990
+        },
+        "control": {
+          "configured_hz": 50000000,
+          "dividers": {
+            "div0": 20,
+            "div1": 1
+          },
+          "enabled": true,
+          "parent": "iopll",
+          "parent_hz": 999999990
+        }
+      },
+      "restored_taint": "12288"
+    },
+    "configuration_sha256": "c6cfc8d1cba76ac061c6b6e2ef1f5d13a6e2bfe8b865a1f19a438c8293f6040c",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-clock-frequency-v1",
+  "id": "attention-clock-20261120T004416Z-a9d9d2",
+  "implementation": {
+    "id": "attention-value-pair-v1",
+    "sha256": "ef998a2920682fdb93aa27978f75086b66eb606675b2483951995dfab68d36bb"
+  },
+  "limitations": [
+    "One KV260 and three fixed prompts. Four mixed pairs and two homogeneous pairs per prompt.",
+    "The Linux driver, clock tree and firmware divider readbacks establish configured rates. CPU timing cross-checks FPGA cycle counts.",
+    "VCC_SOM is the module rail. Active energy includes gaps and correctness verification across the powered block.",
+    "Clock probes run just outside the active window and can affect shifted sensitivity windows.",
+    "SPI1 and TPM counters bracket each active window and cannot isolate their individual energy contributions.",
+    "The first authenticated complete status caps the board execution time."
+  ],
+  "metrics": [
+    {
+      "kind": "derived",
+      "method": "Board CPU admission before encoding and context clear to first useful byte.",
+      "name": "control.encoded-hello.ttft_ms",
+      "samples": [
+        6.124051,
+        5.874729,
+        6.113121,
+        5.900359,
+        5.884159,
+        5.868578,
+        5.887819,
+        5.872829
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful byte intervals divided by board CPU first-to-last elapsed time.",
+      "name": "control.encoded-hello.decode_tps",
+      "samples": [
+        1377.2291440194358,
+        1377.2355589346485,
+        1377.2347064507785,
+        1377.2319358854895,
+        1377.2300178083578,
+        1377.2415050389939,
+        1377.235772055781,
+        1377.2321490055006
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to observed stop and drain before verification.",
+      "name": "control.encoded-hello.completion_ms",
+      "samples": [
+        71.635317,
+        71.385644,
+        71.623856,
+        71.411364,
+        71.394854,
+        71.379383,
+        71.398874,
+        71.383834
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to exact output verification.",
+      "name": "control.encoded-hello.verified_ms",
+      "samples": [
+        72.277213,
+        71.884469,
+        72.254062,
+        71.899889,
+        71.920709,
+        71.874778,
+        71.98255,
+        71.883889
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at first useful byte.",
+      "name": "control.encoded-hello.first_clocks",
+      "samples": [
+        283256,
+        283256,
+        283256,
+        283256,
+        283256,
+        283256,
+        283256,
+        283256
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at last useful byte.",
+      "name": "control.encoded-hello.last_clocks",
+      "samples": [
+        3514339,
+        3514339,
+        3514339,
+        3514339,
+        3514339,
+        3514339,
+        3514339,
+        3514339
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at final completion.",
+      "name": "control.encoded-hello.request_clocks",
+      "samples": [
+        3558785,
+        3558785,
+        3558785,
+        3558785,
+        3558785,
+        3558785,
+        3558785,
+        3558785
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Accepted scores divided by 320.",
+      "name": "control.encoded-hello.scored_positions",
+      "samples": [
+        91,
+        91,
+        91,
+        91,
+        91,
+        91,
+        91,
+        91
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA count of prefill positions without scores.",
+      "name": "control.encoded-hello.skipped_positions",
+      "samples": [
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "derived",
+      "method": "CPU interval between observed completion and exact verification.",
+      "name": "control.encoded-hello.verification_ns",
+      "samples": [
+        641896,
+        498825,
+        630206,
+        488525,
+        525855,
+        495395,
+        583676,
+        500055
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission before encoding and context clear to first useful byte.",
+      "name": "control.encoded-fu2p2q.ttft_ms",
+      "samples": [
+        6.96884,
+        6.96009,
+        6.98465,
+        6.946989,
+        6.986299,
+        6.946279,
+        6.9837,
+        6.97289
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful byte intervals divided by board CPU first-to-last elapsed time.",
+      "name": "control.encoded-fu2p2q.decode_tps",
+      "samples": [
+        1263.9413910585881,
+        1263.9399387440387,
+        1263.9387504891627,
+        1263.938473230013,
+        1263.937549033726,
+        1263.9415098844718,
+        1263.9420379997803,
+        1263.9425661155299
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to observed stop and drain before verification.",
+      "name": "control.encoded-fu2p2q.completion_ms",
+      "samples": [
+        103.713647,
+        103.704998,
+        103.729908,
+        103.692177,
+        103.731667,
+        103.691287,
+        103.728878,
+        103.718048
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to exact output verification.",
+      "name": "control.encoded-fu2p2q.verified_ms",
+      "samples": [
+        104.323503,
+        104.305314,
+        104.340474,
+        104.284583,
+        104.339603,
+        104.262993,
+        104.349504,
+        104.337424
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at first useful byte.",
+      "name": "control.encoded-fu2p2q.first_clocks",
+      "samples": [
+        336800,
+        336800,
+        336800,
+        336800,
+        336800,
+        336800,
+        336800,
+        336800
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at last useful byte.",
+      "name": "control.encoded-fu2p2q.last_clocks",
+      "samples": [
+        5123370,
+        5123370,
+        5123370,
+        5123370,
+        5123370,
+        5123370,
+        5123370,
+        5123370
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at final completion.",
+      "name": "control.encoded-fu2p2q.request_clocks",
+      "samples": [
+        5174020,
+        5174020,
+        5174020,
+        5174020,
+        5174020,
+        5174020,
+        5174020,
+        5174020
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Accepted scores divided by 320.",
+      "name": "control.encoded-fu2p2q.scored_positions",
+      "samples": [
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA count of prefill positions without scores.",
+      "name": "control.encoded-fu2p2q.skipped_positions",
+      "samples": [
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "derived",
+      "method": "CPU interval between observed completion and exact verification.",
+      "name": "control.encoded-fu2p2q.verification_ns",
+      "samples": [
+        609856,
+        600316,
+        610566,
+        592406,
+        607936,
+        571706,
+        620626,
+        619376
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission before encoding and context clear to first useful byte.",
+      "name": "control.encoded-max48.ttft_ms",
+      "samples": [
+        65.263713,
+        65.236692,
+        65.246583,
+        65.250883,
+        65.510325,
+        65.240393,
+        65.515715,
+        65.262122
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful byte intervals divided by board CPU first-to-last elapsed time.",
+      "name": "control.encoded-max48.decode_tps",
+      "samples": [
+        943.5260973639054,
+        943.5299867845342,
+        943.5286903074284,
+        943.5294681932644,
+        943.5314561295614,
+        943.529727488828,
+        943.5266159514698,
+        943.526443088885
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to observed stop and drain before verification.",
+      "name": "control.encoded-max48.completion_ms",
+      "samples": [
+        175.679587,
+        175.652727,
+        175.663067,
+        175.666997,
+        175.92647,
+        175.656617,
+        175.932059,
+        175.678427
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to exact output verification.",
+      "name": "control.encoded-max48.verified_ms",
+      "samples": [
+        176.248463,
+        176.236743,
+        176.259173,
+        176.232993,
+        176.632217,
+        176.234573,
+        176.645156,
+        176.251452
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at first useful byte.",
+      "name": "control.encoded-max48.first_clocks",
+      "samples": [
+        3239400,
+        3239400,
+        3239400,
+        3239400,
+        3239400,
+        3239400,
+        3239400,
+        3239400
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at last useful byte.",
+      "name": "control.encoded-max48.last_clocks",
+      "samples": [
+        8697576,
+        8697576,
+        8697576,
+        8697576,
+        8697576,
+        8697576,
+        8697576,
+        8697576
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at final completion.",
+      "name": "control.encoded-max48.request_clocks",
+      "samples": [
+        8760172,
+        8760172,
+        8760172,
+        8760172,
+        8760172,
+        8760172,
+        8760172,
+        8760172
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Accepted scores divided by 320.",
+      "name": "control.encoded-max48.scored_positions",
+      "samples": [
+        105,
+        105,
+        105,
+        105,
+        105,
+        105,
+        105,
+        105
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA count of prefill positions without scores.",
+      "name": "control.encoded-max48.skipped_positions",
+      "samples": [
+        96,
+        96,
+        96,
+        96,
+        96,
+        96,
+        96,
+        96
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "derived",
+      "method": "CPU interval between observed completion and exact verification.",
+      "name": "control.encoded-max48.verification_ns",
+      "samples": [
+        568876,
+        584016,
+        596106,
+        565996,
+        705747,
+        577956,
+        713097,
+        573025
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "control.mixed.active_power_w",
+      "samples": [
+        3.111253073239636,
+        3.111500707886506,
+        3.1130633265323446,
+        3.115999058865269
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "control.mixed.idle_power_w",
+      "samples": [
+        3.021258332880835,
+        3.0130001768450003,
+        3.0098774558659347,
+        3.0095006308571435,
+        3.008499934185,
+        3.0112497921635635,
+        3.021768703439111,
+        3.0155052407849996
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "control.mixed.energy_per_answer_j",
+      "samples": [
+        0.36589597650710887,
+        0.36591798904795564,
+        0.36611174351059933,
+        0.3665609146604853
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "control.mixed.energy_per_token_j",
+      "samples": [
+        0.0034736959794978693,
+        0.003473904959316035,
+        0.003475744400417082,
+        0.00348000868348562
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "control.mixed.tokens_per_joule",
+      "samples": [
+        287.87781253803115,
+        287.8604946627229,
+        287.7081524982108,
+        287.3556048137178
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "control.mixed.gross_j",
+      "samples": [
+        2.1953758590426533,
+        2.195507934287734,
+        2.196670461063596,
+        2.1993654879629116
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "control.mixed.model_setup_ns",
+      "samples": [
+        541282604,
+        543074041,
+        552206113,
+        554129172
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "control.homogeneous.encoded-hello.active_power_w",
+      "samples": [
+        3.1181811907076553,
+        3.1221740092859323
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "control.homogeneous.encoded-hello.idle_power_w",
+      "samples": [
+        3.016873656686606,
+        3.025832059129899,
+        3.0228790752528982,
+        3.0165004427500004
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "control.homogeneous.encoded-hello.energy_per_answer_j",
+      "samples": [
+        0.2243470115241635,
+        0.22463473795833414
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "control.homogeneous.encoded-hello.energy_per_token_j",
+      "samples": [
+        0.0024927445724907057,
+        0.0024959415328703796
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "control.homogeneous.encoded-hello.tokens_per_joule",
+      "samples": [
+        401.16424724608584,
+        400.6504106087699
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "control.homogeneous.encoded-hello.gross_j",
+      "samples": [
+        4.038246207434943,
+        4.043425283250015
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "control.homogeneous.encoded-hello.model_setup_ns",
+      "samples": [
+        552409115,
+        540134632
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "control.homogeneous.encoded-fu2p2q.active_power_w",
+      "samples": [
+        3.1215023450474666,
+        3.1110480030773475
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "control.homogeneous.encoded-fu2p2q.idle_power_w",
+      "samples": [
+        3.0191234201252968,
+        3.016855691266482,
+        3.019505471418484,
+        3.012855119339999
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "control.homogeneous.encoded-fu2p2q.energy_per_answer_j",
+      "samples": [
+        0.32586706760697526,
+        0.3246844719533513
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "control.homogeneous.encoded-fu2p2q.energy_per_token_j",
+      "samples": [
+        0.002671041537762092,
+        0.0026613481307651747
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "control.homogeneous.encoded-fu2p2q.tokens_per_joule",
+      "samples": [
+        374.3857914084859,
+        375.7494137801829
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "control.homogeneous.encoded-fu2p2q.gross_j",
+      "samples": [
+        3.910404811283703,
+        3.896213663440216
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "control.homogeneous.encoded-fu2p2q.model_setup_ns",
+      "samples": [
+        549633327,
+        550530266
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "control.homogeneous.encoded-max48.active_power_w",
+      "samples": [
+        3.1172660732160056,
+        3.1067870144394276
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "control.homogeneous.encoded-max48.idle_power_w",
+      "samples": [
+        3.0193731032831206,
+        3.0345114281074994,
+        3.012623859531502,
+        3.010251320187765
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "control.homogeneous.encoded-max48.energy_per_answer_j",
+      "samples": [
+        0.549844004084723,
+        0.5480448157326558
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "control.homogeneous.encoded-max48.energy_per_token_j",
+      "samples": [
+        0.005286961577737721,
+        0.005269661689737076
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "control.homogeneous.encoded-max48.tokens_per_joule",
+      "samples": [
+        189.14455596023032,
+        189.76550277365035
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "control.homogeneous.encoded-max48.gross_j",
+      "samples": [
+        4.398752032677784,
+        4.384358525861247
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "control.homogeneous.encoded-max48.model_setup_ns",
+      "samples": [
+        541588286,
+        545029231
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission before encoding and context clear to first useful byte.",
+      "name": "candidate.encoded-hello.ttft_ms",
+      "samples": [
+        5.826858,
+        5.605236,
+        5.843959,
+        5.583816,
+        5.603866,
+        5.600726,
+        5.601196,
+        5.585016
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful byte intervals divided by board CPU first-to-last elapsed time.",
+      "name": "candidate.encoded-hello.decode_tps",
+      "samples": [
+        1449.7271124902234,
+        1449.72050040312,
+        1449.7209726930557,
+        1449.7245148773825,
+        1449.7186112464544,
+        1449.725695609338,
+        1449.717666669968,
+        1449.7148329478937
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to observed stop and drain before verification.",
+      "name": "candidate.encoded-hello.completion_ms",
+      "samples": [
+        68.061861,
+        67.840428,
+        68.079321,
+        67.819278,
+        67.839288,
+        67.836108,
+        67.836608,
+        67.820229
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to exact output verification.",
+      "name": "candidate.encoded-hello.verified_ms",
+      "samples": [
+        68.697827,
+        68.339783,
+        68.720228,
+        68.300113,
+        68.389254,
+        68.321013,
+        68.355723,
+        68.303423
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at first useful byte.",
+      "name": "candidate.encoded-hello.first_clocks",
+      "samples": [
+        283256,
+        283256,
+        283256,
+        283256,
+        283256,
+        283256,
+        283256,
+        283256
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at last useful byte.",
+      "name": "candidate.encoded-hello.last_clocks",
+      "samples": [
+        3514339,
+        3514339,
+        3514339,
+        3514339,
+        3514339,
+        3514339,
+        3514339,
+        3514339
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at final completion.",
+      "name": "candidate.encoded-hello.request_clocks",
+      "samples": [
+        3558785,
+        3558785,
+        3558785,
+        3558785,
+        3558785,
+        3558785,
+        3558785,
+        3558785
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Accepted scores divided by 320.",
+      "name": "candidate.encoded-hello.scored_positions",
+      "samples": [
+        91,
+        91,
+        91,
+        91,
+        91,
+        91,
+        91,
+        91
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA count of prefill positions without scores.",
+      "name": "candidate.encoded-hello.skipped_positions",
+      "samples": [
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "derived",
+      "method": "CPU interval between observed completion and exact verification.",
+      "name": "candidate.encoded-hello.verification_ns",
+      "samples": [
+        635966,
+        499355,
+        640907,
+        480835,
+        549966,
+        484905,
+        519115,
+        483194
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission before encoding and context clear to first useful byte.",
+      "name": "candidate.encoded-fu2p2q.ttft_ms",
+      "samples": [
+        6.659886,
+        6.604776,
+        6.629936,
+        6.609596,
+        6.665747,
+        6.615986,
+        6.653796,
+        6.621936
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful byte intervals divided by board CPU first-to-last elapsed time.",
+      "name": "candidate.encoded-fu2p2q.decode_tps",
+      "samples": [
+        1330.4656849809116,
+        1330.4655386884535,
+        1330.459101852142,
+        1330.4623202625123,
+        1330.459847936796,
+        1330.463066350776,
+        1330.4650998112718,
+        1330.46129622116
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to observed stop and drain before verification.",
+      "name": "candidate.encoded-fu2p2q.completion_ms",
+      "samples": [
+        98.567676,
+        98.512285,
+        98.537925,
+        98.517555,
+        98.573466,
+        98.534745,
+        98.561246,
+        98.529795
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to exact output verification.",
+      "name": "candidate.encoded-fu2p2q.verified_ms",
+      "samples": [
+        99.187772,
+        99.085701,
+        99.126141,
+        99.103781,
+        99.178422,
+        99.178391,
+        99.178932,
+        99.098881
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at first useful byte.",
+      "name": "candidate.encoded-fu2p2q.first_clocks",
+      "samples": [
+        336800,
+        336800,
+        336800,
+        336800,
+        336800,
+        336800,
+        336800,
+        336800
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at last useful byte.",
+      "name": "candidate.encoded-fu2p2q.last_clocks",
+      "samples": [
+        5123370,
+        5123370,
+        5123370,
+        5123370,
+        5123370,
+        5123370,
+        5123370,
+        5123370
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at final completion.",
+      "name": "candidate.encoded-fu2p2q.request_clocks",
+      "samples": [
+        5174020,
+        5174020,
+        5174020,
+        5174020,
+        5174020,
+        5174020,
+        5174020,
+        5174020
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Accepted scores divided by 320.",
+      "name": "candidate.encoded-fu2p2q.scored_positions",
+      "samples": [
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA count of prefill positions without scores.",
+      "name": "candidate.encoded-fu2p2q.skipped_positions",
+      "samples": [
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "derived",
+      "method": "CPU interval between observed completion and exact verification.",
+      "name": "candidate.encoded-fu2p2q.verification_ns",
+      "samples": [
+        620096,
+        573416,
+        588216,
+        586226,
+        604956,
+        643646,
+        617686,
+        569086
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission before encoding and context clear to first useful byte.",
+      "name": "candidate.encoded-max48.ttft_ms",
+      "samples": [
+        62.022021,
+        61.99391,
+        62.04687,
+        62.01174,
+        62.273713,
+        62.063351,
+        62.242583,
+        62.00066
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful byte intervals divided by board CPU first-to-last elapsed time.",
+      "name": "candidate.encoded-max48.decode_tps",
+      "samples": [
+        993.1906942428988,
+        993.1899280860101,
+        993.1882904296241,
+        993.1916519406719,
+        993.1917477105508,
+        993.1884915450298,
+        993.1899280860101,
+        993.1885873142992
+      ],
+      "unit": "tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to observed stop and drain before verification.",
+      "name": "candidate.encoded-max48.completion_ms",
+      "samples": [
+        166.9171,
+        166.889059,
+        166.942549,
+        166.907049,
+        167.168852,
+        166.95907,
+        167.138072,
+        166.896059
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Board CPU admission to exact output verification.",
+      "name": "candidate.encoded-max48.verified_ms",
+      "samples": [
+        167.488966,
+        167.452905,
+        167.552405,
+        167.587566,
+        167.879109,
+        167.537296,
+        167.848609,
+        167.464935
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at first useful byte.",
+      "name": "candidate.encoded-max48.first_clocks",
+      "samples": [
+        3239400,
+        3239400,
+        3239400,
+        3239400,
+        3239400,
+        3239400,
+        3239400,
+        3239400
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at last useful byte.",
+      "name": "candidate.encoded-max48.last_clocks",
+      "samples": [
+        8697576,
+        8697576,
+        8697576,
+        8697576,
+        8697576,
+        8697576,
+        8697576,
+        8697576
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA clock count at final completion.",
+      "name": "candidate.encoded-max48.request_clocks",
+      "samples": [
+        8760172,
+        8760172,
+        8760172,
+        8760172,
+        8760172,
+        8760172,
+        8760172,
+        8760172
+      ],
+      "unit": "cycles"
+    },
+    {
+      "kind": "derived",
+      "method": "Accepted scores divided by 320.",
+      "name": "candidate.encoded-max48.scored_positions",
+      "samples": [
+        105,
+        105,
+        105,
+        105,
+        105,
+        105,
+        105,
+        105
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "observed",
+      "method": "FPGA count of prefill positions without scores.",
+      "name": "candidate.encoded-max48.skipped_positions",
+      "samples": [
+        96,
+        96,
+        96,
+        96,
+        96,
+        96,
+        96,
+        96
+      ],
+      "unit": "positions"
+    },
+    {
+      "kind": "derived",
+      "method": "CPU interval between observed completion and exact verification.",
+      "name": "candidate.encoded-max48.verification_ns",
+      "samples": [
+        571866,
+        563846,
+        609856,
+        680517,
+        710257,
+        578226,
+        710537,
+        568876
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "candidate.mixed.active_power_w",
+      "samples": [
+        3.1222819488813958,
+        3.1312789703062913,
+        3.123438074266048,
+        3.121243208078905
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "candidate.mixed.idle_power_w",
+      "samples": [
+        3.022387223407379,
+        3.029323750410301,
+        3.0218740078095716,
+        3.019769436853027,
+        3.0227546590824987,
+        3.0186768844859166,
+        3.023125123487824,
+        3.0197487095349995
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "candidate.mixed.energy_per_answer_j",
+      "samples": [
+        0.34895562191070667,
+        0.35003478915544034,
+        0.3492384149729586,
+        0.34885838662530994
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "candidate.mixed.energy_per_token_j",
+      "samples": [
+        0.0033128698282662026,
+        0.0033231150869187376,
+        0.003315554572528088,
+        0.0033119467084681323
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "candidate.mixed.tokens_per_joule",
+      "samples": [
+        301.85309168134506,
+        300.92246998499866,
+        301.60866851228053,
+        301.9372254520749
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "candidate.mixed.gross_j",
+      "samples": [
+        2.09373373146424,
+        2.100208734932642,
+        2.0954304898377516,
+        2.0931503197518597
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "candidate.mixed.model_setup_ns",
+      "samples": [
+        546847530,
+        542466405,
+        550243073,
+        550158753
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "candidate.homogeneous.encoded-hello.active_power_w",
+      "samples": [
+        3.124827531243945,
+        3.1153617422585604
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "candidate.homogeneous.encoded-hello.idle_power_w",
+      "samples": [
+        3.021751017729303,
+        3.016723203295863,
+        3.0127491162149997,
+        3.010719947655553
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "candidate.homogeneous.encoded-hello.energy_per_answer_j",
+      "samples": [
+        0.2136922407433349,
+        0.21305665626690695
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "candidate.homogeneous.encoded-hello.energy_per_token_j",
+      "samples": [
+        0.002374358230481499,
+        0.0023672961807434108
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "candidate.homogeneous.encoded-hello.tokens_per_joule",
+      "samples": [
+        421.16643864527924,
+        422.42285022652567
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "candidate.homogeneous.encoded-hello.gross_j",
+      "samples": [
+        3.846460333380028,
+        3.835019812804325
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "candidate.homogeneous.encoded-hello.model_setup_ns",
+      "samples": [
+        550349064,
+        554506766
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "candidate.homogeneous.encoded-fu2p2q.active_power_w",
+      "samples": [
+        3.1167363987812187,
+        3.120926396553336
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "candidate.homogeneous.encoded-fu2p2q.idle_power_w",
+      "samples": [
+        3.0135006786725,
+        3.0147527895675,
+        3.013504631918426,
+        3.0127508261850005
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "candidate.homogeneous.encoded-fu2p2q.energy_per_answer_j",
+      "samples": [
+        0.3091323449622794,
+        0.3096144360606548
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "candidate.homogeneous.encoded-fu2p2q.energy_per_token_j",
+      "samples": [
+        0.0025338716800186838,
+        0.00253782324639881
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "candidate.homogeneous.encoded-fu2p2q.tokens_per_joule",
+      "samples": [
+        394.65297626777465,
+        394.03847427869823
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "candidate.homogeneous.encoded-fu2p2q.gross_j",
+      "samples": [
+        3.7095881395473533,
+        3.715373232727858
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "candidate.homogeneous.encoded-fu2p2q.model_setup_ns",
+      "samples": [
+        548946850,
+        553095762
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by block time.",
+      "name": "candidate.homogeneous.encoded-max48.active_power_w",
+      "samples": [
+        3.1152890750196183,
+        3.118421710827764
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Two equal-duration settled VCC_SOM idle brackets at matched context.",
+      "name": "candidate.homogeneous.encoded-max48.idle_power_w",
+      "samples": [
+        3.0125025153305782,
+        3.0122975612750014,
+        3.020373947156461,
+        3.0180111147009154
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by verified block replies.",
+      "name": "candidate.homogeneous.encoded-max48.energy_per_answer_j",
+      "samples": [
+        0.5221639216485103,
+        0.5226825379806199
+      ],
+      "unit": "J/answer"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint gross VCC_SOM integral divided by useful block output bytes.",
+      "name": "candidate.homogeneous.encoded-max48.energy_per_token_j",
+      "samples": [
+        0.005020806938927984,
+        0.005025793634429038
+      ],
+      "unit": "J/token"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful block output bytes divided by sample-midpoint gross VCC_SOM integral.",
+      "name": "candidate.homogeneous.encoded-max48.tokens_per_joule",
+      "samples": [
+        199.17117151959536,
+        198.9735497990869
+      ],
+      "unit": "tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Sample-midpoint trapezoidal VCC_SOM integral over the verified active block.",
+      "name": "candidate.homogeneous.encoded-max48.gross_j",
+      "samples": [
+        4.177311373188083,
+        4.181460303844959
+      ],
+      "unit": "J"
+    },
+    {
+      "kind": "derived",
+      "method": "Native setup begin through weights loaded and ready, outside the block.",
+      "name": "candidate.homogeneous.encoded-max48.model_setup_ns",
+      "samples": [
+        542902230,
+        542280724
+      ],
+      "unit": "ns"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-clock-frequency-v1",
+    "measurement_boundary": "Board CPU admission through useful output and completion. Gross VCC_SOM block integral includes inter-reply verification and gaps.",
+    "quality_gate": "Exact frozen reply, stopping, geometry and equal first/last/done clocks, plus exact configured PL0 readback.",
+    "sha256": "496e88c0a9adbe1362fd92d1ec980fcecaa156fac49796bc991e3067fa5ab87f",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Three mixed or one homogeneous warm-up per powered block."
+  },
+  "quality": {
+    "evidence": "All 200 timed, 36 warm-up and nine smoke replies preserved outputs, stopping, geometry and first/last/done counters. All 320 original BOS scores matched after restoration.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": null
+  },
+  "started_at": "2026-11-20T00:45:56.452807+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-clock-frequency-abba-v1",
+    "sha256": "00dc1ad4a6b8a9938040fe03f70ce8cef38f0c0a59b468fcf20159c44f7b7397"
+  }
+}

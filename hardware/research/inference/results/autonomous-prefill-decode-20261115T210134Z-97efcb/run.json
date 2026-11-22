@@ -1,0 +1,857 @@
+{
+  "artifacts": [
+    {
+      "bytes": 144011,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-prefill-decode-20261115T210134Z-97efcb/source.patch",
+      "role": "Pinned experiment source and protocol patch",
+      "sha256": "168bfecf0f08f93a8b5f36234808c8d4f5b41e4a1594684923e4ac4dacd7c7bd"
+    },
+    {
+      "bytes": 19925,
+      "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+      "role": "Original resource and memory report",
+      "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+    },
+    {
+      "bytes": 17373,
+      "path": "hardware/research/inference/results/autonomous-build-20261115T204747Z/run.json",
+      "role": "Candidate offline implementation report",
+      "sha256": "eca8497f31030e04be2d4e047d7a93aa189662b073a0dd0533c47dd1912ffde8"
+    },
+    {
+      "bytes": 15389,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-prefill-decode-20261115T210134Z-97efcb/invocation.json",
+      "role": "Exact reviewed packet",
+      "sha256": "d4614b800cf029b99e449e3428fca79d03034a96299842edd6c6f97e66ea9bf4"
+    },
+    {
+      "bytes": 21488,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-prefill-decode-20261115T210134Z-97efcb/mac-gates.jsonl",
+      "role": "Independent Mac gate receipts",
+      "sha256": "8e189bbbd034d0868ef6f1b8602e3f448c24008d0311fcd2bb76eefcf7f069bf"
+    },
+    {
+      "bytes": 2182,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-prefill-decode-20261115T210134Z-97efcb/workload.json",
+      "role": "Frozen workload manifest",
+      "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+    },
+    {
+      "bytes": 57037,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-prefill-decode-20261115T210134Z-97efcb/result.json",
+      "role": "Validated physical comparison",
+      "sha256": "802a21be3cef073bf6fda5a9183f3e385aab454eec736ee795bd9ca4de6814c4"
+    },
+    {
+      "bytes": 37057,
+      "path": ".agents/runtime/hardware/inference/outputs/autonomous-prefill-decode-20261115T210134Z-97efcb/evidence-manifest.json",
+      "role": "Complete raw evidence inventory",
+      "sha256": "84704b2b2196258d6acd1e880f4913f05b4e69e8abbbf6c5dfcb315e000246f2"
+    }
+  ],
+  "completed_at": "2026-11-15T21:14:40.998558+00:00",
+  "conditions": {
+    "cap_smokes": 2,
+    "compact_smokes": 3,
+    "development_effort": "Offline build durations in linked build record. Active effort and AI costs unmeasured.",
+    "diagnostic_requests": 3,
+    "failures": 0,
+    "firmware_switches": 4,
+    "incomplete_requests": 0,
+    "matched_pairs": 3,
+    "measurement_arms": {
+      "p1-candidate": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "same_idle_completed_context": 201
+      },
+      "p1-stock": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "same_idle_completed_context": 201
+      },
+      "p2-candidate": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "same_idle_completed_context": 135
+      },
+      "p2-stock": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "same_idle_completed_context": 135
+      },
+      "p3-candidate": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "same_idle_completed_context": 101
+      },
+      "p3-stock": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "same_idle_completed_context": 101
+      }
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "metric_names": [
+          "stock.active_power",
+          "candidate.active_power"
+        ],
+        "state": "derived"
+      },
+      "cache_capacity": {
+        "reason": "No cache format or context limit change.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Counts accepted logical tokens and scores. AXI polling/physical bandwidth unmeasured.",
+        "sources": [
+          "Native score contract",
+          "Candidate scores_consumed and output counts"
+        ],
+        "state": "derived"
+      },
+      "completion_time": {
+        "metric_names": [
+          "stock.encoded-fu2p2q.completion_ms",
+          "stock.encoded-hello.completion_ms",
+          "stock.encoded-max48.completion_ms",
+          "candidate.encoded-fu2p2q.completion_ms",
+          "candidate.encoded-hello.completion_ms",
+          "candidate.encoded-max48.completion_ms"
+        ],
+        "state": "derived"
+      },
+      "correctness": {
+        "sources": [
+          "autonomous-smoke/fullscore.json",
+          "autonomous-smoke/compact.json",
+          "autonomous-smoke/limit-1.json",
+          "autonomous-smoke/limit-0.json"
+        ],
+        "state": "measured"
+      },
+      "decode_tps": {
+        "metric_names": [
+          "stock.encoded-fu2p2q.decode_bytes_per_second",
+          "stock.encoded-hello.decode_bytes_per_second",
+          "stock.encoded-max48.decode_bytes_per_second",
+          "candidate.encoded-fu2p2q.decode_bytes_per_second",
+          "candidate.encoded-hello.decode_bytes_per_second",
+          "candidate.encoded-max48.decode_bytes_per_second"
+        ],
+        "state": "derived"
+      },
+      "energy_per_answer": {
+        "metric_names": [
+          "stock.energy_per_answer",
+          "candidate.energy_per_answer"
+        ],
+        "state": "derived"
+      },
+      "estimated_cost": {
+        "reason": "No economic claim.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "metric_names": [
+          "stock.idle_power",
+          "candidate.idle_power"
+        ],
+        "state": "derived"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Gross is primary. Retain signed values in raw artifacts.",
+        "sources": [
+          "Signed incremental_j in raw alignment results"
+        ],
+        "state": "derived"
+      },
+      "implementation_timing": {
+        "reason": "Exact candidate routed reports.",
+        "sources": [
+          {
+            "bytes": 17373,
+            "path": "hardware/research/inference/results/autonomous-build-20261115T204747Z/run.json",
+            "role": "Candidate offline implementation report",
+            "sha256": "eca8497f31030e04be2d4e047d7a93aa189662b073a0dd0533c47dd1912ffde8"
+          }
+        ],
+        "state": "reused"
+      },
+      "long_stability": {
+        "reason": "Three short matched pairs, no long-run claim.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Original model/cache arithmetic is fixed. Candidate adds two 256 \u00d7 9-bit buffers. Host peak memory is unmeasured.",
+        "sources": [
+          {
+            "bytes": 19925,
+            "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+            "role": "Original resource and memory report",
+            "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+          },
+          {
+            "bytes": 17373,
+            "path": "hardware/research/inference/results/autonomous-build-20261115T204747Z/run.json",
+            "role": "Candidate offline implementation report",
+            "sha256": "eca8497f31030e04be2d4e047d7a93aa189662b073a0dd0533c47dd1912ffde8"
+          }
+        ],
+        "state": "derived"
+      },
+      "memory_bandwidth": {
+        "reason": "No actual traffic or stall profiler for this interface comparison.",
+        "state": "not_measured"
+      },
+      "model_quality": {
+        "reason": "The frozen model and exact numerical rules are unchanged.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Reported clock verified at gates. Continuous clock/thermal traces unavailable.",
+        "sources": [
+          "Per-gate state/environment files",
+          "arms in conditions"
+        ],
+        "state": "measured"
+      },
+      "output_counts": {
+        "sources": [
+          "All six arm block.json files and candidate cap/compact receipts"
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "No area claim.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "First-output and TTFT boundaries include prefill plus first prediction.",
+        "state": "not_measured"
+      },
+      "repeatability": {
+        "sources": [
+          "mac-gates.jsonl",
+          "Per-case raw timestamps and three paired summaries"
+        ],
+        "state": "measured"
+      },
+      "resources": {
+        "reason": "Static reports for the exact routed circuits.",
+        "sources": [
+          {
+            "bytes": 19925,
+            "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+            "role": "Original resource and memory report",
+            "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+          },
+          {
+            "bytes": 17373,
+            "path": "hardware/research/inference/results/autonomous-build-20261115T204747Z/run.json",
+            "role": "Candidate offline implementation report",
+            "sha256": "eca8497f31030e04be2d4e047d7a93aa189662b073a0dd0533c47dd1912ffde8"
+          }
+        ],
+        "state": "reused"
+      },
+      "stage_cycles": {
+        "reason": "START-relative first/last useful-byte and done cycles. Internal prefill not separated.",
+        "sources": [
+          "Candidate request_cycles in each block.json"
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "Setup retained separately, no cold-start comparison.",
+        "sources": [
+          "Per-arm load.json"
+        ],
+        "state": "measured"
+      },
+      "sustained_throughput": {
+        "metric_names": [
+          "stock.verified_rate",
+          "candidate.verified_rate"
+        ],
+        "state": "derived"
+      },
+      "token_gaps": {
+        "reason": "No tail claim.",
+        "sources": [
+          "CPU-observed output_ns arrays in each block.json"
+        ],
+        "state": "measured"
+      },
+      "tokens_per_joule": {
+        "metric_names": [
+          "stock.tokens_per_joule",
+          "candidate.tokens_per_joule"
+        ],
+        "state": "derived"
+      },
+      "ttft": {
+        "metric_names": [
+          "stock.encoded-fu2p2q.ttft_ms",
+          "stock.encoded-hello.ttft_ms",
+          "stock.encoded-max48.ttft_ms",
+          "candidate.encoded-fu2p2q.ttft_ms",
+          "candidate.encoded-hello.ttft_ms",
+          "candidate.encoded-max48.ttft_ms"
+        ],
+        "state": "derived"
+      }
+    },
+    "measurement_standard": "inference-measurements-v1",
+    "original_restored": true,
+    "scored_requests": 36,
+    "timeouts": 0,
+    "warmups": 18
+  },
+  "correctness": {
+    "evidence": "139,840 diagnostic signed scores matched. Three compact and two cap checks matched. All 36 timed and 18 warm-up requests matched, and the original BOS control and restoration each matched 320 scores.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "comparison_firmware": {
+        "candidate": "071f8cf91657fb5446e66754c28795faa52b92ca2e4aa6ddba71859b1396e3a9",
+        "stock": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0"
+      },
+      "dfx_service": "runtime inactive, boot enablement preserved",
+      "final_state": "Original firmware and original weights restored, 320 original BOS scores verified",
+      "firmware_name": "gradiated-tiny-50mhz.bit.bin",
+      "firmware_sha256": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0",
+      "fpga_manager_flags": 0,
+      "kernel_build": "#16-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 16 05:06:58 UTC 2025",
+      "kernel_release": "6.8.0-1015-xilinx",
+      "model": "ZynqMP KV260 revB",
+      "physical_unit": "KV260 USB bridge XFL1RXOM0IWQ",
+      "pl0_rate_source": "Linux clock framework",
+      "pl0_reported_hz": 50000000,
+      "reset_dt_id": 119,
+      "system_boot_id": "0e4cc12e-4532-4434-be89-665af09dba14",
+      "transformer_map": {
+        "base": 2684354560,
+        "bytes": 4096,
+        "device": "/dev/uio4"
+      },
+      "verified_state_sha256": "9c236b7a021a7e779f24ec00cda6590967fee3f81accbf531b5da7c7b6b735e8"
+    },
+    "configuration_sha256": "9c7ce24cc7d27d8a32463984cb76185c9ed3b3e4deeaa5bc049b09514d943321",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-autonomous-v1",
+  "id": "autonomous-prefill-decode-20261115T210134Z-97efcb",
+  "implementation": {
+    "id": "kv260-original-vs-autonomous-prefill-decode-v1",
+    "sha256": "d4614b800cf029b99e449e3428fca79d03034a96299842edd6c6f97e66ea9bf4"
+  },
+  "limitations": [
+    "Three matched pairs on one board and one boot. No long-term, cross-boot or broad reliability claim.",
+    "Board-host output observations. No end-client or isolated accelerator latency claim.",
+    "VCC_SOM module supply only. Whole-board and FPGA-only energy remain unavailable.",
+    "No prefill-only timing, physical bus bandwidth or host peak-memory measurement.",
+    "Only legacy diagnostic mode transferred all raw scores. Compact correctness was verified by exact output, stop, context, and count; simulation independently checked local score values.",
+    "Raw local evidence is preserved on the Mac. Shared backup remains pending."
+  ],
+  "metrics": [
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "stock.encoded-fu2p2q.completion_ms",
+      "samples": [
+        600.042201,
+        600.92433,
+        600.144553,
+        600.347524,
+        600.779148,
+        600.223933
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "stock.encoded-fu2p2q.decode_bytes_per_second",
+      "samples": [
+        219.6551653527778,
+        219.151567457226,
+        219.47732711601347,
+        219.39749618065224,
+        219.22090484751047,
+        219.45431527384406
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "stock.encoded-fu2p2q.ttft_ms",
+      "samples": [
+        43.568435,
+        43.168961,
+        43.223373,
+        43.225942,
+        43.195202,
+        43.229223
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "stock.encoded-fu2p2q.verified_ms",
+      "samples": [
+        600.613877,
+        601.431885,
+        600.675888,
+        600.844779,
+        601.315484,
+        600.720418
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "stock.encoded-hello.completion_ms",
+      "samples": [
+        419.166732,
+        418.90529,
+        419.860349,
+        419.417205,
+        419.540116,
+        419.597177
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "stock.encoded-hello.decode_bytes_per_second",
+      "samples": [
+        235.57391094531684,
+        235.75496578233884,
+        235.44779144826163,
+        235.4481589436765,
+        235.42500274528038,
+        235.34974107284253
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "stock.encoded-hello.ttft_ms",
+      "samples": [
+        36.360033,
+        36.382114,
+        36.840998,
+        36.395264,
+        36.488725,
+        36.432484
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "stock.encoded-hello.verified_ms",
+      "samples": [
+        419.586546,
+        419.285814,
+        420.348834,
+        419.833559,
+        419.99855,
+        420.042831
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "stock.encoded-max48.completion_ms",
+      "samples": [
+        993.643648,
+        994.027882,
+        995.225894,
+        994.583797,
+        995.362525,
+        995.010672
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "stock.encoded-max48.decode_bytes_per_second",
+      "samples": [
+        172.70250317942373,
+        172.5944513038823,
+        172.3558092509611,
+        172.53008167083277,
+        172.50549447166702,
+        172.48357965950578
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "stock.encoded-max48.ttft_ms",
+      "samples": [
+        390.496436,
+        390.489505,
+        390.861649,
+        390.822239,
+        391.532226,
+        391.096802
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "stock.encoded-max48.verified_ms",
+      "samples": [
+        994.164243,
+        994.541427,
+        995.752689,
+        995.050332,
+        995.926881,
+        995.505287
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "stock.active_power",
+      "samples": [
+        3.156732031774341,
+        3.1501464836100075,
+        3.1598495370177204
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Average power per matched two-second idle interval, before and after each active block.",
+      "name": "stock.idle_power",
+      "samples": [
+        3.0312587524509524,
+        3.0257298924368694,
+        3.0232501805700003,
+        3.0397930331862946,
+        3.0346243843260883,
+        3.0408183857041866
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "stock.energy_per_answer",
+      "samples": [
+        2.1203270330595765,
+        2.1174331565006876,
+        2.1244757037134137
+      ],
+      "unit": "J/verified completion"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "stock.tokens_per_joule",
+      "samples": [
+        49.677871239202226,
+        49.74576553217354,
+        49.58086042086482
+      ],
+      "unit": "output byte tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output count divided by first-admission-to-last-verification block wall time.",
+      "name": "stock.verified_rate",
+      "samples": [
+        156.81972741115092,
+        156.70644836566441,
+        156.66805884580995
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-fu2p2q.completion_ms",
+      "samples": [
+        480.708818,
+        480.376634,
+        480.416805,
+        480.382414,
+        480.423335,
+        480.365234
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "candidate.encoded-fu2p2q.decode_bytes_per_second",
+      "samples": [
+        273.29758709309726,
+        273.2973278333443,
+        273.29750067312494,
+        273.2975500559596,
+        273.29756240167103,
+        273.2973278333443
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-fu2p2q.ttft_ms",
+      "samples": [
+        33.247333,
+        32.915169,
+        32.955449,
+        32.920989,
+        32.96178,
+        32.903629
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "candidate.encoded-fu2p2q.verified_ms",
+      "samples": [
+        481.445036,
+        480.94993,
+        481.023791,
+        481.00215,
+        481.037601,
+        480.96049
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-hello.completion_ms",
+      "samples": [
+        330.01181,
+        330.000341,
+        330.283523,
+        329.993541,
+        330.00765,
+        330.012901
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "candidate.encoded-hello.decode_bytes_per_second",
+      "samples": [
+        298.4793096255399,
+        298.4792495649464,
+        298.47948980746537,
+        298.4793486649386,
+        298.4795298479228,
+        298.4791684831835
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-hello.ttft_ms",
+      "samples": [
+        27.720357,
+        27.708437,
+        27.99186,
+        27.701897,
+        27.716297,
+        27.720997
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "candidate.encoded-hello.verified_ms",
+      "samples": [
+        330.569976,
+        330.542476,
+        330.914639,
+        330.512736,
+        330.550456,
+        330.506186
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-max48.completion_ms",
+      "samples": [
+        824.984281,
+        824.970101,
+        824.979922,
+        824.963591,
+        825.313065,
+        824.962571
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "candidate.encoded-max48.decode_bytes_per_second",
+      "samples": [
+        204.12064206120215,
+        204.1206339708653,
+        204.12061374502593,
+        204.12064206120215,
+        204.12061779019348,
+        204.1205207062165
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-max48.ttft_ms",
+      "samples": [
+        314.522635,
+        314.507835,
+        314.517766,
+        314.501566,
+        314.851149,
+        314.500485
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "candidate.encoded-max48.verified_ms",
+      "samples": [
+        825.629377,
+        825.606797,
+        825.606128,
+        825.571647,
+        826.033542,
+        825.599417
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "candidate.active_power",
+      "samples": [
+        3.1227860165002324,
+        3.1175204483178867,
+        3.1182073364343124
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Average power per matched two-second idle interval, before and after each active block.",
+      "name": "candidate.idle_power",
+      "samples": [
+        3.028002845748875,
+        3.027249421778735,
+        3.0281226750799988,
+        3.0336903897295735,
+        3.0310001131425004,
+        3.0350640462969682
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "candidate.energy_per_answer",
+      "samples": [
+        1.7045973374851389,
+        1.70168253084475,
+        1.702089905986229
+      ],
+      "unit": "J/verified completion"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "candidate.tokens_per_joule",
+      "samples": [
+        61.79367468022439,
+        61.89952087070184,
+        61.88470595053606
+      ],
+      "unit": "output byte tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output count divided by first-admission-to-last-verification block wall time.",
+      "name": "candidate.verified_rate",
+      "samples": [
+        192.9684231995692,
+        192.97302205549278,
+        192.9693441080417
+      ],
+      "unit": "output byte tokens/s"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-autonomous-v1",
+    "measurement_boundary": "Board CPU request admission before encoding/clear through first/last useful byte and stop/drain. Six-request gross VCC_SOM block energy ends after verification. Load, switching, full-score diagnostics and UART export excluded.",
+    "quality_gate": "Exact full-score diagnostics and same exact capped and uncapped completions and stops.",
+    "sha256": "a30def5c75968e4fc1837f97a1d2b66289fb4edc9fec482fa107951d612b33ff",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Three exact requests per arm with loaded weights."
+  },
+  "quality": {
+    "evidence": "Frozen model, arithmetic and greedy output rules unchanged. No broader quality inference.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "04c7100ca9d5ba9ddbd49fdc14bd85cefcc6381d",
+    "patch_sha256": "168bfecf0f08f93a8b5f36234808c8d4f5b41e4a1594684923e4ac4dacd7c7bd"
+  },
+  "started_at": "2026-11-15T21:09:52.853223+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-three-prompts-autonomous-pairs-v1",
+    "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+  }
+}

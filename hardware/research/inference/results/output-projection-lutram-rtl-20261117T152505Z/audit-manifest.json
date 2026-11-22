@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "matched_sha256": "b08111f041c9acf060753fcd5430c1538d6819f6d6f3502f4a2895f207352bfb",
+  "trace_pairs": 49,
+  "model_cases": 7,
+  "positions": 716,
+  "all_absolute_phase_and_request_counters_equal": true,
+  "independent_integer_products_sums": 37888,
+  "independent_rounded_outputs": 1184,
+  "weight_addresses": 1024,
+  "fresh_dense_arms": 2,
+  "full_model_control": "Reused exact baseline source and archived seven-case trace evidence",
+  "candidate_full_model": "Fresh replay byte-matches all seven trace families"
+}

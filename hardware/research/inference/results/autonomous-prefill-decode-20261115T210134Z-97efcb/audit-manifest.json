@@ -1,0 +1,37 @@
+{
+  "capture_manifest_sha256": "84704b2b2196258d6acd1e880f4913f05b4e69e8abbbf6c5dfcb315e000246f2",
+  "evidence_root": ".agents/runtime/hardware/inference/outputs/autonomous-prefill-decode-20261115T210134Z-97efcb-audit",
+  "files": {
+    "audit.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "audit.stdout": {
+      "bytes": 24413,
+      "sha256": "79b481b9b075f4b0b0794835b115f795d0acc9efe39662c666fb210685099bc3"
+    },
+    "independent-audit.py": {
+      "bytes": 7163,
+      "sha256": "3824189f63f9ca4f8ecb2402f220bb2945a741de934fcd99a0ece3fa0c1556b3"
+    },
+    "pre-existing-files.json": {
+      "bytes": 513395,
+      "sha256": "2410c58acd4665571a1fdb0cf747ccdad0a17599a4c2d398c0a3f91cd15a0fab"
+    },
+    "preservation.json": {
+      "bytes": 817,
+      "sha256": "4e9db86f607256ddb1557e681b6a50c0f11620948f226d6a51f55f1cfa66c3af"
+    },
+    "record-consistency.json": {
+      "bytes": 386,
+      "sha256": "76491b06fae0a029ea4bb534b743c8d5c49a373c2a74ca99f3bf9502cf053664"
+    }
+  },
+  "passed": true,
+  "preservation_verified": true,
+  "raw_artifacts_verified": 242,
+  "run_id": "autonomous-prefill-decode-20261115T210134Z-97efcb",
+  "run_record_sha256": "0a83c166904122f67a60604a5b4a3ae70bbff10dcf8bf53d736b623cb09f8c2b",
+  "scope": "Independent decoding of all 14 serial gates, exact reference checks, all 36 timed requests, analytic clipped integration of six 350-sample power traces over five alignments, all 34 recorded metric definitions and 27 coverage entries. Original firmware/pinned weight reload and 320 BOS scores verified, not full weight-memory readback.",
+  "verified_at": "2026-11-15T21:17:55.149656+00:00"
+}

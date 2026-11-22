@@ -1,0 +1,8 @@
+case,prefix_positions,completed_positions,score_projections,output_tokens,baseline_prefix_cycles,baseline_first_output_cycles,baseline_last_output_cycles,baseline_done_cycles,divider_forecast_saved_prefix_cycles,divider_forecast_saved_first_output_cycles,divider_forecast_saved_last_output_cycles,divider_forecast_saved_done_cycles,divider_forecast_done_cycles,divider_forecast_saved_done_ms_at_50_mhz,divider_forecast_done_reduction_pct
+bos-only-cap0,1,1,1,0,36399,,,38081,48,,,48,38033,0.00096,0.12605
+encoded-fu2p2q-cap255,13,135,123,122,493263,494945,7402040,7475095,4368,4368,434160,440640,7034455,8.81280,5.89477
+encoded-hello-cap0,11,11,1,0,414509,,,416191,3168,,,3168,413023,0.06336,0.76119
+encoded-hello-cap1,11,11,1,1,414509,416191,416191,416191,3168,3168,3168,3168,413023,0.06336,0.76119
+encoded-hello-cap255,11,101,91,90,414509,416191,5078839,5142970,3168,3168,242400,247248,4895722,4.94496,4.80749
+encoded-max48-cap255,97,201,105,104,4743643,4745325,12626576,12716857,228144,228144,964800,974448,11742409,19.48896,7.66265
+full-context-cap0,256,256,1,0,17828258,,,17829940,1579008,,,1579008,16250932,31.58016,8.85594

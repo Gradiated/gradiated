@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "id": "kv260-prompt-context-v1",
+  "implementation": "scalar-div-v1",
+  "model": "chip-joke-text-20261109",
+  "context_limit": 256,
+  "natural": {
+    "id": "kv260-prompt-length-natural-v1",
+    "families": {
+      "lab": "The lab needs a new chip for its next test this week.",
+      "garden": "Our gardener ordered more chips for the path today."
+    },
+    "byte_lengths": [4, 12, 24, 48],
+    "unicode_prompt": "Café chips!",
+    "unicode_prompt_bytes": 12,
+    "include_bos_only": true,
+    "max_output_tokens": 255,
+    "repetitions": 4
+  },
+  "teacher_forced": {
+    "id": "kv260-context-length-legacy-score-v1",
+    "context_lengths": [17, 65, 129, 193, 256],
+    "repetitions": 3,
+    "final_step_window": 8
+  }
+}

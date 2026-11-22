@@ -1,0 +1,16 @@
+// Apply separately and verify the real kernel-reported rate BEFORE programming.
+/dts-v1/;
+/plugin/;
+/ {
+    fragment@0 {
+        target = <&amba>;
+        __overlay__ {
+            tiny_transformer_clock {
+                compatible = "xlnx,fclk";
+                clocks = <&zynqmp_clk 71>;
+                assigned-clocks = <&zynqmp_clk 71>;
+                assigned-clock-rates = <50000000>;
+            };
+        };
+    };
+};

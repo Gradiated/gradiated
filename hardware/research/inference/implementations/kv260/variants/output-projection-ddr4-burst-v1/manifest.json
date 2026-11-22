@@ -1,0 +1,10 @@
+{
+  "previous_generator_sha256": "c4e4264c5545fa76e7deffef7bb36ae095a52cfda54daca7f694efb233af14d0",
+  "previous_manifest_sha256": "3c4ab80f51fbbfb53fc02dffe2a057000e4b61c96215ff0f7d450ed8e0915257",
+  "previous_closure_sha256": "3ace860e7985b6f784f77123b5f60058d3138d2534cf9168bf477ed68d288629",
+  "reader_sha256": "570784f5125e1915edad16421b69ffa6779ce8cea8f3f632d58844b5d3b32b95",
+  "fixture_sources": {
+    "axi_transformer": "6d6341d0a8b14a6d176f1c69dfb09e45b3421ce67891199e4814164eb573f8de",
+    "projection_ddr_reader": "570784f5125e1915edad16421b69ffa6779ce8cea8f3f632d58844b5d3b32b95"
+  }
+}

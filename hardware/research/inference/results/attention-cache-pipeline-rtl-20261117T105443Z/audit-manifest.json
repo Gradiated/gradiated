@@ -1,0 +1,15 @@
+{
+  "files": {
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/attention10-candidate-audit.json": {
+      "bytes": 1010,
+      "sha256": "0a405839cf8fb30429bf384818803af6dde36bc81c3376f64e4374627c082f80"
+    },
+    ".agents/runtime/hardware/inference/outputs/attention-cache-pipeline-rtl-20261117T105443Z/audit-attention10-candidate.py": {
+      "bytes": 2773,
+      "sha256": "bbae826cafd7b1db94b4d025f5b534306202ae06e7eccc5b200d2c2ff7593b2a"
+    }
+  },
+  "passed": true,
+  "raw_members": 152,
+  "run_sha256": "c3ffed691c1b1425cc8db6b9a0a049035ad6fd58317b3edaf37dfc4167f7b46d"
+}

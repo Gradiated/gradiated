@@ -1,0 +1,160 @@
+GRADIATED INTERN: EDITABLE JOKE REVIEW
+
+All 48 IDs were retained after your correction pass on 2 November 2026.
+Your submitted wording is preserved in the chosen keyed-jokes-v2 Mac joke model.
+Its standard requests passed 48/48 and two complete CLI rounds passed, but one
+of 96 differently worded requests chose the wrong joke. You accepted small
+mistakes; the original failed gate is preserved in the comparison.
+
+This remains the editable working copy. Future edits here do not change trained
+models or frozen experiment files. Rewrite directly, mark DROP beside an ID, or
+add ideas and notes at the end. Keep IDs where possible. Save with Command-S.
+
+J01-J11 originated in the starter selection, including standalone adaptations;
+J12-J48 originated as expansion drafts. This copy includes your completed review.
+
+J01
+Lithography puts the ridges on the chips. We can reduce the feature size, but then customers complain there's nowhere for the flavour to sit.
+
+J02
+Resist development determines the curl of the chips. We shortened the process to save money and now procurement has to buy bendier potatoes.
+
+J03
+We're on a 3 nm process. Three corners per Dorito. I've updated the investor deck.
+
+J04
+Our prototype uses chocolate chips. They're cheaper, and if the thermal tests fail I can eat the evidence.
+
+J05
+Pringles arrive as stacked wafers. I've assigned the man on the tube with a moustache to advanced packaging.
+
+J06
+I've put the chip team in hairnets. Qualcomm is happy.
+
+J07
+Our chocolate-chip RAM melted. That's phase-change memory, procurement forgot the new phase is a puddle.
+
+J08
+I've put tape-out in the calendar for three weeks from now. The salt-and-vinegar factory hasn't replied yet.
+
+J09
+Intel has had years to develop chips. I guess they keep eating them.
+
+J10
+Salt and vinegar deposition needs improving. If my tongue still works afterwards, they've undersupplied the machine with vinegar.
+
+J11
+Ready salted. I respect a potato that doesn't need a marketing department.
+
+J12
+I moved chip verification to the kitchen. The failures are now delicious, and nobody is filing bug reports.
+
+J13
+We're testing fish and chips for immersion cooling. The oil temperature is excellent for silicon but not potatoes.
+
+J14
+Our chip yield is improving. I've stopped letting the verification team eat the samples.
+
+J15
+The wafer fab rejected our potatoes. Apparently 'locally sourced organic' isn't a process node.
+
+J16
+The chips passed the salt-spray test. That was the entire seasoning budget.
+
+J17
+Our chip has twelve layers of metal. The chocolate one has a biscuit base, which I consider a competitive advantage.
+
+J18
+I've reduced chip power consumption by keeping the chocolate in the fridge. Facilities has asked me to include the fridge.
+
+J19
+Our chips are fabless. We haven't found a factory, but I like that the industry has a word for it.
+
+J20
+The cleanroom is spotless. We've moved all the chip crumbs into Nvidia's section.
+
+J21
+The chip packaging team wants a hermetic seal. I've found a bag clip; we should negotiate.
+
+J22
+Our chip is fully recyclable. It goes from the prototype tray to my mouth with no intermediate processing.
+
+J23
+The processor failed a stress test. I am the processor. The test involved sharing the cheese and onion chips.
+
+J24
+Nvidia has liquid cooling. Our chip team has opened the office window, which our consulting team describes as an advantage.
+
+J25
+Intel is investing billions in chip factories. I've booked the kitchenette for the Thursday before final tape-out.
+
+J26
+AMD can compete on cores. I'm competing on whether the packet contains any whole chips.
+
+J27
+Samsung has vertical integration. Our Pringles tube is upright.
+
+J28
+Qualcomm says its chips connect everyone. Ours bring people together around a bowl.
+
+J29
+Apple has a custom chip strategy. Mine is asking whoever bought the vegetable chips to expense them.
+
+J30
+Broadcom has a diversified chip portfolio. I've bought a multipack.
+
+J31
+TSMC says the chip production slots are full, even during lunch.
+
+J32
+Geopolitics is delaying our chips. My convenience store has become a competitor.
+
+J33
+Three weeks to tape-out. I've bought tape and chips, salt-and-vinegar flavor.
+
+J34
+Our chip launch is on schedule. The chip is late, but the launch is mostly sour cream.
+
+J35
+I've put the chip in charge of project management. It can't answer questions, but it uses less power.
+
+J36
+I'm an intern at Gradiated. I run the chip programme, although I can't find the salt-and-vinegar isle.
+
+J37
+I'm an intern at Gradiated. The chip team reports to me whenever they need flavour suggestions.
+
+J38
+Our chip roadmap is ambitious. So is the expiry date on this sour cream and onion packet.
+
+J39
+The Barbecue department has run out of photoresist for their chips. 
+
+J40
+Sour cream and onion chips are excellent. I schedule important meetings immediately afterwards.
+
+J41
+Nacho cheese chips leave orange fingerprints. Finally, evidence that a competitor touched the hardware.
+
+J42
+Cool Ranch is our chip cooling strategy. Facilities keeps asking about fans.
+
+J43
+Cheddar and sour cream chips have two dairy departments and nobody knows who's in charge.
+
+J44
+Jalapeño chips are ideal for the office. People only ask to share them once.
+
+J45
+Chilli lime chips count as a balanced lunch. The acid in the lime is used during photoresist development.
+
+J46
+Organic chips require 60% more water apparently.
+
+J47
+I bought a family-size bag of chips. It's a very small family with a founder in it.
+
+J48
+Our chips now have error correction. I eat the broken ones before the customer sees them.
+
+NEW JOKE IDEAS / GENERAL NOTES

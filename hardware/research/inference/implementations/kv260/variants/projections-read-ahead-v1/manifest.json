@@ -1,0 +1,23 @@
+{
+  "control_rtl_manifest_sha256": "d23404ea222fef3796f4bf51be1243eb04445f9403665d9b1ca9882f6ce1a109",
+  "provider_sha256": {
+    "variants/logits-pipeline-v1/materialise.py": "1dbb63687097ca0a44dbaa6548cd3be4afd7ded23f31f2d06f4bcf5a4dc39a44",
+    "variants/norm-mul-dsp-v1/materialise_norm_multiply.py": "991266f3a97744d56f8932384e30717d61f3c35dde612deb4e3364f4f0fc9279",
+    "variants/norm-mul-dsp-v1/manifest.json": "ee475568689df3b5f78b8d3f14b69585031abde1ab10890ae49ca557a2af657e",
+    "variants/norm-mul-shared-v1/materialise_shared_norm_multiply.py": "0e467f761aa94e378359be7c24828d42d1eb90ba965148d28b47c09be2ae3bcb",
+    "variants/norm-mul-shared-v1/manifest.json": "79ebb5dddf5530966e129c6b0f66530862677940637f535cd9da0b002c0aa907"
+  },
+  "scope_rtl_sha256": {
+    "qkv": "d8bbcbf1d5bbb965bb17ad75103c3ea9be2c2c661c595b645f5c8abe7a4637cb",
+    "output": "50eee937fb48bcabc1a60b620673fdc0246fa2ad9308bdd16b0a7a2b3d767436",
+    "gate_up": "068b66d8f0842684be31f2b48af07c51fa657a6fd341110efe27dfc730b45e92"
+  },
+  "arm_rtl_manifest_sha256": {
+    "control": "d23404ea222fef3796f4bf51be1243eb04445f9403665d9b1ca9882f6ce1a109",
+    "qkv-read-ahead-v1": "594bd8fa23d5e5dc6a8d76036d204b99ef639bc969ed7b2d0e624cc37f68d548",
+    "attention-output-read-ahead-v1": "b47efbec00845ff5ba1283ca6342e36b53b87ab58b67fc62ae184827f2b24dc2",
+    "ff-gate-up-read-ahead-v1": "73dfc45632d50ea56e936b2911619e9e550f34b1366b405ffd50e79cfd2d182f",
+    "projections-read-ahead-v1": "805ddad6c8d4011ddba8bcc07d5d9bfc6c112e101efe638a902d3e591daf8911",
+    "qkv-attention-output-read-ahead-v1": "d8702fdbe193ae5212f08a7c6950ee297fd17af198225f705f0f2ef140f78f19"
+  }
+}

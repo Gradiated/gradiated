@@ -1,0 +1,2466 @@
+{
+  "artifacts": [
+    {
+      "bytes": 17386,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09/invocation.json",
+      "role": "invocation.json",
+      "sha256": "d1d3e9df4f01a8fb5242c8d00474daffc597f199c7e66e30409ad4317025d768"
+    },
+    {
+      "bytes": 18228,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09/source.patch",
+      "role": "Exact source delta relative to Git",
+      "sha256": "771e501681e014fc832219debcd53afecc35bcb6f85c04b63ff6fc5dd407f37c"
+    },
+    {
+      "bytes": 2182,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09/workload.json",
+      "role": "workload.json",
+      "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+    },
+    {
+      "bytes": 59782,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09/result.json",
+      "role": "result.json",
+      "sha256": "f689ecdc31934dd61122e41d61dcfd4cc4ac2f7ab95d50681323501af07f461c"
+    },
+    {
+      "bytes": 10689,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09/cycle-audit.json",
+      "role": "Board cycle counters versus both full RTL arms",
+      "sha256": "6f93d9e35609303205110d4858282c9f5e43f4cde15196e3ebfd41bb5155f823"
+    },
+    {
+      "bytes": 365,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09/project-receipt.json",
+      "role": "project-receipt.json",
+      "sha256": "eed30b3ded88c5a0eb02bba55e78b22685cd92d103ac9dc33d596fea51fe49e4"
+    },
+    {
+      "bytes": 102976,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09/project-state.json",
+      "role": "project-state.json",
+      "sha256": "3db90b877b8b03dff169e3682f1daac65b645305e7b1e466ad565ab35db76176"
+    },
+    {
+      "bytes": 23439,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09/mac-gates.jsonl",
+      "role": "mac-gates.jsonl",
+      "sha256": "b15b32f4277816c01dd9691948347c8f75137886d25f8046b0a18e915fc7c4f3"
+    },
+    {
+      "bytes": 52679,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09/evidence-manifest.json",
+      "role": "Full recovered raw capture inventory",
+      "sha256": "ae2c4b0f96618cffee2c8ad3304321108e04d960983685208693e5d3c1846942"
+    },
+    {
+      "bytes": 43488,
+      "path": "hardware/research/inference/results/output-projection-lutram-rtl-20261117T152505Z/run.json",
+      "role": "Exact candidate and control RTL comparison",
+      "sha256": "5d02d244c33a6c5973533f05a533b9cac696a0611c501070544c5dae41e932f6"
+    },
+    {
+      "bytes": 61115,
+      "path": "hardware/research/inference/results/output-projection-lutram-build-20261117T151934Z/run.json",
+      "role": "Candidate routed build",
+      "sha256": "6e089d5f1b66948150fa565afb2f9e74db64b696bcf8d90c972654e405d4e138"
+    },
+    {
+      "bytes": 15182,
+      "path": "hardware/research/inference/results/attention-exp-div-build-20261117T130122Z/run.json",
+      "role": "Adopted control routed build",
+      "sha256": "4c2b2feda20e43658159bbe745c3d487295e58c04612bf0603b47742e5ae6809"
+    },
+    {
+      "bytes": 19925,
+      "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+      "role": "Reused original storage footprint baseline",
+      "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+    },
+    {
+      "bytes": 6063,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09/serial-qualification/manifest.json",
+      "role": "Pinned serial-link investigation and full archive checks",
+      "sha256": "f1309d63506bd0f74979d7ecccf53be88c0d89387cd2bdb63eec75f65848daf0"
+    },
+    {
+      "bytes": 1138,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09/serial-qualification/physical-after-staging/launch-receipt.json",
+      "role": "Independent post-stage board and serial state gate",
+      "sha256": "402fbaeb87420c5f72ddcfa6303d7449df9e5d727f97e612b586004d4b311377"
+    },
+    {
+      "bytes": 427,
+      "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09/serial-qualification/physical-after-restoration/restore-receipt.json",
+      "role": "Fresh original state and serial counts after verified restoration",
+      "sha256": "19eb1c2f034a2101a89656257c12245ffa2093f45f5050b5beab8831110c0308"
+    }
+  ],
+  "completed_at": "2026-11-17T16:16:27.297896+00:00",
+  "conditions": {
+    "actual_physical_boot_id": "1a217c7b-33c8-4609-898a-8d56ea3f1ff2",
+    "cap_smokes": 2,
+    "compact_smokes": 3,
+    "development_effort": {
+      "ai_usage_cost": null,
+      "board_dispatch_to_restoration_seconds": 296.293011,
+      "engineering_attention_minutes": null
+    },
+    "diagnostic_requests": 3,
+    "expected_cycle_delta": 0,
+    "failures": 0,
+    "firmware_switches": 5,
+    "incomplete_requests": 0,
+    "logical_weight_array_bytes": 2048,
+    "matched_pairs": 3,
+    "matched_request_cycles": [
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 7913385,
+          "first": 499061,
+          "last": 7833764
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 5387671,
+          "first": 419131,
+          "last": 5318782
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 13663329,
+          "first": 4974881,
+          "last": 13563248
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 5387671,
+          "first": 419131,
+          "last": 5318782
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 7913385,
+          "first": 499061,
+          "last": 7833764
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 13663329,
+          "first": 4974881,
+          "last": 13563248
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 7913385,
+          "first": 499061,
+          "last": 7833764
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 5387671,
+          "first": 419131,
+          "last": 5318782
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 13663329,
+          "first": 4974881,
+          "last": 13563248
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 5387671,
+          "first": 419131,
+          "last": 5318782
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 7913385,
+          "first": 499061,
+          "last": 7833764
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 13663329,
+          "first": 4974881,
+          "last": 13563248
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 5387671,
+          "first": 419131,
+          "last": 5318782
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 13663329,
+          "first": 4974881,
+          "last": 13563248
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 7913385,
+          "first": 499061,
+          "last": 7833764
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 13663329,
+          "first": 4974881,
+          "last": 13563248
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 5387671,
+          "first": 419131,
+          "last": 5318782
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 7913385,
+          "first": 499061,
+          "last": 7833764
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 5387671,
+          "first": 419131,
+          "last": 5318782
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 13663329,
+          "first": 4974881,
+          "last": 13563248
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 7913385,
+          "first": 499061,
+          "last": 7833764
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 13663329,
+          "first": 4974881,
+          "last": 13563248
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 5387671,
+          "first": 419131,
+          "last": 5318782
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 7913385,
+          "first": 499061,
+          "last": 7833764
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 13663329,
+          "first": 4974881,
+          "last": 13563248
+        },
+        "pair": 3
+      },
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 7913385,
+          "first": 499061,
+          "last": 7833764
+        },
+        "pair": 3
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 5387671,
+          "first": 419131,
+          "last": 5318782
+        },
+        "pair": 3
+      },
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 7913385,
+          "first": 499061,
+          "last": 7833764
+        },
+        "pair": 3
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 13663329,
+          "first": 4974881,
+          "last": 13563248
+        },
+        "pair": 3
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 5387671,
+          "first": 419131,
+          "last": 5318782
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 13663329,
+          "first": 4974881,
+          "last": 13563248
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 7913385,
+          "first": 499061,
+          "last": 7833764
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 5387671,
+          "first": 419131,
+          "last": 5318782
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 7913385,
+          "first": 499061,
+          "last": 7833764
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 13663329,
+          "first": 4974881,
+          "last": 13563248
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 5387671,
+          "first": 419131,
+          "last": 5318782
+        },
+        "pair": 3
+      }
+    ],
+    "matched_variants": [
+      "attention-exp-div-v1",
+      "output-projection-lutram-v1"
+    ],
+    "measured_arm_spi1_boundaries": {
+      "p1-candidate": {
+        "active_ms_delta": 0,
+        "after_gap_ns": 22520,
+        "after_read_ns": 420924,
+        "before_gap_ns": 188392,
+        "before_read_ns": 795728,
+        "transfers_delta": 0
+      },
+      "p1-control": {
+        "active_ms_delta": 0,
+        "after_gap_ns": 20120,
+        "after_read_ns": 468825,
+        "before_gap_ns": 252922,
+        "before_read_ns": 765778,
+        "transfers_delta": 0
+      },
+      "p2-candidate": {
+        "active_ms_delta": 0,
+        "after_gap_ns": 14160,
+        "after_read_ns": 462214,
+        "before_gap_ns": 235222,
+        "before_read_ns": 747078,
+        "transfers_delta": 0
+      },
+      "p2-control": {
+        "active_ms_delta": 0,
+        "after_gap_ns": 14020,
+        "after_read_ns": 445925,
+        "before_gap_ns": 224953,
+        "before_read_ns": 757537,
+        "transfers_delta": 0
+      },
+      "p3-candidate": {
+        "active_ms_delta": 0,
+        "after_gap_ns": 19401,
+        "after_read_ns": 457124,
+        "before_gap_ns": 201502,
+        "before_read_ns": 813898,
+        "transfers_delta": 0
+      },
+      "p3-control": {
+        "active_ms_delta": 0,
+        "after_gap_ns": 18720,
+        "after_read_ns": 431815,
+        "before_gap_ns": 199992,
+        "before_read_ns": 804868,
+        "transfers_delta": 0
+      }
+    },
+    "measurement_arms": {
+      "p1-candidate": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.084634928,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 23402644378795,
+            "end_ns": 23403729013723,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 201,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 23397064229844,
+            "end_ns": 23397606303146,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 201,
+        "spi_window": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 22520,
+          "after_read_ns": 420924,
+          "before_gap_ns": 188392,
+          "before_read_ns": 795728,
+          "transfers_delta": 0
+        },
+        "verified_output_tokens": 632
+      },
+      "p1-control": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.08483563,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 23345509135743,
+            "end_ns": 23346593971373,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 201,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 23339928376667,
+            "end_ns": 23340471176176,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 201,
+        "spi_window": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 20120,
+          "after_read_ns": 468825,
+          "before_gap_ns": 252922,
+          "before_read_ns": 765778,
+          "transfers_delta": 0
+        },
+        "verified_output_tokens": 632
+      },
+      "p2-candidate": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.084880871,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 23430593066235,
+            "end_ns": 23431677947106,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 135,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 23425013439980,
+            "end_ns": 23425555496192,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 135,
+        "spi_window": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 14160,
+          "after_read_ns": 462214,
+          "before_gap_ns": 235222,
+          "before_read_ns": 747078,
+          "transfers_delta": 0
+        },
+        "verified_output_tokens": 632
+      },
+      "p2-control": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.084694288,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 23476665220779,
+            "end_ns": 23477749915067,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 135,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 23471085077918,
+            "end_ns": 23471627459033,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 135,
+        "spi_window": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 14020,
+          "after_read_ns": 445925,
+          "before_gap_ns": 224953,
+          "before_read_ns": 757537,
+          "transfers_delta": 0
+        },
+        "verified_output_tokens": 632
+      },
+      "p3-candidate": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.08484845,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 23550804533927,
+            "end_ns": 23551889382377,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 101,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 23545224656450,
+            "end_ns": 23545766699341,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 101,
+        "spi_window": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 19401,
+          "after_read_ns": 457124,
+          "before_gap_ns": 201502,
+          "before_read_ns": 813898,
+          "transfers_delta": 0
+        },
+        "verified_output_tokens": 632
+      },
+      "p3-control": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.084619048,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 23504599750237,
+            "end_ns": 23505684369285,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 101,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 23499019876190,
+            "end_ns": 23499561942771,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 101,
+        "spi_window": {
+          "active_ms_delta": 0,
+          "after_gap_ns": 18720,
+          "after_read_ns": 431815,
+          "before_gap_ns": 199992,
+          "before_read_ns": 804868,
+          "transfers_delta": 0
+        },
+        "verified_output_tokens": 632
+      }
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "metric_names": [
+          "control.active_power",
+          "candidate.active_power"
+        ],
+        "state": "derived"
+      },
+      "cache_capacity": {
+        "reason": "No cache format or context limit change.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Board-host delivery boundary. No laptop or network request interval.",
+        "state": "not_measured"
+      },
+      "communication": {
+        "reason": "Both arms have the same accepted positions, skipped projections and scores. AXI polling and physical bandwidth remain unmeasured.",
+        "sources": [
+          "Native score contract",
+          "Both arms\u2019 scores_consumed and output counts"
+        ],
+        "state": "derived"
+      },
+      "completion_time": {
+        "metric_names": [
+          "control.encoded-fu2p2q.completion_ms",
+          "control.encoded-hello.completion_ms",
+          "control.encoded-max48.completion_ms",
+          "candidate.encoded-fu2p2q.completion_ms",
+          "candidate.encoded-hello.completion_ms",
+          "candidate.encoded-max48.completion_ms"
+        ],
+        "state": "derived"
+      },
+      "correctness": {
+        "sources": [
+          "autonomous-smoke/fullscore.json",
+          "autonomous-smoke/compact.json",
+          "autonomous-smoke/limit-1.json",
+          "autonomous-smoke/limit-0.json"
+        ],
+        "state": "measured"
+      },
+      "cross_device_comparison": {
+        "reason": "Both arms use one identified KV260.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "One boot for this matched pair series. Cross-boot suites are deferred.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "metric_names": [
+          "control.encoded-fu2p2q.decode_bytes_per_second",
+          "control.encoded-hello.decode_bytes_per_second",
+          "control.encoded-max48.decode_bytes_per_second",
+          "candidate.encoded-fu2p2q.decode_bytes_per_second",
+          "candidate.encoded-hello.decode_bytes_per_second",
+          "candidate.encoded-max48.decode_bytes_per_second"
+        ],
+        "state": "derived"
+      },
+      "energy_per_answer": {
+        "metric_names": [
+          "control.energy_per_answer",
+          "candidate.energy_per_answer"
+        ],
+        "state": "derived"
+      },
+      "estimated_cost": {
+        "reason": "No economic claim.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "metric_names": [
+          "control.idle_power",
+          "candidate.idle_power"
+        ],
+        "state": "derived"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Gross is primary. Retain signed values in raw artifacts.",
+        "sources": [
+          "Signed incremental_j in raw alignment results"
+        ],
+        "state": "derived"
+      },
+      "implementation_timing": {
+        "reason": "Exact control and candidate routed reports.",
+        "sources": [
+          {
+            "bytes": 15182,
+            "path": "hardware/research/inference/results/attention-exp-div-build-20261117T130122Z/run.json",
+            "role": "Adopted control routed build",
+            "sha256": "4c2b2feda20e43658159bbe745c3d487295e58c04612bf0603b47742e5ae6809"
+          },
+          {
+            "bytes": 61115,
+            "path": "hardware/research/inference/results/output-projection-lutram-build-20261117T151934Z/run.json",
+            "role": "Candidate routed build",
+            "sha256": "6e089d5f1b66948150fa565afb2f9e74db64b696bcf8d90c972654e405d4e138"
+          }
+        ],
+        "state": "reused"
+      },
+      "long_stability": {
+        "reason": "Three short matched pairs, no long-run claim.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Original model/cache arithmetic is fixed. Both images use the same model, cache layout and input/output buffer capacity. Host peak memory is unmeasured.",
+        "sources": [
+          {
+            "bytes": 19925,
+            "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+            "role": "Reused original storage footprint baseline",
+            "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+          },
+          {
+            "bytes": 15182,
+            "path": "hardware/research/inference/results/attention-exp-div-build-20261117T130122Z/run.json",
+            "role": "Adopted control routed build",
+            "sha256": "4c2b2feda20e43658159bbe745c3d487295e58c04612bf0603b47742e5ae6809"
+          },
+          {
+            "bytes": 61115,
+            "path": "hardware/research/inference/results/output-projection-lutram-build-20261117T151934Z/run.json",
+            "role": "Candidate routed build",
+            "sha256": "6e089d5f1b66948150fa565afb2f9e74db64b696bcf8d90c972654e405d4e138"
+          }
+        ],
+        "state": "derived"
+      },
+      "memory_bandwidth": {
+        "reason": "Unchanged memory footprint and operands. Physical interface bandwidth was outside this comparison.",
+        "sources": [
+          {
+            "bytes": 43488,
+            "path": "hardware/research/inference/results/output-projection-lutram-rtl-20261117T152505Z/run.json",
+            "role": "Exact candidate and control RTL comparison",
+            "sha256": "5d02d244c33a6c5973533f05a533b9cac696a0611c501070544c5dae41e932f6"
+          }
+        ],
+        "state": "not_measured"
+      },
+      "model_quality": {
+        "reason": "The frozen model and retained calculations are unchanged.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Reported clock verified at gates. Continuous clock/thermal traces unavailable.",
+        "sources": [
+          "Per-gate state/environment files",
+          "arms in conditions"
+        ],
+        "state": "measured"
+      },
+      "output_counts": {
+        "sources": [
+          "All six arm block.json files and candidate cap/compact receipts"
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "No area claim.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Scoped VCC_SOM observer used. Independent absolute calibration is outside scope.",
+        "state": "not_measured"
+      },
+      "prefill": {
+        "reason": "Physical end-to-end first byte is measured. Only the separate matched RTL replay splits the pre-projection prefix from final scoring.",
+        "sources": [
+          {
+            "bytes": 43488,
+            "path": "hardware/research/inference/results/output-projection-lutram-rtl-20261117T152505Z/run.json",
+            "role": "Exact candidate and control RTL comparison",
+            "sha256": "5d02d244c33a6c5973533f05a533b9cac696a0611c501070544c5dae41e932f6"
+          }
+        ],
+        "state": "not_measured"
+      },
+      "recovery": {
+        "reason": "Exact original research circuit and all 320 pinned BOS scores restored.",
+        "sources": [
+          {
+            "bytes": 59782,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09/result.json",
+            "role": "result.json",
+            "sha256": "f689ecdc31934dd61122e41d61dcfd4cc4ac2f7ab95d50681323501af07f461c"
+          }
+        ],
+        "state": "measured"
+      },
+      "repeatability": {
+        "sources": [
+          "mac-gates.jsonl",
+          "Per-case raw timestamps and three paired summaries"
+        ],
+        "state": "measured"
+      },
+      "resources": {
+        "reason": "Static reports for the exact routed circuits.",
+        "sources": [
+          {
+            "bytes": 15182,
+            "path": "hardware/research/inference/results/attention-exp-div-build-20261117T130122Z/run.json",
+            "role": "Adopted control routed build",
+            "sha256": "4c2b2feda20e43658159bbe745c3d487295e58c04612bf0603b47742e5ae6809"
+          },
+          {
+            "bytes": 61115,
+            "path": "hardware/research/inference/results/output-projection-lutram-build-20261117T151934Z/run.json",
+            "role": "Candidate routed build",
+            "sha256": "6e089d5f1b66948150fa565afb2f9e74db64b696bcf8d90c972654e405d4e138"
+          }
+        ],
+        "state": "reused"
+      },
+      "serving_load": {
+        "reason": "Only the bounded fixed isolated circuit comparison was run.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Exact first, last and terminal board counts against both RTL arms. Phase attribution is from simulation.",
+        "sources": [
+          {
+            "bytes": 10689,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09/cycle-audit.json",
+            "role": "Board cycle counters versus both full RTL arms",
+            "sha256": "6f93d9e35609303205110d4858282c9f5e43f4cde15196e3ebfd41bb5155f823"
+          },
+          {
+            "bytes": 43488,
+            "path": "hardware/research/inference/results/output-projection-lutram-rtl-20261117T152505Z/run.json",
+            "role": "Exact candidate and control RTL comparison",
+            "sha256": "5d02d244c33a6c5973533f05a533b9cac696a0611c501070544c5dae41e932f6"
+          }
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "Setup retained separately, no cold-start comparison.",
+        "sources": [
+          "Per-arm load.json"
+        ],
+        "state": "measured"
+      },
+      "sustained_throughput": {
+        "metric_names": [
+          "control.verified_rate",
+          "candidate.verified_rate"
+        ],
+        "state": "derived"
+      },
+      "token_gaps": {
+        "reason": "No tail claim.",
+        "sources": [
+          "CPU-observed output_ns arrays in each block.json"
+        ],
+        "state": "measured"
+      },
+      "tokens_per_joule": {
+        "metric_names": [
+          "control.tokens_per_joule",
+          "candidate.tokens_per_joule"
+        ],
+        "state": "derived"
+      },
+      "ttft": {
+        "metric_names": [
+          "control.encoded-fu2p2q.ttft_ms",
+          "control.encoded-hello.ttft_ms",
+          "control.encoded-max48.ttft_ms",
+          "candidate.encoded-fu2p2q.ttft_ms",
+          "candidate.encoded-hello.ttft_ms",
+          "candidate.encoded-max48.ttft_ms"
+        ],
+        "state": "derived"
+      },
+      "workload_coverage": {
+        "reason": "Historical fixed three-prompt workload, exact common reference pins.",
+        "sources": [
+          {
+            "bytes": 2182,
+            "path": ".agents/runtime/hardware/inference/outputs/output-projection-lutram-20261117T155233Z-6a5a09/workload.json",
+            "role": "workload.json",
+            "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+          }
+        ],
+        "state": "reused"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "memory_mapping": {
+      "arms": {
+        "candidate": {
+          "read_path": "status no_named_weight_output_to_operand_register_path\nweight_output_pin_count 658\noperand_input_pin_count 0\n",
+          "routed_checkpoint_sha256": "2639beaaa5d473fd581fb7f07815d41429182e22c4ffc4cdfc0f21531b2854f6",
+          "target_cells": {
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_0_63_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_128_191_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_192_255_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_256_319_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_320_383_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_384_447_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_448_511_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_512_575_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_576_639_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_640_703_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_64_127_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_704_767_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_768_831_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_832_895_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_896_959_7_13/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_0_6/RAMH": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_14_15": "RAM64M",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_14_15/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_14_15/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_14_15/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_14_15/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13": "RAM64M8",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAMA": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAMB": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAMC": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAMD": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAME": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAMF": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAMG": "RAMD64E",
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_960_1023_7_13/RAMH": "RAMD64E"
+          },
+          "target_refs": {
+            "RAM64M": 16,
+            "RAM64M8": 32,
+            "RAMD64E": 320
+          }
+        },
+        "control": {
+          "read_path": "status no_named_weight_output_to_operand_register_path\nweight_output_pin_count 76\noperand_input_pin_count 0\n",
+          "routed_checkpoint_sha256": "e2d24d76b85187815c78f8e64531ab8e19faa626510cb82f371732d417a5c0d8",
+          "target_cells": {
+            "tiny_ps_axi_i/neural/inst/actual/core/output_projection/weight_memory_reg_bram_0": "RAMB18E2"
+          },
+          "target_refs": {
+            "RAMB18E2": 1
+          }
+        }
+      },
+      "changed_non_target_cells": [],
+      "other_arrays_identical": true,
+      "other_memory_primitive_and_macro_cells": 1582,
+      "passed": true,
+      "query_sha256": "516aa241f01eb4e4f0cae535decfef7f365672ab5c372844daeee4d0e5dd3bb1"
+    },
+    "module_rail_alignment": [
+      {
+        "candidate": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 3.380554312672084,
+              "gross_j_per_completion": 0.5634257187786806,
+              "gross_j_per_output_byte": 0.005348978342835576,
+              "idle_w": [
+                3.0273822296814408,
+                3.017353010175623
+              ],
+              "incremental_j": 0.10238882684136952,
+              "incremental_j_per_completion": 0.017064804473561585,
+              "incremental_j_per_output_byte": 0.00016200763740723025
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 3.376482044341767,
+              "gross_j_per_completion": 0.5627470073902945,
+              "gross_j_per_output_byte": 0.005342534880287606,
+              "idle_w": [
+                3.027509112262998,
+                3.0169581852675313
+              ],
+              "incremental_j": 0.09846186831407655,
+              "incremental_j_per_completion": 0.016410311385679426,
+              "incremental_j_per_output_byte": 0.00015579409543366543
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 3.3763125610049998,
+              "gross_j_per_completion": 0.5627187601675,
+              "gross_j_per_output_byte": 0.005342266710450949,
+              "idle_w": [
+                3.0272587827547457,
+                3.0171045192064643
+              ],
+              "incremental_j": 0.09834878359072974,
+              "incremental_j_per_completion": 0.01639146393178829,
+              "incremental_j_per_output_byte": 0.0001556151639093825
+            },
+            "read_end": {
+              "gross_j": 3.3805508055583835,
+              "gross_j_per_completion": 0.5634251342597306,
+              "gross_j_per_output_byte": 0.005348972793605037,
+              "idle_w": [
+                3.0273882308938926,
+                3.017354274559256
+              ],
+              "incremental_j": 0.10238137946802528,
+              "incremental_j_per_completion": 0.01706356324467088,
+              "incremental_j_per_output_byte": 0.00016199585358864758
+            },
+            "read_start": {
+              "gross_j": 3.3805576529683066,
+              "gross_j_per_completion": 0.5634262754947178,
+              "gross_j_per_output_byte": 0.005348983628114409,
+              "idle_w": [
+                3.0273762328748224,
+                3.017351721706767
+              ],
+              "incremental_j": 0.10239611806971194,
+              "incremental_j_per_completion": 0.017066019678285322,
+              "incremental_j_per_output_byte": 0.0001620191741609366
+            }
+          }
+        },
+        "control": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 3.3916360974934108,
+              "gross_j_per_completion": 0.5652726829155684,
+              "gross_j_per_output_byte": 0.005366512812489574,
+              "idle_w": [
+                3.0156264255588128,
+                3.0146320544620306
+              ],
+              "incremental_j": 0.12071646887528376,
+              "incremental_j_per_completion": 0.02011941147921396,
+              "incremental_j_per_output_byte": 0.00019100707100519582
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 3.3892713946049997,
+              "gross_j_per_completion": 0.5648785657675,
+              "gross_j_per_output_byte": 0.005362771193995253,
+              "idle_w": [
+                3.015500091938315,
+                3.0143338062411487
+              ],
+              "incremental_j": 0.11858206674156291,
+              "incremental_j_per_completion": 0.019763677790260486,
+              "incremental_j_per_output_byte": 0.00018762985243918183
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 3.38755852153892,
+              "gross_j_per_completion": 0.5645930869231534,
+              "gross_j_per_output_byte": 0.005360060951802088,
+              "idle_w": [
+                3.01562369655,
+                3.0149355376511426
+              ],
+              "incremental_j": 0.11647575849546321,
+              "incremental_j_per_completion": 0.019412626415910534,
+              "incremental_j_per_output_byte": 0.00018429708622699875
+            },
+            "read_end": {
+              "gross_j": 3.3916330124748355,
+              "gross_j_per_completion": 0.5652721687458059,
+              "gross_j_per_output_byte": 0.0053665079311310685,
+              "idle_w": [
+                3.015627278161004,
+                3.014633039523029
+              ],
+              "incremental_j": 0.12071238707545673,
+              "incremental_j_per_completion": 0.020118731179242788,
+              "incremental_j_per_output_byte": 0.00019100061246116572
+            },
+            "read_start": {
+              "gross_j": 3.391639028526254,
+              "gross_j_per_completion": 0.5652731714210423,
+              "gross_j_per_output_byte": 0.005366517450199768,
+              "idle_w": [
+                3.015625565927265,
+                3.0146310632390954
+              ],
+              "incremental_j": 0.1207204038445715,
+              "incremental_j_per_completion": 0.020120067307428584,
+              "incremental_j_per_output_byte": 0.00019101329722242326
+            }
+          }
+        }
+      },
+      {
+        "candidate": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 3.374530043539914,
+              "gross_j_per_completion": 0.562421673923319,
+              "gross_j_per_output_byte": 0.005339446271423914,
+              "idle_w": [
+                3.0172491110712554,
+                3.019710626924109
+              ],
+              "incremental_j": 0.09983897416574283,
+              "incremental_j_per_completion": 0.016639829027623804,
+              "incremental_j_per_output_byte": 0.0001579730603888336
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 3.371773491624396,
+              "gross_j_per_completion": 0.561962248604066,
+              "gross_j_per_output_byte": 0.005335084638646196,
+              "idle_w": [
+                3.0174966356930484,
+                3.0195776653514037
+              ],
+              "incremental_j": 0.09702027861998541,
+              "incremental_j_per_completion": 0.016170046436664236,
+              "incremental_j_per_output_byte": 0.0001535130990822554
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 3.37130907711,
+              "gross_j_per_completion": 0.561884846185,
+              "gross_j_per_output_byte": 0.005334349805553797,
+              "idle_w": [
+                3.0172489742897186,
+                3.0201265030556548
+              ],
+              "incremental_j": 0.0963924939017553,
+              "incremental_j_per_completion": 0.016065415650292552,
+              "incremental_j_per_output_byte": 0.0001525197688318913
+            },
+            "read_end": {
+              "gross_j": 3.374528214569306,
+              "gross_j_per_completion": 0.5624213690948844,
+              "gross_j_per_output_byte": 0.00533944337748308,
+              "idle_w": [
+                3.017248362491419,
+                3.0197148427331273
+              ],
+              "incremental_j": 0.09983526442982704,
+              "incremental_j_per_completion": 0.016639210738304506,
+              "incremental_j_per_output_byte": 0.0001579671905535238
+            },
+            "read_start": {
+              "gross_j": 3.3745317515922615,
+              "gross_j_per_completion": 0.5624219585987102,
+              "gross_j_per_output_byte": 0.005339448974038388,
+              "idle_w": [
+                3.0172498578419193,
+                3.0197064153858584
+              ],
+              "incremental_j": 0.09984256164812866,
+              "incremental_j_per_completion": 0.016640426941354775,
+              "incremental_j_per_output_byte": 0.0001579787367850137
+            }
+          }
+        },
+        "control": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 3.367995151576001,
+              "gross_j_per_completion": 0.5613325252626669,
+              "gross_j_per_output_byte": 0.005329106252493673,
+              "idle_w": [
+                3.017876150534086,
+                3.0137499164986083
+              ],
+              "incremental_j": 0.09675998044486711,
+              "incremental_j_per_completion": 0.016126663407477853,
+              "incremental_j_per_output_byte": 0.00015310123488111884
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 3.3662980410717713,
+              "gross_j_per_completion": 0.5610496735119619,
+              "gross_j_per_output_byte": 0.005326420951062929,
+              "idle_w": [
+                3.017749724715552,
+                3.013749913504999
+              ],
+              "incremental_j": 0.09513143824582304,
+              "incremental_j_per_completion": 0.015855239707637175,
+              "incremental_j_per_output_byte": 0.00015052442760415038
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 3.3643624215909576,
+              "gross_j_per_completion": 0.5607270702651596,
+              "gross_j_per_output_byte": 0.005323358262011009,
+              "idle_w": [
+                3.0181264159222367,
+                3.01374991688959
+              ],
+              "incremental_j": 0.09299151952927032,
+              "incremental_j_per_completion": 0.015498586588211719,
+              "incremental_j_per_output_byte": 0.00014713848026783277
+            },
+            "read_end": {
+              "gross_j": 3.367988294556944,
+              "gross_j_per_completion": 0.5613313824261573,
+              "gross_j_per_output_byte": 0.005329095402779975,
+              "idle_w": [
+                3.0178769200229274,
+                3.013749823164451
+              ],
+              "incremental_j": 0.09675275671524819,
+              "incremental_j_per_completion": 0.016125459452541364,
+              "incremental_j_per_output_byte": 0.00015308980492919017
+            },
+            "read_start": {
+              "gross_j": 3.368001925694513,
+              "gross_j_per_completion": 0.5613336542824189,
+              "gross_j_per_output_byte": 0.005329116971035622,
+              "idle_w": [
+                3.0178753829099754,
+                3.0137500098667642
+              ],
+              "incremental_j": 0.09676712024417089,
+              "incremental_j_per_completion": 0.016127853374028483,
+              "incremental_j_per_output_byte": 0.00015311253203191595
+            }
+          }
+        }
+      },
+      {
+        "candidate": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 3.3711910680516244,
+              "gross_j_per_completion": 0.561865178008604,
+              "gross_j_per_output_byte": 0.005334163082360165,
+              "idle_w": [
+                3.01650062917,
+                3.023757459043822
+              ],
+              "incremental_j": 0.09480875575226078,
+              "incremental_j_per_completion": 0.015801459292043463,
+              "incremental_j_per_output_byte": 0.0001500138540383873
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 3.3690584651212703,
+              "gross_j_per_completion": 0.5615097441868784,
+              "gross_j_per_output_byte": 0.005330788710634921,
+              "idle_w": [
+                3.0165010133077876,
+                3.0238214659596916
+              ],
+              "incremental_j": 0.0926412255545297,
+              "incremental_j_per_completion": 0.015440204259088283,
+              "incremental_j_per_output_byte": 0.0001465842176495723
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 3.3674711884099997,
+              "gross_j_per_completion": 0.5612451980683333,
+              "gross_j_per_output_byte": 0.0053282771968512655,
+              "idle_w": [
+                3.0165006291699994,
+                3.023757460223116
+              ],
+              "incremental_j": 0.0910888754709589,
+              "incremental_j_per_completion": 0.015181479245159816,
+              "incremental_j_per_output_byte": 0.00014412796751734003
+            },
+            "read_end": {
+              "gross_j": 3.3711865832362284,
+              "gross_j_per_completion": 0.5618644305393714,
+              "gross_j_per_output_byte": 0.005334155986133273,
+              "idle_w": [
+                3.01650069492,
+                3.0237632991388006
+              ],
+              "incremental_j": 0.09480106746347872,
+              "incremental_j_per_completion": 0.015800177910579787,
+              "incremental_j_per_output_byte": 0.00015000168902449165
+            },
+            "read_start": {
+              "gross_j": 3.371195453300974,
+              "gross_j_per_completion": 0.5618659088834956,
+              "gross_j_per_output_byte": 0.005334170021045845,
+              "idle_w": [
+                3.0165005634174995,
+                3.023751618881643
+              ],
+              "incremental_j": 0.09481634451280296,
+              "incremental_j_per_completion": 0.015802724085467162,
+              "incremental_j_per_output_byte": 0.00015002586157089078
+            }
+          }
+        },
+        "control": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 3.3706186491089998,
+              "gross_j_per_completion": 0.5617697748514999,
+              "gross_j_per_output_byte": 0.005333257356185127,
+              "idle_w": [
+                3.0170024715912485,
+                3.0178234000639566
+              ],
+              "incremental_j": 0.09787510322878079,
+              "incremental_j_per_completion": 0.0163125172047968,
+              "incremental_j_per_output_byte": 0.0001548656696657924
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 3.3689790595569695,
+              "gross_j_per_completion": 0.5614965099261616,
+              "gross_j_per_output_byte": 0.005330663068919256,
+              "idle_w": [
+                3.016873436113931,
+                3.017926370157838
+              ],
+              "incremental_j": 0.09624964918243428,
+              "incremental_j_per_completion": 0.01604160819707238,
+              "incremental_j_per_output_byte": 0.00015229374870638336
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 3.36723613036367,
+              "gross_j_per_completion": 0.5612060217272784,
+              "gross_j_per_output_byte": 0.00532790526956277,
+              "idle_w": [
+                3.017375956232069,
+                3.017926401868877
+              ],
+              "incremental_j": 0.0942341813458687,
+              "incremental_j_per_completion": 0.015705696890978116,
+              "incremental_j_per_output_byte": 0.0001491047173194125
+            },
+            "read_end": {
+              "gross_j": 3.370612088532901,
+              "gross_j_per_completion": 0.5617686814221502,
+              "gross_j_per_output_byte": 0.005333246975526742,
+              "idle_w": [
+                3.0170043046917474,
+                3.017822960628163
+              ],
+              "incremental_j": 0.09786778685503883,
+              "incremental_j_per_completion": 0.016311297809173137,
+              "incremental_j_per_output_byte": 0.00015485409312506143
+            },
+            "read_start": {
+              "gross_j": 3.3706250766789267,
+              "gross_j_per_completion": 0.5617708461131544,
+              "gross_j_per_output_byte": 0.005333267526390707,
+              "idle_w": [
+                3.0170006344486024,
+                3.0178238456280524
+              ],
+              "incremental_j": 0.09788228546500877,
+              "incremental_j_per_completion": 0.016313714244168127,
+              "incremental_j_per_output_byte": 0.00015487703396362145
+            }
+          }
+        }
+      }
+    ],
+    "original_restored": true,
+    "restoration_serial_qualification": {
+      "inner_restored_state_sha256": "6a6c58d791831cc81ea645cf23f25ee41c03c7e81ced39ead77850b852cf1171",
+      "new_notices": [],
+      "observed_counters": {
+        "brk": 0,
+        "fe": 0,
+        "oe": 0,
+        "pe": 0
+      },
+      "passed": true,
+      "previous_counters": {
+        "brk": 0,
+        "fe": 0,
+        "oe": 0,
+        "pe": 0
+      },
+      "spi1_runtime_differed": false,
+      "state_sha256": "af3a8dc2421c515c0ea00624b0f6b5edc3529492302271f775e74a96b7768cb2"
+    },
+    "routed_resources": {
+      "candidate": {
+        "bram_tile": {
+          "available": 144,
+          "percent": 26.041666666666668,
+          "used": 37.5
+        },
+        "dsp": {
+          "available": 1248,
+          "percent": 2.96474358974359,
+          "used": 37.0
+        },
+        "lut": {
+          "available": 117120,
+          "percent": 29.809596994535518,
+          "used": 34913.0
+        },
+        "register": {
+          "available": 234240,
+          "percent": 5.800887978142076,
+          "used": 13588.0
+        }
+      },
+      "control": {
+        "bram_tile": {
+          "available": 144,
+          "percent": 26.38888888888889,
+          "used": 38.0
+        },
+        "dsp": {
+          "available": 1248,
+          "percent": 2.96474358974359,
+          "used": 37.0
+        },
+        "lut": {
+          "available": 117120,
+          "percent": 29.470628415300546,
+          "used": 34516.0
+        },
+        "register": {
+          "available": 234240,
+          "percent": 5.797899590163935,
+          "used": 13581.0
+        }
+      }
+    },
+    "scored_requests": 36,
+    "serial_link_qualification": {
+      "boot_id": "1a217c7b-33c8-4609-898a-8d56ea3f1ff2",
+      "canary_bytes": 131072,
+      "energy_scope": "Both USB companion hubs absent on both arms. Compare within this boot.",
+      "group_frames": 32,
+      "matched_usb2_peripheral_hub_present": false,
+      "matched_usb3_peripheral_hub_present": false,
+      "new_uart_errors": 0,
+      "physical_preflight": "Pass after exact whole-archive UART transfer",
+      "prior_uart_overruns": 0,
+      "test_storage": "SD card"
+    },
+    "timeouts": 0,
+    "warmups": 18
+  },
+  "correctness": {
+    "evidence": "Exact full-score diagnostics, compact and capped checks, all 36 timed and 18 warm-up requests, and first/last/terminal cycle counters passed. Restored original firmware and weights matched all 320 BOS scores.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "comparison_firmware": {
+        "candidate": "981049d8dadb1b54c507a924d5dbdabdcbdde1657f897fa95bf11e02d4ce1a73",
+        "control": "8f9280f37353e7595528900df9062407a277a04e4c8734d012aeb4471654fe9b",
+        "stock_restored": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0"
+      },
+      "dfx_service": "runtime inactive, boot enablement preserved",
+      "final_state": "Original firmware and original weights restored, 320 original BOS scores verified",
+      "firmware_identity_scope": "Initial and restored stock firmware. Timed images are listed in comparison_firmware.",
+      "firmware_name": "gradiated-tiny-50mhz.bit.bin",
+      "firmware_sha256": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0",
+      "fpga_manager_flags": 0,
+      "initial_state_sha256": "3db90b877b8b03dff169e3682f1daac65b645305e7b1e466ad565ab35db76176",
+      "kernel_build": "#16-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 16 05:06:58 UTC 2025",
+      "kernel_release": "6.8.0-1015-xilinx",
+      "model": "ZynqMP KV260 revB",
+      "physical_unit": "KV260 USB bridge XFL1RXOM0IWQ",
+      "pl0_rate_source": "Linux clock framework",
+      "pl0_reported_hz": 50000000,
+      "qualified_project_state_sha256": "3db90b877b8b03dff169e3682f1daac65b645305e7b1e466ad565ab35db76176",
+      "reset_dt_id": 119,
+      "system_boot_id": "1a217c7b-33c8-4609-898a-8d56ea3f1ff2",
+      "transformer_map": {
+        "base": 2684354560,
+        "bytes": 4096,
+        "device": "/dev/uio4"
+      },
+      "verified_state_sha256": "6a6c58d791831cc81ea645cf23f25ee41c03c7e81ced39ead77850b852cf1171"
+    },
+    "configuration_sha256": "b73ea9f1bb121c121f33cedc257806eac2fefaeafa5f23c84e75000bd958eb7b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-output-projection-lutram-v1",
+  "id": "output-projection-lutram-20261117T155233Z-6a5a09",
+  "implementation": {
+    "id": "kv260-output-projection-lutram-v1",
+    "sha256": "3d85fbe15db582cad68a2a79fffbfc55c670ddbb39cd82062af7c950cdd9fe88"
+  },
+  "limitations": [
+    "Single physical KV260 and one board boot with three fixed requests and matched repeats.",
+    "Power covers VCC_SOM module rail only. Active blocks include the same verification and request gaps; whole-board input energy was not measured.",
+    "The original firmware and weights passed functional BOS checking. Full configuration or weight-memory readback was outside scope.",
+    "SPI1 active time and TPM transfers were read on both sides of each active block. The readings include the recorded observation gaps and do not quantify energy attributable to SPI or the TPM."
+  ],
+  "metrics": [
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-fu2p2q.completion_ms",
+      "samples": [
+        158.755868,
+        158.520265,
+        158.519455,
+        158.498896,
+        158.509346,
+        158.479035
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "control.encoded-fu2p2q.decode_bytes_per_second",
+      "samples": [
+        824.8360057304152,
+        824.8381986141804,
+        824.8375182566878,
+        824.8375238794723,
+        824.837692563046,
+        824.8366804626396
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-fu2p2q.ttft_ms",
+      "samples": [
+        10.467925,
+        10.232622,
+        10.231632,
+        10.211273,
+        10.221663,
+        10.191322
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "control.encoded-fu2p2q.verified_ms",
+      "samples": [
+        159.471675,
+        159.095321,
+        159.131662,
+        159.052331,
+        159.138132,
+        159.065841
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-hello.completion_ms",
+      "samples": [
+        107.99574,
+        108.03383,
+        108.242152,
+        107.97651,
+        108.00341,
+        107.9815
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "control.encoded-hello.decode_bytes_per_second",
+      "samples": [
+        908.2194266298508,
+        908.2194266298508,
+        908.2205388054062,
+        908.2184071379844,
+        908.219241267523,
+        908.2185832318705
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-hello.ttft_ms",
+      "samples": [
+        8.624336,
+        8.662466,
+        8.870988,
+        8.604896,
+        8.631676,
+        8.610276
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "control.encoded-hello.verified_ms",
+      "samples": [
+        108.528846,
+        108.583916,
+        108.906829,
+        108.463465,
+        108.530655,
+        108.472845
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-max48.completion_ms",
+      "samples": [
+        273.741398,
+        273.759889,
+        273.771508,
+        273.783629,
+        274.049491,
+        273.749068
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "control.encoded-max48.decode_bytes_per_second",
+      "samples": [
+        599.6422359767084,
+        599.642654894451,
+        599.6422359767084,
+        599.6419916082956,
+        599.642375615891,
+        599.642654894451
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-max48.ttft_ms",
+      "samples": [
+        99.97075,
+        99.989451,
+        100.00083,
+        100.013371,
+        100.279093,
+        99.97881
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "control.encoded-max48.verified_ms",
+      "samples": [
+        274.405945,
+        274.328414,
+        274.407674,
+        274.353544,
+        274.752078,
+        274.279014
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "control.active_power",
+      "samples": [
+        3.1264055159152644,
+        3.1050178735485345,
+        3.1076520879144653
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Average power per matched two-second idle interval, before and after each active block.",
+      "name": "control.idle_power",
+      "samples": [
+        3.0156264255588128,
+        3.0146320544620306,
+        3.017876150534086,
+        3.0137499164986083,
+        3.0170024715912485,
+        3.0178234000639566
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "control.energy_per_answer",
+      "samples": [
+        0.5652726829155684,
+        0.5613325252626669,
+        0.5617697748514999
+      ],
+      "unit": "J/verified completion"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "control.tokens_per_joule",
+      "samples": [
+        186.3407458326911,
+        187.64872618782286,
+        187.5026711096685
+      ],
+      "unit": "output byte tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output count divided by first-admission-to-last-verification block wall time.",
+      "name": "control.verified_rate",
+      "samples": [
+        582.5767356110898,
+        582.6526487618049,
+        582.6930673635007
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-fu2p2q.completion_ms",
+      "samples": [
+        158.742277,
+        158.477385,
+        158.506395,
+        158.504665,
+        158.530935,
+        158.473535
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "candidate.encoded-fu2p2q.decode_bytes_per_second",
+      "samples": [
+        824.8388733499925,
+        824.837692563046,
+        824.8380299304,
+        824.8378612466885,
+        824.8366804626396,
+        824.838142386246
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-fu2p2q.ttft_ms",
+      "samples": [
+        10.454524,
+        10.190002,
+        10.219062,
+        10.217012,
+        10.243122,
+        10.185972
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "candidate.encoded-fu2p2q.verified_ms",
+      "samples": [
+        159.512755,
+        159.032721,
+        159.121351,
+        159.089251,
+        159.143961,
+        159.03013
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-hello.completion_ms",
+      "samples": [
+        108.030801,
+        107.9809,
+        108.244443,
+        108.01844,
+        107.97202,
+        108.04491
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "candidate.encoded-hello.decode_bytes_per_second",
+      "samples": [
+        908.2183144570191,
+        908.2172949676497,
+        908.2183144570191,
+        908.2181290951453,
+        908.2222070738468,
+        908.2188705430945
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-hello.ttft_ms",
+      "samples": [
+        8.658957,
+        8.609296,
+        8.872819,
+        8.647166,
+        8.600776,
+        8.673256
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "candidate.encoded-hello.verified_ms",
+      "samples": [
+        108.557086,
+        108.479395,
+        108.884959,
+        108.519735,
+        108.493945,
+        108.567955
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-max48.completion_ms",
+      "samples": [
+        273.759078,
+        273.750348,
+        273.765798,
+        273.770248,
+        274.052491,
+        273.739508
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "candidate.encoded-max48.decode_bytes_per_second",
+      "samples": [
+        599.6417123303534,
+        599.6423407060893,
+        599.6431785424523,
+        599.642654894451,
+        599.6427596239781,
+        599.642654894451
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-max48.ttft_ms",
+      "samples": [
+        99.98865,
+        99.98008,
+        99.99572,
+        100.00001,
+        100.282403,
+        99.96936
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "candidate.encoded-max48.verified_ms",
+      "samples": [
+        274.366404,
+        274.286604,
+        274.388125,
+        274.448325,
+        274.780119,
+        274.421915
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "candidate.active_power",
+      "samples": [
+        3.116766964996801,
+        3.1105074609983734,
+        3.107522592719402
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Average power per matched two-second idle interval, before and after each active block.",
+      "name": "candidate.idle_power",
+      "samples": [
+        3.0273822296814408,
+        3.017353010175623,
+        3.0172491110712554,
+        3.019710626924109,
+        3.01650062917,
+        3.023757459043822
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "candidate.energy_per_answer",
+      "samples": [
+        0.5634257187786806,
+        0.562421673923319,
+        0.561865178008604
+      ],
+      "unit": "J/verified completion"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "candidate.tokens_per_joule",
+      "samples": [
+        186.95158886545138,
+        187.2853380605929,
+        187.47083367341253
+      ],
+      "unit": "output byte tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output count divided by first-admission-to-last-verification block wall time.",
+      "name": "candidate.verified_rate",
+      "samples": [
+        582.6845362295027,
+        582.5524413730768,
+        582.5698511160707
+      ],
+      "unit": "output byte tokens/s"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-output-projection-lutram-v1",
+    "measurement_boundary": "Board CPU request admission before encoding/clear through first/last useful byte and stop/drain. Six-request gross VCC_SOM block energy ends after verification. Load, switching, full-score diagnostics and UART export excluded.",
+    "quality_gate": "Exact full-score diagnostics and same exact capped and uncapped completions and stops.",
+    "sha256": "dfc28dbc01744fd0dc32e3f7b0dc9380ede0ce63a15297093c8a5c6aac5bfe12",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Three exact requests per arm with loaded weights."
+  },
+  "quality": {
+    "evidence": "Frozen model weights, numerical rules and decoding unchanged. Scope limited to the fixed cases.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "771e501681e014fc832219debcd53afecc35bcb6f85c04b63ff6fc5dd407f37c"
+  },
+  "started_at": "2026-11-17T16:11:31.004885+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-three-prompts-output-projection-lutram-pairs-v1",
+    "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+  }
+}

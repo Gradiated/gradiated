@@ -1,0 +1,47 @@
+{
+  "passed": true,
+  "source_change": [
+    "attention.sv"
+  ],
+  "matched_sha256": "a8f78214ae68b8f076d452baa5f83fa1d1eea48d72ad9c00e886fc55bf1d7546",
+  "cases": {
+    "bos-only-cap0": {
+      "positions": 1,
+      "candidate_cycles": 38081,
+      "saved_cycles": 146
+    },
+    "encoded-fu2p2q-cap255": {
+      "positions": 135,
+      "candidate_cycles": 7913385,
+      "saved_cycles": 1323052
+    },
+    "encoded-hello-cap0": {
+      "positions": 11,
+      "candidate_cycles": 419131,
+      "saved_cycles": 9636
+    },
+    "encoded-hello-cap1": {
+      "positions": 11,
+      "candidate_cycles": 419131,
+      "saved_cycles": 9636
+    },
+    "encoded-hello-cap255": {
+      "positions": 101,
+      "candidate_cycles": 5387671,
+      "saved_cycles": 741096
+    },
+    "encoded-max48-cap255": {
+      "positions": 201,
+      "candidate_cycles": 13663329,
+      "saved_cycles": 2871820
+    },
+    "full-context-cap0": {
+      "positions": 256,
+      "candidate_cycles": 19410545,
+      "saved_cycles": 4760330
+    }
+  },
+  "positions": 716,
+  "arithmetic_fixture_rows": 20350,
+  "checks": "Exact scores/cache data, all phase/cycle predictions, unchanged cache schedule and probability division counts, changed exponential count only. Initial invalid-table fixture failure retained."
+}

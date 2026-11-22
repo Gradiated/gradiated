@@ -1,0 +1,584 @@
+{
+  "archive_location": ".agents/runtime/hardware-consolidation/2026-11-14/server-runtime",
+  "archive_manifest_sha256": "a55426425e3602b0c0ff005a10357786be842158ec210e9846e683215d843ac1",
+  "as_of": "2026-11-15",
+  "evidence_type": "archive_analysis",
+  "files": {
+    "board-packages/conditioned-6wbein7j/gradiated-tiny-50mhz.bit.bin": {
+      "bytes": 7797692,
+      "sha256": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0"
+    },
+    "board-packages/conditioned-6wbein7j/libboard_bos.so": {
+      "bytes": 134072,
+      "sha256": "cd0bd2f660c0faa4b130ce7ebd8be2540e2dfc51f1054b2ee55254545d7e57eb"
+    },
+    "board-packages/conditioned-6wbein7j/model-words.bin": {
+      "bytes": 117124,
+      "sha256": "698df2e177b8e478088fffe9b02af09cd10c9ac0afbe252f3b031f133262e055"
+    },
+    "board-packages/conditioned-6wbein7j/package.json": {
+      "bytes": 3649,
+      "sha256": "b0394ba256d877fb62d6eb6e74942d5ff0c649cf751d53481e827c8bae5e9167"
+    },
+    "board-readiness/full-build-m6b0vzkp/synth/candidate-synth.log": {
+      "bytes": 167115,
+      "sha256": "0dbd317b08ac2a1cd9bd861e9d082c13960eb8002ab90ac3fa25cf4fdaff4d64"
+    },
+    "board-readiness/full-build-m6b0vzkp/synth/results.json": {
+      "bytes": 108761,
+      "sha256": "11a4c62a00cf3d218775b4b64091b5e9c8bd0ef0f251410fe6a864ea5d2d9fac"
+    },
+    "board-readiness/full-build-m6b0vzkp/synth/synthesized.dcp": {
+      "bytes": 7080897,
+      "sha256": "fc9bfff6a7cd89946eb8a5fc8edf7b338a045bb093afe96907eda4642972d0d1"
+    },
+    "board-readiness/full-build-m6b0vzkp/synth/utilization.rpt": {
+      "bytes": 10369,
+      "sha256": "c26e75857ddb96d06f8b1986ce6d627f38dc544a8a5c6b5400dcfcbd8656b024"
+    },
+    "conditioned-balanced-import-20261109/fixed/arithmetic.json": {
+      "bytes": 3310,
+      "sha256": "fec2c9b0f155da1d7fa28184fa70fe0f1e86f93582898d1243e2709ff6d45773"
+    },
+    "conditioned-balanced-import-20261109/fixed/fixed-tensors.safetensors": {
+      "bytes": 64648,
+      "sha256": "fcaa3fb5161b3b404f3b8704cdbae6e681d7c54182b5a92e0b28b832da98e142"
+    },
+    "vivado-prep/board-build-74bghzx6/results.json": {
+      "bytes": 11534,
+      "sha256": "88df8b456e7f6888eff1c3bd0f654c0b25879e7684c20ae56fdb27b0ab58429f"
+    },
+    "vivado-prep/board-build-74bghzx6/route.dcp": {
+      "bytes": 19286752,
+      "sha256": "e248864cf021478e6e672895366b116ef6c1227231bab410f1e8f0c38bc0759f"
+    },
+    "vivado-prep/board-build-_4wbn4bx/metrics.txt": {
+      "bytes": 380,
+      "sha256": "0f49bb76cee9c9d5886430d1f79cff1010496bef4e867ba7d06454a3e4030e0c"
+    },
+    "vivado-prep/board-build-_4wbn4bx/offline-candidate.bit": {
+      "bytes": 7797831,
+      "sha256": "4f69ec2d1c41eca9dc33b42fa058c3440a2852fdcd42298e6f2c9893e4909cdd"
+    },
+    "vivado-prep/board-build-_4wbn4bx/results.json": {
+      "bytes": 14027,
+      "sha256": "ae79916842b9516429f1801671abe03296d0af79cf1f0bd7425523c0e033e586"
+    },
+    "vivado-prep/board-build-_4wbn4bx/utilization.rpt": {
+      "bytes": 12588,
+      "sha256": "f71c2442e880bb162f3ca520a7a0135827b6aeb2af6fb7b3344b8009942d9904"
+    },
+    "vivado-prep/board-build-crc7a6cs/opt.dcp": {
+      "bytes": 6646700,
+      "sha256": "76248dd8dabf7b227987fe68bb4534eda4e36e55df5eedf26185fa4488ba2894"
+    },
+    "vivado-prep/board-build-crc7a6cs/results.json": {
+      "bytes": 12213,
+      "sha256": "97b4fd2e4760506dd63289e3885f31d2baaf13cece3e128f7f741616a7bd8edd"
+    },
+    "vivado-prep/board-build-dgvfhitt/place.dcp": {
+      "bytes": 14792561,
+      "sha256": "39a4602f59e70bf623ac8e9309a10881d424abb5c79fd9ffb9e8a216786c05c0"
+    },
+    "vivado-prep/board-build-dgvfhitt/recovered-placement.json": {
+      "bytes": 16054,
+      "sha256": "73671601157729e09b99adaa1b4897dfb998369cf91c5bdd6dfd894af2a82136"
+    },
+    "vivado-prep/board-build-fzsm963h/results.json": {
+      "bytes": 15787,
+      "sha256": "4ccb6b79023d6b5458035c1e20687c4e881d5483f0ae126f362fba2471f1fcfe"
+    },
+    "vivado-prep/board-build-fzsm963h/utilization.rpt": {
+      "bytes": 12588,
+      "sha256": "a4ec497ae33feeeeb532f4f26dc271505e32c1b4bea5a081368047e55e8c8231"
+    },
+    "vivado-prep/pack-lzvte580/model-words.bin": {
+      "bytes": 117124,
+      "sha256": "698df2e177b8e478088fffe9b02af09cd10c9ac0afbe252f3b031f133262e055"
+    },
+    "vivado-prep/pack-lzvte580/results.json": {
+      "bytes": 3692,
+      "sha256": "0efb307ae20ebd67a1e064ab08643e4f328cc5d8ab978812fc41f3f2cb5554a7"
+    },
+    "vivado-prep/routed-timing-wc0y7ot8/results.json": {
+      "bytes": 7962,
+      "sha256": "e0190629058a972c5aea5bd4af053a38d664c5ae86c13292fbb9d006fb670a41"
+    },
+    "vivado-prep/routed-timing-wc0y7ot8/utilization.rpt": {
+      "bytes": 12234,
+      "sha256": "3e0bb76251534572cb49df20f59a20a0f0c3bdda43b922a8aa5820e72897a53e"
+    }
+  },
+  "firmware_provenance": {
+    "accepted_report_receipt": "vivado-prep/board-build-fzsm963h/results.json",
+    "bit_configuration_payload_bytes": 7797692,
+    "bit_header_bytes": 139,
+    "bitstream": "vivado-prep/board-build-_4wbn4bx/offline-candidate.bit",
+    "conversion": "Reverse byte order within each 32-bit configuration word. Verified whole-file equality.",
+    "firmware_file": "board-packages/conditioned-6wbein7j/gradiated-tiny-50mhz.bit.bin",
+    "route_checkpoint": "vivado-prep/board-build-74bghzx6/route.dcp",
+    "runtime_evidence": "The measured run verified the installed firmware file and project state. FPGA configuration readback was outside the run.",
+    "sealed_firmware_sha256": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0"
+  },
+  "measurement_run": "power-paired-20261115T155436Z-fd5f12",
+  "memory": {
+    "activation_bits": 16,
+    "host": {
+      "ctypes_result_counters_bytes_per_scoring_call": 20,
+      "ctypes_score_buffer_bytes_per_scoring_call": 1280,
+      "fpga_score_payload_read_per_scoring_call_bytes": 1280,
+      "mmio_uio_mapping_bytes": 4096,
+      "native_session_state_bytes": 120,
+      "native_step_direct_stack_bytes_excluding_callees": 1360,
+      "persistent_ctypes_model_buffer_bytes_including_NUL": 117125,
+      "python_heap_or_peak_RSS_bytes": null
+    },
+    "kv_cache": {
+      "array_count": 2,
+      "benchmark_final_occupancy": {
+        "encoded-fu2p2q": {
+          "final_context_positions": 135,
+          "generated_output_bytes": 122,
+          "logical_valid_kv_bytes": 17280,
+          "prefix_positions": 13
+        },
+        "encoded-hello": {
+          "final_context_positions": 101,
+          "generated_output_bytes": 90,
+          "logical_valid_kv_bytes": 12928,
+          "prefix_positions": 11
+        },
+        "encoded-max48": {
+          "final_context_positions": 201,
+          "generated_output_bytes": 104,
+          "logical_valid_kv_bytes": 25728,
+          "prefix_positions": 97
+        }
+      },
+      "capacity_positions": 256,
+      "dimensions_per_head": 16,
+      "elem_bytes": 2,
+      "heads": 2,
+      "layers": 1,
+      "logical_allocated_bytes": 32768,
+      "logical_bytes_per_committed_position": 128,
+      "runtime_scope": "KV validity resets, memory allocation stays fixed."
+    },
+    "model_upload_bytes": 117124,
+    "model_upload_words_32bit": 29281,
+    "rtl_tables": {
+      "exp_bytes_per_recipient": 1028,
+      "exp_loader_recipients": 5,
+      "generic_rsqrts_without_writes": 2,
+      "loader_addressable_bytes": 16404,
+      "rope_bytes": 8192,
+      "rope_instances": 1,
+      "rsqrt_bytes_per_recipient": 1024,
+      "rsqrt_loader_recipients": 3
+    },
+    "rtl_weight_arrays": {
+      "embedding_copy_bytes": 20480,
+      "first_q_row_copy_bytes": 64,
+      "per_token_normalisation_gain_copy_bytes": 192,
+      "unique_plus_loader_weight_copies_bytes": 73984
+    },
+    "rtl_work_arrays_bytes_excluding_gain_copies_and_scalar_registers": {
+      "attention_output_projection_input": 64,
+      "attention_query_scores_exponentials_probabilities": 2624,
+      "feedforward_gate_up_down_inputs": 384,
+      "frontend_vectors_and_rotation_and_projection_inputs": 512,
+      "logits_projection_input": 64,
+      "normalisation_inputs": 192,
+      "transformer_current_embedding_and_residual": 128
+    },
+    "rtl_work_arrays_subtotal_bytes": 3968,
+    "safetensors_file_bytes": 64648,
+    "safetensors_overhead_bytes": 964,
+    "unique_coefficient_and_table_bytes": 10244,
+    "unique_parameters": 26720,
+    "unique_tensor_data_bytes": 63684,
+    "unique_weight_bytes": 53440,
+    "upload_banks": [
+      {
+        "bank": 0,
+        "name": "E",
+        "tensor": "E",
+        "tensor_bytes": 20480,
+        "transport_bytes": 40960,
+        "words": 10240
+      },
+      {
+        "bank": 1,
+        "name": "Q",
+        "tensor": "Q",
+        "tensor_bytes": 2048,
+        "transport_bytes": 4096,
+        "words": 1024
+      },
+      {
+        "bank": 2,
+        "name": "K",
+        "tensor": "K",
+        "tensor_bytes": 2048,
+        "transport_bytes": 4096,
+        "words": 1024
+      },
+      {
+        "bank": 3,
+        "name": "V",
+        "tensor": "V",
+        "tensor_bytes": 2048,
+        "transport_bytes": 4096,
+        "words": 1024
+      },
+      {
+        "bank": 4,
+        "name": "O",
+        "tensor": "O",
+        "tensor_bytes": 2048,
+        "transport_bytes": 4096,
+        "words": 1024
+      },
+      {
+        "bank": 5,
+        "name": "gate",
+        "tensor": "gate",
+        "tensor_bytes": 8192,
+        "transport_bytes": 16384,
+        "words": 4096
+      },
+      {
+        "bank": 6,
+        "name": "up",
+        "tensor": "up",
+        "tensor_bytes": 8192,
+        "transport_bytes": 16384,
+        "words": 4096
+      },
+      {
+        "bank": 7,
+        "name": "down",
+        "tensor": "down",
+        "tensor_bytes": 8192,
+        "transport_bytes": 16384,
+        "words": 4096
+      },
+      {
+        "bank": 8,
+        "name": "gain1",
+        "tensor": "gain1",
+        "tensor_bytes": 64,
+        "transport_bytes": 128,
+        "words": 32
+      },
+      {
+        "bank": 9,
+        "name": "gain2",
+        "tensor": "gain2",
+        "tensor_bytes": 64,
+        "transport_bytes": 128,
+        "words": 32
+      },
+      {
+        "bank": 10,
+        "name": "gain3",
+        "tensor": "gain3",
+        "tensor_bytes": 64,
+        "transport_bytes": 128,
+        "words": 32
+      },
+      {
+        "bank": 11,
+        "name": "rope_cosine_low16_sine_high16",
+        "tensor": "rope",
+        "tensor_bytes": 8192,
+        "transport_bytes": 8192,
+        "words": 2048
+      },
+      {
+        "bank": 13,
+        "name": "exp_table",
+        "tensor": "exp_table",
+        "tensor_bytes": 1028,
+        "transport_bytes": 1028,
+        "words": 257
+      },
+      {
+        "bank": 14,
+        "name": "rsqrt_table",
+        "tensor": "rsqrt_table",
+        "tensor_bytes": 1024,
+        "transport_bytes": 1024,
+        "words": 256
+      }
+    ],
+    "upload_weight_high_half_padding_bytes": 53440,
+    "weight_bits": 16
+  },
+  "model_id": "chip-joke-text-20261109",
+  "repo_files": {
+    ".agents/runtime/hardware/inference/outputs/power-paired-20261115T155436Z-fd5f12/evidence-manifest.json": {
+      "bytes": 19657,
+      "sha256": "765f81de2b90142750e5f798ed9cf4f6a9127850d57defa96a2768f46ce86623"
+    },
+    ".agents/runtime/hardware/inference/outputs/power-paired-20261115T155436Z-fd5f12/s1-off/block.json": {
+      "bytes": 243968,
+      "sha256": "970d050e1981129f3e9a72b52d0e8b56ed8d6eae248015bdea7d2c7dfb9b5ddc"
+    },
+    ".agents/runtime/hardware/inference/outputs/power-paired-20261115T155436Z-fd5f12/s1-on/block.json": {
+      "bytes": 243972,
+      "sha256": "0c2c9ab713766c93ef527c7bb055f3fa8c091dcb7ee4fb797a784ce3cb2a2122"
+    },
+    ".agents/runtime/hardware/inference/outputs/power-paired-20261115T155436Z-fd5f12/s2-off/block.json": {
+      "bytes": 243972,
+      "sha256": "66d022984b9a898ff0cea48f0d72630c0149ae91e731c5da93cdbcef776fc9d9"
+    },
+    ".agents/runtime/hardware/inference/outputs/power-paired-20261115T155436Z-fd5f12/s2-on/block.json": {
+      "bytes": 243968,
+      "sha256": "b51e6d50f08eb3d7d2d49dc10e5db28c40fd2ac05158882b4f7934d1ff320b9e"
+    },
+    ".agents/runtime/hardware/inference/outputs/power-paired-20261115T155436Z-fd5f12/s3-off/block.json": {
+      "bytes": 243968,
+      "sha256": "10c6145da323a0069fa8d1a450677ba688caaf119bb649576f93ff7f84ecff20"
+    },
+    ".agents/runtime/hardware/inference/outputs/power-paired-20261115T155436Z-fd5f12/s3-on/block.json": {
+      "bytes": 243972,
+      "sha256": "e601a8b1d93eeb3f2fe4a71e6c72d7bd2af613eb9495e6000c207be8050b479b"
+    },
+    "hardware/research/inference/implementations/kv260/rtl/attention.sv": {
+      "bytes": 12426,
+      "sha256": "3aa9cb030aae469ba235ae9092ea255866cc960ab57adb666117e8e799cbf93d"
+    },
+    "hardware/research/inference/implementations/kv260/rtl/axi_transformer.sv": {
+      "bytes": 8500,
+      "sha256": "12b9d9800a3a0240052219cb40a4e56672605a44b8bd1b8b2bcfb4d873d9a4e5"
+    },
+    "hardware/research/inference/implementations/kv260/rtl/dense.sv": {
+      "bytes": 6033,
+      "sha256": "561e82c83a15071ed45e251329a15fc212b9b1dca4fdb30ed24b33d878613ac9"
+    },
+    "hardware/research/inference/implementations/kv260/rtl/feedforward.sv": {
+      "bytes": 10587,
+      "sha256": "030f2917a8c6df23e18da1d2ef5e3394833c070a22a0a676f4aace705d1253d0"
+    },
+    "hardware/research/inference/implementations/kv260/rtl/fixed_scalar.sv": {
+      "bytes": 11308,
+      "sha256": "d34a86f812f7c3c362aba754430ddd3fe161bb917f066fdbb84ce95291eba690"
+    },
+    "hardware/research/inference/implementations/kv260/rtl/frontend.sv": {
+      "bytes": 7466,
+      "sha256": "dcc8699ad4271af008f1b6dc8f0745ea0435aea87442477217e0be374c5c9d6a"
+    },
+    "hardware/research/inference/implementations/kv260/rtl/kv_cache.sv": {
+      "bytes": 2649,
+      "sha256": "1a97adbdd49e66d6938b4c934185be86a6d3b2a76bc1b85d5df624aacf3c3b48"
+    },
+    "hardware/research/inference/implementations/kv260/rtl/mac32.sv": {
+      "bytes": 5349,
+      "sha256": "9db772ac21e7c0101cfbca0c6f52487cb6a88f24f20b76af76cd1f70c2f7c4b4"
+    },
+    "hardware/research/inference/implementations/kv260/rtl/qk_rope.sv": {
+      "bytes": 6707,
+      "sha256": "acd022f4ffcd540875b37586b0c6fa058873300bb7ea16860bb532b152700662"
+    },
+    "hardware/research/inference/implementations/kv260/rtl/rmsnorm.sv": {
+      "bytes": 7596,
+      "sha256": "de661d481540bacca74e6b28e6d9799daf4dafd9b3c0611781e27b8ec05ac1c0"
+    },
+    "hardware/research/inference/implementations/kv260/rtl/transformer.sv": {
+      "bytes": 17864,
+      "sha256": "d6de7cd2b36a5d6997eab489ec9488745a4c2d37f1b95dd18c79b15aef48d2b9"
+    },
+    "hardware/research/inference/implementations/kv260/tools/board_bos.c": {
+      "bytes": 6855,
+      "sha256": "285bef4c0ea94a4b3b444da544bd1ea485eddbed8b9726deb67a78d87f27e64c"
+    },
+    "hardware/research/inference/implementations/kv260/tools/board_bos.py": {
+      "bytes": 38851,
+      "sha256": "0e32bdf32ea073911ae2cfb81706aa990d71e6788dc43c87da56abca293efe64"
+    },
+    "hardware/research/inference/implementations/kv260/tools/host.c": {
+      "bytes": 21367,
+      "sha256": "a4a1eae0533a2f05b6bc3182248cb4131fd9c1743a07d122fa64edd84f0623f0"
+    },
+    "hardware/research/inference/implementations/kv260/tools/host.h": {
+      "bytes": 6988,
+      "sha256": "1d980ce697f6b88e92d88eb40bc5e442303829d000857f9925c7e11953f67767"
+    },
+    "hardware/research/inference/results/power-paired-20261115T155436Z-fd5f12/run.json": {
+      "bytes": 30353,
+      "sha256": "8e2e325c080270fa44c4699c6694dd54d02b0f096bd1818d149b371e71cff174"
+    }
+  },
+  "resource_usage": {
+    "deployed_routed_full_design": {
+      "accelerator_vs_support_placed_site_breakdown": null,
+      "clock_period_ns": 20,
+      "design": "tiny_ps_axi_wrapper",
+      "distributed_ram_luts": 1094,
+      "hold_slack_ns": 0.011,
+      "nominal_bram_bytes_in_allocated_primitives_including_parity": 168192,
+      "occupied_clbs": {
+        "available": 14640,
+        "device_percent": 36.79,
+        "used": 5386
+      },
+      "report": "vivado-prep/board-build-_4wbn4bx/utilization.rpt",
+      "resources": {
+        "bram_tile_equivalents": {
+          "available": 144,
+          "device_percent": 25.35,
+          "used": 36.5
+        },
+        "clb_luts": {
+          "available": 117120,
+          "device_percent": 27.14,
+          "used": 31792
+        },
+        "clb_registers": {
+          "available": 234240,
+          "device_percent": 4.71,
+          "used": 11027
+        },
+        "dsp_blocks": {
+          "available": 1248,
+          "device_percent": 0.8,
+          "used": 10
+        },
+        "hard_ps8": {
+          "available": 1,
+          "device_percent": 100.0,
+          "used": 1
+        },
+        "lut_as_memory": {
+          "available": 57600,
+          "device_percent": 1.9,
+          "used": 1096
+        },
+        "ramb18": {
+          "available": 288,
+          "device_percent": 4.51,
+          "used": 13
+        },
+        "ramb36": {
+          "available": 144,
+          "device_percent": 20.83,
+          "used": 30
+        },
+        "uram": {
+          "available": 64,
+          "device_percent": 0.0,
+          "used": 0
+        }
+      },
+      "setup_slack_ns": 4.913,
+      "shift_register_luts": 2
+    },
+    "device_part": "xck26-sfvc784-2LV-c",
+    "full_synthesis_seed": {
+      "design": "tiny_ps_axi_wrapper",
+      "report": "board-readiness/full-build-m6b0vzkp/synth/utilization.rpt",
+      "resources": {
+        "bram_tile_equivalents": {
+          "available": 144,
+          "device_percent": 25.35,
+          "used": 36.5
+        },
+        "clb_luts": {
+          "available": 117120,
+          "device_percent": 28.43,
+          "used": 33293
+        },
+        "clb_registers": {
+          "available": 234240,
+          "device_percent": 4.71,
+          "used": 11042
+        },
+        "dsp_blocks": {
+          "available": 1248,
+          "device_percent": 0.8,
+          "used": 10
+        },
+        "hard_ps8": {
+          "available": 1,
+          "device_percent": 100.0,
+          "used": 1
+        },
+        "lut_as_memory": {
+          "available": 57600,
+          "device_percent": 1.96,
+          "used": 1130
+        },
+        "ramb18": {
+          "available": 288,
+          "device_percent": 4.51,
+          "used": 13
+        },
+        "ramb36": {
+          "available": 144,
+          "device_percent": 20.83,
+          "used": 30
+        },
+        "uram": {
+          "available": 64,
+          "device_percent": 0.0,
+          "used": 0
+        }
+      }
+    },
+    "standalone_routed_accelerator": {
+      "design": "transformer",
+      "report": "vivado-prep/routed-timing-wc0y7ot8/utilization.rpt",
+      "resources": {
+        "bram_tile_equivalents": {
+          "available": 144,
+          "device_percent": 25.35,
+          "used": 36.5
+        },
+        "clb_luts": {
+          "available": 117120,
+          "device_percent": 26.2,
+          "used": 30682
+        },
+        "clb_registers": {
+          "available": 234240,
+          "device_percent": 4.3,
+          "used": 10084
+        },
+        "dsp_blocks": {
+          "available": 1248,
+          "device_percent": 0.8,
+          "used": 10
+        },
+        "hard_ps8": {
+          "available": 1,
+          "device_percent": 0.0,
+          "used": 0
+        },
+        "lut_as_memory": {
+          "available": 57600,
+          "device_percent": 1.89,
+          "used": 1090
+        },
+        "ramb18": {
+          "available": 288,
+          "device_percent": 4.51,
+          "used": 13
+        },
+        "ramb36": {
+          "available": 144,
+          "device_percent": 20.83,
+          "used": 30
+        },
+        "uram": {
+          "available": 64,
+          "device_percent": 0.0,
+          "used": 0
+        }
+      },
+      "scope": "Separate build with matching accelerator RTL. Top-level subtraction cannot attribute deployed support resources."
+    },
+    "tool": "Vivado 2025.2"
+  },
+  "schema_version": 1
+}

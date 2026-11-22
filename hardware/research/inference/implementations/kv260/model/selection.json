@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "origin_commit": "e164e1958",
+  "origin_experiment": "data/generative-tiny-v1",
+  "configuration": {
+    "model_type": "llama",
+    "hidden_act": "silu",
+    "hidden_size": 32,
+    "num_hidden_layers": 1,
+    "intermediate_size": 128,
+    "num_attention_heads": 2,
+    "num_key_value_heads": 2,
+    "vocab_size": 320,
+    "rms_norm_eps": 1e-05,
+    "rope_theta": 10000.0,
+    "tie_word_embeddings": true,
+    "attention_bias": false,
+    "mlp_bias": false,
+    "max_position_embeddings": 256
+  },
+  "parameters": 26720,
+  "weights": {
+    "fp32": {
+      "path": "models/tiny/fp32",
+      "files": {
+        "model.safetensors": {
+          "bytes": 107983,
+          "sha256": "ec92ab96fd24c5d82c0b0f9114afbecada1dfc3f4217250472b0336ba0f34e58"
+        },
+        "config.json": {
+          "bytes": 367,
+          "sha256": "9c9e7add01c488a8f5f999dcd964ae3aaca9deeca0d987c9666477e353abd351"
+        }
+      },
+      "tensor_bytes": 106880,
+      "dtypes": [
+        "mlx.core.float32"
+      ]
+    },
+    "q8": {
+      "path": "models/tiny/q8",
+      "files": {
+        "model.safetensors": {
+          "bytes": 36310,
+          "sha256": "1b0f61dfa5c6d0c8c4fffadc80dea4aa8138b3b0e8ed3b375c75c4db7f0590b1"
+        },
+        "config.json": {
+          "bytes": 367,
+          "sha256": "9c9e7add01c488a8f5f999dcd964ae3aaca9deeca0d987c9666477e353abd351"
+        }
+      },
+      "tensor_bytes": 33664,
+      "dtypes": [
+        "mlx.core.float32",
+        "mlx.core.uint32"
+      ]
+    }
+  },
+  "recipe": {
+    "name": "prefix32",
+    "temperature": 0.8,
+    "sample_bytes": 32
+  },
+  "files_sha256": {
+    "jokes.json": "f2238b8088c08acf3ed717b763a87ea4dafaba69c2c79b5e659213c7834e3945",
+    "expected.jsonl": "8bd7290f3c2b0aa9545ffc5722e97a5a71751a1767d547b07d62302a935a9350",
+    "trace.json": "6ad8ca9d3ca1faab6441c91c24ac259ef6a8dd4d7d8102240583528e519dbca6",
+    "trace.txt": "9420755bafae5a19e8180392047d041b37393165b560fde7d1a920cbdce833aa"
+  },
+  "training": {
+    "seed": 47,
+    "passes": 2000,
+    "batch_size": 8,
+    "learning_rate": 0.001,
+    "weight_decay": 0.01,
+    "grad_clip": 1.0,
+    "supervised_tokens_per_pass": 4535
+  },
+  "quality": {
+    "reserved_seeds": [
+      10001,
+      10128
+    ],
+    "samples": 128,
+    "exact": 127,
+    "unique_exact": 41,
+    "largest_joke_count": 8,
+    "failure_seed": 10125
+  },
+  "limits": "All 48 jokes trained; reserved seeds are not semantic heldouts. Repeats and gibberish displayed. Mac only. Eight-bit matrices with FP32 metadata/intermediates/cache."
+}

@@ -1,0 +1,446 @@
+{
+  "artifacts": [
+    {
+      "bytes": 101007976,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/server.tar.gz",
+      "role": "Full received Linux Vivado source and run archive",
+      "sha256": "dead3eac5bdaf0a1dd3fb4ba764ce78f26e49479fd7c1de29b303e1e3156238c"
+    },
+    {
+      "bytes": 285,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/server.receipt.json",
+      "role": "Archive byte and member receipt",
+      "sha256": "86e7d80071b9abd90df85bc4666ed363f1e7982b0c14def923c98639c33fa7ec"
+    },
+    {
+      "bytes": 14509,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/offline-acceptance.json",
+      "role": "Verified phase, timing and image evidence",
+      "sha256": "7135c326a7959714e4edabbae0cbc84af7a92494d3517740b1707bb29064e93f"
+    },
+    {
+      "bytes": 76455,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/attention-resources.json",
+      "role": "Paired census of attention primitives",
+      "sha256": "f339221dc2d19fd2fa380a1782aced8caedc185de248bb4ffa80bd101cc565eb"
+    },
+    {
+      "bytes": 140593,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/control-primitive-census.tsv",
+      "role": "Adopted routed memory and DSP cells",
+      "sha256": "92c26d3434c341d6928d33279e49292d88a47e41312af05336bef0c046770bf1"
+    },
+    {
+      "bytes": 128236,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/candidate-primitive-census.tsv",
+      "role": "Candidate routed memory and DSP cells",
+      "sha256": "8f5417286f623aa8a631580f90fd8ff98ad0ec57fd72646c40a6c9c3cda4ec18"
+    },
+    {
+      "bytes": 10879,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/server/build/reports/utilization-hierarchical.rpt",
+      "role": "Routed hierarchical utilisation",
+      "sha256": "88518d1b31e66418b97eb9eb85b1d83e62a52cd720ed9ec476a793696c27e054"
+    },
+    {
+      "bytes": 380,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/server/build/reports/metrics.txt",
+      "role": "Routed 20 ns constraints and slack",
+      "sha256": "6f9ac110e9e8a617bb54fdb5d09c80d13c6c3e1640333e129da46c80e45c2975"
+    },
+    {
+      "bytes": 2028,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/server/source-manifest.json",
+      "role": "Exact candidate input closure",
+      "sha256": "4d42b14c47bddcf9af558a52fde6f7484f6db3343f99f9dab186d0842a81bdd4"
+    },
+    {
+      "bytes": 62419,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/server/recovery-manifest.json",
+      "role": "Checked build archive members",
+      "sha256": "ee607335ebd8b942586f7cdd7bcc9f4992b33df3d1baf25889ba9b0d971a898c"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/server/offline-package/gradiated-tiny-attention-exp-pair-v1-50mhz.bit.bin",
+      "role": "Verified firmware image",
+      "sha256": "cba28d281c35afe2900b3b06359e8c7c41d81ac562f40199c49084f1c2af81e8"
+    },
+    {
+      "bytes": 367,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/server/kv260-attention-exp-pair-program.dtbo",
+      "role": "Verified firmware-name overlay",
+      "sha256": "a567a9ac9f65f9bec252d8ea085f12501102c6bffabddc5709a724dfa8211e8c"
+    },
+    {
+      "bytes": 42755,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/build-input.tar.gz",
+      "role": "Exact admitted build input archive",
+      "sha256": "9bae65a427fb0cfc1e6ba32a3ca91e6867b0411b918632847ed133942cdc2d48"
+    },
+    {
+      "bytes": 338,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/attention-census.tcl",
+      "role": "Checkpoint resource-census query",
+      "sha256": "73a65c7d0a55a54db11ea899867fcee583266abcf6d1f42ef7ca25768056e630"
+    },
+    {
+      "bytes": 316,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/exponential-registers.tcl",
+      "role": "Focused exponential-buffer register query",
+      "sha256": "d6494f8107894daff13b04d4e69d3a7df41eeab3438933becf6fb6d5176408a6"
+    },
+    {
+      "bytes": 5274,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/candidate-exponential-registers.log",
+      "role": "Routed candidate buffer register proof",
+      "sha256": "9bae69fcb17d4a0217682b2407079f9ec04ada1e86a922f393aee93e099a5e8a"
+    },
+    {
+      "bytes": 3786,
+      "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/compare-attention-resources.py",
+      "role": "Pinned routed census and comparison",
+      "sha256": "09c5f3bb3c21ccae296f3eb0672a2463dd6089d71688e95a20c5cfe9da0e3726"
+    },
+    {
+      "bytes": 15182,
+      "path": "hardware/research/inference/results/attention-exp-div-build-20261117T130122Z/run.json",
+      "role": "Adopted control routed comparison",
+      "sha256": "4c2b2feda20e43658159bbe745c3d487295e58c04612bf0603b47742e5ae6809"
+    },
+    {
+      "bytes": 23405,
+      "path": "hardware/research/inference/results/attention-exp-pair-rtl-20261117T224037Z/run.json",
+      "role": "Exact candidate RTL replay",
+      "sha256": "213233db00f0f495b3f0ea682e8d8cccfebe7bcf329106822645edaff7dae546"
+    }
+  ],
+  "completed_at": "2026-11-17T23:01:44.804025+00:00",
+  "conditions": {
+    "attention_resource_census_sha256": "f339221dc2d19fd2fa380a1782aced8caedc185de248bb4ffa80bd101cc565eb",
+    "clock_target_hz": 50000000,
+    "control_resources": {
+      "bram_tile": 38.0,
+      "dsp": 37.0,
+      "lut": 34516.0,
+      "register": 13581.0
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "cache_capacity": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "communication": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "completion_time": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "correctness": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "cross_device_comparison": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "energy_per_answer": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "estimated_cost": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "implementation_timing": {
+        "reason": "Exact fully routed build and resource census.",
+        "sources": [
+          {
+            "bytes": 14509,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/offline-acceptance.json",
+            "role": "Verified phase, timing and image evidence",
+            "sha256": "7135c326a7959714e4edabbae0cbc84af7a92494d3517740b1707bb29064e93f"
+          },
+          {
+            "bytes": 76455,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/attention-resources.json",
+            "role": "Paired census of attention primitives",
+            "sha256": "f339221dc2d19fd2fa380a1782aced8caedc185de248bb4ffa80bd101cc565eb"
+          },
+          {
+            "bytes": 10879,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/server/build/reports/utilization-hierarchical.rpt",
+            "role": "Routed hierarchical utilisation",
+            "sha256": "88518d1b31e66418b97eb9eb85b1d83e62a52cd720ed9ec476a793696c27e054"
+          }
+        ],
+        "state": "measured"
+      },
+      "long_stability": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Exact fully routed build and resource census.",
+        "sources": [
+          {
+            "bytes": 14509,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/offline-acceptance.json",
+            "role": "Verified phase, timing and image evidence",
+            "sha256": "7135c326a7959714e4edabbae0cbc84af7a92494d3517740b1707bb29064e93f"
+          },
+          {
+            "bytes": 76455,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/attention-resources.json",
+            "role": "Paired census of attention primitives",
+            "sha256": "f339221dc2d19fd2fa380a1782aced8caedc185de248bb4ffa80bd101cc565eb"
+          },
+          {
+            "bytes": 10879,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/server/build/reports/utilization-hierarchical.rpt",
+            "role": "Routed hierarchical utilisation",
+            "sha256": "88518d1b31e66418b97eb9eb85b1d83e62a52cd720ed9ec476a793696c27e054"
+          }
+        ],
+        "state": "measured"
+      },
+      "memory_bandwidth": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "model_quality": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "output_counts": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "physical_area": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "prefill": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "recovery": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "repeatability": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "resources": {
+        "reason": "Exact fully routed build and resource census.",
+        "sources": [
+          {
+            "bytes": 14509,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/offline-acceptance.json",
+            "role": "Verified phase, timing and image evidence",
+            "sha256": "7135c326a7959714e4edabbae0cbc84af7a92494d3517740b1707bb29064e93f"
+          },
+          {
+            "bytes": 76455,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/attention-resources.json",
+            "role": "Paired census of attention primitives",
+            "sha256": "f339221dc2d19fd2fa380a1782aced8caedc185de248bb4ffa80bd101cc565eb"
+          },
+          {
+            "bytes": 10879,
+            "path": ".agents/runtime/hardware/inference/outputs/attention-exp-pair-build-20261117T222808Z/server/build/reports/utilization-hierarchical.rpt",
+            "role": "Routed hierarchical utilisation",
+            "sha256": "88518d1b31e66418b97eb9eb85b1d83e62a52cd720ed9ec476a793696c27e054"
+          }
+        ],
+        "state": "measured"
+      },
+      "serving_load": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "startup": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "sustained_throughput": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "token_gaps": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "tokens_per_joule": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "ttft": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      },
+      "workload_coverage": {
+        "reason": "Vivado implementation stage.",
+        "state": "not_applicable"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "physical_admission": "Rejected: inferred result storage converted to 8192 registers.",
+    "resources": {
+      "bram_tile": 39.0,
+      "dsp": 41.0,
+      "lut": 41324.0,
+      "register": 22702.0
+    },
+    "timing": {
+      "clock": "clk_pl_0 period_ns 20.000",
+      "drc_errors_or_critical_warnings": "0",
+      "fully_placed": "1",
+      "fully_routed": "1",
+      "hold_slack_ns": "0.012",
+      "native_no_clock": "0",
+      "partially_routed_nets": "0",
+      "routing_errors": "0",
+      "routing_gap_nets": "0",
+      "scope": "candidate_full_PS_AXI_neural_no_board_compatibility_claim",
+      "setup_slack_ns": "3.658",
+      "unclocked_active_pins": "0",
+      "unconstrained_internal_endpoints": "0",
+      "unrouted_nets": "0",
+      "unused_ps_clock_outputs": "0"
+    }
+  },
+  "correctness": {
+    "evidence": "20 ns constraint met, setup and hold covered, exact build closure and converted bitstream verified.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "clock_hz": 50000000,
+      "mode": "fully routed PS/AXI/neural implementation",
+      "part": "xck26-sfvc784-2LV-c",
+      "threads": 2,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "995b2e6fbb171dd64467b6c2a1bb1b76488c26c309a332b2adbd50e5c784cc2b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-attention-exp-pair-v1",
+  "id": "attention-exp-pair-build-20261117T222808Z",
+  "implementation": {
+    "id": "attention-exp-pair-v1",
+    "sha256": "cba28d281c35afe2900b3b06359e8c7c41d81ac562f40199c49084f1c2af81e8"
+  },
+  "limitations": [
+    "Implementation reports do not measure inference latency or energy. Named cells include macros and primitive leaves."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilization report.",
+      "name": "routed.bram_tile",
+      "samples": [
+        39.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilization report.",
+      "name": "routed.dsp",
+      "samples": [
+        41.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilization report.",
+      "name": "routed.lut",
+      "samples": [
+        41324.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed utilization report.",
+      "name": "routed.register",
+      "samples": [
+        22702.0
+      ],
+      "unit": "count"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-attention-exp-pair-v1-build",
+    "measurement_boundary": "Routed Vivado synthesis and implementation reports.",
+    "quality_gate": "Completed 50 MHz route, exact closure, timing and firmware conversion.",
+    "sha256": "ea1cbf31fb3c4947c1066cedaf772f7b245a60ce1700ca540a7dfe8816d25b59",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "Same frozen model and seven exact model replay cases.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "1d800bbad07bc33ce118605531f6b3696e766982b8d56b4112c45aa64db9293c"
+  },
+  "started_at": "2026-11-17T22:37:40.008425+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

@@ -35,7 +35,7 @@ tools/browser/.browser-data/
 **/.events.lock
 target/
 **/dist/
-**/node_modules/
+**/node_modules
 **/.turbo/
 **/*.tsbuildinfo
 **/playwright-report/
@@ -128,3 +128,16 @@ skills-lock.json
 
 # Written by scripts/sync-ashby-jobs.ts
 product/website/public/ashby-jobs.sha256
+
+# Hardware experiment payloads belong in ignored runtime or artifact storage.
+hardware/research/**/artifacts/
+hardware/research/**/runtime/
+hardware/**/*.bit
+hardware/**/*.dcp
+hardware/**/*.vcd
+hardware/**/*.wdb
+hardware/**/*.tar.gz
+
+# ETH course-slide extracts remain local study material.
+/hardware/learning/references/slides/eth-*.png
+/hardware/publishing/sand-to-thought/lectures/assets/eth-*.png

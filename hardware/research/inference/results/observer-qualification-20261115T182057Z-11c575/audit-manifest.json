@@ -1,0 +1,30 @@
+{
+  "capture_manifest_sha256": "49f7c84abade4f8c0be244c624bf68b15307aced0b39237bc6e6afeab27ce992",
+  "evidence_root": ".agents/runtime/hardware/inference/outputs/observer-qualification-20261115T182057Z-11c575-audit",
+  "files": {
+    "audit.json": {
+      "bytes": 4351,
+      "sha256": "e78400e2416903662d107480b654d57d3791f7a94e1f216e39c1a8dff83752c8"
+    },
+    "audit.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "audit.stdout": {
+      "bytes": 4351,
+      "sha256": "e78400e2416903662d107480b654d57d3791f7a94e1f216e39c1a8dff83752c8"
+    },
+    "record-observer-physical.py": {
+      "bytes": 13217,
+      "sha256": "3268620b109d7f5379bbf1ef6c1de771a0e5aa2aa6bc8851746b716da502839c"
+    },
+    "review-observer-physical.py": {
+      "bytes": 5331,
+      "sha256": "70e63e9d5b2267e60a0452b8884248df59aca75267c2894957c70b9f485c3bd6"
+    }
+  },
+  "passed": true,
+  "run_id": "observer-qualification-20261115T182057Z-11c575",
+  "run_record_sha256": "e15bff3f9f3970b6a40be975b18aa1990686e174fcbadd39fafedf0ec136eed9",
+  "scope": "Independent UART reconstruction, exact reference receipts, counter invariants and analytic clipped power integration. Timing neutrality remains inconclusive."
+}

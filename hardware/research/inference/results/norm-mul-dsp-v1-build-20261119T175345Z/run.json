@@ -1,0 +1,270 @@
+{
+  "artifacts": [
+    {
+      "bytes": 34660,
+      "path": "hardware/research/inference/results/ff-scalar-mul-dsp-v1-build-20261119T165358Z/run.json",
+      "role": "Exact adopted control route",
+      "sha256": "7e37ae06d062d4a682be42ab49ccdab55fb20c4c85807d08d95bdf8cb741fadd"
+    },
+    {
+      "bytes": 43768,
+      "path": "hardware/research/inference/results/norm-mul-dsp-v1-rtl-20261119T175201Z/run.json",
+      "role": "Candidate RTL qualification",
+      "sha256": "7637f19c80777c1c5c82c387e6f773922f07b289bdf5f9f6a9a79af0ae4c9f9a"
+    },
+    {
+      "bytes": 59576,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/build-input.tar.gz",
+      "role": "Exact admitted build input archive",
+      "sha256": "0737373fa5ead24385843bd1e5fb3d15ee614225e60daa138bccee7d8e0dfbca"
+    },
+    {
+      "bytes": 3326,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/admitted-protocol.md",
+      "role": "Sealed execution protocol",
+      "sha256": "dd96d89fd6d2bf59eebc6feaaabc2daaad4316c5ca457717460ffbf2cfe95239"
+    },
+    {
+      "bytes": 1411,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/admission.json",
+      "role": "Preflight pins for control route, shell and candidate source",
+      "sha256": "dce1176b95ff6fd45264350ab6607cb01e0651d55b6a07284444f13fce11e9d2"
+    },
+    {
+      "bytes": 885,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/admitted-rtl-gate.json",
+      "role": "Frozen initial qualification, selected site and exact RTL manifest pins",
+      "sha256": "26f45e74e4b9431aded80422c4df1d9ffd7f0f9033c2ed3f5d0c9897b590d59a"
+    },
+    {
+      "bytes": 269,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/directed-summary.json",
+      "role": "Exact directed tests admitted before routing",
+      "sha256": "0bd324139b7d921f4fd87249704e4d50028f0228061a66b8492a99c27c673019"
+    },
+    {
+      "bytes": 313565,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/qualified-replay-summary.json",
+      "role": "Exact paired model replay admitted before routing",
+      "sha256": "6cd5065e70cd543b871245bbbd10a1d895d05996aa3c88915bd06899c7fe46bc"
+    },
+    {
+      "bytes": 355,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/dispatch-release.json",
+      "role": "Release of the exact candidate source packet",
+      "sha256": "183f7ce060d34e15a40b3b7f18cb76eefee167555973665b18469af0db4dc88a"
+    },
+    {
+      "bytes": 2605,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/admitted-source-manifest.json",
+      "role": "Candidate source and tooling hashes",
+      "sha256": "cc7f2fae3fd0c08e1a065fade1cab924bb48409f7d73b62c9d0124065e6cf699"
+    },
+    {
+      "bytes": 251,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/dispatch.json",
+      "role": "Bounded Vivado launch receipt",
+      "sha256": "e23a75dd423bbcd25f24641cc3e22f6ac4b6f2bc25b70df5b427fce015a01c3a"
+    },
+    {
+      "bytes": 252,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/launch.log",
+      "role": "Remote shell and control checkpoint hash checks",
+      "sha256": "115360cfac76a5d0776a1685daea1ff04dbd8083b4815ddc03bc34ea6624d0ad"
+    },
+    {
+      "bytes": 3964586,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/server.tar.gz",
+      "role": "Full Linux Vivado projects, checkpoints, tooling, logs and firmware",
+      "sha256": "8a6bbd87badfaab06c5dcb355a09869ca420181c28cfc441d15ad72a6505d74e"
+    },
+    {
+      "bytes": 477,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/server.receipt.json",
+      "role": "Linux archive member and hash receipt",
+      "sha256": "19ff6d16ebd403f3a8446fe87122c40bc90e1252d63bf9cea4f745cb97e77f88"
+    },
+    {
+      "bytes": 421,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/archive-recovery.json",
+      "role": "Resumable verified transfer record",
+      "sha256": "e2571baae4d68c090a545f71189645e8be1aa83b8ead71d3d0e39c8f57a76409"
+    },
+    {
+      "bytes": 553,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/archive-integrity.json",
+      "role": "Independent file-by-file recovery verification",
+      "sha256": "cafd2b6f045e308d476b9a721e421c2da8a2ca1ac8af0e254bbdd5ae83606dfd"
+    },
+    {
+      "bytes": 915,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/candidate-rtl-manifest.json",
+      "role": "Exact candidate full-model replay inputs",
+      "sha256": "8519e39ee6a33ef7d96b7f871222c1fb6d6f30ee0cf1a6a2422819dab44a9c9d"
+    },
+    {
+      "bytes": 915,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/control-rtl-manifest.json",
+      "role": "Exact control full-model replay inputs",
+      "sha256": "a1632c52f0304e5ad709c7ed0b9869d09e68e8c72dde2a4b0889fe03368ff037"
+    },
+    {
+      "bytes": 272,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/server/build-outcome.json",
+      "role": "Vivado flow completion and elapsed time",
+      "sha256": "e72f698151cf8476637f15292a792533ec6db8735c529b121c1dddf605c32b4f"
+    },
+    {
+      "bytes": 45616,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/server/recovery-manifest.json",
+      "role": "Recovered archive member hashes",
+      "sha256": "dd6e6d84f5f6679bcafc0bac223eccf56b17d9a42ed4beb98bb7be97b37aa722"
+    },
+    {
+      "bytes": 2605,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/server/source-manifest.json",
+      "role": "Recovered Vivado input hashes",
+      "sha256": "cc7f2fae3fd0c08e1a065fade1cab924bb48409f7d73b62c9d0124065e6cf699"
+    },
+    {
+      "bytes": 0,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/server/build/generate/compiled-neural-sources.tsv",
+      "role": "Generated project RTL compile source hashes",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1426,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/config.py",
+      "role": "Frozen control build identifiers and checksums",
+      "sha256": "42224ecce1b798eb451ab109189a2ac339c5c61eee16c94767d6a2bce8571adf"
+    },
+    {
+      "bytes": 10583,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/prepare.py",
+      "role": "Candidate packet preparation",
+      "sha256": "bb2bce575b30fdeaa16f671f0569dfc557cbb65ef563920e2082891c42f4d5ba"
+    },
+    {
+      "bytes": 3416,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/launch.py",
+      "role": "Bounded existing-host dispatch",
+      "sha256": "140b6c8f725ca3f02751b1f32b5f4ed4d95edffdc9ec8beeed6fb94e823d8267"
+    },
+    {
+      "bytes": 4080,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/recover.py",
+      "role": "Resumable receipt-verified recovery",
+      "sha256": "6d90db83fa953224dae309146e953dc83669a2647ea7a5ce4f170dec2311f035"
+    },
+    {
+      "bytes": 18567,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/verify.py",
+      "role": "Independent build acceptance checks",
+      "sha256": "31a8f9a09a829ec23226b36e3dca8d47227d0e6aac1edd78bdf6ae814ff8dfb8"
+    },
+    {
+      "bytes": 14898,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/record.py",
+      "role": "Build record assembly and artifact installation",
+      "sha256": "02ade28e2469a7815c83289da1a33576062a8261a43424e0c2cc48cf65794244"
+    },
+    {
+      "bytes": 732,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/verification.log",
+      "role": "Local qualification outcome",
+      "sha256": "87a2dae478501d439de33ced5136ea51a6499c470233145b680be0ab72609d46"
+    },
+    {
+      "bytes": 5075,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/preserve_failure.py",
+      "role": "Failed attempt preservation script",
+      "sha256": "685386841410d6516668ade02cb94a4b5d3b0deaf4235d9b999c834efc001f1d"
+    },
+    {
+      "bytes": 899,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/server/build/generate/phase.json",
+      "role": "Vivado generate outcome",
+      "sha256": "2f853e91b81d0463b1703e5f28e0997123ee990221aa088ff9e64a7a9a5f90e3"
+    },
+    {
+      "bytes": 34466,
+      "path": ".agents/runtime/hardware/inference/outputs/norm-mul-dsp-v1-build-20261119T175345Z/server/build/generate/console.log",
+      "role": "Vivado generate log",
+      "sha256": "5aebb0c7d0fa54482301afe8c7ae6596db8018656ce6e01c81c880a963c9a20b"
+    }
+  ],
+  "completed_at": "2026-11-19T17:56:56.551655+00:00",
+  "conditions": {
+    "candidate_source_manifest_sha256": "cc7f2fae3fd0c08e1a065fade1cab924bb48409f7d73b62c9d0124065e6cf699",
+    "changed_rtl": [
+      "rmsnorm"
+    ],
+    "control_checkpoint_sha256": "2216c3cccf88d35cd5c2b19a056a80be6c6101f8934b5330d63255e5b6ed626b",
+    "failure": "Vivado stopped during project generation because the inherited compile audit required every supplied RTL unit to appear in the active hierarchy. The three RMSNorm instances no longer instantiate the unchanged generic fixed_scalar module, so Vivado omitted that file from the active compile order.",
+    "image_admitted": false,
+    "measurement_standard": "inference-measurements-v2",
+    "selected_sites": [
+      "norm1.scalar",
+      "norm2.scalar",
+      "normfinal.scalar"
+    ],
+    "timing": {}
+  },
+  "correctness": {
+    "evidence": "Vivado stopped during project generation because the inherited compile audit required every supplied RTL unit to appear in the active hierarchy. The three RMSNorm instances no longer instantiate the unchanged generic fixed_scalar module, so Vivado omitted that file from the active compile order.",
+    "passed": false
+  },
+  "device": {
+    "configuration": {
+      "clock_hz": 50000000,
+      "mode": "fully routed PS/AXI/neural implementation",
+      "part": "xck26-sfvc784-2LV-c",
+      "threads": 2,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "995b2e6fbb171dd64467b6c2a1bb1b76488c26c309a332b2adbd50e5c784cc2b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-norm-mul-dsp-v1",
+  "id": "norm-mul-dsp-v1-build-20261119T175345Z",
+  "implementation": {
+    "id": "norm-mul-dsp-v1",
+    "sha256": "8519e39ee6a33ef7d96b7f871222c1fb6d6f30ee0cf1a6a2422819dab44a9c9d"
+  },
+  "limitations": [
+    "The build qualification stopped at the recorded failure."
+  ],
+  "metrics": [],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-norm-mul-dsp-v1-build",
+    "measurement_boundary": "Routed Vivado synthesis and implementation reports.",
+    "quality_gate": "Exact adopted control route and candidate closure, covered timing, bounded archive recovery and verified firmware.",
+    "sha256": "dd96d89fd6d2bf59eebc6feaaabc2daaad4316c5ca457717460ffbf2cfe95239",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Pinned model loaded and legacy BOS run before the tested request"
+  },
+  "quality": {
+    "evidence": "The exact RTL run passed.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "d304046d584162f637af21ce9612a79db90dbab348397e0f4393b0288163b150"
+  },
+  "started_at": "2026-11-19T17:53:55.746641+00:00",
+  "status": "failed",
+  "supersedes": null,
+  "workload": {
+    "id": "matched-scalar-division-seven-simulation-cases-v1",
+    "sha256": "f5e46f0e82996a336deeb5667fdf0edf98c1f3a33ea638ff9b3ca52e5a92018d"
+  }
+}

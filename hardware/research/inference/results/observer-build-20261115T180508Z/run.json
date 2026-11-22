@@ -1,0 +1,423 @@
+{
+  "artifacts": [
+    {
+      "bytes": 6409,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-20261115T1735-preparation/resumed-build/protocol.md",
+      "role": "Frozen offline-build protocol",
+      "sha256": "01a19f524870359b33879302c04024a24daac727fcefa2c16cc4605d33d71f23"
+    },
+    {
+      "bytes": 104791,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-20261115T1735-preparation/resumed-build/source.patch",
+      "role": "Counter variant source delta",
+      "sha256": "a064668b477e43e86054275281e515a5fb5ea707c98122bf679607ba3f64ba47"
+    },
+    {
+      "bytes": 2058,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-20261115T1735-preparation/resumed-build/resume-invocation.json",
+      "role": "Resumed build invocation",
+      "sha256": "f7bc65ef552e3a03a9ba7416f6ee95c70225475b9d60826473e81030692c9f42"
+    },
+    {
+      "bytes": 4800,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-20261115T1735-preparation/resumed-build/offline-acceptance.json",
+      "role": "Independent Mac build and recovery checks",
+      "sha256": "17c048155c4c26edf48a1a45b4137978918fbbdec4b308002b002ca70c77bcc9"
+    },
+    {
+      "bytes": 57530771,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-20261115T1735-preparation/server-resumed.tar.gz",
+      "role": "Complete server source, inputs, outputs and logs",
+      "sha256": "8c7a2ed6f2c8e5b15485e573aa60a2bd137ebb60818e4c644991dcabe1cc3abd"
+    },
+    {
+      "bytes": 64408,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-20261115T1735-preparation/server-resumed/observer-20261115T1735/resumed-files.json",
+      "role": "Server artifact inventory",
+      "sha256": "1ddb36885a2e094f97c1b9311e3f65f61258f023500087eab121f8621856b1af"
+    },
+    {
+      "bytes": 35260240,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-20261115T1735-preparation/server-paused.tar.gz",
+      "role": "Pre-restart recovery archive",
+      "sha256": "a80e812118959082fdf82fd99b91a84b72e853b44228ace76903192f35468459"
+    },
+    {
+      "bytes": 7797692,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-20261115T1735-preparation/server-resumed/observer-20261115T1735/offline-package/gradiated-tiny-observer-v1-50mhz.bit.bin",
+      "role": "Offline observer firmware, not programmed",
+      "sha256": "2a3559bc1cd39e627b35d72c8a55a4b49a06640f48ab23dab884429fa5af0390"
+    },
+    {
+      "bytes": 380,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-20261115T1735-preparation/server-resumed/observer-20261115T1735/build/reports-resume1/metrics.txt",
+      "role": "Final routed timing and coverage",
+      "sha256": "66b221ecfcd428856e8125e15e7b5dd90d99823a3e1e726591d870e742444f05"
+    },
+    {
+      "bytes": 12624,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-20261115T1735-preparation/server-resumed/observer-20261115T1735/build/reports-resume1/utilization.rpt",
+      "role": "Full-device resource usage",
+      "sha256": "f5f314ff5ea0379e30792c1d703e58bd9994f350fb36f61e528b8881e31d1f76"
+    },
+    {
+      "bytes": 410,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-20261115T1735-preparation/mac-workbench-paused/final-tests/result.json",
+      "role": "Earlier simulation result, separate from implementation evidence",
+      "sha256": "e7207db946ee58aae21ccaa1d649f2b45e9793a235aea3d53b316e0daa73d801"
+    },
+    {
+      "bytes": 2324,
+      "path": ".agents/runtime/hardware/inference/outputs/observer-physical-preparation-resumed-20261115-reset-review.md",
+      "role": "SOL independent generated clock/reset comparison",
+      "sha256": "021a858fbc4fffb9b883fcef55d09dc566fafbb8022880fb65f45998813b8a55"
+    }
+  ],
+  "completed_at": "2026-11-15T18:18:33.504601+00:00",
+  "conditions": {
+    "baseline_routed_resources": {
+      "bram_tile": 36.5,
+      "dsp": 10,
+      "lut": 31792,
+      "occupied_clb": 5386,
+      "register": 11027,
+      "uram": 0
+    },
+    "baseline_source": "implementations/kv260/resource-memory-baseline.json",
+    "board_programmed": false,
+    "drc_advisories": {
+      "DPIP-2": 12,
+      "DPOP-3": 10,
+      "DPOP-4": 10
+    },
+    "drc_waivers": false,
+    "mac_archive_verified": true,
+    "original_route_attempt": {
+      "command": [
+        "/home/admin/amd/2025.2/Vivado/bin/vivado",
+        "-mode",
+        "batch",
+        "-notrace",
+        "-source",
+        "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/implementation/tools/observer-build.tcl",
+        "-tclargs",
+        "route",
+        "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/build/place/place.dcp",
+        "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/build/route"
+      ],
+      "elapsed_s": 277.930699886987,
+      "expected_output": "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/build/route/route.dcp",
+      "expected_output_exists": false,
+      "phase": "route",
+      "returncode": -15,
+      "timed_out": false,
+      "timeout_s": 600
+    },
+    "prerequisite_phases": {
+      "generate": {
+        "command": [
+          "/home/admin/amd/2025.2/Vivado/bin/vivado",
+          "-mode",
+          "batch",
+          "-notrace",
+          "-source",
+          "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/implementation/tools/observer-build.tcl",
+          "-tclargs",
+          "generate",
+          "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/board-readiness/full-build-m6b0vzkp/generate/project/tiny_ps_axi_build.xpr",
+          "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/build/generate"
+        ],
+        "elapsed_s": 30.106684469035827,
+        "expected_output": "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/build/generate/project/tiny_ps_axi_build.xpr",
+        "expected_output_exists": true,
+        "phase": "generate",
+        "returncode": 0,
+        "timed_out": false,
+        "timeout_s": 180
+      },
+      "opt": {
+        "command": [
+          "/home/admin/amd/2025.2/Vivado/bin/vivado",
+          "-mode",
+          "batch",
+          "-notrace",
+          "-source",
+          "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/implementation/tools/observer-build.tcl",
+          "-tclargs",
+          "opt",
+          "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/build/synth/synthesized.dcp",
+          "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/build/opt"
+        ],
+        "elapsed_s": 88.69876829104032,
+        "expected_output": "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/build/opt/opt.dcp",
+        "expected_output_exists": true,
+        "phase": "opt",
+        "returncode": 0,
+        "timed_out": false,
+        "timeout_s": 600
+      },
+      "place": {
+        "command": [
+          "/home/admin/amd/2025.2/Vivado/bin/vivado",
+          "-mode",
+          "batch",
+          "-notrace",
+          "-source",
+          "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/implementation/tools/observer-build.tcl",
+          "-tclargs",
+          "place",
+          "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/build/opt/opt.dcp",
+          "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/build/place"
+        ],
+        "elapsed_s": 267.26515421597287,
+        "expected_output": "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/build/place/place.dcp",
+        "expected_output_exists": true,
+        "phase": "place",
+        "returncode": 0,
+        "timed_out": false,
+        "timeout_s": 600
+      },
+      "synth": {
+        "command": [
+          "/home/admin/amd/2025.2/Vivado/bin/vivado",
+          "-mode",
+          "batch",
+          "-notrace",
+          "-source",
+          "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/implementation/tools/observer-build.tcl",
+          "-tclargs",
+          "synth",
+          "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/build/generate/project/tiny_ps_axi_build.xpr",
+          "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/build/synth"
+        ],
+        "elapsed_s": 409.38323532696813,
+        "expected_output": "/home/admin/projects/gradiated/.agents/runtime/fpga-inference/observer-20261115T1735/build/synth/synthesized.dcp",
+        "expected_output_exists": true,
+        "phase": "synth",
+        "returncode": 0,
+        "timed_out": false,
+        "timeout_s": 600
+      }
+    },
+    "prior_258_files_unchanged": true,
+    "verified_files": 327
+  },
+  "correctness": {
+    "evidence": "Pinned source closure and previous 640 exact simulation scores with cycle-identical original/variant traces. No observer-board correctness claim.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "board_preset": "xilinx.com:kv260_som:part0:1.4",
+      "max_threads": 2,
+      "part": "xck26-sfvc784-2LV-c",
+      "route_checkpoint_sha256": "c9e1707fe94860e2f1f3d2fb6aec13e9a0a20612f7105009858dc46161fa4676",
+      "scope": "Full PS, AXI and neural implementation, offline only",
+      "target_clock_period_ns": 20,
+      "tool": "Vivado 2025.2"
+    },
+    "configuration_sha256": "eee05102bcd20c3223e88fa4a8c0fe474c2c3ccf4784ac00d8b664de41242d4b",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "implementation-report",
+  "experiment_id": "kv260-observer-v1",
+  "id": "observer-build-20261115T180508Z",
+  "implementation": {
+    "id": "kv260-observer-v1",
+    "sha256": "737019034f672fef7eef9b97fb0085aeb52e8a73a4584b6fd5fadfdc6cc729db"
+  },
+  "limitations": [
+    "Implementation-report evidence only. Physical qualification pending explicit approval.",
+    "Static timing is not measured inference latency. No new throughput or energy measurements.",
+    "Single routed implementation. Resource deltas include placement and optimisation effects, not isolated counter-cell area.",
+    "Resource utilisation cannot be converted directly to physical silicon area.",
+    "32 pre-existing DSP pipelining advisory warnings remain, with no severity waivers.",
+    "Artifact copies are verified on the Mac. Shared backup remains pending."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "bram_tile_used",
+      "samples": [
+        36.5
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "bram_tile_utilisation",
+      "samples": [
+        25.35
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "dsp_used",
+      "samples": [
+        10.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "dsp_utilisation",
+      "samples": [
+        0.8
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "lut_used",
+      "samples": [
+        32553.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "lut_utilisation",
+      "samples": [
+        27.79
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "occupied_clb_used",
+      "samples": [
+        5764.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "occupied_clb_utilisation",
+      "samples": [
+        39.37
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "register_used",
+      "samples": [
+        12044.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "register_utilisation",
+      "samples": [
+        5.14
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "uram_used",
+      "samples": [
+        0.0
+      ],
+      "unit": "count"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed full-design utilization.rpt",
+      "name": "uram_utilisation",
+      "samples": [
+        0.0
+      ],
+      "unit": "percent"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed static timing at 20 ns target. Not a physical measurement.",
+      "name": "setup_slack_ns",
+      "samples": [
+        4.725
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Vivado routed static timing at 20 ns target. Not a physical measurement.",
+      "name": "hold_slack_ns",
+      "samples": [
+        0.013
+      ],
+      "unit": "ns"
+    },
+    {
+      "kind": "observed",
+      "method": "Monotonic wall time of resumed bounded process, includes report and checkpoint overhead",
+      "name": "bitstream_wall_time",
+      "samples": [
+        113.97631720697973
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Monotonic wall time of resumed bounded process, includes report and checkpoint overhead",
+      "name": "reports_wall_time",
+      "samples": [
+        72.06664540804923
+      ],
+      "unit": "s"
+    },
+    {
+      "kind": "observed",
+      "method": "Monotonic wall time of resumed bounded process, includes report and checkpoint overhead",
+      "name": "route_wall_time",
+      "samples": [
+        500.2970963160042
+      ],
+      "unit": "s"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-observer-v1-offline-build",
+    "measurement_boundary": "Resumed route, reports and offline bitstream. Earlier synthesis/place and interrupted route retained separately. No board execution.",
+    "quality_gate": "Frozen model unchanged. Prerequisite simulation exact scores and cycle-equivalent legacy AXI traces. Full native timing, route, clock and DRC gates.",
+    "sha256": "01a19f524870359b33879302c04024a24daac727fcefa2c16cc4605d33d71f23",
+    "tokenizer": "Unchanged frozen byte/hex tokenizer. No token generation measured in this offline build.",
+    "warmup": "Not applicable to offline implementation reports."
+  },
+  "quality": {
+    "evidence": "Frozen model and numerical format unchanged. Offline implementation acceptance passed. No new model-quality evaluation.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "04c7100ca9d5ba9ddbd49fdc14bd85cefcc6381d",
+    "patch_sha256": "a064668b477e43e86054275281e515a5fb5ea707c98122bf679607ba3f64ba47"
+  },
+  "started_at": "2026-11-15T18:05:08.576995+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-observer-full-device-offline-build",
+    "sha256": "01a19f524870359b33879302c04024a24daac727fcefa2c16cc4605d33d71f23"
+  }
+}

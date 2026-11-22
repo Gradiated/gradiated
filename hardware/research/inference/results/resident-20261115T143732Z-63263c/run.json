@@ -1,0 +1,198 @@
+{
+  "artifacts": [
+    {
+      "bytes": 5417,
+      "path": ".agents/runtime/hardware/inference/outputs/resident-20261115T143732Z-63263c/invocation.json",
+      "role": "frozen invocation and pins",
+      "sha256": "0bf0ddd065417cf34f3a2f7db305e6cce10af3f6c939cb68e67e1c67702e6aa8"
+    },
+    {
+      "bytes": 47407,
+      "path": ".agents/runtime/hardware/inference/outputs/resident-20261115T143732Z-63263c/source.patch",
+      "role": "pinned source patch",
+      "sha256": "d67632a7d0e55f31ee65f9242bc8b62050399652bbf999116d0873a03e6fd56a"
+    },
+    {
+      "bytes": 4598,
+      "path": ".agents/runtime/hardware/inference/outputs/resident-20261115T143732Z-63263c/kv260-conditioned-resident-validation-v1.md",
+      "role": "frozen experiment plan",
+      "sha256": "7892a07b78e3d13f68e3f6c38c1c203e5e526dfb31cbbcc64125d61eb0045d8c"
+    },
+    {
+      "bytes": 12869,
+      "path": ".agents/runtime/hardware/inference/outputs/resident-20261115T143732Z-63263c/evidence-manifest.json",
+      "role": "hashes of raw and verified receipts",
+      "sha256": "25926d2ff4dfe90fc4d2f8445dfe198110be8fdbfc9d0f750bbb9d5cb082ddce"
+    },
+    {
+      "bytes": 2944,
+      "path": ".agents/runtime/hardware/inference/outputs/resident-20261115T143732Z-63263c/summary.json",
+      "role": "resident validation outcome and timing spans",
+      "sha256": "b30cb4dfd89f2fa9516f5bd261ba39db522f068df3d0cbf9d35a75c253cabd65"
+    },
+    {
+      "bytes": 5748,
+      "path": ".agents/runtime/hardware/inference/outputs/resident-20261115T143732Z-63263c/result.json",
+      "role": "independently verified gate and restoration results",
+      "sha256": "5f4af539034983c7f9b0cd269dadaff91a063c26a6e7eef441e1abb0b97224c2"
+    }
+  ],
+  "completed_at": "2026-11-15T14:45:45.532965+00:00",
+  "conditions": {
+    "candidate_model_image_sha256": "698df2e177b8e478088fffe9b02af09cd10c9ac0afbe252f3b031f133262e055",
+    "candidate_model_package_sha256": "b0394ba256d877fb62d6eb6e74942d5ff0c649cf751d53481e827c8bae5e9167",
+    "candidate_native_begins": 1,
+    "configuration_preflight_boot_id": "0e4cc12e-4532-4434-be89-665af09dba14",
+    "configuration_sha256": "9c236b7a021a7e779f24ec00cda6590967fee3f81accbf531b5da7c7b6b735e8",
+    "context_clears": 9,
+    "exact_signed_scores": 469440,
+    "frozen_configuration_record": "Existing 50 MHz project state for the same boot",
+    "frozen_fresh_trace_pins": {
+      "encoded-fu2p2q": [
+        "timed-01-1/runner.stdout",
+        "9b23c8df5cb52633fe05bc02871d246e5538cb94a301aff756f37bfc7aa458ba"
+      ],
+      "encoded-hello": [
+        "timed-01-2/runner.stdout",
+        "e92f9d9d8ec33a6ccbfc715e42148a6aea441f017f89a931c08cad3a84197686"
+      ],
+      "encoded-max48": [
+        "timed-01-3/runner.stdout",
+        "1edfbd04efc45975a02cfec629601de65d430491313f93984a56a4f232ddb8a1"
+      ]
+    },
+    "mac_verified_gates": 14,
+    "original_weights_restored": true,
+    "preregistered_plan": "../../experiments/kv260-conditioned-resident-validation-v1.md",
+    "request_order": [
+      "encoded-fu2p2q",
+      "encoded-hello",
+      "encoded-fu2p2q",
+      "encoded-fu2p2q",
+      "encoded-max48",
+      "encoded-hello",
+      "encoded-max48",
+      "encoded-hello",
+      "repeated-J01-256",
+      "encoded-hello"
+    ],
+    "utc_source": "Mac UTC; inference intervals from board monotonic nanoseconds"
+  },
+  "correctness": {
+    "evidence": "469,440 exact integer scores verified across nine greedy completions and one full-context case.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "dfx_service": "runtime inactive, boot enablement preserved",
+      "firmware_name": "gradiated-tiny-50mhz.bit.bin",
+      "firmware_sha256": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0",
+      "fpga_manager_flags": 0,
+      "kernel_build": "#16-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 16 05:06:58 UTC 2025",
+      "kernel_release": "6.8.0-1015-xilinx",
+      "model": "ZynqMP KV260 revB",
+      "physical_unit": "KV260 USB bridge XFL1RXOM0IWQ",
+      "pl0_rate_source": "Linux clock framework",
+      "pl0_reported_hz": 50000000,
+      "reset_dt_id": 119,
+      "system_boot_id": "0e4cc12e-4532-4434-be89-665af09dba14",
+      "transformer_map": {
+        "base": 2684354560,
+        "bytes": 4096,
+        "device": "/dev/uio4"
+      },
+      "verified_state_sha256": "9c236b7a021a7e779f24ec00cda6590967fee3f81accbf531b5da7c7b6b735e8"
+    },
+    "configuration_sha256": "4515431a669eca9ae9b21f19a34e8c443deb06ee73a25e650d021cfa684314ab",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-conditioned-resident-validation-v1",
+  "id": "resident-20261115T143732Z-63263c",
+  "implementation": {
+    "id": "kv260-conditioned-50mhz-resident-runner-v1",
+    "sha256": "c617850b722ff9a7607d813fd10a206b18dce24d480faad397f3b04dd4807c79"
+  },
+  "limitations": [
+    "Validation covers three frozen prompts in one fixed resident order and one forced full-context sequence.",
+    "A clear invalidates the active context. The experiment makes no claim about erasing old SRAM contents.",
+    "The runner paused between requests for independent UART verification. Sustained/resident throughput, thermal performance, energy and cost remain unmeasured."
+  ],
+  "metrics": [
+    {
+      "kind": "observed",
+      "method": "Monotonic time around the single candidate NativeSession construction.",
+      "name": "candidate_setup",
+      "samples": [
+        553.707428
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Monotonic time around the existing native context clear in each later request.",
+      "name": "context_clear",
+      "samples": [
+        0.115252,
+        0.117771,
+        0.120551,
+        0.101921,
+        0.102791,
+        0.101701,
+        0.101281,
+        0.110561,
+        0.119821
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "observed",
+      "method": "Monotonic time from after context admission to completed inference. Includes one 256-position case.",
+      "name": "inference",
+      "samples": [
+        633.233884,
+        441.649647,
+        629.770899,
+        630.051222,
+        1045.550738,
+        441.634477,
+        1043.398565,
+        441.871079,
+        1438.70435,
+        442.548636
+      ],
+      "unit": "ms"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-conditioned-resident-validation-v1",
+    "measurement_boundary": "Separate board-side monotonic intervals for one session setup, native clears and inference. UART verification occurs between request spans.",
+    "quality_gate": "Every integer score, request order, clock and health gate, exact bytes and EOS, and original restoration.",
+    "sha256": "7892a07b78e3d13f68e3f6c38c1c203e5e526dfb31cbbcc64125d61eb0045d8c",
+    "tokenizer": "BOS plus two hexadecimal digit IDs per input UTF-8 byte. Output uses byte IDs and EOS.",
+    "warmup": "One verified original BOS control before candidate load."
+  },
+  "quality": {
+    "evidence": "Expected generated IDs, decoded bytes and EOS matched for all nine resident text requests.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "04c7100ca9d5ba9ddbd49fdc14bd85cefcc6381d",
+    "patch_sha256": "d67632a7d0e55f31ee65f9242bc8b62050399652bbf999116d0873a03e6fd56a"
+  },
+  "started_at": "2026-11-15T14:41:01.273043+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-conditioned-resident-order-v1",
+    "sha256": "7892a07b78e3d13f68e3f6c38c1c203e5e526dfb31cbbcc64125d61eb0045d8c"
+  }
+}

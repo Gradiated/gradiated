@@ -1,0 +1,15 @@
+// Restore the two HP0 AFI width fields captured as zero on the experiment boot.
+// The firmware's AFI IOCTL performs a masked write to each width field.
+/dts-v1/;
+/plugin/;
+/ {
+    fragment@0 {
+        target = <&amba>;
+        __overlay__ {
+            gradiated_hp0_afi_restore {
+                compatible = "xlnx,afi-fpga";
+                config-afi = <4 0>, <5 0>;
+            };
+        };
+    };
+};

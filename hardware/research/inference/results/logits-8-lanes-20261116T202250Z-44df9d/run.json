@@ -1,0 +1,1881 @@
+{
+  "artifacts": [
+    {
+      "bytes": 16626,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T202250Z-44df9d/invocation.json",
+      "role": "invocation.json",
+      "sha256": "06340ed7c83556e17047ea9308a833ab94892d36a432a50a174440e4b117b5bb"
+    },
+    {
+      "bytes": 18007,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T202250Z-44df9d/source.patch",
+      "role": "Exact source delta relative to Git",
+      "sha256": "cdc7a051a82bad1141685a1019c55e164c40b89d5773e8c6e5e3574d740f5747"
+    },
+    {
+      "bytes": 2182,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T202250Z-44df9d/workload.json",
+      "role": "workload.json",
+      "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+    },
+    {
+      "bytes": 58327,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T202250Z-44df9d/result.json",
+      "role": "result.json",
+      "sha256": "09a45b365c3290e66a5817cf41eedab50a42eb9e5a66c5c2254b6b2750cbc099"
+    },
+    {
+      "bytes": 9045,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T202250Z-44df9d/cycle-audit.json",
+      "role": "Board cycle counters versus both full RTL arms",
+      "sha256": "4b7fb5dedd8b06a76d4ce79d02f7e5cc2e945668f9eb44a1aaf612530ed01c0b"
+    },
+    {
+      "bytes": 365,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T202250Z-44df9d/project-receipt.json",
+      "role": "project-receipt.json",
+      "sha256": "62bdf127a513ba5472b8e02e03a083138a97d160bb6c87d497a24f7548380c98"
+    },
+    {
+      "bytes": 104518,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T202250Z-44df9d/project-state.json",
+      "role": "project-state.json",
+      "sha256": "520b520c05c7d6b23123c14e6a25be4380ca83027e90ae00c5ff6287d7c15f43"
+    },
+    {
+      "bytes": 22489,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T202250Z-44df9d/mac-gates.jsonl",
+      "role": "mac-gates.jsonl",
+      "sha256": "392f4d224bd844bc10400e45c671ae4831d5df4eba41b8ae55c97dc46357cf8a"
+    },
+    {
+      "bytes": 43718,
+      "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T202250Z-44df9d/evidence-manifest.json",
+      "role": "Full recovered raw capture inventory",
+      "sha256": "ecabddd660a462f3ebe250eee008711be7fa076dc10824d35a56cfd3046d9cba"
+    },
+    {
+      "bytes": 40012,
+      "path": "hardware/research/inference/results/logits-eight-rtl-20261116T190922Z/run.json",
+      "role": "Exact paired four/eight RTL replay",
+      "sha256": "358c641be65be64c23e890dbc12dcd590c6aeb92a7b733594e4871752b943df0"
+    },
+    {
+      "bytes": 15074,
+      "path": "hardware/research/inference/results/logits-8-lanes-build-20261116T190809Z/run.json",
+      "role": "Routed 8-lane candidate report",
+      "sha256": "5856a7c9a3a85ff2a8fbada0102f4ad80b9f26e2199bbbb02487fa51e70ac1b7"
+    },
+    {
+      "bytes": 14979,
+      "path": "hardware/research/inference/results/logits-4-lanes-build-20261116T161510Z/run.json",
+      "role": "Routed exact four-lane control report",
+      "sha256": "2caa814cb0ed4a8efa55194a08f1c21120ef84a6af3823194f4ce6552079f2bf"
+    },
+    {
+      "bytes": 19925,
+      "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+      "role": "Reused original storage footprint baseline",
+      "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+    }
+  ],
+  "completed_at": "2026-11-16T20:43:51.243119+00:00",
+  "conditions": {
+    "actual_physical_boot_id": "305f2b01-e9fd-4461-8e6d-0cf91979d151",
+    "cap_smokes": 2,
+    "compact_smokes": 3,
+    "development_effort": {
+      "ai_usage_cost": null,
+      "board_dispatch_to_restoration_seconds": 305.180342,
+      "engineering_attention_minutes": null
+    },
+    "diagnostic_requests": 3,
+    "failures": 0,
+    "firmware_switches": 5,
+    "incomplete_requests": 0,
+    "matched_lane_widths": [
+      4,
+      8
+    ],
+    "matched_pairs": 3,
+    "matched_request_cycles": [
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 11778637,
+          "first": 693237,
+          "last": 11656200
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 7922865,
+          "first": 581355,
+          "last": 7818524
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 20625187,
+          "first": 7260877,
+          "last": 20468562
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 7922865,
+          "first": 581355,
+          "last": 7818524
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 11778637,
+          "first": 693237,
+          "last": 11656200
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 20625187,
+          "first": 7260877,
+          "last": 20468562
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 11611357,
+          "first": 691877,
+          "last": 11490280
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 7799105,
+          "first": 579995,
+          "last": 7696124
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 20482387,
+          "first": 7259517,
+          "last": 20327122
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 7799105,
+          "first": 579995,
+          "last": 7696124
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 11611357,
+          "first": 691877,
+          "last": 11490280
+        },
+        "pair": 1
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 20482387,
+          "first": 7259517,
+          "last": 20327122
+        },
+        "pair": 1
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 7922865,
+          "first": 581355,
+          "last": 7818524
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 20625187,
+          "first": 7260877,
+          "last": 20468562
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 11778637,
+          "first": 693237,
+          "last": 11656200
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 20625187,
+          "first": 7260877,
+          "last": 20468562
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 7922865,
+          "first": 581355,
+          "last": 7818524
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 11778637,
+          "first": 693237,
+          "last": 11656200
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 7799105,
+          "first": 579995,
+          "last": 7696124
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 20482387,
+          "first": 7259517,
+          "last": 20327122
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 11611357,
+          "first": 691877,
+          "last": 11490280
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 20482387,
+          "first": 7259517,
+          "last": 20327122
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 7799105,
+          "first": 579995,
+          "last": 7696124
+        },
+        "pair": 2
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 11611357,
+          "first": 691877,
+          "last": 11490280
+        },
+        "pair": 2
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 20625187,
+          "first": 7260877,
+          "last": 20468562
+        },
+        "pair": 3
+      },
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 11778637,
+          "first": 693237,
+          "last": 11656200
+        },
+        "pair": 3
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 7922865,
+          "first": 581355,
+          "last": 7818524
+        },
+        "pair": 3
+      },
+      {
+        "arm": "control",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 11778637,
+          "first": 693237,
+          "last": 11656200
+        },
+        "pair": 3
+      },
+      {
+        "arm": "control",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 20625187,
+          "first": 7260877,
+          "last": 20468562
+        },
+        "pair": 3
+      },
+      {
+        "arm": "control",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 7922865,
+          "first": 581355,
+          "last": 7818524
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 20482387,
+          "first": 7259517,
+          "last": 20327122
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 11611357,
+          "first": 691877,
+          "last": 11490280
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 7799105,
+          "first": 579995,
+          "last": 7696124
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-fu2p2q",
+        "cycles": {
+          "done": 11611357,
+          "first": 691877,
+          "last": 11490280
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-max48",
+        "cycles": {
+          "done": 20482387,
+          "first": 7259517,
+          "last": 20327122
+        },
+        "pair": 3
+      },
+      {
+        "arm": "candidate",
+        "case": "encoded-hello",
+        "cycles": {
+          "done": 7799105,
+          "first": 579995,
+          "last": 7696124
+        },
+        "pair": 3
+      }
+    ],
+    "measurement_arms": {
+      "p1-candidate": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.601922671,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 29047347867872,
+            "end_ns": 29048949790543,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 201,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 29041511429868,
+            "end_ns": 29042312133616,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 201,
+        "verified_output_tokens": 632
+      },
+      "p1-control": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.619282715,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 28988363901730,
+            "end_ns": 28989983184445,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 201,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 28982518511957,
+            "end_ns": 28983328085434,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 201,
+        "verified_output_tokens": 632
+      },
+      "p2-candidate": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.602032743,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 29076343558334,
+            "end_ns": 29077945591077,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 135,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 29070507467004,
+            "end_ns": 29071308174262,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 135,
+        "verified_output_tokens": 632
+      },
+      "p2-control": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.619377616,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 29123461215984,
+            "end_ns": 29125080593600,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 135,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 29117616381496,
+            "end_ns": 29118425746911,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 135,
+        "verified_output_tokens": 632
+      },
+      "p3-candidate": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.602389997,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 29200399388315,
+            "end_ns": 29202001778312,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 101,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 29194563454237,
+            "end_ns": 29195364144705,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 101,
+        "verified_output_tokens": 632
+      },
+      "p3-control": {
+        "after_temperature": "unavailable",
+        "before_temperature": "unavailable",
+        "block_s": 1.619392637,
+        "missed_power_slots": 0,
+        "power_samples": 350,
+        "qualified_logger": {
+          "block": {
+            "begin_ns": 29152433326720,
+            "end_ns": 29154052719357,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 632,
+            "requests": 6
+          },
+          "idle_context": 101,
+          "mode": "on",
+          "warmup": {
+            "begin_ns": 29146588457702,
+            "end_ns": 29147397827997,
+            "examples": [],
+            "frames": 0,
+            "output_bytes": 316,
+            "requests": 3
+          }
+        },
+        "same_idle_completed_context": 101,
+        "verified_output_tokens": 632
+      }
+    },
+    "measurement_coverage": {
+      "active_power": {
+        "metric_names": [
+          "control.active_power",
+          "candidate.active_power"
+        ],
+        "state": "derived"
+      },
+      "cache_capacity": {
+        "reason": "No cache format or context limit change.",
+        "state": "not_applicable"
+      },
+      "client_delivery": {
+        "reason": "Board-host delivery boundary. No laptop or network request interval.",
+        "state": "not_measured"
+      },
+      "communication": {
+        "reason": "Both arms have the same accepted positions, skipped projections and scores. AXI polling and physical bandwidth remain unmeasured.",
+        "sources": [
+          "Native score contract",
+          "Both arms\u2019 scores_consumed and output counts"
+        ],
+        "state": "derived"
+      },
+      "completion_time": {
+        "metric_names": [
+          "control.encoded-fu2p2q.completion_ms",
+          "control.encoded-hello.completion_ms",
+          "control.encoded-max48.completion_ms",
+          "candidate.encoded-fu2p2q.completion_ms",
+          "candidate.encoded-hello.completion_ms",
+          "candidate.encoded-max48.completion_ms"
+        ],
+        "state": "derived"
+      },
+      "correctness": {
+        "sources": [
+          "autonomous-smoke/fullscore.json",
+          "autonomous-smoke/compact.json",
+          "autonomous-smoke/limit-1.json",
+          "autonomous-smoke/limit-0.json"
+        ],
+        "state": "measured"
+      },
+      "cross_device_comparison": {
+        "reason": "Both arms use one identified KV260.",
+        "state": "not_applicable"
+      },
+      "cross_session": {
+        "reason": "One boot for this matched pair series. Cross-boot suites are deferred.",
+        "state": "not_applicable"
+      },
+      "decode_tps": {
+        "metric_names": [
+          "control.encoded-fu2p2q.decode_bytes_per_second",
+          "control.encoded-hello.decode_bytes_per_second",
+          "control.encoded-max48.decode_bytes_per_second",
+          "candidate.encoded-fu2p2q.decode_bytes_per_second",
+          "candidate.encoded-hello.decode_bytes_per_second",
+          "candidate.encoded-max48.decode_bytes_per_second"
+        ],
+        "state": "derived"
+      },
+      "energy_per_answer": {
+        "metric_names": [
+          "control.energy_per_answer",
+          "candidate.energy_per_answer"
+        ],
+        "state": "derived"
+      },
+      "estimated_cost": {
+        "reason": "No economic claim.",
+        "state": "not_applicable"
+      },
+      "idle_power": {
+        "metric_names": [
+          "control.idle_power",
+          "candidate.idle_power"
+        ],
+        "state": "derived"
+      },
+      "idle_subtracted_energy": {
+        "reason": "Gross is primary. Retain signed values in raw artifacts.",
+        "sources": [
+          "Signed incremental_j in raw alignment results"
+        ],
+        "state": "derived"
+      },
+      "implementation_timing": {
+        "reason": "Exact control and candidate routed reports.",
+        "sources": [
+          {
+            "bytes": 14979,
+            "path": "hardware/research/inference/results/logits-4-lanes-build-20261116T161510Z/run.json",
+            "role": "Routed exact four-lane control report",
+            "sha256": "2caa814cb0ed4a8efa55194a08f1c21120ef84a6af3823194f4ce6552079f2bf"
+          },
+          {
+            "bytes": 15074,
+            "path": "hardware/research/inference/results/logits-8-lanes-build-20261116T190809Z/run.json",
+            "role": "Routed 8-lane candidate report",
+            "sha256": "5856a7c9a3a85ff2a8fbada0102f4ad80b9f26e2199bbbb02487fa51e70ac1b7"
+          }
+        ],
+        "state": "reused"
+      },
+      "long_stability": {
+        "reason": "Three short matched pairs, no long-run claim.",
+        "state": "not_applicable"
+      },
+      "memory": {
+        "reason": "Original model/cache arithmetic is fixed. Both images use the same model, cache layout and input/output buffer capacity. Host peak memory is unmeasured.",
+        "sources": [
+          {
+            "bytes": 19925,
+            "path": "hardware/research/inference/implementations/kv260/resource-memory-baseline.json",
+            "role": "Reused original storage footprint baseline",
+            "sha256": "20e8108b06daf86f2aace04a4d58b243bf7c973715f251d6d4592481f21adab4"
+          },
+          {
+            "bytes": 14979,
+            "path": "hardware/research/inference/results/logits-4-lanes-build-20261116T161510Z/run.json",
+            "role": "Routed exact four-lane control report",
+            "sha256": "2caa814cb0ed4a8efa55194a08f1c21120ef84a6af3823194f4ce6552079f2bf"
+          },
+          {
+            "bytes": 15074,
+            "path": "hardware/research/inference/results/logits-8-lanes-build-20261116T190809Z/run.json",
+            "role": "Routed 8-lane candidate report",
+            "sha256": "5856a7c9a3a85ff2a8fbada0102f4ad80b9f26e2199bbbb02487fa51e70ac1b7"
+          }
+        ],
+        "state": "derived"
+      },
+      "memory_bandwidth": {
+        "projected_MB_per_s": {
+          "4": 336.8421052631579,
+          "8": 609.5238095238095
+        },
+        "reason": "Useful on-chip weight bytes divided by projection cycles at assumed 50 MHz. External/interface rate and stalls were not measured.",
+        "shared_activation_bits_per_read_cycle": 16,
+        "sources": [
+          {
+            "bytes": 40012,
+            "path": "hardware/research/inference/results/logits-eight-rtl-20261116T190922Z/run.json",
+            "role": "Exact paired four/eight RTL replay",
+            "sha256": "358c641be65be64c23e890dbc12dcd590c6aeb92a7b733594e4871752b943df0"
+          }
+        ],
+        "state": "derived",
+        "weight_bits_per_read_cycle": {
+          "4": 64,
+          "8": 128
+        }
+      },
+      "model_quality": {
+        "reason": "The frozen model and retained calculations are unchanged.",
+        "state": "not_applicable"
+      },
+      "operating_conditions": {
+        "reason": "Reported clock verified at gates. Continuous clock/thermal traces unavailable.",
+        "sources": [
+          "Per-gate state/environment files",
+          "arms in conditions"
+        ],
+        "state": "measured"
+      },
+      "output_counts": {
+        "sources": [
+          "All six arm block.json files and candidate cap/compact receipts"
+        ],
+        "state": "measured"
+      },
+      "physical_area": {
+        "reason": "No area claim.",
+        "state": "not_applicable"
+      },
+      "power_validation": {
+        "reason": "Scoped VCC_SOM observer used. Independent absolute calibration is outside scope.",
+        "state": "not_measured"
+      },
+      "prefill": {
+        "reason": "Physical end-to-end first byte is measured. Only the separate matched RTL replay splits the pre-projection prefix from final scoring.",
+        "sources": [
+          {
+            "bytes": 40012,
+            "path": "hardware/research/inference/results/logits-eight-rtl-20261116T190922Z/run.json",
+            "role": "Exact paired four/eight RTL replay",
+            "sha256": "358c641be65be64c23e890dbc12dcd590c6aeb92a7b733594e4871752b943df0"
+          }
+        ],
+        "state": "not_measured"
+      },
+      "recovery": {
+        "reason": "Exact original research circuit and all 320 pinned BOS scores restored.",
+        "sources": [
+          {
+            "bytes": 58327,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T202250Z-44df9d/result.json",
+            "role": "result.json",
+            "sha256": "09a45b365c3290e66a5817cf41eedab50a42eb9e5a66c5c2254b6b2750cbc099"
+          }
+        ],
+        "state": "measured"
+      },
+      "repeatability": {
+        "sources": [
+          "mac-gates.jsonl",
+          "Per-case raw timestamps and three paired summaries"
+        ],
+        "state": "measured"
+      },
+      "resources": {
+        "reason": "Static reports for the exact routed circuits.",
+        "sources": [
+          {
+            "bytes": 14979,
+            "path": "hardware/research/inference/results/logits-4-lanes-build-20261116T161510Z/run.json",
+            "role": "Routed exact four-lane control report",
+            "sha256": "2caa814cb0ed4a8efa55194a08f1c21120ef84a6af3823194f4ce6552079f2bf"
+          },
+          {
+            "bytes": 15074,
+            "path": "hardware/research/inference/results/logits-8-lanes-build-20261116T190809Z/run.json",
+            "role": "Routed 8-lane candidate report",
+            "sha256": "5856a7c9a3a85ff2a8fbada0102f4ad80b9f26e2199bbbb02487fa51e70ac1b7"
+          }
+        ],
+        "state": "reused"
+      },
+      "serving_load": {
+        "reason": "Only the bounded fixed isolated circuit comparison was run.",
+        "state": "not_applicable"
+      },
+      "stage_cycles": {
+        "reason": "Exact first, last and terminal board counts against both RTL arms. Phase attribution is from simulation.",
+        "sources": [
+          {
+            "bytes": 9045,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T202250Z-44df9d/cycle-audit.json",
+            "role": "Board cycle counters versus both full RTL arms",
+            "sha256": "4b7fb5dedd8b06a76d4ce79d02f7e5cc2e945668f9eb44a1aaf612530ed01c0b"
+          },
+          {
+            "bytes": 40012,
+            "path": "hardware/research/inference/results/logits-eight-rtl-20261116T190922Z/run.json",
+            "role": "Exact paired four/eight RTL replay",
+            "sha256": "358c641be65be64c23e890dbc12dcd590c6aeb92a7b733594e4871752b943df0"
+          }
+        ],
+        "state": "measured"
+      },
+      "startup": {
+        "reason": "Setup retained separately, no cold-start comparison.",
+        "sources": [
+          "Per-arm load.json"
+        ],
+        "state": "measured"
+      },
+      "sustained_throughput": {
+        "metric_names": [
+          "control.verified_rate",
+          "candidate.verified_rate"
+        ],
+        "state": "derived"
+      },
+      "token_gaps": {
+        "reason": "No tail claim.",
+        "sources": [
+          "CPU-observed output_ns arrays in each block.json"
+        ],
+        "state": "measured"
+      },
+      "tokens_per_joule": {
+        "metric_names": [
+          "control.tokens_per_joule",
+          "candidate.tokens_per_joule"
+        ],
+        "state": "derived"
+      },
+      "ttft": {
+        "metric_names": [
+          "control.encoded-fu2p2q.ttft_ms",
+          "control.encoded-hello.ttft_ms",
+          "control.encoded-max48.ttft_ms",
+          "candidate.encoded-fu2p2q.ttft_ms",
+          "candidate.encoded-hello.ttft_ms",
+          "candidate.encoded-max48.ttft_ms"
+        ],
+        "state": "derived"
+      },
+      "workload_coverage": {
+        "reason": "Historical fixed three-prompt workload, exact common reference pins.",
+        "sources": [
+          {
+            "bytes": 2182,
+            "path": ".agents/runtime/hardware/inference/outputs/logits-8-lanes-20261116T202250Z-44df9d/workload.json",
+            "role": "workload.json",
+            "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+          }
+        ],
+        "state": "reused"
+      }
+    },
+    "measurement_standard": "inference-measurements-v2",
+    "module_rail_alignment": [
+      {
+        "candidate": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 5.014522938698036,
+              "gross_j_per_completion": 0.8357538231163394,
+              "gross_j_per_output_byte": 0.00793437173844626,
+              "idle_w": [
+                3.039005545277988,
+                3.0471182637093848
+              ],
+              "incremental_j": 0.13977308463316263,
+              "incremental_j_per_completion": 0.023295514105527104,
+              "incremental_j_per_output_byte": 0.00022115994403981427
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 5.014312918346277,
+              "gross_j_per_completion": 0.8357188197243794,
+              "gross_j_per_output_byte": 0.007934039427763096,
+              "idle_w": [
+                3.0380055679825,
+                3.0467338332959226
+              ],
+              "incremental_j": 0.1406719213288401,
+              "incremental_j_per_completion": 0.02344532022147335,
+              "incremental_j_per_output_byte": 0.00022258215400132927
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 5.009775817275736,
+              "gross_j_per_completion": 0.8349626362126227,
+              "gross_j_per_output_byte": 0.007926860470373,
+              "idle_w": [
+                3.039373455780035,
+                3.0472530341903528
+              ],
+              "incremental_j": 0.13462333517937708,
+              "incremental_j_per_completion": 0.02243722252989618,
+              "incremental_j_per_output_byte": 0.00021301160629648273
+            },
+            "read_end": {
+              "gross_j": 5.014502146434416,
+              "gross_j_per_completion": 0.8357503577390694,
+              "gross_j_per_output_byte": 0.007934338839294963,
+              "idle_w": [
+                3.039009803702154,
+                3.0471239045699123
+              ],
+              "incremental_j": 0.13974436342525465,
+              "incremental_j_per_completion": 0.02329072723754244,
+              "incremental_j_per_output_byte": 0.00022111449909059279
+            },
+            "read_start": {
+              "gross_j": 5.014543572807216,
+              "gross_j_per_completion": 0.8357572621345359,
+              "gross_j_per_output_byte": 0.007934404387353189,
+              "idle_w": [
+                3.0390012674313076,
+                3.0471126186569077
+              ],
+              "incremental_j": 0.13980166660090365,
+              "incremental_j_per_completion": 0.023300277766817274,
+              "incremental_j_per_output_byte": 0.0002212051686723159
+            }
+          }
+        },
+        "control": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 5.067604824176015,
+              "gross_j_per_completion": 0.8446008040293358,
+              "gross_j_per_output_byte": 0.008018362063569644,
+              "idle_w": [
+                3.027500841956456,
+                3.0374535907604834
+              ],
+              "incremental_j": 0.157166884095429,
+              "incremental_j_per_completion": 0.026194480682571502,
+              "incremental_j_per_output_byte": 0.00024868177863200794
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 5.067571012587381,
+              "gross_j_per_completion": 0.8445951687645635,
+              "gross_j_per_output_byte": 0.00801830856422054,
+              "idle_w": [
+                3.0275008449974994,
+                3.0375005514900004
+              ],
+              "incremental_j": 0.15709504869584645,
+              "incremental_j_per_completion": 0.026182508115974407,
+              "incremental_j_per_output_byte": 0.0002485681150250735
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 5.062714087744806,
+              "gross_j_per_completion": 0.843785681290801,
+              "gross_j_per_output_byte": 0.008010623556558237,
+              "idle_w": [
+                3.0275007008749992,
+                3.0371756308308995
+              ],
+              "incremental_j": 0.15250130974432174,
+              "incremental_j_per_completion": 0.02541688495738696,
+              "incremental_j_per_output_byte": 0.0002412995407346863
+            },
+            "read_end": {
+              "gross_j": 5.067589632544445,
+              "gross_j_per_completion": 0.8445982720907409,
+              "gross_j_per_output_byte": 0.008018338026177919,
+              "idle_w": [
+                3.027501338804147,
+                3.0374529863737614
+              ],
+              "incremental_j": 0.1571517795319073,
+              "incremental_j_per_completion": 0.02619196325531788,
+              "incremental_j_per_output_byte": 0.0002486578790061824
+            },
+            "read_start": {
+              "gross_j": 5.0676198661013725,
+              "gross_j_per_completion": 0.8446033110168955,
+              "gross_j_per_output_byte": 0.008018385864084451,
+              "idle_w": [
+                3.027500342993555,
+                3.0374541896172653
+              ],
+              "incremental_j": 0.15718184514256972,
+              "incremental_j_per_completion": 0.026196974190428286,
+              "incremental_j_per_output_byte": 0.0002487054511749521
+            }
+          }
+        }
+      },
+      {
+        "candidate": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 5.013092751324427,
+              "gross_j_per_completion": 0.8355154585540712,
+              "gross_j_per_output_byte": 0.007932108783741182,
+              "idle_w": [
+                3.0392490092799993,
+                3.038684695086525
+              ],
+              "incremental_j": 0.14456834923520034,
+              "incremental_j_per_completion": 0.02409472487253339,
+              "incremental_j_per_output_byte": 0.0002287473880303803
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 5.012649337013787,
+              "gross_j_per_completion": 0.8354415561689645,
+              "gross_j_per_output_byte": 0.007931407178819284,
+              "idle_w": [
+                3.0393723125407104,
+                3.040622785717821
+              ],
+              "incremental_j": 0.14247372466895225,
+              "incremental_j_per_completion": 0.02374562077815871,
+              "incremental_j_per_output_byte": 0.00022543310865340545
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 5.008367867626693,
+              "gross_j_per_completion": 0.8347279779377822,
+              "gross_j_per_output_byte": 0.00792463270194097,
+              "idle_w": [
+                3.039249001073355,
+                3.036255174615595
+              ],
+              "incremental_j": 0.14178955778323132,
+              "incremental_j_per_completion": 0.02363159296387189,
+              "incremental_j_per_output_byte": 0.0002243505661127078
+            },
+            "read_end": {
+              "gross_j": 5.013075402074689,
+              "gross_j_per_completion": 0.8355125670124481,
+              "gross_j_per_output_byte": 0.00793208133239666,
+              "idle_w": [
+                3.0392487563600006,
+                3.038665224949923
+              ],
+              "incremental_j": 0.14456679847669474,
+              "incremental_j_per_completion": 0.024094466412782456,
+              "incremental_j_per_output_byte": 0.00022874493429856762
+            },
+            "read_start": {
+              "gross_j": 5.013109994331323,
+              "gross_j_per_completion": 0.8355183323885539,
+              "gross_j_per_output_byte": 0.007932136066979942,
+              "idle_w": [
+                3.0392492621825,
+                3.0387040249462114
+              ],
+              "incremental_j": 0.1445699061289849,
+              "incremental_j_per_completion": 0.024094984354830817,
+              "incremental_j_per_output_byte": 0.00022874985146991282
+            }
+          }
+        },
+        "control": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 5.064415665026565,
+              "gross_j_per_completion": 0.8440692775044275,
+              "gross_j_per_output_byte": 0.008013315925674945,
+              "idle_w": [
+                3.0327499980587627,
+                3.0379821249285994
+              ],
+              "incremental_j": 0.14901180867761799,
+              "incremental_j_per_completion": 0.024835301446269664,
+              "incremental_j_per_output_byte": 0.00023577817828737024
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 5.063361315564891,
+              "gross_j_per_completion": 0.8438935525941486,
+              "gross_j_per_output_byte": 0.00801164765121027,
+              "idle_w": [
+                3.0332451539086907,
+                3.0376457532930803
+              ],
+              "incremental_j": 0.14782889341465033,
+              "incremental_j_per_completion": 0.02463814890244172,
+              "incremental_j_per_output_byte": 0.00023390647692191508
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 5.05994074629261,
+              "gross_j_per_completion": 0.843323457715435,
+              "gross_j_per_output_byte": 0.008006235358057927,
+              "idle_w": [
+                3.0324974047874997,
+                3.037954669557537
+              ],
+              "incremental_j": 0.14476364219505022,
+              "incremental_j_per_completion": 0.02412727369917504,
+              "incremental_j_per_output_byte": 0.00022905639587824403
+            },
+            "read_end": {
+              "gross_j": 5.064405627438187,
+              "gross_j_per_completion": 0.8440676045730311,
+              "gross_j_per_output_byte": 0.008013300043414853,
+              "idle_w": [
+                3.0327499848507107,
+                3.037983365552701
+              ],
+              "incremental_j": 0.14900077726420147,
+              "incremental_j_per_completion": 0.024833462877366912,
+              "incremental_j_per_output_byte": 0.00023576072351930613
+            },
+            "read_start": {
+              "gross_j": 5.064425598752523,
+              "gross_j_per_completion": 0.8440709331254205,
+              "gross_j_per_output_byte": 0.008013331643595764,
+              "idle_w": [
+                3.032750006095333,
+                3.0379808819133327
+              ],
+              "incremental_j": 0.1490227423520052,
+              "incremental_j_per_completion": 0.024837123725334198,
+              "incremental_j_per_output_byte": 0.00023579547840507151
+            }
+          }
+        }
+      },
+      {
+        "candidate": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 5.0344706860237665,
+              "gross_j_per_completion": 0.8390784476706278,
+              "gross_j_per_output_byte": 0.00796593462978444,
+              "idle_w": [
+                3.0364971768505846,
+                3.0366387797018395
+              ],
+              "incremental_j": 0.16870453242345107,
+              "incremental_j_per_completion": 0.028117422070575177,
+              "incremental_j_per_output_byte": 0.0002669375513029289
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 5.034269731243305,
+              "gross_j_per_completion": 0.8390449552072176,
+              "gross_j_per_output_byte": 0.00796561666335966,
+              "idle_w": [
+                3.037120623822016,
+                3.037024630439636
+              ],
+              "incremental_j": 0.16769493336635843,
+              "incremental_j_per_completion": 0.02794915556105974,
+              "incremental_j_per_output_byte": 0.00026534008444044057
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 5.029549110081748,
+              "gross_j_per_completion": 0.8382581850136247,
+              "gross_j_per_output_byte": 0.007958147326078717,
+              "idle_w": [
+                3.035744255047804,
+                3.0365012719576296
+              ],
+              "incremental_j": 0.1644963641809989,
+              "incremental_j_per_completion": 0.02741606069683315,
+              "incremental_j_per_output_byte": 0.00026027905724841595
+            },
+            "read_end": {
+              "gross_j": 5.03445887444711,
+              "gross_j_per_completion": 0.8390764790745183,
+              "gross_j_per_output_byte": 0.00796591594058087,
+              "idle_w": [
+                3.036494988390572,
+                3.036638389508701
+              ],
+              "incremental_j": 0.16869478685080264,
+              "incremental_j_per_completion": 0.028115797808467107,
+              "incremental_j_per_output_byte": 0.00026692213109304213
+            },
+            "read_start": {
+              "gross_j": 5.03448238739866,
+              "gross_j_per_completion": 0.8390803978997767,
+              "gross_j_per_output_byte": 0.007965953144618133,
+              "idle_w": [
+                3.036499357132082,
+                3.03663917589178
+              ],
+              "incremental_j": 0.16871416954231577,
+              "incremental_j_per_completion": 0.02811902825705263,
+              "incremental_j_per_output_byte": 0.0002669527999087275
+            }
+          }
+        },
+        "control": {
+          "admitted": true,
+          "alignment_scenarios": {
+            "midpoint": {
+              "gross_j": 5.067828846028042,
+              "gross_j_per_completion": 0.8446381410046736,
+              "gross_j_per_output_byte": 0.008018716528525382,
+              "idle_w": [
+                3.052507087406702,
+                3.0373542269929716
+              ],
+              "incremental_j": 0.13689055958305563,
+              "incremental_j_per_completion": 0.022815093263842606,
+              "incremental_j_per_output_byte": 0.00021659898668205003
+            },
+            "midpoint_minus_50ms": {
+              "gross_j": 5.066249666165,
+              "gross_j_per_completion": 0.8443749443608333,
+              "gross_j_per_output_byte": 0.008016217826210443,
+              "idle_w": [
+                3.05276027458046,
+                3.0379181714425
+              ],
+              "incremental_j": 0.13464975125290835,
+              "incremental_j_per_completion": 0.022441625208818056,
+              "incremental_j_per_output_byte": 0.00021305340388118408
+            },
+            "midpoint_plus_50ms": {
+              "gross_j": 5.063301991597439,
+              "gross_j_per_completion": 0.8438836652662398,
+              "gross_j_per_output_byte": 0.008011553784173163,
+              "idle_w": [
+                3.0522602328224995,
+                3.0375749027250487
+              ],
+              "incremental_j": 0.13238490207264064,
+              "incremental_j_per_completion": 0.022064150345440108,
+              "incremental_j_per_output_byte": 0.00020946978176050735
+            },
+            "read_end": {
+              "gross_j": 5.067815690092156,
+              "gross_j_per_completion": 0.8446359483486927,
+              "gross_j_per_output_byte": 0.008018695712171134,
+              "idle_w": [
+                3.052516143226443,
+                3.0373540610146796
+              ],
+              "incremental_j": 0.13687020557527596,
+              "incremental_j_per_completion": 0.02281170092921266,
+              "incremental_j_per_output_byte": 0.00021656678097353791
+            },
+            "read_start": {
+              "gross_j": 5.067841850554047,
+              "gross_j_per_completion": 0.8446403084256745,
+              "gross_j_per_output_byte": 0.008018737105307037,
+              "idle_w": [
+                3.0524980435882285,
+                3.037354408254124
+              ],
+              "incremental_j": 0.1369107400890961,
+              "incremental_j_per_completion": 0.022818456681516015,
+              "incremental_j_per_output_byte": 0.00021663091786249382
+            }
+          }
+        }
+      }
+    ],
+    "original_restored": true,
+    "scored_requests": 36,
+    "timeouts": 0,
+    "warmups": 18
+  },
+  "correctness": {
+    "evidence": "Exact full-score diagnostics, compact and capped checks, all 36 timed and 18 warm-up requests, and first/last/terminal cycle counters passed. Restored original firmware and weights matched all 320 BOS scores.",
+    "passed": true
+  },
+  "device": {
+    "configuration": {
+      "comparison_firmware": {
+        "candidate": "bdc134c65a151699d2ddd690b0ddc799cbd09edb688b8a7c4f0ecf7dd498c9e2",
+        "control": "4b255b0f0284ddf53f80986b21e2d8dd4f337db815a4886aaf5c1debbd54dfc3",
+        "stock_restored": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0"
+      },
+      "dfx_service": "runtime inactive, boot enablement preserved",
+      "final_state": "Original firmware and original weights restored, 320 original BOS scores verified",
+      "firmware_identity_scope": "Initial and restored stock firmware. Timed images are listed in comparison_firmware.",
+      "firmware_name": "gradiated-tiny-50mhz.bit.bin",
+      "firmware_sha256": "678aaab239203a9b235b44868b36dd8b1022a5480430c7a3a8f6f587e24ea0d0",
+      "fpga_manager_flags": 0,
+      "initial_state_sha256": "520b520c05c7d6b23123c14e6a25be4380ca83027e90ae00c5ff6287d7c15f43",
+      "kernel_build": "#16-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 16 05:06:58 UTC 2025",
+      "kernel_release": "6.8.0-1015-xilinx",
+      "model": "ZynqMP KV260 revB",
+      "physical_unit": "KV260 USB bridge XFL1RXOM0IWQ",
+      "pl0_rate_source": "Linux clock framework",
+      "pl0_reported_hz": 50000000,
+      "qualified_project_state_sha256": "520b520c05c7d6b23123c14e6a25be4380ca83027e90ae00c5ff6287d7c15f43",
+      "reset_dt_id": 119,
+      "system_boot_id": "305f2b01-e9fd-4461-8e6d-0cf91979d151",
+      "transformer_map": {
+        "base": 2684354560,
+        "bytes": 4096,
+        "device": "/dev/uio4"
+      },
+      "verified_state_sha256": "cce97a59285f6ca0803826c09e0ad2eef0d0e6d792540520fe9d7458f85721a4"
+    },
+    "configuration_sha256": "dd88eb951477826562a504edeb959dad608c197534ace19aa689469dde5dcc27",
+    "id": "amd-kria-kv260"
+  },
+  "evidence_type": "physical-measurement",
+  "experiment_id": "kv260-logits-8-lanes-v1",
+  "id": "logits-8-lanes-20261116T202250Z-44df9d",
+  "implementation": {
+    "id": "kv260-logits-4-vs-8-lanes-v1",
+    "sha256": "2546b26b724b8645ec79bb6724c4e9a5b1142412989f3984ee9b9e3ead4354ae"
+  },
+  "limitations": [
+    "Single physical KV260 and one fresh board boot with three fixed requests and matched repeats.",
+    "Power covers VCC_SOM module rail only. Active blocks include the same verification and request gaps; whole-board input energy was not measured.",
+    "The original firmware and weights passed functional BOS checking. Full configuration or weight-memory readback was outside scope."
+  ],
+  "metrics": [
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-fu2p2q.completion_ms",
+      "samples": [
+        236.126362,
+        235.791798,
+        235.825538,
+        235.797438,
+        235.830588,
+        235.801999
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "control.encoded-fu2p2q.decode_bytes_per_second",
+      "samples": [
+        551.8532914169897,
+        551.8525615237731,
+        551.8522594995586,
+        551.8525363550759,
+        551.8521336562334,
+        551.8528635483183
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-fu2p2q.ttft_ms",
+      "samples": [
+        14.416704,
+        14.082091,
+        14.115461,
+        14.08778,
+        14.120621,
+        14.092081
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "control.encoded-fu2p2q.verified_ms",
+      "samples": [
+        236.832939,
+        236.379644,
+        236.474315,
+        236.416134,
+        236.474905,
+        236.391934
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-hello.completion_ms",
+      "samples": [
+        158.726137,
+        158.710097,
+        158.98853,
+        158.711158,
+        158.707217,
+        158.691958
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "control.encoded-hello.decode_bytes_per_second",
+      "samples": [
+        614.876188772434,
+        614.8751650041686,
+        614.8745702855798,
+        614.8756322838668,
+        614.8745745335657,
+        614.8760995642753
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-hello.ttft_ms",
+      "samples": [
+        11.895009,
+        11.879029,
+        12.157131,
+        11.879709,
+        11.875489,
+        11.860789
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "control.encoded-hello.verified_ms",
+      "samples": [
+        159.269513,
+        159.216192,
+        159.638676,
+        159.215943,
+        159.243692,
+        159.187983
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-max48.completion_ms",
+      "samples": [
+        412.993931,
+        412.999841,
+        413.027281,
+        413.003141,
+        413.376814,
+        413.004621
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "control.encoded-max48.decode_bytes_per_second",
+      "samples": [
+        389.9211190333324,
+        389.9207057252837,
+        389.9203957448222,
+        389.9207942912204,
+        389.9205728764541,
+        389.92052859353106
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "control.encoded-max48.ttft_ms",
+      "samples": [
+        145.705508,
+        145.711057,
+        145.738588,
+        145.714628,
+        146.088091,
+        145.715908
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "control.encoded-max48.verified_ms",
+      "samples": [
+        413.612277,
+        413.569956,
+        413.657448,
+        413.565057,
+        414.086162,
+        413.578277
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "control.active_power",
+      "samples": [
+        3.129536786401141,
+        3.1273840116032363,
+        3.1294626949869486
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Average power per matched two-second idle interval, before and after each active block.",
+      "name": "control.idle_power",
+      "samples": [
+        3.027500841956456,
+        3.0374535907604834,
+        3.0327499980587627,
+        3.0379821249285994,
+        3.052507087406702,
+        3.0373542269929716
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "control.energy_per_answer",
+      "samples": [
+        0.8446008040293358,
+        0.8440692775044275,
+        0.8446381410046736
+      ],
+      "unit": "J/verified completion"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "control.tokens_per_joule",
+      "samples": [
+        124.71374977482824,
+        124.79228440201204,
+        124.70823684097697
+      ],
+      "unit": "output byte tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output count divided by first-admission-to-last-verification block wall time.",
+      "name": "control.verified_rate",
+      "samples": [
+        390.296267690352,
+        390.2733950102964,
+        390.26977495143444
+      ],
+      "unit": "output byte tokens/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-fu2p2q.completion_ms",
+      "samples": [
+        232.786198,
+        232.467985,
+        232.473115,
+        232.457325,
+        232.501855,
+        232.492555
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "candidate.encoded-fu2p2q.decode_bytes_per_second",
+      "samples": [
+        560.2627660154237,
+        560.2628438404842,
+        560.2628438404842,
+        560.2618321163844,
+        560.2626881903849,
+        560.2614689342655
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-fu2p2q.ttft_ms",
+      "samples": [
+        14.394914,
+        14.076531,
+        14.081491,
+        14.06552,
+        14.110511,
+        14.100781
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "candidate.encoded-fu2p2q.verified_ms",
+      "samples": [
+        233.530095,
+        233.058541,
+        233.092461,
+        233.058091,
+        233.217972,
+        233.111551
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-hello.completion_ms",
+      "samples": [
+        156.220873,
+        156.214182,
+        156.567696,
+        156.228303,
+        156.276023,
+        156.241053
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "candidate.encoded-hello.decode_bytes_per_second",
+      "samples": [
+        625.3321506171084,
+        625.3326734691807,
+        625.3333369213883,
+        625.3343914178603,
+        625.3342552118659,
+        625.3339520438981
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-hello.ttft_ms",
+      "samples": [
+        11.837389,
+        11.830818,
+        12.184412,
+        11.844959,
+        11.892519,
+        11.857779
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "candidate.encoded-hello.verified_ms",
+      "samples": [
+        156.784988,
+        156.716777,
+        157.200322,
+        156.750658,
+        156.819489,
+        156.748258
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-max48.completion_ms",
+      "samples": [
+        410.129542,
+        410.136132,
+        410.162002,
+        410.158402,
+        410.521266,
+        410.146262
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output bytes after the first, divided by last-minus-first CPU-observed output time.",
+      "name": "candidate.encoded-max48.decode_bytes_per_second",
+      "samples": [
+        394.100108636182,
+        394.10054593103354,
+        394.09989752866994,
+        394.1004102187344,
+        394.10034990218696,
+        394.1008625934284
+      ],
+      "unit": "output bytes/s"
+    },
+    {
+      "kind": "derived",
+      "method": "Same board-host output observer. Admitted before encoding and explicit previous-context clear.",
+      "name": "candidate.encoded-max48.ttft_ms",
+      "samples": [
+        145.669547,
+        145.676567,
+        145.702127,
+        145.698617,
+        146.061821,
+        145.686837
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Admission through the separate exact completion check.",
+      "name": "candidate.encoded-max48.verified_ms",
+      "samples": [
+        410.755308,
+        410.689847,
+        410.778078,
+        410.740398,
+        411.251014,
+        410.750678
+      ],
+      "unit": "ms"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "candidate.active_power",
+      "samples": [
+        3.1303152327369963,
+        3.129207423024828,
+        3.141851044657867
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Average power per matched two-second idle interval, before and after each active block.",
+      "name": "candidate.idle_power",
+      "samples": [
+        3.039005545277988,
+        3.0471182637093848,
+        3.0392490092799993,
+        3.038684695086525,
+        3.0364971768505846,
+        3.0366387797018395
+      ],
+      "unit": "W"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "candidate.energy_per_answer",
+      "samples": [
+        0.8357538231163394,
+        0.8355154585540712,
+        0.8390784476706278
+      ],
+      "unit": "J/verified completion"
+    },
+    {
+      "kind": "derived",
+      "method": "Gross VCC_SOM with 20 Hz sampler and trapezoid integration at read midpoints. Active starts at first admission and ends at final verification; counts are matched to that window.",
+      "name": "candidate.tokens_per_joule",
+      "samples": [
+        126.03392341128499,
+        126.06987968316159,
+        125.53454760487536
+      ],
+      "unit": "output byte tokens/J"
+    },
+    {
+      "kind": "derived",
+      "method": "Useful output count divided by first-admission-to-last-verification block wall time.",
+      "name": "candidate.verified_rate",
+      "samples": [
+        394.52591029595334,
+        394.4988033243962,
+        394.4108495330304
+      ],
+      "unit": "output byte tokens/s"
+    }
+  ],
+  "model": {
+    "id": "chip-joke-text-20261109",
+    "sha256": "cd8f235b4c6b20a2f542c2e36aad5698d85410700a44743df2389a2c1e48eaed"
+  },
+  "protocol": {
+    "batch_size": 1,
+    "concurrency": 1,
+    "context_limit": 256,
+    "id": "kv260-logits-lanes-4-vs-8-v1",
+    "measurement_boundary": "Board CPU request admission before encoding/clear through first/last useful byte and stop/drain. Six-request gross VCC_SOM block energy ends after verification. Load, switching, full-score diagnostics and UART export excluded.",
+    "quality_gate": "Exact full-score diagnostics and same exact capped and uncapped completions and stops.",
+    "sha256": "c4af3e2b37fd3482ebf442e3f38215158eae5cbf85850d566466d87609434804",
+    "tokenizer": "BOS plus two hex digit IDs per input UTF-8 byte. Useful outputs are byte IDs and exclude EOS.",
+    "warmup": "Three exact requests per arm with loaded weights."
+  },
+  "quality": {
+    "evidence": "Frozen model weights, numerical rules and decoding unchanged. Scope limited to the fixed cases.",
+    "passed": true
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "8f67839f3643dfdb89c554e4bafab6d9d3f0ba72",
+    "patch_sha256": "cdc7a051a82bad1141685a1019c55e164c40b89d5773e8c6e5e3574d740f5747"
+  },
+  "started_at": "2026-11-16T20:38:46.062777+00:00",
+  "status": "passed",
+  "supersedes": null,
+  "workload": {
+    "id": "kv260-three-prompts-lanes-pairs-v1",
+    "sha256": "106e87b59debbcb52a8a70f9a053c0ef10e3b429554fa21fa3af97107fa61cab"
+  }
+}

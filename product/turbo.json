@@ -20,6 +20,11 @@
     "openapi:generate": {
       "dependsOn": ["^build"],
       "cache": false
+    },
+    "gradiated-com#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/../hardware/publishing/**"]
     }
   }
 }

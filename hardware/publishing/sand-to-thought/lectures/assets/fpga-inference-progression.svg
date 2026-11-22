@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg
+  PUBLIC '-//W3C//DTD SVG 1.0//EN'
+  'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd'>
+<svg width="1152" height="648" preserveAspectRatio="xMinYMin meet" viewBox="0 0 1152 648" xmlns="http://www.w3.org/2000/svg" version="1.0" fill-rule="evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<title>...</title>
+	<desc>...</desc>
+	<clipPath id="clip">
+		<rect x="0" y="0" width="1152" height="648"/>
+	</clipPath>
+	<g id="group" transform="scale(1,-1) translate(0,-648)" style="clip-path: url(#clip)">
+		<g transform="">
+			<rect x="0" y="0" width="1152" height="648" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(96%,95%,92%); fill-rule: evenodd;"/>
+			<text x="122" y="583" style="font-family: Helvetica-Bold; font-size: 38px;fill: rgb(9%,8%,10%); stroke:none;" transform="translate(0,1166) scale(1,-1)">FPGA inference throughput</text>
+			<path d="M 122,103 L 1080,103 Z" style="stroke: rgb(88%,85%,81%); stroke-linecap: butt; stroke-width: 1;"/>
+			<text x="96.548" y="97.0" style="font-family: Helvetica; font-size: 17px;fill: rgb(32%,30%,27%); stroke:none;" transform="translate(0,194) scale(1,-1)">0</text>
+			<path d="M 122,170.636364 L 1080,170.636364 Z" style="stroke: rgb(88%,85%,81%); stroke-linecap: butt; stroke-width: 1;"/>
+			<text x="87.096" y="164.63636363636363" style="font-family: Helvetica; font-size: 17px;fill: rgb(32%,30%,27%); stroke:none;" transform="translate(0,329) scale(1,-1)">20</text>
+			<path d="M 122,238.272727 L 1080,238.272727 Z" style="stroke: rgb(88%,85%,81%); stroke-linecap: butt; stroke-width: 1;"/>
+			<text x="87.096" y="232.27272727272728" style="font-family: Helvetica; font-size: 17px;fill: rgb(32%,30%,27%); stroke:none;" transform="translate(0,464) scale(1,-1)">40</text>
+			<path d="M 122,305.909091 L 1080,305.909091 Z" style="stroke: rgb(88%,85%,81%); stroke-linecap: butt; stroke-width: 1;"/>
+			<text x="87.096" y="299.9090909090909" style="font-family: Helvetica; font-size: 17px;fill: rgb(32%,30%,27%); stroke:none;" transform="translate(0,599) scale(1,-1)">60</text>
+			<path d="M 122,373.545455 L 1080,373.545455 Z" style="stroke: rgb(88%,85%,81%); stroke-linecap: butt; stroke-width: 1;"/>
+			<text x="87.096" y="367.54545454545456" style="font-family: Helvetica; font-size: 17px;fill: rgb(32%,30%,27%); stroke:none;" transform="translate(0,735) scale(1,-1)">80</text>
+			<path d="M 122,441.181818 L 1080,441.181818 Z" style="stroke: rgb(88%,85%,81%); stroke-linecap: butt; stroke-width: 1;"/>
+			<text x="77.644" y="435.1818181818182" style="font-family: Helvetica; font-size: 17px;fill: rgb(32%,30%,27%); stroke:none;" transform="translate(0,870) scale(1,-1)">100</text>
+			<path d="M 246.54,103 L 246.54,475 Z" style="stroke: rgb(61%,56%,51%); stroke-linecap: butt; stroke-width: 1.25; stroke-dasharray: 5, 6;"/>
+			<text x="200.72500000000002" y="508" style="font-family: Helvetica-Bold; font-size: 17px;fill: rgb(9%,8%,10%); stroke:none;" transform="translate(0,1016) scale(1,-1)">First model</text>
+			<path d="M 466.88,103 L 466.88,475 Z" style="stroke: rgb(61%,56%,51%); stroke-linecap: butt; stroke-width: 1.25; stroke-dasharray: 5, 6;"/>
+			<text x="382.82349999999997" y="508" style="font-family: Helvetica-Bold; font-size: 17px;fill: rgb(9%,8%,10%); stroke:none;" transform="translate(0,1016) scale(1,-1)">Output no longer fed</text>
+			<text x="383.291" y="486" style="font-family: Helvetica-Bold; font-size: 17px;fill: rgb(9%,8%,10%); stroke:none;" transform="translate(0,972) scale(1,-1)">back to off-chip CPU</text>
+			<path d="M 696.8,103 L 696.8,475 Z" style="stroke: rgb(61%,56%,51%); stroke-linecap: butt; stroke-width: 1.25; stroke-dasharray: 5, 6;"/>
+			<text x="608.4765" y="508" style="font-family: Helvetica-Bold; font-size: 17px;fill: rgb(9%,8%,10%); stroke:none;" transform="translate(0,1016) scale(1,-1)">Model weights moved</text>
+			<text x="660.9214999999999" y="486" style="font-family: Helvetica-Bold; font-size: 17px;fill: rgb(9%,8%,10%); stroke:none;" transform="translate(0,972) scale(1,-1)">to BRAM</text>
+			<path d="M 917.14,103 L 917.14,475 Z" style="stroke: rgb(61%,56%,51%); stroke-linecap: butt; stroke-width: 1.25; stroke-dasharray: 5, 6;"/>
+			<text x="822.1949999999999" y="508" style="font-family: Helvetica-Bold; font-size: 17px;fill: rgb(9%,8%,10%); stroke:none;" transform="translate(0,1016) scale(1,-1)">Model KV cache moved</text>
+			<text x="827.4055" y="486" style="font-family: Helvetica-Bold; font-size: 17px;fill: rgb(9%,8%,10%); stroke:none;" transform="translate(0,972) scale(1,-1)">to distributed memory</text>
+			<g transform="">
+				<g transform=""/>
+				<g transform=""/>
+				<g transform="">
+					<polyline points="122 224.7455, 246.54 224.7455, 246.54 275.4727, 466.88 275.4727, 466.88 329.5818, 696.8 329.5818, 696.8 387.0727, 917.14 387.0727, 917.14 441.1818, 1080 441.1818" style="stroke: rgb(52%,37%,9%); stroke-linecap: round; stroke-width: 4; fill: None; fill-rule: evenodd;"/>
+				</g>
+			</g>
+			<path d="M 122,103 L 1080,103 Z" style="stroke: rgb(9%,8%,10%); stroke-linecap: butt; stroke-width: 1.4;"/>
+			<path d="M 122,103 L 122,475 Z" style="stroke: rgb(9%,8%,10%); stroke-linecap: butt; stroke-width: 1.4;"/>
+			<text x="576.493" y="51" style="font-family: Helvetica-Bold; font-size: 21px;fill: rgb(9%,8%,10%); stroke:none;" transform="translate(0,102) scale(1,-1)">Time</text>
+			<g transform=" matrix(0,1,-1,0,42,289)">
+				<text x="-95.697" y="0" style="font-family: Helvetica-Bold; font-size: 21px;fill: rgb(9%,8%,10%); stroke:none;" transform="translate(0,0) scale(1,-1)">Tokens per second</text>
+			</g>
+		</g>
+	</g>
+</svg>

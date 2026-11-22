@@ -1,0 +1,923 @@
+{
+  "uk-business-electricity": {
+    "authors": [
+      "Department for Energy Security and Net Zero"
+    ],
+    "title": "Quarterly Energy Prices, September 2026",
+    "publication": "UK non-domestic electricity prices, April–June 2026, chart 3.1",
+    "url": "https://assets.publishing.service.gov.uk/media/6aba2810fe72ed1e2b02f0e7/Quarterly_Energy_Prices_September_2026.pdf#page=7",
+    "year": 2026
+  },
+  "uk-sterling-dollar": {
+    "authors": [
+      "Office for National Statistics"
+    ],
+    "title": "Average sterling exchange rate against the US dollar",
+    "publication": "Series XUMAUSS, 2026 Q2",
+    "url": "https://www.ons.gov.uk/economy/nationalaccounts/balanceofpayments/timeseries/auss/mret#:~:text=1.3431",
+    "year": 2026
+  },
+  "h100-memory": {
+    "authors": [
+      "NVIDIA"
+    ],
+    "title": "HGX H100, H200 and B200 GPU specifications",
+    "publication": "HGX AI Factory, Components, table 1",
+    "url": "https://docs.nvidia.com/enterprise-reference-architectures/hgx-ai-factory-h100-h200-b200/latest/components.html#:~:text=Memory%20per%20GPU",
+    "accessed": "20 November 2026"
+  },
+  "tpu-v5e-memory": {
+    "authors": [
+      "Google Cloud"
+    ],
+    "title": "TPU v5e",
+    "publication": "Cloud TPU documentation, System architecture",
+    "url": "https://docs.cloud.google.com/tpu/docs/v5e#:~:text=HBM%20capacity%20per%20chip",
+    "accessed": "20 November 2026"
+  },
+  "fpga-introduction": {
+    "authors": [
+      "Microchip Technology"
+    ],
+    "title": "What is an FPGA?",
+    "url": "https://developerhelp.microchip.com/xwiki/bin/view/products/fpga/hello-fpga/what-is/#:~:text=A%20Field%20Programmable%20Gate%20Array%20is%20an%20integrated%20circuit%20designed%20to%20be%20configured%20by%20you%20after%20the%20chip%20is%20manufactured",
+    "publication": "Developer Help",
+    "year": 2025
+  },
+  "combinational-logic": {
+    "authors": [
+      "Computation Structures"
+    ],
+    "title": "Combinational logic",
+    "url": "https://computationstructures.org/notes/combinational_logic/notes.html#:~:text=There%20is%20a%20one-to-one%20correspondence%20between%20these%20truth%20tables",
+    "publication": "Course notes, chapter 7, sections 7.3 and 7.4",
+    "accessed": "29 October 2026"
+  },
+  "memory-technologies": {
+    "authors": [
+      "Massachusetts Institute of Technology"
+    ],
+    "title": "6.004 Computation Structures, lecture 14: caches and the memory hierarchy",
+    "url": "https://computationstructures.org/videos/caches/lecture.pdf#page=5",
+    "pages": "slides 5–10",
+    "year": 2016
+  },
+  "ice-forty": {
+    "authors": [
+      "Lattice Semiconductor"
+    ],
+    "title": "iCE40 LP/HX family data sheet",
+    "url": "https://www.latticesemi.com/view_document?document_id=49312#page=11",
+    "publication": "FPGA-DS-02029-4.3",
+    "pages": "11–18",
+    "year": 2025
+  },
+  "lut-six": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Look-up table",
+    "url": "https://docs.amd.com/r/en-US/ug474_7Series_CLB/Look-Up-Table#:~:text=implemented%20as%20six-input%20look-up%20tables",
+    "publication": "7 Series FPGAs Configurable Logic Block User Guide, UG474, revision 1.9",
+    "year": 2025
+  },
+  "sequential-logic": {
+    "authors": [
+      "Computation Structures"
+    ],
+    "title": "Sequential logic",
+    "url": "https://computationstructures.org/notes/sequential_logic/notes.html#:~:text=The%20flip%20flop%20shown%20above%20has%20the%20effect%20of%20loading%20new%20data",
+    "publication": "Course notes, chapter 8, sections 8.2.1.4 and 8.3",
+    "accessed": "29 October 2026"
+  },
+  "registered-outputs": {
+    "authors": [
+      "Altera"
+    ],
+    "title": "Register combinational logic outputs",
+    "url": "https://docs.altera.com/r/docs/683082/25.1/quartus-prime-pro-edition-user-guide/register-combinational-logic-outputs#:~:text=glitches%20generated%20by%20the%20combinational%20logic%20are%20blocked%20at%20the%20data%20input%20of%20the%20register",
+    "publication": "Quartus Prime Pro Edition User Guide, version 25.1, section 3.2.3.1",
+    "year": 2026
+  },
+  "clock-network": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Clocking architecture overview",
+    "url": "https://docs.amd.com/r/en-US/ug572-ultrascale-clocking/Clocking-Architecture-Overview#:~:text=with%20dedicated%20global%20clocks%20distributed%20on%20clock%20routing%20and%20clock%20distribution%20resources",
+    "publication": "UltraScale Architecture Clocking Resources User Guide, UG572, revision 1.11",
+    "year": 2025
+  },
+  "fpga-architecture": {
+    "authors": [
+      "Intel"
+    ],
+    "title": "FPGA architecture overview",
+    "url": "https://www.intel.com/content/www/us/en/docs/oneapi-fpga-add-on/developer-guide/2024-2/fpga-architecture-overview.html#:~:text=A%20random%20access%20memory%20%28RAM%29%20block%20provides%20more%20efficient%20storage%20of%20data%20than%20registers",
+    "publication": "Intel oneAPI DPC++/C++ Compiler Handbook for FPGAs, version 2024.2",
+    "year": 2024
+  },
+  "fpga-configuration": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "7 Series FPGAs configuration user guide",
+    "url": "https://docs.amd.com/v/u/en-US/ug470_7Series_Config",
+    "publication": "UG470, revision 1.17",
+    "pages": "11, 78–85",
+    "year": 2023
+  },
+  "simulation": {
+    "authors": [
+      "Amaranth contributors"
+    ],
+    "title": "Simulator",
+    "url": "https://amaranth-lang.org/docs/amaranth/v0.5.0/simulator.html#simulating-circuits",
+    "publication": "Amaranth language and toolchain documentation, version 0.5.0",
+    "accessed": "29 October 2026"
+  },
+  "synthesis": {
+    "authors": [
+      "Yosys contributors"
+    ],
+    "title": "A primer on digital circuit synthesis",
+    "url": "https://yosyshq.readthedocs.io/projects/yosys/en/stable/appendix/primer.html#behavioural-level:~:text=The%20synthesis%20result%20however%20will%20contain%20an%20adder",
+    "publication": "Yosys documentation, sections on behavioural, register-transfer and physical gate levels",
+    "accessed": "29 October 2026"
+  },
+  "design-flow": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Placement and routing",
+    "url": "https://docs.amd.com/r/en-US/ug892-vivado-design-flows-overview/Placement-and-Routing#:~:text=optimize%2C%20place%2C%20and%20route%20it%20onto%20the%20target%20device%20resources",
+    "publication": "Vivado Design Suite User Guide: Design Flows Overview, UG892, version 2026.1",
+    "year": 2026
+  },
+  "timing-analysis": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Running timing analysis",
+    "url": "https://docs.amd.com/r/en-US/ug892-vivado-design-flows-overview/Running-Timing-Analysis#:~:text=logic%20relationships%2C%20and%20constraints%20applied%20to%20your%20design",
+    "publication": "Vivado Design Suite User Guide: Design Flows Overview, UG892, version 2026.1",
+    "year": 2026
+  },
+  "pipeline-performance": {
+    "authors": [
+      "Computation Structures"
+    ],
+    "title": "Performance measures",
+    "url": "https://computationstructures.org/notes/performance/notes.html#:~:text=Latency%2C%20the%20end-to-end%20time%20taken%20for%20each%20individual%20operation",
+    "publication": "Course notes, chapter 11",
+    "accessed": "29 October 2026"
+  },
+  "power-basics": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Power terminology",
+    "url": "https://docs.amd.com/r/en-US/ug907-vivado-power-analysis-optimization/Power-Terminology#:~:text=Design%20power%20is%20the%20dynamic%20power%20of%20the%20user%20design",
+    "publication": "Vivado Design Suite User Guide: Power Analysis and Optimization, UG907, version 2026.1",
+    "year": 2026
+  },
+  "fpga-asic": {
+    "authors": [
+      "Kuon, I.",
+      "Rose, J."
+    ],
+    "title": "Measuring the gap between FPGAs and ASICs",
+    "url": "https://doi.org/10.1109/TCAD.2006.884574",
+    "publication": "IEEE Trans. Comput. Aided Des. Integr. Circuits Syst.",
+    "volume": "26",
+    "pages": "203–215",
+    "year": 2007
+  },
+  "power-estimation": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Vectorless power analysis",
+    "url": "https://docs.amd.com/r/en-US/ug907-vivado-power-analysis-optimization/Vectorless-Power-Analysis#:~:text=The%20vectorless%20power%20analysis%20is%20an%20average%20power%20estimation",
+    "publication": "Vivado Design Suite User Guide: Power Analysis and Optimization, UG907, version 2026.1",
+    "year": 2026
+  },
+  "cpu-gpu": {
+    "authors": [
+      "NVIDIA"
+    ],
+    "title": "Introduction",
+    "url": "https://docs.nvidia.com/cuda/archive/12.5.0/cuda-c-programming-guide/index.html#:~:text=The%20GPU%20is%20specialized%20for%20highly%20parallel%20computations",
+    "publication": "CUDA C++ Programming Guide, version 12.5.0, section 1.1, The Benefits of Using GPUs",
+    "accessed": "29 October 2026"
+  },
+  "inference-gpu-batching": {
+    "authors": [
+      "NVIDIA"
+    ],
+    "title": "Optimizing TensorRT performance",
+    "url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/performance/optimization.html#batching",
+    "publication": "NVIDIA TensorRT documentation, Batching",
+    "accessed": "16 November 2026"
+  },
+  "cpu-fpga": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Introduction",
+    "url": "https://docs.amd.com/r/en-US/ug585-zynq-7000-SoC-TRM/Introduction#:~:text=integrates%20a%20feature-rich%20dual%2Fsingle%20core",
+    "publication": "Zynq 7000 SoC Technical Reference Manual, UG585, version 1.15",
+    "year": 2026
+  },
+  "processor-prototype": {
+    "authors": [
+      "OpenHW Group"
+    ],
+    "title": "CVA6: an application class RISC-V CPU core",
+    "url": "https://docs.openhwgroup.org/projects/cva6-user-manual/#:~:text=The%20CVA6%20targets%20both%20ASIC%20and%20FPGA%20implementations",
+    "publication": "CVA6 documentation",
+    "accessed": "29 October 2026"
+  },
+  "hardware-timers": {
+    "authors": [
+      "NXP Semiconductors"
+    ],
+    "title": "LPC51U68 product data sheet",
+    "url": "https://www.nxp.com/docs/en/data-sheet/LPC51U68.pdf#page=36",
+    "publication": "Revision 1.5, section 7.15.2, SCTimer/PWM subsystem",
+    "pages": "36",
+    "year": 2020
+  },
+  "atlas-data-acquisition": {
+    "authors": [
+      "ATLAS Collaboration"
+    ],
+    "title": "Trigger and Data Acquisition",
+    "url": "https://atlas.cern/Discover/Detector/Trigger-DAQ#:~:text=ATLAS%20is%20designed%20to%20observe,megabytes%20per%20second.&text=During%20this%20time%20the%20event%20data%20is%20kept%20in%20storage%20buffers.",
+    "publication": "Collision rate and first-level hardware trigger",
+    "accessed": "6 November 2026"
+  },
+  "atlas-trigger": {
+    "authors": [
+      "ATLAS Collaboration"
+    ],
+    "title": "ATLAS event selection system readies for LHC Run 3",
+    "url": "https://atlas.cern/updates/briefing/run-3-trigger#:~:text=The%20calorimeter%20trigger%20now%20has%20modern%20large-scale%20FPGAs,with%20higher%20precision.",
+    "year": 2022
+  },
+  "fpga-video-walkthrough": {
+    "authors": [
+      "Excessive Overkill"
+    ],
+    "title": "FPGAs Aren’t Processors (Unless You Want Them to Be) || FPGA Deep Dive and Use",
+    "url": "https://www.youtube.com/watch?v=d3nuepnbmC4",
+    "publication": "YouTube video",
+    "year": 2026
+  },
+  "fpga-video-history": {
+    "authors": [
+      "Asianometry"
+    ],
+    "title": "The History of the FPGA: The Ultimate Flex",
+    "url": "https://www.youtube.com/watch?v=m-8G1Yixb34",
+    "publication": "YouTube video",
+    "year": 2022
+  },
+  "neural-network-basics": {
+    "authors": [
+      "Zhang, A.",
+      "Lipton, Z. C.",
+      "Li, M.",
+      "Smola, A. J."
+    ],
+    "title": "Multilayer perceptrons",
+    "url": "https://en.d2l.ai/chapter_multilayer-perceptrons/mlp.html#from-linear-to-nonlinear:~:text=Since%20the%20hidden%20and%20output%20layers%20are%20both%20fully%20connected",
+    "publication": "Dive into Deep Learning, version 1.0.3, sections 5.1.1.3 and 5.1.2.1",
+    "accessed": "30 October 2026"
+  },
+  "sensor-processing": {
+    "authors": [
+      "Altera"
+    ],
+    "title": "Physical AI",
+    "url": "https://www.altera.com/solutions/physical-ai#:~:text=FPGAs%20process%20parallel%20sensor%20streams,precise%20timing%20and%20responsive%20sense-decide-act%20control%20loops.",
+    "publication": "Sections on deterministic real-time control and complex sensor connectivity",
+    "accessed": "30 October 2026"
+  },
+  "nandland-comparison": {
+    "authors": [
+      "Nandland"
+    ],
+    "title": "Lesson 2: FPGA vs. Microcontroller vs. ASIC",
+    "url": "https://nandland.com/lesson-2-fpga-vs-micro-vs-asic/#:~:text=The%20act%20of%20examining%20multiple%20possibilities,Selecting%20the%20right%20tool%20for%20your%20problem%20will%20make%20solving%20the%20problem%20much%20more%20enjoyable.",
+    "publication": "FPGA-101",
+    "accessed": "30 October 2026"
+  },
+  "nandland-luts": {
+    "authors": [
+      "Nandland"
+    ],
+    "title": "Lesson 4: What is a Look-Up Table (LUT)?",
+    "url": "https://nandland.com/lesson-4-what-is-a-look-up-table-lut/#:~:text=Each%20input%20increases%20the%20number%20of%20possible%20outputs%20by%20a%20factor%20of%202.",
+    "publication": "FPGA-101",
+    "accessed": "30 October 2026"
+  },
+  "nandland-flip-flops": {
+    "authors": [
+      "Nandland"
+    ],
+    "title": "Lesson 5: What is a Flip-Flop?",
+    "url": "https://nandland.com/lesson-5-what-is-a-flip-flop/#:~:text=The%20above%20waveform%20shows%20three%20clock%20cycle%20events,Since%20it%20has%20not%20changed%2C%20Q%20stays%20high.",
+    "publication": "FPGA-101",
+    "accessed": "30 October 2026"
+  },
+  "nandland-block-ram": {
+    "authors": [
+      "Nandland"
+    ],
+    "title": "Lesson 15: What is a Block RAM (BRAM)?",
+    "url": "https://nandland.com/lesson-15-what-is-a-block-ram-bram/#:~:text=Note%20that%20you%20can%20only%20read%20one%20Rd%20Data%20value%20per%20clock%20cycle.,If%20you%20want%20to%20read%20and%20write%20data%20at%20the%20same%20time%2C%20you%20will%20need%20a%20Dual%20Port%20Block%20RAM%21",
+    "publication": "FPGA-101",
+    "accessed": "30 October 2026"
+  },
+  "microcontroller-basics": {
+    "authors": [
+      "Microchip Technology"
+    ],
+    "title": "Differences Between MCU and MPU Development",
+    "url": "https://developerhelp.microchip.com/xwiki/bin/view/products/mcu-mpu/32bit-mpu/differences-between-mcu-and-mpu-development/#:~:text=Along%20came%20MCUs.,in%20a%20single%20package.",
+    "publication": "Developer Help, sections on MCU integration and hardware architecture",
+    "accessed": "30 October 2026"
+  },
+  "sram-writing": {
+    "authors": [
+      "Massachusetts Institute of Technology"
+    ],
+    "title": "6.004 Computation Structures: SRAM",
+    "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/pages/c14/c14s1/#:~:text=The%20heart%20of%20the%20SRAM%20are%20the%20bit%20cells,maintain%20the%20stored%20value%20as%20long%20as%20there%E2%80%99s%20power.&text=Write%20operations%20start%20by%20driving%20the%20bitlines,This%20would%20be%20a%20no-no%20in%20a%20strictly%20digital%20circuit.",
+    "publication": "Lecture 14.1, annotated slides, SRAM bit cells, access transistors and write operations",
+    "year": 2017
+  },
+  "flash-memory": {
+    "authors": [
+      "Massachusetts Institute of Technology"
+    ],
+    "title": "6.004 Computation Structures: Flash Memory",
+    "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/pages/c14/c14s1/#:~:text=In%20flash%20memories,where%20it%20will%20remain%20stable%20for%20years.",
+    "publication": "Lecture 14.1, annotated slide on flash memory",
+    "year": 2017
+  },
+  "configuration-physical": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Overview",
+    "url": "https://docs.amd.com/r/en-US/ug570-ultrascale-configuration/Overview#:~:text=After%20programming%2C%20the%20FPGA%20bitstream%20is%20stored%20in%20highly%20robust%20CMOS%20configuration%20latches",
+    "publication": "UltraScale Architecture Configuration User Guide, UG570, revision 1.20.1",
+    "year": 2025
+  },
+  "configuration-load": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Configuration packets",
+    "url": "https://docs.amd.com/r/en-US/ug570-ultrascale-configuration/Configuration-Packets#:~:text=The%20configuration%20logic%20consists%20of%20a%20packet%20processor",
+    "publication": "UltraScale Architecture Configuration User Guide, UG570, revision 1.20.1",
+    "year": 2025
+  },
+  "configuration-frames": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Configuration memory frames",
+    "url": "https://docs.amd.com/r/en-US/ug570-ultrascale-configuration/Configuration-Memory-Frames#:~:text=FPGA%20configuration%20memory%20is%20arranged%20in%20frames,all%20operations%20must%20therefore%20act%20upon%20whole%20configuration%20frames.",
+    "publication": "UltraScale Architecture Configuration User Guide, UG570, revision 1.20.1",
+    "year": 2025
+  },
+  "lut-size-tradeoff": {
+    "authors": [
+      "Feng, W.",
+      "Greene, J.",
+      "Mishchenko, A."
+    ],
+    "title": "Improving FPGA performance with a S44 LUT structure",
+    "url": "https://people.eecs.berkeley.edu/~alanmi/publications/2018/fpga18_s44.pdf#page=1",
+    "publication": "Proceedings of the 2018 ACM/SIGDA International Symposium on Field-Programmable Gate Arrays, introduction",
+    "year": 2018
+  },
+  "inference-quantisation": {
+    "authors": [
+      "Hugging Face"
+    ],
+    "title": "Quantization concepts",
+    "url": "https://huggingface.co/docs/transformers/en/quantization/concept_guide#:~:text=Quantization%20reduces%20the%20memory%20footprint,precision%20data%20types",
+    "publication": "Transformers documentation, quantisation schemes and int4 weight packing",
+    "accessed": "30 October 2026"
+  },
+  "fpga-fixed-point": {
+    "authors": [
+      "hls4ml contributors"
+    ],
+    "title": "Frequently asked questions",
+    "url": "https://fastmachinelearning.org/hls4ml/intro/faq.html#:~:text=hls4ml%20uses%20fixed-point%20precision%20types,computation%20accuracy%20that%20propagate%20through%20the%20layers.",
+    "publication": "hls4ml documentation, prediction accuracy and fixed-point precision",
+    "accessed": "30 October 2026"
+  },
+  "our-board": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Summary",
+    "url": "https://docs.amd.com/r/en-US/ug1089-kv260-starter-kit/Summary#:~:text=The%20AMD%20Kria,security%20module.",
+    "publication": "Kria KV260 Vision AI Starter Kit User Guide, UG1089, revision 1.4",
+    "year": 2025
+  },
+  "our-board-system": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Functional overview and block diagram",
+    "url": "https://docs.amd.com/r/en-US/ds987-k26-som/Functional-Overview-and-Block-Diagram#:~:text=It%20provides%20an%20embedded%20processing%20system,non-volatile%20memory%20devices",
+    "publication": "Kria K26 SOM Data Sheet, DS987, revision 1.6, functional overview and linked processing-system section",
+    "year": 2026
+  },
+  "our-board-processors": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Processing system",
+    "url": "https://docs.amd.com/r/en-US/ds987-k26-som/Processing-System#:~:text=Arm%C2%AE%20Cortex%C2%AE-A53%20based%20application%20processing%20unit",
+    "publication": "Kria K26 SOM Data Sheet, DS987, revision 1.6, application processing unit",
+    "year": 2026
+  },
+  "kv260-ethernet": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Interfaces",
+    "url": "https://docs.amd.com/r/en-US/ug1089-kv260-starter-kit/Interfaces#:~:text=Ethernet%20RJ45%20jack",
+    "publication": "Kria KV260 Vision AI Starter Kit User Guide, UG1089, revision 1.4, Table 1, J10",
+    "year": 2025
+  },
+  "kv260-ddr-access": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Slave interface",
+    "url": "https://docs.amd.com/r/3.4-English/pg201-zynq-ultrascale-plus-processing-system/Slave-Interface?contentId=a27dSHbpSWjx9dexkTB1Ug#:~:text=Non%2Dcoherent%20paths%20from%20PL%20to%20FPD%20main%20switch%20and%20DDR",
+    "publication": "Zynq UltraScale+ MPSoC Processing System Product Guide, PG201, version 3.4, Table 4-2",
+    "year": 2022
+  },
+  "melten-n10": {
+    "authors": [
+      "Melten Engineering"
+    ],
+    "title": "An LLM accelerator, built in five days",
+    "url": "https://melten.ai/blog/llm-accelerator-built-in-five-days/#:~:text=7B%20model%20verified&text=It%20also%20reused%20the%20PCIe%20and%20DDR%20platform",
+    "publication": "Melten engineering notes, N10 FPGA prototype",
+    "year": 2026
+  },
+  "transformer-attention": {
+    "authors": [
+      "Vaswani, A. et al."
+    ],
+    "title": "Attention is all you need",
+    "url": "https://arxiv.org/html/1706.03762v7#S3.SS2:~:text=An%20attention%20function%20can%20be%20described",
+    "publication": "Advances in Neural Information Processing Systems",
+    "volume": "30",
+    "year": 2017
+  },
+  "llama-architecture": {
+    "authors": [
+      "Touvron, H. et al."
+    ],
+    "title": "LLaMA: Open and efficient foundation language models",
+    "url": "https://arxiv.org/html/2302.13971v1#S2.SS2",
+    "publication": "arXiv:2302.13971, section 2.2",
+    "year": 2023
+  },
+  "led-video-display": {
+    "authors": [
+      "Analog Devices"
+    ],
+    "title": "Designing an LED-based video-display board",
+    "url": "https://www.analog.com/en/resources/technical-articles/designing-an-ledbased-videodisplay-board.html#:~:text=The%20FPGA%20buffers%20the%20pixel%20data%20stream,corresponding%20LVDS%20channels.",
+    "publication": "Maxim application note, video-display architecture and video bit-stream demultiplexing",
+    "year": 2009
+  },
+  "reusable-ip": {
+    "authors": [
+      "Altera"
+    ],
+    "title": "FPGA intellectual property",
+    "url": "https://www.altera.com/products/ip#:~:text=Altera%20FPGA%20intellectual%20property%20provides%20reusable%20building%20blocks,each%20selected%20core.",
+    "publication": "Overview and soft and hardened IP portfolio",
+    "accessed": "5 November 2026"
+  },
+  "risc-v-standard": {
+    "authors": [
+      "Himelstein, M."
+    ],
+    "title": "RISC-V: An open standard instruction set architecture",
+    "url": "https://riscv.org/blog/risc-v-an-open-standard-instruction-set-architecture/#:~:text=RISC-V%20International%20produces%20specifications.,Those%20implementations%20may%20be%20open%20source%20or%20commercial.",
+    "publication": "RISC-V International",
+    "year": 2023
+  },
+  "ip-selection": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Selecting IP from the IP catalog",
+    "url": "https://docs.amd.com/r/en-US/ug1387-acap-hardware-ip-platform-dev-methodology/Selecting-IP-from-the-IP-Catalog#:~:text=A%20majority%20of%20the%20IP%20in%20the%20IP%20catalog%20is%20free.,Silicon%20Resources%20required%20by%20this%20IP",
+    "publication": "Versal Adaptive SoC Hardware, IP, and Platform Development Methodology Guide, UG1387, version 2026.1",
+    "year": 2026
+  },
+  "ip-validation": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Validating the IP",
+    "url": "https://docs.amd.com/r/2025.1-English/ug892-vivado-design-flows-overview/Validating-the-IP#:~:text=You%20can%20verify%20Vivado%20IP%20by%20synthesizing%20the%20IP,timing%2C%20power%2C%20and%20resource%20utilization.",
+    "publication": "Vivado Design Suite User Guide: Design Flows Overview, UG892, version 2025.1",
+    "year": 2025
+  },
+  "ai-netlist-reconstruction": {
+    "authors": [
+      "Fang, W.",
+      "Wang, J.",
+      "Lu, Y.",
+      "Liu, S.",
+      "Xie, Z."
+    ],
+    "title": "GenEDA: Towards generative netlist functional reasoning via cross-modal circuit encoder-decoder alignment",
+    "url": "https://arxiv.org/abs/2504.09485#:~:text=GenEDA%20enables%20three%20unprecedented%20generative%20netlist%20functional%20reasoning%20tasks,from%20low-level%20netlists.",
+    "publication": "ICCAD 2025; author manuscript, arXiv:2504.09485v2",
+    "year": 2025
+  },
+  "ai-synthesis": {
+    "authors": [
+      "Hosny, A.",
+      "Hashemi, S.",
+      "Shalan, M.",
+      "Reda, S."
+    ],
+    "title": "DRiLLS: Deep reinforcement learning for logic synthesis",
+    "url": "https://arxiv.org/html/1911.04021v2#:~:text=Logic%20synthesis%20requires%20extensive%20tuning,subject%20to%20a%20timing%20constraint.",
+    "publication": "Proceedings of the 25th Asia and South Pacific Design Automation Conference; author manuscript, arXiv:1911.04021v2, abstract and sections I–II",
+    "year": 2020
+  },
+  "fpga-prototyping": {
+    "authors": [
+      "Synopsys"
+    ],
+    "title": "FPGA prototyping and the SoC design/verification process",
+    "url": "https://www.synopsys.com/blogs/chip-design/scalable-performance-for-soc-design.html#:~:text=As%20its%20name%20implies,real-world%20interface%20connectivity.",
+    "publication": "Silicon to Systems Blog, introduction and “Fastest Path to a Prototype”",
+    "accessed": "5 November 2026"
+  },
+  "prototype-adaptation": {
+    "authors": [
+      "Synopsys"
+    ],
+    "title": "FPGA-based prototyping",
+    "url": "https://www.synopsys.com/content/dam/synopsys/services/datasheets/fpga-based-prototyping-ds.pdf#page=1",
+    "publication": "Professional Services datasheet, adapting ASIC-targeted RTL for FPGAs",
+    "pages": "1",
+    "year": 2015
+  },
+  "clb-overview": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "CLB overview",
+    "url": "https://docs.amd.com/r/en-US/ug574-ultrascale-clb/CLB-Overview#:~:text=Each%20UltraScale%20architecture%20CLB%20contains%20one%20slice.,eight%206-input%20LUTs%20and%20sixteen%20flip-flops.",
+    "publication": "UltraScale Architecture Configurable Logic Block User Guide, UG574, revision 1.6",
+    "year": 2025
+  },
+  "drone-processing": {
+    "authors": [
+      "Altera"
+    ],
+    "title": "Drones & Unmanned System",
+    "url": "https://www.altera.com/solutions/aerospace-defense/drones-uavs#:~:text=designers%20can%20process%20and%20fuse%20sensor%20streams,while%20addressing%20performance",
+    "publication": "Overview: sensor processing, flexible I/O and embedded processing",
+    "accessed": "6 November 2026"
+  },
+  "detector-signals": {
+    "authors": [
+      "CERN"
+    ],
+    "title": "How a detector works",
+    "url": "https://home.cern/science/experiments/how-detector-works#:~:text=Most%20tracking%20devices,through%20the%20device.",
+    "publication": "Tracking devices and calorimeters",
+    "accessed": "6 November 2026"
+  },
+  "cern-fpga-trigger": {
+    "authors": [
+      "Traczyk, P."
+    ],
+    "title": "Smarter decisions at the speed of collisions",
+    "url": "https://home.cern/smarter-decisions-at-the-speed-of-collisions/#:~:text=In%202018%20CMS%20researchers,the%20level-1%20trigger.",
+    "publication": "CERN",
+    "year": 2026,
+    "accessed": "6 November 2026"
+  },
+  "flip-flop-latches": {
+    "authors": [
+      "Massachusetts Institute of Technology"
+    ],
+    "title": "6.004 Computation Structures: Sequential Logic",
+    "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/pages/c5/c5s1/#:~:text=The%20D%20input%20is%20connected%20to%20what%20we%20call%20the%20master%20latch,the%20gate%20input%20of%20the%20master%20latch.&text=On%20the%20rising%20edge%20of%20the%20clock,the%20Q%20signal%20is%20also%20stable",
+    "publication": "Lecture 5.1, annotated slides 12–13: Edge-triggered D Register and D-Register Waveforms",
+    "year": 2017
+  },
+  "routing-interconnect": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Interconnect resources",
+    "url": "https://docs.amd.com/r/en-US/ug574-ultrascale-clb/Interconnect-Resources#:~:text=The%20CLB%20slices%20are%20arranged,between%20the%20rows%20and%20columns",
+    "publication": "UltraScale Architecture Configurable Logic Block User Guide, UG574, revision 1.6, switch matrices and general-routing resources",
+    "year": 2025
+  },
+  "bram-configuration": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Block RAM summary",
+    "url": "https://docs.amd.com/r/en-US/ug573-ultrascale-memory-resources/Block-RAM-Summary#:~:text=Each%20port%20can%20be%20configured,configuration%20bitstream.",
+    "publication": "UltraScale Architecture Memory Resources User Guide, UG573, revision 1.14, port widths and initial memory contents",
+    "year": 2025
+  },
+  "multiplexers": {
+    "authors": [
+      "Massachusetts Institute of Technology"
+    ],
+    "title": "6.004 Computation Structures: Multiplexers",
+    "url": "https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/pages/c4/c4s1/#:~:text=A%20multiplexer%2C%20or%20MUX%20for%20short,Y%20output%20value.",
+    "publication": "Lecture 4.1, annotated slides: 2-to-1 multiplexers, select inputs and MUX trees",
+    "year": 2017
+  },
+  "distributed-ram": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Distributed RAM (SLICEM only)",
+    "url": "https://docs.amd.com/r/en-US/ug574-ultrascale-clb/Distributed-RAM-SLICEM-Only#:~:text=The%20function%20generators%20%28LUTs%29%20in%20SLICEM%20can%20be%20implemented%20as%20a%20synchronous%20RAM%20resource%20also%20described%20as%20distributed%20RAM.",
+    "publication": "UltraScale Architecture Configurable Logic Block User Guide, UG574, revision 1.6",
+    "year": 2025
+  },
+  "distributed-ram-use": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Distributed RAM applications",
+    "url": "https://docs.amd.com/r/en-US/ug574-ultrascale-clb/Distributed-RAM-Applications#:~:text=Distributed%20RAM%20provides%20a%20trade-off%20between%20using%20storage%20elements%20for%20very%20small%20arrays%20and%20block%20RAM%20for%20larger%20arrays.",
+    "publication": "UltraScale Architecture Configurable Logic Block User Guide, UG574, revision 1.6",
+    "year": 2025
+  },
+  "resource-columns": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Clock structure",
+    "url": "https://docs.amd.com/r/en-US/ug572-ultrascale-clocking/Clock-Structure#:~:text=The%20mix%20of%20slice%2C%20DSP%2C%20and%20block%20RAM%20columns%20in%20each%20CR%20can%20be%20different%2C%20but%20are%20always%20identical%20when%20stacked%20in%20the%20vertical%20direction%2C%20thus%20building%20columns%20of%20those%20resources%20for%20the%20entire%20device.",
+    "publication": "UltraScale Architecture Clocking Resources User Guide, UG572, revision 1.11",
+    "year": 2025
+  },
+  "adder-lut-estimate": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Know what you infer",
+    "url": "https://docs.amd.com/r/2023.1-English/ug949-vivado-design-methodology/Know-What-You-Infer#:~:text=an%208%2Dbit%20by%208%2Dbit%20adder%20uses%208%20LUTs",
+    "publication": "UltraFast Design Methodology Guide for FPGAs and SoCs, UG949, Vivado 2023.1, carry-chain adder example",
+    "year": 2023
+  },
+  "multiplier-lut-utilisation": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Performance and resource utilization for Multiplier v12.0",
+    "url": "https://download.amd.com/docnav/documents/ip_attachments/mult-gen.html#:~:text=zup_1_lut_12x12_area,125&text=zup_1_lut_12x12_speed,141",
+    "publication": "Vivado 2025.2, Zynq UltraScale+ table, XCZU9EG unsigned 12 × 12-bit multiplier",
+    "year": 2025
+  },
+  "dsp-arithmetic": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "DSP48E2",
+    "url": "https://docs.amd.com/r/en-US/ug958-vivado-sysgen-ref/DSP48E2#:~:text=The%20Xilinx%20DSP48E2%20block,system%20design%20flexibility.",
+    "publication": "Vivado Design Suite Reference Guide: Model-Based DSP Design Using System Generator, UG958, version 2020.2",
+    "year": 2020
+  },
+  "dsp-inference": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Multiply-add and multiply-accumulate implementation",
+    "url": "https://docs.amd.com/r/2023.2-English/ug901-vivado-synthesis/Multiply-Add-and-Multiply-Accumulate-Implementation#:~:text=Vivado%20synthesis%20can%20implement%20an%20inferred%20Multiply%2DAdd%20or%20Multiply%2DAccumulate%20macro%20on%20DSP%20block%20resources",
+    "publication": "Vivado Design Suite User Guide: Synthesis, UG901, version 2023.2",
+    "year": 2023
+  },
+  "xck26-dsp-type": {
+    "authors": [
+      "Shen, G. et al."
+    ],
+    "title": "Are Conventional SNNs Really Efficient? A Perspective from Network Quantization",
+    "url": "https://openaccess.thecvf.com/content/CVPR2024/supplemental/Shen_Are_Conventional_SNNs_CVPR_2024_supplemental.pdf",
+    "publication": "CVPR, supplementary material, Table 6, XCK26 resource utilisation",
+    "year": 2024
+  },
+  "dsp48e2-diagram": {
+    "authors": [
+      "Xilinx"
+    ],
+    "title": "Basic DSP48E2 functionality",
+    "url": "https://docs.amd.com/api/khub/documents/pTysoma4TYgNH95BrY1Sbw/content#page=8",
+    "publication": "UltraScale Architecture DSP Slice User Guide, UG579, revision 1.11, Figure 1-1, p. 8",
+    "year": 2021
+  },
+  "our-memory-capacity": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Programmable logic",
+    "url": "https://docs.amd.com/r/en-US/ds987-k26-som/Programmable-Logic#:~:text=Distributed%20RAM%20(Mb),288%20Kb%20dual-port%2C%2072-bit-wide%20memory%20with%20error%20correction",
+    "publication": "Kria K26 SOM Data Sheet, DS987, revision 1.6, PL resources table",
+    "year": 2026
+  },
+  "ultraram": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "UltraRAM summary",
+    "url": "https://docs.amd.com/r/en-US/ug573-ultrascale-memory-resources/UltraRAM-Summary#:~:text=Each%20UltraRAM%20block%20can%20store%20up%20to%20288K%20bits%20of%20data,UltraRAM%20has%20eight%20times%20the%20capacity%20of%20a%20block%20RAM.&text=However%2C%20internally%20the%20SRAM%20array%20uses%20single%20port%20memory%20cells.&text=The%20288%20Kb%20blocks%20can%20be%20cascaded%20to%20facilitate%20deeper%20memory%20implementations.",
+    "publication": "UltraScale Architecture Memory Resources User Guide, UG573, revision 1.14",
+    "year": 2025
+  },
+  "kv260-boot-flash": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Primary boot device",
+    "url": "https://docs.amd.com/r/en-US/ug1089-kv260-starter-kit/Primary-Boot-Device#:~:text=The%20primary%20boot%20device%20is%20a%20QSPI",
+    "publication": "Kria KV260 Vision AI Starter Kit User Guide, UG1089, revision 1.4",
+    "year": 2025
+  },
+  "kv260-sd-storage": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Secondary boot device",
+    "url": "https://docs.amd.com/r/en-US/ug1089-kv260-starter-kit/Secondary-Boot-Device?contentId=iByjrffOvQz1H8LXf~D1lA#:~:text=The%20secondary%20boot%20device%20on%20the%20KV260",
+    "publication": "Kria KV260 Vision AI Starter Kit User Guide, UG1089, revision 1.4",
+    "year": 2025
+  },
+  "kv260-hardware": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Product details",
+    "url": "https://docs.amd.com/r/en-US/ds986-kv260-starter-kit/Product-Details#:~:text=DDR%20memory,DDR4",
+    "publication": "Kria KV260 Vision AI Starter Kit Data Sheet, DS986, revision 1.3, product details table",
+    "year": 2025
+  },
+  "kv260-interfaces": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "MIO peripherals",
+    "url": "https://docs.amd.com/r/en-US/ds987-k26-som/MIO-Peripherals?contentId=LVZhHeSTGGXT3pjJelCkrg#:~:text=A%20number%20of%20peripherals%20are%20available%20within%20the%20MIO",
+    "publication": "Kria K26 SOM Data Sheet, DS987, revision 1.6, peripheral controllers",
+    "year": 2026
+  },
+  "kv260-power": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Powering the starter kit and power budgets",
+    "url": "https://docs.amd.com/r/en-US/ug1089-kv260-starter-kit/Powering-the-Starter-Kit-and-Power-Budgets?contentId=GSIWVBXyN~R_H0necbRq6Q#:~:text=The%20KV260%20Starter%20Kit%20carrier%20card%20on-board%20regulator",
+    "publication": "Kria KV260 Vision AI Starter Kit User Guide, UG1089, revision 1.4, Powering the K26 SOM",
+    "year": 2025
+  },
+  "inference-brainwave": {
+    "authors": [
+      "Microsoft Research"
+    ],
+    "title": "Project Brainwave",
+    "url": "https://www.microsoft.com/en-us/research/project/project-brainwave/#:~:text=with%20no%20batching",
+    "publication": "Overview and precision-adaptable FPGA soft processor",
+    "accessed": "12 November 2026"
+  },
+  "inference-brainwave-architecture": {
+    "authors": [
+      "Fowers, J. et al."
+    ],
+    "title": "A Configurable Cloud-Scale DNN Processor for Real-Time AI",
+    "url": "https://www.microsoft.com/en-us/research/wp-content/uploads/2018/06/ISCA18-Brainwave-CameraReady.pdf#page=2",
+    "publication": "ISCA, architecture and memory system, sections I–III",
+    "year": 2018
+  },
+  "inference-hls4ml": {
+    "authors": [
+      "hls4ml contributors"
+    ],
+    "title": "Frequently asked questions",
+    "url": "https://fastmachinelearning.org/hls4ml/intro/faq.html#:~:text=stores%20all%20weights%20on-chip",
+    "publication": "hls4ml 1.3.0 documentation, speed, model fit and precision questions",
+    "accessed": "12 November 2026"
+  },
+  "efinix-supply-migration": {
+    "authors": [
+      "Efinix"
+    ],
+    "title": "FPGA Availability Got You Down?",
+    "url": "https://www.efinixinc.com/promo/switch2efinix.php#:~:text=convert%20a%20design%20from%20another%20FPGA",
+    "publication": "Vendor migration campaign, form lists 2023–24 dates",
+    "accessed": "12 November 2026"
+  },
+  "efinix-device-migration": {
+    "authors": [
+      "Efinix"
+    ],
+    "title": "Migrating a Project to another FPGA",
+    "url": "https://www.efinixinc.com/docs/efinity-ug-v16.1.pdf#page=27",
+    "publication": "Efinity Software User Guide, UG-EFN-SOFTWARE-v16.1, June 2025",
+    "pages": "27–28",
+    "year": 2025
+  },
+  "rotary-position": {
+    "authors": [
+      "Su, J. et al."
+    ],
+    "title": "RoFormer: Enhanced transformer with rotary position embedding",
+    "url": "https://arxiv.org/html/2104.09864v5#S3.SS2:~:text=We%20begin%20with%20a%20simple%20case",
+    "publication": "arXiv:2104.09864, section 3.2",
+    "year": 2021
+  },
+  "alveo-2018-prices": {
+    "authors": [
+      "Xilinx"
+    ],
+    "title": "Xilinx ML Suite Overview",
+    "publication": "Alveo ordering information, suggested retail prices for one card",
+    "url": "https://www.xilinx.com/publications/events/machine-learning-live/san-diego/xilinx_ml_suite_overview.pdf#search=%2212%2C995%22",
+    "year": 2018
+  },
+  "v100-2018-price": {
+    "authors": [
+      "Microway"
+    ],
+    "title": "NVIDIA Tesla V100 Price Analysis",
+    "publication": "Single-unit list prices, 8 May 2018",
+    "url": "https://www.microway.com/hpc-tech-tips/nvidia-tesla-v100-price-analysis/#:~:text=%2410%2C664",
+    "year": 2018
+  },
+  "alveo-v80-price": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "AMD Alveo V80 Compute Accelerator Card",
+    "publication": "US suggested retail price, part A-V80-P64G-PQ-G",
+    "url": "https://www.amd.com/en/products/accelerators/alveo/v80/a-v80-p64g-pq-g.html#:~:text=%249%2C495.00",
+    "accessed": "20 November 2026"
+  },
+  "ace-gpu-prices": {
+    "authors": [
+      "Ace Computers"
+    ],
+    "title": "US government contract price list",
+    "publication": "GSA schedule GS-35F-0400T, effective 15 September 2025, GPU options, page 12",
+    "url": "https://acecomputers.com/wp-content/uploads/2025/11/Ace-Computers-GSA-Pricelists-2025.09.16.pdf#page=12",
+    "year": 2025
+  },
+  "qwen-35-small": {
+    "authors": [
+      "Qwen Team"
+    ],
+    "title": "Qwen3.5-0.8B",
+    "publication": "Model card, model overview and text-only inference",
+    "url": "https://huggingface.co/Qwen/Qwen3.5-0.8B#model-overview",
+    "year": 2026
+  },
+  "alveo-u200-u250-memory": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "FPGA resource information",
+    "publication": "Alveo U200 and U250 data sheet, DS962, external DDR4 capacity",
+    "url": "https://docs.amd.com/r/en-US/ds962-u200-u250/FPGA-Resource-Information#:~:text=for%20a%20total%20of%2064%20GB%20of%20DDR4",
+    "year": 2023
+  },
+  "alveo-v80-memory": {
+    "authors": [
+      "AMD"
+    ],
+    "title": "Alveo V80 card product details",
+    "publication": "Alveo V80 data sheet, DS1013, table 1, HBM capacity and fitted DDR4 by part number",
+    "url": "https://docs.amd.com/r/en-US/ds1013-v80/Product-Details#:~:text=A-V80-P64G-PQ-G",
+    "year": 2024
+  }
+}

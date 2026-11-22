@@ -18,3 +18,12 @@ declare module "*.md?fabrication-article" {
   };
   export default article;
 }
+
+declare module "*.md?cited-article" {
+  const article: {
+    introduction: string;
+    scenes: { key: string; html: string }[];
+    bibliography: string;
+  };
+  export default article;
+}

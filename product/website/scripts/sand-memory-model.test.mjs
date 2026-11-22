@@ -8,7 +8,7 @@ import {
   REGISTER_MODEL,
   createLatchModel,
   dataChangePulse,
-} from "../src/components/articles/sand/runtime/memory-model.js";
+} from "../../../hardware/publishing/sand-to-thought/articles/sand/figures/runtime/memory-model.js";
 
 test("memory stays still until a reader chooses an action", () => {
   const model = createMemoryDemo();

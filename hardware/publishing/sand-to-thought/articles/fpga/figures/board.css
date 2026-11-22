@@ -1,0 +1,113 @@
+.fpga-world-layer .fpga-board text {
+  font-size: 21px;
+}
+.fpga-world-layer .fpga-board text.fpga-small {
+  font-size: 18px;
+}
+.fpga-board-chip-label {
+  dominant-baseline: central;
+  paint-order: stroke;
+  stroke: var(--fpga-paper);
+  stroke-width: 7px;
+  stroke-linejoin: round;
+}
+.fpga-board-laptop-display {
+  transition:
+    y 240ms ease-out,
+    width 240ms ease-out,
+    height 240ms ease-out;
+}
+.fpga-board-laptop-base {
+  transition: d 240ms ease-out;
+}
+.fpga-board[data-request="true"] .fpga-board-laptop-display {
+  y: 3px;
+  width: 270px;
+  height: 103px;
+}
+.fpga-board[data-request="true"] .fpga-board-laptop-base {
+  d: path("M65 106L53 115H347L335 106");
+}
+.fpga-board-screen {
+  color: var(--fpga-ink);
+  font-family: var(--font-body);
+  animation: fpga-world-enter 180ms ease-out 240ms both;
+}
+.fpga-board-screen-header {
+  font-size: 12px;
+  line-height: 15px;
+}
+.fpga-board-screen-header code {
+  margin-inline-start: 4px;
+  font-family: var(--font-code);
+}
+.fpga-board-reply {
+  margin-top: 2px;
+  font-size: 17px;
+  line-height: 18px;
+}
+.fpga-board[data-request="true"] .fpga-signal {
+  animation-duration: calc(300ms * var(--fpga-board-slowdown));
+}
+.fpga-board[data-quick="true"] .fpga-signal {
+  animation-duration: calc(120ms * var(--fpga-board-slowdown));
+}
+.fpga-board-request-marker {
+  fill: var(--signal-stroke);
+  stroke: var(--fpga-paper);
+  stroke-width: 1;
+  animation: fpga-board-request-travel linear both;
+}
+
+@keyframes fpga-board-request-travel {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+
+.fpga-board[data-playing="false"] .fpga-board-request-marker {
+  animation-play-state: paused;
+}
+
+.fpga-board-support,
+.fpga-board-laptop {
+  transition: opacity 250ms ease-out;
+}
+.fpga-board[data-request="true"]:not(
+    [data-activity="firmware"],
+    [data-activity="linux"]
+  )
+  .fpga-board-support {
+  opacity: 0.6;
+}
+.fpga-board[data-request="false"] .fpga-board-laptop {
+  opacity: 0.6;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fpga-board,
+  .fpga-board * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+.fpga-stage
+  .fpga-detail-layer[data-continuous="true"][data-visible="true"]
+  .fpga-board-world {
+  animation: none;
+}
+.fpga-board {
+  animation: fpga-world-enter 200ms ease-out both;
+}
+
+@media (max-width: 899px) {
+  .fpga-world-layer .fpga-board text {
+    font-size: 26px;
+  }
+  .fpga-world-layer .fpga-board text.fpga-small {
+    font-size: 22px;
+  }
+}

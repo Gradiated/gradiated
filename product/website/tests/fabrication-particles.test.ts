@@ -4,15 +4,15 @@ import { expect, it } from "vitest";
 import {
   CloseupProcessEffects,
   WaferProcessEffects,
-} from "../src/components/articles/fabrication/ProcessEffects";
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/ProcessEffects";
 import {
   patternState,
   patternSurfaceHeight,
   siliconSurfaceHeight,
   stages,
-} from "../src/components/articles/fabrication/process";
-import type { Visit } from "../src/components/articles/fabrication/process";
-import { steps } from "../src/components/articles/fabrication/sequence";
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/process";
+import type { Visit } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/process";
+import { steps } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/sequence";
 
 const render = (index: number, process: number) => {
   const visit: Visit = {

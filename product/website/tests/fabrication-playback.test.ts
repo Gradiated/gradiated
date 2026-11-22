@@ -1,8 +1,8 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
-import { FabricationJourney } from "../src/components/articles/fabrication/FabricationJourney";
-import { inverterDuration } from "../src/components/articles/fabrication/process";
+import { FabricationJourney } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/FabricationJourney";
+import { inverterDuration } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/process";
 
 const playback = vi.hoisted(() => ({
   effects: [] as (() => void | (() => void))[],
@@ -39,30 +39,39 @@ vi.mock("../src/components/design", () => ({ SectionFab: () => null }));
 vi.mock("../src/components/sand-library/ChipLayersArtwork", () => ({
   ChipLayersArtwork: () => null,
 }));
-vi.mock("../src/components/articles/fabrication/FabricationLab", () => ({
-  CleanRoom: () => null,
-  WholeWafer: () => null,
-}));
 vi.mock(
-  "../src/components/articles/fabrication/PatterningModel",
+  "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/FabricationLab",
+  () => ({
+    CleanRoom: () => null,
+    WholeWafer: () => null,
+  }),
+);
+vi.mock(
+  "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/PatterningModel",
   async (load) => ({
     ...(await load<object>()),
     PatterningModel: () => null,
   }),
 );
 vi.mock(
-  "../src/components/articles/fabrication/FabricationIntroduction",
+  "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/FabricationIntroduction",
   async (load) => ({
     ...(await load<object>()),
     useOpeningLayout: () => undefined,
   }),
 );
-vi.mock("../src/components/articles/fabrication/WaferMagnification", () => ({
-  WaferMagnification: () => null,
-}));
-vi.mock("../src/components/articles/fabrication/InterconnectStack", () => ({
-  InterconnectStack: () => null,
-}));
+vi.mock(
+  "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/WaferMagnification",
+  () => ({
+    WaferMagnification: () => null,
+  }),
+);
+vi.mock(
+  "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/InterconnectStack",
+  () => ({
+    InterconnectStack: () => null,
+  }),
+);
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -182,4 +191,22 @@ it("pauses a hidden tab and resumes its remaining hold without skipping a cycle"
   expect(animationWrites().at(-1)).toMatchObject({ progress: 0 });
   clock.stop();
   expect(clock.frames.size).toBe(0);
+});
+
+it("shows the lecture title, chapter navigation and controls without article prose", () => {
+  const lecture = renderToStaticMarkup(
+    createElement(FabricationJourney, { lecture: true }),
+  );
+  const article = renderToStaticMarkup(createElement(FabricationJourney));
+
+  expect(lecture).toContain("Lecture 3");
+  expect(lecture).toContain('aria-label="Lecture contents"');
+  expect(lecture).toContain('aria-label="Next step"');
+  expect(lecture).toContain('aria-label="Replay animation"');
+  expect(lecture).toContain('class="fab-cover"');
+  expect(lecture).not.toContain('class="fab-prose"');
+  expect(lecture).not.toContain('class="fab-bibliography"');
+  expect(article).toContain('class="fab-prose"');
+  expect(article).not.toContain('class="fab-side gr-doc-side"');
+  expect(article).not.toContain('aria-label="Next step"');
 });

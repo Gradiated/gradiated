@@ -5,11 +5,11 @@ import {
   inverterPlacement,
   type InterconnectSolid,
   type InterconnectNet,
-} from "../src/components/articles/fabrication/interconnectLayout";
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/interconnectLayout";
 import {
   firstMetalTracks,
   upperMetalTracks,
-} from "../src/components/articles/fabrication/process";
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/process";
 
 const { x, y, scale } = inverterPlacement;
 const localWire = (

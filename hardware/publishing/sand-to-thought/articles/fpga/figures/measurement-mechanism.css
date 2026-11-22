@@ -1,0 +1,309 @@
+.fpga-measurement-mechanisms {
+  --measurement-line: color-mix(in srgb, var(--fpga-ink) 33%, var(--fpga-paper));
+  --measurement-accent: color-mix(in srgb, var(--signal-stroke) 56%, var(--fpga-ink));
+  --measurement-highlight: color-mix(in srgb, var(--signal-stroke) 23%, var(--fpga-paper));
+  --measurement-surface: color-mix(in srgb, var(--fpga-ink) 3%, var(--fpga-paper));
+  container: fpga-measurement / inline-size;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.35rem, 1.8vw, 1rem);
+  width: 100%;
+  align-items: stretch;
+}
+
+.fpga-measurement-panel {
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--fpga-ink) 16%, transparent);
+  border-radius: 0.55rem;
+  background: var(--measurement-surface);
+}
+
+.fpga-measurement-panel-title {
+  font-size: clamp(0.72rem, 2.2cqi, 0.93rem);
+  font-weight: 650;
+  line-height: 1.1;
+  padding: 0.65rem 0.65rem 0;
+}
+
+.fpga-measurement-panel > svg {
+  display: block;
+  width: 100%;
+  max-height: 15.25rem;
+  overflow: visible;
+}
+
+.fpga-measurement-panel > svg text {
+  fill: var(--fpga-ink);
+  font-family: inherit;
+  font-size: 12px;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.fpga-measurement-panel > svg .fpga-measurement-small {
+  font-size: 10.5px;
+}
+
+.fpga-measurement-panel > svg.fpga-measurement-token-flow text {
+  font-size: 10.8px;
+}
+
+.fpga-measurement-panel > svg.fpga-measurement-token-flow .fpga-measurement-small {
+  font-size: 9.5px;
+}
+
+.fpga-measurement-token-flow .fpga-measurement-token-motion {
+  transition: transform 230ms ease;
+}
+
+.fpga-measurement-token-flow .fpga-measurement-token-row > rect {
+  transition: height 230ms ease, fill 230ms ease, stroke 230ms ease;
+}
+
+.fpga-measurement-heads {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 230ms ease, visibility 0s 230ms;
+}
+
+.fpga-measurement-heads[data-visible="true"] {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.fpga-measurement-panel > svg .fpga-measurement-comparison-label {
+  text-anchor: start;
+}
+
+.fpga-measurement-panel > svg .fpga-measurement-comparison-before {
+  fill: color-mix(in srgb, var(--fpga-ink) 60%, var(--fpga-paper));
+}
+
+.fpga-measurement-panel > svg .fpga-measurement-comparison-after {
+  fill: var(--measurement-accent);
+  font-weight: 600;
+}
+
+.fpga-measurement-panel > svg .fpga-measurement-comparison .fpga-measurement-comparison-value {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fpga-measurement-node > :is(rect, circle) {
+  fill: var(--fpga-paper);
+  stroke: var(--measurement-line);
+  transition: fill 230ms ease, stroke 230ms ease;
+}
+
+.fpga-measurement-node[data-active="true"] > :is(rect, circle) {
+  fill: var(--measurement-highlight);
+  stroke: var(--measurement-accent);
+}
+
+.fpga-measurement-guide,
+.fpga-measurement-arrow,
+.fpga-measurement-flow {
+  fill: none;
+  stroke: var(--measurement-line);
+  stroke-width: 1.15;
+  transition: stroke 230ms ease;
+}
+
+.fpga-measurement-flow,
+.fpga-measurement-guide[data-active="true"],
+.fpga-measurement-arrow[data-active="true"] {
+  stroke: var(--measurement-accent);
+}
+
+.fpga-measurement-flow,
+.fpga-measurement-guide[data-active="true"] {
+  stroke-dasharray: 3 2;
+  animation: fpga-measurement-transfer 1.35s linear infinite;
+}
+
+.fpga-measurement-map {
+  --fpga-map-track-ink: var(--measurement-line);
+}
+
+.fpga-measurement-map .fpga-map-drawing text {
+  opacity: 0;
+}
+
+.fpga-measurement-map-focus {
+  fill: none;
+  stroke: var(--measurement-accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.fpga-measurement-map-focus--logic {
+  opacity: 0;
+  transition: opacity 230ms ease;
+}
+
+.fpga-measurement-map-focus--logic[data-active="true"] {
+  opacity: 1;
+}
+
+.fpga-measurement-callout {
+  transition: transform 290ms ease;
+}
+
+.fpga-measurement-panel > svg .fpga-measurement-callout text {
+  text-anchor: start;
+}
+
+.fpga-measurement-previous-store circle {
+  stroke-dasharray: 3 2;
+}
+
+.fpga-measurement-previous-store > path {
+  fill: none;
+  stroke: var(--measurement-accent);
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+}
+
+.fpga-measurement-moving-weights {
+  animation: fpga-weight-placement 1.25s ease-in-out both;
+}
+
+@keyframes fpga-weight-placement {
+  0%, 25% { transform: translateX(116px); }
+  100% { transform: translateX(0); }
+}
+
+.fpga-measurement-weight-array {
+  fill: var(--measurement-surface);
+  stroke: var(--measurement-line);
+}
+
+.fpga-measurement-detail {
+  animation: fpga-measurement-appear 230ms ease-out both;
+}
+
+.fpga-measurement-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+@keyframes fpga-measurement-transfer {
+  to { stroke-dashoffset: -10; }
+}
+
+@keyframes fpga-measurement-appear {
+  from { opacity: 0; }
+}
+
+@container fpga-measurement (max-width: 440px) {
+  .fpga-measurement-panel-title {
+    min-height: 2.3em;
+    padding: 0.4rem 0.35rem 0;
+  }
+
+  .fpga-measurement-panel > svg {
+    max-height: min(8.35rem, 34dvh);
+  }
+
+  .fpga-measurement-panel > svg .fpga-measurement-detail text {
+    font-size: 13px;
+  }
+
+  .fpga-measurement-panel > svg .fpga-measurement-detail .fpga-measurement-small {
+    font-size: 12px;
+  }
+}
+
+.fpga-fabric-usage {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0 .35rem;
+  color: var(--fpga-ink);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(.65rem, 1.9cqi, .8rem);
+  line-height: 1.1;
+}
+.fpga-fabric-usage figcaption {
+  margin-bottom: .85rem;
+  font-weight: 650;
+}
+.fpga-fabric-usage-plot {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  height: clamp(2.25rem, 5.7dvh, 3.5rem);
+  margin: 0 0 1.15rem 2.2em;
+  border-block: 1px solid var(--measurement-line);
+  border-inline-start: 1px solid var(--measurement-line);
+}
+.fpga-fabric-usage-scale {
+  position: absolute;
+  inset: 0 calc(100% + .25em) 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: right;
+}
+.fpga-fabric-usage-scale span:first-child { translate: 0 -50%; }
+.fpga-fabric-usage-scale span:last-child { translate: 0 50%; }
+.fpga-fabric-usage-column { position: relative; text-align: center; }
+.fpga-fabric-usage-bar {
+  position: absolute;
+  inset: auto 0 0;
+  margin: auto;
+  width: 47%;
+  max-width: 2.4rem;
+  background: color-mix(in srgb, var(--color-aegean-400) 82%, var(--fpga-ink));
+  border-radius: 2px 2px 0 0;
+  transition: height 300ms ease;
+}
+.fpga-fabric-usage-bar > span {
+  white-space: nowrap;
+  position: absolute;
+  bottom: calc(100% + 1px);
+  background: var(--fpga-paper);
+  padding-inline: .12em;
+  left: 50%;
+  translate: -50% 0;
+}
+.fpga-fabric-usage-label {
+  position: absolute;
+  inset: calc(100% + .28em) 0 auto;
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .fpga-measurement-stage:has(.fpga-fabric-usage) { row-gap: .25rem; }
+  .fpga-measurement-mechanisms { row-gap: .25rem; }
+  .fpga-measurement-panel > svg { max-height: min(7rem, 29dvh); }
+  .fpga-fabric-usage figcaption { margin-bottom: .6rem; }
+}
+
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 740px) {
+  .fpga-fabric-usage-plot { height: 1.75rem; }
+  .fpga-measurement-panel > svg { max-height: 26dvh; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fpga-measurement-mechanisms *,
+  .fpga-measurement-mechanisms *::before,
+  .fpga-measurement-mechanisms *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.fpga-measurement-panel > svg .fpga-measurement-read-ahead text {
+  font-size: 11.5px;
+}
+
+.fpga-later-comparison { align-self: center; }
+.fpga-measurement-panel > svg .fpga-comparison-change text:nth-child(odd) {
+  font-size: 10px;
+  opacity: .75;
+}
+.fpga-comparison-change text:nth-child(even) { font-weight: 550; }

@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
-import { surfaceContours } from "../src/components/articles/fabrication/surfaces";
-import type { SurfacePoint } from "../src/components/articles/fabrication/surfaces";
+import { surfaceContours } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/surfaces";
+import type { SurfacePoint } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/surfaces";
 
 const square = (x: number, y: number): SurfacePoint[] => [
   [x, y, 0],

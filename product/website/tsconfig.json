@@ -14,8 +14,16 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "react": ["./node_modules/@types/react"],
+      "react/*": ["./node_modules/@types/react/*"],
+      "react-dom/*": ["./node_modules/@types/react-dom/*"],
+      "gsap": ["./node_modules/gsap"],
+      "lucide-react": ["./node_modules/lucide-react"],
+      "react-dom": ["./node_modules/@types/react-dom"]
+    }
   },
-  "include": ["src", "vite.config.ts"],
+  "include": ["src", "vite.config.ts", "../../hardware/publishing"],
   "references": []
 }

@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "publication_id": "inside-our-fpga",
+  "runs": [
+    {
+      "path": "hardware/research/inference/results/physical-acceptance-20261114T232418Z-c39918/run.json",
+      "sha256": "8ce080c6b969f0061a5f44fcd239856ba2e35958b14285b0ab19578b5e86e9c1"
+    },
+    {
+      "path": "hardware/research/inference/results/autonomous-prefill-decode-20261115T210134Z-97efcb/run.json",
+      "sha256": "0a83c166904122f67a60604a5b4a3ae70bbff10dcf8bf53d736b623cb09f8c2b"
+    },
+    {
+      "path": "hardware/research/inference/results/prefill-skip-20261115T224422Z-754f19/run.json",
+      "sha256": "cc0c4dad1e44b99e3bf00ac25b96cf1c783898eeaa148e97f03df4e0b7832ee5"
+    },
+    {
+      "path": "hardware/research/inference/results/scalar-mul-20261116T001133Z-268099/run.json",
+      "sha256": "622c9f4d2c459afe78ea0ba0e62eeb60b9351f70b33f5cd3238496019261e191"
+    },
+    {
+      "path": "hardware/research/inference/results/scalar-div-20261116T105755Z-3c2ae0/run.json",
+      "sha256": "4d7c75c293ea94145b925f49d83ca8423c8e4754ca681019f192adc8e5b4e451"
+    },
+    {
+      "path": "hardware/research/inference/results/logits-pipeline-20261116T143416Z-2592fd/run.json",
+      "sha256": "ce16c4e6d6469f243e43bb59b8eeaeeebb7a8e74fca8fdbd4837b5cd3d82015a"
+    },
+    {
+      "path": "hardware/research/inference/results/logits-2-lanes-20261116T164332Z-6c4968/run.json",
+      "sha256": "1e8f1b2ba71347abbb4b110df3a732a31a193a2287acc26da0ab56211d9171f9"
+    },
+    {
+      "path": "hardware/research/inference/results/logits-4-lanes-20261116T170727Z-020546/run.json",
+      "sha256": "147656c1225dd90377227e26d2109301b9a0df486e4393f043e2a73740ef8454"
+    },
+    {
+      "path": "hardware/research/inference/results/logits-8-lanes-20261116T202250Z-44df9d/run.json",
+      "sha256": "8f826df934aa6940ef839638682300aae8aa49b8777474f01fe741b553bab536"
+    },
+    {
+      "path": "hardware/research/inference/results/ff-exp-div-20261116T230715Z-0969cc/run.json",
+      "sha256": "5b0a9a277980aba69d1853aac6523ca7dfafc9fc0c3bba0082103ae1c22c8ec6"
+    },
+    {
+      "path": "hardware/research/inference/results/ff-down-pipeline-20261117T095726Z-1092a6/run.json",
+      "sha256": "0ebaa4ce5b7ae2b4e3c63256aa6c1907826dacd92215934ddd6b0fd0336839c7"
+    },
+    {
+      "path": "hardware/research/inference/results/attention-cache-pipeline-20261117T112139Z-daeb2e/run.json",
+      "sha256": "bfecd146fe93cb3b6fe0c387a59e6c51f291f09290baaa567c9aa125fabda078"
+    },
+    {
+      "path": "hardware/research/inference/results/attention-exp-div-20261117T132955Z-48d0fb/run.json",
+      "sha256": "45c7d2ae0e857d9921ff01d8a7f36358deb426cf6c8143a36273d3053508c12d"
+    },
+    {
+      "path": "hardware/research/inference/results/output-projection-lutram-20261117T155233Z-6a5a09/run.json",
+      "sha256": "c142997068b3de1c6a7e1d01b502baa38555a6c023fe8a80ae59a1c2a7d215e1"
+    },
+    {
+      "path": "hardware/research/inference/results/attention-exp-pair-v2-20261117T232821Z-e72da4/run.json",
+      "sha256": "897f86341c09f680edfc4eac54e27281cfe1a39453540bd5d736fc12dd2aed67"
+    },
+    {
+      "path": "hardware/research/inference/results/output-projection-ddr4-20261118T232351Z-c820f6/run.json",
+      "sha256": "70f4ccb9c77d8125f4ca00f6bb09d062f332c0f178f584a855a56029e314e003"
+    },
+    {
+      "path": "hardware/research/inference/results/output-projection-ddr4-burst-20261119T111700Z-e69dad/run.json",
+      "sha256": "19bc0e15b753cdca2e5a65d39dbcbc767392dae0457491134c5eb10e0b4a1f36"
+    },
+    {
+      "path": "hardware/research/inference/results/logits-ddr4-burst-20261119T121954Z-31256a/run.json",
+      "sha256": "8f55bc732d223c84705029c0bbb39429501aac909546b5460829f035efabe8d9"
+    },
+    {
+      "path": "hardware/research/inference/results/logits-ddr4-prefetch-20261119T151537Z-9eeb65/run.json",
+      "sha256": "69165e19fa9a02df0e7004d2e01af6aed1d3e875f44281973e8ba3122fe0cbfe"
+    },
+    {
+      "path": "hardware/research/inference/results/probability-div-20261119T161808Z-5b91c1/run.json",
+      "sha256": "090a9238d89ce7f6999b48c33a5d31f0d7d07534e469bda345116faa263e4555"
+    },
+    {
+      "path": "hardware/research/inference/results/ff-scalar-mul-dsp-20261119T171509Z-1b23a4/run.json",
+      "sha256": "2e4afdcb1885e9cff5ae6c5308995620051a395fa5df2d9377c986685beefe40"
+    },
+    {
+      "path": "hardware/research/inference/results/norm-mul-dsp-20261119T181907Z-22daa1/run.json",
+      "sha256": "09088d127fdfc7ace39a79078665ac5f9abe6923e8cd68b6e2c8f45e811b10c2"
+    },
+    {
+      "path": "hardware/research/inference/results/norm-mul-shared-20261119T184132Z-42cf65/run.json",
+      "sha256": "bf0c620e65c5b91e437e9215dad7b80f07ee43e8c0626ae853609e4794100dd8"
+    },
+    {
+      "path": "hardware/research/inference/results/projections-read-ahead-20261119T195431Z-008bba/run.json",
+      "sha256": "809492e99c0baf53cdc544941dd9a3700108a5fca9c6fb5ec588475866635307"
+    },
+    {
+      "path": "hardware/research/inference/results/attention-value-pair-v1-rtl-20261119T203052Z/run.json",
+      "sha256": "e9d57fea3d368173010e7532c832b01ba461e04c637a39651bcf705258aad81a"
+    },
+    {
+      "path": "hardware/research/inference/results/attention-value-pair-v1-build-20261119T203714Z/run.json",
+      "sha256": "43f40df14aa13a18cd22355ecf13e94a1aba10455d94a6870e97abed0d1f12ee"
+    },
+    {
+      "path": "hardware/research/inference/results/attention-value-pair-20261119T234247Z-e21df0/run.json",
+      "sha256": "d853f1eb8d6f3c1af10654601b29d91409178825073df385c9d63000f35f0d49"
+    },
+    {
+      "path": "hardware/research/inference/results/attention-clock-v1-original-sta-20261120T003417Z/run.json",
+      "sha256": "785691563250fc24063c7249da9e4a9fa505bf38734e937ee7bcaa114ca46e1f"
+    },
+    {
+      "path": "hardware/research/inference/results/attention-clock-20261120T004416Z-a9d9d2/run.json",
+      "sha256": "a9fda8cba68cd2bee56a0803b2a90e096bc77e026625075ac4aacc37e22c7a27"
+    }
+  ],
+  "illustrative_figures": [
+    "Lecture 4 experiment charts"
+  ],
+  "note": "Experiments 1\u201324 use physical KV260 comparisons. Each comparison uses its recorded control and workload. The 62.5 MHz target in experiment 24 reached routed timing analysis only."
+}

@@ -7,7 +7,7 @@ import {
   controllerFrame,
   CONTROLLER_GATES,
   CONTROLLER_OUTPUTS,
-} from "../src/components/articles/sand/runtime/instruction-cycle-model.js";
+} from "../../../hardware/publishing/sand-to-thought/articles/sand/figures/runtime/instruction-cycle-model.js";
 
 test("the fetched bits encode the same ADD R0 R0 R3 used in the processing example", () => {
   const instruction = parseInt(INSTRUCTION_BITS.replaceAll(" ", ""), 2);

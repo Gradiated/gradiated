@@ -1,0 +1,205 @@
+.fpga-measurements {
+  --measure-ink: var(--fpga-ink, #24202a);
+  --measure-muted: color-mix(in srgb, var(--measure-ink) 76%, var(--fpga-paper, #faf7ef));
+  --measure-rule: color-mix(in srgb, var(--measure-ink) 24%, var(--fpga-paper, #faf7ef));
+  --measure-teal: #17776c;
+  --measure-blue: #305bb0;
+  --measure-orange: #a04816;
+  color: var(--measure-ink);
+  position: relative;
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+  font-size: .75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  container-type: inline-size;
+}
+
+.gr-root[data-theme="dark"] .fpga-measurements {
+  --measure-teal: #65dac7;
+  --measure-blue: #8db9ff;
+  --measure-orange: #ffab76;
+}
+
+.fpga-measurements-caption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .2rem .4rem;
+  padding-block-end: .35rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.fpga-measurements-readings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem clamp(.65rem, 3cqi, 1.5rem);
+  margin: .2rem 0 .35rem;
+  font-size: .72rem;
+}
+.fpga-measurements [data-metric="ttftMs"] { --series: var(--measure-teal); }
+.fpga-measurements [data-metric="decodeTps"] { --series: var(--measure-blue); }
+.fpga-measurements [data-metric="joulesPerToken"] { --series: var(--measure-orange); }
+.fpga-measurements-readings strong { color: var(--series); }
+.fpga-measurements-grid {
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr) 2.8rem 3rem;
+  grid-template-rows: clamp(5rem, 15dvh, 9rem) auto;
+  padding-top: 1rem;
+}
+.fpga-measurements-scale {
+  position: relative;
+  grid-row: 1;
+  color: var(--series);
+  border-inline-start: 1px solid var(--series);
+  font-size: .64rem;
+}
+.fpga-measurements-scale[data-metric="ttftMs"] {
+  grid-column: 1;
+  border-inline-start: 0;
+  border-inline-end: 1px solid var(--series);
+  text-align: right;
+}
+.fpga-measurements-scale[data-metric="decodeTps"] { grid-column: 3; }
+.fpga-measurements-scale[data-metric="joulesPerToken"] { grid-column: 4; }
+.fpga-measurements-scale > * { position: absolute; left: .22rem; }
+.fpga-measurements-scale[data-metric="ttftMs"] > * { left: auto; right: .22rem; }
+.fpga-measurements-scale b { bottom: calc(100% + .45rem); white-space: nowrap; }
+.fpga-measurements-scale span { transform: translateY(-50%); }
+.fpga-measurements-plot {
+  grid-area: 1 / 2;
+  position: relative;
+  border-block: 1px solid var(--measure-rule);
+}
+.fpga-measurements-plot::before {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  border-top: 1px dashed var(--measure-rule);
+}
+.fpga-measurements-cursor {
+  position: absolute;
+  inset-block: 0;
+  border-left: 1px dotted var(--measure-rule);
+  transition: left 220ms ease;
+}
+.fpga-measurements-point, .fpga-measurements-symbol {
+  display: inline-block;
+  width: 4.5px;
+  height: 4.5px;
+  background: var(--series);
+}
+.fpga-measurements-point {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  translate: -50% -50%;
+  animation: fpga-measurement-in 240ms ease-out both;
+}
+.fpga-measurements [data-metric="ttftMs"] .fpga-measurements-symbol,
+.fpga-measurements-point[data-metric="ttftMs"] { border-radius: 50%; }
+.fpga-measurements [data-metric="joulesPerToken"] .fpga-measurements-symbol,
+.fpga-measurements-point[data-metric="joulesPerToken"] {
+  background: var(--fpga-paper);
+  border: 1.5px solid var(--series);
+  rotate: 45deg;
+}
+.fpga-measurements-point.is-current { width: 6px; height: 6px; }
+.fpga-measurements-axis {
+  grid-column: 2;
+  position: relative;
+  min-height: 1rem;
+  margin-top: .32rem;
+  font-size: .625rem;
+  color: var(--measure-muted);
+}
+
+.fpga-measurements-tick {
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.fpga-measurements-tick[data-current="true"] {
+  color: var(--measure-ink);
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: .15em;
+}
+
+.fpga-measurements-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes fpga-measurement-in {
+  from { opacity: 0; scale: .5; }
+  to { opacity: 1; scale: 1; }
+}
+
+@container (width < 420px) {
+  .fpga-measurements-grid {
+    grid-template-columns: 1.6rem minmax(0, 1fr) 3rem 2.9rem;
+    grid-template-rows: clamp(4.5rem, 11dvh, 6rem) auto;
+  }
+
+  .fpga-measurements-point.is-current { width: 4px; height: 4px; }
+
+  .fpga-measurements-point:not(.is-current) {
+    width: 3px;
+    height: 3px;
+  }
+
+  .fpga-measurements-tick:last-child {
+    transform: translateX(-90%);
+  }
+
+  .fpga-measurements-tick[data-current="false"][data-endpoint="false"][data-phone-tick="false"] {
+    display: none;
+  }
+}
+
+/* Keep the last two numbers on one line when there is little room between ticks. */
+@container (width < 32rem) {
+  .fpga-measurement-stage .fpga-measurements-tick[data-current="false"][data-endpoint="false"][data-phone-tick="false"] {
+    display: none;
+  }
+
+  .fpga-measurement-stage .fpga-measurements-tick:nth-last-child(2) {
+    transform: translateX(-100%);
+  }
+
+  .fpga-measurement-stage .fpga-measurements-tick:last-child {
+    transform: none;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .fpga-measurements-grid {
+    row-gap: .2rem;
+    grid-template-rows: clamp(2rem, 10dvh, 3rem) auto;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 740px) {
+  .fpga-measurements-readings {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .15rem;
+    font-size: .64rem;
+  }
+  .fpga-measurements-caption { padding-bottom: .1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fpga-measurements-cursor { transition: none; }
+  .fpga-measurements-point {
+    animation: none;
+  }
+}

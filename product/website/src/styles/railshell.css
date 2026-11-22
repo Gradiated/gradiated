@@ -142,12 +142,11 @@
 /* The incoming doc chrome waits for the outgoing to clear. */
 /* Back control and the page's name on one line: <- G Handbook. */
 .gr-rail-dochead {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 4px;
   align-self: start;
   margin-bottom: 40px;
-  text-decoration: none;
   animation: gr-rail-in 0.5s 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
 }
 
@@ -162,9 +161,11 @@
 }
 
 .gr-rail-docback {
-  display: flex;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
   align-items: center;
-  gap: 4px;
+  text-decoration: none;
   color: #fafafa;
 }
 
@@ -196,6 +197,14 @@
   align-content: start;
   overflow-y: auto;
   animation: gr-rail-in 0.5s 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+}
+
+.gr-rail-docauthor {
+  grid-column: 2;
+  margin: 0;
+  color: #d4d4d8;
+  font-size: var(--text-note);
+  line-height: 1.3;
 }
 
 .gr-rail-docnav-group {

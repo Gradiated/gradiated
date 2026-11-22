@@ -55,6 +55,7 @@ export type RailDocGroup = {
 
 export type RailDocNav = {
   title: string;
+  author?: string;
   /** The current page's href, for the active state. */
   current?: string;
   groups: readonly RailDocGroup[];
@@ -94,7 +95,7 @@ export const useRailDocNav = (nav: RailDocNav): void => {
     register(nav);
     return () => register(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [register, nav.title, nav.current, nav.groups]);
+  }, [register, nav.title, nav.author, nav.current, nav.groups]);
 };
 
 type Card = {
@@ -412,14 +413,13 @@ export const RailShell = ({
         <aside className="gr-rail-rail">
           {/* Doc mode's back control: one link — the arrow AND the title. */}
           {shown && (
-            <a
-              className="gr-rail-dochead gr-rail-docback"
-              data-leaving={leaving || undefined}
-              href={shown.backHref ?? "/"}
-            >
-              <Arrow />
-              <span className="gr-rail-doctitle">{shown.title}</span>
-            </a>
+            <div className="gr-rail-dochead" data-leaving={leaving || undefined}>
+              <a className="gr-rail-docback" href={shown.backHref ?? "/"}>
+                <Arrow />
+                <span className="gr-rail-doctitle">{shown.title}</span>
+              </a>
+              {shown.author && <p className="gr-rail-docauthor">{shown.author}</p>}
+            </div>
           )}
           {back && !shown && (
             <a className="gr-rail-back" href={back.href}>

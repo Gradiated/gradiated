@@ -8,6 +8,7 @@ const { articleCitationsPlugin } = createRequire(import.meta.url)(
 
 export default defineConfig({
   root: import.meta.dirname,
+  resolve: { dedupe: ["react", "react-dom", "gsap", "lucide-react"] },
   plugins: [articleCitationsPlugin()],
-  test: { include: ["*.test.ts"] },
+  test: { include: ["*.test.{ts,mjs}"] },
 });

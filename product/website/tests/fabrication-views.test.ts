@@ -1,9 +1,9 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, it } from "vitest";
-import { InterconnectStack } from "../src/components/articles/fabrication/InterconnectStack";
-import { patterningCamera } from "../src/components/articles/fabrication/PatterningModel";
-import { stages } from "../src/components/articles/fabrication/process";
+import { InterconnectStack } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/InterconnectStack";
+import { patterningCamera } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/PatterningModel";
+import { stages } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/process";
 
 it("reveals the via's interior at the cut face, then smoothly restores the wider view", () => {
   const original = { elevation: 0.65, section: 1, cutY: 34 };

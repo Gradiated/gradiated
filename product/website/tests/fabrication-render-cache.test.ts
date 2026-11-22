@@ -4,12 +4,12 @@ import { expect, it, vi } from "vitest";
 import {
   PatterningModel,
   patterningCamera,
-} from "../src/components/articles/fabrication/PatterningModel";
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/PatterningModel";
 import {
   patternState,
   visitFor,
-} from "../src/components/articles/fabrication/process";
-import { steps } from "../src/components/articles/fabrication/sequence";
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/process";
+import { steps } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/sequence";
 
 // Retain the component's refs across server renders to exercise its frame cache.
 const retained = vi.hoisted(() => ({

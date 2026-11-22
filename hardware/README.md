@@ -32,7 +32,7 @@ Both the original 26,720-parameter joke transformer and the newer text-input mod
 
 The [KV260 speed baseline](research/inference/results/speed-20261115T125210Z-f3c38c/run.json) measures request latency and output generation rates on the board, with a fresh model load for each request. The [resident-speed benchmark](research/inference/results/resident-speed-20261115T150400Z-f42f45/run.json) adds latency and verified back-to-back rates with the weights kept loaded. Three [repeated resident blocks](research/inference/results/resident-diagnosis-20261115T165522Z-5cfeb0/findings.md) add about a minute of continuous throughput and VCC_SOM energy measurements per block. Whole-board energy and longer thermal behaviour remain open.
 
-The article and lecture charts remain illustrative.
+The FPGA article and Lecture 4 use the [selected board measurements](publishing/sand-to-thought/articles/fpga/results.json) through Experiment 24. Comparisons with other chips are illustrative.
 
 The [migration record](research/inference/migration.json) identifies the Mac and server source revisions. The existing implementation is kept together under `implementations/kv260/`, including its model manifests, reference arithmetic, RTL and host tools. This preserves the relative source identities used by older evidence. New shared benchmark records live above it.
 

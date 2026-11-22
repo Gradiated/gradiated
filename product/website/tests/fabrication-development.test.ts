@@ -1,21 +1,24 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, it } from "vitest";
-import { materialColours } from "../src/components/articles/fabrication/materials";
+import { materialColours } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/materials";
 import {
   PatterningModel,
   patterningCamera,
-} from "../src/components/articles/fabrication/PatterningModel";
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/PatterningModel";
 import {
   exposureRegions,
+  materialSurfaceHeight,
+  maskOpens,
+  resistThickness,
   patternState,
   patternSurfaceHeight,
   visitFor,
-} from "../src/components/articles/fabrication/process";
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/process";
 import {
   maskCycles,
   steps,
-} from "../src/components/articles/fabrication/sequence";
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/sequence";
 
 type Point = [number, number];
 
@@ -81,6 +84,45 @@ it.each(["contact", "via"] as const)(
         const visible = faces.filter((face) => contains(face.d, point)).pop();
         expect(visible?.fill).toBe(materialColours.resist[0]);
       }
+    }
+  },
+);
+
+it.each(["n", "p"] as const)(
+  "erodes the %s-implant photoresist from a level top instead of compressing it around the gate",
+  (mask) => {
+    const cycle = maskCycles.find(({ id }) => id === mask)!;
+    const points = [16, 26, 36, 64, 74, 84]
+      .filter((x) => !maskOpens(mask, x, 23))
+      .map((x) => [x, 23] as const);
+    let previous = points.map(() => Infinity);
+
+    for (const progress of [0, 0.25, 0.5, 0.65, 0.9, 1]) {
+      const state = patternState(cycle.strip, {
+        ...visitFor(1, "strip", undefined),
+        process: progress,
+      });
+      const thicknesses = points.map(([x, y]) =>
+        resistThickness(state, mask, x, y),
+      );
+      const tops = points.flatMap(([x, y], i) =>
+        thicknesses[i] > 0.001
+          ? [materialSurfaceHeight(state, x, y) + thicknesses[i]]
+          : [],
+      );
+
+      tops.forEach((top) => expect(top).toBeCloseTo(tops[0], 8));
+      thicknesses.forEach((thickness, i) =>
+        expect(thickness).toBeLessThanOrEqual(previous[i]),
+      );
+      if (progress === 0.65) {
+        expect(thicknesses[1]).toBe(0);
+        expect(thicknesses[0]).toBeGreaterThan(0);
+      }
+      if (progress === 1) expect(thicknesses).toEqual([0, 0, 0]);
+      expect(state.implantN).toBe(1);
+      expect(state.implantP).toBe(mask === "p" ? 1 : 0);
+      previous = thicknesses;
     }
   },
 );

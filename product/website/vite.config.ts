@@ -164,7 +164,8 @@ export default defineConfig(({ command, isSsrBuild, mode }) => {
           if (
             id.includes("?raw") ||
             id.includes("?sand-article") ||
-            id.includes("?fabrication-article")
+            id.includes("?fabrication-article") ||
+            id.includes("?cited-article")
           )
             return;
           if (typeof mdxPlugin.transform === "function") {
@@ -176,7 +177,14 @@ export default defineConfig(({ command, isSsrBuild, mode }) => {
       react({ include: /\.(jsx|js|tsx|ts|mdx)$/ }),
       tailwindcss(),
     ],
+    resolve: { dedupe: ["react", "react-dom", "gsap", "lucide-react"] },
     server: {
+      fs: {
+        allow: [
+          fileURLToPath(new URL("../", import.meta.url)),
+          fileURLToPath(new URL("../../hardware/publishing/", import.meta.url)),
+        ],
+      },
       allowedHosts: ["gradiated-dev.test"],
       proxy: {
         "/api/": {

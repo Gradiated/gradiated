@@ -1,18 +1,19 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { WholeWafer } from "../src/components/articles/fabrication/FabricationLab";
+import { WholeWafer } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/FabricationLab";
 import { expect, it } from "vitest";
-import { scenes } from "../src/components/articles/fabrication/model";
+import { scenes } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/model";
 import {
   initialOpening,
   openingState,
-} from "../src/components/articles/fabrication/FabricationIntroduction";
+  WaferTransfer,
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/FabricationIntroduction";
 import {
   patternState,
   stages,
   visitFor,
-} from "../src/components/articles/fabrication/process";
-import { steps } from "../src/components/articles/fabrication/sequence";
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/process";
+import { steps } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/sequence";
 
 it("keeps every introductory view on bare silicon until processing begins", () => {
   expect(scenes.map((scene) => scene.key)).toEqual(
@@ -120,4 +121,46 @@ it("hides the gloves only when a real machine has the wafer loaded", () => {
     }),
   );
   expect(markup).toContain('class="fab-gloves" opacity="1"');
+});
+
+it("keeps an interrupted handoff wafer out of unrelated figures when scrolling backwards", () => {
+  const state = patternState(stages.wafer, visitFor(1, undefined, undefined));
+  const layout = {
+    dx: 0,
+    dy: 0,
+    scale: 1,
+    source: { x: 100, y: 300, rx: 95, ry: 76 },
+    target: { x: 300, y: 100, rx: 8, ry: 5 },
+  };
+  const renderTransfer = (index: number, fromIndex: number, progress: number) =>
+    renderToStaticMarkup(
+      createElement(WaferTransfer, {
+        index,
+        fromIndex,
+        progress,
+        layout,
+        state,
+      }),
+    );
+
+  for (const index of [
+    0,
+    stages.wafer,
+    stages.cleanRoom,
+    stages.magnify,
+    stages.inverter,
+  ]) {
+    for (const progress of [0.1, 0.5, 0.9]) {
+      expect(renderTransfer(index, stages.handOff, progress)).toBe("");
+    }
+  }
+  expect(renderTransfer(stages.operator, stages.growOxide, 0.5)).toBe("");
+  expect(renderTransfer(stages.handOff, stages.operator, 0.5)).toContain(
+    'class="fab-wafer-transfer"',
+  );
+  expect(renderTransfer(stages.operator, stages.handOff, 0.5)).toContain(
+    'class="fab-wafer-transfer"',
+  );
+  expect(renderTransfer(stages.handOff, stages.operator, 0)).toBe("");
+  expect(renderTransfer(stages.handOff, stages.operator, 1)).toBe("");
 });

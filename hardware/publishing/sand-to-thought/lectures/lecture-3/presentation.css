@@ -1,0 +1,332 @@
+body:has(.fab-lecture) {
+  margin: 0;
+  background: #f7f3ec;
+}
+.fab-lecture {
+  --nav-h: 0px;
+  --u: clamp(20px, 2.5vw, 48px);
+  min-height: 100dvh;
+  padding: 2rem var(--u) 0;
+}
+.fab-lecture .fab-layout {
+  max-width: 1920px;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  gap: clamp(1.5rem, 3vw, 4rem);
+}
+.fab-lecture .fab-side {
+  position: sticky;
+  display: block;
+  top: 2rem;
+  max-height: calc(100dvh - 4rem);
+}
+.fab-lecture .fab-cover {
+  height: clamp(240px, 28vw, 420px);
+}
+.fab-lecture .fab-introduction {
+  max-width: none;
+  margin: 2rem 0 0;
+  padding: 0 0 3rem;
+}
+.fab-lecture .fab-lecture-label {
+  margin: 0 0 0.9rem;
+  color: var(--fab-accent);
+  font-size: 1rem;
+  font-weight: 500;
+}
+.fab-lecture .fab-introduction h1 {
+  max-width: 1100px;
+  margin: 0;
+}
+.fab-lecture .fab-body {
+  display: block;
+  max-width: none;
+}
+.fab-lecture .fab-stage {
+  position: relative;
+  top: auto;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 0;
+  max-width: none;
+  padding: clamp(0.75rem, 2dvh, 1.5rem) 0;
+  scroll-margin-top: 0;
+  box-shadow: none;
+}
+.fab-lecture-toolbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+}
+.fab-lecture-toolbar h2 {
+  margin: 0;
+  font: 500 clamp(1.3rem, 2vw, 2rem)/1.2 var(--font-title);
+  letter-spacing: -0.03em;
+}
+.fab-lecture-navigation {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+.fab-lecture-navigation span {
+  margin-right: 0.5rem;
+  color: var(--fab-muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.fab-lecture-navigation button {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--fab-line);
+  border-radius: 3px;
+  background: transparent;
+  font-size: 0.95rem;
+}
+.fab-lecture-navigation button:hover:enabled {
+  background: #e8e8dc;
+}
+.fab-lecture-navigation button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.fab-lecture .fab-visuals {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.fab-lecture .fab-room-host {
+  width: min(70%, 65dvh);
+  max-width: none;
+}
+.fab-lecture .fab-observations {
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.4fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.fab-lecture .fab-wafer-panel,
+.fab-lecture .fab-detail-panel {
+  min-height: 0;
+  height: 100%;
+  max-height: none;
+  aspect-ratio: auto;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  align-items: center;
+}
+.fab-lecture .fab-wafer-position {
+  min-height: 0;
+  height: 100%;
+}
+.fab-lecture .fab-whole-wafer {
+  height: 100%;
+  max-height: none;
+}
+.fab-lecture .fab-pattern-model {
+  min-height: 0;
+  height: 100%;
+  aspect-ratio: auto;
+  grid-template-rows: minmax(0, 1fr);
+}
+.fab-lecture .fab-pattern-model > svg {
+  min-height: 0;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+}
+.fab-lecture .fab-opening-destination,
+.fab-lecture .fab-wiring-overview {
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+.fab-lecture .fab-interconnect-stack {
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+}
+.fab-lecture .fab-opening-destination > .fab-inverter-views {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+  min-height: 0;
+  padding: 0.5rem 0 1rem;
+}
+.fab-lecture .fab-inverter-symbol {
+  flex: 0 0 auto;
+  height: clamp(64px, 16dvh, 130px);
+  max-height: 130px;
+  margin: 0 auto;
+}
+.fab-lecture .fab-inverter-details {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+.fab-lecture .fab-inverter-details figure {
+  height: 100%;
+  min-height: 0;
+}
+.fab-lecture .fab-inverter-details .fab-pattern-model {
+  grid-template-rows: minmax(0, 1fr);
+}
+.fab-lecture .fab-inverter-details .fab-pattern-model > svg {
+  min-height: 0;
+}
+.fab-lecture .fab-inverter-circuit {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+}
+.fab-lecture .fab-controls {
+  flex: none;
+  padding-top: 0.8rem;
+}
+@media (max-width: 899px) {
+  .fab-lecture {
+    padding: 1.2rem 1.2rem 0;
+  }
+  .fab-lecture .fab-layout {
+    display: grid;
+    grid-template-columns: 8rem minmax(0, 1fr);
+    gap: 1.2rem;
+  }
+  .fab-lecture .fab-side {
+    top: 1rem;
+    max-height: calc(100dvh - 2rem);
+  }
+  .fab-lecture .fab-cover {
+    height: 220px;
+  }
+  .fab-lecture .fab-room-host {
+    width: 95%;
+  }
+  .fab-lecture-toolbar {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 540px) {
+  .fab-lecture .fab-layout {
+    display: block;
+  }
+  .fab-lecture .fab-side {
+    display: none;
+  }
+  .fab-lecture .fab-observations {
+    gap: 0.3rem;
+  }
+}
+
+.fab-lecture-chapters {
+  display: none;
+}
+@media (max-width: 540px) {
+  .fab-lecture-chapters {
+    display: block;
+    width: 100%;
+    min-height: 40px;
+    padding: 0.4rem;
+    border: 1px solid var(--fab-line);
+    border-radius: 3px;
+    background: var(--fab-paper);
+    color: var(--fab-ink);
+    font: inherit;
+  }
+}
+
+.fab-lecture .fab-background-graphics[aria-hidden="true"] {
+  visibility: hidden;
+}
+
+.fab-lecture .fab-side {
+  display: flex;
+  flex-direction: column;
+  top: clamp(0.75rem, 2dvh, 1.5rem);
+  height: calc(100dvh - clamp(1.5rem, 4dvh, 3rem));
+  max-height: none;
+  gap: clamp(0.35rem, 1dvh, 0.75rem);
+  overflow: visible;
+}
+.fab-lecture .fab-side > .gr-doc-nav {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.fab-process-indicator {
+  flex: none;
+  width: min(100%, clamp(90px, 18dvh, 144px));
+  margin: auto 0 0;
+  padding-top: 0.75rem;
+  text-align: center;
+}
+.fab-process-indicator svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+.fab-process-indicator path {
+  fill: #e8e2d7;
+  stroke: #d5cbbd;
+  stroke-width: 0.6;
+  transition:
+    fill 0.2s ease,
+    stroke 0.2s ease;
+}
+.fab-process-indicator text {
+  font: 400 11.5px var(--font-body);
+  text-anchor: middle;
+  fill: #726b60;
+}
+.fab-process-indicator [data-active="true"] path {
+  fill: #dcc58b;
+  stroke: #a88b46;
+}
+.fab-process-indicator [data-active="true"] text {
+  fill: #453919;
+  font-weight: 600;
+}
+.fab-process-indicator .fab-process-centre-label {
+  font-size: 10px;
+  fill: var(--fab-muted);
+}
+.fab-process-indicator .fab-process-centre-value {
+  font-size: 14px;
+  font-weight: 500;
+  fill: var(--fab-ink);
+}
+.fab-process-indicator figcaption {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--fab-ink);
+}
+@media (max-width: 540px) {
+  .fab-lecture .fab-side {
+    display: none;
+  }
+}
+
+.fab-process-indicator [data-category="clean"],
+.fab-process-indicator [data-category="inspect"] {
+  opacity: 0.3;
+}
+
+@media (min-width: 541px) and (max-height: 700px) {
+  .fab-lecture .fab-side .gr-doc-nav-link {
+    padding-block: 0.3em;
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+  .fab-lecture .fab-kicker {
+    gap: 0.35rem;
+  }
+}

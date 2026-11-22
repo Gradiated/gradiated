@@ -102,7 +102,9 @@ PostHog personal API key in a `VITE_` variable.
 
 Create a Vercel project for this repository.
 
-Set the Vercel Root Directory to `product/website`.
+Set the Vercel Root Directory to `product/website`. Enable **Include source files outside of the Root Directory in the Build Step** in the project settings, as required by [Vercel’s monorepo guidance](https://vercel.com/docs/monorepos/monorepo-faq). Hardware publishing source lives outside that root. This setting must be checked on the Vercel project before deployment. It cannot be verified from this repository alone.
+
+The ignored-build command watches the website, hardware publishing and shared workspace configuration. The website’s Turbo build includes hardware publishing files in its cache inputs. Hardware publishing is not a separate workspace package, since Turborepo’s workspace root is `product/`. Research-only edits do not require a website build.
 
 Vercel reads `vercel.json`, runs `pnpm build`, and serves `dist`.
 
@@ -117,7 +119,7 @@ files directly. `vercel.json` redirects old docs routes to their current routes.
   and structured data for all public routes.
 - `src/careers.ts` contains the public job descriptions and role metadata.
 - `src/docs/` contains the public MDX documentation.
-- `content/articles/*.mdx` is the source of truth for articles and their metadata.
+- `content/articles/*.mdx` owns route metadata and wrappers. Sand to Thought prose, figures and lectures live under `../../hardware/publishing/`.
 - `src/articles.ts` discovers articles and filters drafts by build mode.
 - `src/pages/ReadingPages.tsx` renders articles in the shared site shell,
   including the guide's journey layout.
@@ -300,14 +302,14 @@ the shared website shell. Drafts are included locally and in Vercel Preview
 deployments (`VERCEL_ENV=preview`). Preview drafts are prerendered with noindex
 metadata and omitted from the sitemap. Production excludes drafts until their
 metadata is set to published. Sand to Thought is published through all five
-current chapters. `content/articles/sand/publication.json` records
+current chapters. `../../hardware/publishing/sand-to-thought/articles/sand/publication.json` records
 `publishedThrough: "computer"` and the public closing paragraph. Development and
 Vercel previews render the complete script. Moving the boundary to a later
 chapter's final scene publishes that chapter on the next production deployment.
 The boundary must fall at the end of the script or immediately before the next
 chapter heading. Production omits later prose, contents links and diagram nodes.
 The complete script is still validated on every build. The prose is rendered at
-build time from `content/articles/sand/script.md`, with the ordered scene manifest
+build time from `../../hardware/publishing/sand-to-thought/articles/sand/script.md`, with the ordered scene manifest
 validated by the renderer. The animation geometry is scoped to its mounted page
 and cleaned up on navigation. The imported animation files are a preserved
 snapshot; later illustration edits must be coordinated with the writing preview. Its five overview chapters belong to the continuous
@@ -315,12 +317,12 @@ journey; future chapter guides will organise separate deeper articles, with one
 primary chapter and contextual links from others. Add guide links only when the
 destination exists.
 
-The checked-in `content/articles/sand/script.md` is the canonical prose source.
+The checked-in `../../hardware/publishing/sand-to-thought/articles/sand/script.md` is the canonical prose source.
 The local authoring workspace links its `script.md` to this file. Saving updates
 both local views, while commit and push update the branch preview. The portable
 authoring edition has its own build tool and animation copy. Private visual cues
 remain in the authoring workspace and are not published. Production builds use
-only checked-in website files and do not depend on another local folder.
+checked-in website and hardware publishing files from this repository, without a dependency on the local authoring workspace.
 
 Timing follows the adder and heat discussion, before the memory chapter. Memory
 builds from a latch and register into addressed arrays with manual read and write

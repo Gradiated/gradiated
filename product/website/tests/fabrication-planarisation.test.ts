@@ -6,12 +6,12 @@ import {
   patternState,
   stages,
   upperInsulatorHeight,
-} from "../src/components/articles/fabrication/process";
-import { scenes } from "../src/components/articles/fabrication/model";
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/process";
+import { scenes } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/model";
 import {
   maskCycles,
   steps,
-} from "../src/components/articles/fabrication/sequence";
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/sequence";
 
 const stateAt = (index: number, process: number) =>
   patternState(index, {

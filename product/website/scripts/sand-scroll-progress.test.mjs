@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { SAND_PROGRESS } from "../src/components/articles/sand/runtime/scroll-progress.js";
+import { SAND_PROGRESS } from "../../../hardware/publishing/sand-to-thought/articles/sand/figures/runtime/scroll-progress.js";
 const { progressAt } = SAND_PROGRESS;
 const bounds = [
   { start: 100, end: 200, center: 150 },

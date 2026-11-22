@@ -1,0 +1,12 @@
+.sand-mobile-author {
+  display: none;
+}
+
+@media (max-width: 60rem) {
+  .sand-mobile-author {
+    display: block;
+    margin: calc(2 * var(--u)) 0 0;
+    font-size: var(--text-note);
+    line-height: 1.3;
+  }
+}

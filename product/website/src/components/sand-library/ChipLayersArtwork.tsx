@@ -20,8 +20,12 @@ const fpgaColours = [
 
 export const ChipLayersArtwork = ({
   variant = "chip",
+  playOnMount = false,
+  morphSpeed = 4,
 }: {
   variant?: "chip" | "fpga";
+  playOnMount?: boolean;
+  morphSpeed?: number;
 }): ReactElement => {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -46,10 +50,10 @@ export const ChipLayersArtwork = ({
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     let width = 0;
     let height = 0;
-    let progress = 0;
-    let target = 0;
-    let hovered = false;
-    let focused = false;
+    let hovered = trigger.matches(":hover");
+    let focused = trigger === document.activeElement;
+    let target = Number(playOnMount || hovered || focused);
+    let progress = reduced.matches ? target : 0;
     let visible = false;
     let frame = 0;
     let previous = 0;
@@ -96,7 +100,7 @@ export const ChipLayersArtwork = ({
 
       const elapsed = previous ? Math.min((now - previous) / 1000, 0.05) : 0;
       previous = now;
-      progress += (target - progress) * (1 - Math.exp(-elapsed * 4));
+      progress += (target - progress) * (1 - Math.exp(-elapsed * morphSpeed));
       if (Math.abs(target - progress) < 0.001) progress = target;
       draw();
       if (progress !== target) frame = requestAnimationFrame(tick);
@@ -107,11 +111,14 @@ export const ChipLayersArtwork = ({
       previous = 0;
       frame = requestAnimationFrame(tick);
     };
-    const update = () => {
-      target = Number(hovered || focused);
+    const applyTarget = () => {
       if (reduced.matches) progress = target;
       draw();
       schedule();
+    };
+    const update = () => {
+      target = Number(hovered || focused);
+      applyTarget();
     };
     const enter = () => {
       hovered = true;
@@ -153,7 +160,7 @@ export const ChipLayersArtwork = ({
     trigger.addEventListener("mouseleave", leave);
     trigger.addEventListener("focus", focus);
     trigger.addEventListener("blur", blur);
-    reduced.addEventListener("change", update);
+    reduced.addEventListener("change", applyTarget);
     document.addEventListener("visibilitychange", schedule);
 
     return () => {
@@ -164,10 +171,10 @@ export const ChipLayersArtwork = ({
       trigger.removeEventListener("mouseleave", leave);
       trigger.removeEventListener("focus", focus);
       trigger.removeEventListener("blur", blur);
-      reduced.removeEventListener("change", update);
+      reduced.removeEventListener("change", applyTarget);
       document.removeEventListener("visibilitychange", schedule);
     };
-  }, [variant]);
+  }, [morphSpeed, playOnMount, variant]);
 
   return (
     <div

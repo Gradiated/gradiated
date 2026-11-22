@@ -22,6 +22,11 @@ class ProductChangesTest(unittest.TestCase):
         self.assertTrue(result["unit"])
         self.assertTrue(result["rust"])
 
+    def test_hardware_publishing_selects_website(self):
+        result = plan(["hardware/publishing/sand-to-thought/articles/fpga/figures/ChipMap.tsx"])
+        self.assertTrue(result["website"])
+        self.assertFalse(result["inference_native"])
+
     def test_website_does_not_run_backend_or_inference_checks(self):
         result = plan(["product/website/src/pages/TrainingPage.tsx"])
         self.assertTrue(result["website"])

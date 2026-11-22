@@ -1,0 +1,3383 @@
+.fpga-article {
+  --fpga-paper: var(--color-substrate);
+  --fpga-ink: var(--color-text);
+  --fpga-muted: var(--color-text-muted);
+  --fpga-line: var(--color-rule);
+  --fpga-prose: color-mix(in srgb, var(--fpga-ink) 75%, var(--fpga-paper));
+  color-scheme: light;
+  --signal-stroke: var(--color-energy-yellow);
+  --signal-width: 3px;
+  --signal-glow: #f4ce568c;
+  background: var(--fpga-paper);
+  color: var(--fpga-ink);
+  padding: calc(2.5 * var(--u)) var(--u) 4rem;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+.fpga-article *,
+.fpga-article *::before,
+.fpga-article *::after {
+  box-sizing: border-box;
+}
+.fpga-article a {
+  color: inherit;
+}
+.fpga-article :focus-visible {
+  outline: 2px solid var(--color-interactive);
+  outline-offset: 4px;
+}
+.fpga-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--u);
+  align-items: start;
+  max-width: var(--module-w);
+  margin-inline: auto;
+}
+.fpga-main {
+  min-width: 0;
+}
+.fpga-cover {
+  display: block;
+  position: relative;
+  height: clamp(230px, 27vw, 340px);
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+.fpga-introduction {
+  padding: 3rem 0 2.5rem;
+}
+.fpga-introduction h1 {
+  font: 650 var(--text-hero)/var(--leading-hero) var(--font-title);
+  letter-spacing: var(--tracking-hero);
+  max-width: 1000px;
+  margin: 0;
+  text-wrap: balance;
+}
+.fpga-introduction p {
+  font-size: var(--text-lede);
+  line-height: 1.65;
+  color: var(--fpga-prose);
+  margin: 1.2rem 0 0;
+}
+.fpga-body {
+  /* Changing figure heights must not move the prose across a scene boundary. */
+  overflow-anchor: none;
+}
+.fpga-article .fpga-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 1fr);
+  gap: clamp(1.4rem, 3vw, 3rem);
+  align-items: start;
+}
+.fpga-stage {
+  width: 100%;
+  overflow-anchor: none;
+  position: sticky;
+  top: 1rem;
+  align-self: start;
+  min-width: 0;
+  padding: 1rem 0;
+}
+.fpga-figure-title {
+  font: 500 1rem/1.3 var(--font-body);
+  text-align: center;
+  margin: 0 0 0.4rem;
+  color: var(--fpga-muted);
+}
+.fpga-diagram-hint {
+  margin: 0.25rem 0 0;
+  text-align: center;
+  color: var(--fpga-muted);
+  font: 400 0.75rem/1.4 var(--font-body);
+}
+.fpga-drawing {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  font-family: var(--font-body);
+}
+.fpga-drawing text {
+  fill: var(--fpga-ink);
+  font-size: 18px;
+  font-weight: 500;
+}
+.fpga-drawing text.fpga-small {
+  font-size: 14px;
+  font-weight: 400;
+}
+.fpga-drawing text.fpga-value {
+  font-family: var(--font-code);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "liga" 0;
+}
+.fpga-wire,
+.fpga-gate,
+.fpga-mux > path,
+.fpga-chip-outline,
+.fpga-lut-boundary {
+  fill: none;
+  stroke: var(--fpga-ink);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.fpga-chip-outline {
+  stroke: var(--fpga-line);
+}
+.fpga-gate {
+  fill: var(--fpga-paper);
+}
+.fpga-mux > path {
+  fill: var(--fpga-paper);
+}
+.fpga-lut-boundary {
+  stroke: color-mix(in srgb, var(--color-aegean-400) 70%, var(--fpga-ink));
+  stroke-dasharray: 5 5;
+}
+.fpga-signal {
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-width: var(--signal-width);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: fpga-signal-enter 0.3s ease-out;
+}
+.fpga-config-signal {
+  stroke-dasharray: 4 4;
+}
+.fpga-config-wire {
+  stroke: color-mix(in srgb, var(--color-aegean-400) 70%, var(--fpga-ink));
+  stroke-dasharray: 4 4;
+}
+.fpga-faint {
+  opacity: 0.26;
+}
+.fpga-dot {
+  fill: var(--fpga-ink);
+}
+.fpga-junction {
+  fill: var(--signal-stroke);
+}
+.fpga-block > rect {
+  fill: color-mix(in srgb, var(--fpga-ink) 4%, var(--fpga-paper));
+  stroke: var(--fpga-line);
+  stroke-width: 1.3;
+  transition:
+    fill 0.18s,
+    stroke 0.18s;
+}
+.fpga-block--storage > rect {
+  fill: color-mix(in srgb, var(--color-taupe-500) 16%, var(--fpga-paper));
+  stroke: color-mix(in srgb, var(--color-taupe-500) 70%, var(--fpga-ink));
+}
+.fpga-block--config > rect {
+  fill: color-mix(in srgb, var(--color-aegean-400) 16%, var(--fpga-paper));
+  stroke: color-mix(in srgb, var(--color-aegean-400) 70%, var(--fpga-ink));
+}
+.fpga-block--memory > rect {
+  fill: color-mix(in srgb, var(--color-grove-500) 16%, var(--fpga-paper));
+  stroke: color-mix(in srgb, var(--color-grove-500) 70%, var(--fpga-ink));
+}
+.fpga-block--arithmetic > rect {
+  fill: color-mix(in srgb, var(--signal-stroke) 16%, var(--fpga-paper));
+  stroke: color-mix(in srgb, var(--signal-stroke) 70%, var(--fpga-ink));
+}
+.fpga-block.is-selected > rect,
+.fpga-selected-row {
+  fill: color-mix(
+    in srgb,
+    var(--signal-stroke) 25%,
+    var(--fpga-paper)
+  ) !important;
+  stroke: var(--signal-stroke);
+  stroke-width: 1.5;
+}
+.fpga-bus path {
+  fill: none;
+  stroke: var(--fpga-ink);
+  stroke-width: 1.5;
+}
+.fpga-resource-bus .fpga-wire {
+  stroke-width: 3;
+}
+.fpga-resource-bus .fpga-signal {
+  stroke-width: 4;
+}
+.fpga-resource-bus .fpga-bus path {
+  stroke-width: 2;
+}
+.fpga-captured {
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-width: 3;
+  opacity: 0;
+  animation: fpga-capture 0.65s ease-out;
+}
+.fpga-clock-pulse {
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-width: 4;
+  opacity: 0;
+  animation: fpga-capture 0.65s ease-out;
+}
+.fpga-guide {
+  stroke: var(--fpga-line);
+  stroke-width: 1;
+  fill: none;
+}
+.fpga-wave {
+  fill: none;
+  stroke: var(--fpga-ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.fpga-edge-marker {
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-dasharray: 3 4;
+  stroke-width: 1.3;
+}
+.fpga-timing-window {
+  fill: #d8c59455;
+  stroke: none;
+}
+.fpga-wave-high,
+.fpga-budget-pass {
+  fill: color-mix(in srgb, var(--color-grove-500) 25%, var(--fpga-paper));
+  stroke: var(--color-interactive);
+  stroke-width: 1;
+}
+.fpga-wave-low {
+  fill: color-mix(in srgb, var(--fpga-ink) 4%, var(--fpga-paper));
+  stroke: var(--fpga-line);
+  stroke-width: 1;
+}
+.fpga-budget-fail {
+  fill: color-mix(in srgb, var(--color-kiln-600) 25%, var(--fpga-paper));
+  stroke: var(--color-kiln-600);
+  stroke-width: 1;
+}
+.fpga-drawing text.fpga-pass {
+  fill: var(--color-interactive);
+}
+.fpga-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  font-size: 0.84rem;
+}
+.fpga-controls button {
+  min-height: 36px;
+  border: 1px solid var(--fpga-line);
+  background: transparent;
+  color: inherit;
+  border-radius: 3px;
+  padding: 0.35rem 0.65rem;
+  font: 500 0.82rem/1.2 var(--font-body);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.fpga-controls button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fpga-ink) 7%, var(--fpga-paper));
+}
+.fpga-controls button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--signal-stroke) 20%, var(--fpga-paper));
+  border-color: var(--signal-stroke);
+}
+.fpga-controls button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.fpga-bit-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.fpga-bit-control code {
+  font-family: var(--font-code);
+  font-weight: 600;
+}
+.fpga-status {
+  max-width: 34rem;
+  min-height: 3.3em;
+  margin: 0.85rem auto 0;
+  text-align: center;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--fpga-muted);
+}
+.fpga-scene {
+  padding: 2rem 0 3rem;
+  min-height: 36vh;
+  scroll-margin-top: calc(var(--nav-h) + 1.2rem);
+}
+.fpga-scene:first-child {
+  padding-top: 1rem;
+}
+.fpga-scene h2 {
+  font: 500 clamp(1.7rem, 2.4vw, 2.2rem)/1.16 var(--font-title);
+  letter-spacing: -0.035em;
+  margin: 0 0 1.8rem;
+  text-wrap: balance;
+}
+.fpga-scene p,
+.fpga-scene li {
+  font-size: 1.12rem;
+  line-height: 1.75;
+  color: var(--fpga-prose);
+  margin: 0 0 1.3rem;
+}
+.fpga-scene code {
+  font: 0.87em var(--font-code);
+  background: color-mix(in srgb, var(--fpga-ink) 6%, var(--fpga-paper));
+  border-radius: 3px;
+  padding: 0.05em 0.22em;
+  box-decoration-break: clone;
+}
+.fpga-scene pre {
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--fpga-ink) 6%, var(--fpga-paper));
+  border-radius: 4px;
+}
+.fpga-scene pre code {
+  font-size: 0.8rem;
+  line-height: 1.7;
+  padding: 0;
+  background: transparent;
+}
+.fpga-scene table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin: 1.5rem 0;
+}
+.fpga-scene th,
+.fpga-scene td {
+  padding: 0.5rem 0.2rem;
+  text-align: center;
+  border-bottom: 1px solid var(--fpga-line);
+  font-weight: 400;
+}
+.fpga-scene th {
+  font-weight: 500;
+}
+#fpga-chip-choices h3 {
+  font: 500 clamp(1.35rem, 1.8vw, 1.65rem)/1.2 var(--font-title);
+  margin: 0 0 1rem;
+  text-wrap: balance;
+}
+#fpga-chip-choices table {
+  table-layout: fixed;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+#fpga-chip-choices :is(th, td) {
+  padding: 0.75rem 0.65rem 0.75rem 0;
+  text-align: left;
+  vertical-align: top;
+}
+#fpga-chip-choices th:first-child {
+  width: 16%;
+}
+#fpga-chip-choices :is(th, td):last-child {
+  padding-right: 0;
+}
+#fpga-chip-choices td:first-child strong {
+  font-weight: 500;
+}
+@media (max-width: 600px) {
+  #fpga-chip-choices thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  #fpga-chip-choices tbody tr {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--fpga-line);
+  }
+  #fpga-chip-choices tbody td {
+    padding: 0;
+    border: 0;
+  }
+  #fpga-chip-choices td:last-child::before {
+    content: "Trade-off. ";
+    font-weight: 500;
+  }
+}
+.fpga-scene details {
+  margin-top: 1.6rem;
+  padding: 0.8rem 0;
+}
+.fpga-scene summary {
+  cursor: pointer;
+  font-size: 0.97rem;
+  line-height: 1.4;
+}
+.fpga-scene details p {
+  font-size: 1rem;
+  line-height: 1.65;
+  margin-top: 1.2rem;
+}
+.fpga-scene .fpga-inline-circuit {
+  margin: 1.5rem 0;
+}
+.fpga-inline-circuit img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.fpga-scene a {
+  text-underline-offset: 3px;
+}
+.fpga-scene p > a {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+}
+.fpga-bibliography {
+  max-width: 1000px;
+  margin-inline: auto;
+}
+
+@keyframes fpga-signal-enter {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fpga-capture {
+  0%,
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@media (min-width: 900px) {
+  .fpga-body {
+    --fpga-stage-inset: clamp(0.5rem, 2dvh, 1rem);
+  }
+  .fpga-stage .fpga-drawing {
+    max-height: calc(100dvh - 8rem);
+  }
+}
+@media (min-width: 900px) and (max-height: 800px) {
+  .fpga-controls {
+    margin-top: 0.4rem;
+    gap: 0.4rem;
+  }
+  .fpga-status {
+    margin-top: 0.5rem;
+  }
+}
+@media (max-width: 1100px) and (min-width: 900px) {
+  .fpga-article .fpga-columns {
+    grid-template-columns: minmax(0, 1.2fr) minmax(17rem, 1fr);
+    gap: 1.3rem;
+  }
+}
+@media (max-width: 899px) {
+  .fpga-article {
+    padding: calc(1.5 * var(--u)) var(--u) 3rem;
+    --fpga-stage-height: clamp(325px, 48dvh, 420px);
+  }
+  .fpga-layout,
+  .fpga-article .fpga-columns {
+    display: block;
+  }
+  .fpga-introduction {
+    padding: 2rem 0 1.5rem;
+  }
+  .fpga-cover {
+    height: clamp(210px, 50vw, 320px);
+  }
+  .fpga-stage {
+    z-index: 4;
+    top: 0;
+    background: var(--fpga-paper);
+    padding: 0.5rem 0 0.7rem;
+    max-width: 640px;
+    max-height: 70dvh;
+    overflow: auto;
+    scrollbar-width: thin;
+    margin-inline: auto;
+    box-shadow: 0 12px 16px -14px #756f62;
+  }
+  .fpga-figure-title {
+    font-size: 0.88rem;
+    margin-bottom: 0.25rem;
+  }
+  .fpga-diagram-viewport {
+    max-height: clamp(150px, 30dvh, 280px);
+    overflow: auto;
+    scrollbar-width: thin;
+  }
+  .fpga-drawing {
+    max-height: none;
+  }
+  .fpga-controls {
+    margin-top: 0.3rem;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+  }
+  .fpga-controls button {
+    min-height: 34px;
+    padding: 0.3rem 0.55rem;
+    font-size: 0.78rem;
+  }
+  .fpga-status {
+    font-size: 0.78rem;
+    line-height: 1.4;
+    min-height: 0;
+    margin-top: 0.5rem;
+    max-width: 31rem;
+  }
+  .fpga-prose {
+    max-width: 38rem;
+    margin: 1rem auto 0;
+  }
+  .fpga-scene {
+    min-height: 28vh;
+    padding: 1.8rem 0 2.5rem;
+    scroll-margin-top: calc(var(--fpga-stage-height) + 1rem);
+  }
+  .fpga-scene h2 {
+    font-size: 1.8rem;
+  }
+  .fpga-scene p {
+    font-size: 1.08rem;
+    line-height: 1.7;
+  }
+}
+@media (min-width: 640px) and (max-width: 899px) and (max-height: 620px) {
+  .fpga-article .fpga-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+  .fpga-stage {
+    padding-block: 0.25rem;
+    box-shadow: none;
+  }
+  .fpga-diagram-viewport {
+    max-height: max(100px, calc(100dvh - 260px));
+  }
+  .fpga-drawing {
+    min-width: 480px;
+  }
+  .fpga-scene {
+    scroll-margin-top: calc(var(--nav-h) + 1rem);
+  }
+}
+@media (min-width: 900px),
+  (min-width: 640px) and (max-width: 899px) and (max-height: 620px) {
+  .fpga-stage {
+    display: grid;
+    align-content: safe center;
+    top: var(--fpga-stage-inset, 0px);
+    height: calc(100dvh - 2 * var(--fpga-stage-inset, 0px));
+    max-height: none;
+    overflow: auto;
+    scrollbar-width: thin;
+  }
+  .fpga-scene:first-child {
+    scroll-margin-top: var(--fpga-stage-inset, 0px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fpga-article *,
+  .fpga-article *::before,
+  .fpga-article *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .fpga-captured,
+  .fpga-clock-pulse {
+    opacity: 0;
+  }
+}
+
+html:has(.fpga-article) {
+  scroll-padding-top: 0;
+}
+@media (max-width: 899px) {
+  .fpga-drawing text.fpga-small {
+    font-size: 16px;
+  }
+  .fpga-drawing text.fpga-note {
+    font-size: 14px;
+  }
+}
+
+.fpga-package-shadow {
+  fill: #c6bfb4;
+}
+.fpga-package {
+  fill: #6c6961;
+  stroke: #37362f;
+  stroke-width: 1.5;
+}
+.fpga-package-cavity {
+  fill: #d0c0a0;
+  stroke: #9a8c70;
+}
+.fpga-package-pins rect {
+  fill: #b6b2a8;
+  stroke: #77766d;
+  stroke-width: 1;
+}
+.fpga-die {
+  fill: color-mix(in srgb, var(--color-taupe-500) 18%, var(--fpga-paper));
+  stroke: var(--fpga-line);
+  stroke-width: 1.3;
+}
+.fpga-die-io {
+  fill: color-mix(in srgb, var(--color-grove-500) 22%, var(--fpga-paper));
+  stroke: var(--fpga-line);
+}
+.fpga-die-tile {
+  fill: color-mix(in srgb, var(--color-taupe-500) 35%, var(--fpga-paper));
+  stroke: var(--fpga-line);
+  stroke-width: 0.8;
+}
+.fpga-die-detail {
+  fill: none;
+  stroke: var(--fpga-ink);
+  stroke-width: 0.8;
+  opacity: 0.55;
+}
+.fpga-die-buffer {
+  fill: none;
+  stroke: #9da58d;
+  stroke-width: 3;
+}
+.fpga-die-configuration {
+  fill: none;
+  stroke: #8a9ca9;
+  stroke-width: 4;
+}
+.fpga-die-pads rect {
+  fill: #c1af7d;
+  stroke: #a28d59;
+  stroke-width: 0.5;
+}
+.fpga-bond-wires path {
+  fill: none;
+  stroke: #9c8050;
+  stroke-width: 0.7;
+}
+.fpga-die-memory {
+  fill: #a9bdc7;
+  stroke: #7a929f;
+  stroke-width: 0.7;
+}
+.fpga-die-switch {
+  fill: color-mix(in srgb, var(--fpga-ink) 8%, var(--fpga-paper));
+  stroke: var(--fpga-line);
+  stroke-width: 1;
+}
+.fpga-die-storage {
+  fill: color-mix(in srgb, var(--color-taupe-500) 25%, var(--fpga-paper));
+  stroke: color-mix(in srgb, var(--color-taupe-500) 70%, var(--fpga-ink));
+  stroke-width: 1;
+}
+.fpga-die-lut {
+  fill: color-mix(in srgb, var(--signal-stroke) 25%, var(--fpga-paper));
+  stroke: var(--signal-stroke);
+  stroke-width: 1;
+}
+
+.fpga-drawing--compact {
+  display: none;
+}
+@media (max-width: 599px) {
+  .fpga-drawing--wide {
+    display: none;
+  }
+  .fpga-drawing--compact {
+    display: block;
+    max-height: none;
+  }
+  .fpga-drawing--compact text.fpga-small {
+    font-size: 15px;
+  }
+  .fpga-drawing--compact .fpga-mux text {
+    font-size: 12px;
+  }
+}
+
+.fpga-current-count {
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-width: 2.5;
+}
+
+.gr-root[data-theme="dark"] .fpga-article {
+  color-scheme: dark;
+}
+
+.fpga-cache-rails {
+  fill: none;
+  stroke: color-mix(in srgb, var(--fpga-ink) 26%, var(--fpga-paper));
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.fpga-stage[data-scene="transformer-cache"]
+  .fpga-tour-layer[data-context="true"]
+  .fpga-map-available {
+  opacity: 0;
+}
+.fpga-cache-logic > .fpga-block > rect {
+  fill: color-mix(in srgb, var(--color-interactive) 28%, var(--fpga-paper));
+  stroke: var(--color-interactive);
+}
+.fpga-cache-logic > .fpga-block.is-selected > rect {
+  fill: color-mix(
+    in srgb,
+    var(--color-interactive) 40%,
+    var(--fpga-paper)
+  ) !important;
+  stroke: var(--signal-stroke);
+}
+.fpga-cache-logic text.fpga-cache-logic-label {
+  fill: var(--color-interactive);
+  font-weight: 600;
+}
+
+.fpga-cache-row-outline {
+  fill: transparent;
+  stroke: var(--signal-stroke);
+  stroke-width: 1.5;
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+.fpga-cache-row-outline[data-highlighted="true"] {
+  opacity: 1;
+}
+.fpga-cache-cells .fpga-cache-cell {
+  fill: color-mix(in srgb, var(--fpga-ink) 12%, var(--fpga-paper));
+  transition: fill 170ms ease-out;
+}
+.fpga-cache-cell[data-sign="-1"] {
+  fill: color-mix(in srgb, var(--color-energy-red) 85%, var(--fpga-ink));
+}
+.fpga-cache-cell[data-sign="1"] {
+  fill: color-mix(in srgb, var(--color-signal-green) 65%, var(--fpga-ink));
+}
+.fpga-cache-cells > g {
+  opacity: 0.68;
+  transition: opacity 170ms ease-out;
+}
+.fpga-cache-cells > g[data-emphasised="true"] {
+  opacity: 1;
+}
+.fpga-cache-cells .fpga-cache-grid-focus {
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-width: 1.5;
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+.fpga-cache-demo[data-activity="compare"]
+  .fpga-cache-cells
+  > g[data-emphasised="true"]
+  > .fpga-cache-grid-focus {
+  opacity: 1;
+}
+.fpga-cache-value-flow {
+  transition: opacity 220ms ease-out;
+}
+.fpga-cache-demo[data-activity="result"] .fpga-cache-value-flow {
+  opacity: 0.55;
+}
+.fpga-detail-layer[data-detail-scene="transformer-cache"]
+  .fpga-chip-detail
+  > .fpga-tour-boundary {
+  stroke: none;
+}
+.fpga-cache-rain {
+  pointer-events: none;
+}
+.fpga-cache-rain rect {
+  opacity: 0;
+  animation: fpga-cache-rain-fall linear both;
+}
+@keyframes fpga-cache-rain-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  10%,
+  40% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(132px);
+  }
+}
+.fpga-cache-demo[data-paused="true"]
+  :is(.fpga-data-transfer, .fpga-cache-rain rect) {
+  animation-play-state: paused;
+}
+.fpga-cache-demo[data-activity="write"] .fpga-data-transfer {
+  animation-duration: 780ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fpga-cache-rain {
+    display: none;
+  }
+  .fpga-cache-demo
+    :is(
+      .fpga-cache-row-outline,
+      .fpga-cache-grid-focus,
+      .fpga-cache-value-flow,
+      .fpga-cache-cells .fpga-cache-cell,
+      .fpga-cache-cells > g
+    ) {
+    transition: none;
+  }
+}
+.fpga-chip-detail .fpga-cache-demo text {
+  font-size: 25px;
+}
+.fpga-chip-detail .fpga-cache-demo text.fpga-small {
+  font-size: 21px;
+}
+
+@media (max-width: 639px), (max-width: 899px) and (max-height: 620px) {
+  .fpga-chip-detail .fpga-cache-demo text {
+    font-size: 31px;
+  }
+  .fpga-chip-detail .fpga-cache-demo text.fpga-small {
+    font-size: 25px;
+  }
+  .fpga-chip-detail .fpga-cache-demo .fpga-block > text:not(.fpga-small) {
+    font-size: 27px;
+  }
+  .fpga-world-layer.fpga-token-feedback text {
+    font-size: 25px;
+  }
+  .fpga-world-layer.fpga-token-feedback text.fpga-small {
+    font-size: 21px;
+  }
+}
+
+.fpga-token-feedback [data-paused="true"] .fpga-data-transfer {
+  animation-play-state: paused;
+}
+.fpga-token-output {
+  color: var(--fpga-ink);
+  font: 400 23px/1.2 var(--font-body);
+}
+.fpga-token-output span {
+  visibility: hidden;
+}
+@media (max-width: 639px), (max-width: 899px) and (max-height: 620px) {
+  .fpga-token-output {
+    font-size: 26px;
+    line-height: 1.14;
+  }
+}
+
+.fpga-chip-detail .fpga-cache-demo text.fpga-cache-compact-label {
+  font-size: 16px;
+}
+
+.fpga-video-pixels rect {
+  fill: color-mix(in srgb, var(--fpga-ink) 9%, var(--fpga-paper));
+  transition: fill 0.24s ease-in-out;
+}
+.fpga-video-pixels rect.is-lit {
+  fill: var(--signal-stroke);
+}
+.fpga-video-input-dot,
+.fpga-video-output-dot {
+  fill: var(--signal-stroke);
+  animation: fpga-video-transfer 0.5s linear infinite;
+}
+.fpga-video-input-dot {
+  animation-name: fpga-video-receive;
+}
+@keyframes fpga-video-transfer {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(20px);
+  }
+}
+@keyframes fpga-video-receive {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(38px);
+  }
+}
+
+@media (max-width: 599px) {
+  .fpga-stage[data-scene="why-fpgas"] .fpga-diagram-viewport {
+    max-height: 40dvh;
+  }
+}
+
+.fpga-map-location {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+  color: var(--fpga-muted);
+  font: 400 0.78rem/1.3 var(--font-body);
+}
+.fpga-map-locator {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 auto;
+}
+.fpga-map-available {
+  opacity: 0.3;
+  transition: opacity 0.18s;
+}
+.fpga-map-available .fpga-wire {
+  transition: stroke 0.18s;
+}
+.fpga-map-pins path {
+  fill: none;
+  stroke: var(--fpga-ink);
+  stroke-width: 4;
+  stroke-linecap: square;
+  transition: stroke 0.18s;
+}
+.fpga-map-ports rect {
+  fill: var(--fpga-paper);
+  stroke: var(--fpga-ink);
+  stroke-width: 1.5;
+  transition:
+    fill 0.18s,
+    stroke 0.18s;
+}
+.fpga-drawing .fpga-map-drawing .fpga-map-ports text {
+  font-size: 14px;
+}
+.fpga-map-tile {
+  fill: var(--fpga-paper);
+  stroke: var(--fpga-line);
+  stroke-width: 1.5;
+}
+.fpga-map-tile.is-selected {
+  fill: color-mix(in srgb, var(--signal-stroke) 17%, var(--fpga-paper));
+  stroke: var(--signal-stroke);
+}
+.fpga-map-focus {
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+@media (max-width: 599px) {
+  .fpga-stage[data-figure="0"] .fpga-diagram-viewport,
+  .fpga-stage[data-scene="routing-grid"] .fpga-diagram-viewport,
+  .fpga-chip-context .fpga-diagram-viewport {
+    max-height: 44dvh;
+  }
+  .fpga-map-locator {
+    width: 45px;
+    height: 45px;
+  }
+}
+.fpga-drawing .fpga-map-mux-label {
+  font-size: 12px;
+}
+.fpga-map-locator .fpga-chip-outline,
+.fpga-map-locator .fpga-map-tile,
+.fpga-map-locator .fpga-map-focus {
+  stroke-width: 6;
+}
+@media (max-width: 899px) {
+  .fpga-drawing .fpga-map-drawing text {
+    font-size: 24px;
+  }
+  .fpga-drawing .fpga-map-drawing text.fpga-small {
+    font-size: 20px;
+  }
+  .fpga-drawing .fpga-map-drawing .fpga-map-mux-label {
+    font-size: 14px;
+  }
+  .fpga-drawing .fpga-map-drawing text.fpga-note {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 899px) {
+  .fpga-body:has(.fpga-chip-context) {
+    overflow-anchor: none;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 899px) and (max-height: 620px) {
+  .fpga-stage[data-scene="routing-grid"] .fpga-drawing,
+  .fpga-stage[data-figure="0"] .fpga-drawing {
+    min-width: 0;
+  }
+  .fpga-stage[data-scene="routing-grid"] .fpga-diagram-viewport {
+    max-height: none;
+  }
+  .fpga-stage[data-figure="0"] .fpga-diagram-viewport {
+    max-height: calc(100dvh - 150px);
+  }
+}
+
+@media (max-width: 899px) {
+  .fpga-stage:is([data-figure="0"], [data-scene="routing-grid"])
+    .fpga-diagram-viewport {
+    max-height: none;
+    overflow: visible;
+  }
+  .fpga-stage:is([data-figure="0"], [data-scene="routing-grid"]) .fpga-drawing {
+    min-width: 0;
+    max-height: 44dvh;
+  }
+}
+
+@media (max-width: 899px) and (orientation: portrait) {
+  .fpga-stage:is(
+      [data-scene="stored-bit"],
+      [data-scene="truth-table"],
+      [data-scene="combined-logic"],
+      [data-scene="first-fpga"],
+      [data-scene="first-fpga-block"],
+      [data-scene="simulate"]
+    )
+    .fpga-diagram-viewport {
+    max-height: none;
+    overflow: visible;
+  }
+  .fpga-stage:is(
+      [data-scene="stored-bit"],
+      [data-scene="truth-table"],
+      [data-scene="combined-logic"],
+      [data-scene="first-fpga"],
+      [data-scene="first-fpga-block"],
+      [data-scene="simulate"]
+    )
+    .fpga-drawing {
+    max-height: 44dvh;
+  }
+}
+
+.fpga-map-drawing[data-highlight="io"] .fpga-map-ports rect,
+.fpga-map-ports rect.is-selected {
+  fill: color-mix(in srgb, var(--signal-stroke) 22%, var(--fpga-paper));
+  stroke: var(--signal-stroke);
+  stroke-width: 2;
+}
+.fpga-map-drawing[data-highlight="io"] .fpga-map-pins path,
+.fpga-map-pins path.is-selected {
+  stroke: var(--signal-stroke);
+}
+.fpga-map-drawing[data-highlight="tracks"] {
+  --fpga-map-track-ink: var(--signal-stroke);
+}
+.fpga-map-drawing[data-highlight="tracks"] .fpga-map-available {
+  opacity: 0.85;
+}
+.fpga-map-drawing[data-highlight="tracks"] .fpga-map-available .fpga-wire {
+  stroke: var(--signal-stroke);
+}
+.fpga-map-switchboxes rect {
+  fill: color-mix(in srgb, var(--signal-stroke) 12%, transparent);
+  stroke: var(--signal-stroke);
+  stroke-width: 2;
+}
+.fpga-map-directions path {
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.fpga-application-tour .fpga-tour-chip {
+  transform-origin: 0 0;
+  transition: transform 650ms cubic-bezier(0.45, 0, 0.2, 1);
+}
+/* A fast scroll should settle on its destination rather than chase old zooms. */
+.fpga-stage[data-zoom="instant"]
+  :is(
+    .fpga-tour-chip,
+    .fpga-tour-resource,
+    .fpga-detail-layer,
+    .fpga-tour-resource > rect,
+    .fpga-tour-resource-label,
+    .fpga-configuration-lut-block,
+    .fpga-configuration-lut-array,
+    .fpga-configuration-clb-label,
+    .fpga-configuration-lut-contents,
+    .fpga-configuration-lut-loading,
+    .fpga-map-drawing > .fpga-chip-outline,
+    .fpga-map-ports rect,
+    .fpga-map-ports text,
+    .fpga-map-right-pins,
+    .fpga-map-right-ports
+  ) {
+  transition: none;
+}
+.fpga-tour-chip .fpga-map-drawing text {
+  transition: opacity 180ms;
+}
+.fpga-application-tour:not([data-application="none"]) .fpga-map-drawing text {
+  opacity: 0;
+}
+.fpga-app-chip-name,
+.fpga-app-circuit,
+.fpga-application-environment {
+  opacity: 0;
+  transition: opacity 300ms ease-in-out;
+  pointer-events: none;
+}
+.fpga-application-environment[data-active="true"],
+.fpga-application-tour:not([data-application="none"]) .fpga-app-chip-name,
+.fpga-app-circuit {
+  opacity: 1;
+}
+.fpga-application-environment[data-active="false"] {
+  visibility: hidden;
+  transition:
+    opacity 250ms,
+    visibility 0s 250ms;
+}
+.fpga-application-tour[data-running="false"] *,
+.fpga-application-environment[data-active="false"] * {
+  animation-play-state: paused !important;
+}
+.fpga-app-equipment path,
+.fpga-app-equipment rect,
+.fpga-app-equipment circle,
+.fpga-app-result-mark {
+  stroke: var(--fpga-ink);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+.fpga-app-equipment rect {
+  fill: var(--fpga-paper);
+}
+.fpga-detector circle,
+.fpga-detector path {
+  stroke: color-mix(in srgb, var(--fpga-ink) 38%, var(--fpga-paper));
+}
+.fpga-detector .fpga-app-beamline {
+  stroke-dasharray: 2 5;
+}
+.fpga-drawing .fpga-application-environment text,
+.fpga-drawing .fpga-app-chip-name {
+  font-size: 18px;
+}
+.fpga-drawing .fpga-application-environment text.fpga-small {
+  font-size: 15px;
+}
+.fpga-app-packet {
+  fill: var(--signal-stroke);
+  stroke: var(--fpga-ink);
+  stroke-width: 0.5;
+  opacity: 0;
+  offset-rotate: 0deg;
+  animation: fpga-app-arrival 10s linear infinite;
+  animation-delay: var(--packet-delay, 0s);
+}
+.fpga-collision-flash,
+.fpga-detector-hit {
+  fill: var(--signal-stroke);
+  opacity: 0;
+  animation: fpga-collision-hit 10s linear infinite;
+  animation-delay: var(--event-delay);
+}
+.fpga-collision-flash {
+  animation-name: fpga-collision-origin;
+}
+.fpga-particle-track {
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  animation: fpga-particle-flight 10s ease-out infinite;
+  animation-delay: var(--event-delay);
+}
+.fpga-collision-event.is-rejected {
+  --signal-stroke: var(--color-text-muted);
+}
+.fpga-cern-decision {
+  animation-name: fpga-cern-decision;
+}
+.fpga-cern-result {
+  opacity: 0;
+  animation: fpga-cern-result 10s linear infinite;
+  animation-delay: var(--event-delay);
+}
+.fpga-app-circuit path {
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.fpga-app-circuit-work {
+  animation: fpga-app-process 5s ease-in-out infinite;
+}
+.fpga-app-pixels rect {
+  fill: color-mix(in srgb, var(--fpga-ink) 8%, var(--fpga-paper));
+}
+.fpga-app-pixels rect.is-lit {
+  fill: var(--signal-stroke);
+}
+.fpga-display-blob {
+  opacity: 0;
+  animation: fpga-display-pixel 4.8s steps(1, end) infinite;
+  animation-delay: calc(var(--pixel-phase) + var(--picture-delay));
+}
+.fpga-display-input,
+.fpga-display-output {
+  animation: fpga-display-transfer 0.4s linear infinite;
+  animation-delay: var(--packet-delay);
+}
+.fpga-app-equipment .fpga-app-design-path {
+  stroke: var(--fpga-muted);
+  stroke-dasharray: 4 5;
+}
+.fpga-prototype-write {
+  fill: var(--color-aegean-400);
+  animation: fpga-prototype-write 12s linear infinite;
+}
+.fpga-prototype-test {
+  animation: fpga-prototype-test 12s linear infinite;
+}
+.fpga-prototype-return {
+  animation: fpga-prototype-return 12s linear infinite;
+}
+.fpga-prototype-fail,
+.fpga-prototype-pass {
+  opacity: 0;
+  animation: fpga-prototype-fail 12s linear infinite;
+}
+.fpga-prototype-pass {
+  animation-name: fpga-prototype-pass;
+}
+@keyframes fpga-collision-origin {
+  0%,
+  4% {
+    opacity: 1;
+  }
+  10%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes fpga-particle-flight {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
+  3% {
+    opacity: 1;
+  }
+  16%,
+  30% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  43%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+@keyframes fpga-collision-hit {
+  0%,
+  12% {
+    opacity: 0;
+  }
+  18%,
+  30% {
+    opacity: 1;
+  }
+  43%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes fpga-app-arrival {
+  0%,
+  18% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  19% {
+    opacity: 1;
+  }
+  28% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  29%,
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+@keyframes fpga-cern-decision {
+  0%,
+  30% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  31% {
+    opacity: 1;
+  }
+  40% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  41%,
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+@keyframes fpga-cern-result {
+  0%,
+  39% {
+    opacity: 0;
+  }
+  42%,
+  47% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes fpga-app-process {
+  0%,
+  30%,
+  85%,
+  100% {
+    opacity: 0.25;
+  }
+  50%,
+  70% {
+    opacity: 1;
+  }
+}
+@keyframes fpga-display-pixel {
+  0% {
+    opacity: 1;
+  }
+  25%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes fpga-display-transfer {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+@keyframes fpga-prototype-write {
+  0%,
+  54% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  2%,
+  56% {
+    opacity: 1;
+  }
+  12%,
+  66% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  13%,
+  53%,
+  67%,
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+@keyframes fpga-prototype-test {
+  0%,
+  20%,
+  69% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  21%,
+  70% {
+    opacity: 1;
+  }
+  28%,
+  77% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  29%,
+  68%,
+  78%,
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+@keyframes fpga-prototype-return {
+  0%,
+  29%,
+  77% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  30%,
+  78% {
+    opacity: 1;
+  }
+  42%,
+  87% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  43%,
+  76%,
+  88%,
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+@keyframes fpga-prototype-fail {
+  0%,
+  42%,
+  55%,
+  100% {
+    opacity: 0;
+  }
+  44%,
+  53% {
+    opacity: 1;
+  }
+}
+@keyframes fpga-prototype-pass {
+  0%,
+  87%,
+  100% {
+    opacity: 0;
+  }
+  89%,
+  98% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fpga-application-tour * {
+    animation: none !important;
+    transition: none !important;
+  }
+  .fpga-collision-event.is-kept
+    :is(.fpga-particle-track, .fpga-detector-hit, .fpga-cern-result) {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  .fpga-collision-event.is-rejected {
+    display: none;
+  }
+  .fpga-prototype-pass {
+    opacity: 1;
+  }
+  .fpga-prototype-fail {
+    opacity: 0;
+  }
+  .fpga-display-blob.is-start {
+    opacity: 1;
+  }
+}
+
+.fpga-application-tour:not([data-application="none"])
+  .fpga-tour-chip
+  .fpga-chip-outline {
+  stroke: var(--fpga-ink);
+  stroke-width: 4;
+}
+.fpga-application-tour:not([data-application="none"])
+  .fpga-tour-chip
+  .fpga-block
+  > rect {
+  fill: color-mix(in srgb, var(--fpga-ink) 8%, var(--fpga-paper));
+  stroke: var(--fpga-ink);
+  stroke-width: 3;
+}
+.fpga-particle-head {
+  fill: var(--signal-stroke);
+  opacity: 0;
+  offset-rotate: 0deg;
+  animation: fpga-particle-head 10s ease-out infinite;
+  animation-delay: var(--event-delay);
+}
+.fpga-prototype-config {
+  fill: var(--color-aegean-400);
+  opacity: 0;
+  animation: fpga-prototype-config 12s ease-in-out infinite;
+}
+@keyframes fpga-particle-head {
+  0% {
+    opacity: 0;
+    offset-distance: 0%;
+  }
+  3% {
+    opacity: 1;
+  }
+  16% {
+    opacity: 1;
+    offset-distance: 100%;
+  }
+  18%,
+  100% {
+    opacity: 0;
+    offset-distance: 100%;
+  }
+}
+@keyframes fpga-prototype-config {
+  0%,
+  12%,
+  54%,
+  66%,
+  100% {
+    opacity: 0;
+  }
+  5%,
+  9%,
+  59%,
+  63% {
+    opacity: 0.8;
+  }
+}
+
+@media (max-width: 899px) {
+  .fpga-drawing .fpga-application-environment text,
+  .fpga-drawing .fpga-app-chip-name {
+    font-size: 24px;
+  }
+  .fpga-drawing .fpga-application-environment text.fpga-small {
+    font-size: 22px;
+  }
+}
+
+.fpga-tour-layer {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 240ms ease-in-out,
+    visibility 0s 240ms;
+  pointer-events: none;
+}
+.fpga-map-drawing .fpga-map-logic-block > .fpga-block > text {
+  transform: translateY(0);
+  transition:
+    transform 240ms ease-in-out,
+    opacity 180ms;
+}
+.fpga-map-drawing
+  .fpga-map-logic-block[data-detail="true"]
+  > .fpga-block
+  > text {
+  transform: translateY(-14px);
+}
+.fpga-tour-layer[data-visible="false"] * {
+  animation-play-state: paused !important;
+}
+.fpga-tour-layer[data-visible="true"] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 240ms ease-in-out;
+}
+.fpga-tour-layer[data-zoom-out="true"][data-visible="false"] {
+  transition:
+    opacity 240ms ease-in-out 380ms,
+    visibility 0s 620ms;
+}
+.fpga-stage[data-zoom="instant"]
+  .fpga-tour-layer[data-zoom-out="true"][data-visible="false"] {
+  transition: none;
+}
+.fpga-detail-controls:not([hidden]) {
+  display: contents;
+}
+.fpga-tour-boundary {
+  fill: var(--fpga-paper);
+  stroke: var(--signal-stroke);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.fpga-application-tour .fpga-tour-location {
+  font: 400 0.8rem/1.3 var(--font-body);
+  color: var(--fpga-muted);
+  text-align: center;
+  margin: 0 0 1.25rem;
+}
+.fpga-application-tour[data-view="lut"] {
+  position: relative;
+}
+.fpga-application-tour[data-view="lut"] > .fpga-controls {
+  position: absolute;
+  width: max-content;
+  margin: 0;
+  transform: translateX(-50%);
+}
+.fpga-tour-lut-shell text,
+.fpga-tour-sram text,
+.fpga-tour-routing text {
+  font-size: 24px;
+}
+.fpga-tour-lut-shell text.fpga-small,
+.fpga-tour-sram text.fpga-small,
+.fpga-tour-routing text.fpga-small {
+  font-size: 20px;
+}
+.fpga-tour-resource,
+.fpga-tour-resource > rect,
+.fpga-tour-resource-label {
+  transform-origin: 0 0;
+  transition: transform 650ms cubic-bezier(0.45, 0, 0.2, 1);
+}
+.fpga-tour-resource > rect {
+  vector-effect: non-scaling-stroke;
+}
+.fpga-tour-clb-shell[data-overview="true"] .fpga-tour-resource text {
+  font-size: 23px;
+}
+.fpga-tour-connections[data-visible="true"] {
+  transition: opacity 240ms ease-in-out 300ms;
+}
+.fpga-tour-clb-resources text {
+  font-size: 26px;
+}
+.fpga-tour-clb-resources text.fpga-small,
+.fpga-tour-clb-resources .fpga-block text {
+  font-size: 23px;
+}
+.fpga-tour-clb-shell text {
+  font-size: 28px;
+}
+.fpga-tour-clb-shell text.fpga-small {
+  font-size: 22px;
+}
+.fpga-tour-clb-shell .fpga-block text {
+  font-size: 24px;
+}
+.fpga-tour-lut-shell .fpga-mux text,
+.fpga-tour-routing .fpga-mux text.fpga-small {
+  font-size: 12px;
+}
+.fpga-tour-lut-shell .fpga-mux text.fpga-value {
+  font-size: 20px;
+}
+.fpga-tour-sram-symbol :is(.fpga-wire, .fpga-gate) {
+  stroke-width: 3;
+}
+.fpga-tour-capture circle {
+  fill: var(--signal-stroke);
+  opacity: 0;
+  pointer-events: none;
+}
+.fpga-tour-clock-edge {
+  animation: fpga-tour-clock-edge 2s ease-in-out infinite;
+}
+.fpga-tour-clock-packet {
+  animation: fpga-tour-clock-packet 2s linear infinite;
+}
+.fpga-tour-data-packet {
+  animation: fpga-tour-data-packet 2s ease-in-out 440ms infinite;
+}
+@keyframes fpga-tour-clock-edge {
+  0%,
+  18%,
+  100% {
+    opacity: 0;
+  }
+  4%,
+  10% {
+    opacity: 0.75;
+  }
+}
+@keyframes fpga-tour-clock-packet {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  4% {
+    opacity: 1;
+  }
+  20% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  22%,
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+@keyframes fpga-tour-data-packet {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  3% {
+    opacity: 1;
+  }
+  34% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  38%,
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+.fpga-tour-access-on {
+  stroke: var(--signal-stroke);
+  stroke-width: 3;
+}
+.fpga-tour-sram .fpga-wire,
+.fpga-tour-sram .fpga-gate,
+.fpga-tour-routing .fpga-wire,
+.fpga-tour-lut-shell .fpga-wire {
+  transition: stroke 200ms ease;
+}
+.fpga-application-tour[data-view="cell"] .fpga-drawing,
+.fpga-application-tour[data-view="lut"] .fpga-drawing,
+.fpga-application-tour[data-view="clb"] .fpga-drawing,
+.fpga-application-tour[data-view="clb-overview"] .fpga-drawing,
+.fpga-application-tour[data-view="junction"] .fpga-drawing {
+  overflow: hidden;
+}
+
+@media (max-width: 599px) {
+  .fpga-tour-lut-shell text,
+  .fpga-tour-sram text,
+  .fpga-tour-routing text {
+    font-size: 28px;
+  }
+  .fpga-tour-lut-shell text.fpga-small,
+  .fpga-tour-sram text.fpga-small,
+  .fpga-tour-routing text.fpga-small {
+    font-size: 28px;
+  }
+  .fpga-tour-lut-shell .fpga-mux text,
+  .fpga-tour-routing .fpga-mux text.fpga-small {
+    font-size: 14px;
+  }
+  .fpga-tour-lut-shell .fpga-mux text.fpga-value {
+    font-size: 23px;
+  }
+}
+
+@media (max-width: 599px) {
+  .fpga-tour-clb-shell text {
+    font-size: 28px;
+  }
+  .fpga-tour-clb-shell text.fpga-small,
+  .fpga-tour-clb-shell .fpga-block text {
+    font-size: 24px;
+  }
+  .fpga-tour-sram text.fpga-small,
+  .fpga-tour-routing text.fpga-small {
+    font-size: 24px;
+  }
+}
+
+.fpga-tour-layer[data-context="true"] {
+  opacity: 0.2;
+  visibility: visible;
+  transition: opacity 240ms ease-in-out;
+}
+.fpga-tour-layer[data-context="true"] text,
+.fpga-tour-layer[data-context="true"] .fpga-signal {
+  visibility: hidden;
+}
+.fpga-tour-layer[data-context="true"] .fpga-map-available {
+  opacity: 1;
+}
+.fpga-tour-layer[data-context="true"] :is(path, rect, circle) {
+  vector-effect: non-scaling-stroke;
+}
+.fpga-tour-layer[data-context="true"]
+  :is(
+    .fpga-chip-outline,
+    .fpga-map-ports rect,
+    .fpga-block rect,
+    .fpga-map-tile,
+    .fpga-map-focus,
+    .fpga-tour-boundary,
+    .fpga-gate,
+    .fpga-mux > path
+  ) {
+  fill: none;
+}
+
+.fpga-tour-layer[data-context="true"]
+  :is(.fpga-map-junction-symbol, .fpga-map-focus) {
+  visibility: hidden;
+}
+
+.fpga-prose {
+  min-width: 0;
+  width: 100%;
+}
+.fpga-map-drawing > .fpga-chip-outline {
+  transition:
+    width 650ms cubic-bezier(0.45, 0, 0.2, 1),
+    y 650ms cubic-bezier(0.45, 0, 0.2, 1),
+    height 650ms cubic-bezier(0.45, 0, 0.2, 1);
+}
+.fpga-map-ports .fpga-map-right-ports,
+.fpga-map-pins .fpga-map-right-pins {
+  transition: transform 650ms cubic-bezier(0.45, 0, 0.2, 1);
+}
+.fpga-chip-detail-compact {
+  display: none;
+}
+.fpga-chip-detail text {
+  font-size: 18px;
+}
+.fpga-chip-detail text.fpga-small {
+  font-size: 14px;
+}
+.fpga-chip-detail .fpga-resource-circuit text {
+  font-size: 28px;
+}
+.fpga-chip-detail .fpga-resource-circuit text.fpga-small {
+  font-size: 26px;
+}
+.fpga-chip-detail .fpga-memory-word {
+  fill: var(--fpga-paper);
+  stroke: var(--fpga-line);
+  stroke-width: 1;
+}
+.fpga-chip-detail .fpga-tour-boundary {
+  stroke-width: 1.5;
+}
+.fpga-continuation-map .fpga-block text {
+  font-size: 17px;
+}
+.fpga-continuation-map .fpga-block text.fpga-small {
+  font-size: 13px;
+}
+.fpga-pin-route {
+  --fpga-pin-signal-ink: color-mix(
+    in srgb,
+    var(--signal-stroke) 50%,
+    var(--fpga-ink)
+  );
+}
+.gr-root[data-theme="dark"] .fpga-pin-route {
+  --fpga-pin-signal-ink: var(--signal-stroke);
+}
+.fpga-pin-route .fpga-pin-signal,
+.fpga-pin-signal-block {
+  opacity: 0;
+  stroke: var(--fpga-pin-signal-ink);
+}
+.fpga-pin-route .fpga-pin-signal {
+  animation: none;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.fpga-pin-signal-block {
+  fill: none;
+  stroke-width: 2.5;
+}
+.fpga-pin-route[data-visible="true"] .fpga-pin-signal {
+  animation: fpga-pin-signal 5.5s var(--pin-signal-delay) linear infinite;
+}
+.fpga-pin-route[data-visible="true"] .fpga-pin-signal-block {
+  animation: fpga-pin-signal-block 5.5s var(--pin-signal-delay) ease-out
+    infinite;
+}
+@keyframes fpga-pin-signal {
+  0% {
+    opacity: 1;
+    stroke-dashoffset: 1;
+  }
+  12% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  18%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes fpga-pin-signal-block {
+  0%,
+  16%,
+  100% {
+    opacity: 0;
+  }
+  5%,
+  10% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fpga-pin-route[data-visible="true"] .fpga-pin-signal,
+  .fpga-pin-route[data-visible="true"] .fpga-pin-signal-block {
+    animation: none;
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+.fpga-chip-config-cells rect {
+  fill: var(--fpga-paper);
+  stroke: var(--fpga-muted);
+  stroke-width: 1;
+}
+.fpga-chip-config-cells rect.is-loaded {
+  fill: var(--signal-stroke);
+}
+.fpga-continuation-map[data-powered="false"] .fpga-chip-config-cells rect {
+  fill: var(--fpga-paper);
+}
+.fpga-application-tour:is([data-view="detail"], [data-view="expanded-chip"])
+  .fpga-drawing {
+  overflow: hidden;
+}
+.fpga-application-tour[data-view="detail"] .fpga-drawing {
+  min-width: 0;
+}
+@media (max-width: 899px) {
+  .fpga-application-tour:is([data-view="detail"], [data-view="expanded-chip"])
+    .fpga-diagram-viewport,
+  .fpga-application-tour:is([data-view="detail"], [data-view="expanded-chip"])
+    .fpga-drawing {
+    max-height: clamp(200px, 44dvh, 350px);
+  }
+}
+@media (max-width: 639px) {
+  .fpga-chip-detail-wide {
+    display: none;
+  }
+  .fpga-chip-detail-compact {
+    display: inline;
+  }
+  .fpga-chip-detail text {
+    font-size: 19px;
+  }
+  .fpga-chip-detail text.fpga-small {
+    font-size: 15px;
+  }
+}
+@media (min-width: 640px) and (max-width: 899px) and (max-height: 620px) {
+  .fpga-stage .fpga-application-tour .fpga-diagram-viewport {
+    max-height: none;
+    overflow: visible;
+  }
+  .fpga-stage .fpga-application-tour .fpga-drawing {
+    min-width: 0;
+    max-height: clamp(120px, calc(100dvh - 140px), 285px);
+  }
+}
+
+.fpga-application-tour[data-configuration="configuration-source"] {
+  --fpga-slot-delay: 650ms;
+  --fpga-incoming-delay: calc(var(--fpga-slot-delay) + 450ms);
+}
+.fpga-application-tour[data-configuration="configuration-source"]
+  .fpga-map-extension[data-visible="true"] {
+  transition: opacity 220ms ease-out var(--fpga-slot-delay);
+}
+.fpga-application-tour[data-configuration="configuration-source"]
+  .fpga-configuration-reveal[data-visible="true"] {
+  transition: opacity 220ms ease-out calc(var(--fpga-slot-delay) + 100ms);
+}
+.fpga-application-tour[data-configuration="configuration-source"]
+  .fpga-configuration-loading[data-visible="true"] {
+  transition: opacity 220ms ease-out calc(var(--fpga-slot-delay) + 250ms);
+}
+.fpga-stage[data-zoom="instant"]
+  .fpga-application-tour[data-configuration="configuration-source"] {
+  --fpga-incoming-delay: 0ms;
+}
+.fpga-stage[data-zoom="instant"]
+  .fpga-application-tour[data-configuration="configuration-source"]
+  :is(
+    .fpga-map-extension,
+    .fpga-configuration-reveal,
+    .fpga-configuration-loading
+  )[data-visible="true"] {
+  transition: none;
+}
+
+.fpga-loading-cell,
+.fpga-loading-target {
+  --fpga-configured-ink: color-mix(
+    in srgb,
+    var(--color-signal-green) 65%,
+    var(--fpga-ink)
+  );
+  color: var(--fpga-configured-ink);
+}
+.fpga-loading-cell[data-bit="0"],
+.fpga-loading-target[data-bit="0"] {
+  --fpga-configured-ink: color-mix(
+    in srgb,
+    var(--color-energy-red) 85%,
+    var(--fpga-ink)
+  );
+}
+.fpga-loading-target .fpga-loading-write {
+  fill: var(--fpga-configured-ink);
+}
+.fpga-loading-cell > rect {
+  fill: color-mix(in srgb, currentColor 8%, var(--fpga-paper));
+  stroke: var(--fpga-muted);
+  stroke-width: 1.3;
+}
+.fpga-loading-cell .fpga-tour-sram-symbol :is(.fpga-wire, .fpga-gate) {
+  stroke: var(--fpga-muted);
+}
+.fpga-loading-cell text.fpga-small {
+  font-size: 13px;
+  fill: currentColor;
+}
+.fpga-distribution-halo {
+  fill: none;
+  stroke: var(--fpga-paper);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.fpga-configuration-arc,
+.fpga-clock-arc {
+  fill: none;
+  stroke: var(--fpga-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 5;
+  stroke-linecap: round;
+}
+.fpga-clock-distribution {
+  --fpga-clock-period: 2s;
+  --fpga-clock-signal: color-mix(in srgb, var(--signal-stroke) 62%, var(--fpga-ink));
+  --fpga-clock-ink: color-mix(
+    in srgb,
+    var(--color-aegean-400) 85%,
+    var(--fpga-ink)
+  );
+}
+.gr-root[data-theme="dark"] .fpga-clock-distribution {
+  --fpga-clock-signal: var(--signal-stroke);
+}
+.fpga-clock-arc,
+.fpga-clock-terminal {
+  stroke: var(--fpga-clock-ink);
+}
+.fpga-clock-terminal {
+  fill: var(--fpga-paper);
+  stroke-width: 1.5;
+}
+.fpga-clock-packet,
+.fpga-clock-origin {
+  fill: var(--fpga-clock-signal);
+}
+.fpga-clock-distribution > .fpga-block > rect {
+  animation: fpga-clock-beat var(--fpga-clock-period) ease-in-out infinite;
+}
+.fpga-clock-packet {
+  offset-distance: 0%;
+  opacity: 0;
+  animation: fpga-clock-distribute var(--fpga-clock-period) ease-in-out infinite;
+}
+.fpga-clock-origin {
+  animation: fpga-clock-origin var(--fpga-clock-period) ease-in-out infinite;
+}
+@keyframes fpga-clock-beat {
+  0%,
+  30%,
+  100% {
+    filter: none;
+  }
+  10% {
+    filter: drop-shadow(
+      0 0 3px color-mix(in srgb, var(--fpga-clock-signal) 70%, transparent)
+    );
+  }
+}
+@keyframes fpga-clock-distribute {
+  0%,
+  8% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  65% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  75%,
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+@keyframes fpga-clock-origin {
+  0%,
+  16% {
+    opacity: 1;
+  }
+  30%,
+  100% {
+    opacity: 0.25;
+  }
+}
+
+.fpga-loading-packet {
+  fill: var(--signal-stroke);
+  opacity: 0;
+  offset-distance: 0%;
+}
+.fpga-configuration-loading:not([data-phase="hidden"]) .fpga-loading-incoming {
+  animation: fpga-configuration-packet 1.1s ease-in-out both;
+  animation-delay: calc(
+    var(--fpga-incoming-delay, 0ms) + var(--fpga-packet-delay, 0ms)
+  );
+}
+.fpga-configuration-loading[data-phase="source"] .fpga-loading-incoming {
+  /* Six packets at 180 ms intervals fill one loop. */
+  animation-duration: 1080ms;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.fpga-configuration-loading[data-phase="routing"] .fpga-loading-write {
+  animation: fpga-configuration-packet 700ms ease-in-out 250ms both;
+}
+.fpga-loading-initial-value {
+  opacity: 0;
+}
+.fpga-configuration-loading[data-phase="routing"]
+  .fpga-loading-routing
+  .fpga-loading-cell,
+.fpga-configuration-lut-array[data-visible="true"] .fpga-loading-cell {
+  animation: fpga-configuration-value 140ms ease-out var(--fpga-cell-delay) both;
+}
+.fpga-configuration-loading[data-phase="routing"]
+  .fpga-loading-routing
+  .fpga-loading-initial-value,
+.fpga-configuration-lut-array[data-visible="true"] .fpga-loading-initial-value {
+  animation: fpga-configuration-bit-before var(--fpga-cell-delay) steps(1, end)
+    both;
+}
+.fpga-configuration-loading[data-phase="routing"]
+  .fpga-loading-routing
+  .fpga-loading-cell[data-bit="1"]
+  .fpga-loading-value,
+.fpga-configuration-lut-array[data-visible="true"]
+  .fpga-loading-cell[data-bit="1"]
+  .fpga-loading-value {
+  animation: fpga-configuration-bit-after var(--fpga-cell-delay) steps(1, end)
+    both;
+}
+@keyframes fpga-configuration-bit-before {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes fpga-configuration-bit-after {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fpga-loading-cell > rect,
+.fpga-loading-cell .fpga-tour-sram-symbol :is(.fpga-wire, .fpga-gate) {
+  stroke: currentColor;
+}
+.fpga-loading-wires {
+  opacity: 0.6;
+  transition: opacity 220ms ease-out;
+}
+.fpga-loading-routing {
+  transition: opacity 220ms ease-out;
+}
+.fpga-configuration-loading[data-phase="luts"] .fpga-loading-routing {
+  opacity: 0.25;
+}
+.fpga-configuration-loading[data-phase="luts"]
+  .fpga-loading-routing
+  .fpga-loading-wires {
+  opacity: 0;
+}
+.fpga-application-tour[data-configuration="configuration-source"]
+  .fpga-map-drawing
+  .fpga-signal {
+  opacity: 0;
+}
+.fpga-application-tour[data-configuration="configuration-distribute"]
+  .fpga-map-drawing
+  .fpga-signal {
+  animation: fpga-configuration-data 1.25s ease-out both;
+}
+.fpga-configuration-lut-array {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 150ms 650ms,
+    visibility 0s 800ms;
+}
+.fpga-configuration-lut-array[data-visible="true"] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 100ms;
+}
+.fpga-lut-array-frame {
+  fill: var(--fpga-paper);
+  stroke: var(--signal-stroke);
+  stroke-width: 1.5;
+}
+.fpga-configuration-lut-block {
+  transform-origin: 0 0;
+  transition: transform 650ms cubic-bezier(0.45, 0, 0.2, 1);
+}
+.fpga-configuration-clb-label,
+.fpga-configuration-lut-contents {
+  opacity: 0;
+  transition: opacity 240ms ease-in-out 380ms;
+}
+.fpga-configuration-lut-loading {
+  opacity: 0;
+  transition: opacity 100ms;
+}
+.fpga-configuration-lut-array[data-visible="true"]
+  :is(
+    .fpga-configuration-clb-label,
+    .fpga-configuration-lut-contents,
+    .fpga-configuration-lut-loading
+  ) {
+  opacity: 1;
+  transition: opacity 180ms 450ms;
+}
+.fpga-configuration-lut-array .fpga-configuration-clb-label {
+  font-size: 28px;
+}
+.fpga-configured-lut {
+  fill: var(--fpga-paper);
+  stroke: var(--fpga-muted);
+  stroke-width: 1;
+}
+.fpga-configuration-lut-contents > g > text.fpga-small {
+  font-size: 18px;
+}
+.fpga-configuration-lut-array .fpga-loading-cell text.fpga-small {
+  font-size: 16px;
+}
+.fpga-configuration-lut-array[data-visible="true"]
+  .fpga-loading-target
+  .fpga-loading-lut-packet {
+  fill: var(--fpga-configured-ink);
+  animation: fpga-configuration-packet 500ms ease-in-out
+    var(--fpga-packet-delay) both;
+}
+@media (max-width: 639px) {
+  .fpga-configuration-lut-contents > g > text.fpga-small {
+    font-size: 26px;
+  }
+  .fpga-configuration-lut-array .fpga-tour-sram-symbol {
+    display: none;
+  }
+  .fpga-configuration-lut-array .fpga-loading-cell text.fpga-small {
+    font-size: 28px;
+    transform: translate(-12px, 4px);
+  }
+}
+@keyframes fpga-configuration-packet {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  8%,
+  90% {
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+@keyframes fpga-configuration-value {
+  from {
+    color: var(--fpga-muted);
+  }
+  to {
+    color: var(--fpga-configured-ink);
+  }
+}
+@keyframes fpga-configuration-data {
+  0%,
+  77% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.fpga-configuration-loading > .fpga-block > text:not(.fpga-small) {
+  font-size: 22px;
+}
+.fpga-configuration-loading > .fpga-block > text.fpga-small {
+  font-size: 16px;
+}
+
+.fpga-data-transfer {
+  fill: var(--signal-stroke);
+  stroke: var(--fpga-paper);
+  stroke-width: 1;
+  offset-distance: 0%;
+  opacity: 0;
+  animation: fpga-configuration-packet 500ms ease-in-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fpga-data-transfer {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .fpga-detail-layer[data-detail-scene="neuron"]
+    .fpga-chip-detail-compact
+    text {
+    font-size: 22px;
+  }
+  .fpga-detail-layer[data-detail-scene="neuron"]
+    .fpga-chip-detail-compact
+    text.fpga-small {
+    font-size: 18px;
+  }
+  .fpga-stage[data-scene="neuron"] .fpga-status {
+    min-height: 4.2em;
+  }
+}
+
+.fpga-world-layer text {
+  font-size: 22px;
+}
+.fpga-world-layer text.fpga-small {
+  font-size: 18px;
+}
+.fpga-world-equipment :is(rect, path) {
+  fill: none;
+  stroke: var(--fpga-ink);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.fpga-world-visibility {
+  transition: opacity 220ms ease-out;
+}
+.fpga-world-visibility[data-visible="false"] {
+  opacity: 0;
+  pointer-events: none;
+}
+.fpga-token-resource {
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-width: 3;
+  transition: opacity 180ms;
+}
+.fpga-token-resource.is-idle {
+  opacity: 0;
+}
+.fpga-historical-camera {
+  transform-origin: 0 0;
+  transition: transform 650ms cubic-bezier(0.45, 0, 0.2, 1);
+}
+.fpga-history-context {
+  transition: opacity 220ms;
+}
+.fpga-history-context[data-detail="true"] {
+  opacity: 0.12;
+}
+.fpga-history-context[data-detail="true"] rect {
+  fill: none;
+}
+.fpga-history-context[data-detail="true"] :is(rect, path) {
+  vector-effect: non-scaling-stroke;
+}
+.fpga-historical-tile text {
+  font-size: 18px;
+}
+
+.fpga-historical-tile .fpga-note {
+  display: none;
+}
+.fpga-application-tour[data-history="true"] .fpga-tour-chip {
+  opacity: 0;
+}
+.fpga-application-tour[data-history="true"] .fpga-tour-chip text {
+  visibility: hidden;
+}
+.fpga-stage[data-zoom="instant"]
+  :is(.fpga-historical-camera, .fpga-world-visibility) {
+  transition: none;
+}
+
+.fpga-detail-layer[data-continuous="true"][data-visible="true"]
+  .fpga-world-layer:where(:not(.fpga-network-world)),
+.fpga-detail-layer[data-continuous="true"][data-visible="true"]:where(
+    :not([data-detail-scene="neuron"], [data-detail-scene="neuron-next"])
+  )
+  .fpga-chip-detail {
+  animation: fpga-world-enter 200ms ease-out 450ms both;
+}
+@keyframes fpga-world-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fpga-application-tour[data-world="true"] .fpga-map-available {
+  opacity: 0.55;
+}
+.fpga-application-tour[data-world="true"]
+  .fpga-tour-chip
+  :is(.fpga-map-tile, .fpga-chip-outline, .fpga-map-available .fpga-wire) {
+  vector-effect: non-scaling-stroke;
+  stroke-width: 0.8;
+}
+.fpga-historical-tile text.fpga-small {
+  font-size: 18px;
+}
+.fpga-stage[data-zoom="instant"]
+  .fpga-application-tour[data-continuous="true"]
+  :is(.fpga-application-environment, .fpga-app-chip-name) {
+  transition: none;
+}
+.fpga-stage[data-zoom="instant"]
+  .fpga-detail-layer[data-continuous="true"]
+  :is(.fpga-world-layer, .fpga-chip-detail) {
+  animation: none;
+}
+
+.fpga-application-tour[data-continuous="true"] .fpga-tour-chip {
+  transition:
+    transform 650ms cubic-bezier(0.45, 0, 0.2, 1),
+    opacity 220ms ease-out;
+}
+.fpga-stage[data-zoom="instant"]
+  .fpga-application-tour[data-continuous="true"]
+  .fpga-tour-chip {
+  transition: none;
+}
+
+.fpga-map-pins .fpga-map-edge-pin,
+.fpga-map-edge-ports,
+.fpga-column-resource {
+  transition: transform 650ms cubic-bezier(0.45, 0, 0.2, 1);
+}
+.fpga-column-resource .fpga-block > rect,
+.fpga-map-drawing .fpga-block > rect {
+  transition:
+    height 650ms cubic-bezier(0.45, 0, 0.2, 1),
+    fill 180ms,
+    stroke 180ms;
+}
+.fpga-map-drawing[data-columns="true"] text,
+.fpga-continuation-map[data-columns="true"] .fpga-column-resource text {
+  opacity: 0;
+}
+.fpga-resource-columns-legend text {
+  font-size: 22px;
+}
+.fpga-resource-columns-extra[data-visible="true"] {
+  transition: opacity 250ms 350ms;
+}
+.fpga-stage[data-zoom="instant"]
+  :is(
+    .fpga-map-edge-pin,
+    .fpga-map-edge-ports,
+    .fpga-column-resource,
+    .fpga-map-drawing .fpga-block > rect,
+    .fpga-column-resource .fpga-block > rect,
+    .fpga-resource-columns-extra
+  ) {
+  transition: none;
+}
+@media (max-width: 639px) {
+  .fpga-resource-columns-legend text {
+    font-size: 28px;
+  }
+}
+
+.fpga-map-local-wires {
+  transition: opacity 180ms;
+}
+.fpga-map-drawing[data-columns="true"] .fpga-map-local-wires {
+  opacity: 0;
+}
+.fpga-application-tour[data-resource-columns="true"] .fpga-block--logic > rect {
+  fill: color-mix(in srgb, var(--fpga-ink) 9%, var(--fpga-paper));
+  stroke: color-mix(in srgb, var(--fpga-ink) 45%, var(--fpga-paper));
+}
+.fpga-application-tour[data-resource-columns="true"] .fpga-map-available {
+  opacity: 0.16;
+}
+.fpga-map-drawing[data-columns="true"] > .fpga-chip-outline {
+  stroke: var(--fpga-muted);
+}
+
+.fpga-chip-detail .fpga-neuron-tail .fpga-block > text:not(.fpga-small) {
+  font-size: 24px;
+}
+.fpga-dsp-register-value,
+.fpga-dsp-adder-input {
+  dominant-baseline: central;
+}
+.fpga-dsp-accumulator,
+.fpga-dsp-direct-output {
+  transition: opacity 240ms ease-out;
+}
+.fpga-dsp-datapath[data-accumulate="false"] .fpga-dsp-accumulator,
+.fpga-dsp-datapath[data-accumulate="true"] .fpga-dsp-direct-output {
+  opacity: 0;
+}
+
+.fpga-dsp-capture-result,
+.fpga-dsp-previous-total {
+  opacity: 0;
+}
+.fpga-dsp-capture-result {
+  animation: fpga-dsp-save-result 1.8s ease-in-out both;
+}
+.fpga-dsp-previous-total {
+  animation: fpga-dsp-save-previous 1.8s linear both;
+}
+.fpga-dsp-datapath[data-capturing="true"] .fpga-dsp-saved-result {
+  animation: fpga-dsp-save-value 1.8s linear both;
+}
+.fpga-dsp-datapath[data-capturing="true"] .fpga-dsp-feedback .fpga-signal {
+  stroke-dasharray: 1;
+  animation: fpga-dsp-save-feedback 1.8s ease-in-out both;
+}
+.fpga-dsp-capture-flash {
+  animation: fpga-dsp-save-flash 1.8s ease-out both;
+}
+.fpga-dsp-capture-clock .fpga-data-transfer {
+  r: 6;
+  animation: fpga-dsp-save-clock 1.8s ease-in-out both;
+}
+@keyframes fpga-dsp-save-clock {
+  0%,
+  20% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  21% {
+    opacity: 1;
+  }
+  45%,
+  49% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  50%,
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+@keyframes fpga-dsp-save-result {
+  0%,
+  45% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  64% {
+    opacity: 1;
+    transform: translate(74px, 34px);
+  }
+  65%,
+  100% {
+    opacity: 0;
+    transform: translate(74px, 34px);
+  }
+}
+@keyframes fpga-dsp-save-previous {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  65%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes fpga-dsp-save-value {
+  0%,
+  64% {
+    opacity: 0;
+  }
+  65%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes fpga-dsp-save-feedback {
+  0%,
+  64% {
+    opacity: 0;
+    stroke-dashoffset: 1;
+  }
+  65% {
+    opacity: 1;
+    stroke-dashoffset: 1;
+  }
+  100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes fpga-dsp-save-flash {
+  0%,
+  64%,
+  100% {
+    opacity: 0;
+  }
+  65%,
+  80% {
+    opacity: 1;
+  }
+}
+
+.fpga-neuron-output {
+  transition: opacity 240ms ease-out;
+}
+.fpga-neuron-circuit[data-output="false"] .fpga-neuron-output {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 639px) {
+  .fpga-stage[data-scene="token-journey"] .fpga-drawing {
+    max-height: 265px;
+  }
+}
+
+@media (max-width: 599px) and (orientation: portrait) {
+  .fpga-stage:has(
+    .fpga-application-tour:is(
+      [data-network-intro="true"],
+      [data-neuron-reference="true"]
+    )
+  ) {
+    width: calc(100% + 2.5rem);
+    margin-inline: -1.25rem;
+  }
+  .fpga-application-tour:is(
+      [data-network-intro="true"],
+      [data-neuron-reference="true"]
+    )
+    .fpga-diagram-viewport {
+    max-height: none;
+    overflow: visible;
+  }
+}
+@media (min-width: 640px) and (max-width: 899px) and (max-height: 620px) {
+  .fpga-stage
+    .fpga-application-tour:is(
+      [data-network-intro="true"],
+      [data-neuron-reference="true"]
+    )
+    .fpga-drawing {
+    max-height: min(290px, calc(100dvh - 100px));
+  }
+}
+.fpga-application-tour[data-network-intro="true"] .fpga-tour-chip text {
+  opacity: 0;
+}
+.fpga-network-layout {
+  transform-origin: 0 0;
+  transition: transform 650ms cubic-bezier(0.45, 0, 0.2, 1);
+}
+.fpga-network-intro[data-compact="true"] .fpga-network-layout {
+  transform: translate(73px, -49px) scale(0.68);
+}
+.fpga-network-reference-backdrop {
+  fill: var(--fpga-paper);
+  opacity: 0;
+  transition: opacity 240ms ease-out;
+}
+.fpga-network-intro[data-compact="true"] .fpga-network-reference-backdrop {
+  opacity: 1;
+}
+.fpga-network-camera {
+  transform-origin: 0 0;
+  transition: transform 900ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+.fpga-network-overview,
+.fpga-network-context,
+.fpga-network-close-labels,
+.fpga-network-products {
+  transition: opacity 300ms ease-in-out;
+}
+.fpga-network-frame {
+  fill: color-mix(in srgb, var(--fpga-ink) 2%, var(--fpga-paper));
+  stroke: var(--fpga-line);
+  stroke-width: 1.4;
+}
+.fpga-network-flow {
+  fill: none;
+  stroke: var(--fpga-muted);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.68;
+  transition:
+    stroke 170ms,
+    opacity 170ms,
+    stroke-width 170ms;
+}
+.fpga-network-flow[data-dashed="true"] {
+  stroke-dasharray: 4 5;
+}
+.fpga-network-flow[data-active="true"] {
+  stroke: var(--signal-stroke);
+  stroke-width: 2.3;
+  opacity: 1;
+}
+.fpga-network-arrow,
+.fpga-network-junction {
+  fill: var(--fpga-muted);
+}
+.fpga-network-stage-node :is(rect, circle),
+.fpga-network-embedding circle,
+.fpga-network-node {
+  fill: var(--fpga-paper);
+  stroke: var(--fpga-ink);
+  stroke-opacity: 0.45;
+  stroke-width: 1.2;
+  transition:
+    fill 170ms,
+    stroke 170ms,
+    stroke-opacity 170ms,
+    opacity 300ms;
+}
+.fpga-network-stage-node[data-active="true"] :is(rect, circle),
+.fpga-network-embedding[data-active="true"] circle,
+.fpga-network-intro[data-sum="true"] .fpga-network-selected-node {
+  fill: color-mix(in srgb, var(--signal-stroke) 20%, var(--fpga-paper));
+  stroke: var(--signal-stroke);
+  stroke-opacity: 1;
+}
+.fpga-network-stage-node text,
+.fpga-network-node-value {
+  dominant-baseline: central;
+}
+.fpga-network-cache-vector rect {
+  fill: var(--fpga-paper);
+}
+.fpga-network-cache-vector :is(rect, path) {
+  stroke: var(--fpga-muted);
+  stroke-width: 1.1;
+}
+.fpga-network-cache-vector {
+  opacity: 0.28;
+  transition: opacity 170ms;
+}
+.fpga-network-cache-vector[data-stored="true"] {
+  opacity: 0.78;
+}
+.fpga-network-cache-vector[data-latest="true"],
+.fpga-network-cache-flight {
+  opacity: 1;
+}
+.fpga-network-cache-vector[data-latest="true"] :is(rect, path),
+.fpga-network-cache-flight :is(rect, path) {
+  stroke: var(--signal-stroke);
+}
+.fpga-network-cache-flight {
+  offset-rotate: 0deg;
+  animation: fpga-network-cache-write 360ms ease-in-out both;
+}
+@keyframes fpga-network-cache-write {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+.fpga-network-chip-activity {
+  animation: fpga-network-chip-activity 400ms ease-out both;
+  pointer-events: none;
+}
+.fpga-network-chip-activity :is(rect, path) {
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-width: 1px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.fpga-network-chip-activity rect {
+  fill: color-mix(in srgb, var(--signal-stroke) 24%, var(--fpga-paper));
+}
+@keyframes fpga-network-chip-activity {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  24%,
+  50% {
+    opacity: 0.9;
+  }
+}
+.fpga-network-edge {
+  fill: none;
+  stroke: var(--fpga-ink);
+  stroke-width: 1;
+  opacity: 0.2;
+  transition:
+    stroke 170ms,
+    opacity 170ms;
+}
+.fpga-network-context[data-active="true"] .fpga-network-edge {
+  stroke: var(--signal-stroke);
+  opacity: 0.74;
+}
+.fpga-network-contribution,
+.fpga-network-result-path {
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-width: 1.15;
+  stroke-linecap: round;
+}
+.fpga-network-contribution {
+  transition:
+    stroke 180ms ease-out,
+    stroke-width 180ms ease-out;
+}
+.fpga-network-contribution[data-active="true"] {
+  stroke-width: 1.8;
+}
+.fpga-network-contribution[data-active="false"] {
+  stroke: var(--fpga-muted);
+}
+.fpga-network-selected-paths {
+  opacity: 0;
+  transition: opacity 350ms;
+}
+.fpga-network-intro[data-sum="true"] .fpga-network-selected-paths {
+  opacity: 1;
+}
+.fpga-network-close-labels,
+.fpga-network-products {
+  opacity: 0;
+  pointer-events: none;
+}
+.fpga-network-intro[data-sum="true"]
+  :is(.fpga-network-context, .fpga-network-context-node) {
+  opacity: 0.045;
+}
+.fpga-network-intro[data-compact="true"]
+  :is(.fpga-network-context, .fpga-network-context-node) {
+  opacity: 0;
+}
+.fpga-network-intro[data-sum="true"] .fpga-network-overview {
+  opacity: 0;
+}
+.fpga-network-intro[data-sum="true"]:where([data-compact="false"])
+  :is(.fpga-network-overview, .fpga-network-context, .fpga-network-context-node) {
+  transition: opacity 300ms ease-in-out 250ms;
+}
+.fpga-network-intro[data-sum="true"] .fpga-network-close-labels {
+  opacity: 1;
+  transition-delay: 500ms;
+}
+.fpga-network-intro[data-products="true"] .fpga-network-products {
+  opacity: 1;
+}
+.fpga-world-layer .fpga-network-overview text {
+  font-size: 21px;
+}
+.fpga-world-layer .fpga-network-overview .fpga-network-stage-node text {
+  font-size: 19px;
+}
+.fpga-world-layer .fpga-network-overview text.fpga-small {
+  font-size: 18px;
+}
+.fpga-network-capsule {
+  pointer-events: none;
+}
+.fpga-network-capsule rect {
+  fill: var(--fpga-paper);
+  stroke: var(--fpga-line);
+  stroke-width: 1.25;
+  transition:
+    fill 170ms,
+    stroke 170ms;
+}
+.fpga-network-capsule[data-active="true"] rect {
+  fill: color-mix(in srgb, var(--signal-stroke) 12%, var(--fpga-paper));
+  stroke: var(--signal-stroke);
+}
+.fpga-world-layer .fpga-network-overview .fpga-network-capsule text {
+  dominant-baseline: central;
+  font-size: 17px;
+  font-weight: 600;
+}
+.fpga-network-output-pointer {
+  transition: transform 160ms ease-out;
+}
+.fpga-network-output-pointer[data-empty="true"] {
+  transition: none;
+}
+.fpga-world-layer .fpga-network-chip-label {
+  font-size: 16px;
+  font-weight: 600;
+  dominant-baseline: central;
+  paint-order: stroke;
+  stroke: var(--fpga-paper);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.fpga-world-layer .fpga-network-overview text.fpga-network-output {
+  font-size: 24px;
+  white-space: pre;
+}
+.fpga-world-layer .fpga-network-close-labels text.fpga-small {
+  font-size: 20px;
+}
+.fpga-world-layer .fpga-network-close-labels text.fpga-value {
+  font-size: 27px;
+}
+.fpga-stage[data-zoom="instant"] .fpga-network-intro * {
+  transition: none;
+}
+.fpga-neuron-demo .fpga-dsp-demo-values text.fpga-faint {
+  opacity: 0.45;
+}
+.fpga-neuron-demo .fpga-dsp-demo-values text {
+  font-size: 24px;
+}
+.fpga-neuron-demo .fpga-dsp-demo-values text.fpga-small {
+  font-size: 20px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fpga-network-intro * {
+    transition: none !important;
+  }
+  .fpga-network-chip-activity {
+    display: none;
+  }
+}
+.fpga-bram-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.fpga-bram-controls select {
+  min-height: 36px;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--fpga-line);
+  border-radius: 3px;
+  background: var(--fpga-paper);
+  color: var(--fpga-ink);
+  font: 500 0.82rem/1.2 var(--font-code);
+  cursor: pointer;
+}
+
+.fpga-bram-circuit {
+  --fpga-bit-ink: color-mix(
+    in srgb,
+    var(--color-energy-red) 85%,
+    var(--fpga-ink)
+  );
+}
+.fpga-bram-circuit text {
+  font-size: 22px;
+}
+.fpga-bram-circuit text.fpga-small {
+  font-size: 20px;
+}
+.fpga-bram-bit--0 {
+  --fpga-bit-ink: color-mix(
+    in srgb,
+    var(--color-energy-red) 85%,
+    var(--fpga-ink)
+  );
+}
+.fpga-bram-bit--1 {
+  --fpga-bit-ink: color-mix(
+    in srgb,
+    var(--color-signal-green) 65%,
+    var(--fpga-ink)
+  );
+}
+.fpga-bram-circuit text.fpga-bram-bit,
+.fpga-bram-cell text {
+  fill: var(--fpga-bit-ink);
+}
+.fpga-bram-circuit .fpga-bram-address {
+  fill: var(--fpga-muted);
+  font-size: 16px;
+}
+.fpga-bram-array {
+  fill: var(--fpga-paper);
+  stroke: var(--fpga-line);
+  stroke-width: 1;
+}
+.fpga-bram-cell rect {
+  fill: color-mix(in srgb, var(--fpga-bit-ink) 6%, var(--fpga-paper));
+  stroke: color-mix(in srgb, var(--fpga-bit-ink) 35%, var(--fpga-paper));
+  stroke-width: 1;
+  transition:
+    fill 200ms ease-in-out,
+    stroke 200ms ease-in-out;
+}
+.fpga-bram-cell text {
+  animation: fpga-bram-bit-arrives 200ms ease-out;
+}
+.fpga-bram-selected {
+  transition: y 220ms ease-in-out;
+}
+.fpga-bram-gate {
+  transform-origin: 164px 220px;
+  transition: transform 260ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+.fpga-bram-gate[data-open="true"] {
+  transform: rotate(82deg);
+}
+.fpga-bram-gate path {
+  fill: none;
+  stroke: var(--fpga-ink);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.fpga-bram-hinge {
+  fill: var(--fpga-paper);
+  stroke: var(--fpga-ink);
+  stroke-width: 1.5;
+}
+.fpga-bram-write-packet,
+.fpga-bram-clock-packet,
+.fpga-bram-read-packet {
+  fill: var(--signal-stroke);
+  opacity: 0;
+  offset-distance: 0%;
+  animation: fpga-bram-packet 600ms ease-in-out 250ms both;
+}
+.fpga-bram-clock-packet {
+  animation-delay: 650ms;
+  animation-duration: 250ms;
+}
+.fpga-bram-read-packet {
+  animation-delay: 900ms;
+  animation-duration: 450ms;
+}
+.fpga-bram-capture {
+  fill: none;
+  stroke: var(--signal-stroke);
+  stroke-width: 2.5;
+  opacity: 0;
+  animation: fpga-bram-capture 450ms ease-out 900ms both;
+}
+@keyframes fpga-bram-packet {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+@keyframes fpga-bram-capture {
+  0%,
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes fpga-bram-bit-arrives {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 899px) {
+  .fpga-bram-circuit text {
+    font-size: 30px;
+  }
+  .fpga-bram-circuit text.fpga-small {
+    font-size: 28px;
+  }
+  .fpga-bram-circuit .fpga-bram-address {
+    font-size: 18px;
+  }
+}
+
+.fpga-dsp-demo .fpga-dsp-datapath text.fpga-value {
+  opacity: 0;
+}
+.fpga-dsp-demo-values text {
+  transition: opacity 180ms;
+}
+.fpga-dsp-number circle {
+  fill: var(--fpga-paper);
+  stroke: var(--signal-stroke);
+  stroke-width: 1.5;
+}
+.fpga-dsp-number text {
+  dominant-baseline: central;
+}
+.fpga-dsp-moving-number {
+  offset-rotate: 0deg;
+  animation: fpga-dsp-number-travel 800ms ease-in-out both;
+}
+.fpga-dsp-moving-number[data-hold="true"] {
+  --fpga-dsp-end-opacity: 1;
+}
+.fpga-dsp-demo-clock {
+  fill: var(--signal-stroke);
+  animation: fpga-dsp-number-travel ease-in-out both;
+}
+.fpga-dsp-wire-flow :is(.fpga-signal, .fpga-dsp-arrow-highlight) {
+  animation: fpga-dsp-wire-highlight var(--fpga-dsp-flow-duration) ease-in-out
+    var(--fpga-dsp-flow-delay) both;
+}
+@keyframes fpga-dsp-wire-highlight {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  10%,
+  90% {
+    opacity: 1;
+  }
+}
+.fpga-dsp-clock-triggered {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fpga-dsp-clock-label-flash 280ms ease-in-out both;
+}
+@keyframes fpga-dsp-clock-label-flash {
+  0%,
+  100% {
+    fill: var(--fpga-ink);
+    transform: scale(1);
+  }
+  30%,
+  45% {
+    fill: var(--signal-stroke);
+    transform: scale(1.1);
+  }
+}
+.fpga-dsp-waiting-result {
+  animation: fpga-dsp-wait-for-clock 900ms linear both;
+}
+.fpga-dsp-demo-capture {
+  fill: color-mix(in srgb, var(--signal-stroke) 10%, transparent);
+  stroke: var(--signal-stroke);
+  stroke-width: 2;
+  animation: fpga-dsp-capture-arrives 300ms ease-out both;
+}
+@keyframes fpga-dsp-number-travel {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: var(--fpga-dsp-end-opacity, 0);
+  }
+}
+@keyframes fpga-dsp-wait-for-clock {
+  0%,
+  66.6% {
+    opacity: 1;
+  }
+  66.7%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes fpga-dsp-capture-arrives {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (max-width: 899px) {
+  .fpga-chip-detail .fpga-resource-circuit.fpga-dsp-demo text {
+    font-size: 34px;
+  }
+  .fpga-chip-detail .fpga-resource-circuit.fpga-dsp-demo text.fpga-small {
+    font-size: 28px;
+  }
+  .fpga-chip-detail .fpga-dsp-demo .fpga-dsp-number text {
+    font-size: 26px;
+  }
+}
+.fpga-dsp-demo[data-scene="arithmetic-accumulate"] .fpga-dsp-accumulator {
+  animation: fpga-dsp-demo-reveal 240ms ease-out both;
+}
+@keyframes fpga-dsp-demo-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fpga-dsp-adder-arrows {
+  fill: var(--fpga-ink);
+}
+.fpga-dsp-arrow-highlight {
+  fill: var(--signal-stroke);
+  animation: fpga-signal-enter 0.3s ease-out;
+}
+
+@media (max-width: 899px) {
+  .fpga-world-layer .fpga-network-close-labels text.fpga-small {
+    font-size: 27px;
+  }
+  .fpga-world-layer .fpga-network-close-labels text.fpga-value {
+    font-size: 32px;
+  }
+  .fpga-chip-detail .fpga-neuron-demo text {
+    font-size: 30px;
+  }
+  .fpga-chip-detail .fpga-neuron-demo text.fpga-small {
+    font-size: 28px;
+  }
+  .fpga-chip-detail .fpga-neuron-demo text.fpga-value {
+    font-size: 34px;
+  }
+  .fpga-chip-detail .fpga-neuron-demo .fpga-dsp-number text {
+    font-size: 28px;
+  }
+}
+
+.fpga-figure-content[data-board-transition] {
+  position: relative;
+  isolation: isolate;
+}
+
+.fpga-figure-content[data-board-transition] > [hidden] {
+  display: block;
+  position: absolute;
+  inset: 0 0 auto;
+  pointer-events: none;
+}
+
+.fpga-figure-content[data-board-transition] > [data-board-layer] {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.fpga-figure-content[data-board-transition] > [data-board-layer][hidden] {
+  position: absolute;
+}
+
+.fpga-stage[data-figure="6"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (max-width: 599px) and (orientation: portrait) {
+  .fpga-stage[data-figure="6"] {
+    width: calc(100% + 2rem);
+    margin-inline: -1rem;
+    padding-inline: .25rem;
+  }
+}
+.fpga-measurement-stage {
+  display: grid;
+  align-content: center;
+  gap: clamp(1.25rem, 4dvh, 3rem);
+  width: 100%;
+  min-width: 0;
+  padding-block: .6rem;
+}
+.fpga-scene[id^="fpga-measure-"] h3 {
+  font: 500 clamp(1.25rem, 2vw, 1.6rem)/1.18 var(--font-title);
+  letter-spacing: -.025em;
+  text-wrap: balance;
+  margin: 0 0 .8rem;
+}
+@media (max-width: 899px) {
+  .fpga-measurement-stage {
+    gap: .75rem;
+    padding-block: .15rem;
+  }
+}

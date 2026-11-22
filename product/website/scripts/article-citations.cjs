@@ -317,9 +317,12 @@ const articleCitationsPlugin = () => ({
     }
   },
   load(id) {
-    if (!id.endsWith(".md?fabrication-article")) return;
+    const suffix = ["?fabrication-article", "?cited-article"].find((query) =>
+      id.endsWith(`.md${query}`),
+    );
+    if (!suffix) return;
 
-    const file = id.slice(0, -"?fabrication-article".length);
+    const file = id.slice(0, -suffix.length);
     this.addWatchFile(file);
     const references = referenceFileFor(file);
     if (existsSync(references)) this.addWatchFile(references);

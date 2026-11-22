@@ -5,10 +5,18 @@ import test from "node:test";
 
 const { renderPost } = createRequire(import.meta.url)("./sand-renderer.cjs");
 const read = (file) => readFileSync(new URL(file, import.meta.url), "utf8");
-const source = read("../content/articles/sand/script.md");
-const scenes = JSON.parse(read("../content/articles/sand/scenes.json"));
+const source = read(
+  "../../../hardware/publishing/sand-to-thought/articles/sand/script.md",
+);
+const scenes = JSON.parse(
+  read(
+    "../../../hardware/publishing/sand-to-thought/articles/sand/scenes.json",
+  ),
+);
 const publication = JSON.parse(
-  read("../content/articles/sand/publication.json"),
+  read(
+    "../../../hardware/publishing/sand-to-thought/articles/sand/publication.json",
+  ),
 );
 const template = "<!--{{TITLE}}-->{{ARTICLE}}";
 const sceneKeys = (html) =>

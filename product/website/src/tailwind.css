@@ -1,3 +1,5 @@
+@source "../../../hardware/publishing";
+
 @import "tailwindcss/theme.css";
 
 /* The brand palette and its Tailwind registration compile in the SAME CSS root

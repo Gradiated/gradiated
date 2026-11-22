@@ -75,6 +75,7 @@ JOB_PATHS = {
         "product/docker-compose.yml",
     ),
     "website": (
+        "hardware/publishing/*",
         "product/website/*",
         "product/services/api/generated/openapi.json",
         "product/packages/contracts/*",

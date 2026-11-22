@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mountVisibleTicker } from "../src/components/articles/sand/runtime/visible-ticker.js";
+import { mountVisibleTicker } from "../../../hardware/publishing/sand-to-thought/articles/sand/figures/runtime/visible-ticker.js";
 
 const setup = (visibilityState = "visible") => {
   let notify;

@@ -4,8 +4,8 @@ import { expect, it } from "vitest";
 import {
   PatterningModel,
   patterningCamera,
-} from "../src/components/articles/fabrication/PatterningModel";
-import { scenes } from "../src/components/articles/fabrication/model";
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/PatterningModel";
+import { scenes } from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/model";
 import {
   activeSilicon,
   blendPattern,
@@ -20,11 +20,11 @@ import {
   stages,
   transitionPattern,
   visitFor,
-} from "../src/components/articles/fabrication/process";
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/process";
 import {
   maskCycles,
   steps,
-} from "../src/components/articles/fabrication/sequence";
+} from "../../../hardware/publishing/sand-to-thought/articles/fabricating-a-transistor/figures/sequence";
 
 const stateAt = (index: number, process = 1) =>
   patternState(index, {

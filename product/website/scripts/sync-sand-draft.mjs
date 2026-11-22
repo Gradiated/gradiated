@@ -9,7 +9,10 @@ if (input === -1 || !process.argv[input + 1]) {
 }
 const source = resolve(process.argv[input + 1]);
 const destination = fileURLToPath(
-  new URL("../content/articles/sand/script.md", import.meta.url),
+  new URL(
+    "../../../hardware/publishing/sand-to-thought/articles/sand/script.md",
+    import.meta.url,
+  ),
 );
 const entry = fileURLToPath(
   new URL(

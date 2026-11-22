@@ -1,0 +1,117 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="18 24 550 384"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">
+    One temporary current path in a six-transistor SRAM cell
+  </title>
+  <desc id="desc">
+    Six transistor symbols form two cross-coupled CMOS inverters and two access
+    switches. Moving yellow dots trace one possible temporary current path from
+    the supply through the left p-type pull-up and left access transistor to the
+    writing wire, held at ground by external writing circuitry, which is
+    omitted. Feedback ends this competing current after the cell changes state.
+    Wire bridges cross without connecting.
+  </desc>
+  <style>
+    :root {
+      --ink: #27251f;
+      --muted: #77756f;
+      --paper: #fafafa;
+      --accent: #c49b3c;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ink: #f6f3ec;
+        --muted: #aaa69d;
+        --paper: #181818;
+        --accent: #f4ce56;
+      }
+    }
+    .wire {
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .control {
+      fill: none;
+      stroke: var(--muted);
+      stroke-width: 1.5;
+      stroke-dasharray: 4 4;
+    }
+    .current {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 4.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 1 11;
+      animation: current-flow 1s linear infinite;
+    }
+    @keyframes current-flow {
+      to {
+        stroke-dashoffset: -24;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .current {
+        animation: none;
+      }
+    }
+  </style>
+  <g
+    fill="var(--ink)"
+    font-family="'JetBrains Mono', monospace"
+    font-size="22"
+    text-anchor="middle"
+  >
+    <text x="280" y="48">+1 V</text>
+    <text x="520" y="178">+1 V</text>
+  </g>
+  <g class="wire">
+    <path
+      d="M190 76H370M280 76V56M190 76V141M370 76V141M190 181V281M370 181V281M190 321V365H370V321M280 365V381M266 381H294M271 387H289M277 393H283"
+    />
+    <path
+      d="M190 141H210V181H190M230 145V177M240 161H250V301H230M230 285V317M190 281H210V321H190"
+    />
+    <path
+      d="M370 141H350V181H370M330 145V177M320 161H310V301H330M330 285V317M370 281H350V321H370"
+    />
+    <circle cx="235" cy="161" r="5" fill="var(--paper)" />
+    <circle cx="325" cy="161" r="5" fill="var(--paper)" />
+    <path
+      d="M40 228H84V218H116V228H190M84 204H116M370 228H444V218H476V228H520V190M444 204H476M40 228V296M27 296H53M32 302H48M37 308H43"
+    />
+  </g>
+  <path class="control" d="M100 204V104H460V204" />
+  <g
+    fill="none"
+    stroke="var(--paper)"
+    stroke-width="7"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path
+      d="M190 228H242Q250 218 258 228H270V260H310M370 228H318Q310 218 302 228H290V200H250"
+    />
+  </g>
+  <path
+    class="wire"
+    d="M190 228H242Q250 218 258 228H270V260H310M370 228H318Q310 218 302 228H290V200H250"
+  />
+  <path
+    class="current"
+    d="M280 56V76H190V141H210V181H190V228H116V218H84V228H40V296"
+  />
+  <g fill="var(--ink)">
+    <circle cx="190" cy="228" r="3" />
+    <circle cx="370" cy="228" r="3" />
+    <circle cx="250" cy="200" r="3" />
+    <circle cx="310" cy="260" r="3" />
+  </g>
+</svg>

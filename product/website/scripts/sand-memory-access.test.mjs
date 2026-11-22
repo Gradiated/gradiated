@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   createMemoryAccessModel,
   MEMORY_ACCESS_DURATION,
-} from "../src/components/articles/sand/runtime/memory-access-model.js";
+} from "../../../hardware/publishing/sand-to-thought/articles/sand/figures/runtime/memory-access-model.js";
 
 test("the interface holds its values until the register capture", () => {
   const model = createMemoryAccessModel();

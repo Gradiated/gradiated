@@ -1,0 +1,108 @@
+.inference-profile {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(16rem, 1fr);
+  align-items: center;
+  gap: clamp(1.25rem, 3vw, 3rem);
+  margin: 0 0 3rem;
+  color: var(--color-text);
+  --profile-stroke: color-mix(
+    in srgb,
+    var(--chart-1) 75%,
+    var(--color-text)
+  );
+  scroll-margin-top: 2rem;
+}
+.inference-profile-chart {
+  min-width: 0;
+  margin: 0;
+}
+.inference-profile-chart svg {
+  display: block;
+  width: 88%;
+  height: auto;
+  margin-inline: auto;
+  overflow: visible;
+}
+.inference-profile-grid {
+  fill: none;
+  stroke: color-mix(in srgb, var(--color-text) 9%, transparent);
+  stroke-width: 1;
+}
+.inference-profile-boundary {
+  stroke: color-mix(in srgb, var(--color-text) 23%, transparent);
+}
+.inference-profile-shape {
+  fill: color-mix(in srgb, var(--profile-stroke) 9%, transparent);
+  stroke: var(--profile-stroke);
+  stroke-width: 3;
+  stroke-dasharray: 6 4;
+  stroke-linejoin: round;
+}
+.inference-profile-vertex {
+  fill: var(--profile-stroke);
+}
+.inference-profile-chart text {
+  fill: var(--color-text);
+  font: 700 22px var(--font-title);
+}
+.inference-profile-copy h2 {
+  margin: 0;
+  font: 500 1.65rem/1.25 var(--font-title);
+}
+.inference-profile-copy p {
+  margin: 1rem 0 0;
+  font: 400 1rem/1.6 var(--font-body);
+}
+.inference-profile-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.inference-profile-placeholder::before {
+  content: "";
+  flex: 0 0 2rem;
+  border-top: 3px dotted var(--profile-stroke);
+}
+.inference-profile-copy dl {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.25rem 0 0;
+  font: 400 0.9375rem/1.5 var(--font-body);
+}
+.inference-profile-copy dl > div {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, 0.85fr) minmax(0, 1.15fr);
+  gap: 0.5rem;
+}
+.inference-profile-copy dt {
+  color: var(--color-text-muted);
+}
+.inference-profile-copy dd {
+  margin: 0;
+}
+.inference-profile-copy a {
+  text-decoration: underline;
+  text-decoration-color: var(--color-rule);
+  text-underline-offset: 3px;
+}
+@media (max-width: 899px) {
+  .inference-profile {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+  }
+  .inference-profile-chart,
+  .inference-profile-copy {
+    width: 100%;
+    max-width: 36rem;
+    margin-inline: auto;
+  }
+}
+@media (max-width: 599px) {
+  .inference-profile-chart svg {
+    width: 100%;
+  }
+  .inference-profile-chart text {
+    font-size: 26px;
+  }
+}

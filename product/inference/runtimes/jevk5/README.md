@@ -34,17 +34,17 @@ Usage counts every pass's whole prompt, as upstream does, with nothing reported 
 ## Limits
 
 - 16,384 tokens a prompt (JevK5's own limit) and 65,536 a request across its passes, else 422; never truncated.
-- 1 to 255 options (the gateway's bound) and 1 to 64 questions; up to 8 requests at once, then 429.
+- 1 to 255 options (the gateway's bound) and 1 to 1,024 questions; up to 8 requests at once, then 429.
 - SGLang: one GPU, `--mem-fraction-static 0.80`, up to 64 running prompts, prompts prefilled whole
   (`--max-prefill-tokens` and `--chunked-prefill-size` 16,385), no CUDA graphs (every request is a single prefill).
 
 ## Placement
 
-One NVIDIA L4 (24 GB, compute 8.9) a replica, on a g6.xlarge (4 vCPU, about 14 GiB allocatable host memory). Suggested
-`runtimes.json` settings once a release is published: `gpus` 1, `active_requests` 8, `cpu` "3", `memory` and
-`request_memory` "12Gi", `startup_timeout` 1800. Not pinned yet: the publish workflow does not need a pin to build.
-Before a pool, L4 must also be a `GpuHost` product (`gpuhost-crd.yaml` and `tools/gpu/prepare-enrollment.py` list
-none today), and the hosts need a driver for CUDA 13 (580 or newer).
+One NVIDIA L4 (24 GB, compute 8.9) a replica, on a g6.xlarge (4 vCPU, about 14 GiB allocatable host memory). The
+release is pinned in `product/inference/gpu/runtimes.json` under the private runtime model ID
+`posthog/jevk5-qualification`, so it can be staged as a qualification pool and promoted without a new pin: `gpus` 1,
+`active_requests` 8, `cpu` "3", `memory` and `request_memory` "12Gi", `startup_timeout` 1800. It has no pool yet:
+that needs registered L4 `GpuHost`s with a driver for CUDA 13 (580 or newer).
 
 ## Verification
 

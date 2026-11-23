@@ -50,17 +50,18 @@ PostHog reports it; usage counts every question's whole prompt, nothing cached.
 ## Limits
 
 - 16,384 tokens a prompt and 65,536 a request, else 422; never truncated.
-- 1 to 255 options (one pass, as Jeeves) and 1 to 64 questions; up to 8 requests at once, then 429.
+- 1 to 255 options (one pass, as Jeeves) and 1 to 1,024 questions; up to 8 requests at once, then 429.
 - No thinking: PostHog measured 19 to 92 s for a three-question request with it.
 - SGLang: one GPU, `--mem-fraction-static 0.80`, up to 32 running prompts, `--max-prefill-tokens` 16,385, no CUDA
   graphs.
 
 ## Placement
 
-One NVIDIA L4 (24 GB, compute 8.9) a replica, on a g6.xlarge (4 vCPU, about 14 GiB allocatable host memory). Suggested
-`runtimes.json` settings once a release is published: `gpus` 1, `active_requests` 8, `cpu` "3", `memory` and
-`request_memory` "12Gi", `startup_timeout` 1800. Not pinned yet: the publish workflow does not need a pin to build.
-Before a pool, L4 must also be a `GpuHost` product, and the hosts need a driver for CUDA 13 (580 or newer).
+One NVIDIA L4 (24 GB, compute 8.9) a replica, on a g6.xlarge (4 vCPU, about 14 GiB allocatable host memory). The
+release is pinned in `product/inference/gpu/runtimes.json` under the private runtime model ID
+`posthog/jeeves-qualification`, so it can be staged as a qualification pool and promoted without a new pin: `gpus` 1,
+`active_requests` 8, `cpu` "3", `memory` and `request_memory` "12Gi", `startup_timeout` 1800. It has no pool yet:
+that needs registered L4 `GpuHost`s with a driver for CUDA 13 (580 or newer).
 
 ## Verification
 

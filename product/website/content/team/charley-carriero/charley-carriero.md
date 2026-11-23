@@ -64,7 +64,6 @@ Add writing from anywhere else as a list of links, with an optional note:
 - [Title of the post](https://example.com/your-post) — where or when
 -->
 
-- [Kimi K3.1 Pro](https://www.gradiated.com/library/kimi-k-3-point-1-pro/)
 
 ## Gallery
 

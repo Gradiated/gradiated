@@ -527,6 +527,31 @@ class CartridgeCanaryTests(unittest.TestCase):
         # The two canary generations use the shorter budget the API's deadline counts.
         self.assertEqual(self.timeouts[-2:], [CANARY_TIMEOUT_SECONDS] * 2)
 
+    def test_one_output_stopping_first_counts_as_a_change(self):
+        base = [self.position("I", ("I", 0.6), ("We", 0.4)), self.position(".", (".", 0.9))]
+        self.outputs = {"base-model": base, self.adapter: base[:1]}
+        self.probe()
+        self.outputs = {"base-model": base[:1], self.adapter: base}
+        self.probe()
+
+    def test_unreadable_canary_responses_are_a_retryable_runtime_fault(self):
+        good = [self.position("I", ("I", 1.0))]
+        self.outputs = {"base-model": good, self.adapter: good}
+        engine = self.engine
+
+        def truncated(method, path, body=None, timeout=None):
+            if path == "/v1/models" or (body or {}).get("logprobs"):
+                return b'{"choices": ['
+            return engine(method, path, body, timeout)
+
+        self.loader.engine = truncated
+        with self.assertRaises(RuntimeError):
+            self.probe()
+        self.loader.engine = engine
+        self.models = None
+        with self.assertRaises(RuntimeError):
+            self.probe()
+
     def test_malformed_canary_logprobs_are_a_retryable_runtime_fault(self):
         good = [self.position("I", ("I", 0.6), ("We", 0.4))]
         for broken in (

@@ -62,7 +62,8 @@ def canary_divergence(with_cartridge, without):
         largest = max(largest, distance / 2)
         if left != right:
             return 1.0
-    return largest
+    # One output stopping first (EOS, which logprobs omit) is also a differing greedy token.
+    return 1.0 if len(with_cartridge) != len(without) else largest
 
 
 class Loader:
@@ -455,16 +456,27 @@ class Loader:
 
     def cartridge_canary(self, model):
         """Fails when the cartridge does not change the canary prompt's next-token logits."""
-        served = [
-            row["id"]
-            for row in json.loads(self.engine("GET", "/v1/models"))["data"]
-            if not row.get("parent")
-        ]
+
+        def runtime_json(data):
+            # A 200 with an unreadable body is a runtime fault (503), never a rejected adapter.
+            try:
+                return json.loads(data)
+            except ValueError:
+                raise RuntimeError("Canary response is not JSON") from None
+
+        try:
+            served = [
+                row["id"]
+                for row in runtime_json(self.engine("GET", "/v1/models"))["data"]
+                if not row.get("parent")
+            ]
+        except (KeyError, TypeError, AttributeError):
+            raise RuntimeError("Runtime model list is malformed") from None
         if len(served) != 1:
             raise RuntimeError("Runtime base model is ambiguous")
 
         def positions(name):
-            result = json.loads(
+            result = runtime_json(
                 self.engine(
                     "POST",
                     "/v1/chat/completions",

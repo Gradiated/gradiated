@@ -1,6 +1,7 @@
 import concurrent.futures
 import copy
 import json
+import math
 import tempfile
 import threading
 import unittest
@@ -17,7 +18,7 @@ from fixtures import (
     grant,
     settings,
 )
-from loader import CapacityError, Loader
+from loader import CapacityError, CartridgeNotApplied, Loader
 from startup import start_preload
 
 
@@ -470,6 +471,68 @@ class CartridgeLoaderTests(unittest.TestCase):
         with self.assertRaises(CapacityError):
             self.loader.resolve_version(second["version"]["name"], second["workspace_id"])
         self.assertTrue(Path(files["path"]).is_file())
+
+
+class CartridgeCanaryTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.payload = cartridge_file()
+        self.spec = cartridge_grant(self.payload)
+        self.loader = Loader(
+            {**settings(), "model_config": cartridge_model_config()},
+            self.temp.name,
+            1,
+            set(),
+            fetch=lambda spec, path, hosts, deadline=None: path.write_bytes(self.payload),
+        )
+        self.loader.ready = True
+        self.loader.resolve = lambda name, workspace, deadline=None: self.spec
+        self.adapter = f"{self.spec['workspace_id']}/{self.spec['version']['name']}"
+        self.models = [{"id": "base-model"}, {"id": "other/lora", "parent": "base-model"}]
+        self.outputs = {}
+        self.loader.engine = self.engine
+
+    @staticmethod
+    def position(token, *top):
+        top_logprobs = [{"token": t, "logprob": math.log(p)} for t, p in top]
+        return {"token": token, "top_logprobs": top_logprobs}
+
+    def engine(self, method, path, body=None):
+        if path == "/v1/models":
+            return json.dumps({"data": self.models}).encode()
+        content = self.outputs.get(body["model"]) if body.get("logprobs") else None
+        return json.dumps({"model": body["model"], "choices": [{"logprobs": {"content": content}}],
+                           "usage": {"completion_tokens": 1}}).encode()
+
+    def probe(self):
+        self.loader.probe(self.spec["version"]["name"], self.spec["workspace_id"])
+
+    def test_a_cartridge_passes_only_when_it_changes_the_canary_logits(self):
+        base = [
+            self.position("I", ("I", 0.6), ("We", 0.4)),
+            self.position(" help", (" help", 0.9)),
+        ]
+        self.outputs = {"base-model": base, self.adapter: base}
+        with self.assertRaises(CartridgeNotApplied):
+            self.probe()
+
+        self.outputs[self.adapter] = [self.position("I", ("I", 0.9), ("We", 0.1)), base[1]]
+        self.probe()
+        # A forced first token still passes once a later greedy token differs.
+        self.outputs[self.adapter] = [base[0], self.position(" write", (" write", 0.9))]
+        self.probe()
+
+    def test_the_canary_needs_one_base_model_and_logprobs(self):
+        base = [self.position("I", ("I", 1.0))]
+        self.outputs = {"base-model": base, self.adapter: base}
+        self.models = [{"id": "a"}, {"id": "b"}]
+        with self.assertRaises(RuntimeError):
+            self.probe()
+        self.models = [{"id": "base-model"}]
+        self.outputs = {"base-model": base}
+        with self.assertRaises(RuntimeError):
+            self.probe()
 
 
 if __name__ == "__main__":

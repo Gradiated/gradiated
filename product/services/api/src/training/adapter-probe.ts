@@ -18,6 +18,7 @@ const LOADER_ERRORS = new Set([
   "adapter_unavailable",
   "preparation_failed",
   "invalid_adapter",
+  "cartridge_not_applied",
 ]);
 
 const probeUrl = (serviceUrl: string) => {

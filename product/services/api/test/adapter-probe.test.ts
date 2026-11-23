@@ -100,6 +100,7 @@ describe("adapter probe", () => {
 
   it.each([
     [422, '{"error":"invalid_adapter"}', true, "invalid_adapter"],
+    [422, '{"error":"cartridge_not_applied"}', true, "cartridge_not_applied"],
     [503, '{"error":"capacity_unavailable"}', false, "capacity_unavailable"],
     [503, '{"error":"preparation_failed"}', false, "preparation_failed"],
     [503, '{"error":"adapter_unavailable"}', false, "adapter_unavailable"],

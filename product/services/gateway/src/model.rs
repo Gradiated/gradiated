@@ -1,8 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde::{Deserialize, Deserializer, Serialize};
+use serde_json::{value::RawValue, Value};
 use thiserror::Error;
 use uuid::Uuid;
 use validator::{Validate, ValidationErrors};
@@ -20,6 +20,7 @@ pub struct GatewayModel {
     pub name: String,
     pub status: ModelStatus,
     pub properties: GatewayModelProperties,
+    #[serde(deserialize_with = "deserialize_deployments")]
     pub deployments: Vec<GatewayModelDeployment>,
     #[serde(default)]
     pub openrouter_model_id: Option<String>,
@@ -31,6 +32,28 @@ pub struct GatewayModel {
     /// another key, so a missing field is never an old record of an owned model.
     #[serde(default)]
     pub organization_id: Option<Uuid>,
+}
+
+fn deserialize_deployments<'de, D>(deserializer: D) -> Result<Vec<GatewayModelDeployment>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let records = Vec::<Box<RawValue>>::deserialize(deserializer)?;
+    let mut deployments = Vec::with_capacity(records.len());
+
+    for (deployment_index, record) in records.into_iter().enumerate() {
+        match serde_json::from_str(record.get()) {
+            Ok(deployment) => deployments.push(deployment),
+            Err(_) => crate::diagnostics::limited_warn!(
+                deployment_index,
+                phase = "model_deployment_read",
+                error_code = "malformed_record",
+                "dropping an unreadable model deployment"
+            ),
+        }
+    }
+
+    Ok(deployments)
 }
 
 /// A Hugging Face tokenizer at an immutable revision.

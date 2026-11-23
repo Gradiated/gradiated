@@ -19,6 +19,9 @@ the first new replica, compare, then decide.
    publishes the bundle.
 3. Roll out at a quiet hour. Each replaced replica drains, and its sessions
    lose their GPU prefix cache.
+4. If the release adds a field, verify the compatible gateway image is running
+   on every serving gateway pod before starting the GPU rollout. Confirm the
+   gateway Rollout is healthy and all ready pods use that image digest.
 
 ## Roll out and hold
 

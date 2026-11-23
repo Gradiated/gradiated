@@ -421,7 +421,8 @@ admission; other omitted parameters retain the pinned runtime/model defaults.
 
 1. Convert the requested model ID to ASCII lowercase.
 2. Read `model:v2:<normalized_model_id>` through Valkey.
-3. Strictly deserialize `GatewayModel` and its closed `ModelProperties`.
+3. Deserialize `GatewayModel` and its closed `ModelProperties`. Drop each
+   unreadable deployment entry from the model's deployment list.
 4. Require `model.id` to equal the normalized request model exactly.
 5. Treat a model with an `organization_id` as missing unless the caller's key
    belongs to that organization or to the configured verification workspace,
@@ -432,9 +433,9 @@ admission; other omitted parameters retain the pinned runtime/model defaults.
 6. Reject `unavailable` or `retired` models for inference.
 7. Read the model's projected `deployments` array and optional
    `openrouter_model_id` from that same `GatewayModel` value.
-8. Select the first valid `available` deployment in projection order; reject a
-   malformed one. A model without one qualifies only when OpenRouter may serve
-   it; otherwise the existing `503 serving_state_unavailable` applies.
+8. Select the first `available` deployment in projection order and validate it.
+   A model without one qualifies only when OpenRouter may serve it. Otherwise
+   `503 serving_state_unavailable` applies.
 9. Read the text output modality's `supported_parameters` and the model's
    request-scoped `passthrough_parameters` maps.
 10. Validate every advertised non-envelope top-level field against its
@@ -927,7 +928,8 @@ or the internal served-release digest.
 ## Deployment records and release identity
 
 `GatewayModel` is Zod-authored and projected from the PostgreSQL model plus all
-of its deployment rows. Rust strictly validates the complete Valkey document.
+of its deployment rows. Rust decodes each deployment independently and keeps
+strict release decoding so the release digest includes every field.
 An available model must have at least one valid available child deployment.
 Fresh deployment status controls live routing. Missing routes fail closed.
 

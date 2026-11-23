@@ -403,6 +403,31 @@ mod records {
     }
 
     #[test]
+    fn model_parsing_keeps_the_stable_replica_when_a_release_is_unreadable() {
+        let mut model: serde_json::Value =
+            serde_json::from_str(&model_json("model-a", "Model A")).unwrap();
+        let stable: serde_json::Value = serde_json::from_str(include_str!(
+            "../test/fixtures/gateway-model-deployment.accepted.json"
+        ))
+        .unwrap();
+        let mut candidate = stable.clone();
+        candidate["id"] = serde_json::json!(Uuid::from_u128(1));
+        candidate["release"]["future_capability"] = serde_json::json!(true);
+        model["deployments"] = serde_json::json!([candidate, stable]);
+
+        let parsed: GatewayModel = parse_record("GatewayModel", &model.to_string()).unwrap();
+
+        assert_eq!(parsed.deployments.len(), 1);
+        assert_eq!(
+            parsed.serving_deployment().unwrap().release_digest,
+            "sha256:e4a74e6c4981b6176e08acc9fa391ca5fe5562485b5df96fdf088c48ae406eda"
+        );
+
+        model["deployments"] = serde_json::json!({"unexpected": []});
+        assert!(parse_record::<GatewayModel>("GatewayModel", &model.to_string()).is_err());
+    }
+
+    #[test]
     fn a_lowercase_sha256_digest_decodes_to_32_bytes() {
         let digest = "0123456789abcdef".repeat(4);
 

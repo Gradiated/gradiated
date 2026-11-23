@@ -134,6 +134,16 @@ def validate_file(path, adapter, model_config, deadline=None):
                 raise ValueError("Cartridge slot token outside the vocabulary")
 
 
+def slot_ids(path):
+    """The slot token IDs of a verified cartridge file."""
+    header, data_start = read_header(path)
+    start, end = header["slot_token_ids"]["data_offsets"]
+    with path.open("rb") as source:
+        source.seek(data_start + start)
+        data = source.read(end - start)
+    return list(struct.unpack(f"<{len(data) // 8}q", data))
+
+
 def materialize(spec, root, max_bytes, allowed_hosts, model_config, fetch, reserve=None, deadline=None):
     """Download and verify one cartridge file; returns (directory, disk bytes)."""
     remaining(deadline)

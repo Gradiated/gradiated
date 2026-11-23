@@ -491,6 +491,7 @@ class CartridgeCanaryTests(unittest.TestCase):
         self.adapter = f"{self.spec['workspace_id']}/{self.spec['version']['name']}"
         self.models = [{"id": "base-model"}, {"id": "other/lora", "parent": "base-model"}]
         self.outputs = {}
+        self.messages = {}
         self.timeouts = []
         self.loader.engine = self.engine
 
@@ -503,6 +504,11 @@ class CartridgeCanaryTests(unittest.TestCase):
         self.timeouts.append(timeout)
         if path == "/v1/models":
             return json.dumps({"data": self.models}).encode()
+        if path == "/v1/detokenize":
+            self.detokenized = body
+            return json.dumps({"text": "<slots>"}).encode()
+        if body.get("logprobs"):
+            self.messages[body["model"]] = body["messages"]
         content = self.outputs.get(body["model"]) if body.get("logprobs") else None
         return json.dumps({"model": body["model"], "choices": [{"logprobs": {"content": content}}],
                            "usage": {"completion_tokens": 1}}).encode()
@@ -526,6 +532,11 @@ class CartridgeCanaryTests(unittest.TestCase):
         self.probe()
         # The two canary generations use the shorter budget the API's deadline counts.
         self.assertEqual(self.timeouts[-2:], [CANARY_TIMEOUT_SECONDS] * 2)
+        # The control carries the same slot tokens as text, so only the embeddings differ.
+        self.assertEqual(self.detokenized["tokens"], [10, 11, 12])
+        self.assertFalse(self.detokenized["skip_special_tokens"])
+        self.assertEqual(self.messages["base-model"][0], {"role": "system", "content": "<slots>\n\n"})
+        self.assertEqual(self.messages[self.adapter], self.messages["base-model"][1:])
 
     def test_one_output_stopping_first_counts_as_a_change(self):
         base = [self.position("I", ("I", 0.6), ("We", 0.4)), self.position(".", (".", 0.9))]

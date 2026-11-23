@@ -452,10 +452,14 @@ class Loader:
         with self.lock:
             adapter = self.entries[key]["spec"]["version"]["adapter"]
         if adapter["format"] == "cartridge":
-            self.cartridge_canary(f"{workspace_id}/{name}")
+            self.cartridge_canary(f"{workspace_id}/{name}", key, adapter)
 
-    def cartridge_canary(self, model):
-        """Fails when the cartridge does not change the canary prompt's next-token logits."""
+    def cartridge_canary(self, model, key, adapter):
+        """Fails when the cartridge does not change the canary prompt's next-token logits.
+
+        The control is the base model with the slot text as the system prompt, so both
+        requests have the same token IDs and only the cartridge embeddings differ.
+        """
 
         def runtime_json(data):
             # A 200 with an unreadable body is a runtime fault (503), never a rejected adapter.
@@ -475,14 +479,33 @@ class Loader:
         if len(served) != 1:
             raise RuntimeError("Runtime base model is ambiguous")
 
-        def positions(name):
+        try:
+            slot_text = runtime_json(
+                self.engine(
+                    "POST",
+                    "/v1/detokenize",
+                    {
+                        "model": served[0],
+                        "tokens": cartridge.slot_ids(self.root / key / cartridge.FILE),
+                        "skip_special_tokens": False,
+                    },
+                    timeout=CANARY_TIMEOUT_SECONDS,
+                )
+            )["text"]
+            if not isinstance(slot_text, str):
+                raise TypeError
+        except (KeyError, TypeError):
+            raise RuntimeError("Runtime detokenize response is malformed") from None
+        control = [{"role": "system", "content": slot_text + adapter["separator"]}, *CANARY_MESSAGES]
+
+        def positions(name, messages):
             result = runtime_json(
                 self.engine(
                     "POST",
                     "/v1/chat/completions",
                     {
                         "model": name,
-                        "messages": CANARY_MESSAGES,
+                        "messages": messages,
                         "max_tokens": CANARY_TOKENS,
                         "temperature": 0,
                         "logprobs": True,
@@ -499,7 +522,8 @@ class Loader:
                 raise RuntimeError("Canary identity or logprobs mismatch") from None
             return canary_positions(content)
 
-        if canary_divergence(positions(model), positions(served[0])) <= CANARY_MIN_DIVERGENCE:
+        with_cartridge = positions(model, CANARY_MESSAGES)
+        if canary_divergence(with_cartridge, positions(served[0], control)) <= CANARY_MIN_DIVERGENCE:
             raise CartridgeNotApplied("Cartridge did not change the canary")
 
     def status(self):

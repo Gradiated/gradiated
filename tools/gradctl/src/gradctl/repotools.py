@@ -159,6 +159,18 @@ TOOLS = (
          'Build desmondd and run its native tests with CMake', effects='read', network=False,
          requires=('cmake', 'git')),
 
+    Tool('research', 'merge-discover', (python('research/merge-model/discover.py'),),
+         'Discover licensed public Git repositories for merge-resolution research', effects='write', requires=('gh',)),
+    Tool('research', 'merge-launch', (python('research/merge-model/launch.py'),),
+         'Start deadline-bound development spot workers for Git merge replay', effects='write', requires=('aws',)),
+
+    Tool('research', 'merge-train-night', (python('research/merge-model/place.py'),),
+         'Start an overnight merge-model pilot or a gated model ladder on an existing development VM', effects='write',
+         requires=('aws',)),
+    Tool('research', 'merge-freeze', (python('research/merge-model/freeze.py'),),
+         'Verify committed merge shards and freeze a deduplicated training and holdout snapshot',
+         effects='write', network=False),
+
     # Agent skills.
     Tool('research', 'efficiency', (python('.agents/skills/experiment-run/scripts/research_efficiency.py'),),
          'Account Codex and provider throughput for $experiment-run from event timing, not reasoning text',

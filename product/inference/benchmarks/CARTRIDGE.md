@@ -59,12 +59,14 @@ commit them.
    decode and prefill graph capture, overlap scheduling, and no
    `--cartridge-pool-bytes does not support` error.
 5. Decode: `cartridge_bench.py decode --batch 64 --output-tokens 512 --repeats 4`.
-   Repeat the base arm against a server started with
-   `--cartridge-pool-bytes 0` to measure the breakable-graph break that the
-   pool adds to every prefill.
-6. Prefill: `cartridge_bench.py prefill --cartridge-tokens 256 --repeats 8`.
-   Record the cartridge table load time separately from the server log or
-   `py-spy`.
+   For the fixed cost of the pool, run `decode --base-only` on a server with the
+   pool on and on one started with `--cartridge-pool-bytes 0`; give the second
+   run `--compare-with <first result>` to check the 2% bounds.
+6. Prefill: `cartridge_bench.py prefill --cartridge-start <position> --repeats 8`.
+   Use the zero-based position of the first slot in the tokenized prompt for
+   the tested model and chat template. Each warm sample must cache through the
+   last slot. The command also checks the 1.05 timing bound and reports the
+   first-use cost (resolve and table load) as `first_use_ms`.
 7. Correctness reference: render 16 cut points of one held-out row as chat
    messages, with the final assistant message as a prefix, into
    `/data/cases.json` (`{"cases": [{"messages": [...]}]}`). Start the research
@@ -112,10 +114,12 @@ slot IDs, about 2.62 MB. All 34 total about 89 MB.
   cache namespaces. `identity-b` is the noise floor.
 
 List the 32 synthetic model names in a file, one per line. Run the checks in
-this order against one replica. The base model and every cartridge must reach
-the same replica; through the gateway that holds only when the replica is the
-deployment's only one. Production's router admits 32 requests and queues 2, so
-background load stops at 31. The wrapper retries 429 and 503 answers.
+this order against one replica. Send `identity` and `isolation` to the private
+runtime endpoint so it receives their `cache_salt`. Both checks use fresh
+cache namespaces to avoid reusing prefixes warmed by earlier checks. The base
+model and every cartridge must reach the same replica. Production's router
+admits 32 requests and queues 2, so background load stops at 31. The wrapper
+retries 429 and 503 answers.
 
 ```sh
 export CARTRIDGE_BENCH_API_KEY=...   # from the secret store, never on the command line
@@ -129,7 +133,9 @@ cartridge_replica.py isolation $C
 
 `probe` checks that `ignore_eos`, streamed usage and logprobs pass through.
 Without per-chunk usage, `decode` spreads the token count over the chunks and
-reports `approximate_token_counts`. Gates:
+reports `approximate_token_counts`, and fails unless
+`--allow-approximate` is given. `identity --background` fails unless every
+background stream completes. Gates:
 
 | Check       | Pass                                                                                                                                                                                                                                                                                                                           |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

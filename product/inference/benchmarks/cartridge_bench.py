@@ -240,10 +240,47 @@ def decode_round(args: argparse.Namespace, with_cartridges: bool) -> dict:
         "chunk_gap_p99_ms": 1000 * sorted(gaps)[int(0.99 * (len(gaps) - 1))],
         "window_seconds": end - start,
         "prompt_tokens": [result["usage"].get("prompt_tokens") for result in results],
+        # True when a stream had no per-chunk usage and its stamps were spread.
+        "approximate": any(result.get("approximate") for result in results),
     }
 
 
+def base_only(args: argparse.Namespace) -> int:
+    """Base rounds only, for the fixed cost of the pool on a ``--cartridge-pool-bytes 0`` server.
+
+    Pass the pool-on result as ``--compare-with`` when testing the pool-off
+    server. The gate measures the cost of enabling the pool.
+    """
+    decode_round(args, False)
+    rounds = [decode_round(args, False) for _ in range(args.repeats)]
+    summary = {
+        "batch": args.batch,
+        "base_only": True,
+        "rounds": rounds,
+        "decode_tokens_per_second": statistics.fmean(
+            r["decode_tokens_per_second"] for r in rounds
+        ),
+        "itl_mean_ms": statistics.fmean(r["itl_mean_ms"] for r in rounds),
+    }
+    if args.compare_with:
+        pool_on = json.loads(Path(args.compare_with).read_text())
+        throughput = (
+            pool_on["decode_tokens_per_second"] / summary["decode_tokens_per_second"]
+        )
+        itl = pool_on["itl_mean_ms"] / summary["itl_mean_ms"]
+        summary.update(
+            compared_with=args.compare_with,
+            throughput_ratio=throughput,
+            itl_ratio=itl,
+            passed=throughput >= 1 - args.tolerance and itl <= 1 + args.tolerance,
+        )
+    print(json.dumps(summary, indent=2))
+    return 0 if summary.get("passed", True) else 1
+
+
 def decode(args: argparse.Namespace) -> int:
+    if args.base_only:
+        return base_only(args)
     decode_round(args, True)  # resolve and load every cartridge
     decode_round(args, False)
     rounds = []
@@ -335,6 +372,7 @@ def prefill(args: argparse.Namespace) -> int:
     matched = ("base_plus_k", "warm_plus_k", "cold", "cold_resident", "warm")
     samples = {name: [] for name in names}
     usage = {}
+    warm_cache_depths = []
 
     def sample(name, model, extra=""):
         elapsed, usage[name] = ttft(args, model, messages(str(uuid.uuid4()), extra))
@@ -354,6 +392,9 @@ def prefill(args: argparse.Namespace) -> int:
         # Rows already resident: the prefill alone.
         sample("cold_resident", cartridge)
         sample("warm", cartridge)
+        warm_cache_depths.append(
+            (usage["warm"].get("prompt_tokens_details") or {}).get("cached_tokens")
+        )
         ttft(args, args.base_model, messages(str(uuid.uuid4())))
         sample("base_warm", args.base_model)
         # Every trial, not only the last: the padded arms and the cartridge
@@ -377,8 +418,20 @@ def prefill(args: argparse.Namespace) -> int:
     summary["first_use_ms"] = median["cold"] - median["cold_resident"]
     summary["warm_vs_warm_plus_k"] = median["warm"] / median["warm_plus_k"]
     summary["warm_vs_base_warm"] = median["warm"] / median["base_warm"]
+    cartridge_end = args.cartridge_start + args.cartridge_tokens
+    summary["warm_cached_tokens"] = warm_cache_depths
+    summary["warm_required_cached_tokens"] = cartridge_end
+    bound = 1 + args.prefill_tolerance
+    summary["pass"] = (
+        summary["cold_vs_base_plus_k"] <= bound
+        and summary["warm_vs_warm_plus_k"] <= bound
+        and summary["warm_vs_base_warm"] <= bound
+        and all(
+            depth is not None and depth >= cartridge_end for depth in warm_cache_depths
+        )
+    )
     print(json.dumps(summary, indent=2))
-    return 0
+    return 0 if summary["pass"] else 1
 
 
 def top_logprobs(
@@ -483,9 +536,24 @@ def parse_args() -> argparse.Namespace:
         if name == "decode":
             command.add_argument("--batch", type=int, default=64)
             command.add_argument("--output-tokens", type=int, default=512)
+            command.add_argument(
+                "--base-only",
+                action="store_true",
+                help="base rounds only (a server with --cartridge-pool-bytes 0)",
+            )
+            command.add_argument(
+                "--compare-with", help="base-only result from the pool-on server"
+            )
         if name == "prefill":
+            command.add_argument("--prefill-tolerance", type=float, default=0.05)
             command.add_argument("--system-words", type=int, default=256)
             command.add_argument("--cartridge-tokens", type=int, default=256)
+            command.add_argument(
+                "--cartridge-start",
+                type=int,
+                required=True,
+                help="zero-based position of the first slot in the rendered prompt",
+            )
             command.add_argument("--first-cold", type=int, default=64)
         if name == "correctness":
             command.add_argument("--cases", required=True)
@@ -499,7 +567,14 @@ def parse_args() -> argparse.Namespace:
             command.add_argument("--applied-threshold", type=float, default=0.1)
             command.add_argument("--background", type=int, default=0)
             command.add_argument("--background-delay", type=float, default=2.0)
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.command == "prefill" and (
+        args.cartridge_start < 0 or args.cartridge_tokens <= 0
+    ):
+        parser.error("prefill needs a nonnegative slot start and a positive slot count")
+    # A gateway or production replica: the key comes from the environment only.
+    args.api_key = os.environ.get("CARTRIDGE_BENCH_API_KEY")
+    return args
 
 
 def main() -> int:

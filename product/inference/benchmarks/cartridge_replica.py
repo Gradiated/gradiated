@@ -174,7 +174,9 @@ def retrying(fn, *a, attempts: int = 30):
             time.sleep(0.5 + random.random())
 
 
-def top_logprobs(args, model: str, messages: list) -> dict:
+def top_logprobs(
+    args, model: str, messages: list, cache_salt: str | None = None
+) -> dict:
     body = {
         "model": model,
         "messages": messages,
@@ -185,6 +187,8 @@ def top_logprobs(args, model: str, messages: list) -> dict:
     }
     if messages[-1]["role"] == "assistant":
         body["continue_final_message"] = True
+    if cache_salt is not None:
+        body["cache_salt"] = cache_salt
 
     def call():
         with cb.post(args, "/v1/chat/completions", body) as response:
@@ -252,32 +256,31 @@ class Background:
     """Keep N streams busy until stopped: 3 of 4 on cartridges, 1 of 4 on the base model."""
 
     def __init__(self, args, count: int, tokens: int):
-        self.args, self.tokens, self.stop, self.completed, self.errors = (
-            args,
-            tokens,
-            threading.Event(),
-            0,
-            0,
-        )
+        self.args = args
+        self.tokens = tokens
+        self.stop = threading.Event()
+        self.completed = [0] * count
+        self.errors = [0] * count
         self.threads = [
             threading.Thread(target=self.loop, args=(i,), daemon=True)
-            for i in range(1, count + 1)
+            for i in range(count)
         ]
 
     def loop(self, index: int):
+        stream = index + 1
+        model = cb.model_name(self.args, None if stream % 4 == 0 else stream)
         while not self.stop.is_set():
-            model = cb.model_name(self.args, None if index % 4 == 0 else index)
             try:
                 retrying(
                     cb.stream_chat,
                     self.args,
                     model,
-                    cb.unique_messages(index, 64),
+                    cb.unique_messages(stream, 64),
                     self.tokens,
                 )
-                self.completed += 1
+                self.completed[index] += 1
             except Exception:
-                self.errors += 1
+                self.errors[index] += 1
                 time.sleep(1)
 
     def __enter__(self):
@@ -397,8 +400,12 @@ def decode(args: argparse.Namespace) -> int:
         summary[f"pass_vs_{control}"] = (
             throughput >= 1 - args.tolerance and itl <= 1 + args.tolerance
         )
-    passed = summary["pass_vs_slots"]
     summary["approximate_token_counts"] = any(r.get("approximate") for r in rounds)
+    # Synthesized timestamps are not a measurement of ITL: pass only on exact
+    # per-chunk counts unless the caller accepts the approximation.
+    passed = summary["pass_vs_slots"] and (
+        not summary["approximate_token_counts"] or args.allow_approximate
+    )
     summary["pass"] = passed
     print(json.dumps(summary, indent=2))
     return 0 if passed else 1
@@ -429,9 +436,10 @@ def identity(args: argparse.Namespace) -> int:
         background.__enter__()
     try:
         for case in cases:
+            cache_salt = uuid.uuid4().hex
             for name, (model, render) in arms.items():
                 records[name].append(
-                    top_logprobs(args, model, render(case["messages"]))
+                    top_logprobs(args, model, render(case["messages"]), cache_salt)
                 )
     finally:
         if background:
@@ -440,13 +448,16 @@ def identity(args: argparse.Namespace) -> int:
     out = {
         "cases": len(cases),
         "background": args.background,
-        "background_completed": background.completed if background else 0,
-        "background_errors": background.errors if background else 0,
+        "background_completed": sum(background.completed) if background else 0,
+        "background_errors": sum(background.errors) if background else 0,
         "identity_vs_slots": stats(records["identity"], records["slots"]),
         "floor_vs_slots": stats(records["floor"], records["slots"]),
         "identity_vs_floor": stats(records["identity"], records["floor"]),
         "synthetic_vs_slots": stats(records["synthetic"], records["slots"]),
         "prompt_tokens": lengths,
+        "all_cold": all(
+            result["cached_tokens"] == 0 for arm in records.values() for result in arm
+        ),
     }
     measured, floor = out["identity_vs_slots"], out["identity_vs_floor"]
     # Pass: the cartridge is indistinguishable from its own slot embeddings, i.e. no
@@ -454,17 +465,24 @@ def identity(args: argparse.Namespace) -> int:
     # A no-op scatter would also pass that, so the synthetic cartridge must differ clearly.
     applied = out["synthetic_vs_slots"]["median"] > max(0.1, 5 * floor["median"])
     out["synthetic_applied"] = applied
-    out["pass"] = applied and measured["median"] <= max(
-        args.tolerance, 1.5 * floor["median"]
-    ) and measured["same_argmax_fraction"] >= floor["same_argmax_fraction"] - 1 / len(
-        cases
+    out["pass"] = (
+        out["all_cold"]
+        and applied
+        and measured["median"] <= max(args.tolerance, 1.5 * floor["median"])
+        and measured["same_argmax_fraction"]
+        >= floor["same_argmax_fraction"] - 1 / len(cases)
     )
+    if background:
+        # Mixed-batch isolation needs the load to have run: every stream must
+        # finish at least once and none may fail after its retries.
+        out["background_ok"] = not any(background.errors) and all(background.completed)
+        out["pass"] = out["pass"] and out["background_ok"]
     print(json.dumps(out, indent=2))
     return 0 if out["pass"] else 1
 
 
 def isolation(args: argparse.Namespace) -> int:
-    """A fresh prefix per run, so no cache flush is needed (the gateway has none)."""
+    """Compare cache reuse within one fresh namespace on a live replica."""
     text = slot_text(args)
     system = f"{uuid.uuid4()} " + "You are a careful assistant. " * args.system_words
     messages = [
@@ -472,6 +490,7 @@ def isolation(args: argparse.Namespace) -> int:
         {"role": "user", "content": "Summarize the plan."},
     ]
     first, second = cb.model_name(args, args.first), cb.model_name(args, args.second)
+    cache_salt = uuid.uuid4().hex
     out = {}
     for label, model, render in (
         ("a_first", first, messages),
@@ -480,14 +499,15 @@ def isolation(args: argparse.Namespace) -> int:
         ("slots_first", args.base_model, with_slots(messages, text)),
         ("b_again", second, messages),
     ):
-        got = top_logprobs(args, model, render)
+        got = top_logprobs(args, model, render, cache_salt)
         out[label] = {
             "prompt_tokens": got["prompt_tokens"],
             "cached_tokens": got["cached_tokens"] or 0,
         }
     # Gateway usage subtracts the K cartridge positions, so compare against the prompt, not K.
     out["pass"] = (
-        out["a_again"]["cached_tokens"] >= out["a_first"]["prompt_tokens"] // 2
+        out["a_first"]["cached_tokens"] == 0
+        and out["a_again"]["cached_tokens"] >= out["a_first"]["prompt_tokens"] // 2
         and out["b_first"]["cached_tokens"] <= args.max_before_slots
         and out["slots_first"]["cached_tokens"] <= args.max_before_slots
         and out["b_again"]["cached_tokens"] >= out["a_first"]["prompt_tokens"] // 2
@@ -544,6 +564,11 @@ def parse_args() -> argparse.Namespace:
             command.add_argument("--batch", type=int, default=32)
             command.add_argument("--output-tokens", type=int, default=2048)
             command.add_argument("--repeats", type=int, default=4)
+            command.add_argument(
+                "--allow-approximate",
+                action="store_true",
+                help="pass on token counts spread over chunks (no per-chunk usage)",
+            )
         if name == "identity":
             command.add_argument("--cases", help="cases JSON; default: synthetic cases")
             command.add_argument("--count", type=int, default=16)

@@ -88,3 +88,51 @@ commit them.
 Report each result as measured, with the command line, bundle digest, GPU and
 TP size. A failure is a branch result: record it and continue with the
 remaining checks.
+
+## Production replica
+
+`cartridge_replica.py` runs the checks that gate a rollout against a
+production replica held at the first new replica, or the gateway. It takes
+`--base-url`, the base model name and real task-version model names, and
+reads the API key from `CARTRIDGE_BENCH_API_KEY`. It needs no flush or
+resolver.
+
+Upload 34 cartridge task versions to one internal workspace. Each holds K = 256
+positions × 5120 bf16 values: 2,621,440 bytes of embeddings plus 2,048 bytes of
+slot IDs, about 2.62 MB. All 34 total about 89 MB.
+
+- 32 synthetic cartridges, for 32 different cartridges in a batch-32 decode:
+  `cartridge_bench.py synth --slots-from <cartridge> --output <dir> --count 32`.
+  Only the slot IDs are read from `--slots-from`, never its embeddings.
+- `identity-a` and `identity-b`, from
+  `cartridge_replica.py identity-files --model <checkpoint> --slots-from <cartridge> --output <dir>`.
+  Their rows are the checkpoint's own embedding rows of the slot IDs, so a
+  correct server gives the same logits as the base model with the slot text.
+  The two files differ only in metadata, so they have different digests and
+  cache namespaces. `identity-b` is the noise floor.
+
+List the 32 synthetic model names in a file, one per line. Run the checks in
+this order against one replica. The base model and every cartridge must reach
+the same replica; through the gateway that holds only when the replica is the
+deployment's only one. Production's router admits 32 requests and queues 2, so
+background load stops at 31. The wrapper retries 429 and 503 answers.
+
+```sh
+export CARTRIDGE_BENCH_API_KEY=...   # from the secret store, never on the command line
+C="--base-url <url> --base-model deepseek-ai/DeepSeek-V4.1-Flash-1017 --cartridges names.txt --slot-text slots.json"
+cartridge_replica.py probe     $C --identity <identity-a>
+cartridge_replica.py decode    $C --batch 32 --repeats 4 [--metrics-url <replica>/metrics]
+cartridge_replica.py identity  $C --identity <identity-a> --identity-floor <identity-b>
+cartridge_replica.py identity  $C --identity <identity-a> --identity-floor <identity-b> --background 31
+cartridge_replica.py isolation $C
+```
+
+`probe` checks that `ignore_eos`, streamed usage and logprobs pass through.
+Without per-chunk usage, `decode` spreads the token count over the chunks and
+reports `approximate_token_counts`. Gates:
+
+| Check       | Pass                                                                                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `decode`    | cartridge vs slot-text control: throughput ratio ≥ 0.98 and ITL ratio ≤ 1.02; DSPARK accept ratio reported with `--metrics-url`                              |
+| `identity`  | median top-5 \|Δ logprob\| vs the slot-text render ≤ max(0.02, 1.5 × the identity-a vs identity-b median), and argmax agreement within one case of the floor |
+| `isolation` | the second cartridge and the slot-text base request cache at most the 64 tokens before the slots; each cartridge reuses its own prefix                       |

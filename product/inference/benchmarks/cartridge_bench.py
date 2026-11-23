@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Prompt-cartridge serving benchmark for the SGLang bundle, using only the stdlib.
 
-Subcommands (see CARTRIDGE.md):
+Subcommands (see CARTRIDGE.md; cartridge_replica.py runs the gating checks against a production replica):
   synth        write synthetic cartridges that reuse a slot-ID set
   resolver     serve SGLANG_LORA_RESOLVER_URL for a directory of cartridges
   decode       mixed-batch decode throughput and ITL: N cartridges vs none
@@ -122,14 +122,23 @@ def resolver(args: argparse.Namespace) -> None:
 
 
 def model_name(args: argparse.Namespace, index: int | None) -> str:
-    return args.base_model if index is None else f"{WORKSPACE}/bench-{index:04d}"
+    if index is None:
+        return args.base_model
+    # cartridge_replica.py names uploaded task versions explicitly.
+    names = getattr(args, "cartridge_names", None)
+    if names:
+        return names[index % len(names)]
+    return f"{WORKSPACE}/bench-{index:04d}"
 
 
 def post(args: argparse.Namespace, path: str, body: dict):
+    headers = {"Content-Type": "application/json"}
+    if getattr(args, "api_key", None):
+        headers["Authorization"] = f"Bearer {args.api_key}"
     request = urllib.request.Request(
         args.base_url.rstrip("/") + path,
         data=json.dumps(body).encode(),
-        headers={"Content-Type": "application/json"},
+        headers=headers,
         method="POST",
     )
     return urllib.request.urlopen(request, timeout=args.timeout)
@@ -151,19 +160,36 @@ def stream_chat(args: argparse.Namespace, model: str, messages: list, max_tokens
         "stream_options": {"include_usage": True, "continuous_usage_stats": True},
     }
     sent = time.perf_counter()
-    stamps, usage, seen = [], {}, 0
+    stamps, usage, seen, chunks, counted = [], {}, 0, [], 0
     with post(args, "/v1/chat/completions", body) as response:
         for raw in response:
             line = raw.decode().strip()
             if not line.startswith("data: ") or line == "data: [DONE]":
                 continue
             event = json.loads(line[6:])
+            now = time.perf_counter()
+            if any(
+                (choice.get("delta") or {}).get("content")
+                or (choice.get("delta") or {}).get("reasoning_content")
+                for choice in event.get("choices") or []
+            ):
+                chunks.append(now)
             if event.get("usage"):
                 usage = event["usage"]
                 completed = usage.get("completion_tokens") or 0
-                stamps.extend([time.perf_counter()] * (completed - seen))
+                if event.get("choices"):
+                    counted += 1
+                stamps.extend([now] * (completed - seen))
                 seen = max(seen, completed)
-    return {"sent": sent, "stamps": stamps, "usage": usage}
+    approximate = False
+    if not counted and chunks and seen:
+        # No per-chunk usage (a gateway that drops continuous_usage_stats):
+        # spread the final token count evenly over the content chunks.
+        approximate = True
+        stamps = [
+            chunks[min(len(chunks) - 1, i * len(chunks) // seen)] for i in range(seen)
+        ]
+    return {"sent": sent, "stamps": stamps, "usage": usage, "approximate": approximate}
 
 
 def unique_messages(index: int, words: int) -> list:

@@ -574,6 +574,10 @@ async fn adapter_query_reads_exact_versions_and_production_with_workspace_isolat
     assert_eq!(adapter.size_bytes, 1024);
     assert_eq!(adapter.sha256, "a".repeat(64));
     assert_eq!(
+        (adapter.format, adapter.num_tokens),
+        (crate::AdapterFormat::PeftLora, None)
+    );
+    assert_eq!(
         reader
             .private_adapter_json(owner.workspace_id, &owner.name("support"))
             .await

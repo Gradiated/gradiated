@@ -318,6 +318,8 @@ async fn adapter_capacity_pressure_is_counted_against_its_base_model() {
         base_model_id: "base-model".to_owned(),
         base_model_revision: "revision".to_owned(),
         sha256: "a".repeat(64),
+        format: crate::AdapterFormat::PeftLora,
+        num_tokens: None,
     });
     let harness = Harness::new(request, []);
     for status in harness.state.statuses.lock().unwrap().iter_mut() {

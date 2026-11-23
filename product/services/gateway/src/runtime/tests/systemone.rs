@@ -139,6 +139,7 @@ fn models() -> ModelNames {
     ModelNames {
         requested: "Exact/Model".to_owned(),
         runtime: "runtime-model".to_owned(),
+        cartridge_tokens: 0,
     }
 }
 

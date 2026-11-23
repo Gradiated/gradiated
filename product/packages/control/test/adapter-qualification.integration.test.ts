@@ -217,6 +217,44 @@ describe("adapter qualification on promotion", () => {
     expect(probe).toHaveBeenCalledTimes(2);
   });
 
+  it("qualifies an available cartridge on every promotion and refuses it without cartridge capacity", async () => {
+    const { owner, task, version } = await seedUpload();
+    await db.database
+      .update(taskVersions)
+      .set({
+        status: "available",
+        adapter: {
+          format: "cartridge",
+          artifact_uri: `s3://bucket/cartridges/${version.id}/${"c".repeat(64)}/cartridge.safetensors`,
+          sha256: "c".repeat(64),
+          size_bytes: 4096,
+          num_tokens: 4,
+          hidden_size: 8,
+          placement: "system_prompt_start",
+          separator: "\n\n",
+          has_slot_token_ids: true,
+          validated_base_model_revision: REVISION,
+        },
+      })
+      .where(eq(taskVersions.id, version.id));
+    const probe = vi.fn<AdapterProbe>(async () => ({ ok: true }));
+    const { reports, service } = setup(probe);
+
+    // The base model's LoRA deployments do not set cartridge_enabled.
+    await expect(
+      service.promote(owner.userId, owner.workspaceId, task.name, version.id),
+    ).rejects.toMatchObject({
+      code: "unavailable",
+      message:
+        "No deployment of this base model serves cartridges right now. The version was not promoted.",
+    });
+    expect(probe).not.toHaveBeenCalled();
+    expect(reports).toMatchObject([{ outcome: "no_capacity" }]);
+    expect((await stored(task.id, version.id)).task.productionVersionId).toBe(
+      null,
+    );
+  });
+
   it("passes when one allocation cannot test the adapter and another passes", async () => {
     const { owner, task, version } = await seedUpload();
     const probe = vi

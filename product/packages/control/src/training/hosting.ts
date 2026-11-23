@@ -4,11 +4,15 @@ import type { AdapterDownloads } from "./downloads.js";
 import type { TaskVersionRecord } from "./records.js";
 import { createTrainingStore } from "./store.js";
 
+// A cartridge serves only on cartridge-enabled deployments; qualification checks those.
 export const requireLoadableAdapter = (version: TaskVersionRecord) => {
-  if (version.adapter.format === "cartridge")
+  if (
+    version.adapter.format === "cartridge" &&
+    !version.adapter.has_slot_token_ids
+  )
     throw new ControlServiceError(
       "unavailable",
-      "Cartridge versions cannot be served yet.",
+      "This cartridge has no slot token IDs, which serving requires. Convert it again with them.",
     );
   if (
     !(

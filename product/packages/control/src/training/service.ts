@@ -402,7 +402,11 @@ export const createTrainingService = (
       const task = await findTask(workspaceId, name);
       const version = await findVersion(task.id, versionNameOrId);
       requireLoadableAdapter(version);
-      if (version.status === "available")
+      // A cartridge is qualified on every promotion, so it never becomes production without capacity.
+      if (
+        version.status === "available" &&
+        version.adapter.format !== "cartridge"
+      )
         return records.setProductionVersion(task.id, version.id);
 
       if (!qualifyAdapter)

@@ -34,7 +34,7 @@ mod test_support;
 mod tokenizer;
 mod valkey_auth;
 
-pub use adapter::PrivateAdapter;
+pub use adapter::{AdapterFormat, PrivateAdapter};
 pub use completion::CompletionService;
 pub use config::GatewayConfig;
 pub use coordinator::RequestCoordinator;

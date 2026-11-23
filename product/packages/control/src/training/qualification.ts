@@ -48,8 +48,10 @@ export const adapterBaseRevision = (version: TaskVersionRecord) =>
 export const servesAdapter = (
   release: ModelDeploymentRelease,
   revision: string | undefined,
+  format: TaskVersionRecord["adapter"]["format"] = "peft_lora",
 ) =>
   release.lora_enabled === true &&
+  (format !== "cartridge" || release.cartridge_enabled === true) &&
   !!revision &&
   (release.lora_base_model_revision ?? release.model_revision) === revision &&
   release.protocol !== "system_one" &&
@@ -104,14 +106,17 @@ export const createAdapterQualifier = ({
 
     const candidates = order(
       (await targets(version.baseModelId)).filter((target) =>
-        servesAdapter(target.release, revision),
+        servesAdapter(target.release, revision, version.adapter.format),
       ),
     ).slice(0, maxTargets);
+    const cartridge = version.adapter.format === "cartridge";
     if (!candidates.length) {
       finish("no_capacity", 0);
       throw new ControlServiceError(
         "unavailable",
-        "No serving capacity for this base model can load adapters right now. Try again later.",
+        cartridge
+          ? "No deployment of this base model serves cartridges right now. The version was not promoted."
+          : "No serving capacity for this base model can load adapters right now. Try again later.",
       );
     }
 
@@ -141,7 +146,9 @@ export const createAdapterQualifier = ({
       );
       throw new ControlServiceError(
         "conflict",
-        "The serving runtime could not load this adapter. Check that it targets modules this base model supports. The version was not promoted.",
+        cartridge
+          ? "The serving runtime could not load this cartridge, or it did not change the model's output. The version was not promoted."
+          : "The serving runtime could not load this adapter. Check that it targets modules this base model supports. The version was not promoted.",
       );
     }
 

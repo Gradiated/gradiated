@@ -63,6 +63,9 @@ pub struct InferenceRequest {
     pub(crate) encoded_input_ids: Option<Vec<u32>>,
     #[serde(skip)]
     pub(crate) runtime_model_name: Option<String>,
+    /// The cartridge's K when the runtime serves this request with one; never billed.
+    #[serde(skip)]
+    pub(crate) cartridge_tokens: u64,
     #[serde(skip)]
     pub(crate) decision: Option<crate::systemone::SystemOneRequest>,
     /// Moonshot Partial Mode: the final assistant message is a prefix the
@@ -98,6 +101,7 @@ impl InferenceRequest {
             parameters: Map::new(),
             encoded_input_ids: None,
             runtime_model_name: None,
+            cartridge_tokens: 0,
             decision: Some(decision),
             continue_final_message: false,
             open_output_limit: false,
@@ -168,6 +172,7 @@ impl InferenceRequest {
             mut parameters,
             encoded_input_ids: _,
             runtime_model_name: _,
+            cartridge_tokens: _,
             decision: _,
             continue_final_message,
             open_output_limit,

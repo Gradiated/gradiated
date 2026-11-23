@@ -196,6 +196,8 @@ impl Transport {
 pub(super) struct ModelNames {
     pub(super) requested: String,
     pub(super) runtime: String,
+    /// Cartridge positions the runtime counts as prompt tokens; usage leaves them out.
+    pub(super) cartridge_tokens: u64,
 }
 
 impl ModelNames {
@@ -208,7 +210,11 @@ impl ModelNames {
             .or_else(|| call.deployment.release.runtime_model_name.clone())
             .unwrap_or_else(|| requested.clone());
 
-        Self { requested, runtime }
+        Self {
+            requested,
+            runtime,
+            cartridge_tokens: call.request.cartridge_tokens,
+        }
     }
 }
 

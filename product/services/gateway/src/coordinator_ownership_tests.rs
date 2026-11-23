@@ -121,6 +121,8 @@ async fn a_retired_hosted_model_yields_its_name_to_a_private_model() {
             base_model_id: model.id.clone(),
             base_model_revision: model.deployments[0].release.model_revision.clone(),
             sha256: "a".repeat(64),
+            format: crate::AdapterFormat::PeftLora,
+            num_tokens: None,
         });
         let state = Arc::new(state);
 

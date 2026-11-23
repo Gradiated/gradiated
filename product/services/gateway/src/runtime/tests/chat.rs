@@ -17,6 +17,7 @@ fn models(requested: &str, runtime: &str) -> ModelNames {
     ModelNames {
         requested: requested.to_owned(),
         runtime: runtime.to_owned(),
+        cartridge_tokens: 0,
     }
 }
 
@@ -697,4 +698,58 @@ async fn an_open_output_limit_is_sent_only_to_capped_runtimes() {
             "{revision}"
         );
     }
+}
+
+#[tokio::test]
+async fn cartridge_positions_are_left_out_of_reported_and_billed_usage() {
+    let mut request = private_model_request(false);
+    request.cartridge_tokens = 512;
+    let mut response = completion();
+    response["model"] = request.runtime_model_name.clone().unwrap().into();
+    response["usage"] = json!({"prompt_tokens": 600, "completion_tokens": 5, "total_tokens": 605,
+        "prompt_tokens_details": {"cached_tokens": 520}});
+    let runtime = MockRuntime::builder()
+        .json(CHAT, StatusCode::OK, response)
+        .start()
+        .await;
+    let completion = client()
+        .complete(&runtime.renamed_deployment(), request, 16, deadline(5))
+        .await
+        .unwrap();
+
+    let usage = completion.usage();
+    assert_eq!((usage.input_tokens(), usage.cached_input_tokens()), (88, 8));
+    let reported = &completion.into_response()["usage"];
+    assert_eq!(reported["prompt_tokens"], 88);
+    assert_eq!(reported["total_tokens"], 93);
+    assert_eq!(reported["prompt_tokens_details"]["cached_tokens"], 8);
+}
+
+#[tokio::test]
+async fn a_streamed_cartridge_request_reports_usage_without_its_positions() {
+    let mut request = private_model_request(true);
+    request.cartridge_tokens = 512;
+    let mut event = chunk(json!({"content": "hello"}), Some("stop"));
+    event["model"] = request.runtime_model_name.clone().unwrap().into();
+    let mut terminal = event.clone();
+    terminal["choices"] = json!([]);
+    // A cold cartridge: fewer cached tokens than K leaves none cached.
+    terminal["usage"] = json!({"prompt_tokens": 520, "completion_tokens": 1, "total_tokens": 521,
+        "prompt_tokens_details": {"cached_tokens": 100}});
+    let runtime = MockRuntime::builder()
+        .sse(CHAT, &[data(&event), data(&terminal), DONE.to_owned()])
+        .start()
+        .await;
+    let mut stream = client()
+        .stream(&runtime.deployment(), request, 16, deadline(5))
+        .await
+        .unwrap();
+    stream.next_event().await.unwrap().unwrap();
+    let RuntimeStreamEvent::Chunk(chunk) = stream.next_event().await.unwrap().unwrap() else {
+        panic!("expected the usage chunk");
+    };
+    assert!(chunk.is_terminal_usage());
+    let usage = chunk.usage().unwrap();
+    assert_eq!((usage.input_tokens(), usage.cached_input_tokens()), (8, 0));
+    assert_eq!(chunk.into_response()["usage"]["prompt_tokens"], 8);
 }

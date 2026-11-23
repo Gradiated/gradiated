@@ -70,7 +70,7 @@ impl SglangClient {
             .header(header::ACCEPT, accept);
         let response = send(upstream).await?;
         if !response.status().is_success() {
-            return Err(rejected_with_usage(response).await);
+            return Err(rejected_with_usage(response, models.cartridge_tokens).await);
         }
 
         Ok(response)
@@ -78,11 +78,11 @@ impl SglangClient {
 }
 
 /// A rejected chat request can still report usage the runtime consumed.
-async fn rejected_with_usage(response: Response) -> RuntimeFailure {
+async fn rejected_with_usage(response: Response, cartridge_tokens: u64) -> RuntimeFailure {
     let status = response.status();
     let headers = response.headers().clone();
     let usage = match read_bounded_body(response).await {
-        Ok(body) => optional_usage(&body).unwrap_or_else(NormalizedUsage::zero),
+        Ok(body) => optional_usage(&body, cartridge_tokens).unwrap_or_else(NormalizedUsage::zero),
         Err(_) => NormalizedUsage::zero(),
     };
 
@@ -172,9 +172,10 @@ impl ChatEventStream {
                         if rejection.error.code == 503
                             && rejection.error.kind == "SERVICE_UNAVAILABLE"
                         {
+                            let cartridge_tokens = self.normalizer.models.cartridge_tokens;
                             let usage = rejection
                                 .usage
-                                .map(UpstreamUsage::normalize)
+                                .map(|usage| usage.normalize(cartridge_tokens))
                                 .transpose()?
                                 .unwrap_or_else(NormalizedUsage::zero);
 
@@ -242,7 +243,7 @@ pub(super) fn normalize_completion(
         return Err(ProtocolViolation::FinishReason.into());
     }
 
-    let usage = response.usage.normalize()?;
+    let usage = response.usage.normalize(models.cartridge_tokens)?;
     let finish_reason = response.choices[0].finish_reason.clone();
     let response = NormalizedCompletionResponse {
         id: response.id,
@@ -308,11 +309,15 @@ impl ChatStreamNormalizer {
         }
 
         // A chunk without choices is the terminal usage report.
+        let cartridge_tokens = self.models.cartridge_tokens;
         let usage = if chunk.choices.is_empty() {
             let usage = chunk.usage.ok_or(ProtocolViolation::Usage)?;
-            Some(ChunkUsage::Terminal(usage.normalize()?))
+            Some(ChunkUsage::Terminal(usage.normalize(cartridge_tokens)?))
         } else {
-            let usage = chunk.usage.map(UpstreamUsage::normalize).transpose()?;
+            let usage = chunk
+                .usage
+                .map(|usage| usage.normalize(cartridge_tokens))
+                .transpose()?;
             usage.map(ChunkUsage::Running)
         };
         let public_usage = match usage {
@@ -352,7 +357,7 @@ pub(super) fn valid_finish_reason(reason: &str) -> bool {
     !reason.is_empty() && reason.chars().count() <= MAX_FINISH_REASON_CHARS
 }
 
-fn optional_usage(body: &[u8]) -> Option<NormalizedUsage> {
+fn optional_usage(body: &[u8], cartridge_tokens: u64) -> Option<NormalizedUsage> {
     #[derive(Deserialize)]
     struct UsageEnvelope {
         usage: Option<UpstreamUsage>,
@@ -361,7 +366,7 @@ fn optional_usage(body: &[u8]) -> Option<NormalizedUsage> {
     serde_json::from_slice::<UsageEnvelope>(body)
         .ok()?
         .usage?
-        .normalize()
+        .normalize(cartridge_tokens)
         .ok()
 }
 
@@ -451,7 +456,8 @@ struct UpstreamUsage {
 }
 
 impl UpstreamUsage {
-    fn normalize(self) -> Result<NormalizedUsage, RuntimeFailure> {
+    /// `cartridge_tokens` are prompt positions the runtime counts but nobody is billed for.
+    fn normalize(self, cartridge_tokens: u64) -> Result<NormalizedUsage, RuntimeFailure> {
         let expected_total = self
             .prompt_tokens
             .checked_add(self.completion_tokens)
@@ -461,10 +467,11 @@ impl UpstreamUsage {
         }
 
         NormalizedUsage::new(
-            self.prompt_tokens,
+            self.prompt_tokens.saturating_sub(cartridge_tokens),
             self.prompt_tokens_details
                 .as_ref()
-                .map_or(0, |details| details.cached_tokens),
+                .map_or(0, |details| details.cached_tokens)
+                .saturating_sub(cartridge_tokens),
             self.prompt_tokens_details
                 .and_then(|details| details.cache_write_tokens)
                 .or(self.cache_write_tokens)

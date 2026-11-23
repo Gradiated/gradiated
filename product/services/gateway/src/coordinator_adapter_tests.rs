@@ -17,6 +17,8 @@ fn state() -> TestServingState {
         base_model_id: model.id.clone(),
         base_model_revision: model.deployments[0].release.model_revision.clone(),
         sha256: "a".repeat(64),
+        format: crate::AdapterFormat::PeftLora,
+        num_tokens: None,
     });
     state
 }
@@ -191,4 +193,67 @@ async fn serves_the_adapter_only_on_its_qualified_training_revision() {
             assert!(request.base.is_some());
         }
     }
+}
+
+fn cartridge_state(enabled: Option<bool>) -> TestServingState {
+    let mut state = state();
+    let adapter = state.adapter.as_mut().unwrap();
+    adapter.format = crate::AdapterFormat::Cartridge;
+    adapter.num_tokens = Some(512);
+    state.model.as_mut().unwrap().deployments[0]
+        .release
+        .cartridge_enabled = enabled;
+    state
+}
+
+#[tokio::test]
+async fn a_cartridge_routes_only_to_cartridge_enabled_deployments() {
+    let request = private_request(Arc::new(cartridge_state(Some(true))), "acme/task-a")
+        .await
+        .unwrap();
+    assert_eq!(
+        request
+            .local_capacity()
+            .deployment
+            .release
+            .cartridge_enabled,
+        Some(true)
+    );
+    assert_eq!(request.request.cartridge_tokens, 512);
+
+    assert_eq!((&request.base, &request.external), (&None, &None));
+
+    // Fails closed: no base-model or OpenRouter fallback, even for a mapped model.
+    for enabled in [None, Some(false)] {
+        let mut state = cartridge_state(enabled);
+        state.model.as_mut().unwrap().openrouter_model_id = Some("vendor/model".to_owned());
+        assert_eq!(
+            private_request(Arc::new(state), "acme/task-a").await.err(),
+            Some(GatewayError::ModelUnavailable),
+            "{enabled:?}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn a_cartridge_takes_its_positions_out_of_the_context_limit() {
+    let lora = private_request(Arc::new(state()), "acme/task-a")
+        .await
+        .unwrap();
+    let cartridge = private_request(Arc::new(cartridge_state(Some(true))), "acme/task-a")
+        .await
+        .unwrap();
+
+    assert_eq!(lora.request.cartridge_tokens, 0);
+    assert_eq!(cartridge.max_context_tokens, lora.max_context_tokens - 512);
+    assert_eq!(cartridge.max_prompt_tokens, lora.max_prompt_tokens - 512);
+}
+
+#[tokio::test]
+async fn a_cartridge_without_its_length_is_invalid() {
+    let mut state = cartridge_state(Some(true));
+    state.adapter.as_mut().unwrap().num_tokens = None;
+    assert!(private_request(Arc::new(state), "acme/task-a")
+        .await
+        .is_err());
 }

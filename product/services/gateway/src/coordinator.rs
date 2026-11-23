@@ -123,6 +123,9 @@ impl HostedRequest {
             .as_ref()
             .map_or_else(|| model.id.clone(), |adapter| adapter.model_id());
         request.runtime_model_name = adapter.as_ref().map(|adapter| adapter.runtime_name());
+        request.cartridge_tokens = adapter
+            .as_ref()
+            .map_or(0, crate::PrivateAdapter::cartridge_tokens);
         if let Some(decision) = &mut request.decision {
             decision.model.clone_from(&model.id);
         }
@@ -212,8 +215,17 @@ impl HostedRequest {
                 .tokenizer
                 .clone()
                 .filter(crate::PinnedTokenizer::valid),
-            max_context_tokens: input.supported_inputs.max_context_length.value,
-            max_prompt_tokens: input.supported_inputs.max_prompt_length.value,
+            // The cartridge occupies K positions of the model's context.
+            max_context_tokens: input
+                .supported_inputs
+                .max_context_length
+                .value
+                .saturating_sub(request.cartridge_tokens),
+            max_prompt_tokens: input
+                .supported_inputs
+                .max_prompt_length
+                .value
+                .saturating_sub(request.cartridge_tokens),
             effective_output_tokens,
             pricing,
             request,
@@ -601,10 +613,15 @@ impl RequestCoordinator {
         let from_openrouter = authorization.from_openrouter;
         let identity = authorization.into_hosted_identity()?;
         let pinned = deployment_target.is_some();
-        let external = external_model(&model, from_openrouter, pinned);
+        // A cartridge fails closed: without one, the answer is not the version's, so
+        // neither the base model nor OpenRouter may serve it.
+        let cartridge = adapter
+            .as_ref()
+            .is_some_and(crate::PrivateAdapter::is_cartridge);
+        let external = external_model(&model, from_openrouter, pinned || cartridge);
         // An adapter that cannot be served falls back to its base model without it;
         // a pinned request keeps its exact deployment instead.
-        let base = (adapter.is_some() && !pinned).then(|| {
+        let base = (adapter.is_some() && !pinned && !cartridge).then(|| {
             let mut base = model.clone();
             base.deployments.retain(|deployment| {
                 !deployment.release.is_system_one() && !deployment.release.sends_token_ids()
@@ -614,6 +631,8 @@ impl RequestCoordinator {
         if let Some(adapter) = &adapter {
             model.deployments.retain(|deployment| {
                 deployment.release.lora_enabled == Some(true)
+                    && (!adapter.is_cartridge()
+                        || deployment.release.cartridge_enabled == Some(true))
                     && deployment
                         .release
                         .lora_base_model_revision

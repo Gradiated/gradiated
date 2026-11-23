@@ -353,6 +353,7 @@ impl RuntimeCall {
                 self.local_attempts += 1;
                 if !adapter {
                     request.runtime_model_name = None;
+                    request.cartridge_tokens = 0;
                 }
 
                 RuntimeAttempt::Local {

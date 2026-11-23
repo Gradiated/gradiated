@@ -22,7 +22,7 @@ gradctl research merge-train-night -- corpus --vm merge-first-pass-00 \
 
 The launcher writes per-VM receipts and schedules teardown at the hard deadline. Each remote worker uploads compressed data before its SHA-256 manifest. The coordinator freezes snapshots roughly every 20 minutes. It checks shard integrity, removes conflicting duplicate training labels, excludes normalized duplicate conflicts across splits (including swapped sides), and protects both fixed W1B holdouts. Whole repository families go into the repository holdout. The 2026-01-01 UTC cutoff determines the temporal holdout for the other repositories.
 
-The first checkpoint comparison starts at 25,000 unique training hunks across 25 repositories and six languages, with at least 150 rows in each fresh holdout. The three arms use the same dataset and pinned Qwen3.5 revisions. The evaluator retains exact scores for the two fixed W1B splits and the two new splits individually. Training writes the adapter, optimizer, input identity, actual total and supervised token counts, and a completion flag. The process skips training if the gate arrives too close to teardown.
+The first checkpoint comparison starts at 25,000 unique training hunks across 25 repositories and six languages, with at least 150 rows in each fresh holdout. The three arms use the same dataset and pinned Qwen3.5 revisions. The evaluator retains exact scores for the two fixed W1B splits and the two new splits individually. Training writes the adapter, optimizer, input identity, actual total and supervised token counts, and a completion flag. Deadline-truncated runs keep their checkpoints and are excluded from the scored comparison. The process skips training if the gate arrives too close to teardown.
 
 ## Data budget
 

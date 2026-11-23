@@ -117,7 +117,18 @@ def train_arm(
             env,
             output=job / "train.log",
         )
-        s3_copy(job / "train_meta.json", f"{prefix}/train_meta.json", deadline)
+        metadata_path = job / "train_meta.json"
+        s3_copy(metadata_path, f"{prefix}/train_meta.json", deadline)
+        metadata = json.loads(metadata_path.read_text())
+        if metadata["complete"] is not True:
+            log(
+                "arm_incomplete",
+                size=size,
+                steps=metadata["step"],
+                planned_steps=metadata["config"]["steps"],
+                tokens=metadata["tokens"],
+            )
+            return False
         log("eval_launch", size=size)
         args = [
             python,
@@ -148,6 +159,8 @@ def train_arm(
         OSError,
         RuntimeError,
         TimeoutError,
+        ValueError,
+        KeyError,
         subprocess.CalledProcessError,
         subprocess.TimeoutExpired,
     ) as error:

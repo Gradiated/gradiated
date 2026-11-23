@@ -87,6 +87,19 @@ class CheckPinnedImageTest(unittest.TestCase):
                                 {'./etc/gradiated/base-id': b'ubuntu24-cuda13-amd64-v3\n'})
         self.assertEqual(check.problems(pins(), registry), [])
 
+    def test_checks_the_aws_image_by_digest_against_the_same_base(self):
+        registry = FakeRegistry({'etc/gradiated/base-id': b'ubuntu24-cuda13-amd64-v3\n'})
+        aws = IMAGE.split(':')[0] + '@sha256:' + 'a' * 64
+        self.assertEqual(check.problems({**pins(), 'awsImage': aws}, registry), [])
+        [problem] = check.problems({**pins(base='ubuntu24-cuda13-amd64-v2'), 'awsImage': aws}, registry)[1:]
+        self.assertIn(aws + ' has base ID ubuntu24-cuda13-amd64-v3', problem)
+
+    def test_rejects_an_aws_image_in_another_repository(self):
+        registry = FakeRegistry({'etc/gradiated/base-id': b'ubuntu24-cuda13-amd64-v3\n'})
+        aws = '873716897517.dkr.ecr.us-east-1.amazonaws.com/other@sha256:' + 'a' * 64
+        [problem] = check.problems({**pins(), 'awsImage': aws}, registry)
+        self.assertIn('is not a tag or digest in', problem)
+
     def test_rejects_an_image_without_a_base_id(self):
         registry = FakeRegistry({'etc/hostname': b'x'})
         [problem] = check.problems(pins(), registry)

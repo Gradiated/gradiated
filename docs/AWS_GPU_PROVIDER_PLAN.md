@@ -113,8 +113,11 @@ zone's) reservation, then a `gradiated.com/fault-domain` spread on each pool.
 3. Merge the application PR; add one host, register it through ops-mcp and
    qualify one model. Confirm the host agent's cgroup control and GPU locks
    inside Docker on that host.
-4. AWS hosts start observe-only in gpu-fleet; automated re-imaging follows as
-   a separate change.
+4. gpu-fleet re-images AWS hosts like RunPod ones, one drained host at a time,
+   through the operator role (`AWS_GPU_OPERATOR_ROLE_ARNS`). A host it never
+   re-imaged is adopted under the current pin and re-imaged on the next pin
+   change. AWS hosts follow `awsImage` in `pins.json`, today the digest ops-mcp
+   registers them with, so a RunPod-only pin change never reaches them.
 5. Done 2026-11-23: the four L4 hosts are registered as GpuHosts reserved for
    `posthog`. The `jeeves-l4` and `jevk5-l4` pools serve in production directly,
    without a qualification stage, because PostHog was not yet calling the

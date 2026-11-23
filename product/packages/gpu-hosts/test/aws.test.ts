@@ -157,6 +157,30 @@ describe("EC2 GPU hosts", () => {
     );
   });
 
+  it("tells whether an instance type has instance storage, asking EC2 once per type", async () => {
+    const { sent, client } = setup(({ input }) => ({
+      InstanceTypes: [
+        (input.InstanceTypes as string[])[0] === "g6.xlarge"
+          ? {
+              InstanceStorageSupported: true,
+              InstanceStorageInfo: { TotalSizeInGB: 250 },
+            }
+          : { InstanceStorageSupported: false },
+      ],
+    }));
+    await expect(client.instanceStorage("g6.xlarge")).resolves.toBe(true);
+    await expect(client.instanceStorage("g6.xlarge")).resolves.toBe(true);
+    await expect(client.instanceStorage("m7i.large")).resolves.toBe(false);
+    expect(sent.map((call) => call.input.InstanceTypes)).toEqual([
+      ["g6.xlarge"],
+      ["m7i.large"],
+    ]);
+    const missing = setup(() => ({ InstanceTypes: [] }));
+    await expect(missing.client.instanceStorage("x1.large")).rejects.toThrow(
+      "was not found",
+    );
+  });
+
   it("restores the root volume from the given AMI and deletes the old one", async () => {
     const { sent, client } = setup(({ name }) =>
       name === "CreateReplaceRootVolumeTaskCommand"
@@ -321,6 +345,23 @@ describe("EC2 GPU hosts", () => {
     await expect(
       associated.client.bootstrapProfileAssociated(ID),
     ).resolves.toBe(true);
+    const detaching = setup(() => ({
+      IamInstanceProfileAssociations: [
+        {
+          AssociationId: "iip-assoc-1",
+          IamInstanceProfile: { Arn: BOOTSTRAP_PROFILE_ARN },
+          State: "disassociating",
+        },
+      ],
+    }));
+    await expect(detaching.client.bootstrapProfileAssociated(ID)).resolves.toBe(
+      false,
+    );
+    await expect(
+      detaching.client.bootstrapProfileAssociated(ID, {
+        includeDetaching: true,
+      }),
+    ).resolves.toBe(true);
     const other = setup(() => ({
       IamInstanceProfileAssociations: [
         {
@@ -469,6 +510,24 @@ describe("EC2 GPU hosts", () => {
     ]);
   });
 
+  it("treats a bootstrap secret being deleted or gone as unreadable", async () => {
+    const answers = [
+      () => ({ Name: "x" }),
+      () => ({ Name: "x", DeletedDate: new Date() }),
+      () => {
+        throw failure("ResourceNotFoundException");
+      },
+    ];
+    const { sent, client } = setup(() => answers.shift()!());
+    await expect(client.bootstrapSecretReadable(ID)).resolves.toBe(true);
+    await expect(client.bootstrapSecretReadable(ID)).resolves.toBe(false);
+    await expect(client.bootstrapSecretReadable(ID)).resolves.toBe(false);
+    expect(sent[0]).toEqual({
+      name: "DescribeSecretCommand",
+      input: { SecretId: `gradiated/gpu-bootstrap/${ID}` },
+    });
+  });
+
   it("force-deletes the bootstrap secret and treats a missing one as deleted", async () => {
     let calls = 0;
     const { sent, client } = setup(() => {
@@ -490,7 +549,7 @@ describe("EC2 GPU hosts", () => {
     });
   });
 
-  it("associates the bootstrap profile only when the instance has none, and removes every association", async () => {
+  it("associates the bootstrap profile only when the instance has none, and removes only that one", async () => {
     let associated: {
       AssociationId: string;
       IamInstanceProfile: { Arn: string };
@@ -505,11 +564,15 @@ describe("EC2 GPU hosts", () => {
             IamInstanceProfile: { Arn: BOOTSTRAP_PROFILE_ARN },
           },
         ];
+      if (name === "DisassociateIamInstanceProfileCommand") associated = [];
       return {};
     });
     await expect(client.associateBootstrapProfile(ID)).resolves.toBe(true);
     await expect(client.associateBootstrapProfile(ID)).resolves.toBe(false);
-    await expect(client.disassociateInstanceProfile(ID)).resolves.toBe(1);
+    await expect(client.disassociateBootstrapProfile(ID)).resolves.toEqual({
+      removed: 1,
+      kept: [],
+    });
     expect(sent.filter(({ name }) => !name.startsWith("Describe"))).toEqual([
       {
         name: "AssociateIamInstanceProfileCommand",
@@ -523,6 +586,93 @@ describe("EC2 GPU hosts", () => {
         input: { AssociationId: "iip-assoc-1" },
       },
     ]);
+  });
+
+  it("waits for a bootstrap profile already disassociating to disappear", async () => {
+    const clock = fakeClock();
+    const other = "arn:aws:iam::111122223333:instance-profile/other";
+    const { sent, client } = setup(({ name, input }) => {
+      expect(name).toBe("DescribeIamInstanceProfileAssociationsCommand");
+      expect(input.Filters).toContainEqual({
+        Name: "state",
+        Values: ["associating", "associated", "disassociating"],
+      });
+      return {
+        IamInstanceProfileAssociations:
+          clock.waits.length < 2
+            ? [
+                {
+                  AssociationId: "iip-assoc-1",
+                  IamInstanceProfile: { Arn: BOOTSTRAP_PROFILE_ARN },
+                  State: "disassociating",
+                },
+              ]
+            : [
+                {
+                  AssociationId: "iip-assoc-2",
+                  IamInstanceProfile: { Arn: other },
+                  State: "associated",
+                },
+              ],
+      };
+    }, clock);
+
+    await expect(client.disassociateBootstrapProfile(ID)).resolves.toEqual({
+      removed: 1,
+      kept: [other],
+    });
+    expect(sent).toHaveLength(3);
+  });
+
+  it("fails cleanup if the bootstrap profile does not finish detaching", async () => {
+    let state = "associated";
+    const clock = fakeClock();
+    const { client } = setup(({ name }) => {
+      if (name === "DisassociateIamInstanceProfileCommand") {
+        state = "disassociating";
+        return {};
+      }
+
+      return {
+        IamInstanceProfileAssociations: [
+          {
+            AssociationId: "iip-assoc-1",
+            IamInstanceProfile: { Arn: BOOTSTRAP_PROFILE_ARN },
+            State: state,
+          },
+        ],
+      };
+    }, clock);
+
+    await expect(client.disassociateBootstrapProfile(ID)).rejects.toThrow(
+      "still has its bootstrap instance profile",
+    );
+    expect(clock.waits.length).toBeGreaterThan(0);
+  });
+
+  it("never disassociates a profile other than the bootstrap profile", async () => {
+    const other = "arn:aws:iam::111122223333:instance-profile/other";
+    const { sent, client } = setup(({ name }) =>
+      name === "DescribeIamInstanceProfileAssociationsCommand"
+        ? {
+            IamInstanceProfileAssociations: [
+              {
+                AssociationId: "iip-assoc-2",
+                IamInstanceProfile: { Arn: other },
+              },
+            ],
+          }
+        : {},
+    );
+    await expect(client.disassociateBootstrapProfile(ID)).resolves.toEqual({
+      removed: 0,
+      kept: [other],
+    });
+    expect(
+      sent.filter(
+        ({ name }) => name === "DisassociateIamInstanceProfileCommand",
+      ),
+    ).toEqual([]);
   });
 
   it("accepts the bootstrap profile already associated and refuses any other profile", async () => {

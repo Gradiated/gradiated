@@ -1,10 +1,13 @@
 import { randomUUID } from "node:crypto";
 
 import {
-  isManaged,
-  MANAGED_TAG,
-  replacementSettled,
+  managedInstance,
+  prepareReplacement,
+  removeBootstrapAccess,
+  replacementProgress,
+  replaceWithTemplateImage,
   type AwsGpuClient,
+  type Ec2Instance,
   type EnrollmentPayload,
 } from "@gradiated/gpu-hosts";
 
@@ -56,14 +59,7 @@ export const createAwsProvider = ({
   const enrollment = tailnetEnrollment(tailnet, audit);
   const sleep = () => new Promise((resolve) => setTimeout(resolve, pollMs));
 
-  const managed = async (instanceId: string) => {
-    const current = await client.instance(instanceId);
-    if (!isManaged(current))
-      throw new Error(
-        `EC2 instance ${instanceId} is not tagged ${MANAGED_TAG.key}=${MANAGED_TAG.value}, so the GPU fleet cannot manage it`,
-      );
-    return current;
-  };
+  const managed = (instanceId: string) => managedInstance(client, instanceId);
 
   // The host enrolled: it keeps no way to read AWS. A failure here fails the
   // registration, so the host is not committed while it still has credentials.
@@ -71,13 +67,17 @@ export const createAwsProvider = ({
     instanceId: string,
     inventory: GpuInventory,
   ) => {
-    const left: string[] = [];
-    await client.deleteBootstrapSecret(instanceId).catch(() => {
-      left.push("its bootstrap secret");
-    });
-    await client.disassociateInstanceProfile(instanceId).catch(() => {
-      left.push("its instance profile");
-    });
+    const { left, kept } = await removeBootstrapAccess(client, instanceId);
+    if (kept.length) {
+      audit?.({
+        event: "aws_instance_profile_left",
+        provider_instance_id: instanceId,
+        kept,
+      });
+      throw new Error(
+        `EC2 instance ${instanceId} enrolled, but it has instance profile ${kept.join(", ")}, not the bootstrap profile; remove it before committing its GpuHost`,
+      );
+    }
     if (left.length) {
       audit?.({
         event: "aws_bootstrap_credentials_left",
@@ -185,9 +185,9 @@ export const createAwsProvider = ({
   // until every task has ended and the instance runs again on its new root;
   // a host whose last replacement failed gets nothing.
   const replacementsSettled = async (instanceId: string) => {
-    let tasks = await client.replaceRootVolumeTasks(instanceId);
-    const inFlight = tasks.filter((task) => !replacementSettled(task));
-    if (inFlight.length) {
+    let { inFlight, last } = await replacementProgress(client, instanceId);
+    const waited = inFlight.length > 0;
+    if (waited) {
       audit?.({
         event: "aws_root_volume_replacement_in_flight",
         provider_instance_id: instanceId,
@@ -197,18 +197,17 @@ export const createAwsProvider = ({
         `replace-root-volume task ${inFlight.map((task) => task.id).join(", ")} of ${instanceId} to end`,
         reimageTimeoutMs,
         async () => {
-          tasks = await client.replaceRootVolumeTasks(instanceId);
-          return tasks.every(replacementSettled);
+          ({ inFlight, last } = await replacementProgress(client, instanceId));
+          return !inFlight.length;
         },
       );
     }
-    const last = tasks.at(-1);
     if (last?.state.startsWith("fail"))
       throw new Error(
         `Replacing the root volume of ${instanceId} ${last.state} (task ${last.id}), ` +
           "so no bootstrap key was written; re-image it only when that reset is explicitly authorized",
       );
-    if (inFlight.length)
+    if (waited)
       await running(
         instanceId,
         `EC2 instance ${instanceId} to run on its new root volume`,
@@ -216,17 +215,18 @@ export const createAwsProvider = ({
       );
   };
 
-  // The order matters: the key reaches only the new root volume. A stopped
-  // instance's old root can still hold a launcher waiting for its secret, so
-  // nothing is written until that root is gone.
+  // The order matters: the profile and the key reach only the new root
+  // volume. A stopped instance's old root can still hold a launcher waiting
+  // for its secret, and anything on a running one could copy the profile's
+  // credentials, so neither is there until that root is gone.
   const reimage = async (
-    instanceId: string,
-    state: string,
+    current: Ec2Instance,
     deliver: () => Promise<void>,
   ) => {
-    if (await client.associateBootstrapProfile(instanceId))
+    const { id: instanceId, state } = current;
+    if (await prepareReplacement(client, current))
       audit?.({
-        event: "aws_bootstrap_profile_associated",
+        event: "aws_bootstrap_profile_removed",
         provider_instance_id: instanceId,
       });
     // Replacing a root volume needs a running instance.
@@ -238,13 +238,10 @@ export const createAwsProvider = ({
         10 * MINUTE,
       );
     }
-    // Named explicitly: without an image EC2 restores the instance's original
-    // launch AMI, so a pin change would never reach an existing host.
-    const imageId = await client.launchTemplateImage();
-    const task = await client.replaceRootVolume(
+    const { imageId, task } = await replaceWithTemplateImage(
+      client,
       instanceId,
       randomUUID(),
-      imageId,
     );
     audit?.({
       event: "aws_root_volume_replacement_started",
@@ -272,6 +269,11 @@ export const createAwsProvider = ({
       `EC2 instance ${instanceId} to run on its new root volume`,
       10 * MINUTE,
     );
+    if (await client.associateBootstrapProfile(instanceId))
+      audit?.({
+        event: "aws_bootstrap_profile_associated",
+        provider_instance_id: instanceId,
+      });
     await deliver();
   };
 
@@ -399,7 +401,7 @@ export const createAwsProvider = ({
           `Refusing to re-image EC2 instance ${instanceId} while it is ${current.state}`,
         );
       return withBootstrapKey(instanceId, image, async (deliver) => {
-        await reimage(instanceId, current.state, deliver);
+        await reimage(current, deliver);
         return removeCredentials(
           instanceId,
           await enrollWhenJoined(

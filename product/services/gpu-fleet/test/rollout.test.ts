@@ -26,6 +26,7 @@ import {
   OLD_IMAGE,
   pins,
   simulateFleet,
+  TEMPLATE_AMI,
   type Simulation,
 } from "./support/simulation.js";
 import { virtualKubeletPod } from "./support/pods.js";
@@ -154,44 +155,6 @@ describe("rolling re-image", () => {
         result: "Succeeded",
         bundle: { sha256: NEW_BUNDLE },
       });
-  });
-
-  it("leaves an AWS host on another image alone while the RunPod hosts roll", async () => {
-    const AWS = "01a0fbf9-0000-7000-8000-000000000001";
-    const fleet = simulateFleet(
-      [
-        { instanceId: SPARE, podId: "yzno396wdsidu4", gpus: 1 },
-        { instanceId: FIRST, podId: "zhimpngvqyotuj", gpus: 1 },
-        { instanceId: SECOND, podId: "dv31b4wrd2yc8n", gpus: 1 },
-        {
-          instanceId: AWS,
-          podId: "i-0123456789abcdef0",
-          gpus: 1,
-          provider: "aws",
-        },
-      ],
-      [{ name: "kev", gpus: 1, replicas: 2 }],
-    );
-    fleet.place("kev", FIRST);
-    fleet.place("kev", SECOND);
-
-    const events = await run(
-      fleet,
-      pins(NEW_IMAGE, NEW_BUNDLE),
-      allSucceeded(fleet),
-    );
-
-    expect(started(events)).toEqual([SPARE, FIRST, SECOND]);
-    expect(fleet.sim(AWS)).toMatchObject({
-      image: OLD_IMAGE,
-      bundle: OLD_BUNDLE,
-      resets: 0,
-    });
-    expect(fleet.host(AWS).status?.rollout).toBeUndefined();
-    expect(fleet.host(AWS).status?.plan).toBe(
-      `Waiting: Observed only: automated re-imaging is not yet supported for aws hosts; the host runs bundle ${OLD_BUNDLE}, not the pinned bundle`,
-    );
-    expect(fleet.node(AWS).spec?.unschedulable).toBeFalsy();
   });
 
   it("blocks without draining when there is no room, holds the fleet, and waits for capacity to change", async () => {
@@ -1814,6 +1777,726 @@ describe("hosts that stop answering", () => {
       state: "enrolled",
       bundle: NEW_BUNDLE,
     });
+  });
+});
+
+describe("draining with one replica unavailable", () => {
+  // The four posthog-reserved AWS L4 hosts in hosts.yaml.
+  const EC2: Record<string, string> = {
+    "01a2087d-f7d4-73cd-85dc-b2598e892f28": "i-0d2200c67dac19f46",
+    "01a2087d-fec7-761d-957f-07c70d17a2cf": "i-0f2117e94c0d38218",
+    "01a2087e-0540-749d-bcdc-65b7065851d1": "i-087093ae4b5d38083",
+    "01a2087e-0bc2-75c1-988b-b97db8e1206c": "i-00b00c5a446421b25",
+  };
+  const L4 = Object.keys(EC2);
+  const RESERVED = {
+    key: "gradiated.com/reserved",
+    value: "posthog",
+    effect: "NoSchedule",
+  };
+  // As render-config renders the jeeves-l4 and jevk5-l4 pools from models.json:
+  // two replicas each, one L4 apiece, on these hosts, minAvailable 1.
+  const template = {
+    nodeSelector: {
+      "gradiated.com/provider": "aws",
+      "nvidia.com/gpu.product": "L4",
+    },
+    tolerations: [
+      {
+        key: "gradiated.com/gpu",
+        operator: "Equal",
+        value: "true",
+        effect: "NoSchedule",
+      },
+      { ...RESERVED, operator: "Equal" },
+    ],
+    affinity: {
+      nodeAffinity: {
+        requiredDuringSchedulingIgnoredDuringExecution: {
+          nodeSelectorTerms: [
+            {
+              matchExpressions: [
+                {
+                  key: "gradiated.com/instance-id",
+                  operator: "In",
+                  values: L4,
+                },
+              ],
+            },
+          ],
+        },
+      },
+    },
+  };
+
+  const postHogFleet = async (minAvailable = 1) => {
+    const fleet = simulateFleet(
+      L4.map((instanceId) => ({
+        instanceId,
+        podId: EC2[instanceId]!,
+        gpus: 1,
+        gpuProduct: "L4",
+        provider: "aws" as const,
+      })),
+      [
+        { name: "jeeves-l4", gpus: 1, replicas: 2, minAvailable, template },
+        { name: "jevk5-l4", gpus: 1, replicas: 2, minAvailable, template },
+      ],
+    );
+    for (const id of L4) {
+      const node = fleet.kube.objects.get(`${NODES}/gpu-${id}`) as unknown as {
+        metadata: { labels?: Record<string, string> };
+        spec: { taints?: (typeof RESERVED)[] };
+      };
+      node.metadata.labels = {
+        "gradiated.com/provider": "aws",
+        "nvidia.com/gpu.product": "L4",
+        "gradiated.com/instance-id": id,
+      };
+      node.spec.taints = [RESERVED];
+    }
+    fleet.place("jeeves-l4", L4[0]!);
+    fleet.place("jeeves-l4", L4[1]!);
+    fleet.place("jevk5-l4", L4[2]!);
+    fleet.place("jevk5-l4", L4[3]!);
+    await run(fleet, pins(OLD_IMAGE, OLD_BUNDLE), () => false, {}, 3);
+    return fleet;
+  };
+
+  it("rolls four full hosts one at a time, never leaving a model without a Ready replica", async () => {
+    const fleet = await postHogFleet();
+
+    const events = await run(fleet, pins(NEW_IMAGE, NEW_BUNDLE), () =>
+      L4.every((id) => rollout(fleet, id)?.result === "Succeeded"),
+    );
+
+    expect(started(events)).toHaveLength(4);
+    expect(new Set(started(events))).toEqual(new Set(L4));
+    for (const [index, id] of L4.entries()) {
+      expect(rollout(fleet, id)).toMatchObject({
+        kind: "reimage",
+        result: "Succeeded",
+        unavailable: [index < 2 ? "jeeves-l4" : "jevk5-l4"],
+      });
+      expect(fleet.sim(id)).toMatchObject({ image: NEW_IMAGE, resets: 1 });
+      expect(fleet.node(id).spec?.unschedulable).toBeFalsy();
+    }
+    expect(fleet.lowest).toEqual(
+      new Map([
+        ["jeeves-l4", 1],
+        ["jevk5-l4", 1],
+      ]),
+    );
+    expect(fleet.ready("jeeves-l4")).toBe(2);
+    expect(fleet.ready("jevk5-l4")).toBe(2);
+    expect(
+      events.filter(
+        (event) => event.event === "gpu_rollout_replica_unavailable",
+      ),
+    ).toHaveLength(4);
+    // Each host started only once the last one's model had both replicas back.
+    const steps = events.filter(
+      (event) => event.event === "gpu_rollout_step" && event.to === "Restore",
+    );
+    expect(steps).toHaveLength(4);
+  });
+
+  it("says in the host's plan that it drains with a replica unavailable", async () => {
+    const fleet = await postHogFleet();
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+
+    await run(fleet, pinned, () =>
+      L4.some((id) => rollout(fleet, id)?.unavailable !== undefined),
+    );
+
+    const draining = L4.find((id) => rollout(fleet, id)?.unavailable)!;
+    expect(fleet.host(draining).status?.plan).toMatch(
+      /^Draining with one (jeeves|jevk5)-l4 replica unavailable/,
+    );
+  });
+
+  it("rechecks the one-replica allowance when another replica binds during cordon", async () => {
+    const fleet = await postHogFleet();
+    const cluster = createCluster(fleet.kube.api, () => undefined);
+    const host = L4[0]!;
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => {
+        const state = rollout(fleet, host);
+        return (
+          !!state && (state.result === "Blocked" || state.step !== "Cordon")
+        );
+      },
+      {
+        cluster: {
+          ...cluster,
+          cordon: async (instanceId) => {
+            fleet.place("jeeves-l4", instanceId);
+            return cluster.cordon(instanceId);
+          },
+        },
+      },
+    );
+
+    expect(rollout(fleet, host)).toMatchObject({
+      step: "Cordon",
+      result: "Blocked",
+      lastError: expect.stringContaining(
+        "2 jeeves-l4 replicas run on the host",
+      ),
+    });
+    expect(rollout(fleet, host)?.unavailable).toBeUndefined();
+    expect(fleet.node(host).spec?.unschedulable).toBeFalsy();
+  });
+
+  it("blocks before scaling down if another replica binds after the allowance is recorded", async () => {
+    const fleet = await postHogFleet();
+    const host = L4[0]!;
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+
+    await run(fleet, pinned, () => rollout(fleet, host)?.step === "Surge");
+    expect(rollout(fleet, host)?.unavailable).toEqual(["jeeves-l4"]);
+    fleet.place("jeeves-l4", host);
+    await run(fleet, pinned, () => rollout(fleet, host)?.result === "Blocked");
+
+    expect(rollout(fleet, host)).toMatchObject({
+      step: "Surge",
+      result: "Blocked",
+      lastError: expect.stringContaining("2 replicas run on the host"),
+    });
+    expect(rollout(fleet, host)?.surge).toBeUndefined();
+    expect(fleet.node(host).spec?.unschedulable).toBeFalsy();
+  });
+
+  it("blocks when the pool's budget allows no disruption", async () => {
+    const fleet = await postHogFleet(2);
+
+    await run(fleet, pins(NEW_IMAGE, NEW_BUNDLE), () =>
+      L4.some((id) => rollout(fleet, id)?.result === "Blocked"),
+    );
+
+    const blocked = L4.find((id) => rollout(fleet, id)?.result === "Blocked")!;
+    expect(rollout(fleet, blocked)?.lastError).toMatch(
+      /^No capacity for a replacement .* replica, and a replica cannot be unavailable: the .* PodDisruptionBudget allows no disruption$/,
+    );
+    expect(L4.every((id) => fleet.sim(id).resets === 0)).toBe(true);
+    expect(fleet.lowest.get("jeeves-l4")).toBe(2);
+    expect(fleet.lowest.get("jevk5-l4")).toBe(2);
+  });
+
+  it("blocks while another replica of the model is not Ready, even if its budget allows it", async () => {
+    const fleet = await postHogFleet(0);
+    for (const id of [L4[1]!, L4[3]!])
+      fleet.notReady.add(fleet.podsOn(id)[0]!.metadata.name);
+    fleet.tick();
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, L4[0]!)?.result === "Blocked",
+    );
+
+    expect(rollout(fleet, L4[0]!)?.lastError).toContain(
+      "not every other jeeves-l4 replica is Ready",
+    );
+    expect(L4.every((id) => fleet.sim(id).resets === 0)).toBe(true);
+    expect(fleet.podsOn(L4[0]!)).toHaveLength(1);
+  });
+
+  it("still blocks a model with a single replica", async () => {
+    const fleet = simulateFleet(
+      [
+        { instanceId: SPARE, podId: "yzno396wdsidu4", gpus: 1 },
+        { instanceId: FIRST, podId: "zhimpngvqyotuj", gpus: 1 },
+      ],
+      [
+        { name: "solo", gpus: 1, replicas: 1, minAvailable: 0 },
+        { name: "filler", gpus: 1, replicas: 1, minAvailable: 0 },
+      ],
+    );
+    fleet.place("solo", SPARE);
+    fleet.place("filler", FIRST);
+
+    await run(fleet, pins(NEW_IMAGE, NEW_BUNDLE), () =>
+      [SPARE, FIRST].some((id) => rollout(fleet, id)?.result === "Blocked"),
+    );
+
+    const blocked = [SPARE, FIRST].find(
+      (id) => rollout(fleet, id)?.result === "Blocked",
+    )!;
+    expect(rollout(fleet, blocked)?.lastError).toMatch(
+      /a replica cannot be unavailable: not every other (solo|filler) replica is Ready$/,
+    );
+    expect(fleet.violations).toEqual([]);
+    expect([SPARE, FIRST].every((id) => fleet.sim(id).resets === 0)).toBe(true);
+  });
+
+  it("moves replicas first when there is room, even with a budget", async () => {
+    const fleet = simulateFleet(
+      [
+        { instanceId: SPARE, podId: "yzno396wdsidu4", gpus: 1 },
+        { instanceId: FIRST, podId: "zhimpngvqyotuj", gpus: 1 },
+        { instanceId: SECOND, podId: "dv31b4wrd2yc8n", gpus: 1 },
+      ],
+      [{ name: "kev", gpus: 1, replicas: 2, minAvailable: 1 }],
+    );
+    fleet.place("kev", FIRST);
+    fleet.place("kev", SECOND);
+
+    await run(fleet, pins(NEW_IMAGE, NEW_BUNDLE), allSucceeded(fleet));
+
+    expectRolledOut(fleet);
+    for (const id of HOSTS)
+      expect(rollout(fleet, id)?.unavailable).toBeUndefined();
+  });
+});
+
+describe("re-imaging AWS hosts", () => {
+  const AWS_SPARE = "01a0fbf9-0000-7000-8000-000000000001";
+  const AWS_SERVING = "01a0fbf9-0000-7000-8000-000000000002";
+  const EC2_SPARE = "i-0123456789abcdef0";
+  const EC2_SERVING = "i-0123456789abcdef1";
+  const AWS_HOSTS = [AWS_SPARE, AWS_SERVING, FIRST];
+
+  // Two EC2 instances, one serving, and a serving RunPod pod, all adopted
+  // under the old pins as they were when the operator first saw them.
+  const awsFleet = async (
+    knobs: Partial<ReturnType<Simulation["sim"]>> = {},
+  ) => {
+    const fleet = simulateFleet(
+      [
+        {
+          instanceId: AWS_SPARE,
+          podId: EC2_SPARE,
+          gpus: 1,
+          provider: "aws",
+        },
+        {
+          instanceId: AWS_SERVING,
+          podId: EC2_SERVING,
+          gpus: 1,
+          provider: "aws",
+        },
+        { instanceId: FIRST, podId: "zhimpngvqyotuj", gpus: 1 },
+      ],
+      [{ name: "kev", gpus: 1, replicas: 2 }],
+    );
+    fleet.place("kev", AWS_SERVING);
+    fleet.place("kev", FIRST);
+    Object.assign(fleet.sim(AWS_SPARE), knobs);
+    await run(fleet, pins(OLD_IMAGE, OLD_BUNDLE), () => false, {}, 3);
+    return fleet;
+  };
+
+  it("adopts an AWS host it never re-imaged under the current pin and leaves it alone", async () => {
+    const fleet = await awsFleet();
+
+    for (const id of [AWS_SPARE, AWS_SERVING]) {
+      expect(fleet.host(id).status).toMatchObject({ adoptedUnder: OLD_IMAGE });
+      expect(fleet.host(id).status?.rollout).toBeUndefined();
+      expect(fleet.host(id).status?.plan).toBeUndefined();
+      expect(fleet.sim(id).replacements).toEqual([]);
+    }
+  });
+
+  it("re-images AWS hosts onto the AWS image, never onto a RunPod-only pin", async () => {
+    const fleet = await awsFleet();
+    const awsNew = `${NEW_IMAGE.split(":")[0]}@sha256:${"4".repeat(64)}`;
+    const runPodOnly = { ...pins(NEW_IMAGE, NEW_BUNDLE), awsImage: OLD_IMAGE };
+
+    await run(fleet, runPodOnly, () =>
+      AWS_HOSTS.every((id) => rollout(fleet, id)?.result === "Succeeded"),
+    );
+
+    expect(fleet.sim(FIRST)).toMatchObject({ image: NEW_IMAGE, resets: 1 });
+    for (const id of [AWS_SPARE, AWS_SERVING]) {
+      expect(rollout(fleet, id)).toMatchObject({
+        kind: "bundle",
+        target: { image: OLD_IMAGE },
+      });
+      expect(fleet.sim(id)).toMatchObject({
+        image: OLD_IMAGE,
+        bundle: NEW_BUNDLE,
+        resets: 0,
+        replacements: [],
+      });
+    }
+
+    await run(fleet, { ...runPodOnly, awsImage: awsNew }, () =>
+      [AWS_SPARE, AWS_SERVING].every(
+        (id) =>
+          rollout(fleet, id)?.kind === "reimage" &&
+          rollout(fleet, id)?.result === "Succeeded",
+      ),
+    );
+
+    for (const id of [AWS_SPARE, AWS_SERVING]) {
+      expect(fleet.sim(id)).toMatchObject({ image: awsNew, resets: 1 });
+      expect(fleet.host(id).status?.image).toBe(awsNew);
+    }
+    expect(fleet.sim(FIRST).resets).toBe(1);
+    expect(fleet.violations).toEqual([]);
+  });
+
+  it("re-images AWS hosts one drained host at a time once the pinned image changes", async () => {
+    const fleet = await awsFleet();
+
+    const events = await run(fleet, pins(NEW_IMAGE, NEW_BUNDLE), () =>
+      AWS_HOSTS.every((id) => rollout(fleet, id)?.result === "Succeeded"),
+    );
+
+    expect(started(events)[0]).toBe(AWS_SPARE);
+    expect(started(events).sort()).toEqual([...AWS_HOSTS].sort());
+    for (const id of [AWS_SPARE, AWS_SERVING]) {
+      const sim = fleet.sim(id);
+      expect(sim).toMatchObject({
+        image: NEW_IMAGE,
+        bundle: NEW_BUNDLE,
+        state: "enrolled",
+        resets: 1,
+        ami: TEMPLATE_AMI,
+        profile: false,
+      });
+      expect(sim.secret).toBeUndefined();
+      expect(sim.replacements).toMatchObject([
+        { state: "succeeded", imageId: TEMPLATE_AMI },
+      ]);
+      expect(fleet.host(id).status).toMatchObject({
+        image: NEW_IMAGE,
+        rollout: { kind: "reimage", result: "Succeeded" },
+      });
+      expect(fleet.node(id).spec?.unschedulable).toBeFalsy();
+    }
+    expect(fleet.sim(FIRST)).toMatchObject({ image: NEW_IMAGE, resets: 1 });
+    expect(fleet.violations).toEqual([]);
+    expect(fleet.ready("kev")).toBe(2);
+    expect([...fleet.keys.values()].every((key) => key.revoked)).toBe(true);
+
+    // Recorded as re-imaged, the host is current until the pin changes again.
+    await run(fleet, pins(NEW_IMAGE, NEW_BUNDLE), () => false, {}, 5);
+    expect(fleet.sim(AWS_SPARE).replacements).toHaveLength(1);
+  });
+
+  it("refuses an instance with another instance profile before draining it, and leaves the profile", async () => {
+    const other = "arn:aws:iam::111122223333:instance-profile/other";
+    const fleet = await awsFleet({ otherProfile: other });
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, AWS_SPARE)?.result === "Failed",
+    );
+
+    expect(rollout(fleet, AWS_SPARE)).toMatchObject({ step: "Cordon" });
+    expect(rollout(fleet, AWS_SPARE)?.lastError).toContain(
+      `has instance profile ${other}, not the bootstrap profile`,
+    );
+    expect(fleet.sim(AWS_SPARE)).toMatchObject({
+      otherProfile: other,
+      replacements: [],
+      resets: 0,
+    });
+    expect(fleet.node(AWS_SPARE).spec?.unschedulable).toBeFalsy();
+  });
+
+  it("keeps another instance profile that appears during a re-image through its deadline and cleanup", async () => {
+    const other = "arn:aws:iam::111122223333:instance-profile/other";
+    const fleet = await awsFleet({ replaceAnswerLost: true });
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    const limits = { ...LIMITS, Reimage: 5 * 60_000 };
+
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, AWS_SPARE)?.reimageRequestedAt !== undefined,
+      { limits },
+    );
+    // Attached by someone else after the request; the resend refuses it.
+    fleet.sim(AWS_SPARE).otherProfile = other;
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, AWS_SPARE)?.result === "Failed",
+      { limits },
+    );
+
+    expect(rollout(fleet, AWS_SPARE)).toMatchObject({ step: "Reimage" });
+    expect(rollout(fleet, AWS_SPARE)?.lastError).toMatch(
+      /^Reimage did not finish within 5 minutes.*; instance profile arn:aws:iam::111122223333:instance-profile\/other was left in place$/,
+    );
+    expect(fleet.sim(AWS_SPARE).otherProfile).toBe(other);
+  });
+
+  it("fails, cordoned, a host that holds another instance profile once enrolled", async () => {
+    const other = "arn:aws:iam::111122223333:instance-profile/other";
+    const fleet = await awsFleet();
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, AWS_SPARE)?.step === "RemoveAccess",
+    );
+    fleet.sim(AWS_SPARE).otherProfile = other;
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, AWS_SPARE)?.result === "Failed",
+    );
+
+    expect(rollout(fleet, AWS_SPARE)).toMatchObject({ step: "RemoveAccess" });
+    expect(rollout(fleet, AWS_SPARE)?.lastError).toContain(
+      `it has instance profile ${other}, not the bootstrap profile`,
+    );
+    expect(fleet.node(AWS_SPARE).spec?.unschedulable).toBe(true);
+    expect(fleet.sim(AWS_SPARE).otherProfile).toBe(other);
+    expect(rollout(fleet, AWS_SERVING)).toBeUndefined();
+  });
+
+  it("removes bootstrap access before starting an instance stopped mid-rollout", async () => {
+    const fleet = await awsFleet({
+      profile: true,
+      secret: { image: OLD_IMAGE, tailscaleAuthKey: "tskey-auth-revoked" },
+    });
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, AWS_SPARE)?.step === "Reimage",
+    );
+    fleet.sim(AWS_SPARE).ec2State = "stopped";
+
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, AWS_SPARE)?.result === "Succeeded",
+    );
+
+    expect(fleet.sim(AWS_SPARE)).toMatchObject({
+      image: NEW_IMAGE,
+      ec2State: "running",
+      resets: 1,
+      profile: false,
+    });
+    expect(fleet.violations).toEqual([]);
+  });
+
+  it("removes a bootstrap profile left attached before replacing the root, and attaches it only on the new root", async () => {
+    const fleet = await awsFleet({ profile: true });
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, AWS_SPARE)?.result === "Succeeded",
+    );
+
+    expect(fleet.sim(AWS_SPARE)).toMatchObject({
+      image: NEW_IMAGE,
+      state: "enrolled",
+      resets: 1,
+      profile: false,
+    });
+    // The sim records any profile on the old root, a root replaced with a
+    // profile or secret left, and any secret written without the profile.
+    expect(fleet.violations).toEqual([]);
+  });
+
+  it("deletes a bootstrap secret an earlier attempt left before replacing the root", async () => {
+    const fleet = await awsFleet({
+      secret: { image: OLD_IMAGE, tailscaleAuthKey: "tskey-auth-revoked" },
+    });
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, AWS_SPARE)?.result === "Succeeded",
+    );
+
+    expect(fleet.sim(AWS_SPARE)).toMatchObject({
+      image: NEW_IMAGE,
+      state: "enrolled",
+      resets: 1,
+    });
+    expect(fleet.sim(AWS_SPARE).replacements).toHaveLength(1);
+    expect(fleet.violations).toEqual([]);
+  });
+
+  it("replaces no root while EC2 cannot delete a leftover bootstrap secret", async () => {
+    const fleet = await awsFleet({
+      secret: { image: OLD_IMAGE, tailscaleAuthKey: "tskey-auth-revoked" },
+      accessStuck: true,
+    });
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, AWS_SPARE)?.result === "Failed",
+      { limits: { ...LIMITS, Reimage: 5 * 60_000 } },
+    );
+
+    expect(rollout(fleet, AWS_SPARE)).toMatchObject({ step: "Reimage" });
+    expect(fleet.sim(AWS_SPARE)).toMatchObject({ resets: 0, replacements: [] });
+    expect(fleet.keys.size).toBe(0);
+  });
+
+  it("asks EC2 again with the same token when the answer to a replace request is lost", async () => {
+    const fleet = await awsFleet({ replaceAnswerLost: true });
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, AWS_SPARE)?.result === "Succeeded",
+    );
+
+    expect(fleet.sim(AWS_SPARE).replacements).toHaveLength(1);
+    expect(fleet.sim(AWS_SPARE)).toMatchObject({
+      image: NEW_IMAGE,
+      resets: 1,
+    });
+    expect(fleet.violations).toEqual([]);
+  });
+
+  it("fails and holds the fleet when the root volume replacement fails, writing no key", async () => {
+    const fleet = await awsFleet({ replaceFails: true });
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, AWS_SPARE)?.result === "Failed",
+    );
+    await run(fleet, pins(NEW_IMAGE, NEW_BUNDLE), () => false, {}, 20);
+
+    expect(rollout(fleet, AWS_SPARE)).toMatchObject({
+      result: "Failed",
+      step: "Reimage",
+    });
+    expect(rollout(fleet, AWS_SPARE)?.lastError).toMatch(
+      /^Replacing the root volume fail/,
+    );
+    expect(fleet.node(AWS_SPARE).spec?.unschedulable).toBe(true);
+    expect(fleet.keys.size).toBe(0);
+    expect(fleet.sim(AWS_SPARE)).toMatchObject({ resets: 0, profile: false });
+    expect(rollout(fleet, AWS_SERVING)).toBeUndefined();
+    expect(fleet.host(AWS_SERVING).status?.plan).toContain(
+      `Held: the rollout on gpu-${AWS_SPARE} failed`,
+    );
+  });
+
+  it("fails a host that never joins, removes its access and recovers it on retry", async () => {
+    const fleet = await awsFleet({ launchFails: true });
+    const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, AWS_SPARE)?.result === "Failed",
+      { limits: { ...LIMITS, Join: 5 * 60_000 } },
+    );
+
+    expect(rollout(fleet, AWS_SPARE)).toMatchObject({
+      result: "Failed",
+      step: "Join",
+    });
+    expect(fleet.node(AWS_SPARE).spec?.unschedulable).toBe(true);
+    expect([...fleet.keys.values()].every((key) => key.revoked)).toBe(true);
+    expect(fleet.sim(AWS_SPARE).secret).toBeUndefined();
+    expect(fleet.sim(AWS_SPARE).profile).toBe(false);
+    expect(rollout(fleet, AWS_SERVING)).toBeUndefined();
+
+    delete fleet.sim(AWS_SPARE).launchFails;
+    await fleet.kube.api.mergePatch(`${GPU_HOSTS}/gpu-${AWS_SPARE}`, {
+      metadata: { annotations: { [RETRY_ANNOTATION]: "1" } },
+    });
+    await run(
+      fleet,
+      pinned,
+      () => rollout(fleet, AWS_SPARE)?.result === "Succeeded",
+    );
+
+    expect(rollout(fleet, AWS_SPARE)).toMatchObject({
+      kind: "recover",
+      retry: "1",
+    });
+    expect(fleet.sim(AWS_SPARE).replacements).toHaveLength(2);
+    expect(fleet.sim(AWS_SPARE)).toMatchObject({
+      image: NEW_IMAGE,
+      state: "enrolled",
+    });
+    expect(fleet.violations).toEqual([]);
+  });
+
+  it("refuses an untagged instance or one in another account before draining it", async () => {
+    for (const [extra, message] of [
+      [{ untagged: true }, "is not tagged gradiated:managed=gpu-fleet"],
+      [
+        { ownerAccount: "444455556666" },
+        "is in account 444455556666, not 111122223333",
+      ],
+    ] as const) {
+      const fleet = simulateFleet(
+        [
+          {
+            instanceId: AWS_SPARE,
+            podId: EC2_SPARE,
+            gpus: 1,
+            provider: "aws",
+            ...extra,
+          },
+        ],
+        [{ name: "kev", gpus: 1, replicas: 1 }],
+      );
+      fleet.place("kev", AWS_SPARE);
+      await run(fleet, pins(OLD_IMAGE, OLD_BUNDLE), () => false, {}, 3);
+
+      await run(
+        fleet,
+        pins(NEW_IMAGE, NEW_BUNDLE),
+        () => rollout(fleet, AWS_SPARE)?.result === "Failed",
+      );
+
+      expect(rollout(fleet, AWS_SPARE)).toMatchObject({ step: "Cordon" });
+      expect(rollout(fleet, AWS_SPARE)?.lastError).toContain(message);
+      expect(fleet.node(AWS_SPARE).spec?.unschedulable).toBeFalsy();
+      expect(fleet.podsOn(AWS_SPARE)).toHaveLength(1);
+      expect(fleet.sim(AWS_SPARE)).toMatchObject({
+        replacements: [],
+        profile: false,
+        resets: 0,
+      });
+    }
+  });
+
+  it("enrolls a new AWS host that has never answered", async () => {
+    const fleet = simulateFleet(
+      [
+        {
+          instanceId: AWS_SPARE,
+          podId: EC2_SPARE,
+          gpus: 1,
+          provider: "aws",
+          enrolled: false,
+        },
+      ],
+      [],
+    );
+
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, AWS_SPARE)?.result === "Succeeded",
+    );
+
+    expect(rollout(fleet, AWS_SPARE)).toMatchObject({ kind: "enroll" });
+    expect(fleet.host(AWS_SPARE).status?.image).toBe(NEW_IMAGE);
+    expect(fleet.sim(AWS_SPARE)).toMatchObject({
+      state: "enrolled",
+      image: NEW_IMAGE,
+      bundle: NEW_BUNDLE,
+      profile: false,
+    });
+    expect(fleet.violations).toEqual([]);
   });
 });
 

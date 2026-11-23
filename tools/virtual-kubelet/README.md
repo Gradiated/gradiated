@@ -533,6 +533,18 @@ one at a time, and records each host's progress in `status.rollout` of its
   waits twice as long as the last (5 minutes, then 10, up to an hour), so
   autoscaling that only fills GPUs never restarts it. `GpuHostRolloutBlocked`
   fires after two hours blocked.
+  Only when no complete placement exists, a re-image may drain a model with one
+  replica unavailable instead of blocking, when all of these hold: the pool's
+  PodDisruptionBudget (`minAvailable: floor - 1`, rendered for production pools
+  with a floor of two or more) reports `status.disruptionsAllowed` of at least
+  one; the host runs exactly one of the model's replicas; every other replica is
+  Ready and qualified; and no other host's rollout is running. The fewest such
+  models are chosen; the rest still move first. The host's `status.plan` says
+  `Draining with one <model> replica unavailable`, `status.rollout.unavailable`
+  lists the models, and after Uncordon the `Restore` step holds the fleet until
+  each has all its replicas Ready and qualified again, so two hosts never take
+  the same model down together. A model with one replica, or a pool without a
+  budget (such as Kimi's), still blocks.
 - A host on the pinned image but another bundle is updated in place: once every
   serving pod on it is Ready, the operator records them and writes the bundle to `status.rollout.bundle`, the controller (which holds the
   fencing epoch) sends it with `configure`, and the operator requires the host to
@@ -594,10 +606,43 @@ ScaledObject's `autoscaling.keda.sh/paused-replicas` annotation. A rollout marks
 its cordon `gpu-fleet-rollout` (the drain uses `gpu-fleet`) and uncordons only a
 node it marked, so a node someone cordoned by hand stays cordoned.
 
-AWS hosts (EC2 instances) are observed only, in either mode: the operator keeps
-their Services, status and PostgreSQL rows, and their `status.plan` says
-automated re-imaging is not yet supported for aws hosts. It does not re-image,
-enroll, recover, lease or update them in place.
+AWS hosts (EC2 instances) go through the same rollouts, through the operator
+role of their account in `AWS_GPU_OPERATOR_ROLE_ARNS` (a host in an account
+without one is never changed). Before a host is drained the operator refuses an
+instance not tagged `gradiated:managed=gpu-fleet` or owned by another account
+than its `GpuHost` names. A re-image replaces the root volume with the AMI of
+the launch template's default version, as ops-mcp registration does, using the
+shared sequence in `@gradiated/gpu-hosts`: the instance, its ID and its capacity
+stay, and nothing stops or terminates it. The request time is recorded first and
+makes the task's client token, so a repeated request is the same task. Before
+the request the operator deletes any bootstrap secret left behind and removes the
+bootstrap instance profile, confirming both are gone, so nothing on the old root,
+such as a lease holder's container, can read the secret or copy the profile's
+credentials. Once that task is the last to have succeeded and the instance runs
+again, the operator attaches the bootstrap profile, then mints the single-use
+bootstrap key and writes it, with the pinned AWS image, to
+`gradiated/gpu-bootstrap/<instance ID>`; the host launcher pulls the image and
+the container joins as `gpu-bootstrap-<instance ID>`. After enrollment the
+`RemoveAccess` step deletes the secret and removes the bootstrap instance
+profile (never another profile, which a re-image refuses and leaves in place;
+a host that holds one once enrolled fails, cordoned) before
+the host is verified, soaked and uncordoned. A failed replacement, or a host that
+never joins, fails the rollout as on RunPod, and the operator removes the
+bootstrap access it left.
+
+AWS hosts run `awsImage` from `pins.json` (a tag or digest in the same
+repository; `image` when unset), because an image built before AWS support
+cannot join on EC2; `gradctl gpu render-config` copies it to ops-mcp's
+`AWS_GPU_BASE_IMAGE`. EC2 cannot show which container image a host runs, so the operator records it
+in `status.image` when it re-images an AWS host. A host it never re-imaged is
+adopted: `status.adoptedUnder` records the pinned AWS image when the operator first
+sees the host answer, and the host is re-imaged once the pin changes. An AWS host
+is recovered only after its own rollout replaced its root volume and it did not
+rejoin; a root volume survives a restart, so any other silent host is left to a
+person. A lease is refused on an instance with an EBS volume besides its root, or
+whose type has an instance store (`g6` and `g6e` do): a root volume replacement
+leaves both, so a return could not wipe what the holder wrote there. Serving
+never uses the instance store; nothing formats or mounts it.
 
 The operator runs in `MODE=observe` until switched to `act`. Observe mode holds
 only the destructive steps: re-image, enroll and recover are written to each

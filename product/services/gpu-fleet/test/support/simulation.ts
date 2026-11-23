@@ -5,6 +5,7 @@ import {
   enrollmentPayloadSchema,
   releaseInstanceName,
   RunPodError,
+  type AwsGpuClient,
   type RunPodClient,
   type RunSsh,
   type TailnetStatus,
@@ -20,6 +21,7 @@ import {
   PODS,
   ROLLOUTS,
   SCALED_OBJECTS,
+  DISRUPTION_BUDGETS,
   type GpuHost,
 } from "../../src/hosts.js";
 import type { Observation } from "../../src/observe.js";
@@ -54,6 +56,21 @@ export type HostSpec = {
   hasAttachedVolumes?: boolean;
   // An EC2 instance, whose podId is its instance ID, instead of a RunPod pod.
   provider?: "aws";
+  // An instance without the gradiated:managed tag, or owned by another account.
+  untagged?: boolean;
+  ownerAccount?: string;
+  gpuProduct?: string;
+};
+
+export const AWS_ACCOUNT = "111122223333";
+export const TEMPLATE_AMI = "ami-0fedcba9876543210";
+
+type ReplaceTask = {
+  id: string;
+  token: string;
+  state: string;
+  imageId: string;
+  started: Date;
 };
 
 type Device = {
@@ -93,9 +110,35 @@ type Host = HostSpec & {
   // The next update fails: with an HTTP status, or a lost connection without
   // one; applied says whether RunPod made the change anyway.
   updateFails?: { status?: number; applied: boolean };
+  // EC2: the instance, its root volume's launcher, and what it can read.
+  ec2State: string;
+  ami: string;
+  // The launcher on the current root volume already ran.
+  launched: boolean;
+  profile: boolean;
+  secret?: { image: string; tailscaleAuthKey: string };
+  replacements: ReplaceTask[];
+  // The next replacement EC2 runs fails, leaving the old root in place.
+  replaceFails?: boolean;
+  // The next replace request is carried out, but its answer is lost.
+  replaceAnswerLost?: boolean;
+  // The launcher reads its secret but its container never starts.
+  launchFails?: boolean;
+  // Bootstrap profile and secret calls fail.
+  accessStuck?: boolean;
+  // An instance profile that is not the bootstrap profile.
+  otherProfile?: string;
 };
 
-type Model = { name: string; gpus: number; replicas: number };
+type Model = {
+  name: string;
+  gpus: number;
+  replicas: number;
+  // The PodDisruptionBudget's minAvailable; no budget unless set.
+  minAvailable?: number;
+  // Placement fields every pod of the model carries, as its Rollout sets them.
+  template?: Record<string, unknown>;
+};
 const TRAINING: Model = { name: "training", gpus: 1, replicas: 0 };
 
 /**
@@ -181,6 +224,11 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
       env: {},
       rejects: new Set(),
       resets: 0,
+      ec2State: "running",
+      ami: "ami-0123456789abcdef0",
+      launched: spec.enrolled !== false,
+      profile: false,
+      replacements: [],
     };
     sims.set(spec.podId, host);
     if (host.state === "enrolled")
@@ -198,14 +246,14 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
           spec.provider === "aws"
             ? {
                 name: "aws",
-                accountId: "111122223333",
+                accountId: AWS_ACCOUNT,
                 region: "us-east-1",
                 availabilityZone: "us-east-1b",
                 ec2InstanceId: spec.podId,
               }
             : { name: "runpod", accountId: "user_test", podId: spec.podId },
         inventory: {
-          gpuProduct: "B300",
+          gpuProduct: spec.gpuProduct ?? "B300",
           gpuCount: spec.gpus,
           cpu: 64,
           memoryGiB: 896,
@@ -239,7 +287,15 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
       metadata: { name: model.name, annotations: {} },
       spec: { minReplicaCount: model.replicas },
     });
+    if (model.minAvailable !== undefined)
+      kube.seed(DISRUPTION_BUDGETS, {
+        metadata: { name: model.name },
+        spec: { minAvailable: model.minAvailable },
+        status: { disruptionsAllowed: 0 },
+      });
   }
+  // The fewest Ready replicas each model had at the end of any tick.
+  const lowest = new Map(models.map((model) => [model.name, model.replicas]));
 
   const sim = (instanceId: string) =>
     [...sims.values()].find((h) => h.instanceId === instanceId)!;
@@ -267,7 +323,11 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
           : {},
         creationTimestamp: now().toISOString(),
       },
-      spec: { ...(node && { nodeName: node }), containers: containers(gpus) },
+      spec: {
+        ...structuredClone(models.find((m) => m.name === model)!.template),
+        ...(node && { nodeName: node }),
+        containers: containers(gpus),
+      },
       status: node
         ? virtualKubeletStatus(ready)
         : { phase: "Pending", conditions: [] },
@@ -319,6 +379,38 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
 
   const tick = () => {
     clock += 30_000;
+
+    // A replacement swaps the root on its first step: the old volume, its
+    // container and its tailnet identity are gone. A fresh root's launcher
+    // starts the container once its secret is there.
+    for (const host of sims.values()) {
+      if (host.provider !== "aws") continue;
+      for (const task of host.replacements) {
+        if (task.state === "pending") {
+          if (host.replaceFails) {
+            delete host.replaceFails;
+            task.state = "failing";
+            continue;
+          }
+          wipe(host.instanceId);
+          host.ami = task.imageId;
+          host.image = "";
+          host.launched = false;
+          host.resets++;
+          task.state = "in-progress";
+        } else if (task.state === "in-progress") task.state = "succeeded";
+        else if (task.state === "failing") task.state = "failed";
+      }
+      if (!host.launched && host.secret && host.ec2State === "running") {
+        host.launched = true;
+        if (host.launchFails) continue;
+        host.image = host.secret.image;
+        host.env = {
+          GRADIATED_TAILSCALE_BOOTSTRAP_KEY: host.secret.tailscaleAuthKey,
+        };
+        host.state = "booting";
+      }
+    }
 
     for (const host of sims.values()) {
       if (host.state === "pulling" && clock >= host.pulledAt!) {
@@ -479,6 +571,22 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
         });
     }
 
+    // The disruption controller counts Ready pods against minAvailable.
+    for (const model of models) {
+      const budget = kube.objects.get(`${DISRUPTION_BUDGETS}/${model.name}`);
+      if (budget && model.minAvailable !== undefined)
+        budget.status = {
+          disruptionsAllowed: Math.max(
+            0,
+            ready(model.name) - model.minAvailable,
+          ),
+        };
+      lowest.set(
+        model.name,
+        Math.min(lowest.get(model.name)!, ready(model.name)),
+      );
+    }
+
     for (const model of models)
       if (ready(model.name) < model.replicas)
         violations.push(
@@ -541,6 +649,131 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
       sims.get(podId)!.desiredStatus = "RUNNING";
     },
   } as unknown as RunPodClient;
+
+  const ec2 = (instanceId: string) => {
+    const host = sims.get(instanceId);
+    if (host?.provider !== "aws")
+      throw new Error(`EC2 instance ${instanceId} was not found`);
+    return host;
+  };
+  const stuck = (host: Host) => {
+    if (host.accessStuck) throw new Error("AccessDenied");
+  };
+  const aws: AwsGpuClient = {
+    accountId: AWS_ACCOUNT,
+    region: "us-east-1",
+    instance: async (id) => {
+      const host = ec2(id);
+      return {
+        id,
+        accountId: host.ownerAccount ?? AWS_ACCOUNT,
+        state: host.ec2State,
+        availabilityZone: "us-east-1b",
+        instanceType: "g6.xlarge",
+        imageId: host.ami,
+        tags: host.untagged ? {} : { "gradiated:managed": "gpu-fleet" },
+        ...(host.otherProfile && { instanceProfileArn: host.otherProfile }),
+        blockDevices: 1,
+      };
+    },
+    gpus: async () => ({ count: 1, name: "L4" }),
+    instanceStorage: async (type) => type.startsWith("g6"),
+    start: async (id) => {
+      const host = ec2(id);
+      if (host.launched && (host.profile || host.secret))
+        violations.push(`${id}: old root started with bootstrap access`);
+      host.ec2State = "running";
+    },
+    launchTemplateImage: async () => TEMPLATE_AMI,
+    // A repeated client token names the same task, as in EC2.
+    replaceRootVolume: async (id, token, imageId) => {
+      const host = ec2(id);
+      let task = host.replacements.find((item) => item.token === token);
+      if (!task) {
+        if (host.ec2State !== "running")
+          throw new Error("IncorrectState: the instance must be running");
+        if (host.profile)
+          violations.push(
+            `${id}: root replaced with the bootstrap profile attached`,
+          );
+        if (host.secret)
+          violations.push(`${id}: root replaced with a bootstrap secret left`);
+        task = {
+          id: `replacevol-${host.podId}-${host.replacements.length + 1}`,
+          token,
+          state: "pending",
+          imageId,
+          started: now(),
+        };
+        host.replacements.push(task);
+      }
+      if (host.replaceAnswerLost) {
+        delete host.replaceAnswerLost;
+        throw new Error("socket hang up");
+      }
+      return { id: task.id, state: task.state };
+    },
+    replaceRootVolumeTask: async (id, taskId) => {
+      const task = ec2(id).replacements.find((item) => item.id === taskId);
+      if (!task) throw new Error(`Replace-root-volume task ${taskId} is gone`);
+      return { id: taskId, state: task.state };
+    },
+    replaceRootVolumeTasks: async (id) =>
+      ec2(id).replacements.map(({ id: taskId, state, started }) => ({
+        id: taskId,
+        state,
+        started,
+      })),
+    bootstrapProfileAssociated: async (id) => ec2(id).profile,
+    // The old root, and whatever runs on it, must never see the profile's
+    // credentials: it is attached only on a new root whose launcher waits.
+    associateBootstrapProfile: async (id) => {
+      const host = ec2(id);
+      stuck(host);
+      if (host.otherProfile)
+        throw new Error(
+          `EC2 instance ${id} has instance profile ${host.otherProfile}`,
+        );
+      if (host.profile) return false;
+      if (host.launched || host.replacements.at(-1)?.state !== "succeeded")
+        violations.push(`${id}: bootstrap profile attached to the old root`);
+      host.profile = true;
+      return true;
+    },
+    disassociateBootstrapProfile: async (id) => {
+      const host = ec2(id);
+      stuck(host);
+      const had = host.profile ? 1 : 0;
+      host.profile = false;
+      return {
+        removed: had,
+        kept: host.otherProfile ? [host.otherProfile] : [],
+      };
+    },
+    // A key reaching a root whose launcher already ran, or one a replacement
+    // can still wipe, is a key handed to the wrong volume.
+    writeBootstrapSecret: async (id, value) => {
+      const host = ec2(id);
+      if (!host.profile)
+        violations.push(`${id}: secret written without the bootstrap profile`);
+      if (
+        host.launched ||
+        host.replacements.some(
+          (task) => !["succeeded", "failed"].includes(task.state),
+        )
+      )
+        violations.push(`${id}: secret written to a root it cannot reach`);
+      host.secret = value;
+    },
+    deleteBootstrapSecret: async (id) => {
+      const host = ec2(id);
+      stuck(host);
+      const had = host.secret !== undefined;
+      delete host.secret;
+      return had;
+    },
+    bootstrapSecretReadable: async (id) => ec2(id).secret !== undefined,
+  };
 
   const status = async (): Promise<TailnetStatus> => ({
     Peer: Object.fromEntries(
@@ -614,6 +847,7 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
 
   const enrollment = createEnrollment({
     runpod,
+    aws: (accountId) => (accountId === AWS_ACCOUNT ? aws : undefined),
     tailnet: { status, run },
     instanceTailnet: (instanceId) =>
       instanceTailnet(instanceId, control, credentials),
@@ -705,7 +939,9 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
     devices,
     keys,
     violations,
+    lowest,
     runpod,
+    aws,
     enrollment,
     ping,
     place,

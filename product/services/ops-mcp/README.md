@@ -91,11 +91,13 @@ running instance needs no reset: ops-mcp only writes its secret, and only while
 the instance still has the bootstrap profile and no `gpu-<instance UUID>` device
 exists in the tailnet; any other running instance without a bootstrap peer is
 refused, since its one-shot launcher will not read the secret. An authorized
-reset, or a stopped instance, runs in this order: re-attach the bootstrap
-profile (refusing, before any change, an instance with another profile), start a stopped instance and wait for it to run, read the AMI of the
+reset, or a stopped instance, runs in this order: delete any bootstrap secret
+left behind and remove the bootstrap profile, confirming both are gone (refusing,
+before any change, an instance with another profile), start a stopped instance and wait for it to run, read the AMI of the
 launch template's default version, replace the root volume with that AMI
 (deleting the old volume) and wait for the task and the instance, and only then
-write the secret with a fresh key, so an old root volume never sees the key.
+attach the bootstrap profile and write the secret with a fresh key, so an old
+root volume never sees the key or the profile's credentials.
 The instance and its capacity stay; nothing stops or terminates an instance.
 Writing the secret waits up to two minutes for an earlier forced deletion of
 the same name to finish; a pending secret is never restored. Once enrolled, the

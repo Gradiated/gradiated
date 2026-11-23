@@ -77,6 +77,8 @@ export type Ec2Instance = {
   readonly launchedAt?: string;
   readonly tags: Readonly<Record<string, string>>;
   readonly instanceProfileArn?: string;
+  // Attached EBS volumes, the root included; a re-image wipes only the root.
+  readonly blockDevices?: number;
 };
 
 export type Ec2Gpus = {
@@ -141,6 +143,8 @@ const named = (error: unknown, ...names: string[]) =>
 // same name to finish; Secrets Manager completes one asynchronously.
 export const SECRET_DELETION_WAIT_MS = 2 * 60_000;
 const SECRET_DELETION_BACKOFF_MS = [1_000, 2_000, 5_000, 10_000];
+const PROFILE_DETACH_WAIT_MS = 60_000;
+const PROFILE_DETACH_POLL_MS = 2_000;
 
 export const createAwsGpuClient = ({
   access,
@@ -177,6 +181,7 @@ export const createAwsGpuClient = ({
       credentials: credentials!,
     });
   const id = (instanceId: string) => ec2InstanceId.parse(instanceId);
+  const storage = new Map<string, boolean>();
 
   const instance = async (instanceId: string): Promise<Ec2Instance> => {
     const result = await compute.send(
@@ -216,6 +221,9 @@ export const createAwsGpuClient = ({
       ...(found.IamInstanceProfile?.Arn && {
         instanceProfileArn: found.IamInstanceProfile.Arn,
       }),
+      ...(found.BlockDeviceMappings?.length && {
+        blockDevices: found.BlockDeviceMappings.length,
+      }),
     };
   };
 
@@ -225,7 +233,10 @@ export const createAwsGpuClient = ({
         new DescribeIamInstanceProfileAssociationsCommand({
           Filters: [
             { Name: "instance-id", Values: [id(instanceId)] },
-            { Name: "state", Values: ["associating", "associated"] },
+            {
+              Name: "state",
+              Values: ["associating", "associated", "disassociating"],
+            },
           ],
         }),
       )
@@ -255,6 +266,26 @@ export const createAwsGpuClient = ({
           `EC2 instance type ${instanceType} has no single kind of GPU`,
         );
       return { count: gpus[0]!.Count, name: gpus[0]!.Name };
+    },
+
+    // Instance-store volumes survive a root volume replacement, so whatever
+    // was written to them outlives a re-image.
+    instanceStorage: async (instanceType: string): Promise<boolean> => {
+      const cached = storage.get(instanceType);
+      if (cached !== undefined) return cached;
+      const result = await compute.send(
+        new DescribeInstanceTypesCommand({
+          InstanceTypes: [instanceType as _InstanceType],
+        }),
+      );
+      const type = result.InstanceTypes?.[0];
+      if (!type)
+        throw new Error(`EC2 instance type ${instanceType} was not found`);
+      const supported =
+        type.InstanceStorageSupported === true ||
+        (type.InstanceStorageInfo?.TotalSizeInGB ?? 0) > 0;
+      storage.set(instanceType, supported);
+      return supported;
     },
 
     start: async (instanceId: string) => {
@@ -358,9 +389,14 @@ export const createAwsGpuClient = ({
 
     // A fresh instance has the bootstrap profile from its launch template;
     // enrollment removes it.
-    bootstrapProfileAssociated: async (instanceId: string) =>
-      (await associations(instanceId)).some((association) =>
-        isBootstrapProfile(association.IamInstanceProfile?.Arn),
+    bootstrapProfileAssociated: async (
+      instanceId: string,
+      { includeDetaching = false } = {},
+    ) =>
+      (await associations(instanceId)).some(
+        (association) =>
+          (includeDetaching || association.State !== "disassociating") &&
+          isBootstrapProfile(association.IamInstanceProfile?.Arn),
       ),
 
     // Refuses an instance with any other profile: an instance has at most
@@ -376,7 +412,12 @@ export const createAwsGpuClient = ({
         throw new Error(
           `EC2 instance ${instanceId} has instance profile ${other.IamInstanceProfile?.Arn ?? other.AssociationId ?? "unknown"}, not ${access.bootstrapInstanceProfile}; remove it before re-imaging the instance`,
         );
+      if (current.some((association) => association.State === "disassociating"))
+        throw new Error(
+          `EC2 instance ${instanceId} is still detaching its bootstrap instance profile`,
+        );
       if (current.length) return false;
+
       await compute.send(
         new AssociateIamInstanceProfileCommand({
           InstanceId: id(instanceId),
@@ -386,16 +427,44 @@ export const createAwsGpuClient = ({
       return true;
     },
 
-    // Leaves the enrolled host with no AWS credentials.
-    disassociateInstanceProfile: async (instanceId: string) => {
-      const current = await associations(instanceId);
-      for (const association of current)
+    // Removes only the bootstrap profile, leaving the enrolled host with none
+    // of its credentials; any other profile is not the fleet's to remove, and
+    // is returned as kept.
+    disassociateBootstrapProfile: async (instanceId: string) => {
+      let current = await associations(instanceId);
+      const isBootstrap = (association: (typeof current)[number]) =>
+        isBootstrapProfile(association.IamInstanceProfile?.Arn);
+      const bootstrap = current.filter(isBootstrap);
+
+      for (const association of bootstrap) {
+        if (association.State === "disassociating") continue;
         await compute.send(
           new DisassociateIamInstanceProfileCommand({
             AssociationId: association.AssociationId,
           }),
         );
-      return current.length;
+      }
+
+      const deadline = now() + PROFILE_DETACH_WAIT_MS;
+      while (current.some(isBootstrap)) {
+        if (now() + PROFILE_DETACH_POLL_MS > deadline)
+          throw new Error(
+            `EC2 instance ${instanceId} still has its bootstrap instance profile after waiting for detachment`,
+          );
+
+        await sleep(PROFILE_DETACH_POLL_MS);
+        current = await associations(instanceId);
+      }
+
+      return {
+        removed: bootstrap.length,
+        kept: current.map(
+          (association) =>
+            association.IamInstanceProfile?.Arn ??
+            association.AssociationId ??
+            "unknown",
+        ),
+      };
     },
 
     // The operator can write and delete the secret but never read it back.
@@ -479,6 +548,22 @@ export const createAwsGpuClient = ({
           }),
         );
         return true;
+      } catch (error) {
+        if (named(error, "ResourceNotFoundException")) return false;
+        throw error;
+      }
+    },
+
+    // A secret being deleted can no longer be read, though its name stays
+    // taken until Secrets Manager finishes.
+    bootstrapSecretReadable: async (instanceId: string) => {
+      try {
+        const secret = await store.send(
+          new DescribeSecretCommand({
+            SecretId: bootstrapSecretName(instanceId),
+          }),
+        );
+        return secret.DeletedDate === undefined;
       } catch (error) {
         if (named(error, "ResourceNotFoundException")) return false;
         throw error;

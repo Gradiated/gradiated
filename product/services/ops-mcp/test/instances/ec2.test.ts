@@ -127,7 +127,7 @@ describe("EC2 GPU hosts", () => {
     expect(s.bootstrapKey).not.toHaveBeenCalled();
     expect(changes(s.host.calls)).toEqual([
       "deleteBootstrapSecret",
-      "disassociateInstanceProfile",
+      "disassociateBootstrapProfile",
     ]);
     expect(s.host.profile).toBe(false);
   });
@@ -149,7 +149,7 @@ describe("EC2 GPU hosts", () => {
     expect(changes(s.host.calls)).toEqual([
       "writeBootstrapSecret",
       "deleteBootstrapSecret",
-      "disassociateInstanceProfile",
+      "disassociateBootstrapProfile",
       "deleteBootstrapSecret",
     ]);
     expect(s.revoke).toHaveBeenCalledOnce();
@@ -254,13 +254,17 @@ describe("EC2 GPU hosts", () => {
     await expect(
       s.provider.bootstrap(instance, image, payload, { allowReset: true }),
     ).resolves.toEqual(inventory);
+    // Nothing the old root could read is left before it is replaced, and the
+    // profile and key arrive only on the new root.
     expect(changes(s.host.calls)).toEqual([
-      "associateBootstrapProfile",
+      "deleteBootstrapSecret",
+      "disassociateBootstrapProfile",
       "launchTemplateImage",
       "replaceRootVolume",
+      "associateBootstrapProfile",
       "writeBootstrapSecret",
       "deleteBootstrapSecret",
-      "disassociateInstanceProfile",
+      "disassociateBootstrapProfile",
       "deleteBootstrapSecret",
     ]);
     expect(s.host.tasks).toBe(1);
@@ -274,9 +278,13 @@ describe("EC2 GPU hosts", () => {
     const succeeded = s.host.calls.lastIndexOf(
       `replaceRootVolumeTask ${INSTANCE} replacevol-1`,
     );
+    const associated = s.host.calls.indexOf(
+      `associateBootstrapProfile ${INSTANCE}`,
+    );
+    expect(associated).toBeGreaterThan(succeeded);
     expect(
       s.host.calls.indexOf(`writeBootstrapSecret ${INSTANCE}`),
-    ).toBeGreaterThan(succeeded);
+    ).toBeGreaterThan(associated);
     expect(s.host.secrets).toEqual([
       { image, tailscaleAuthKey: "tskey-auth-bootstrap-1" },
     ]);
@@ -302,14 +310,18 @@ describe("EC2 GPU hosts", () => {
       await expect(
         s.provider.bootstrap(instance, image, payload),
       ).resolves.toEqual(inventory);
+      // The launch template's bootstrap profile is removed before the old root
+      // runs again, and attached once the new root is in place.
       expect(changes(s.host.calls)).toEqual([
-        "associateBootstrapProfile",
+        "deleteBootstrapSecret",
+        "disassociateBootstrapProfile",
         "start",
         "launchTemplateImage",
         "replaceRootVolume",
+        "associateBootstrapProfile",
         "writeBootstrapSecret",
         "deleteBootstrapSecret",
-        "disassociateInstanceProfile",
+        "disassociateBootstrapProfile",
         "deleteBootstrapSecret",
       ]);
       // Only the new root volume ever read the single-use key.
@@ -336,13 +348,12 @@ describe("EC2 GPU hosts", () => {
   it.each(["running", "stopped"])(
     "refuses to reset a %s instance with another instance profile before replacing its root",
     async (state) => {
-      const ec2 = fakeEc2({ state, launched: true, profile: false });
-      ec2.client.associateBootstrapProfile = async (id) => {
-        ec2.host.calls.push(`associateBootstrapProfile ${id}`);
-        throw new Error(
-          `EC2 instance ${id} has instance profile arn:aws:iam::111122223333:instance-profile/other, not gradiated-gpu-prod-host-bootstrap`,
-        );
-      };
+      const ec2 = fakeEc2({
+        state,
+        launched: true,
+        profile: false,
+        instanceProfileArn: "arn:aws:iam::111122223333:instance-profile/other",
+      });
       const s = setup(ec2);
       await expect(
         s.provider.bootstrap(
@@ -353,7 +364,8 @@ describe("EC2 GPU hosts", () => {
         ),
       ).rejects.toThrow("instance-profile/other");
       expect(changes(s.host.calls)).toEqual([
-        "associateBootstrapProfile",
+        "deleteBootstrapSecret",
+        "disassociateBootstrapProfile",
         "deleteBootstrapSecret",
       ]);
       expect(s.host.tasks).toBe(0);
@@ -414,7 +426,7 @@ describe("EC2 GPU hosts", () => {
   it("fails an enrollment whose AWS access could not be removed", async () => {
     const ec2 = fakeEc2({ launched: true });
     ec2.host.joined = true;
-    ec2.client.disassociateInstanceProfile = async () => {
+    ec2.client.disassociateBootstrapProfile = async () => {
       throw new Error("AccessDenied");
     };
     const s = setup(ec2);
@@ -423,6 +435,25 @@ describe("EC2 GPU hosts", () => {
     ).rejects.toThrow("its instance profile could not be removed");
     expect(s.audit).toHaveBeenCalledWith(
       expect.objectContaining({ event: "aws_bootstrap_credentials_left" }),
+    );
+  });
+
+  it("fails an enrollment whose instance holds another instance profile, leaving it alone", async () => {
+    const ec2 = fakeEc2({ launched: true });
+    ec2.host.joined = true;
+    const other = "arn:aws:iam::111122223333:instance-profile/other";
+    ec2.client.disassociateBootstrapProfile = async () => {
+      ec2.host.profile = false;
+      return { removed: 1, kept: [other] };
+    };
+    const s = setup(ec2);
+    await expect(
+      s.provider.bootstrap(await s.provider.describe(INSTANCE), image, payload),
+    ).rejects.toThrow(
+      `it has instance profile ${other}, not the bootstrap profile`,
+    );
+    expect(s.audit).toHaveBeenCalledWith(
+      expect.objectContaining({ event: "aws_instance_profile_left" }),
     );
   });
 

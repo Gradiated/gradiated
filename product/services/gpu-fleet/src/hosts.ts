@@ -10,6 +10,8 @@ export const ROLLOUTS =
   "/apis/argoproj.io/v1alpha1/namespaces/gpu-inference/rollouts";
 export const SCALED_OBJECTS =
   "/apis/keda.sh/v1alpha1/namespaces/gpu-inference/scaledobjects";
+export const DISRUPTION_BUDGETS =
+  "/apis/policy/v1/namespaces/gpu-inference/poddisruptionbudgets";
 export const TAILNET = "tail186117.ts.net";
 
 const conditionSchema = z.object({
@@ -77,10 +79,15 @@ export const rolloutSchema = z.object({
       }),
     )
     .optional(),
+  // Models drained with one replica unavailable because no host had room
+  // for it; the rollout ends once each has all its replicas Ready again.
+  unavailable: z.array(z.string()).optional(),
   // Serving pod UID → qualified runtime incarnation before an in-place update.
   baseline: z.record(z.string(), z.string()).optional(),
-  // Recorded before RunPod is asked to re-image the pod.
+  // Recorded before RunPod or EC2 is asked to re-image the host.
   reimageRequestedAt: z.string().optional(),
+  // The EC2 replace-root-volume task re-imaging an AWS host.
+  rootVolumeTask: z.string().optional(),
   // Recorded before enrollment starts, with the operator replica running it.
   enrollStartedAt: z.string().optional(),
   enrollBy: z.string().optional(),
@@ -110,6 +117,12 @@ export const hostStatusSchema = z.object({
   rollout: rolloutSchema.optional(),
   // Set while the host is leased: drained, cordoned and out of the pool.
   lease: hostLeaseSchema.optional(),
+  // EC2 cannot show the container image, so the operator records the image it
+  // last re-imaged an AWS host onto. A host it never re-imaged records the
+  // pinned image when the operator first saw it, and is re-imaged once that
+  // pin changes.
+  image: z.string().optional(),
+  adoptedUnder: z.string().optional(),
 });
 
 const runPodProviderSchema = z.object({
@@ -119,7 +132,7 @@ const runPodProviderSchema = z.object({
   machineId: z.string().optional(),
 });
 
-// An EC2 instance in the GPU account, which the operator only observes.
+// An EC2 instance in a GPU account, reached through its operator role.
 // The zone is its region plus one letter, as the CRD requires, so a host is
 // never published under another region's fault domain.
 const awsProviderSchema = z
@@ -180,6 +193,9 @@ export const gpuHostSchema = z.object({
 export type GpuHost = z.infer<typeof gpuHostSchema>;
 export type RunPodHost = GpuHost & {
   spec: { provider: z.infer<typeof runPodProviderSchema> };
+};
+export type AwsHost = GpuHost & {
+  spec: { provider: z.infer<typeof awsProviderSchema> };
 };
 export type HostStatus = z.infer<typeof hostStatusSchema>;
 export type Condition = z.infer<typeof conditionSchema>;
@@ -272,13 +288,11 @@ export const leaseRequest = (
   }
 };
 
-// The operator re-images, enrolls and recovers only RunPod hosts so far; it
-// observes AWS hosts, keeps their Services and status, and syncs their rows.
-export const AWS_REIMAGE_UNSUPPORTED =
-  "automated re-imaging is not yet supported for aws hosts";
-
 export const isRunPod = (host: GpuHost): host is RunPodHost =>
   host.spec.provider.name === "runpod";
+
+export const isAws = (host: GpuHost): host is AwsHost =>
+  host.spec.provider.name === "aws";
 
 // The provider's ID for the host, which names its bootstrap device
 // gpu-bootstrap-<id>: a RunPod pod or an EC2 instance.
@@ -287,12 +301,21 @@ export const providerInstanceId = (host: GpuHost) =>
     ? host.spec.provider.podId
     : host.spec.provider.ec2InstanceId;
 
-// The RunPod pod of a host the operator may re-image; throws for any other.
 export const runPodId = (host: GpuHost) => {
   if (!isRunPod(host))
-    throw new Error(`${host.metadata.name}: ${AWS_REIMAGE_UNSUPPORTED}`);
+    throw new Error(`${host.metadata.name} is not a RunPod host`);
   return host.spec.provider.podId;
 };
+
+export const ec2InstanceOf = (host: GpuHost) => {
+  if (!isAws(host)) throw new Error(`${host.metadata.name} is not an AWS host`);
+  return host.spec.provider.ec2InstanceId;
+};
+
+// The image an AWS host runs as far as the operator knows: the one it last
+// re-imaged the host onto, or the pin it adopted the host under.
+export const recordedImage = (host: GpuHost) =>
+  host.status?.image ?? host.status?.adoptedUnder;
 
 // The PostgreSQL fault domain: a RunPod machine, which a host may not have
 // recorded, or an EC2 availability zone.

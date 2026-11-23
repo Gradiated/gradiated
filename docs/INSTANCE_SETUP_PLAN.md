@@ -56,9 +56,9 @@ in place, so an old root's launcher never consumes the single-use key. Its `GpuH
 domain is `aws:<availability zone>`. Pin a pool to AWS hosts with `provider:
 aws` in `models.json` (the node selector `gradiated.com/provider: aws`) and a
 reservation. Add `aws/<account ID>` to the operator's `FLEET_ACCOUNTS` with the
-first AWS host. The `gpu-fleet` operator only observes AWS hosts so far: it keeps
-their Services, status and `instances` rows, and does not re-image, enroll,
-recover, lease or update them in place. Training stays on RunPod hosts.
+first AWS host. The `gpu-fleet` operator rolls AWS hosts as it does RunPod pods, through
+the account's operator role named in its `AWS_GPU_OPERATOR_ROLE_ARNS`; see the
+[operator README](../tools/virtual-kubelet/README.md). Training stays on RunPod hosts.
 
 Commit the prepared host as a `GpuHost` in
 `infra/environments/prod/us-east-1/kubernetes/gpu-inference/hosts.yaml`: its

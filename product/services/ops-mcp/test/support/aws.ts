@@ -98,6 +98,7 @@ export const fakeEc2 = (
         name: "L4",
       };
     },
+    instanceStorage: async () => true,
     start: async (id) => {
       host.calls.push(`start ${id}`);
       host.instance = { ...host.instance, state: "running" };
@@ -150,11 +151,12 @@ export const fakeEc2 = (
       host.profile = true;
       return true;
     },
-    disassociateInstanceProfile: async (id) => {
-      host.calls.push(`disassociateInstanceProfile ${id}`);
+    disassociateBootstrapProfile: async (id) => {
+      host.calls.push(`disassociateBootstrapProfile ${id}`);
       const had = host.profile ? 1 : 0;
       host.profile = false;
-      return had;
+      const other = host.instance.instanceProfileArn;
+      return { removed: had, kept: other && !had ? [other] : [] };
     },
     writeBootstrapSecret: async (id, value) => {
       host.calls.push(`writeBootstrapSecret ${id}`);
@@ -167,6 +169,7 @@ export const fakeEc2 = (
       host.secret = undefined;
       return had;
     },
+    bootstrapSecretReadable: async () => host.secret !== undefined,
   };
   // What the ops-mcp sidecar's netmap shows while the host is a bootstrap device.
   const status = async (): Promise<TailnetStatus> => ({

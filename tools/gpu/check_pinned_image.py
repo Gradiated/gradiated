@@ -3,7 +3,8 @@
 
 The image tag must resolve to `imageDigest`, and the image's
 /etc/gradiated/base-id must equal `hostBundle.baseId`, or a host re-imaged to
-it rejects the pinned bundle. The base ID is read from the image's small layers,
+it rejects the pinned bundle. The same holds for `awsImage`, the tag or digest
+AWS hosts run, when it is set. The base ID is read from the image's small layers,
 so the multi-gigabyte CUDA layers are never downloaded.
 
 Needs the AWS CLI with credentials that can read the image's ECR repository.
@@ -25,6 +26,7 @@ import urllib.request
 ROOT = Path(__file__).resolve().parents[2]
 PINS = ROOT / 'infra/environments/prod/us-east-1/kubernetes/gpu-inference/pins.json'
 IMAGE = re.compile(r'(?P<registry>\d{12}\.dkr\.ecr\.(?P<region>[a-z0-9-]+)\.amazonaws\.com)/(?P<repository>[a-z0-9/._-]+):(?P<tag>[A-Za-z0-9._-]+)')
+AWS_IMAGE = re.compile(r'(?P<repository>[^:@]+)(:(?P<tag>[A-Za-z0-9._-]+)|@(?P<digest>sha256:[0-9a-f]{64}))')
 BASE_ID = 'etc/gradiated/base-id'
 # The base-id COPY makes a layer of a few hundred bytes; the largest layer
 # read is far below the CUDA and apt layers.
@@ -117,13 +119,28 @@ def problems(pins, registry):
     if digest != pins['imageDigest']:
         found.append(f'{pins["image"]} resolves to {digest}, but pins.json pins {pins["imageDigest"]}')
         return found
+    found += base_problems(pins['image'], registry, digest, manifest, pins['hostBundle']['baseId'])
+    if 'awsImage' in pins:
+        aws = AWS_IMAGE.fullmatch(pins['awsImage'])
+        if not aws or aws['repository'] != pins['image'].split(':')[0]:
+            found.append(f'awsImage {pins["awsImage"]} is not a tag or digest in {pins["image"].split(":")[0]}')
+            return found
+        aws_digest, aws_manifest = registry.manifest(aws['digest'] or aws['tag'])
+        if aws['digest'] and aws_digest != aws['digest']:
+            found.append(f'{pins["awsImage"]} resolves to {aws_digest}')
+            return found
+        found += base_problems(pins['awsImage'], registry, aws_digest, aws_manifest, pins['hostBundle']['baseId'])
+    return found
+
+
+def base_problems(image, registry, digest, manifest, expected):
     image_base = base_id(registry, amd64(registry, digest, manifest))
     if image_base is None:
-        found.append(f'{pins["image"]} has no /{BASE_ID} in a layer under {SMALL_LAYER} bytes')
-    elif image_base != pins['hostBundle']['baseId']:
-        found.append(f'{pins["image"]} has base ID {image_base}, but the pinned host bundle is for '
-                     f'{pins["hostBundle"]["baseId"]}; hosts on this image would reject it')
-    return found
+        return [f'{image} has no /{BASE_ID} in a layer under {SMALL_LAYER} bytes']
+    if image_base != expected:
+        return [f'{image} has base ID {image_base}, but the pinned host bundle is for '
+                f'{expected}; hosts on this image would reject it']
+    return []
 
 
 def main():
@@ -138,6 +155,8 @@ def main():
     if found:
         sys.exit(1)
     print(f'{pins["image"]} is {pins["imageDigest"]} with base ID {pins["hostBundle"]["baseId"]}')
+    if 'awsImage' in pins:
+        print(f'{pins["awsImage"]} has base ID {pins["hostBundle"]["baseId"]}')
 
 
 if __name__ == '__main__':

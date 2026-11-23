@@ -56,12 +56,17 @@ class RenderTests(unittest.TestCase):
             with patch.object(renderer, 'GPU', gpu):
                 outputs = renderer.render()
                 self.assertEqual(json.loads(outputs[gpu / 'gpu-fleet-pins.yaml'][0]['data']['pins.json']), pins)
+                aws = {**pins, 'awsImage': pins['image'].split(':')[0] + '@sha256:' + 'b' * 64}
+                (gpu / 'pins.json').write_text(json.dumps(aws))
+                self.assertEqual(json.loads(renderer.render()[gpu / 'gpu-fleet-pins.yaml'][0]['data']['pins.json']), aws)
                 # The controller applies whatever bundle the operator chose for each host.
                 self.assertNotIn('host_bundle', json.loads(outputs[gpu / 'controller.yaml'][0]['data']['hosts.json']))
                 for invalid in ({**pins, 'hostBundle': {**pins['hostBundle'], 'sha256': '../escape'}},
                                 {**pins, 'image': pins['image'] + '@' + pins['imageDigest']},
                                 {**pins, 'image': 'docker.io/library/ubuntu:latest'},
                                 {**pins, 'imageDigest': 'latest'},
+                                {**pins, 'awsImage': pins['image'].split(':')[0] + ':latest'},
+                                {**pins, 'awsImage': '873716897517.dkr.ecr.us-east-1.amazonaws.com/other@sha256:' + 'b' * 64},
                                 {**pins, 'extra': True}):
                     (gpu / 'pins.json').write_text(json.dumps(invalid))
                     with self.assertRaises(ValueError):
@@ -89,9 +94,12 @@ class RenderTests(unittest.TestCase):
         copies = renderer.pinned_copies(pins)
         self.assertEqual(json.loads(copies[renderer.TEMPLATES])['image'], pins['image'])
         workload = copies[renderer.OPS_MCP]
-        for name, value in (('GPU_BASE_IMAGE', pins['image']), ('GPU_HOST_BOOTSTRAP_SHA256', 'a' * 64),
-                            ('GPU_HOST_BOOTSTRAP_BASE_ID', 'test-base')):
+        for name, value in (('GPU_BASE_IMAGE', pins['image']), ('AWS_GPU_BASE_IMAGE', pins['image']),
+                            ('GPU_HOST_BOOTSTRAP_SHA256', 'a' * 64), ('GPU_HOST_BOOTSTRAP_BASE_ID', 'test-base')):
             self.assertRegex(workload, rf'- name: {name}\n\s+value: {re.escape(value)}\n')
+        aws = pins['image'].split(':')[0] + '@sha256:' + 'b' * 64
+        self.assertRegex(renderer.pinned_copies({**pins, 'awsImage': aws})[renderer.OPS_MCP],
+                         rf'- name: AWS_GPU_BASE_IMAGE\n\s+value: {re.escape(aws)}\n')
         # Everything else in the workload is left as written.
         current = renderer.OPS_MCP.read_text().splitlines()
         self.assertEqual(len(workload.splitlines()), len(current))

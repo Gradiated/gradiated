@@ -508,6 +508,9 @@ def node_names(documents):
 
 
 IMAGE = re.compile(r'\d{12}\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com/[a-z0-9/._-]+:gpu-base-inputs-[0-9a-f]{64}')
+# AWS hosts pull with their own ECR credentials, so they can also run a build by digest.
+AWS_IMAGE = re.compile(r'(?P<repository>\d{12}\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com/[a-z0-9/._-]+)'
+                       r'(:gpu-base-inputs-[0-9a-f]{64}|@sha256:[0-9a-f]{64})')
 TEMPLATES = ROOT / 'infra/environments/prod/runpod/templates.json'
 RUNTIMES = ROOT / 'product/inference/gpu/runtimes.json'
 OPS_MCP = KUBE / 'operations/ops-mcp/workload.yaml'
@@ -515,7 +518,11 @@ OPS_MCP = KUBE / 'operations/ops-mcp/workload.yaml'
 
 def validate_pins(pins):
     # RunPod pulls only by tag; imageDigest records the build the tag names.
-    if (set(pins) != {'image', 'imageDigest', 'hostBundle'} or set(pins['hostBundle']) != {'sha256', 'baseId'} or
+    # awsImage, in the same repository, is what AWS hosts run instead.
+    aws = AWS_IMAGE.fullmatch(pins.get('awsImage', pins['image']))
+    if (set(pins) - {'awsImage'} != {'image', 'imageDigest', 'hostBundle'} or
+            set(pins['hostBundle']) != {'sha256', 'baseId'} or
+            not aws or not pins['image'].startswith(aws['repository'] + ':') or
             not IMAGE.fullmatch(pins['image']) or not re.fullmatch('sha256:[0-9a-f]{64}', pins['imageDigest']) or
             not re.fullmatch('[0-9a-f]{64}', pins['hostBundle']['sha256']) or
             not re.fullmatch('[A-Za-z0-9._-]{1,64}', pins['hostBundle']['baseId'])):
@@ -542,6 +549,7 @@ def pinned_copies(pins):
     templates['image'] = pins['image']
     workload = OPS_MCP.read_text()
     for name, value in (('GPU_BASE_IMAGE', pins['image']),
+                        ('AWS_GPU_BASE_IMAGE', pins.get('awsImage', pins['image'])),
                         ('GPU_HOST_BOOTSTRAP_SHA256', pins['hostBundle']['sha256']),
                         ('GPU_HOST_BOOTSTRAP_BASE_ID', pins['hostBundle']['baseId'])):
         pattern = re.compile(rf'(- name: {name}\n\s+value: )\S+')

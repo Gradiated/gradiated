@@ -11,15 +11,15 @@ When requests for 64 different cartridges share one batch, decode should cost
 the same as the same batch without cartridges. Prefill should cost no more than
 the extra K positions. Logits should match the research reference.
 
-| Check | Pass |
-| --- | --- |
-| Decode: 64 requests across 64 cartridges vs 64 base requests | throughput ratio ≥ 0.98 and mean ITL ratio ≤ 1.02 (ABBA, 4 repeats) |
-| Fixed cost: pool on, base traffic only, vs `--cartridge-pool-bytes 0` | the same 2% bounds |
-| Cold prefill: new cartridge after `flush_cache` vs base prompt plus K text tokens | TTFT ratio ≤ 1.05, plus the measured table-load time |
-| Warm prefill: cached cartridge prefix vs base request with a cached system prompt | TTFT ratio ≤ 1.05; `cached_tokens` ≥ first cartridge position + K |
-| Correctness: one held-out row, 16 assistant cut points | same argmax, top-5 \|Δ logprob\| ≤ 0.02, and the no-cartridge control differs by > 0.1 |
-| Mixed-batch isolation: the correctness run with 63 background requests (cartridges and base) | the same bounds |
-| Radix isolation: two cartridges with the same slot IDs | the second cartridge's first request caches at most the tokens before the slots |
+| Check                                                                                        | Pass                                                                                   |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Decode: 64 requests across 64 cartridges vs 64 base requests                                 | throughput ratio ≥ 0.98 and mean ITL ratio ≤ 1.02 (ABBA, 4 repeats)                    |
+| Fixed cost: pool on, base traffic only, vs `--cartridge-pool-bytes 0`                        | the same 2% bounds                                                                     |
+| Cold prefill: new cartridge after `flush_cache` vs base prompt plus K text tokens            | TTFT ratio ≤ 1.05, plus the measured table-load time                                   |
+| Warm prefill: cached cartridge prefix vs base request with a cached system prompt            | TTFT ratio ≤ 1.05; `cached_tokens` ≥ first cartridge position + K                      |
+| Correctness: one held-out row, 16 assistant cut points                                       | same argmax, top-5 \|Δ logprob\| ≤ 0.02, and the no-cartridge control differs by > 0.1 |
+| Mixed-batch isolation: the correctness run with 63 background requests (cartridges and base) | the same bounds                                                                        |
+| Radix isolation: two cartridges with the same slot IDs                                       | the second cartridge's first request caches at most the tokens before the slots        |
 
 ## Configuration
 

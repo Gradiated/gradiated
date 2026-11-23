@@ -4,12 +4,11 @@ export const jevk5ModelId = "posthog/jevk5";
 export const jevk5ArtifactModelPath = "alibiserikbay/JevK5";
 export const jevk5BaseModelPath = "Qwen/Qwen3.5-4B";
 
-// Unavailable: SGLang returns NaN logits for it on the L4 pools (2026-11-23).
 export const createJevk5ModelConfiguration = () =>
   ({
     id: jevk5ModelId,
     name: "JevK5",
-    status: "unavailable",
+    status: "available",
     type: "decision",
     owner: { organizationSlug: "posthog" },
     openrouterModelId: null,

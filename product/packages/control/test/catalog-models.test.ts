@@ -354,7 +354,7 @@ it("backfills each existing model with the type its definition declares", () => 
 
 it.each([
   ["posthog/jeeves", "available"],
-  ["posthog/jevk5", "unavailable"],
+  ["posthog/jevk5", "available"],
 ] as const)("defines %s as PostHog's own decision model (%s)", (id, status) => {
   const model: CatalogModelInput | undefined = catalogModels.find(
     (item) => item.id === id,

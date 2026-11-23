@@ -959,28 +959,6 @@
     "request_memory": "12Gi",
     "startup_timeout": 1800
   },
-  "4cc590ec8bbef1202a55b0c66fa82c3526c4fd2796845ea1388e9bb195c8a42e": {
-    "image": "gradiated/jevk5-bundle@sha256:4cc590ec8bbef1202a55b0c66fa82c3526c4fd2796845ea1388e9bb195c8a42e",
-    "bundles": {
-      "ubuntu24-cuda13-amd64-v3": "4cc590ec8bbef1202a55b0c66fa82c3526c4fd2796845ea1388e9bb195c8a42e"
-    },
-    "model_id": "posthog/jevk5-qualification",
-    "release": {
-      "protocol": "system_one",
-      "schema_version": 1,
-      "model_path": "alibiserikbay/JevK5",
-      "model_revision": "c4f7fdb3aeab5582336406e78d3bef11bf98833d",
-      "tokenizer_path": "alibiserikbay/JevK5",
-      "tokenizer_revision": "c4f7fdb3aeab5582336406e78d3bef11bf98833d",
-      "runtime_revision": "jevk5-4cc590ec8bbe"
-    },
-    "gpus": 1,
-    "active_requests": 8,
-    "cpu": "3",
-    "memory": "12Gi",
-    "request_memory": "12Gi",
-    "startup_timeout": 1800
-  },
   "60d996c744e868424025405b0c090a52d905a5fe6a2f5937ec09b3da0a1d757b": {
     "image": "gradiated/deepseek-sglang-bundle@sha256:60d996c744e868424025405b0c090a52d905a5fe6a2f5937ec09b3da0a1d757b",
     "bundles": {
@@ -1019,5 +997,27 @@
       "GRADIATED_API_BASE_URL": "http://127.0.0.1:3004",
       "LORA_BASE_MODEL_REVISION": "1bae0e1088993b9b82de08f59de5be5a34e42170"
     }
+  },
+  "bd5c11d31dd9236a9aa514563558751e5917b26ab7834413a1f39d47cd110ebe": {
+    "image": "gradiated/jevk5-bundle@sha256:bd5c11d31dd9236a9aa514563558751e5917b26ab7834413a1f39d47cd110ebe",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "bd5c11d31dd9236a9aa514563558751e5917b26ab7834413a1f39d47cd110ebe"
+    },
+    "model_id": "posthog/jevk5-qualification",
+    "release": {
+      "protocol": "system_one",
+      "schema_version": 1,
+      "model_path": "alibiserikbay/JevK5",
+      "model_revision": "c4f7fdb3aeab5582336406e78d3bef11bf98833d",
+      "tokenizer_path": "alibiserikbay/JevK5",
+      "tokenizer_revision": "c4f7fdb3aeab5582336406e78d3bef11bf98833d",
+      "runtime_revision": "jevk5-bd5c11d31dd9"
+    },
+    "gpus": 1,
+    "active_requests": 8,
+    "cpu": "3",
+    "memory": "12Gi",
+    "request_memory": "12Gi",
+    "startup_timeout": 1800
   }
 }

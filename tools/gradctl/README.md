@@ -96,6 +96,12 @@ Each catalog entry says what a command does before you run it:
   tool. Use `--` before them when one could be mistaken for gradctl's own, for
   example `gradctl gpu render-config -- --help`.
 
+## Compute provider defaults
+
+Ornn is temporarily excluded from default aggregate compute results (`search`,
+`ls`, and `meter`). Its implementation remains available through explicit
+`--provider ornn` selection, including commands for existing VMs.
+
 ## SF Compute training GPUs
 
 `gradctl compute search --provider sfcompute` reads live SKU-specific market quotes

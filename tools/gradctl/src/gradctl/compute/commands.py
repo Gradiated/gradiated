@@ -77,6 +77,8 @@ from .spheron import Spheron
 from .sfcompute import SFCompute
 
 PROVIDERS = {'nebius': Nebius, 'ornn': Ornn, 'spheron': Spheron, 'sfcompute': SFCompute}
+# Temporarily omit Ornn from aggregate results; retain explicit access for existing VMs.
+DISABLED_PROVIDERS = {'ornn'}
 TAILSCALE = 'https://api.tailscale.com/api/v2'
 TAG = 'tag:dev-training'
 
@@ -102,8 +104,8 @@ def provider_list(value):
 
 
 def each_provider(only, run):
-    """Run for the chosen providers, or every provider, skipping one that cannot be reached when none was chosen."""
-    for name in sorted(set(only)) if only else sorted(PROVIDERS):
+    """Run for chosen providers or enabled defaults, skipping failures only for defaults."""
+    for name in sorted(set(only)) if only else sorted(PROVIDERS.keys() - DISABLED_PROVIDERS):
         try:
             run(name, provider(name))
         # A provider error, or any failure such as a hung CLI or a malformed answer.
@@ -798,7 +800,8 @@ def register(commands, common) -> None:
         parser = leaf(sub, name, lambda ctx: run(ctx.args), meta, common, aliases=list(aliases))
         if many:
             parser.add_argument('--provider', type=provider_list, action='extend',
-                                help=f"one or more of {', '.join(sorted(PROVIDERS))}; default: all")
+                                help=f"one or more of {', '.join(sorted(PROVIDERS))}; "
+                                     f"default: {', '.join(sorted(PROVIDERS.keys() - DISABLED_PROVIDERS))}")
         else:
             parser.add_argument('--provider', choices=sorted(PROVIDERS),
                                 required=not vm and name != 'up', help='default: found from NAME or the platform')

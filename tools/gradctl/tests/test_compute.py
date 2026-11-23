@@ -3,6 +3,7 @@
 import argparse
 import re
 import unittest
+from unittest import mock
 
 import _path  # noqa: F401
 from gradctl.compute import commands as dev_training
@@ -32,6 +33,16 @@ class SearchTests(unittest.TestCase):
         self.assertEqual(dev_training.provider_list('ornn, nebius'), ['ornn', 'nebius'])
         with self.assertRaises(argparse.ArgumentTypeError):
             dev_training.provider_list('aws')
+
+    def test_default_results_skip_ornn_but_explicit_selection_still_works(self):
+        with mock.patch.object(dev_training, 'provider') as provider:
+            visited = []
+            dev_training.each_provider(None, lambda name, cloud: visited.append(name))
+            self.assertEqual(visited, ['nebius', 'sfcompute', 'spheron'])
+            self.assertNotIn(mock.call('ornn'), provider.call_args_list)
+            dev_training.each_provider(['ornn'], lambda name, cloud: visited.append(name))
+            self.assertEqual(visited[-1], 'ornn')
+            provider.assert_called_with('ornn')
 
     def test_each_platform_name_has_one_provider(self):
         for platform, expected in (('gpu-h100-sxm', 'nebius'), ('nvidia_b300', 'ornn'), ('cpu', 'ornn'),
@@ -90,7 +101,7 @@ class SearchTests(unittest.TestCase):
             def offers(self, term):
                 return [OFFER]
 
-        providers, dev_training.PROVIDERS = dev_training.PROVIDERS, {'nebius': Hung, 'ornn': Healthy}
+        providers, dev_training.PROVIDERS = dev_training.PROVIDERS, {'nebius': Hung, 'spheron': Healthy}
         rows = []
         try:
             dev_training.each_provider(None, lambda name, cloud: rows.extend(cloud.offers(None)))

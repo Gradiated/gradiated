@@ -753,3 +753,23 @@ async fn a_streamed_cartridge_request_reports_usage_without_its_positions() {
     assert_eq!((usage.input_tokens(), usage.cached_input_tokens()), (8, 0));
     assert_eq!(chunk.into_response()["usage"]["prompt_tokens"], 8);
 }
+
+#[test]
+fn cartridge_positions_are_left_out_of_cache_writes_too() {
+    let mut names = models("model-a", "model-a");
+    names.cartridge_tokens = 512;
+    for (cached, written, expected) in [(0, 600, (0, 88)), (520, 80, (8, 80)), (100, 500, (0, 88))]
+    {
+        let mut response = completion();
+        response["usage"] = json!({"prompt_tokens": 600, "completion_tokens": 5, "total_tokens": 605,
+            "prompt_tokens_details": {"cached_tokens": cached, "cache_write_tokens": written}});
+        let usage = normalize_completion(&serde_json::to_vec(&response).unwrap(), &names)
+            .unwrap()
+            .usage();
+        assert_eq!(
+            (usage.cached_input_tokens(), usage.cache_write_tokens()),
+            expected,
+            "{cached} cached, {written} written"
+        );
+    }
+}

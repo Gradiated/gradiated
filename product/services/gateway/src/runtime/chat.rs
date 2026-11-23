@@ -466,16 +466,20 @@ impl UpstreamUsage {
             return Err(ProtocolViolation::Usage.into());
         }
 
+        let cached = self
+            .prompt_tokens_details
+            .as_ref()
+            .map_or(0, |details| details.cached_tokens);
+        // Cartridge positions the cache did not hold were written to it instead.
+        let written_cartridge = cartridge_tokens - cached.min(cartridge_tokens);
         NormalizedUsage::new(
             self.prompt_tokens.saturating_sub(cartridge_tokens),
-            self.prompt_tokens_details
-                .as_ref()
-                .map_or(0, |details| details.cached_tokens)
-                .saturating_sub(cartridge_tokens),
+            cached.saturating_sub(cartridge_tokens),
             self.prompt_tokens_details
                 .and_then(|details| details.cache_write_tokens)
                 .or(self.cache_write_tokens)
-                .unwrap_or(0),
+                .unwrap_or(0)
+                .saturating_sub(written_cartridge),
             self.completion_tokens,
             self.completion_tokens_details
                 .and_then(|details| details.reasoning_tokens)

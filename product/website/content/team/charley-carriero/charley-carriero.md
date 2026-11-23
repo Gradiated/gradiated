@@ -28,10 +28,14 @@ is not shown, so delete nothing: fill in what you want. -->
 paragraphs read better than one long one. Until you write this, your summary
 above is shown as your bio. -->
 
-I'd like to make it easier to follow what's going on in AI right now.
-There are large problems to solve, and building cheap and energy efficient AI systems is one of them.
+I'd like to make it easier to follow what's going on in AI right now. 
+
+It's quite clear this technology is here to stay, but there are still really large problems to solve. 
+Understanding how to build cheap and energy efficient AI systems is one of them.
 
 We're giving that one a go, and I'm very happy to be writing about it.
+
+
 
 
 ## Working on

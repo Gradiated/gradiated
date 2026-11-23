@@ -108,6 +108,8 @@ describe("model configurations", () => {
       output: [8_000, 8_000],
     },
     "z-ai/glm-5.3": { input: [1_400, 260], output: [4_400, 4_400] },
+    "posthog/jeeves": { input: [20, 20], output: [0] },
+    "posthog/jevk5": { input: [20, 20], output: [0] },
   };
 
   it.each([...catalogModels, ...legacyModels])(
@@ -141,6 +143,8 @@ describe("model configurations", () => {
       "perplexity-ai/pplx-decider-v1.2": null,
       "moonshotai/kimi-k3.1-pro": "moonshotai/kimi-k3.1-pro",
       "z-ai/glm-5.3": "z-ai/glm-5.3",
+      "posthog/jeeves": null,
+      "posthog/jevk5": null,
     });
     for (const mapping of Object.values(mappings)) {
       if (typeof mapping === "string") OpenRouterModelIdSchema.parse(mapping);
@@ -182,6 +186,8 @@ describe("model configurations", () => {
       "decision",
       "chat",
       "chat",
+      "decision",
+      "decision",
     ]);
   });
 
@@ -338,9 +344,38 @@ it("backfills each existing model with the type its definition declares", () => 
   const backfilled = [...list.matchAll(/'([^']+)'/g)].map((match) => match[1]);
 
   expect(backfilled.sort()).toEqual(
+    // Owned models are new rows, written with their type.
     [...catalogModels, ...legacyModels, ...trainingOnlyModels()]
-      .filter((model) => model.type === "decision")
+      .filter((model) => model.type === "decision" && !("owner" in model))
       .map((model) => model.id)
       .sort(),
   );
 });
+
+it.each(["posthog/jeeves", "posthog/jevk5"])(
+  "defines %s as PostHog's own decision model, unavailable until it has production pools",
+  (id) => {
+    const model: CatalogModelInput | undefined = catalogModels.find(
+      (item) => item.id === id,
+    );
+
+    expect(model).toMatchObject({
+      owner: { organizationSlug: "posthog" },
+      type: "decision",
+      status: "unavailable",
+      openrouterModelId: null,
+      properties: {
+        tokenizer: "Qwen",
+        input_modalities: [
+          { supported_inputs: { max_prompt_length: { value: 16_384 } } },
+        ],
+        output_modalities: [{ streaming: false, max_length: { value: 1 } }],
+      },
+    });
+    expect(model?.id.startsWith("posthog/")).toBe(true);
+    expect(model?.aliases ?? []).toEqual([]);
+    expect(() => requireOwnedModelNames(model!)).not.toThrow();
+    // Never compiled into the public catalog, so never published or listed.
+    expect(catalogModel(id)).toBeUndefined();
+  },
+);

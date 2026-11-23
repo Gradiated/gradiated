@@ -253,7 +253,11 @@ await withControlDatabase(async ({ database, catalog }) => {
   }
 }, databaseUrl);
 
-const seededModelNames = catalogModels.map((model) => model.name).join(", ");
+// Organization-owned models are skipped unless their owner exists locally.
+const seededModelNames = catalogModels
+  .filter((model) => !("owner" in model))
+  .map((model) => model.name)
+  .join(", ");
 console.log(
   creditTarget
     ? `Seed data ready for ${email}: ${organizationName}, ${seededModelNames} and $100.00 credit`

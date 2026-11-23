@@ -306,6 +306,7 @@ def prefill(args: argparse.Namespace) -> int:
         "warm_plus_k",
         "base_warm",
     )
+    matched = ("base_plus_k", "warm_plus_k", "cold", "cold_resident", "warm")
     samples = {name: [] for name in names}
     usage = {}
 
@@ -329,10 +330,14 @@ def prefill(args: argparse.Namespace) -> int:
         sample("warm", cartridge)
         ttft(args, args.base_model, messages(str(uuid.uuid4())))
         sample("base_warm", args.base_model)
-    if usage["base_plus_k"]["prompt_tokens"] != usage["cold"]["prompt_tokens"]:
-        raise SystemExit(
-            "the padded control and the cartridge request differ in length"
-        )
+        # Every trial, not only the last: the padded arms and the cartridge
+        # arms must prefill the same number of tokens.
+        lengths = {name: usage[name]["prompt_tokens"] for name in matched}
+        if set(lengths.values()) != {padded}:
+            raise SystemExit(
+                f"trial {trial}: the padded control and the cartridge request"
+                f" differ in length: {lengths}"
+            )
     median = {
         name: 1000 * statistics.median(values) for name, values in samples.items()
     }

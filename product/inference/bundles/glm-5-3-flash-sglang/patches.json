@@ -160,7 +160,7 @@
     {
       "path": "sglang/srt/managers/cartridge.py",
       "original_sha256": null,
-      "overlay_sha256": "4548642c1af1539097cf7135ef2dbc36b7817cde7ba3c806250a558b6072d540",
+      "overlay_sha256": "9302750f5e98cd7585e05179b5d1a0451eb844ef2f0c5fc40c919c8193aefc25",
       "patch": "cartridge_module.patch"
     },
     {
@@ -202,7 +202,7 @@
     {
       "path": "sglang/srt/entrypoints/openai/serving_chat.py",
       "original_sha256": "f4e21c5c758c38dbc7d3a1fecae3adf56d49ff889c2284a060fb002e72465bd8",
-      "overlay_sha256": "952d48fa15a4789d1a9b0667e3f46465cb03118a9f3226917a5cdc4033190535",
+      "overlay_sha256": "1a51d9e577a14845f648a629f1e34f297338afd845b59b8fd02b533ec44f1a5c",
       "patch": "cartridge_serving_chat.patch"
     },
     {

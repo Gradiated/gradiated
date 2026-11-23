@@ -26,6 +26,12 @@ export const ModelDeploymentReleaseSchema = z
     lora_base_model_revision: BoundedIdentifierSchema.optional().describe(
       "Qualified training checkpoint revision accepted by this deployment; defaults to model_revision.",
     ),
+    cartridge_enabled: z
+      .boolean()
+      .optional()
+      .describe(
+        "Whether the runtime serves prompt-cartridge task versions; absent means it does not.",
+      ),
   })
   .openapi("ModelDeploymentRelease");
 

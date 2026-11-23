@@ -71,6 +71,8 @@ def settings(environment):
     lora = environment.get('LORA_ENABLED', 'false')
     if lora not in {'true', 'false'} or (lora == 'true' and not model['lora_targets']):
         raise ValueError('This checkpoint has no qualified adapters')
+    if 'CARTRIDGE_POOL_BYTES' in environment:
+        raise ValueError('GLM SGLang profiles do not serve cartridges')
     if environment.get('TENSOR_PARALLEL_SIZE', '2') != '2':
         raise ValueError('GLM SGLang profiles require TP2')
     if environment.get('MAX_QUEUED_REQUESTS') or environment.get('MAX_QUEUED_TOKENS'):

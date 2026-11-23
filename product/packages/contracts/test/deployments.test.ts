@@ -85,6 +85,24 @@ describe("ModelDeploymentReleaseSchema", () => {
     ).toBe(false);
   });
 
+  it("accepts an optional cartridge flag that defaults to absent", () => {
+    expect(ModelDeploymentReleaseSchema.parse(release).cartridge_enabled).toBe(
+      undefined,
+    );
+    expect(
+      ModelDeploymentReleaseSchema.parse({
+        ...release,
+        cartridge_enabled: true,
+      }).cartridge_enabled,
+    ).toBe(true);
+    expect(
+      ModelDeploymentReleaseSchema.safeParse({
+        ...release,
+        cartridge_enabled: "true",
+      }).success,
+    ).toBe(false);
+  });
+
   it("rejects an unknown key", () => {
     expect(
       ModelDeploymentReleaseSchema.safeParse({ ...release, extra: true })

@@ -351,6 +351,20 @@ def validate_active_requests(pools, runtimes, profiles):
             raise ValueError(f'Pool {name} runtime active_requests must equal its launcher profile, {enforced}')
 
 
+def validate_cartridges(runtimes):
+    # The DeepSeek runtime sizes its cartridge pool whenever LORA_ENABLED is set; the release flag
+    # only lets the gateway route cartridges there, so it may be off while the pool exists.
+    for key, runtime in runtimes.items():
+        if 'cartridge_enabled' not in runtime['release']:
+            continue
+        if not runtime['image'].startswith('gradiated/deepseek-sglang-bundle@'):
+            raise ValueError(f'Runtime release {key} cannot serve cartridges; only DeepSeek SGLang can')
+        if runtime['release']['cartridge_enabled'] and (
+                runtime['release'].get('lora_enabled') is not True
+                or runtime.get('environment', {}).get('LORA_ENABLED') != 'true'):
+            raise ValueError(f'Runtime release {key} serves cartridges only with lora_enabled and LORA_ENABLED')
+
+
 def disruption_budget(name, pool):
     # Voluntary disruptions, such as a host drain, take one replica below the floor at most.
     return {'apiVersion': 'policy/v1', 'kind': 'PodDisruptionBudget',
@@ -471,6 +485,7 @@ def replica_rules(pools):
 def model_outputs(models, runtimes, hosts):
     pools = plan(models, runtimes, hosts)
     validate_active_requests(pools, runtimes, glm_sglang_profiles())
+    validate_cartridges(runtimes)
     outputs = {}
     for name, pool in pools.items():
         documents = [rollout(name, pool, runtimes)]

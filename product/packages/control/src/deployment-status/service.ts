@@ -58,6 +58,9 @@ export const servedReleaseDigest = (
     ...(release.lora_base_model_revision === undefined
       ? {}
       : { lora_base_model_revision: release.lora_base_model_revision }),
+    ...(release.cartridge_enabled === undefined
+      ? {}
+      : { cartridge_enabled: release.cartridge_enabled }),
   };
 
   return `sha256:${createHash("sha256")

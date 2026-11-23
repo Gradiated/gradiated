@@ -164,18 +164,19 @@ pairing's model/tokenizer/adapter layout and inference have been verified.
 The pinned runtime profile controls both GPU allocation and the engine flag;
 the assigned GPU UUID count must match. These are host decisions, not adapter fields.
 
-| Setting                  | Source/default                                                   |
-| ------------------------ | ---------------------------------------------------------------- |
-| `LORA_ENABLED`           | Runtime catalogue `lora_enabled`, false                          |
-| `MODEL_ID`               | Existing public base model ID                                    |
-| `LORA_GPU_SLOTS`         | Native `max_loras`, 8                                            |
-| `LORA_CPU_SLOTS`         | Native `max_cpu_loras`, 64; at least GPU slots                   |
-| `LORA_MAX_RANK`          | Native `max_lora_rank`, 8                                        |
-| `LORA_DISK_CACHE_BYTES`  | Explicit allocation disk budget; zero fails startup when enabled |
-| `LORA_DOWNLOAD_HOSTS`    | Exact S3 HTTPS host allowlist                                    |
-| `GRADIATED_API_BASE_URL` | API origin; HTTPS or local loopback HTTP                         |
-| `LORA_CACHE_DIR`         | `${GRADIATED_RUNTIME_DIR}/lora`                                  |
-| `ADAPTER_PORT`           | Allocation-local control port; inference stays on `RUNTIME_PORT` |
+| Setting                  | Source/default                                                                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `LORA_ENABLED`           | Runtime catalogue `lora_enabled`, false                                                                                                          |
+| Cartridge pool           | DeepSeek only: 4 GiB per rank (`CARTRIDGE_POOL_BYTES` in its `config.py`) whenever `LORA_ENABLED`; release `cartridge_enabled` routes cartridges |
+| `MODEL_ID`               | Existing public base model ID                                                                                                                    |
+| `LORA_GPU_SLOTS`         | Native `max_loras`, 8                                                                                                                            |
+| `LORA_CPU_SLOTS`         | Native `max_cpu_loras`, 64; at least GPU slots                                                                                                   |
+| `LORA_MAX_RANK`          | Native `max_lora_rank`, 8                                                                                                                        |
+| `LORA_DISK_CACHE_BYTES`  | Explicit allocation disk budget; zero fails startup when enabled                                                                                 |
+| `LORA_DOWNLOAD_HOSTS`    | Exact S3 HTTPS host allowlist                                                                                                                    |
+| `GRADIATED_API_BASE_URL` | API origin; HTTPS or local loopback HTTP                                                                                                         |
+| `LORA_CACHE_DIR`         | `${GRADIATED_RUNTIME_DIR}/lora`                                                                                                                  |
+| `ADAPTER_PORT`           | Allocation-local control port; inference stays on `RUNTIME_PORT`                                                                                 |
 
 Prepare/probe/status/metrics bind only to loopback and use the existing
 Tailscale host ingress for external access, like the native SGLang

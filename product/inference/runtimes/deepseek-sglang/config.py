@@ -18,6 +18,9 @@ BUNDLE_ROOT = Path(__file__).resolve().parents[1]
 # expert (w1/w2/w3); routed-expert adapters are rejected at load because neither FP4 MoE kernel exposes
 # LoRA hooks. Names are the checkpoint's module leaves.
 LORA_TARGETS = ['wq_a', 'wq_b', 'wkv', 'wo_a', 'wo_b', 'w1', 'w2', 'w3', 'lm_head']
+# Per-rank cartridge table. Host agents pass only allowlisted variables, so the adapter service
+# (LORA_ENABLED) turns it on; the release's cartridge_enabled decides whether the gateway routes cartridges.
+CARTRIDGE_POOL_BYTES = 4 * 1024 ** 3
 PROFILES = {
     'b300-tp4': {'gpu_product': 'B300', 'active_requests': ACTIVE_REQUESTS, 'prefill_tokens': 16384,
                  'memory_fraction': 0.80, 'dspark_block_size': 5},
@@ -74,6 +77,7 @@ def settings(environment):
         raise ValueError('Runtime ports overlap reserved host services')
     return {'root': root, 'front': front, 'warmup': warmup, 'backend': backend, 'metrics': metrics,
             'profile': profile, **PROFILES[profile], 'model_id': MODEL_ID, 'lora': lora == 'true',
+            **({'cartridge_pool_bytes': CARTRIDGE_POOL_BYTES} if lora == 'true' else {}),
             'model': MODEL, 'revision': REVISION, 'served_model_name': MODEL, 'tp': TENSOR_PARALLEL_SIZE}
 
 
@@ -156,6 +160,8 @@ def commands(environment):
         # Only the Triton LoRA backend implements the grouped wo_a adapter; LoRA keeps the
         # FlashMLA (not MegaAttention) decode backend that the patched hook requires.
         backend += ['--lora-backend', 'triton', *lora_arguments(environment)]
+    if config.get('cartridge_pool_bytes'):
+        backend += ['--cartridge-pool-bytes', str(config['cartridge_pool_bytes'])]
     router = [python, '-m', 'smg.launch_router', '--worker-urls',
               f"http://127.0.0.1:{config['backend']}", '--policy', 'round_robin',
               '--host', '127.0.0.1', '--port', str(config['front']),

@@ -671,6 +671,29 @@ class RenderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'no single GLM SGLang profile'):
             renderer.validate_active_requests(placed, changed, profiles)
 
+    def test_only_lora_deepseek_releases_serve_cartridges(self):
+        _, runtimes, _ = self.fleet()
+        renderer.validate_cartridges(runtimes)
+        deepseek = next(key for key, runtime in runtimes.items()
+                        if runtime['image'].startswith('gradiated/deepseek-sglang-bundle@')
+                        and runtime['release'].get('lora_enabled'))
+        glm = next(key for key, runtime in runtimes.items()
+                   if runtime['image'].startswith('gradiated/glm-sglang-bundle@'))
+        for key, release, environment, message in [
+                (glm, {'cartridge_enabled': True}, {}, 'only DeepSeek SGLang'),
+                (glm, {'cartridge_enabled': False}, {}, 'only DeepSeek SGLang'),
+                (deepseek, {'cartridge_enabled': True, 'lora_enabled': False}, {}, 'only with lora_enabled'),
+                (deepseek, {'cartridge_enabled': True}, {'LORA_ENABLED': 'false'}, 'only with lora_enabled')]:
+            changed = copy.deepcopy(runtimes)
+            changed[key]['release'].update(release)
+            changed[key].setdefault('environment', {}).update(environment)
+            with self.subTest(key=key, release=release), self.assertRaisesRegex(ValueError, message):
+                renderer.validate_cartridges(changed)
+        for enabled in (True, False):
+            changed = copy.deepcopy(runtimes)
+            changed[deepseek]['release']['cartridge_enabled'] = enabled
+            renderer.validate_cartridges(changed)
+
     def test_b300_sglang_pool_keeps_its_compact_memory_request(self):
         models, runtimes, hosts = self.fleet()
         pool = renderer.plan(models, runtimes, hosts)['glm-dealign-sglang']

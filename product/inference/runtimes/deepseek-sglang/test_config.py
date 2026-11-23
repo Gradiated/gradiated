@@ -63,7 +63,20 @@ class Configuration(unittest.TestCase):
         self.assertTrue(settings['lora'])
         for flag, value in [('--max-lora-rank', '8'), ('--max-loras-per-batch', '8'), ('--max-loaded-loras', '64')]:
             self.assertEqual(backend[backend.index(flag) + 1], value)
-        self.assertEqual(backend[backend.index('--lora-target-modules') + 1:], config.LORA_TARGETS)
+        start = backend.index('--lora-target-modules') + 1
+        self.assertEqual(backend[start:start + len(config.LORA_TARGETS) + 1],
+                         [*config.LORA_TARGETS, '--cartridge-pool-bytes'])
+
+    def test_the_cartridge_pool_follows_the_adapter_service(self):
+        lora = {**self.environment, 'LORA_ENABLED': 'true', 'MODEL_ID': config.MODEL_ID,
+                'LORA_GPU_SLOTS': '8', 'LORA_CPU_SLOTS': '64', 'LORA_MAX_RANK': '8',
+                'LORA_DISK_CACHE_BYTES': '1073741824', 'LORA_DOWNLOAD_HOSTS': 'artifacts.s3.amazonaws.com'}
+        settings, backend, _ = config.commands(self.environment)
+        self.assertNotIn('--cartridge-pool-bytes', backend)
+        self.assertNotIn('cartridge_pool_bytes', settings)
+        settings, backend, _ = config.commands(lora)
+        self.assertEqual(backend[backend.index('--cartridge-pool-bytes') + 1], str(4 * 1024 ** 3))
+        self.assertEqual(settings['cartridge_pool_bytes'], config.CARTRIDGE_POOL_BYTES)
 
     def test_build_verifier_preserves_model_for_base_and_adapter_commands(self):
         lora = {**self.environment, 'LORA_ENABLED': 'true', 'MODEL_ID': config.MODEL_ID,

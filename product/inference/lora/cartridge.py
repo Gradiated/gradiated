@@ -45,6 +45,9 @@ def validate_metadata(adapter, model_config):
         or type(adapter.get("has_slot_token_ids")) is not bool
     ):
         raise ValueError("Incompatible cartridge")
+    # DeepSeek V4 hashes token IDs (Engram), so serving needs the IDs the cartridge was trained behind.
+    if not adapter["has_slot_token_ids"]:
+        raise ValueError("Serving a cartridge requires slot_token_ids")
 
 
 def read_header(path):

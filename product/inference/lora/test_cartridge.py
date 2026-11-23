@@ -147,6 +147,7 @@ class CartridgeFileTests(unittest.TestCase):
             {"placement": "suffix"},
             {"separator": "x" * 65},
             {"has_slot_token_ids": 1},
+            {"has_slot_token_ids": False},
         ):
             with self.subTest(change=change), self.assertRaises(ValueError):
                 cartridge.validate_metadata({**adapter, **change}, self.config)

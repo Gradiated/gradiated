@@ -357,6 +357,36 @@
         "lora_base_model_revision": "bf16-qualified-training-revision"
       },
       "digest": "sha256:fdebe782f0acedd73cd2a7774a4599a17aabcfc97916b0d0a877e32cc9aea62a"
+    },
+    {
+      "name": "required fields only; cartridge_enabled=false",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "cartridge_enabled": false
+      },
+      "digest": "sha256:c35c78a123b852309e2ac125c2314baade87d52c940f619564ed558a3b3345d1"
+    },
+    {
+      "name": "cartridge-enabled-lora-deployment",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "runtime_model_name": "vendor/runtime-name",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "tokenizer_mode": "deepseek_v41",
+        "lora_enabled": true,
+        "lora_base_model_revision": "bf16-qualified-training-revision",
+        "cartridge_enabled": true
+      },
+      "digest": "sha256:b4002150bf8b8a550ff450d6416cbe19b701e8f3a4e520addbb1d200912ccd83"
     }
   ]
 }

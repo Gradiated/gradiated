@@ -167,6 +167,7 @@ the assigned GPU UUID count must match. These are host decisions, not adapter fi
 | Setting                  | Source/default                                                   |
 | ------------------------ | ---------------------------------------------------------------- |
 | `LORA_ENABLED`           | Runtime catalogue `lora_enabled`, false                          |
+| Cartridge pool           | DeepSeek only: 4 GiB per rank (`CARTRIDGE_POOL_BYTES` in its `config.py`) whenever `LORA_ENABLED`; release `cartridge_enabled` routes cartridges |
 | `MODEL_ID`               | Existing public base model ID                                    |
 | `LORA_GPU_SLOTS`         | Native `max_loras`, 8                                            |
 | `LORA_CPU_SLOTS`         | Native `max_cpu_loras`, 64; at least GPU slots                   |

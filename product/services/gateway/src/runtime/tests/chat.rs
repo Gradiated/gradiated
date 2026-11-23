@@ -773,3 +773,12 @@ fn cartridge_positions_are_left_out_of_cache_writes_too() {
         );
     }
 }
+
+#[test]
+fn a_cartridge_usage_report_without_its_positions_is_rejected() {
+    let mut names = models("model-a", "model-a");
+    names.cartridge_tokens = 512;
+    let mut response = completion();
+    response["usage"] = json!({"prompt_tokens": 100, "completion_tokens": 5, "total_tokens": 105});
+    assert!(normalize_completion(&serde_json::to_vec(&response).unwrap(), &names).is_err());
+}

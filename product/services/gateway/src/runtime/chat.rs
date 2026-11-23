@@ -470,10 +470,15 @@ impl UpstreamUsage {
             .prompt_tokens_details
             .as_ref()
             .map_or(0, |details| details.cached_tokens);
+        // A cartridge runtime counts all K positions in the prompt; fewer means an incompatible report.
+        let prompt = self
+            .prompt_tokens
+            .checked_sub(cartridge_tokens)
+            .ok_or(ProtocolViolation::Usage)?;
         // Cartridge positions the cache did not hold were written to it instead.
         let written_cartridge = cartridge_tokens - cached.min(cartridge_tokens);
         NormalizedUsage::new(
-            self.prompt_tokens.saturating_sub(cartridge_tokens),
+            prompt,
             cached.saturating_sub(cartridge_tokens),
             self.prompt_tokens_details
                 .and_then(|details| details.cache_write_tokens)

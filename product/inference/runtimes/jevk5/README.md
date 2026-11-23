@@ -42,9 +42,9 @@ Usage counts every pass's whole prompt, as upstream does, with nothing reported 
 
 One NVIDIA L4 (24 GB, compute 8.9) a replica, on a g6.xlarge (4 vCPU, about 14 GiB allocatable host memory). The
 release is pinned in `product/inference/gpu/runtimes.json` under the private runtime model ID
-`posthog/jevk5-qualification`, so it can be staged as a qualification pool and promoted without a new pin: `gpus` 1,
-`active_requests` 8, `cpu` "3", `memory` and `request_memory` "12Gi", `startup_timeout` 1800. It has no pool yet:
-that needs registered L4 `GpuHost`s with a driver for CUDA 13 (580 or newer).
+`posthog/jevk5-qualification`, served as `posthog/jevk5`: `gpus` 1, `active_requests` 8, `cpu` "3", `memory` and
+`request_memory` "12Gi", `startup_timeout` 1800. The production pool `jevk5-l4` (`models.json`) runs two replicas on
+the four AWS L4 hosts reserved for `posthog`.
 
 ## Verification
 

@@ -94,8 +94,14 @@ cannot read back.
 Jeeves and JevK5 are PostHog-private models (`posthog/...`) served to their
 API keys. Their hosts carry `extraTaints: gradiated.com/reserved=posthog`; their
 pools reserve `posthog` and select `gradiated.com/provider: aws` and
-`gradiated.com/gpu-product: L4`, spread across zones. No other model schedules
-there, and no prompt or response is persisted on the hosts.
+`gradiated.com/gpu-product: L4`. No other model schedules there, and no prompt
+or response is persisted on the hosts.
+
+The four reserved hosts are three in us-east-1d and one in us-east-1c: that was
+the L4 capacity available on 2026-11-20. Two replicas of each model fill all four,
+so at least one model has both replicas in us-east-1d, and an outage of that
+zone takes it down. Spreading both models needs a second us-east-1c (or another
+zone's) reservation, then a `gradiated.com/fault-domain` spread on each pool.
 
 ## Rollout
 
@@ -109,7 +115,12 @@ there, and no prompt or response is persisted on the hosts.
    inside Docker on that host.
 4. AWS hosts start observe-only in gpu-fleet; automated re-imaging follows as
    a separate change.
-5. Deploy the reserved PostHog pools: canary, qualification, cutover.
+5. Done 2026-11-23: the four L4 hosts are registered as GpuHosts reserved for
+   `posthog`. The `jeeves-l4` and `jevk5-l4` pools serve in production directly,
+   without a qualification stage, because PostHog was not yet calling the
+   models. The worker SDK-qualifies each pod before routing to it.
+6. Run `product/inference/runtimes/posthog/parity.py` against the live pods,
+   then PostHog cuts over.
 
 ## CPU smoke test (2026-11-20)
 

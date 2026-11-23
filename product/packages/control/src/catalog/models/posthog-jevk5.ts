@@ -4,12 +4,11 @@ export const jevk5ModelId = "posthog/jevk5";
 export const jevk5ArtifactModelPath = "alibiserikbay/JevK5";
 export const jevk5BaseModelPath = "Qwen/Qwen3.5-4B";
 
-// Unavailable until its AWS L4 pools have qualified and passed parity.
 export const createJevk5ModelConfiguration = () =>
   ({
     id: jevk5ModelId,
     name: "JevK5",
-    status: "unavailable",
+    status: "available",
     type: "decision",
     owner: { organizationSlug: "posthog" },
     openrouterModelId: null,

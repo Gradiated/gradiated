@@ -353,7 +353,7 @@ it("backfills each existing model with the type its definition declares", () => 
 });
 
 it.each(["posthog/jeeves", "posthog/jevk5"])(
-  "defines %s as PostHog's own decision model, unavailable until it has production pools",
+  "defines %s as PostHog's own decision model, served from its AWS L4 pools",
   (id) => {
     const model: CatalogModelInput | undefined = catalogModels.find(
       (item) => item.id === id,
@@ -362,7 +362,7 @@ it.each(["posthog/jeeves", "posthog/jevk5"])(
     expect(model).toMatchObject({
       owner: { organizationSlug: "posthog" },
       type: "decision",
-      status: "unavailable",
+      status: "available",
       openrouterModelId: null,
       properties: {
         tokenizer: "Qwen",

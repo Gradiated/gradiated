@@ -42,7 +42,7 @@ regexes = [
 
 # The public Hugging Face repository `alibiserikbay/JevK5` as a runtime
 # release's `tokenizer_path`: "token" in the key and a mixed-case ID look like a
-# credential. Only that ID, only in the runtime catalogue and its rendered copy.
+# credential. Only that ID, only in the runtime catalogue and its rendered copies.
 [[allowlists]]
 description = "Public Hugging Face tokenizer repository in the runtime catalogue"
 targetRules = ["generic-api-key"]
@@ -50,6 +50,7 @@ condition = "AND"
 paths = [
   '''^product/inference/gpu/runtimes\.json$''',
   '''^infra/environments/prod/us-east-1/kubernetes/gpu-inference/controller\.yaml$''',
+  '''^infra/environments/prod/us-east-1/kubernetes/gpu-inference/models/jevk5-l4/jevk5-l4\.yaml$''',
 ]
 regexTarget = "match"
 regexes = [

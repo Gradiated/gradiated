@@ -206,14 +206,22 @@ class Engine:
 
 
 def sglang_command(checkpoint, port):
-    return common.sglang_command(checkpoint, port, MAX_TOKENS, SGLANG_FLAGS)
+    # JevK5ForCausalLM (jevk5_sglang/model.py) loads the checkpoint's vision-language weight names.
+    return common.sglang_command(checkpoint, port, MAX_TOKENS, [
+        *SGLANG_FLAGS, '--json-model-override-args', json.dumps({'architectures': ['JevK5ForCausalLM']})])
+
+
+def sglang_environment(root):
+    """SGLang imports JevK5ForCausalLM from the bundle's jevk5_sglang package."""
+    return {'SGLANG_EXTERNAL_MODEL_PACKAGE': 'jevk5_sglang', 'PYTHONPATH': str(root)}
 
 
 def load(checkpoint):
     from transformers import AutoTokenizer
 
     config = json.loads((Path(checkpoint) / 'jevk5_config.json').read_text())
-    process, url = common.start_sglang(sglang_command(checkpoint, common.free_port()))
+    process, url = common.start_sglang(sglang_command(checkpoint, common.free_port()),
+                                       sglang_environment(Path(__file__).resolve().parent))
     return Engine(AutoTokenizer.from_pretrained(checkpoint), common.client(url, ACTIVE_REQUESTS),
                   lambda: process.poll() is None, float(config['temperature']),
                   float(config.get('knockout_temperature', upstream.TEMPERATURES['knockout'])))

@@ -15,6 +15,11 @@ PostHog's server and the parity check are in [`../posthog`](../posthog/README.md
   is vendored byte for byte as `jevk5_prompt.py` (sha256 pinned in `service.py` and checked by the tests and the
   build), with its `LICENSE.jevk5` (Apache-2.0) and `NOTICE.jevk5`.
 - Served in BF16, as PostHog serves it: its parity table puts BF16 closest to the upstream runtime.
+- The checkpoint names its weights `model.language_model.*`, as Qwen3.5's vision-language checkpoints do, but declares
+  the text-only `Qwen3_5ForCausalLM`. SGLang 0.5.21's text loader matches none of those names and silently leaves every
+  layer uninitialised, so every logit is NaN (measured on the L4 hosts, 2026-11-23; `transformers` loads them).
+  `jevk5_sglang/model.py` (`JevK5ForCausalLM`, an SGLang external model package selected with
+  `--json-model-override-args`) renames them before the stock loader and refuses to start if any parameter is unloaded.
 
 ## Readout
 

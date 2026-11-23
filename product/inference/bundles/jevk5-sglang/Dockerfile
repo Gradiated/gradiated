@@ -23,6 +23,7 @@ FROM dependencies AS package
 COPY bundles/package.sh /package.sh
 COPY runtimes/jevk5/service.py runtimes/jevk5/jevk5_prompt.py runtimes/jevk5/verify-build.py \
      runtimes/jevk5/LICENSE.jevk5 runtimes/jevk5/NOTICE.jevk5 /bundle/
+COPY runtimes/jevk5/jevk5_sglang/__init__.py runtimes/jevk5/jevk5_sglang/model.py /bundle/jevk5_sglang/
 COPY runtimes/posthog/posthog_common.py /bundle/posthog_common.py
 COPY runtimes/kev/adapter.py /bundle/kev_http.py
 COPY --chmod=755 bundles/jevk5-sglang/entrypoint /bundle/entrypoint

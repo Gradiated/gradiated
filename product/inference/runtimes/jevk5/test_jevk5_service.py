@@ -81,6 +81,56 @@ def letter_distribution(n, temperature=1.22):
 
 
 class JevK5Tests(unittest.TestCase):
+    def test_sglang_serves_the_checkpoint_through_jevk5_sglang(self):
+        command = service.sglang_command('/m', 1)
+        override = command[command.index('--json-model-override-args') + 1]
+        self.assertEqual(json.loads(override), {'architectures': ['JevK5ForCausalLM']})
+        self.assertEqual(service.sglang_environment(Path('/r')),
+                         {'SGLANG_EXTERNAL_MODEL_PACKAGE': 'jevk5_sglang', 'PYTHONPATH': '/r'})
+
+    def test_the_model_loads_vision_language_weight_names_and_refuses_gaps(self):
+        # A stand-in for SGLang's Qwen3_5ForCausalLM, whose loader takes model.* names.
+        import types
+        received = []
+
+        class Base:
+            def __init__(self, parameters):
+                self.parameters = parameters
+
+            def named_parameters(self):
+                return [(name, None) for name in self.parameters]
+
+            def load_weights(self, weights):
+                received.extend(name for name, _ in weights)
+                return set(received)
+
+        modules = {'sglang': types.ModuleType('sglang'), 'sglang.srt': types.ModuleType('sglang.srt'),
+                   'sglang.srt.models': types.ModuleType('sglang.srt.models'),
+                   'sglang.srt.models.qwen3_5_text': types.ModuleType('sglang.srt.models.qwen3_5_text'),
+                   'torch': sys.modules.get('torch') or types.ModuleType('torch')}
+        modules['sglang.srt.models.qwen3_5_text'].Qwen3_5ForCausalLM = Base
+        modules['torch'].Tensor = getattr(modules['torch'], 'Tensor', object)
+        saved = {name: sys.modules.get(name) for name in modules}
+        sys.modules.update(modules)
+        try:
+            spec = importlib.util.spec_from_file_location('jevk5_model', ROOT / 'jevk5_sglang/model.py')
+            model = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(model)
+            loaded = model.JevK5ForCausalLM(['model.layers.0.mlp.up_proj.weight', 'model.norm.weight']).load_weights(
+                [('model.language_model.layers.0.mlp.up_proj.weight', 0), ('model.language_model.norm.weight', 0)])
+            self.assertEqual(received, ['model.layers.0.mlp.up_proj.weight', 'model.norm.weight'])
+            self.assertEqual(loaded, set(received))
+            received.clear()
+            with self.assertRaisesRegex(RuntimeError, 'left 1 parameters unloaded'):
+                model.JevK5ForCausalLM(['model.layers.0.mlp.up_proj.weight', 'model.norm.weight']).load_weights(
+                    [('model.language_model.norm.weight', 0)])
+        finally:
+            for name, module in saved.items():
+                if module is None:
+                    sys.modules.pop(name, None)
+                else:
+                    sys.modules[name] = module
+
     def test_the_vendored_prompt_is_upstreams(self):
         digest = hashlib.sha256((ROOT / 'jevk5_prompt.py').read_bytes()).hexdigest()
         self.assertEqual(digest, service.UPSTREAM_PROMPT_SHA256)

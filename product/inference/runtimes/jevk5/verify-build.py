@@ -27,13 +27,19 @@ assert transformers.__version__ == '5.12.1', transformers.__version__
 assert flashinfer.__version__ == '0.6.18', flashinfer.__version__
 assert (Path(sys.base_prefix) / 'include/python3.12/Python.h').is_file()
 
-# SGLang serves the checkpoint's own architecture (Qwen3.5 text with GatedDeltaNet layers) and accepts every flag.
+# SGLang serves JevK5ForCausalLM, Qwen3.5 text with GatedDeltaNet layers that loads the checkpoint's
+# model.language_model.* weight names, and accepts every flag.
 models = Path(importlib.util.find_spec('sglang.srt.models.qwen3_5_text').origin).read_text()
 assert 'class Qwen3_5ForCausalLM' in models and 'EntryClass = [Qwen3_5MoeForCausalLM, Qwen3_5ForCausalLM]' in models
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from jevk5_sglang.model import EntryClass, VL_PREFIX  # noqa: E402
+assert EntryClass.__name__ == 'JevK5ForCausalLM' and VL_PREFIX == 'model.language_model.'
+assert service.sglang_environment(Path('/r')) == {'SGLANG_EXTERNAL_MODEL_PACKAGE': 'jevk5_sglang', 'PYTHONPATH': '/r'}
 parser = argparse.ArgumentParser()
 ServerArgs.add_cli_args(parser)
 args = parser.parse_args(service.sglang_command('/m', 1)[3:])
 assert args.context_length == service.MAX_TOKENS + 1 and args.enable_fp32_lm_head and args.skip_server_warmup
+assert json.loads(args.json_model_override_args) == {'architectures': ['JevK5ForCausalLM']}
 assert (args.cuda_graph_backend_decode, args.cuda_graph_backend_prefill) == ('disabled', 'disabled')
 
 # Every distribution gives an answer the gateway accepts, for every type and option count.

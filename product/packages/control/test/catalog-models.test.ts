@@ -352,30 +352,30 @@ it("backfills each existing model with the type its definition declares", () => 
   );
 });
 
-it.each(["posthog/jeeves", "posthog/jevk5"])(
-  "defines %s as PostHog's own decision model, served from its AWS L4 pools",
-  (id) => {
-    const model: CatalogModelInput | undefined = catalogModels.find(
-      (item) => item.id === id,
-    );
+it.each([
+  ["posthog/jeeves", "available"],
+  ["posthog/jevk5", "unavailable"],
+] as const)("defines %s as PostHog's own decision model (%s)", (id, status) => {
+  const model: CatalogModelInput | undefined = catalogModels.find(
+    (item) => item.id === id,
+  );
 
-    expect(model).toMatchObject({
-      owner: { organizationSlug: "posthog" },
-      type: "decision",
-      status: "available",
-      openrouterModelId: null,
-      properties: {
-        tokenizer: "Qwen",
-        input_modalities: [
-          { supported_inputs: { max_prompt_length: { value: 16_384 } } },
-        ],
-        output_modalities: [{ streaming: false, max_length: { value: 1 } }],
-      },
-    });
-    expect(model?.id.startsWith("posthog/")).toBe(true);
-    expect(model?.aliases ?? []).toEqual([]);
-    expect(() => requireOwnedModelNames(model!)).not.toThrow();
-    // Never compiled into the public catalog, so never published or listed.
-    expect(catalogModel(id)).toBeUndefined();
-  },
-);
+  expect(model).toMatchObject({
+    owner: { organizationSlug: "posthog" },
+    type: "decision",
+    status,
+    openrouterModelId: null,
+    properties: {
+      tokenizer: "Qwen",
+      input_modalities: [
+        { supported_inputs: { max_prompt_length: { value: 16_384 } } },
+      ],
+      output_modalities: [{ streaming: false, max_length: { value: 1 } }],
+    },
+  });
+  expect(model?.id.startsWith("posthog/")).toBe(true);
+  expect(model?.aliases ?? []).toEqual([]);
+  expect(() => requireOwnedModelNames(model!)).not.toThrow();
+  // Never compiled into the public catalog, so never published or listed.
+  expect(catalogModel(id)).toBeUndefined();
+});

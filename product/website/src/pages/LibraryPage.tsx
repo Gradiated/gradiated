@@ -33,7 +33,11 @@ const journeys: Array<Story & { publishedAt: string }> = articles
       article.path === SAND_OVERVIEW_PATH ? (
         <SandCircuitArtwork />
       ) : (
-        <ChipLayersArtwork variant={article.path === "/library/sand-to-thought/fpga/" ? "fpga" : "chip"} />
+        <ChipLayersArtwork
+          variant={
+            article.path === "/library/sand-to-thought/fpga/" ? "fpga" : "chip"
+          }
+        />
       ),
     kind: "note",
     lede: article.description,

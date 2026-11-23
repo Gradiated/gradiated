@@ -413,12 +413,17 @@ export const RailShell = ({
         <aside className="gr-rail-rail">
           {/* Doc mode's back control: one link — the arrow AND the title. */}
           {shown && (
-            <div className="gr-rail-dochead" data-leaving={leaving || undefined}>
+            <div
+              className="gr-rail-dochead"
+              data-leaving={leaving || undefined}
+            >
               <a className="gr-rail-docback" href={shown.backHref ?? "/"}>
                 <Arrow />
                 <span className="gr-rail-doctitle">{shown.title}</span>
               </a>
-              {shown.author && <p className="gr-rail-docauthor">{shown.author}</p>}
+              {shown.author && (
+                <p className="gr-rail-docauthor">{shown.author}</p>
+              )}
             </div>
           )}
           {back && !shown && (

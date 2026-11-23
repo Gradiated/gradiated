@@ -43,7 +43,9 @@ describe("FPGA teaching examples", () => {
       );
       expect(isLaterScene(scene.key), scene.key).toBe(deviceRecap);
     }
-    for (const scene of scenes.slice(start + 1).filter((item) => item.group !== 6)) {
+    for (const scene of scenes
+      .slice(start + 1)
+      .filter((item) => item.group !== 6)) {
       expect(isLaterScene(scene.key), scene.key).toBe(true);
       expect(
         Boolean(continuationFor(scene.key) || applicationFor(scene.key)),
@@ -224,7 +226,21 @@ describe("FPGA teaching examples", () => {
   it("adds a sourced measurement point for each step and preserves the paired controls", () => {
     expect(measurements).toHaveLength(measurementScenes.length);
     expect(measurements.map((point) => point.controlStep)).toEqual([
-      undefined, 0, 1, 2, 3, 4, 5, 5, 7, 8, 9, 10, 11, 12, 12,
+      undefined,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      5,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      12,
     ]);
     for (const point of measurements) {
       expect(publication.runs.map((run) => run.path)).toContain(
@@ -234,13 +250,28 @@ describe("FPGA teaching examples", () => {
   });
 
   it("reproduces the workload plot from the pinned per-request samples", () => {
-    const outputBytes = { "encoded-hello": 90, "encoded-fu2p2q": 122, "encoded-max48": 104 };
+    const outputBytes = {
+      "encoded-hello": 90,
+      "encoded-fu2p2q": 122,
+      "encoded-max48": 104,
+    };
     for (const [step, point] of measurements.entries()) {
-      const file = new URL(`../../../hardware/research/inference/results/${point.runId}/run.json`, import.meta.url);
-      const run: { metrics: { name: string; samples: number[] }[] } = JSON.parse(readFileSync(file, "utf8"));
-      const samples = Object.fromEntries(run.metrics.map(({ name, samples }) => [name, samples]));
-      const controlArm = samples["stock.energy_per_answer"] ? "stock" : "control";
-      const arms = [[step === 0 ? controlArm : "candidate", point.value], [controlArm, point.control]] as const;
+      const file = new URL(
+        `../../../hardware/research/inference/results/${point.runId}/run.json`,
+        import.meta.url,
+      );
+      const run: { metrics: { name: string; samples: number[] }[] } =
+        JSON.parse(readFileSync(file, "utf8"));
+      const samples = Object.fromEntries(
+        run.metrics.map(({ name, samples }) => [name, samples]),
+      );
+      const controlArm = samples["stock.energy_per_answer"]
+        ? "stock"
+        : "control";
+      const arms = [
+        [step === 0 ? controlArm : "candidate", point.value],
+        [controlArm, point.control],
+      ] as const;
 
       for (const [arm, value] of arms) {
         if (!value) continue;
@@ -258,11 +289,17 @@ describe("FPGA teaching examples", () => {
         }
 
         expect(waits).toHaveLength(18);
-        expect(value.ttftMs).toBeCloseTo(waits.reduce((a, b) => a + b, 0) / waits.length, 4);
+        expect(value.ttftMs).toBeCloseTo(
+          waits.reduce((a, b) => a + b, 0) / waits.length,
+          4,
+        );
         expect(value.decodeTps).toBeCloseTo(decodeTokens / decodeSeconds, 4);
         const blockEnergy = samples[`${arm}.energy_per_answer`];
         expect(blockEnergy).toHaveLength(3);
-        expect(value.joulesPerToken).toBeCloseTo(blockEnergy.reduce((a, b) => a + b, 0) * 6 / (3 * 632), 8);
+        expect(value.joulesPerToken).toBeCloseTo(
+          (blockEnergy.reduce((a, b) => a + b, 0) * 6) / (3 * 632),
+          8,
+        );
       }
     }
   });
@@ -402,7 +439,9 @@ describe("FPGA teaching examples", () => {
     ]);
     expect(keys).not.toContain("built-in-timers");
     expect(keys).not.toContain("cpu-and-fpga");
-    expect(scenes.at(-1)?.html).toContain("<h3>Choosing a chip for inference</h3>");
+    expect(scenes.at(-1)?.html).toContain(
+      "<h3>Choosing a chip for inference</h3>",
+    );
     expect(scenes.at(-1)?.html).toContain("estimated speed and energy");
     expect(chapters.at(-1)).toMatchObject({
       id: "fpga-measuring-inference",

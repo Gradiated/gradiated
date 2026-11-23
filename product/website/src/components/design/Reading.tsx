@@ -24,6 +24,9 @@ import { WaferArtwork } from "./WaferArtwork";
  */
 
 type Section = { id: string; text: string };
+type ReadingLink = { label: string; href: string };
+type ReadingNote = { title: string; items: string[] };
+const host = (href: string) => new URL(href).hostname.replace(/^www\./, "");
 
 /** `Some Heading!` -> `some-heading`, for the anchor. */
 const slug = (text: string) =>
@@ -41,6 +44,8 @@ export const Reading = ({
   art,
   cover,
   lede,
+  links = [],
+  note,
   tags = [],
   title,
 }: {
@@ -53,6 +58,8 @@ export const Reading = ({
   art?: string;
   cover?: StoryCover;
   lede?: string;
+  links?: ReadingLink[];
+  note?: ReadingNote;
   /** What the piece belongs to — its collection, then its section. */
   tags?: string[];
   title: string;
@@ -132,6 +139,53 @@ export const Reading = ({
                 </a>
               ))}
             </nav>
+          ) : null}
+
+          {links.length > 0 ? (
+            <nav aria-label="Links" className="gr-read-links">
+              <p className="gr-label gr-read-links-title">Links</p>
+              {links.map((link) => (
+                <a
+                  className="gr-read-link"
+                  href={link.href}
+                  key={link.href}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <span className="gr-read-link-label">
+                    {link.label}
+                    <span aria-hidden className="gr-read-link-arrow">
+                      ↗
+                    </span>
+                  </span>
+                  <span className="gr-read-link-host">{host(link.href)}</span>
+                </a>
+              ))}
+            </nav>
+          ) : null}
+
+          {note ? (
+            <section
+              aria-label={note.title}
+              className="gr-read-links gr-read-note"
+            >
+              <p className="gr-label gr-read-links-title">{note.title}</p>
+              <ul className="gr-read-note-items">
+                {note.items.map((item) => (
+                  <li key={item}>
+                    {item
+                      .split(/\*\*(.+?)\*\*/)
+                      .map((part, index) =>
+                        index % 2 === 1 ? (
+                          <strong key={index}>{part}</strong>
+                        ) : (
+                          part
+                        ),
+                      )}
+                  </li>
+                ))}
+              </ul>
+            </section>
           ) : null}
         </aside>
 

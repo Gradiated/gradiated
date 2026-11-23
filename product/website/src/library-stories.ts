@@ -85,6 +85,9 @@ const NOTE_ART: Record<string, StoryArt> = {
   "/library/0-to-1-weeks-at-gradiated/": {
     tall: "/brand/library/zero-to-one.webp",
   },
+  "/library/kimi-k-3-point-1-pro/": {
+    tall: "/brand/library/kimi-k31-pro.jpg",
+  },
 };
 
 const NOTE_COVERS: Record<string, StoryCover> = {

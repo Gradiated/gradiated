@@ -58,6 +58,8 @@ export const ArticleReadingPage = ({
             art={storyAt(article.path)?.art?.tall}
             cover={storyAt(article.path)?.cover}
             lede={article.description}
+            links={article.links}
+            note={article.note}
             tags={[article.category === "hardware" ? "Hardware" : "Notes"]}
             title={article.title}
           >

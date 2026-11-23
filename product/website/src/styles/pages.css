@@ -2600,6 +2600,76 @@
   background: var(--color-interactive);
 }
 
+.gr-read-links {
+  display: grid;
+  gap: 0.9em;
+  margin-block-start: calc(2 * var(--u));
+}
+
+.gr-root .gr-read-links-title {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.gr-read-link {
+  display: grid;
+  gap: 0.15em;
+  color: var(--color-text);
+  font-size: 13px;
+  line-height: 1.3;
+  text-decoration: none;
+}
+
+.gr-read-link-label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35em;
+}
+
+.gr-read-link-arrow {
+  color: var(--color-text-muted);
+  transition:
+    color var(--dur-fast) var(--ease-response),
+    translate var(--dur-fast) var(--ease-response);
+}
+
+.gr-read-link-host {
+  color: var(--color-text-muted);
+  font-family: var(--font-code);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+.gr-read-link:hover .gr-read-link-label,
+.gr-read-link:focus-visible .gr-read-link-label,
+.gr-read-link:hover .gr-read-link-arrow,
+.gr-read-link:focus-visible .gr-read-link-arrow {
+  color: var(--color-interactive);
+}
+
+.gr-read-link:hover .gr-read-link-arrow,
+.gr-read-link:focus-visible .gr-read-link-arrow {
+  translate: 2px -2px;
+}
+
+.gr-read-note {
+  gap: 0.4em;
+}
+
+.gr-read-note-items strong {
+  font-weight: 600;
+}
+
+.gr-read-note-items {
+  display: grid;
+  gap: 0.5em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text);
+  font-size: 13px;
+  line-height: 1.4;
+}
 /* ~68px. The largest type in the system, and it earns it: on a reading page
    the title is the only thing competing with the prose for the eye. */
 /* Fluid, unlike before.
@@ -2785,10 +2855,85 @@
   font-weight: 500;
 }
 
+/* A quote's last paragraph is its source. */
 .gr-prose blockquote {
-  padding-inline-start: 1em;
-  border-inline-start: 2px solid var(--color-rule);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin-inline: 0;
+  padding-inline-start: 1.6em;
+  color: var(--color-text);
+  font-size: 1.05em;
+  line-height: 1.55;
+}
+
+.gr-prose blockquote::before {
+  content: "\201C";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0.05em;
   color: var(--color-text-muted);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2.2em;
+  line-height: 1;
+}
+
+.gr-prose blockquote > p {
+  margin-block: 0;
+}
+
+.gr-prose blockquote > p + p {
+  margin-block-start: 0.6em;
+  color: var(--color-text-muted);
+  font-family: var(--font-code);
+  font-size: 0.68em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gr-prose blockquote > p + p a {
+  color: inherit;
+}
+
+.gr-expandable__summary {
+  display: inline;
+  cursor: pointer;
+  list-style: none;
+}
+
+.gr-expandable__summary::-webkit-details-marker {
+  display: none;
+}
+
+.gr-expandable__arrow {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-inline-start: 0.3em;
+  vertical-align: -0.15em;
+  color: var(--color-text-muted);
+  transition: transform 150ms ease;
+}
+
+.gr-expandable[open] .gr-expandable__arrow {
+  transform: rotate(90deg);
+}
+
+.gr-expandable__summary:hover .gr-expandable__arrow {
+  color: var(--color-text);
+}
+
+.gr-expandable__body {
+  margin-block-start: 0.75em;
+  color: var(--color-text-muted);
+}
+
+.gr-expandable__body > * {
+  margin-block: 0;
+}
+
+.gr-expandable__body > * + * {
+  margin-block-start: 0.6em;
 }
 
 .gr-prose code {

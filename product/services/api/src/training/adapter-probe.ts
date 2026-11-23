@@ -9,9 +9,9 @@ import {
 import { serviceLog } from "../logging.js";
 import type { ApiMetrics } from "../metrics.js";
 
-// A cold probe shares the loader's 60-second preparation deadline, then runs a
-// bounded generation whose engine call the loader caps at another 60 seconds.
-export const ADAPTER_PROBE_TIMEOUT_MS = 150_000;
+// Loader worst case: 60 s preparation, a 60 s generation and, for a cartridge, two
+// 30 s canary generations (CANARY_TIMEOUT_SECONDS), plus 30 s of slack.
+export const ADAPTER_PROBE_TIMEOUT_MS = 210_000;
 
 const LOADER_ERRORS = new Set([
   "capacity_unavailable",

@@ -30,17 +30,37 @@ CANARY_MESSAGES = [{"role": "user", "content": "In one sentence, what do you hel
 CANARY_TOKENS = 8
 # Total variation between the top-20 next-token distributions; unapplied cartridges give ~0.
 CANARY_MIN_DIVERGENCE = 0.02
+# Each canary generation is 8 tokens; the API's probe deadline counts two of these.
+CANARY_TIMEOUT_SECONDS = 30
+
+
+def canary_positions(content):
+    """Each position's greedy token and top-token probabilities; malformed is a runtime fault."""
+    try:
+        positions = [
+            (
+                row["token"],
+                {item["token"]: math.exp(item["logprob"]) for item in row["top_logprobs"]},
+            )
+            for row in content
+        ]
+        if not positions or not all(
+            isinstance(token, str) and all(isinstance(t, str) for t in top)
+            for token, top in positions
+        ):
+            raise ValueError
+        return positions
+    except (KeyError, IndexError, TypeError, ValueError, OverflowError):
+        raise RuntimeError("Canary logprobs are malformed") from None
 
 
 def canary_divergence(with_cartridge, without):
     """Largest next-token divergence while both greedy outputs agree; a differing token is 1."""
     largest = 0.0
-    for left, right in zip(with_cartridge, without):
-        p = {item["token"]: math.exp(item["logprob"]) for item in left["top_logprobs"]}
-        q = {item["token"]: math.exp(item["logprob"]) for item in right["top_logprobs"]}
+    for (left, p), (right, q) in zip(with_cartridge, without):
         distance = sum(abs(p.get(t, 0.0) - q.get(t, 0.0)) for t in p.keys() | q.keys())
         largest = max(largest, distance / 2)
-        if left["token"] != right["token"]:
+        if left != right:
             return 1.0
     return largest
 
@@ -174,9 +194,11 @@ class Loader:
             entry["spec"] = spec
         return name
 
-    def engine(self, method, path, body=None):
+    def engine(self, method, path, body=None, timeout=None):
         connection = http.client.HTTPConnection(
-            "127.0.0.1", self.engine_port, timeout=60 if method == "POST" else 5
+            "127.0.0.1",
+            self.engine_port,
+            timeout=timeout or (60 if method == "POST" else 5),
         )
         try:
             connection.request(
@@ -454,18 +476,16 @@ class Loader:
                         "logprobs": True,
                         "top_logprobs": 20,
                     },
+                    timeout=CANARY_TIMEOUT_SECONDS,
                 )
             )
             try:
                 content = result["choices"][0]["logprobs"]["content"]
-                if result.get("model") != name or not content:
+                if result.get("model") != name:
                     raise ValueError
-                return [
-                    {"token": row["token"], "top_logprobs": row["top_logprobs"]}
-                    for row in content
-                ]
             except (KeyError, IndexError, TypeError, ValueError):
                 raise RuntimeError("Canary identity or logprobs mismatch") from None
+            return canary_positions(content)
 
         if canary_divergence(positions(model), positions(served[0])) <= CANARY_MIN_DIVERGENCE:
             raise CartridgeNotApplied("Cartridge did not change the canary")

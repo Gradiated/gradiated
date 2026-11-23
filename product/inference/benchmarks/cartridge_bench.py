@@ -255,9 +255,31 @@ def flush(args: argparse.Namespace) -> None:
     post(args, "/flush_cache", {}).close()
 
 
+PAD_UNIT = " note"
+
+
+def padding_for(args: argparse.Namespace, messages, target: int) -> tuple[str, int]:
+    """Text that makes a base request exactly ``target`` prompt tokens long.
+
+    The cartridge request carries K slot tokens and a separator; the control
+    pads the same system prompt with a one-token unit and checks the count
+    from ``usage.prompt_tokens``, correcting the repeat count until it matches.
+    """
+    base = ttft(args, args.base_model, messages(str(uuid.uuid4())))[1]["prompt_tokens"]
+    count = target - base
+    for _ in range(4):
+        text = PAD_UNIT * count
+        got = ttft(args, args.base_model, messages(str(uuid.uuid4()), text))[1][
+            "prompt_tokens"
+        ]
+        if got == target:
+            return text, got
+        count += target - got
+    raise SystemExit(f"could not pad the control to {target} prompt tokens")
+
+
 def prefill(args: argparse.Namespace) -> int:
     system = "You are a careful assistant. " * args.system_words
-    padding = "Background note. " * args.cartridge_tokens
 
     def messages(nonce: str, extra: str = "") -> list:
         return [
@@ -268,45 +290,62 @@ def prefill(args: argparse.Namespace) -> int:
             },
         ]
 
-    samples = {
-        name: [] for name in ("base", "base_plus_k", "cold", "warm", "base_warm")
-    }
+    # The control must prefill as many tokens as a cartridge request: the base
+    # prompt plus the K cartridge positions and the separator.
+    flush(args)
+    target = ttft(
+        args, model_name(args, args.first_cold - 1), messages(str(uuid.uuid4()))
+    )[1]["prompt_tokens"]
+    padding, padded = padding_for(args, messages, target)
+    names = (
+        "base",
+        "base_plus_k",
+        "cold",
+        "cold_resident",
+        "warm",
+        "warm_plus_k",
+        "base_warm",
+    )
+    samples = {name: [] for name in names}
     usage = {}
+
+    def sample(name, model, extra=""):
+        elapsed, usage[name] = ttft(args, model, messages(str(uuid.uuid4()), extra))
+        samples[name].append(elapsed)
+
     for trial in range(args.repeats):
-        cartridge = args.first_cold + trial
+        cartridge = model_name(args, args.first_cold + trial)
         flush(args)
-        samples["base"].append(
-            ttft(args, args.base_model, messages(str(uuid.uuid4())))[0]
-        )
+        sample("base", args.base_model)
         flush(args)
-        elapsed, usage["base_plus_k"] = ttft(
-            args, args.base_model, messages(str(uuid.uuid4()), padding)
-        )
-        samples["base_plus_k"].append(elapsed)
+        sample("base_plus_k", args.base_model, padding)
+        sample("warm_plus_k", args.base_model, padding)
         flush(args)
-        elapsed, usage["cold"] = ttft(
-            args, model_name(args, cartridge), messages(str(uuid.uuid4()))
-        )
-        samples["cold"].append(elapsed)
-        elapsed, usage["warm"] = ttft(
-            args, model_name(args, cartridge), messages(str(uuid.uuid4()))
-        )
-        samples["warm"].append(elapsed)
+        # First use: resolve, validate and write the table rows, then prefill.
+        sample("cold", cartridge)
+        flush(args)
+        # Rows already resident: the prefill alone.
+        sample("cold_resident", cartridge)
+        sample("warm", cartridge)
         ttft(args, args.base_model, messages(str(uuid.uuid4())))
-        samples["base_warm"].append(
-            ttft(args, args.base_model, messages(str(uuid.uuid4())))[0]
+        sample("base_warm", args.base_model)
+    if usage["base_plus_k"]["prompt_tokens"] != usage["cold"]["prompt_tokens"]:
+        raise SystemExit(
+            "the padded control and the cartridge request differ in length"
         )
+    median = {
+        name: 1000 * statistics.median(values) for name, values in samples.items()
+    }
     summary = {
-        name: {"median_ms": 1000 * statistics.median(values), "samples": len(values)}
-        for name, values in samples.items()
+        name: {"median_ms": median[name], "samples": len(samples[name])}
+        for name in names
     }
     summary["usage"] = usage
-    summary["cold_vs_base_plus_k"] = (
-        summary["cold"]["median_ms"] / summary["base_plus_k"]["median_ms"]
-    )
-    summary["warm_vs_base_warm"] = (
-        summary["warm"]["median_ms"] / summary["base_warm"]["median_ms"]
-    )
+    summary["control_prompt_tokens"] = padded
+    summary["cold_vs_base_plus_k"] = median["cold_resident"] / median["base_plus_k"]
+    summary["first_use_ms"] = median["cold"] - median["cold_resident"]
+    summary["warm_vs_warm_plus_k"] = median["warm"] / median["warm_plus_k"]
+    summary["warm_vs_base_warm"] = median["warm"] / median["base_warm"]
     print(json.dumps(summary, indent=2))
     return 0
 

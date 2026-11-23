@@ -548,7 +548,13 @@ class RenderTests(unittest.TestCase):
         # No host is held for training: it runs on shared capacity, preemptible by models.
         self.assertEqual(reserved, {
             ('gradiated.com/reserved', 'kimi-k31'): ['01a0fbf7-5276-700b-903b-7e04da150ed6'],
-            ('gradiated.com/reserved', 'linden-us'): ['01a1f438-b779-71cd-ac20-ccaeb04496e6']})
+            ('gradiated.com/reserved', 'linden-us'): ['01a1f438-b779-71cd-ac20-ccaeb04496e6'],
+            # PostHog's own models on its four AWS L4 hosts.
+            ('gradiated.com/reserved', 'posthog'): [
+                '01a2087d-f7d4-73cd-85dc-b2598e892f28',
+                '01a2087d-fec7-761d-957f-07c70d17a2cf',
+                '01a2087e-0540-749d-bcdc-65b7065851d1',
+                '01a2087e-0bc2-75c1-988b-b97db8e1206c']})
         models, runtimes, inventory = self.fleet()
         pools = renderer.plan(models, runtimes, inventory)
         templates = {name: renderer.rollout(name, pools[name], runtimes)['spec']['template']['spec']

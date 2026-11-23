@@ -247,6 +247,17 @@ class PoolTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.pool.rows("a")
 
+    def test_prefilled_cartridge_stops_holding_its_pages(self):
+        for name in "abcd":
+            self.pool.begin_round()
+            self.pool.admit(Ref(name, 8), 0)
+        for _ in range(2):
+            self.pool.begin_round()
+            self.assertTrue(self.pool.admit(Ref("a", 8, start=1), prefix_len=9))
+
+        self.assertTrue(self.pool.admit(Ref("e", 8), 0))
+        self.assertNotIn("a", self.pool.resident)
+
     def test_least_recently_used_unprotected_cartridge_is_evicted(self):
         for name in "abcd":
             self.pool.begin_round()

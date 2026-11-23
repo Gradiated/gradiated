@@ -61,8 +61,8 @@
 +        cartridge: tuple[Cartridge, str],
 +    ) -> tuple[MessageProcessingResult, CartridgeRef]:
 +        spec, slot_text = cartridge
-+        if request.input_ids is not None or request.session_id is not None:
-+            raise ValueError("Cartridge requests take chat messages without a session")
++        if any(v is not None for v in (request.input_ids, request.session_id, request.lora_path)):
++            raise ValueError("Cartridge requests take chat messages without a session or LoRA path")
 +
 +        def render(messages):
 +            processed = self._process_messages(

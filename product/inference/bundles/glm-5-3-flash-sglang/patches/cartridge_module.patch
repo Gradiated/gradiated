@@ -302,12 +302,12 @@
 +        Returns False when the table cannot hold it now; the request then
 +        waits for a later round, like a request waiting for KV memory.
 +        """
++        if prefix_len >= ref.start + ref.num_tokens:
++            return True
 +        entry = self.resident.get(ref.sha256)
 +        if entry is not None:
 +            entry.round = self.round
 +            self.resident.move_to_end(ref.sha256)
-+            return True
-+        if prefix_len >= ref.start + ref.num_tokens:
 +            return True
 +
 +        needed = self.pages_for(ref.num_tokens)

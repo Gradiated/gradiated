@@ -416,6 +416,8 @@ def identity(args: argparse.Namespace) -> int:
         "identity": (args.identity, lambda m: m),
         "slots": (args.base_model, lambda m: with_slots(m, text)),
         "floor": (args.identity_floor, lambda m: m),
+        # A synthetic cartridge has rows unlike the slot embeddings, so it must move the logits.
+        "synthetic": (args.cartridge_names[0], lambda m: m),
     }
     records = {name: [] for name in arms}
     background = (
@@ -443,12 +445,16 @@ def identity(args: argparse.Namespace) -> int:
         "identity_vs_slots": stats(records["identity"], records["slots"]),
         "floor_vs_slots": stats(records["floor"], records["slots"]),
         "identity_vs_floor": stats(records["identity"], records["floor"]),
+        "synthetic_vs_slots": stats(records["synthetic"], records["slots"]),
         "prompt_tokens": lengths,
     }
     measured, floor = out["identity_vs_slots"], out["identity_vs_floor"]
     # Pass: the cartridge is indistinguishable from its own slot embeddings, i.e. no
     # further from the slot-text render than two identical cartridges are from each other.
-    out["pass"] = measured["median"] <= max(
+    # A no-op scatter would also pass that, so the synthetic cartridge must differ clearly.
+    applied = out["synthetic_vs_slots"]["median"] > max(0.1, 5 * floor["median"])
+    out["synthetic_applied"] = applied
+    out["pass"] = applied and measured["median"] <= max(
         args.tolerance, 1.5 * floor["median"]
     ) and measured["same_argmax_fraction"] >= floor["same_argmax_fraction"] - 1 / len(
         cases
@@ -559,6 +565,8 @@ def parse_args() -> argparse.Namespace:
             for line in Path(args.cartridges).read_text().splitlines()
             if line.strip()
         ]
+        if args.command == "decode" and len(set(args.cartridge_names)) < args.batch:
+            parser.error("decode needs at least --batch distinct cartridge names")
         if args.command in ("probe", "identity") and not (
             args.identity and (args.identity_floor or args.command == "probe")
         ):

@@ -134,5 +134,5 @@ reports `approximate_token_counts`. Gates:
 | Check       | Pass                                                                                                                                                         |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `decode`    | cartridge vs slot-text control: throughput ratio ≥ 0.98 and ITL ratio ≤ 1.02; DSPARK accept ratio reported with `--metrics-url`                              |
-| `identity`  | median top-5 \|Δ logprob\| vs the slot-text render ≤ max(0.02, 1.5 × the identity-a vs identity-b median), and argmax agreement within one case of the floor |
+| `identity`  | median top-5 \|Δ logprob\| vs the slot-text render ≤ max(0.02, 1.5 × the identity-a vs identity-b median), and argmax agreement within one case of the floor; the first `--cartridges` name (synthetic) must differ from the slot-text render by a median > max(0.1, 5 × the floor), which catches a scatter that never writes |
 | `isolation` | the second cartridge and the slot-text base request cache at most the 64 tokens before the slots; each cartridge reuses its own prefix                       |

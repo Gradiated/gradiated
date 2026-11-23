@@ -1,6 +1,7 @@
 import concurrent.futures
 import copy
 import json
+import math
 import tempfile
 import threading
 import unittest
@@ -17,7 +18,7 @@ from fixtures import (
     grant,
     settings,
 )
-from loader import CapacityError, Loader
+from loader import CANARY_TIMEOUT_SECONDS, CapacityError, CartridgeNotApplied, Loader
 from startup import start_preload
 
 
@@ -470,6 +471,112 @@ class CartridgeLoaderTests(unittest.TestCase):
         with self.assertRaises(CapacityError):
             self.loader.resolve_version(second["version"]["name"], second["workspace_id"])
         self.assertTrue(Path(files["path"]).is_file())
+
+
+class CartridgeCanaryTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.payload = cartridge_file()
+        self.spec = cartridge_grant(self.payload)
+        self.loader = Loader(
+            {**settings(), "model_config": cartridge_model_config()},
+            self.temp.name,
+            1,
+            set(),
+            fetch=lambda spec, path, hosts, deadline=None: path.write_bytes(self.payload),
+        )
+        self.loader.ready = True
+        self.loader.resolve = lambda name, workspace, deadline=None: self.spec
+        self.adapter = f"{self.spec['workspace_id']}/{self.spec['version']['name']}"
+        self.models = [{"id": "base-model"}, {"id": "other/lora", "parent": "base-model"}]
+        self.outputs = {}
+        self.timeouts = []
+        self.loader.engine = self.engine
+
+    @staticmethod
+    def position(token, *top):
+        top_logprobs = [{"token": t, "logprob": math.log(p)} for t, p in top]
+        return {"token": token, "top_logprobs": top_logprobs}
+
+    def engine(self, method, path, body=None, timeout=None):
+        self.timeouts.append(timeout)
+        if path == "/v1/models":
+            return json.dumps({"data": self.models}).encode()
+        content = self.outputs.get(body["model"]) if body.get("logprobs") else None
+        return json.dumps({"model": body["model"], "choices": [{"logprobs": {"content": content}}],
+                           "usage": {"completion_tokens": 1}}).encode()
+
+    def probe(self):
+        self.loader.probe(self.spec["version"]["name"], self.spec["workspace_id"])
+
+    def test_a_cartridge_passes_only_when_it_changes_the_canary_logits(self):
+        base = [
+            self.position("I", ("I", 0.6), ("We", 0.4)),
+            self.position(" help", (" help", 0.9)),
+        ]
+        self.outputs = {"base-model": base, self.adapter: base}
+        with self.assertRaises(CartridgeNotApplied):
+            self.probe()
+
+        self.outputs[self.adapter] = [self.position("I", ("I", 0.9), ("We", 0.1)), base[1]]
+        self.probe()
+        # A forced first token still passes once a later greedy token differs.
+        self.outputs[self.adapter] = [base[0], self.position(" write", (" write", 0.9))]
+        self.probe()
+        # The two canary generations use the shorter budget the API's deadline counts.
+        self.assertEqual(self.timeouts[-2:], [CANARY_TIMEOUT_SECONDS] * 2)
+
+    def test_one_output_stopping_first_counts_as_a_change(self):
+        base = [self.position("I", ("I", 0.6), ("We", 0.4)), self.position(".", (".", 0.9))]
+        self.outputs = {"base-model": base, self.adapter: base[:1]}
+        self.probe()
+        self.outputs = {"base-model": base[:1], self.adapter: base}
+        self.probe()
+
+    def test_unreadable_canary_responses_are_a_retryable_runtime_fault(self):
+        good = [self.position("I", ("I", 1.0))]
+        self.outputs = {"base-model": good, self.adapter: good}
+        engine = self.engine
+
+        def truncated(method, path, body=None, timeout=None):
+            if path == "/v1/models" or (body or {}).get("logprobs"):
+                return b'{"choices": ['
+            return engine(method, path, body, timeout)
+
+        self.loader.engine = truncated
+        with self.assertRaises(RuntimeError):
+            self.probe()
+        self.loader.engine = engine
+        self.models = None
+        with self.assertRaises(RuntimeError):
+            self.probe()
+
+    def test_malformed_canary_logprobs_are_a_retryable_runtime_fault(self):
+        good = [self.position("I", ("I", 0.6), ("We", 0.4))]
+        for broken in (
+            [{"token": "I", "top_logprobs": None}],
+            [{"token": "I", "top_logprobs": [{"token": "I"}]}],
+            [{"token": "I", "top_logprobs": [{"logprob": -0.5}]}],
+            [{"token": None, "top_logprobs": []}],
+            [{"top_logprobs": []}],
+            [None],
+            [],
+        ):
+            self.outputs = {"base-model": good, self.adapter: broken}
+            with self.subTest(broken=broken), self.assertRaises(RuntimeError):
+                self.probe()
+
+    def test_the_canary_needs_one_base_model_and_logprobs(self):
+        base = [self.position("I", ("I", 1.0))]
+        self.outputs = {"base-model": base, self.adapter: base}
+        self.models = [{"id": "a"}, {"id": "b"}]
+        with self.assertRaises(RuntimeError):
+            self.probe()
+        self.models = [{"id": "base-model"}]
+        self.outputs = {"base-model": base}
+        with self.assertRaises(RuntimeError):
+            self.probe()
 
 
 if __name__ == "__main__":

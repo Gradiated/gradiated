@@ -2,6 +2,7 @@ import copy
 import http.client
 import json
 import logging
+import math
 import re
 import shutil
 import threading
@@ -18,6 +19,51 @@ logger = logging.getLogger(__name__)
 
 class CapacityError(RuntimeError):
     pass
+
+
+class CartridgeNotApplied(ValueError):
+    """The cartridge loaded but did not change the canary's next-token distribution."""
+
+
+# A fixed open-ended prompt, so the base model's first tokens are not forced.
+CANARY_MESSAGES = [{"role": "user", "content": "In one sentence, what do you help people with?"}]
+CANARY_TOKENS = 8
+# Total variation between the top-20 next-token distributions; unapplied cartridges give ~0.
+CANARY_MIN_DIVERGENCE = 0.02
+# Each canary generation is 8 tokens; the API's probe deadline counts two of these.
+CANARY_TIMEOUT_SECONDS = 30
+
+
+def canary_positions(content):
+    """Each position's greedy token and top-token probabilities; malformed is a runtime fault."""
+    try:
+        positions = [
+            (
+                row["token"],
+                {item["token"]: math.exp(item["logprob"]) for item in row["top_logprobs"]},
+            )
+            for row in content
+        ]
+        if not positions or not all(
+            isinstance(token, str) and all(isinstance(t, str) for t in top)
+            for token, top in positions
+        ):
+            raise ValueError
+        return positions
+    except (KeyError, IndexError, TypeError, ValueError, OverflowError):
+        raise RuntimeError("Canary logprobs are malformed") from None
+
+
+def canary_divergence(with_cartridge, without):
+    """Largest next-token divergence while both greedy outputs agree; a differing token is 1."""
+    largest = 0.0
+    for (left, p), (right, q) in zip(with_cartridge, without):
+        distance = sum(abs(p.get(t, 0.0) - q.get(t, 0.0)) for t in p.keys() | q.keys())
+        largest = max(largest, distance / 2)
+        if left != right:
+            return 1.0
+    # One output stopping first (EOS, which logprobs omit) is also a differing greedy token.
+    return 1.0 if len(with_cartridge) != len(without) else largest
 
 
 class Loader:
@@ -149,9 +195,11 @@ class Loader:
             entry["spec"] = spec
         return name
 
-    def engine(self, method, path, body=None):
+    def engine(self, method, path, body=None, timeout=None):
         connection = http.client.HTTPConnection(
-            "127.0.0.1", self.engine_port, timeout=60 if method == "POST" else 5
+            "127.0.0.1",
+            self.engine_port,
+            timeout=timeout or (60 if method == "POST" else 5),
         )
         try:
             connection.request(
@@ -189,13 +237,15 @@ class Loader:
         )
 
     def prepare_version(self, name, workspace_id):
+        """Prepares the version and returns its loader key."""
         deadline = time.monotonic() + 60
-        return self.operation(
-            "prepare",
-            lambda: self.prepare(
-                self.version_key(name, workspace_id, deadline), workspace_id, deadline
-            ),
-        )
+
+        def prepare():
+            key = self.version_key(name, workspace_id, deadline)
+            self.prepare(key, workspace_id, deadline)
+            return key
+
+        return self.operation("prepare", prepare)
 
     def operation(self, action, call):
         started = time.monotonic()
@@ -380,7 +430,7 @@ class Loader:
         return self.local_files(name)
 
     def probe(self, name, workspace_id):
-        self.prepare_version(name, workspace_id)
+        key = self.prepare_version(name, workspace_id)
         result = json.loads(
             self.engine(
                 "POST",
@@ -399,6 +449,58 @@ class Loader:
             or not result.get("usage", {}).get("completion_tokens", 0)
         ):
             raise RuntimeError("Adapter probe identity or usage mismatch")
+        with self.lock:
+            adapter = self.entries[key]["spec"]["version"]["adapter"]
+        if adapter["format"] == "cartridge":
+            self.cartridge_canary(f"{workspace_id}/{name}")
+
+    def cartridge_canary(self, model):
+        """Fails when the cartridge does not change the canary prompt's next-token logits."""
+
+        def runtime_json(data):
+            # A 200 with an unreadable body is a runtime fault (503), never a rejected adapter.
+            try:
+                return json.loads(data)
+            except ValueError:
+                raise RuntimeError("Canary response is not JSON") from None
+
+        try:
+            served = [
+                row["id"]
+                for row in runtime_json(self.engine("GET", "/v1/models"))["data"]
+                if not row.get("parent")
+            ]
+        except (KeyError, TypeError, AttributeError):
+            raise RuntimeError("Runtime model list is malformed") from None
+        if len(served) != 1:
+            raise RuntimeError("Runtime base model is ambiguous")
+
+        def positions(name):
+            result = runtime_json(
+                self.engine(
+                    "POST",
+                    "/v1/chat/completions",
+                    {
+                        "model": name,
+                        "messages": CANARY_MESSAGES,
+                        "max_tokens": CANARY_TOKENS,
+                        "temperature": 0,
+                        "logprobs": True,
+                        "top_logprobs": 20,
+                    },
+                    timeout=CANARY_TIMEOUT_SECONDS,
+                )
+            )
+            try:
+                content = result["choices"][0]["logprobs"]["content"]
+                if result.get("model") != name:
+                    raise ValueError
+            except (KeyError, IndexError, TypeError, ValueError):
+                raise RuntimeError("Canary identity or logprobs mismatch") from None
+            return canary_positions(content)
+
+        if canary_divergence(positions(model), positions(served[0])) <= CANARY_MIN_DIVERGENCE:
+            raise CartridgeNotApplied("Cartridge did not change the canary")
 
     def status(self):
         with self.lock:

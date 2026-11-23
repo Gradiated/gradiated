@@ -186,6 +186,12 @@ API calls probe through the host proxy (`<service_url>/internal/adapters/probe`)
 when an editor promotes an unavailable version, such as an upload; a pass makes
 the version available and production (see the
 [serving contract](../../../docs/TASK_FINE_TUNING_SERVING_CONTRACT.md)).
+A cartridge is probed on every promotion, and only on `cartridge_enabled`
+deployments. Its probe also sends a fixed canary prompt with and without the
+cartridge, at temperature 0 with the top 20 logprobs. It passes only if a
+next-token distribution, compared while the two greedy outputs still agree,
+differs by more than 0.02 total variation, or if the greedy tokens differ.
+Otherwise it answers 422 `cartridge_not_applied`.
 Metrics live at `/internal/adapters/metrics`; they report file hits, downloads,
 startup registrations, failures, disk evictions and preparation duration with no adapter or
 workspace labels. Prometheus discovers enabled allocations from the worker's internal

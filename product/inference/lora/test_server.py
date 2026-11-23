@@ -6,7 +6,7 @@ import unittest
 from unittest import mock
 
 from fixtures import archive, grant, settings
-from loader import CapacityError, Loader
+from loader import CapacityError, CartridgeNotApplied, Loader
 from server import create_server
 
 
@@ -175,6 +175,15 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(
             self.loader.engine.call_args.args[:2], ("POST", "/v1/chat/completions")
         )
+
+    def test_a_cartridge_without_effect_is_rejected_with_its_reason(self):
+        self.loader.probe = mock.Mock(side_effect=CartridgeNotApplied("no effect"))
+        status, body = self.request(
+            "POST",
+            "/internal/adapters/probe",
+            {"name": self.spec["version"]["name"], "workspace_id": self.spec["workspace_id"]},
+        )
+        self.assertEqual((status, json.loads(body)), (422, {"error": "cartridge_not_applied"}))
 
 
 if __name__ == "__main__":

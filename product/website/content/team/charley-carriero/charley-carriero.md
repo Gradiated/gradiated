@@ -10,9 +10,9 @@ location:
 # Links shown as icons beside your name. Remove the # to use any of them:
 # links:
 #   website: https://example.com
-#   github: https://github.com/charcarr
-#   linkedin: https://www.linkedin.com/in/charleycarriero/
-#   x: https://x.com/charcarriero
+   github: https://github.com/charcarr
+   linkedin: https://www.linkedin.com/in/charleycarriero/
+   x: https://x.com/charcarriero
 # Pictures in images/gallery/ beside this file are your gallery. To caption
 # one:
 # captions:

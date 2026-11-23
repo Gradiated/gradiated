@@ -273,7 +273,7 @@ describe("adapter qualification lock", () => {
     expect(valkey.set).toHaveBeenCalledWith(
       `adapter-qualification:{${versionId}}`,
       expect.any(String),
-      { NX: true, PX: 260_000 },
+      { NX: true, PX: 290_000 },
     );
   });
 

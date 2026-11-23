@@ -36,9 +36,12 @@ const ApiOnlyEnvironmentSchema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((value) => value === "true"),
-  GPU_CONTROL_PROVIDER: z
+  // The providers whose hosts reach the private GPU control listener, such as
+  // runpod,aws; a status report must come from a deployment on one of them.
+  GPU_CONTROL_PROVIDERS: z
     .string()
-    .regex(/^[a-z][a-z0-9_-]{0,99}$/)
+    .regex(/^[a-z][a-z0-9_-]{0,99}(,[a-z][a-z0-9_-]{0,99})*$/)
+    .transform((value) => value.split(","))
     .optional(),
 });
 

@@ -308,10 +308,10 @@ const server = serve({
   // Keep backend connections open beyond the public ALB's 660-second idle timeout.
   serverOptions: { keepAliveTimeout: 670_000 },
 });
-const gpuControlServer = environment.GPU_CONTROL_PROVIDER
+const gpuControlServer = environment.GPU_CONTROL_PROVIDERS
   ? serve({
       fetch: createGpuControlApp({
-        provider: environment.GPU_CONTROL_PROVIDER,
+        providers: environment.GPU_CONTROL_PROVIDERS,
         status: createDeploymentStatusService(database, valkey),
         adapters: {
           service: createAdapterHostingService(database, adapterDownloads),

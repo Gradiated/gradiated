@@ -64,7 +64,7 @@ const fixture = () => {
     productionVersions: vi.fn(async () => [target]),
   } satisfies AdapterHostingService;
   const app = createGpuControlApp({
-    provider: "runpod",
+    providers: ["runpod"],
     status: { report: async () => undefined },
     check: async () => ({}),
     adapters: { service },

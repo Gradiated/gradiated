@@ -24,7 +24,10 @@ export class DeploymentStatusError extends Error {
 }
 
 export interface DeploymentStatusService {
-  report(provider: string, report: DeploymentStatusReport): Promise<void>;
+  report(
+    providers: readonly string[],
+    report: DeploymentStatusReport,
+  ): Promise<void>;
 }
 
 export const servedReleaseDigest = (
@@ -66,7 +69,7 @@ export const createDeploymentStatusService = (
   database: ControlDatabase,
   valkey: DeploymentStatusValkey,
 ): DeploymentStatusService => ({
-  async report(provider, report) {
+  async report(providers, report) {
     const deployment = await createDeploymentStatusStore(
       database,
     ).getDeployment(report.deployment_id);
@@ -74,7 +77,7 @@ export const createDeploymentStatusService = (
     if (!deployment) {
       throw new DeploymentStatusError("deployment_not_found");
     }
-    if (deployment.provider !== provider) {
+    if (!providers.includes(deployment.provider)) {
       throw new DeploymentStatusError("provider_mismatch");
     }
     if (deployment.release.runtime_revision !== report.runtime_revision) {

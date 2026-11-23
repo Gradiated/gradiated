@@ -21,7 +21,11 @@ def apply(site, directory, manifest_name='patches.json'):
         target = site / item['path']
         if not target.resolve().is_relative_to(site.resolve()):
             raise ValueError('Patch target escaped site-packages')
-        if hashlib.sha256(target.read_bytes()).hexdigest() != item['original_sha256']:
+        # A null original adds a file that the upstream source does not have.
+        if item['original_sha256'] is None:
+            if target.exists():
+                raise ValueError('Added patch file already exists: ' + item['path'])
+        elif hashlib.sha256(target.read_bytes()).hexdigest() != item['original_sha256']:
             raise ValueError('Upstream patch input changed: ' + item['path'])
         subprocess.run(['patch', '--batch', '--fuzz=0', '-p1', '-d', str(site),
                         '-i', str((directory / 'patches' / item['patch']).resolve())], check=True)

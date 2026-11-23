@@ -1,0 +1,154 @@
+--- a/sglang/srt/managers/tokenizer_manager.py
++++ b/sglang/srt/managers/tokenizer_manager.py
+@@ -28,7 +28,7 @@
+ import threading
+ import time
+ from array import array
+-from collections import deque
++from collections import OrderedDict, deque
+ from contextlib import nullcontext
+ from datetime import datetime
+ from enum import Enum
+@@ -78,6 +78,7 @@
+ )
+ from sglang.srt.lora.lora_registry import LoRARef, LoRARegistry
+ from sglang.srt.managers.async_dynamic_batch_tokenizer import AsyncDynamicbatchTokenizer
++from sglang.srt.managers.cartridge import Cartridge, CartridgeError, read_cartridge
+ from sglang.srt.managers.disagg_service import start_disagg_service
+ from sglang.srt.managers.embed_types import PositionalEmbeds
+ from sglang.srt.managers.io_struct import (
+@@ -832,6 +833,9 @@
+         # name are coalesced; resolved adapters reload from the cached path.
+         self.lora_resolver_url = os.environ.get("SGLANG_LORA_RESOLVER_URL") or None
+         self.lora_resolutions: Dict[str, asyncio.Future] = {}
++        # Resolved adapter names that are prompt cartridges, with their slot text.
++        self.cartridge_pool_bytes = get_lora().cartridge_pool_bytes
++        self.cartridges: OrderedDict[str, Tuple[Cartridge, str]] = OrderedDict()
+         # Preserve the adapter ID across incomplete cleanup retries.
+         self.pending_lora_unloads: Dict[str, str] = {}
+         if get_lora().lora_paths is not None:
+@@ -1672,6 +1676,7 @@
+                 multi_item_delimiter_indices=obj.multi_item_delimiter_indices,
+                 token_indices_to_pool=obj.token_indices_to_pool,
+                 encoder_urls=obj.encoder_urls,
++                cartridge=obj.cartridge,
+             )
+         elif isinstance(obj, EmbeddingReqInput):
+             # Resolve unresolved embed overrides now that input_ids are available
+@@ -3819,6 +3824,10 @@
+         if not obj.lora_path:
+             return
+ 
++        names = [obj.lora_path] if isinstance(obj.lora_path, str) else obj.lora_path
++        if any(name in self.cartridges for name in names):
++            raise ValueError("Cartridge adapters are served through chat completions")
++
+         if not self.enable_lora:
+             first_adapter = (
+                 obj.lora_path
+@@ -3859,6 +3868,10 @@
+ 
+             if lora_path not in self.lora_ref_cache and self.lora_resolver_url:
+                 await self._resolve_lora_adapter(lora_path)
++                if lora_path in self.cartridges:
++                    raise ValueError(
++                        "Cartridge adapters are served through chat completions"
++                    )
+                 continue
+ 
+             if lora_path not in self.lora_ref_cache:
+@@ -3892,7 +3905,7 @@
+                 obj.lora_id[i] if isinstance(obj.lora_id, list) else obj.lora_id
+             )
+ 
+-    def _fetch_lora_adapter_path(self, lora_name: str) -> str:
++    def _fetch_lora_adapter_path(self, lora_name: str) -> Dict[str, Any]:
+         import urllib.request
+         import uuid
+ 
+@@ -3915,13 +3928,16 @@
+                 data = response.read(65537)
+             if len(data) > 65536:
+                 raise ValueError
+-            path = json.loads(data)["path"]
++            resolved = json.loads(data)
++            path = resolved["path"]
+             if not isinstance(path, str) or not os.path.isabs(path):
++                raise ValueError
++            if resolved.get("kind", "lora") not in ("lora", "cartridge"):
+                 raise ValueError
+         except Exception:
+             # Keep signed URLs, credentials and loader errors out of responses and logs.
+             raise ValueError("Adapter resolution unavailable") from None
+-        return path
++        return resolved
+ 
+     async def _resolve_lora_adapter(self, lora_name: str) -> None:
+         pending = self.lora_resolutions.get(lora_name)
+@@ -3931,9 +3947,15 @@
+         pending = asyncio.get_running_loop().create_future()
+         self.lora_resolutions[lora_name] = pending
+         try:
+-            path = await asyncio.to_thread(self._fetch_lora_adapter_path, lora_name)
++            resolved = await asyncio.to_thread(self._fetch_lora_adapter_path, lora_name)
++            if resolved.get("kind") == "cartridge":
++                self._register_cartridge(lora_name, resolved)
++                pending.set_result(None)
++                return
++            if not self.enable_lora:
++                raise ValueError("LoRA adapters are not enabled")
+             result = await self.load_lora_adapter(
+-                LoadLoRAAdapterReqInput(lora_name=lora_name, lora_path=path)
++                LoadLoRAAdapterReqInput(lora_name=lora_name, lora_path=resolved["path"])
+             )
+             if not result.success and lora_name not in self.lora_ref_cache:
+                 logger.warning("Resolved LoRA adapter failed to load")
+@@ -3947,6 +3969,48 @@
+             raise
+         finally:
+             self.lora_resolutions.pop(lora_name, None)
++
++    def _register_cartridge(self, name: str, resolved: Dict[str, Any]) -> None:
++        if self.cartridge_pool_bytes <= 0:
++            raise ValueError("Cartridges are not enabled")
++        sha256, num_tokens = resolved.get("sha256"), resolved.get("num_tokens")
++        if (
++            not isinstance(sha256, str)
++            or len(sha256) != 64
++            or type(num_tokens) is not int
++            or num_tokens <= 0
++        ):
++            raise ValueError("Adapter resolution unavailable")
++        hidden_size = self.model_config.hidden_size
++        if num_tokens * hidden_size * 2 > self.cartridge_pool_bytes:
++            raise ValueError("Cartridge exceeds the cartridge pool")
++        try:
++            cartridge = read_cartridge(
++                resolved["path"],
++                sha256=sha256,
++                num_tokens=num_tokens,
++                hidden_size=hidden_size,
++                vocab_size=self.model_config.vocab_size,
++            )
++        except (CartridgeError, OSError):
++            logger.warning("Resolved cartridge failed validation")
++            raise ValueError("Adapter load failed") from None
++        slot_text = self.tokenizer.decode(list(cartridge.slot_token_ids))
++        self.cartridges[name] = (cartridge, slot_text)
++        self.cartridges.move_to_end(name)
++        while len(self.cartridges) > 4096:
++            self.cartridges.popitem(last=False)
++
++    async def resolve_cartridge(self, name: str) -> Optional[Tuple[Cartridge, str]]:
++        """The cartridge and its slot text when ``name`` names one, else None."""
++        if self.cartridge_pool_bytes <= 0 or name in self.lora_ref_cache:
++            return None
++        if name not in self.cartridges and self.lora_resolver_url:
++            await self._resolve_lora_adapter(name)
++        entry = self.cartridges.get(name)
++        if entry is not None:
++            self.cartridges.move_to_end(name)
++        return entry
+ 
+     def _init_req_state(
+         self,

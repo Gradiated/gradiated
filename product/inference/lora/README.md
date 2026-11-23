@@ -218,6 +218,17 @@ SGLang owns model-specific module compatibility and rejects adapters for
 modules outside the runtime's `--lora-target-modules`. This does not qualify vision-tower
 adapters or GLM numeric correctness.
 
+Cartridge versions (`format: "cartridge"`, see the
+[cartridge plan](../../../docs/CARTRIDGE_SERVING_PLAN.md)) download one
+`cartridge.safetensors` file rather than an archive. Before the file is
+retained, the loader checks its size and SHA256 and parses the header as JSON,
+never pickle. It also checks the tensor names, dtypes, shapes and byte ranges
+against the task version and the pinned `hidden_size`, `vocab_size` and
+`max_position_embeddings`. The embeddings must be finite and the slot IDs
+inside the vocabulary. Resolution returns
+`{kind: "cartridge", path, sha256, num_tokens}`. SGLang reads the file into its
+cartridge table, so cartridges are never registered through `load_lora_adapter`.
+
 ## Verification
 
 ```sh

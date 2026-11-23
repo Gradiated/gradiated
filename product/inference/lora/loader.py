@@ -10,6 +10,7 @@ import urllib.error
 import uuid
 from pathlib import Path
 
+import cartridge
 from artifacts import cache_key, download, has_fused_experts, materialize, remaining
 
 logger = logging.getLogger(__name__)
@@ -97,7 +98,7 @@ class Loader:
         version, workspace = spec["version"], spec["workspace_id"]
         adapter = version["adapter"]
         if (
-            adapter.get("format") != "peft_lora"
+            adapter.get("format") not in ("peft_lora", "cartridge")
             or version["base_model_id"] != self.config["base_model_id"]
             or adapter.get("validated_base_model_revision", adapter.get("base_model_revision"))
             != self.config["base_model_revision"]
@@ -106,11 +107,13 @@ class Loader:
             or str(uuid.UUID(workspace)) != workspace
             or not isinstance(version["name"], str)
             or not 0 < len(version["name"]) <= 300
-            or type(adapter["rank"]) is not int
-            or not 0 < adapter["rank"] <= self.config["max_rank"]
             or type(adapter["size_bytes"]) is not int
             or not 0 < adapter["size_bytes"] < self.config["disk_cache_bytes"]
         ):
+            raise ValueError("Incompatible task version")
+        if adapter["format"] == "cartridge":
+            cartridge.validate_metadata(adapter, self.config["model_config"])
+        elif type(adapter["rank"]) is not int or not 0 < adapter["rank"] <= self.config["max_rank"]:
             raise ValueError("Incompatible task version")
         spec["version"] = {
             "id": version["id"],
@@ -234,6 +237,9 @@ class Loader:
 
     def local_files(self, name):
         path = self.root / name
+        adapter = self.entries[name]["spec"]["version"]["adapter"]
+        if adapter["format"] == "cartridge":
+            return cartridge.resolved_files(path, adapter)
         return {"path": str(path), "is_3d_lora_weight": has_fused_experts(path)}
 
     def resolve_files(self, name, workspace_id, deadline=None):
@@ -273,6 +279,9 @@ class Loader:
 
     def prepare(self, name, workspace_id, deadline=None):
         files = self.resolve_files(name, workspace_id, deadline)
+        # SGLang reads a cartridge from its path on first use; there is nothing to register.
+        if files.get("kind") == "cartridge":
+            return
         runtime_name = f"{workspace_id}/{self.entries[name]['spec']['version']['name']}"
         # SGLang's resolver hook can call the loader while it loads an adapter.
         # Do not hold the materialization lock across calls back into SGLang.
@@ -331,17 +340,29 @@ class Loader:
                 self.reserve_disk(name, required)
 
         try:
-            _path, disk, _tensor_bytes = materialize(
-                entry["spec"],
-                self.root,
-                self.config["disk_cache_bytes"],
-                self.allowed_hosts,
-                self.config["model_config"],
-                fetch=fetch,
-                reserve=reserve,
-                deadline=deadline,
-                allowed_target_modules=self.config.get("allowed_target_modules"),
-            )
+            if entry["spec"]["version"]["adapter"]["format"] == "cartridge":
+                _path, disk = cartridge.materialize(
+                    entry["spec"],
+                    self.root,
+                    self.config["disk_cache_bytes"],
+                    self.allowed_hosts,
+                    self.config["model_config"],
+                    fetch=fetch,
+                    reserve=reserve,
+                    deadline=deadline,
+                )
+            else:
+                _path, disk, _tensor_bytes = materialize(
+                    entry["spec"],
+                    self.root,
+                    self.config["disk_cache_bytes"],
+                    self.allowed_hosts,
+                    self.config["model_config"],
+                    fetch=fetch,
+                    reserve=reserve,
+                    deadline=deadline,
+                    allowed_target_modules=self.config.get("allowed_target_modules"),
+                )
         finally:
             with self.lock:
                 directory = self.root / name

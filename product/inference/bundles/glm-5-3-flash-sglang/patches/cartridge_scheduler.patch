@@ -1,0 +1,202 @@
+--- a/sglang/srt/managers/scheduler.py
++++ b/sglang/srt/managers/scheduler.py
+@@ -21,7 +21,7 @@
+ import sys
+ import time
+ from array import array
+-from collections import deque
++from collections import OrderedDict, deque
+ from contextlib import ExitStack, contextmanager, nullcontext
+ from functools import partial
+ from http import HTTPStatus
+@@ -127,6 +127,14 @@
+ from sglang.srt.managers.deferred_output import ResponseCompletion
+ from sglang.srt.managers.disagg_service import maybe_create_ascend_config_store
+ from sglang.srt.managers.hisparse_coordinator import HiSparseCoordinator
++from sglang.srt.managers.cartridge import (
++    Cartridge,
++    CartridgeError,
++    CartridgePool,
++    read_cartridge,
++)
++from sglang.srt.managers.cartridge import extra_key as cartridge_extra_key
++from sglang.srt.managers.cartridge import set_pool as set_cartridge_pool
+ from sglang.srt.managers.io_struct import (
+     AbortReq,
+     ActiveRanksOutput,
+@@ -137,6 +145,7 @@
+     BatchTokenizedEmbeddingReqInput,
+     BatchTokenizedGenerateReqInput,
+     BeginWeightUpdateReqInput,
++    CartridgeRef,
+     CheckWeightsReqInput,
+     ClearHiCacheReqInput,
+     ClearHiCacheReqOutput,
+@@ -757,6 +766,9 @@
+         # Init LoRA drainer for fair scheduling
+         self.init_lora_drainer()
+ 
++        # Init the GPU table for prompt cartridges
++        self.init_cartridge_pool()
++
+         # Init LoRA overlap loader
+         self.init_lora_overlap_loader()
+ 
+@@ -2468,6 +2480,102 @@
+             metrics_collector=self.metrics_collector,
+         )
+ 
++    def init_cartridge_pool(self) -> None:
++        self.cartridge_pool: Optional[CartridgePool] = None
++        self.cartridge_table = None
++        self.cartridge_specs: OrderedDict[str, Cartridge] = OrderedDict()
++        pool_bytes = get_lora().cartridge_pool_bytes
++        if pool_bytes <= 0:
++            return
++
++        from sglang.srt.layers.attention.dsa.utils import is_dsa_enable_prefill_cp
++        from sglang.srt.layers.cartridge_embedding import (
++            CartridgeTable,
++            set_cartridge_table,
++        )
++        from sglang.srt.model_executor.cuda_graph_config import Backend
++
++        prefill_backend = get_exec().graph.cuda_graph_config.prefill.backend
++        for unsupported, mode in (
++            (
++                prefill_backend not in (Backend.BREAKABLE, Backend.DISABLED),
++                f"the {prefill_backend} prefill CUDA graph",
++            ),
++            (get_parallel().pp_size > 1, "pipeline parallelism"),
++            (is_dsa_enable_prefill_cp(), "prefill context parallelism"),
++            (
++                get_exec().features.enable_encoder_swa_bounded_replay,
++                "encoder SWA bounded replay",
++            ),
++            (
++                self.disaggregation_mode != DisaggregationMode.NULL,
++                "prefill-decode disaggregation",
++            ),
++        ):
++            if unsupported:
++                raise ValueError(f"--cartridge-pool-bytes does not support {mode}")
++
++        self.cartridge_table = CartridgeTable(
++            pool_bytes,
++            self.model_config.hidden_size,
++            self.tp_worker.model_runner.device,
++        )
++        set_cartridge_table(self.cartridge_table)
++        self.cartridge_pool = CartridgePool(
++            self.cartridge_table.capacity_rows, self._load_cartridge
++        )
++        set_cartridge_pool(self.cartridge_pool)
++
++    def _cartridge_spec(self, ref: CartridgeRef) -> Cartridge:
++        spec = self.cartridge_specs.get(ref.sha256)
++        if spec is None or spec.path != ref.path or spec.num_tokens != ref.num_tokens:
++            spec = read_cartridge(
++                ref.path,
++                sha256=ref.sha256,
++                num_tokens=ref.num_tokens,
++                hidden_size=self.model_config.hidden_size,
++                vocab_size=self.model_config.vocab_size,
++            )
++            self.cartridge_specs[ref.sha256] = spec
++        self.cartridge_specs.move_to_end(ref.sha256)
++        while len(self.cartridge_specs) > 4096:
++            self.cartridge_specs.popitem(last=False)
++        return spec
++
++    def _load_cartridge(self, ref: CartridgeRef, rows) -> None:
++        self.cartridge_table.write(self._cartridge_spec(ref), rows)
++
++    def _validate_cartridge_req(self, req: Req) -> Optional[str]:
++        ref = req.cartridge
++        if self.cartridge_pool is None:
++            return "Cartridges are not enabled"
++        if not self.cartridge_pool.fits(ref.num_tokens):
++            return "Cartridge exceeds the cartridge pool"
++        try:
++            spec = self._cartridge_spec(ref)
++        except (CartridgeError, OSError):
++            return "Cartridge file is invalid"
++        slots = req.origin_input_ids[ref.start : ref.start + ref.num_tokens]
++        if ref.start < 0 or tuple(slots) != spec.slot_token_ids:
++            return "Cartridge positions do not hold its slot tokens"
++        return None
++
++    def _admit_cartridge(self, req: Req) -> bool:
++        """Reserve the request's cartridge rows for this prefill round."""
++        if req.cartridge is None:
++            return True
++        try:
++            return self.cartridge_pool.admit(req.cartridge, req.prefix_len)
++        except (CartridgeError, OSError, ValueError):
++            logger.warning("Cartridge rows failed to load")
++            req.cartridge = None
++            req.set_finish_with_abort(
++                "Cartridge could not be loaded",
++                status_code=HTTPStatus.SERVICE_UNAVAILABLE,
++                err_type="ServiceUnavailableError",
++            )
++            return False
++
+     def init_lora_drainer(self) -> None:
+         if get_lora().lora_drain_wait_threshold > 0.0:
+             self.lora_drainer = LoRADrainer(
+@@ -3171,7 +3279,13 @@
+         self, recv_req: TokenizedGenerateReqInput, *args, **kwargs
+     ) -> Req:
+         """Extension point for request-local state, including session requests."""
+-        return Req(*args, **kwargs)
++        req = Req(*args, **kwargs)
++        if recv_req.cartridge is not None:
++            req.cartridge = recv_req.cartridge
++            req.extra_key = cartridge_extra_key(
++                recv_req.cartridge.sha256, req.extra_key
++            )
++        return req
+ 
+     def handle_generate_request(
+         self,
+@@ -3351,6 +3465,15 @@
+         self._maybe_namespace_elastic_radix_cache(req)
+         self._record_kv_event_lora_name(req, recv_req.lora_name)
+ 
++        if req.cartridge is not None and (
++            error_msg := self._validate_cartridge_req(req)
++        ):
++            req.cartridge = None
++            req.set_finish_with_abort(error_msg)
++            self.init_req_max_new_tokens(req)
++            self._add_request_to_queue(req)
++            return
++
+         if mm_input_error is not None:
+             req.set_finish_with_abort(
+                 mm_input_error,
+@@ -4463,8 +4586,14 @@
+             prefill_tile_block_m=prefill_tile_block_m,
+         )
+ 
++        if self.cartridge_pool is not None:
++            self.cartridge_pool.begin_round()
+         if self.chunked_req is not None:
+             self.chunked_req.init_next_round_input()
++            if self.chunked_req.cartridge is not None and not self.cartridge_pool.admit(
++                self.chunked_req.cartridge, self.chunked_req.prefix_len
++            ):
++                raise RuntimeError("cartridge of a chunked request was evicted")
+             adder.chunked_req_limit = self.policy.shortest_prefill_chunk_limit(
+                 self.chunked_req,
+                 self.waiting_queue,
+@@ -4578,6 +4707,8 @@
+                 req.time_stats.observe_storage_staging_ready(staging_ready)
+                 if not staging_ready:
+                     continue
++            if self.cartridge_pool is not None and not self._admit_cartridge(req):
++                continue
+             res = adder.add_one_req(
+                 req,
+                 has_chunked_req=(self.chunked_req is not None),

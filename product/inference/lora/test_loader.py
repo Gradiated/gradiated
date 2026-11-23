@@ -9,7 +9,14 @@ import uuid
 from pathlib import Path
 from unittest import mock
 
-from fixtures import archive, grant, settings
+from fixtures import (
+    archive,
+    cartridge_file,
+    cartridge_grant,
+    cartridge_model_config,
+    grant,
+    settings,
+)
 from loader import CapacityError, Loader
 from startup import start_preload
 
@@ -383,6 +390,86 @@ class LoaderTests(unittest.TestCase):
         )
         self.assertEqual(len(self.models), 1)
         self.assertEqual(self.fetches, 1)
+
+
+class CartridgeLoaderTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.config = {**settings(), "model_config": cartridge_model_config()}
+        self.payload = cartridge_file()
+        self.fetches = 0
+        self.commands = []
+        self.loader = Loader(self.config, self.temp.name, 1, set(), fetch=self.fetch)
+        self.loader.ready = True
+        self.loader.engine = self.engine
+
+    def fetch(self, spec, path, hosts, deadline=None):
+        self.fetches += 1
+        path.write_bytes(self.payload)
+
+    def engine(self, method, path, body=None):
+        self.commands.append((method, path, body))
+        return b"ok"
+
+    def test_resolution_returns_the_cartridge_kind_and_verified_path(self):
+        spec = cartridge_grant(self.payload)
+        self.loader.resolve = lambda name, workspace, deadline=None: spec
+
+        files = self.loader.resolve_version(spec["version"]["name"], spec["workspace_id"])
+
+        self.assertEqual(files["kind"], "cartridge")
+        self.assertEqual(files["sha256"], spec["version"]["adapter"]["sha256"])
+        self.assertEqual(files["num_tokens"], 3)
+        self.assertEqual(Path(files["path"]).read_bytes(), self.payload)
+        self.assertEqual(
+            self.loader.resolve_version(spec["version"]["name"], spec["workspace_id"]),
+            files,
+        )
+        self.assertEqual(self.fetches, 1)
+
+    def test_preparation_never_registers_a_cartridge_as_a_lora_adapter(self):
+        spec = cartridge_grant(self.payload)
+        self.loader.resolve = lambda name, workspace, deadline=None: spec
+
+        self.loader.prepare_version(spec["version"]["name"], spec["workspace_id"])
+
+        self.assertEqual(self.commands, [])
+        self.assertEqual(self.loader.status()["registered_adapters"], 0)
+
+    def test_cartridges_need_the_pinned_model_dimensions(self):
+        spec = cartridge_grant(self.payload, hidden=8)
+        with self.assertRaises(ValueError):
+            self.loader.register_metadata(spec)
+
+        self.loader.config = {**self.config, "model_config": {"num_hidden_layers": 2}}
+        with self.assertRaises(ValueError):
+            self.loader.register_metadata(cartridge_grant(self.payload))
+
+    def test_lora_versions_still_require_a_valid_rank(self):
+        spec = grant(archive())
+        spec["version"]["adapter"]["rank"] = 0
+        with self.assertRaises(ValueError):
+            self.loader.register_metadata(spec)
+
+        del spec["version"]["adapter"]["rank"]
+        with self.assertRaises(KeyError):
+            self.loader.register_metadata(spec)
+
+    def test_cartridge_disk_budget_evicts_unpinned_files_only(self):
+        first = cartridge_grant(self.payload)
+        self.loader.resolve = lambda name, workspace, deadline=None: first
+        files = self.loader.resolve_version(first["version"]["name"], first["workspace_id"])
+
+        self.loader.config = {
+            **self.config,
+            "disk_cache_bytes": len(self.payload) + 4096 + 128,
+        }
+        second = cartridge_grant(self.payload)
+        self.loader.resolve = lambda name, workspace, deadline=None: second
+        with self.assertRaises(CapacityError):
+            self.loader.resolve_version(second["version"]["name"], second["workspace_id"])
+        self.assertTrue(Path(files["path"]).is_file())
 
 
 if __name__ == "__main__":

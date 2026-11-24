@@ -33,7 +33,7 @@
   cursor: pointer;
 }
 
-.bounce-cards__card--clickable:focus-visible {
+.bounce-cards__card:focus-visible {
   outline: 2px solid var(--bounce-cards-border-color);
   outline-offset: 3px;
 }

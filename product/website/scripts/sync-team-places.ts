@@ -25,14 +25,27 @@ declare const process: {
 const OUTPUT = new URL("../src/team-places.generated.json", import.meta.url);
 const OPTIONAL = process.env.TEAM_PLACES_OPTIONAL === "1";
 
-type Wanted = { city: string; country: string; file: string; key: string };
+type Wanted = {
+  city: string;
+  country: string;
+  /** The profile's own `countryCode`, which wins over the name. */
+  countryCode?: string;
+  file: string;
+  key: string;
+};
 
 const wanted = async (): Promise<Wanted[]> => {
   const places: Wanted[] = [];
 
   for (const profile of await profiles()) {
     const location = profile.front.location as
-      { city?: unknown; country?: unknown; latitude?: unknown } | undefined;
+      | {
+          city?: unknown;
+          country?: unknown;
+          countryCode?: unknown;
+          latitude?: unknown;
+        }
+      | undefined;
     if (!location?.city || !location?.country) continue;
     // Coordinates written in the profile are used as they are.
     if (location.latitude !== undefined) continue;
@@ -43,6 +56,10 @@ const wanted = async (): Promise<Wanted[]> => {
     places.push({
       city: String(location.city).trim(),
       country: String(location.country).trim(),
+      ...(typeof location.countryCode === "string" &&
+      location.countryCode.trim()
+        ? { countryCode: location.countryCode.trim().toUpperCase() }
+        : {}),
       file: profile.label,
       key,
     });
@@ -52,7 +69,7 @@ const wanted = async (): Promise<Wanted[]> => {
 };
 
 const lookUp = async (place: Wanted): Promise<PlaceCoordinates> => {
-  const code = countryCodeOf(place.country);
+  const code = place.countryCode ?? countryCodeOf(place.country);
   if (!code) {
     throw new Error(
       `${place.file}: "${place.country}" is not a country name this recognises. Add its two-letter code as \`countryCode\`.`,

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactElement } from "react";
 import { marked } from "marked";
+import { useLocation } from "react-router-dom";
 import { articles } from "../articles";
 import { PixelIcon, Tabs } from "../components/design";
 import { useRailDocNav } from "../components/design/RailShell";
@@ -159,6 +160,9 @@ const useOpenSection = (
 ): [string | undefined, (id: string) => void] => {
   const [open, setOpen] = useState(ids[0]);
   const key = ids.join("|");
+  // A route change between profiles reuses this component and fires no
+  // hashchange, so the location is a dependency too.
+  const { hash, pathname } = useLocation();
 
   useEffect(() => {
     const read = () => {
@@ -171,7 +175,7 @@ const useOpenSection = (
     return () => window.removeEventListener("hashchange", read);
     // `key` stands in for `ids`, which is a new array each render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, [key, pathname, hash]);
 
   const choose = (id: string) => {
     setOpen(id);

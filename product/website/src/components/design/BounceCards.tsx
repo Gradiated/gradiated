@@ -429,7 +429,11 @@ export const BounceCards = ({
           style={{ zIndex: i + 1 }}
           {...(settings.clickable
             ? { "aria-label": `Card ${i + 1}`, role: "button", tabIndex: 0 }
-            : null)}
+            : settings.enableHover
+              ? // Focus brings a card forward, as hover does, so keyboard
+                // readers can reach the text other cards cover.
+                { tabIndex: 0 }
+              : null)}
         >
           {card}
         </div>

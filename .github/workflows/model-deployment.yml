@@ -188,7 +188,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node tools/models/wait-infrastructure.mjs
-      - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/gradiated-prod-deployment
@@ -201,7 +201,7 @@ jobs:
         uses: depot/setup-action@91bc8495a33ebfc504ffc89e5674379ccf23c29c # v1.7.2
       - name: Package and verify the runtime
         if: steps.existing.outputs.exists != 'true'
-        uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
+        uses: depot/build-push-action@0f27be7c41d76663a98518dfe68f1c46582242c4 # v1.19.0
         with:
           project: ${{ vars.DEPOT_PROJECT_ID }}
           context: ${{ matrix.bundle == 'host' && '.' || (matrix.bundle == 'training' && 'product' || 'product/inference') }}

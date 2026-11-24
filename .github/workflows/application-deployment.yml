@@ -211,7 +211,7 @@ jobs:
           VITE_POSTHOG_KEY: ${{ vars.CONSOLE_POSTHOG_KEY }}
           SOURCE_SHA: ${{ needs.resolve.outputs.source_sha }}
         run: node tools/deployment/console-artifact.mjs fetch "$SOURCE_SHA"
-      - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}
@@ -342,14 +342,14 @@ jobs:
       - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
         with:
           install_args: aws kubectl node
-      - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}
           allowed-account-ids: ${{ env.AWS_ACCOUNT_ID }}
           role-session-name: deploy-wait-${{ github.run_id }}
       - name: Join the tailnet for the Kubernetes API
-        uses: tailscale/github-action@99a8333667fff04fdd6cffb46dfd409f8329a7bf # v4.3.0
+        uses: tailscale/github-action@064b10558093f38325e838ddea35486bdc6b1d5c # v4.4.0
         with:
           oauth-client-id: ${{ vars.TAILSCALE_CI_CLIENT_ID }}
           audience: ${{ vars.TAILSCALE_CI_AUDIENCE }}
@@ -419,7 +419,7 @@ jobs:
         with:
           name: console-${{ needs.resolve.outputs.source_sha }}
           path: console-dist
-      - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}

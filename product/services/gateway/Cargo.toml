@@ -28,7 +28,7 @@ rustls = { version = "=0.23.45", default-features = false, features = ["aws_lc_r
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0.140", features = ["preserve_order", "raw_value"] }
 switchyard-translation = "=0.3.0"
-sha2 = "0.10.9"
+sha2 = "0.11.0"
 thiserror = "2.0.12"
 tokenizers = { version = "=0.23.1", default-features = false, features = ["fancy-regex"] }
 tokio = { version = "1.45.1", features = ["macros", "net", "rt-multi-thread", "signal", "sync", "time"] }

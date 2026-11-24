@@ -178,6 +178,36 @@ series and the separate Mamba metrics remain available without being relabeled
 as KV usage. The allocation's public `/metrics` path does not aggregate SMG;
 use the private Desmond/warmup metrics endpoint.
 
+## Live tuning
+
+The bundle installs the livetune SGLang plugin (`product/inference/livetune`).
+`LIVETUNE_MODE` selects what it does and defaults to `off`:
+
+- `off`: the plugin only answers `/server_info` readback; nothing is recorded or
+  changed.
+- `observe`: SGLang writes content-free request records to
+  `$XDG_CACHE_HOME/glm-sglang/livetune/trace/`, owner-only and rotated at 512 MB.
+  If the bundle carries a policy for the hardware profile, in
+  `glm-sglang/livetune/<profile>.json`, a controller logs what it would change.
+- `act`: the same, and the controller applies the policy's live settings
+  (running cap, prefill chunk and budget, schedule policy and conservativeness,
+  stream interval, queue limit). Caps never exceed their startup values, so the
+  SMG limits and decode graph sizes stay valid.
+
+- `canary`: for a server that only replayed production traffic reaches
+  (`livetune improve --canary`). SGLang ends each replayed early stop at its
+  recorded length, exactly, even under speculative decoding; nothing is recorded
+  or changed.
+
+The controller is a third child of the service. Its exit never stops SGLang or
+SMG; the service restarts it after 30 s, doubling to 10 minutes while it keeps
+failing. It logs every change and a heartbeat every 5 minutes. A policy is part
+of the bundle, so changing one is a reviewed release, and the controller refuses
+a policy tuned on a different scope. Forward-code variants switch live
+only with `LIVETUNE_LIVE_VARIANTS=1`: each gets its own speculative runtime
+state, so a switch to one built before is a pointer swap. `test_livetune_contract.py` checks every SGLang method the
+plugin hooks against the installed SGLang during the bundle build.
+
 ## Portable artifacts and verification
 
 The archive contains pinned packages and source, not the experimental virtual

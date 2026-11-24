@@ -67,6 +67,12 @@ class Controller:
         if self._probation is not None and self._probation.rule == self.current:
             self._probation.started, self._probation.verdicts = now, []
 
+    def replace_policy(self, policy: Policy) -> None:
+        """Adopt a new policy; the next window picks a rule afresh while what the server runs is kept."""
+        self.policy = policy
+        self.current, self._probation, self._candidate, self._candidate_windows = None, None, None, 0
+        self._penalties.clear()
+
     def forget(self) -> None:
         self.current, self.applied, self._probation = None, {}, None
 

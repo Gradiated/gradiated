@@ -1,19 +1,35 @@
 from __future__ import annotations
 
-import gc
+import atexit
+import dataclasses
+import json
 import logging
 import os
+import queue
+import threading
 import time
+from pathlib import Path
 from typing import Any
 
-from livetune import variants
-from livetune.knobs import KNOBS, VARIANT_KEY, InvalidSetting
+from livetune import trace, variants
+from livetune.knobs import COMMAND_KEYS, KNOBS, SCHEDULE_POLICIES, VARIANT_KEY, InvalidSetting
 
 logger = logging.getLogger(__name__)
 
 _TARGET = "sglang.srt.managers.scheduler_components.internal_state.SchedulerInternalStateController"
 _SCHEDULER = "sglang.srt.managers.scheduler.Scheduler"
 _MODEL_RUNNER = "sglang.srt.model_executor.model_runner.ModelRunner"
+_STREAMER = "sglang.srt.managers.scheduler_components.output_streamer.SchedulerOutputStreamer"
+_TIME_STATS = "sglang.srt.observability.req_time_stats.SchedulerReqTimeStats"
+_REQ = "sglang.srt.managers.schedule_batch.Req"
+# A replayed request that stopped early in production carries its recorded length here, and the
+# server finishes it at exactly that many tokens: a client cutting the stream would see the stop
+# only at a chunk boundary, and speculative decoding can accept several tokens past it.
+REPLAY_STOP_KEY = "livetune_stop_after"
+# Samples the scheduler thread's stack for this many seconds into LIVETUNE_PROFILE_DIR. A command, not
+# a setting: it is never stored in settings, so a controller reconciling settings cannot repeat it.
+PROFILE_KEY = "profile_seconds"
+assert PROFILE_KEY in COMMAND_KEYS
 
 
 class NoUsableVariant(RuntimeError):
@@ -25,11 +41,7 @@ class LiveTuner:
         runner = scheduler.tp_worker.model_runner
         self.scheduler = scheduler
         self.page_size = int(getattr(scheduler, "page_size", 1) or 1)
-        self.startup = {
-            "max_running_requests": scheduler.max_running_requests,
-            "chunked_prefill_size": scheduler.chunked_prefill_size,
-            "max_prefill_tokens": scheduler.max_prefill_tokens,
-        }
+        self.startup = _startup_settings(scheduler)
         self.startup[VARIANT_KEY] = getattr(runner, "_livetune_variant_id", variants.STOCK)
         from sglang.srt.runtime_context import get_parallel
 
@@ -37,6 +49,10 @@ class LiveTuner:
         self.pp_micro_batch_startup = get_parallel().pp_max_micro_batch_size
         self.gpu = _gpu_name()
         self._runtime: dict[str, str | None] | None = None
+        self._runtime_thread: threading.Thread | None = None
+        # Speculative runtime states by variant id, least recently used first.
+        self.states: dict[int, Any] = {}
+        self.max_states = max(2, int(os.environ.get("LIVETUNE_VARIANT_STATES", "3") or 3))
         self.settings: dict[str, Any] = dict(self.startup)
         self.variant: variants.InstalledVariant | None = getattr(runner, "_livetune_variant", None)
         # The code installed at startup, by hash: re-registering a name later changes the catalog, not this.
@@ -47,12 +63,22 @@ class LiveTuner:
         if self.variant is not None:
             self.pinned[str(self.startup[VARIANT_KEY])] = self.variant.source.sha256
         self.pending_variant: int | None = None
+        self.forward_pending: int | None = None  # a built state to switch to at the next forward
+        self.profile: Any = None
         self.pending_since_step = 0
         self.drain_steps = int(os.environ.get("LIVETUNE_DRAIN_STEPS", "6000"))
         self.changes: list[dict[str, Any]] = []
         self.errors: list[dict[str, Any]] = []
 
     def validate(self, key: str, value: Any) -> None:
+        if key == PROFILE_KEY:
+            if not os.environ.get("LIVETUNE_PROFILE_DIR"):
+                raise InvalidSetting(f"{PROFILE_KEY} needs LIVETUNE_PROFILE_DIR")
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not 1 <= value <= 600:
+                raise InvalidSetting(f"{PROFILE_KEY} must be 1-600 seconds")
+            if self.profile is not None and not self.profile.done.is_set():
+                raise InvalidSetting("a profile is already running")
+            return
         if key == VARIANT_KEY:
             if not _live_variants():
                 raise InvalidSetting(f"live {VARIANT_KEY} switching is disabled; set LIVETUNE_STARTUP_VARIANT and restart")
@@ -61,12 +87,24 @@ class LiveTuner:
             # Data-parallel schedulers drain independently, so their switches cannot be made atomic.
             if getattr(get_parallel(), "dp_size", 1) > 1:
                 raise InvalidSetting(f"live {VARIANT_KEY} switching is not supported with data parallelism")
+            # A speculative server switches whole runtime states, target and draft; one whose worker
+            # cannot build them, or that switches them itself (adaptive steps), would keep old code.
+            spec = getattr(self.scheduler, "spec_algorithm", None)
+            if spec is not None and not spec.is_none():
+                worker = _state_worker(self.scheduler)
+                if worker is None:
+                    raise InvalidSetting(f"live {VARIANT_KEY} switching needs a speculative worker that builds runtime states")
+                if getattr(worker, "adaptive_controller", None) is not None:
+                    raise InvalidSetting(f"live {VARIANT_KEY} switching is not supported with adaptive speculative steps")
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
                 raise InvalidSetting(f"{VARIANT_KEY} must be a variant id (0 = stock)")
             if value != variants.STOCK:
                 self._resolve(value)
             return
         KNOBS[key].validate(value, self.startup, self.page_size)
+        if key == "schedule_policy":
+            _schedule_policy(self.scheduler, SCHEDULE_POLICIES[value])  # incompatible policies raise here, not mid-apply
+
         if key == "max_running_requests" and value != self.startup[key]:
             from sglang.srt.runtime_context import get_parallel
 
@@ -86,7 +124,7 @@ class LiveTuner:
             self.errors.append({"t": time.time(), "key": key, "value": value, "error": f"{type(exc).__name__}: {exc}"})
             del self.errors[:-20]
             return None
-        if key == VARIANT_KEY:
+        if key in (VARIANT_KEY, PROFILE_KEY):
             return overrides
         self.settings[key] = value
         self.changes.append({"t": time.time(), "key": key, "value": value, "seconds": time.perf_counter() - started})
@@ -96,6 +134,14 @@ class LiveTuner:
 
     def _apply(self, key: str, value: Any) -> dict[str, Any] | None:
         overrides: dict[str, Any] | None = None
+        if key == PROFILE_KEY:
+            from livetune.sampler import StackSampler
+            from sglang.srt.runtime_context import get_parallel
+
+            # Handlers run on the scheduler thread, which is the one to profile.
+            name = f"scheduler-{time.strftime('%Y%m%dT%H%M%S')}-tp{get_parallel().tp_rank}-{os.getpid()}.txt"
+            self.profile = StackSampler(threading.get_ident(), float(value), Path(os.environ["LIVETUNE_PROFILE_DIR"]) / name).start()
+            return None
         if key == "max_running_requests":
             from sglang.srt.runtime_context import get_parallel
 
@@ -109,12 +155,43 @@ class LiveTuner:
         elif key == "max_prefill_tokens":
             self.scheduler.max_prefill_tokens = value
             overrides = {key: value}
+        elif key == "schedule_policy":
+            name = SCHEDULE_POLICIES[value]
+            # The scheduler holds a policy object built at startup; config is also read fresh in places.
+            self.scheduler.policy = _schedule_policy(self.scheduler, name)
+            self.scheduler.schedule_policy = name
+            overrides = {key: name}
+        elif key == "schedule_conservativeness":
+            from sglang.srt.managers.scheduler_components.new_token_ratio_tracker import NewTokenRatioTracker
+            from sglang.srt.runtime_context import get_context
+
+            # The admission headroom tracker derives its ratios from config at construction.
+            get_context().override(source="livetune", **{key: value})
+            self.scheduler.new_token_ratio_tracker = NewTokenRatioTracker.from_config()
+            overrides = {key: value}
+        elif key == "stream_interval":
+            overrides = {key: value}
+        elif key == "policy_version":
+            pass  # recorded in settings, read back by stage and guard
+        elif key == "max_queued_requests":
+            self.scheduler.max_queued_requests = value or None
+
         elif key == VARIANT_KEY:
-            # Recapturing graphs under an in-flight overlap batch corrupts its buffers, so
-            # the switch waits for an idle scheduler; admission pauses until then.
             if value == self.settings[VARIANT_KEY]:
-                self.pending_variant = None
+                self.pending_variant = self.forward_pending = None
                 return None
+            worker = _state_worker(self.scheduler) or (self.scheduler.tp_worker if _target_states() else None)
+            if worker is not None and value in self.states:
+                # A state built before is switched in at the next forward pass, as SGLang switches
+                # its adaptive states, with requests in flight: nothing is captured or freed, so
+                # the scheduler need not drain. Every rank handles this request at the same point
+                # of its loop, so every rank switches at the same forward.
+                self.pending_variant, self.forward_pending = None, value
+                _switch_at_forward(worker, self)
+                return None
+            # Building a state, or recapturing, under an in-flight overlap batch corrupts its
+            # buffers, so the switch waits for an idle scheduler; admission pauses until then.
+            self.forward_pending = None
             self.pending_variant = value
             self.pending_since_step = getattr(self.scheduler, "forward_ct", 0)
             return None
@@ -131,9 +208,20 @@ class LiveTuner:
         return True
 
     def on_idle(self) -> None:
+        # An idle scheduler is also a safe point for a built state, and the only one if no request comes.
+        self.on_forward()
         if self.pending_variant is None:
             return
         variant_id, self.pending_variant = self.pending_variant, None
+        self._complete_switch(variant_id)
+
+    def on_forward(self) -> None:
+        if self.forward_pending is None:
+            return
+        variant_id, self.forward_pending = self.forward_pending, None
+        self._complete_switch(variant_id)
+
+    def _complete_switch(self, variant_id: int) -> None:
         started = time.perf_counter()
         try:
             self._switch_variant(variant_id)
@@ -170,7 +258,9 @@ class LiveTuner:
         raise NoUsableVariant(f"variant {variant_id} failed and neither {previous} nor stock could be restored") from error
 
     def _try_variant(self, variant_id: int) -> Exception | None:
-        # Install and graph recapture succeed together on every rank, or the attempt fails.
+        # Install and graph recapture succeed together on every rank, or the attempt fails. Ranks vote
+        # after installing, before recapture: recapture runs tensor-parallel collectives, and a rank
+        # that skipped it would leave the others blocked in them.
         if self.variant is not None:
             variants.uninstall(self.variant)
             self.variant = None
@@ -178,12 +268,55 @@ class LiveTuner:
         try:
             if variant_id != variants.STOCK:
                 self._install(variant_id)
-            self._recapture(self.scheduler.tp_worker.model_runner)
+        except Exception as exc:
+            error = exc
+        if not self._all_ranks_agree(error is None):
+            if self.variant is not None:
+                variants.uninstall(self.variant)
+                self.variant = None
+            return error or RuntimeError("variant install failed on another tensor-parallel rank")
+        try:
+            self._rebuild(variant_id)
         except Exception as exc:
             error = exc
         if self._all_ranks_agree(error is None):
             return None
+        # Every rank forgets the attempted state, so a retry builds it again on all of them; a state
+        # cached on some ranks only would send them down different paths at the next switch.
+        self.states.pop(variant_id, None)
         return error or RuntimeError("variant switch failed on another tensor-parallel rank")
+
+    def _rebuild(self, variant_id: int) -> None:
+        """Put graphs captured with the installed code in place.
+
+        A speculative worker gets a runtime state per variant, built the way SGLang builds its adaptive
+        speculative states: fresh attention backends and graph runners for the target and draft
+        models, captured with the variant installed. Switching to a state built before is a pointer
+        swap, and no switch frees the graphs being left, so nothing serving can see freed memory.
+        Other servers recapture in place with SGLang's elastic sequence.
+        """
+        worker = _state_worker(self.scheduler)
+        runner = self.scheduler.tp_worker.model_runner
+        if worker is None and not _target_states():
+            self._recapture(runner)
+            return
+        if not self.states:
+            # The graphs captured at startup belong to the variant serving before the first switch.
+            self.states[self.settings[VARIANT_KEY]] = _current_state(worker) if worker is not None else _TargetState.current(runner)
+        state = self.states.pop(variant_id, None)
+        if state is None:
+            if worker is not None:
+                state = worker.build_adaptive_runtime_state(worker.speculative_num_steps, worker.speculative_num_draft_tokens)
+            else:
+                state = _TargetState.build(runner)
+        self.states[variant_id] = state  # most recently used last
+        if worker is not None:
+            _apply_state(worker, state)
+        else:
+            state.apply(runner)
+        # Keep a bounded number of states: drop the least recently used, never the one now serving.
+        while len(self.states) > self.max_states:
+            del self.states[next(iter(self.states))]
 
     def _all_ranks_agree(self, ok: bool) -> bool:
         group = getattr(self.scheduler, "tp_cpu_group", None)
@@ -198,25 +331,43 @@ class LiveTuner:
 
     @staticmethod
     def _recapture(runner: Any) -> None:
-        import torch
+        # SGLang's own sequence for recapturing decode graphs on a running server (elastic EP):
+        # free the old graphs through their backend, start a fresh graph memory pool, warm the
+        # kernels again, then capture. Re-calling init_decode_cuda_graph() alone reused the old
+        # pool and hit an illegal memory access at the first decode on DeepSeek V4.
+        from sglang.srt.model_executor.model_runner_components.cuda_graph_setup import (
+            drop_elastic_cuda_graph_state,
+            recapture_elastic_cuda_graph,
+        )
 
+        drop_elastic_cuda_graph_state(decode_runner=runner.decode_cuda_graph_runner, eager_runner=runner.eager_runner)
         runner.decode_cuda_graph_runner = None
-        gc.collect()
-        torch.cuda.synchronize()
-        runner.init_decode_cuda_graph()
-        torch.cuda.synchronize()
+        runner.decode_cuda_graph_runner = recapture_elastic_cuda_graph(model_runner=runner).runner
 
     @property
-    def runtime(self) -> dict[str, str | None]:
-        # Hashing thousands of files takes seconds on a busy host, so it waits for the first readback.
-        if self._runtime is None:
+    def runtime(self) -> dict[str, str | None] | None:
+        """Digests of the code and inputs serving, or None while they are being computed.
+
+        Hashing thousands of files takes about a second, which would stall serving on the scheduler
+        thread. It starts at the first readback, after startup has written its caches, and runs in the
+        background; clients wait for it.
+        """
+        if self._runtime is None and self._runtime_thread is None:
+            self._runtime_thread = threading.Thread(target=self._compute_runtime, name="livetune-runtime", daemon=True)
+            self._runtime_thread.start()
+        return self._runtime
+
+    def _compute_runtime(self) -> None:
+        try:
             self._runtime = {
                 "sglang": _source_digest("sglang"),
                 "livetune": _source_digest("livetune"),
                 "packages": _packages_digest(),
                 "inputs": _inputs_digest(os.environ.get("LIVETUNE_RUNTIME_INPUTS", "")),
             }
-        return self._runtime
+        except Exception as exc:  # an unreadable input is a scope nobody can match, not a crash
+            logger.exception("livetune: could not digest the runtime")
+            self._runtime = {"error": f"{type(exc).__name__}: {exc}"}
 
     def _resolve(self, variant_id: int) -> variants.VariantSource:
         source = variants.resolve(variant_id)
@@ -234,6 +385,26 @@ class LiveTuner:
             self._pin(variant_id, sha256)
         return catalog
 
+    def oldest_unfinished(self) -> float | None:
+        """Wall time the longest-waiting unfinished request entered the queue, or None when idle.
+
+        Its record is written only when it finishes, so a trace window that began after this is
+        not yet complete.
+        """
+        scheduler = self.scheduler
+        running = getattr(getattr(scheduler, "running_batch", None), "reqs", None) or []
+        chunked = getattr(scheduler, "chunked_req", None)
+        stamps = []
+        for req in [*(getattr(scheduler, "waiting_queue", None) or []), *running, *([chunked] if chunked else [])]:
+            stats = getattr(req, "time_stats", None)
+            stamp = getattr(stats, "livetune_first_entry", 0.0) or getattr(stats, "wait_queue_entry_time", 0.0)
+            if stamp:
+                stamps.append(stamp)
+        if not stamps:
+            return None
+        # The stamps are on this process's perf_counter clock.
+        return time.time() - (time.perf_counter() - min(stamps))
+
     def readback(self) -> dict[str, Any]:
         try:
             catalog: dict[str, str] | str = self._catalog()
@@ -245,12 +416,18 @@ class LiveTuner:
             "page_size": self.page_size,
             "pp_micro_batch_startup": self.pp_micro_batch_startup,
             "live_variants": _live_variants(),
+            "replay_stops": _replay_stops(),
             "startup_variant": self.startup_variant,
             "runtime": self.runtime,
+            "telemetry": telemetry.readback() if (telemetry := _TELEMETRY.get("rank0")) else None,
+            "oldest_unfinished": self.oldest_unfinished(),
             "gpu": self.gpu,
             "variant": {"name": self.variant.source.name, "sha256": self.variant.source.sha256} if self.variant else None,
             "variants": catalog,
-            "pending_variant": self.pending_variant,
+            "pending_variant": self.pending_variant if self.pending_variant is not None else self.forward_pending,
+            "variant_states": list(self.states),
+            "profile": {"path": str(self.profile.path), "done": self.profile.done.is_set(), "samples": self.profile.samples}
+            if self.profile is not None else None,
             "recent_changes": self.changes[-10:],
             "recent_errors": self.errors[-5:],
         }
@@ -306,6 +483,90 @@ def _packages_digest() -> str:
     return digest.hexdigest()
 
 
+def _target_states() -> bool:
+    # Servers without speculative decoding switch target-only states. LIVETUNE_RECAPTURE=elastic keeps
+    # SGLang's in-place recapture, which crashed DeepSeek V4 under long contexts by the second round.
+    return os.environ.get("LIVETUNE_RECAPTURE", "states") != "elastic"
+
+
+@dataclasses.dataclass
+class _TargetState:
+    """The target model's attention backend and decode graphs, for a server without speculative decoding:
+    the target half of SGLang's adaptive speculative state."""
+
+    attn_backend: Any
+    graph_runner: Any
+
+    @classmethod
+    def current(cls, runner: Any) -> "_TargetState":
+        return cls(runner.attn_backend, runner.decode_cuda_graph_runner)
+
+    @classmethod
+    def build(cls, runner: Any) -> "_TargetState":
+        from sglang.srt.model_executor.runner.decode_cuda_graph_runner import DecodeCudaGraphRunner
+
+        # A fresh workspace, as SGLang builds a state's target backend, so states share no scratch.
+        backup = runner.init_new_workspace
+        try:
+            backend = runner._get_attention_backend(init_new_workspace=True)
+        finally:
+            runner.init_new_workspace = backup
+        graphs = DecodeCudaGraphRunner(runner, attn_backend=backend) if runner.decode_cuda_graph_runner is not None else None
+        return cls(backend, graphs)
+
+    def apply(self, runner: Any) -> None:
+        runner.attn_backend = self.attn_backend
+        runner.decode_cuda_graph_runner = self.graph_runner
+
+
+def _state_worker(scheduler: Any) -> Any:
+    """The speculative worker, if it can build and apply complete runtime states."""
+    worker = getattr(scheduler, "draft_worker", None)
+    if worker is None or not all(callable(getattr(worker, name, None)) for name in ("build_adaptive_runtime_state", "apply_runtime_state")):
+        return None
+    return worker
+
+
+def _switch_at_forward(worker: Any, tuner: LiveTuner) -> None:
+    """Run tuner.on_forward before each of the worker's forward passes, from the first one asked for.
+
+    The instance's method is wrapped, whatever its class, so the hook costs nothing until used.
+    """
+    if getattr(worker, "_livetune_forward", None) is tuner:
+        return
+    original = worker.forward_batch_generation
+
+    def forward_batch_generation(*args: Any, **kwargs: Any) -> Any:
+        tuner.on_forward()
+        return original(*args, **kwargs)
+
+    worker.forward_batch_generation = forward_batch_generation
+    worker._livetune_forward = tuner
+
+
+def _current_state(worker: Any) -> Any:
+    from sglang.srt.speculative.adaptive_runtime_state import SpecRuntimeState
+
+    draft, target = worker._draft_worker, worker._target_worker.model_runner
+    return SpecRuntimeState(
+        speculative_num_steps=worker.speculative_num_steps,
+        speculative_num_draft_tokens=worker.speculative_num_draft_tokens,
+        draft_attn_backend=draft.draft_attn_backend,
+        cuda_graph_runner=draft.cuda_graph_runner,
+        target_attn_backend=target.attn_backend,
+        target_graph_runner=target.decode_cuda_graph_runner,
+        draft_extend_attn_backend=draft.draft_extend_attn_backend,
+        cuda_graph_runner_for_draft_extend=draft.cuda_graph_runner_for_draft_extend,
+    )
+
+
+def _apply_state(worker: Any, state: Any) -> None:
+    # SGLang applies a state only when the step count changes (its adaptive use); a variant's state
+    # has the same steps, so mark the worker unset to make it apply every resource.
+    worker.speculative_num_steps = -1
+    worker.apply_runtime_state(state)
+
+
 def _live_variants() -> bool:
     return os.environ.get("LIVETUNE_LIVE_VARIANTS") == "1"
 
@@ -316,6 +577,295 @@ def _gpu_name() -> str | None:
     except ImportError:
         return None
     return torch.cuda.get_device_name() if torch.cuda.is_available() else None
+
+
+def _startup_settings(scheduler: Any) -> dict[str, Any]:
+    from sglang.srt.runtime_context import get_schedule, get_serving
+
+    policy = getattr(scheduler, "schedule_policy", None)
+    startup = {
+        "max_running_requests": scheduler.max_running_requests,
+        "chunked_prefill_size": scheduler.chunked_prefill_size,
+        "max_prefill_tokens": scheduler.max_prefill_tokens,
+        "schedule_policy": SCHEDULE_POLICIES.index(policy) if policy in SCHEDULE_POLICIES else None,
+        "schedule_conservativeness": get_schedule().schedule_conservativeness,
+        "stream_interval": get_serving().stream_interval,
+        "max_queued_requests": getattr(scheduler, "max_queued_requests", None) or 0,
+    }
+    # A knob whose startup value is unknown is left out, which makes it unavailable.
+    return {key: value for key, value in startup.items() if value is not None}
+
+
+def _schedule_policy(scheduler: Any, name: str) -> Any:
+    from sglang.srt.managers.schedule_policy import SchedulePolicy
+
+    return SchedulePolicy(
+        name,
+        scheduler.tree_cache,
+        scheduler.enable_hierarchical_cache,
+        scheduler.enable_priority_scheduling,
+        scheduler.schedule_low_priority_values_first,
+    )
+
+
+# SGLang's defaults; a request that differs is recorded and replayed with the same values.
+_SAMPLING_DEFAULTS = {"top_p": 1.0, "top_k": -1, "min_p": 0.0, "repetition_penalty": 1.0, "frequency_penalty": 0.0, "presence_penalty": 0.0,
+                      "min_new_tokens": 0, "stream_interval": None, "sampling_seed": None}
+
+_FINISH_NAMES = {"FINISH_LENGTH": "length", "FINISH_ABORT": "abort", "FINISH_MATCHED_TOKEN": "stop", "FINISH_MATCHED_STR": "stop", "FINISHED_MATCHED_REGEX": "stop"}
+
+
+class Telemetry:
+    """What the scheduler saw, on attention-TP rank 0: one record per finished request, counters per batch."""
+
+    # Finished requests waiting to be hashed and written; beyond this the scheduler drops records
+    # rather than wait or grow memory.
+    BACKLOG = 8192
+
+    def __init__(self, directory: str | None, page_size: int = 1, keys: trace.PrefixKeys | None = None) -> None:
+        self.writer = trace.Writer(directory) if directory else None
+        self.keys = keys or trace.PrefixKeys(directory=directory)
+        self.page_size = max(page_size, 1)
+        self.batches = trace.BatchStats()
+        self.recent: list[str] = []
+        self.since = time.time()  # wall clock: a trace window before this was not recorded by this process
+        self.enqueued = 0  # snapshots handed to the writer thread
+        self.processed = 0  # of those, written or failed: once it reaches a count read earlier, those are on disk
+        self.dropped = 0  # on the scheduler thread: the backlog was full
+        self.failed = 0  # on the writer thread: a record could not be hashed or written
+        self.error: str | None = None
+        # Seconds spent recording, on the scheduler thread and on the writer thread.
+        self.scheduler_s = 0.0
+        self.writer_s = 0.0
+        self._queue: queue.Queue[tuple[trace.Record, Any, int, str | None]] = queue.Queue(self.BACKLOG)
+        if self.writer is not None:
+            # Hashing a long prompt takes milliseconds, which would stall every running request if
+            # the scheduler did it; the scheduler only snapshots the request.
+            threading.Thread(target=self._write_loop, name="livetune-trace", daemon=True).start()
+            atexit.register(self.drain)
+
+    def record(self, req: Any, now_wall: float, now: float) -> trace.Record:
+        """The complete record of a finished request."""
+        return self._hashed(*self._snapshot(req, now_wall, now))
+
+    def _hashed(self, record: trace.Record, ids: Any, cached_pages: int, namespace: str | None) -> trace.Record:
+        depths = [d for d in trace.FAMILY_DEPTHS if len(ids) >= d]
+        found = self.keys.digests(ids, depths + ([cached_pages] if cached_pages else []), namespace)
+        return dataclasses.replace(record, families=tuple(found[d] for d in depths),
+                                   cached_family=found[cached_pages] if cached_pages else None)
+
+    def _snapshot(self, req: Any, now_wall: float, now: float) -> tuple[trace.Record, Any, int, str | None]:
+        """Everything but the prefix hashes, cheap enough for the scheduler thread; SGLang does not
+        change a finished request's prompt ids, so they are kept by reference."""
+        ts = req.time_stats
+        # Waiting-queue entry and prefill completion share the scheduler's perf_counter clock;
+        # scheduler_recv_time is calibrated against another process and read 2 s early on the pod.
+        # A retracted request re-enters the queue and SGLang restamps wait_queue_entry_time, so the
+        # first entry comes from the stamp _keep_first_entry kept.
+        arrival = getattr(ts, "livetune_first_entry", 0.0) or ts.wait_queue_entry_time
+        forward = getattr(ts, "forward_entry_time", 0.0)  # SGLang sets it once, at the first forward
+        first = ts.prefill_finished_time
+        done = ts.completion_time or now
+        ids = req.origin_input_ids
+        cached = int(getattr(req, "cached_tokens", 0) or 0)
+        params = req.sampling_params
+        verify = getattr(req, "spec_verify_ct", 0)
+        reason = type(req.finished_reason).__name__ if req.finished_reason is not None else "unknown"
+        cached_pages = min(cached // self.page_size * self.page_size, len(ids))
+        # Both parts, typed and in order, so ("a|b", None) and ("a", "b") stay distinct namespaces.
+        parts = (getattr(req, "cache_salt", None), getattr(req, "extra_key", None))
+        namespace = json.dumps(parts, default=str, separators=(",", ":")) if any(parts) else None
+        record = trace.Record(
+            t=now_wall,
+            prompt_tokens=len(ids),
+            cached_tokens=cached,
+            output_tokens=len(req.output_ids),
+            queue_s=getattr(ts, "queue_duration_s", None),
+            ttft_s=first - arrival if first and arrival else None,
+            decode_s=done - first if first else None,
+            finish=_FINISH_NAMES.get(reason, reason.lower()),
+            retractions=int(getattr(req, "retraction_count", 0) or 0),
+            lookup_s=forward - arrival if forward and arrival else None,
+            spec_accept=getattr(req, "spec_num_correct_drafts", 0) / verify + 1 if verify else None,
+            temperature=getattr(params, "temperature", None),
+            max_new_tokens=getattr(params, "max_new_tokens", None),
+            constrained=any(getattr(params, key, None) for key in ("json_schema", "regex", "ebnf", "structural_tag")),
+            priority=getattr(req, "priority", None),
+            lora=getattr(req, "lora_id", None) is not None,
+            session=getattr(req, "session_id", None) is not None,
+            salted=namespace is not None,
+            hidden_states=bool(getattr(req, "return_hidden_states", False)),
+            cached_family_tokens=cached_pages,
+            # Integers stay integers: a seed above 2**53 would not survive a float.
+            sampling={key: value if isinstance(value, int) and not isinstance(value, bool) else float(value)
+                      for key, default in _SAMPLING_DEFAULTS.items()
+                      if (value := getattr(params, key, default)) not in (None, default)},
+            logprobs=int(getattr(getattr(req, "logprob", None), "top_logprobs_num", 0) or 0) if getattr(req, "return_logprob", False) else -1,
+            logprob_start=int(getattr(req, "logprob_start_len", -1)) if getattr(req, "return_logprob", False) else -1,
+            stream=bool(getattr(req, "stream", True)),
+            launched=bool(getattr(ts, "forward_entry_time", 0.0)),
+            server_s=done - arrival if arrival else None,
+            multimodal=getattr(req, "multimodal_inputs", None) is not None or getattr(req, "input_embeds", None) is not None
+            or getattr(req, "origin_input_ids_unpadded", ids) is not ids,
+        )
+        return record, ids, cached_pages, namespace
+
+    def on_finish(self, req: Any) -> None:
+        # With overlap scheduling a finished request can reach the output path twice.
+        if req.rid in self.recent:
+            return
+        self.recent = (self.recent + [req.rid])[-256:]
+        if self.writer is None:
+            return
+        started = time.perf_counter()
+        try:
+            self._queue.put_nowait(self._snapshot(req, time.time(), started))
+            self.enqueued += 1
+        except queue.Full:
+            self.dropped += 1
+        self.scheduler_s += time.perf_counter() - started
+
+    FLUSH_S = 0.2  # a busy writer still flushes this often, so records reach readers promptly
+
+    def _write_loop(self) -> None:
+        unflushed, flushed_at = 0, time.monotonic()
+        while True:
+            item = self._queue.get()
+            started = time.perf_counter()
+            try:
+                self.writer.write(self._hashed(*item), flush=False)
+                unflushed += 1
+            except Exception as exc:
+                self.failed += 1
+                self.processed += 1  # it will never be written
+                self.error = f"{type(exc).__name__}: {exc}"
+                logger.debug("livetune: could not write a record", exc_info=True)
+            try:
+                # A burst is flushed once, but never held longer than FLUSH_S. A record counts as
+                # processed only once flushed, so a reader waiting on the count finds it on disk.
+                if unflushed and (self._queue.empty() or time.monotonic() - flushed_at >= self.FLUSH_S):
+                    self.writer.flush()
+                    self.processed += unflushed
+                    unflushed, flushed_at = 0, time.monotonic()
+            except Exception as exc:
+                self.failed += unflushed
+                self.processed += unflushed
+                unflushed = 0
+                self.error = f"{type(exc).__name__}: {exc}"
+            finally:
+                self.writer_s += time.perf_counter() - started
+                self._queue.task_done()
+
+    def drain(self, timeout: float = 5.0) -> bool:
+        """Wait for queued records to reach the trace file; true if none are left."""
+        deadline = time.monotonic() + timeout
+        while self._queue.unfinished_tasks and time.monotonic() < deadline:
+            time.sleep(0.005)
+        return not self._queue.unfinished_tasks
+
+    def on_batch(self, batch: Any, result: Any) -> None:
+        mode = getattr(getattr(batch, "forward_mode", None), "name", "unknown").lower()
+        requests = len(getattr(batch, "reqs", ()) or ())
+        # A decode step makes one token per request; extend_num_tokens is only meaningful for prefill.
+        tokens = requests if mode == "decode" else int(getattr(batch, "extend_num_tokens", 0) or 0)
+        launched = getattr(batch, "launch_ts", None)
+        self.batches.add(mode, requests, int(tokens), bool(getattr(result, "can_run_cuda_graph", False)), time.monotonic() - launched if launched else None)
+
+    def readback(self) -> dict[str, Any]:
+        return {
+            "trace_path": str(self.writer.path) if self.writer else None,
+            "since": self.since,
+            "records": self.writer.written if self.writer else 0,
+            "dropped": self.dropped + self.failed,
+            "pending": self._queue.qsize(),
+            "enqueued": self.enqueued,
+            "processed": self.processed,
+            "scheduler_s": round(self.scheduler_s, 6),
+            "writer_s": round(self.writer_s, 6),
+            "error": self.error,
+            "batches": self.batches.snapshot(),
+        }
+
+
+_TELEMETRY: dict[str, Telemetry] = {}
+
+
+def _telemetry(page_size: int = 1) -> Telemetry | None:
+    from sglang.srt.runtime_context import get_parallel
+
+    # One recorder per scheduler group: under attention context parallelism every CP rank is attention
+    # TP rank 0 and sees every request, so recording on each would write each request once per CP rank.
+    parallel = get_parallel()
+    if getattr(parallel, "attn_tp_rank", 0) != 0 or getattr(parallel, "attn_cp_rank", 0) != 0:
+        return None
+    if "rank0" not in _TELEMETRY:
+        try:
+            _TELEMETRY["rank0"] = Telemetry(os.environ.get("LIVETUNE_TRACE_DIR"), page_size)
+        except Exception as exc:  # telemetry is optional: a bad key or directory disables it, never serving
+            logger.exception("livetune: telemetry disabled")
+            disabled = Telemetry(None, page_size, keys=trace.PrefixKeys(os.urandom(32)))
+            disabled.error = f"{type(exc).__name__}: {exc}"
+            _TELEMETRY["rank0"] = disabled
+    return _TELEMETRY["rank0"]
+
+
+def _record_finished(result: Any, streamer: Any, *args: Any, **kwargs: Any) -> Any:
+    # f171859 declares req keyword-only; a positional call is accepted too, so a signature change
+    # upstream cannot silently empty the trace.
+    req = kwargs.get("req", args[0] if args else None)
+    if req is not None and req.finished():
+        telemetry = _telemetry()
+        if telemetry is not None:
+            try:
+                telemetry.on_finish(req)
+            except Exception:  # telemetry must never fail a request
+                telemetry.dropped += 1
+                logger.debug("livetune: could not record request", exc_info=True)
+    return result
+
+
+def _replay_stops() -> bool:
+    # Canaries that replay traffic enable it; production never pays the per-step hook.
+    return os.environ.get("LIVETUNE_REPLAY_STOPS") == "1"
+
+
+_FINISH_LENGTH: Any = None
+
+
+def _replay_stop(result: Any, req: Any, *args: Any, **kwargs: Any) -> Any:
+    global _FINISH_LENGTH
+    if req.finished_reason is None:
+        params = getattr(req.sampling_params, "custom_params", None)
+        stop = params.get(REPLAY_STOP_KEY) if params else None
+        if stop and len(req.output_ids) >= stop:
+            if _FINISH_LENGTH is None:
+                from sglang.srt.managers.schedule_batch import FINISH_LENGTH as _FINISH_LENGTH
+            # finished_len trims tokens a speculative step accepted past the stop, as SGLang does for stop tokens.
+            req.finished_reason = _FINISH_LENGTH(length=stop)
+            req.finished_len = stop
+    return result
+
+
+def _keep_first_entry(result: Any, stats: Any, *args: Any, **kwargs: Any) -> Any:
+    if not getattr(stats, "livetune_first_entry", 0.0):
+        stats.livetune_first_entry = stats.wait_queue_entry_time
+    return result
+
+
+def _forget_first_entry(result: Any, stats: Any, *args: Any, **kwargs: Any) -> Any:
+    # A prefill retry starts the request's timing over.
+    stats.livetune_first_entry = 0.0
+    return result
+
+
+def _record_batch(result: Any, scheduler: Any, batch: Any, batch_result: Any, *args: Any, **kwargs: Any) -> Any:
+    telemetry = _telemetry(int(getattr(scheduler, "page_size", 1) or 1))
+    if telemetry is not None and batch is not None:
+        try:
+            telemetry.on_batch(batch, batch_result)
+        except Exception:
+            telemetry.dropped += 1
+    return result
 
 
 def _tuner(controller: Any) -> LiveTuner:
@@ -340,7 +890,7 @@ def _add_handlers(handlers: dict, controller: Any) -> dict:
         except Exception as exc:
             raise UpdateRejected(f"{key}={value!r} rejected: {exc}") from exc
 
-    for key in [*KNOBS, VARIANT_KEY]:
+    for key in [*KNOBS, VARIANT_KEY, PROFILE_KEY]:
         handlers[key] = _UpdateHandler(validate, tuner.apply)
     return handlers
 
@@ -387,3 +937,9 @@ def register() -> None:
     HookRegistry.register(f"{_SCHEDULER}.get_num_allocatable_reqs", _gate_admission, HookType.AROUND)
     HookRegistry.register(f"{_SCHEDULER}.on_idle", _switch_when_idle, HookType.AFTER)
     HookRegistry.register(f"{_MODEL_RUNNER}.init_cuda_graphs", _install_startup_variant, HookType.BEFORE)
+    HookRegistry.register(f"{_STREAMER}._maybe_log_time_stats", _record_finished, HookType.AFTER)
+    HookRegistry.register(f"{_SCHEDULER}.process_batch_result", _record_batch, HookType.AFTER)
+    HookRegistry.register(f"{_TIME_STATS}.set_wait_queue_entry_time", _keep_first_entry, HookType.AFTER)
+    HookRegistry.register(f"{_TIME_STATS}.reset_prefill_retry_time", _forget_first_entry, HookType.AFTER)
+    if _replay_stops():
+        HookRegistry.register(f"{_REQ}.update_finish_state", _replay_stop, HookType.AFTER)

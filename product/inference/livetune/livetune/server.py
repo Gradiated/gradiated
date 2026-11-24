@@ -7,7 +7,7 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any
 
-from livetune.knobs import KNOBS, VARIANT_KEY
+from livetune.knobs import COMMAND_KEYS, KNOBS, VARIANT_KEY
 from livetune.metrics import Scrape, parse
 
 
@@ -48,12 +48,61 @@ class Server:
     def scrape(self) -> Scrape:
         return parse(self._request("/metrics").decode(), time.monotonic())
 
-    def fingerprint(self) -> dict[str, Any]:
+    def flush_cache(self, wait_s: float = 60.0) -> None:
+        """Empty the prefix cache once the server is idle; SGLang answers 400 if it cannot."""
+        import urllib.error
+
+        try:
+            self._request(f"/flush_cache?timeout={wait_s}", {}, timeout=wait_s + self.timeout_s)
+        except urllib.error.HTTPError as exc:
+            raise UpdateFailed(f"{self.url} would not flush its prefix cache: {exc.read()[:200]!r}") from exc
+
+    def greedy(self, prompts: list[list[int]], max_new_tokens: int = 64, scored_tokens: int = 400) -> Any:
+        """Greedy continuations with logprobs, and the teacher-forced logprobs of each prompt's last
+        scored_tokens tokens, each from a cold prefix cache so every probe runs the same path."""
+        import math
+
+        from livetune.gate import Sample
+
+        def value(entry: Any) -> float:
+            return float(entry[0]) if entry[0] is not None else math.nan
+
+        tokens, logprobs, scored = [], [], []
+        for ids in prompts:
+            self.flush_cache()
+            body = {"input_ids": ids, "sampling_params": {"max_new_tokens": max_new_tokens, "temperature": 0}, "return_logprob": True,
+                    "logprob_start_len": max(len(ids) - scored_tokens, 0)}
+            meta = json.loads(self._request("/generate", body, timeout=600))["meta_info"]
+            entries = meta["output_token_logprobs"]
+            tokens.append([int(entry[1]) for entry in entries])
+            logprobs.append([value(entry) for entry in entries])
+            # The first prompt token has no logprob; it carries None, not a measurement.
+            scored.append([value(entry) for entry in meta.get("input_token_logprobs") or [] if entry[0] is not None])
+        return Sample(tokens, logprobs, scored)
+
+    def info(self) -> dict[str, Any]:
+        return json.loads(self._request("/server_info"))
+
+    def fingerprint(self, runtime_wait_s: float = 120.0) -> dict[str, Any]:
         info = json.loads(self._request("/server_info"))
         # Page size bounds which knob values the server accepts. The startup variant id (in startup)
         # and the verified catalog fix the forward code; the live variant is state, not scope.
         envelope = ("gpu", "page_size", "pp_micro_batch_startup", "startup", "startup_variant", "variants", "live_variants", "runtime")
-        scopes = [{key: state.get(key) for key in envelope} for state in self.livetune_states()]
+        deadline = time.monotonic() + runtime_wait_s
+        while True:
+            states = self.livetune_states()
+            # A scheduler digests its runtime in the background after the first readback.
+            pending = [state for state in states if "runtime" in state and state["runtime"] is None]
+            if not pending or time.monotonic() >= deadline:
+                break
+            time.sleep(0.5)
+        scopes = [{key: state.get(key) for key in envelope} for state in states]
+        failed = [scope["runtime"]["error"] for scope in scopes if isinstance(scope["runtime"], dict) and "error" in scope["runtime"]]
+        if failed:
+            # Two hosts that failed the same way would otherwise match each other's scope.
+            raise UpdateFailed(f"{self.url} could not digest its runtime: {failed[0]}")
+        if pending:
+            raise UpdateFailed(f"{self.url} did not finish digesting its runtime in {runtime_wait_s:.0f}s")
         # The scheduler reports its own GPU; the client running this may have none, or different ones.
         if not all(scope["gpu"] for scope in scopes):
             raise UpdateFailed(f"{self.url} does not report its GPU; upgrade its livetune plugin")
@@ -76,7 +125,16 @@ class Server:
     def apply(self, settings: dict[str, Any], timeout: float = 300.0) -> dict[str, Any]:
         """Send the settings that differ from any scheduler's live state; return what was sent."""
         live = self.livetune_states()
-        settings = {k: v for k, v in settings.items() if any(state.get("settings", {}).get(k) != v for state in live)}
+        commands = {k: v for k, v in settings.items() if k in COMMAND_KEYS}
+        settings = {k: v for k, v in settings.items() if k not in COMMAND_KEYS and any(state.get("settings", {}).get(k) != v for state in live)}
+        if commands:
+            # A command acts once and has nothing to read back.
+            reply = json.loads(self._request("/set_internal_state", {"server_args": commands}, timeout=timeout))
+            updated = reply if isinstance(reply, list) else [reply.get("updated", False)]
+            if not updated or not all(updated):
+                raise UpdateFailed(f"server rejected {commands}: {reply}")
+            if not settings:
+                return commands
         if not settings:
             return settings
         reply = json.loads(self._request("/set_internal_state", {"server_args": settings}, timeout=timeout))
@@ -87,7 +145,14 @@ class Server:
         # A variant switch completes only once the scheduler drains, so poll for it.
         deadline = time.monotonic() + (timeout if VARIANT_KEY in settings else 0)
         while True:
-            states = self.livetune_states()
+            try:
+                states = self.livetune_states()
+            except OSError:
+                # The scheduler answers nothing while it recaptures graphs, which takes tens of seconds.
+                if time.monotonic() >= deadline:
+                    raise
+                time.sleep(1.0)
+                continue
             mismatched = {
                 index: {k: (v, state.get("settings", {}).get(k)) for k, v in settings.items() if state.get("settings", {}).get(k) != v}
                 for index, state in enumerate(states)

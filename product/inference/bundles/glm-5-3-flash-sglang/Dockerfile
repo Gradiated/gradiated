@@ -68,6 +68,7 @@ COPY bundles/glm-5-3-flash-sglang/model-config.json bundles/glm-5-3-flash-sglang
 COPY runtimes/glm/warmup-supervisor.py /bundle/warmup-base.py
 COPY runtimes/glm-sglang/*.py /bundle/glm-sglang/
 COPY runtimes/glm-sglang/autotune /bundle/glm-sglang/autotune
+COPY runtimes/glm-sglang/livetune /bundle/glm-sglang/livetune
 COPY images/gpu-base/base-id /bundle/base-id
 RUN bash /package.sh
 

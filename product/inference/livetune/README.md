@@ -7,19 +7,25 @@ Livetune changes a running SGLang server's settings in response to the traffic i
 | `livetune.sglang_plugin` | inside every SGLang scheduler process | Adds live settings to SGLang's `/set_internal_state` and installs startup forward-pass variants.                                 |
 | `livetune control`       | next to the server                    | Reads `/metrics` every few seconds, maps the traffic shape to a policy rule, applies it, and rolls it back if it breaks the SLO. |
 | `livetune tune`          | against a test server                 | Measures settings under each traffic profile and writes the policy.                                                              |
+| `livetune advise`        | next to the server                    | Watches utilization, the traffic mix and batch counters, and proposes experiments.                                               |
 
-The tuner applies the persistent-engine idea from Together Compiler to settings. Each candidate is applied live, so a trial costs one measurement window instead of an engine restart.
+[Adaptive serving](../../../docs/LIVETUNE_ADAPTIVE_SERVING.md) describes the whole loop: the data collected, the three tiers of levers and how each tier is rolled out. The tuner applies the persistent-engine idea from Together Compiler to settings. Each candidate is applied live, so a trial costs one measurement window instead of an engine restart.
 
 ## Live settings
 
 The plugin registers through SGLang's plugin entry point (`sglang.srt.plugins`), so SGLang loads it in every scheduler process with no source patch. A request to `/set_internal_state` is validated on every tensor-parallel rank before any rank applies it. Every rank applies it at the same point of its scheduling loop, so the ranks cannot diverge.
 
-| Setting                | Effect                                                                      | Bound                                          |
-| ---------------------- | --------------------------------------------------------------------------- | ---------------------------------------------- |
-| `max_running_requests` | Running-batch cap: trades time to first token against per-user decode speed | 1 to the startup value                         |
-| `chunked_prefill_size` | Prefill chunk size: smaller chunks stall decoding users less                | page-aligned, up to the startup value          |
-| `max_prefill_tokens`   | Prefill token budget per step                                               | page-aligned, up to the startup value          |
-| `forward_variant`      | Reports the installed forward-pass variant; see below for how it changes    | ids in the pinned variant manifest; 0 is stock |
+| Setting                     | Effect                                                                                                                                          | Bound                                          |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `max_running_requests`      | Running-batch cap: trades time to first token against per-user decode speed                                                                     | 1 to the startup value                         |
+| `chunked_prefill_size`      | Prefill chunk size: smaller chunks stall decoding users less                                                                                    | page-aligned, up to the startup value          |
+| `max_prefill_tokens`        | Prefill token budget per step                                                                                                                   | page-aligned, up to the startup value          |
+| `schedule_policy`           | Waiting-queue order, as an index: 0 `fcfs`, 1 `lpm`, 2 `dfs-weight`, 3 `lof`, 4 `random`, 5 `hrrn`, 6 `shortest-prefill-first`, 7 `routing-key` | a policy the scheduler can build               |
+| `schedule_conservativeness` | Decode headroom reserved when admitting prefill; lower admits more and risks retraction                                                         | 0.1 to 2.0                                     |
+| `stream_interval`           | Tokens per streamed chunk                                                                                                                       | 1 to 64                                        |
+| `max_queued_requests`       | Waiting-queue limit; arrivals beyond it are rejected; 0 is unlimited                                                                            | 0 to 1,000,000                                 |
+| `policy_version`            | Not a lever: `control` sets it to the version of the policy it loaded, so stage and guard know a replica runs that policy                       | 48-bit                                         |
+| `forward_variant`           | Reports the installed forward-pass variant; see below for how it changes                                                                        | ids in the pinned variant manifest; 0 is stock |
 
 Buffers and CUDA graphs are sized at startup, so a setting can only move inside the envelope the server started with. Start the server at the most permissive values the policy may use.
 
@@ -30,13 +36,67 @@ python -m livetune status --url http://127.0.0.1:30000   # live settings, startu
 
 A forward variant is a module with `install(model, patch, ctx)`. Every change goes through `patch(obj, name, value)`, so it can be undone. Variants are selected by id, because SGLang's update endpoint carries numbers only. `LIVETUNE_VARIANTS_DIR/manifest.json` maps each id to a `<name>.py` file with a pinned sha256, and no code is ever sent over the wire. `livetune.variants.register` adds files on a host.
 
-In production, a variant is chosen at startup with `LIVETUNE_STARTUP_VARIANT=<id>`. It is installed before SGLang captures its CUDA graphs, and it changes through a rolling restart. Live switching (`LIVETUNE_LIVE_VARIANTS=1`) is off by default because recapturing decode graphs at runtime is not safe on the pinned SGLang build:
+A variant can be chosen at startup with `LIVETUNE_STARTUP_VARIANT=<id>`, which installs it before SGLang captures its CUDA graphs. It can also be switched on a running server with `LIVETUNE_LIVE_VARIANTS=1`. Live switching is off by default, and should be enabled first on a canary or a staged replica:
 
-- **In-flight batches.** Recapturing while a batch is still in flight under the overlap scheduler corrupted that batch. The plugin therefore defers a switch until the scheduler is idle and pauses admission meanwhile; if the scheduler doesn't drain within `LIVETUNE_DRAIN_STEPS`, the switch is cancelled.
-- **Broken graphs.** Even a switch made while idle produced decode graphs that hit an illegal memory access on DeepSeek V4.1 Flash. SGLang's own recapture paths first drop attention-backend graph state, and a plain `init_decode_cuda_graph()` re-call does not.
-- **Agreement.** Ranks all-reduce the success of install plus graph recapture, so either all of them switch or none does. A failed switch restores the variant that was serving, or stock if that fails too. If neither comes back, the scheduler stops rather than serve without working graphs. Data-parallel servers refuse live switching, because their schedulers drain independently.
+- **Every variant gets its own runtime state.** A variant is installed, then a complete set of graphs is built for it, and the server switches between those sets by pointer:
+  - On a speculative server (GLM-5.3 Flash with EAGLE) the set is fresh attention backends plus target-verify, draft and draft-extend graphs. It is built with SGLang's adaptive-speculation builder (`build_adaptive_runtime_state`) and applied with `apply_runtime_state`.
+  - On other servers (DeepSeek V4) it is the target half of that: a fresh attention backend on its own workspace and a new decode graph runner.
 
-Keep live switching off until a recapture path is qualified for the model's attention backend. A recapture also pauses decoding for about 27 s on DeepSeek V4.1 Flash with 12 graph sizes.
+  No switch frees the graphs it leaves, so nothing serving can read freed memory. The startup graphs are kept as the state of the startup variant. At most `LIVETUNE_VARIANT_STATES` states are kept (default 3), and the least recently used one that is not serving is dropped. Building a state drains the scheduler and pauses admission (cancelled after `LIVETUNE_DRAIN_STEPS`). A switch to a built state happens at the next forward pass with requests in flight, as SGLang switches its adaptive states, so admission never pauses. Servers with adaptive speculative steps refuse live switching, since they swap states themselves.
+
+- **Measured on GLM-5.3 Flash NVFP4** (B300 TP2 with prefill context parallelism, EAGLE, the production bundle's SGLang):
+  - Building a new variant's state paused serving for 8.4–9.2 s, or about 12 s under load, and used 0.39–0.43 GB per GPU.
+  - Ten alternating switches, each followed by a 60 s burst of 12 users with 24k-token prompts, finished with 0 errors and no illegal memory access.
+  - A variant that compiles a Triton kernel at runtime switched in, served a burst and switched out. So did one that patches the scheduler's own `process_batch_result`.
+  - Under 12 users with 16k-token prompts and 512-token outputs, 16 switches to built states took 2–3 ms each inside the scheduler. The load completed 286 requests with 0 errors at 105 tok/s per user.
+- **Measured on DeepSeek V4.1 Flash** (TP4, B300):
+  - Building a state paused serving for 27 s. Later switches took 0.08–0.45 s, under a 40-user load as well.
+  - Three rounds of switching a variant in and back to stock, each followed by a 40-user burst of 24k-token prompts with shared prefixes, passed with no illegal memory access. Eight more switches in the middle of that load gave 520 requests with 0 errors.
+  - The old path, SGLang's elastic in-place recapture (`LIVETUNE_RECAPTURE=elastic`), crashed with an illegal memory access on the same sequence by the second round. Flushing the cache, disabling the overlap scheduler, or rebuilding every graph runner did not help; only `CUDA_LAUNCH_BLOCKING=1` hid it. The fault surfaced in DeepSeek V4's mHC side-stream code. Building a state never frees serving graphs or reuses their pool, which is what the old path did on every switch.
+- **The gate scores prompts as well as continuations.** GLM's greedy decoding does not repeat even on stock: two identical runs diverged by token 8 on most prompts. Deterministic inference is not available with its sparse (DSA) attention. So each probe also returns the teacher-forced logprobs of the prompt's last 400 tokens. Run-to-run noise moves those both ways and cancels in the mean, while a real numeric change shifts them one way. A variant fails if its mean shift exceeds both 0.03 nats and 3× stock's own shift, at more than 4 standard errors. Greedy agreement is judged only where stock repeats itself. Live on GLM through `variant-eval`, the identity and Triton-copy variants were kept (shifts −0.0007 and +0.0024 against stock's −0.0055 and −0.0072). A ×1.05 logit scale was rejected: −0.101, z = −17. Its mean absolute drift had looked like noise.
+- **What a variant can change.** Any Python reachable from `install`'s model and `ctx` (model runner, scheduler): module forwards, calls into Triton or CUDA kernels compiled at runtime, and scheduler methods. What a variant cannot change is fixed when the server starts: memory pools, KV-cache layout and dtype, weight layout and the captured batch sizes.
+- **Agreement.** Ranks all-reduce the success of the install, then of building or applying the state, so either all of them switch or none does; a state that failed on any rank is forgotten on all of them. A failed switch restores the variant that was serving, or stock if that fails too. If neither comes back, the scheduler stops rather than serve without working graphs. Data-parallel servers refuse live switching, because their schedulers drain independently.
+
+Enable live switching on a canary or staged replica first, and gate each variant with `variant-eval` before it reaches production.
+
+## Traffic data
+
+Set `LIVETUNE_TRACE_DIR` and the plugin writes one JSON line per finished request, on the rank that is attention-TP rank 0 and attention-CP rank 0. Under attention context parallelism (GLM on B300) every CP rank is attention-TP rank 0. An earlier build recorded each GLM request twice, and replaying such a trace doubled the canary's load. Each line holds prompt, cached and output tokens, queue time, scheduler TTFT and decode time, finish reason, retractions, spec accept length, sampling features, and keyed hashes of the prompt prefix at 256, 2,048 and 16,384 tokens and at the cached length. It holds no text and no token ids. Prefix hashes are keyed by `LIVETUNE_TRACE_KEY` (hex), or by a random key kept in the trace directory (`.trace-key`, mode 0600), so data-parallel schedulers that share the directory group prefixes alike. Files rotate at 64 MB, and the 8 newest are kept. The scheduler thread only snapshots a finished request, which took 17.6 µs per request on the B300 pod. Hashing and writing happen on a background thread, because hashing a 120k-token prompt takes about 5 ms and would stall every running request. A full backlog of 8,192 records drops records rather than slow serving. `/server_info` reports records written, dropped and pending, and the seconds spent on each thread, under `telemetry`. The plugin also counts batches, requests, tokens, CUDA-graph batches and seconds for each forward mode there. The runtime digest that scopes policies is computed in the background after the first readback, and clients wait for it.
+
+```bash
+python -m livetune traffic --trace-dir /var/lib/livetune/trace          # the traffic mix
+python -m livetune advise --url URL --trace-dir DIR --seconds 300 --out advice.json
+python -m livetune tune --url URL --trace DIR --grid advice.json --slo-tps 80 --slo-ttft 10 --corpus corpus.json --out policy.json
+python -m livetune replay --url URL --trace DIR --policy policy.json --corpus corpus.json
+```
+
+`livetune improve` closes the loop. Every `--every` seconds it:
+
+1. advises from the production server;
+2. replays the last `--window` seconds of recorded production traffic on a canary with the same scope, measuring each live proposal. Requests that were already running when the window began replay from its start, unmeasured. A canary started with `LIVETUNE_REPLAY_STOPS=1` finishes each replayed early stop at its recorded length on the server, so chunked streaming and speculative decoding do not add decode work. A request that had already decoded tokens replays with those tokens as cached context, so it decodes at the same KV length. A window is skipped unless its trace is complete. Every scheduler must have been recording since before the window began, with no writer error, no rotated-away files, and no records dropped during the window. Each gets the output it had left and its prompt cached, so the canary starts as loaded as production was;
+3. publishes a policy to `--policy-out` when a candidate beat the startup settings.
+
+With `--stage-url`, `--stage-policy` and `--peers`, a winner first runs on one production replica for `--stage-seconds`. That replica and its peers serve the same live traffic, so they are compared window for window. The winner is published to the fleet only if the staged replica meets the SLO as often as its peers and is no slower. Otherwise the replica's previous policy is restored. A replica starved or flooded by the router (demand outside 0.7–1.3× its peers) gives an inconclusive result, and nothing is published. Replay picks the winner; the stage checks what replay cannot reproduce: prompt content, hours of cache state and fleet routing.
+
+`control` reloads its policy file when the file changes, and ignores a file that fails the scope check. Tuning never adds load to production, and production only changes through a measured policy.
+
+`advise` proposes live levers with values to try, restart levers (launch flags for a canary) and code levers, giving the hot shapes for a forward variant. Each proposal carries the measurements behind it. Its `grid` is a valid `tune --grid`. `--trace` replays recorded requests open loop at their recorded times, keeping each prefix family's shared prefix, so every candidate meets the same traffic.
+
+## Trying a variant
+
+```bash
+python -m livetune variant-eval --url CANARY --variant my_kernel.py --name my-kernel --corpus corpus.json \
+    --trace DIR --slo-tps 80 --slo-ttft 10
+```
+
+`variant-eval` registers the file under its content hash, so every revision gets its own pinned id. It then:
+
+1. takes two greedy, logprob-carrying stock baselines on fixed prompts, each from a flushed cache;
+2. switches the variant in live and gates it against stock, relative to how well stock agrees with itself (`livetune.gate`);
+3. if the gate passes, measures variant and stock alternately on the recorded trace;
+4. switches back to stock, whatever happened.
+
+It prints one JSON report ending in `keep` or `reject`. The canary must run with `LIVETUNE_LIVE_VARIANTS=1` and share `LIVETUNE_VARIANTS_DIR`. This is the command an agent iterating on a kernel calls.
 
 ## Policies
 

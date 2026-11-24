@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import statistics
 from dataclasses import asdict, dataclass
 from typing import Any, Callable, Mapping, Sequence
 
@@ -16,6 +17,9 @@ class Profile:
     prompt_tokens: int
     output_tokens: int
     shared_prefix: float = 0.0
+    # Open-loop load has no fixed user count, so a running cap may always bind; users is then the
+    # demand the traffic produced, which places the policy rule where that traffic lands.
+    open_loop: bool = False
 
     def phase(self, seconds: float) -> Phase:
         return Phase(self.users, self.prompt_tokens, self.output_tokens, seconds, self.shared_prefix, self.name)
@@ -40,9 +44,34 @@ def score(summary: Mapping[str, Any], slo: Slo) -> tuple[int, float]:
 Measure = Callable[[Profile, dict[str, Any]], dict[str, Any]]
 
 
+def trace_profile(arrivals: Sequence[Any]) -> dict[str, Any]:
+    """One profile standing for a recorded trace, placed at the demand the trace produced.
+
+    Lengths are per-request means, the statistic the controller observes from metric windows, so the
+    rule tuned here covers the shape the controller will see; a median sits far from it when a few
+    long requests skew the mix.
+    """
+    from livetune.trace import concurrency, observed_cache_hit
+
+    if not arrivals:
+        raise ValueError("the trace has no requests")
+    # Requests already running when the window began load the server but are not its workload.
+    measured = [a for a in arrivals if not getattr(a, "warmup", False)] or list(arrivals)
+    return {
+        "name": "trace",
+        "users": concurrency(arrivals),
+        "open_loop": True,
+        "prompt_tokens": round(statistics.fmean(a.prompt_tokens for a in measured)),
+        "output_tokens": round(statistics.fmean(a.output_tokens for a in measured)),
+        # The cache hit production recorded, which is what the controller will observe, not the
+        # sharing replay could reach from a cold cache.
+        "shared_prefix": observed_cache_hit(arrivals),
+    }
+
+
 def binding(knob: str, value: Any, profile: Profile) -> bool:
     # A running cap at or above the closed-loop user count never limits anything.
-    return knob != "max_running_requests" or value < profile.users
+    return knob != "max_running_requests" or profile.open_loop or value < profile.users
 
 
 def merged(summaries: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
@@ -126,8 +155,8 @@ def _cells(levels: Sequence[float]) -> list[tuple[float | None, float]]:
     return cells + [(ordered[-1], ordered[-1] * EVIDENCE_REACH)]
 
 
-def _profile_of(name: str, phase: Mapping[str, Any]) -> Profile:
-    return Profile(name, phase["users"], phase["prompt_tokens"], phase["output_tokens"], phase.get("shared_prefix", 0.0))
+def _profile_of(name: str, phase: Mapping[str, Any], open_loop: bool = False) -> Profile:
+    return Profile(name, phase["users"], phase["prompt_tokens"], phase["output_tokens"], phase.get("shared_prefix", 0.0), open_loop)
 
 
 def best_from_trials(trials: Sequence[Mapping[str, Any]], slo: Slo, start: Mapping[str, Any], min_gain: float = 0.02) -> list[dict[str, Any]]:
@@ -137,7 +166,7 @@ def best_from_trials(trials: Sequence[Mapping[str, Any]], slo: Slo, start: Mappi
         by_profile.setdefault(trial["profile"], []).append(trial)
     results = []
     for name, rows in by_profile.items():
-        profiles = {_profile_of(name, row["summary"]["phase"]) for row in rows}
+        profiles = {_profile_of(name, row["summary"]["phase"], row.get("open_loop", False)) for row in rows}
         if len(profiles) != 1:
             raise ValueError(f"profile {name!r} was measured with different workloads; give each workload its own name")
         (profile,) = profiles

@@ -125,6 +125,77 @@ class Lifecycle(unittest.TestCase):
         self.assertTrue(issubclass(cls, launch.base.http.server.BaseHTTPRequestHandler))
 
 
+class LiveTuning(unittest.TestCase):
+    def config(self, root):
+        return {'root': Path(root), 'backend': 18084, 'profile': 'b300-pcp2'}
+
+    def test_live_tuning_is_off_unless_asked(self):
+        with tempfile.TemporaryDirectory() as root:
+            self.assertEqual(service.livetune({}, self.config(root)), (None, {}))
+            with self.assertRaisesRegex(ValueError, 'LIVETUNE_MODE'):
+                service.livetune({'LIVETUNE_MODE': 'on'}, self.config(root))
+
+    def test_a_canary_ends_replayed_stops_and_records_nothing(self):
+        with tempfile.TemporaryDirectory() as root:
+            self.assertEqual(service.livetune({'LIVETUNE_MODE': 'canary'}, self.config(root)), (None, {'LIVETUNE_REPLAY_STOPS': '1'}))
+
+    def test_a_profile_without_a_policy_records_traffic_and_runs_no_controller(self):
+        with tempfile.TemporaryDirectory() as root:
+            command, environment = service.livetune({'LIVETUNE_MODE': 'act', 'XDG_CACHE_HOME': '/c'}, self.config(root))
+        self.assertIsNone(command)
+        self.assertEqual(environment, {'LIVETUNE_TRACE_DIR': '/c/glm-sglang/livetune/trace'})
+
+    def test_the_bundled_policy_for_the_profile_drives_the_controller(self):
+        with tempfile.TemporaryDirectory() as root:
+            policy = Path(root, 'glm-sglang/livetune/b300-pcp2.json')
+            policy.parent.mkdir(parents=True)
+            policy.write_text('{}')
+            command, environment = service.livetune({'LIVETUNE_MODE': 'observe', 'HOME': '/h'}, self.config(root))
+        self.assertEqual(command[1:5], ['-m', 'livetune.cli', 'control', '--url'])
+        self.assertEqual(command[command.index('--policy') + 1], str(policy))
+        self.assertEqual(command[command.index('--mode') + 1], 'observe')
+        self.assertEqual(environment['LIVETUNE_TRACE_DIR'], '/h/.cache/glm-sglang/livetune/trace')
+
+    def test_a_dying_controller_is_restarted_with_backoff_and_never_stops_serving(self):
+        now, started = [0.0], []
+
+        def start(command):
+            started.append(now[0])
+            return FakeChild(None)
+
+        controller = service.Controller(['livetune'], clock=lambda: now[0], start=start)
+        controller.tick()
+        for _ in range(4):
+            controller.child.code = 1  # exits soon after starting
+            now[0] += 1
+            controller.tick()
+            self.assertIsNone(controller.child)
+            now[0] = controller.restart_at
+            controller.tick()
+        gaps = [b - a for a, b in zip(started, started[1:])]
+        self.assertEqual(gaps, [31, 61, 121, 241])
+        controller.child.code = 1
+        now[0] += 3600  # ran for an hour: a fresh failure, short backoff
+        controller.tick()
+        self.assertEqual(controller.restart_at - now[0], 30)
+        controller.restart_at = now[0]
+        controller.tick()
+        controller.child.code = 78  # refused its policy: not restarted
+        controller.tick()
+        now[0] += 10_000
+        controller.tick()
+        self.assertEqual((controller.child, controller.children()), (None, []))
+        def broken(command):
+            raise OSError('No such file or directory')
+
+        failing = service.Controller(['livetune'], clock=lambda: now[0], start=broken)
+        failing.tick()  # does not raise: serving goes on
+        self.assertEqual((failing.child, failing.restart_at - now[0]), (None, 30))
+        idle = service.Controller(None, start=start)
+        idle.tick()
+        self.assertEqual(idle.children(), [])
+
+
 class Response:
     status = 200
     def __init__(self, body): self.body = body

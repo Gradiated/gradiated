@@ -840,8 +840,10 @@
     rotate: 90deg;
   }
 
+  /* Close under the section's title, and clear of the rule below. */
   .gr-rail-menu-reveal {
-    margin-top: 20px;
+    margin-top: 0;
+    padding-bottom: 32px;
     animation: gr-rail-in 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
   }
 
@@ -853,7 +855,6 @@
   .gr-rail-menu-doc {
     display: grid;
     gap: 20px;
-    padding-block-end: 24px;
   }
 
   .gr-rail-menu-doc-group {
@@ -907,7 +908,12 @@
 
   .gr-rail-menu-reveal .gr-rail-under-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+    gap: 28px 16px;
+  }
+
+  /* Cards in a row are stretched to one height; their parts stay at the top. */
+  .gr-rail-menu-reveal .gr-rail-under-card {
+    align-content: start;
   }
 
   .gr-rail-menu-reveal .gr-rail-under-name {

@@ -255,6 +255,7 @@
 
 .gr-root .gr-profile-meta p {
   margin: 0;
+  color: inherit;
 }
 
 .gr-profile-flag {

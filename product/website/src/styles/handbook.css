@@ -74,6 +74,7 @@ img.gr-pill__avatar {
 }
 
 .gr-pill__name {
+  color: var(--color-text);
   font-weight: 500;
 }
 
@@ -220,6 +221,7 @@ img.gr-pill__avatar {
 }
 
 .gr-root .gr-callout__title {
+  color: var(--color-text);
   font-weight: 500;
 }
 

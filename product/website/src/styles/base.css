@@ -25,6 +25,17 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Body copy is muted in every theme; headings, names, values and quotes keep
+   the full ink. Lists that are components (they have a class) are left alone. */
+.gr-root :where(p, figcaption, ul:not([class]) > li, ol:not([class]) > li) {
+  color: var(--color-text-muted);
+}
+
+/* Quotes keep the full ink. */
+.gr-root :where(blockquote, blockquote p, blockquote li) {
+  color: var(--color-text);
+}
+
 /* Anchor jumps land below the fixed nav bar rather than under it, and glide
    rather than cut. */
 html {

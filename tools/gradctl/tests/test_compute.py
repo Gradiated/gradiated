@@ -206,10 +206,12 @@ class SearchTests(unittest.TestCase):
         cloud.spot_prices = lambda: {}
         cloud.items = lambda *args: [{'metadata': {'id': 'subnet-test'}}]
         cloud.cli = mock.Mock()
+        user_data = mock.Mock()
         with self.assertRaisesRegex(SystemExit, 'No live spot quote'):
             cloud.create('test-name', 'eu-north1', 'gpu-h200-sxm', '8gpu-128vcpu-1600gb',
-                         None, None, lambda: '#cloud-config')
+                         None, None, user_data)
         cloud.cli.assert_not_called()
+        user_data.assert_not_called()
 
 
     def test_nebius_can_retry_policy_cleanup_when_vm_is_gone(self):

@@ -274,8 +274,6 @@ class Nebius:
                     'name': name + '-boot', 'spec': {
                         'size_bytes': str((disk_gib or 250) * 1024 ** 3), 'type': 'NETWORK_SSD',
                         'source_image_family': {'image_family': image or 'ubuntu24.04-cuda13.0'}}}},
-                # Built only now, after the price check, because it mints a tailnet key.
-                'cloud_init_user_data': user_data(),
             },
         }
         policy_id = None
@@ -291,6 +289,8 @@ class Nebius:
             })
         # One request file per launch, so concurrent launches cannot read each other's.
         try:
+            # Cloud-init mints a Tailscale key. Build it only after the price and policy checks.
+            spec['spec']['cloud_init_user_data'] = user_data()
             with tempfile.NamedTemporaryFile('w', dir=self.state, suffix='.json') as request:
                 json.dump(spec, request)
                 request.flush()

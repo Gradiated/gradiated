@@ -32,8 +32,8 @@ ceil(n / 16) groups, then a final over the groups' best, sharpened by 0.93. All 
 SGLang in one batched call; upstream's own `spread` is replayed over the passes read so far to find the next ones.
 The LM head runs in FP32 (`--enable-fp32-lm-head`).
 
-Requests whose passes share a prompt prefix of at least 128 tokens, saving at least 1,024 recomputed tokens, prefill
-the prefix once into SGLang's radix cache before the passes. Confidence is the top probability, as PostHog reports it.
+The runtime prefills a shared prefix separately when at least 128 tokens match and the estimated savings reach
+6,144 tokens for two to eight passes, or 1,024 for larger batches. Smaller savings go straight to the batched read. Confidence is the top probability, as PostHog reports it.
 Usage counts every pass's whole prompt, as upstream does, with nothing reported as cached.
 
 ## Limits

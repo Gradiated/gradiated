@@ -80,36 +80,47 @@ def option_block(question):
 
 class Prompts:
     def __init__(self, tokenizer):
-        self.tokenizer = tokenizer
+        self.encoder = tokenizer.backend_tokenizer
+        self.encoder.no_padding()
+        self.encoder.no_truncation()
         ids = tokenizer.convert_tokens_to_ids([OPT_END, DECIDE, THINK_END])
         if any(i is None or i == tokenizer.unk_token_id for i in ids):
             raise ValueError('marker tokens missing from tokenizer')
         self.opt_end_id, self.decide_id, self.think_end_id = ids
-        self.empty_think = self.encode('\n')
+        # The pinned Qwen tokenizer treats the delimiters as atomic tokens. Render the chat
+        # envelope once, retaining its exact handling of the newline after the last option.
+        envelope = tokenizer.apply_chat_template(
+            [{'role': 'user', 'content': STATE + OPT_END + '\n'}], tokenize=False,
+            add_generation_prompt=True, enable_thinking=True)
+        before, content, after = envelope.partition(STATE + OPT_END)
+        if not content or not after.endswith(THINK + '\n'):
+            raise ValueError('unexpected Jeeves chat envelope')
+        head, think, tail = after.rpartition(THINK)
+        self.before_state = self.encode(escaped_thinking(before) + STATE)
+        self.between_blocks = (self.encode(escaped_thinking(head) + think + tail)
+                               + self.encode('\n') + self.encode(THINK_END + '\n\n'))
+        self.end = self.encode('\n' + DECIDE)
+        if self.end[-1] != self.decide_id or self.think_end_id not in self.between_blocks:
+            raise ValueError('missing Jeeves decision or thinking delimiter')
 
     def encode(self, text):
-        return self.tokenizer(text, add_special_tokens=False).input_ids
+        return self.encoder.encode(text, add_special_tokens=False).ids
 
-    def chat(self, content):
-        return self.tokenizer.apply_chat_template([{'role': 'user', 'content': content}], tokenize=False,
-                                                  add_generation_prompt=True, enable_thinking=True)
+    def state_ids(self, state):
+        return self.before_state + self.encode(escaped_thinking(sanitize(render(state))) + '\n')
 
-    def prompt_text(self, state, question):
-        text = self.chat(f'{STATE}{sanitize(render(state))}\n{QUESTION}{sanitize(render(question.get("instructions")))}'
-                         f'\n{option_block(question)}')
-        # Every thinking marker is escaped but the <think> of the chat template, which ends the prompt.
-        head, think, tail = text.rpartition(THINK)
-        return escaped_thinking(head) + think + tail
-
-    def remainder_text(self, question):
-        head, think_end, tail = f'{THINK_END}\n\n{option_block(question)}{DECIDE}'.partition(THINK_END)
-        return head + think_end + escaped_thinking(tail)
+    def question_ids(self, state_ids, question):
+        instructions = escaped_thinking(sanitize(render(question.get('instructions'))))
+        instruction_ids = self.encode(QUESTION + instructions + '\n')
+        # The same option block occurs twice. Its last token is always the closing
+        # delimiter, so encoding it separately preserves the BPE boundaries on both sides.
+        block = self.encode(escaped_thinking(option_block(question).removesuffix('\n')))
+        if block.count(self.opt_end_id) != len(keys(question)):
+            raise ValueError('the question does not render as Jeeves reads it')
+        ids = state_ids.copy()
+        for piece in (instruction_ids, block, self.between_blocks, block, self.end):
+            ids.extend(piece)
+        return ids
 
     def ids(self, state, question):
-        """The no-think sequence of Jeeves's engine: its prompt, empty thinking, then the options and <decide>."""
-        ids = self.encode(self.prompt_text(state, question)) + list(self.empty_think) + self.encode(
-            self.remainder_text(question))
-        tail = ids[len(ids) - 1 - ids[::-1].index(self.think_end_id):]
-        if ids[-1] != self.decide_id or tail.count(self.opt_end_id) != len(options(question)):
-            raise ValueError('the question does not render as Jeeves reads it')
-        return ids
+        return self.question_ids(self.state_ids(state), question)

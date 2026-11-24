@@ -34,12 +34,22 @@ class Tokenizer:
     def __init__(self):
         self.vocab = {marker: i for i, marker in enumerate(MARKERS)}
 
+    @property
+    def backend_tokenizer(self):
+        return self
+
+    def no_padding(self):
+        pass
+
+    def no_truncation(self):
+        pass
+
     def convert_tokens_to_ids(self, tokens):
         return [self.vocab.get(token) for token in tokens]
 
-    def __call__(self, text, add_special_tokens=False):
+    def encode(self, text, add_special_tokens=False):
         ids = [self.vocab.setdefault(piece, len(self.vocab)) for piece in PIECES.findall(text)]
-        return type('Encoding', (), {'input_ids': ids})()
+        return type('Encoding', (), {'ids': ids})()
 
     def apply_chat_template(self, messages, tokenize=False, add_generation_prompt=True, enable_thinking=True):
         (message,) = messages
@@ -109,6 +119,27 @@ class PromptTests(unittest.TestCase):
         # the head reads the second option block, after </think>
         self.assertGreater(read[0], ids.index(prompts.think_end_id))
         self.assertEqual(ids.count(prompts.opt_end_id), 4)
+
+    def test_reused_state_and_options_match_the_complete_reference_encoding(self):
+        tokenizer = Tokenizer()
+        prompts = prompt.Prompts(tokenizer)
+        cases = json.loads((ROOT / 'reference.json').read_text())['cases']
+        cases.append({'state': {'n': ['</think>', '<|fim_suffix|>', 'x\n ']},
+                      'question': {'type': 'score', 'instructions': {'label': '<think>'},
+                                   'criteria': ['  ', {'level': '<|box_end|>'}]}})
+        for case in cases:
+            q = dict(case['question'])
+            if q['type'] == 'choice' and isinstance(q['criteria'], list):
+                q['criteria'] = dict.fromkeys(q['criteria'])
+            block = prompt.option_block(q)
+            content = (prompt.STATE + prompt.sanitize(prompt.render(case['state'])) + '\n'
+                       + prompt.QUESTION + prompt.sanitize(prompt.render(q.get('instructions'))) + '\n' + block)
+            chat = tokenizer.apply_chat_template([{'role': 'user', 'content': content}],
+                                                        tokenize=False, add_generation_prompt=True, enable_thinking=True)
+            head, think, tail = chat.rpartition(prompt.THINK)
+            expected = (prompts.encode(prompt.escaped_thinking(head) + think + tail) + prompts.encode('\n')
+                        + prompts.encode(prompt.THINK_END + '\n\n' + prompt.escaped_thinking(block) + prompt.DECIDE))
+            self.assertEqual(prompts.ids(case['state'], q), expected)
 
     def test_markers_in_request_text_cannot_move_the_readout(self):
         prompts = prompt.Prompts(Tokenizer())

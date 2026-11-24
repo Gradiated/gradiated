@@ -49,20 +49,6 @@ export const apps = [
     },
   },
   {
-    key: "autotrain-reader",
-    name: "Gradiated Autotrain Reader",
-    description: "Reads the private autotrain library for runtime builds.",
-    permissions: { contents: "read" },
-    repositories: ["autotrain"],
-    store: {
-      github: {
-        repository: "gradiated",
-        secret: "AUTOTRAIN_APP_PRIVATE_KEY",
-        variable: "AUTOTRAIN_APP_CLIENT_ID",
-      },
-    },
-  },
-  {
     key: "argocd",
     name: "Gradiated Argo CD",
     description: "Lets production Argo CD read the GitOps repository.",

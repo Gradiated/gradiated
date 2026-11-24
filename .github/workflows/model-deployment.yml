@@ -85,30 +85,17 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: node tools/models/verify-inputs.mjs "$BASE_SHA"
-      # Only the training bundle builds from the private autotrain library, so
-      # other pull requests, including Dependabot's, need no app key.
       - name: Read pinned autotrain revision
         id: autotrain
         if: contains(steps.verification.outputs.targets, 'verify-training')
         run: echo "revision=$(git rev-parse HEAD:product/packages/autotrain)" >> "$GITHUB_OUTPUT"
-      - name: Create autotrain read token
-        id: autotrain-token
-        if: contains(steps.verification.outputs.targets, 'verify-training')
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-        with:
-          client-id: ${{ vars.AUTOTRAIN_APP_CLIENT_ID }}
-          private-key: ${{ secrets.AUTOTRAIN_APP_PRIVATE_KEY }}
-          owner: Gradiated
-          repositories: autotrain
-          permission-contents: read
-      - name: Check out private training library
+      - name: Check out public training library
         if: contains(steps.verification.outputs.targets, 'verify-training')
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: Gradiated/autotrain
           ref: ${{ steps.autotrain.outputs.revision }}
           path: product/packages/autotrain
-          token: ${{ steps.autotrain-token.outputs.token }}
           persist-credentials: false
       - run: |
           node --test tools/images/*.test.mjs tools/models/*.test.mjs
@@ -166,22 +153,12 @@ jobs:
       - name: Read pinned autotrain revision
         id: autotrain
         run: echo "revision=$(git rev-parse HEAD:product/packages/autotrain)" >> "$GITHUB_OUTPUT"
-      - name: Create autotrain read token
-        id: autotrain-token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-        with:
-          client-id: ${{ vars.AUTOTRAIN_APP_CLIENT_ID }}
-          private-key: ${{ secrets.AUTOTRAIN_APP_PRIVATE_KEY }}
-          owner: Gradiated
-          repositories: autotrain
-          permission-contents: read
-      - name: Check out private training library
+      - name: Check out public training library
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: Gradiated/autotrain
           ref: ${{ steps.autotrain.outputs.revision }}
           path: product/packages/autotrain
-          token: ${{ steps.autotrain-token.outputs.token }}
           persist-credentials: false
       - name: Wait for the source infrastructure prerequisite
         if: vars.RELEASE_STATE_REPO != 'infrastructure'

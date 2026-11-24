@@ -17,7 +17,6 @@ test("only the release app writes to the production repository through a protect
     assert.deepEqual(Object.keys(app.permissions), expected);
   }
   assert.equal(apps.find((app) => app.key === "release").store.github.environment, "production");
-  assert.equal(apps.find((app) => app.key === "autotrain-reader").permissions.contents, "read");
   assert.equal(apps.find((app) => app.key === "argocd").permissions.contents, "read");
 });
 

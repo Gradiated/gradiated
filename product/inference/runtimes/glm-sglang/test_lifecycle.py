@@ -137,13 +137,18 @@ class LiveTuning(unittest.TestCase):
 
     def test_a_canary_ends_replayed_stops_and_records_nothing(self):
         with tempfile.TemporaryDirectory() as root:
-            self.assertEqual(service.livetune({'LIVETUNE_MODE': 'canary'}, self.config(root)), (None, {'LIVETUNE_REPLAY_STOPS': '1'}))
+            command, environment = service.livetune({'LIVETUNE_MODE': 'canary', 'XDG_CACHE_HOME': '/c'}, self.config(root))
+        self.assertIsNone(command)
+        # Live variants on, as in production, so the canary measures production's scope.
+        self.assertEqual(environment, {'LIVETUNE_REPLAY_STOPS': '1', 'LIVETUNE_LIVE_VARIANTS': '1',
+                                       'LIVETUNE_VARIANTS_DIR': '/c/glm-sglang/livetune/variants'})
 
     def test_a_profile_without_a_policy_records_traffic_and_runs_no_controller(self):
         with tempfile.TemporaryDirectory() as root:
             command, environment = service.livetune({'LIVETUNE_MODE': 'act', 'XDG_CACHE_HOME': '/c'}, self.config(root))
         self.assertIsNone(command)
-        self.assertEqual(environment, {'LIVETUNE_TRACE_DIR': '/c/glm-sglang/livetune/trace'})
+        self.assertEqual(environment, {'LIVETUNE_TRACE_DIR': '/c/glm-sglang/livetune/trace', 'LIVETUNE_LIVE_VARIANTS': '1',
+                                       'LIVETUNE_VARIANTS_DIR': '/c/glm-sglang/livetune/variants'})
 
     def test_the_bundled_policy_for_the_profile_drives_the_controller(self):
         with tempfile.TemporaryDirectory() as root:
@@ -155,6 +160,8 @@ class LiveTuning(unittest.TestCase):
         self.assertEqual(command[command.index('--policy') + 1], str(policy))
         self.assertEqual(command[command.index('--mode') + 1], 'observe')
         self.assertEqual(environment['LIVETUNE_TRACE_DIR'], '/h/.cache/glm-sglang/livetune/trace')
+        # The controller registers the policy's variants where the server resolves them.
+        self.assertEqual(command[command.index('--variants-dir') + 1], environment['LIVETUNE_VARIANTS_DIR'])
 
     def test_a_dying_controller_is_restarted_with_backoff_and_never_stops_serving(self):
         now, started = [0.0], []

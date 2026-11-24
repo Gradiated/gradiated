@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import hashlib
 import json
 import logging
 import math
@@ -12,11 +13,11 @@ from pathlib import Path
 from typing import Any, Callable, Sequence
 
 from livetune import controller as control
-from livetune import advisor, loadgen, rollout, trace, tune
+from livetune import advisor, loadgen, rollout, trace, tune, variants
 from livetune.knobs import VARIANT_KEY
 from livetune.metrics import window
 from livetune.policy import Policy, Slo
-from livetune.server import KV_TOLERANCE, Server
+from livetune.server import KV_TOLERANCE, Server, UpdateFailed
 
 
 def _value(raw: str) -> Any:
@@ -86,23 +87,47 @@ def _differences(expected: dict[str, Any], actual: dict[str, Any], prefix: str =
     return out
 
 
-def load_policy(path: str, server: Server, allow_scope_mismatch: bool) -> Policy:
+def load_policy(path: str, server: Server, allow_scope_mismatch: bool, variants_dir: str | None = None) -> Policy:
     policy = Policy.load(path)
     expected, actual = policy.provenance.get("scope"), server.fingerprint()
     if expected is None and not allow_scope_mismatch:
         raise SystemExit(f"{path} records no tuning scope; rebuild it with `livetune policy`, or pass --allow-scope-mismatch")
     if expected is not None and not allow_scope_mismatch:
         differs = _scope_differences(expected, actual)
-        if not differs:
-            return policy
-        raise SystemExit(f"{path} was tuned for a different server (policy, live): {differs}; pass --allow-scope-mismatch to override")
+        if differs:
+            raise SystemExit(f"{path} was tuned for a different server (policy, live): {differs}; pass --allow-scope-mismatch to override")
+    install_variants(policy, server, variants_dir)
     return policy
+
+
+def install_variants(policy: Policy, server: Server, variants_dir: str | None) -> None:
+    """Register the variants a policy carries where the server resolves them, before a rule asks for one.
+
+    A policy's variants are code that runs inside the server: publish policies only through the path
+    that reviews them.
+    """
+    if not policy.variants:
+        return
+    if not variants_dir:
+        raise SystemExit("the policy carries forward variants; give --variants-dir, the server's LIVETUNE_VARIANTS_DIR")
+    if policy.used_variants() and not all(state.get("live_variants") for state in server.livetune_states()):
+        raise SystemExit("the policy switches forward variants live; the server needs LIVETUNE_LIVE_VARIANTS=1")
+    for entry in policy.variants.values():
+        variants.register(variants_dir, entry["name"], entry["code"])
+
+
+def _carried(results: Sequence[dict[str, Any]], start: dict[str, Any], variants_dir: str | None) -> dict[str, dict[str, str]]:
+    """The code of every variant the tuned settings switch to, for the policy to carry."""
+    ids = {r["settings"].get(VARIANT_KEY) for r in results} - {None, variants.STOCK, start.get(VARIANT_KEY, variants.STOCK)}
+    if ids and not variants_dir:
+        raise SystemExit("the tuned settings switch forward variants; give --variants-dir to carry their code in the policy")
+    return {str(i): variants.embedded(variants.resolve(i, variants_dir)) for i in sorted(ids)}
 
 
 def replay(args: argparse.Namespace, server: Server) -> None:
     import threading
 
-    policy = load_policy(args.policy, server, args.allow_scope_mismatch)
+    policy = load_policy(args.policy, server, args.allow_scope_mismatch, args.variants_dir)
     write = _appender(args.out)
     startup = server.livetune_state()["startup"]
     server.apply(startup)
@@ -240,10 +265,9 @@ def tune_policy(
     seconds: float,
     warmup: float,
     record: Any,
+    variants_dir: str | None = None,
 ) -> Policy:
     """Measure each grid value against the startup settings, per profile or against recorded traffic."""
-    import asyncio
-
     start = dict(server.livetune_state()["startup"])
     scope = server.fingerprint()
     # Every candidate and confirmation run sends the same token ids; content changes MoE routing.
@@ -278,7 +302,8 @@ def tune_policy(
         results = [tune.tune_profile(tune.Profile(**p), start, grid, slo, measure) for p in profiles]
     finally:
         server.apply(start)
-    return tune.build_policy(results, slo, {"tuned_at": time.time(), "url": server.url, "scope": scope}, start)
+    return tune.build_policy(results, slo, {"tuned_at": time.time(), "url": server.url, "scope": scope}, start,
+                             _carried(results, start, variants_dir))
 
 
 def variant_eval(args: argparse.Namespace, server: Server) -> dict[str, Any]:
@@ -287,31 +312,22 @@ def variant_eval(args: argparse.Namespace, server: Server) -> dict[str, Any]:
     The variant is registered under its content hash, so every revision gets its own pinned id.
     The canary must run with LIVETUNE_LIVE_VARIANTS=1 and share LIVETUNE_VARIANTS_DIR with this host.
     """
-    import asyncio
-    import hashlib
-
-    from livetune import gate, variants
-
     code = Path(args.variant).read_text()
-    name = f"{args.name}-{hashlib.sha256(code.encode()).hexdigest()[:10]}"
+    name = args.name
     variant_id = variants.register(args.variants_dir, name, code)
-    source = loadgen.PromptSource(_corpus(args.corpus), seed=args.seed)
-    prompts = [source.family_prompt(args.prompt_tokens, 0, None) for _ in range(args.prompts)]
+    prompts = _gate_prompts(args.corpus, args.prompts, args.prompt_tokens, args.seed)
     # Baselines are always stock, whatever the canary was running; that is restored at the end.
     incumbent = server.livetune_state()["settings"].get(VARIANT_KEY, variants.STOCK)
     stock_id = variants.STOCK
-    report: dict[str, Any] = {"variant": name, "id": variant_id, "incumbent": incumbent}
+    report: dict[str, Any] = {"variant": name, "id": variant_id, "sha256": hashlib.sha256(code.encode()).hexdigest(), "incumbent": incumbent}
     try:
         server.apply({VARIANT_KEY: stock_id})
-        stock, stock_again = server.greedy(prompts, args.tokens), server.greedy(prompts, args.tokens)
-        started = time.monotonic()
-        server.apply({VARIANT_KEY: variant_id})
-        report["switch_s"] = round(time.monotonic() - started, 1)
-        verdict = gate.judge(stock, stock_again, server.greedy(prompts, args.tokens))
+        stock = (server.greedy(prompts, args.tokens), server.greedy(prompts, args.tokens))
+        verdict, report["switch_s"] = _gate_variant(server, variant_id, prompts, args.tokens, stock)
         report["gate"] = dataclasses.asdict(verdict)
         if verdict.passed and args.trace:
             arrivals = trace.arrivals(list(trace.read([args.trace])), speed=args.speed)
-            ids = loadgen.trace_prompts(arrivals, source)
+            ids = loadgen.trace_prompts(arrivals, loadgen.PromptSource(_corpus(args.corpus), seed=args.seed))
             runs: dict[str, list[dict[str, Any]]] = {"variant": [], "stock": []}
             # Interleaved, and every run starts from a flushed cache, so order and warmth cancel out.
             for label in ("variant", "stock", "variant", "stock"):
@@ -326,6 +342,74 @@ def variant_eval(args: argparse.Namespace, server: Server) -> dict[str, Any]:
     finally:
         server.apply({VARIANT_KEY: incumbent})
     return report
+
+
+def _gate_prompts(corpus: str, count: int, prompt_tokens: int, seed: int) -> list[list[int]]:
+    source = loadgen.PromptSource(_corpus(corpus), seed=seed)
+    return [source.family_prompt(prompt_tokens, 0, None) for _ in range(count)]
+
+
+def _gate_variant(server: Server, variant_id: int, prompts: list[list[int]], tokens: int, stock: tuple[Any, Any]) -> tuple[Any, float]:
+    """Switch to a variant and judge its greedy output against stock's two runs; returns the verdict
+    and how long the switch took. The caller switches back."""
+    from livetune import gate
+
+    started = time.monotonic()
+    server.apply({VARIANT_KEY: variant_id})
+    switch_s = round(time.monotonic() - started, 1)
+    return gate.judge(stock[0], stock[1], server.greedy(prompts, tokens)), switch_s
+
+
+def _variant_candidates(args: argparse.Namespace, canary: Server, ledger_path: Path) -> list[dict[str, Any]]:
+    """Gate every new variant file in --candidates on the canary; return the ledger.
+
+    A variant is judged once per revision, by its code's hash. One that fails the gate is rejected for
+    good; one that passes stays a tuning candidate until it has lost --variant-tries cycles. The agent
+    loop that writes variants reads code-targets.json and adds files here.
+    """
+    ledger: dict[str, dict[str, Any]] = json.loads(ledger_path.read_text()) if ledger_path.is_file() else {}
+    fresh = []
+    for path in sorted(Path(args.candidates).glob("*.py")):
+        code = path.read_text()
+        sha256 = hashlib.sha256(code.encode()).hexdigest()
+        # A file refused for its name is keyed by name too, so renaming it gets the same code gated.
+        invalid = f"{sha256}:{path.stem}"
+        if sha256 in ledger or invalid in ledger:
+            continue
+        try:
+            variant_id = variants.register(args.variants_dir, path.stem, code)
+        except variants.VariantError as exc:
+            ledger[invalid] = {"name": path.stem, "status": "invalid", "reason": str(exc), "t": time.time()}
+            continue
+        fresh.append((path.stem, sha256, variant_id))
+    if fresh:
+        prompts = _gate_prompts(args.corpus, args.gate_prompts, args.gate_prompt_tokens, 7)
+        incumbent = canary.livetune_state()["settings"].get(VARIANT_KEY, variants.STOCK)
+        try:
+            canary.apply({VARIANT_KEY: variants.STOCK})
+            stock = (canary.greedy(prompts, args.gate_tokens), canary.greedy(prompts, args.gate_tokens))
+            for name, sha256, variant_id in fresh:
+                entry: dict[str, Any] = {"name": name, "id": variant_id, "t": time.time(), "losses": 0}
+                try:
+                    verdict, entry["switch_s"] = _gate_variant(canary, variant_id, prompts, args.gate_tokens, stock)
+                    entry["gate"] = dataclasses.asdict(verdict)
+                    entry["status"] = "candidate" if verdict.passed else "rejected"
+                except UpdateFailed as exc:
+                    # The server refused or failed the switch: the install raised, or building its state did.
+                    # Anything else (an unreachable canary) fails the cycle, and the variant is gated next time.
+                    entry.update(status="rejected", reason=f"{type(exc).__name__}: {exc}")
+                ledger[sha256] = entry
+                canary.apply({VARIANT_KEY: variants.STOCK})
+        finally:
+            canary.apply({VARIANT_KEY: incumbent})
+    _write_json(ledger_path, ledger)
+    return list(ledger.values())
+
+
+def _write_json(path: Path, value: Any) -> None:
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(value, indent=1))
+    temporary.replace(path)
 
 
 def _rotated_away(trace_dir: str, pid: str, since: float) -> bool:
@@ -410,6 +494,17 @@ def improve(args: argparse.Namespace, server: Server) -> None:
         report = advise(argparse.Namespace(seconds=args.advise_seconds, interval=args.interval, trace_dir=args.trace_dir, close_s=args.close_s), server)
         entry: dict[str, Any] = {"t": started, "proposals": report["proposals"], "grid": report["grid"]}
         differs = _scope_differences(server.fingerprint(), canary.fingerprint())
+        grid = dict(report["grid"])
+        code_targets = [p for p in report["proposals"] if p["tier"] == "code"]
+        if args.candidates and not differs:
+            if not canary.livetune_state().get("live_variants"):
+                entry["variants_skipped"] = "the canary runs without LIVETUNE_LIVE_VARIANTS=1"
+            else:
+                ledger = _variant_candidates(args, canary, out / "variants.json")
+                entry["variants"] = [{k: v.get(k) for k in ("name", "id", "status")} for v in ledger if v.get("t", 0) >= started]
+                kept = [v["id"] for v in ledger if v["status"] == "candidate"]
+                if kept:
+                    grid[VARIANT_KEY] = kept
         # A record is written when its request finishes, so a window that ended just now would miss its
         # long requests. Replay one that closed --close-s ago, whose requests have had time to finish.
         until = time.time() - args.close_s
@@ -426,8 +521,8 @@ def improve(args: argparse.Namespace, server: Server) -> None:
         elif not report.get("traffic_complete", True):
             # The proposals were drawn from a traffic mix that was still missing requests.
             entry["skipped"] = {"incomplete_trace": "the advisor's traffic was still being recorded"}
-        elif not report["grid"] or not records:
-            entry["skipped"] = "nothing to test" if not report["grid"] else "no recorded traffic"
+        elif not grid or not records:
+            entry["skipped"] = "nothing to test" if not grid else "no recorded traffic"
         elif gap := ("requests from the window are still running" if not finished else "records were still being written" if not written
                      else _trace_gap(server, args.trace_dir, since, history)):
             # Tuning on a partial trace measures a lighter workload than production served.
@@ -439,10 +534,17 @@ def improve(args: argparse.Namespace, server: Server) -> None:
             snapshot = out / f"trace-{int(started)}.jsonl"
             with os.fdopen(os.open(snapshot, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w") as handle:
                 handle.write("".join(r.to_json() + "\n" for r in records))
-            policy = tune_policy(canary, Slo(args.slo_tps, args.slo_ttft), loadgen.PromptSource(_corpus(args.corpus)), report["grid"],
-                                 None, trace.arrivals(records, speed=args.speed, measured_from=since), 0, 0, _appender(str(out / f"trials-{int(started)}.jsonl")))
+            if code_targets:
+                # The shapes worth a kernel, and the traffic it must win on, for the agent loop that writes variants.
+                _write_json(out / "code-targets.json", {"t": started, "targets": code_targets, "trace": str(snapshot),
+                                                        "candidates": args.candidates})
+            policy = tune_policy(canary, Slo(args.slo_tps, args.slo_ttft), loadgen.PromptSource(_corpus(args.corpus)), grid,
+                                 None, trace.arrivals(records, speed=args.speed, measured_from=since), 0, 0, _appender(str(out / f"trials-{int(started)}.jsonl")),
+                                 args.variants_dir)
             winner = policy.rule("trace").settings
             entry["winner"] = winner
+            if VARIANT_KEY in grid:
+                _score_candidates(out / "variants.json", grid[VARIANT_KEY], winner.get(VARIANT_KEY), args.variant_tries)
             if winner != policy.rule("unmeasured").settings:
                 staged_before = Path(args.stage_policy).read_text() if args.stage_url else None
                 verdict = stage(args, server, policy) if args.stage_url else None
@@ -465,6 +567,17 @@ def improve(args: argparse.Namespace, server: Server) -> None:
         if args.once:
             return
         time.sleep(max(args.every - (time.time() - started), 0))
+
+
+def _score_candidates(ledger_path: Path, measured: Sequence[int], chosen: int | None, tries: int) -> None:
+    """Count a cycle each measured candidate lost; retire one that has lost tries cycles."""
+    ledger = json.loads(ledger_path.read_text())
+    for entry in ledger.values():
+        if entry.get("status") == "candidate" and entry.get("id") in measured:
+            entry["losses"] = 0 if entry["id"] == chosen else entry.get("losses", 0) + 1
+            if entry["losses"] >= tries:
+                entry["status"] = "retired"
+    _write_json(ledger_path, ledger)
 
 
 def _scope_differences(expected: dict[str, Any], actual: dict[str, Any]) -> dict[str, Any]:
@@ -760,6 +873,9 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--interval", type=float, default=5.0)
     for name in ("control", "replay"):
         sub.choices[name].add_argument("--allow-scope-mismatch", action="store_true", help="use a policy tuned on a different model, layout or GPU")
+    for name in ("control", "replay", "tune", "policy", "improve"):
+        sub.choices[name].add_argument("--variants-dir", default=os.environ.get("LIVETUNE_VARIANTS_DIR"),
+                                       help="the server's LIVETUNE_VARIANTS_DIR, where policies' variants are registered and read")
     t = sub.choices["tune"]
     workload = t.add_mutually_exclusive_group(required=True)
     workload.add_argument("--profiles", help="closed-loop profiles (JSON list)")
@@ -789,7 +905,7 @@ def main(argv: list[str] | None = None) -> int:
     ve.add_argument("--name", required=True)
     ve.add_argument("--variants-dir", default=os.environ.get("LIVETUNE_VARIANTS_DIR"), required=not os.environ.get("LIVETUNE_VARIANTS_DIR"))
     ve.add_argument("--corpus", required=True)
-    ve.add_argument("--prompts", type=int, default=8)
+    ve.add_argument("--prompts", type=int, default=16)
     ve.add_argument("--prompt-tokens", type=int, default=1024)
     ve.add_argument("--tokens", type=int, default=64)
     ve.add_argument("--seed", type=int, default=7)
@@ -819,6 +935,11 @@ def main(argv: list[str] | None = None) -> int:
     im.add_argument("--stage-apply-s", type=float, default=180, help="how long the staged controller may take to apply the candidate")
     im.add_argument("--fleet", default="", help="comma-separated production replicas the guard watches with --url")
     im.add_argument("--guard-seconds", type=float, default=1800, help="fleet time before and after publishing to compare; 0 disables")
+    im.add_argument("--candidates", help="a directory of forward variant files (install(model, patch, ctx)) to gate and tune on the canary")
+    im.add_argument("--variant-tries", type=int, default=3, help="cycles a gated variant may lose before it is retired")
+    im.add_argument("--gate-prompts", type=int, default=16)
+    im.add_argument("--gate-prompt-tokens", type=int, default=1024)
+    im.add_argument("--gate-tokens", type=int, default=64)
     c = sub.choices["control"]
     c.add_argument("--policy", required=True)
     c.add_argument("--interval", type=float, default=5.0)
@@ -847,6 +968,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "improve":
         if args.stage_url and not (args.stage_policy and args.peers):
             raise SystemExit("--stage-url needs --stage-policy and --peers")
+        if args.candidates and not args.variants_dir:
+            raise SystemExit("--candidates needs --variants-dir, the canary's LIVETUNE_VARIANTS_DIR")
         improve(args, server)
         return 0
     if args.command == "status":
@@ -869,7 +992,7 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit(f"{args.trace}: {exc}") from exc
         profiles = json.loads(Path(args.profiles).read_text()) if args.profiles else None
         policy = tune_policy(server, Slo(args.slo_tps, args.slo_ttft), loadgen.PromptSource(_corpus(args.corpus)), grid,
-                             profiles, arrivals, args.seconds, args.warmup, _appender(args.out + ".trials.jsonl", mode="w"))
+                             profiles, arrivals, args.seconds, args.warmup, _appender(args.out + ".trials.jsonl", mode="w"), args.variants_dir)
         Path(args.out).write_text(policy.to_json())
         print(policy.to_json())
     elif args.command == "policy":
@@ -880,7 +1003,8 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit("trials must all record the same tuning scope; rerun tune for older or mixed trial files")
         scope = trials[0]["scope"]
         start = scope["startup"]
-        policy = tune.build_policy(tune.best_from_trials(trials, slo, start), slo, {"trials": args.trials, "scope": scope}, start)
+        results = tune.best_from_trials(trials, slo, start)
+        policy = tune.build_policy(results, slo, {"trials": args.trials, "scope": scope}, start, _carried(results, start, args.variants_dir))
         Path(args.out).write_text(policy.to_json())
         print(policy.to_json())
     elif args.command == "replay":
@@ -895,8 +1019,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"livetune control: {args.policy}: {exc}", file=sys.stderr)
             return CONFIG_ERROR
         try:
-            policy = load_policy(args.policy, server, args.allow_scope_mismatch)
-        except SystemExit as exc:
+            policy = load_policy(args.policy, server, args.allow_scope_mismatch, args.variants_dir)
+        except (SystemExit, ValueError) as exc:
             print(f"livetune control: {exc}", file=sys.stderr)
             return CONFIG_ERROR
         acting = args.mode == "act"
@@ -916,7 +1040,7 @@ def main(argv: list[str] | None = None) -> int:
             mtime = Path(args.policy).stat().st_mtime
             if mtime != seen:
                 try:
-                    reloaded = load_policy(args.policy, server, args.allow_scope_mismatch)
+                    reloaded = load_policy(args.policy, server, args.allow_scope_mismatch, args.variants_dir)
                     # Announce the version before adopting the rules, so a replica never runs a policy
                     # under another policy's version; if this fails, nothing has changed yet.
                     if acting:

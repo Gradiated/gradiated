@@ -15,10 +15,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from livetune import controller as control  # noqa: E402
-from livetune import cli, gate, knobs, loadgen, metrics, tune, variants  # noqa: E402
+from livetune import cli, gate, knobs, loadgen, metrics, trace, tune, variants  # noqa: E402
 from livetune.policy import Policy, Rule, Shape, Slo  # noqa: E402
 
 STARTUP = {"max_running_requests": 64, "chunked_prefill_size": 8192, "max_prefill_tokens": 8192}
+
+
+def _carried(code: str = "def install(model, patch, ctx):\n    pass\n", name: str = "fused") -> tuple[int, dict[str, dict[str, str]]]:
+    """A variant id and the entry a policy carries for it."""
+    source = variants.VariantSource(name, code, hashlib.sha256(code.encode()).hexdigest())
+    return variants.code_id(code), {str(variants.code_id(code)): variants.embedded(source)}
 
 
 class KnobTest(unittest.TestCase):
@@ -55,16 +61,24 @@ class VariantTest(unittest.TestCase):
         self.assertEqual((layer.forward(), module.kernel()), ("stock", "stock"))
         self.assertFalse(hasattr(Layer, "added"))
 
-    def test_register_and_resolve_by_id_with_pinned_sha(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            first = variants.register(tmp, "fused", "def install(m, p, c): pass\n")
-            second = variants.register(tmp, "other", "def install(m, p, c): pass\n")
-            self.assertEqual((first, second), (1, 2))
-            self.assertEqual(variants.register(tmp, "fused", "def install(m, p, c): return 1\n"), 1)
-            self.assertEqual(variants.resolve(1, tmp).name, "fused")
-            (Path(tmp) / "fused.py").write_text("tampered")
+    def test_an_id_is_the_codes_hash_on_every_host(self):
+        code, revised = "def install(m, p, c): pass\n", "def install(m, p, c): return 1\n"
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as other:
+            first = variants.register(tmp, "fused", code)
+            self.assertEqual(first, variants.code_id(code))
+            self.assertLess(first, 1 << 48)  # fits the numeric update endpoint
+            # Another host registering the same code, in another order and under another name, gets the same id.
+            variants.register(other, "unrelated", revised)
+            self.assertEqual(variants.register(other, "renamed", code), first)
+            self.assertEqual(variants.register(tmp, "fused", code), first)  # registering again changes nothing
+            # A revision is a new id; the old revision still resolves, so a policy measured with it keeps it.
+            second = variants.register(tmp, "fused", revised)
+            self.assertNotEqual(second, first)
+            self.assertEqual((variants.resolve(first, tmp).code, variants.resolve(second, tmp).code), (code, revised))
+            self.assertEqual(set(variants.catalog(tmp)), {str(first), str(second)})
+            next(Path(tmp).glob(f"fused-{variants.resolve(first, tmp).sha256[:12]}.py")).write_text("tampered")
             with self.assertRaises(variants.VariantError):
-                variants.resolve(1, tmp)
+                variants.resolve(first, tmp)
             for bad in (0, -1, 3, True, "1"):
                 with self.subTest(bad=bad), self.assertRaises(variants.VariantError):
                     variants.resolve(bad, tmp)
@@ -339,9 +353,11 @@ class ControllerTest(unittest.TestCase):
         self.assertEqual(ctl.current, "busy")
 
     def test_variant_switches_need_longer_dwell_and_cooldown(self):
-        policy = Policy(Slo(50, 5), (Rule("light", 4, math.inf, {"forward_variant": 1}), Rule("busy", math.inf, math.inf, {"forward_variant": 0})))
+        one, carried = _carried()
+        policy = Policy(Slo(50, 5), (Rule("light", 4, math.inf, {"forward_variant": one}), Rule("busy", math.inf, math.inf, {"forward_variant": 0})),
+                        variants=carried)
         ctl = control.Controller(policy, dwell=1, cooldown_s=0, variant_dwell=3, variant_cooldown_s=100, smoothing=1.0, probation_s=1, demand_decay=0,
-                                 applied={"forward_variant": 1})
+                                 applied={"forward_variant": one})
         # The server already runs variant 1, so the initial rule switches nothing and starts no cooldown.
         self.assertEqual(ctl.step(_window(2), 0).settings, {})
         self.assertIsNone(ctl.step(_window(10), 5))
@@ -609,7 +625,9 @@ class FingerprintTest(unittest.TestCase):
         self.assertEqual((scope["gpu"], scope["page_size"], scope["startup"]), ("NVIDIA B300", 256, STARTUP))
         # Launch arguments are in scope, except secrets, per-replica addresses, random draws and the knobs livetune moves.
         self.assertEqual(scope["server_args"], {"model_path": "m", "speculative_num_steps": 3, "tp_size": 4})
-        self.assertEqual((scope["kv_tokens"], scope["variants"]), (123, {"1": "ab"}))
+        self.assertEqual(scope["kv_tokens"], 123)
+        # Ids are code hashes and policies carry their variants' code, so the catalog is not scope.
+        self.assertNotIn("variants", scope)
         self.assertEqual(scope["model"], {"model_path": "m2", "weight_version": "step-900"})  # the weights serving now
         self.assertNotIn("variant", scope)  # the live variant is state, not scope
 
@@ -831,7 +849,7 @@ class PluginTest(unittest.TestCase):
                 self.assertFalse(self.tuner.admission_blocked())
                 self.assertEqual(self.tuner.readback()["variant"]["name"], "bump")
                 self.assertEqual(self.tuner.readback()["variants"], {str(variant): variants.resolve(variant).sha256})
-                Path(tmp, "bump.py").write_text("tampered")
+                next(Path(tmp).glob("bump-*.py")).write_text("tampered")
                 self.assertIn("does not match", self.tuner.readback()["variants"])
                 self.tuner.apply("forward_variant", 0)
                 self.tuner.on_idle()
@@ -1110,17 +1128,18 @@ class PluginTest(unittest.TestCase):
         with self.assertRaises(self.plugin.NoUsableVariant):
             self.tuner.on_idle()
 
-    def test_a_variant_rewritten_under_the_same_id_is_refused_until_restart(self):
+    def test_a_rewritten_variant_is_a_new_id_and_the_measured_one_keeps_its_code(self):
         with tempfile.TemporaryDirectory() as tmp:
             first = variants.register(tmp, "bump", "def install(model, patch, ctx):\n    patch(model, 'value', 2)\n")
             os.environ["LIVETUNE_VARIANTS_DIR"] = tmp
             try:
                 self.tuner.validate("forward_variant", first)
                 again = variants.register(tmp, "bump", "def install(model, patch, ctx):\n    patch(model, 'value', 7)\n")
-                self.assertEqual(again, first)
-                with self.assertRaises(variants.VariantError):
-                    self.tuner.validate("forward_variant", first)
-                self.assertIn("changed after this scheduler pinned it", self.tuner.readback()["variants"])
+                self.assertNotEqual(again, first)
+                self.tuner.apply("forward_variant", first)
+                self.tuner.on_idle()
+                self.assertEqual(self.model.value, 2)  # the code measured under first, not the rewrite
+                self.assertEqual(set(self.tuner.readback()["variants"]), {str(first), str(again)})
             finally:
                 del os.environ["LIVETUNE_VARIANTS_DIR"]
 
@@ -1392,7 +1411,7 @@ class ImproveTest(unittest.TestCase):
             try:
                 args = argparse.Namespace(canary="canary", work_dir=tmp, advise_seconds=0, interval=1, trace_dir=tmp, window=600,
                                           slo_tps=50, slo_ttft=5, corpus="", speed=1.0, policy_out=str(Path(tmp, "policy.json")), every=0, once=True,
-                                          stage_url=None, fleet="", guard_seconds=0, close_s=0)
+                                          stage_url=None, fleet="", guard_seconds=0, close_s=0, candidates=None, variants_dir=None)
                 cli.improve(args, prod)
             finally:
                 cli.Server = saved
@@ -1724,16 +1743,26 @@ class GateTest(unittest.TestCase):
     def test_a_variant_is_judged_against_how_well_stock_agrees_with_itself(self):
         from livetune import gate
 
-        stock = self._sample([[1, 2, 3, 4, 5, 6, 7, 8, 9]] * 4)
-        noisy = self._sample([[1, 2, 3, 4, 5, 6, 7, 8, 9]] * 3 + [[1, 2, 3, 9, 9, 9, 9, 9, 9]])  # stock itself diverges on one prompt
-        close = self._sample([[1, 2, 3, 4, 5, 6, 7, 8, 9]] * 3 + [[1, 2, 3, 4, 9, 9, 9, 9, 9]], drift=0.01)
-        broken = self._sample([[7, 7, 7, 7, 7, 7, 7, 7, 7]] * 4)
+        same, diverged = [1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 9, 9, 9, 9, 9, 9]
+        stock = self._sample([same] * 8)
+        noisy = self._sample([same] * 6 + [diverged] * 2)  # stock itself diverges on two prompts
+        close = self._sample([same] * 6 + [[1, 2, 3, 4, 9, 9, 9, 9, 9]] * 2, drift=0.01)
+        broken = self._sample([[7, 7, 7, 7, 7, 7, 7, 7, 7]] * 8)
         self.assertTrue(gate.judge(stock, noisy, close).passed)
         verdict = gate.judge(stock, noisy, broken)
         self.assertFalse(verdict.passed)
         self.assertTrue(any("prefix match" in r for r in verdict.reasons))
-        drifted = gate.judge(stock, stock, self._sample([[1, 2, 3, 4, 5, 6, 7, 8, 9]] * 4, drift=0.5))
+        self.assertTrue(any("shared continuation" in r for r in verdict.reasons))
+        drifted = gate.judge(stock, stock, self._sample([same] * 8, drift=0.5))
         self.assertTrue(any("logprob drift" in r for r in drifted.reasons))
+        # GLM on B300: an exact Triton copy matched 3 of 8 against stock's own 6 of 8. That is run-to-run
+        # noise (p = 0.16), not a broken kernel, and passes.
+        unlucky = self._sample([same] * 3 + [diverged] * 5)
+        self.assertTrue(gate.judge(stock, noisy, unlucky).passed)
+        self.assertLess(gate.fewer_matches_p(0, 6, 8), 0.01)
+        # Against a stock that repeats every prompt, the same 3 of 8 is a corrupted decode, not noise.
+        corrupt = self._sample([same] * 3 + [[5, 5, 5, 5, 5, 5, 5, 5, 5]] * 5)
+        self.assertFalse(gate.judge(stock, stock, corrupt).passed)
 
 
 class VariantEvalTest(unittest.TestCase):
@@ -1758,7 +1787,7 @@ class VariantEvalTest(unittest.TestCase):
                                       corpus=str(Path(tmp, "corpus.json")), prompts=2, prompt_tokens=64, tokens=8, seed=7,
                                       trace=None, speed=1.0, slo_tps=None, slo_ttft=None)
             report = cli.variant_eval(args, server)
-            self.assertTrue(report["variant"].startswith("kernel-"))
+            self.assertEqual((report["variant"], report["id"]), ("kernel", variants.code_id("def install(model, patch, ctx):\n    pass\n")))
             self.assertEqual((report["decision"], report["gate"]["passed"]), ("reject", False))
             self.assertEqual(applied[0], {"forward_variant": 0})  # baselines on real stock, not the incumbent 2
             self.assertEqual(applied[-1], {"forward_variant": 2})  # and the incumbent comes back afterwards
@@ -3019,3 +3048,198 @@ class HiddenStateAndUnstagedGuardTest(unittest.TestCase):
             finally:
                 cli._watch, cli._wait_applied, cli._runs_candidate = saved
         self.assertEqual((unstaged.decision, staged.decision), ("revert", "inconclusive"))
+
+
+class CodeTierTest(unittest.TestCase):
+    """Variants travel inside policies and enter the improve loop as one more tuning lever."""
+
+    GOOD = "def install(model, patch, ctx):\n    patch(model, 'value', 2)\n"
+    BAD = "def install(model, patch, ctx):\n    patch(model, 'value', 3)\n"
+
+    def _variant_policy(self, code=GOOD):
+        variant, carried = _carried(code, "kernel")
+        rules = (Rule("long", math.inf, 16000, {**STARTUP, "forward_variant": variant}),
+                 Rule("unmeasured", math.inf, math.inf, {**STARTUP, "forward_variant": 0}))
+        return variant, Policy(Slo(50, 5), rules, {"scope": {"gpu": "B300"}}, carried)
+
+    def test_a_policy_carries_the_code_of_every_variant_it_switches_to(self):
+        variant, policy = self._variant_policy()
+        again = Policy.from_json(policy.to_json())
+        self.assertEqual((again.variants, again.used_variants(), again.version), (policy.variants, {variant}, policy.version))
+        with self.assertRaises(ValueError):  # a rule naming a variant whose code the policy lacks
+            Policy(policy.slo, policy.rules, policy.provenance)
+        tampered = json.loads(policy.to_json())
+        tampered["variants"][str(variant)]["code"] = self.BAD
+        with self.assertRaises(ValueError):  # code that is not what the id names
+            Policy.from_json(json.dumps(tampered))
+        # A knob-only policy has no variants field, so its version is what it was before variants travelled.
+        self.assertNotIn("variants", json.loads(_policy().to_json()))
+        # Stock and the startup variant need no code: every server already has them.
+        startup_variant, _ = _carried(self.BAD)
+        Policy(Slo(50, 5), (Rule("all", math.inf, math.inf, {"forward_variant": startup_variant}),))
+
+    def _server(self, live_variants=True):
+        return types.SimpleNamespace(url="http://x", fingerprint=lambda: {"gpu": "B300"},
+                                     livetune_states=lambda: [{"live_variants": live_variants}])
+
+    def test_the_controller_registers_a_policys_variants_where_the_server_reads_them(self):
+        variant, policy = self._variant_policy()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "policy.json")
+            path.write_text(policy.to_json())
+            directory = str(Path(tmp, "variants"))
+            cli.load_policy(str(path), self._server(), False, directory)
+            self.assertEqual(variants.resolve(variant, directory).code, self.GOOD)
+            with self.assertRaises(SystemExit):  # nowhere to put the code
+                cli.load_policy(str(path), self._server(), False, None)
+            with self.assertRaises(SystemExit):  # a server that cannot switch live would never run the rule
+                cli.load_policy(str(path), self._server(live_variants=False), False, directory)
+
+    def test_control_refuses_a_policy_with_tampered_variant_code_as_a_config_error(self):
+        variant, policy = self._variant_policy()
+        tampered = json.loads(policy.to_json())
+        tampered["variants"][str(variant)]["code"] = self.BAD
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "policy.json")
+            path.write_text(json.dumps(tampered))
+            saved = cli.Server
+            cli.Server = lambda url: self._server()
+            try:
+                self.assertEqual(cli.main(["control", "--policy", str(path), "--variants-dir", tmp]), cli.CONFIG_ERROR)
+            finally:
+                cli.Server = saved
+
+    def test_tuned_settings_that_switch_variants_carry_their_code(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            variant = variants.register(tmp, "kernel", self.GOOD)
+            results = [{"settings": {**STARTUP, "forward_variant": variant}}, {"settings": {**STARTUP, "forward_variant": 0}}]
+            carried = cli._carried(results, {**STARTUP, "forward_variant": 0}, tmp)
+            self.assertEqual(carried[str(variant)]["code"], self.GOOD)
+            self.assertEqual(cli._carried(results[1:], {**STARTUP, "forward_variant": 0}, None), {})
+            with self.assertRaises(SystemExit):
+                cli._carried(results, {**STARTUP, "forward_variant": 0}, None)
+
+    def _canary(self):
+        good, bad = gate.Sample([[1, 2, 3, 4, 5, 6, 7, 8]] * 2, [[-1.0] * 8] * 2), gate.Sample([[9] * 8] * 2, [[-1.0] * 8] * 2)
+        state = {"forward_variant": 0}
+        canary = types.SimpleNamespace(applied=[], greedy_calls=0)
+
+        def apply(settings):
+            from livetune.server import UpdateFailed
+
+            canary.applied.append(dict(settings))
+            if settings.get("forward_variant") == variants.code_id("def install(model, patch, ctx):\n    raise RuntimeError('no kernel')\n"):
+                raise UpdateFailed("readback mismatch: install failed")
+            state.update(settings)
+
+        def greedy(prompts, tokens):
+            canary.greedy_calls += 1
+            return bad if state["forward_variant"] == variants.code_id(self.BAD) else good
+
+        canary.apply, canary.greedy = apply, greedy
+        canary.livetune_state = lambda: {"settings": dict(state), "live_variants": True}
+        return canary
+
+    def test_improve_gates_each_candidate_revision_once_and_tunes_the_ones_that_pass(self):
+        import argparse
+
+        canary = self._canary()
+        with tempfile.TemporaryDirectory() as tmp:
+            candidates = Path(tmp, "candidates")
+            candidates.mkdir()
+            Path(candidates, "fused.py").write_text(self.GOOD)
+            Path(candidates, "scaled.py").write_text(self.BAD)
+            Path(candidates, "Bad Name.py").write_text(self.GOOD + "# other revision\n")
+            broken = "def install(model, patch, ctx):\n    raise RuntimeError('no kernel')\n"
+            Path(candidates, "broken.py").write_text(broken)
+            Path(tmp, "corpus.json").write_text(json.dumps(list(range(5000))))
+            args = argparse.Namespace(candidates=str(candidates), variants_dir=str(Path(tmp, "variants")), corpus=str(Path(tmp, "corpus.json")),
+                                      gate_prompts=2, gate_prompt_tokens=64, gate_tokens=8)
+            ledger_path = Path(tmp, "variants.json")
+            ledger = {entry["name"]: entry for entry in cli._variant_candidates(args, canary, ledger_path)}
+            self.assertEqual({name: entry["status"] for name, entry in ledger.items()},
+                             {"fused": "candidate", "scaled": "rejected", "Bad Name": "invalid", "broken": "rejected"})
+            self.assertEqual(ledger["fused"]["id"], variants.code_id(self.GOOD))
+            self.assertEqual(canary.applied[-1], {"forward_variant": 0})  # the canary is back on what it ran
+            calls = canary.greedy_calls
+            cli._variant_candidates(args, canary, ledger_path)
+            self.assertEqual(canary.greedy_calls, calls)  # nothing new to gate
+            # The file refused for its name is gated once renamed, though its code is unchanged.
+            Path(candidates, "Bad Name.py").rename(Path(candidates, "renamed.py"))
+            renamed = {entry["name"]: entry for entry in cli._variant_candidates(args, canary, ledger_path)}
+            self.assertEqual(renamed["renamed"]["status"], "candidate")
+            # A candidate that keeps losing to the incumbent settings is retired after --variant-tries cycles.
+            for _ in range(2):
+                cli._score_candidates(ledger_path, [ledger["fused"]["id"]], 0, 2)
+            self.assertEqual(json.loads(ledger_path.read_text())[hashlib.sha256(self.GOOD.encode()).hexdigest()]["status"], "retired")
+
+    def test_improve_measures_gated_variants_on_the_recorded_trace_and_hands_code_targets_to_the_agent_loop(self):
+        import argparse
+
+        prod, canary = ImproveTest._servers(ImproveTest(), "B300")
+        canary.livetune_state = lambda: {"settings": dict(STARTUP), "startup": dict(STARTUP), "page_size": 256, "live_variants": True}
+        record = types.SimpleNamespace(to_json=lambda: "{}")
+        code = {"tier": "code", "lever": "decode_forward_variant", "values": [], "why": "", "evidence": {"decode_time_share": 0.8}}
+        seen = {}
+
+        def tune_policy(server, slo, prompts, grid, profiles, arrivals, seconds, warmup, record_, variants_dir=None):
+            seen["grid"], seen["variants_dir"] = grid, variants_dir
+            return Policy(slo, (Rule("trace", math.inf, math.inf, dict(STARTUP)), Rule("unmeasured", math.inf, math.inf, dict(STARTUP))))
+
+        patched = {"advise": lambda args, server: {"proposals": [code], "grid": {}, "traffic_complete": True},
+                   "_await_finished": lambda *a, **k: True, "_await_written": lambda *a, **k: True, "_trace_gap": lambda *a: None,
+                   "tune_policy": tune_policy,
+                   "_variant_candidates": lambda args, canary_, path: [{"name": "fused", "id": 7, "status": "candidate", "t": time.time()}]}
+        saved = {name: getattr(cli, name) for name in patched}
+        saved_trace = (trace.read, trace.replay_gaps, trace.arrivals)
+        saved_server = cli.Server
+        with tempfile.TemporaryDirectory() as tmp:
+            for name, value in patched.items():
+                setattr(cli, name, value)
+            trace.read = lambda *a, **k: iter([record])
+            trace.replay_gaps = lambda records: None
+            trace.arrivals = lambda records, **k: []
+            cli.Server = lambda url: canary
+            Path(tmp, "corpus.json").write_text(json.dumps(list(range(5000))))
+            try:
+                args = argparse.Namespace(canary="canary", work_dir=tmp, advise_seconds=0, interval=1, trace_dir=tmp, window=600,
+                                          slo_tps=50, slo_ttft=5, corpus=str(Path(tmp, "corpus.json")), speed=1.0, policy_out=str(Path(tmp, "policy.json")),
+                                          every=0, once=True, stage_url=None, fleet="", guard_seconds=0, close_s=0, candidates=str(tmp), variants_dir="/v",
+                                          variant_tries=3)
+                saved_score = cli._score_candidates
+                cli._score_candidates = lambda *a: seen.setdefault("scored", a)
+                try:
+                    cli.improve(args, prod)
+                finally:
+                    cli._score_candidates = saved_score
+            finally:
+                for name, value in saved.items():
+                    setattr(cli, name, value)
+                trace.read, trace.replay_gaps, trace.arrivals = saved_trace
+                cli.Server = saved_server
+            entry = json.loads(Path(tmp, "improve.jsonl").read_text().splitlines()[0])
+            targets = json.loads(Path(tmp, "code-targets.json").read_text())
+        # A variant alone is something to test, even when no live knob was proposed.
+        self.assertEqual((seen["grid"], seen["variants_dir"]), ({"forward_variant": [7]}, "/v"))
+        self.assertEqual(entry["variants"], [{"name": "fused", "id": 7, "status": "candidate"}])
+        self.assertEqual((targets["targets"], targets["candidates"]), ([code], str(tmp)))
+        self.assertTrue(targets["trace"].endswith(".jsonl"))
+        self.assertEqual(seen["scored"][1:], ([7], None, 3))
+
+
+class TransientErrorTest(unittest.TestCase):
+    def test_one_failed_request_in_one_repetition_does_not_sink_a_setting(self):
+        slo = Slo(50, 8)
+        run = {"completed": 821, "output_tps": 691.0, "tps_per_user_p50": 117.0, "ttft_p90": 4.2}
+        startup = tune.merged([{**run, "errors": 1}, {**run, "errors": 0}, {**run, "errors": 0}])
+        self.assertEqual(startup["errors"], 0)
+        self.assertEqual(tune.score(startup, slo)[0], 1)
+        # A setting that fails in most repetitions stays infeasible.
+        self.assertEqual(tune.merged([{**run, "errors": 3}, {**run, "errors": 2}, {**run, "errors": 0}])["errors"], 2)
+
+    def test_a_replay_summary_names_the_kinds_of_errors_without_their_messages(self):
+        records = [loadgen.RequestRecord(0.0) for _ in range(3)]
+        records[0].error = "ClientPayloadError: Response payload is not completed: <reply text>"
+        records[1].error = "ClientPayloadError: other"
+        summary = loadgen.PhaseResult(loadgen.Phase(1, 10, 10, 1.0), records).summary()
+        self.assertEqual((summary["errors"], summary["error_kinds"]), (2, {"ClientPayloadError": 2}))

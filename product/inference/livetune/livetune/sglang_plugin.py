@@ -55,13 +55,8 @@ class LiveTuner:
         self.max_states = max(2, int(os.environ.get("LIVETUNE_VARIANT_STATES", "3") or 3))
         self.settings: dict[str, Any] = dict(self.startup)
         self.variant: variants.InstalledVariant | None = getattr(runner, "_livetune_variant", None)
-        # The code installed at startup, by hash: re-registering a name later changes the catalog, not this.
+        # The code installed at startup, by hash.
         self.startup_variant = {"name": self.variant.source.name, "sha256": self.variant.source.sha256} if self.variant else None
-        # Variant ids are mutable names in the manifest; the first hash this scheduler sees for an id
-        # is the only code it will install under that id.
-        self.pinned: dict[str, str] = {}
-        if self.variant is not None:
-            self.pinned[str(self.startup[VARIANT_KEY])] = self.variant.source.sha256
         self.pending_variant: int | None = None
         self.forward_pending: int | None = None  # a built state to switch to at the next forward
         self.profile: Any = None
@@ -370,20 +365,11 @@ class LiveTuner:
             self._runtime = {"error": f"{type(exc).__name__}: {exc}"}
 
     def _resolve(self, variant_id: int) -> variants.VariantSource:
-        source = variants.resolve(variant_id)
-        self._pin(str(variant_id), source.sha256)
-        return source
-
-    def _pin(self, variant_id: str, sha256: str) -> None:
-        pinned = self.pinned.setdefault(variant_id, sha256)
-        if pinned != sha256:
-            raise variants.VariantError(f"variant {variant_id} changed after this scheduler pinned it ({pinned[:12]}); restart to use the new code")
+        # An id is its code's hash, so whatever resolves under it is the code it was measured as.
+        return variants.resolve(variant_id)
 
     def _catalog(self) -> dict[str, str]:
-        catalog = variants.catalog()
-        for variant_id, sha256 in catalog.items():
-            self._pin(variant_id, sha256)
-        return catalog
+        return variants.catalog()
 
     def oldest_unfinished(self) -> float | None:
         """Wall time the longest-waiting unfinished request entered the queue, or None when idle.

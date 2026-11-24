@@ -8,4 +8,6 @@ and runs no controller.
 A policy is a reviewed bundle release. Produce one with `livetune tune` or
 `livetune improve` on a canary with this bundle's scope, then commit it here.
 The controller refuses a policy whose recorded scope differs from the live
-server. See `product/inference/livetune/README.md`.
+server. A policy may carry forward variants, Python and kernels that run inside
+SGLang; review them as code. The controller registers them in the host's
+variants directory before applying a rule that switches to one. See `product/inference/livetune/README.md`.

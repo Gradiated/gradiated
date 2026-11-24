@@ -86,7 +86,8 @@ def merged(summaries: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
 
     return {
         "completed": min(s.get("completed", 0) for s in summaries),
-        "errors": sum(s.get("errors", 0) for s in summaries),
+        # A median like the rest: one transient failure in one repetition must not sink a setting for good.
+        "errors": median("errors", higher_is_better=False),
         "output_tps": median("output_tps"),
         "tps_per_user_p50": median("tps_per_user_p50"),
         "ttft_p90": median("ttft_p90", higher_is_better=False),
@@ -211,7 +212,8 @@ def check_distinguishable(profiles: Sequence[Mapping[str, Any]]) -> None:
         raise ValueError(f"profiles share a (prompt_tokens, users) shape the policy cannot distinguish: {duplicates}")
 
 
-def build_policy(results: Sequence[Mapping[str, Any]], slo: Slo, provenance: Mapping[str, Any], start: Mapping[str, Any]) -> Policy:
+def build_policy(results: Sequence[Mapping[str, Any]], slo: Slo, provenance: Mapping[str, Any], start: Mapping[str, Any],
+                 variants: Mapping[str, dict[str, str]] | None = None) -> Policy:
     """One rule per profile, reaching only near its measurement; everywhere else the startup settings apply."""
     check_distinguishable([r["profile"] for r in results])
     rules: list[Rule] = []
@@ -230,4 +232,4 @@ def build_policy(results: Sequence[Mapping[str, Any]], slo: Slo, provenance: Map
         rules.append(Rule(f"beyond-{rows[max(rows)]['profile']['name']}", math.inf, prompt_edge, dict(start)))
     rules.sort(key=lambda rule: (rule.max_prompt_tokens, rule.max_demand))
     rules.append(Rule("unmeasured", math.inf, math.inf, dict(start)))
-    return Policy(slo, tuple(rules), dict(provenance))
+    return Policy(slo, tuple(rules), dict(provenance), dict(variants or {}))

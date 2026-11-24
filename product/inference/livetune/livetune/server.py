@@ -85,9 +85,10 @@ class Server:
 
     def fingerprint(self, runtime_wait_s: float = 120.0) -> dict[str, Any]:
         info = json.loads(self._request("/server_info"))
-        # Page size bounds which knob values the server accepts. The startup variant id (in startup)
-        # and the verified catalog fix the forward code; the live variant is state, not scope.
-        envelope = ("gpu", "page_size", "pp_micro_batch_startup", "startup", "startup_variant", "variants", "live_variants", "runtime")
+        # Page size bounds which knob values the server accepts. The startup variant fixes the forward
+        # code at startup. The catalog is not scope: a variant id is its code's hash, and a policy carries
+        # the code of every variant it switches to. The live variant is state, not scope.
+        envelope = ("gpu", "page_size", "pp_micro_batch_startup", "startup", "startup_variant", "live_variants", "runtime")
         deadline = time.monotonic() + runtime_wait_s
         while True:
             states = self.livetune_states()

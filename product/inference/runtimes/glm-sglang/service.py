@@ -33,22 +33,29 @@ def livetune(environment, config):
     bundle release; a profile without one records traffic and runs no controller. canary serves
     replayed production traffic for tuning: it ends each replayed early stop at its recorded length,
     and records and changes nothing.
+
+    Every mode can switch forward variants live, so a canary and production share one scope. A policy
+    carries the code of the variants it switches to, and its controller registers that code in the
+    host's variants directory; the switch builds the variant its own CUDA graphs and costs nothing
+    until a rule asks for it.
     """
     mode = environment.get('LIVETUNE_MODE', 'off')
     if mode not in LIVETUNE_MODES:
         raise ValueError('LIVETUNE_MODE must be off, observe, act or canary')
     if mode == 'off':
         return None, {}
-    if mode == 'canary':
-        return None, {'LIVETUNE_REPLAY_STOPS': '1'}
     cache = Path(environment.get('XDG_CACHE_HOME') or Path(environment.get('HOME', '/home/runtime')) / '.cache')
-    backend_environment = {'LIVETUNE_TRACE_DIR': str(cache / 'glm-sglang' / 'livetune' / 'trace')}
+    variants = str(cache / 'glm-sglang' / 'livetune' / 'variants')
+    live_variants = {'LIVETUNE_LIVE_VARIANTS': '1', 'LIVETUNE_VARIANTS_DIR': variants}
+    if mode == 'canary':
+        return None, {'LIVETUNE_REPLAY_STOPS': '1', **live_variants}
+    backend_environment = {'LIVETUNE_TRACE_DIR': str(cache / 'glm-sglang' / 'livetune' / 'trace'), **live_variants}
     policy = Path(config['root']) / 'glm-sglang' / 'livetune' / f"{config['profile']}.json"
     if not policy.is_file():
         return None, backend_environment
     command = [str(Path(config['root']) / 'python/bin/python3'), '-m', 'livetune.cli', 'control',
                '--url', f"http://127.0.0.1:{config['backend']}", '--policy', str(policy),
-               '--mode', mode, '--log-every', '300']
+               '--mode', mode, '--log-every', '300', '--variants-dir', variants]
     return command, backend_environment
 
 

@@ -1,6 +1,6 @@
 ---
 name: experiment-record
-description: Keep conversation traces, a thin experiment summary, and supporting data or charts in a dated research folder for later writing. Use when the user asks to record an experiment as it develops, rather than draft or publish a post.
+description: Keep conversation exports in approved private storage and a thin summary with publishable data or charts in a dated research folder. Use when the user asks to record an experiment as it develops, rather than draft or publish a post.
 ---
 
 # Experiment record
@@ -13,12 +13,12 @@ Do not replace it with a long reconstructed narrative or publish it unless asked
 - Look for an existing record for this work before creating another.
 - Use `research/experiments/YYYY-MM-DD-short-name/`, dated by the experiment's
   start date. Keep that folder stable as work continues across days.
-- Put conversation exports in `traces/`: structured JSONL plus a small
-  coverage/provenance manifest. Do not duplicate the conversation in Markdown
+- Keep conversation exports in approved private storage. Use structured JSONL
+  and a small coverage/provenance manifest. Do not duplicate the conversation in Markdown
   unless the user specifically asks for a readable copy. Use the
   conversation's stable thread ID and item IDs to avoid duplicate exports.
 - Keep the experiment's `README.md` to a few bullets: question/setup, current
-  result and caveat, and links to the traces and useful data/charts.
+  result and caveat, and links to publishable data and charts.
 - Add `data/` and `figures/` only for useful supporting artifacts. The top-level
   `research/experiments/README.md` describes the convention; do not add per-run
   log entries or a status index there.
@@ -44,7 +44,7 @@ For T3, infer speaker from the message type: delivered user messages can have
 When tools expose only activity summaries or raw bodies cannot be exported,
 keep labeled activity metadata rather than inventing or implying complete logs.
 Omit command previews, arguments, titles, and raw bodies from activity exports.
-Before committing an approved export, run `python3
+Before storing an approved export, run `python3
 .agents/skills/experiment-record/scripts/sanitize_trace.py --self-test PATH/TO/traces`
 to redact literal/escaped network addresses and account endpoints and refresh hashes.
 This helper supplements the data-handling review; it does not clear restricted

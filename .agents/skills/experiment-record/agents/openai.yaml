@@ -1,4 +1,4 @@
 interface:
   display_name: "Experiment Record"
   short_description: "Save experiment conversations and a thin summary"
-  default_prompt: "Use $experiment-record to keep the conversation trace, a thin bullet summary, and useful data or charts in a dated experiment folder."
+  default_prompt: "Use $experiment-record to keep a thin summary and publishable data or charts in a dated experiment folder, with conversation exports in approved private storage."

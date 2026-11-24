@@ -54,6 +54,9 @@ target/
 **/*.pth
 **/*.ckpt
 
+# Conversation exports stay in approved private storage.
+research/experiments/*/traces/
+
 # Generated research experiment payloads. Keep source, configuration and
 # compact result summaries in Git; store raw captures and transfer bundles
 # outside the repository.
@@ -115,8 +118,6 @@ dist/
 product/inference/build/
 
 .coherence/*
-!.coherence/journal/
-!.coherence/runs/
 !.coherence/work/
 
 **/storybook-static/

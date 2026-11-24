@@ -771,6 +771,12 @@
     transform: translateX(calc(100vw - 64px - 48px));
   }
 
+  /* The sheet slides off to the right; unclipped, the page widens and a
+     phone zooms out to fit it. */
+  .gr-rail-root {
+    overflow-x: clip;
+  }
+
   /* A column: items, then the CTA pinned to the foot via margin-top
      auto, so it sits where a thumb lands. */
   .gr-rail-menu nav {

@@ -3298,6 +3298,15 @@
   letter-spacing: var(--tracking-heading);
 }
 
+/* Phones: the lede under the title, not a second title beside it. */
+.gr-root[data-tier="narrow"] .gr-job-summary,
+.gr-root[data-tier="compact"] .gr-job-summary {
+  max-width: none;
+  font-size: calc(0.85 * var(--text-heading));
+  line-height: 1.4;
+  letter-spacing: var(--tracking-body);
+}
+
 /* Stacked, with a rule per entry rather than one box around all three: read
    down, they are three separate facts, and a shared border made them look
    like one table with three cells. */

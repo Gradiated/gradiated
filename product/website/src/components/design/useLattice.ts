@@ -16,7 +16,7 @@ import { useEffect, useRef, useState } from "react";
  *      N units fits the available width, where N has good divisors. CSS can
  *      clamp and round but it cannot pick N.
  *
- * The unit is always an integer, which is what keeps the lattice pixel-exact.
+ * The unit is an integer, keeping the lattice pixel-exact, except on phones.
  */
 
 /** Unit counts per tier. Each divides cleanly by 2, 3, 4, 6 and 12. */
@@ -29,10 +29,10 @@ import { useEffect, useRef, useState } from "react";
 const TIERS = [
   { margin: 24, minWidth: 900, moduleU: 48, name: "wide" },
   { margin: 24, minWidth: 620, moduleU: 36, name: "mid" },
-  /* Phone tiers: at least 40px a side, clear of the side strip. The module
-     quantises to whole units, so the real gutter is the leftover split. */
-  { margin: 40, minWidth: 432, moduleU: 24, name: "compact" },
-  { margin: 40, minWidth: 0, moduleU: 16, name: "narrow" },
+  /* Phones: exactly 36px a side. The unit goes fractional to fit, so the
+     gutter does not vary with the leftover of whole units. */
+  { exact: true, margin: 36, minWidth: 432, moduleU: 24, name: "compact" },
+  { exact: true, margin: 36, minWidth: 0, moduleU: 16, name: "narrow" },
 ] as const;
 
 export type Tier = (typeof TIERS)[number]["name"];
@@ -73,7 +73,11 @@ const EMPTY: Lattice = {
 export const resolveLattice = (width: number): Lattice => {
   const tier = TIERS.find(({ minWidth }) => width >= minWidth) ?? TIERS.at(-1)!;
   const usable = width - (tier.margin ?? MIN_MARGIN) * 2;
-  const u = Math.min(U_MAX, Math.max(U_MIN, Math.floor(usable / tier.moduleU)));
+  const fit = usable / tier.moduleU;
+  const u = Math.min(
+    U_MAX,
+    Math.max(U_MIN, "exact" in tier ? fit : Math.floor(fit)),
+  );
 
   return {
     moduleU: tier.moduleU,

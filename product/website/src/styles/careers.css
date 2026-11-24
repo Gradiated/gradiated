@@ -91,6 +91,11 @@
   margin: 0;
 }
 
+.gr-root[data-tier="narrow"] .gr-careers-handbook,
+.gr-root[data-tier="compact"] .gr-careers-handbook {
+  align-items: flex-start;
+}
+
 /* One and a half times a module's usual space under the cards. */
 .gr-root .gr-careers-decide-module {
   padding-block-end: calc(6.75 * var(--u));

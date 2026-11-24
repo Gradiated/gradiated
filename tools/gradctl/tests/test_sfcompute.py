@@ -92,6 +92,13 @@ class SFComputeTests(unittest.TestCase):
         instance = cloud.calls[-1][3]
         self.assertEqual(base64.b64decode(instance['cloud_init_user_data']), b'#cloud-config')
 
+    def test_spot_defaults_to_twice_the_quoted_price_for_the_allocation(self):
+        cloud = Fake()
+        with mock.patch('time.time', return_value=3660):
+            cloud.create('exp', None, 'sku_test', None, None, None, lambda: '#cloud-config')
+        order = next(c[3] for c in cloud.calls if c[:2] == ('POST', '/v2/orders'))
+        self.assertEqual(order['limit_price_dollars_per_node_hour'], '31.999980')
+
     def test_on_demand_omits_preemption(self):
         cloud = Fake()
         cloud.responses['GET', '/preview/v2/orderbook/quote'] = {'best_ask': {**ASK, 'dollars_per_node_hour': '15.0'}}
@@ -121,7 +128,8 @@ class SFComputeTests(unittest.TestCase):
         for price in (None, 0, -1, float('nan'), float('inf'), 1):
             cloud = Fake()
             with self.assertRaises(SystemExit):
-                cloud.create('exp', None, 'sku_test', None, None, None, lambda: '', max_price=price)
+                cloud.create('exp', None, 'sku_test', None, None, None, lambda: '', term='on-demand' if price is None else 'spot',
+                             max_price=price)
             self.assertFalse(any(c[0] == 'POST' for c in cloud.calls))
         cloud = Fake()
         with self.assertRaises(SystemExit):

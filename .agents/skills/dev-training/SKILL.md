@@ -80,7 +80,9 @@ only what you copy to them, and `gradiated/dev/env` holds only development keys.
    sellers and is blank for the rest. Without `--provider` it
    searches every provider. `platforms --provider nebius --region <region>`
    lists every Nebius preset. Try the next offer if `up` fails.
-2. Create: `gradctl compute up <name> <arguments from search> --max-price <USD per GPU-hour>`.
+2. Create: `gradctl compute up <name> <arguments from search>`. GPU spot purchases
+   default to twice the live quote. Pass `--max-price <USD per GPU-hour>` to set
+   an explicit limit.
    Names are unique across providers, so `ssh`, `s3`, `start`, `stop` and `down`
    find the VM without `--provider`; `up` takes the provider from the platform
    name. `--max-price` refuses to buy if the price has
@@ -131,8 +133,8 @@ Report the VM, its hours and where the results are in your response or PR.
 ## SF Compute
 
 Use `--provider sfcompute` and a `sku_...` platform from `platforms` or `search`.
-See `tools/gradctl/README.md` for setup and bounded-order semantics. `up` requires
-`--max-price`; `--duration-hours` (default 1) bounds the prepaid window and rounds
+See `tools/gradctl/README.md` for setup and bounded-order semantics. On-demand
+`up` requires `--max-price`; `--duration-hours` (default 1) bounds the prepaid window and rounds
 the end down to the provider's schedule grid. Spot enables resale/preemption;
 on-demand holds the allocation until expiry. Neither supports stop/resume.
 `down` deletes the instance but does not refund its prepaid pool: sell unused time

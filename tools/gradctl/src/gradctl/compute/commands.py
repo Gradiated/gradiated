@@ -492,8 +492,15 @@ def up(args):
         if cloud.name != 'sfcompute':
             raise UsageError('--duration-hours is supported only by SF Compute')
         cloud.duration_hours = args.duration_hours
+    pricing = {}
+    if getattr(args, 'spot_price_multiple', None) is not None:
+        if cloud.name != 'nebius' or args.term != 'spot' or not args.platform.startswith('gpu-'):
+            raise UsageError('--spot-price-multiple requires a Nebius spot GPU')
+        if not math.isfinite(args.spot_price_multiple) or args.spot_price_multiple <= 0:
+            raise UsageError('--spot-price-multiple must be finite and positive')
+        pricing['spot_price_multiple'] = args.spot_price_multiple
     cloud.create(args.name, region, args.platform, args.preset, args.disk_gib, args.image,
-                 lambda: cloud_init(cloud, host), term=args.term, max_price=args.max_price)
+                 lambda: cloud_init(cloud, host), term=args.term, max_price=args.max_price, **pricing)
     with usage.ledger(state()) as book:
         book[f'{cloud.name}:{args.name}'] = {'customer': args.customer, 'stage': args.stage, 'run_id': args.run_id,
                                              'workstream': args.workstream, 'started_at': usage.now().isoformat()}
@@ -742,6 +749,9 @@ def down(args):
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
     else:
         lines.append(f'No VM named {args.name}; removing its tailnet device if one is left')
+        if args.provider in (None, 'nebius'):
+            nebius = cloud or provider('nebius')
+            nebius.remove_vm_policies(args.name)
         # A VM the provider ended itself, such as a reclaimed Spheron spot VM, still owes its final interval.
         for name in [cloud.name] if cloud else [args.provider] if args.provider else sorted(PROVIDERS):
             try:
@@ -831,7 +841,9 @@ def register(commands, common) -> None:
     parser.add_argument('--region', help='Ornn and Spheron default: the cheapest region')
     parser.add_argument('--term', choices=['spot', 'on-demand'], default='spot')
     parser.add_argument('--max-price', type=float,
-                        help='refuse to create the VM above this USD per GPU-hour now; spot prices can move later')
+                        help='maximum USD per GPU-hour at purchase; spot defaults to twice the quote or a tighter provider limit')
+    parser.add_argument('--spot-price-multiple', type=float,
+                        help='Nebius spot: attach a provider-enforced ceiling at this multiple of the live GPU price')
     parser.add_argument('--disk-gib', type=int, help='Nebius boot disk, default 250; Ornn nodes have their own disk')
     parser.add_argument('--image', help='Nebius image family (default Ubuntu 24.04 with CUDA), Ornn disk ID or '
                                         "one of the Spheron offer's os_options (default Ubuntu with CUDA)")

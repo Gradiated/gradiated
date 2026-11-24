@@ -102,6 +102,18 @@ Ornn is temporarily excluded from default aggregate compute results (`search`,
 `ls`, and `meter`). Its implementation remains available through explicit
 `--provider ornn` selection, including commands for existing VMs.
 
+New GPU spot allocations default to a ceiling of twice their current quote.
+Nebius attaches a regional GPU pricing policy within the provider's bid range.
+It removes its VM's unused policy on teardown. Spheron passes a running price
+cap to providers with live spot pricing. Ornn pins the purchase to the
+selected quote. SF Compute applies the default to its bounded purchase order
+and retains its separate preemption rule.
+
+An explicit `--max-price` overrides the purchase default. On Nebius a standalone
+`--max-price` checks the launch quote. Combine it with
+`--spot-price-multiple 2` to use a provider policy with the lower of the two
+limits. On-demand pricing and existing VMs retain their current terms.
+
 ## SF Compute training GPUs
 
 `gradctl compute search --provider sfcompute` reads live SKU-specific market quotes
@@ -126,8 +138,8 @@ gradctl compute ssh train-sf --provider sfcompute -- nvidia-smi
 gradctl compute down train-sf --provider sfcompute
 ```
 
-`up` requires a finite positive `--max-price` and buys one node with a non-standing,
-non-partial order into a dedicated `gradctl-<name>` pool. The price cap rounds down
+`up` buys one node with a non-standing, non-partial order into a dedicated
+`gradctl-<name>` pool. On-demand orders require a finite positive `--max-price`. The price cap rounds down
 to a market tick. `--duration-hours` defaults to 1 and is an upper bound: the end
 is the last provider schedule boundary inside that window. There is no automatic
 renewal. Before expiry, extend with a new price cap:

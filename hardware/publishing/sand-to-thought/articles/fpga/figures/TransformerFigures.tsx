@@ -84,14 +84,21 @@ const TokenFigure = () => {
           Prompt “{textRequest.input}”
         </Label>
         <Wire d={`${promptPath}m-5 -9l5 9 5 -9`} active={prompting} />
-        <Wire d={scoresPath} active={scoring || repeating} />
-        <Wire d={feedbackPath} active={feedingBack || repeating} />
-        <Wire d={outputPath} active={choosing || repeating} />
+        <Wire d={scoresPath} active={scoring} />
+        <Wire d={feedbackPath} active={feedingBack} />
+        <Wire d={outputPath} active={choosing} />
         <path
           d="M195 241L185 247L195 253M286 281L296 287L286 293M94 360L100 370L106 360"
           className="fpga-wire"
         />
         <g data-paused={!playing}>
+          {repeating && (
+            <g className="fpga-token-burst" aria-hidden="true">
+              <path d={`${scoresPath}m10 -6l-10 6 10 6`} className="fpga-signal" />
+              <path d={`${outputPath}m-6 -10l6 10 6 -10`} className="fpga-signal" />
+              <path d={`${feedbackPath}m-10 -6l10 6 -10 6`} className="fpga-signal" />
+            </g>
+          )}
           <Transfer d={promptPath} trigger={prompting ? step + 1 : 0} />
           <Transfer d={scoresPath} trigger={scoring ? step + 1 : 0} />
           <Transfer d={feedbackPath} trigger={feedingBack ? step + 1 : 0} />
@@ -346,7 +353,7 @@ const CacheFigure = () => {
     <>
       <div ref={motion.host} />
       <Figure
-        title={`KV cache in block RAM. The surrounding FPGA logic compares keys and mixes values outside the memory. Each key and value has two groups of sixteen numbers. ${description}`}
+        title={`KV cache in BRAM. The surrounding FPGA logic compares keys and mixes values outside the memory. Each key and value has two groups of sixteen numbers. ${description}`}
         viewBox="0 0 600 432"
       >
         <g
@@ -512,6 +519,35 @@ const CacheFigure = () => {
         </g>
       </Figure>
       <div className="fpga-controls">
+        <div
+          className="fpga-cache-sign-key"
+          role="img"
+          aria-label="Filled cells use green for positive numbers, red for negative numbers and grey for zero"
+        >
+          {([
+            [1, "Positive"],
+            [-1, "Negative"],
+            [0, "Zero"],
+          ] as const).map(([sign, label]) => (
+            <span key={sign}>
+              <svg
+                className="fpga-cache-cells"
+                width={10}
+                height={10}
+                aria-hidden="true"
+              >
+                <rect
+                  className="fpga-cache-cell"
+                  data-sign={sign}
+                  width={10}
+                  height={10}
+                  rx={1}
+                />
+              </svg>
+              {label}
+            </span>
+          ))}
+        </div>
         {!complete && (
           <button type="button" onClick={() => setPaused(!paused)}>
             {paused ? "Resume" : "Pause"}

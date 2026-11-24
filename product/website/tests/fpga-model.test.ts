@@ -1,4 +1,7 @@
 import { readFileSync } from "node:fs";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { ChipComparisonProfiles } from "../../../hardware/publishing/sand-to-thought/articles/fpga/figures/ChipComparisonProfiles";
 import {
   continuationFor,
   isLaterScene,
@@ -28,13 +31,14 @@ import {
 } from "../../../hardware/publishing/sand-to-thought/articles/fpga/figures/model";
 import {
   chapters,
+  closingSceneKeys,
   groups,
   measurementScenes,
   scenes,
 } from "../../../hardware/publishing/sand-to-thought/articles/fpga/figures/scenes";
 
 describe("FPGA teaching examples", () => {
-  it("keeps the FPGA map after the network introduction except in the chip comparison", () => {
+  it("keeps the FPGA map in animated scenes after the network introduction", () => {
     const start = scenes.findIndex((scene) => scene.key === "neuron-map");
     expect(start).toBeGreaterThan(0);
     for (const scene of scenes.slice(0, start + 1)) {
@@ -45,12 +49,15 @@ describe("FPGA teaching examples", () => {
     }
     for (const scene of scenes
       .slice(start + 1)
-      .filter((item) => item.group !== 6)) {
+      .filter(
+        (item) =>
+          item.group !== 6 && !closingSceneKeys.some((key) => key === item.key),
+      )) {
       expect(isLaterScene(scene.key), scene.key).toBe(true);
       expect(
         Boolean(continuationFor(scene.key) || applicationFor(scene.key)),
         scene.key,
-      ).toBe(scene.key !== "chip-choices");
+      ).toBe(true);
     }
     expect(continuationFor("block-ram")?.world).toBeUndefined();
     expect(continuationFor("arithmetic-blocks")?.world).toBeUndefined();
@@ -435,14 +442,30 @@ describe("FPGA teaching examples", () => {
       "measure-projection-reads",
       "measure-value-pair",
       "measure-clock-rate",
+      "final-profile",
+      "final-profile-notes",
       "chip-choices",
+      "outlook-trends",
     ]);
+    expect(scenes.find((scene) => scene.key === "final-profile")?.html).toMatch(
+      /<h3>.+<\/h3>/,
+    );
+    expect(
+      scenes.find((scene) => scene.key === "final-profile-notes")?.html,
+    ).toMatch(/<details>\s*<summary>.+<\/summary>/);
     expect(keys).not.toContain("built-in-timers");
     expect(keys).not.toContain("cpu-and-fpga");
-    expect(scenes.at(-1)?.html).toContain(
-      "<h3>Choosing a chip for inference</h3>",
+    expect(scenes.find((scene) => scene.key === "chip-choices")?.html).toMatch(
+      /^<p>/,
     );
-    expect(scenes.at(-1)?.html).toContain("estimated speed and energy");
+    expect(scenes.find((scene) => scene.key === "outlook-trends")?.html).toMatch(
+      /^<h3>.+<\/h3>/,
+    );
+    const profiles = renderToStaticMarkup(
+      createElement(ChipComparisonProfiles, { compact: true }),
+    );
+    expect(profiles.match(/<small>\(placeholder\)<\/small>/g)).toHaveLength(3);
+    expect(profiles).toContain("<figcaption>KV260 FPGA</figcaption>");
     expect(chapters.at(-1)).toMatchObject({
       id: "fpga-measuring-inference",
       label: "Measuring inference on the KV260",
@@ -462,9 +485,6 @@ describe("FPGA teaching examples", () => {
     expect(
       scenes.find((scene) => scene.key === "transformer-cache")?.html,
     ).toContain("the same weighted sum we saw in the neuron example");
-    expect(
-      scenes.find((scene) => scene.key === "token-journey")?.html,
-    ).toContain('id="fpga-projection"');
     expect(scenes.every((scene) => !scene.html.includes("[@"))).toBe(true);
   });
 });

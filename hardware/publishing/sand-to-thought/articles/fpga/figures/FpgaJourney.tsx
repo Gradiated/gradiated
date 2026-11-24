@@ -7,6 +7,7 @@ import { ChipLayersArtwork } from "../../../../../../product/website/src/compone
 import {
   bibliography,
   chapters,
+  closingSceneKeys,
   figureTitles,
   introduction,
   measurementScenes,
@@ -19,7 +20,7 @@ import { ClockTimingFigure } from "./ClockFigures";
 import { BoundaryFigure, ResourcesFigure } from "./DeviceFigures";
 import { BoardMeasurementTransition } from "./BoardMeasurementTransition";
 import { MeasuredProfile } from "./MeasuredProfile";
-import { MeasurementChart } from "./MeasurementChart";
+import { experimentNumbers, MeasurementChart } from "./MeasurementChart";
 import { LaterComparison } from "./LaterComparison";
 import { laterComparisons, type ComparisonScene } from "./laterComparisons";
 import { MeasurementMechanism } from "./MeasurementMechanism";
@@ -220,8 +221,13 @@ export const FpgaFigureStage = ({
   );
 };
 
-const scrollScenes = scenes.filter(scene => scene.key !== "chip-choices");
-const chipComparison = scenes.find(scene => scene.key === "chip-choices")!;
+const finalProfile = scenes.find((scene) => scene.key === "final-profile")!;
+const finalProfileNotes = scenes.find((scene) => scene.key === "final-profile-notes")!;
+const chipComparison = scenes.find((scene) => scene.key === "chip-choices")!;
+const outlookTrends = scenes.find((scene) => scene.key === "outlook-trends")!;
+const scrollScenes = scenes.filter(
+  (scene) => !closingSceneKeys.some((key) => key === scene.key),
+);
 
 export const FpgaJourney = ({ author }: { author: string }) => {
   const host = useRef<HTMLElement>(null);
@@ -282,10 +288,21 @@ export const FpgaJourney = ({ author }: { author: string }) => {
               ))}
             </div>
           </div>
-          <MeasuredProfile comparison />
-          <section className="kv-chip-section fpga-columns" id="fpga-chip-choices" aria-label="Choosing a chip for inference">
-            <ChipComparisonProfiles compact />
+          <MeasuredProfile
+            summary={
+              <Markup className="kv-profile-summary" html={finalProfile.html} />
+            }
+            readingGuide={<Markup html={finalProfileNotes.html} />}
+          />
+          <section className="kv-chip-section" id="fpga-chip-choices" aria-label="Comparing inference chips">
             <Markup className="kv-chip-text" html={chipComparison.html} />
+            <ChipComparisonProfiles compact />
+          </section>
+          <section className="fpga-outlook-trends fpga-columns" id="fpga-outlook-trends" aria-label="Outlook and inference experiment trends">
+            <Markup className="kv-chip-text" html={outlookTrends.html} />
+            <div className="fpga-measurement-stage">
+              <MeasurementChart step={experimentNumbers.length - 1} overview />
+            </div>
           </section>
           <Markup className="fpga-bibliography" html={bibliography} />
         </div>

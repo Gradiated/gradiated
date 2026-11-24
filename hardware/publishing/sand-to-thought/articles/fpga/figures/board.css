@@ -73,15 +73,25 @@
 }
 
 .fpga-board-support,
-.fpga-board-laptop {
+.fpga-board-laptop,
+.fpga-board-data {
   transition: opacity 250ms ease-out;
 }
 .fpga-board[data-request="true"]:not(
     [data-activity="firmware"],
-    [data-activity="linux"]
+    [data-activity="linux"],
+    [data-activity="configure"]
   )
   .fpga-board-support {
   opacity: 0.6;
+}
+.fpga-board[data-activity="configure"] .fpga-board-data {
+  opacity: 0.2;
+}
+.fpga-application-tour:has(.fpga-detail-layer[data-visible="true"] .fpga-board[data-activity="configure"])
+  .fpga-configuration-block .fpga-block > rect {
+  stroke: var(--signal-stroke);
+  stroke-width: 5px;
 }
 .fpga-board[data-request="false"] .fpga-board-laptop {
   opacity: 0.6;

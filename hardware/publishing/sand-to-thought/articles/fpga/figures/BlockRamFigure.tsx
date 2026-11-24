@@ -163,8 +163,8 @@ export const BlockRamFigure = () => {
 
     setLast(
       kind === "write"
-        ? "Write enable opens the gate. Waiting for the clock edge to save the word."
-        : "Waiting for the clock edge to read the selected word.",
+        ? "Write enable opens the gate. Waiting for the clock edge to save the new value."
+        : "Waiting for the clock edge to read the selected value.",
     );
     setOperation({
       kind,
@@ -178,7 +178,7 @@ export const BlockRamFigure = () => {
   return (
     <>
       <Figure
-        title={`A simplified block RAM shows four rows of four SRAM bits. Red means 0 and green means 1. This teaching example starts with zeros. The two-bit address ${binary(location, 2)} selects the highlighted row. The four-bit write data is ${binary(incoming)}. A small barrier illustrates write enable: closed at 0, open at 1. Opening it permits a write, but the row changes only when the clock pulse arrives. Read data holds its last sampled word until another read. Automatic writes visit shuffled addresses and overwrite their data. Pause to inspect a result, or choose your own address and write data. Write and Read demonstrate individual operations in slow motion.`}
+        title={`This simplified BRAM has four rows of four SRAM bits. Red means 0 and green means 1. This teaching example starts with zeros. The two-bit address ${binary(location, 2)} selects the highlighted row. The four-bit write data is ${binary(incoming)}. A small barrier illustrates write enable: closed at 0, open at 1. Opening it permits a write, but the row changes only when the clock pulse arrives. The read output shows the last value it received until the next read. Automatic writes visit shuffled addresses and overwrite their data. Pause to inspect a result, or choose your own address and write data. Write and Read demonstrate individual operations in slow motion.`}
       >
         <g
           className="fpga-bram-circuit"
@@ -343,7 +343,7 @@ export const BlockRamFigure = () => {
       <div
         className="fpga-controls"
         role="group"
-        aria-label="Block RAM address"
+        aria-label="BRAM address"
         ref={controls}
       >
         <span>Address</span>
@@ -383,7 +383,7 @@ export const BlockRamFigure = () => {
       <div
         className="fpga-controls fpga-bram-controls"
         role="group"
-        aria-label="Block RAM operations"
+        aria-label="BRAM operations"
       >
         <label>
           Write data

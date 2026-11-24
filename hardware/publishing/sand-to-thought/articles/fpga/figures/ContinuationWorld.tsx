@@ -95,7 +95,11 @@ export const ContinuationWorld = ({
       }
       title={
         scene === "our-board" || scene === "board-request"
-          ? "The KV260 carrier holds the K26 module, which contains the Zynq chip, DDR4 and boot flash. The chip contains the CPU, controllers and FPGA logic. The carrier’s microSD and Ethernet connect to the controllers. In the request view, the board starts from boot flash and loads Linux from microSD into DDR4. The laptop sends its prompt to the CPU through Ethernet and the controllers. The CPU sends tokens to the FPGA and receives scores over an on-chip connection. Each chosen token travels to the laptop and back to the FPGA for the next prediction. The laptop screen pairs an example prompt with a reply from the software evaluation. The animation shows the order of transfers at an illustrative pace."
+          ? "The KV260 carrier holds the K26 module, which contains the Zynq chip, DDR4 and boot flash. The chip contains the CPU, controllers and FPGA logic. The carrier’s microSD and Ethernet connect to the controllers. " +
+            (lecture
+              ? "In the request view, the board starts from boot flash and loads Linux from microSD into DDR4. Linux reads the bitstream file from microSD into DDR4, and dedicated hardware transfers it to the FPGA’s configuration circuitry. "
+              : "In the request view, the FPGA is configured and the model weights are loaded. ") +
+            "The laptop sends its prompt to the CPU through Ethernet and the controllers. The CPU sends tokens to the FPGA and receives scores over an on-chip connection. Each chosen token travels to the laptop and back to the FPGA for the next prediction. The laptop screen pairs an example prompt with a reply from the software evaluation. The animation shows the order of transfers at an illustrative pace."
           : scene === "simulate"
             ? "Browser pulse-model checks beside the same FPGA circuit. Four rows each show sixteen output intervals. These are model checks, not hardware measurements."
             : "A microcontroller's fixed timer and a configured FPGA circuit can both generate PWM. The drawings show alternative implementations, not chips connected together."

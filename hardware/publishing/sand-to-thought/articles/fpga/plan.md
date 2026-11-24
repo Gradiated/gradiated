@@ -17,6 +17,10 @@ The goal is to understand the mechanism, then connect it to engineering practice
 
 ## Inference progress record
 
+### 24 November 2026 — SRAM, DSP and KV-cache examples
+
+The article describes the temporary SRAM write current, clocked DSP register and first neuron directly. The KV-cache figure labels the colours for positive, negative and zero values using the existing cell swatches. The prose follows the first attention head.
+
 ### 20 November 2026 — measurement introduction
 
 The measurement introduction shows a plain routing grid without a resource callout. Resource highlights and labels begin with the first experiment.
@@ -29,7 +33,7 @@ The final measured profile and the four smaller hardware profiles use the articl
 
 ### 20 November 2026 — original and final KV260 profiles
 
-The opening profile shows the [experiment 24 candidate](../../../../research/inference/results/attention-clock-20261120T004416Z-a9d9d2/run.json) alone. The smaller closing profile compares it with the CPU-controlled arm of [the first board comparison](../../../../research/inference/results/autonomous-prefill-decode-20261115T210134Z-97efcb/run.json) and includes the electricity estimate and methods. Both use the existing article graph's mixed-prompt timing and energy data. Module tokens per joule and tokens per dollar of module electricity describe the same energy measurement. The latter assumes 24.51p/kWh and $1.3431/£ for Q2 2026. The closing chart explains its scales and electricity estimate in its disclosure and links to the measurement chapter for the shared test method.
+The opening profile shows the [experiment 24 candidate](../../../../research/inference/results/attention-clock-20261120T004416Z-a9d9d2/run.json) alone. The smaller closing profile compares it with the CPU-controlled arm of [the first board comparison](../../../../research/inference/results/autonomous-prefill-decode-20261115T210134Z-97efcb/run.json) and includes the electricity estimate and methods. Both use the existing article graph's mixed-prompt timing and energy data. The opening figure stands on its own with its title below. Both measured profiles use the same typography and extended spokes leading to horizontal labels. Module tokens per joule and tokens per dollar of module electricity describe the same energy measurement. The latter assumes 24.51p/kWh and $1.3431/£ for Q2 2026. The closing chart explains its scales and electricity estimate in its disclosure. The Outlook reuses the full experiment chart through Experiment 24 alongside the discussion of where the curves might plateau. It fills the left column with a taller plot and omits the experiment caption and selection line.
 
 The five spokes share fixed scales across profiles. TTFT runs from 1,000 to 0.1 ms, decode from 1 to 20,000 tokens/s, module efficiency from 1 to 10,000 tokens/J, external bandwidth from 1 GB/s to 25 TB/s and 16-bit weight capacity from one million to six trillion weights. These scales are logarithmic. Board specifications, calculated ceilings and measurements are identified in the reader's disclosure. Use matched model, prompts, concurrency, timing and power boundaries for future chip overlays. Lecture 4 retains its illustrative profiles.
 
@@ -207,6 +211,12 @@ Lecture diagram follow-up, 12 November: the FPGA logic now has a dashed path to 
 Lecture exports: [board connections](../../lectures/assets/kv260-board-connections.png) and [request flow](../../lectures/assets/kv260-request-flow.png). Checked both views on desktop, phone portrait and phone landscape.
 
 The board request view loops the example prompt “We need more chips.” and pairs it with the wafer fab joke, an exact reply recorded for a different prompt in the fixed-point software evaluation (J15, run `20261109T190531255188`). The first two tokens follow the CPU-to-FPGA, FPGA-to-CPU and Ethernet paths in turn, then the remainder plays at a faster pace. The earlier token walkthrough uses an edited reply for the recorded `a` request. The figure expands “Resist” to “Photoresist” and animates the first two displayed letters, P and h. The replies appear in the figures without a final full stop. The saved fixture retains the original text and scores. The lecture PNGs above show the static wiring and request path.
+
+The article gives startup, the prompt and the first two predictions more time to read. The remaining reply still arrives faster, and the full text stays on the laptop for about six seconds before the next request. The lecture keeps its own pacing.
+
+A separate startup beat shows Linux on the CPU initiating configuration and the bitstream moving from DDR4 to the FPGA’s configuration circuitry. The startup stages run before the first prompt. The article distinguishes loading the circuit from loading model weights into BRAM. [Board programming record](../../../../research/inference/implementations/kv260/history/server-record.md#physical-bos-comparison-passed).
+
+The article’s board-request scene now starts with the inference circuit ready and the model weights loaded. Lecture 4 retains the startup sequence.
 
 ### 12 November 2026 — choosing a chip
 
@@ -683,6 +693,8 @@ A static, shared SVG spider chart sits below the article title and before the ch
 The accompanying specifications distinguish vendor-reported 4 GB external DDR4 from the current project's 26,720-parameter model and 16-bit weights/working values with 48-bit accumulated sums. Model size on the chart means parameters that fit at a stated precision and context, not the size of our tiny example. Future comparisons must state the model, precision, context, load and output quality; cost and energy must use declared equipment/host/power boundaries. There are no new controls, scene changes or hardware measurement claims.
 
 
+Spell out block RAM at its first definition in the article, then use BRAM in the prose, figure labels and accessible descriptions.
+
 The BRAM close-up now shows four four-bit words as individual SRAM cells, using the same red zero / green one convention as the configuration cells. The example explicitly starts with zeros. Write enable lifts a small illustrative barrier on the input bus, a data packet enters, and the selected row changes only when the clock pulse arrives. Read samples the chosen row with write enable low. Operations are single, bounded animations with timer cleanup on unmount, and reduced motion updates the values immediately. Address, data and read/write controls remain. The short landscape layout fits the complete close-up without internal scrolling.
 
 BRAM writes now start automatically on entry, visiting a shuffled set of all four addresses before repeating and always choosing a different word for the selected row. A pause control and a decimal write-data selector allow manual experiments. Selecting address/data or reading/writing pauses the loop, and it resumes only when explicitly requested. Timers are cleaned up on unmount, off-screen/hidden-tab operation stops, reduced motion uses manual immediate updates, and automatic writes do not repeatedly announce live-region messages. The array is labelled “SRAM cells”.
@@ -714,3 +726,7 @@ The later experiments share the centred fabric diagram used in experiments 1–1
 On the same Experiment 23 image, changing the configured FPGA clock from 50 to 52.63 MHz kept every reply and cycle count identical. Median replies took about 5% less time on all three prompts. Across the mixed-prompt blocks, module energy fell from 3.476 to 3.316 mJ per useful token. The 62.5 MHz target missed timing on two layouts and has no board measurement. The inference research checkout holds the physical record `attention-clock-20261120T004416Z-a9d9d2` and the final timing record `attention-clock-v1-stretch-build-20261120T003806Z`.
 
 The article now includes the clock comparison. The graph adds the measured 52.63 MHz point and keeps the same resource counts as experiment 23. The 62.5 MHz target appears only in the timing discussion. [Board record](../../../../research/inference/results/attention-clock-20261120T004416Z-a9d9d2/run.json) · [Second layout](../../../../research/inference/results/attention-clock-v1-stretch-build-20261120T003806Z/run.json)
+
+## 24 November 2026 — token feedback
+
+After the first two predictions, short gold pulses trace the scores, output and feedback wires in sequence during rapid generation. The pulses stop when the completed reply is held, and reduced motion shows the complete reply with static wiring.

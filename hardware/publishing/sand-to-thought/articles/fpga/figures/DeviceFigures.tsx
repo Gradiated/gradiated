@@ -205,8 +205,8 @@ export const BoundaryFigure = ({ scene }: { scene: string }) => {
               h={43}
               label={
                 powered
-                  ? "Block RAM · working data"
-                  : "Block RAM · contents lost"
+                  ? "BRAM · working data"
+                  : "BRAM · contents lost"
               }
               kind="memory"
             />
@@ -250,7 +250,7 @@ export const BoundaryFigure = ({ scene }: { scene: string }) => {
           ? !powered
             ? "Flash keeps the file. SRAM configuration and working state do not survive power loss."
             : configured
-              ? "Settings choose the circuit. Registers and block RAM hold its working data."
+              ? "Settings choose the circuit. Registers and BRAM hold its working data."
               : "Power has returned. Configuration must be loaded before this circuit can run."
           : "A signal follows the configured logic path. A clock edge captures its result before output."}
       </p>

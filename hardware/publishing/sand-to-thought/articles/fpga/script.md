@@ -12,9 +12,9 @@ In this article we will demonstrate the basic workings of an FPGA along with all
 
 <!-- scene: map-io -->
 
-Around the edge of the chip, input/output blocks connect the internal circuit to physical pins and thus the outside world. Pins can be configured to receive signals, send them, or do both. Other dedicated pins such as the power supply are not shown.[@ice-forty]
+Around the edge of the chip, input/output blocks connect the internal circuit to physical pins and thus the outside world. Pins can be configured to receive signals, send them, or do both.[@fpga-bidirectional-io] Other dedicated pins such as the power supply are not shown.
 
-This large number of connections lets an FPGA exchange several streams of data at once. This is useful anywhere needing lots of fast data movement: cameras, large displays, robots and drones. However the achievable data rate depends also on the user's custom design implemented within the FPGA's circuits, not simply the number of pins.[@sensor-processing; @led-video-display; @drone-processing]
+This large number of connections lets an FPGA exchange several streams of data at once. This is useful anywhere needing lots of fast data movement: cameras, large displays, robots and drones. However the achievable data rate depends also on the user's custom design implemented within the FPGA's circuits, not simply the number of pins.[@sensor-processing]
 
 <!-- scene: map-logic -->
 
@@ -22,11 +22,11 @@ The larger squares are configurable logic blocks, or CLBs. Each contains circuit
 
 <!-- scene: map-routing -->
 
-The CLBs and I/Os are interconnected by many wires carrying electrical signals.[@ice-forty]
+The CLBs and I/Os are interconnected by many wires carrying electrical signals.
 
 <!-- scene: map-junctions -->
 
-The routes these wires take is chosen by electrically controlled, configurable switches. Stored settings at the wire junctions choose which wire segments they connect, directing signals through the chip.[@ice-forty]
+The routes these wires take is chosen by electrically controlled, configurable switches. Stored settings at the wire junctions choose which wire segments they connect, directing signals through the chip.[@routing-interconnect]
 
 <!-- scene: first-circuit -->
 
@@ -40,7 +40,7 @@ Say `B` now changes to `0`. The inputs are no longer both `1`, so the output bec
 
 <!-- scene: rule-change -->
 
-Now keep `A` at `1` and `B` at `0`, and change the stored rule in the CLB to OR. OR outputs `1` if at least one input is `1`, so our output changes to `1`. The same block and paths perform a different function because we changed a setting inside the CLB.[@fpga-introduction]
+Now keep `A` at `1` and `B` at `0`, and change the stored rule in the CLB to OR. OR outputs `1` if at least one input is `1`, so our output changes to `1`. The same block and paths perform a different function because we changed a setting inside the CLB.
 
 Changing an input supplies new data. Changing the stored rule reconfigures how that data is processed. Before peering inside a CLB to explore how they work, let’s consider why engineers use FPGAs at all.
 
@@ -48,9 +48,9 @@ Changing an input supplies new data. Changing the stored rule reconfigures how t
 
 ## Why use an FPGA?
 
-Imagine our chip among the electronics of a particle detector at CERN. Particles produced in a collision scatter and pass through layers of sensors, which produce electrical signals for the processing electronics.[@detector-signals] There is far too much data to record in full, with collision rates reaching billions per second.[@atlas-data-acquisition]
+Imagine our chip among the electronics of the ATLAS particle detector at CERN. Particles produced in a collision scatter and pass through layers of sensors, which produce electrical signals for the processing electronics.[@detector-signals] There is far too much data to record in full.
 
-In the first stage of filtering, FPGAs check signals from several parts of the detector as the data arrives.[@cern-fpga-trigger] The system passes on events that meet the experiment’s selection criteria for closer analysis.[@atlas-trigger] It discards the rest, leaving much less data to process and store.[@atlas-data-acquisition]
+The first stage of filtering looks at signals from several parts of the detector. FPGAs help identify promising events from the energy measured by the detector. The first stage can take in about 40 million events per second and passes on around 100,000 for closer analysis.[@atlas-trigger]
 
 <!-- scene: why-display -->
 
@@ -97,7 +97,7 @@ In the figure, the `AB` column labels these input combinations. For each input, 
 
 Selection circuits called [multiplexers](/library/sand-to-thought/how-to-get-an-answer-out-of-sand/#sand-select-values), labelled MUX, connect one of those answers to the output. A two-input MUX uses a selection bit to choose its first input for `0` or its second for `1`.[@multiplexers]
 
-Here, the input `B` is connected to the first two MUXes, and selects within each pair of answers. `A` is connected to the final MUX and selects between the pairs. With `A = 0` and `B = 1`, the final MUX selects the top channel and the top MUX selects its lower input, resulting in a final output with the answer from SRAM row `01`, which is `0`, as expected for AND. The input signals are designed to select a path through the circuit. They do not search the rows one after another or rewrite the stored answers.[@nandland-luts]
+Here, the input `B` is connected to the first two MUXes, and selects within each pair of answers. `A` is connected to the final MUX and selects between the pairs. With `A = 0` and `B = 1`, the final MUX selects the top channel and the top MUX selects its lower input, resulting in a final output with the answer from SRAM row `01`, which is `0`, as expected for AND. The input signals are designed to select a path through the circuit. They do not search the rows one after another or rewrite the stored answers.[@lut-table-lookup]
 
 Let’s make the same change we saw at the start, from AND to OR, by rewriting those two bits.
 
@@ -107,7 +107,7 @@ Let’s make the same change we saw at the start, from AND to OR, by rewriting t
 
 Let's zoom into the SRAM block for row `01`. Static random-access memory, or SRAM, uses the feedback principle we explored in [Sand to Thought’s Memory chapter](/library/sand-to-thought/how-to-get-an-answer-out-of-sand/#sand-latch). In this case, two connected NOT gates reinforce opposite values (while power is supplied).[@sram-writing]
 
-The triangles with small circles at their tips represent NOT gates, each [built from two transistors](/library/sand-to-thought/fabricating-a-transistor/#fab-destination). The two dots on the wires show where each NOT gate’s output connects to the other’s input. The right side of the cell holds the LUT’s stored answer. The left side of the cell holds the opposite value. The two access transistors act as switches that connect each side of the cell to its writing wire.
+The triangles with small circles at their tips represent NOT gates, each [built from two transistors](/library/sand-to-thought/fabricating-a-transistor/#fab-destination). The two dots on the wires show where each NOT gate’s output connects to the other’s input. The right side of the cell holds the LUT’s stored answer. The left side of the cell holds the opposite value. The two access transistors act as switches that connect each side of the cell to its writing wire. Together, the NOT gates and switches use just six transistors, making a compact, rewritable cell.[@sram-writing]
 
 With access set to `0`, the switches are off and the cell holds `0`, even though the writing wires are ready to change it.
 
@@ -118,13 +118,13 @@ To store a `1`, we set the left writing wire to `0` and the right one to `1`. Tu
 <details>
 <summary>Don't we get a short circuit?</summary>
 
-Yes, briefly. The yellow dots show current flowing from the power supply to ground (0 V). The animation below repeats that brief moment.
+Yes, briefly. During a write, current can flow from the power supply to ground (0 V).
 
 <figure class="fpga-inline-circuit">
 <img src="/assets/fpga/sram-write-contention.svg" width="524" height="366" alt="Six-transistor SRAM cell. Moving yellow dots trace one temporary current path from the supply through a pull-up and an access transistor to a writing wire held at ground by the external writing circuitry.">
 </figure>
 
-The writing circuit pulls the left side of the cell low. The right side goes high, switching off the transistor at the top left. That cuts off the current shown by the dots.[@sram-writing]
+The writing circuit pulls the left side of the cell low. The right side goes high, switching off the transistor at the top left. That cuts off the current.[@sram-writing]
 
 </details>
 
@@ -132,20 +132,13 @@ The writing circuit pulls the left side of the cell low. The right side goes hig
 
 Turn access off again. The writing wires are isolated from the storage circuit, and powered feedback maintains the new answer. We have successfully programmed this storage cell from a `0` to a `1`.
 
-<details>
-<summary>Why use SRAM?</summary>
-
-SRAM-style storage provides compact, rewritable memory bits using only six transistors, whose voltages remain available while power is supplied. Unlike dynamic RAM (DRAM), it does not need periodic refreshing, however it does also lose its contents when power is removed.[@memory-technologies]
-
-</details>
-
 <!-- scene: lut -->
 
-Now zoom back out to the complete LUT. We changed row `AB = 01` from `0` to `1`. Repeating that write for row `10` completes the change from AND’s `0, 0, 0, 1` to OR’s `0, 1, 1, 1`. The selector circuit formed of MUXes stays the same, all that needs to change are the SRAM answer bits.[@fpga-introduction] We have rewritten the answers to convert this LUT into an OR gate.
+Now zoom back out to the complete LUT. We changed row `AB = 01` from `0` to `1`. Repeating that write for row `10` completes the change from AND’s `0, 0, 0, 1` to OR’s `0, 1, 1, 1`. The selector circuit formed of MUXes stays the same, all that needs to change are the SRAM answer bits. We have rewritten the answers to convert this LUT into an OR gate.
 
-For a single output, `n` input LUT we need `2ⁿ` SRAM answers: four inputs need `2⁴ = 16`, while six need `2⁶ = 64`. Several LUTs can be stacked together to perform more complex functions.[@nandland-luts] A larger LUT can reduce the number of logic stages and wired connections, but each extra input doubles its answer storage and requires more MUXes. Manufacturers balance these costs against speed.[@lut-size-tradeoff]
+For a LUT with `n` inputs and one output, we need `2ⁿ` SRAM answers: four inputs need `2⁴ = 16`, while six need `2⁶ = 64`. Several LUTs can be stacked together to perform more complex functions.[@lut-table-lookup] A larger LUT can reduce the number of logic stages and wired connections, but each extra input doubles its answer storage. In our MUX design, it also doubles the number of branches. Manufacturers balance these costs against speed.[@lut-size-tradeoff]
 
-We will return to how this SRAM configuration data reaches the chip later.[@configuration-frames]
+We will return to how this SRAM configuration data reaches the chip later.
 
 <!-- scene: flip-flop -->
 
@@ -167,7 +160,7 @@ The MUX on the right chooses what leaves the logic block. It can send the LUT’
 
 <!-- scene: clb-output-setting -->
 
-A bit stored in SRAM tells the MUX which path to use.[@clb-overview] Here the setting is `1`, so the MUX selects the flip-flop and the block sends out the saved `1`.
+A stored setting chooses between the LUT’s direct output and its saved result.[@clb-overview] In our diagram, an SRAM bit tells the MUX which path to use. Here the setting is `1`, so the MUX selects the flip-flop and the block sends out the saved `1`.
 
 The LUT’s SRAM configuration remembers the logic or function the LUT should enact, while the flip-flop's memory remembers and buffers a result produced as the circuit runs. We will introduce more kinds of memory and their uses in our FPGA later.
 
@@ -175,13 +168,13 @@ The LUT’s SRAM configuration remembers the logic or function the LUT should en
 
 ## Choosing the connections
 
-Now we zoom back out to see the whole chip. While one CLB can only perform simple calculations among its array of LUTs and flip-flops, combining blocks introduces the possibility to perform much larger, more complex maths and functions. This programmable routing is achieved using the wires and configurable switches between CLBs.[@ice-forty]
+Now we zoom back out to see the whole chip. While one CLB can only perform simple calculations among its array of LUTs and flip-flops, combining blocks introduces the possibility to perform much larger, more complex maths and functions. This programmable routing is achieved using the wires and configurable switches between CLBs.
 
-Let's zoom into one particular switch at the junction between four CLBs. This switch is connected to, at its inputs, a wire from the upper-left CLB `1` and the one below it (`4`). Its output feeds into the central CLB `5`.[@routing-interconnect]
+Let's zoom into one particular switch at the junction between four CLBs. This switch is connected to, at its inputs, a wire from the upper-left CLB `1` and the one below it (`4`). Its output feeds into the central CLB `5`.
 
 <!-- scene: routing-switch -->
 
-Inside, another MUX connects one of two incoming wires to an outgoing wire.[@multiplexers] A configuration SRAM cell holds a bit whose voltage controls the MUX's transistors. With its SRAM set to `0`, the CLB `1` is connected to CLB `5`, carrying signal `1`. The lower wire remains unselected.[@fpga-introduction; @configuration-physical]
+Inside, another MUX connects one of two incoming wires to an outgoing wire.[@multiplexers] A configuration SRAM cell holds a bit whose voltage controls the MUX's transistors. With its SRAM set to `0`, the CLB `1` is connected to CLB `5`, carrying signal `1`. The lower wire remains unselected.
 
 This is another important use of SRAM configuration memory: here it remembers a connection choice rather than a LUT answer. This setting stays in place while data signals pass through, and the MUX behaves as a railway switch for voltage. Each junction contains many MUXes and configuration bits, giving us much freedom in the connections between CLBs.
 
@@ -199,13 +192,13 @@ We changed one connection by rewriting a single bit. How do we load all the SRAM
 
 ## Configuring the whole chip
 
-Let’s widen the circuit to allow more blocks on our chip. To configure our FPGA, we need to load a file of settings called a *bitstream*, which can be stored in off-chip flash memory.[@flash-memory] This file contains data of all the bits we should set each of our SRAM cells to. We do this by introducing the *configuration block* on the chip which receives these settings and sends out that information into the SRAM spread throughout the logic and routing.[@configuration-physical]
+Let’s widen the circuit to allow more blocks on our chip. To configure an FPGA, we load a file of settings called a *bitstream*. In this example, the bitstream is stored in off-chip flash memory.[@configuration-load] Flash retains its contents when the power is off.[@flash-memory] On [our KV260](#fpga-our-board), Linux loads the inference bitstream from microSD.[@kv260-bitstream-load] The *configuration block* on the chip receives these settings and writes them into memory spread throughout the logic and routing. AMD calls the cells that hold the settings *configuration latches*. They can be rewritten and hold their settings while the chip is powered, like the SRAM cell we drew earlier.[@configuration-physical]
 
 Before we can load a bitstream, design tools have to fit our circuit into the available blocks, find routes between them and check that signals arrive in time for the next clock edge. A design can give the right answers in simulation and still miss its timing target. An early version of our inference circuit missed its target of `100 MHz`, or 100 million clock cycles per second.
 
 <!-- scene: configuration-distribute -->
 
-First, the configuration block writes a red `0` into the routing MUX’s SRAM cell, using a separate loading connection. This selects the upper incoming wire connecting CLB `1` to CLB `5`.[@configuration-load]
+The configuration block has a dedicated path for loading settings.[@configuration-load] Here we show it writing a red `0` into the routing MUX’s storage cell. This selects the upper incoming wire connecting CLB `1` to CLB `5`.
 
 <!-- scene: configuration-luts -->
 
@@ -221,9 +214,9 @@ All the many flip-flops inside CLBs also need a shared clock to coordinate when 
 
 So far, we have used SRAM to hold settings, and flip-flops to hold results. But suppose our circuit receives a stream of, say, sensor readings and needs to keep many of them for later. We need somewhere to store a collection of numbers.
 
-LUTs can hold information in its SRAM instead of a logic rule. This use is called *distributed RAM*.[@distributed-ram] It is useful for small memories, but storing larger collections this way can use up the CLBs we need for calculations and control.[@distributed-ram-use]
+Some LUTs can use their SRAM to hold working data. This use is called *distributed RAM*.[@distributed-ram] It is useful for small memories, but storing larger collections this way can use up the CLBs we need for calculations and control.
 
-To fix this problem let's introduce a dedicated tool for data storage: *block RAM*, or BRAM. Its data is organised into groups of bits called *words*, each with an address identifying its location. We could save one word at address `0`, the next at `1` and so on, to read them back when needed, much like the memory array we built in [Sand to Thought’s Memory chapter](/library/sand-to-thought/how-to-get-an-answer-out-of-sand/#sand-memory-array).[@fpga-architecture]
+To fix this problem, let’s introduce *block RAM*, or BRAM, a dedicated memory for working data. Each address selects a group of bits that the circuit can read or write together. We could save one reading at address `0`, the next at `1` and so on, to read them back when needed, much like the memory array we built in [Sand to Thought’s Memory chapter](/library/sand-to-thought/how-to-get-an-answer-out-of-sand/#sand-memory-array).
 
 <!-- scene: block-ram -->
 
@@ -233,27 +226,27 @@ Our KV260’s FPGA has 144 BRAM blocks, together providing about 660 kilobytes (
 
 Our FPGA also has 64 larger dedicated SRAM blocks called *UltraRAM*, providing another 2.4 megabytes (MB) of storage.[@our-memory-capacity] Each holds eight times as much as a BRAM block and can be linked to others to store larger collections of data, such as model weights, without using LUTs for storage.[@ultraram]
 
-Our example figure stores four `4-bit` words. The thick lines with slashes represent bundles of wires, called *buses*. The address bus has two wires, each carrying one bit. Together they carry the signals `00`, `01`, `10` or `11`, selecting locations `0`, `1`, `2` or `3`. Each data bus (read or write) has four wires, one for each bit of the word, such as `0011` for the number `3`. To read, the circuit supplies an address and receives the stored word. To write, it supplies an address, a new word and a write-enable signal, set to `1` to allow writing or `0` to prevent it. The clock pulse determines when the memory carries out the read or write.[@nandland-block-ram]
+Our example has four memory locations, each holding four bits. The thick lines with slashes represent bundles of wires, called *buses*. The address bus has two wires, each carrying one bit. Together they carry the signals `00`, `01`, `10` or `11`, selecting locations `0`, `1`, `2` or `3`. Each data bus (read or write) has four wires and carries four bits at once, such as `0011` for the number `3`. To read, the circuit supplies an address and receives the stored bits. To write, it supplies an address, the new bits and a write-enable signal, set to `1` to allow writing or `0` to prevent it. The clock pulse determines when the memory carries out the read or write.[@nandland-block-ram]
 
-In the figure, each square is one SRAM bit, with green `1`s and red `0`s. Our example begins with a BRAM full of SRAM zeros, then automatically writes random words to different addresses. You can pause it and choose your own address and data. Write enable opens the small gate on the data bus (this is a visual aid, not a literal moving part). The selected row saves the new bits when the clock pulse arrives.
+In the figure, each square is one SRAM bit, with green `1`s and red `0`s. Our example begins with a BRAM full of SRAM zeros, then automatically writes random values to different addresses. You can pause it and choose your own address and data. Write enable opens the small gate on the data bus (this is a visual aid, not a literal moving part). The selected row saves the new bits when the clock pulse arrives.
 
-The address, data and control wires connect to other blocks through the routing grid, allowing CLBs to control BRAM.[@bram-configuration]
+The address, data and control wires connect to other blocks through the routing grid, allowing CLBs to control BRAM.[@routing-interconnect]
 
 <!-- scene: arithmetic-map -->
 
 We can now store our readings and processed data, but what if we want to perform the common task of multiplication? We could build a multiplier from LUTs and other CLB circuitry, but this can use up many resources.
 
-Adding two unsigned 12-bit numbers takes on the order of 10 LUTs, plus dedicated carry logic.[@adder-lut-estimate] Multiplying them takes on the order of 100 LUTs in AMD’s examples.[@multiplier-lut-utilisation] On our FPGA, the same multiplication fits into one DSP block.[@our-memory-capacity]
+Adding two unsigned 12-bit numbers would take roughly a dozen LUTs plus dedicated carry logic, based on AMD’s example of an eight-bit adder.[@adder-lut-estimate] A carry chain gives carries a dedicated path between neighbouring logic cells, speeding up addition.[@fpga-carry-logic] On its XCZU9EG chip, AMD reports 125 and 141 LUTs for two versions of a 12-bit multiplier built without DSPs.[@multiplier-lut-utilisation] On our FPGA, the same multiplication fits into one DSP block.[@dsp-arithmetic]
 
-A *digital signal processing* block, or DSP block, provides dedicated multiplication and addition circuitry already hardwired into the silicon, leaving more CLBs free for other tasks.[@fpga-architecture] Its specialised circuitry can be faster and use less power than an equivalent circuit built from CLBs.[@dsp-arithmetic]
+A *digital signal processing* block, or DSP block, provides dedicated multiplication and addition circuitry already hardwired into the silicon, leaving more CLBs free for other tasks. Its specialised circuitry can be faster and use less power than an equivalent circuit built from CLBs.
 
 <!-- scene: arithmetic-blocks -->
 
-Let’s zoom into a DSP block. Here, a stored reading of `3` is multiplied by `2`, producing `6`. The ready-made multiplication circuitry is already there, connected to inputs. We only need to configure how to connect it, rather than constructing the multiplier from LUTs.[@xck26-dsp-type; @dsp48e2-diagram] [See Xilinx’s detailed DSP block diagram.](https://docs.amd.com/api/khub/documents/pTysoma4TYgNH95BrY1Sbw/content#page=8)
+Let’s zoom into a DSP block. Here, a stored reading of `3` is multiplied by `2`, producing `6`. The ready-made multiplication circuitry is already there, connected to inputs. We only need to configure how to connect it, rather than constructing the multiplier from LUTs. [See Xilinx’s detailed DSP block diagram.](https://docs.amd.com/api/khub/documents/pTysoma4TYgNH95BrY1Sbw/content#page=8)
 
 <!-- scene: arithmetic-accumulate -->
 
-DSP blocks can also add each new product to a *running total*, the sum of the products processed so far, which turns out to often be very useful.[@dsp-arithmetic] The DSP’s built-in output register holds this total between clock edges. It uses one flip-flop for each bit of the total (we have only shown one), which updates once per clock cycle. The saved register value starts at `0`. The multiplier supplies `6`, and the adder prepares `0 + 6 = 6`. The register still holds `0` until the next clock trigger - scroll down to trigger the clock.
+DSP blocks can also add each new product to a *running total*, the sum of the products processed so far, which turns out to often be very useful.[@dsp-arithmetic] The DSP’s built-in output register holds this total between clock edges. It uses one flip-flop for each bit of the total. The saved register value starts at `0`. The multiplier supplies `6`, and the adder prepares `0 + 6 = 6`. The register holds `0` until the next clock edge.
 
 <!-- scene: arithmetic-save -->
 
@@ -265,7 +258,7 @@ Say we have a new set of inputs `2 × 2` producing `4`. The adder combines this 
 
 <!-- scene: pins -->
 
-Finally, the I/O blocks around the chip's edge provide another source of input and output data. They receive signals from physical pins and drive signals out through them.[@ice-forty]
+Finally, the I/O blocks around the chip's edge provide another source of input and output data. They receive signals from physical pins and drive signals out through them.
 
 In this example, a signal from an input pin starts the calculation. The CLBs tell BRAM which pair of numbers to send to the DSP. The DSP updates the running total, and the result leaves through an output pin.
 
@@ -293,7 +286,7 @@ We trained an extremely small, rather mindless model with 26,720 parameters on f
 
 <!-- scene: network-layers -->
 
-The drawing shows how one token passes through our model. It starts as a list of pre-learned numbers. Attention combines information from this token and earlier ones. The next set of results from calculations in the feed-forward network is added to those numbers again, and the model uses the final result to score possible next tokens.
+Each token starts as a list of learned numbers. Attention combines information from this token and earlier ones. The next set of results from calculations in the feed-forward network is added to those numbers again, and the model uses the final result to score possible next tokens.
 
 <!-- scene: network-sum -->
 
@@ -309,7 +302,7 @@ The first connection contributes `3 × 2 = 6`. The second contributes `2 × (−
 
 We already have the FPGA blocks needed for this sum. BRAM holds the input numbers and weights. CLBs control which pair to read next, and a DSP multiplies the pair and adds its product to a running total.
 
-The two connections in our network drawing can take turns through the same DSP. We can reuse that circuitry for other neurons too. Let’s open it and follow the same numbers.
+The two input–weight pairs can take turns through the same DSP. We can reuse that circuitry for other neurons too. Let’s open it and follow the same numbers.
 
 <!-- scene: neuron -->
 
@@ -322,27 +315,11 @@ Next, memory supplies input `2` and weight `−1`. The same multiplier now produ
 This is one small part of a neuron’s calculation. Neural networks also apply rules that reshape these sums before passing numbers onward. Our transformer combines many such calculations to produce its next-token scores.
 
 <details>
-<summary>What else can a neuron do?</summary>
-
-A simple neuron can add a learned offset, called a *bias*, then apply an output rule. For example, adding a bias of `−1` to our sum of `4` gives `3`. A common rule keeps a non-negative result and replaces a negative one with `0`, so this neuron would output `3`.[@neural-network-basics]
-
-Our transformer uses no added biases and has a different output rule. The multiply-and-add calculation we have just built is shared by both examples.
-
-</details>
-
-<details>
 <summary>Can our neural network use fixed-point numbers?</summary>
 
-Fixed-point numbers represent fractions using integers and an agreed scale. If we count in sixteenths, stored `20` means `20 ÷ 16 = 1.25`. Using fewer bits saves memory and can simplify the arithmetic, but rounding can change the model’s predictions.[@inference-quantisation; @fpga-fixed-point]
+Fixed-point numbers represent fractions using integers and an agreed scale. If we count in sixteenths, stored `20` means `20 ÷ 16 = 1.25`. Using fewer bits saves memory and can simplify the arithmetic, but rounding can change the model’s predictions.[@inference-quantisation]
 
-Each input and weight in our weighted sum fits in 16 bits. A product can need up to 32 bits, and adding many products can take even more room. The DSP keeps the running total in 48 bits. Once it has added all the products, we [rescale and round the result](#fpga-projection) to store it in 16 bits.
-
-</details>
-
-<details>
-<summary>What makes addition faster?</summary>
-
-We saw how adding one bit position can produce a carry for the next. A carry chain provides dedicated paths for these carries between neighbouring logic cells, helping an addition finish sooner.[@ice-forty]
+Each input and weight in our weighted sum fits in 16 bits. A product can need up to 32 bits, and adding many products can take even more room. The DSP keeps the running total in 48 bits. Once it has added all the products, we convert the total from the products’ scale to the scale used for the output, then round it to an integer for 16-bit storage.
 
 </details>
 
@@ -354,30 +331,26 @@ The first words of a sentence can change what comes next. Our transformer uses *
 
 <!-- scene: transformer-cache -->
 
-Let’s open block RAM. The first two rows of the *KV cache* hold keys and values for tokens we’ve already processed. Each new token adds its own pair. Attention compares the current token’s *query*, another list of numbers, with the stored keys to decide how much of each value to mix in.[@transformer-attention]
+Let’s open BRAM. The first two rows of the *KV cache* hold keys and values for tokens we’ve already processed. Each new token adds its own pair.[@kv-cache-explainer] Attention compares the current token’s *query*, another list of numbers, with the stored keys to decide how much of each value to mix in.[@transformer-attention]
 
-To calculate the query, the FPGA starts with the same weighted sum we saw in the neuron example. For each sum, the FPGA reuses one DSP multiplier 32 times, multiplying one input by its learned weight each time. It adds each product to a running total.
+To calculate the query, the FPGA starts with the same weighted sum we saw in the neuron example. For each sum, the FPGA reuses one DSP multiplier 32 times, multiplying one input by its learned weight each time. It adds each product to a running total. Each sum gives one number in the query. For the next number, the FPGA uses the same inputs with a different set of weights.
 
-Each square represents one number. In a filled grid, green means positive, red means negative and grey means zero. Each key and value has one grid per attention head. We follow the first head. The gold lines show all four values flowing into the mix.
+Each square represents one number. Each key and value has one grid per attention head. We follow the first head.
 
 Each token adds `128` bytes to our cache. Saving those numbers lets us reuse them for later predictions. The learned weights stay the same as the cache grows.
 
 <details>
 <summary>How are the cache addresses arranged?</summary>
 
-There is room for `256` tokens, including the start token, so the cache can hold `32 KiB`. Each position contributes thirty-two rotated `K` numbers and thirty-two `V` numbers, each sixteen bits wide.
-
-`K` and `V` occupy separate memory banks. In each bank, `word address = position × 32 + coordinate`. Position `255`, coordinate `31`, selects word `8191`. Each word occupies two bytes. The cache preserves the integers exactly. `K` uses scale `2⁻¹¹`, and `V` uses `2⁻¹²`.
-
-In our earlier component simulation, a position becomes readable once all thirty-two pairs have been written. Reset marks every position invalid, so the controller refuses reads even though the old bits remain.
+There is room for `256` tokens, including the start token, so the cache can hold `32 KiB`. Keys and values occupy separate memory banks. In each bank, a token takes up thirty-two consecutive entries, each holding one two-byte number. The entry index is `position × 32 + coordinate`, where the coordinate is the number’s place within the key or value, counting from zero.
 
 </details>
 
 <!-- scene: token-journey -->
 
-Let’s follow the first two predictions from a request containing the letter `a`. Once the FPGA has processed the prompt, it sends a list of scores to the CPU. The CPU picks the token with the highest score, adds it to the output and sends it back through the model. That pass adds another entry to the cache and produces scores for the next token. The animation uses an edited version of the software reply.
+Let’s follow the first two predictions from a request containing the letter `a`. Once the FPGA has processed the prompt, it sends a list of scores to the CPU. The CPU picks the token with the highest score, adds it to the output and sends it back through the model. That pass adds another entry to the cache and produces scores for the next token. 
 
-Picking the highest score is a simple job for the CPU. Sending it all 320 scores also lets us compare the FPGA’s results with our software model. The round trip adds time to every prediction as the FPGA waits for the chosen token to come back. In our first experiment, we move that choice onto the FPGA and measure the time saved.
+Picking the highest score is a simple job for the CPU. Sending it all 320 scores also lets us compare the FPGA’s results with our software model. The round trip adds time to every prediction as the FPGA waits for the chosen token to come back. In our first experiment, we move that choice onto the FPGA and measure the time saved. 
 
 <details>
 <summary>How exactly is text encoded and a token chosen?</summary>
@@ -393,65 +366,46 @@ Output byte tokens are `0` through `255`. The end token is `257`, and the vocabu
 <details>
 <summary>What is inside our tiny model?</summary>
 
-Normalisation rescales a list of working values before the next learned calculation. It does not change the stored weights. A residual connection adds an earlier list back to a transformed list, preserving a path for those earlier values.
-
-It has one Llama-style transformer block: one attention section and one feed-forward section, with normalisation and residual connections. Its working vectors contain thirty-two numbers, and its two attention heads each use sixteen. SwiGLU makes two `128`-number projections, applies a smooth nonlinear rule to one and multiplies them together, then projects the result back to thirty-two. This differs from our earlier illustrative neuron’s bias and negative-to-zero rule.[@llama-architecture]
-
-We use rotary position embeddings, or RoPE. Treat two coordinates as the components of an arrow, then rotate them by an angle determined by token position. This changes how queries compare with keys at other positions. `Q` and `K` are rotated. `V` is not. It rotates pairs of numbers, not words, and an individual coordinate need not have a recognisable human meaning.[@rotary-position]
-
-Weights, stored activations and cached keys and values use sixteen bits. Dot-product accumulators use forty-eight bits, while scores and some other calculations use wider values. Not every calculation is sixteen-bit. The learned weights occupy `53,440` bytes. We are teaching inference, not winning a text-compression competition.
-
-</details>
-
-<details id="fpga-projection">
-<summary>How does one projection use our weighted sum?</summary>
-
-For one output of a projection, take thirty-two input numbers, multiply each by its corresponding learned weight, then add the products. A projection makes a new set of numbers from its input in this way. To produce the next output, use another row of weights with the same inputs.
-
-In the recorded software request for `a`, the first input after normalisation is `1382`, its weight is `1663`, and their product is `2,298,266`. After thirty-two products, the sum is `−100,126,855`. The input scale is `2⁻¹¹` and the weight scale is `2⁻¹⁵`, so products and their sum use `2⁻²⁶`. The stored output uses `2⁻¹¹`. Divide the sum by `2¹⁵ = 32,768` and round to the nearest integer, giving `Q[0] = −3056`. Ties round to the even integer. The same circuit starts a fresh sum with the next row of weights to produce `Q[1] = −1688`.
+Our model has one Llama-style transformer block with an attention section and a feed-forward network.[@llama-architecture] It represents each token with thirty-two numbers, and its two attention heads each work with sixteen. The feed-forward network expands the list to 128 numbers before bringing it back to thirty-two. The model’s 16-bit weights occupy `53,440` bytes.
 
 </details>
 
 <!-- scene: our-board -->
 
-Let’s return to our KV260 and see where its parts sit. A smaller board mounted on it, the K26 module, carries a Zynq UltraScale+ chip. The chip combines Arm CPUs that run software with the [programmable logic](#fpga-reconfigure) we have introduced.[@our-board-system; @our-board-processors] Both are built from the kinds of [logic gates we met in Sand to Thought](/library/sand-to-thought/how-to-get-an-answer-out-of-sand/#sand-not). The larger carrier board provides power and connections to other devices.[@our-board]
+Let’s return to our KV260 and see where its parts sit. A smaller board mounted on it, the K26 module, carries a Zynq UltraScale+ chip. The chip combines Arm CPUs that run software with the FPGA we have introduced.[@our-board-system] Both are built from the kinds of [logic gates we met in Sand to Thought](/library/sand-to-thought/how-to-get-an-answer-out-of-sand/#sand-not). The larger carrier board provides power and connections to other devices.[@our-board]
 
-- **DDR4 RAM**, on the module, holds running programs and working data for both the CPU and FPGA. It is separate from the FPGA’s block RAM.[@kv260-hardware]
-- **Boot flash**, also on the module, retains startup software, called firmware, without power.[@kv260-boot-flash; @flash-memory]
+- **DDR4 RAM**, on the module, holds running programs and working data for both the CPU and FPGA. It is separate from the FPGA’s BRAM.[@our-board-system]
+- **Boot flash**, also on the module, holds the firmware that starts the board.[@kv260-boot-flash]
 - **microSD** is removable storage on the carrier. In the standard KV260 setup, it holds the Linux operating system and application files.[@kv260-sd-storage]
-- **Controllers** handle transfers to and from DDR4, boot flash and microSD.[@our-board-processors; @kv260-interfaces] The FPGA logic can also access DDR4 through the memory controller without asking the CPU to fetch each value.[@kv260-ddr-access]
-- **Power in** connects an external supply. Regulators convert its voltage into the supplies needed by the board and module.[@kv260-power]
+- **Controllers** manage DDR4, boot flash and microSD. The FPGA can use the DDR4 controller without going through the CPU.[@kv260-ddr-access]
+- **Power in** connects and regulates an external supply.[@kv260-power]
 
 <!-- scene: board-request -->
 
-In our text-input design, the laptop sends the prompt and displays the returned text. The module reads its firmware from boot flash, then loads Linux from microSD into DDR4 for the CPU to run.[@kv260-boot-flash; @kv260-sd-storage] Before inference, software running on the CPU loads the model’s weights into the FPGA’s BRAM.
+With the FPGA configured and the model’s weights loaded, the laptop sends a prompt to the CPU through the carrier board’s Ethernet port. The CPU sends input tokens to the FPGA. The FPGA logic does the neural-network arithmetic and holds the KV cache in BRAM. It returns a score for each possible next token. The CPU chooses the highest-scoring token and sends it back to the FPGA for the next prediction. It also sends the token’s text to the laptop, where the reply grows one character at a time.
 
-The laptop can send the prompt to the CPU through the carrier board’s Ethernet port.[@kv260-ethernet] The CPU sends input tokens to the FPGA. The FPGA logic does the neural-network arithmetic and holds the KV cache in BRAM. It returns a score for each possible next token. The CPU chooses the highest-scoring token and sends it back to the FPGA for the next prediction. It also sends the token’s text to the laptop, where the reply grows one character at a time. 
-
-The CPU–FPGA exchange stays inside the Zynq chip.[@our-board-system] The FPGA reads its weights from BRAM in this build. In [experiment 12](#fpga-measure-lutram), we move some of those weights into LUT memory. In [experiment 14](#fpga-measure-ddr-weight), we start fetching weights from DDR4 during inference.
+The CPU–FPGA exchange stays inside the Zynq chip.[@our-board-system] The FPGA reads its weights from BRAM in this build. In [experiment 12](#fpga-measure-lutram), we move some of those weights into LUT memory. In [experiment 14](#fpga-measure-ddr-weight), we will moving the weights into DDR4.
 
 <!-- scene: measuring-inference -->
 
 ## Measuring inference on the KV260
 
-How much faster and cheaper could our FPGA run inference? With help from GPT-6 Astra, we ran iterative experiments to test changes to how the FPGA does its arithmetic, uses memory and shares work with the CPU, measuring how each change affected reply speed and energy use. We started with the circuit we just saw, where the CPU picks the next token. In each experiments below, we tried changes such as reading weights from BRAM sooner or calculating several scores at once. For each board comparison, we ran the starting circuit and the modified circuit on the same KV260. We gave them the same three prompts and always checked that both produced exactly the expected replies.
+How much faster and cheaper could our FPGA run inference? With help from GPT-6 Astra, we ran iterative experiments to change how the FPGA does arithmetic, uses memory and shares work with the CPU, measuring how each change affected reply speed and energy use. We started with the circuit we just saw, where the CPU picks the next token. In each experiments below, we tried changes such as reading weights from BRAM sooner or calculating several scores at once. For each measurement we gave the FPGA the same three prompts and always checked that it produced exactly the expected replies.
 
 We kept the model architecture, learned weights and fixed-point number format constant throughout. We kept the FPGA clock at 50 MHz through experiment 23, so the circuit had to fit the same work into fewer ticks to finish sooner. In the last experiment we changed the clock itself.
 
-For each prompt, we measured how long the board took to deliver the first token (*time to first token*, or TTFT), then how quickly the rest of the reply arrived (*decode speed*, in tokens per second) and finally the average energy per output token.
-
-We estimated energy per token from the K26 module’s power readings.[@kv260-power]
+For each prompt, we measured how long the board took to deliver the first token (*time to first token*, or TTFT), then how quickly the rest of the reply arrived (*decode speed*, in tokens per second) and finally the average energy per output token from the K26 module’s power readings.[@kv260-power]
 
 <details>
 <summary>How did we measure speed and energy use?</summary>
+
+Each experiment had its own baseline. For experiment 1, we used the original setup, where the CPU picked the next token. For later experiments, the baseline was the best setup we had up to that point, often from the previous experiment. We tested the baseline and the modified setup in adjacent runs on the same KV260 board. 
 
 We kept the weights loaded, started each prompt with an empty KV cache and ran one request at a time. The three fixed prompts were `Hello`, a six-byte gibberish prompt and a 48-byte prompt. Each point in the graph combines results from all three prompts. After warming up each circuit, to gather statistics we measured six replies per prompt through experiment 14 and eight from experiment 15 onward. The board’s CPU timed each request from just before prompt preparation. Laptop communication and weight loading fall outside that interval.
 
 For time to first token, we average the wait across the measured replies to all three prompts. For decode speed, we count the output tokens after the first in each reply and divide by the total time from first to last token across those replies.
 
 To estimate energy per token, we added up the energy measured across runs of consecutive replies and divided it by the total number of output tokens. The K26 module’s power sensor covers both the CPU and the FPGA. The readings include gaps between requests and time spent checking the answers, so background activity can affect the estimate.
-
-The opening and closing profiles use the same timings. We convert module energy into electricity cost using the UK business average and sterling exchange rate for April–June 2026.[@uk-business-electricity; @uk-sterling-dollar] The memory figures come from the K26’s DDR4 specification.[@our-board-system]
 
 </details>
 
@@ -547,7 +501,7 @@ With three extra DSPs, final scoring took a little over a quarter of the clock c
 
 Would doubling the lanes again give us another gain? We built an eight-lane scoring circuit and compared it directly with the four-lane version.
 
-Four more DSPs and four more independently readable banks of weights let us score eight possible tokens together. That nearly halved the time spent on final scoring. By now, though, the FPGA spent most of each prediction in the earlier stages of the transformer. Decode speed rose only from 498 to 505 tokens per second. We kept the eight lanes and turned to those earlier stages.
+Four more DSPs and four more independently readable banks of weights let us score eight possible tokens together. Final scoring fell from 3,040 to 1,680 clock ticks. Across the whole model, decode speed rose from 498 to 505 tokens per second, about 1.4%. The FPGA was already spending most of each prediction in earlier stages of the transformer. We kept the eight lanes and turned to those earlier stages.
 
 <!-- scene: measure-feedforward-divide -->
 
@@ -610,13 +564,15 @@ In [experiment 5](#fpga-measure-score-pipeline), we saved time by asking for the
 
 We chose the weights that combine the attention heads’ outputs. They fitted in distributed RAM, the small memories we can make from LUTs inside CLBs. Each weight still reached the multiplier on the same clock tick, so each reply took exactly as many cycles as before. What changed was the space we used. We freed one 18-kilobit BRAM block at the cost of 397 extra LUTs.
 
+Even if moving the weights shortened the signal’s journey within a tick, the multiplier still used them at the same time, resulting in no change to inference speed. In the future, we’d like to test whether there is any way that distributed RAM can let us use weights a tick earlier or run the circuit at a faster clock speed.
+
 <!-- scene: measure-exp-pair -->
 
 ### 13. Work on two attention scores at once
 
 **More work per tick**
 
-We returned to the circuit from experiment 11 and let one attention head work on two scores at once. The number of heads stayed the same.
+We returned to the circuit from experiment 11 as a baseline and let one attention head work on two scores at once. The number of heads stayed the same.
 
 We added a second copy of the exponential circuit with its own lookup table. Both circuits could now take a score from the same head, then pass their results into the sum in the original order. At the first position there is only one score. As the KV cache fills, there are more pairs to work on together. Complete replies took about 6% less time on average.
 
@@ -644,7 +600,9 @@ We kept the same weights in DDR4 and changed how we asked for them. We tried kee
 
 First we gave the FPGA room to hold all four weights from a transfer. The multiplier could use them in turn before asking for more. Then we asked for a whole row of 32 weights. The memory controller sent the row in several transfers, but the FPGA only had to send the address once.
 
-For `Hello`, fetching whole rows brought the reply down to 104 ms, compared with 103 ms using BRAM. Most of the delay in experiment 14 had come from repeatedly asking for data.
+Fetching four weights at a time and fetching a whole row transferred the same number of bytes. A whole row took one request where the four-at-a-time version needed eight. With fewer waits for the memory controller to start sending data, we cut about 80% of the extra clock ticks that four-at-a-time DDR4 reads added over BRAM. For `Hello`, fetching whole rows brought the reply down to 104 ms, compared with 103 ms using BRAM.
+
+This matters because DDR4 has room for the weights of a much larger model. It could also hold a larger KV cache for longer prompts and replies. Here we tested one set of attention weights. We’d like to see how fast we can keep the arithmetic going when more of the weights and cache have to be fetched from DDR4.
 
 <!-- scene: measure-ddr-scores -->
 
@@ -712,7 +670,7 @@ Normalisation adjusts the scale of the model’s working numbers. It squares eac
 
 We let all three normalisation stages share one fast multiplier. They already ran at different times, so we expected one multiplier to keep up with all three.
 
-The first stage runs before attention, the second before the feed-forward block and the last before scoring. Whichever stage was active sent its two numbers to the shared multiplier and collected the product. The other stages had no multiplication waiting. Each reply took exactly the same number of FPGA clocks as before, and the whole design used 57 DSPs instead of 89.
+The first stage runs before attention, the second before the feed-forward block and the last before scoring. Whichever stage was active sent its two numbers to the shared multiplier and collected the product. The other stages had no multiplication waiting. Each reply took exactly the same number of FPGA clocks as before, and the whole design used 57 DSPs instead of 89. This simple change freed up more than a third of the DSP blocks we had been using, making them available for other calculations. We plan to take this further by finding other stages that need the same kind of hardware at different times.
 
 <!-- scene: measure-projection-reads -->
 
@@ -724,7 +682,7 @@ We looked for weighted sums that still waited for a read before starting the nex
 
 In attention, we fetched the next input and weight while adding the current product. The model reads weights to calculate the query, key and value. Later it reads another set of weights to combine the heads’ outputs. Reading ahead helped at both points. We tried the same change in the two weighted sums at the start of the feed-forward block. Those sums already ran alongside other calculations, so finishing them sooner barely changed when the block could move on.
 
-The separate simulations showed that nearly all the saving came from attention. With the changes combined on the board, complete replies took 8–10% less time, using the same DSPs.
+The separate simulations showed that attention accounted for over 99% of the ticks saved. When we combined the changes on the board, the number of ticks saved matched what the simulations predicted. Complete replies took 8–10% less time, using the same DSPs.
 
 <!-- scene: measure-value-pair -->
 
@@ -746,22 +704,41 @@ The design used one more DSP and the same amount of BRAM. Complete replies took 
 
 Until now we had kept the clock at 50 MHz and tried to do the work in fewer ticks. For the last experiment we kept exactly the circuit from experiment 23 and turned up its clock.
 
-At 52.63 MHz the time between ticks fell from 20 to 19 nanoseconds. Each reply took exactly the same number of ticks, so it finished about 5% sooner. The module drew slightly more power while it worked, but used 4.6% less energy per output token across the three prompts.
+At 52.63 MHz the time between ticks fell from 20 to 19 nanoseconds. Each reply took exactly the same number of ticks, so it finished about 5% sooner. The module drew slightly more power while it worked. It drew that power for less time, so it used 4.6% less energy per output token across the three prompts.
 
 Could we go faster still? At 62.5 MHz a signal would have only 16 nanoseconds to pass through the logic and reach the next flip-flop. Vivado’s timing check found that the slowest path would miss that deadline even after it tried a different layout. We kept that setting off the board.
 
-Our first 23 experiments kept the FPGA clock at 50 MHz. Once the FPGA chose each token itself, it could start the next prediction without waiting for the CPU. We shortened multiplication and division, read the next weight while adding the current product and calculated several scores side by side. With fewer clock ticks between tokens, decode speed rose from 205 to 805 tokens per second across our three prompts by experiment 13. Later, fetching whole rows from DDR4 let us trade a little speed for room on the chip, and sharing a multiplier freed DSPs without costing a clock. By experiment 22, the board could finish its reply to `Hello` in 75 ms. Mixing two coordinates of each cached value in parallel and then shortening the clock cycle brought that down to 68 ms. The model gave exactly the same replies.
+Our first 23 experiments kept the FPGA clock at 50 MHz. Once the FPGA chose each token itself, it could start the next prediction without waiting for the CPU. We shortened multiplication and division, read the next weight while adding the current product and calculated several scores side by side. With fewer clock ticks between tokens, decode speed rose from 205 to 805 tokens per second across our three prompts by experiment 13. Later, moving the scoring weights to DDR4 freed BRAM, and sharing a multiplier freed DSPs without costing a clock tick. By experiment 22, the board could finish its reply to `Hello` in 75 ms. Mixing two coordinates of each cached value in parallel and then shortening the clock cycle brought that down to 68 ms. The model gave exactly the same replies.
+
+<!-- scene: final-profile -->
+
+### The same FPGA, after 24 experiments
+
+The same board now generates nearly six times as many tokens each second. Each joule now buys about six times as many output tokens. The board has the same memory and the same reconfigurable logic.
+
+<!-- scene: final-profile-notes -->
+
+<details>
+<summary>How to read this chart</summary>
+
+Further out means better on each axis, including a shorter wait for the first token. Each step between rings changes the value by the same factor on that axis.
+
+Memory bandwidth is the DDR4 interface’s peak rate. Weight capacity assumes all 4 GB of DDR4 are used for 16-bit weights.
+
+The electricity estimate covers the K26 module during the tests. From April to June 2026, UK businesses paid an average of 24.51p per kWh.[@uk-business-electricity] The average exchange rate was US$1.3431 per pound.[@uk-sterling-dollar] At those rates, US$1 buys about 10.94 million joules. Divide that by the energy used per output token to get the figures above.
+
+</details>
 
 <!-- scene: chip-choices -->
 
-### Choosing a chip for inference
+As we continue to run more experiments, we’ll soon benchmark other chips in a similar way, in order to have easy side-by-side comparisons of their various characterisitics.
 
-These charts use the same axes as above. We measured inference on our FPGA and estimated speed and energy for its Arm CPU, the NVIDIA H100 and Google’s TPU v5e using the same model and prompts.
+<!-- scene: outlook-trends -->
 
-Our FPGA and CPU share DDR4 memory.[@our-board-system; @our-board-processors] The H100 and TPU each have their own high-bandwidth memory.[@h100-memory; @tpu-v5e-memory] The charts show peak memory bandwidth and how many `16-bit` weights would fill the memory. In practice, each request also needs room for a KV cache that grows with the prompt and reply.
+### Outlook
 
-With an FPGA, we can change what the logic blocks do and how they connect. CPUs, GPUs and TPUs have fixed circuitry, ranging from general-purpose designs to chips specialised for neural network maths.[@fpga-asic; @cpu-gpu]
+We built a tiny transformer so we could keep its answers fixed and change the machine underneath it. GPT-6 Astra ran iteration after iteration of new experiments, thinking of a possible improvements in between - which we helped guide. Each experiment took roughly 1 hour. It re-wrote circuit changes and ran the same checks over and over. After improvements in parallelisation, memory access and circuit recyling, the same FPGA improved its TTFT, decode speed and energy efficiency each by roughly a factor 6.
 
-We built a transformer that tells chip jokes so we could keep its answers fixed and change the machine underneath it. AI helped us write circuit changes and run the same checks over and over. We could try two ways to mix a cached value, check both against the software model and let the board tell us which was faster. Across our three prompts, the same FPGA went from 205 to 1,222 tokens per second and gave the same replies.
+As you can see from the final data, all trendlines still continue and we don’t know where those curves will plateau. Our next steps are to keep suggesting and trying new improvements, until we have squeezed every token we can out of this FPGA for our model. Once that has maxed out, we’ll try the largest model we can run on this board. We could try Qwen3.5-0.8B or a decision model such as OneJev1.6-0.8B.[@qwen-35-small; @onejev-16-small] We’ll optimise it using a similar strategy as we just did, then run the same model and prompts on other chips to compare. As we move to larger models, we will need to look for more places to share hardware and optimize how DDR4 can supply weights and the KV cache to the FPGA.
 
-We still don’t know where those curves flatten. We’ll keep changing one part at a time to see when the wait for the first token, the speed of the reply and the energy per token stop improving by more than we see between repeat runs. Then we’ll try the largest model we can run on this board. One candidate is the text part of Qwen3.5-0.8B.[@qwen-35-small] We’ll optimise it and run the same model and prompts on other chips. Then we can replace the grey estimates above with measurements.
+Over time we will update this article as we refine our experiments and start running more useful models.

@@ -8,11 +8,10 @@
   margin: 1rem auto 3rem;
   color: var(--fpga-ink);
 }
-.kv-profile-final { margin-block: 3rem; }
+.kv-profile-final { margin-block: 3rem 1.5rem; }
 .kv-profile-final .kv-profile-copy { align-self: start; }
 .kv-profile-plot { width: 100%; max-width: 43rem; margin: 0 auto; }
-.fpga-article .kv-profile-final .kv-profile-plot,
-.fpga-article .kv-chip-section .kv-chip-profiles {
+.fpga-article .kv-profile-final .kv-profile-plot {
   inline-size: 100%;
   max-inline-size: 30rem;
   margin-inline: auto;
@@ -22,11 +21,24 @@
 .kv-profile-before, .kv-profile-after { stroke-linejoin: round; stroke-width: 2.3; }
 .kv-profile-before { fill: color-mix(in srgb, var(--fpga-muted) 8%, transparent); stroke: var(--fpga-muted); stroke-dasharray: 4 3; }
 .kv-profile-after { fill: color-mix(in srgb, var(--profile-accent) 12%, transparent); stroke: var(--profile-accent); }
-.kv-profile svg text { fill: var(--fpga-ink); font: 550 14px var(--font-body); }
-.kv-profile svg .kv-profile-value { fill: var(--fpga-muted); font-weight: 450; }
+.kv-profile svg text {
+  fill: var(--fpga-ink);
+  font: var(--weight-heading) 15.5px var(--font-title);
+}
+
+.kv-profile svg .kv-profile-value,
+.kv-profile svg .kv-profile-new-value {
+  font: 500 14px var(--font-code);
+}
+
+.kv-profile svg .kv-profile-value { fill: var(--fpga-muted); }
 .kv-profile svg .kv-profile-new-value { fill: var(--profile-accent); font-weight: 650; }
+
+.kv-profile-unit {
+  font: 500 .86em var(--font-body);
+}
 .kv-profile-copy { align-self: center; font: 400 1rem/1.5 var(--font-body); }
-.kv-profile h2 { margin: 0; font: 500 clamp(1.3rem, 2vw, 1.8rem)/1.15 var(--font-title); }
+.kv-profile h2, .kv-profile-final h3 { margin: 0; font: 500 clamp(1.3rem, 2vw, 1.8rem)/1.15 var(--font-title); }
 .kv-profile-copy p { margin: .8em 0; }
 .kv-profile-key { display: flex; flex-wrap: wrap; gap: .35rem 1rem; font-size: .9rem; }
 .kv-profile-key span::before { content: ""; width: 1.6em; display: inline-block; margin-right: .4em; vertical-align: middle; border-top: 2px dashed var(--fpga-muted); }
@@ -34,6 +46,25 @@
 .kv-profile-cost, .kv-profile details { font-size: .92rem; }
 .kv-profile summary { cursor: pointer; }
 .kv-profile details a { text-decoration: underline; }
+
+.kv-profile-opening {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  text-align: center;
+}
+
+.kv-profile-opening .kv-profile-plot {
+  max-width: 32rem;
+  justify-self: center;
+  margin-inline: auto;
+}
+.kv-profile-opening figcaption { margin-top: 1.125rem; }
+.kv-profile-opening h2 { font-size: clamp(1.04rem, 1.5vw, 1.25rem); }
+
+@media (orientation: landscape) and (max-height: 540px) {
+  .kv-profile-opening .kv-profile-plot { max-width: min(32rem, 105svh); }
+}
+
 @media (max-width: 760px) {
   .kv-profile { grid-template-columns: 1fr; gap: .6rem; }
   .kv-profile-plot { max-width: 32rem; }
@@ -43,15 +74,29 @@
   .kv-profile svg text { font-size: 17px; }
 }
 
-.kv-chip-section { margin: 3rem 0; scroll-margin-top: 2rem; }
-.kv-chip-section .kv-chip-text { font: 400 1rem/1.55 var(--font-body); }
-.kv-chip-text p, .kv-profile-final .kv-profile-copy > p:not(.kv-profile-cost) {
+.kv-chip-section, .fpga-outlook-trends { scroll-margin-top: 2rem; }
+.kv-chip-section { margin-block: 1.5rem 2.25rem; }
+.fpga-outlook-trends { margin-block: 2.25rem 3rem; grid-template-areas: "chart text"; }
+.fpga-outlook-trends .kv-chip-text { grid-area: text; }
+.fpga-outlook-trends .fpga-measurement-stage {
+  grid-area: chart;
+  padding-block-start: 0;
+}
+.fpga-outlook-trends .fpga-measurements-grid {
+  grid-template-rows: clamp(6.5rem, 21dvh, 12rem) auto;
+}
+.kv-chip-section .kv-chip-text { max-inline-size: 68ch; }
+.kv-chip-text p, .kv-profile-final .kv-profile-summary > p {
   margin: 0 0 1.3rem;
   font-size: 1.12rem;
   line-height: 1.75;
   color: var(--fpga-prose);
 }
-.kv-profile-final h2 { margin-bottom: 1rem; letter-spacing: -.035em; }
+.kv-profile-final h3, .fpga-outlook-trends h3 {
+  margin: 0 0 1rem;
+  font: 500 clamp(1.3rem, 2vw, 1.8rem)/1.15 var(--font-title);
+  letter-spacing: -.035em;
+}
 .kv-chip-text summary { cursor: pointer; }
 .kv-chip-text table { width: 100%; border-collapse: collapse; }
 .kv-chip-profiles {
@@ -76,12 +121,15 @@
   gap: clamp(.5rem, 2vw, 1.25rem);
 }
 .kv-chip-section .kv-chip-profiles svg { max-inline-size: 11rem; margin: 0 auto; }
+@media (min-width: 760px) {
+  .kv-chip-section .kv-chip-profiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
 @media (max-width: 899px) and (min-height: 621px), (max-width: 639px) {
-  .kv-chip-section .kv-chip-text, .kv-profile-final .kv-profile-copy {
+  .kv-profile-final .kv-profile-copy {
     max-width: 38rem;
-    margin: 1.8rem auto 0;
+    margin: .9rem auto 0;
   }
-  .kv-chip-text p, .kv-profile-final .kv-profile-copy > p:not(.kv-profile-cost) {
+  .kv-chip-text p, .kv-profile-final .kv-profile-summary > p {
     font-size: 1.08rem;
     line-height: 1.7;
   }

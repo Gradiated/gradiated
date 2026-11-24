@@ -780,6 +780,23 @@ html:has(.fpga-article) {
 .fpga-cache-cell[data-sign="1"] {
   fill: color-mix(in srgb, var(--color-signal-green) 65%, var(--fpga-ink));
 }
+.fpga-cache-sign-key,
+.fpga-cache-sign-key > span {
+  display: inline-flex;
+  align-items: center;
+}
+.fpga-cache-sign-key {
+  gap: 0.6rem;
+}
+.fpga-cache-sign-key > span {
+  gap: 0.25rem;
+}
+@media (max-width: 899px) {
+  .fpga-cache-sign-key {
+    flex-basis: 100%;
+    justify-content: center;
+  }
+}
 .fpga-cache-cells > g {
   opacity: 0.68;
   transition: opacity 170ms ease-out;
@@ -879,7 +896,20 @@ html:has(.fpga-article) {
   }
 }
 
-.fpga-token-feedback [data-paused="true"] .fpga-data-transfer {
+.fpga-token-burst > .fpga-signal {
+  animation: fpga-token-flash 400ms ease-in-out infinite both;
+}
+.fpga-token-burst > .fpga-signal:nth-child(2) {
+  animation-delay: 100ms;
+}
+.fpga-token-burst > .fpga-signal:nth-child(3) {
+  animation-delay: 200ms;
+}
+@keyframes fpga-token-flash {
+  0%, 25%, 100% { opacity: 0; }
+  8%, 17% { opacity: 1; }
+}
+.fpga-token-feedback [data-paused="true"] :is(.fpga-data-transfer, .fpga-token-burst > .fpga-signal) {
   animation-play-state: paused;
 }
 .fpga-token-output {
@@ -3374,6 +3404,13 @@ html:has(.fpga-article) {
   letter-spacing: -.025em;
   text-wrap: balance;
   margin: 0 0 .8rem;
+}
+.fpga-scene[id^="fpga-measure-"] h3 + p > strong:only-child {
+  display: block;
+  color: var(--fpga-muted);
+  font: 800 .875rem/1.4 var(--font-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
 }
 @media (max-width: 899px) {
   .fpga-measurement-stage {

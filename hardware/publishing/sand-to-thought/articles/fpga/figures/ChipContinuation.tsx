@@ -58,6 +58,17 @@ export const isLaterScene = (scene: string) =>
 export const networkChipCamera = [20, 504, 0.115] as const;
 export const bramBlock = { x: 508, y: 124, w: 136, h: 72 };
 export const dspBlock = { x: 508, y: 244, w: 136, h: 72 };
+const configurationBlock = { x: 508, y: 364, w: 136, h: 72 };
+const [chipCentreX, chipCentreY] = [382, 280] as const;
+const boardChipCamera = [390, 280, 0.22] as const;
+const [boardChipX, boardChipY, boardChipScale] = boardChipCamera;
+
+export const boardConfigurationInput = {
+  x: boardChipX +
+    (configurationBlock.x + configurationBlock.w / 2 - chipCentreX) * boardChipScale,
+  y: boardChipY +
+    (configurationBlock.y + configurationBlock.h - chipCentreY) * boardChipScale,
+};
 
 export const hasNeuronReference = (scene: string) =>
   scene === "neuron-hardware" || scene === "neuron" || scene === "neuron-next";
@@ -80,8 +91,8 @@ const worldCameras: Record<string, readonly [number, number, number]> = {
   "network-layers": networkChipCamera,
   "network-sum": networkChipCamera,
   "network-products": networkChipCamera,
-  "our-board": [390, 280, 0.22],
-  "board-request": [390, 280, 0.22],
+  "our-board": boardChipCamera,
+  "board-request": boardChipCamera,
   simulate: [280, 190, 0.52],
   "token-journey": [410, 267, 0.34],
   "built-in-timers": [408, 260, 0.34],
@@ -114,13 +125,13 @@ const overviews: Record<string, string> = {
   "clock-network":
     "One clock distribution block sends clock edges along curved dotted paths to the flip-flops in all nine CLBs. These paths represent a dedicated on-chip clock network, separate from data routing.",
   "resources-map":
-    "The same chip map expands to reveal a dedicated block RAM resource.",
+    "The same chip map expands to reveal a dedicated BRAM resource.",
   "arithmetic-map":
-    "Return to the map and reveal dedicated DSP arithmetic alongside block RAM.",
+    "Return to the map and reveal dedicated DSP arithmetic alongside BRAM.",
   "resources-together":
-    "Return from the DSP close-up to the familiar three-by-three CLB map, with block RAM, DSP and configuration circuitry in their established positions.",
+    "Return from the DSP close-up to the familiar three-by-three CLB map, with BRAM, DSP and configuration circuitry in their established positions.",
   "resource-columns":
-    "The same chip expands to reveal repeated columns of CLBs, block RAM and DSP resources. This is a schematic resource pattern, not the exact floor plan or resource count of our KV260. Different resource types have different heights.",
+    "The same chip expands to reveal repeated columns of CLBs, BRAM and DSP resources. This is a schematic resource pattern, not the exact floor plan or resource count of our KV260. Different resource types have different heights.",
   "neuron-map":
     "Our tiny transformer repeatedly predicts a token. The same FPGA remains in the corner while we explore the model.",
   "network-layers":
@@ -129,9 +140,9 @@ const overviews: Record<string, string> = {
     "Zoom into one learned weighted sum before mapping its arithmetic onto FPGA resources.",
   "neuron-hardware":
     "BRAM supplies input numbers and weights. CLB control selects each pair for a shared DSP to multiply and accumulate.",
-  pins: "An input pin signals a CLB to request numbers from block RAM. The numbers travel from block RAM to the DSP, which updates the running total and sends the result to an output pin.",
+  pins: "An input pin signals a CLB to request numbers from BRAM. The numbers travel from BRAM to the DSP, which updates the running total and sends the result to an output pin.",
   "memory-roles":
-    "Configuration settings, working state and block RAM data have different jobs.",
+    "Configuration settings, working state and BRAM data have different jobs.",
   "map-and-route":
     "The pulse circuit is assigned to CLBs and connected using existing tracks.",
   configure:
@@ -139,14 +150,14 @@ const overviews: Record<string, string> = {
   "running-parameters":
     "Changing a working width value leaves the configured circuit in place.",
   "transformer-cache-map":
-    "Return from the DSP to the FPGA map, with the block RAM that holds our KV cache highlighted.",
+    "Return from the DSP to the FPGA map, with the BRAM that holds our KV cache highlighted.",
   "cpu-and-fpga":
     "CPU software exchanges parameters and results with the same configured FPGA.",
 };
 const locations: Record<Focus, string> = {
   chip: "Whole FPGA",
   system: "FPGA › Circuit using BRAM, DSP and logic",
-  memory: "FPGA › Block RAM",
+  memory: "FPGA › BRAM",
   arithmetic: "FPGA › DSP arithmetic",
   circuit: "FPGA › Circuit using logic and registers",
 };
@@ -193,7 +204,7 @@ export const continuationTransform = (view: Continuation) => {
 
   if (view.camera) {
     const [x, y, scale] = view.camera;
-    return `matrix(${scale}, 0, 0, ${scale}, ${x - scale * 382}, ${y - scale * 280})`;
+    return `matrix(${scale}, 0, 0, ${scale}, ${x - scale * chipCentreX}, ${y - scale * chipCentreY})`;
   }
 
   const bounds =
@@ -251,10 +262,7 @@ const ConfigurationBlock = ({
     }}
   >
     <Block
-      x={508}
-      y={364}
-      w={136}
-      h={72}
+      {...configurationBlock}
       label="Configuration"
       kind="config"
       active={active}

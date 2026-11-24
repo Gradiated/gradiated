@@ -53,7 +53,12 @@ export function ChipComparisonProfiles({ compact = false }: { compact?: boolean 
             <small>{specs ? "Illustrative estimate · unmeasured" : "Inference measured · experiment 24"}</small>
           </figcaption>}
           <ProfilePlot title={compact ? `${kind} · ${name}, ${specs ? "illustrative estimate" : "inference measured"}` : name} specs={specs} compact={compact} />
-          {compact && <figcaption>{name}</figcaption>}
+          {compact && (
+            <figcaption>
+              {name}
+              {specs && <small>(placeholder)</small>}
+            </figcaption>
+          )}
         </figure>
       ))}
     </div>

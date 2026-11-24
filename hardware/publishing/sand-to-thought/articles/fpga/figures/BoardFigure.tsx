@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { useApplicationMotion } from "./ApplicationEnvironments";
+import { boardConfigurationInput } from "./ChipContinuation";
 import { Block, Label, Wire } from "./drawing";
 import "./board.css";
 
@@ -86,6 +87,10 @@ const tokenRoute = wirePath([
   [326, 266.8],
   fpga,
 ]);
+const { x: configurationX, y: configurationY } = boardConfigurationInput;
+const configurationRoute =
+  wirePath([...ddrWire].reverse()) +
+  `V350H245C266 350 275 332 302 332H${configurationX - 14}Q${configurationX} 332 ${configurationX} ${configurationY}`;
 const scoresRoute = wirePath([
   fpga,
   [326, 293.2],
@@ -96,9 +101,17 @@ const scoresRoute = wirePath([
 
 type RequestBeat = {
   activity:
-    "firmware" | "linux" | "prompt" | "token" | "scores" | "reply" | "complete";
+    | "firmware"
+    | "linux"
+    | "configure"
+    | "prompt"
+    | "token"
+    | "scores"
+    | "reply"
+    | "complete";
   shown: number;
   duration: number;
+  startupMessage?: string;
   quick?: boolean;
   route?: string;
   forwardToken?: boolean;
@@ -110,11 +123,12 @@ const requestReply =
 const replyLength = requestReply.length;
 const replyRoute = wirePath([...promptRoute].reverse());
 
-const bootBeats: readonly RequestBeat[] = [
+const startupBeats: readonly RequestBeat[] = [
   {
     activity: "firmware",
     shown: 0,
     duration: 1050,
+    startupMessage: "Read firmware from boot flash.",
     route: wirePath([
       ...[...flashWire].reverse(),
       [209, 328],
@@ -125,6 +139,7 @@ const bootBeats: readonly RequestBeat[] = [
     activity: "linux",
     shown: 0,
     duration: 1450,
+    startupMessage: "Load Linux from microSD into DDR4. Arm runs it from there.",
     route: wirePath([
       ...[...sdWire].reverse(),
       [110, 336],
@@ -134,10 +149,16 @@ const bootBeats: readonly RequestBeat[] = [
       ...controllerToCpu,
     ]),
   },
+  {
+    activity: "configure",
+    shown: 0,
+    duration: 1800,
+    startupMessage: "Linux starts the load. The bitstream moves from DDR4 into the FPGA.",
+    route: configurationRoute,
+  },
 ];
 
 const requestBeats: readonly RequestBeat[] = [
-  ...bootBeats,
   {
     activity: "prompt",
     shown: 0,
@@ -167,6 +188,7 @@ const requestBeats: readonly RequestBeat[] = [
   }).flat(),
   { activity: "complete", shown: replyLength, duration: 3900 },
 ];
+const lectureRequestBeats = [...startupBeats, ...requestBeats];
 
 export const BoardFigure = ({
   request,
@@ -179,11 +201,14 @@ export const BoardFigure = ({
   const [step, setStep] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
   const playing = request && running && !reducedMotion;
-  const slowdown = lecture ? 3 : 1;
-  const { activity, shown, duration, quick, route, forwardToken } =
-    requestBeats[step];
-  const nextStep =
-    step === requestBeats.length - 1 ? bootBeats.length : step + 1;
+  const beats = lecture ? lectureRequestBeats : requestBeats;
+  const {
+    activity, shown, duration, quick, route, forwardToken, startupMessage,
+  } = beats[step];
+  const articleSlowdown = quick ? 1.25 : 1.6;
+  const slowdown = lecture ? 3 : articleSlowdown;
+  const firstPrompt = lecture ? startupBeats.length : 0;
+  const nextStep = step === beats.length - 1 ? firstPrompt : step + 1;
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -208,10 +233,8 @@ export const BoardFigure = ({
   const staticRequest = request && reducedMotion;
   const loadingFirmware = request && !staticRequest && activity === "firmware";
   const loadingLinux = request && !staticRequest && activity === "linux";
-  const startupMessage = loadingFirmware
-    ? "Read firmware from boot flash."
-    : "Load Linux from microSD into DDR4. Arm runs it from there.";
-  const startingUp = loadingFirmware || loadingLinux;
+  const startingUp = request && !staticRequest && startupMessage !== undefined;
+  const configuring = startingUp && activity === "configure";
   const prompt = request && activity === "prompt";
   const replying = request && activity === "reply";
   const sendingToken = request && (activity === "token" || forwardToken);
@@ -259,7 +282,12 @@ export const BoardFigure = ({
         <Wire d={wirePath(flashWire)} active={loadingFirmware} />
         <Wire d={wirePath(sdWire)} active={loadingLinux} />
         <Block x={75} y={320} w={170} h={32} label="Controllers" />
-        <Block x={65} y={400} w={170} h={38} label="DDR4 RAM" kind="memory" />
+        <Block
+          x={65} y={400} w={170} h={38}
+          label="DDR4 RAM"
+          kind="memory"
+          active={configuring}
+        />
         <Block
           x={335}
           y={400}
@@ -277,9 +305,12 @@ export const BoardFigure = ({
       </g>
 
       <Wire d={ethernetToControllers} active={networkActive} />
-      <Wire d={cpuToControllers} active={networkActive || startingUp} />
+      <Wire
+        d={cpuToControllers}
+        active={networkActive || loadingFirmware || loadingLinux}
+      />
       <Block x={15} y={131} w={110} h={32} label="Ethernet" />
-      <Block x={75} y={250} w={110} h={50} label="CPU" />
+      <Block x={75} y={250} w={110} h={50} label="CPU" active={configuring} />
       <g className="fpga-board-data">
         <Wire d={tokenPath} active={staticRequest || sendingToken} />
         <Wire d={scoresPath} active={staticRequest || returningScores} />
@@ -291,6 +322,14 @@ export const BoardFigure = ({
           Scores
         </Label>
       </g>
+
+      {configuring && (
+        <path
+          d={configurationRoute}
+          className="fpga-signal fpga-config-signal"
+          aria-hidden="true"
+        />
+      )}
 
       <g className="fpga-board-laptop">
         <g className="fpga-world-equipment">

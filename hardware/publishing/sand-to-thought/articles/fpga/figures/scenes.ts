@@ -27,6 +27,13 @@ export const measurementScenes = [
 export const measurementStepFor = (scene: string) =>
   measurementScenes.findIndex((key) => key === scene);
 
+export const closingSceneKeys = [
+  "final-profile",
+  "final-profile-notes",
+  "chip-choices",
+  "outlook-trends",
+] as const;
+
 export const groups = [
   [
     ...openingSceneKeys,
@@ -51,7 +58,7 @@ export const groups = [
   ],
   ["pins", "memory-roles", "our-board", "board-request"],
   ["transformer-cache-map", "transformer-cache", "token-journey"],
-  ["chip-choices"],
+  closingSceneKeys,
   [...measurementScenes, ...Object.keys(laterComparisons)],
 ] as const;
 

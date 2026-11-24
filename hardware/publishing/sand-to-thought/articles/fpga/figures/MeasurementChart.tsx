@@ -39,7 +39,13 @@ function experimentLabel(index: number) {
   return index === 0 ? experimentNumbers[0] : `Experiment ${experimentNumbers[index]}`
 }
 
-export function MeasurementChart({ step }: { step: number }) {
+export function MeasurementChart({
+  step,
+  overview = false,
+}: {
+  step: number
+  overview?: boolean
+}) {
   const current = history[step]
   if (!current) return null
 
@@ -48,9 +54,11 @@ export function MeasurementChart({ step }: { step: number }) {
 
   return (
     <figure className="fpga-measurements" aria-label="Measured on one KV260">
-      <figcaption className="fpga-measurements-caption">
-        {experimentLabel(step)}{current.value ? "" : " · Board measurements pending"}
-      </figcaption>
+      {!overview && (
+        <figcaption className="fpga-measurements-caption">
+          {experimentLabel(step)}{current.value ? "" : " · Board measurements pending"}
+        </figcaption>
+      )}
       <div className="fpga-measurements-readings">
         {metrics.map(metric => (
           <div key={metric.key} data-metric={metric.key}>
@@ -72,7 +80,9 @@ export function MeasurementChart({ step }: { step: number }) {
           </div>
         ))}
         <div className="fpga-measurements-plot">
-          <div className="fpga-measurements-cursor" style={{ left: experimentPosition(step) }} />
+          {!overview && (
+            <div className="fpga-measurements-cursor" style={{ left: experimentPosition(step) }} />
+          )}
           {metrics.map(metric => candidates.map(({ runId, value }, index) => value && (
             <span
               key={`${metric.key}-${runId}-${index}`}

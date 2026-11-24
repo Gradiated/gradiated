@@ -4,8 +4,8 @@ author: Charley Carriero
 description: "Why care about looped transformers?"
 path: /library/inkling-2-mini/
 category: notes
-status: draft
-publishedAt: "2026-11-23"
+status: published
+publishedAt: "2026-11-24"
 image: /brand/library/inkling-2-mini.jpg
 ---
 
@@ -35,7 +35,7 @@ The pitch emphasizes that Inkling 2 Mini is uniquely capable for its size, and i
 
 ## Inkling in action
 
-The demo in the official announcement is fun and impressive. They run the model on a MacBook Pro in airplane mode up on an actual flight, and ask it to build a simple flight simulator. It does! You can even play it on the announcement page.
+The demo in the official announcement is fun and impressive. They run the model on a MacBook Pro in airplane mode up on an actual flight, and ask it to build a simple flight simulator. It does! You can even play it on the [announcement page](https://thinkingmachines.ai/news/inkling-2-mini/).
 
 While it's nice to see the _what can be done on a laptop_ frontier move forward, Inkling is more of an offering to the research community than it is to product developers. Thinking Machines invites researchers to use the model to study the monitorability of looping models.
 
@@ -59,7 +59,7 @@ The model has 24 layers that are grouped into four blocks of six. The looping pa
 
 The idea here is that the middle blocks are where abstract reasoning likely happens. This is an intuition, but it's based on an understanding that since the first layer input is a token embedding and the last layer output is a ranking of likely tokens, the outer layers in general do more translating between embeddings and internal representations than reasoning.
 
-They did test this intuition, and looping through only the middle layers beats looping through the later layers on 27 of 28 of their tests. The result here is a model that computes through 48 layers but only stores 24.
+They did test this intuition, and looping through only the middle layers beats looping through the later layers on 27 of 28 of their tests. The result here is a model that computes through 48 layers but only needs to store 24.
 
 #### A research model with adjustable loop depth
 
@@ -67,7 +67,7 @@ Thinking Machines also published a research model called [TML-d24-varloop-resear
 
 It's quite cool to see that for tasks that require reasoning, adding more loops actually does improve the model's performance. On knowledge-based tasks, like closed-book factual recall benchmarks, looping has little to no improvement. This is obviously expected, but satisfying to see empirically.
 
-What's particularly noticeable is the improvement looping makes on the model's ability to _find_ information. [BrowseComp](https://openai.com/index/browsecomp/) is a benchmark from OpenAI that tests an agent's ability to locate hard-to-find information. Using search and tools effectively is a core agent task, and looping appears to have a big effect.
+What's particularly noticeable is the improvement looping makes on the model's ability to _find_ information. [BrowseComp](https://openai.com/index/browsecomp/) is a benchmark from OpenAI that tests an agent's ability to locate hard-to-find information on the web. Using search and tools effectively is a core agent task, and looping appears to have a big effect.
 
 <LoopsChart />
 

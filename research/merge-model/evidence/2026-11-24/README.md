@@ -88,3 +88,12 @@ Starting from the merged `pooled-control` checkpoint (`checkpoint-011839`, 681/1
 - **Forward DuckDB conflicts (`duckdb`, 1,000 conflicts, 329 merges):** `682/1,000` (68.20%) vs. `681/1,000` (68.10%); +18 / −17, **+0.10 pp** (95% CI −1.23 to +1.28), 0 malformed, 0 abstentions.
 
 [Epoch-1 post-merge LoRA metrics and paired intervals](post-merge-lora-epoch1.json)
+
+### Arm 2 — Pre-cutoff DuckDB commit diffs + historical DuckDB conflicts LoRA
+
+Starting from the same merged `pooled-control` base (`681/1,000` DuckDB, `4,399/6,398` others), a rank-32 LoRA (`lr=1e-4`) trained on 2,500 strictly pre-cutoff DuckDB commit diffs (`5,070,993` tokens, all timestamps `< 1595239541`) plus 314 strictly pre-cutoff DuckDB merge conflicts (`sft_weight=0.5`, zero UID/merge overlap with `duck-forward`) and non-DuckDB merge KL anchoring (`kl_weight=2.5`) preserved unrelated merge accuracy while showing no gain on forward DuckDB conflicts:
+
+- **Epoch 1 (104 steps):** `duckdb` 675/1,000 (67.50%, +25/−31, −0.60 pp, 95% CI −2.24 to +1.08); `others` 4,372/6,398 (68.33%, +98/−125, −0.42 pp, 95% CI −1.00 to +0.18).
+- **Epoch 3 (312 steps):** `duckdb` 673/1,000 (67.30%, +32/−40, −0.80 pp, 95% CI −2.98 to +1.47); `others` 4,394/6,398 (68.68%, +117/−122, −0.08 pp, 95% CI −0.57 to +0.47).
+
+[Arm 2 commit-diff paired counts and intervals](arm2-commit-diff.json)

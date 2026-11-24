@@ -10,6 +10,7 @@ import {
   Substrate,
 } from "../components/design";
 import { libraryStories } from "../library-stories";
+import { CONSOLE_BASE_URL } from "../urls";
 import { ModelRoadmap } from "./ModelRoadmap";
 import "../styles/index.css";
 import "./home-lab.css";
@@ -30,11 +31,11 @@ export const HomePage = (): ReactElement => (
             the weights so you can run them yourself.
           </p>
           <div className="gr-home-actions">
-            <a className="gr-button gr-button--main" href="#model-roadmap">
-              Explore the model roadmap
+            <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
+              Start Research <Arrow />
             </a>
-            <Link className="gr-button gr-button--secondary" to="/training/">
-              Train a model for your product
+            <Link className="gr-button gr-button--secondary" to="/docs/">
+              View Docs <Arrow />
             </Link>
           </div>
         </div>
@@ -45,26 +46,6 @@ export const HomePage = (): ReactElement => (
 
     <Band>
       <Module index={2}>
-        <section
-          className="gr-lab-training"
-          aria-labelledby="lab-training-title"
-        >
-          <h2 className="gr-heading" id="lab-training-title">
-            Your product deserves its own model.
-          </h2>
-          <div>
-            <p>
-              Give us a workflow you want to move off a frontier model. We use
-              your production traces and codebase to build evals, then
-              post-train an open model for the work your product actually does.
-              You own the weights.
-            </p>
-            <Link className="gr-button gr-button--main" to="/training/">
-              Explore custom training
-            </Link>
-          </div>
-        </section>
-
         <div className="gr-news-head">
           <h2 className="gr-heading">Latest from the lab</h2>
           <a className="gr-link" href="/notes/">
@@ -77,6 +58,22 @@ export const HomePage = (): ReactElement => (
             stories={libraryStories.slice(0, 3)}
           />
         </div>
+
+        <section className="gr-home-cta" aria-labelledby="lab-training-title">
+          <h2 className="gr-heading gr-home-cta-title" id="lab-training-title">
+            Get your own model running
+          </h2>
+          <p className="gr-body gr-muted gr-lab-cta-copy">
+            Bring a workflow and its production traces. We’ll build the evals,
+            train an open model for your task, and help you serve it through the
+            API. You own the weights.
+          </p>
+          <div className="gr-home-actions">
+            <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
+              Start Research <Arrow />
+            </a>
+          </div>
+        </section>
       </Module>
     </Band>
 

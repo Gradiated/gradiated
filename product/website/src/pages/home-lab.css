@@ -18,30 +18,8 @@
   margin: 0;
 }
 
-.gr-lab-training {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-  gap: 1.25rem clamp(1.5rem, 5vw, 5rem);
-  align-items: start;
-  padding-block: clamp(3rem, 7vw, 6rem);
-}
-
-.gr-lab-training .gr-heading {
-  margin: 0;
-  max-width: 15ch;
-}
-
-.gr-lab-training p {
-  max-width: 40ch;
-  margin: 0 0 1.2rem;
-  color: var(--color-text-muted);
-  font: 400 clamp(1.125rem, 1.75vw, 1.3rem)/1.5 var(--font-body);
-}
-
-@media (max-width: 42rem) {
-  .gr-lab-training {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.gr-lab-cta-copy {
+  max-width: 43ch;
 }
 
 .gr-roadmap-table {

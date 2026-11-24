@@ -7,7 +7,11 @@ import {
   type TestDatabase,
 } from "../../../packages/control/test/support/postgres.js";
 import { createFleet } from "../src/fleet.js";
-import { GPU_HOSTS, SERVICES } from "../src/hosts.js";
+import {
+  GPU_HOSTS,
+  RESOLVE_ENROLLMENT_EGRESS_ANNOTATION,
+  SERVICES,
+} from "../src/hosts.js";
 import { createMetrics } from "../src/metrics.js";
 import { pingHost } from "../src/observe.js";
 import { UNREACHABLE_AFTER_MS } from "../src/status.js";
@@ -19,6 +23,105 @@ import {
   gpuHost,
   hostPath,
 } from "./support/fleet.js";
+import { NEW_BUNDLE, NEW_IMAGE, pins } from "./support/simulation.js";
+
+it("refreshes only an opted-in AWS enrollment route and restores MagicDNS after the soak", async () => {
+  const cluster = fakeKubernetes();
+  const at = new Date().toISOString();
+  const { hostBundle } = pins(NEW_IMAGE, NEW_BUNDLE);
+  const original = gpuHost(FIRST, "firstpod");
+  const enrolled = {
+    ...gpuHost(SECOND, "unused"),
+    metadata: {
+      name: `gpu-${SECOND}`,
+      annotations: { [RESOLVE_ENROLLMENT_EGRESS_ANNOTATION]: "true" },
+    },
+    spec: {
+      ...gpuHost(SECOND, "unused").spec,
+      provider: {
+        name: "aws",
+        accountId: "111122223333",
+        region: "us-east-1",
+        availabilityZone: "us-east-1b",
+        ec2InstanceId: "i-0123456789abcdef0",
+      },
+    },
+    status: {
+      rollout: {
+        kind: "enroll",
+        target: { image: NEW_IMAGE, bundle: hostBundle },
+        step: "Verify",
+        result: "Failed",
+        startedAt: at,
+        stepStartedAt: at,
+      },
+    },
+  };
+  cluster.seed(GPU_HOSTS, original);
+  cluster.seed(GPU_HOSTS, enrolled);
+  const lookups: string[] = [];
+  let address: string | undefined = "100.64.0.2";
+  const fleet = createFleet({
+    api: cluster.api,
+    metrics: createMetrics(),
+    ping: async () => ({
+      reachable: false,
+      error: "Connection refused",
+      silent: false,
+    }),
+    enrollmentAddress: async (host) => {
+      lookups.push(host.spec.instanceId);
+      return address;
+    },
+    sync: () => undefined,
+    leading: () => true,
+    log: () => undefined,
+  });
+  const serviceAnnotations = (id: string) =>
+    cluster.read(`${SERVICES}/gpu-${id}`)?.metadata as
+      { annotations?: Record<string, string> } | undefined;
+
+  await fleet.reconcile();
+  expect(lookups).toEqual([]);
+  expect(serviceAnnotations(SECOND)?.annotations).toMatchObject({
+    "tailscale.com/tailnet-fqdn": `gpu-${SECOND}.tail186117.ts.net`,
+  });
+  await cluster.api.mergePatch(`${hostPath(SECOND)}/status`, {
+    status: { rollout: { enrolledAt: at } },
+  });
+  await fleet.reconcile();
+  expect(lookups).toEqual([SECOND]);
+  expect(serviceAnnotations(FIRST)?.annotations).toMatchObject({
+    "tailscale.com/tailnet-fqdn": `gpu-${FIRST}.tail186117.ts.net`,
+  });
+  expect(serviceAnnotations(SECOND)?.annotations).toMatchObject({
+    "tailscale.com/tailnet-ip": "100.64.0.2",
+  });
+  expect(serviceAnnotations(SECOND)?.annotations).not.toHaveProperty([
+    "tailscale.com/tailnet-fqdn",
+  ]);
+
+  address = undefined;
+  await fleet.reconcile();
+  expect(serviceAnnotations(SECOND)?.annotations).toMatchObject({
+    "tailscale.com/tailnet-ip": "100.64.0.2",
+  });
+  expect(serviceAnnotations(SECOND)?.annotations).not.toHaveProperty([
+    "tailscale.com/tailnet-fqdn",
+  ]);
+
+  await cluster.api.mergePatch(`${hostPath(SECOND)}/status`, {
+    status: { rollout: { step: "Uncordon", result: "Succeeded" } },
+  });
+  await fleet.reconcile();
+  expect(lookups).toEqual([SECOND, SECOND]);
+  expect(serviceAnnotations(SECOND)?.annotations).toMatchObject({
+    "tailscale.com/tailnet-fqdn": `gpu-${SECOND}.tail186117.ts.net`,
+  });
+  expect(serviceAnnotations(SECOND)?.annotations).not.toHaveProperty([
+    "tailscale.com/tailnet-ip",
+  ]);
+});
 
 describe("the GPU fleet operator", () => {
   let database: TestDatabase;

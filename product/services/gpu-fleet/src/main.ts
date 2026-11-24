@@ -127,14 +127,6 @@ const leading = () => Date.now() < leaseValidUntil;
 
 const api = inClusterKubernetes();
 const metrics = createMetrics();
-const fleet = createFleet({
-  api,
-  metrics,
-  ping: (instanceId) => pingHost(instanceId, config.HOST_KEYS_DIRECTORY),
-  sync: credential.resolve,
-  leading,
-  log,
-});
 const pins = () => readPins(config.PINS_FILE);
 const ping = (instanceId: string) =>
   pingHost(instanceId, config.HOST_KEYS_DIRECTORY);
@@ -168,6 +160,18 @@ const enrollment = async () => {
   access = { runpod, enrollment: built };
   return built;
 };
+const fleet = createFleet({
+  api,
+  metrics,
+  ping,
+  enrollmentAddress: async (host) => {
+    const access = await enrollment();
+    return (await access?.tailnetOf(host))?.address;
+  },
+  sync: credential.resolve,
+  leading,
+  log,
+});
 const rollouts = createRollouts({
   api,
   cluster: createCluster(api, log),

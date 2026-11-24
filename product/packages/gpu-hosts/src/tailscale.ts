@@ -179,6 +179,7 @@ export type InstanceTailnet = {
   connected: boolean;
   // When control last saw any such device; undefined if there is none.
   lastSeen?: string;
+  address?: string;
 };
 
 // What Tailscale's control plane knows of a host, independent of whether the
@@ -188,7 +189,11 @@ export const instanceTailnet = async (
   request: typeof fetch,
   credentials: OAuthCredentials,
 ): Promise<InstanceTailnet> => {
-  const { devices } = await instanceDevices(instanceId, request, credentials);
+  const { devices, hostname } = await instanceDevices(
+    instanceId,
+    request,
+    credentials,
+  );
   const connected = devices.some(
     (device) => device.connectedToControl !== false,
   );
@@ -197,7 +202,19 @@ export const instanceTailnet = async (
     .filter((value): value is string => value !== undefined)
     .sort()
     .at(-1);
-  return { connected, ...(seen && { lastSeen: seen }) };
+  const [device] = devices;
+  const address =
+    devices.length === 1 &&
+    device?.connectedToControl !== false &&
+    device?.hostname === hostname &&
+    device.name.split(".")[0] === hostname
+      ? device.addresses.find(tailnetAddress)
+      : undefined;
+  return {
+    connected,
+    ...(seen && { lastSeen: seen }),
+    ...(address && { address }),
+  };
 };
 
 // Whether any tag:gpu-inference device, online or not, uses gpu-<id>: the

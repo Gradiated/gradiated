@@ -20,14 +20,17 @@ const PORTS = [{ name: "inference", port: 8888, protocol: "TCP" }];
 const RETIRED_ANNOTATIONS = [
   "argocd.argoproj.io/tracking-id",
   "kubectl.kubernetes.io/last-applied-configuration",
-  "tailscale.com/tailnet-ip",
 ];
 
 const labels = { "app.kubernetes.io/managed-by": MANAGED_BY };
 
-const annotations = (host: GpuHost) => ({
+const annotations = (host: GpuHost, address?: string) => ({
   "gradiated.com/instance-id": host.spec.instanceId,
-  "tailscale.com/tailnet-fqdn": `${hostName(host.spec.instanceId)}.${TAILNET}`,
+  ...(address
+    ? { "tailscale.com/tailnet-ip": address }
+    : {
+        "tailscale.com/tailnet-fqdn": `${hostName(host.spec.instanceId)}.${TAILNET}`,
+      }),
   "tailscale.com/proxy-group": "inference-egress",
 });
 
@@ -37,10 +40,15 @@ const annotations = (host: GpuHost) => ({
 export const reconcileService = async (
   api: Kubernetes,
   host: GpuHost,
+  enrollmentTarget?: { address: string | undefined },
 ): Promise<ServiceChange> => {
   const name = hostName(host.spec.instanceId);
   const existing = (await api.get(`${SERVICES}/${name}`)) as
     Service | undefined;
+  const address =
+    enrollmentTarget &&
+    (enrollmentTarget.address ??
+      existing?.metadata.annotations?.["tailscale.com/tailnet-ip"]);
   if (!existing) {
     await api.create(SERVICES, {
       apiVersion: "v1",
@@ -49,7 +57,7 @@ export const reconcileService = async (
         name,
         namespace: "tailscale-inference",
         labels,
-        annotations: annotations(host),
+        annotations: annotations(host, address),
       },
       spec: { type: "ExternalName", externalName: "unused", ports: PORTS },
     });
@@ -70,9 +78,12 @@ export const reconcileService = async (
       (reference) => reference.kind !== "GpuHost",
     );
   const annotationPatch: Record<string, string | null> = {};
-  for (const [key, value] of Object.entries(annotations(host)))
+  for (const [key, value] of Object.entries(annotations(host, address)))
     if (current.annotations?.[key] !== value) annotationPatch[key] = value;
-  for (const key of RETIRED_ANNOTATIONS)
+  const obsoleteTarget = address
+    ? "tailscale.com/tailnet-fqdn"
+    : "tailscale.com/tailnet-ip";
+  for (const key of [...RETIRED_ANNOTATIONS, obsoleteTarget])
     if (current.annotations?.[key] !== undefined) annotationPatch[key] = null;
   if (Object.keys(annotationPatch).length)
     patch.metadata.annotations = annotationPatch;

@@ -196,7 +196,7 @@ describe("GPU tailnet names across a re-image", () => {
     const device = tailnet.join(hostname, "tag:gpu-inference");
     await expect(
       instanceTailnet(instance, tailnet.fetch, credentials),
-    ).resolves.toEqual({ connected: true });
+    ).resolves.toEqual({ connected: true, address: device.addresses[0] });
 
     tailnet.disconnect(device);
     const renamed = tailnet.join(hostname, "tag:gpu-inference");

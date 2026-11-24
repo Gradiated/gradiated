@@ -208,6 +208,8 @@ export const ENROLL_DURING_RUNPOD_HOLD_ANNOTATION =
   "fleet.gradiated.com/enroll-during-runpod-hold";
 export const RESUME_ENROLLMENT_VERIFY_ANNOTATION =
   "fleet.gradiated.com/resume-enrollment-verify";
+export const RESOLVE_ENROLLMENT_EGRESS_ANNOTATION =
+  "fleet.gradiated.com/resolve-enrollment-egress";
 // Set by a person (kubectl annotate) to restart a failed rollout.
 export const RETRY_ANNOTATION = "fleet.gradiated.com/retry";
 // A lease request as JSON (gradctl gpu lease); removing it hands the host back.

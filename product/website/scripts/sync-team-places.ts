@@ -107,6 +107,7 @@ const lookUp = async (place: Wanted): Promise<PlaceCoordinates> => {
   }
 
   return {
+    countryCode: code,
     latitude: Number(best.latitude.toFixed(4)),
     longitude: Number(best.longitude.toFixed(4)),
   };
@@ -122,8 +123,15 @@ const main = async (): Promise<void> => {
   const failures: string[] = [];
 
   for (const place of places) {
-    if (known[place.key]) {
-      next[place.key] = known[place.key];
+    // Reused only if it was found in the country now asked for: correcting
+    // just a profile's countryCode must move its pin.
+    const code = place.countryCode ?? countryCodeOf(place.country);
+    const cached = known[place.key];
+    if (
+      cached &&
+      (cached.countryCode ?? countryCodeOf(place.country)) === code
+    ) {
+      next[place.key] = cached;
       continue;
     }
 

@@ -66,4 +66,9 @@ export const countryCodeOf = (country: string): string | undefined => {
 export const placeKey = (city: string, country: string): string =>
   `${city.trim()}, ${country.trim()}`;
 
-export type PlaceCoordinates = { latitude: number; longitude: number };
+export type PlaceCoordinates = {
+  /** The country the place was looked up in, when the build looked it up. */
+  countryCode?: string;
+  latitude: number;
+  longitude: number;
+};

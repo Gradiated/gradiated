@@ -231,14 +231,31 @@ const main = async (): Promise<void> => {
       }
     }
 
+    // Two files that reduce to one name (desk.jpg, desk.png) would share
+    // their copies, and one picture would silently go missing.
+    const byName = new Map<string, typeof gallery>();
     for (const picture of gallery) {
+      byName.set(picture.name, [...(byName.get(picture.name) ?? []), picture]);
+    }
+    for (const [name, same] of byName) {
+      if (same.length < 2) continue;
+      problems.push(
+        `${images}gallery/: ${same.map(({ file }) => file).join(" and ")} would both be published as "${name}". Rename one.`,
+      );
+    }
+
+    for (const picture of gallery) {
+      if ((byName.get(picture.name)?.length ?? 0) > 1) continue;
+
       const full = new URL(`gallery-${picture.name}.webp`, out);
       const base = `/team/${slug}/gallery-${picture.name}`;
       try {
         await resize(picture.source, full, "inside", FULL);
         await resize(
           picture.source,
-          new URL(`gallery-${picture.name}-thumb.webp`, out),
+          // A media name has no dots, so no picture's full-size copy can
+          // land on this path (desk-thumb.jpg against desk.jpg's thumbnail).
+          new URL(`gallery-${picture.name}.thumb.webp`, out),
           "inside",
           THUMB,
         );
@@ -248,7 +265,7 @@ const main = async (): Promise<void> => {
         entry.gallery[picture.name] = {
           height,
           src: `${base}.webp`,
-          thumb: `${base}-thumb.webp`,
+          thumb: `${base}.thumb.webp`,
           width,
         };
       } catch (error) {

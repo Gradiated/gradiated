@@ -43,7 +43,6 @@ I'd like to make it easier to follow what's going on in AI right now.
 It's quite clear this technology is here to stay, but there are still really large problems to solve.
 Understanding how to build cheap and energy efficient AI systems is one of them. We're giving it a go, and I'll be writing about it.
 
-
 This week I'm learning about decision models.
 
 ## Things I've done

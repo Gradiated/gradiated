@@ -253,11 +253,12 @@ export const sectionsOf = (
     const markdown = current.lines.join("\n").trim();
     if (!markdown && !keepEmpty.includes(current.title.toLowerCase())) return;
     const base = idOf(current.title) || "section";
-    const taken = sections.filter((section) =>
-      section.id.startsWith(base),
-    ).length;
+    let id = base;
+    for (let n = 2; sections.some((section) => section.id === id); n++) {
+      id = `${base}-${n}`;
+    }
     sections.push({
-      id: taken ? `${base}-${taken + 1}` : base,
+      id,
       markdown,
       title: current.title,
     });

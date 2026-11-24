@@ -166,7 +166,12 @@ const useOpenSection = (
 
   useEffect(() => {
     const read = () => {
-      const wanted = decodeURIComponent(window.location.hash.slice(1));
+      let wanted = "";
+      try {
+        wanted = decodeURIComponent(window.location.hash.slice(1));
+      } catch {
+        // A malformed fragment (#%) names no section.
+      }
       setOpen(ids.includes(wanted) ? wanted : ids[0]);
     };
 

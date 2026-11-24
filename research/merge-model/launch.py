@@ -143,8 +143,9 @@ def worker(args, index, repos, deadline):
                 "up",
                 vm,
                 *gpu_args,
-                "--max-price",
-                str(args.max_price),
+                "--spot-price-multiple",
+                "2",
+                *(["--max-price", str(args.max_price)] if args.max_price is not None else []),
                 "--disk-gib",
                 str(650 if args.gpus_per_vm == 8 else 200),
                 "--stage",
@@ -231,7 +232,7 @@ def main():
     parser.add_argument("--region", default="eu-west1")
     parser.add_argument("--gpus-per-vm", type=int, choices=PRESETS, default=1)
     parser.add_argument("--hours", type=float, default=7)
-    parser.add_argument("--max-price", type=float, default=1.25)
+    parser.add_argument("--max-price", type=float, help="optional absolute ceiling in USD/GPU-hour")
     args = parser.parse_args()
     if not 1 <= args.workers <= 16 or not 0.25 <= args.hours <= 10:
         parser.error("set 1–16 workers and a window from 15 minutes to 10 hours")

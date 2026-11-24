@@ -6,6 +6,7 @@ service account, editor on the regional projects in nebius-projects.json).
 """
 
 from concurrent.futures import ThreadPoolExecutor
+from decimal import Decimal, ROUND_DOWN
 from importlib import resources
 import json
 from pathlib import Path
@@ -203,7 +204,35 @@ class Nebius:
             for instance in self.items('compute', 'instance', 'list', '--parent-id', parent):
                 yield self.vm(region, instance)
 
-    def create(self, name, region, platform, preset, disk_gib, image, user_data, term='spot', max_price=None):
+    def capped_spot_policy(self, region, platform, multiple, max_price=None):
+        market = self.spot_prices().get((region, platform))
+        if not market or market <= 0:
+            sys.exit(f'No live spot quote for {platform} in {region}; no VM requested')
+        cap = (Decimal(str(market)) * Decimal(str(multiple))).quantize(Decimal('0.001'), rounding=ROUND_DOWN)
+        if max_price is not None:
+            cap = min(cap, Decimal(str(max_price)).quantize(Decimal('0.001'), rounding=ROUND_DOWN))
+        parent = self.project(region)
+        name = f'gradctl-{platform}-{int(cap * 1000)}'
+        lookup = ('billing', 'pricing-policy', 'get-by-name', '--parent-id', parent, '--name', name)
+        current = self.cli(*lookup, missing_ok=True)
+        if current is None:
+            try:
+                current = self.cli('billing', 'pricing-policy', 'create', '--parent-id', parent, '--name', name,
+                                   '--compute-instance-spec-v1-platform', platform,
+                                   '--pricing-max-price-v1-max-price', str(cap))
+            except SystemExit:
+                # A concurrent launch may have created the same policy.
+                current = self.cli(*lookup, missing_ok=True)
+                if current is None:
+                    raise
+        spec = current['spec']
+        if (spec['compute_instance_spec']['v1']['platform'] != platform or
+                Decimal(spec['pricing']['max_price_v1']['max_price']) != cap):
+            sys.exit(f'Existing pricing policy {name} differs from requested cap; no VM requested')
+        return current['metadata']['id']
+
+    def create(self, name, region, platform, preset, disk_gib, image, user_data, term='spot', max_price=None,
+               spot_price_multiple=None):
         if not preset:
             sys.exit('Nebius needs --preset; see `platforms`')
         parent = self.project(region)
@@ -238,7 +267,8 @@ class Nebius:
                 'preemptible': {'on_preemption': 'STOP'},
                 # Nebius accepts only FAIL for preemptible VMs.
                 'recovery_policy': 'FAIL',
-                'follows_spot_price': {},
+                **({'spot_pricing_policy': {'id': self.capped_spot_policy(region, platform, spot_price_multiple, max_price)}}
+                   if spot_price_multiple is not None else {'follows_spot_price': {}}),
             })
         # One request file per launch, so concurrent launches cannot read each other's.
         with tempfile.NamedTemporaryFile('w', dir=self.state, suffix='.json') as request:

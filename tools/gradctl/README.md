@@ -197,7 +197,7 @@ Run `gradctl commands` for the current list.
 | `gpu lease` | `acquire`, `wait`, `extend`, `release`, `status`; see `$gpu-host-lease` |
 | `gpu` | `render-config`, `stage-glm-pool`, `stage-kimi-pool`, `pin-host`, `prepare-enrollment`, `mint-bootstrap-key`, `create-runpod-template`, `qualification-slot` |
 | `infra` | `fmt`, `check`, `sec` |
-| `security` | `drata-policies`, `drata-risks`, `argocd-auth`, `temporal-ui`, `audit-controls`, `unauthorized-calls`, `ci-boundaries` |
+| `security` | `argocd-auth`, `temporal-ui`, `audit-controls`, `unauthorized-calls`, `ci-boundaries` |
 | `observability` | `check`, `platform`, `controller-requests` |
 | `models` | `monitoring-billing`, `probe-readiness` |
 | `browser` | `sync`, `install`, `website-screenshots`, `storybook-screenshots`, `temporal-ui` |

@@ -342,7 +342,7 @@ To activate in an environment:
    definition. It serves immediately, with or without deployments.
 
 OpenRouter has no signed DPA with Gradiated; the Security Officer accepted that
-as exception E-04 in `docs/security/risk-register.md`.
+as exception E-04 in the [risk register](https://github.com/Gradiated/gradiated-internal/blob/main/docs/security/risk-register.md).
 
 To rotate, write the new key to the inactive slot, test it, then switch
 `activeSlot`; revoke the old key after five minutes.

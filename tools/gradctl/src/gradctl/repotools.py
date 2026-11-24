@@ -89,14 +89,6 @@ TOOLS = (
          effects='read'),
 
     # Security and compliance.
-    Tool('security', 'drata-policies', (python('tools/security/sync_drata_policies.py'),),
-         'Reconcile the policy drafts and compliance records in Git with Drata; a dry run unless --apply '
-         'or --apply-evidence',
-         requires=('git',)),
-    Tool('security', 'drata-risks', (python('tools/security/sync_drata_risks.py'),),
-         'Reconcile docs/security/risks.yml with the Drata risk register; offline check, --plan to compare, '
-         '--apply-risks to write',
-         requires=('git',)),
     Tool('security', 'argocd-auth', (python('tools/security/check_argocd_auth.py'),),
          'Exercise the pinned Argo CD login gate with signed, synthetic OIDC identities', effects='read',
          requires=('docker',)),
@@ -170,7 +162,7 @@ GROUPS = {
     'browser': 'Browser automation environment for $browser-research',
     'lab': 'The research lab Rust workspace',
     'infra': 'Credential-free infrastructure formatting and checks',
-    'security': 'Security and compliance checks, and the Drata sync',
+    'security': 'Security and compliance checks',
     'observability': 'Checks over the rendered monitoring configuration',
     'models': 'Production model operations',
     'product': 'Local product development',

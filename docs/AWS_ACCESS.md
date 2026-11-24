@@ -24,7 +24,7 @@ Open a pull request that adds you to
 - Use your Gradiated email. Leave out `user_id`; AWS assigns it.
 - Ask only for the levels your role needs. If you need more than `restricted`,
   say why in the pull request; the Security Officer approves access under the
-  [System Access Control Policy](security/policies/system-access-control-policy.md).
+  [System Access Control Policy](https://github.com/Gradiated/gradiated-internal/blob/main/docs/security/policies/system-access-control-policy.md).
 
 | Level | What it allows |
 | --- | --- |

@@ -18,7 +18,7 @@ This repository is the complete project state for the research and product-build
 - Use the repository as the canonical source for implementation state, plans, prompts, measurements, reports, and generated decision artifacts.
 - Use `README.md`, `docs/ARCHITECTURE.md` and `research/README.md` as the orientation map.
 - Use the top-level documents in `docs/` for product architecture, data models and implementation plans; do not encode durable interfaces only in chat or issue comments.
-- Treat `docs/security/policies/` as binding company policy for security, access, change and data handling. Change a policy there by PR, then publish it to Drata.
+- Treat the [security policies](https://github.com/Gradiated/gradiated-internal/blob/main/docs/security/policies/README.md) as binding company policy for security, access, change and data handling. Change a policy there by PR, then publish it to Drata.
 - Pin every GitHub Action and reusable workflow to a full-length commit SHA with a version comment, e.g. `uses: actions/checkout@<sha> # v4.4.0`. The Gradiated org requires this, so a tag or branch ref fails the run. Pin new or changed `uses:` lines with [pinact](https://github.com/suzuki-shunsuke/pinact) (`pinact run`); pinact can't pin a branch ref, so switch it to a release tag first. Local `./` actions need no pin.
 - Put browser automation code and dependency declarations in `tools/browser/`.
 - Put temporary profiles, caches, test output, and run logs under `.agents/runtime/`; never commit them.

@@ -152,6 +152,21 @@ export const AboutPage = (): ReactElement => {
 
         <Module className="gr-module--about-why" index={1}>
           <Features items={PRINCIPLES} />
+        </Module>
+
+        <Module className="gr-module--about-team" index={2}>
+          <div className="gr-about-team-head">
+            <h2 className="gr-section-title">The Team</h2>
+            <a className="gr-button gr-button--secondary" href="/team/">
+              Meet the team
+              <Arrow />
+            </a>
+          </div>
+          <MemberGrid
+            className="gr-member-grid--about"
+            detail="none"
+            members={team}
+          />
 
           <div
             aria-label="The layers of a chip package, from its substrate up to its lid"
@@ -170,21 +185,6 @@ export const AboutPage = (): ReactElement => {
               </span>
             ))}
           </div>
-        </Module>
-
-        <Module className="gr-module--about-team" index={2}>
-          <div className="gr-about-team-head">
-            <h2 className="gr-section-title">The Team</h2>
-            <a className="gr-button gr-button--secondary" href="/team/">
-              Meet the team
-              <Arrow />
-            </a>
-          </div>
-          <MemberGrid
-            className="gr-member-grid--about"
-            detail="none"
-            members={team}
-          />
 
           <div className="gr-about-silicon">
             <h2 className="gr-section-title">

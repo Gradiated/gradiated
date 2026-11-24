@@ -20,6 +20,24 @@
   margin-block-end: calc(1.2 * var(--u));
 }
 
+/* A staircase: each principle in its own column, starting below the last. */
+.gr-module--about-why .gr-features {
+  row-gap: var(--u);
+}
+
+.gr-module--about-why .gr-features > :nth-child(2) {
+  grid-area: 2 / 2;
+}
+
+.gr-module--about-why .gr-features > :nth-child(3) {
+  grid-area: 3 / 3;
+}
+
+.gr-root[data-tier="narrow"] .gr-module--about-why .gr-features > *,
+.gr-root[data-tier="compact"] .gr-module--about-why .gr-features > * {
+  grid-area: auto;
+}
+
 /* Six diamonds, each overlapping the next by a quarter, spanning the band.
    Later layers sit on top, as they do in the package. */
 .gr-about-dies {

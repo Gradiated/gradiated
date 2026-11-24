@@ -36,7 +36,7 @@ on each, and what the open question is. Keep this one current.
 - **An area of research.** What you are trying to find out.
 -->
 
-- **RL experiments.** Running reinforcement learning experiments—including post-training loops over production traces and reconstructed environments—to turn smaller open-weight models into reliable, cost-effective specialists for real-world workloads.
+- **RL experiments.** Running reinforcement learning experiments - including post-training loops over production traces and reconstructing production environments from traces to turn smaller open-weight models into reliable, cost-effective specialists for real-world workloads.
 
 ## Things I've done
 

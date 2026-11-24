@@ -1,8 +1,6 @@
 // The routing rule: with a provider key, a request relays to that key's provider
 // unless it names a model we host; everything else goes to the gateway. The key
 // alone picks the provider, so paths and provider models need no proxy knowledge.
-import { createHash } from "node:crypto";
-
 import { describe, expect, it } from "vitest";
 
 import { expectPublicError } from "../../../gateway/test/integration/assertions.js";
@@ -272,20 +270,8 @@ describe("with a provider key", () => {
     });
 
     expect(fixture.provider.requests).toEqual([]);
-    // This gateway cannot load an OpenRouter key, so it reports its own capacity failure.
     expectPublicError(response, { code: "runtime_unavailable" });
-    await instance.settled(response, {
-      status: "failed",
-      charge: 0,
-      releaseDigest: `sha256:${createHash("sha256")
-        .update(
-          JSON.stringify({
-            capacity: "openrouter",
-            model: "synthetic-author/openrouter-model",
-          }),
-        )
-        .digest("hex")}`,
-    });
+    await instance.expectNotDispatched();
   });
 
   it("matches hosted models without regard to case, as the gateway does", async () => {

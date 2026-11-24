@@ -98,18 +98,9 @@ balance, status, pins, OpenRouter's own and other channel traffic, listing and
 adapter degradation.
 Every assertion also checks that no OpenRouter detail reaches the caller.
 
-`openrouter-live.test.ts` runs a few of these cases against the live API with
-`meta-llama/llama-3.1-8b-instruct`, which has several ZDR providers and costs
-about $0.00001 a request. It runs only when `OPENROUTER_LIVE_API_KEY` is set:
-
-```sh
-OPENROUTER_LIVE_API_KEY=... pnpm --filter @gradiated/gateway exec vitest run \
-  test/integration/openrouter-live.test.ts
-```
-
-CI sets it from the `OPENROUTER_CI_API_KEY` Actions secret and fails without it,
-except on fork and Dependabot runs, which get no secrets. Locally, the
-`OPENROUTER_API_KEY` in `gradiated/dev/env` works.
+`fallback.test.ts` verifies direct fallback settlement through the real gateway
+binary. `cargo test --locked runtime::tests::fallback` verifies both providers,
+streaming failover and session affinity against local HTTP peers.
 
 ## Run the suite
 

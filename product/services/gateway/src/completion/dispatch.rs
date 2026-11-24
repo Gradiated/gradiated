@@ -1,8 +1,4 @@
-use std::{
-    future::Future,
-    sync::Arc,
-    time::{Duration, Instant},
-};
+use std::{future::Future, sync::Arc, time::Instant};
 
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
@@ -11,13 +7,12 @@ use super::{route_lease::HeldRoute, settlement::FailedGeneration, unless_panicke
 use crate::{
     metrics::{Capacity, CapacityMetrics, FallbackReason},
     routing::RoutePlacement,
+    runtime::MIN_FALLBACK_BUDGET,
     ExternalCapacity, ExternalModel, ExternalRequest, GatewayError, GatewayModelDeployment,
     InferenceRequest, ModelRuntime, PriceCap, Route, RuntimeCompletion, RuntimeEventStream,
     RuntimeFailure, RuntimeFailureKind,
 };
 
-/// An attempt with less time than this left would only spend the deadline.
-const MIN_FALLBACK_BUDGET: Duration = Duration::from_secs(1);
 const MAX_LOCAL_ATTEMPTS: u8 = 2;
 
 /// Where a generation runs now, and what it may still move to.
@@ -30,7 +25,7 @@ pub(super) struct CapacityPlan {
     pub(super) external: Option<ExternalModel>,
     /// Why `target` is not the preferred local capacity.
     pub(super) reason: Option<FallbackReason>,
-    /// What our own capacity answered, which the caller gets if OpenRouter cannot serve.
+    /// What our own capacity answered, which the caller gets if external capacity fails.
     pub(super) own_error: Option<GatewayError>,
 }
 
@@ -103,7 +98,7 @@ impl Target {
     pub(super) fn metric_label(&self) -> String {
         match self {
             Self::Local { deployment, .. } => deployment.id.to_string(),
-            Self::External(_) => "openrouter".to_owned(),
+            Self::External(model) => model.capacity().as_str().to_owned(),
         }
     }
 
@@ -111,7 +106,7 @@ impl Target {
         match self {
             Self::Local { adapter: false, .. } => Capacity::Local,
             Self::Local { adapter: true, .. } => Capacity::Adapter,
-            Self::External(_) => Capacity::OpenRouter,
+            Self::External(model) => model.capacity(),
         }
     }
 
@@ -194,7 +189,7 @@ impl CapacityPlan {
         true
     }
 
-    /// The degraded base model while a local attempt is left, else OpenRouter.
+    /// The degraded base model while a local attempt is left, else external capacity.
     fn move_to_next_tier(&mut self, local_attempt_left: bool) -> bool {
         let next = match self.degraded.take() {
             Some(tier) if local_attempt_left => {
@@ -255,7 +250,11 @@ impl CapacityPlan {
                 .map(|deployment| deployment.id.to_string());
 
         local
-            .chain(self.external.iter().map(|_| "openrouter".to_owned()))
+            .chain(
+                self.external
+                    .iter()
+                    .map(|model| model.capacity().as_str().to_owned()),
+            )
             .collect()
     }
 }
@@ -419,7 +418,7 @@ impl RuntimeCall {
         Some(self.plan.target.capacity())
     }
 
-    /// Replaces the error just recorded for an OpenRouter fallback with the local
+    /// Replaces the error just recorded for an external attempt with the local
     /// failure itself, which keeps that runtime's `Retry-After`.
     pub(super) fn keep_own_error(&mut self, failure: &RuntimeFailure) {
         if let (Target::External(_), Some(own)) = (&self.plan.target, &mut self.plan.own_error) {
@@ -427,7 +426,7 @@ impl RuntimeCall {
         }
     }
 
-    /// OpenRouter's failure before output never reaches the caller: they get the
+    /// An external failure before output never reaches the caller: they get the
     /// answer our own capacity gave. A missed deadline stays a timeout.
     pub(super) fn own_error(&self, failure: RuntimeFailureKind) -> Option<GatewayError> {
         if !matches!(self.plan.target, Target::External(_))
@@ -452,10 +451,6 @@ impl RuntimeCall {
     }
 }
 
-#[expect(
-    clippy::large_enum_variant,
-    reason = "built for one attempt and consumed by it"
-)]
 enum RuntimeAttempt {
     Local {
         runtime: Arc<dyn ModelRuntime>,

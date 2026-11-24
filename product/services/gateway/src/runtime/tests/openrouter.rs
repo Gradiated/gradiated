@@ -10,7 +10,7 @@ use futures_util::stream;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
-use super::support::{data, deadline, expect_chunk, MockRuntime, DONE};
+use super::support::{credential_loader, data, deadline, expect_chunk, MockRuntime, DONE};
 use crate::{
     config::OpenRouterConfig,
     runtime::{
@@ -33,23 +33,6 @@ async fn client(mock: &MockRuntime) -> OpenRouterClient {
     })
     .await
     .unwrap()
-}
-
-/// The credential loader reading a stand-in for Secrets Manager at `endpoint`.
-fn loader(endpoint: String) -> gradiated_credentials::CredentialLoader {
-    let config = aws_sdk_secretsmanager::Config::builder()
-        .behavior_version_latest()
-        .region(aws_sdk_secretsmanager::config::Region::new("us-east-1"))
-        .credentials_provider(aws_credential_types::Credentials::new(
-            "test", "test", None, None, "test",
-        ))
-        .retry_config(
-            aws_sdk_secretsmanager::config::retry::RetryConfig::standard().with_max_attempts(1),
-        )
-        .endpoint_url(endpoint)
-        .build();
-
-    gradiated_credentials::CredentialLoader::new(aws_sdk_secretsmanager::Client::from_conf(config))
 }
 
 fn request(body: Value) -> ExternalRequest {
@@ -742,9 +725,11 @@ async fn a_rotating_key_sends_the_active_slot() {
         .start()
         .await;
     let mock = mock_json(StatusCode::OK, completion()).await;
-    let client =
-        OpenRouterClient::with_loader(&format!("{}/api/v1", mock.url()), loader(secrets.url()))
-            .unwrap();
+    let client = OpenRouterClient::with_loader(
+        &format!("{}/api/v1", mock.url()),
+        credential_loader(secrets.url()),
+    )
+    .unwrap();
 
     client.complete(chat()).await.unwrap();
 
@@ -769,9 +754,11 @@ async fn an_unreadable_credential_fails_the_attempt_without_a_request() {
         .start()
         .await;
     let mock = mock_json(StatusCode::OK, completion()).await;
-    let client =
-        OpenRouterClient::with_loader(&format!("{}/api/v1", mock.url()), loader(secrets.url()))
-            .unwrap();
+    let client = OpenRouterClient::with_loader(
+        &format!("{}/api/v1", mock.url()),
+        credential_loader(secrets.url()),
+    )
+    .unwrap();
 
     let failure = client.complete(chat()).await.unwrap_err();
 

@@ -271,10 +271,11 @@ Global hosted-model catalog. The primary key is the immutable human-readable mod
 | `created_at`          | timestamptz | no   | Creation time                                                                          |
 | `updated_at`          | timestamptz | no   | Last mutation time                                                                     |
 
-`openrouter_model_id` is not part of `ModelProperties`, so it is never
-published. Catalog membership decides that Gradiated bills a request; the
-mapping only lets OpenRouter serve it, and a mapped model can serve with no
-deployment. Git-owned catalog definitions set it, and omitting it clears it.
+The `openrouter_model_id` field remains in the catalog for compatibility.
+Production fallback mappings and per-token upstream rates live in the gateway's
+repo-owned [`fallback_routes.json`](../product/services/gateway/src/runtime/fallback_routes.json)
+and are keyed by the canonical catalog model ID. A configured model can serve
+with zero deployments.
 
 `ModelProperties` is a closed, versioned Zod document inspired by OpenRouter's
 current provider schema. It keeps model capabilities, limits, and prices in the
@@ -535,8 +536,8 @@ Rust serializes this typed object canonically and hashes only it to produce the
 `served_release_digest` captured by each admitted generation. Settlement names
 what actually served: an adapter's own digest, the base release when the base
 model served an adapter request without it, or
-`sha256({"capacity":"openrouter","model":<openrouter_model_id>})` when
-OpenRouter served.
+`sha256({"capacity":"fallback","model":<catalog_model_id>})` for external
+fallback. The external usage event identifies the provider and its request ID.
 
 There is no generic deployment metadata. A field that affects routing,
 availability, capacity, compliance, or cost becomes an explicit column or part

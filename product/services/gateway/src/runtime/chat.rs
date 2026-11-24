@@ -403,7 +403,7 @@ pub(super) struct StreamChoice {
 }
 
 impl StreamChoice {
-    /// Text, reasoning or a tool call. Role-only and empty deltas are not output.
+    /// Text, refusal, reasoning or a tool call. Role-only and empty deltas are not output.
     pub(super) fn has_usable_output(&self) -> bool {
         let text = |name: &str| {
             self.delta
@@ -422,6 +422,7 @@ impl StreamChoice {
             .is_some_and(|value| !value.is_null());
 
         text("content")
+            || text("refusal")
             || text("reasoning_content")
             || text("reasoning")
             || tool_calls

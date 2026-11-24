@@ -33,6 +33,10 @@ export interface GatewayOptions {
   readonly logLevel?: "warn" | "info";
   readonly leaseFinalizationMarginSeconds?: number;
   readonly expiredLeaseCleanupGraceSeconds?: number;
+  readonly fallback?: {
+    readonly routes: Record<string, unknown>;
+    readonly secretsManagerUrl: string;
+  };
   readonly openRouter?: { readonly baseUrl: string; readonly apiKey: string };
 }
 
@@ -96,6 +100,15 @@ export class GatewayProcess {
           ? {
               OPENROUTER_API_KEY: options.openRouter.apiKey,
               OPENROUTER_BASE_URL: options.openRouter.baseUrl,
+            }
+          : {}),
+        ...(options.fallback
+          ? {
+              GATEWAY_FALLBACK_ROUTES: JSON.stringify(options.fallback.routes),
+              AWS_ENDPOINT_URL_SECRETS_MANAGER:
+                options.fallback.secretsManagerUrl,
+              AWS_ACCESS_KEY_ID: "fixture-key",
+              AWS_SECRET_ACCESS_KEY: "fixture-secret",
             }
           : {}),
         RUST_LOG: options.logLevel ?? "warn",

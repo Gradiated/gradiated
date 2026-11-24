@@ -41,7 +41,7 @@ pub use coordinator::RequestCoordinator;
 pub use http::{browser_cors, router, GatewayState};
 pub use postgres_reader::PostgresReader;
 pub use readiness::DependencyReadiness;
-pub use runtime::{OpenRouterClient, RuntimeTlsConfig, SglangClient};
+pub use runtime::{FallbackRouter, OpenRouterClient, RuntimeTlsConfig, SglangClient};
 pub use serving_state::ValkeyServingState;
 pub use tokenizer::ModelTokenizer;
 

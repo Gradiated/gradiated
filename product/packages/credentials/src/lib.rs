@@ -14,6 +14,8 @@ pub enum Provider {
     OpenAi,
     Anthropic,
     OpenRouter,
+    Baseten,
+    Modal,
 }
 
 impl Provider {
@@ -21,6 +23,8 @@ impl Provider {
         match self {
             Self::OpenAi => "gradiated/prod/providers/openai",
             Self::Anthropic => "gradiated/prod/providers/anthropic",
+            Self::Baseten => "gradiated/prod/providers/baseten",
+            Self::Modal => "gradiated/prod/providers/modal",
             Self::OpenRouter => "gradiated/prod/providers/openrouter",
         }
     }
@@ -35,6 +39,8 @@ pub struct CredentialLoader {
     openai: Mutex<Option<CachedKey>>,
     anthropic: Mutex<Option<CachedKey>>,
     openrouter: Mutex<Option<CachedKey>>,
+    baseten: Mutex<Option<CachedKey>>,
+    modal: Mutex<Option<CachedKey>>,
 }
 
 impl CredentialLoader {
@@ -44,6 +50,8 @@ impl CredentialLoader {
             openai: Mutex::new(None),
             anthropic: Mutex::new(None),
             openrouter: Mutex::new(None),
+            baseten: Mutex::new(None),
+            modal: Mutex::new(None),
         }
     }
 
@@ -52,6 +60,8 @@ impl CredentialLoader {
             Provider::OpenAi => self.openai.lock().await,
             Provider::Anthropic => self.anthropic.lock().await,
             Provider::OpenRouter => self.openrouter.lock().await,
+            Provider::Baseten => self.baseten.lock().await,
+            Provider::Modal => self.modal.lock().await,
         };
         if let Some(entry) = cached.as_ref() {
             if Instant::now() < entry.expires_at {

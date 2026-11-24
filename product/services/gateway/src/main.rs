@@ -2,9 +2,9 @@ use std::{error::Error, future::IntoFuture, process::ExitCode, sync::Arc, time::
 
 use axum::http::HeaderValue;
 use gradiated_gateway::{
-    browser_cors, router, CompletionService, DependencyReadiness, GatewayConfig, GatewayState,
-    ModelTokenizer, OpenRouterClient, PostgresReader, RequestCoordinator, RuntimeTlsConfig,
-    SglangClient, ValkeyServingState,
+    browser_cors, router, CompletionService, DependencyReadiness, FallbackRouter, GatewayConfig,
+    GatewayState, ModelTokenizer, OpenRouterClient, PostgresReader, RequestCoordinator,
+    RuntimeTlsConfig, SglangClient, ValkeyServingState,
 };
 use tokio::signal::unix::{signal, Signal, SignalKind};
 use tracing::{error, info, warn};
@@ -99,10 +99,17 @@ async fn run() -> Result<(), Failure> {
         tokenizer,
         Arc::new(config.clone()),
     );
-    let openrouter = OpenRouterClient::connect(&config.openrouter)
-        .await
-        .map_err(at(Stage::Runtime))?;
-    let completions = completions.with_external_capacity(Arc::new(openrouter));
+    let completions = if config.use_openrouter_fallback() {
+        let legacy = OpenRouterClient::connect(&config.openrouter)
+            .await
+            .map_err(at(Stage::Runtime))?;
+        completions.with_external_capacity(Arc::new(legacy))
+    } else {
+        let fallback = FallbackRouter::connect(&config.fallback_routes)
+            .await
+            .map_err(at(Stage::Runtime))?;
+        completions.with_external_capacity(Arc::new(fallback))
+    };
 
     let app =
         application(&config, serving_state, completions.clone()).map_err(at(Stage::Application))?;
@@ -182,11 +189,17 @@ fn application(
         (*serving_state).clone(),
         completions.metrics(),
     ));
+    let coordinator = RequestCoordinator::new(serving_state)
+        .with_verification_workspace(config.verification_workspace_id);
+    let coordinator = if config.use_openrouter_fallback() {
+        coordinator.with_legacy_openrouter_fallback()
+    } else {
+        coordinator.with_fallback_routes(config.fallback_routes.clone())
+    };
     let app = router(GatewayState::new(
         readiness,
         completions,
-        RequestCoordinator::new(serving_state)
-            .with_verification_workspace(config.verification_workspace_id),
+        coordinator,
         config.compliance(),
     ));
 

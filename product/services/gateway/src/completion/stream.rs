@@ -14,7 +14,7 @@ use crate::{
     RuntimeStreamChunk, RuntimeStreamEvent,
 };
 
-/// OpenRouter sends its usage frame right after the finish reason.
+/// The final usage frame can follow the finish reason.
 const FINAL_USAGE_GRACE: Duration = Duration::from_secs(2);
 
 pub(super) struct StreamProgress {
@@ -114,7 +114,7 @@ impl StreamProgress {
         Ok(())
     }
 
-    /// OpenRouter reports usage only in its final frame, so a caller that leaves
+    /// External providers can report usage only in their final frame. A caller that leaves
     /// after the finish reason, holding its answer, is still billed for it.
     pub(super) async fn collect_final_usage(
         &mut self,

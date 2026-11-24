@@ -237,3 +237,20 @@ pub(super) fn decision_request() -> InferenceRequest {
 pub(super) fn deadline(seconds: i64) -> DateTime<Utc> {
     Utc::now() + TimeDelta::seconds(seconds)
 }
+
+/// The credential loader reading a stand-in for Secrets Manager at `endpoint`.
+pub(super) fn credential_loader(endpoint: String) -> gradiated_credentials::CredentialLoader {
+    let config = aws_sdk_secretsmanager::Config::builder()
+        .behavior_version_latest()
+        .region(aws_sdk_secretsmanager::config::Region::new("us-east-1"))
+        .credentials_provider(aws_credential_types::Credentials::new(
+            "test", "test", None, None, "test",
+        ))
+        .retry_config(
+            aws_sdk_secretsmanager::config::retry::RetryConfig::standard().with_max_attempts(1),
+        )
+        .endpoint_url(endpoint)
+        .build();
+
+    gradiated_credentials::CredentialLoader::new(aws_sdk_secretsmanager::Client::from_conf(config))
+}

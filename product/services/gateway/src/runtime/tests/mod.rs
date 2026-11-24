@@ -2,6 +2,7 @@ mod chat;
 mod client;
 mod count_tokens;
 mod diagnostics;
+mod fallback;
 mod native;
 mod openrouter;
 mod progress;

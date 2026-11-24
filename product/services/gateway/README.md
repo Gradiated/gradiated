@@ -267,90 +267,72 @@ The local endpoints are:
 
 ## Configuration
 
-| Variable                                        | Required | Default                           |
-| ----------------------------------------------- | -------- | --------------------------------- |
-| `VALKEY_URL`                                    | yes      | none                              |
-| `GATEWAY_SETTLEMENT_BACKLOG_LIMIT`              | yes      | none                              |
-| `GATEWAY_BIND_ADDRESS`                          | no       | `127.0.0.1:3002`                  |
-| `GATEWAY_GENERATION_TIMEOUT_SECONDS`            | no       | `630`                             |
-| `GATEWAY_LEASE_FINALIZATION_MARGIN_SECONDS`     | no       | `60`                              |
-| `GATEWAY_EXPIRED_LEASE_CLEANUP_GRACE_SECONDS`   | no       | `300`                             |
-| `GATEWAY_ORGANIZATION_CONCURRENCY_CAP`          | no       | `500`                             |
-| `GATEWAY_BALANCE_PER_CONCURRENCY_SLOT_NANO_USD` | no       | `1000000000`                      |
-| `SGLANG_API_KEY`                                | no       | no upstream authentication        |
-| `OPENROUTER_API_KEY`                            | no       | the `providers/openrouter` secret |
-| `OPENROUTER_BASE_URL`                           | no       | `https://openrouter.ai/api/v1`    |
+| Variable                                        | Required | Default                         |
+| ----------------------------------------------- | -------- | ------------------------------- |
+| `VALKEY_URL`                                    | yes      | none                            |
+| `GATEWAY_SETTLEMENT_BACKLOG_LIMIT`              | yes      | none                            |
+| `GATEWAY_BIND_ADDRESS`                          | no       | `127.0.0.1:3002`                |
+| `GATEWAY_GENERATION_TIMEOUT_SECONDS`            | no       | `630`                           |
+| `GATEWAY_LEASE_FINALIZATION_MARGIN_SECONDS`     | no       | `60`                            |
+| `GATEWAY_EXPIRED_LEASE_CLEANUP_GRACE_SECONDS`   | no       | `300`                           |
+| `GATEWAY_ORGANIZATION_CONCURRENCY_CAP`          | no       | `500`                           |
+| `GATEWAY_BALANCE_PER_CONCURRENCY_SLOT_NANO_USD` | no       | `1000000000`                    |
+| `SGLANG_API_KEY`                                | no       | no upstream authentication      |
+| `GATEWAY_FALLBACK_ROUTES`                       | no       | embedded `fallback_routes.json` |
+| `OPENROUTER_API_KEY`                            | no       | loopback test peer only         |
+| `OPENROUTER_BASE_URL`                           | no       | loopback test peer only         |
 
 Valkey is always accessed with the cluster protocol. The local one-node
 cluster owns all 16,384 slots and therefore exercises the same hash-tag and
 `CROSSSLOT` behavior required by ElastiCache Serverless.
 
-## OpenRouter capacity
+## External fallback
 
-With Gradiated's own OpenRouter key, the gateway serves a
-catalog model whose `models.openrouter_model_id` is set through OpenRouter when
-our deployments are absent, unhealthy, saturated or fail before output. Callers
-need no OpenRouter key, are billed at catalog prices and see no OpenRouter
-identity. The rules are in [ARCHITECTURE.md](ARCHITECTURE.md#external-capacity-openrouter).
-`OPENROUTER_BASE_URL` accepts HTTPS, or HTTP on a loopback host for tests.
-Every OpenRouter request requires zero data retention and no data collection,
-and caps the provider price at the model's own catalog price, with two exceptions:
-Kimi K3.1 Pro accepts up to 120% of it, and DeepSeek V4.1 Flash 1017 accepts up to
-$0.30 input and $1.20 output per million tokens. If OpenRouter
-cannot serve, the caller gets our own capacity's answer.
+Production fallback routes and upstream rates live in
+[`src/runtime/fallback_routes.json`](src/runtime/fallback_routes.json), keyed by
+canonical catalog model ID (integration tests may override the map with
+`GATEWAY_FALLBACK_ROUTES`). Each model can have one route per provider with the
+exact model ID returned by each provider's endpoint.
 
-The gateway uses `OPENROUTER_API_KEY` when it is set, as local runs and tests do.
-Otherwise it reads the active slot of `gradiated/prod/providers/openrouter`
-through the shared [credential loader](../../packages/credentials/README.md) on
-each OpenRouter attempt, cached for five minutes, so changing `activeSlot`
-rotates the key without a restart. A key that cannot be loaded fails that
-attempt as `runtime_unavailable` and is logged as
-`openrouter_credential_unavailable`; it never stops the gateway. A model uses
-OpenRouter only when its catalog row maps it, so the mapping and the model's
-status are the switch.
+```json
+{
+  "gradiated/example": [
+    {
+      "provider": "baseten",
+      "base_url": "https://inference.baseten.co/v1",
+      "model": "publisher/ExactModel",
+      "nano_usd_per_token": { "input": 300, "cached_input": 30, "output": 1200 }
+    },
+    {
+      "provider": "modal",
+      "base_url": "https://example.us-west.modal.direct/v1",
+      "model": "publisher/ExactModel",
+      "nano_usd_per_token": { "input": 250, "cached_input": 25, "output": 1000 }
+    }
+  ]
+}
+```
 
-Mappings live in the git-owned catalog definitions under
-`packages/control/src/catalog/models/`. Map only an OpenRouter entry for the same
-weights: check its `hugging_face_id` in `GET https://openrouter.ai/api/v1/models`.
-Verified on 2026-11-05: `z-ai/glm-5.3-flash`. Verified on 2026-11-10:
-`deepseek/deepseek-v4.1-flash-1017` and `deepseek/deepseek-v4.1-flash`. The original
-DeepSeek V4.1 Flash row is retired; its names now resolve through the `aliases`
-field on the `deepseek/deepseek-v4.1-flash-1017` catalog definition, which is hosted
-on our capacity at $0.30 input, $0.007 cached input, and $1.20 output per million
-tokens. Its OpenRouter fallback permits up to $0.30 input and $1.20 output per
-million tokens, so it can serve without a local replica. Customer billing remains
-at catalog prices.
-OpenRouter has no Dealign uncensored GLM and no SystemOne model; those stay
-unmapped, and standard GLM must never stand in for the uncensored one.
+Rates are integer nano-USD per token. For example, $0.30 per million tokens
+is 300 nano-USD per token. The optional `cache_write` rate is a surcharge on
+uncached input. Modal routes use a token-billed Shared Endpoint and its
+documented model ID. Baseten routes use the Model API endpoint and an exact
+model revision. Each configured provider must support final usage for streams.
+See the [Baseten Model APIs](https://www.baseten.co/products/model-apis/)
+and [Modal endpoint documentation](https://modal.com/docs/guide/endpoints).
 
-Add alternate request names to a model definition's `aliases` array in
-`packages/control/src/catalog/models/`. Catalog apply validates and persists
-these names; the proxy and gateway pick them up through their existing catalog
-refreshes and caches. Aliases use the target model's status, pricing and capacity.
-They do not add entries to `/v1/models` or require gateway/proxy rebuilds for later edits.
+Populate the Baseten and Modal containers in Secrets Manager using the
+[active-slot format](../../packages/credentials/README.md). Modal uses the
+combined proxy token `wk-<id>.ws-<secret>` in the active slot. Apply the
+`registry-secrets` and `platform-iam` Terraform units before deploying.
+After confirming direct fallback in production, remove the gateway's permission
+to read the legacy OpenRouter secret.
 
-To activate in an environment:
-
-1. In OpenRouter, create a key for the gateway, allow only the providers that may
-   serve Gradiated traffic and set its credit limit. Keep zero data retention
-   enforced for the account.
-2. Write two distinct keys to `gradiated/prod/providers/openrouter` as
-   `{"activeSlot": "primary", "primaryApiKey": …, "secondaryApiKey": …}`.
-3. Apply the `registry-secrets` and `platform-iam` units. They adopt that secret
-   and let only the gateway's role read it.
-4. Roll out the gateway, then mark a mapped model `available` in its catalog
-   definition. It serves immediately, with or without deployments.
-
-OpenRouter has no signed DPA with Gradiated; the Security Officer accepted that
-as exception E-04 in the [risk register](https://github.com/Gradiated/gradiated-internal/blob/main/docs/security/risk-register.md).
-
-To rotate, write the new key to the inactive slot, test it, then switch
-`activeSlot`; revoke the old key after five minutes.
-
-Watch `gradiated_gateway_capacity_fallbacks_total`,
-`gradiated_gateway_upstream_cost_nano_usd_total` against
-`gradiated_gateway_calculated_charge_nano_usd_total{deployment="openrouter"}`,
-and generations whose terminal log has `capacity="openrouter"`.
+Compare `gradiated_gateway_upstream_cost_nano_usd_total` and
+`gradiated_gateway_calculated_charge_nano_usd_total{deployment="fallback"}`.
+The `external_usage` event identifies the provider and upstream request.
+[Gateway architecture](ARCHITECTURE.md#external-capacity) defines eligibility,
+routing and settlement.
 
 ## Verify
 

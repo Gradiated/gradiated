@@ -395,3 +395,61 @@ async fn a_model_without_capacity_fails_before_its_protocol_is_checked() {
 
     assert_eq!(result.err(), Some(GatewayError::ServingStateUnavailable));
 }
+
+#[tokio::test]
+async fn direct_routes_use_the_canonical_model_and_pass_catalog_parameters() {
+    let mut state = mapped(0);
+    let model = state.model.as_mut().unwrap();
+    model.aliases = vec!["beta".to_owned()];
+    model.openrouter_model_id = None;
+    model.properties.passthrough_parameters.insert(
+        "chat_template_kwargs".to_owned(),
+        ModelParameterDescriptor::Unknown,
+    );
+    let routes = FallbackRoutes::parse(Some(
+        r#"{
+        "model-a": [{
+            "provider": "baseten",
+            "base_url": "https://inference.baseten.co/v1",
+            "model": "publisher/ExactModel",
+            "nano_usd_per_token": {"input": 300, "cached_input": 30, "output": 1200}
+        }]
+    }"#,
+    ))
+    .unwrap();
+    let coordinator = coordinator(state).with_fallback_routes(routes);
+    let body = br#"{"model":"beta","messages":[{}],"chat_template_kwargs":{"thinking":false}}"#;
+
+    let request = qualify_with(
+        &coordinator,
+        &headers(&WORKSPACE_KEY),
+        body,
+        RequestKind::Chat,
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(request.local, None);
+    assert_eq!(request.external, Some(ExternalModel::direct("model-a")));
+    assert_eq!(
+        request.request.parameters["chat_template_kwargs"]["thinking"],
+        false
+    );
+}
+
+#[tokio::test]
+async fn empty_direct_routes_do_not_use_a_legacy_catalog_mapping() {
+    let coordinator = coordinator(mapped(1)).with_fallback_routes(FallbackRoutes::default());
+
+    let request = qualify_with(
+        &coordinator,
+        &headers(&WORKSPACE_KEY),
+        CHAT,
+        RequestKind::Chat,
+    )
+    .await
+    .unwrap();
+
+    assert!(request.local.is_some());
+    assert_eq!(request.external, None);
+}

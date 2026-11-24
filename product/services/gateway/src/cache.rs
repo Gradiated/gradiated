@@ -61,8 +61,17 @@ where
             .await
     }
 
-    fn store(&self, key: K, value: V) {
+    pub(crate) fn store(&self, key: K, value: V) {
         let mut values = locked(&self.values);
+        let entry = CacheValue {
+            loaded_at: Instant::now(),
+            value,
+        };
+        if let Some(existing) = values.get_mut(&key) {
+            *existing = entry;
+            return;
+        }
+
         if values.len() >= self.capacity {
             values.retain(|_, entry| entry.loaded_at.elapsed() < self.ttl);
         }
@@ -77,16 +86,10 @@ where
             }
         }
 
-        values.insert(
-            key,
-            CacheValue {
-                loaded_at: Instant::now(),
-                value,
-            },
-        );
+        values.insert(key, entry);
     }
 
-    fn get(&self, key: &K) -> Option<V> {
+    pub(crate) fn get(&self, key: &K) -> Option<V> {
         locked(&self.values)
             .get(key)
             .filter(|entry| entry.loaded_at.elapsed() < self.ttl)
@@ -209,6 +212,18 @@ mod tests {
             assert_eq!(value, 42);
         }
         assert_eq!(loads.load(Ordering::SeqCst), 1);
+    }
+
+    #[test]
+    fn replacing_an_entry_in_a_full_cache_preserves_other_entries() {
+        let cache = LazyTtlCache::new(Duration::from_secs(60), 2);
+        cache.store("another session", 1);
+        cache.store("active session", 2);
+
+        cache.store("active session", 3);
+
+        assert_eq!(cache.get(&"another session"), Some(1));
+        assert_eq!(cache.get(&"active session"), Some(3));
     }
 
     #[tokio::test]

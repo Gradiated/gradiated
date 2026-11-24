@@ -203,9 +203,10 @@ def scaling_tests(name, pool, queries, wrap=False):
     case('our capacity_exceeded failures are refusals', reporters() + requests(
         48, 12, 'gradiated_gateway_generations_total', deployment='d', status='failed', error='capacity_exceeded'),
          {**zero, 'refusals': step})
-    case("OpenRouter's capacity_exceeded is not ours", reporters() + requests(
-        48, 12, 'gradiated_gateway_generations_total', deployment='openrouter', status='failed', error='capacity_exceeded'),
-         zero)
+    for deployment in ('openrouter', 'fallback'):
+        case(f'{deployment} capacity failures do not increase local demand', reporters() + requests(
+            48, 12, 'gradiated_gateway_generations_total', deployment=deployment, status='failed',
+            error='capacity_exceeded'), zero)
     case('customer policy rejection does not grow GPU pools', reporters() + requests(
         54, 6, 'gradiated_gateway_admission_rejections_total', reason='insufficient_balance'), zero)
     # A refusal burst keeps its step for the pool's hold (ten minutes by

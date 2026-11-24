@@ -1,0 +1,90 @@
+{
+  "moonshotai/kimi-k3.1-pro": [
+    {
+      "provider": "baseten",
+      "base_url": "https://inference.baseten.co/v1",
+      "model": "moonshotai/Kimi-K3.1-Pro",
+      "nano_usd_per_token": {
+        "input": 2000,
+        "cached_input": 200,
+        "output": 10000
+      }
+    },
+    {
+      "provider": "modal",
+      "base_url": "https://gradiated-prod--ep-kimi-k3-1-pro-server.us-west.modal.direct/v1",
+      "model": "moonshotai/Kimi-K3.1-Pro",
+      "nano_usd_per_token": {
+        "input": 2000,
+        "cached_input": 200,
+        "output": 10000
+      }
+    }
+  ],
+  "deepseek/deepseek-v4.1-flash-1017": [
+    {
+      "provider": "baseten",
+      "base_url": "https://inference.baseten.co/v1",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "nano_usd_per_token": {
+        "input": 300,
+        "cached_input": 7,
+        "output": 1200
+      }
+    },
+    {
+      "provider": "modal",
+      "base_url": "https://gradiated-prod--ep-deepseek-v4-1-flash-1017-server.us-west.modal.direct/v1",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "nano_usd_per_token": {
+        "input": 300,
+        "cached_input": 5,
+        "output": 1200
+      }
+    }
+  ],
+  "z-ai/glm-5.3-flash": [
+    {
+      "provider": "baseten",
+      "base_url": "https://inference.baseten.co/v1",
+      "model": "zai-org/GLM-5.3-Flash",
+      "nano_usd_per_token": {
+        "input": 150,
+        "cached_input": 30,
+        "output": 500
+      }
+    },
+    {
+      "provider": "modal",
+      "base_url": "https://gradiated-prod--ep-glm-5-3-flash-server.us-west.modal.direct/v1",
+      "model": "zai-org/GLM-5.3-Flash",
+      "nano_usd_per_token": {
+        "input": 450,
+        "cached_input": 90,
+        "output": 1500
+      }
+    }
+  ],
+  "z-ai/glm-5.3": [
+    {
+      "provider": "baseten",
+      "base_url": "https://inference.baseten.co/v1",
+      "model": "zai-org/GLM-5.3",
+      "nano_usd_per_token": {
+        "input": 1400,
+        "cached_input": 140,
+        "output": 4400
+      }
+    },
+    {
+      "provider": "modal",
+      "base_url": "https://gradiated-prod--ep-glm-5-3-server.us-west.modal.direct/v1",
+      "model": "zai-org/GLM-5.3",
+      "nano_usd_per_token": {
+        "input": 1400,
+        "cached_input": 260,
+        "output": 4400
+      }
+    }
+  ]
+}

@@ -39,8 +39,8 @@ service to pick it up immediately. If a
 service keeps a provider client, reload its key or restart the service before
 revoking the old key. Keep one loader per service so calls share the cache.
 
-The gateway loads the OpenRouter key on each OpenRouter attempt, so a slot change
-takes effect within the cache lifetime without a restart.
+The gateway loads the Baseten or Modal key on each fallback attempt. Slot changes
+take effect within the cache lifetime.
 
 The Temporal worker loads these keys before training allocation and when calling
 the selected comparison or judge provider. Production uses Secrets Manager; local

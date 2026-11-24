@@ -1,9 +1,13 @@
 mod chat;
 mod client;
+mod external_chat;
+mod fallback;
 mod native;
 mod openrouter;
 mod progress;
 mod systemone;
+
+use std::time::Duration;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -21,7 +25,10 @@ use crate::{
     NormalizedUsage,
 };
 
+pub(crate) const MIN_FALLBACK_BUDGET: Duration = Duration::from_secs(1);
+
 pub use client::{RuntimeClientError, RuntimeTlsConfig, SglangClient};
+pub use fallback::{FallbackRouter, FallbackRoutes};
 pub use openrouter::{supports_parameter as openrouter_supports_parameter, OpenRouterClient};
 
 #[async_trait]
@@ -86,20 +93,43 @@ pub struct PriceCap {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExternalModel {
     id: String,
+    direct: bool,
 }
 
 impl ExternalModel {
     pub fn openrouter(id: &str) -> Self {
-        Self { id: id.to_owned() }
+        Self {
+            id: id.to_owned(),
+            direct: false,
+        }
+    }
+
+    pub(crate) fn direct(id: &str) -> Self {
+        Self {
+            id: id.to_owned(),
+            direct: true,
+        }
+    }
+
+    pub(crate) fn is_direct(&self) -> bool {
+        self.direct
+    }
+
+    pub(crate) fn capacity(&self) -> crate::metrics::Capacity {
+        if self.direct {
+            crate::metrics::Capacity::Fallback
+        } else {
+            crate::metrics::Capacity::OpenRouter
+        }
     }
 
     pub fn id(&self) -> &str {
         &self.id
     }
 
-    /// Settlement's served-release identity for generations OpenRouter serves.
+    /// Settlement identity for an external capacity route.
     pub fn served_release_digest(&self) -> String {
-        let identity = serde_json::json!({"capacity": "openrouter", "model": self.id});
+        let identity = serde_json::json!({"capacity": self.capacity().as_str(), "model": self.id});
         let encoded = serde_json::to_vec(&identity).expect("a JSON object serializes");
 
         format!("sha256:{:x}", Sha256::digest(encoded))

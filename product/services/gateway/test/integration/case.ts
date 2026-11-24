@@ -136,7 +136,9 @@ export class Case {
   ): Promise<Case> {
     const { database, runtimeToken } = connections;
     const upstream = options.upstream ?? SYNTHETIC;
-    const model = `test/${kind}-${crypto.randomUUID().replaceAll("-", "")}`;
+    const model =
+      options.modelId ??
+      `test/${kind}-${crypto.randomUUID().replaceAll("-", "")}`;
     const runtimeModel =
       upstream.kind === "proxy" ? upstream.model : `private/${model}`;
 
@@ -530,6 +532,7 @@ export class Case {
 export type OrganizationKind = "customer" | "distribution_channel";
 
 export interface CaseOptions {
+  modelId?: string;
   replicas?: number;
   /** Maps the case's model to this OpenRouter model. */
   openRouterModel?: string;

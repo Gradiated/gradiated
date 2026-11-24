@@ -459,6 +459,7 @@ pub(crate) enum Capacity {
     Local,
     Adapter,
     OpenRouter,
+    Fallback,
 }
 
 impl Capacity {
@@ -467,6 +468,7 @@ impl Capacity {
             Self::Local => "local",
             Self::Adapter => "adapter",
             Self::OpenRouter => "openrouter",
+            Self::Fallback => "fallback",
         }
     }
 }

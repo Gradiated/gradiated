@@ -37,13 +37,13 @@ aliases to the canonical model before routing and billing. Direct
 customers and OpenRouter use the same Rust gateway and the same Valkey-backed
 authentication, admission and settlement path.
 
-The gateway has one external capacity: Gradiated's own OpenRouter account. It
-serves a catalog model whose row maps the exact OpenRouter model when our
-deployments are absent, unhealthy, saturated or fail before any output. The
-caller is billed once at catalog prices and sees only Gradiated's response;
-OpenRouter's own traffic and deployment-pinned requests never use it. The
-[gateway architecture](../product/services/gateway/ARCHITECTURE.md#external-capacity-openrouter)
-owns the rules.
+The gateway can serve an explicitly mapped catalog model through Baseten or
+Modal when our deployments are absent, unhealthy, saturated or fail before
+output. It bills the caller at catalog prices and accounts for the upstream cost
+separately. Deployment-pinned requests and traffic from the OpenRouter
+distribution channel use Gradiated capacity. The
+[gateway architecture](../product/services/gateway/ARCHITECTURE.md#external-capacity)
+defines the routing and settlement rules.
 
 The one exception is the customer-key proxy in `product/services/proxy`, which
 the [proxy feature plan](PROXY_FEATURE_PLAN.md) governs. It relays requests to

@@ -16,7 +16,7 @@ use crate::{
     model::{ModelStatus, ServingDeployment, ServingDeploymentError, TextOutputModality},
     protocol::Protocol,
     request::parse_target,
-    runtime::openrouter_supports_parameter,
+    runtime::{openrouter_supports_parameter, FallbackRoutes},
     serving_state::{ServingState, ServingStateError},
     CatalogModel, ExternalModel, GatewayError, GatewayModel, GatewayModelDeployment,
     InferenceRequest, ModelAccess, RequestKind,
@@ -183,10 +183,11 @@ impl HostedRequest {
         request.parameters.remove("partial");
 
         let external = external.filter(|external| {
-            request
-                .parameters
-                .keys()
-                .all(|name| openrouter_supports_parameter(external.id(), name))
+            external.is_direct()
+                || request
+                    .parameters
+                    .keys()
+                    .all(|name| openrouter_supports_parameter(external.id(), name))
         });
         if local.is_none() && base.is_none() && external.is_none() {
             return Err(no_capacity(&model, adapter.is_some()));
@@ -233,26 +234,6 @@ impl HostedRequest {
     }
 }
 
-/// OpenRouter can serve a model only through its explicit mapping, and never
-/// SystemOne, OpenRouter's own traffic or a request pinned to a deployment.
-fn external_model(
-    model: &GatewayModel,
-    from_openrouter: bool,
-    pinned: bool,
-) -> Option<ExternalModel> {
-    let eligible = !from_openrouter
-        && !pinned
-        && !model
-            .deployments
-            .iter()
-            .any(|deployment| deployment.release.is_system_one());
-
-    eligible
-        .then(|| model.openrouter_model())
-        .flatten()
-        .map(ExternalModel::openrouter)
-}
-
 /// Keeps the errors that predate external capacity; only a mapped model may have
 /// no deployments by design.
 fn no_capacity(model: &GatewayModel, adapter: bool) -> GatewayError {
@@ -288,6 +269,7 @@ impl Authorization {
 pub struct RequestCoordinator {
     serving_state: Arc<dyn ServingState>,
     verification_workspace_id: Option<Uuid>,
+    fallback_routes: Option<FallbackRoutes>,
 }
 
 impl RequestCoordinator {
@@ -295,12 +277,48 @@ impl RequestCoordinator {
         Self {
             serving_state,
             verification_workspace_id: None,
+            fallback_routes: (!cfg!(test)).then(FallbackRoutes::default),
         }
     }
 
     pub fn with_verification_workspace(mut self, workspace_id: Option<Uuid>) -> Self {
         self.verification_workspace_id = workspace_id;
         self
+    }
+
+    pub fn with_fallback_routes(mut self, routes: FallbackRoutes) -> Self {
+        self.fallback_routes = Some(routes);
+        self
+    }
+
+    #[doc(hidden)]
+    pub fn with_legacy_openrouter_fallback(mut self) -> Self {
+        self.fallback_routes = None;
+        self
+    }
+
+    fn external_model(
+        &self,
+        model: &GatewayModel,
+        from_openrouter: bool,
+        pinned: bool,
+    ) -> Option<ExternalModel> {
+        if from_openrouter
+            || pinned
+            || model
+                .deployments
+                .iter()
+                .any(|deployment| deployment.release.is_system_one())
+        {
+            return None;
+        }
+
+        match &self.fallback_routes {
+            Some(routes) => routes
+                .contains(&model.id)
+                .then(|| ExternalModel::direct(&model.id)),
+            None => model.openrouter_model().map(ExternalModel::openrouter),
+        }
     }
 
     pub fn qualify(
@@ -477,7 +495,9 @@ impl RequestCoordinator {
                     &statuses,
                     requested_at,
                 ),
-                external_capacity: external_model(&model, from_openrouter, false).is_some(),
+                external_capacity: self
+                    .external_model(&model, from_openrouter, false)
+                    .is_some(),
                 model,
             });
         }
@@ -618,7 +638,7 @@ impl RequestCoordinator {
         let cartridge = adapter
             .as_ref()
             .is_some_and(crate::PrivateAdapter::is_cartridge);
-        let external = external_model(&model, from_openrouter, pinned || cartridge);
+        let external = self.external_model(&model, from_openrouter, pinned || cartridge);
         // An adapter that cannot be served falls back to its base model without it;
         // a pinned request keeps its exact deployment instead.
         let base = (adapter.is_some() && !pinned && !cartridge).then(|| {

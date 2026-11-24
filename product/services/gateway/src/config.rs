@@ -42,14 +42,25 @@ pub struct GatewayConfig {
     pub sglang_api_key: Option<String>,
     pub verification_workspace_id: Option<uuid::Uuid>,
     pub openrouter: OpenRouterConfig,
+    pub fallback_routes: crate::runtime::FallbackRoutes,
 }
 
-/// Gradiated's own OpenRouter account; never a customer's key, never sent to a runtime.
+/// Outbound OpenRouter configuration for the migration and loopback tests.
 #[derive(Clone, Eq, PartialEq)]
 pub struct OpenRouterConfig {
-    /// Without one, the key is the active slot of the `providers/openrouter` secret.
     pub api_key: Option<String>,
     pub base_url: String,
+}
+
+impl OpenRouterConfig {
+    pub fn is_loopback_mock(&self) -> bool {
+        self.api_key.is_some()
+            && self
+                .base_url
+                .parse::<Uri>()
+                .ok()
+                .is_some_and(|uri| matches!(uri.host(), Some("127.0.0.1" | "localhost" | "[::1]")))
+    }
 }
 
 impl fmt::Debug for OpenRouterConfig {
@@ -69,6 +80,10 @@ impl GatewayConfig {
             MINIMAL_ENVIRONMENT.map(|(name, value)| (name.to_owned(), value.to_owned())),
         )
         .expect("the test environment is valid")
+    }
+
+    pub fn use_openrouter_fallback(&self) -> bool {
+        self.openrouter.is_loopback_mock()
     }
 
     pub fn from_environment() -> Result<Self, ConfigError> {
@@ -143,6 +158,7 @@ impl fmt::Debug for GatewayConfig {
                 &self.sglang_api_key.as_ref().map(|_| REDACTED),
             )
             .field("openrouter", &self.openrouter)
+            .field("fallback_routes", &self.fallback_routes)
             .finish()
     }
 }
@@ -153,6 +169,11 @@ impl TryFrom<Environment> for GatewayConfig {
     fn try_from(environment: Environment) -> Result<Self, ConfigError> {
         let valkey_iam = environment.valkey_iam()?;
         let openrouter = environment.openrouter()?;
+        let fallback_routes = match environment.gateway_fallback_routes.as_deref() {
+            Some(raw) => crate::runtime::FallbackRoutes::parse(Some(raw))
+                .ok_or(ConfigError::FallbackRoutes)?,
+            None => crate::runtime::FallbackRoutes::production(),
+        };
         let browser_origins = environment
             .browser_origins
             .as_deref()
@@ -185,6 +206,7 @@ impl TryFrom<Environment> for GatewayConfig {
             sglang_api_key: environment.sglang_api_key.filter(|value| !value.is_empty()),
             verification_workspace_id: environment.gateway_verification_workspace_id,
             openrouter,
+            fallback_routes,
         })
     }
 }
@@ -259,6 +281,7 @@ struct Environment {
 
     sglang_api_key: Option<String>,
 
+    gateway_fallback_routes: Option<String>,
     openrouter_api_key: Option<String>,
     openrouter_base_url: Option<String>,
 }
@@ -377,6 +400,8 @@ pub enum ConfigError {
     EmptyValkeyIam,
     #[error("OPENROUTER_BASE_URL must be an HTTPS URL, or HTTP on a loopback host")]
     OpenRouterBaseUrl,
+    #[error("GATEWAY_FALLBACK_ROUTES must contain valid Baseten or Modal routes")]
+    FallbackRoutes,
 }
 
 #[cfg(test)]
@@ -469,6 +494,19 @@ mod tests {
             }
         );
         assert_eq!(local.sglang_api_key, None);
+    }
+
+    #[test]
+    fn production_fallback_routes_are_loaded_by_default() {
+        let config = minimal_with(&[]).unwrap();
+        assert!(!config.use_openrouter_fallback());
+        assert!(!config.fallback_routes.is_empty());
+        assert!(config.fallback_routes.contains("moonshotai/kimi-k3.1-pro"));
+        assert!(config
+            .fallback_routes
+            .contains("deepseek/deepseek-v4.1-flash-1017"));
+        assert!(config.fallback_routes.contains("z-ai/glm-5.3-flash"));
+        assert!(config.fallback_routes.contains("z-ai/glm-5.3"));
     }
 
     #[test]

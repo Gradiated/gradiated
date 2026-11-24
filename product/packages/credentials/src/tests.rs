@@ -33,13 +33,20 @@ fn does_not_require_a_revoked_inactive_key() {
 async fn reads_current_version_and_observes_manual_rotation() {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let endpoint = format!("http://{}", listener.local_addr().unwrap());
+    let providers = [
+        Provider::OpenAi,
+        Provider::Anthropic,
+        Provider::OpenRouter,
+        Provider::Baseten,
+        Provider::Modal,
+    ];
     let server = tokio::spawn(async move {
         let mut requests = Vec::new();
 
         for slot in ["primary", "secondary", "error"]
             .into_iter()
             .cycle()
-            .take(9)
+            .take(3 * providers.len())
         {
             let (mut stream, _) = listener.accept().await.unwrap();
             let mut request = Vec::new();
@@ -108,7 +115,6 @@ async fn reads_current_version_and_observes_manual_rotation() {
         .build();
     let loader = CredentialLoader::new(Client::from_conf(config));
 
-    let providers = [Provider::OpenAi, Provider::Anthropic, Provider::OpenRouter];
     for provider in providers {
         let (first, concurrent) = tokio::join!(loader.load(provider), loader.load(provider));
         assert_eq!(first.unwrap(), "first-key");
@@ -119,6 +125,8 @@ async fn reads_current_version_and_observes_manual_rotation() {
             Provider::OpenAi => &loader.openai,
             Provider::Anthropic => &loader.anthropic,
             Provider::OpenRouter => &loader.openrouter,
+            Provider::Baseten => &loader.baseten,
+            Provider::Modal => &loader.modal,
         };
         cache.lock().await.as_mut().unwrap().expires_at = Instant::now();
         assert_eq!(loader.load(provider).await.unwrap(), "next-key");

@@ -276,6 +276,21 @@ export const planHost = (facts: HostFacts, pins: Pins, now: Date): Plan => {
     return { action: "none" };
   }
 
+  // A fresh EC2 host cannot answer until enrollment creates its management
+  // key. Cordon checks that EC2 confirms the bootstrap profile is ours.
+  if (
+    !isRunPod(host) &&
+    observation.keyMissing &&
+    !host.status?.observed?.lastSeen &&
+    recordedImage(host) === undefined &&
+    !facts.node?.ready &&
+    !facts.pods &&
+    facts.instance?.state === "running" &&
+    facts.instance.instanceProfileArn &&
+    tailnet?.connected === false
+  )
+    return neverAnswered(host, tailnet, now);
+
   const alive = notGone(facts);
   if (alive) return { action: "wait", reason: `Not answering ping. ${alive}` };
   if (!isRunPod(host)) return planUnreachableAws(facts, now);

@@ -18,7 +18,7 @@ export type Observation =
   // answer, or a failure to reach the egress Service (no DNS name, nothing
   // listening) is the operator's problem, and says nothing about whether the
   // host lives.
-  | { reachable: false; error: string; silent: boolean };
+  | { reachable: false; error: string; silent: boolean; keyMissing?: true };
 
 const pingSchema = z.object({
   instance_id: z.string(),
@@ -39,11 +39,14 @@ export const pingHost = async (
   let key: string;
   try {
     key = (await readFile(path.join(keys, instanceId), "utf8")).trim();
-  } catch {
+  } catch (error) {
     return {
       reachable: false,
       error: "The host management key is not mounted",
       silent: false,
+      ...((error as NodeJS.ErrnoException).code === "ENOENT" && {
+        keyMissing: true as const,
+      }),
     };
   }
   try {

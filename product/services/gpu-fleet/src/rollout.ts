@@ -589,6 +589,22 @@ export const createRollouts = (deps: RolloutDependencies) => {
     if (live.length && rollout.kind === "return")
       return { block: "A pod runs on the leased host" };
 
+    if (rollout.kind === "enroll" && (live.length || facts.node?.ready))
+      return {
+        block: "The host already has a Ready node or running workloads",
+      };
+
+    if (
+      rollout.kind === "enroll" &&
+      !facts.observation.reachable &&
+      facts.observation.keyMissing &&
+      isAws(host) &&
+      !facts.instance?.instanceProfileArn
+    )
+      return {
+        block: "EC2 no longer reports an instance profile for the new host",
+      };
+
     if (rollout.kind === "recover" || rollout.kind === "enroll") {
       // The plan saw no connected device; check again right before the wipe.
       const tailnet = await required().tailnetOf(host);

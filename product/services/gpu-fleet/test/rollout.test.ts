@@ -2498,6 +2498,49 @@ describe("re-imaging AWS hosts", () => {
     });
     expect(fleet.violations).toEqual([]);
   });
+
+  it("enrolls a fresh AWS host whose management key is not mounted", async () => {
+    const fleet = simulateFleet(
+      [
+        {
+          instanceId: AWS_SPARE,
+          podId: EC2_SPARE,
+          gpus: 1,
+          provider: "aws",
+          enrolled: false,
+        },
+      ],
+      [],
+    );
+
+    fleet.sim(AWS_SPARE).profile = true;
+    await run(
+      fleet,
+      pins(NEW_IMAGE, NEW_BUNDLE),
+      () => rollout(fleet, AWS_SPARE)?.result === "Succeeded",
+      {
+        ping: async (id) =>
+          fleet.sim(id).state === "enrolled"
+            ? fleet.ping(id)
+            : {
+                reachable: false,
+                silent: false,
+                keyMissing: true,
+                error: "The host management key is not mounted",
+              },
+      },
+    );
+
+    expect(rollout(fleet, AWS_SPARE)).toMatchObject({ kind: "enroll" });
+    expect(fleet.host(AWS_SPARE).status?.image).toBe(NEW_IMAGE);
+    expect(fleet.sim(AWS_SPARE)).toMatchObject({
+      state: "enrolled",
+      image: NEW_IMAGE,
+      bundle: NEW_BUNDLE,
+      profile: false,
+    });
+    expect(fleet.violations).toEqual([]);
+  });
 });
 
 describe("observe mode", () => {

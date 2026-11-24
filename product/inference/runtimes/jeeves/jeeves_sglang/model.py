@@ -92,8 +92,7 @@ class JeevesForCausalLM(Qwen3_5ForCausalLM):
         seq_lens = forward_batch.extend_seq_lens_cpu
         if input_ids is None or not forward_batch.forward_mode.is_extend() or not seq_lens:
             return rows
-        prefix_lens = forward_batch.extend_prefix_lens_cpu or [0] * len(seq_lens)
-        questions = plan(input_ids[:sum(seq_lens)].tolist(), seq_lens, prefix_lens, self.markers)
+        questions = plan(input_ids[:sum(seq_lens)].tolist(), seq_lens, self.markers)
         if not questions:
             return rows
         device = hidden.device

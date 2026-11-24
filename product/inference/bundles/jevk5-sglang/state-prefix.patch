@@ -1,0 +1,26 @@
+--- a/sglang/srt/managers/schedule_batch.py
++++ b/sglang/srt/managers/schedule_batch.py
+@@ -3093,2 +3093,9 @@
+                 )
++            # On a cold forward, donate a reusable hybrid state at the shared evidence boundary.
++            # Honour native branching decisions for partially overlapping prefixes.
++            if req.mamba_branching_seqlen is None:
++                state_len = (req.sampling_params.custom_params or {}).get("jevk5_state_tokens", 0)
++                boundary = min(state_len, len(req.origin_input_ids) - 1) // checkpoint_grid * checkpoint_grid
++                if boundary > prefix_len:
++                    req.mamba_branching_seqlen = boundary
+             if req.mamba_branching_seqlen is not None:
+--- a/sglang/srt/arg_groups/overrides.py
++++ b/sglang/srt/arg_groups/overrides.py
+@@ -358,4 +358,5 @@
+         # Qwen3.8-2.4T-A95B ships as Qwen3_5MoeForCausalLM.
+         "Qwen3_5MoeForCausalLM",
++        "JevK5ForCausalLM",
+         "Qwen3_5ForCausalLM",
+         "Qwen4ExpForConditionalGeneration",
+@@ -384,4 +385,5 @@
+         # Qwen3.8-2.4T-A95B ships as Qwen3_5MoeForCausalLM.
+         "Qwen3_5MoeForCausalLM",
++        "JevK5ForCausalLM",
+         "Qwen3_5ForCausalLM",
+         "Qwen3NextForCausalLM",

@@ -40,9 +40,9 @@ LONG_PROMPT_TOKENS = 2048
 PREFILL_STEP_TOKENS = MAX_TOKENS + 1
 SGLANG_FLAGS = [
     '--mem-fraction-static', '0.80', '--max-running-requests', '32',
-    # The head reads a question's options and <decide> in one forward step: no chunked prefill and no radix cache,
-    # whose hits would leave the options out of the step.
-    '--chunked-prefill-size', '-1', '--disable-radix-cache', '--max-prefill-tokens', str(PREFILL_STEP_TOKENS),
+    # Keep the scored suffix in one step. The bundle caps radix matches before the pointer readout.
+    '--mamba-radix-cache-strategy', 'extra_buffer',
+    '--chunked-prefill-size', '-1', '--max-prefill-tokens', str(PREFILL_STEP_TOKENS),
 ]
 
 
@@ -52,6 +52,7 @@ class Engine:
     def __init__(self, prompts, sglang, sglang_alive, temperature):
         self.prompts, self.sglang, self.sglang_alive, self.temperature = prompts, sglang, sglang_alive, temperature
         self.healthy = True
+        self._warm_states = common.WarmStateTracker()
 
     def answer(self, data):
         if not self.healthy or not self.sglang_alive():
@@ -76,7 +77,7 @@ class Engine:
                    for key, question in questions.items() if key not in asked}
         try:
             scores = self._read([rows[key] for key in asked],
-                                [list(range(len(prompt.keys(questions[key])))) for key in asked])
+                                [list(range(len(prompt.keys(questions[key])))) for key in asked], state_ids)
         except self.sglang.http_error as exc:
             # SGLang answers 400 for a prompt over the context length; anything else is a failed engine.
             if exc.response is not None and exc.response.status_code == 400:
@@ -101,13 +102,37 @@ class Engine:
                 'usage': {'input_tokens': tokens, 'cached_input_tokens': 0, 'output_tokens': 0},
                 'latency_ms': round((time.perf_counter() - started) * 1000, 3)}
 
-    def _read(self, rows, token_ids):
-        # On L4, packing long unchunked prefills into a full step costs more than
-        # submitting each separately. Other concurrent requests can still co-batch.
-        lengths = [len(row) for row in rows]
-        if len(rows) >= 4 and sum(lengths) > PREFILL_STEP_TOKENS and min(lengths) >= LONG_PROMPT_TOKENS:
-            return [self.sglang.logprobs([row], [ids])[0] for row, ids in zip(rows, token_ids)]
-        return self.sglang.logprobs(rows, token_ids)
+    def _read(self, rows, token_ids, state_ids):
+        # Every scored request can reuse resident state. On a cold multi-question request over a
+        # non-trivial state, run question 0 first so SGLang populates the KV + GDN checkpoint at the
+        # state boundary, then batch the remaining questions' suffixes. Warm states batch in one pass.
+        if not rows:
+            return []
+        state_len = len(state_ids)
+        params = {'jeeves_state_tokens': state_len, 'jeeves_readout_marker': self.prompts.think_end_id}
+        state_key = self._warm_states.key(state_ids)
+        is_warm = self._warm_states.is_warm(state_key)
+        out = []
+        start = 0
+        if len(rows) >= 2 and state_key is not None and not is_warm:
+            out.extend(self.sglang.logprobs([rows[0]], [token_ids[0]], custom_params=params))
+            start = 1
+        cached_est = (state_len // common.GDN_CHECKPOINT_TOKENS) * common.GDN_CHECKPOINT_TOKENS if (
+            state_key is not None and (is_warm or start == 1)) else 0
+        i = start
+        while i < len(rows):
+            batch_rows, batch_ids, step_tokens = [], [], 0
+            while i < len(rows):
+                est = max(1, len(rows[i]) - cached_est)
+                if batch_rows and step_tokens + est > PREFILL_STEP_TOKENS:
+                    break
+                batch_rows.append(rows[i])
+                batch_ids.append(token_ids[i])
+                step_tokens += est
+                i += 1
+            out.extend(self.sglang.logprobs(batch_rows, batch_ids, custom_params=params))
+        self._warm_states.mark(state_key)
+        return out
 
     @staticmethod
     def legend(question):

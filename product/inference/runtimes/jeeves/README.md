@@ -42,19 +42,22 @@ weight; the adapter reads them with `token_ids_logprob`, divides by 1.522 and so
 (no, yes). No `lm_head` is allocated. hogference's fused FP8 kernels, last-layer split and prefix-state connector are
 not ported.
 
-The head needs a question's options and `<decide>` in one forward step, so SGLang runs without chunked prefill and
-without radix cache (a cache hit would leave the options out of the step). A question read from an incomplete step
-gets NaN scores, which the adapter refuses with a 500 rather than answering. For batches with at least four scored questions, when each has
-at least 2,048 tokens and their total exceeds one 16,385-token prefill step, the adapter submits them one at a time. Confidence is the top probability, as
-PostHog reports it; usage counts every question's whole prompt, nothing cached.
+The head needs the closing thinking marker, the second option block and the decision token in one forward step.
+Each scored request uses SGLang's pod-local `extra_buffer` radix cache, including single-question requests. The first
+forward stores attention KV and an aligned recurrent checkpoint from the shared state. On a cold multi-question
+request over a state of at least 64 tokens, the adapter submits question 0 first to populate the checkpoint and then
+batches the remaining questions' suffixes; warm states batch all questions together. The engine bounds the match
+before the closing thinking marker so even an identical question recomputes every option used by its pointer head.
+A missing scoring marker or unreadable option fails the request.
+The public usage field counts every question's whole prompt, following PostHog's usage convention.
 
 ## Limits
 
 - 16,384 tokens a prompt and 65,536 a request, else 422; never truncated.
 - 1 to 255 options (one pass, as Jeeves) and 1 to 1,024 questions; up to 8 requests at once, then 429.
 - No thinking: PostHog measured 19 to 92 s for a three-question request with it.
-- SGLang: one GPU, `--mem-fraction-static 0.80`, up to 32 running prompts, `--max-prefill-tokens` 16,385, no CUDA
-  graphs.
+- SGLang: one GPU, `--mem-fraction-static 0.80`, up to 32 running prompts, `--max-prefill-tokens` 16,385,
+  `--disable-overlap-schedule`, decode CUDA graphs disabled, breakable prefill CUDA graphs for sizes 64..1,024.
 
 ## Placement
 

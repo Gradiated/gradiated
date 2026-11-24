@@ -9,6 +9,9 @@ systemone.rs); an answer that would fail them is an engine fault, never returned
 from __future__ import annotations
 
 import atexit
+from array import array
+from collections import OrderedDict
+import hashlib
 import logging
 import math
 import os
@@ -24,6 +27,8 @@ log = logging.getLogger('posthog.runtime')
 
 SGLANG_STARTUP_SECONDS = 1500
 SGLANG_TIMEOUT_SECONDS = 120
+GDN_CHECKPOINT_TOKENS = 64
+PREFILL_CUDA_GRAPH_SIZES = ('64', '128', '256', '512', '1024')
 ANSWER_FIELDS = {'noul': {'type', 'noul'}, 'choice': {'type', 'choice', 'confidence', 'probabilities'},
                  'score': {'type', 'score', 'legend', 'confidence', 'probabilities'}}
 
@@ -113,15 +118,18 @@ class SGLang:
         """Compute a shared prefix into the radix cache, so the prompts that start with it reuse its state."""
         self._generate({'input_ids': list(ids), 'sampling_params': {'max_new_tokens': 1, 'temperature': 0.0}})
 
-    def logprobs(self, rows, token_ids):
+    def logprobs(self, rows, token_ids, *, custom_params=None):
         """-> for each prompt (a list of token ids), the next-token log probabilities of its token_ids, in order.
         A missing or non-finite value is None."""
         if not rows:
             return []
-        results = self._generate({'input_ids': [list(ids) for ids in rows],
-                                  'sampling_params': {'max_new_tokens': 1, 'temperature': 0.0},
-                                  'return_logprob': True, 'logprob_start_len': -1,
-                                  'token_ids_logprob': [list(ids) for ids in token_ids]})
+        sampling = {'max_new_tokens': 1, 'temperature': 0.0}
+        if custom_params is not None:
+            sampling['custom_params'] = custom_params
+        body = {'input_ids': [list(ids) for ids in rows], 'sampling_params': sampling,
+                'return_logprob': True, 'logprob_start_len': -1,
+                'token_ids_logprob': [list(ids) for ids in token_ids]}
+        results = self._generate(body)
         if len(rows) == 1 and isinstance(results, dict):
             results = [results]
         if not isinstance(results, list) or len(results) != len(rows):
@@ -195,13 +203,46 @@ def free_port():
         return sock.getsockname()[1]
 
 
+class WarmStateTracker:
+    """Thread-safe bounded LRU of recently prefilled state-prefix digests for cold/warm batching decisions."""
+
+    def __init__(self, max_entries=128):
+        self.max_entries = max_entries
+        self._seen = OrderedDict()
+        self._lock = threading.Lock()
+
+    @staticmethod
+    def key(ids):
+        if len(ids) < GDN_CHECKPOINT_TOKENS:
+            return None
+        return hashlib.blake2b(array('q', ids).tobytes(), digest_size=16).digest()
+
+    def is_warm(self, state_key):
+        if state_key is None:
+            return False
+        with self._lock:
+            return state_key in self._seen
+
+    def mark(self, state_key):
+        if state_key is None:
+            return
+        with self._lock:
+            self._seen.pop(state_key, None)
+            self._seen[state_key] = None
+            if len(self._seen) > self.max_entries:
+                self._seen.popitem(last=False)
+
+
 def sglang_command(checkpoint, port, max_tokens, flags):
     """SGLang for prompts of at most max_tokens tokens, each answered with one token (max_tokens + 1 context)."""
     return [sys.executable, '-m', 'sglang.launch_server', '--model-path', checkpoint, '--served-model-name', 'm',
             '--tp', '1', '--host', '127.0.0.1', '--port', str(port), '--context-length', str(max_tokens + 1),
-            # Every request generates exactly one token, so there are no decode steps for CUDA graphs to speed up;
-            # graphs would only cost GPU memory and start time.
-            '--cuda-graph-backend-decode', 'disabled', '--cuda-graph-backend-prefill', 'disabled',
+            # Every request generates one token (no decode steps). Disable decode graphs and overlap scheduling
+            # (which otherwise launches an unused 1-token eager decode step after every prefill), and capture
+            # breakable prefill CUDA graphs up to 1,024 tokens to accelerate short and warm-cache suffix prefills.
+            '--cuda-graph-backend-decode', 'disabled',
+            '--cuda-graph-backend-prefill', 'breakable', '--cuda-graph-bs-prefill', *PREFILL_CUDA_GRAPH_SIZES,
+            '--disable-overlap-schedule',
             # The adapter runs its own warmup through the real request path.
             '--skip-server-warmup', *flags]
 

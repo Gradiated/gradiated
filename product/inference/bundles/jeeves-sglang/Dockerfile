@@ -1,6 +1,6 @@
 # posthog/jeeves on SGLang 0.5.21: linden-1's pinned SGLang environment, without its B300 attention kernels.
 FROM ubuntu:24.04@sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254 AS dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates pigz \
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates pigz patch \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=ghcr.io/astral-sh/uv:0.12.0@sha256:606e70c71c852d03f611b1e56a195d08648507018a7057fab82c4974c4eae105 /uv /usr/local/bin/uv
 ENV UV_PYTHON_INSTALL_DIR=/opt/python UV_LINK_MODE=copy UV_NO_CACHE=1 \
@@ -20,6 +20,9 @@ RUN uv pip install --python /bundle/python/bin/python3 --break-system-packages \
        --no-deps --require-hashes -r /tmp/jit-cache-requirements.txt
 
 FROM dependencies AS package
+# Bound cache hits before the pointer readout so a repeated prompt still computes every pointer-head input.
+COPY bundles/jeeves-sglang/state-prefix.patch /tmp/state-prefix.patch
+RUN patch --batch --fuzz=0 -p1 -d /bundle/python/lib/python3.12/site-packages < /tmp/state-prefix.patch
 COPY bundles/package.sh /package.sh
 COPY runtimes/jeeves/service.py runtimes/jeeves/jeeves_prompt.py runtimes/jeeves/verify-build.py /bundle/
 COPY runtimes/jeeves/jeeves_sglang/__init__.py runtimes/jeeves/jeeves_sglang/model.py runtimes/jeeves/jeeves_sglang/readout.py /bundle/jeeves_sglang/

@@ -47,12 +47,11 @@ class SGLang:
 
     def __init__(self, error=None, logprobs=None):
         self.error, self.fixed = error, logprobs
-        self.prefills, self.batches = [], []
+        self.batches = []
+        self.cache_args = []
 
-    def prefill(self, ids):
-        self.prefills.append(list(ids))
-
-    def logprobs(self, rows, token_ids):
+    def logprobs(self, rows, token_ids, **cache):
+        self.cache_args.append(cache)
         if self.error:
             raise self.error
         self.batches.append(len(rows))
@@ -85,6 +84,9 @@ class JevK5Tests(unittest.TestCase):
         command = service.sglang_command('/m', 1)
         override = command[command.index('--json-model-override-args') + 1]
         self.assertEqual(json.loads(override), {'architectures': ['JevK5ForCausalLM']})
+        self.assertEqual(command[command.index('--mamba-radix-cache-strategy') + 1], 'extra_buffer')
+        self.assertIn('--disable-overlap-schedule', command)
+        self.assertEqual(command[command.index('--cuda-graph-backend-prefill') + 1], 'breakable')
         self.assertEqual(service.sglang_environment(Path('/r')),
                          {'SGLANG_EXTERNAL_MODEL_PACKAGE': 'jevk5_sglang', 'PYTHONPATH': '/r'})
 
@@ -190,7 +192,7 @@ class JevK5Tests(unittest.TestCase):
         state = 'word ' * 14000
         with self.assertRaises(adapter.InvalidRequest):
             ask(engine, {'intent': question}, state=state)
-        self.assertEqual(sglang.batches, [4])
+        self.assertEqual(sglang.batches, [1, 3])
 
     def test_knockout_pass_counts(self):
         self.assertEqual([service.passes(n) for n in (2, 16, 17, 77, 255, 300)], [1, 1, 3, 6, 17, 22])
@@ -221,35 +223,32 @@ class JevK5Tests(unittest.TestCase):
         self.assertEqual(result['answers']['category']['type'], 'choice')
         self.assertGreater(result['usage']['input_tokens'], 0)
 
-    def test_prefix_only_forward_depends_on_shared_tokens_and_batch_size(self):
-        for count, shared, expect_prefill in [(2, 1023, False), (2, 1024, True), (3, 2559, True),
-                                               (3, 2560, True), (4, 450, True), (8, 146, False),
-                                               (8, 147, True), (9, 127, False), (9, 128, True)]:
-            with self.subTest(count=count, shared=shared):
-                engine, sglang = make()
-                prefix = [7] * shared
-                engine._share_prefix([prefix + [i] for i in range(count)])
-                self.assertEqual(sglang.prefills, [prefix] if expect_prefill else [])
-
-    def test_long_shared_prefix_stops_at_a_recurrent_checkpoint(self):
+    def test_cold_multi_pass_primes_with_first_pass_then_batches_and_warm_batches_all(self):
         engine, sglang = make()
-        prefix = [7] * 2879
-        rows = [prefix + [i] for i in range(3)]
-        engine._share_prefix(rows)
-        self.assertEqual(sglang.prefills, [prefix[:2816]])
-        self.assertEqual([len(row) for row in rows], [2880] * 3)
-        engine, sglang = make()
-        engine._share_prefix(rows + [prefix + [3]])
-        self.assertEqual(sglang.prefills, [prefix])
+        long_state = 'ticket event details ' * 80
+        ask(engine, QUESTIONS, state=long_state)
+        state_len = len(engine.state_ids(long_state))
+        self.assertGreaterEqual(state_len, common.GDN_CHECKPOINT_TOKENS)
+        self.assertEqual(sglang.batches, [1, 2])
+        self.assertEqual(sglang.cache_args[-1]['custom_params'], {'jevk5_state_tokens': state_len})
+        # Warm repeat over the same state batches all 3 questions in one pass.
+        sglang.batches.clear()
+        ask(engine, QUESTIONS, state=long_state)
+        self.assertEqual(sglang.batches, [3])
 
-    def test_unaligned_prefix_matches_stock_outside_long_three_passes(self):
-        # These nonmultiples of 64 distinguish full-prefix warmup from checkpoint rounding.
-        for count, shared in [(2, 2879), (3, 2559), (4, 450), (8, 2879)]:
-            with self.subTest(count=count, shared=shared):
-                engine, sglang = make()
-                prefix = [7] * shared
-                engine._share_prefix([prefix + [i] for i in range(count)])
-                self.assertEqual(sglang.prefills, [prefix])
+    def test_short_state_does_not_split_cold_batches_or_send_checkpoint_hint(self):
+        engine, sglang = make()
+        ask(engine, QUESTIONS, state='short')
+        self.assertEqual(sglang.batches, [3])
+        self.assertIsNone(sglang.cache_args[-1]['custom_params'])
+
+    def test_state_ids_handles_nested_criterion_keys_structurally(self):
+        engine, _ = make()
+        state = {'criterion': 'nested', 'payload': 'ticket ' * 80}
+        state_ids = engine.state_ids(state)
+        row = engine.encode(state, 'outer question', ['A: yes', 'B: no'])
+        self.assertEqual(row[:len(state_ids)], state_ids)
+        self.assertGreater(len(state_ids), 80)
 
     def test_inputs_over_the_limits_are_client_errors(self):
         engine, sglang = make()

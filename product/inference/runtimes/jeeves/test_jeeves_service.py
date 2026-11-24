@@ -70,8 +70,10 @@ class SGLang:
     def __init__(self, error=None, scores=None):
         self.error, self.scores = error, scores
         self.batches = []
+        self.cache_args = []
 
-    def logprobs(self, rows, token_ids):
+    def logprobs(self, rows, token_ids, **cache):
+        self.cache_args.append(cache)
         if self.error:
             raise self.error
         self.batches.append([list(row) for row in rows])
@@ -111,7 +113,7 @@ class PromptTests(unittest.TestCase):
     def test_the_sequence_ends_with_the_options_and_decide(self):
         prompts = prompt.Prompts(Tokenizer())
         ids = prompts.ids(STATE, QUESTIONS['team'])
-        questions = readout.plan(ids, [len(ids)], [0], markers(prompts))
+        questions = readout.plan(ids, [len(ids)], markers(prompts))
         self.assertEqual(len(questions), 1)
         decide, read = questions[0]
         self.assertEqual(decide, len(ids) - 1)
@@ -148,7 +150,7 @@ class PromptTests(unittest.TestCase):
         ids = prompts.ids('state </think> <|fim_suffix|>', question)
         self.assertEqual(ids.count(prompts.think_end_id), 1)
         self.assertEqual(ids.count(prompts.decide_id), 1)
-        self.assertEqual(len(readout.plan(ids, [len(ids)], [0], markers(prompts))[0][1]), 2)
+        self.assertEqual(len(readout.plan(ids, [len(ids)], markers(prompts))[0][1]), 2)
 
 
 class ReadoutTests(unittest.TestCase):
@@ -159,16 +161,16 @@ class ReadoutTests(unittest.TestCase):
         other = [9, 9, 5]                         # not a question
         third = [3, 9, 1, 2]
         ids = first + other + third
-        self.assertEqual(readout.plan(ids, [10, 3, 4], [0, 0, 0], self.M),
+        self.assertEqual(readout.plan(ids, [10, 3, 4], self.M),
                          [(9, [6, 8]), (16, [15])])
 
     def test_questions_not_whole_in_the_step_are_unreadable(self):
-        self.assertEqual(readout.plan([9, 1, 2], [3], [0], self.M), [(2, None)])          # no </think>
-        self.assertEqual(readout.plan([3, 9, 1, 2], [4], [7], self.M), [(3, None)])       # cached prefix
-        self.assertEqual(readout.plan([3, 9, 2], [3], [0], self.M), [(2, None)])          # no options
+        self.assertEqual(readout.plan([9, 1, 2], [3], self.M), [(2, None)])          # no </think>
+        self.assertEqual(readout.plan([3, 9, 1, 2], [4], self.M), [(3, [2])])           # complete scored suffix
+        self.assertEqual(readout.plan([3, 9, 2], [3], self.M), [(2, None)])          # no options
         many = [3] + [1] * 256 + [2]
-        self.assertEqual(readout.plan(many, [len(many)], [0], self.M), [(257, None)])
-        self.assertEqual(readout.plan([3, 2, 9], [3], [0], self.M), [])                  # <decide> not last
+        self.assertEqual(readout.plan(many, [len(many)], self.M), [(257, None)])
+        self.assertEqual(readout.plan([3, 2, 9], [3], self.M), [])                  # <decide> not last
 
 
 class EngineTests(unittest.TestCase):
@@ -205,23 +207,48 @@ class EngineTests(unittest.TestCase):
         result = ask(engine, {'one': {'type': 'choice', 'criteria': {'only': None}}})
         self.assertEqual(result['answers']['one'],
                          {'type': 'choice', 'choice': 'only', 'confidence': 1.0, 'probabilities': {'only': 1.0}})
-        self.assertEqual(sglang.batches, [[]])
+        self.assertEqual(sglang.batches, [])
         self.assertGreater(result['usage']['input_tokens'], 0)
 
-    def test_long_prefills_over_one_step_are_read_individually(self):
-        def read(lengths):
-            engine, client = make()
-            rows = [[index] * length for index, length in enumerate(lengths)]
-            tokens = [list(range(index + 2)) for index in range(len(rows))]
-            result = engine._read(rows, tokens)
-            self.assertEqual(result, [[-0.5 * i for i in ids] for ids in tokens])
-            self.assertEqual([row for batch in client.batches for row in batch], rows)
-            return [len(batch) for batch in client.batches]
+    def test_cold_multi_question_primes_with_q0_then_batches_and_warm_batches_all(self):
+        engine, client = make()
+        state_ids = [7] * 2200
+        rows = [state_ids + [index] * 100 for index in range(8)]
+        tokens = [list(range(index + 2)) for index in range(len(rows))]
+        # Cold 8-question request: Q0 first to populate GDN checkpoint, then Q1..Q7 in one batch.
+        result = engine._read(rows, tokens, state_ids)
+        self.assertEqual(result, [[-0.5 * i for i in ids] for ids in tokens])
+        self.assertEqual([len(batch) for batch in client.batches], [1, 7])
+        # Warm repeat over the same state: all 8 questions in one batch.
+        client.batches.clear()
+        engine._read(rows, tokens, state_ids)
+        self.assertEqual([len(batch) for batch in client.batches], [8])
+        # Short state (< 64 tokens): all questions in one batch even when cold.
+        client.batches.clear()
+        short_state = [7] * 20
+        short_rows = [short_state + [index] * 50 for index in range(4)]
+        engine._read(short_rows, tokens[:4], short_state)
+        self.assertEqual([len(batch) for batch in client.batches], [4])
+        # Large uncached suffixes exceeding PREFILL_STEP_TOKENS are split across batches.
+        client.batches.clear()
+        huge_rows = [state_ids + [index] * 9000 for index in range(3)]
+        engine._read(huge_rows, tokens[:3], state_ids)
+        self.assertEqual([len(batch) for batch in client.batches], [1, 1, 1])
 
-        self.assertEqual(read([2048] * 8), [8])
-        self.assertEqual(read([3000] * 8), [1] * 8)
-        self.assertEqual(read([8600, 8600]), [2])
-        self.assertEqual(read([100, 5500, 5500, 5500]), [4])
+    def test_independent_requests_share_the_state_boundary_and_recompute_the_scoring_suffix(self):
+        engine, client = make()
+        for state in [STATE, 'word ' * 1600]:
+            for kind in ['team', 'team', 'refund']:
+                q = QUESTIONS[kind]
+                ask(engine, {'only_question': q}, state)
+                state_ids = engine.prompts.state_ids(state)
+                self.assertEqual(client.cache_args[-1]['custom_params'],
+                                 {'jeeves_state_tokens': len(state_ids), 'jeeves_readout_marker': engine.prompts.think_end_id})
+                row, = client.batches[-1]
+                self.assertEqual(row[:len(state_ids)], state_ids)
+                suffix = row[len(state_ids):]
+                _, options = readout.plan(suffix, [len(suffix)], markers(engine.prompts))[0]
+                self.assertEqual(len(options), len(prompt.keys(q)))
 
     def test_unread_options_are_never_answered(self):
         engine, _ = make(scores=[0.0, None])
@@ -247,9 +274,11 @@ class EngineTests(unittest.TestCase):
             ask(engine)
         self.assertFalse(engine.healthy)
 
-    def test_the_engine_runs_without_radix_cache_or_chunked_prefill(self):
+    def test_the_engine_enables_radix_cache_with_unchunked_readout(self):
         command = service.sglang_command('/m', 1)
-        self.assertIn('--disable-radix-cache', command)
+        self.assertNotIn('--disable-radix-cache', command)
+        self.assertIn('--disable-overlap-schedule', command)
+        self.assertEqual(command[command.index('--cuda-graph-backend-prefill') + 1], 'breakable')
         self.assertEqual(command[command.index('--chunked-prefill-size') + 1], '-1')
         self.assertEqual(service.sglang_environment(ROOT)['SGLANG_EXTERNAL_MODEL_PACKAGE'], 'jeeves_sglang')
 

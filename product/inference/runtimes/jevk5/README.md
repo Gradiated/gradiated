@@ -32,19 +32,20 @@ ceil(n / 16) groups, then a final over the groups' best, sharpened by 0.93. All 
 SGLang in one batched call; upstream's own `spread` is replayed over the passes read so far to find the next ones.
 The LM head runs in FP32 (`--enable-fp32-lm-head`).
 
-For a batch of three passes sharing at least 2,560 tokens, the runtime prefills through the last shared 64-token
-recurrent-state checkpoint. Every pass still receives its complete original input. For other shapes, the runtime
-prefills a shared prefix separately when at least 128 tokens match and the estimated savings reach
-1,024 tokens. This is the cutoff used by the stock L4 bundle `bd5c11d31dd9`. The 6,144-token small-batch cutoff
-reduced throughput in the four-question production canary. Smaller savings go straight to the batched read. Confidence is the top probability, as PostHog reports it.
-Usage counts every pass's whole prompt, as upstream does, with nothing reported as cached.
+Each scored request uses SGLang's pod-local `extra_buffer` Mamba radix cache (patched into the bundle for
+`JevK5ForCausalLM`), saving an aligned GatedDeltaNet checkpoint at the shared evidence prefix boundary on a cold
+forward. On a cold multi-pass request over a state of at least 64 tokens, the adapter submits the first pass to
+populate the checkpoint and then batches the remaining passes; warm states batch all passes together. Confidence is
+the top probability, as PostHog reports it. Usage counts every pass's whole prompt, as upstream does, with nothing
+reported as cached.
 
 ## Limits
 
 - 16,384 tokens a prompt (JevK5's own limit) and 65,536 a request across its passes, else 422; never truncated.
 - 1 to 255 options (the gateway's bound) and 1 to 1,024 questions; up to 8 requests at once, then 429.
 - SGLang: one GPU, `--mem-fraction-static 0.80`, up to 64 running prompts, prompts prefilled whole
-  (`--max-prefill-tokens` and `--chunked-prefill-size` 16,385), no CUDA graphs (every request is a single prefill).
+  (`--max-prefill-tokens` and `--chunked-prefill-size` 16,385), `--mamba-radix-cache-strategy extra_buffer`,
+  `--disable-overlap-schedule`, decode CUDA graphs disabled, breakable prefill CUDA graphs for sizes 64..1,024.
 
 ## Placement
 

@@ -38,17 +38,12 @@ MAX_TOKENS = 16384
 # About ten seconds of an L4's prompt throughput; a request whose passes sum to more is rejected before it runs.
 REQUEST_MAX_TOKENS = 65536
 ACTIVE_REQUESTS = 8
-# A request's passes share the prompt up to their criterion (template, system prompt and the state). When enough of
-# it would be recomputed, it is prefilled once first and the passes start from its cached state.
-SHARED_PREFIX_MIN_TOKENS = 128
-SHARED_PREFIX_SAVED_TOKENS = 1024
-# The pinned Qwen3.5 GatedDeltaNet backend checkpoints recurrent state on 64-token boundaries.
-GDN_CHECKPOINT_TOKENS = 64
-LONG_SHARED_PREFIX_TOKENS = 2560
+PREFILL_STEP_TOKENS = MAX_TOKENS + 1
 SGLANG_FLAGS = [
     '--mem-fraction-static', '0.80', '--max-running-requests', '64',
+    '--mamba-radix-cache-strategy', 'extra_buffer',
     # A whole prompt is read in one step; JevK5's limit is the step.
-    '--max-prefill-tokens', str(MAX_TOKENS + 1), '--chunked-prefill-size', str(MAX_TOKENS + 1),
+    '--max-prefill-tokens', str(PREFILL_STEP_TOKENS), '--chunked-prefill-size', str(PREFILL_STEP_TOKENS),
     '--enable-fp32-lm-head',
 ]
 
@@ -94,9 +89,16 @@ class Engine:
             raise RuntimeError('every answer letter must be one token')
         self.letters = [ids[0] for ids in letters]
         self.healthy = True
+        self._warm_states = common.WarmStateTracker()
 
     def encode(self, state, instructions, texts):
         return self.tokenizer.encode(upstream.prompt_text(state, instructions, texts), add_special_tokens=False)
+
+    def state_ids(self, state):
+        """Tokens of the shared prompt prefix up to the criterion field (system prompt + serialized evidence)."""
+        header = upstream.CHAT_TEMPLATE.split('{user}', 1)[0].format(system=upstream.SYSTEM)
+        prefix = header + '{"evidence": ' + json.dumps(state, ensure_ascii=False) + ','
+        return self.tokenizer.encode(prefix, add_special_tokens=False)
 
     def answer(self, data):
         if not self.healthy or not self.sglang_alive():
@@ -126,14 +128,14 @@ class Engine:
         if tokens + sum(map(len, rows.values())) + later > REQUEST_MAX_TOKENS:
             raise InvalidRequest(f'request exceeds {REQUEST_MAX_TOKENS} input tokens')
         known = {key: {} for key in questions if key not in answers}
+        state_ids = self.state_ids(state) if rows else []
         try:
-            self._share_prefix(list(rows.values()))
             while rows:
                 # The estimate above admits the request; the passes the knockout actually asks for are held to the
                 # same bound, since an option's characters need not predict its tokens.
                 if tokens + sum(map(len, rows.values())) > REQUEST_MAX_TOKENS:
                     raise InvalidRequest(f'request exceeds {REQUEST_MAX_TOKENS} input tokens')
-                read = self._read(list(rows), list(rows.values()))
+                read = self._read(list(rows), list(rows.values()), state_ids)
                 tokens += sum(map(len, rows.values()))
                 for (key, pass_texts), probabilities in read.items():
                     known[key][pass_texts] = probabilities
@@ -177,21 +179,37 @@ class Engine:
             return 0
         return later * len(self.encode(state, instructions, sorted(texts, key=len)[-len(upstream.LETTERS):]))
 
-    def _share_prefix(self, rows):
-        if len(rows) < 2:
-            return
-        shared = common.common_prefix_length(rows)
-        if shared >= SHARED_PREFIX_MIN_TOKENS and shared * (len(rows) - 1) >= SHARED_PREFIX_SAVED_TOKENS:
-            # The production L4 uses the full shared prefix outside this measured shape.
-            if len(rows) == 3 and shared >= LONG_SHARED_PREFIX_TOKENS:
-                shared -= shared % GDN_CHECKPOINT_TOKENS
-            self.sglang.prefill(rows[0][:shared])
-
-    def _read(self, keys, rows):
-        """One batched engine call: the calibrated letter distribution of every pass."""
+    def _read(self, keys, rows, state_ids=()):
+        """Batched engine call(s): Q0-first on a cold state to populate the GDN checkpoint, then co-batched suffixes."""
+        if not rows:
+            return {}
         letters = [self.letters[:len(pass_texts)] for _, pass_texts in keys]
+        state_len = len(state_ids)
+        state_key = self._warm_states.key(state_ids)
+        params = {'jevk5_state_tokens': state_len} if state_key is not None else None
+        is_warm = self._warm_states.is_warm(state_key)
+        all_logprobs = []
+        start = 0
+        if len(rows) >= 2 and state_key is not None and not is_warm:
+            all_logprobs.extend(self.sglang.logprobs([rows[0]], [letters[0]], custom_params=params))
+            start = 1
+        cached_est = (state_len // common.GDN_CHECKPOINT_TOKENS) * common.GDN_CHECKPOINT_TOKENS if (
+            state_key is not None and (is_warm or start == 1)) else 0
+        i = start
+        while i < len(rows):
+            batch_rows, batch_letters, step_tokens = [], [], 0
+            while i < len(rows):
+                est = max(1, len(rows[i]) - cached_est)
+                if batch_rows and step_tokens + est > PREFILL_STEP_TOKENS:
+                    break
+                batch_rows.append(rows[i])
+                batch_letters.append(letters[i])
+                step_tokens += est
+                i += 1
+            all_logprobs.extend(self.sglang.logprobs(batch_rows, batch_letters, custom_params=params))
+        self._warm_states.mark(state_key)
         out = {}
-        for key, logprobs in zip(keys, self.sglang.logprobs(rows, letters)):
+        for key, logprobs in zip(keys, all_logprobs):
             if any(value is None for value in logprobs):
                 raise common.InvalidModelOutput('SGLang did not return every answer letter')
             out[key] = common.softmax([value / self.temperature for value in logprobs])

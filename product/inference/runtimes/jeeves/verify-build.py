@@ -1,6 +1,7 @@
 """Check the packaged posthog/jeeves runtime without a GPU: pins, imports, the SGLang interfaces the pointer-head model
 relies on, SGLang flags and answer formats."""
 import argparse
+from array import array
 import importlib.util
 import json
 from pathlib import Path
@@ -48,10 +49,23 @@ py_compile.compile('jeeves_sglang/model.py', doraise=True)
 parser = argparse.ArgumentParser()
 ServerArgs.add_cli_args(parser)
 args = parser.parse_args(service.sglang_command('/m', 1)[3:])
-assert args.disable_radix_cache and args.chunked_prefill_size == -1 and args.skip_server_warmup
+assert not args.disable_radix_cache and args.chunked_prefill_size == -1 and args.skip_server_warmup
+assert args.mamba_radix_cache_strategy == 'extra_buffer'
 assert args.max_prefill_tokens == service.MAX_TOKENS + 1 and args.context_length == service.MAX_TOKENS + 1
-assert (args.cuda_graph_backend_decode, args.cuda_graph_backend_prefill) == ('disabled', 'disabled')
+assert args.disable_overlap_schedule
+assert (args.cuda_graph_backend_decode, args.cuda_graph_backend_prefill) == ('disabled', 'breakable')
+assert args.cuda_graph_bs_prefill == [int(x) for x in common.PREFILL_CUDA_GRAPH_SIZES]
 assert readout.MAX_OPTIONS == 255
+
+# Exercise the installed scheduler's match cap, including requests without Jeeves cache metadata.
+from sglang.srt.managers.schedule_batch import Req
+from sglang.srt.sampling.sampling_params import SamplingParams
+from sglang.srt.arg_groups.overrides import _MAMBA_RADIX_CACHE_ARCHS, _MAMBA_EXTRA_BUFFER_ARCHS
+assert 'JeevesForCausalLM' in _MAMBA_RADIX_CACHE_ARCHS & _MAMBA_EXTRA_BUFFER_ARCHS
+for marker, ids, expected in [(9, [1, 2, 9, 3, 4], 2), (8, [1, 2, 9], 0), (None, [1, 2], 0)]:
+    params = SamplingParams(custom_params={'jeeves_readout_marker': marker} if marker is not None else None)
+    req = Req('verify', '', array('q', ids), params)
+    assert req._compute_max_prefix_len(len(ids)) == expected
 
 # Every distribution gives an answer the gateway accepts, for every type and option count.
 for kind in ('choice', 'score', 'noul'):

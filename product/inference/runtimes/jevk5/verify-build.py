@@ -39,8 +39,14 @@ parser = argparse.ArgumentParser()
 ServerArgs.add_cli_args(parser)
 args = parser.parse_args(service.sglang_command('/m', 1)[3:])
 assert args.context_length == service.MAX_TOKENS + 1 and args.enable_fp32_lm_head and args.skip_server_warmup
+assert not args.disable_radix_cache and args.mamba_radix_cache_strategy == 'extra_buffer'
+assert args.disable_overlap_schedule
 assert json.loads(args.json_model_override_args) == {'architectures': ['JevK5ForCausalLM']}
-assert (args.cuda_graph_backend_decode, args.cuda_graph_backend_prefill) == ('disabled', 'disabled')
+assert (args.cuda_graph_backend_decode, args.cuda_graph_backend_prefill) == ('disabled', 'breakable')
+assert args.cuda_graph_bs_prefill == [int(x) for x in common.PREFILL_CUDA_GRAPH_SIZES]
+
+from sglang.srt.arg_groups.overrides import _MAMBA_RADIX_CACHE_ARCHS, _MAMBA_EXTRA_BUFFER_ARCHS  # noqa: E402
+assert 'JevK5ForCausalLM' in _MAMBA_RADIX_CACHE_ARCHS & _MAMBA_EXTRA_BUFFER_ARCHS
 
 # Every distribution gives an answer the gateway accepts, for every type and option count.
 for kind in ('choice', 'score', 'noul'):

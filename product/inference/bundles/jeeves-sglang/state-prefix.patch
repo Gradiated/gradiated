@@ -1,0 +1,40 @@
+--- a/sglang/srt/managers/schedule_batch.py
++++ b/sglang/srt/managers/schedule_batch.py
+@@ -1114,2 +1114,8 @@
+         self.sampling_params = sampling_params
++        # A radix hit may consume any prefix before </think>. Jeeves needs the
++        # marker and all following option and decision states in the same step.
++        marker = (sampling_params.custom_params or {}).get("jeeves_readout_marker")
++        self.jeeves_cache_limit = 0
++        if marker is not None and marker in self.origin_input_ids:
++            self.jeeves_cache_limit = self.origin_input_ids.index(marker)
+         self.custom_logit_processor = custom_logit_processor
+@@ -1711,2 +1717,3 @@
+             max_prefix_len = min(max_prefix_len, self.logprob_start_len)
++        max_prefix_len = min(max_prefix_len, self.jeeves_cache_limit)
+         return max(max_prefix_len, 0)
+@@ -3093,2 +3100,10 @@
+                 )
++            # On a cold forward, donate a reusable hybrid state before the question.
++            # Honour native branching decisions for partially overlapping prefixes.
++            if req.mamba_branching_seqlen is None:
++                state_len = (req.sampling_params.custom_params or {}).get("jeeves_state_tokens", 0)
++                boundary = min(state_len, req.jeeves_cache_limit) // checkpoint_grid * checkpoint_grid
++                if boundary <= prefix_len:
++                    boundary = req.jeeves_cache_limit // checkpoint_grid * checkpoint_grid
++                req.mamba_branching_seqlen = boundary
+             if req.mamba_branching_seqlen is not None:
+--- a/sglang/srt/arg_groups/overrides.py
++++ b/sglang/srt/arg_groups/overrides.py
+@@ -358,4 +358,5 @@
+         # Qwen3.8-2.4T-A95B ships as Qwen3_5MoeForCausalLM.
+         "Qwen3_5MoeForCausalLM",
++        "JeevesForCausalLM",
+         "Qwen3_5ForCausalLM",
+         "Qwen4ExpForConditionalGeneration",
+@@ -384,4 +385,5 @@
+         # Qwen3.8-2.4T-A95B ships as Qwen3_5MoeForCausalLM.
+         "Qwen3_5MoeForCausalLM",
++        "JeevesForCausalLM",
+         "Qwen3_5ForCausalLM",
+         "Qwen3NextForCausalLM",

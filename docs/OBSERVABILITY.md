@@ -255,19 +255,22 @@ alerts remain visible in Prometheus and Grafana. Autoscaling failures, service
 errors/latency, worker backlog/stalls, and unavailable replicas still create
 incidents; capacity warnings in other namespaces retain their normal routing.
 `KubeCPUOvercommit` and `KubeMemoryOvercommit` replace the upstream cluster-wide
-rules with independent `system` and `gpu` pools. Positive NVIDIA GPU requests
-identify GPU pods, including pending pods; other pods (including controllers
-in `gpu-inference`) count against the system pool. Positive NVIDIA GPU
-allocatable resources identify GPU nodes. Only Ready, uncordoned nodes supply
-capacity. Requests include Pending and Running pods, exclude completed pods,
-and use the same container-request accounting as the upstream rules.
-Each pool reserves its largest available node when it has multiple available
-nodes; a single-node pool checks total capacity, and a pool with requests but
-no available nodes has zero capacity. A shortage sustained for ten minutes
-creates a warning grouped by `pool`. The Controllers dashboard shows requests,
-available capacity and the failover threshold for both resources. These are
-aggregate capacity checks within each pool; GPU model, hardware, reservation
-and placement constraints remain covered by the model and scheduling alerts.
+rules with pool-separated `system` and `gpu` accounting and alert on the `system`
+pool only. Positive NVIDIA GPU requests identify GPU pods, including pending
+pods; other pods (including controllers in `gpu-inference`) count against the
+system pool. Positive NVIDIA GPU allocatable resources identify GPU nodes. Only
+Ready, uncordoned nodes supply capacity. Requests include Pending and Running
+pods, exclude completed pods, and use the same container-request accounting as
+the upstream rules. Each pool's recording rules reserve its largest available
+node when it has multiple available nodes; a single-node pool checks total
+capacity, and a pool with requests but no available nodes has zero capacity. A
+`system` pool shortage sustained for ten minutes creates a warning grouped by
+`pool`. The Controllers dashboard shows requests, available capacity and the
+failover threshold for both pools. The `gpu` pool is intentionally excluded from
+the N+1 CPU/memory overcommit alerts because GPU nodes are heterogeneous,
+reservation-tainted, and GPU-bound rather than provisioned for N+1 CPU/memory
+failover; GPU capacity, placement, and host health are covered by the model,
+scheduling, and fleet alerts.
 `ApplicationReconciliationFailed` excludes `Missing` health for manually managed
 applications, which can be staged before their first deployment. Degraded or
 unknown health still creates incidents, as do missing resources or stalled sync

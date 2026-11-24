@@ -170,6 +170,7 @@ jobs:
     needs: resolve
     if: needs.resolve.outputs.deploy == 'true'
     uses: ./.github/workflows/build-images.yml
+    secrets: inherit
     with:
       source_sha: ${{ needs.resolve.outputs.collector_source_sha }}
       artifact_prefix: collector
@@ -184,6 +185,7 @@ jobs:
     needs: resolve
     if: needs.resolve.outputs.deploy == 'true'
     uses: ./.github/workflows/build-images.yml
+    secrets: inherit
     with:
       source_sha: ${{ needs.resolve.outputs.source_sha }}
       images: '["product","gateway","proxy","gpu-controller"]'

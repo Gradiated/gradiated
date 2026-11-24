@@ -7,6 +7,7 @@ import {
   Reading,
   Substrate,
 } from "../components/design";
+import { authorOf } from "../articles";
 import type { Article } from "../articles";
 import {
   DocsCodeBlock,
@@ -46,7 +47,12 @@ export const ArticleReadingPage = ({
         <Module className="gr-module--top" index={0}>
           <Reading
             author={article.author}
-            authorTitle={article.authorTitle}
+            authorHref={authorOf(article)?.path}
+            authorTitle={
+              article.authorTitle ??
+              // "Technical Staff – Hardware" is "Technical Staff" in a byline.
+              authorOf(article)?.role.split(/\s+[–—-]\s+/)[0]
+            }
             byline={
               article.status === "draft"
                 ? undefined

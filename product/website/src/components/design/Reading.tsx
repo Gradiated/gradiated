@@ -37,6 +37,7 @@ const slug = (text: string) =>
 
 export const Reading = ({
   author,
+  authorHref,
   authorTitle,
   byline,
   bylineDateTime,
@@ -50,6 +51,8 @@ export const Reading = ({
   title,
 }: {
   author?: string;
+  /** The author's profile. */
+  authorHref?: string;
   authorTitle?: string;
   byline?: string;
   bylineDateTime?: string;
@@ -112,17 +115,6 @@ export const Reading = ({
           >
             {!art && cover ? <WaferArtwork options={cover} /> : null}
           </span>
-
-          {author ? (
-            <p className="gr-read-author">
-              {author}
-              {authorTitle ? (
-                <span className="gr-label gr-read-author-title">
-                  {authorTitle}
-                </span>
-              ) : null}
-            </p>
-          ) : null}
 
           {/* Absent rather than empty when a piece has no headings — a
               contents list of one item tells the reader nothing. */}
@@ -208,17 +200,35 @@ export const Reading = ({
         ) : null}
 
         <div className="gr-read-body">
-          {byline ? (
-            <p className="gr-read-byline">
-              {bylineDateTime ? (
-                <time dateTime={bylineDateTime}>{byline}</time>
-              ) : (
-                byline
-              )}
-            </p>
-          ) : null}
-          <h1 className="gr-read-title">{title}</h1>
-          {lede ? <p className="gr-read-lede">{lede}</p> : null}
+          <header className="gr-read-head">
+            {byline ? (
+              <p className="gr-read-byline">
+                {bylineDateTime ? (
+                  <time dateTime={bylineDateTime}>{byline}</time>
+                ) : (
+                  byline
+                )}
+              </p>
+            ) : null}
+            <h1 className="gr-read-title">{title}</h1>
+            {lede ? <p className="gr-read-lede">{lede}</p> : null}
+            {author ? (
+              <p className="gr-read-author">
+                {authorHref ? (
+                  <a className="gr-read-author-name" href={authorHref}>
+                    {author}
+                  </a>
+                ) : (
+                  <span className="gr-read-author-name">{author}</span>
+                )}
+                {authorTitle ? (
+                  <span className="gr-label gr-read-author-title">
+                    {authorTitle}
+                  </span>
+                ) : null}
+              </p>
+            ) : null}
+          </header>
           <div className="gr-prose" ref={proseRef}>
             {children}
           </div>

@@ -1,7 +1,7 @@
 import { jobs } from "./careers";
 import { handbookPages } from "./handbook";
 import { models } from "./models";
-import { articles } from "./articles";
+import { articles, authorOf } from "./articles";
 import { team } from "./team";
 
 export const siteOrigin = "https://gradiated.com";
@@ -247,7 +247,7 @@ export const getPageMetadata = (pathname: string): PageMetadata => {
       publishedAt: article.publishedAt,
       updatedAt: article.updatedAt,
       author: article.author,
-      authorTitle: article.authorTitle,
+      authorTitle: article.authorTitle ?? authorOf(article)?.role,
       index: article.status === "published",
       kind: "article",
     };

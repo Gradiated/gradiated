@@ -10,6 +10,10 @@
   color: var(--color-zinc-950);
 }
 
+.gr-root .lp :where(p, li) {
+  color: inherit;
+}
+
 .gr-root :is(h2, h3, h4) + .lp {
   margin-block-start: 1em;
 }

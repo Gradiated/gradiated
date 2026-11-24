@@ -18,6 +18,7 @@ vi.mock("../src/articles", () => ({
         `${name}.mdx`,
         `---
 title: ${name}
+author: Ada Lovelace
 description: Example article.
 path: ${path}
 collection: ${collection}

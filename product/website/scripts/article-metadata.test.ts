@@ -8,6 +8,7 @@ import {
 
 const fixture = (status = "published", path = "/library/example/") => `---
 title: Example
+author: Ada Lovelace
 description: Example article description.
 path: ${path}
 status: ${status}
@@ -23,10 +24,7 @@ test("frontmatter provides article metadata without reading its body", () => {
   assert.equal(article.image, "/brand/png/gradiated-mark-dark-1024.png");
 });
 test("articles can name an author", () => {
-  const source = fixture().replace(
-    "title: Example\n",
-    "title: Example\nauthor: Ada Lovelace\n",
-  );
+  const source = fixture();
   const article = parseArticleMetadata(source, "with-author.mdx");
   assert.equal(article.author, "Ada Lovelace");
   const titled = parseArticleMetadata(
@@ -37,9 +35,11 @@ test("articles can name an author", () => {
     "with-title.mdx",
   );
   assert.equal(titled.authorTitle, "Mathematician");
-  assert.equal(
-    parseArticleMetadata(fixture(), "example.mdx").author,
-    undefined,
+  assert.throws(() =>
+    parseArticleMetadata(
+      fixture().replace("author: Ada Lovelace\n", ""),
+      "no-author.mdx",
+    ),
   );
 });
 test("articles can omit the visible description", () => {

@@ -148,3 +148,7 @@
 .gr-root .gr-prose > .rc {
   margin-block: 4em;
 }
+
+.rc :where(li) {
+  color: inherit;
+}

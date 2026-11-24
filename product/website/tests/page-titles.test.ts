@@ -41,7 +41,9 @@ vi.mock("../src/articles", () => ({
     status: "published",
     collection: "notes",
     layout: "note",
+    author: "Ada Lovelace",
   })),
+  authorOf: () => undefined,
 }));
 vi.mock("../src/handbook", () => ({
   handbookPages: [],

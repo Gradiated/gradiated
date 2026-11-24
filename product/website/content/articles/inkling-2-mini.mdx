@@ -28,9 +28,9 @@ Inkling is a model produced by Thinking Machines. Founded in early 2025, Thinkin
 
 The team believes human values don't average out, and that an ecosystem of AIs with great diversity is better than a handful of centralized all-purpose models. To build such a world, there would need to be strong open models, and useful tools to fine-tune them. They're working to produce both of the above.
 
-Their first product Tinker, launched in October 2025. Tinker is an API for fine-tuning open-weight models. Earlier this year they released their first model, Inkling. They trained Inkling from scratch and since it's release in July they've also released Inkling-Small, Inkling 2 Small, and the focus of this announcement, Inkling 2 Mini.
+Their first product, Tinker, launched in October 2025. Tinker is an API for fine-tuning open-weight models. Earlier this year they released their first model, Inkling. They trained Inkling from scratch and since its release in July they've also released Inkling-Small, Inkling 2 Small, and the focus of this announcement, Inkling 2 Mini.
 
-The pitch emphasizes that Inkling 2 Mini is uniquely capable for its size, and is a base for further customization. It's a meaningful contribution to the research community who can now experiment with a model that has a looped architecture.
+The pitch emphasizes that Inkling 2 Mini is uniquely capable for its size, and is a base for further customization. It's a meaningful contribution to the research community, which can now experiment with a model that has a looped architecture.
 
 ## Inkling in action
 
@@ -58,7 +58,7 @@ The model has 24 layers that are grouped into four blocks of six. The looping pa
 
 The idea here is that the middle blocks are where abstract reasoning likely happens. This is an intuition, but it's based on an understanding that since the first layer input is a token embedding and the last layer output is a ranking of likely tokens, the outer layers in general do more translating between embeddings and internal representations than reasoning.
 
-They did test this intuition, and looping through only the middle layers beats looping through the later layers on 27 of 28 their tests. The result here is a model that computes through 48 layers but only stores 24.
+They did test this intuition, and looping through only the middle layers beats looping through the later layers on 27 of 28 of their tests. The result here is a model that computes through 48 layers but only stores 24.
 
 #### A research model with adjustable loop depth
 

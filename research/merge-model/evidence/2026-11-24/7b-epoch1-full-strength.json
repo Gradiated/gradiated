@@ -1,0 +1,24 @@
+{
+  "epoch": 1,
+  "step": 851,
+  "adapter_scale": 1.0,
+  "sha256": "e80ad333263ed2c442d52529ea77100ae04e32971861dae2ac710e6f3ecd4cfd",
+  "loss": {
+    "project_source": {
+      "nll": 0.43653490908112325,
+      "tokens": 27698478
+    },
+    "bundled": {
+      "nll": 0.3740929965016824,
+      "tokens": 12147338
+    },
+    "other_text": {
+      "nll": 0.793160071809805,
+      "tokens": 1946383
+    },
+    "whole": {
+      "nll": 0.4349945770358633,
+      "tokens": 41792199
+    }
+  }
+}

@@ -10,7 +10,7 @@ export const apps = [
     name: "Gradiated Release",
     description: "Commits production release state to main. Bypasses the main ruleset.",
     permissions: { contents: "write" },
-    repositories: ["gradiated"],
+    repositories: ["gradiated", "infrastructure"],
     store: {
       github: {
         repository: "gradiated",
@@ -67,7 +67,7 @@ export const apps = [
     name: "Gradiated Argo CD",
     description: "Lets production Argo CD read the GitOps repository.",
     permissions: { contents: "read" },
-    repositories: ["gradiated"],
+    repositories: ["gradiated", "infrastructure"],
     store: {
       // Argo CD repository credential fields, read by an ExternalSecret.
       aws: {

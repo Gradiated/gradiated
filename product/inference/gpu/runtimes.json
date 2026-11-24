@@ -1019,5 +1019,49 @@
     "memory": "12Gi",
     "request_memory": "12Gi",
     "startup_timeout": 1800
+  },
+  "d3cdf34ff7f0909548062f680f43bc42362c87396eadb2253f45113471d2a0b0": {
+    "image": "gradiated/jeeves-bundle@sha256:d3cdf34ff7f0909548062f680f43bc42362c87396eadb2253f45113471d2a0b0",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "d3cdf34ff7f0909548062f680f43bc42362c87396eadb2253f45113471d2a0b0"
+    },
+    "model_id": "posthog/jeeves-qualification",
+    "release": {
+      "protocol": "system_one",
+      "schema_version": 1,
+      "model_path": "PostHog/jeeves-fp8",
+      "model_revision": "718f9c1aea0753b88fd260045a26e8343fa262d8",
+      "tokenizer_path": "PostHog/jeeves-fp8",
+      "tokenizer_revision": "718f9c1aea0753b88fd260045a26e8343fa262d8",
+      "runtime_revision": "jeeves-d3cdf34ff7f0"
+    },
+    "gpus": 1,
+    "active_requests": 8,
+    "cpu": "3",
+    "memory": "12Gi",
+    "request_memory": "12Gi",
+    "startup_timeout": 1800
+  },
+  "dd616f7eeec57b16fb8e56ceb1ec9c92c1c9efbffaa2f27b8a2af203ccc4dd03": {
+    "image": "gradiated/jevk5-bundle@sha256:dd616f7eeec57b16fb8e56ceb1ec9c92c1c9efbffaa2f27b8a2af203ccc4dd03",
+    "bundles": {
+      "ubuntu24-cuda13-amd64-v3": "dd616f7eeec57b16fb8e56ceb1ec9c92c1c9efbffaa2f27b8a2af203ccc4dd03"
+    },
+    "model_id": "posthog/jevk5-qualification",
+    "release": {
+      "protocol": "system_one",
+      "schema_version": 1,
+      "model_path": "alibiserikbay/JevK5",
+      "model_revision": "c4f7fdb3aeab5582336406e78d3bef11bf98833d",
+      "tokenizer_path": "alibiserikbay/JevK5",
+      "tokenizer_revision": "c4f7fdb3aeab5582336406e78d3bef11bf98833d",
+      "runtime_revision": "jevk5-dd616f7eeec5"
+    },
+    "gpus": 1,
+    "active_requests": 8,
+    "cpu": "3",
+    "memory": "12Gi",
+    "request_memory": "12Gi",
+    "startup_timeout": 1800
   }
 }

@@ -703,6 +703,14 @@ class RenderTests(unittest.TestCase):
         pool = {**renderer.plan(models, runtimes, hosts)['glm-dealign-sglang-h200'], 'maximum': 1, 'floor': 1}
         default = renderer.rollout('glm-dealign-sglang-h200', {**pool, 'rolling_update': False}, runtimes)
         self.assertEqual(default['spec']['strategy']['canary']['steps'][0], {'setWeight': 50})
+        held = renderer.rollout('glm-dealign-sglang-h200', {**pool, 'floor': 2, 'rolling_update': False,
+                                         'pause_before_promotion': True}, runtimes)
+        self.assertEqual(held['spec']['strategy']['canary']['steps'], [
+            {'setWeight': 50}, default['spec']['strategy']['canary']['steps'][1], {'pause': {}}, {'setWeight': 100}])
+        for invalid in ({'floor': 1}, {'rolling_update': True}, {'pause_before_promotion': 'true'}):
+            with self.assertRaisesRegex(ValueError, 'pause_before_promotion'):
+                renderer.rollout('held', {**pool, 'floor': 2, 'rolling_update': False,
+                                          'pause_before_promotion': True, **invalid}, runtimes)
         rolling = renderer.rollout('glm-dealign-sglang-h200', pool, runtimes)['spec']['strategy']['canary']
         self.assertEqual(rolling['steps'], [{'setWeight': 100}, default['spec']['strategy']['canary']['steps'][1]])
         self.assertEqual((rolling['maxSurge'], rolling['maxUnavailable']), (0, 1))

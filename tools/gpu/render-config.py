@@ -101,7 +101,7 @@ REPLICA_RULES = KUBE / 'workloads/observability/model-replica-rules.yaml'
 NAME = re.compile(r'[a-z](?:[a-z0-9-]*[a-z0-9])?')
 POOL_FIELDS = {'runtime', 'gpu', 'gpu_count', 'provider', 'reservation', 'spread', 'slots', 'max_replicas', 'mode', 'replicas',
                'utilization', 'hold_minutes',
-               'progress_deadline_seconds', 'max_surge', 'max_unavailable', 'rolling_update', 'labels', 'annotations'}
+               'progress_deadline_seconds', 'max_surge', 'max_unavailable', 'rolling_update', 'pause_before_promotion', 'labels', 'annotations'}
 SERVING_ANNOTATIONS = {'gradiated.com/model-id', 'gradiated.com/release',
                        'gradiated.com/serving-model-id', 'gradiated.com/serving-mode'}
 
@@ -223,6 +223,9 @@ def rollout(name, pool, runtimes):
     # for. A half-weight canary of one replica would also restart the previous
     # revision, so it moves straight to the new one and then qualifies it.
     rolling = rolling or not pool['floor']
+    pause = pool.get('pause_before_promotion', False)
+    if type(pause) is not bool or (pause and (rolling or pool['floor'] < 2)):
+        raise ValueError('pause_before_promotion requires a half-weight rollout with at least two replicas')
     if not isinstance(pool.get('gpu'), str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,62}', pool['gpu']):
         raise ValueError('gpu must be the GPU product label of the hosts the pool runs on')
     runtime = runtimes[pool['runtime']]
@@ -240,6 +243,8 @@ def rollout(name, pool, runtimes):
             {'name': 'app', 'value': name},
             {'name': 'hash', 'valueFrom': {'podTemplateHashValue': 'Latest'}}]}}
     ]
+    if pause:
+        steps.append({'pause': {}})
     if not rolling:
         steps.append({'setWeight': 100})
     if not pool['maximum']:

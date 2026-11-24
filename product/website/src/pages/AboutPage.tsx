@@ -170,19 +170,6 @@ export const AboutPage = (): ReactElement => {
               </span>
             ))}
           </div>
-
-          <div className="gr-about-silicon">
-            <h2 className="gr-section-title">
-              Going down to silicon
-              <br />
-              is the imperative.
-            </h2>
-            <p className="gr-body gr-muted">
-              Driving down tokens per joule we believe is the greatest impact we
-              can have on mankind as it is the best way to empower every person
-              and every system to research, build, understand and do more.
-            </p>
-          </div>
         </Module>
 
         <Module className="gr-module--about-team" index={2}>
@@ -198,6 +185,19 @@ export const AboutPage = (): ReactElement => {
             detail="none"
             members={team}
           />
+
+          <div className="gr-about-silicon">
+            <h2 className="gr-section-title">
+              Going down to silicon
+              <br />
+              is the imperative.
+            </h2>
+            <p className="gr-body gr-muted">
+              Driving down tokens per joule we believe is the greatest impact we
+              can have on mankind as it is the best way to empower every person
+              and every system to research, build, understand and do more.
+            </p>
+          </div>
         </Module>
       </Band>
 

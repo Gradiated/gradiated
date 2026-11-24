@@ -9,6 +9,10 @@ image: /brand/library/inkling-2-mini.jpg
 ---
 
 import { LoopsFigure } from "../../src/components/articles/inkling-2-mini/LoopsFigure";
+import {
+  BrowseCompFigure,
+  LoopsChart,
+} from "../../src/components/articles/inkling-2-mini/LoopResults";
 
 ## The latest
 
@@ -24,7 +28,7 @@ Inkling is a model produced by Thinking Machines. Founded in early 2025, Thinkin
 
 The team believes human values don't average out, and that an ecosystem of AIs with great diversity is better than a handful of centralized all-purpose models. To build such a world, there would need to be strong open models, and useful tools to fine-tune them. They're working to produce both of the above.
 
-Their first product, Tinker, launched in October 2025, is an API for fine-tuning open-weight models. They trained their first model, Inkling, from scratch and open-sourced it in July of this year. They've since released Inkling-Small, Inkling 2 Small, and the focus of this announcement, Inkling 2 Mini.
+Their first product Tinker, launched in October 2025. Tinker is an API for fine-tuning open-weight models. Earlier this year they released their first model, Inkling. They trained Inkling from scratch and since it's release in July they've also released Inkling-Small, Inkling 2 Small, and the focus of this announcement, Inkling 2 Mini.
 
 The pitch emphasizes that Inkling 2 Mini is uniquely capable for its size, and is a base for further customization. It's a meaningful contribution to the research community who can now experiment with a model that has a looped architecture.
 
@@ -36,7 +40,7 @@ While it's nice to see the _what can be done on a laptop_ frontier move forward,
 
 > We are particularly excited for researchers to investigate questions of monitorability, and to develop interpretability techniques for understanding the computation within loops.
 >
-> [Thinking Machines, 2026](https://thinkingmachines.ai/news/inkling-2-mini/#monitorability-of-looped-transformers)
+> [Thinking Machines](https://thinkingmachines.ai/news/inkling-2-mini/#monitorability-of-looped-transformers)
 
 The idea is that for models that don't loop, they must write out text to reason with themselves. Model developers and even users can read that text, and learn how the model thought about the problem and what its approach was. This is formally referred to as the model's chain of thought.
 
@@ -44,26 +48,32 @@ Looping models can instead do more of their reasoning inside the loops, rather t
 
 <LoopsFigure />
 
-This is the first open-weight model with strong enough capabilities to test how looping affects monitorability. Inkling 2 Mini will be put to work to help answer these questions. We do not know the architecture of large, proprietary frontier models, but rumours suggest this is an important avenue of research. Even if we had access to a large frontier looping model, understanding how monitorability works on a small model is much more reasonable.
+This is the first open-weight model with strong enough capabilities to test how looping affects monitorability. Inkling 2 Mini will be put to work to help answer these questions. We do not know the architecture of large, proprietary frontier models, but rumours suggest this is an important avenue of research. Understanding how monitorability works on a small looped model is a sound starting place.
 
 ## Technically of note
 
-- discuss which layers loop and why that's relevant
+#### Only the middle layers of the model loop
 
-- "The non-looped version cost 7.5% less to train, but needed 140% more compute when running to match the looped one on 512K-token agent traces. Looping moves cost from running the model into training it."
+The model has 24 layers that are grouped into four blocks of six. The looping part of the architecture only involves the second and third blocks. A token passes through the first block once, and then moves through blocks two and three sequentially, three separate times before moving through the fourth block once.
 
-- with more loops they saw
-  Mathematical reasoning, Improves
-  Long-horizon agentic tasks,Improves
-  Factual knowledge,Little improvement
-  Closed-book factual recall,Little improvement
+The idea here is that the middle blocks are where abstract reasoning likely happens. This is an intuition, but it's based on an understanding that since the first layer input is a token embedding and the last layer output is a ranking of likely tokens, the outer layers in general do more translating between embeddings and internal representations than reasoning.
 
-- discuss the research model they released with it that lets you set the number of loops 1-5.
+They did test this intuition, and looping through only the middle layers beats looping through the later layers on 27 of 28 their tests. The result here is a model that computes through 48 layers but only stores 24.
+
+#### A research model with adjustable loop depth
+
+Thinking Machines also published a research model called [TML-d24-varloop-research](https://huggingface.co/thinkingmachines/TML-d24-varloop-research). The research model lets you set the loop depth anywhere between one and five at the time of inference, and the model card includes a bunch of benchmarks run at each loop depth.
+
+It's quite cool to see that for tasks that require reasoning, adding more loops actually does improve the model's performance. On knowledge-based tasks, like closed-book factual recall benchmarks, looping has little to no improvement. This is obviously expected, but satisfying to see empirically.
+
+What's particularly noticeable is the improvement looping makes on the model's ability to _find_ information. [BrowseComp](https://openai.com/index/browsecomp/) is a benchmark from OpenAI that tests an agent's ability to locate hard-to-find information. Using search and tools effectively is a core agent task, and looping appears to have a big effect.
+
+<LoopsChart />
+
+The research model shared its pre-training with Inkling 2 Mini, and the two diverged in mid-training where the research model received training at every loop depth one through five. Most importantly, in post-training, the research model only underwent the reinforcement learning stage at loop depth three.
+
+This does mean that the research model can't be used to truly compare loop depths fairly. It can merely suggest what is likely to happen as loop depths increase, which in itself is a tremendous step forward for research tooling.
 
 ## How to run it
 
 This is not a hard model to run. If you have a laptop with more than 32 GB of RAM, you can run it locally. [Ollama](https://ollama.com/library/inkling-2-mini) handles the details, and even configures its use in a number of coding agents (Claude Code, OpenCode, etc.)
-
-Comments on Energy efficiency
-
-## License summary

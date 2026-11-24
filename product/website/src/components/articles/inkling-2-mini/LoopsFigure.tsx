@@ -49,7 +49,9 @@ export const LoopsFigure = () => {
       </div>
 
       <figcaption>
-        <a href={source}>Thinking Machines, 2026</a>
+        <a href={source} rel="noreferrer" target="_blank">
+          Thinking Machines
+        </a>
       </figcaption>
     </figure>
   );

@@ -1,25 +1,33 @@
 # Gradiated
 
-Gradiated builds inference infrastructure for AI applications and coding agents.
-It serves open-weight models through an OpenAI-compatible API and OpenRouter,
-with a customer console for workspaces, API keys, usage, and billing.
+Gradiated post-trains open-source models on production workloads and serves them
+at low latency and cost. Applications route traffic through our OpenAI-compatible
+gateway and provider relay to capture production traces, post-train open-weight
+models on real tasks, and deploy the resulting checkpoints onto dedicated GPU
+serving runtimes.
 
-This monorepo contains the product, GPU serving runtimes, and model
-optimization research. Production infrastructure lives in the private
+This monorepo contains the product, GPU serving and training runtimes, and model
+optimization research. Our post-training library lives in
+[`Gradiated/autotrain`](https://github.com/Gradiated/autotrain), and production
+infrastructure lives in the private
 [`Gradiated/infrastructure`](https://github.com/Gradiated/infrastructure)
 repository (see [docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md)).
 
 ## The product
 
-- **Hosted inference:** streaming model APIs backed by a Rust gateway that handles
-  authentication, capacity, routing, and usage accounting.
-- **Provider relay and traces:** call Anthropic or OpenAI with your own provider
-  key, with optional task-scoped trace capture for inspecting application traffic.
-- **Console and integrations:** manage accounts and model access in the React
-  console, or use the setup CLI to configure OpenCode, Codex, and Claude Code.
-- **Training work in progress:** task-based fine-tuning interfaces and Temporal
-  orchestration are present; the current executor is a mock, not a production
-  training backend.
+- **Post-training on production workloads:** turn captured production traces into
+  task-specific fine-tuned and RL-trained open-weight models using Temporal
+  orchestration, GPU training runtimes, and
+  [`Gradiated/autotrain`](https://github.com/Gradiated/autotrain).
+- **Provider relay and trace capture:** call Anthropic, OpenAI, or open-weight
+  models through a Rust proxy with task-scoped trace capture for dataset
+  curation and evaluation.
+- **High-throughput open-weight serving:** streaming model APIs backed by a Rust
+  gateway (authentication, capacity, routing, and usage accounting) and custom
+  GPU inference runtimes and kernels.
+- **Console and integrations:** manage workspaces, traces, training runs, API
+  keys, usage, and billing in the React console, or use the setup CLI to
+  configure OpenCode, Codex, and Claude Code.
 
 See the [website](https://gradiated.com), [developer docs](https://gradiated.com/docs),
 and [console](https://console.gradiated.com). For coding-agent setup, start with
@@ -32,7 +40,7 @@ the [wizard](product/services/wizard/README.md).
 | [`product/services/`](product/services/) | Management API, workers, console, Rust gateway/proxy/collector, setup CLI, and operations MCP. |
 | [`product/packages/`](product/packages/) | Shared contracts, configuration, control-plane logic, and datastore integrations. |
 | [`product/website/`](product/website/) | Public website, developer documentation, and articles. |
-| [`product/inference/`](product/inference/) | Native C++/CUDA engine, model runtimes, runtime bundles, and serving benchmarks. |
+| [`product/inference/`](product/inference/) | Native C++/CUDA engine, serving and training runtimes, runtime bundles, and benchmarks. |
 | [`docs/INFRASTRUCTURE.md`](docs/INFRASTRUCTURE.md) | Pointer to the private `Gradiated/infrastructure` repo (Terraform/Terragrunt, Kubernetes/Argo CD, and GPU host configuration). |
 | [`research/`](research/) | Model analysis, simulation, validation, and research tooling. |
 | [`tools/`](tools/) | Development checks, browser automation, and model/operations utilities. |
@@ -80,4 +88,4 @@ Keep credentials and local run output out of version control.
 
 For deeper context, see the [architecture](docs/ARCHITECTURE.md),
 [data model](docs/DATA_MODEL.md), [deployment guide](docs/DEPLOYMENT.md),
-[infrastructure guide](infra/README.md), and [research overview](research/README.md).
+[infrastructure guide](docs/INFRASTRUCTURE.md), and [research overview](research/README.md).

@@ -11,6 +11,7 @@ import {
   Tabs,
 } from "../components/design";
 import { GoodForGlyph } from "../components/design/GoodForGlyphs";
+import { PixelIcon } from "../components/design/PixelIcon";
 import { listModels } from "../api/queries";
 import type { ModelPageData } from "../models";
 import { useRailBack } from "../components/design/RailShell";
@@ -295,32 +296,7 @@ const ModelId = ({ id }: { id: string }): ReactElement => {
           title={copied ? "Copied" : "Copy model id"}
           type="button"
         >
-          {copied ? (
-            <svg fill="none" height="14" viewBox="0 0 14 14" width="14">
-              <path
-                d="M2.5 7.5L5.5 10.5L11.5 3.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-            </svg>
-          ) : (
-            <svg fill="none" height="14" viewBox="0 0 14 14" width="14">
-              <rect
-                height="8.5"
-                rx="1.5"
-                stroke="currentColor"
-                strokeWidth="1.2"
-                width="8.5"
-                x="4"
-                y="4"
-              />
-              <path
-                d="M10 2H3.5A1.5 1.5 0 0 0 2 3.5V10"
-                stroke="currentColor"
-                strokeWidth="1.2"
-              />
-            </svg>
-          )}
+          <PixelIcon name={copied ? "check" : "copy"} />
         </button>
       </span>
     </div>

@@ -34,6 +34,11 @@
   row-gap: calc(1.75 * var(--u));
 }
 
+.gr-root[data-tier="narrow"] .gr-careers-reasons,
+.gr-root[data-tier="compact"] .gr-careers-reasons {
+  row-gap: calc(2.75 * var(--u));
+}
+
 .gr-careers-reason {
   display: grid;
   grid-template-columns: calc(2.8 * var(--u)) minmax(0, 1fr);
@@ -41,12 +46,9 @@
   align-items: start;
 }
 
-/* Each fits the same square, so a wide icon reads no larger than a tall one. */
 .gr-careers-reason-icon {
   justify-self: center;
-  width: calc(1.8 * var(--u));
-  height: calc(1.8 * var(--u));
-  object-fit: contain;
+  height: calc(2.4 * var(--u));
 }
 
 .gr-root .gr-careers-reason-title {
@@ -87,12 +89,6 @@
 
 .gr-root .gr-careers-handbook p {
   margin: 0;
-}
-
-.gr-careers-handbook img {
-  flex: none;
-  width: auto;
-  height: calc(1.8 * var(--u));
 }
 
 /* One and a half times a module's usual space under the cards. */

@@ -2907,10 +2907,8 @@
 
 .gr-expandable__arrow {
   display: inline-block;
-  width: 1em;
-  height: 1em;
-  margin-inline-start: 0.3em;
-  vertical-align: -0.15em;
+  margin-inline-start: 0.1em;
+  vertical-align: middle;
   color: var(--color-text-muted);
   transition: transform 150ms ease;
 }
@@ -3214,12 +3212,16 @@
   font-size: calc(1.4 * var(--text-heading));
 }
 
+.gr-role-go .gr-arrow {
+  --arrow-pixel: 4px;
+}
+
 .gr-role:hover .gr-arrow {
   translate: 0.15em 0;
 }
 
 .gr-role:hover .gr-arrow-shaft {
-  stroke-dashoffset: 0;
+  clip-path: inset(0);
 }
 
 .gr-role-title {

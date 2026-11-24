@@ -12,6 +12,7 @@ import {
   Footer,
   Module,
   Nav,
+  PixelIcon,
   Reveal,
   SectionFab,
   Substrate,
@@ -95,12 +96,12 @@ const COLLAGE: CollageLayer[] = [
 const reasons = [
   {
     body: "We put the latest open-weight models into production, develop new inference techniques, and follow performance all the way down to silicon. Nobody arrives knowing every layer, so we run internal lectures, work through problems together, and expect everyone to teach what they know.",
-    icon: "icon-cake.webp",
+    icon: "stack" as const,
     title: "One problem. Every layer.",
   },
   {
     body: "You will work directly with a small founding team that has built PostHog into a unicorn and a developer brand people love, led AI engineering, and gone deep in mathematics, semiconductors, and quantum computing.",
-    icon: "icon-rewind.webp",
+    icon: "rewind" as const,
     title: (
       <>
         Half a million customers later,
@@ -111,7 +112,7 @@ const reasons = [
   },
   {
     body: "We are engineering-led and trust-led. We want customers to find us through excellent work, useful writing, and other builders telling them about us. The aim is lasting technical advantage, not a brief turn in the hype cycle.",
-    icon: "icon-star.webp",
+    icon: "trend-up" as const,
     title: "Build a reputation that compounds.",
   },
 ];
@@ -300,11 +301,9 @@ const Why = (): ReactElement => {
             key={reason.body}
             style={{ "--i": index } as CSSProperties}
           >
-            <img
-              alt=""
-              className="gr-careers-reason-icon"
-              src={`${ASSETS}/${reason.icon}`}
-            />
+            <span className="gr-careers-reason-icon">
+              <PixelIcon name={reason.icon} />
+            </span>
             <div>
               <h3 className="gr-careers-reason-title">{reason.title}</h3>
               <p className="gr-careers-reason-body gr-muted">{reason.body}</p>
@@ -402,7 +401,7 @@ const Decide = (): ReactElement => {
       <div className="gr-careers-decide-head">
         <h2 className="gr-section-title">Before you decide</h2>
         <div className="gr-careers-handbook">
-          <img alt="" src={`${ASSETS}/icon-book.webp`} />
+          <PixelIcon name="book-open" />
           <p>
             <a className="gr-link" href="/handbook/">
               Read our Handbook

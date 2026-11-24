@@ -33,9 +33,9 @@
 }
 
 .gr-docrail-back .gr-arrow {
+  --arrow-pixel: 3px;
+
   rotate: 180deg;
-  width: 1.2em;
-  height: 1.2em;
 }
 
 .gr-docrail-back:hover .gr-arrow {
@@ -43,7 +43,7 @@
 }
 
 .gr-docrail-back:hover .gr-arrow-shaft {
-  stroke-dashoffset: 0;
+  clip-path: inset(0);
 }
 
 .gr-docrail-back img {

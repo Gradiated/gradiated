@@ -26,10 +26,40 @@
     padding-block-start: 0;
   }
 
+  /* -- first fold: every page's content starts the same distance from the
+        top, half a section gap, beside the strip rather than under a bar */
+  .gr-rail-sheet
+    .gr-root[data-tier]:not([data-tier="wide"])
+    .gr-band:first-of-type
+    > .gr-module:first-child:not(.gr-module--profile) {
+    padding-block-start: calc(var(--rhythm-section) / 2);
+  }
+
+  .gr-rail-sheet
+    .gr-root[data-tier]:not([data-tier="wide"])
+    .gr-team-overview-copy {
+    padding-block-start: 0;
+  }
+
+  /* The profile's band starts at the very top; its portrait carries the
+     first-fold offset itself. */
+  .gr-rail-sheet
+    .gr-root[data-tier]:not([data-tier="wide"])
+    .gr-module.gr-module--profile {
+    padding-block-start: 0;
+  }
+
+  /* The collage runs to the bottom of the screen. */
+  .gr-rail-sheet
+    .gr-root[data-tier]:not([data-tier="wide"])
+    .gr-module.gr-collage-hero {
+    padding-block-end: 0;
+  }
+
   /* -- hero ----------------------------------------------------------------
         page lead, then title -> CTAs (element), then the argument (sub) */
   .gr-rail-sheet .gr-root[data-tier]:not([data-tier="wide"]) .gr-fold-left {
-    padding-block: calc(3 * var(--u)) var(--rhythm-sub);
+    padding-block: 0 var(--rhythm-sub);
   }
 
   .gr-rail-sheet

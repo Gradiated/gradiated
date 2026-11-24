@@ -14,6 +14,7 @@
     "preview": "mise exec -- vite preview",
     "sync:ashby-jobs": "node scripts/sync-ashby-jobs.ts",
     "sync:team-media": "node scripts/sync-team-media.ts",
+    "icons:pixel": "node scripts/pixel-icons.ts && prettier --write src/components/design/pixel-icons.generated.ts",
     "sync:team-places": "node scripts/sync-team-places.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config tests/vitest.config.ts && tsx --test scripts/article-metadata.test.ts && node --test scripts/sand-*.test.mjs scripts/article-citations.test.mjs scripts/article-links.test.mjs"
@@ -39,6 +40,7 @@
   },
   "devDependencies": {
     "@mdx-js/rollup": "^3.1.1",
+    "@phosphor-icons/core": "2.1.1",
     "@tailwindcss/vite": "4.3.3",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",

@@ -393,7 +393,7 @@
 .gr-nav-model:focus-visible .gr-arrow-shaft,
 .gr-nav-note:hover .gr-arrow-shaft,
 .gr-nav-note:focus-visible .gr-arrow-shaft {
-  stroke-dashoffset: 0;
+  clip-path: inset(0);
 }
 
 /* -- entrance -------------------------------------------------------------- */

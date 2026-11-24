@@ -305,11 +305,6 @@
   color: #18181b;
 }
 
-.gr-profile-links svg {
-  width: 0.9375rem;
-  height: 0.9375rem;
-}
-
 .gr-profile-side {
   grid-column: 1;
   grid-row: 1 / span 2;
@@ -359,11 +354,6 @@
   color: var(--color-inverse);
 }
 
-.gr-profile-share svg {
-  width: 1.125rem;
-  height: 1.125rem;
-}
-
 .gr-profile-share-note {
   position: absolute;
   inset-inline-start: calc(100% + 0.5 * var(--u));
@@ -403,11 +393,6 @@
   place-items: center;
   width: 1.25rem;
   height: 1.25rem;
-}
-
-.gr-profile-nav-icon svg {
-  width: 1.125rem;
-  height: 1.125rem;
 }
 
 .gr-profile-nav button:hover,
@@ -655,11 +640,6 @@
   background: #3f3f46;
 }
 
-.gr-lightbox-button svg {
-  width: 1.125rem;
-  height: 1.125rem;
-}
-
 .gr-lightbox-close {
   inset: var(--u) var(--u) auto auto;
 }
@@ -692,11 +672,14 @@
     gap: calc(1.5 * var(--u)) var(--u);
   }
 
-  /* One column: a shallower band, the portrait hanging out of it, then the
-     name on the page's own ground, the contents as a row, and the sections. */
+  /* One column: the band, with the portrait starting where every page's
+     content starts and hanging out of it; share and the person's links on
+     the band beside it; then the name on the page's own ground, the
+     contents as a row, and the sections. */
   .gr-root .gr-module.gr-module--profile {
-    --profile-band: calc(6 * var(--u));
-    --profile-top: calc(2 * var(--u));
+    --profile-top: calc(var(--rhythm-section, 3 * var(--u)) / 2);
+    --profile-band: calc(var(--profile-top) + 7.5 * var(--u));
+    --profile-portrait: calc(7.5 * var(--u));
     padding-block-start: 0;
   }
 
@@ -711,7 +694,7 @@
 
   .gr-profile-side .gr-portrait {
     order: 1;
-    width: calc(8 * var(--u));
+    width: var(--profile-portrait);
   }
 
   .gr-profile-head {
@@ -724,15 +707,18 @@
     color: var(--color-text-muted);
   }
 
+  /* At the foot of the band, right-aligned beside the portrait; a fourth
+     link wraps above the first three rather than off the band. */
   .gr-root .gr-profile-links {
-    margin-inline-start: 0;
-    flex-basis: 100%;
-    margin-block-start: calc(0.5 * var(--u));
-  }
-
-  .gr-profile-links a {
-    background: var(--color-panel);
-    color: var(--color-text);
+    position: absolute;
+    top: var(--profile-band);
+    right: 0;
+    flex-wrap: wrap-reverse;
+    justify-content: flex-end;
+    gap: calc(0.35 * var(--u));
+    max-width: calc(100% - var(--profile-portrait) - var(--u));
+    margin: 0;
+    translate: 0 calc(-100% - 0.6 * var(--u));
   }
 
   .gr-profile-rail {
@@ -752,12 +738,22 @@
     position: relative;
   }
 
+  /* Top right of the band, in the links' dark circle. */
   .gr-profile-share {
     position: absolute;
-    inset: calc(var(--profile-top) + 10 * var(--u) - 2.5rem) 0 auto auto;
-    width: 2.5rem;
-    height: 2.5rem;
+    inset: var(--profile-top) 0 auto auto;
+    width: 2rem;
+    height: 2rem;
     margin: 0;
+    background: #27272a;
+    box-shadow: none;
+    color: #d4d4d8;
+  }
+
+  .gr-profile-share:hover,
+  .gr-profile-share[data-copied] {
+    background: #fafafa;
+    color: #18181b;
   }
 
   .gr-profile-share-note {

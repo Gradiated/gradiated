@@ -713,6 +713,9 @@ importers:
       '@mdx-js/rollup':
         specifier: ^3.1.1
         version: 3.1.1(rollup@4.62.5)
+      '@phosphor-icons/core':
+        specifier: 2.1.1
+        version: 2.1.1
       '@tailwindcss/vite':
         specifier: 4.3.3
         version: 4.3.3(vite@8.2.4(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.0))
@@ -2304,6 +2307,9 @@ packages:
     resolution: {integrity: sha512-VPoCAhKvCQTlG7vxqaBXcmuvbh77BfnGXj8g0pbvVXpm1F/R8rDVwqIWcEbMzrI1JvJlm8v7T9uMVQb6UctMRg==}
     cpu: [x64]
     os: [win32]
+
+  '@phosphor-icons/core@2.1.1':
+    resolution: {integrity: sha512-v4ARvrip4qBCImOE5rmPUylOEK4iiED9ZyKjcvzuezqMaiRASCHKcRIuvvxL/twvLpkfnEODCOJp5dM4eZilxQ==}
 
   '@playwright/test@1.63.0':
     resolution: {integrity: sha512-oxMK4vllB9RK5NQ2l1pq1IfOf2AvnEuj/vYGDj0H2nMtmtZpKtCwt/l00GEO6xjGfpBNAvjovvYdCm50dRQkpQ==}
@@ -8544,6 +8550,8 @@ snapshots:
 
   '@oxc-resolver/binding-win32-x64-msvc@11.21.2':
     optional: true
+
+  '@phosphor-icons/core@2.1.1': {}
 
   '@playwright/test@1.63.0':
     dependencies:

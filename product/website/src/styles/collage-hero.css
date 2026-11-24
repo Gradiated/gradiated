@@ -98,6 +98,16 @@
 
 /* The copy first, then the whole collage under it. */
 @media (max-width: 60rem) {
+  /* Exactly one screen: the copy from the top, and the collage blown up
+     behind it from the bottom right, cut off on the left, where it is
+     mostly empty. */
+  .gr-root .gr-collage-hero {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    box-sizing: border-box;
+    min-height: 100svh;
+  }
+
   .gr-collage-hero .gr-module-inner {
     display: block;
     aspect-ratio: auto;
@@ -105,13 +115,13 @@
 
   .gr-collage-hero-copy {
     transform: none;
-    padding-block: calc(var(--nav-h) + 2 * var(--u)) calc(2 * var(--u));
+    padding-block: 0 calc(2 * var(--u));
+    padding-inline: calc((100% - var(--module-w)) / 2);
   }
 
   .gr-collage {
-    position: relative;
-    width: 100%;
-    height: auto;
+    top: auto;
+    height: var(--collage-h, 55svh);
   }
 }
 

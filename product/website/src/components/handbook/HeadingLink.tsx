@@ -1,4 +1,4 @@
-import { Check, Link } from "lucide-react";
+import { PixelIcon } from "../design/PixelIcon";
 import { Children, isValidElement, useEffect, useRef, useState } from "react";
 import type {
   ComponentPropsWithoutRef,
@@ -83,11 +83,7 @@ const makeHeading = (Tag: Level) => {
           onClick={copy}
           title={copied ? "Link copied" : "Copy link"}
         >
-          {copied ? (
-            <Check aria-hidden="true" className="gr-heading-anchor__icon" />
-          ) : (
-            <Link aria-hidden="true" className="gr-heading-anchor__icon" />
-          )}
+          {copied ? <PixelIcon name="check" /> : <PixelIcon name="link" />}
         </a>
       </Tag>
     );

@@ -136,7 +136,7 @@
 }
 
 .gr-rail-back:hover .gr-arrow-shaft {
-  stroke-dashoffset: 0;
+  clip-path: inset(0);
 }
 
 /* The incoming doc chrome waits for the outgoing to clear. */
@@ -177,9 +177,9 @@
 }
 
 .gr-rail-docback .gr-arrow {
+  --arrow-pixel: 3px;
+
   rotate: 180deg;
-  width: 1.2em;
-  height: 1.2em;
 }
 
 .gr-rail-docback:hover .gr-arrow {
@@ -187,7 +187,7 @@
 }
 
 .gr-rail-docback:hover .gr-arrow-shaft {
-  stroke-dashoffset: 0;
+  clip-path: inset(0);
 }
 
 .gr-rail-docnav {
@@ -403,7 +403,7 @@
 }
 
 .gr-rail-cta:hover .gr-arrow-shaft {
-  stroke-dashoffset: 0;
+  clip-path: inset(0);
 }
 
 /* -- the reveal body -------------------------------------------------------- */
@@ -508,7 +508,7 @@
 }
 
 .gr-rail-under-card:hover .gr-arrow-shaft {
-  stroke-dashoffset: 0;
+  clip-path: inset(0);
 }
 
 .gr-rail-under-blurb {
@@ -561,7 +561,7 @@
 }
 
 .gr-rail-model:hover .gr-arrow-shaft {
-  stroke-dashoffset: 0;
+  clip-path: inset(0);
 }
 
 .gr-rail-model-name {
@@ -699,9 +699,9 @@
   }
 
   .gr-rail-strip-back .gr-arrow {
+    --arrow-pixel: 3px;
+
     rotate: 180deg;
-    width: 1.2em;
-    height: 1.2em;
   }
 
   .gr-rail-strip-mark img {
@@ -841,6 +841,62 @@
 
   .gr-rail-menu-reveal .gr-rail-under-title {
     display: none;
+  }
+
+  /* The page's own contents (the team, a handbook's chapters). */
+  .gr-rail-menu-doc {
+    display: grid;
+    gap: 20px;
+    padding-block-end: 24px;
+  }
+
+  .gr-rail-menu-doc-group {
+    display: grid;
+    gap: 4px;
+  }
+
+  .gr-rail-menu-doc-title {
+    margin-block-end: 4px;
+    color: #71717a;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .gr-rail-menu-doc a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    color: #d4d4d8;
+    font-size: 17px;
+    text-decoration: none;
+  }
+
+  .gr-rail-menu-doc a[data-sub] {
+    padding-inline-start: 16px;
+    font-size: 15px;
+  }
+
+  .gr-rail-menu-doc a[data-active] {
+    color: #fafafa;
+  }
+
+  .gr-rail-menu-doc a[data-active] .gr-rail-thumb {
+    outline-color: var(--color-cloud-lavender);
+    color: var(--color-cloud-lavender);
+  }
+
+  .gr-rail-menu-doc .gr-rail-thumb {
+    width: 32px;
+    height: 32px;
+  }
+
+  .gr-rail-menu-doc .gr-rail-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .gr-rail-menu-reveal .gr-rail-under-cards {

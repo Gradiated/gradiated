@@ -77,6 +77,8 @@ export {
   PageHero,
   Showpiece,
 } from "./Sections";
+export { PixelIcon } from "./PixelIcon";
+export type { PixelIconName } from "./PixelIcon";
 export type { CardItem } from "./Sections";
 export { StoryReel } from "./StoryReel";
 export type { Chapter } from "./StoryReel";

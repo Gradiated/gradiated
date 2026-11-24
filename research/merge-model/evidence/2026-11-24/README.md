@@ -97,3 +97,11 @@ Starting from the same merged `pooled-control` base (`681/1,000` DuckDB, `4,399/
 - **Epoch 3 (312 steps):** `duckdb` 673/1,000 (67.30%, +32/−40, −0.80 pp, 95% CI −2.98 to +1.47); `others` 4,394/6,398 (68.68%, +117/−122, −0.08 pp, 95% CI −0.57 to +0.47).
 
 [Arm 2 commit-diff paired counts and intervals](arm2-commit-diff.json)
+
+### Arm 1 — Deep DuckDB NTP LoRA (rank 64, lr=2e-4, kl=1.5)
+
+Starting from the same merged `pooled-control` base (`681/1,000` DuckDB, `4,399/6,398` others), a rank-64 LoRA (`lr=2e-4`, `kl_weight=1.5`) trained on the 41.8M-token DuckDB tree drove whole-snapshot perplexity down **15.84%** at Epoch 1 (`1.4634`, 0.38076 nats) and **18.61%** at Epoch 2 (`1.4152`, 0.34728 nats; first-party `1.4298`, −15.46%), while holding unrelated merge accuracy completely flat:
+
+- **Epoch 2 (1,702 steps):** `duckdb` 676/1,000 (67.60%, +32/−37, −0.50 pp, 95% CI −2.52 to +1.50, 0 malformed); `others` 4,400/6,398 (68.77%, +126/−125, +0.02 pp, 95% CI −0.64 to +0.96, 0 malformed). Epochs 3–4 running now on 8× H200.
+
+[Arm 1 deep NTP metrics and paired intervals](arm1-deep-ntp.json)

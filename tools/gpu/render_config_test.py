@@ -562,7 +562,12 @@ class RenderTests(unittest.TestCase):
                 '01a2087d-f7d4-73cd-85dc-b2598e892f28',
                 '01a2087d-fec7-761d-957f-07c70d17a2cf',
                 '01a2087e-0540-749d-bcdc-65b7065851d1',
-                '01a2087e-0bc2-75c1-988b-b97db8e1206c']})
+                '01a2087e-0bc2-75c1-988b-b97db8e1206c'],
+            ('gradiated.com/reserved', 'posthog-expansion'): [
+                '01a20b53-db59-7350-b854-41550562cffd',
+                '01a20b53-db59-7431-8789-a26ebb43905c',
+                '01a20b53-db59-769d-858f-8fd853a9b8d7',
+                '01a20b53-db59-7b43-a7a7-e25ffa5c3b56']})
         models, runtimes, inventory = self.fleet()
         pools = renderer.plan(models, runtimes, inventory)
         templates = {name: renderer.rollout(name, pools[name], runtimes)['spec']['template']['spec']

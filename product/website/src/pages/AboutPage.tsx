@@ -110,11 +110,6 @@ const useReveal = () => {
   return { ref, state };
 };
 
-/**
- * The principles start as a staircase and close into one row as the page
- * scrolls: the row pins, and each step rises by its offset until the third
- * meets the first. Off with one column or reduced motion.
- */
 const useSteps = () => {
   const ref = useRef<HTMLDivElement>(null);
 

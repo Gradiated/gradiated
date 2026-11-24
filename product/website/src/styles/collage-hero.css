@@ -1,6 +1,4 @@
-/* A first fold that is a collage (CollageHero). The collage is drawn on a
-   canvas whose ratio the page sets as --canvas, and the hero is that canvas:
-   full width and as tall as the picture. */
+/* The hero is the collage's canvas, whose ratio the page sets as --canvas. */
 
 .gr-root .gr-collage-hero {
   padding-block: 0;
@@ -67,10 +65,8 @@
   user-select: none;
 }
 
-/* Laid down like cut paper, back to front: each piece slides in from its own
-   side, tilted, and settles flat on a long ease-out. The fade is over early,
-   so a piece is solid while it is still settling. Hidden only once the
-   script is waiting for the pictures to load. */
+/* Hidden only while the script waits for the pictures; the fade ends early
+   so a piece is solid while it settles. */
 .gr-collage[data-laid="waiting"] .gr-collage-layer {
   opacity: 0;
 }
@@ -98,9 +94,7 @@
 
 /* The copy first, then the whole collage under it. */
 @media (max-width: 60rem) {
-  /* Exactly one screen: the copy from the top, and the collage blown up
-     behind it from the bottom right, cut off on the left, where it is
-     mostly empty. */
+  /* One screen tall, the collage behind the copy and cut off on the left. */
   .gr-root .gr-collage-hero {
     display: grid;
     grid-template-rows: minmax(0, 1fr);

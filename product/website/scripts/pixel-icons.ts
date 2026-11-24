@@ -1,9 +1,5 @@
-// Redraws the Phosphor icons the site uses on coarse grids of squares and
-// writes them to src/components/design/pixel-icons.generated.ts. Run with
-// `pnpm icons:pixel` after changing ICONS.
-//
-// Each icon is drawn at its grid's size times a whole number of pixels, so
-// every square lands on screen pixels and the icon stays crisp.
+// Writes src/components/design/pixel-icons.generated.ts; run `pnpm icons:pixel`
+// after changing ICONS.
 
 import { readFile, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -14,9 +10,8 @@ type Weight = "bold" | "fill" | "regular";
 /** Squares the icon must cover for one to fill, 0 to 1. */
 const THRESHOLD = 0.4;
 
-/** Interface icons: 11 squares, drawn 2px a square beside type. The profile
- *  links and share button take the regular weight, so the brand marks, which
- *  are drawn as outlines, read as one set. */
+/** 2px squares beside type. Links and share use the regular weight to match
+ *  the outlined brand marks. */
 const UI = 11;
 /** Feature icons: 21 squares, drawn large above a heading. */
 const FEATURE = 21;

@@ -1,22 +1,5 @@
-// Runs at the start of `pnpm build` and when the dev server starts (plain
-// `node`, using its built-in type stripping).
-//
-// A person's pictures go in their folder, sorted by what they are for:
-//
-//   content/team/ada-lovelace/ada-lovelace.md
-//   content/team/ada-lovelace/images/profile/me.jpg     <- their portrait
-//   content/team/ada-lovelace/images/gallery/desk.jpg   <- a gallery picture
-//
-// People add whatever they have, straight off a phone or camera. This turns
-// each file into WebP copies at the sizes the site uses, in
-// public/team/<name>/ (generated, not committed), and lists them in
-// src/team-media.generated.json for the pages to read.
-//
-// Resizing drops the file's metadata, so a photograph's embedded location
-// and camera details are never published.
-//
-// A caption that names no file fails the build and names the profile,
-// because it is almost always a typo.
+// Resizing drops a photo's metadata, so its location and camera details are
+// never published.
 
 import {
   mkdir,
@@ -68,12 +51,7 @@ const stale = async (source: URL, output: URL): Promise<boolean> => {
 
 const kept = new Set<string>();
 
-/**
- * Where a seated studio portrait's head is, across the frame: the middle of
- * the dark pixels (hair, mostly) against the bright backdrop, in the band the
- * heads sit in. Searched in the middle of the frame, away from the backdrop's
- * dark edges.
- */
+/** Centre of the dark pixels (hair) in the band where seated heads sit. */
 const headCentre = async (image: Buffer): Promise<number> => {
   const { data, info } = await sharp(image)
     .greyscale()
@@ -96,12 +74,8 @@ const headCentre = async (image: Buffer): Promise<number> => {
   return count > 200 ? total / count / width : 0.5;
 };
 
-/**
- * "inside" keeps the whole picture; "square" and "bust" crop it. A tall
- * portrait is a seated studio shot, so those two crop to the person (head and
- * shoulders for the square, down to the chest for the bust) rather than leave
- * it to the attention crop, which picks the body in black and white.
- */
+// The attention crop picks the body in black and white, so tall studio
+// portraits are cropped to the person by hand.
 const resize = async (
   source: URL,
   output: URL,
@@ -185,6 +159,18 @@ const main = async (): Promise<void> => {
         ),
       ),
     );
+
+    // Checked before skipping a profile with no pictures, so captions whose
+    // pictures were never added still fail the build.
+    const named = new Set(gallery.map((picture) => picture.name));
+    const captions = (profile.front.captions ?? {}) as Record<string, unknown>;
+    for (const file of Object.keys(captions)) {
+      if (named.has(mediaName(file))) continue;
+      problems.push(
+        `${profile.label}: the caption "${file}" matches no picture in ${images}gallery/.`,
+      );
+    }
+
     if (portraits.length + gallery.length === 0) continue;
 
     const out = new URL(`${slug}/`, OUTPUT);
@@ -271,15 +257,6 @@ const main = async (): Promise<void> => {
       } catch (error) {
         failed(picture.file, "gallery", error);
       }
-    }
-
-    // A caption that points at nothing.
-    const captions = (profile.front.captions ?? {}) as Record<string, unknown>;
-    for (const file of Object.keys(captions)) {
-      if (entry.gallery[mediaName(file)]) continue;
-      problems.push(
-        `${profile.label}: the caption "${file}" matches no picture in ${images}gallery/.`,
-      );
     }
   }
 

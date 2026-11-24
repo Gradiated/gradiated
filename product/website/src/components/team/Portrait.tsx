@@ -2,12 +2,6 @@ import type { ReactElement } from "react";
 import { initials } from "../../people";
 import type { TeamMember } from "../../team";
 
-/**
- * A person's picture, or their initials until they add one.
- *
- * The initials tile is the same shape as a photo, so a row of cards holds its
- * grid whether or not everyone has uploaded a picture yet.
- */
 export const Portrait = ({
   bust = false,
   eager = false,

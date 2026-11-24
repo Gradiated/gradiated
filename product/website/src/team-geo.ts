@@ -1,8 +1,3 @@
-/* Turning the "city" and "country" a person writes into a flag and a pin.
-   The flag's code is worked out here from the country's name; the pin's
-   coordinates are looked up once by scripts/sync-team-places.ts and kept in
-   src/team-places.generated.json. */
-
 const ALIASES: Record<string, string> = {
   uk: "GB",
   "great britain": "GB",

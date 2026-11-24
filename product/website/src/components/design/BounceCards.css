@@ -1,6 +1,5 @@
 /* Vendored from React Bits' BounceCards (reactbits.dev, MIT licence, David
-   Haz). Class names kept as shipped so upstream fixes can be diffed in;
-   the cards may be oblong, and hold content rather than an image. */
+   Haz); class names kept as shipped so upstream fixes can be diffed in. */
 
 .bounce-cards {
   position: relative;

@@ -148,13 +148,8 @@ const flagOf = (code: string): string =>
     ...[...code].map((letter) => 0x1f1e6 + letter.charCodeAt(0) - 65),
   );
 
-/**
- * Which section is open. One section shows at a time; the address carries it
- * as a hash (/team/ada/#posts), so a section can be linked and shared.
- *
- * The first section is what the server renders, so the hash is read after
- * mount rather than during it.
- */
+// The open section is in the hash, read after mount: the server renders
+// the first section.
 const useOpenSection = (
   ids: string[],
 ): [string | undefined, (id: string) => void] => {
@@ -197,12 +192,6 @@ const useOpenSection = (
 
 type Picture = TeamMember["gallery"][number];
 
-/**
- * The gallery: a grid of pictures, each opening full size.
- *
- * A native <dialog>, so focus is held inside it, Escape closes it and the
- * page behind is inert without any of that being written here.
- */
 const Gallery = ({ pictures }: { pictures: Picture[] }): ReactElement => {
   const dialog = useRef<HTMLDialogElement>(null);
   const [index, setIndex] = useState<number | null>(null);
@@ -305,10 +294,6 @@ const Gallery = ({ pictures }: { pictures: Picture[] }): ReactElement => {
   );
 };
 
-/**
- * Share this profile. On a phone this opens the system share sheet; where
- * there is none, it copies the page's link and says so.
- */
 const ShareButton = ({ name }: { name: string }): ReactElement => {
   const [copied, setCopied] = useState(false);
 
@@ -357,12 +342,6 @@ const ShareButton = ({ name }: { name: string }): ReactElement => {
 
 const POST_FILTERS = ["All", "Gradiated", "External"] as const;
 
-/**
- * A person's writing, as a plain list. What they published on Gradiated is
- * found for them; what they published elsewhere is the list of links under
- * their Posts heading. The filter is always there, so the section looks the
- * same on every profile; a filter with nothing behind it says so.
- */
 const Posts = ({
   external,
   gradiated,
@@ -441,10 +420,8 @@ export const ProfilePage = ({
         dangerouslySetInnerHTML={{ __html: marked.parse(markdown) as string }}
       />
     );
-    /* Posts and Gallery are on every profile, and each has two sources: what
-       the person wrote under the heading, and what the site knows (their
-       Library articles, the pictures in their gallery folder). Either alone
-       is enough to show the section; with neither, it is not there. */
+    /* Shown when the person wrote under the heading or the site has their
+       articles or pictures. */
     let postsPlaced = false;
     let galleryPlaced = false;
     const authored = sectionsOf(member.body, ["posts", "gallery"]).flatMap(

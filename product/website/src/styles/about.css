@@ -116,9 +116,8 @@
   width: 82%;
 }
 
-/* Hidden only once the script is watching for them, then up one at a time,
-   substrate first. The fade is over early so a die is solid while it is
-   still settling; the long expo-out is what makes it glide rather than land. */
+/* Hidden only once the script is watching; the fade ends early so a die is
+   solid while it settles. */
 .gr-about-dies[data-reveal="waiting"] .gr-about-die {
   opacity: 0;
   translate: 0 35%;

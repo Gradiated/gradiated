@@ -1,14 +1,7 @@
 import type { ReactElement } from "react";
 import { PixelIcon } from "./PixelIcon";
 
-/**
- * The chevron-to-arrow affordance, drawn in squares like the pixel icons.
- *
- * At rest it is a chevron; on hover a shaft grows out of the chevron's back,
- * a square at a time, and it becomes an arrow. Styling and the hover
- * transition live in base.css (`.gr-arrow`), so any `.gr-button` can carry
- * one.
- */
+/** A chevron whose shaft grows in on hover; styled by `.gr-arrow` in base.css. */
 export const Arrow = (): ReactElement => (
   <svg
     aria-hidden

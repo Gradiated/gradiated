@@ -1,14 +1,5 @@
-/**
- * Vendored from React Bits' BounceCards (reactbits.dev, MIT licence, David
- * Haz), ported to TypeScript for this codebase. A loose fan of cards that
- * pop in on springs; hovering one straightens it and pushes the rest aside.
- *
- * Changes from upstream: cards hold any content (`cards`) rather than only
- * images, may be oblong (`cardWidth` and `cardHeight`), report the hovered
- * card (`onHoverChange`), may pop in from part size with a fade
- * (`fromScale`), and the container may take any CSS width. The
- * spring physics are unchanged.
- */
+/* Vendored from React Bits' BounceCards (reactbits.dev, MIT licence, David
+   Haz) and ported to TypeScript; the spring physics are unchanged. */
 import { useEffect, useRef } from "react";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import "./BounceCards.css";

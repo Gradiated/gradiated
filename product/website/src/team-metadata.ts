@@ -5,12 +5,6 @@ import type { PlaceCoordinates } from "./team-geo";
 import { mediaName } from "./team-media";
 import type { TeamMedia, TeamPicture, TeamPortrait } from "./team-media";
 
-/* One folder per person in content/team/, holding their profile and their
-   images. The folder's name is the profile's URL (/team/<folder>/); the front
-   matter is validated here so a typo fails the build with the file's name
-   instead of shipping a broken page. content/team/README.md is the guide
-   people edit from. */
-
 const url = z.string().regex(/^https:\/\/\S+$/, "Use a full https:// link");
 
 const schema = z
@@ -19,11 +13,7 @@ const schema = z
     role: z.string().trim().min(1),
     /** One or two sentences, shown on cards and at the top of the profile. */
     summary: z.string().trim().min(1).optional(),
-    /**
-     * Where the person is based, to the city. Leave out to stay off the map.
-     * City and country are all that is needed: the flag and the pin are
-     * worked out from them. The other three override that when it is wrong.
-     */
+    /** Flag and pin come from city and country; the other fields override. */
     location: z
       .object({
         city: z.string().trim().min(1),
@@ -43,11 +33,7 @@ const schema = z
         "Give latitude and longitude together, or neither",
       )
       .optional(),
-    /**
-     * Captions for gallery pictures, by file name. The pictures themselves
-     * are whatever is in images/gallery/; nothing is listed here to make one
-     * appear.
-     */
+    /** By file name; the pictures are whatever is in images/gallery/. */
     captions: z.record(z.string(), z.string().trim().min(1)).default({}),
     links: z
       .object({
@@ -232,11 +218,7 @@ const idOf = (title: string): string =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
-/**
- * A profile's sections are the `##` headings its author wrote: the page's
- * contents list and its layout both come from the file, so adding a section
- * is adding a heading. Anything above the first heading is the bio.
- */
+/** Sections are the author's `##` headings; text above the first is the bio. */
 export const sectionsOf = (
   body: string,
   /** Titles (lowercase) to keep even when empty: the page fills them in, and
@@ -283,15 +265,7 @@ export const sectionsOf = (
 
 export type ExternalPost = { note?: string; title: string; url: string };
 
-/**
- * The writing a person lists under their Posts heading, as a Markdown list of
- * links:
- *
- *   - [Title](https://example.com/post) — an optional note
- *
- * Each such line becomes a post. Anything else under the heading is returned
- * as `rest` and shown as ordinary text.
- */
+/** `- [Title](url) — note` lines under Posts become posts; the rest is `rest`. */
 export const postsIn = (
   markdown: string,
 ): { posts: ExternalPost[]; rest: string } => {

@@ -37,12 +37,7 @@ const nudgeOf = (place: TeamPlace, places: TeamPlace[]) => {
   return { dx: (east / length) * reach, dy: (-north / length) * reach };
 };
 
-/**
- * The globe on /team/: one pin per city, sized by how many people are there.
- * Hovering one lists its people, each a link to their page, and a city of
- * one goes straight there. It is decoration: the rail lists everyone, so the
- * globe is aria-hidden and its pins stay out of the tab order.
- */
+/** Decorative: the rail lists everyone, so the globe is aria-hidden. */
 export const TeamMap = ({
   centre,
   places,

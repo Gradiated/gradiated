@@ -42,12 +42,6 @@ const noiseTile = (): HTMLCanvasElement => {
   return tile;
 };
 
-/**
- * The texturizer: a swarm of 1px bars (or bits, or spiral dashes)
- * drifting across a flat ground, blurring toward the bottom, under a riso grain. It fills its
- * parent, runs only while on screen and moving, and holds still under
- * reduced motion.
- */
 export const EnergyField = ({
   angle = 24,
   blur = 6,

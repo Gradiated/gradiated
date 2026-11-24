@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 
-/* For canvases (the amCharts maps) that cannot read CSS variables.
-   The probe resolves var() chains; the canvas turns any color syntax into
-   sRGB bytes, so color-mix(), color() and oklch() all come out right. */
+/* For canvases, which cannot read CSS variables: the probe resolves var()
+   chains and the canvas turns any color syntax into sRGB bytes. */
 export const resolveColor = (host: HTMLElement, property: string): number => {
   const probe = document.createElement("span");
   probe.style.color = `var(${property})`;

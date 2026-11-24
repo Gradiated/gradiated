@@ -1,16 +1,5 @@
-// Runs at the start of `pnpm build` and when the dev server starts (plain
-// `node`, using its built-in type stripping).
-//
-// A profile in content/team/ gives a city and a country. This looks up each
-// city's coordinates once, with Open-Meteo's geocoding API (public, no key),
-// and keeps them in src/team-places.generated.json, which is committed. A
-// build therefore only needs the network for a city nobody has listed before.
-//
-// Only the city and country are sent, never a person's name.
-//
-// A city that cannot be found fails the build and names the file, because it
-// is almost always a typo. To place somewhere the lookup gets wrong, give
-// `latitude` and `longitude` in the profile; those are used as written.
+// Coordinates are cached in src/team-places.generated.json, so a build only
+// needs the network for a new city. Only city and country are sent.
 
 import { readFile, writeFile } from "node:fs/promises";
 import { profiles } from "./team-profiles.ts";

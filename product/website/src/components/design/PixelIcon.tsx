@@ -3,11 +3,7 @@ import { PIXEL_ICONS } from "./pixel-icons.generated";
 
 export type PixelIconName = keyof typeof PIXEL_ICONS;
 
-/**
- * A Phosphor icon redrawn in squares (scripts/pixel-icons.ts). It is drawn
- * at a whole number of pixels a square (--pixel, 2px by default) so the
- * squares stay crisp; pass `label` only when the icon stands alone.
- */
+/** Sized at whole pixels a square (--pixel) so the squares stay crisp. */
 export const PixelIcon = ({
   className,
   label,

@@ -1,12 +1,3 @@
-/* A person's pictures live in their folder, sorted by what they are for:
-
-     content/team/<name>/images/profile/   their portrait (one picture)
-     content/team/<name>/images/gallery/   the Gallery section
-
-   scripts/sync-team-media.ts resizes each one into public/team/<name>/ and
-   lists the results in src/team-media.generated.json, which is what the
-   pages read. */
-
 export type TeamPicture = {
   height: number;
   /** The picture at full size, for the viewer. */

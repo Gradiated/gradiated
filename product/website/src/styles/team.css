@@ -1,7 +1,3 @@
-/* /team/ and /team/<name>/, plus the people row on /about/.
-   A person is always the same card: a 4:5 portrait, then name, role and one
-   line of detail. Everything is sized from the lattice unit like the rest. */
-
 /* -- portrait -------------------------------------------------------------- */
 
 .gr-portrait {
@@ -195,23 +191,14 @@
   }
 }
 
-/* -- profile ---------------------------------------------------------------
-
-   A dark band across the top of the sheet carries the name; the portrait
-   hangs out of it into the page, with the page's contents under it; the
-   person's own sections run down the column beside.
-
-   Spacing is measured off the design at the full 24px unit: band 224px,
-   portrait 240x300 starting 106px down, a 96px gutter between the columns (wider than the design, by request).
-   Type is the system's own roles — no size here is a one-off.              */
+/* -- profile --------------------------------------------------------------- */
 
 .gr-module--profile {
   --profile-band: calc(9.33 * var(--u));
   --profile-top: calc(4.4 * var(--u));
   padding-block-start: 0;
-  /* The band is a background layer, for the model page's reason: anything
-     painted inside .gr-module-inner sits under its entrance transform and
-     is clipped to the band's width. A background cannot be. */
+  /* A background rather than a child, which the entrance transform would clip
+     to the band's width. */
   background-image: linear-gradient(
     var(--rail-ink, #18181b),
     var(--rail-ink, #18181b)
@@ -574,9 +561,7 @@
   line-height: 1.4;
 }
 
-/* -- lightbox --------------------------------------------------------------
-   A gallery picture at full size. Dark in every theme: the picture is the
-   only thing on screen. */
+/* -- lightbox: dark in every theme ----------------------------------------- */
 
 .gr-lightbox {
   width: 100vw;
@@ -672,10 +657,8 @@
     gap: calc(1.5 * var(--u)) var(--u);
   }
 
-  /* One column: the band, with the portrait starting where every page's
-     content starts and hanging out of it; share and the person's links on
-     the band beside it; then the name on the page's own ground, the
-     contents as a row, and the sections. */
+  /* The portrait starts where every page's content does; share and links sit
+     on the band beside it. */
   .gr-root .gr-module.gr-module--profile {
     --profile-top: calc(var(--rhythm-section, 3 * var(--u)) / 2);
     --profile-band: calc(var(--profile-top) + 7.5 * var(--u));

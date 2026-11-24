@@ -204,9 +204,11 @@ export type Bundle = z.infer<typeof bundleSchema>;
 export type LeaseRequest = z.infer<typeof leaseRequestSchema>;
 export type HostLease = z.infer<typeof hostLeaseSchema>;
 
-// Set by a person (kubectl annotate) to restart a failed rollout.
 export const ENROLL_DURING_RUNPOD_HOLD_ANNOTATION =
   "fleet.gradiated.com/enroll-during-runpod-hold";
+export const RESUME_ENROLLMENT_VERIFY_ANNOTATION =
+  "fleet.gradiated.com/resume-enrollment-verify";
+// Set by a person (kubectl annotate) to restart a failed rollout.
 export const RETRY_ANNOTATION = "fleet.gradiated.com/retry";
 // A lease request as JSON (gradctl gpu lease); removing it hands the host back.
 export const LEASE_ANNOTATION = "fleet.gradiated.com/lease";

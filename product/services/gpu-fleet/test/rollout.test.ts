@@ -13,6 +13,7 @@ import {
   GPU_HOSTS,
   NODES,
   PODS,
+  RESUME_ENROLLMENT_VERIFY_ANNOTATION,
   RETRY_ANNOTATION,
   type Rollout,
 } from "../src/hosts.js";
@@ -2527,6 +2528,101 @@ describe("re-imaging AWS hosts", () => {
           result: "Succeeded",
         });
       else expect(rollout(fleet, AWS_SPARE)).toBeUndefined();
+    },
+  );
+
+  it.each([
+    { matches: true, reachable: true, resumes: true },
+    { matches: false, reachable: true, resumes: false },
+    { matches: true, reachable: false, resumes: false },
+  ])(
+    "resumes only the specified healthy AWS enrollment at Verify ($matches, $reachable)",
+    async ({ matches, reachable, resumes }) => {
+      const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+      const fleet = simulateFleet(
+        [
+          { instanceId: FIRST, podId: "zhimpngvqyotuj", gpus: 1 },
+          {
+            instanceId: AWS_SPARE,
+            podId: EC2_SPARE,
+            gpus: 1,
+            provider: "aws",
+            image: NEW_IMAGE,
+            bundle: NEW_BUNDLE,
+          },
+        ],
+        [],
+      );
+      const at = fleet.now().toISOString();
+      const runpodFailure: Rollout = {
+        kind: "recover",
+        target: target(pinned, fleet.host(FIRST)),
+        step: "Join",
+        result: "Failed",
+        startedAt: at,
+        stepStartedAt: at,
+      };
+      const verifyFailure: Rollout = {
+        kind: "enroll",
+        target: target(pinned, fleet.host(AWS_SPARE)),
+        step: "Verify",
+        result: "Failed",
+        startedAt: at,
+        stepStartedAt: at,
+        reimageRequestedAt: at,
+        enrolledAt: at,
+        finishedAt: at,
+        lastError: "Verify did not finish within 20 minutes",
+      };
+      await fleet.kube.api.mergePatch(`${GPU_HOSTS}/gpu-${FIRST}/status`, {
+        status: { rollout: runpodFailure },
+      });
+      await fleet.kube.api.mergePatch(`${GPU_HOSTS}/gpu-${AWS_SPARE}/status`, {
+        status: { rollout: verifyFailure },
+      });
+      await fleet.kube.api.mergePatch(`${GPU_HOSTS}/gpu-${AWS_SPARE}`, {
+        metadata: {
+          annotations: {
+            [ENROLL_DURING_RUNPOD_HOLD_ANNOTATION]: "true",
+            [RESUME_ENROLLMENT_VERIFY_ANNOTATION]: matches
+              ? at
+              : new Date(0).toISOString(),
+          },
+        },
+      });
+
+      const events = await run(
+        fleet,
+        pinned,
+        () => rollout(fleet, AWS_SPARE)?.result === "Succeeded",
+        {
+          ping: (id) =>
+            id === AWS_SPARE && !reachable
+              ? Promise.resolve({
+                  reachable: false,
+                  silent: false,
+                  error: "The host management key is not mounted",
+                })
+              : fleet.ping(id),
+        },
+        20,
+      );
+
+      expect(rollout(fleet, FIRST)).toEqual(runpodFailure);
+      expect(fleet.sim(FIRST).resets).toBe(0);
+      expect(fleet.sim(AWS_SPARE).replacements).toEqual([]);
+      if (resumes) {
+        expect(rollout(fleet, AWS_SPARE)?.result).toBe("Succeeded");
+        expect(fleet.node(AWS_SPARE).spec?.unschedulable).toBeFalsy();
+        expect(events).toContainEqual({
+          event: "gpu_rollout_step",
+          instance_id: AWS_SPARE,
+          from: "Verify",
+          to: "Soak",
+        });
+      } else {
+        expect(rollout(fleet, AWS_SPARE)).toEqual(verifyFailure);
+      }
     },
   );
 

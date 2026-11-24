@@ -6,6 +6,7 @@ import json
 import math
 import re
 import sys
+from textwrap import indent
 from pathlib import Path
 import uuid
 
@@ -23,6 +24,7 @@ APPLICATIONS = KUBE / 'platform/gpu-models.yaml'
 # The Virtual Kubelet node label gradiated.com/provider of each GpuHost
 # spec.provider.name, and the field naming the host at that provider.
 PROVIDERS = {'runpod': 'podId', 'aws': 'ec2InstanceId'}
+INDEPENDENT_MANAGEMENT_KEY = 'fleet.gradiated.com/independent-management-key'
 
 
 # Field bounds are checked against the GpuHost CRD schema by
@@ -559,8 +561,32 @@ def pinned_copies(pins):
     return {TEMPLATES: json.dumps(templates, indent=2) + '\n', OPS_MCP: workload}
 
 
+def management_key_volume(credentials):
+    shared = credentials[1]['spec']['target']['name']
+    if len(credentials) == 2:
+        return {'name': 'keys', 'secret': {'secretName': shared, 'defaultMode': 288}}
+    sources = [{'secret': {'name': shared}}]
+    sources.extend({'secret': {'name': resource['spec']['target']['name'], 'optional': True}}
+                   for resource in credentials[2:])
+    return {'name': 'keys', 'projected': {'defaultMode': 288, 'sources': sources}}
+
+
+def fleet_key_manifest(path, credentials):
+    # Only the keys volume is generated. Keep the rest of the manifest,
+    # including its comments, editable.
+    volume = indent(yaml.safe_dump([management_key_volume(credentials)], sort_keys=False), ' ' * 6)
+    content, count = re.subn(r'^      - name: keys\n(?:^ {8}[^\n]*\n)+', volume,
+                             path.read_text(), flags=re.MULTILINE)
+    if count != 1:
+        raise ValueError(f'{path} must contain exactly one keys volume')
+    return content
+
+
 def render(retire=()):
-    hosts, secrets = inventory([item for item in yaml.safe_load_all((GPU / 'hosts.yaml').read_text()) if item])
+    documents = [item for item in yaml.safe_load_all((GPU / 'hosts.yaml').read_text()) if item]
+    hosts, secrets = inventory(documents)
+    independent_keys = {host['spec']['instanceId'] for host in documents
+                        if host['metadata'].get('annotations', {}).get(INDEPENDENT_MANAGEMENT_KEY) == 'true'}
     runtimes = json.loads(RUNTIMES.read_text())
     controller = list(yaml.safe_load_all((GPU / 'controller.yaml').read_text()))
     pins = json.loads((GPU / 'pins.json').read_text())
@@ -582,7 +608,10 @@ def render(retire=()):
     listed = {host['instance_id'] for host in hosts}
     retiring = [name.removeprefix('gpu-') for name in node_names(rbac)
                 if name.removeprefix('gpu-') not in listed and name.removeprefix('gpu-') not in retire]
-    secrets += [entry for entry in credentials[1]['spec'].get('data', []) if entry['secretKey'] in retiring]
+    store, shared_keys, *host_keys = credentials
+    secrets += [entry for entry in shared_keys['spec'].get('data', []) if entry['secretKey'] in retiring]
+    retiring_keys = [resource for resource in host_keys
+                     if resource['spec']['data'][0]['secretKey'] in retiring]
     names = ['gpu-' + instance for instance in [host['instance_id'] for host in hosts] + retiring]
     for resource in rbac:
         # gpu-fleet-nodes lets the operator cordon a GPU node it is draining, and no other node.
@@ -590,8 +619,30 @@ def render(retire=()):
             for rule in resource['rules']:
                 if 'resourceNames' in rule:
                     rule['resourceNames'] = names
-    credentials[1]['spec'].pop('dataFrom', None)
-    credentials[1]['spec']['data'] = secrets
+    shared_keys['spec'].pop('dataFrom', None)
+    shared_keys['spec']['data'] = [entry for entry in secrets if entry['secretKey'] not in independent_keys]
+    # Enrollment creates each key serially. A missing key must not block a
+    # different host's Secret or prevent either deployment from starting.
+    credentials = [store, shared_keys]
+    for entry in secrets:
+        if entry['secretKey'] not in independent_keys:
+            continue
+        name = 'gpu-host-' + entry['secretKey']
+        credentials.append({
+            'apiVersion': shared_keys['apiVersion'],
+            'kind': 'ExternalSecret',
+            'metadata': {'name': name, 'namespace': shared_keys['metadata']['namespace']},
+            'spec': {
+                'refreshInterval': shared_keys['spec']['refreshInterval'],
+                'secretStoreRef': shared_keys['spec']['secretStoreRef'],
+                'target': {'name': name, 'creationPolicy': 'Owner'},
+                'data': [entry],
+            },
+        })
+    credentials.extend(retiring_keys)
+    volumes = controller[1]['spec']['template']['spec']['volumes']
+    keys_index, = (index for index, volume in enumerate(volumes) if volume['name'] == 'keys')
+    volumes[keys_index] = management_key_volume(credentials)
     fleet_pins = [{'apiVersion': 'v1', 'kind': 'ConfigMap',
                    'metadata': {'name': 'gpu-fleet-pins', 'namespace': 'gpu-inference'},
                    'data': {'pins.json': json.dumps(pins, indent=2) + '\n'}}]
@@ -631,7 +682,10 @@ def main():
                          + '; '.join(f'kubectl -n gpu-inference delete rollout,scaledobject,poddisruptionbudget {name}' for name in names)
                          + '.')
     stale = []
-    for path, content in pinned_copies(json.loads((GPU / 'pins.json').read_text())).items():
+    text_outputs = pinned_copies(json.loads((GPU / 'pins.json').read_text()))
+    fleet = GPU / 'gpu-fleet.yaml'
+    text_outputs[fleet] = fleet_key_manifest(fleet, outputs[GPU / 'credentials.yaml'])
+    for path, content in text_outputs.items():
         if args.check:
             if path.read_text() != content:
                 stale.append(str(path.relative_to(ROOT)))

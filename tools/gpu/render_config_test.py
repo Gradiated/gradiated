@@ -215,7 +215,7 @@ class RenderTests(unittest.TestCase):
         # Hosts being retired keep their node access until --retire drops it with their key.
         listed = {host['metadata']['name'] for host in self.hosts}
         credentials = list(yaml.safe_load_all((renderer.GPU / 'credentials.yaml').read_text()))
-        retained = {'gpu-' + entry['secretKey'] for entry in credentials[1]['spec']['data']}
+        retained = {'gpu-' + entry['secretKey'] for secret in credentials[1:] for entry in secret['spec']['data']}
         self.assertLessEqual(listed, set(updates[0]['resourceNames']))
         self.assertLessEqual(set(updates[0]['resourceNames']) - listed, retained)
         policies = list(yaml.safe_load_all((renderer.GPU / 'gpu-fleet.yaml').read_text()))
@@ -223,6 +223,55 @@ class RenderTests(unittest.TestCase):
                           and d['metadata']['name'] == 'gpu-fleet-node-updates')
         self.assertEqual(restricted['spec']['matchConditions'], [{'name': 'gpu-fleet',
             'expression': "request.userInfo.username == 'system:serviceaccount:gpu-inference:gpu-fleet'"}])
+
+    def test_independent_management_keys_do_not_block_other_hosts(self):
+        self.assert_independent_management_keys(self.hosts)
+
+    def assert_independent_management_keys(self, hosts):
+        documents = list(yaml.safe_load_all((renderer.GPU / 'credentials.yaml').read_text()))
+        expected = {}
+        shared = {}
+        for host in hosts:
+            instance = host['spec']['instanceId']
+            entry = {'secretKey': instance, 'remoteRef': host['spec']['managementSecret']}
+            if host['metadata'].get('annotations', {}).get(renderer.INDEPENDENT_MANAGEMENT_KEY) == 'true':
+                expected['gpu-host-' + instance] = entry
+            else:
+                shared[instance] = entry
+
+        base = documents[1]
+        self.assertEqual(base['spec']['target'], {'name': 'gpu-controller', 'creationPolicy': 'Owner'})
+        self.assertTrue(shared.items() <= {entry['secretKey']: entry for entry in base['spec']['data']}.items())
+        roles = yaml.safe_load_all((renderer.GPU / 'rbac.yaml').read_text())
+        listed = {host['spec']['instanceId'] for host in hosts}
+        draining = {name.removeprefix('gpu-') for name in renderer.node_names(roles)} - listed
+        independent = {}
+        for doc in documents[2:]:
+            entry, = doc['spec']['data']
+            name = doc['metadata']['name']
+            self.assertEqual(name, 'gpu-host-' + entry['secretKey'])
+            self.assertEqual(doc['spec']['target'], {'name': name, 'creationPolicy': 'Owner'})
+            if entry['secretKey'] not in draining:
+                self.assertEqual(entry, expected[name])
+            self.assertNotIn(name, independent)
+            independent[name] = entry
+        self.assertTrue(expected.items() <= independent.items())
+        self.assertTrue({entry['secretKey'] for entry in base['spec']['data']}.isdisjoint(
+            entry['secretKey'] for entry in independent.values()))
+
+        for workload in ('controller.yaml', 'gpu-fleet.yaml'):
+            resources = yaml.safe_load_all((renderer.GPU / workload).read_text())
+            deployment = next(doc for doc in resources if doc['kind'] == 'Deployment')
+            volumes = deployment['spec']['template']['spec']['volumes']
+            keys = next(volume for volume in volumes if volume['name'] == 'keys')
+            if not independent:
+                self.assertEqual(keys, {'name': 'keys', 'secret': {'secretName': 'gpu-controller', 'defaultMode': 288}})
+                continue
+            sources = [source['secret'] for source in keys['projected']['sources']]
+            self.assertEqual(sources[0], {'name': 'gpu-controller'})
+            optional = {source['name'] for source in sources[1:] if source.get('optional')}
+            self.assertEqual(independent.keys(), optional)
+            self.assertEqual(len(sources), 1 + len(optional))
 
     def test_argo_never_deletes_the_crd_or_a_gpuhost(self):
         options = self.definition['metadata']['annotations']['argocd.argoproj.io/sync-options'].split(',')
@@ -254,23 +303,32 @@ class RenderTests(unittest.TestCase):
             shutil.copyfile(renderer.ROOT / 'product/inference/gpu/runtimes.json', runtime_path)
             # The last host no pool reservation depends on.
             host = [h for h in self.hosts if not h['spec'].get('extraTaints')][-1]
-            removed = host['spec']['instanceId']
-            (gpu / 'hosts.yaml').write_text(yaml.safe_dump_all([h for h in self.hosts if h is not host]))
+            independent = next((entry for entry in self.hosts
+                                if entry['metadata'].get('annotations', {}).get(renderer.INDEPENDENT_MANAGEMENT_KEY)
+                                == 'true'), None)
+            removed = [entry['spec']['instanceId'] for entry in (host, independent) if entry]
+            remaining = [entry for entry in self.hosts if entry['spec']['instanceId'] not in removed]
+            (gpu / 'hosts.yaml').write_text(yaml.safe_dump_all(remaining))
             with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu, MODELS=gpu / 'models'):
                 # Step one: out of hosts.yaml, so Argo stops wanting the GpuHost,
                 # but still drainable.
                 with patch('sys.argv', ['render-config.py']):
                     renderer.main()
-                self.assertIn('gpu-' + removed, (gpu / 'rbac.yaml').read_text())
-                self.assertIn(removed, (gpu / 'credentials.yaml').read_text())
+                for instance in removed:
+                    self.assertIn('gpu-' + instance, (gpu / 'rbac.yaml').read_text())
+                    self.assertIn(instance, (gpu / 'credentials.yaml').read_text())
                 with patch('sys.argv', ['render-config.py', '--check']):
                     renderer.main()
+                self.assert_independent_management_keys(remaining)
 
-                # Step two, once the GpuHost is gone.
-                with patch('sys.argv', ['render-config.py', '--retire', removed]):
+                # Step two, once the GpuHosts are gone.
+                retire = [flag for instance in removed for flag in ('--retire', instance)]
+                with patch('sys.argv', ['render-config.py', *retire]):
                     renderer.main()
-                self.assertNotIn('gpu-' + removed, (gpu / 'rbac.yaml').read_text())
-                self.assertNotIn(removed, (gpu / 'credentials.yaml').read_text())
+                for instance in removed:
+                    self.assertNotIn('gpu-' + instance, (gpu / 'rbac.yaml').read_text())
+                    self.assertNotIn(instance, (gpu / 'credentials.yaml').read_text())
+                self.assert_independent_management_keys(remaining)
                 with patch('sys.argv', ['render-config.py', '--check']):
                     renderer.main()
 
@@ -306,6 +364,12 @@ class RenderTests(unittest.TestCase):
             # Hosts being retired keep their keys after the listed hosts.
             self.assertIn({'secretKey': instance, 'remoteRef': entry['spec']['managementSecret']},
                           outputs[gpu / 'credentials.yaml'][1]['spec']['data'])
+            entry['metadata'].setdefault('annotations', {})[renderer.INDEPENDENT_MANAGEMENT_KEY] = 'true'
+            (gpu / 'hosts.yaml').write_text(yaml.safe_dump_all([*self.hosts, entry]))
+            with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu, MODELS=gpu / 'models'):
+                with patch('sys.argv', ['render-config.py']):
+                    renderer.main()
+                self.assert_independent_management_keys([*self.hosts, entry])
             models = json.loads((gpu / 'models.json').read_text())
             models.pop('gradiated/linden-1')
             (gpu / 'models.json').write_text(json.dumps(models))

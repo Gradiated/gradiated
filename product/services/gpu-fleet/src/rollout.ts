@@ -15,6 +15,7 @@ import {
   parseHosts,
   providerInstanceId,
   recordedImage,
+  RESUME_ENROLLMENT_VERIFY_ANNOTATION,
   RETRY_ANNOTATION,
   type GpuHost,
   type HostLease,
@@ -1484,6 +1485,41 @@ export const createRollouts = (deps: RolloutDependencies) => {
     return !retry || retry === rollout.retry;
   };
 
+  const isRunPodJoinFailure = ({ host }: Facts) =>
+    isRunPod(host) &&
+    host.status?.rollout?.kind === "recover" &&
+    host.status.rollout.step === "Join";
+
+  const resumableEnrollmentVerify = (item: Facts) => {
+    const { host, node } = item;
+    const rollout = host.status?.rollout;
+    const requested =
+      host.metadata.annotations?.[RESUME_ENROLLMENT_VERIFY_ANNOTATION];
+    const timeout = `Verify did not finish within ${Math.round(limits.Verify / MINUTE)} minutes`;
+
+    if (
+      !requested ||
+      !isAws(host) ||
+      host.metadata.annotations?.[ENROLL_DURING_RUNPOD_HOLD_ANNOTATION] !==
+        "true" ||
+      host.status?.lease ||
+      leaseRequest(host) ||
+      item.pods ||
+      (node?.unschedulable && !node.cordonedByRollout) ||
+      !rollout ||
+      rollout.kind !== "enroll" ||
+      rollout.step !== "Verify" ||
+      rollout.result !== "Failed" ||
+      !rollout.enrolledAt ||
+      rollout.finishedAt !== requested ||
+      rollout.lastError !== timeout ||
+      !healthy(item, rollout)
+    )
+      return;
+
+    return rollout;
+  };
+
   const mayAct = (kind: Rollout["kind"]) =>
     deps.mode === "act" || kind === "bundle";
 
@@ -1807,15 +1843,37 @@ export const createRollouts = (deps: RolloutDependencies) => {
     await preempt(all, plans);
 
     const held = all.filter((item) => holding(item.host, pins));
+    if (mayAct("enroll")) {
+      for (const item of held) {
+        if (
+          !held.every((other) => other === item || isRunPodJoinFailure(other))
+        )
+          continue;
+        const rollout = resumableEnrollmentVerify(item);
+        if (!rollout) continue;
+
+        const { host } = item;
+        const id = host.spec.instanceId;
+        await act(() => cluster.cordon(id));
+        await writeStatus(host, {
+          rollout: {
+            ...rollout,
+            result: "Running",
+            stepStartedAt: now().toISOString(),
+            finishedAt: undefined,
+            lastError: undefined,
+            healthySince: undefined,
+          },
+        });
+        deps.log({ event: "gpu_enrollment_verify_resumed", instance_id: id });
+        return;
+      }
+    }
+
     const halted = held[0];
     // A failed RunPod recovery is still held while explicitly opted-in,
     // empty AWS hosts enroll through their separate bootstrap path.
-    const onlyRunPodJoinFailures = held.every(
-      ({ host }) =>
-        isRunPod(host) &&
-        host.status?.rollout?.kind === "recover" &&
-        host.status.rollout.step === "Join",
-    );
+    const onlyRunPodJoinFailures = held.every(isRunPodJoinFailure);
     const mayEnrollDuringHold = (item: Facts, plan: Plan) =>
       onlyRunPodJoinFailures &&
       plan.action === "start" &&

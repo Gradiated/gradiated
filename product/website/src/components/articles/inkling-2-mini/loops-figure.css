@@ -1,0 +1,90 @@
+.gr-root .gr-prose > .lf {
+  margin-block: 4em;
+}
+
+.lf {
+  padding: 1.75em 2em;
+  border-radius: 0.75rem;
+  background: var(--color-panel);
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+.lf p {
+  margin: 0;
+}
+
+.lf-prompt {
+  margin-block-end: 2em;
+  padding: 1em 1.2em;
+  border-radius: 0.5rem;
+  background: var(--color-substrate);
+}
+
+.lf-prompt-label {
+  margin-block-end: 0.4em !important;
+  color: var(--color-text-muted);
+  font-family: var(--font-code);
+  font-size: 0.7em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lf-question {
+  font-family: var(--font-title);
+  font-size: 1.15em;
+  line-height: 1.4;
+}
+
+.lf-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 2.5em;
+}
+
+.lf-title {
+  font-family: var(--font-title);
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.lf-count,
+.lf figcaption {
+  color: var(--color-text-muted);
+}
+
+.lf-count {
+  margin-block-end: 1em !important;
+}
+
+.lf-cot {
+  padding: 0.2em 0 0.2em 0.9em;
+  border-inline-start: 2px solid var(--color-rule);
+}
+
+.lf-line {
+  display: block;
+  height: 6px;
+  margin: 7px 0;
+  border-radius: 3px;
+  background: var(--color-text-muted);
+  opacity: 0.3;
+}
+
+.lf-answer {
+  margin-block-start: 1em !important;
+  font-family: var(--font-code);
+  font-size: 0.85em;
+}
+
+.lf figcaption {
+  margin-top: 1.75em;
+  font-size: 0.85em;
+}
+
+@media (max-width: 640px) {
+  .lf-cols {
+    grid-template-columns: 1fr;
+  }
+}

@@ -88,6 +88,9 @@ const NOTE_ART: Record<string, StoryArt> = {
   "/library/kimi-k-3-point-1-pro/": {
     tall: "/brand/library/kimi-k31-pro.jpg",
   },
+  "/library/inkling-2-mini/": {
+    tall: "/brand/library/inkling-2-mini.jpg",
+  },
 };
 
 const NOTE_COVERS: Record<string, StoryCover> = {

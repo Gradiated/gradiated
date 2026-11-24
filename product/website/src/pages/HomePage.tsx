@@ -64,9 +64,9 @@ export const HomePage = (): ReactElement => (
             Get your own model running
           </h2>
           <p className="gr-body gr-muted gr-lab-cta-copy">
-            Bring a workflow and its production traces. We’ll build the evals,
-            train an open model for your task, and help you serve it through the
-            API. You own the weights.
+            Swap your base url over to the one we provide you. We will collect
+            production traces, build the evals, train your own model for your
+            task, and serve it for you through the API. You own the weights.
           </p>
           <div className="gr-home-actions">
             <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>

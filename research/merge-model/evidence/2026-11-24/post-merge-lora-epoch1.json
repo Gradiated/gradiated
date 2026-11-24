@@ -1,0 +1,46 @@
+{
+  "arm": "post-merge-lora",
+  "epoch": 1,
+  "step": 851,
+  "base": "pooled-control checkpoint-011839 merged into Qwen2.5-Coder-7B-Instruct",
+  "kl_weight": 3.0,
+  "lr": 6e-05,
+  "ppl": {
+    "base_whole_nll": 0.5531606780434403,
+    "base_project_source_nll": 0.5254259846880912,
+    "epoch1_whole_nll": 0.40320787351769116,
+    "epoch1_project_source_nll": 0.40730468885863846,
+    "whole_ppl": 1.4966179540826402,
+    "project_source_ppl": 1.5027619090335202,
+    "whole_ppl_reduction_pct": 13.93,
+    "project_source_ppl_reduction_pct": 11.14
+  },
+  "duckdb": {
+    "conflicts": 1000,
+    "grouping": "merge",
+    "groups": 329,
+    "control_correct": 681,
+    "adapted_correct": 682,
+    "gained": 18,
+    "lost": 17,
+    "delta": 0.001,
+    "delta_ci95": [
+      -0.012270452753881481,
+      0.012797074954296161
+    ]
+  },
+  "others": {
+    "conflicts": 6398,
+    "grouping": "repo",
+    "groups": 68,
+    "control_correct": 4399,
+    "adapted_correct": 4406,
+    "gained": 68,
+    "lost": 61,
+    "delta": 0.0010940919037199124,
+    "delta_ci95": [
+      -0.001884352177513401,
+      0.004440240223663715
+    ]
+  }
+}

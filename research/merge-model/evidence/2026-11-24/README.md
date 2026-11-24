@@ -56,3 +56,9 @@ The full-strength step-1,702 adapter passed the development retention checks at 
 [Measured perplexity curve](7b-full-strength-through-epoch2.png) · [Token counts and cross-entropies](7b-full-strength-through-epoch2.csv)
 
 The unadapted pooled 7B merge control completed all 11,839 updates. It exactly resolved 681 of the 1,000 forward DuckDB conflicts (68.10%) and 4,399 of the 6,398 unrelated held-out conflicts (68.76%). Each exported prediction matched its frozen conflict ID, repository, and merge commit. These single-arm scores establish the comparison point for the epoch-one and retention-qualified treatments.
+
+### Frontier comparison on forward DuckDB conflicts
+
+GPT-6.2-Sol at medium reasoning effort received each of the same 1,000 frozen conflict prompts through the local subscription API, with no tools or retrieval. It exactly resolved 711/1,000, versus 681/1,000 for the pooled 7B control. Sol gained 96 resolutions and lost 66, for a difference of +3.00 percentage points (paired merge-cluster bootstrap 95% interval -3.08 to +8.24, 329 merge commits). The comparison used the same whitespace normalization, explicit abstention handling, frozen conflict IDs and git resolutions. The control received task-specific merge training; Sol used the frontier model directly.
+
+[Exact counts and paired uncertainty](sol-duckdb.json)

@@ -1,0 +1,23 @@
+{
+  "model": "gpt-6.2-sol",
+  "reasoning_effort": "medium",
+  "tools": false,
+  "source_sha256": "1da617f731450410886fbfc5dfe0d2a116b4ab5e0a8669c7b7cdf60ca55ffbc6",
+  "counts": {
+    "answer": 999,
+    "abstain": 1,
+    "malformed": 0
+  },
+  "conflicts": 1000,
+  "grouping": "merge",
+  "groups": 329,
+  "control_correct": 681,
+  "adapted_correct": 711,
+  "gained": 96,
+  "lost": 66,
+  "delta": 0.03,
+  "delta_ci95": [
+    -0.030770456960680127,
+    0.08236398359509672
+  ]
+}

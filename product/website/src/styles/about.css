@@ -123,6 +123,20 @@
   aspect-ratio: 10 / 11;
   object-position: 50% 30%;
   object-view-box: inset(0 3% 0 3%);
+  filter: grayscale(1);
+  transition:
+    scale 600ms var(--ease-media),
+    filter 400ms var(--ease-media);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .gr-member-grid--about .gr-member:hover .gr-portrait {
+    filter: none;
+  }
+}
+
+.gr-member-grid--about .gr-member:focus-visible .gr-portrait {
+  filter: none;
 }
 
 /* -- narrower -------------------------------------------------------------- */

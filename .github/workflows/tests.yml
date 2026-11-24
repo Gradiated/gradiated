@@ -208,7 +208,7 @@ jobs:
         run: mkdir -p ci-image
       - name: Build the candidate image
         if: steps.prior.outputs.reused != 'true'
-        uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
+        uses: depot/build-push-action@0f27be7c41d76663a98518dfe68f1c46582242c4 # v1.19.0
         with:
           project: ${{ vars.DEPOT_PROJECT_ID }}
           context: ${{ matrix.context }}
@@ -546,7 +546,7 @@ jobs:
       # Both runtime images carry their weights, so nothing is downloaded at run
       # time. Depot caches the layers, so an unchanged Dockerfile rebuilds nothing.
       - name: Build the CPU LLM runtime
-        uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
+        uses: depot/build-push-action@0f27be7c41d76663a98518dfe68f1c46582242c4 # v1.19.0
         with:
           project: ${{ vars.DEPOT_PROJECT_ID }}
           context: product/inference/runtimes/sglang-cpu
@@ -555,7 +555,7 @@ jobs:
           load: true
           tags: gradiated/sglang-cpu:ci
       - name: Build the CPU decision runtime
-        uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
+        uses: depot/build-push-action@0f27be7c41d76663a98518dfe68f1c46582242c4 # v1.19.0
         with:
           project: ${{ vars.DEPOT_PROJECT_ID }}
           context: product/inference/runtimes/kev

@@ -124,3 +124,38 @@
     animation: none;
   }
 }
+
+/* Phones: the title reflows as one sentence, as the home title does, rather
+   than keeping the wide screen's line breaks. */
+.gr-root[data-tier="narrow"] .gr-collage-hero-title .gr-hero-line,
+.gr-root[data-tier="compact"] .gr-collage-hero-title .gr-hero-line {
+  display: inline;
+}
+
+.gr-root[data-tier="narrow"]
+  .gr-collage-hero-title
+  .gr-hero-line
+  + .gr-hero-line::before,
+.gr-root[data-tier="compact"]
+  .gr-collage-hero-title
+  .gr-hero-line
+  + .gr-hero-line::before {
+  content: " ";
+}
+
+/* Phones: the collage runs behind the copy, so each line of the paragraph
+   sits on its own strip of page, like type pasted onto the collage. */
+.gr-root[data-tier="narrow"] .gr-collage-hero-title,
+.gr-root[data-tier="compact"] .gr-collage-hero-title {
+  margin-block-end: calc(1.5 * var(--u));
+}
+
+.gr-root[data-tier="narrow"] .gr-collage-hero-copy .gr-body,
+.gr-root[data-tier="compact"] .gr-collage-hero-copy .gr-body {
+  display: inline;
+  padding: 0.15em 0.35em;
+  margin-inline-start: -0.35em;
+  background: var(--color-substrate);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}

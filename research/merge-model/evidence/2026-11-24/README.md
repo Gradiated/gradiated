@@ -64,3 +64,14 @@ GPT-6.2-Sol at medium reasoning effort received each of the same 1,000 frozen co
 [Exact counts and paired uncertainty](sol-duckdb.json)
 
 After pooled merge SFT, the control's independent test retained 152/160 ARC answers (95.0% agreement), with accuracy moving from 139/160 to 137/160. Instruction accuracy rose from 14/48 to 17/48, while exact answer agreement was 34/48 (70.8%), below the 90% criterion. English and Python cross-entropies improved from 2.77115 to 2.71454 and from 0.86872 to 0.84780 nats/token, respectively. Whole DuckDB snapshot perplexity after control SFT was 1.7388.
+
+### Exploratory epoch-one historical merge comparison
+
+The full-strength epoch-one DuckDB adapter completed all 3,419 merge-training updates on dataset 1795477893 with the exact same training configuration and data digest (`d34152a7...`, 29,090 examples, seed 0) as the unadapted 7B baseline (`seven-generic`). Paired exact-resolution results grouped by merge commit show no material difference on unrelated repositories:
+
+- `fresh_repo` (611 conflicts, 206 merges): 400/611 (65.47%) vs. 404/611 (66.12%); +11 / −15, −0.65 percentage points (95% CI −2.25 to +1.14).
+- `fresh_time` (1,000 conflicts, 474 merges): 746/1,000 (74.60%) vs. 732/1,000 (73.20%); +33 / −19, +1.40 percentage points (95% CI −0.64 to +3.82).
+- `w1b_repo` (163 conflicts, 82 merges): 138/163 (84.66%) vs. 136/163 (83.44%); +3 / −1, +1.23 percentage points (95% CI −1.11 to +3.75).
+- `w1b_time` (153 conflicts, 35 merges): 134/153 (87.58%) vs. 134/153 (87.58%); +2 / −2, 0.00 percentage points (95% CI −1.98 to +3.95).
+
+[Paired historical counts and intervals](epoch1-historical.json)

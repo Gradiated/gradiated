@@ -105,11 +105,13 @@ export const LibraryPage = (): ReactElement => {
           {view === "list" ? (
             <StoryList stories={shown} />
           ) : (
-            <StoryRow
-              columns="repeat(3, var(--card-narrow))"
-              stories={shown}
-              uniform
-            />
+            <div className="gr-library-grid">
+              <StoryRow
+                columns="repeat(3, var(--card-narrow))"
+                stories={shown}
+                uniform
+              />
+            </div>
           )}
         </Module>
       </Band>

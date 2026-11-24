@@ -75,3 +75,7 @@ The full-strength epoch-one DuckDB adapter completed all 3,419 merge-training up
 - `w1b_time` (153 conflicts, 35 merges): 134/153 (87.58%) vs. 134/153 (87.58%); +2 / −2, 0.00 percentage points (95% CI −1.98 to +3.95).
 
 [Paired historical counts and intervals](epoch1-historical.json)
+
+### Epoch three on the instruction-distillation branch
+
+Epoch 3 completed step 2,553 on `merge-duck2-n24` and passed development retention at full adapter strength (scale 1.0). Whole-snapshot perplexity reached 1.49270 (0.40059 nats/token), down 14.76% from the base model (1.75107), and first-party source reached 1.49725 (0.40363 nats/token), down 11.82% from base (1.69802). Perplexity improved by 0.01340 nats/token over epoch 2 (0.41399) while remaining above the 30% reduction ceilings. Following the shift to the reversed-order post-merge DuckDB LoRA experiment (`post-merge-lora`), `merge-duck2-n24` was released after verifying all epoch-3 S3 exports (`best-adapter`, `best-source.json`, `resume/`, `curve.jsonl`).

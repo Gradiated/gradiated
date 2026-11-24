@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { productApiBaseUrl } from "../api/client";
+import { PixelIcon } from "./design/PixelIcon";
 import "./waitlist.css";
 
 /**
@@ -153,20 +154,7 @@ export const WaitlistDrawer = ({
             type="button"
             onClick={backToMenu}
           >
-            <svg
-              aria-hidden
-              fill="none"
-              height="16"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-              width="16"
-            >
-              <path d="M19 12H5" />
-              <path d="m12 19-7-7 7-7" />
-            </svg>
+            <PixelIcon name="arrow-left" />
             Menu
           </button>
         ) : null}

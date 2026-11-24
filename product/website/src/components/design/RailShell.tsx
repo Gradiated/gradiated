@@ -8,9 +8,8 @@ import {
 } from "react";
 import type { ReactElement, ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Moon, Sun } from "lucide-react";
 import { Arrow } from "./icons";
-import { Icon } from "./Icon";
+import { PixelIcon } from "./PixelIcon";
 import { CONSOLE_BASE_URL } from "../../urls";
 import { applyTheme, readStoredTheme, storeTheme } from "../../theme";
 import type { ThemeId } from "../../theme";
@@ -50,6 +49,9 @@ export type RailDocGroup = {
     label: string;
     /** An indented child of the item above it (a journey subsection). */
     sub?: boolean;
+    /** A small square before the label: a person's photo, their initials,
+     *  or an icon. The team's contents use it; it replaces the chip. */
+    thumb?: { icon?: ReactNode; src?: string; text?: string };
   }[];
 };
 
@@ -246,7 +248,7 @@ const RailThemeToggle = ({
       onClick={() => onChoose(dark ? "taupe" : "dark")}
       type="button"
     >
-      <Icon glyph={dark ? Sun : Moon} />
+      <PixelIcon name={dark ? "sun" : "moon"} />
     </button>
   );
 };
@@ -385,6 +387,8 @@ export const RailShell = ({
       setDoc(next);
       setShown(next);
       setLeaving(false);
+      /* On a phone the menu opens on the page's contents. */
+      setMenuOpen("doc");
       return;
     }
     setDoc(null);
@@ -458,9 +462,19 @@ export const RailShell = ({
                       <Link
                         data-active={item.href === shown.current || undefined}
                         data-sub={item.sub || undefined}
+                        data-thumb={item.thumb ? true : undefined}
                         key={item.href}
                         to={item.href}
                       >
+                        {item.thumb ? (
+                          <span aria-hidden="true" className="gr-rail-thumb">
+                            {item.thumb.src ? (
+                              <img alt="" src={item.thumb.src} />
+                            ) : (
+                              (item.thumb.icon ?? item.thumb.text)
+                            )}
+                          </span>
+                        ) : null}
                         {item.label}
                       </Link>
                     ),
@@ -513,7 +527,15 @@ export const RailShell = ({
       {/* Narrow screens: the base becomes a strip on the LEFT. */}
       <div className="gr-rail-strip">
         <div className="gr-rail-strip-top">
-          {back && (
+          {shown ? (
+            <a
+              aria-label={`Back to ${shown.title}`}
+              className="gr-rail-strip-back"
+              href={shown.backHref ?? "/"}
+            >
+              <Arrow />
+            </a>
+          ) : back ? (
             <a
               aria-label={`Back to ${back.label}`}
               className="gr-rail-strip-back"
@@ -521,7 +543,7 @@ export const RailShell = ({
             >
               <Arrow />
             </a>
-          )}
+          ) : null}
           <a aria-label="Gradiated" className="gr-rail-strip-mark" href="/">
             <img alt="" src="/brand/wordmark-hx-white.svg" />
           </a>
@@ -545,9 +567,65 @@ export const RailShell = ({
       </div>
       <div className="gr-rail-menu" inert={!menu}>
         <nav>
+          {shown && (
+            <div className="gr-rail-menu-item">
+              <div className="gr-rail-menu-section">
+                <button
+                  aria-expanded={menuOpen === "doc"}
+                  onClick={() =>
+                    setMenuOpen((open) => (open === "doc" ? null : "doc"))
+                  }
+                  type="button"
+                >
+                  {shown.title} <Arrow />
+                </button>
+                {menuOpen === "doc" && (
+                  <div className="gr-rail-menu-reveal gr-rail-menu-doc">
+                    {shown.groups.map((group, index) => (
+                      <div
+                        className="gr-rail-menu-doc-group"
+                        key={group.heading ?? index}
+                      >
+                        {group.heading && (
+                          <span className="gr-rail-menu-doc-title">
+                            {group.heading}
+                          </span>
+                        )}
+                        {group.items.map((item) => (
+                          <Link
+                            data-active={
+                              item.href === shown.current || undefined
+                            }
+                            data-sub={item.sub || undefined}
+                            key={item.href}
+                            onClick={() => setMenu(false)}
+                            to={item.href}
+                          >
+                            {item.thumb ? (
+                              <span
+                                aria-hidden="true"
+                                className="gr-rail-thumb"
+                              >
+                                {item.thumb.src ? (
+                                  <img alt="" src={item.thumb.src} />
+                                ) : (
+                                  (item.thumb.icon ?? item.thumb.text)
+                                )}
+                              </span>
+                            ) : null}
+                            {item.label}
+                          </Link>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           {SECTIONS.map((section, index) => (
             <div className="gr-rail-menu-item" key={section.id}>
-              {index > 0 && <hr className="gr-rail-menu-rule" />}
+              {(index > 0 || shown) && <hr className="gr-rail-menu-rule" />}
               {section.panel ? (
                 <div className="gr-rail-menu-section">
                   <button

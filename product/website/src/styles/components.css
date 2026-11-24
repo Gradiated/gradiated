@@ -487,3 +487,15 @@ select.gr-sys-input {
   color: var(--color-text-muted);
   pointer-events: none;
 }
+
+/* -- pixel icons ------------------------------------------------------------ */
+
+.gr-pixel-icon {
+  --pixel: 2px;
+
+  display: inline-block;
+  flex: none;
+  width: calc(var(--cells) * var(--pixel));
+  height: calc(var(--cells) * var(--pixel));
+  vertical-align: middle;
+}

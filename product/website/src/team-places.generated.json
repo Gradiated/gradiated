@@ -1,0 +1,18 @@
+{
+  "Cambridge, UK": {
+    "latitude": 52.2,
+    "longitude": 0.1167
+  },
+  "London, UK": {
+    "latitude": 51.5085,
+    "longitude": -0.1257
+  },
+  "San Francisco, US": {
+    "latitude": 37.7749,
+    "longitude": -122.4194
+  },
+  "Toronto, Canada": {
+    "latitude": 43.7064,
+    "longitude": -79.3986
+  }
+}

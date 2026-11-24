@@ -1,6 +1,6 @@
-import { ChevronRight } from "lucide-react";
 import { Children, isValidElement } from "react";
 import type { ReactElement, ReactNode } from "react";
+import { PixelIcon } from "./PixelIcon";
 
 // MDX hands the first line over as a <p>; its contents become the toggle.
 const unwrap = (node: ReactNode): ReactNode =>
@@ -17,7 +17,7 @@ export const Expandable = ({
     <details className="gr-expandable">
       <summary className="gr-expandable__summary">
         <span>{unwrap(first)}</span>
-        <ChevronRight aria-hidden="true" className="gr-expandable__arrow" />
+        <PixelIcon className="gr-expandable__arrow" name="caret-right" />
       </summary>
       <div className="gr-expandable__body">{rest}</div>
     </details>

@@ -1,0 +1,126 @@
+/* The hero is the collage's canvas, whose ratio the page sets as --canvas. */
+
+.gr-root .gr-collage-hero {
+  padding-block: 0;
+}
+
+.gr-collage-hero::before {
+  display: none;
+}
+
+.gr-collage-hero .gr-module-inner {
+  position: relative;
+  display: grid;
+  grid-template-rows: var(--copy-rows, 1fr auto 1.7fr);
+  width: 100%;
+  aspect-ratio: var(--canvas);
+  overflow: hidden;
+}
+
+.gr-collage-hero-frame {
+  display: contents;
+}
+
+.gr-collage-hero-copy {
+  position: relative;
+  z-index: 1;
+  transform: translate3d(0, calc(var(--drift, 0px) * 0.15), 0);
+  grid-row: 2;
+  box-sizing: border-box;
+  width: 100%;
+  padding-inline: calc((100% - var(--module-w)) / 2);
+}
+
+.gr-collage-hero-title {
+  font-family: var(--font-title);
+  font-size: var(--text-masthead);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-hero);
+  line-height: var(--leading-display);
+}
+
+.gr-root .gr-collage-hero-copy .gr-body {
+  max-width: 44ch;
+  margin-block-start: calc(1.5 * var(--u));
+}
+
+.gr-root .gr-collage-hero-copy .gr-page-hero-actions {
+  margin-block-start: calc(1.5 * var(--u));
+}
+
+.gr-collage {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  aspect-ratio: var(--canvas);
+  pointer-events: none;
+}
+
+.gr-collage-layer {
+  position: absolute;
+  height: auto;
+  transform: translate3d(0, calc(var(--drift, 0px) * var(--rate)), 0);
+  will-change: transform;
+  user-select: none;
+}
+
+/* Hidden only while the script waits for the pictures; the fade ends early
+   so a piece is solid while it settles. */
+.gr-collage[data-laid="waiting"] .gr-collage-layer {
+  opacity: 0;
+}
+
+.gr-collage[data-laid="laid"] .gr-collage-layer {
+  animation:
+    gr-collage-lay 1600ms var(--ease-open) both,
+    gr-collage-fade 300ms ease-out both;
+  animation-delay: calc(150ms + var(--layer) * 160ms);
+}
+
+@keyframes gr-collage-lay {
+  from {
+    translate: var(--from-x) var(--from-y);
+    rotate: var(--from-r);
+    scale: 1.04;
+  }
+}
+
+@keyframes gr-collage-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The copy first, then the whole collage under it. */
+@media (max-width: 60rem) {
+  /* One screen tall, the collage behind the copy and cut off on the left. */
+  .gr-root .gr-collage-hero {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    box-sizing: border-box;
+    min-height: 100svh;
+  }
+
+  .gr-collage-hero .gr-module-inner {
+    display: block;
+    aspect-ratio: auto;
+  }
+
+  .gr-collage-hero-copy {
+    transform: none;
+    padding-block: 0 calc(2 * var(--u));
+    padding-inline: calc((100% - var(--module-w)) / 2);
+  }
+
+  .gr-collage {
+    top: auto;
+    height: var(--collage-h, 55svh);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-collage-layer {
+    animation: none;
+  }
+}

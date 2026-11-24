@@ -29,10 +29,10 @@ import { useEffect, useRef, useState } from "react";
 const TIERS = [
   { margin: 24, minWidth: 900, moduleU: 48, name: "wide" },
   { margin: 24, minWidth: 620, moduleU: 36, name: "mid" },
-  /* Phone tiers: 20px a side. The module quantises to whole units, so
-     the real gutter is the leftover split — ~27px on a 390 viewport. */
-  { margin: 20, minWidth: 432, moduleU: 24, name: "compact" },
-  { margin: 20, minWidth: 0, moduleU: 16, name: "narrow" },
+  /* Phone tiers: at least 40px a side, clear of the side strip. The module
+     quantises to whole units, so the real gutter is the leftover split. */
+  { margin: 40, minWidth: 432, moduleU: 24, name: "compact" },
+  { margin: 40, minWidth: 0, moduleU: 16, name: "narrow" },
 ] as const;
 
 export type Tier = (typeof TIERS)[number]["name"];

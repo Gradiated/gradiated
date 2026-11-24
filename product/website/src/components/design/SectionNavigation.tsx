@@ -8,7 +8,8 @@ export type SectionNavigationItem = {
 };
 
 export type SectionNavigationGroup = {
-  heading: string;
+  /** Left out when the list needs no heading, as for a single group. */
+  heading?: string;
   items: SectionNavigationItem[];
 };
 
@@ -22,9 +23,11 @@ export const SectionNavigation = ({
   groups: SectionNavigationGroup[];
 }): ReactElement => (
   <nav aria-label={ariaLabel} className="gr-doc-nav">
-    {groups.map((group) => (
-      <div className="gr-doc-nav-group" key={group.heading}>
-        <p className="gr-doc-nav-heading gr-label">{group.heading}</p>
+    {groups.map((group, index) => (
+      <div className="gr-doc-nav-group" key={group.heading ?? index}>
+        {group.heading ? (
+          <p className="gr-doc-nav-heading gr-label">{group.heading}</p>
+        ) : null}
         {group.items.map((item) => (
           <Link
             aria-current={item.href === current ? "page" : undefined}
@@ -50,9 +53,11 @@ export const SectionNavigationFab = ({
   label: string;
 }): ReactElement => (
   <SectionFab label={label}>
-    {groups.map((group) => (
-      <div className="gr-fab-group" key={group.heading}>
-        <p className="gr-fab-heading gr-label">{group.heading}</p>
+    {groups.map((group, index) => (
+      <div className="gr-fab-group" key={group.heading ?? index}>
+        {group.heading ? (
+          <p className="gr-fab-heading gr-label">{group.heading}</p>
+        ) : null}
         {group.items.map((item) => (
           <Link
             aria-current={item.href === current ? "page" : undefined}

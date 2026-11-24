@@ -226,25 +226,24 @@ html {
    and a miter join — round caps would soften a system that has no round
    corners anywhere else. */
 
+/* Seven squares by five, each a whole number of pixels so the squares stay
+   crisp; a context that needs it larger sets --arrow-pixel. */
 .gr-arrow {
-  width: 1em;
-  height: 1em;
-  /* Negative margin pulls the glyph in: the icon's box is square but its ink
-     occupies only the middle, so a gap sized to the box reads as a gap and a
-     half. */
-  margin-inline-start: -0.25em;
+  --arrow-pixel: 2px;
+
+  width: calc(7 * var(--arrow-pixel));
+  height: calc(5 * var(--arrow-pixel));
+  /* The shaft's empty columns would read as extra gap at rest. */
+  margin-inline-start: calc(-2 * var(--arrow-pixel));
   flex: none;
   overflow: visible;
-  stroke-width: 1.25;
-  stroke-linecap: butt;
-  stroke-linejoin: miter;
   transition: translate var(--dur-base) var(--ease-response);
 }
 
+/* Grows out of the chevron's back a square at a time. */
 .gr-arrow-shaft {
-  stroke-dasharray: 7;
-  stroke-dashoffset: 7;
-  transition: stroke-dashoffset var(--dur-base) var(--ease-response);
+  clip-path: inset(0 0 0 100%);
+  transition: clip-path var(--dur-base) steps(5, end);
 }
 
 .gr-button:hover .gr-arrow {
@@ -252,7 +251,7 @@ html {
 }
 
 .gr-button:hover .gr-arrow-shaft {
-  stroke-dashoffset: 0;
+  clip-path: inset(0);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -321,7 +320,7 @@ html {
 
 .gr-link:hover .gr-arrow-shaft,
 .gr-link:focus-visible .gr-arrow-shaft {
-  stroke-dashoffset: 0;
+  clip-path: inset(0);
 }
 
 @media (prefers-reduced-motion: reduce) {

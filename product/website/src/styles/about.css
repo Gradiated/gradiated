@@ -1,0 +1,234 @@
+/* /about/: a collage hero, three principles, the layers of a chip, and the
+   team. */
+
+/* -- hero ------------------------------------------------------------------ */
+
+.gr-module--about-hero {
+  --canvas: 2928 / 2120;
+}
+
+.gr-module--about-why::before {
+  display: none;
+}
+
+/* -- principles and the chip ---------------------------------------------- */
+
+.gr-features-icon {
+  display: block;
+  width: auto;
+  height: calc(2.4 * var(--u));
+  margin-block-end: calc(1.2 * var(--u));
+}
+
+/* Feature icons scale with the lattice rather than snapping to pixels. */
+.gr-features-icon .gr-pixel-icon,
+.gr-careers-reason-icon .gr-pixel-icon,
+.gr-careers-handbook .gr-pixel-icon {
+  display: block;
+  width: auto;
+  height: calc(2.4 * var(--u));
+  color: var(--color-text);
+}
+
+/* A staircase: each principle in its own column, starting below the last. */
+.gr-module--about-why .gr-features {
+  row-gap: var(--u);
+}
+
+.gr-module--about-why .gr-features > * {
+  padding-inline-end: calc(3.5 * var(--u));
+}
+
+.gr-module--about-why .gr-features > :nth-child(2) {
+  grid-area: 2 / 2;
+}
+
+.gr-module--about-why .gr-features > :nth-child(3) {
+  grid-area: 3 / 3;
+}
+
+.gr-about-steps[data-steps] .gr-features {
+  position: sticky;
+  top: calc(50dvh - 4 * var(--u));
+}
+
+.gr-about-steps[data-steps] .gr-features > * {
+  grid-row: 1;
+  translate: 0 calc((1 - var(--steps, 0)) * var(--step, 0px));
+}
+
+.gr-root[data-tier="narrow"] .gr-module--about-why .gr-features > *,
+.gr-root[data-tier="compact"] .gr-module--about-why .gr-features > * {
+  grid-area: auto;
+  padding-inline-end: 0;
+}
+
+/* Phones: the icon beside the point, as on Careers' reasons. */
+.gr-root[data-tier="narrow"] .gr-module--about-why .gr-features,
+.gr-root[data-tier="compact"] .gr-module--about-why .gr-features {
+  row-gap: calc(2.75 * var(--u));
+}
+
+.gr-root[data-tier="narrow"] .gr-module--about-why .gr-features > *,
+.gr-root[data-tier="compact"] .gr-module--about-why .gr-features > * {
+  display: grid;
+  grid-template-columns: calc(2.8 * var(--u)) minmax(0, 1fr);
+  column-gap: calc(1.6 * var(--u));
+  align-items: start;
+}
+
+.gr-root[data-tier="narrow"] .gr-module--about-why .gr-features-icon,
+.gr-root[data-tier="compact"] .gr-module--about-why .gr-features-icon {
+  grid-row: span 2;
+  justify-self: center;
+  margin-block-end: 0;
+}
+
+/* Six diamonds, each overlapping the next by a quarter, spanning the band.
+   Later layers sit on top, as they do in the package. */
+.gr-about-dies {
+  --die: calc(100% / 4.85);
+
+  display: flex;
+  margin-block-start: calc(4 * var(--u));
+}
+
+.gr-about-die {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--die);
+  aspect-ratio: 1;
+}
+
+.gr-about-die + .gr-about-die {
+  margin-inline-start: calc(var(--die) * -0.23);
+}
+
+.gr-about-die img {
+  width: 70.71%;
+  height: auto;
+  rotate: 45deg;
+}
+
+/* The lid's pins reach past the package, so its picture is drawn larger. */
+.gr-about-die:last-child img {
+  width: 82%;
+}
+
+/* Hidden only once the script is watching; the fade ends early so a die is
+   solid while it settles. */
+.gr-about-dies[data-reveal="waiting"] .gr-about-die {
+  opacity: 0;
+  translate: 0 35%;
+}
+
+.gr-about-dies[data-reveal="seen"] .gr-about-die {
+  animation:
+    gr-die-rise 1300ms var(--ease-open) both,
+    gr-die-fade 500ms ease-out both;
+  animation-delay: calc(var(--i) * 90ms);
+}
+
+@keyframes gr-die-rise {
+  from {
+    translate: 0 35%;
+  }
+}
+
+@keyframes gr-die-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.gr-about-silicon {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--u) var(--pad);
+  align-items: start;
+  margin-block-start: calc(3.5 * var(--u));
+}
+
+.gr-about-silicon .gr-body {
+  margin-inline-start: calc(2 * var(--u));
+}
+
+/* -- team ------------------------------------------------------------------ */
+
+.gr-about-team-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--u);
+  padding-block-end: calc(2.5 * var(--u));
+}
+
+/* A name or role may run wider than the picture above it, as in print, and
+   wraps only when four (or three) of them no longer fit side by side. */
+.gr-root .gr-member-grid--about {
+  grid-template-columns: repeat(4, minmax(0, max-content));
+  justify-content: space-between;
+  row-gap: calc(3.5 * var(--u));
+}
+
+.gr-member-grid--about .gr-member-frame {
+  width: calc(8.1 * var(--u));
+  max-width: 100%;
+}
+
+.gr-member-grid--about .gr-member-role {
+  color: var(--color-text-muted);
+}
+
+.gr-member-grid--about .gr-portrait {
+  aspect-ratio: 10 / 11;
+  object-position: 50% 30%;
+  object-view-box: inset(0 3% 0 3%);
+  filter: grayscale(1);
+  transition:
+    scale 600ms var(--ease-media),
+    filter 400ms var(--ease-media);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .gr-member-grid--about .gr-member:hover .gr-portrait {
+    filter: none;
+  }
+}
+
+.gr-member-grid--about .gr-member:focus-visible .gr-portrait {
+  filter: none;
+}
+
+/* -- narrower -------------------------------------------------------------- */
+
+/* Fewer across as soon as the longest names would wrap: measured at 1240px
+   for four and 1000px for three. */
+@media (max-width: 77.5rem) {
+  .gr-root .gr-member-grid--about {
+    grid-template-columns: repeat(3, minmax(0, max-content));
+  }
+}
+
+@media (max-width: 62.5rem) {
+  .gr-root .gr-member-grid--about {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: calc(2 * var(--u));
+  }
+}
+
+@media (max-width: 60rem) {
+  .gr-about-silicon {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gr-about-silicon .gr-body {
+    margin-inline-start: 0;
+  }
+
+  .gr-member-grid--about .gr-member-frame {
+    width: 100%;
+  }
+}

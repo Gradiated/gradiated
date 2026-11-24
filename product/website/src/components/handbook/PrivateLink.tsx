@@ -1,4 +1,4 @@
-import { Lock } from "lucide-react";
+import { PixelIcon } from "../design/PixelIcon";
 import { useId } from "react";
 import type { ReactElement, ReactNode } from "react";
 
@@ -19,7 +19,7 @@ export const PrivateLink = ({
         href={href}
         rel="nofollow noreferrer"
       >
-        <Lock aria-hidden="true" className="gr-private-link__icon" />
+        <PixelIcon className="gr-private-link__icon" name="lock" />
         {children}
       </a>
       <span className="gr-private-link__tip" id={tip} role="tooltip">

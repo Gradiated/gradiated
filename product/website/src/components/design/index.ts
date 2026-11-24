@@ -30,6 +30,12 @@ export { HeroBeamRaw } from "./HeroBeamRaw";
 export { HomeFlow } from "./HomeFlow";
 export { InferenceFlow } from "./InferenceFlow";
 export { BadgeCard } from "./BadgeCard";
+export { BounceCards } from "./BounceCards";
+export type { BounceCardsProps } from "./BounceCards";
+export { CollageHero } from "./CollageHero";
+export type { CollageLayer } from "./CollageHero";
+export { EnergyField } from "./EnergyField";
+export type { EnergyFieldProps } from "./EnergyField";
 export { LoopSection } from "./LoopSection";
 export { ModelArt } from "./ModelArt";
 export { ModelMarquee } from "./ModelMarquee";
@@ -71,6 +77,8 @@ export {
   PageHero,
   Showpiece,
 } from "./Sections";
+export { PixelIcon } from "./PixelIcon";
+export type { PixelIconName } from "./PixelIcon";
 export type { CardItem } from "./Sections";
 export { StoryReel } from "./StoryReel";
 export type { Chapter } from "./StoryReel";

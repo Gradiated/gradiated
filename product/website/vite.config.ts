@@ -79,6 +79,77 @@ const syncAshbyJobs: Plugin = {
   },
 };
 
+/* A profile's city is turned into map coordinates once and kept in
+   src/team-places.generated.json. The dev server looks up any new city on
+   start; offline, that person is simply left off the map. */
+const syncTeamPlaces: Plugin = {
+  name: "sync-team-places",
+  apply: "serve",
+  buildStart() {
+    const result = spawnSync(
+      process.execPath,
+      [
+        fileURLToPath(
+          new URL("./scripts/sync-team-places.ts", import.meta.url),
+        ),
+      ],
+      {
+        env: { ...process.env, TEAM_PLACES_OPTIONAL: "1" },
+        stdio: "inherit",
+        timeout: 20_000,
+      },
+    );
+    if (result.error) {
+      console.warn(
+        `Team places lookup did not finish (${result.error.message}); starting with src/team-places.generated.json as it is.`,
+      );
+    }
+  },
+};
+
+/* People's pictures (content/team/<name>/images/) are resized into public/team/
+   by scripts/sync-team-media.ts. The dev server does it on start, and again
+   whenever a photograph is added, changed or removed. */
+const syncTeamMedia = (): Plugin => {
+  const script = fileURLToPath(
+    new URL("./scripts/sync-team-media.ts", import.meta.url),
+  );
+  const folder = fileURLToPath(new URL("./content/team/", import.meta.url));
+  const run = () => {
+    const result = spawnSync(process.execPath, [script], { stdio: "inherit" });
+    if (result.error) {
+      console.warn(
+        `Team photographs were not resized (${result.error.message}).`,
+      );
+    }
+  };
+
+  return {
+    name: "sync-team-media",
+    apply: "serve",
+    buildStart: run,
+    configureServer(server) {
+      server.watcher.add(folder);
+      const onChange = (file: string) => {
+        // Profiles are watched by Vite itself; this is for the pictures.
+        // Matched on the path's tail: the watcher can report the root in a
+        // different letter case from the one this file was loaded under.
+        if (
+          !/\/content\/team\/[^/]+\/images\/[^/]+\/[^/]+\.(?:jpe?g|png|webp|avif|tiff?|heic|heif)$/i.test(
+            file.replaceAll("\\", "/"),
+          )
+        )
+          return;
+        run();
+        server.ws.send({ type: "full-reload" });
+      };
+      server.watcher.on("add", onChange);
+      server.watcher.on("change", onChange);
+      server.watcher.on("unlink", onChange);
+    },
+  };
+};
+
 export default defineConfig(({ command, isSsrBuild, mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
   if (
@@ -98,6 +169,8 @@ export default defineConfig(({ command, isSsrBuild, mode }) => {
     },
     plugins: [
       syncAshbyJobs,
+      syncTeamPlaces,
+      syncTeamMedia(),
       articleCitationsPlugin(),
       {
         name: "sand-article",

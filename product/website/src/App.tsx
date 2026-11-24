@@ -34,6 +34,8 @@ import { StylePage } from "./pages/StylePage";
 import { TrainingPage } from "./pages/TrainingPage";
 import { ArtworkGeneratorPage } from "./pages/ArtworkGeneratorPage";
 import { AboutPage } from "./pages/AboutPage";
+import { ProfilePage, TeamPage } from "./pages/TeamPages";
+import { team } from "./team";
 
 /* No layout wrapper. Every route now carries its own Substrate, Nav and
    Footer, so there is nowhere left for the legacy SiteLayout to be reached
@@ -139,6 +141,25 @@ export const AppRoutes = (): ReactElement => (
       }
       path="/about/"
     />
+    <Route
+      element={
+        <Shelled>
+          <TeamPage />
+        </Shelled>
+      }
+      path="/team/"
+    />
+    {team.map((member) => (
+      <Route
+        element={
+          <Shelled>
+            <ProfilePage member={member} />
+          </Shelled>
+        }
+        key={member.slug}
+        path={member.path}
+      />
+    ))}
     <Route
       element={
         <Shelled>

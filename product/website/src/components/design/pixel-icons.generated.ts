@@ -30,6 +30,10 @@ export const PIXEL_ICONS = {
     d: "M4 2h1v1h-1zM5 3h1v1h-1zM6 4h1v1h-1zM6 5h2v1h-2zM6 6h1v1h-1zM5 7h1v1h-1zM4 8h1v1h-1z",
     grid: 11,
   },
+  "caret-double-right": {
+    d: "M2 2h2v1h-2zM5 2h2v1h-2zM3 3h2v1h-2zM6 3h2v1h-2zM4 4h2v1h-2zM7 4h2v1h-2zM5 5h1v1h-1zM8 5h2v1h-2zM4 6h2v1h-2zM7 6h2v1h-2zM3 7h2v1h-2zM6 7h2v1h-2zM2 8h2v1h-2zM5 8h2v1h-2z",
+    grid: 11,
+  },
   check: {
     d: "M8 3h2v1h-2zM7 4h2v1h-2zM6 5h2v1h-2zM1 6h2v1h-2zM5 6h2v1h-2zM2 7h4v1h-4zM3 8h2v1h-2z",
     grid: 11,
@@ -99,6 +103,14 @@ export const PIXEL_ICONS = {
   rewind: {
     d: "M8 4h2v1h-2zM17 4h2v1h-2zM7 5h4v1h-4zM15 5h4v1h-4zM5 6h6v1h-6zM14 6h5v1h-5zM3 7h4v1h-4zM9 7h2v1h-2zM12 7h4v1h-4zM17 7h2v1h-2zM2 8h4v1h-4zM9 8h5v1h-5zM17 8h2v1h-2zM1 9h3v1h-3zM9 9h4v1h-4zM17 9h2v1h-2zM0 10h3v1h-3zM9 10h3v1h-3zM17 10h2v1h-2zM1 11h3v1h-3zM9 11h4v1h-4zM17 11h2v1h-2zM2 12h4v1h-4zM9 12h5v1h-5zM17 12h2v1h-2zM3 13h4v1h-4zM9 13h2v1h-2zM12 13h4v1h-4zM17 13h2v1h-2zM5 14h6v1h-6zM14 14h5v1h-5zM7 15h4v1h-4zM15 15h4v1h-4zM8 16h2v1h-2zM17 16h2v1h-2z",
     grid: 21,
+  },
+  sidebar: {
+    d: "M2 1h7v1h-7zM1 2h9v1h-9zM1 3h3v1h-3zM9 3h1v1h-1zM1 4h3v1h-3zM9 4h1v1h-1zM1 5h3v1h-3zM9 5h1v1h-1zM1 6h1v1h-1zM3 6h1v1h-1zM9 6h1v1h-1zM1 7h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM1 8h9v1h-9zM2 9h7v1h-7z",
+    grid: 11,
+  },
+  "sidebar-simple": {
+    d: "M2 1h7v1h-7zM1 2h9v1h-9zM1 3h1v1h-1zM3 3h1v1h-1zM9 3h1v1h-1zM1 4h1v1h-1zM3 4h1v1h-1zM9 4h1v1h-1zM1 5h1v1h-1zM3 5h1v1h-1zM9 5h1v1h-1zM1 6h1v1h-1zM3 6h1v1h-1zM9 6h1v1h-1zM1 7h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM1 8h9v1h-9zM2 9h7v1h-7z",
+    grid: 11,
   },
   "speaker-high": {
     d: "M5 1h2v1h-2zM4 2h3v1h-3zM1 3h4v1h-4zM6 3h1v1h-1zM9 3h1v1h-1zM0 4h2v1h-2zM3 4h1v1h-1zM6 4h1v1h-1zM8 4h3v1h-3zM0 5h2v1h-2zM3 5h1v1h-1zM6 5h1v1h-1zM8 5h1v1h-1zM10 5h1v1h-1zM0 6h2v1h-2zM3 6h1v1h-1zM6 6h1v1h-1zM8 6h3v1h-3zM1 7h4v1h-4zM6 7h1v1h-1zM9 7h1v1h-1zM4 8h3v1h-3zM5 9h2v1h-2z",

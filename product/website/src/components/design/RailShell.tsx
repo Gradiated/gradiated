@@ -232,6 +232,34 @@ const useRailTheme = (): [ThemeId, (next: ThemeId) => void] => {
   return [theme, choose];
 };
 
+const STRIP_KEY = "gr-strip";
+
+/* Phones: the strip can be put away so the page takes the full width.
+   Remembered per device, and read after mount like the theme. */
+const useStripHidden = (): [boolean, (hidden: boolean) => void] => {
+  const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    try {
+      setHidden(localStorage.getItem(STRIP_KEY) === "hidden");
+    } catch {
+      // Storage can be unavailable; the strip just starts shown.
+    }
+  }, []);
+
+  const choose = useCallback((next: boolean) => {
+    setHidden(next);
+    try {
+      if (next) localStorage.setItem(STRIP_KEY, "hidden");
+      else localStorage.removeItem(STRIP_KEY);
+    } catch {
+      // Not remembered, but the choice still applies to this visit.
+    }
+  }, []);
+
+  return [hidden, choose];
+};
+
 const RailThemeToggle = ({
   theme,
   onChoose,
@@ -371,6 +399,22 @@ export const RailShell = ({
      menu has actually been opened. */
   const [menuTouched, setMenuTouched] = useState(false);
   const [theme, chooseTheme] = useRailTheme();
+  const [stripHidden, setStripHidden] = useStripHidden();
+  const stripToggle = useRef<HTMLButtonElement>(null);
+  const stripReveal = useRef<HTMLButtonElement>(null);
+  const stripMoved = useRef(false);
+
+  // Focus follows the control that just moved, but not on the first render.
+  useEffect(() => {
+    if (!stripMoved.current) return;
+
+    (stripHidden ? stripReveal : stripToggle).current?.focus();
+  }, [stripHidden]);
+
+  const toggleStrip = (next: boolean) => {
+    stripMoved.current = true;
+    setStripHidden(next);
+  };
   /* `doc` drives the rail's geometry (width, wordmark, nav). `shown`
      is what the doc chrome renders — it outlives `doc` by one exit
      animation, so leaving doc mode plays a choreography instead of a
@@ -408,6 +452,7 @@ export const RailShell = ({
       className="gr-root gr-rail-root"
       data-doc={doc ? true : undefined}
       data-menu={menu || undefined}
+      data-strip={stripHidden ? "hidden" : undefined}
       data-peek={peek ?? undefined}
     >
       {/* LAYER 1 — the base. Leaving it (entering the sheet) closes the
@@ -525,7 +570,7 @@ export const RailShell = ({
       </main>
 
       {/* Narrow screens: the base becomes a strip on the LEFT. */}
-      <div className="gr-rail-strip">
+      <div className="gr-rail-strip" inert={stripHidden}>
         <div className="gr-rail-strip-top">
           {shown ? (
             <a
@@ -549,6 +594,15 @@ export const RailShell = ({
           </a>
         </div>
         <div className="gr-rail-strip-bottom">
+          <button
+            aria-label="Hide the side bar"
+            className="gr-rail-strip-hide"
+            onClick={() => toggleStrip(true)}
+            ref={stripToggle}
+            type="button"
+          >
+            <PixelIcon name="sidebar-simple" />
+          </button>
           <RailThemeToggle onChoose={chooseTheme} theme={theme} />
           <button
             aria-expanded={menu}
@@ -565,6 +619,17 @@ export const RailShell = ({
           </button>
         </div>
       </div>
+      {stripHidden && (
+        <button
+          aria-label="Show the side bar"
+          className="gr-rail-strip-reveal"
+          onClick={() => toggleStrip(false)}
+          ref={stripReveal}
+          type="button"
+        >
+          <PixelIcon name="caret-double-right" />
+        </button>
+      )}
       <div className="gr-rail-menu" inert={!menu}>
         <nav>
           {shown && (

@@ -126,6 +126,7 @@ jobs:
     # when the Terraform prerequisite failed and was fixed by a later commit.
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     uses: ./.github/workflows/build-images.yml
+    secrets: inherit
     with:
       source_sha: ${{ github.sha }}
       images: '["gpu-base"]'

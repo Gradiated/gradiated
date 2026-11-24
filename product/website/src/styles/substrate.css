@@ -682,6 +682,27 @@
   color: var(--color-interactive);
 }
 
+.gr-footer-social {
+  display: flex;
+  gap: calc(0.6 * var(--u));
+  padding-block-start: calc(0.2 * var(--u));
+}
+
+.gr-footer-social-link {
+  display: inline-flex;
+  color: var(--color-text-muted);
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-footer-social-link:hover {
+  color: var(--color-interactive);
+}
+
+.gr-footer-social-link svg {
+  width: 1em;
+  height: 1em;
+}
+
 /* The canvas is exactly the mark: no overhang to position around, and nothing
    to clip, now that the chips are static rather than falling into place. */
 .gr-wordmark-field {

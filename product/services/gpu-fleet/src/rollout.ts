@@ -3,6 +3,7 @@ import { isDeepStrictEqual } from "node:util";
 import type { Cluster, ClusterPod } from "./cluster.js";
 import { ReimageNotSent, type Enrollment } from "./enroll.js";
 import {
+  ENROLL_DURING_RUNPOD_HOLD_ANNOTATION,
   GPU_HOSTS,
   hostName,
   hostState,
@@ -1805,7 +1806,28 @@ export const createRollouts = (deps: RolloutDependencies) => {
     }
     await preempt(all, plans);
 
-    const halted = all.find((item) => holding(item.host, pins));
+    const held = all.filter((item) => holding(item.host, pins));
+    const halted = held[0];
+    // A failed RunPod recovery is still held while explicitly opted-in,
+    // empty AWS hosts enroll through their separate bootstrap path.
+    const onlyRunPodJoinFailures = held.every(
+      ({ host }) =>
+        isRunPod(host) &&
+        host.status?.rollout?.kind === "recover" &&
+        host.status.rollout.step === "Join",
+    );
+    const mayEnrollDuringHold = (item: Facts, plan: Plan) =>
+      onlyRunPodJoinFailures &&
+      plan.action === "start" &&
+      plan.kind === "enroll" &&
+      isAws(item.host) &&
+      !item.pods &&
+      !item.node?.ready &&
+      !item.host.status?.observed?.lastSeen &&
+      recordedImage(item.host) === undefined &&
+      item.host.metadata.annotations?.[ENROLL_DURING_RUNPOD_HOLD_ANNOTATION] ===
+        "true";
+
     // A new retry annotation restarts that host's rollout; the rest wait for it.
     const retried = all.find((item) => {
       const rollout = item.host.status?.rollout;
@@ -1833,11 +1855,25 @@ export const createRollouts = (deps: RolloutDependencies) => {
         waitingForCapacity &&
         plan.action === "start" &&
         skipsCapacityWait(plan.kind);
-      const wanted = text(plan, own || restores ? undefined : holder);
+      const independentEnrollment = halted && mayEnrollDuringHold(item, plan);
+      const wanted = text(
+        plan,
+        own || restores || independentEnrollment ? undefined : holder,
+      );
       if (wanted !== item.host.status?.plan)
         await writeStatus(item.host, { plan: wanted ?? null });
     }
-    if (halted) return;
+    if (halted) {
+      if (enrollment && mayAct("enroll")) {
+        for (const item of all) {
+          const plan = plans.get(item.host.spec.instanceId)!;
+          if (plan.action === "start" && mayEnrollDuringHold(item, plan))
+            return start(item, plan, pins);
+        }
+      }
+
+      return;
+    }
 
     // A lease that this operator cannot start is refused at once rather than
     // left waiting ahead of the host's other plans.

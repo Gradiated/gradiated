@@ -9,6 +9,7 @@ import {
 import { CORDONED_BY } from "../src/drain.js";
 import type { Enrollment } from "../src/enroll.js";
 import {
+  ENROLL_DURING_RUNPOD_HOLD_ANNOTATION,
   GPU_HOSTS,
   NODES,
   PODS,
@@ -18,6 +19,7 @@ import {
 import type { Kubernetes } from "../src/kubernetes.js";
 import { createMetrics, type Metrics } from "../src/metrics.js";
 import type { Pins } from "../src/pins.js";
+import { target } from "../src/plan.js";
 import { createRollouts, type RolloutDependencies } from "../src/rollout.js";
 import {
   NEW_BUNDLE,
@@ -2467,6 +2469,66 @@ describe("re-imaging AWS hosts", () => {
       });
     }
   });
+
+  it.each([
+    { annotated: true, step: "Join", succeeds: true },
+    { annotated: false, step: "Join", succeeds: false },
+    { annotated: true, step: "Enroll", succeeds: false },
+  ])(
+    "enrolls only an opted-in AWS host while RunPod recovery is held ($annotated, $step)",
+    async ({ annotated, step, succeeds }) => {
+      const pinned = pins(NEW_IMAGE, NEW_BUNDLE);
+      const fleet = simulateFleet(
+        [
+          { instanceId: FIRST, podId: "zhimpngvqyotuj", gpus: 1 },
+          {
+            instanceId: AWS_SPARE,
+            podId: EC2_SPARE,
+            gpus: 1,
+            provider: "aws",
+            enrolled: false,
+          },
+        ],
+        [],
+      );
+      const failed: Rollout = {
+        kind: "recover",
+        target: target(pinned, fleet.host(FIRST)),
+        step,
+        result: "Failed",
+        startedAt: fleet.now().toISOString(),
+        stepStartedAt: fleet.now().toISOString(),
+        lastError: "Timed out",
+      };
+      await fleet.kube.api.mergePatch(`${GPU_HOSTS}/gpu-${FIRST}/status`, {
+        status: { rollout: failed },
+      });
+      if (annotated)
+        await fleet.kube.api.mergePatch(`${GPU_HOSTS}/gpu-${AWS_SPARE}`, {
+          metadata: {
+            annotations: { [ENROLL_DURING_RUNPOD_HOLD_ANNOTATION]: "true" },
+          },
+        });
+
+      await run(
+        fleet,
+        pinned,
+        () => rollout(fleet, AWS_SPARE)?.result === "Succeeded",
+        {},
+        100,
+      );
+
+      expect(rollout(fleet, FIRST)).toEqual(failed);
+      expect(fleet.sim(FIRST).resets).toBe(0);
+      expect(fleet.violations).toEqual([]);
+      if (succeeds)
+        expect(rollout(fleet, AWS_SPARE)).toMatchObject({
+          kind: "enroll",
+          result: "Succeeded",
+        });
+      else expect(rollout(fleet, AWS_SPARE)).toBeUndefined();
+    },
+  );
 
   it("enrolls a new AWS host that has never answered", async () => {
     const fleet = simulateFleet(

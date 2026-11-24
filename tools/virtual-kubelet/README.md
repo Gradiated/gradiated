@@ -571,6 +571,11 @@ no other host starts until the pins change or someone sets the
 restarts only that host. A host on the old image keeps its old bundle until it
 is re-imaged.
 
+A new AWS host can opt in to enrolling during a failed RunPod recovery at
+`Join` with `fleet.gradiated.com/enroll-during-runpod-hold: "true"` in
+`hosts.yaml`. The operator requires the AWS host to have no recorded image,
+prior heartbeat, Ready node, or workloads. Other rollout actions stay held.
+
 Before an in-place bundle update, every Ready model pod must have a qualified
 runtime and enters the protected baseline for verification and soak. Non-Ready
 pods whose current containers failed SDK qualification do not block the update.

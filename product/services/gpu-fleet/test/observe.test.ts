@@ -47,6 +47,7 @@ describe("host observation", () => {
       reachable: false,
       error: "The host management key is not mounted",
       silent: false,
+      keyMissing: true,
     });
 
     await writeFile(path.join(agents.keys, FIRST), "stale-key\n");

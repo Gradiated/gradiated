@@ -221,13 +221,14 @@ class JevK5Tests(unittest.TestCase):
         self.assertEqual(result['answers']['category']['type'], 'choice')
         self.assertGreater(result['usage']['input_tokens'], 0)
 
-    def test_long_shared_states_are_prefilled_once(self):
-        engine, sglang = make()
-        ask(engine, state={'ticket': 'word ' * 2000})
-        self.assertEqual(len(sglang.prefills), 1)
-        engine, sglang = make()
-        ask(engine)
-        self.assertEqual(sglang.prefills, [])
+    def test_prefix_only_forward_depends_on_shared_tokens_and_batch_size(self):
+        for count, shared, expect_prefill in [(2, 1024, False), (3, 3071, False), (3, 3072, True),
+                                               (8, 147, False), (9, 127, False), (9, 128, True)]:
+            with self.subTest(count=count, shared=shared):
+                engine, sglang = make()
+                prefix = [7] * shared
+                engine._share_prefix([prefix + [i] for i in range(count)])
+                self.assertEqual(sglang.prefills, [prefix] if expect_prefill else [])
 
     def test_inputs_over_the_limits_are_client_errors(self):
         engine, sglang = make()

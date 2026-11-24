@@ -1,7 +1,10 @@
 """gradctl compute: search filters and provider choice."""
 
 import argparse
+import json
+from pathlib import Path
 import re
+import tempfile
 import unittest
 from unittest import mock
 
@@ -117,6 +120,111 @@ class SearchTests(unittest.TestCase):
         self.assertAlmostEqual(nebius.hourly_price('eu-north1', 'gpu-h100-sxm', '8gpu-128vcpu-1600gb', 'spot'), 18.96)
         self.assertEqual(nebius.hourly_price('eu-north1', 'gpu-h100-sxm', '1gpu-16vcpu-200gb', 'on-demand'), 99.0)
         self.assertEqual(nebius.hourly_price('eu-north1', 'gpu-l40s-a', '1gpu-8vcpu-32gb', 'spot'), 99.0)
+
+
+    def test_nebius_default_spot_policy_uses_exact_region_and_enforces_double_quote(self):
+        from gradctl.compute.nebius import Nebius
+
+        with tempfile.TemporaryDirectory() as directory:
+            cloud = Nebius(lambda name: '', Path(directory))
+            cloud.spot_prices = lambda: {
+                ('eu-north1', 'gpu-h200-sxm'): 2.18,
+                ('eu-west1', 'gpu-h200-sxm'): 2.00,
+            }
+            cloud.items = lambda *args: [{'metadata': {'id': 'subnet-test'}}]
+            cloud.estimate = mock.Mock(return_value=43.2)
+            requests = []
+            expected_policy_price = '4.360'
+
+
+            def cli(*args, **kwargs):
+                if args[:3] == ('billing', 'pricing-policy', 'get-by-name'):
+                    return None
+                if args[:3] == ('billing', 'pricing-policy', 'create'):
+                    self.assertEqual(args[-2:], ('--pricing-max-price-v1-max-price', expected_policy_price))
+                    return {
+                        'metadata': {'id': 'pricingpolicy-test', 'labels': {'gradctl-vm': 'test-name'}},
+                        'spec': {
+                            'compute_instance_spec': {'v1': {'platform': 'gpu-h200-sxm'}},
+                            'pricing': {'max_price_v1': {'max_price': expected_policy_price}},
+                        },
+                    }
+                self.assertEqual(args[:3], ('compute', 'instance', 'create'))
+                requests.append(json.loads(Path(args[-1]).read_text())['spec'])
+
+            cloud.cli = cli
+            create_args = ('test-name', 'eu-north1', 'gpu-h200-sxm', '8gpu-128vcpu-1600gb',
+                           None, None, lambda: '#cloud-config')
+            cloud.create(*create_args)
+            cloud.create(*create_args, term='on-demand')
+            cloud.create(*create_args, max_price=3)
+            self.assertEqual(requests[0]['spot_pricing_policy'], {'id': 'pricingpolicy-test'})
+            self.assertNotIn('follows_spot_price', requests[0])
+            self.assertNotIn('preemptible', requests[1])
+            self.assertIn('follows_spot_price', requests[2])
+            self.assertNotIn('spot_pricing_policy', requests[2])
+
+            cloud.estimate.return_value = 32
+            expected_policy_price = '3.990'
+            cloud.create(*create_args)
+            self.assertEqual(requests[3]['spot_pricing_policy'], {'id': 'pricingpolicy-test'})
+
+    def test_nebius_failed_create_checks_for_policy_rollback(self):
+        from gradctl.compute.nebius import Nebius
+
+        with tempfile.TemporaryDirectory() as directory:
+            cloud = Nebius(lambda name: '', Path(directory))
+            cloud.items = mock.Mock(return_value=[{'metadata': {'id': 'subnet-test'}}])
+            cloud.capped_spot_policy = mock.Mock(return_value='policy-id')
+            cloud.remove_unused_policy = mock.Mock()
+            cloud.cli = mock.Mock(side_effect=SystemExit('create failed'))
+            with self.assertRaisesRegex(SystemExit, 'create failed'):
+                cloud.create('test-name', 'eu-north1', 'gpu-h200-sxm', '8gpu-128vcpu-1600gb',
+                             None, None, lambda: '#cloud-config')
+            cloud.remove_unused_policy.assert_called_once_with('eu-north1', 'test-name', 'policy-id')
+
+    def test_nebius_delete_cleans_only_its_own_orphaned_policy(self):
+        from gradctl.compute.nebius import Nebius
+
+        cloud = Nebius(lambda name: '', None)
+        vm = {'id': 'vm-id', 'name': 'test-name', 'region': 'eu-north1', 'spot_pricing_policy_id': 'policy-id'}
+        cloud.cli = mock.Mock(return_value={'metadata': {'labels': {'gradctl-vm': 'test-name'}}})
+        cloud.items = mock.Mock(return_value=[{'spec': {'spot_pricing_policy': {'id': 'policy-id'}}}])
+        cloud.delete(vm)
+        self.assertEqual(cloud.cli.call_args.args[:3], ('billing', 'pricing-policy', 'get'))
+        cloud.items.return_value = []
+        cloud.delete(vm)
+        cloud.cli.assert_called_with('billing', 'pricing-policy', 'delete', '--id', 'policy-id', missing_ok=True)
+        cloud.cli.return_value = {'metadata': {}}
+        cloud.delete(vm)
+        self.assertEqual(cloud.cli.call_args.args[:3], ('billing', 'pricing-policy', 'get'))
+
+    def test_nebius_default_requires_a_live_quote_before_creating_resources(self):
+        from gradctl.compute.nebius import Nebius
+
+        cloud = Nebius(lambda name: '', None)
+        cloud.spot_prices = lambda: {}
+        cloud.items = lambda *args: [{'metadata': {'id': 'subnet-test'}}]
+        cloud.cli = mock.Mock()
+        with self.assertRaisesRegex(SystemExit, 'No live spot quote'):
+            cloud.create('test-name', 'eu-north1', 'gpu-h200-sxm', '8gpu-128vcpu-1600gb',
+                         None, None, lambda: '#cloud-config')
+        cloud.cli.assert_not_called()
+
+
+    def test_nebius_can_retry_policy_cleanup_when_vm_is_gone(self):
+        from gradctl.compute import nebius
+
+        cloud = nebius.Nebius(lambda name: '', None)
+        cloud.items = mock.Mock(return_value=[
+            {'metadata': {'id': 'policy-id', 'labels': {'gradctl-vm': 'test-name'}}},
+            {'metadata': {'id': 'other-id', 'labels': {'gradctl-vm': 'another-vm'}}},
+            {'metadata': {'id': 'manual-id'}},
+        ])
+        cloud.remove_unused_policy = mock.Mock()
+        with mock.patch.object(nebius, 'PROJECTS', {'eu-north1': 'test-project'}):
+            cloud.remove_vm_policies('test-name')
+        cloud.remove_unused_policy.assert_called_once_with('eu-north1', 'test-name', 'policy-id')
 
 
 class ExtensionCommandTests(unittest.TestCase):

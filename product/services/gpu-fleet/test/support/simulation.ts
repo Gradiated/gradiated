@@ -672,7 +672,12 @@ export const simulateFleet = (hosts: HostSpec[], models: Model[]) => {
         instanceType: "g6.xlarge",
         imageId: host.ami,
         tags: host.untagged ? {} : { "gradiated:managed": "gpu-fleet" },
-        ...(host.otherProfile && { instanceProfileArn: host.otherProfile }),
+        ...(host.otherProfile
+          ? { instanceProfileArn: host.otherProfile }
+          : host.profile && {
+              instanceProfileArn:
+                "arn:aws:iam::123456789012:instance-profile/gradiated-gpu-prod-host-bootstrap",
+            }),
         blockDevices: 1,
       };
     },

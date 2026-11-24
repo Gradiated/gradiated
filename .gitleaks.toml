@@ -51,6 +51,7 @@ paths = [
   '''^product/inference/gpu/runtimes\.json$''',
   '''^infra/environments/prod/us-east-1/kubernetes/gpu-inference/controller\.yaml$''',
   '''^infra/environments/prod/us-east-1/kubernetes/gpu-inference/models/jevk5-l4/jevk5-l4\.yaml$''',
+  '''^infra/environments/prod/us-east-1/kubernetes/gpu-inference/models/jevk5-l4-expansion/jevk5-l4-expansion\.yaml$''',
 ]
 regexTarget = "match"
 regexes = [

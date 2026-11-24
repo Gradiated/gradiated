@@ -42,6 +42,10 @@ ACTIVE_REQUESTS = 8
 # it would be recomputed, it is prefilled once first and the passes start from its cached state.
 SHARED_PREFIX_MIN_TOKENS = 128
 SHARED_PREFIX_SAVED_TOKENS = 1024
+# A separate prefix-only forward adds latency to small L4 batches. Retain it when
+# the possible reuse is large, or when many passes compete for a prefill step.
+SMALL_BATCH_MAX_PASSES = 8
+SMALL_BATCH_PREFIX_SAVED_TOKENS = 6144
 SGLANG_FLAGS = [
     '--mem-fraction-static', '0.80', '--max-running-requests', '64',
     # A whole prompt is read in one step; JevK5's limit is the step.
@@ -178,7 +182,9 @@ class Engine:
         if len(rows) < 2:
             return
         shared = common.common_prefix_length(rows)
-        if shared >= SHARED_PREFIX_MIN_TOKENS and shared * (len(rows) - 1) >= SHARED_PREFIX_SAVED_TOKENS:
+        savings_needed = (SMALL_BATCH_PREFIX_SAVED_TOKENS if len(rows) <= SMALL_BATCH_MAX_PASSES
+                          else SHARED_PREFIX_SAVED_TOKENS)
+        if shared >= SHARED_PREFIX_MIN_TOKENS and shared * (len(rows) - 1) >= savings_needed:
             self.sglang.prefill(rows[0][:shared])
 
     def _read(self, keys, rows):

@@ -83,6 +83,9 @@ class SpheronTests(unittest.TestCase):
         with mock.patch('sys.stderr'):
             spheron.create('exp', None, 'B300_SXM6', None, None, None, None, term='spot', max_price=6)
         self.assertEqual(spheron.calls[-1][3]['maxHourlyRate'], 48.0)
+        with mock.patch('sys.stderr'):
+            spheron.create('exp-default', None, 'B300_SXM6', None, None, None, None, term='spot')
+        self.assertEqual(spheron.calls[-1][3]['maxHourlyRate'], 80.0)
         spheron = FakeSpheron({('GET', '/api/gpu-offers'): CATALOG, ('POST', '/api/deployments'): {'id': 'd-5'}})
         with mock.patch('sys.stderr'):
             spheron.create('exp', None, 'B300_SXM6', None, None, None, None, term='spot', max_price=6)

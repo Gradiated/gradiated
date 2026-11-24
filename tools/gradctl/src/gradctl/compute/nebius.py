@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal, ROUND_DOWN
 from importlib import resources
 import json
+import math
 from pathlib import Path
 import shutil
 import subprocess
@@ -178,6 +179,7 @@ class Nebius:
                 'gpu_type': resources['platform'],
                 'gpus': int(resources['preset'].split('gpu')[0]) if resources['preset'][:1].isdigit() else None,
                 'preset': resources['preset'], 'usd_per_gpu_hour': None,
+                'spot_pricing_policy_id': (instance['spec'].get('spot_pricing_policy') or {}).get('id'),
                 'created_at': instance['metadata'].get('created_at'),
                 'shape': f"{resources['platform']}/{resources['preset']}"}
 
@@ -204,21 +206,32 @@ class Nebius:
             for instance in self.items('compute', 'instance', 'list', '--parent-id', parent):
                 yield self.vm(region, instance)
 
-    def capped_spot_policy(self, region, platform, multiple, max_price=None):
+    def capped_spot_policy(self, vm_name, region, platform, preset, multiple, max_price=None):
         market = self.spot_prices().get((region, platform))
-        if not market or market <= 0:
+        if market is None or not math.isfinite(market) or market <= 0:
             sys.exit(f'No live spot quote for {platform} in {region}; no VM requested')
-        cap = (Decimal(str(market)) * Decimal(str(multiple))).quantize(Decimal('0.001'), rounding=ROUND_DOWN)
+        on_demand = self.estimate(region, platform, preset, 'on-demand')
+        if on_demand is None or not math.isfinite(on_demand) or on_demand <= 0:
+            sys.exit(f'No on-demand quote for {platform} {preset} in {region}; no VM requested')
+        gpus = int(preset.split('gpu')[0])
+        # Nebius accepts bids from $0.79 to one cent below on-demand, in millidollars per GPU.
+        maximum = Decimal(str(on_demand)) / gpus - Decimal('0.01')
+        cap = min(Decimal(str(market)) * Decimal(str(multiple)), maximum)
         if max_price is not None:
-            cap = min(cap, Decimal(str(max_price)).quantize(Decimal('0.001'), rounding=ROUND_DOWN))
+            cap = min(cap, Decimal(str(max_price)))
+        cap = cap.quantize(Decimal('0.001'), rounding=ROUND_DOWN)
+        minimum = max(Decimal('0.79'), Decimal(str(market)))
+        if cap < minimum:
+            sys.exit(f'Nebius needs at least ${minimum}/GPU-hour but the permitted cap is ${cap}; no VM requested')
         parent = self.project(region)
-        name = f'gradctl-{platform}-{int(cap * 1000)}'
+        name = f'gradctl-{vm_name}-{int(cap * 1000)}'
         lookup = ('billing', 'pricing-policy', 'get-by-name', '--parent-id', parent, '--name', name)
         current = self.cli(*lookup, missing_ok=True)
         if current is None:
             try:
                 current = self.cli('billing', 'pricing-policy', 'create', '--parent-id', parent, '--name', name,
                                    '--compute-instance-spec-v1-platform', platform,
+                                   '--labels', f'gradctl-vm={vm_name}',
                                    '--pricing-max-price-v1-max-price', str(cap))
             except SystemExit:
                 # A concurrent launch may have created the same policy.
@@ -226,7 +239,8 @@ class Nebius:
                 if current is None:
                     raise
         spec = current['spec']
-        if (spec['compute_instance_spec']['v1']['platform'] != platform or
+        if (current['metadata'].get('labels', {}).get('gradctl-vm') != vm_name or
+                spec['compute_instance_spec']['v1']['platform'] != platform or
                 Decimal(spec['pricing']['max_price_v1']['max_price']) != cap):
             sys.exit(f'Existing pricing policy {name} differs from requested cap; no VM requested')
         return current['metadata']['id']
@@ -244,6 +258,9 @@ class Nebius:
             gpus = int(preset.split('gpu')[0])
             if price / gpus > max_price:
                 sys.exit(f'${price / gpus:.2f}/GPU-hour is above --max-price ${max_price:.2f}; nothing created')
+        # GPU pricing policies use the regional live spot quote. CPU VMs have no GPU quote.
+        if term == 'spot' and platform.startswith('gpu-') and max_price is None and spot_price_multiple is None:
+            spot_price_multiple = 2
         subnets = list(self.items('vpc', 'subnet', 'list', '--parent-id', parent))
         if not subnets:
             sys.exit(f'No subnet in {region}')
@@ -261,20 +278,28 @@ class Nebius:
                 'cloud_init_user_data': user_data(),
             },
         }
+        policy_id = None
+        if spot_price_multiple is not None:
+            policy_id = self.capped_spot_policy(name, region, platform, preset, spot_price_multiple, max_price)
         if term == 'spot':
             spec['spec'].update({
                 # Preemption stops the VM; pricing defaults to on-demand, so ask for spot.
                 'preemptible': {'on_preemption': 'STOP'},
                 # Nebius accepts only FAIL for preemptible VMs.
                 'recovery_policy': 'FAIL',
-                **({'spot_pricing_policy': {'id': self.capped_spot_policy(region, platform, spot_price_multiple, max_price)}}
-                   if spot_price_multiple is not None else {'follows_spot_price': {}}),
+                **({'spot_pricing_policy': {'id': policy_id}} if policy_id else {'follows_spot_price': {}}),
             })
         # One request file per launch, so concurrent launches cannot read each other's.
-        with tempfile.NamedTemporaryFile('w', dir=self.state, suffix='.json') as request:
-            json.dump(spec, request)
-            request.flush()
-            self.cli('compute', 'instance', 'create', '--file', request.name)
+        try:
+            with tempfile.NamedTemporaryFile('w', dir=self.state, suffix='.json') as request:
+                json.dump(spec, request)
+                request.flush()
+                self.cli('compute', 'instance', 'create', '--file', request.name)
+        except (SystemExit, Exception):
+            if policy_id:
+                # A failed response can still have created a VM. Check for references before rollback.
+                self.remove_unused_policy(region, name, policy_id)
+            raise
 
     def start(self, vm):
         self.cli('compute', 'instance', 'start', '--id', vm['id'])
@@ -284,3 +309,30 @@ class Nebius:
 
     def delete(self, vm):
         self.cli('compute', 'instance', 'delete', '--id', vm['id'])
+        if policy_id := vm.get('spot_pricing_policy_id'):
+            self.remove_unused_policy(vm['region'], vm['name'], policy_id)
+
+    def remove_vm_policies(self, vm_name):
+        """Retry policy cleanup after an incomplete launch or after the VM is gone."""
+        for region, parent in PROJECTS.items():
+            try:
+                policies = self.items('billing', 'pricing-policy', 'list', '--parent-id', parent)
+                for policy in policies:
+                    metadata = policy['metadata']
+                    if metadata.get('labels', {}).get('gradctl-vm') == vm_name:
+                        self.remove_unused_policy(region, vm_name, metadata['id'])
+            except (SystemExit, Exception) as error:
+                print(f'Could not list pricing policies for {vm_name} in {region}: {error}', file=sys.stderr)
+
+    def remove_unused_policy(self, region, vm_name, policy_id):
+        try:
+            policy = self.cli('billing', 'pricing-policy', 'get', '--id', policy_id, missing_ok=True)
+            if not policy or policy['metadata'].get('labels', {}).get('gradctl-vm') != vm_name:
+                return
+            remaining = self.items('compute', 'instance', 'list', '--parent-id', self.project(region))
+            if any((instance['spec'].get('spot_pricing_policy') or {}).get('id') == policy_id
+                   for instance in remaining):
+                return
+            self.cli('billing', 'pricing-policy', 'delete', '--id', policy_id, missing_ok=True)
+        except (SystemExit, Exception) as error:
+            print(f'Could not remove unused spot pricing policy {policy_id}: {error}', file=sys.stderr)

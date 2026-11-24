@@ -8,8 +8,10 @@ import {
 import {
   faultDomain,
   GPU_HOSTS,
+  isAws,
   parseHosts,
   providerInstanceId,
+  RESOLVE_ENROLLMENT_EGRESS_ANNOTATION,
   type GpuHost,
   type HostStatus,
 } from "./hosts.js";
@@ -31,6 +33,7 @@ export type FleetDependencies = {
   api: Kubernetes;
   metrics: Metrics;
   ping: (instanceId: string) => Promise<Observation>;
+  enrollmentAddress?: (host: GpuHost) => Promise<string | undefined>;
   // Undefined while the operator has no PostgreSQL credential.
   sync: () => SyncFleet | undefined;
   // Checked before every write, so a replica that lost the lease stops writing.
@@ -70,6 +73,7 @@ export const createFleet = ({
   api,
   metrics,
   ping,
+  enrollmentAddress,
   sync,
   leading,
   log,
@@ -101,7 +105,20 @@ export const createFleet = ({
 
     ensureLeading();
     try {
-      const change = await reconcileService(api, host);
+      const rollout = host.status?.rollout;
+      // The Tailscale proxy may miss an unresolved FQDN when its device first
+      // joins. Switching the route to its verified address triggers a refresh.
+      const enrollmentTarget =
+        isAws(host) &&
+        host.metadata.annotations?.[RESOLVE_ENROLLMENT_EGRESS_ANNOTATION] ===
+          "true" &&
+        rollout?.kind === "enroll" &&
+        rollout.enrolledAt &&
+        rollout.result !== "Succeeded"
+          ? { address: await enrollmentAddress?.(host) }
+          : undefined;
+      ensureLeading();
+      const change = await reconcileService(api, host, enrollmentTarget);
       if (change !== "unchanged") {
         metrics.serviceChanges.inc({ change });
         log({ event: "gpu_host_service", instance_id: id, change });

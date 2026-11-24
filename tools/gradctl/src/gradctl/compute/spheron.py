@@ -267,6 +267,8 @@ class Spheron:
         print(f"Best offer: {offer['offerId']} from {offer['provider']} in {cluster}: {offer['gpuCount']}x {platform} "
               f"at ${gpu_hour:.2f}/GPU-hour (${self.price(offer):.2f}/hour), {operating_system}; at least "
               f"{offer.get('minimumRuntimeMinutes') or 20} minutes are billed", file=sys.stderr)
+        if term == 'spot' and max_price is None:
+            max_price = 2 * gpu_hour
         if max_price is not None and gpu_hour > max_price:
             sys.exit(f'${gpu_hour:.2f}/GPU-hour is above --max-price ${max_price:.2f}; nothing bought')
         public_key = self.secret('SPHERON_SSH_PUBLIC_KEY_B64').strip()

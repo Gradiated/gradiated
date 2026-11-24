@@ -201,10 +201,15 @@ class SFCompute:
         if not sku or (region and region != self.value(sku, 'region')):
             sys.exit('SF Compute SKU not found in the requested region; see `compute platforms --provider sfcompute`')
         gpus = self.value(sku, 'num_accelerators', 0)
-        cap = self.price_cap(max_price, gpus)
         start, end = self.window()
         ask = self.quote(platform, start, end)
-        if not ask or Decimal(ask['dollars_per_node_hour']) > cap:
+        if not ask:
+            sys.exit('No SF Compute ask for the requested window; nothing purchased')
+        ask_price = Decimal(ask['dollars_per_node_hour'])
+        if term == 'spot' and max_price is None:
+            max_price = 2 * ask_price / gpus
+        cap = self.price_cap(max_price, gpus)
+        if ask_price > cap:
             sys.exit('No SF Compute ask at or below --max-price; nothing purchased')
         workspace = self.secret('SF_COMPUTE_WORKSPACE')
         image = image or 'sfc:image:sfcompute:public:ubuntu-24.04-cuda-13.2'

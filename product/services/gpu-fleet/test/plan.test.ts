@@ -459,6 +459,34 @@ describe("planning an AWS host", () => {
     });
   });
 
+  it("enrolls a fresh EC2 host before its management key is mounted", () => {
+    const unkeyed = aws({
+      host: ec2(undefined, ago(60)),
+      observation: {
+        reachable: false,
+        error: "The host management key is not mounted",
+        silent: false,
+        keyMissing: true,
+      },
+      tailnet: { connected: false },
+      instance: instance({ instanceProfileArn: "arn:bootstrap" }),
+    });
+    expect(planHost(unkeyed, next, NOW)).toMatchObject({
+      action: "start",
+      kind: "enroll",
+    });
+
+    for (const facts of [
+      { ...unkeyed, host: ec2(ago(20), ago(60)) },
+      { ...unkeyed, instance: instance() },
+      aws({ ...unkeyed, tailnet: undefined }),
+      { ...unkeyed, tailnet: { connected: true } },
+      { ...unkeyed, pods: 1 },
+      { ...unkeyed, node: { ready: true, unschedulable: false } as never },
+    ])
+      expect(planHost(facts, next, NOW)).toMatchObject({ action: "wait" });
+  });
+
   it("recovers a silent host only after its own rollout replaced its root volume", () => {
     expect(planHost(aws({ host: ec2(ago(60)) }), next, NOW)).toMatchObject({
       action: "wait",

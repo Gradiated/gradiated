@@ -58,7 +58,8 @@ class Engine:
         started = time.perf_counter()
         state, questions = data['state'], data['questions']
         try:
-            rows = {key: self.prompts.ids(state, question) for key, question in questions.items()}
+            state_ids = self.prompts.state_ids(state)
+            rows = {key: self.prompts.question_ids(state_ids, question) for key, question in questions.items()}
         except (ValueError, KeyError, TypeError) as exc:
             raise InvalidRequest(f'invalid decision request: {exc}') from None
         for ids in rows.values():

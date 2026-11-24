@@ -117,8 +117,38 @@ research/**/experiments/gemma4_31b/research_lab/projects/sglang_gemma4_exact_pre
 dist/
 product/inference/build/
 
-.coherence/*
-!.coherence/work/
+# Paths moved to private repositories (Gradiated/infrastructure,
+# Gradiated/gradiated-internal) or retired from this repository.
+# Kept ignored so older local checkouts cannot accidentally re-commit them.
+/infra/
+/docs/security/
+/docs/organization/
+/docs/interviews/
+/docs/UK_INFERENCE_CHIP_TALENT_MAP.md
+/docs/decisions/2026-07-28-uk-inference-chip-talent-map.md
+/people/
+/tasks/active/2026-07-28-inference-talent-corpus.md
+/tasks/done/2026-07-28-uk-inference-chip-talent.md
+/.coherence/
+/.github/ISSUE_TEMPLATE/onboarding.yml
+/.github/ISSUE_TEMPLATE/offboarding.yml
+/.github/workflows/drata-sync.yml
+/.github/workflows/drata-upload.yml
+/.github/workflows/terraform.yml
+/.github/workflows/kubernetes.yml
+/.github/workflows/node-patching.yml
+/.github/workflows/prowler.yml
+/.github/workflows/aws-control-inventory.yml
+/.github/workflows/gpu-pins.yml
+/.github/workflows/falco-images.yml
+/.github/workflows/temporal-ui-images.yml
+/.github/actions/relevant/kubernetes.json
+/tools/security/drata_evidence.yml
+/tools/security/requirements-policy-sync.txt
+/tools/security/sync_drata_policies.py
+/tools/security/sync_drata_risks.py
+/tools/security/test_sync_drata_policies.py
+/tools/security/test_sync_drata_risks.py
 
 **/storybook-static/
 

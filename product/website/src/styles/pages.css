@@ -2222,12 +2222,16 @@
   font-size: var(--text-note);
 }
 
+/* The subheading role, like the prose H3s. At the card size with the
+   heading's -4% tracking, the bold title was cramped and sat smaller than
+   the standfirst under it. */
 .gr-storylist-title {
   display: block;
   font-family: var(--font-title);
-  font-size: var(--text-card);
+  font-size: var(--text-subheading);
   font-weight: var(--weight-heading);
-  letter-spacing: var(--tracking-heading);
+  letter-spacing: var(--tracking-subheading);
+  line-height: 1.25;
 }
 
 .gr-storylist-lede {
@@ -2253,6 +2257,7 @@
    * disagreeing about how big a piece's name is. */
   .gr-storylist-title {
     font-size: var(--text-heading);
+    letter-spacing: var(--tracking-heading);
     line-height: 1.2;
   }
 }

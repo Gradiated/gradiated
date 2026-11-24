@@ -2222,12 +2222,16 @@
   font-size: var(--text-note);
 }
 
+/* The subheading role, like the prose H3s. At the card size with the
+   heading's -4% tracking, the bold title was cramped and sat smaller than
+   the standfirst under it. */
 .gr-storylist-title {
   display: block;
   font-family: var(--font-title);
-  font-size: var(--text-card);
+  font-size: var(--text-subheading);
   font-weight: var(--weight-heading);
-  letter-spacing: var(--tracking-heading);
+  letter-spacing: var(--tracking-subheading);
+  line-height: 1.25;
 }
 
 .gr-storylist-lede {
@@ -2253,6 +2257,7 @@
    * disagreeing about how big a piece's name is. */
   .gr-storylist-title {
     font-size: var(--text-heading);
+    letter-spacing: var(--tracking-heading);
     line-height: 1.2;
   }
 }
@@ -6689,4 +6694,29 @@ a.gr-read-author-name:focus-visible {
 .gr-root .gr-masthead-title,
 .gr-root .gr-doc-main h1 {
   font-weight: 700;
+}
+
+/* The Library is a field of posters, not a row of three. Phones get one
+   column; tablets two, so a poster is neither page-wide nor a thumbnail;
+   three only once each can be about desktop size. Rows open up so the next
+   poster doesn't start right under the last one's standfirst. */
+@media (min-width: 40rem) and (max-width: 79.9375rem) {
+  .gr-root .gr-library-grid .gr-story-row[data-uniform] {
+    /* Capped near the desktop poster, so the step up to three columns
+       doesn't halve it. */
+    grid-template-columns: repeat(2, minmax(0, 22.5rem)) !important;
+    justify-content: space-between;
+    column-gap: var(--card-gutter);
+    row-gap: calc(3 * var(--u));
+  }
+}
+
+@media (min-width: 80rem) {
+  .gr-root .gr-library-grid .gr-story-row[data-uniform] {
+    /* 10% under the shared narrow card; the space goes to the gutters so
+       three posters still span the row. */
+    --card-narrow: 25%;
+    --card-gutter: 12.5%;
+    row-gap: calc(3 * var(--u));
+  }
 }

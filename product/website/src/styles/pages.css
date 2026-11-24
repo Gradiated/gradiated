@@ -2485,8 +2485,93 @@
    and has nothing left to stick within. */
 .gr-read-side {
   position: sticky;
-  top: calc(var(--nav-h) + var(--u));
+  /* Below the date's own start, so the column starts level with it. */
+  top: calc(1.5 * var(--u));
   align-self: start;
+}
+
+.gr-read-focus {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-inline-start: -7px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-read-focus:hover,
+.gr-read-focus:focus-visible {
+  color: var(--color-text);
+}
+
+/* Four tracks in both modes so the switch animates; focus centres the piece
+   at the width it already had, so no line rewraps. */
+@media (min-width: 60.0625rem) {
+  .gr-read-grid {
+    --read-piece: calc((100% - 6 * var(--u)) * 0.8);
+
+    grid-template-columns:
+      calc((100% - 6 * var(--u)) * 0.2) calc(6 * var(--u))
+      var(--read-piece) 0px;
+    column-gap: 0;
+    transition: grid-template-columns 0.5s var(--ease-open);
+  }
+
+  .gr-read-grid[data-focus] {
+    grid-template-columns:
+      calc((100% - var(--read-piece)) / 2) 0px var(--read-piece)
+      calc((100% - var(--read-piece)) / 2);
+  }
+
+  .gr-read-side,
+  .gr-read-tools {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .gr-read-body {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .gr-read-side > * {
+    transition:
+      opacity 0.25s var(--ease-response),
+      visibility 0.25s;
+  }
+
+  .gr-read-grid[data-focus] .gr-read-side > * {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  /* The full height of the piece, with the button riding the screen's foot. */
+  .gr-read-tools {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-self: stretch;
+    pointer-events: none;
+  }
+
+  .gr-read-focus {
+    position: sticky;
+    bottom: var(--rail-foot, calc(1.5 * var(--u)));
+    pointer-events: auto;
+  }
+}
+
+@media (min-width: 60.0625rem) and (prefers-reduced-motion: reduce) {
+  .gr-read-grid,
+  .gr-read-side > * {
+    transition: none;
+  }
 }
 
 /* The narrow card's shape, so one asset serves both.
@@ -2781,6 +2866,11 @@ a.gr-read-author-name:focus-visible {
 
   .gr-read-side {
     position: static;
+  }
+
+  /* Stacked, there is no column to put away. */
+  .gr-read-tools {
+    display: none;
   }
 
   /* The title, date and lede lead; the cover, author and links follow them,

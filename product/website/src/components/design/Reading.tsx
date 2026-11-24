@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactElement, ReactNode } from "react";
 import type { StoryCover } from "./Story";
 import { Arrow } from "./icons";
+import { PixelIcon } from "./PixelIcon";
 import { useRailBack } from "./RailShell";
 import { SectionFab } from "./SectionFab";
 import { WaferArtwork } from "./WaferArtwork";
@@ -27,6 +28,34 @@ type Section = { id: string; text: string };
 type ReadingLink = { label: string; href: string };
 type ReadingNote = { title: string; items: string[] };
 const host = (href: string) => new URL(href).hostname.replace(/^www\./, "");
+
+const FOCUS_KEY = "gr-read-focus";
+
+/* Reading with the side column put away, remembered per device and read
+   after mount. */
+const useFocus = (): [boolean, (focus: boolean) => void] => {
+  const [focus, setFocus] = useState(false);
+
+  useEffect(() => {
+    try {
+      setFocus(localStorage.getItem(FOCUS_KEY) === "on");
+    } catch {
+      // Storage can be unavailable; the column just starts shown.
+    }
+  }, []);
+
+  const choose = (next: boolean) => {
+    setFocus(next);
+    try {
+      if (next) localStorage.setItem(FOCUS_KEY, "on");
+      else localStorage.removeItem(FOCUS_KEY);
+    } catch {
+      // Not remembered, but the choice still applies to this visit.
+    }
+  };
+
+  return [focus, choose];
+};
 
 /** `Some Heading!` -> `some-heading`, for the anchor. */
 const slug = (text: string) =>
@@ -72,6 +101,7 @@ export const Reading = ({
   const proseRef = useRef<HTMLDivElement>(null);
   const [sections, setSections] = useState<Section[]>([]);
   const [active, setActive] = useState<string>();
+  const [focus, setFocus] = useFocus();
 
   useEffect(() => {
     const prose = proseRef.current;
@@ -106,7 +136,7 @@ export const Reading = ({
 
   return (
     <article className="gr-read">
-      <div className="gr-read-grid">
+      <div className="gr-read-grid" data-focus={focus || undefined}>
         <aside className="gr-read-side">
           <span
             aria-hidden
@@ -180,6 +210,20 @@ export const Reading = ({
             </section>
           ) : null}
         </aside>
+
+        {/* Its own slot, so the button is in one place in both modes. */}
+        <div className="gr-read-tools">
+          <button
+            aria-label={focus ? "Show the side column" : "Hide the side column"}
+            aria-pressed={focus}
+            className="gr-read-focus"
+            onClick={() => setFocus(!focus)}
+            title={focus ? "Show the side column" : "Hide the side column"}
+            type="button"
+          >
+            <PixelIcon name={focus ? "sidebar-simple" : "sidebar"} />
+          </button>
+        </div>
 
         {/* The same headings as the aside's list, as a button on a phone —
             where that list is stacked above the prose and only repeats what

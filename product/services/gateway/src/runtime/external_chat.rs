@@ -23,6 +23,7 @@ pub(super) struct Names {
     generation_id: Uuid,
     requested: String,
     upstream: String,
+    response_model: Option<String>,
     billing: UpstreamBilling,
     response_id: String,
 }
@@ -33,13 +34,19 @@ impl Names {
             generation_id: request.generation_id,
             requested: request.request.model.clone(),
             upstream: upstream.to_owned(),
+            response_model: None,
             billing,
             response_id: format!("chatcmpl-{}", request.generation_id.simple()),
         }
     }
 
+    pub(super) fn with_response_model(mut self, response_model: Option<&str>) -> Self {
+        self.response_model = response_model.map(str::to_owned);
+        self
+    }
+
     fn check_model(&self, model: &str) -> Result<(), RuntimeFailure> {
-        if model != self.upstream {
+        if model != self.upstream && self.response_model.as_deref() != Some(model) {
             return Err(ProtocolViolation::ModelMismatch.into());
         }
 

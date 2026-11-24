@@ -104,6 +104,64 @@ fn chunk(model: &str, choices: Value, tokens: Value) -> String {
 }
 
 #[tokio::test]
+async fn accepts_the_configured_response_model_for_streams_and_completions() {
+    const RESPONSE_MODEL: &str = "baseten/response-model";
+    let baseten = MockRuntime::builder()
+        .json(CHAT, StatusCode::OK, completion(RESPONSE_MODEL))
+        .start()
+        .await;
+    let streaming = MockRuntime::builder()
+        .sse(
+            CHAT,
+            &[
+                chunk(
+                    RESPONSE_MODEL,
+                    json!([{"index": 0, "delta": {"content": "Answer"}}]),
+                    Value::Null,
+                ),
+                chunk(
+                    RESPONSE_MODEL,
+                    json!([{"index": 0, "delta": {}, "finish_reason": "stop"}]),
+                    Value::Null,
+                ),
+                chunk(RESPONSE_MODEL, json!([]), usage()),
+                DONE.to_owned(),
+            ],
+        )
+        .start()
+        .await;
+    let modal = MockRuntime::builder()
+        .json(CHAT, StatusCode::TOO_MANY_REQUESTS, json!({}))
+        .start()
+        .await;
+    let secrets = secrets().await;
+
+    let configured_router = |endpoint: &str| {
+        let mut config = routes(endpoint, &modal.url());
+        config[MODEL][0]["response_model"] = json!(RESPONSE_MODEL);
+        let routes = FallbackRoutes::parse(Some(&config.to_string())).unwrap();
+        FallbackRouter::with_loader(&routes, credential_loader(secrets.url())).unwrap()
+    };
+
+    let result = configured_router(&baseten.url())
+        .complete(request(false))
+        .await
+        .unwrap();
+    assert_eq!(result.response()["model"], MODEL);
+    assert_eq!(baseten.requests()[0].body["model"], BASETEN);
+
+    let mut stream = configured_router(&streaming.url())
+        .stream(request(true))
+        .await
+        .unwrap();
+    let content = expect_chunk(stream.next_event().await.unwrap()).into_response();
+    assert_eq!(content["model"], MODEL);
+    assert_eq!(content["choices"][0]["delta"]["content"], "Answer");
+    assert_eq!(streaming.requests()[0].body["model"], BASETEN);
+    assert!(modal.requests().is_empty());
+}
+
+#[tokio::test]
 async fn retries_the_other_provider_and_keeps_the_successful_provider_for_the_session() {
     let baseten = MockRuntime::builder()
         .json(CHAT, StatusCode::TOO_MANY_REQUESTS, json!({}))

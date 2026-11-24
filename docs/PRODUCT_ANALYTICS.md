@@ -90,8 +90,12 @@ Because GitHub has no aggregate completion trigger, this single runner can wait
 for slower workflows that finish after Product tests. Source timestamps exclude
 that collection delay.
 
-The batch contains one `ci_workflow_completed` event per workflow run/attempt and
-one `ci_workflow_step_completed` event per recorded job step. All events use the
+The batch contains one `ci_workflow_completed` event per workflow run/attempt.
+Its `jobs` property records every job step. The batch also contains one
+`ci_workflow_step_completed` event for each step that did not succeed, and for
+each successful step that took at least 5 seconds (`MIN_STEP_EVENT_SECONDS`).
+Skipped steps and fast successful steps, such as job setup and checkout
+cleanup, get no step event. All events use the
 fixed `distinct_id: github-ci`, `source: ci`, and `schema_version: 1`. This is a
 separate operational event contract, outside the product TypeScript schemas. It
 uses the existing production `CONSOLE_POSTHOG_KEY` repository variable and the US
@@ -137,9 +141,9 @@ identifiers plus `workflow_status`, `workflow_conclusion`, `job_id`, `job_name`,
 `job_conclusion`, `runner_labels`, `step_name`, `step_number`, `status`,
 `conclusion`, `started_at`, `completed_at`, and `duration_seconds`. Their PostHog
 `timestamp` is the step's original completion time. If GitHub provides no finish
-time (for example, an unstarted skipped step), the event uses the job or workflow
+time (for example, an unstarted cancelled step), the event uses the job or workflow
 completion time with `timestamp_is_fallback: true`; `completed_at` stays null.
-Unknown durations stay null, and skipped work contributes zero.
+Unknown durations stay null.
 
 All run instances for the revision and their attempts are reported. Reruns use
 the exact attempt's metadata/jobs and original start/end times. Event UUIDs use
@@ -159,9 +163,11 @@ to exclude runs that only selected/skipped checks. Compare
 `longest_queue_seconds` with `slowest_job_seconds` to separate runner waits from
 execution. For detailed build/install/test trends, select
 `ci_workflow_step_completed`, aggregate average or p95 `duration_seconds`, and
-break down by `workflow_name`, `job_name`, and `step_name`. Filter skipped or
-cancelled steps as needed. Use event counts rather than unique users because all
-events share one identity.
+break down by `workflow_name`, `job_name`, and `step_name`. Step events omit
+successful runs under 5 seconds, so step counts and averages describe slow or
+unsuccessful executions only. For every step, expand `jobs` of
+`ci_workflow_completed` in SQL. Use event counts rather than unique users because
+all events share one identity.
 
 Run `python3 -m unittest discover -s tools/ci -v` for collection barriers,
 workflow/step payloads, timing, pagination, retries, PR associations, reruns,

@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import type { GpuHost } from "../src/hosts.js";
@@ -31,24 +30,5 @@ describe("pins", () => {
       `873716897517.dkr.ecr.us-east-1.amazonaws.com/other:gpu-base-inputs-${"a".repeat(64)}`,
     ])
       expect(pinsSchema.safeParse({ ...base, awsImage }).success).toBe(false);
-  });
-
-  it("pins AWS hosts to the build ops-mcp registers them with", () => {
-    const read = (path: string) =>
-      readFileSync(new URL(path, import.meta.url), "utf8");
-    const pins = pinsSchema.parse(
-      JSON.parse(
-        read(
-          "../../../../infra/environments/prod/us-east-1/kubernetes/gpu-inference/pins.json",
-        ),
-      ),
-    );
-    const workload = read(
-      "../../../../infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/workload.yaml",
-    );
-
-    expect(pins.awsImage).toBe(
-      workload.match(/- name: AWS_GPU_BASE_IMAGE\s+value: (\S+)/)?.[1],
-    );
   });
 });

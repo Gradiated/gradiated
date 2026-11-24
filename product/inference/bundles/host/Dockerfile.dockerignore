@@ -27,12 +27,5 @@
 !tools/virtual-kubelet/
 !tools/virtual-kubelet/host_agent_test.py
 !tools/virtual-kubelet/host_state_test.py
-!infra/
-!infra/environments/
-!infra/environments/prod/
-!infra/environments/prod/us-east-1/
-!infra/environments/prod/us-east-1/kubernetes/
-!infra/environments/prod/us-east-1/kubernetes/workloads/
-!infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml
 **/__pycache__
 **/*.pyc

@@ -21,8 +21,6 @@ DISTINCT_ID = "github-ci"
 HOST = "https://us.i.posthog.com"
 REQUIRED_WORKFLOWS = {
     ".github/workflows/tests.yml",
-    ".github/workflows/kubernetes.yml",
-    ".github/workflows/terraform.yml",
     ".github/workflows/model-deployment.yml",
     ".github/workflows/wizard-publish.yml",
     ".github/workflows/agent-quality.yml",

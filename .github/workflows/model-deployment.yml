@@ -34,7 +34,6 @@ on:
       - tools/models/**
       - tools/virtual-kubelet/host_agent_test.py
       - tools/virtual-kubelet/host_state_test.py
-      - infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml
       - mise.toml
       - .github/workflows/model-deployment.yml
       - .github/workflows/build-images.yml

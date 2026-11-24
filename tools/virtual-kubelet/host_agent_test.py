@@ -618,11 +618,8 @@ class HostAgentTest(unittest.TestCase):
 
     def test_proxy_timeout_covers_the_production_generation_budget(self):
         import re
-        import yaml
-        config = next(doc for doc in yaml.safe_load_all((Path(__file__).resolve().parents[2] /
-            'infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml').read_text())
-                      if doc['kind'] == 'ConfigMap')['data']
-        request_limit = int(config['GATEWAY_GENERATION_TIMEOUT_SECONDS'])
+        # Production gateway generation budget (GATEWAY_GENERATION_TIMEOUT_SECONDS in Gradiated/infrastructure).
+        request_limit = 630
         timeout = int(re.search(r'proxy_read_timeout (\d+)s;', self.host.proxy_config()).group(1))
         self.assertGreaterEqual(timeout, request_limit + 30)
         self.assertEqual(timeout, agent.REQUEST_DRAIN_SECONDS)

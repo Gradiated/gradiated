@@ -22,7 +22,6 @@ RUN bash /package.sh
 FROM runtime-base AS verify
 RUN apt-get update && apt-get install -y --no-install-recommends python3-yaml && rm -rf /var/lib/apt/lists/*
 COPY tools/virtual-kubelet/host_agent_test.py tools/virtual-kubelet/host_state_test.py product/inference/gpu/host_bundle_test.py /tests/tools/virtual-kubelet/
-COPY infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml /tests/infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml
 RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
     tar -xzf /tmp/runtime.tar.gz -C /tests/tools/virtual-kubelet \
     && cd /tests/tools/virtual-kubelet && python3 host_agent_test.py && python3 host_state_test.py \

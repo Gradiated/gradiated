@@ -1,55 +1,24 @@
-import { readFileSync } from "node:fs";
-
 import { describe, expect, it } from "vitest";
-import { parseAllDocuments } from "yaml";
 
 import { createTestApp } from "./support.js";
 
-const WORKLOADS = new URL(
-  "../../../../infra/environments/prod/us-east-1/kubernetes/workloads/",
-  import.meta.url,
-);
-const HOST = "api.gradiated.com";
-
-interface HttpRoute {
-  kind: string;
-  spec: {
-    hostnames?: string[];
-    rules?: {
-      matches?: { path?: { type: string; value: string } }[];
-      backendRefs?: { name: string }[];
-    }[];
-  };
-}
-
-const publicRules = () =>
-  ["public-api.yaml", "proxy.yaml"].flatMap((file) =>
-    parseAllDocuments(readFileSync(new URL(file, WORKLOADS), "utf8"))
-      .map((document) => document.toJS() as HttpRoute | null)
-      .filter((route) => route?.kind === "HTTPRoute")
-      .filter((route) => route!.spec.hostnames?.includes(HOST))
-      .flatMap((route) => route!.spec.rules ?? [])
-      .filter((rule) => rule.backendRefs?.length)
-      .flatMap((rule) =>
-        (rule.matches ?? []).map((match) => {
-          expect(match.path?.type).toBe("PathPrefix");
-
-          return {
-            prefix: match.path!.value.replace(/\/$/, ""),
-            backend: rule.backendRefs![0]!.name,
-          };
-        }),
-      ),
-  );
+// Production HTTPRoute prefixes for api.gradiated.com live in
+// Gradiated/infrastructure (environments/prod/us-east-1/kubernetes/workloads/{public-api,proxy}.yaml).
+const PUBLIC_RULES = [
+  { prefix: "/api", backend: "api" },
+  { prefix: "/health", backend: "api" },
+  { prefix: "/docs", backend: "api" },
+  { prefix: "/.well-known/oauth-authorization-server", backend: "api" },
+  { prefix: "/openai/v1", backend: "proxy" },
+  { prefix: "", backend: "proxy" },
+] as const;
 
 // Gateway API matches path prefixes element by element, and the longest prefix wins.
 const backendFor = (path: string) =>
-  publicRules()
-    .filter(
-      ({ prefix }) =>
-        prefix === "" || path === prefix || path.startsWith(`${prefix}/`),
-    )
-    .sort((a, b) => b.prefix.length - a.prefix.length)[0]?.backend;
+  PUBLIC_RULES.filter(
+    ({ prefix }) =>
+      prefix === "" || path === prefix || path.startsWith(`${prefix}/`),
+  ).sort((a, b) => b.prefix.length - a.prefix.length)[0]?.backend;
 
 const literalPrefix = (path: string) => {
   const parts = path.split("/");

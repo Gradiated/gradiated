@@ -32,10 +32,20 @@ const fixture = (t) => {
   const files = readFileSync(script, "utf8")
     .match(/environments\/[^\s"]+\.yaml/g)
     .map((file) => `infra/${file}`);
-  for (const file of [...new Set([...files, recovery]), "tools/deployment/release-order.mjs"]) {
+  for (const file of [...new Set([...files, recovery])]) {
     mkdirSync(path.dirname(path.join(checkout, file)), { recursive: true });
-    copyFileSync(file, path.join(checkout, file));
+    writeFileSync(
+      path.join(checkout, file),
+      file === recovery
+        ? "            image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product:old\n".repeat(3)
+        : "# fixture manifest\n",
+    );
   }
+  mkdirSync(path.join(checkout, "tools/deployment"), { recursive: true });
+  copyFileSync(
+    "tools/deployment/release-order.mjs",
+    path.join(checkout, "tools/deployment/release-order.mjs"),
+  );
   writeFileSync(
     path.join(checkout, metadata),
     'data:\n  sourceRevision: "unreleased"\n',

@@ -67,7 +67,6 @@ updates:
     directories:
       - /product
       - /product/services
-      - /infra/images/temporal-ui
       - /tools/virtual-kubelet
     schedule:
       interval: weekly

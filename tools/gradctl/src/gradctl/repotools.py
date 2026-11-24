@@ -37,9 +37,6 @@ def python(path: str) -> tuple[str, ...]:
     return ('{python}', path)
 
 
-INFRA_TG = 'infra/environments/prod/us-east-1/terraform'
-FMT = (('terraform', 'fmt', '-recursive', 'infra'),
-       ('terragrunt', 'hcl', 'fmt', '--working-dir', INFRA_TG))
 # uv installs the locked environment on first use, so these commands are networked.
 BROWSER = ('uv', 'run', '--locked', '--project', 'tools/browser', 'python')
 
@@ -75,18 +72,6 @@ TOOLS = (
     Tool('lab', 'check', (('cargo', 'fmt', '--manifest-path', 'research/lab/Cargo.toml', '--all', '--', '--check'),
                           ('cargo', 'test', '--manifest-path', 'research/lab/Cargo.toml', '--workspace')),
          'Check formatting and run the tests of the research lab workspace', effects='read', network=False),
-
-    # Infrastructure. Credential-free: these read no state and reach no account.
-    Tool('infra', 'fmt', FMT, 'Format Terraform and Terragrunt configuration', network=False),
-    Tool('infra', 'check', FMT + (
-        ('terraform', 'fmt', '-check', '-recursive', 'infra'),
-        ('terragrunt', 'hcl', 'fmt', '--check', '--working-dir', INFRA_TG),
-        ('terragrunt', 'hcl', 'validate', '--working-dir', INFRA_TG),
-        ('git', 'diff', '--check')),
-         'Format, then check formatting and HCL of the infrastructure configuration', network=False),
-    Tool('infra', 'sec', (('trivy', 'config', '--quiet', '--exit-code', '1', 'infra/bootstrap'),),
-         'Report security misconfigurations in the standalone bootstrap roots with Trivy (downloads its checks)',
-         effects='read'),
 
     # Security and compliance.
     Tool('security', 'argocd-auth', (python('tools/security/check_argocd_auth.py'),),

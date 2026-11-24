@@ -33,7 +33,6 @@ export const bundles = {
     "product/inference/runtime-launcher",
     "tools/virtual-kubelet/host_agent_test.py",
     "tools/virtual-kubelet/host_state_test.py",
-    "infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml",
   ],
   training: [
     "product/inference/training",

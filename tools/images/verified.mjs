@@ -30,8 +30,6 @@ export const selectImages = (
     "collector",
     "gpu-controller",
     "gpu-base",
-    "falco",
-    "temporal-ui",
   ],
 ) => {
   const images = plan(names, revision).include;

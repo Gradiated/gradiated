@@ -202,11 +202,10 @@ class ProductChangesTest(unittest.TestCase):
         self.assertFalse(plan(["tools/deployment/update-release.mjs"])["unit"])
         self.assertTrue(plan(["tools/model-radar/radar.ts"])["tooling"])
 
-    def test_gateway_fixtures_and_ingress_run_api_contract_tests(self):
+    def test_gateway_fixtures_run_api_contract_tests(self):
         for path in (
             "product/services/gateway/src/http.rs",
             "product/services/gateway/test/fixtures/systemone-request.accepted.json",
-            "infra/environments/prod/us-east-1/kubernetes/workloads/public-api.yaml",
         ):
             self.assertIn("@gradiated/api", plan([path])["packages"])
 

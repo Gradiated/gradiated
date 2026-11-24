@@ -44,17 +44,211 @@ const fixture = (t) => {
       "product/inference/runtimes/glm-sglang/config.py",
       "product/inference/runtimes/deepseek-sglang/config.py",
       "product/inference/images/gpu-base/base-id",
-      "infra/environments/prod/us-east-1/kubernetes/gpu-inference",
-      "infra/environments/prod/us-east-1/kubernetes/platform/gpu-models.yaml",
-      // Rendering also writes the per-pool replica targets for the alerts.
-      "infra/environments/prod/us-east-1/kubernetes/workloads/observability/model-replica-rules.yaml",
-      "infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/workload.yaml",
-      "infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml",
-      "infra/environments/prod/runpod/templates.json",
     ],
     { maxBuffer: 8 * 1024 * 1024 },
   );
   execFileSync("tar", ["-x", "-C", checkout], { input: archive });
+  const baseId = readFileSync(
+    path.join(checkout, "product/inference/images/gpu-base/base-id"),
+    "utf8",
+  ).trim();
+  const baseImageTag = `873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/inference:gpu-base-inputs-${"1".repeat(64)}`;
+  const writeFixture = (rel, content) => {
+    const dest = path.join(checkout, rel);
+    mkdirSync(path.dirname(dest), { recursive: true });
+    writeFileSync(dest, content);
+  };
+  const instanceId = "11111111-1111-4111-8111-111111111111";
+  writeFixture(
+    "infra/environments/prod/us-east-1/kubernetes/gpu-inference/hosts.yaml",
+    `apiVersion: fleet.gradiated.com/v1alpha1
+kind: GpuHost
+metadata:
+  name: gpu-${instanceId}
+  namespace: gpu-inference
+spec:
+  instanceId: ${instanceId}
+  provider:
+    name: runpod
+    podId: pod-fixture
+  inventory:
+    gpuCount: 1
+    cpu: "16"
+    memoryGiB: 64
+    gpuProduct: NVIDIA-H200
+  managementSecret:
+    key: test-host-keys
+    property: ${instanceId}
+`,
+  );
+  const runtimes = JSON.parse(
+    readFileSync(path.join(checkout, "product/inference/gpu/runtimes.json"), "utf8"),
+  );
+  const [runtimeKey, runtimeDef] = Object.entries(runtimes).find(
+    ([, r]) =>
+      r.kind !== "training" &&
+      !r.image.startsWith("gradiated/glm-sglang-bundle@") &&
+      !r.image.startsWith("gradiated/deepseek-sglang-bundle@"),
+  );
+  writeFixture(
+    "infra/environments/prod/us-east-1/kubernetes/gpu-inference/models.json",
+    JSON.stringify(
+      {
+        [runtimeDef.model_id]: {
+          min_slots: 1,
+          pools: {
+            fixture: {
+              runtime: runtimeKey,
+              gpu: "NVIDIA-H200",
+              ...(runtimeDef.active_requests == null ? { slots: 1 } : {}),
+              max_replicas: 1,
+              progress_deadline_seconds: 600,
+            },
+          },
+        },
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+  writeFixture(
+    hostPins,
+    JSON.stringify(
+      {
+        image: baseImageTag,
+        imageDigest: `sha256:${"2".repeat(64)}`,
+        hostBundle: { sha256: "0".repeat(64), baseId },
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+  writeFixture(
+    "infra/environments/prod/us-east-1/kubernetes/gpu-inference/controller.yaml",
+    `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gpu-controller-hosts
+  namespace: gpu-inference
+data:
+  hosts.json: "{}\\n"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpu-controller
+  namespace: gpu-inference
+spec:
+  template:
+    metadata:
+      annotations:
+        gradiated.com/host-inventory: ""
+    spec:
+      volumes:
+        - name: keys
+          secret:
+            secretName: gpu-host-keys
+            defaultMode: 288
+`,
+  );
+  writeFixture(
+    "infra/environments/prod/us-east-1/kubernetes/gpu-inference/rbac.yaml",
+    `apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gpu-controller-nodes
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    resourceNames: ["gpu-${instanceId}"]
+    verbs: ["get"]
+`,
+  );
+  writeFixture(
+    "infra/environments/prod/us-east-1/kubernetes/gpu-inference/credentials.yaml",
+    `apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: aws-secrets-manager
+  namespace: gpu-inference
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: gpu-host-keys
+  namespace: gpu-inference
+spec:
+  refreshInterval: 5m
+  secretStoreRef:
+    name: aws-secrets-manager
+    kind: SecretStore
+  target:
+    name: gpu-host-keys
+  data: []
+`,
+  );
+  writeFixture(
+    "infra/environments/prod/us-east-1/kubernetes/gpu-inference/gpu-fleet.yaml",
+    `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpu-fleet
+spec:
+  template:
+    spec:
+      volumes:
+      - name: keys
+        secret:
+          secretName: gpu-host-keys
+          defaultMode: 288
+`,
+  );
+  writeFixture(
+    "infra/environments/prod/us-east-1/kubernetes/platform/gpu-models.yaml",
+    `apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: gpu-models
+spec:
+  generators: []
+`,
+  );
+  writeFixture(
+    "infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/workload.yaml",
+    `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product@sha256:${"4".repeat(64)}
+env:
+  - name: GPU_BASE_IMAGE
+    value: ${baseImageTag}
+  - name: AWS_GPU_BASE_IMAGE
+    value: ${baseImageTag}
+  - name: GPU_HOST_BOOTSTRAP_SHA256
+    value: ${"0".repeat(64)}
+  - name: GPU_HOST_BOOTSTRAP_BASE_ID
+    value: ${baseId}
+`,
+  );
+  writeFixture(
+    "infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml",
+    `apiVersion: v1
+kind: ConfigMap
+data:
+  GATEWAY_GENERATION_TIMEOUT_SECONDS: "630"
+---
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  template:
+    spec:
+      containers:
+        - name: gateway
+          image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/gateway@sha256:${"3".repeat(64)}
+`,
+  );
+  writeFixture(
+    "infra/environments/prod/runpod/templates.json",
+    JSON.stringify({ image: baseImageTag }, null, 2) + "\n",
+  );
+  execFileSync("python3", ["tools/gpu/render-config.py"], { cwd: checkout });
   git(checkout, "config", "user.name", "Fixture");
   git(checkout, "config", "user.email", "fixture@example.invalid");
   git(checkout, "add", ".");
@@ -399,8 +593,8 @@ test("unrelated catalog and base-image changes cannot supersede a manual rollbac
   const catalogFile = "tools/images/catalog.mjs";
   const before = readFileSync(path.join(writer, catalogFile), "utf8");
   const changed = before.replace(
-    'context: "infra/images/falco"',
-    'context: "infra/images/new-falco"',
+    'context: "tools/virtual-kubelet"',
+    'context: "tools/new-virtual-kubelet"',
   );
   assert.notEqual(changed, before);
   const unrelated = f.commit(writer, catalogFile, changed);

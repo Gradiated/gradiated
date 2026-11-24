@@ -196,7 +196,6 @@ Run `gradctl commands` for the current list.
 | `compute` | `search`, `platforms`, `up`, `ls`, `ssh`, `s3`, `start`, `stop`, `down`, `setup`; see `$dev-training` |
 | `gpu lease` | `acquire`, `wait`, `extend`, `release`, `status`; see `$gpu-host-lease` |
 | `gpu` | `render-config`, `stage-glm-pool`, `stage-kimi-pool`, `pin-host`, `prepare-enrollment`, `mint-bootstrap-key`, `create-runpod-template`, `qualification-slot` |
-| `infra` | `fmt`, `check`, `sec` |
 | `security` | `argocd-auth`, `temporal-ui`, `audit-controls`, `unauthorized-calls`, `ci-boundaries` |
 | `observability` | `check`, `platform`, `controller-requests` |
 | `models` | `monitoring-billing`, `probe-readiness` |

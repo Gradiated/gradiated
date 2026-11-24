@@ -4,8 +4,10 @@ Gradiated builds inference infrastructure for AI applications and coding agents.
 It serves open-weight models through an OpenAI-compatible API and OpenRouter,
 with a customer console for workspaces, API keys, usage, and billing.
 
-This monorepo contains the product, GPU serving runtimes, production
-infrastructure, and model optimization research.
+This monorepo contains the product, GPU serving runtimes, and model
+optimization research. Production infrastructure lives in the private
+[`Gradiated/infrastructure`](https://github.com/Gradiated/infrastructure)
+repository (see [docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md)).
 
 ## The product
 
@@ -31,7 +33,7 @@ the [wizard](product/services/wizard/README.md).
 | [`product/packages/`](product/packages/) | Shared contracts, configuration, control-plane logic, and datastore integrations. |
 | [`product/website/`](product/website/) | Public website, developer documentation, and articles. |
 | [`product/inference/`](product/inference/) | Native C++/CUDA engine, model runtimes, runtime bundles, and serving benchmarks. |
-| [`infra/`](infra/) | Terraform/Terragrunt infrastructure, Kubernetes/Argo CD deployments, and GPU host configuration. |
+| [`docs/INFRASTRUCTURE.md`](docs/INFRASTRUCTURE.md) | Pointer to the private `Gradiated/infrastructure` repo (Terraform/Terragrunt, Kubernetes/Argo CD, and GPU host configuration). |
 | [`research/`](research/) | Model analysis, simulation, validation, and research tooling. |
 | [`tools/`](tools/) | Development checks, browser automation, and model/operations utilities. |
 | [`docs/`](docs/) | Architecture, data contracts, deployment guides, and feature plans. |

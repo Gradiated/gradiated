@@ -58,8 +58,6 @@ JOB_PATHS = {
     "proxy_e2e": (
         *PROXY,
         "product/docker-compose.yml",
-        "infra/environments/prod/us-east-1/kubernetes/workloads/proxy.yaml",
-        "infra/environments/prod/us-east-1/kubernetes/workloads/public-api.yaml",
     ),
     "backend_storage": (
         *COLLECTOR,
@@ -165,8 +163,6 @@ def plan(paths: list[str], root: Path = ROOT, force: bool = False) -> dict:
             (
                 "product/services/gateway/src/http.rs",
                 "product/services/gateway/test/fixtures/systemone-request.*.json",
-                "infra/environments/prod/us-east-1/kubernetes/workloads/proxy.yaml",
-                "infra/environments/prod/us-east-1/kubernetes/workloads/public-api.yaml",
             ),
         ),
     ):

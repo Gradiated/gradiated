@@ -13,12 +13,26 @@ import uuid
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
-KUBE = ROOT / 'infra/environments/prod/us-east-1/kubernetes'
+INFRA_ROOT = ROOT
+KUBE = INFRA_ROOT / 'infra/environments/prod/us-east-1/kubernetes'
 GPU = KUBE / 'gpu-inference'
 # One directory per model; the gpu-models ApplicationSet makes an Argo
 # application for each, so one model's sync never waits on another.
 MODELS = GPU / 'models'
 APPLICATIONS = KUBE / 'platform/gpu-models.yaml'
+
+
+def set_infra_root(infra_root):
+    global INFRA_ROOT, KUBE, GPU, MODELS, APPLICATIONS, REPLICA_RULES, TEMPLATES, OPS_MCP
+    INFRA_ROOT = Path(infra_root).resolve()
+    env_base = INFRA_ROOT / 'environments' if (INFRA_ROOT / 'environments').is_dir() else INFRA_ROOT / 'infra/environments'
+    KUBE = env_base / 'prod/us-east-1/kubernetes'
+    GPU = KUBE / 'gpu-inference'
+    MODELS = GPU / 'models'
+    APPLICATIONS = KUBE / 'platform/gpu-models.yaml'
+    REPLICA_RULES = KUBE / 'workloads/observability/model-replica-rules.yaml'
+    TEMPLATES = env_base / 'prod/runpod/templates.json'
+    OPS_MCP = KUBE / 'operations/ops-mcp/workload.yaml'
 
 
 # The Virtual Kubelet node label gradiated.com/provider of each GpuHost
@@ -674,7 +688,11 @@ def main():
     parser.add_argument('--check', action='store_true')
     parser.add_argument('--retire', action='append', default=[], metavar='INSTANCE_ID',
                         help='drop the access of a host removed from hosts.yaml whose GpuHost is gone')
+    parser.add_argument('--infra-root', type=Path, default=None,
+                        help='infrastructure checkout holding infra/ manifests when separate from product source')
     args = parser.parse_args()
+    if args.infra_root is not None:
+        set_infra_root(args.infra_root)
     outputs = render(set(args.retire))
     obsolete = retired_outputs(outputs)
     if obsolete:
@@ -693,7 +711,7 @@ def main():
     for path, content in text_outputs.items():
         if args.check:
             if path.read_text() != content:
-                stale.append(str(path.relative_to(ROOT)))
+                stale.append(str(path.relative_to(INFRA_ROOT)))
         else:
             path.write_text(content)
     for path, documents in outputs.items():
@@ -707,7 +725,7 @@ def main():
         content += yaml.safe_dump_all(documents, sort_keys=False, width=120)
         if args.check:
             if not path.exists() or path.read_text() != content:
-                stale.append(str(path.relative_to(ROOT)))
+                stale.append(str(path.relative_to(INFRA_ROOT)))
         else:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content)

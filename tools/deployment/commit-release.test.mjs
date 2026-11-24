@@ -30,8 +30,8 @@ const fixture = (t) => {
   git(checkout, "config", "user.name", "Fixture");
   git(checkout, "config", "user.email", "fixture@example.invalid");
   const files = readFileSync(script, "utf8")
-    .match(/  infra\/[^\n]+/g)
-    .map((line) => line.trim());
+    .match(/environments\/[^\s"]+\.yaml/g)
+    .map((file) => `infra/${file}`);
   for (const file of [...new Set([...files, recovery]), "tools/deployment/release-order.mjs"]) {
     mkdirSync(path.dirname(path.join(checkout, file)), { recursive: true });
     copyFileSync(file, path.join(checkout, file));
@@ -174,8 +174,8 @@ test("rejects pre-staged unrelated changes and makes matching releases a no-op",
 test("commits every manifest the release rewrites", async () => {
   const { IMAGES } = await import("./update-release.mjs");
   const committed = readFileSync(script, "utf8")
-    .match(/  infra\/[^\n]+/g)
-    .map((line) => line.trim());
+    .match(/environments\/[^\s"]+\.yaml/g)
+    .map((file) => `infra/${file}`);
   const workloads = "infra/environments/prod/us-east-1/kubernetes/workloads";
   const rewritten = [
     ...IMAGES.flatMap(({ manifests }) =>
@@ -211,5 +211,42 @@ fi
   assert.equal(
     f.git(f.root, "--git-dir", f.remote, "rev-parse", "main"),
     f.git(f.checkout, "rev-parse", "HEAD"),
+  );
+});
+
+test("records split release state while checking ancestry in the product repo", (t) => {
+  const f = fixture(t);
+  const remote = path.join(f.root, "infrastructure.git");
+  const state = path.join(f.root, "infrastructure");
+  f.git(f.root, "init", "--bare", "--initial-branch=main", remote);
+  f.git(f.root, "clone", remote, state);
+  f.git(state, "config", "user.name", "Fixture");
+  f.git(state, "config", "user.email", "fixture@example.invalid");
+  const archive = execFileSync("git", ["archive", "HEAD", "infra"], {
+    cwd: f.checkout,
+  });
+  execFileSync("tar", ["-x", "-C", state], { input: archive });
+  f.git(state, "add", "infra");
+  f.git(state, "commit", "-m", "Infrastructure import");
+  f.git(state, "push", "origin", "main");
+  writeFileSync(
+    path.join(state, metadata),
+    `data:\n  sourceRevision: "${f.source}"\n`,
+  );
+
+  const result = spawnSync("bash", [script], {
+    cwd: f.checkout,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      SOURCE_SHA: f.source,
+      RELEASE_STATE_ROOT: state,
+    },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(f.git(f.checkout, "rev-parse", "HEAD"), f.source);
+  assert.equal(
+    f.git(state, "show", `origin/main:${metadata}`),
+    `data:\n  sourceRevision: "${f.source}"`,
   );
 });

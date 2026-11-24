@@ -57,6 +57,8 @@ jobs:
     needs: plan
     runs-on: depot-ubuntu-24.04
     environment: production
+    env:
+      RELEASE_STATE_ROOT: ${{ vars.RELEASE_STATE_REPO == 'infrastructure' && format('{0}/infra-release-state', github.workspace) || '' }}
     # Performance target: 10 minutes; the timeout is only a runaway guard.
     timeout-minutes: 60
     strategy:
@@ -70,6 +72,25 @@ jobs:
         with:
           ref: ${{ inputs.source_sha }}
           fetch-depth: 0
+      - name: Create read-only release state token
+        if: env.RELEASE_STATE_ROOT != ''
+        id: read-release-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: infrastructure
+          permission-contents: read
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.RELEASE_STATE_ROOT != ''
+        with:
+          repository: ${{ github.repository_owner }}/infrastructure
+          ref: main
+          fetch-depth: 0
+          path: infra-release-state
+          token: ${{ steps.read-release-token.outputs.token }}
+          persist-credentials: false
       - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         with:
           aws-region: ${{ env.AWS_REGION }}

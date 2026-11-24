@@ -540,3 +540,83 @@ git -C ${q(writer)} push origin main >/dev/null
   );
   assert.deepEqual(pins, f.pins);
 });
+
+test("records split host bundle pins in an independent infrastructure repo", (t) => {
+  const f = fixture(t);
+  const infraRemote = path.join(f.root, "infrastructure.git");
+  const infraState = path.join(f.root, "infrastructure");
+  f.git(f.root, "init", "--bare", "--initial-branch=main", infraRemote);
+  f.git(f.root, "clone", infraRemote, infraState);
+  f.git(infraState, "config", "user.name", "Fixture");
+  f.git(infraState, "config", "user.email", "fixture@example.invalid");
+  const archive = execFileSync("git", ["archive", "HEAD", "infra"], {
+    cwd: f.checkout,
+  });
+  execFileSync("tar", ["-x", "-C", infraState], { input: archive });
+  f.git(infraState, "add", "infra");
+  f.git(infraState, "commit", "-m", "Infrastructure import");
+  f.git(infraState, "push", "origin", "main");
+
+  const result = promoteHost({
+    source: f.source,
+    releaseFile: f.releaseFile,
+    root: f.checkout,
+    releaseStateRoot: infraState,
+  });
+  assert.equal(result.promoted, true);
+  assert.equal(f.git(f.checkout, "rev-parse", "HEAD"), f.source);
+  assert.equal(
+    f.git(f.root, "--git-dir", infraRemote, "rev-parse", "main"),
+    result.commit,
+  );
+  const updated = JSON.parse(
+    f.git(f.root, "--git-dir", infraRemote, "show", `main:${hostPins}`),
+  );
+  assert.equal(updated.hostBundle.sha256, f.release.sha256);
+  assert.equal(updated.hostBundle.baseId, f.release.baseId);
+});
+
+test("rechecks product main before pushing split host bundle state", (t) => {
+  const f = fixture(t);
+  const infraRemote = path.join(f.root, "infrastructure.git");
+  const infraState = path.join(f.root, "infrastructure");
+  f.git(f.root, "init", "--bare", "--initial-branch=main", infraRemote);
+  f.git(f.root, "clone", infraRemote, infraState);
+  f.git(infraState, "config", "user.name", "Fixture");
+  f.git(infraState, "config", "user.email", "fixture@example.invalid");
+  const archive = execFileSync("git", ["archive", "HEAD", "infra"], {
+    cwd: f.checkout,
+  });
+  execFileSync("tar", ["-x", "-C", infraState], { input: archive });
+  f.git(infraState, "add", "infra");
+  f.git(infraState, "commit", "-m", "Infrastructure import");
+  f.git(infraState, "push", "origin", "main");
+
+  const writer = f.writer();
+  const q = (value) => `'${value.replaceAll("'", "'\\''")}'`;
+  const hook = path.join(infraState, ".git/hooks/post-commit");
+  writeFileSync(
+    hook,
+    `#!/bin/sh
+set -eu
+printf 'newer host code during split render\\n' > ${q(path.join(writer, "product/inference/gpu/host-agent.py"))}
+git -C ${q(writer)} add .
+git -C ${q(writer)} commit -m 'New host source during split promotion' >/dev/null
+git -C ${q(writer)} push origin main >/dev/null
+`,
+  );
+  chmodSync(hook, 0o755);
+
+  const result = promoteHost({
+    source: f.source,
+    releaseFile: f.releaseFile,
+    root: f.checkout,
+    releaseStateRoot: infraState,
+  });
+  assert.equal(result.promoted, false);
+  assert.equal(result.reason, "newer host build inputs on main");
+  const pins = JSON.parse(
+    f.git(f.root, "--git-dir", infraRemote, "show", `main:${hostPins}`),
+  );
+  assert.deepEqual(pins, f.pins);
+});

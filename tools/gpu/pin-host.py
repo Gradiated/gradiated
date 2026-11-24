@@ -20,12 +20,19 @@ def pin(release):
 def main():
     parser = argparse.ArgumentParser(description='Pin a published host bundle and render the fleet configuration.')
     parser.add_argument('release', type=Path, help='host-runtime-release/release.json from Model deployment')
+    parser.add_argument('--infra-root', type=Path, default=None,
+                        help='infrastructure checkout holding infra/ manifests when separate from product source')
     args = parser.parse_args()
-    path = ROOT / 'infra/environments/prod/us-east-1/kubernetes/gpu-inference/pins.json'
+    infra_root = args.infra_root.resolve() if args.infra_root is not None else ROOT
+    env_base = infra_root / 'environments' if (infra_root / 'environments').is_dir() else infra_root / 'infra/environments'
+    path = env_base / 'prod/us-east-1/kubernetes/gpu-inference/pins.json'
     pins = json.loads(path.read_text())
     pins['hostBundle'] = pin(json.loads(args.release.read_text()))
     path.write_text(json.dumps(pins, indent=2) + '\n')
-    subprocess.run(['python3', str(ROOT / 'tools/gpu/render-config.py')], check=True)
+    command = ['python3', str(ROOT / 'tools/gpu/render-config.py')]
+    if args.infra_root is not None:
+        command.extend(['--infra-root', str(infra_root)])
+    subprocess.run(command, check=True)
 
 
 if __name__ == '__main__':

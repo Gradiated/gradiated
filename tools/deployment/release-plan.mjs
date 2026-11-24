@@ -111,17 +111,29 @@ if (
 ) {
   const source = process.argv[2];
   if (!/^[a-f0-9]{40}$/.test(source)) throw new Error("Invalid source SHA");
-  const metadata = execFileSync(
-    "git",
-    ["show", `origin/main:${metadataPath}`],
-    { encoding: "utf8" },
-  );
+  const stateRoot = process.env.RELEASE_STATE_ROOT || undefined;
+  let metadata;
+  for (const candidate of [
+    "environments/prod/us-east-1/kubernetes/workloads/release-metadata.yaml",
+    metadataPath,
+  ]) {
+    try {
+      metadata = execFileSync("git", ["show", `origin/main:${candidate}`], {
+        encoding: "utf8",
+        cwd: stateRoot,
+        stdio: ["ignore", "pipe", "ignore"],
+      });
+      break;
+    } catch {}
+  }
+  if (metadata === undefined)
+    throw new Error(`Missing ${metadataPath} on origin/main`);
   let result = releasePlan(
     source,
     metadata,
     (revision) => plan(images, revision).include,
     (before, after) => consoleKey(before) !== consoleKey(after),
-    backendManifestChanges,
+    process.env.RELEASE_STATE_ROOT ? undefined : backendManifestChanges,
   );
   if (!result.backend || !result.console) {
     const previous = metadata.match(

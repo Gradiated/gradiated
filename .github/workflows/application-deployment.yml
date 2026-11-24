@@ -85,7 +85,10 @@ env:
 jobs:
   resolve:
     name: Resolve source release
+    environment: ${{ vars.RELEASE_STATE_REPO == 'infrastructure' && 'production' || '' }}
     runs-on: ubuntu-latest
+    env:
+      RELEASE_STATE_ROOT: ${{ vars.RELEASE_STATE_REPO == 'infrastructure' && format('{0}/infra-release-state', github.workspace) || '' }}
     outputs:
       source_sha: ${{ steps.source.outputs.source_sha }}
       collector_source_sha: ${{ steps.collector-source.outputs.source_sha }}
@@ -116,6 +119,25 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+      - name: Create read-only release state token
+        if: env.RELEASE_STATE_ROOT != ''
+        id: read-release-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: infrastructure
+          permission-contents: read
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.RELEASE_STATE_ROOT != ''
+        with:
+          repository: ${{ github.repository_owner }}/infrastructure
+          ref: main
+          fetch-depth: 0
+          path: infra-release-state
+          token: ${{ steps.read-release-token.outputs.token }}
+          persist-credentials: false
       - id: order
         name: Skip sources older than the recorded release
         env:
@@ -126,6 +148,7 @@ jobs:
         with:
           ref: ${{ steps.source.outputs.source_sha }}
           fetch-depth: 0
+          clean: ${{ env.RELEASE_STATE_ROOT == '' }}
       - id: collector-source
         if: steps.order.outputs.deploy == 'true'
         env:
@@ -240,6 +263,8 @@ jobs:
     runs-on: ubuntu-latest
     # The release app key is a production environment secret: only main can use it.
     environment: production
+    env:
+      RELEASE_STATE_ROOT: ${{ vars.RELEASE_STATE_REPO == 'infrastructure' && format('{0}/infra-release-state', github.workspace) || '' }}
     # Performance target: 10 minutes; the timeout is only a runaway guard.
     timeout-minutes: 30
     outputs:
@@ -251,11 +276,21 @@ jobs:
         with:
           client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ vars.RELEASE_STATE_REPO == 'infrastructure' && 'infrastructure' || 'gradiated' }}
           permission-contents: write
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           fetch-depth: 0
+          token: ${{ env.RELEASE_STATE_ROOT == '' && steps.release-token.outputs.token || github.token }}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.RELEASE_STATE_ROOT != ''
+        with:
+          repository: ${{ github.repository_owner }}/infrastructure
+          ref: main
+          fetch-depth: 0
+          path: infra-release-state
           token: ${{ steps.release-token.outputs.token }}
       - name: Update release state
         env:
@@ -268,8 +303,12 @@ jobs:
           COLLECTOR_DIGEST: ${{ needs.build-collector.outputs.collector_digest }}
         run: |
           git pull --ff-only origin main
+          if [[ -n "$RELEASE_STATE_ROOT" ]]; then
+            git -C "$RELEASE_STATE_ROOT" pull --ff-only origin main
+          fi
           node tools/deployment/release-order.mjs "$SOURCE_SHA" --reject-stale
           node tools/deployment/update-release.mjs \
+            --root "${RELEASE_STATE_ROOT:-$PWD}" \
             --source-sha "${SOURCE_SHA}" \
             --console-sha "${CONSOLE_SHA}" \
             --deployment-run-id "${GITHUB_RUN_ID}" \
@@ -278,7 +317,11 @@ jobs:
             --proxy-digest "${PROXY_DIGEST}" \
             --collector-digest "${COLLECTOR_DIGEST}" \
             --gpu-controller-digest "${GPU_CONTROLLER_DIGEST}"
-          kubectl kustomize infra/environments/prod/us-east-1/kubernetes/workloads >/dev/null
+          workloads_dir="${RELEASE_STATE_ROOT:-$PWD}/infra/environments/prod/us-east-1/kubernetes/workloads"
+          if [[ -d "${RELEASE_STATE_ROOT:-$PWD}/environments/prod/us-east-1/kubernetes/workloads" ]]; then
+            workloads_dir="${RELEASE_STATE_ROOT:-$PWD}/environments/prod/us-east-1/kubernetes/workloads"
+          fi
+          kubectl kustomize "${workloads_dir}" >/dev/null
       - id: commit
         name: Commit production release to main
         env:

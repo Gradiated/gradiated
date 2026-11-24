@@ -92,10 +92,19 @@ export async function updateRelease(options) {
     ]),
   );
   const root = path.resolve(options.root);
-  const workloads = path.join(
+  const directWorkloads = path.join(
+    root,
+    "environments/prod/us-east-1/kubernetes/workloads",
+  );
+  const legacyWorkloads = path.join(
     root,
     "infra/environments/prod/us-east-1/kubernetes/workloads",
   );
+  let workloads = legacyWorkloads;
+  try {
+    await readFile(path.join(directWorkloads, "release-metadata.yaml"), "utf8");
+    workloads = directWorkloads;
+  } catch {}
   const kustomizationPath = path.join(workloads, "kustomization.yaml");
   const metadataPath = path.join(workloads, "release-metadata.yaml");
 

@@ -141,13 +141,22 @@ const main = async () => {
       name,
     )
   ) {
-    const metadata = execFileSync(
-      "git",
-      [
-        "show",
-        "origin/main:infra/environments/prod/us-east-1/kubernetes/workloads/release-metadata.yaml",
-      ],
-      { encoding: "utf8" },
+    const stateRoot = process.env.RELEASE_STATE_ROOT || undefined;
+    const stateGit = (rel) => {
+      const candidates = [rel, `infra/${rel}`];
+      for (const candidate of candidates) {
+        try {
+          return execFileSync("git", ["show", `origin/main:${candidate}`], {
+            cwd: stateRoot,
+            encoding: "utf8",
+            stdio: ["ignore", "pipe", "ignore"],
+          });
+        } catch {}
+      }
+      throw new Error(`Missing release state file ${rel} on origin/main`);
+    };
+    const metadata = stateGit(
+      "environments/prod/us-east-1/kubernetes/workloads/release-metadata.yaml",
     );
     const previous = metadata.match(
       /^  sourceRevision: "([a-f0-9]{40})"$/m,
@@ -155,13 +164,8 @@ const main = async () => {
     if (previous && plan([name], previous).include[0].tag === image.tag) {
       const contents =
         name === "gpu-controller"
-          ? execFileSync(
-              "git",
-              [
-                "show",
-                "origin/main:infra/environments/prod/us-east-1/kubernetes/gpu-inference/controller.yaml",
-              ],
-              { encoding: "utf8" },
+          ? stateGit(
+              "environments/prod/us-east-1/kubernetes/gpu-inference/controller.yaml",
             )
           : metadata;
       const digest =

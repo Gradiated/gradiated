@@ -59,6 +59,7 @@ export const SectionFab = ({
 }): ReactElement | null => {
   const [open, setOpen] = useState(false);
   const [read, setRead] = useState(0);
+  const [lift, setLift] = useState(0);
   const frame = useRef(0);
 
   /* Read on a frame, not on the event. Scroll fires far more often than the
@@ -69,6 +70,11 @@ export const SectionFab = ({
       const scrollable =
         document.documentElement.scrollHeight - window.innerHeight;
       setRead(scrollable > 0 ? Math.min(1, window.scrollY / scrollable) : 0);
+
+      // Rides above the footer rather than covering its links.
+      const footer = document.querySelector(".gr-footer");
+      const top = footer?.getBoundingClientRect().top ?? window.innerHeight;
+      setLift(Math.max(0, Math.round(window.innerHeight - top)));
     };
     const onScroll = () => {
       if (frame.current === 0) frame.current = requestAnimationFrame(measure);
@@ -77,40 +83,16 @@ export const SectionFab = ({
     measure();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
+    // The page grows as pictures load, which moves the footer without a scroll.
+    const resize = new ResizeObserver(onScroll);
+    resize.observe(document.body);
     return () => {
       if (frame.current !== 0) cancelAnimationFrame(frame.current);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
+      resize.disconnect();
     };
   }, []);
-
-  /* Out of the way once the footer arrives.
-   *
-   * The button sits in the bottom corner for the whole article, which is also
-   * where the footer's own links end up — so at the foot of the page it stops
-   * being a control and becomes something covering one. It leaves while the
-   * footer is on screen and comes back when it is not.
-   *
-   * An observer on the footer rather than a scroll threshold: the footer's
-   * height is whatever it is, and "is the footer visible" is the actual
-   * question. */
-  const [atFooter, setAtFooter] = useState(false);
-  useEffect(() => {
-    const footer = document.querySelector(".gr-footer");
-    if (!footer) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setAtFooter(entry.isIntersecting),
-      { threshold: 0 },
-    );
-    observer.observe(footer);
-    return () => observer.disconnect();
-  }, []);
-
-  /* Nothing left open behind it — a list that fades out with the button would
-     otherwise be waiting, still open, when the reader scrolls back up. */
-  useEffect(() => {
-    if (atFooter) setOpen(false);
-  }, [atFooter]);
 
   /* Closes on its own once the reader has chosen. Escape as well, because an
      open list covers the text it is about. */
@@ -138,10 +120,8 @@ export const SectionFab = ({
 
   return createPortal(
     <div
-      className={`gr-fab${open ? " gr-fab--open" : ""}${
-        atFooter ? " gr-fab--away" : ""
-      }`}
-      style={{ "--read": read } as CSSProperties}
+      className={`gr-fab${open ? " gr-fab--open" : ""}`}
+      style={{ "--lift": `${lift}px`, "--read": read } as CSSProperties}
     >
       {/* Above the button in the DOM so it opens upward without the list
           having to be positioned from the bottom of the viewport. */}

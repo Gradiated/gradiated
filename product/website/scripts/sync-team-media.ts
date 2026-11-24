@@ -116,9 +116,11 @@ const resize = async (
   const image = sharp(upright);
   const { height = 0, width = 0 } = await image.metadata();
 
-  if (shape !== "inside" && height >= width * 1.2) {
+  const tall = height >= width * 1.2;
+  if (shape === "square" ? height >= width : shape === "bust" && tall) {
     const cropWidth = Math.round(width * (shape === "square" ? 0.46 : 0.5));
-    const centre = (await headCentre(upright)) * width;
+    // Busy collage backgrounds throw off the head search; their person is centred.
+    const centre = (tall ? await headCentre(upright) : 0.47) * width;
     image.extract({
       height: shape === "square" ? cropWidth : Math.round(cropWidth * 1.25),
       left: Math.round(

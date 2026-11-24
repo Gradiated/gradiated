@@ -83,6 +83,8 @@ export interface PlanOptions {
   mutateBody?: (body: JsonObject) => void;
   mutateEvents?: (events: StreamEvents) => void;
   errorUsage?: JsonObject;
+  /** Extra headers on a failure reply, such as `Retry-After` on a 429. */
+  errorHeaders?: Record<string, string>;
 }
 
 export interface Plan {
@@ -95,6 +97,7 @@ export interface Plan {
   readonly mutateBody: ((body: JsonObject) => void) | undefined;
   readonly mutateEvents: ((events: StreamEvents) => void) | undefined;
   readonly errorUsage: JsonObject | undefined;
+  readonly errorHeaders: Record<string, string> | undefined;
 }
 
 const plan = (options: PlanOptions = {}): Plan => ({
@@ -107,6 +110,7 @@ const plan = (options: PlanOptions = {}): Plan => ({
   mutateBody: options.mutateBody,
   mutateEvents: options.mutateEvents,
   errorUsage: options.errorUsage,
+  errorHeaders: options.errorHeaders,
 });
 
 /**
@@ -148,6 +152,7 @@ const ignoredSettings = (
     [`fault ${plan.fault}`, plan.fault !== "ok", faultApplies],
     [`status ${plan.status}`, plan.status !== 200, !disconnects],
     ["errorUsage", plan.errorUsage !== undefined, !disconnects && !answers],
+    ["errorHeaders", plan.errorHeaders !== undefined, !disconnects && !answers],
     ["cached", plan.cached !== 0, synthesizes],
     ["fragment", plan.fragment !== 0, answers && stream],
     ["mutateBody", plan.mutateBody !== undefined, answers && !stream],
@@ -514,12 +519,10 @@ const replyFailure = (response: ServerResponse, plan: Plan): void => {
   const error: JsonObject = { error: { message: "PRIVATE_RUNTIME_DETAIL" } };
   if (plan.errorUsage !== undefined) error.usage = plan.errorUsage;
 
-  reply(
-    response,
-    plan.status,
-    Buffer.from(JSON.stringify(error)),
-    plan.status === 307 ? { Location: "/must-not-follow" } : undefined,
-  );
+  reply(response, plan.status, Buffer.from(JSON.stringify(error)), {
+    ...(plan.status === 307 ? { Location: "/must-not-follow" } : {}),
+    ...plan.errorHeaders,
+  });
 };
 
 const isDisconnect = (error: unknown): boolean =>

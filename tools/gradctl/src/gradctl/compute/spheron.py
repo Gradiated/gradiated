@@ -45,6 +45,7 @@ class Unconfirmed(SystemExit):
 
 class Spheron:
     name = 'spheron'
+    extension_note = 'VMs keep billing while running; the GPU VM API exposes no reservation extension operation'
     ssh_user = 'root'
     default_region = None
     virtualization = 'vm'

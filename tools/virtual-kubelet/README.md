@@ -110,8 +110,9 @@ When any `GpuHost` changes (added, removed or edited), the leader steps down and
 the next leader restarts every host's virtual node, not just the changed one.
 Heartbeats pause for about a minute; serving processes on the hosts keep running,
 as they did when a host list change restarted the controller. Each node
-carries `gradiated.com/fault-domain`, the host's RunPod machine ID, for
-topology spread and anti-affinity. The `gpu-fleet` operator
+carries `gradiated.com/provider` from the `GpuHost` (`runpod` or `aws`) and
+`gradiated.com/fault-domain`, the host's RunPod machine ID or EC2 availability
+zone, for topology spread and anti-affinity. The `gpu-fleet` operator
 (`product/services/gpu-fleet`) keeps each host's private Service, reports its
 health in its `GpuHost` status, and holds a deleted `GpuHost` until no pods run on
 it; see the retirement steps in the [instance setup plan](../../docs/INSTANCE_SETUP_PLAN.md).
@@ -243,7 +244,8 @@ Every pool scales on the same three signals, in its own slots, and the HPA takes
 the largest (a pool with no floor has a fourth, below):
 
 - **Utilization.** The model's peak in-flight generations over the last minute
-  (`gradiated:model_busy_slots`), divided by 0.7, less the slots the pools ahead
+  (`gradiated:model_busy_slots`), divided by the pool's utilization target
+  (0.7 unless the pool sets `utilization`), less the slots the pools ahead
   of this one serve: a pool still growing counts at its maximum, and one that
   requests its maximum counts only its ready replicas, so demand it cannot place
   or serve passes to the next pool. In-flight generations include those
@@ -259,13 +261,20 @@ the largest (a pool with no floor has a fourth, below):
   up on refusals only once every pool ahead of it requests its maximum, so a
   pool that cannot place its replicas hands demand on.
 
+A pool aiming for revenue per replica-hour rather than headroom can raise
+`utilization` (up to 1.2), adding replicas only once requests queue, and lengthen
+`hold_minutes` (up to 120), keeping replicas through the gaps between bursts
+instead of paying for another start. The uncensored GLM pool runs at 1.0 with
+a 30-minute hold.
+
 There is no CPU, memory or GPU-memory signal. Both recording rules live in
 `workloads/observability/autoscaling-prometheus-rules.yaml`; the scaling
 constants live in `tools/gpu/render-config.py`. All queries require fresh,
 complete gateway telemetry. Missing samples or a Prometheus outage trigger a
 fallback that retains the current replica count when it exceeds the floor.
 Scale-up adds every replica the signals ask for at once, at least doubling or
-adding four every 15 seconds, because a start takes minutes; scale-down waits ten minutes and
+adding four every 15 seconds, because a start takes minutes; scale-down waits for the pool's hold (ten
+minutes unless the pool sets `hold_minutes`) and
 removes one at a time: a third signal, `draining`, holds the requested count
 while any of the pool's replicas is terminating, because it can still hold its
 GPUs, so the next removal waits only as long as the actual drain. New replicas
@@ -524,6 +533,18 @@ one at a time, and records each host's progress in `status.rollout` of its
   waits twice as long as the last (5 minutes, then 10, up to an hour), so
   autoscaling that only fills GPUs never restarts it. `GpuHostRolloutBlocked`
   fires after two hours blocked.
+  Only when no complete placement exists, a re-image may drain a model with one
+  replica unavailable instead of blocking, when all of these hold: the pool's
+  PodDisruptionBudget (`minAvailable: floor - 1`, rendered for production pools
+  with a floor of two or more) reports `status.disruptionsAllowed` of at least
+  one; the host runs exactly one of the model's replicas; every other replica is
+  Ready and qualified; and no other host's rollout is running. The fewest such
+  models are chosen; the rest still move first. The host's `status.plan` says
+  `Draining with one <model> replica unavailable`, `status.rollout.unavailable`
+  lists the models, and after Uncordon the `Restore` step holds the fleet until
+  each has all its replicas Ready and qualified again, so two hosts never take
+  the same model down together. A model with one replica, or a pool without a
+  budget (such as Kimi's), still blocks.
 - A host on the pinned image but another bundle is updated in place: once every
   serving pod on it is Ready, the operator records them and writes the bundle to `status.rollout.bundle`, the controller (which holds the
   fencing epoch) sends it with `configure`, and the operator requires the host to
@@ -549,6 +570,11 @@ no other host starts until the pins change or someone sets the
 `fleet.gradiated.com/retry` annotation on the host to a new value; a retry
 restarts only that host. A host on the old image keeps its old bundle until it
 is re-imaged.
+
+A new AWS host can opt in to enrolling during a failed RunPod recovery at
+`Join` with `fleet.gradiated.com/enroll-during-runpod-hold: "true"` in
+`hosts.yaml`. The operator requires the AWS host to have no recorded image,
+prior heartbeat, Ready node, or workloads. Other rollout actions stay held.
 
 Before an in-place bundle update, every Ready model pod must have a qualified
 runtime and enters the protected baseline for verification and soak. Non-Ready
@@ -584,6 +610,44 @@ could no longer be going before it starts another. Admission policies in
 ScaledObject's `autoscaling.keda.sh/paused-replicas` annotation. A rollout marks
 its cordon `gpu-fleet-rollout` (the drain uses `gpu-fleet`) and uncordons only a
 node it marked, so a node someone cordoned by hand stays cordoned.
+
+AWS hosts (EC2 instances) go through the same rollouts, through the operator
+role of their account in `AWS_GPU_OPERATOR_ROLE_ARNS` (a host in an account
+without one is never changed). Before a host is drained the operator refuses an
+instance not tagged `gradiated:managed=gpu-fleet` or owned by another account
+than its `GpuHost` names. A re-image replaces the root volume with the AMI of
+the launch template's default version, as ops-mcp registration does, using the
+shared sequence in `@gradiated/gpu-hosts`: the instance, its ID and its capacity
+stay, and nothing stops or terminates it. The request time is recorded first and
+makes the task's client token, so a repeated request is the same task. Before
+the request the operator deletes any bootstrap secret left behind and removes the
+bootstrap instance profile, confirming both are gone, so nothing on the old root,
+such as a lease holder's container, can read the secret or copy the profile's
+credentials. Once that task is the last to have succeeded and the instance runs
+again, the operator attaches the bootstrap profile, then mints the single-use
+bootstrap key and writes it, with the pinned AWS image, to
+`gradiated/gpu-bootstrap/<instance ID>`; the host launcher pulls the image and
+the container joins as `gpu-bootstrap-<instance ID>`. After enrollment the
+`RemoveAccess` step deletes the secret and removes the bootstrap instance
+profile (never another profile, which a re-image refuses and leaves in place;
+a host that holds one once enrolled fails, cordoned) before
+the host is verified, soaked and uncordoned. A failed replacement, or a host that
+never joins, fails the rollout as on RunPod, and the operator removes the
+bootstrap access it left.
+
+AWS hosts run `awsImage` from `pins.json` (a tag or digest in the same
+repository; `image` when unset), because an image built before AWS support
+cannot join on EC2; `gradctl gpu render-config` copies it to ops-mcp's
+`AWS_GPU_BASE_IMAGE`. EC2 cannot show which container image a host runs, so the operator records it
+in `status.image` when it re-images an AWS host. A host it never re-imaged is
+adopted: `status.adoptedUnder` records the pinned AWS image when the operator first
+sees the host answer, and the host is re-imaged once the pin changes. An AWS host
+is recovered only after its own rollout replaced its root volume and it did not
+rejoin; a root volume survives a restart, so any other silent host is left to a
+person. A lease is refused on an instance with an EBS volume besides its root, or
+whose type has an instance store (`g6` and `g6e` do): a root volume replacement
+leaves both, so a return could not wipe what the holder wrote there. Serving
+never uses the instance store; nothing formats or mounts it.
 
 The operator runs in `MODE=observe` until switched to `act`. Observe mode holds
 only the destructive steps: re-image, enroll and recover are written to each

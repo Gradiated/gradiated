@@ -15,12 +15,16 @@ export const SystemOneJsonSchema = z
     items: {},
   });
 
+// Matches the gateway (product/services/gateway/src/systemone.rs) and every SystemOne runtime.
+export const SYSTEMONE_MAX_QUESTIONS = 1024;
+const MAX_OPTIONS = 255;
+
 const LevelIndexSchema = z.string().regex(/^(0|[1-9]\d*)$/);
 const HostedModelIdSchema = ModelIdSchema.describe(
   "Exact hosted model ID, required; no default, alias resolution or fallback.",
 );
 const InstructionsSchema = SystemOneJsonSchema.optional().describe(
-  "Question instructions as JSON. Optional, as in TypeSafe's API: the TypeSafe SDK omits them when a question has only criteria. perplexity-ai/pplx-decider-v1.2 still requires them.",
+  "Question instructions as JSON. Optional, as in TypeSafe's API: the TypeSafe SDK omits them when a question has only criteria.",
 );
 
 const boundedMap = <T extends z.ZodType>(
@@ -37,17 +41,40 @@ const boundedMap = <T extends z.ZodType>(
     }, `Expected ${min}..${max} entries`)
     .openapi({ minProperties: min, maxProperties: max });
 
+const ChoiceOptionsSchema = boundedMap(z.string(), SystemOneJsonSchema, {
+  min: 1,
+  max: MAX_OPTIONS,
+}).describe(
+  "One to 255 named options with JSON descriptions; null leaves an option undescribed.",
+);
+
+// PostHog's clients send option names alone. The Rust gateway rewrites the list
+// to undescribed options before anything else sees it, so runtimes and answers
+// only ever use the object form. This schema validates the list but does not
+// rewrite it: a JavaScript object would reorder integer-like names ("10", "2").
+const ChoiceLabelsSchema = z
+  .array(z.string().min(1))
+  .min(1)
+  .max(MAX_OPTIONS)
+  .refine(
+    (labels) => new Set(labels).size === labels.length,
+    "Option names must be distinct",
+  )
+  .openapi({ uniqueItems: true })
+  .describe(
+    "One to 255 distinct, non-empty option names, equivalent to an object mapping each name to null.",
+  );
+
 export const SystemOneQuestionSchema = z
   .discriminatedUnion("type", [
     z.strictObject({
       type: z.literal("choice").describe("Select one named option."),
       instructions: InstructionsSchema,
-      criteria: boundedMap(z.string(), SystemOneJsonSchema, {
-        min: 1,
-        max: 255,
-      }).describe(
-        "One to 255 named options with JSON descriptions; null leaves an option undescribed.",
-      ),
+      criteria: z
+        .union([ChoiceOptionsSchema, ChoiceLabelsSchema])
+        .describe(
+          "Named options: an object of option names to JSON descriptions, or a list of option names.",
+        ),
     }),
     z.strictObject({
       type: z.literal("noul").describe("Estimate the probability of true."),
@@ -77,7 +104,7 @@ export const SystemOneQuestionSchema = z
         .min(1)
         .max(255)
         .describe(
-          "One to 255 ordered JSON level descriptions, indexed from zero. A single level is answered with certainty; perplexity-ai/pplx-decider-v1.2 still requires at least two.",
+          "One to 255 ordered JSON level descriptions, indexed from zero. A single level is answered with certainty.",
         ),
     }),
   ])
@@ -98,8 +125,10 @@ export const SystemOneRequestSchema = z
       ),
     questions: boundedMap(NameSchema, SystemOneQuestionSchema, {
       min: 1,
-      max: 64,
-    }).describe("One to 64 named questions; each name is 1..200 characters."),
+      max: SYSTEMONE_MAX_QUESTIONS,
+    }).describe(
+      "One to 1,024 named questions; each name is 1..200 characters. Runtime token limits usually bind first.",
+    ),
     session_id: z
       .string()
       .min(1)
@@ -199,7 +228,7 @@ export const SystemOneResponseSchema = z
     model: HostedModelIdSchema,
     answers: boundedMap(NameSchema, SystemOneAnswerSchema, {
       min: 1,
-      max: 64,
+      max: SYSTEMONE_MAX_QUESTIONS,
     }).describe("Answers keyed by the request question names."),
     usage: SystemOneUsageSchema,
     latency_ms: z

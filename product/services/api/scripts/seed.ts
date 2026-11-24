@@ -101,6 +101,7 @@ const localQwen = {
   model: {
     id: "mlx-community/qwen3-0.6b-4bit",
     name: "Qwen3 0.6B 4-bit",
+    type: "chat",
     status: "available",
     properties: {
       description:
@@ -252,7 +253,11 @@ await withControlDatabase(async ({ database, catalog }) => {
   }
 }, databaseUrl);
 
-const seededModelNames = catalogModels.map((model) => model.name).join(", ");
+// Organization-owned models are skipped unless their owner exists locally.
+const seededModelNames = catalogModels
+  .filter((model) => !("owner" in model))
+  .map((model) => model.name)
+  .join(", ");
 console.log(
   creditTarget
     ? `Seed data ready for ${email}: ${organizationName}, ${seededModelNames} and $100.00 credit`

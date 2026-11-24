@@ -34,6 +34,8 @@ export const ORGANIZATION_ROLES = ["admin", "member"] as const;
 export const MEMBER_STATUSES = ["active", "suspended"] as const;
 export const BILLING_MODES = ["prepaid", "invoiced"] as const;
 export const MODEL_STATUSES = ["available", "unavailable", "retired"] as const;
+/** The inference interface: chat generates text; decision answers SystemOne. */
+export const MODEL_TYPES = ["chat", "decision"] as const;
 export const DEPLOYMENT_STATUSES = [
   "available",
   "unavailable",
@@ -360,6 +362,16 @@ export const models = pgTable(
     // when no deployment supplies one.
     tokenizerPath: text("tokenizer_path"),
     tokenizerRevision: text("tokenizer_revision"),
+    // Only this organization's API keys can call the model, and only it sees it
+    // listed. Null is the public catalog.
+    organizationId: uuid("organization_id").references(() => organizations.id, {
+      onDelete: "restrict",
+    }),
+    // The interface the model serves, declared by its catalog definition;
+    // every deployment's release must serve it.
+    // The default only keeps workers from before this column writing their
+    // catalog during a rolling upgrade; every definition declares its type.
+    type: text("type", { enum: MODEL_TYPES }).notNull().default("chat"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -368,6 +380,17 @@ export const models = pgTable(
       .notNull(),
   },
   (table) => [
+    index("models_organization_id_idx")
+      .on(table.organizationId)
+      .where(sql`${table.organizationId} is not null`),
+    check("models_type_check", sql`${table.type} in ('chat', 'decision')`),
+    // `<owner slug>/<name>`: one segment after the slug, so an owned name can
+    // never be a private model version (`<slug>/<task>/<version>`). Aliases
+    // contain no comma.
+    check(
+      "models_owned_name_check",
+      sql`${table.organizationId} is null or (${table.id} ~ '^[^/]+/[^/]+$' and ${table.id} = lower(${table.id}) and array_to_string(${table.aliases}, ',') !~ '(^|,)[^,/]*/[^,/]*/')`,
+    ),
     check(
       "models_openrouter_model_id_check",
       sql`${table.openrouterModelId} ~ '^[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$' and char_length(${table.openrouterModelId}) <= 200`,

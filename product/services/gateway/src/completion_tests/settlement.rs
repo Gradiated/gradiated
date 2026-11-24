@@ -89,7 +89,7 @@ async fn overload_is_finalized_before_the_public_error_is_returned() {
 
     assert_eq!(
         harness.complete().await.unwrap_err(),
-        GatewayError::CapacityExceeded
+        GatewayError::capacity_exceeded()
     );
 
     let finalized = harness.only_finalized();

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="${GRADIATED_RUNTIME_ROOT:?}"
+export CUDA_VISIBLE_DEVICES="${NVIDIA_VISIBLE_DEVICES:?Host agent must assign a GPU UUID}"
+export CUDA_HOME="$root/python/lib/python3.12/site-packages/nvidia/cu13"
+export CUDA_PATH="$CUDA_HOME"
+export PATH="$root/python/bin:$CUDA_HOME/bin:$PATH"
+export LD_LIBRARY_PATH="$CUDA_HOME/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+# Triton compiles a CUDA helper at engine start and needs the Python headers.
+export CPATH="$root/python/include/python3.12${CPATH:+:$CPATH}"
+unset PYTHONPATH PYTHONHOME LD_PRELOAD
+export SGLANG_ENABLE_HEALTH_ENDPOINT_GENERATION=0
+export TOKENIZERS_PARALLELISM=false
+# A g6.xlarge has four vCPUs for the adapter and SGLang's three processes.
+export OMP_NUM_THREADS=2
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/jevk5-sglang"
+export FLASHINFER_WORKSPACE_BASE="$cache/flashinfer"
+export SGLANG_CACHE_DIR="$cache/sglang"
+export SGLANG_JIT_CACHE_DIR="$cache/jit"
+export TORCH_EXTENSIONS_DIR="$cache/torch-extensions"
+export TRITON_CACHE_DIR="$cache/triton"
+export CUDA_CACHE_PATH="$cache/cuda"
+mkdir -p "$FLASHINFER_WORKSPACE_BASE" "$SGLANG_CACHE_DIR" "$SGLANG_JIT_CACHE_DIR" "$TORCH_EXTENSIONS_DIR" \
+  "$TRITON_CACHE_DIR" "$CUDA_CACHE_PATH"
+exec "$root/python/bin/python3" "$root/service.py" --port "${RUNTIME_PORT:?}"

@@ -18,6 +18,7 @@ import { seedMember, seedWorkspace } from "./support/fixtures.js";
 import { adapterFiles } from "./support/adapter-upload.js";
 import type { BaseModelConfiguration } from "../src/training/base-model-configuration.js";
 import { createMemoryContentStore } from "./support/content-store.js";
+import { cartridgeFile } from "./support/cartridge.js";
 
 describe("model uploads", () => {
   let db: TestDatabase;
@@ -66,6 +67,8 @@ describe("model uploads", () => {
         layerCount: 1,
         expertCount: 0,
         projectionShapes: { "0/self_attn.q_proj": [4, 4] as const },
+        hiddenSize: 8,
+        vocabSize: 1000,
       }),
     );
     const service = createModelUploads(
@@ -107,6 +110,70 @@ describe("model uploads", () => {
       loadBaseConfiguration,
     };
   };
+  it("publishes a cartridge as an unavailable version", async () => {
+    const { member, objects, service, storage } = await setup();
+    const bytes = cartridgeFile();
+    const upload = await service.create(member.userId, member.workspaceId, {
+      format: "cartridge",
+      task: member.task.name,
+      name: "cartridge-v1",
+      base_model_id: member.input.baseModelId,
+      cartridge_size: bytes.length,
+    });
+
+    expect(upload).toMatchObject({
+      cartridge_url: `https://storage.invalid/uploads/${upload.id}/cartridge.safetensors`,
+    });
+    expect(upload).not.toHaveProperty("config_url");
+
+    objects.set(`uploads/${upload.id}/cartridge.safetensors`, bytes);
+    const { version } = await service.complete(
+      member.userId,
+      member.workspaceId,
+      upload.id,
+    );
+
+    expect(version.status).toBe("unavailable");
+    expect(version.adapter).toMatchObject({
+      format: "cartridge",
+      num_tokens: 4,
+      hidden_size: 8,
+      placement: "system_prompt_start",
+      separator: "\n\n",
+      has_slot_token_ids: true,
+      size_bytes: bytes.length,
+    });
+    expect(version.adapter.artifact_uri).toMatch(
+      new RegExp(
+        `^s3://test/cartridges/${upload.id}/[0-9a-f]{64}/cartridge\\.safetensors$`,
+      ),
+    );
+    expect(objects.has(`uploads/${upload.id}/cartridge.safetensors`)).toBe(
+      false,
+    );
+    expect(storage.putFile).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects a cartridge built for a different hidden size", async () => {
+    const { member, objects, service } = await setup();
+    const bytes = cartridgeFile({ hidden: 4 });
+    const upload = await service.create(member.userId, member.workspaceId, {
+      format: "cartridge",
+      task: member.task.name,
+      name: "cartridge-v1",
+      base_model_id: member.input.baseModelId,
+      cartridge_size: bytes.length,
+    });
+    objects.set(`uploads/${upload.id}/cartridge.safetensors`, bytes);
+
+    await expect(
+      service.complete(member.userId, member.workspaceId, upload.id),
+    ).rejects.toMatchObject({
+      code: "conflict",
+      message: expect.stringContaining("must be 8 wide"),
+    });
+  });
+
   it("rejects a different base model when appending to a task", async () => {
     const { member, body, service, storage } = await setup();
     await db.database
@@ -204,7 +271,10 @@ describe("model uploads", () => {
     );
     expect(result.version.trainingRunId).toBeNull();
     expect(result.version.status).toBe("unavailable");
-    expect(result.version.adapter.rank).toBe(2);
+    expect(result.version.adapter).toMatchObject({
+      format: "peft_lora",
+      rank: 2,
+    });
     expect(objects.has(`uploads/${upload.id}/adapter_config.json`)).toBe(false);
     expect(objects.has(`uploads/${upload.id}/adapter_model.safetensors`)).toBe(
       false,

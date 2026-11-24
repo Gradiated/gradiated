@@ -4,7 +4,7 @@ import type { AdapterHostingDependencies } from "../src/routes/adapter-hosting.j
 
 const app = (adapters?: AdapterHostingDependencies) =>
   createGpuControlApp({
-    provider: "runpod",
+    providers: ["runpod"],
     status: { report: async () => undefined },
     check: async () => ({ postgres: { status: "up" } }),
     ...(adapters ? { adapters } : {}),
@@ -37,7 +37,7 @@ describe("private GPU control listener", () => {
       url: "https://bundles.example.invalid/download",
     }));
     const privateApp = createGpuControlApp({
-      provider: "runpod",
+      providers: ["runpod"],
       status: { report: async () => undefined },
       check: async () => ({}),
       runtimeBundle,

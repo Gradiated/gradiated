@@ -16,7 +16,7 @@ import type { DependencyCheck } from "./readiness.js";
 import type { ApiEnvironment } from "./types.js";
 
 export const createGpuControlApp = (dependencies: {
-  provider: string;
+  providers: readonly string[];
   status: DeploymentStatusService;
   adapters?: Pick<AdapterHostingDependencies, "service">;
   runtimeBundle?: (digest: string) => Promise<{ url: string } | undefined>;
@@ -55,7 +55,7 @@ export const createGpuControlApp = (dependencies: {
   app.route(
     "/",
     createDeploymentStatusIngestApp({
-      provider: dependencies.provider,
+      providers: dependencies.providers,
       service: dependencies.status,
     }),
   );

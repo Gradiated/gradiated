@@ -128,8 +128,9 @@ export const DownloadAdapterDialog = ({
         <DialogHeader>
           <DialogTitle>Download {version.name}</DialogTitle>
           <DialogDescription>
-            A standard PEFT LoRA adapter you can serve anywhere its base model
-            runs.
+            {adapter.format === "cartridge"
+              ? "A cartridge: learned input embeddings that go in front of the system prompt of the unchanged base model."
+              : "A standard PEFT LoRA adapter you can serve anywhere its base model runs."}
           </DialogDescription>
         </DialogHeader>
 
@@ -153,8 +154,12 @@ export const DownloadAdapterDialog = ({
               <span className="text-muted-foreground">Unknown</span>
             )}
           </Detail>
-          <Detail label="Rank">
-            <span className="tabular-nums">{adapter.rank}</span>
+          <Detail label={adapter.format === "cartridge" ? "Tokens" : "Rank"}>
+            <span className="tabular-nums">
+              {adapter.format === "cartridge"
+                ? adapter.num_tokens.toLocaleString()
+                : adapter.rank}
+            </span>
           </Detail>
           <Detail label="Size">
             <span className="tabular-nums">
@@ -178,26 +183,37 @@ export const DownloadAdapterDialog = ({
           </Detail>
         </dl>
 
-        <div className="space-y-2">
+        {adapter.format === "cartridge" ? (
           <p className="text-xs text-muted-foreground">
-            <span className="font-mono">adapter.tar.gz</span> contains{" "}
-            <span className="font-mono">adapter_config.json</span> and{" "}
-            <span className="font-mono">adapter_model.safetensors</span>.
+            <span className="font-mono">cartridge.safetensors</span> holds the
+            embeddings
+            {adapter.has_slot_token_ids
+              ? " and the token IDs they were trained behind"
+              : ""}
+            .
           </p>
-          <CodeSnippet
-            code={snippet(runtime, {
-              name: version.name,
-              repo,
-              revision,
-              rank: adapter.rank,
-            })}
-            language={runtime === "peft" ? "python" : "bash"}
-            value={runtime}
-            options={RUNTIMES}
-            onValueChange={setRuntime}
-            copyText="Copy command"
-          />
-        </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-mono">adapter.tar.gz</span> contains{" "}
+              <span className="font-mono">adapter_config.json</span> and{" "}
+              <span className="font-mono">adapter_model.safetensors</span>.
+            </p>
+            <CodeSnippet
+              code={snippet(runtime, {
+                name: version.name,
+                repo,
+                revision,
+                rank: adapter.rank,
+              })}
+              language={runtime === "peft" ? "python" : "bash"}
+              value={runtime}
+              options={RUNTIMES}
+              onValueChange={setRuntime}
+              copyText="Copy command"
+            />
+          </div>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>

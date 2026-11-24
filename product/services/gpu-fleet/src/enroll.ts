@@ -1,9 +1,18 @@
+import { createHash } from "node:crypto";
+
 import {
   BOOTSTRAP_TAG,
   bootstrapPeer,
+  ec2Refusal,
   enroll as runEnroll,
   enrollmentPayload,
+  managedInstance,
+  prepareReplacement,
+  removeBootstrapAccess,
+  replacementProgress,
+  replaceWithTemplateImage,
   RunPodError,
+  type AwsGpuClient,
   type BootstrapPeer,
   type EnrollmentResult,
   type InstanceTailnet,
@@ -12,7 +21,14 @@ import {
   type TailnetStatus,
 } from "@gradiated/gpu-hosts";
 
-import type { Bundle, GpuHost } from "./hosts.js";
+import {
+  ec2InstanceOf,
+  isAws,
+  providerInstanceId,
+  runPodId,
+  type Bundle,
+  type GpuHost,
+} from "./hosts.js";
 
 export class ReimageNotSent extends Error {
   constructor(cause: unknown) {
@@ -30,9 +46,11 @@ export type MintedKey = { key: string; id: string };
 
 export type EnrollmentDependencies = {
   runpod: RunPodClient;
+  // The operator role client of each AWS GPU account the fleet may change.
+  aws?: (accountId: string) => AwsGpuClient | undefined;
   tailnet: { status: () => Promise<TailnetStatus>; run: RunSsh };
   instanceTailnet: (instanceId: string) => Promise<InstanceTailnet>;
-  bootstrapKey: (podId: string) => Promise<AuthKey>;
+  bootstrapKey: (providerInstanceId: string) => Promise<AuthKey>;
   inferenceKey: (instanceId: string) => Promise<AuthKey>;
   // Each OAuth client can revoke only the keys it minted.
   revokeKey: (client: KeyClient, id: string) => Promise<void>;
@@ -48,6 +66,7 @@ const SKU_PRODUCTS: Record<string, string> = {
   B300: "NVIDIA B300",
   H100: "NVIDIA H100",
   H200: "NVIDIA H200",
+  L4: "NVIDIA L4",
   L40S: "NVIDIA L40S",
   "RTX-PRO-6000": "NVIDIA RTX PRO 6000",
 };
@@ -61,16 +80,138 @@ const sku = (host: GpuHost) => {
   return `${host.spec.inventory.gpuCount}x ${product}`;
 };
 
+// A host's EC2 client, only for the account and region its GpuHost names.
+const ec2 = (deps: EnrollmentDependencies, host: GpuHost) => {
+  if (!isAws(host)) throw new Error(`${host.metadata.name} is not an AWS host`);
+  const { accountId, region } = host.spec.provider;
+  const client = deps.aws?.(accountId);
+  if (!client || client.accountId !== accountId)
+    throw new Error(`AWS access to account ${accountId} is not configured`);
+  if (client.region !== region)
+    throw new Error(
+      `AWS access to account ${accountId} is for ${client.region}, not ${region}`,
+    );
+  return { client, id: ec2InstanceOf(host), accountId };
+};
+
+// One task per re-image request: EC2 treats a repeated token as the same task.
+const replaceToken = (host: GpuHost, requestedAt: string) =>
+  createHash("sha256")
+    .update(`${host.metadata.uid}/${requestedAt}`)
+    .digest("hex");
+
+const onNewRoot = async (
+  client: AwsGpuClient,
+  id: string,
+  accountId: string,
+  taskId: string,
+) => {
+  const instance = await managedInstance(client, id, accountId);
+  const { inFlight, last } = await replacementProgress(client, id);
+  if (inFlight.length || last?.id !== taskId || last.state !== "succeeded")
+    throw new Error(
+      `Replace-root-volume task ${taskId} of ${id} is not the last to have succeeded`,
+    );
+  if (instance.state !== "running")
+    throw new Error(`EC2 instance ${id} is ${instance.state}, not running`);
+};
+
 export const createEnrollment = (deps: EnrollmentDependencies) => ({
-  pod: (host: GpuHost) => deps.runpod.pod(host.spec.provider.podId),
+  pod: (host: GpuHost) => deps.runpod.pod(runPodId(host)),
+
+  instance: async (host: GpuHost) => {
+    const { client, id } = ec2(deps, host);
+    return client.instance(id);
+  },
+
+  instanceStorage: async (host: GpuHost, instanceType: string) =>
+    ec2(deps, host).client.instanceStorage(instanceType),
+
+  // Why the instance must not be re-imaged: untagged, in another account, or
+  // with an instance profile other than the bootstrap profile.
+  ec2Refusal: async (host: GpuHost) => {
+    const { client, id, accountId } = ec2(deps, host);
+    const instance = await client.instance(id);
+    const refusal = ec2Refusal(instance, accountId);
+    if (refusal) return refusal;
+    if (
+      instance.instanceProfileArn &&
+      !(await client.bootstrapProfileAssociated(id, { includeDetaching: true }))
+    )
+      return `EC2 instance ${id} has instance profile ${instance.instanceProfileArn}, not the bootstrap profile; the operator leaves it alone`;
+  },
+
+  // The old root boots again, so its bootstrap access goes first.
+  startInstance: async (host: GpuHost) => {
+    const { client, id, accountId } = ec2(deps, host);
+    await prepareReplacement(
+      client,
+      await managedInstance(client, id, accountId),
+    );
+    await client.start(id);
+  },
+
+  replacements: async (host: GpuHost) => {
+    const { client, id } = ec2(deps, host);
+    return replacementProgress(client, id);
+  },
+
+  // Sent again with the same request time, it returns the same task.
+  replaceRoot: async (host: GpuHost, requestedAt: string) => {
+    const { client, id, accountId } = ec2(deps, host);
+    await prepareReplacement(
+      client,
+      await managedInstance(client, id, accountId),
+    );
+    return replaceWithTemplateImage(
+      client,
+      id,
+      replaceToken(host, requestedAt),
+    );
+  },
+
+  rootVolumeTask: async (host: GpuHost, taskId: string) => {
+    const { client, id } = ec2(deps, host);
+    return client.replaceRootVolumeTask(id, taskId);
+  },
+
+  // The profile and the key reach only the new root volume: both wait until
+  // this rollout's replacement is the last, every task has ended, and the
+  // instance runs again.
+  attachBootstrapProfile: async (host: GpuHost, taskId: string) => {
+    const { client, id, accountId } = ec2(deps, host);
+    await onNewRoot(client, id, accountId, taskId);
+    await client.associateBootstrapProfile(id);
+  },
+
+  deliverBootstrapKey: async (
+    host: GpuHost,
+    taskId: string,
+    image: string,
+    key: string,
+  ) => {
+    const { client, id, accountId } = ec2(deps, host);
+    await onNewRoot(client, id, accountId, taskId);
+    if (!(await client.bootstrapProfileAssociated(id)))
+      throw new Error(
+        `EC2 instance ${id} has no bootstrap instance profile, so no bootstrap key was written`,
+      );
+
+    await client.writeBootstrapSecret(id, { image, tailscaleAuthKey: key });
+  },
+
+  removeBootstrapAccess: async (host: GpuHost) => {
+    const { client, id } = ec2(deps, host);
+    return removeBootstrapAccess(client, id);
+  },
 
   tailnetOf: (host: GpuHost) => deps.instanceTailnet(host.spec.instanceId),
 
   peer: async (host: GpuHost): Promise<BootstrapPeer | null> =>
-    bootstrapPeer(await deps.tailnet.status(), host.spec.provider.podId),
+    bootstrapPeer(await deps.tailnet.status(), providerInstanceId(host)),
 
   bootstrapKey: async (host: GpuHost): Promise<MintedKey> => {
-    const { key, id } = await deps.bootstrapKey(host.spec.provider.podId);
+    const { key, id } = await deps.bootstrapKey(providerInstanceId(host));
     return { key, id: `bootstrap:${id}` };
   },
 
@@ -84,7 +225,7 @@ export const createEnrollment = (deps: EnrollmentDependencies) => ({
   // Throws ReimageNotSent when RunPod certainly did not apply the update. Any
   // other error leaves it unknown whether the pod is being re-imaged.
   reimage: async (host: GpuHost, image: string, bootstrapKey: string) => {
-    const podId = host.spec.provider.podId;
+    const podId = runPodId(host);
     const current = await deps.runpod.pod(podId).catch((error: unknown) => {
       throw new ReimageNotSent(error);
     });

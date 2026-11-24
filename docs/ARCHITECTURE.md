@@ -350,11 +350,15 @@ The Rust service exposes the launch inference contract:
 
 - `POST /v1/chat/completions`, streaming and non-streaming;
 - `POST /v1/systemone`, non-streaming native typed decision inference;
-- `GET /v1/models` with only exact currently advertised model IDs;
+- `GET /v1/models` with only exact currently advertised model IDs: public
+  models and the caller's organization's own;
 - `/health/live`, `/health/ready` and `/metrics`.
 
 For each request it authenticates the API-key digest, converts the model ID to
-ASCII lowercase, resolves the exact canonical model record, checks
+ASCII lowercase, resolves the exact canonical model record (an
+organization-owned model resolves only for that organization's keys and the
+verification workspace; to anyone else it is `model_not_found`, see
+[organization-owned models](DATA_MODEL.md#organization-owned-models)), checks
 organization/workspace status, applies the operational prepaid
 balance/concurrency rule when applicable, and rejects parameters not advertised
 by the exact model before contacting SGLang. Invoiced organizations are not
@@ -401,8 +405,11 @@ constructs the closed generation properties document and invokes the Valkey
 finalization script. A lost process may leave an expired, unbilled generation;
 there is no durable in-progress request table at launch.
 
-Native SystemOne accepts an exact model, text/object/array state and 1..64
-named `choice`, `noul` or `score` questions with JSON instructions and criteria.
+Native SystemOne accepts an exact model, text/object/array state and 1..1,024
+named `choice`, `noul` or `score` questions with JSON instructions and criteria;
+runtime token limits bind well before that count. `choice` criteria may be a
+list of distinct option names, which the gateway rewrites to undescribed options
+(`{name: null}`) before routing, so runtimes receive only the object form.
 Optional `noul` criteria accept only `false` and `true` keys; unsupported
 outcomes are rejected rather than silently discarded by the runtime.
 Its closed envelope rejects streaming, output-token controls, caller priority

@@ -2,7 +2,7 @@
 
 <DocsLead>Use the TypeSafe SDK to ask linden-1 for decisions. Set your Gradiated base URL, API key, and model, then send a state and named questions.</DocsLead>
 
-linden-1 31B is Gradiated's open decision model, served through the native SystemOne API. If you already use TypeSafe's SDK for Jev, use the same client with `gradiated/linden-1` on Gradiated. This selects linden-1; `jev-latest` is not a Gradiated model alias.
+linden-1 is Gradiated's open decision model, served through the native SystemOne API. If you already use TypeSafe's SDK for Jev, use the same client with `gradiated/linden-1` on Gradiated. This selects linden-1; `jev-latest` is not a Gradiated model alias.
 
 ## Install
 
@@ -181,7 +181,7 @@ console.log(response.answers.urgency.score);
 
 ## Supported requests
 
-linden-1 accepts 1–64 named questions per request. A choice has 1–255 options and a score 1–255 ordered criteria; a single option or level is answered with certainty. Instructions are optional: a question without them is asked through its criteria alone. States are text, JSON or a text-only chat; images and other media are not supported. The hosted runtime limits bodies to 1 MiB and each question's prompt, including the state, to 32,768 tokens.
+linden-1 accepts 1–1,024 named questions per request. A choice has 1–255 options, as an object of descriptions or a list of option names, and a score 1–255 ordered criteria; a single option or level is answered with certainty. Instructions are optional: a question without them is asked through its criteria alone. States are text, JSON or a text-only chat; images and other media are not supported. The hosted runtime limits bodies to 1 MiB and each question's prompt, including the state, to 32,768 tokens.
 
 Use the native SystemOne endpoint for linden-1. It returns all answers in one response, with no streaming or text generation parameters such as `max_tokens` or `temperature`. Only the `default` service tier is supported; omit `service_tier` to use it.
 

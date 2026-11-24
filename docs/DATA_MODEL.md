@@ -139,7 +139,7 @@ Direct customers and distribution channels such as OpenRouter use the same organ
 
 OpenRouter is an internal `distribution_channel` organization and is not visible in the customer organization chooser.
 
-The organization `slug` prefixes its private model names, as in `acme/support-triage`. An organization created during signup starts with a random 16-character slug, and its owner chooses the real one during onboarding; one created from the console asks for its slug up front. In both cases the console suggests a slugified form of the organization name and the owner can edit it; a slug held by another organization is refused so they can pick again. Admins can change it in settings until the organization has its first model, after which it is fixed so model names never stop resolving. Fixed platform names (`gradiated`, `openai`, `anthropic`, `api`, ...) and the author segment of every hosted catalog id (`google`, `qwen`, ...) are reserved, so a private name never shadows a catalog id. Migration 0030 gives existing organizations a slug from their name, with `-2`, `-3`, ... on collisions and an `-org` suffix for reserved or too-short names.
+The organization `slug` prefixes its private model names, as in `acme/support-triage`. An organization created during signup starts with a random 16-character slug, and its owner chooses the real one during onboarding; one created from the console asks for its slug up front. In both cases the console suggests a slugified form of the organization name and the owner can edit it; a slug held by another organization is refused so they can pick again. Admins can change it in settings until the organization has its first model (a private model or its own hosted model), after which it is fixed so model names never stop resolving. Fixed platform names (`gradiated`, `openai`, `anthropic`, `api`, ...) and the author segment of every hosted catalog id (`google`, `qwen`, ...) are reserved, so a private name never shadows a catalog id. Migration 0030 gives existing organizations a slug from their name, with `-2`, `-3`, ... on collisions and an `-org` suffix for reserved or too-short names.
 
 A new user's signup organization has a null `onboarded_at`, and the console asks its owner to name it before continuing. An owner or admin may set `auto_join_domain` only to the domain of their own verified email, and only when that domain is not a free or disposable email provider. When a user signs up with a verified email at a claimed domain of an active customer organization, they join it as a `member` and no personal organization is created. One organization may claim a domain.
 
@@ -256,18 +256,20 @@ The raw format is `grad_<32 random bytes encoded as base64url>`. Authentication 
 
 ### 10. `models`
 
-Global hosted-model catalog. It is not organization-scoped. The primary key is the immutable human-readable model identifier used in direct requests and returned to OpenRouter, for example `google/gemma-4-31b-it`.
+Global hosted-model catalog. The primary key is the immutable human-readable model identifier used in direct requests and returned to OpenRouter, for example `google/gemma-4-31b-it`. A row with no `organization_id` is a public catalog model; a row with one is that organization's own full custom model (see [Organization-owned models](#organization-owned-models)).
 
-| Field                 | Type        | Null | Rules                                                                        |
-| --------------------- | ----------- | ---- | ---------------------------------------------------------------------------- |
-| `id`                  | text        | no   | Primary key; lowercase immutable public model ID                             |
-| `name`                | text        | no   | Bounded customer-facing name                                                 |
-| `status`              | text        | no   | `available`, `unavailable`, `retired`                                        |
-| `properties`          | jsonb       | no   | Closed Zod `ModelProperties` document                                        |
-| `aliases`             | text[]      | no   | Alternate request names; defaults to an empty array                          |
-| `openrouter_model_id` | text        | yes  | Exact OpenRouter `author/slug` of the same model; no `:variant` or `~` alias |
-| `created_at`          | timestamptz | no   | Creation time                                                                |
-| `updated_at`          | timestamptz | no   | Last mutation time                                                           |
+| Field                 | Type        | Null | Rules                                                                                  |
+| --------------------- | ----------- | ---- | -------------------------------------------------------------------------------------- |
+| `id`                  | text        | no   | Primary key; lowercase immutable model ID                                              |
+| `name`                | text        | no   | Bounded customer-facing name                                                           |
+| `status`              | text        | no   | `available`, `unavailable`, `retired`                                                  |
+| `properties`          | jsonb       | no   | Closed Zod `ModelProperties` document                                                  |
+| `aliases`             | text[]      | no   | Alternate request names; defaults to an empty array                                    |
+| `openrouter_model_id` | text        | yes  | Exact OpenRouter `author/slug` of the same model; no `:variant` or `~` alias           |
+| `organization_id`     | uuid        | yes  | FK `organizations.id`, restrict; the only organization that can call or list the model |
+| `type`                | text        | no   | `chat` or `decision`, declared by the catalog definition; deployments must serve it    |
+| `created_at`          | timestamptz | no   | Creation time                                                                          |
+| `updated_at`          | timestamptz | no   | Last mutation time                                                                     |
 
 `openrouter_model_id` is not part of `ModelProperties`, so it is never
 published. Catalog membership decides that Gradiated bills a request; the
@@ -293,10 +295,21 @@ belong to `model_deployments`, not to this customer-facing document.
 | `passthrough_parameters` | capability-descriptor map | Bounded request-scoped extension allowlist |
 | `deprecation_date`       | timestamp nullable        | Optional scheduled retirement              |
 
-The public Models API adds a required `properties.type` (`chat` or `decision`)
-from the Git-owned model catalog metadata. This field is response-only and is
-not written to PostgreSQL, so rolling API and worker releases keep the same
-closed stored document shape.
+Every model declares its interface in the `type` column: `decision` for a
+model served over SystemOne, `chat` for the rest. Each Git catalog definition
+sets it, and migration 0036 backfilled existing rows (decision for Kev 9B,
+Decider v1.2 and linden-1, as their definitions declare; chat otherwise). Only
+releases of the matching protocol become a model's deployments: Kubernetes
+reconciliation withdraws a pod of the other protocol, the worker logs
+`deployment_protocol_refused`, and a direct deployment write is refused.
+A model ID's type is fixed once written, as cached gateway records carry its
+deployments: a definition that changes it is skipped as `type_changed` and the
+row retired, and a direct write that changes it withdraws the deployments of
+the other protocol. The column defaults to `chat` only so workers from before
+it can keep writing existing rows during the rollout. The
+public Models API returns it as `properties.type`, and probes use it. It is a
+column, not part of `ModelProperties`, so the stored document keeps its closed
+shape; the compiled `MODEL_CATALOG` keeps only display metadata.
 
 The `external=true` pricing feed retains its legacy model-property shape without
 `type`. Evaluation workers read `ExternalModelListSchema`, allowing old and new
@@ -721,25 +734,28 @@ Valkey key: `credential:<hex SHA-256 digest>`. The digest is the lookup key and 
 
 ## 19. `GatewayModel`
 
-Valkey key: `model:<id>`.
+Valkey key: `model:v2:<id>`.
 
-| Field         | Type                       |
-| ------------- | -------------------------- |
-| `id`          | string                     |
-| `name`        | string                     |
-| `status`      | model status               |
-| `properties`  | `ModelProperties`          |
-| `deployments` | `GatewayModelDeployment[]` |
+| Field                 | Type                       |
+| --------------------- | -------------------------- |
+| `id`                  | string                     |
+| `aliases`             | string[]                   |
+| `name`                | string                     |
+| `status`              | model status               |
+| `properties`          | `ModelProperties`          |
+| `openrouter_model_id` | string nullable            |
+| `tokenizer`           | pinned tokenizer nullable  |
+| `organization_id`     | uuid nullable              |
+| `deployments`         | `GatewayModelDeployment[]` |
 
-This is the route-ready projection of one PostgreSQL `models` row and all of
-its `model_deployments` rows. Each `GatewayModelDeployment` contains `id`,
+This is the route-ready read of one PostgreSQL `models` row and all of its
+`model_deployments` rows. Each `GatewayModelDeployment` contains `id`,
 `status`, `provider`, `region`, `fault_domain`, `service_url`, and the closed
-`ModelDeploymentRelease`. The projector replaces the complete document with
-one `SET`. `gateway-model-ids` is the enumeration index for readiness and
-`/v1/models`.
-
-The gateway caches this projection in memory for one second. A miss reloads it
-from Valkey. A missing route fails closed.
+`ModelDeploymentRelease`. The gateway reads it through Valkey: a miss reads
+PostgreSQL and caches the record for `GATEWAY_RECORD_CACHE_TTL_SECONDS`.
+`/v1/models` enumerates model IDs from PostgreSQL. A missing route fails
+closed. Records cached under the earlier `model:<id>` key have no
+`organization_id`, so a gateway that enforces ownership never reads them.
 
 ## 20. `DeploymentRuntimeStatus`
 
@@ -918,6 +934,65 @@ Executor-specific support is checked when admitting a run.
 
 Workspace `default_judge_model` seeds `tasks.judge_model_id` when a task is first captured. Each task can override its judge independently; changing the workspace default never rewrites existing tasks. Migration 0013 renames the workspace field and backfills existing tasks from their workspace’s current default. Training admission snapshots the saved task judge.
 
+## Organization-owned models
+
+A full custom model, not an adapter, can belong to one organization: its
+`models.organization_id` names the owner. Every such model is a Git catalog
+definition with an owner, since each needs its own runtime and GPU decisions;
+customers don't upload them. Migration 0036 adds the column, null for every
+existing row, so the public catalog is unchanged. An owned model is served like
+any hosted model, on its own deployments, but:
+
+- only API keys of the owner can call it. To every other organization the
+  gateway answers `model_not_found`, exactly as for an unknown ID, so its
+  existence is not revealed. The one exception is the configured verification
+  workspace (`GATEWAY_VERIFICATION_WORKSPACE_ID`), whose keys the worker uses
+  to qualify pods and probe models continuously. The gateway's serving state
+  takes a `ModelAccess`, built only from the caller's authenticated identity,
+  for every model read and listing, so no request path can obtain an owned
+  model without one;
+- it is never listed. `GET /api/v1/models` (and so the website and docs
+  catalog), MCP `list_models`, the console's model lists and evaluation and
+  base-model choices read only public rows: `listModels` leaves owned rows out
+  unless an internal caller that never publishes the result (catalog apply,
+  probes, qualification, the GPU fleet) asks for them, and the public route
+  drops any that reach it. Gateway `/v1/models` lists an owned model only to
+  its owner, so OpenRouter's provider listing never includes one;
+- it is never in the compiled `MODEL_CATALOG`. Like every model, its
+  definition declares its `type`, which its deployments must serve.
+
+Its ID is `<owner slug>/<name>`, one segment after the slug, like a private
+model's production name, and so are its aliases, so an owned name can never be
+a private version name (`<slug>/<task>/<version>`); `models_owned_name_check`
+enforces the shape. Owning a model fixes the organization's slug, as a first
+private model does, and the slug's author segment is reserved. One name can't
+be both an owned model and a private model, which the gateway would refuse as
+`ambiguous_model_name`: training and adapter uploads refuse a task name whose
+`<slug>/<lowercase name>` is a non-retired owned model's ID or alias, migration 0036
+makes the claim trigger leave such a name unclaimed (covering runs admitted
+earlier), and `applyCatalog` skips an owned definition whose ID or alias is a
+claimed private name as `private_model_conflict`. Both sides lock the
+organization row, so they can't race.
+
+Definitions name their owner by slug, `owner: { organizationSlug }`, because
+IDs differ per environment; `applyCatalog` resolves it to `organization_id`,
+rejects a malformed ID or alias, and skips the row with a
+`catalog_model_skipped` warning when that environment has no such organization,
+so an owned model is never written public. A model's owner is fixed when its
+row is first written: gateways cache the record under its ID, so an owner
+changed in place would be enforced from a stale record until it expired. A
+definition that would change it (public to owned, owned to public, or to
+another owner) is skipped as `owner_changed`, and moving a model takes a new
+ID. Gateways cache records under aliases too, so every name keeps one owner: an
+owned model's names are under its owner's fixed slug, a new public ID or alias
+may not be under any organization's slug, and a name another owner (or the
+public catalog) answers to can't be taken. Such a definition is skipped as
+`namespace_conflict` and its row keeps its previous names. The author segment
+of public aliases, not just IDs, reserves a slug. A catalog row already written for a definition skipped this way, or for an
+absent owner or a private name conflict, is retired. A retired hosted model
+yields its name to a private model with the same name instead of making both
+ambiguous.
+
 ## Private LoRA serving
 
 A private model's public name is `<organization slug>/<task>` for the task's
@@ -940,7 +1015,9 @@ row, as slug changes do, so a slug can't change under an organization's first
 model; running it in the database also covers versions written by older code
 during a rollout.
 Training and uploads are refused when another workspace of the organization
-already has a model with the name. Only claimed tasks resolve at the gateway or
+already has a model with the name, or when the organization's own hosted model
+is named `<slug>/<task>` (compared in lowercase, as the gateway looks it up).
+Only claimed tasks resolve at the gateway or
 load on GPU runtimes. The migration claims names for tasks that already have
 versions; where several workspaces of one organization share such a name, the
 oldest task keeps it.
@@ -984,7 +1061,8 @@ upload grant cannot change published bytes. Completion and deletion serialize on
 the task version; expired uploads cannot complete. Publication marks the file
 `ready` and replaces any ready file with the same name on that version, deleting
 the replaced object. A partial unique index keeps one ready file per version and
-name. Workspace members list, read (text files up to 2 MiB, served by the API) and
+name. Workspace members list, read (text files up to 2 MiB, or 32 MiB for
+`.eval.json` files, served by the API) and
 download ready files. Removed and replaced rows remain as tombstones until artifact
 cleanup deletes their objects after upload grants expire. Cleanup also removes
 abandoned uploads and archived workspace files before task/version rows; S3

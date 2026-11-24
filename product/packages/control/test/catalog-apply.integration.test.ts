@@ -51,7 +51,7 @@ describe("catalog apply", () => {
   });
 
   it("writes every model in the catalog", async () => {
-    await applyCatalog(testDatabase.database);
+    const { skipped } = await applyCatalog(testDatabase.database);
 
     const stored = await testDatabase.database
       .select({
@@ -60,12 +60,25 @@ describe("catalog apply", () => {
         properties: models.properties,
       })
       .from(models);
+    // An owned model waits for its owner's organization, which this
+    // database lacks; it is never written public in the meantime.
+    const owned = catalogModels.filter((model) => "owner" in model);
+    expect(owned.length).toBeGreaterThan(0);
+    expect(skipped).toEqual(
+      expect.arrayContaining(
+        owned.map((model) => ({ id: model.id, reason: "owner_missing" })),
+      ),
+    );
     expect(stored.map((model) => model.id)).toEqual(
       expect.arrayContaining([
-        ...catalogModels.map((model) => model.id),
+        ...catalogModels
+          .filter((model) => !("owner" in model))
+          .map((model) => model.id),
         ...trainingOnlyModels().map((model) => model.id),
       ]),
     );
+    for (const model of owned)
+      expect(stored.map((row) => row.id)).not.toContain(model.id);
     expect(
       stored.find((model) => model.id === "deepseek/deepseek-v4.1-flash-1017")
         ?.aliases,

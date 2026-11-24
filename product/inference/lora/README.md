@@ -164,18 +164,19 @@ pairing's model/tokenizer/adapter layout and inference have been verified.
 The pinned runtime profile controls both GPU allocation and the engine flag;
 the assigned GPU UUID count must match. These are host decisions, not adapter fields.
 
-| Setting                  | Source/default                                                   |
-| ------------------------ | ---------------------------------------------------------------- |
-| `LORA_ENABLED`           | Runtime catalogue `lora_enabled`, false                          |
-| `MODEL_ID`               | Existing public base model ID                                    |
-| `LORA_GPU_SLOTS`         | Native `max_loras`, 8                                            |
-| `LORA_CPU_SLOTS`         | Native `max_cpu_loras`, 64; at least GPU slots                   |
-| `LORA_MAX_RANK`          | Native `max_lora_rank`, 8                                        |
-| `LORA_DISK_CACHE_BYTES`  | Explicit allocation disk budget; zero fails startup when enabled |
-| `LORA_DOWNLOAD_HOSTS`    | Exact S3 HTTPS host allowlist                                    |
-| `GRADIATED_API_BASE_URL` | API origin; HTTPS or local loopback HTTP                         |
-| `LORA_CACHE_DIR`         | `${GRADIATED_RUNTIME_DIR}/lora`                                  |
-| `ADAPTER_PORT`           | Allocation-local control port; inference stays on `RUNTIME_PORT` |
+| Setting                  | Source/default                                                                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `LORA_ENABLED`           | Runtime catalogue `lora_enabled`, false                                                                                                          |
+| Cartridge pool           | DeepSeek only: 4 GiB per rank (`CARTRIDGE_POOL_BYTES` in its `config.py`) whenever `LORA_ENABLED`; release `cartridge_enabled` routes cartridges |
+| `MODEL_ID`               | Existing public base model ID                                                                                                                    |
+| `LORA_GPU_SLOTS`         | Native `max_loras`, 8                                                                                                                            |
+| `LORA_CPU_SLOTS`         | Native `max_cpu_loras`, 64; at least GPU slots                                                                                                   |
+| `LORA_MAX_RANK`          | Native `max_lora_rank`, 8                                                                                                                        |
+| `LORA_DISK_CACHE_BYTES`  | Explicit allocation disk budget; zero fails startup when enabled                                                                                 |
+| `LORA_DOWNLOAD_HOSTS`    | Exact S3 HTTPS host allowlist                                                                                                                    |
+| `GRADIATED_API_BASE_URL` | API origin; HTTPS or local loopback HTTP                                                                                                         |
+| `LORA_CACHE_DIR`         | `${GRADIATED_RUNTIME_DIR}/lora`                                                                                                                  |
+| `ADAPTER_PORT`           | Allocation-local control port; inference stays on `RUNTIME_PORT`                                                                                 |
 
 Prepare/probe/status/metrics bind only to loopback and use the existing
 Tailscale host ingress for external access, like the native SGLang
@@ -185,6 +186,12 @@ API calls probe through the host proxy (`<service_url>/internal/adapters/probe`)
 when an editor promotes an unavailable version, such as an upload; a pass makes
 the version available and production (see the
 [serving contract](../../../docs/TASK_FINE_TUNING_SERVING_CONTRACT.md)).
+A cartridge is probed on every promotion, and only on `cartridge_enabled`
+deployments. Its probe also sends a fixed canary prompt with and without the
+cartridge, at temperature 0 with the top 20 logprobs. It passes only if a
+next-token distribution, compared while the two greedy outputs still agree,
+differs by more than 0.02 total variation, or if the greedy tokens differ.
+Otherwise it answers 422 `cartridge_not_applied`.
 Metrics live at `/internal/adapters/metrics`; they report file hits, downloads,
 startup registrations, failures, disk evictions and preparation duration with no adapter or
 workspace labels. Prometheus discovers enabled allocations from the worker's internal
@@ -217,6 +224,17 @@ Links, traversal, executable files and unsupported PEFT features are rejected.
 SGLang owns model-specific module compatibility and rejects adapters for
 modules outside the runtime's `--lora-target-modules`. This does not qualify vision-tower
 adapters or GLM numeric correctness.
+
+Cartridge versions (`format: "cartridge"`, see the
+[cartridge plan](../../../docs/CARTRIDGE_SERVING_PLAN.md)) download one
+`cartridge.safetensors` file rather than an archive. Before the file is
+retained, the loader checks its size and SHA256 and parses the header as JSON,
+never pickle. It also checks the tensor names, dtypes, shapes and byte ranges
+against the task version and the pinned `hidden_size`, `vocab_size` and
+`max_position_embeddings`. The embeddings must be finite and the slot IDs
+inside the vocabulary. Resolution returns
+`{kind: "cartridge", path, sha256, num_tokens}`. SGLang reads the file into its
+cartridge table, so cartridges are never registered through `load_lora_adapter`.
 
 ## Verification
 

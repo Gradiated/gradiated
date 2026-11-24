@@ -53,7 +53,7 @@ class CatalogTests(unittest.TestCase):
     def test_replaces_the_old_entry_points(self):
         names = {e['command'] for e in self.entries}
         for command in ('devex start', 'devex check', 'env build', 'aws login', 'compute search', 'compute up',
-                        'compute down', 'gpu lease acquire', 'gpu render-config', 'github-apps create'):
+                        'compute down', 'compute extend', 'gpu lease acquire', 'gpu render-config', 'github-apps create'):
             self.assertIn(command, names)
 
     def test_every_repository_tool_exists(self):
@@ -109,6 +109,18 @@ class EnvelopeTests(unittest.TestCase):
         code, out, _ = run('--json', 'compute', 'nope')
         self.assertEqual(code, 2)
         self.assertEqual(json.loads(out)['error']['code'], 'usage')
+
+    def test_extend_dispatches_duration_alias_and_returns_json(self):
+        from types import SimpleNamespace
+        from gradctl.compute import commands
+        cloud = SimpleNamespace(name='sfcompute', extend=mock.Mock(return_value={
+            'hours': 2, 'end_at': 10800, 'order_id': 'ordr_test'}))
+        with mock.patch.object(commands, 'locate', return_value=(cloud, {'name': 'exp'})):
+            code, out, err = run('--json', 'compute', 'extend', 'exp', '--provider', 'sfcompute',
+                                 '--duration-hours', '2', '--max-price', '3')
+        self.assertEqual(code, 0, err)
+        self.assertEqual(json.loads(out)['data']['order_id'], 'ordr_test')
+        cloud.extend.assert_called_once_with({'name': 'exp'}, 2, 3)
 
     def test_a_group_without_a_command_is_a_usage_error(self):
         code, out, _ = run('--json', 'gpu')

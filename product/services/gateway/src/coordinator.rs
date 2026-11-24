@@ -19,7 +19,7 @@ use crate::{
     runtime::openrouter_supports_parameter,
     serving_state::{ServingState, ServingStateError},
     CatalogModel, ExternalModel, GatewayError, GatewayModel, GatewayModelDeployment,
-    InferenceRequest, RequestKind,
+    InferenceRequest, ModelAccess, RequestKind,
 };
 
 /// A runtime scheduling hint that only internal callers may set.
@@ -123,6 +123,9 @@ impl HostedRequest {
             .as_ref()
             .map_or_else(|| model.id.clone(), |adapter| adapter.model_id());
         request.runtime_model_name = adapter.as_ref().map(|adapter| adapter.runtime_name());
+        request.cartridge_tokens = adapter
+            .as_ref()
+            .map_or(0, crate::PrivateAdapter::cartridge_tokens);
         if let Some(decision) = &mut request.decision {
             decision.model.clone_from(&model.id);
         }
@@ -212,8 +215,17 @@ impl HostedRequest {
                 .tokenizer
                 .clone()
                 .filter(crate::PinnedTokenizer::valid),
-            max_context_tokens: input.supported_inputs.max_context_length.value,
-            max_prompt_tokens: input.supported_inputs.max_prompt_length.value,
+            // The cartridge occupies K positions of the model's context.
+            max_context_tokens: input
+                .supported_inputs
+                .max_context_length
+                .value
+                .saturating_sub(request.cartridge_tokens),
+            max_prompt_tokens: input
+                .supported_inputs
+                .max_prompt_length
+                .value
+                .saturating_sub(request.cartridge_tokens),
             effective_output_tokens,
             pricing,
             request,
@@ -428,11 +440,14 @@ impl RequestCoordinator {
     ) -> Result<Vec<CatalogModel>, GatewayError> {
         let authorization = self.authorize(headers, requested_at).await?;
         let from_openrouter = authorization.from_openrouter;
-        authorization.into_hosted_identity()?;
+        let identity = authorization.into_hosted_identity()?;
 
+        // Another organization's own model is never listed, including to
+        // OpenRouter, whose key belongs to its own organization, or to the
+        // verification workspace.
         let models = self
             .serving_state
-            .models()
+            .models_visible_to(ModelAccess::caller(&identity))
             .await
             .map_err(state_unavailable("catalog_read"))?;
 
@@ -544,9 +559,12 @@ impl RequestCoordinator {
         let mut model_id = target.model.clone();
         model_id.make_ascii_lowercase();
         let mut adapter = None;
+        // An organization's own model answers only its keys and the platform's
+        // verification workspace; to anyone else it is an unknown model.
+        let access = ModelAccess::calling(&authorization.identity, self.verification_workspace_id);
         let mut model = self
             .serving_state
-            .model(&model_id)
+            .model_for(access, &model_id)
             .await
             .map_err(state_unavailable("model_read"))?;
         if model.is_some()
@@ -556,7 +574,15 @@ impl RequestCoordinator {
                 .await
                 .map_err(state_unavailable("private_adapter_read"))?
         {
-            return Err(inconsistent_state("ambiguous_model_name"));
+            // A retired hosted model gives its name to the private model, as
+            // happens when the catalog withholds an owned model that collides.
+            if model
+                .as_ref()
+                .is_some_and(|model| model.status != ModelStatus::Retired)
+            {
+                return Err(inconsistent_state("ambiguous_model_name"));
+            }
+            model = None;
         }
         if model.is_none() {
             let resolved = self
@@ -571,7 +597,7 @@ impl RequestCoordinator {
             }
             model = self
                 .serving_state
-                .model(&resolved.base_model_id)
+                .model_for(access, &resolved.base_model_id)
                 .await
                 .map_err(state_unavailable("model_read"))?;
             if model
@@ -587,10 +613,15 @@ impl RequestCoordinator {
         let from_openrouter = authorization.from_openrouter;
         let identity = authorization.into_hosted_identity()?;
         let pinned = deployment_target.is_some();
-        let external = external_model(&model, from_openrouter, pinned);
+        // A cartridge fails closed: without one, the answer is not the version's, so
+        // neither the base model nor OpenRouter may serve it.
+        let cartridge = adapter
+            .as_ref()
+            .is_some_and(crate::PrivateAdapter::is_cartridge);
+        let external = external_model(&model, from_openrouter, pinned || cartridge);
         // An adapter that cannot be served falls back to its base model without it;
         // a pinned request keeps its exact deployment instead.
-        let base = (adapter.is_some() && !pinned).then(|| {
+        let base = (adapter.is_some() && !pinned && !cartridge).then(|| {
             let mut base = model.clone();
             base.deployments.retain(|deployment| {
                 !deployment.release.is_system_one() && !deployment.release.sends_token_ids()
@@ -600,6 +631,8 @@ impl RequestCoordinator {
         if let Some(adapter) = &adapter {
             model.deployments.retain(|deployment| {
                 deployment.release.lora_enabled == Some(true)
+                    && (!adapter.is_cartridge()
+                        || deployment.release.cartridge_enabled == Some(true))
                     && deployment
                         .release
                         .lora_base_model_revision
@@ -867,3 +900,7 @@ mod adapter_tests;
 #[cfg(test)]
 #[path = "coordinator_capacity_tests.rs"]
 mod capacity_tests;
+
+#[cfg(test)]
+#[path = "coordinator_ownership_tests.rs"]
+mod ownership_tests;

@@ -71,6 +71,12 @@ def services(layout):
     ]
 
 
+# The AWS host launcher sets GRADIATED_PROVIDER_INSTANCE_ID to the EC2 instance ID; RunPod sets
+# RUNPOD_POD_ID in every pod.
+def provider_instance_id(environ):
+    return environ.get('GRADIATED_PROVIDER_INSTANCE_ID') or environ.get('RUNPOD_POD_ID', '')
+
+
 def keep_running(action, stop, name):
     while not stop.is_set():
         try:
@@ -95,12 +101,13 @@ def main(layout=Layout(), environ=os.environ, stop=None, supervised=None):
 
     tailscale = Tailscale(layout)
     try:
-        tailscale.join_as_bootstrap(environ.get('RUNPOD_POD_ID', ''), key, login_server)
+        tailscale.join_as_bootstrap(provider_instance_id(environ), key, login_server)
     except ValueError as error:
         print(error, flush=True)
     del key
     if tailscale.config() is None:
-        print('GPU enrollment requires GRADIATED_TAILSCALE_BOOTSTRAP_KEY from a RunPod secret.', flush=True)
+        print('GPU enrollment requires GRADIATED_TAILSCALE_BOOTSTRAP_KEY from a RunPod secret or the AWS host '
+              'launcher.', flush=True)
 
     log = files.log(layout.logs / 'gradiated-tailscale.log')
     daemon = threading.Thread(target=keep_running, args=(lambda: tailscale.run(stop, log), stop, 'Tailscale'),

@@ -77,13 +77,13 @@ describe("deployment status reports", () => {
   it.each([
     [
       "deployment_not_found",
-      "runpod",
+      ["runpod"],
       () => report({ deployment_id: randomUUID() }),
     ],
-    ["provider_mismatch", "lambda", () => report()],
+    ["provider_mismatch", ["lambda", "aws"], () => report()],
     [
       "runtime_revision_mismatch",
-      "runpod",
+      ["runpod"],
       () => report({ runtime_revision: "other-revision" }),
     ],
   ] as const)(
@@ -97,10 +97,17 @@ describe("deployment status reports", () => {
     },
   );
 
+  it("accepts a report on a listener shared by several providers", async () => {
+    // RunPod and AWS hosts reach the same private listener.
+    await service.report(["aws", "runpod"], report());
+
+    expect(valkey.calls.map((call) => call.command)).toContain("hSet");
+  });
+
   it("writes the report under the served release key for 30 seconds", async () => {
     const key = `deployment-status:{${servedReleaseDigest(deploymentRelease())}}`;
 
-    await service.report("runpod", report({ healthy: false }));
+    await service.report(["runpod"], report({ healthy: false }));
 
     expect(valkey.calls).toEqual([
       {
@@ -129,7 +136,7 @@ describe("deployment status reports", () => {
       .where(eq(modelDeployments.id, deployment.id));
 
     await expect(
-      service.report("runpod", report({ deployment_id: deployment.id })),
+      service.report(["runpod"], report({ deployment_id: deployment.id })),
     ).rejects.toMatchObject({ name: "ZodError" });
     expect(valkey.calls).toEqual([]);
   });

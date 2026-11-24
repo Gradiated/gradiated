@@ -123,14 +123,19 @@ impl ServingState for TestServingState {
         Ok(self.account.clone())
     }
 
-    async fn model(&self, model_id: &str) -> Result<Option<GatewayModel>, ServingStateError> {
+    async fn model_for(
+        &self,
+        access: crate::ModelAccess,
+        model_id: &str,
+    ) -> Result<Option<GatewayModel>, ServingStateError> {
         self.record("model");
         self.requested_models
             .lock()
             .unwrap()
             .push(model_id.to_owned());
         Ok(self.model.clone().filter(|model| {
-            model.id == model_id || model.aliases.iter().any(|alias| alias == model_id)
+            (model.id == model_id || model.aliases.iter().any(|alias| alias == model_id))
+                && access.permits(model)
         }))
     }
 
@@ -156,9 +161,17 @@ impl ServingState for TestServingState {
         }))
     }
 
-    async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError> {
+    async fn models_visible_to(
+        &self,
+        access: crate::ModelAccess,
+    ) -> Result<Vec<GatewayModel>, ServingStateError> {
         self.record("models");
-        Ok(self.model.clone().into_iter().collect())
+        Ok(self
+            .model
+            .clone()
+            .into_iter()
+            .filter(|model| access.permits(model))
+            .collect())
     }
 
     async fn deployment_statuses(

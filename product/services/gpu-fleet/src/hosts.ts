@@ -10,6 +10,8 @@ export const ROLLOUTS =
   "/apis/argoproj.io/v1alpha1/namespaces/gpu-inference/rollouts";
 export const SCALED_OBJECTS =
   "/apis/keda.sh/v1alpha1/namespaces/gpu-inference/scaledobjects";
+export const DISRUPTION_BUDGETS =
+  "/apis/policy/v1/namespaces/gpu-inference/poddisruptionbudgets";
 export const TAILNET = "tail186117.ts.net";
 
 const conditionSchema = z.object({
@@ -77,10 +79,15 @@ export const rolloutSchema = z.object({
       }),
     )
     .optional(),
+  // Models drained with one replica unavailable because no host had room
+  // for it; the rollout ends once each has all its replicas Ready again.
+  unavailable: z.array(z.string()).optional(),
   // Serving pod UID → qualified runtime incarnation before an in-place update.
   baseline: z.record(z.string(), z.string()).optional(),
-  // Recorded before RunPod is asked to re-image the pod.
+  // Recorded before RunPod or EC2 is asked to re-image the host.
   reimageRequestedAt: z.string().optional(),
+  // The EC2 replace-root-volume task re-imaging an AWS host.
+  rootVolumeTask: z.string().optional(),
   // Recorded before enrollment starts, with the operator replica running it.
   enrollStartedAt: z.string().optional(),
   enrollBy: z.string().optional(),
@@ -110,7 +117,42 @@ export const hostStatusSchema = z.object({
   rollout: rolloutSchema.optional(),
   // Set while the host is leased: drained, cordoned and out of the pool.
   lease: hostLeaseSchema.optional(),
+  // EC2 cannot show the container image, so the operator records the image it
+  // last re-imaged an AWS host onto. A host it never re-imaged records the
+  // pinned image when the operator first saw it, and is re-imaged once that
+  // pin changes.
+  image: z.string().optional(),
+  adoptedUnder: z.string().optional(),
 });
+
+const runPodProviderSchema = z.object({
+  name: z.literal("runpod"),
+  accountId: z.string(),
+  podId: z.string(),
+  machineId: z.string().optional(),
+});
+
+// An EC2 instance in a GPU account, reached through its operator role.
+// The zone is its region plus one letter, as the CRD requires, so a host is
+// never published under another region's fault domain.
+const awsProviderSchema = z
+  .object({
+    name: z.literal("aws"),
+    accountId: z.string(),
+    region: z.string(),
+    availabilityZone: z.string(),
+    ec2InstanceId: z.string(),
+  })
+  .refine(
+    ({ region, availabilityZone }) =>
+      availabilityZone.length === region.length + 1 &&
+      availabilityZone.startsWith(region) &&
+      /[a-z]$/.test(availabilityZone),
+    {
+      message: "the availability zone must be in the region",
+      path: ["availabilityZone"],
+    },
+  );
 
 // Bounds and patterns are enforced by the CRD at admission
 // (gpu-inference/gpuhost-crd.yaml); this reads the fields the operator uses.
@@ -127,12 +169,10 @@ export const gpuHostSchema = z.object({
   }),
   spec: z.object({
     instanceId: z.uuid(),
-    provider: z.object({
-      name: z.literal("runpod"),
-      accountId: z.string(),
-      podId: z.string(),
-      machineId: z.string().optional(),
-    }),
+    provider: z.discriminatedUnion("name", [
+      runPodProviderSchema,
+      awsProviderSchema,
+    ]),
     inventory: z.object({
       gpuProduct: z.string(),
       gpuCount: z.number().int(),
@@ -151,6 +191,12 @@ export const gpuHostSchema = z.object({
 });
 
 export type GpuHost = z.infer<typeof gpuHostSchema>;
+export type RunPodHost = GpuHost & {
+  spec: { provider: z.infer<typeof runPodProviderSchema> };
+};
+export type AwsHost = GpuHost & {
+  spec: { provider: z.infer<typeof awsProviderSchema> };
+};
 export type HostStatus = z.infer<typeof hostStatusSchema>;
 export type Condition = z.infer<typeof conditionSchema>;
 export type Rollout = z.infer<typeof rolloutSchema>;
@@ -158,6 +204,12 @@ export type Bundle = z.infer<typeof bundleSchema>;
 export type LeaseRequest = z.infer<typeof leaseRequestSchema>;
 export type HostLease = z.infer<typeof hostLeaseSchema>;
 
+export const ENROLL_DURING_RUNPOD_HOLD_ANNOTATION =
+  "fleet.gradiated.com/enroll-during-runpod-hold";
+export const RESUME_ENROLLMENT_VERIFY_ANNOTATION =
+  "fleet.gradiated.com/resume-enrollment-verify";
+export const RESOLVE_ENROLLMENT_EGRESS_ANNOTATION =
+  "fleet.gradiated.com/resolve-enrollment-egress";
 // Set by a person (kubectl annotate) to restart a failed rollout.
 export const RETRY_ANNOTATION = "fleet.gradiated.com/retry";
 // A lease request as JSON (gradctl gpu lease); removing it hands the host back.
@@ -240,6 +292,43 @@ export const leaseRequest = (
   } catch {
     return { invalid: "not JSON" };
   }
+};
+
+export const isRunPod = (host: GpuHost): host is RunPodHost =>
+  host.spec.provider.name === "runpod";
+
+export const isAws = (host: GpuHost): host is AwsHost =>
+  host.spec.provider.name === "aws";
+
+// The provider's ID for the host, which names its bootstrap device
+// gpu-bootstrap-<id>: a RunPod pod or an EC2 instance.
+export const providerInstanceId = (host: GpuHost) =>
+  host.spec.provider.name === "runpod"
+    ? host.spec.provider.podId
+    : host.spec.provider.ec2InstanceId;
+
+export const runPodId = (host: GpuHost) => {
+  if (!isRunPod(host))
+    throw new Error(`${host.metadata.name} is not a RunPod host`);
+  return host.spec.provider.podId;
+};
+
+export const ec2InstanceOf = (host: GpuHost) => {
+  if (!isAws(host)) throw new Error(`${host.metadata.name} is not an AWS host`);
+  return host.spec.provider.ec2InstanceId;
+};
+
+// The image an AWS host runs as far as the operator knows: the one it last
+// re-imaged the host onto, or the pin it adopted the host under.
+export const recordedImage = (host: GpuHost) =>
+  host.status?.image ?? host.status?.adoptedUnder;
+
+// The PostgreSQL fault domain: a RunPod machine, which a host may not have
+// recorded, or an EC2 availability zone.
+export const faultDomain = (host: GpuHost) => {
+  const provider = host.spec.provider;
+  if (provider.name === "aws") return `aws:${provider.availabilityZone}`;
+  return provider.machineId ? `runpod:${provider.machineId}` : undefined;
 };
 
 export const hostName = (instanceId: string) => `gpu-${instanceId}`;

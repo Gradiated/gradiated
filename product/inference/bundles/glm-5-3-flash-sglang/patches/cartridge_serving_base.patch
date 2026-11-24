@@ -1,0 +1,54 @@
+--- a/sglang/srt/entrypoints/openai/serving_base.py
++++ b/sglang/srt/entrypoints/openai/serving_base.py
+@@ -1,6 +1,7 @@
+ from __future__ import annotations
+ 
+ import asyncio
++import functools
+ import json
+ import logging
+ import uuid
+@@ -27,6 +28,9 @@
+ # Base class for specific endpoint handlers
+ class OpenAIServingBase(ABC):
+     """Abstract base class for OpenAI endpoint handlers"""
++
++    # Endpoints that place a prompt cartridge when the model names one.
++    accepts_cartridges = False
+ 
+     def __init__(self, tokenizer_manager: TokenizerManager):
+         self.tokenizer_manager = tokenizer_manager
+@@ -84,6 +88,15 @@
+         # Fall back to explicit lora_path
+         return explicit_lora_path
+ 
++    async def _resolve_cartridge(self, request: OpenAIServingRequest):
++        model = getattr(request, "model", None)
++        if not self.accepts_cartridges or not isinstance(model, str):
++            return None
++        _, adapter_name = self._parse_model_parameter(model)
++        if adapter_name is None:
++            return None
++        return await self.tokenizer_manager.resolve_cartridge(adapter_name)
++
+     async def handle_request(
+         self, request: OpenAIServingRequest, raw_request: Request
+     ) -> Union[Any, StreamingResponse, ErrorResponse]:
+@@ -103,11 +116,16 @@
+             if request_logger.log_requests and request_logger.log_requests_level >= 2:
+                 request_logger.log_openai_received_request(request, request=raw_request)
+ 
++            convert = self._convert_to_internal_request
++            cartridge = await self._resolve_cartridge(request)
++            if cartridge is not None:
++                convert = functools.partial(convert, cartridge=cartridge)
++
+             # Convert off-loop: jinja render + full-prompt tokenization blocks
+             # the loop on long prompts, and the rust tokenizer releases the GIL.
+             loop = asyncio.get_running_loop()
+             adapted_request, processed_request = await loop.run_in_executor(
+-                None, self._convert_to_internal_request, request, raw_request
++                None, convert, request, raw_request
+             )
+ 
+             if isinstance(adapted_request, (GenerateReqInput, EmbeddingReqInput)):

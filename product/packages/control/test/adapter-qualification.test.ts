@@ -182,3 +182,92 @@ describe("createAdapterQualifier", () => {
     expect(reports).toMatchObject([{ outcome: "no_capacity", attempts: 0 }]);
   });
 });
+
+const cartridgeVersion = {
+  ...version,
+  adapter: {
+    format: "cartridge",
+    artifact_uri: "s3://bucket/cartridges/x/cartridge.safetensors",
+    sha256: "a".repeat(64),
+    size_bytes: 1024,
+    num_tokens: 4,
+    hidden_size: 8,
+    placement: "system_prompt_start",
+    separator: "\n\n",
+    has_slot_token_ids: true,
+    validated_base_model_revision: "training",
+  },
+} as TaskVersionRecord;
+
+describe("cartridge qualification", () => {
+  it("serves cartridges only from cartridge-enabled releases", () => {
+    expect(servesAdapter(release(), "training", "cartridge")).toBe(false);
+    expect(
+      servesAdapter(
+        release({ cartridge_enabled: false }),
+        "training",
+        "cartridge",
+      ),
+    ).toBe(false);
+    expect(
+      servesAdapter(
+        release({ cartridge_enabled: true }),
+        "training",
+        "cartridge",
+      ),
+    ).toBe(true);
+    expect(
+      servesAdapter(
+        release({ cartridge_enabled: true, lora_enabled: false }),
+        "training",
+        "cartridge",
+      ),
+    ).toBe(false);
+  });
+
+  it("probes only cartridge-enabled allocations", async () => {
+    const probe = vi.fn<AdapterProbe>(async () => ({ ok: true }));
+    const { qualify } = qualifier(
+      [target("lora"), target("cartridge", { cartridge_enabled: true })],
+      probe,
+    );
+
+    await qualify(cartridgeVersion);
+
+    expect(probe.mock.calls.map(([target]) => target.id)).toEqual([
+      "cartridge",
+    ]);
+  });
+
+  it("refuses promotion with a clear message when no deployment serves cartridges", async () => {
+    const probe = vi.fn<AdapterProbe>();
+    const { qualify, reports } = qualifier([target("lora")], probe);
+
+    await expect(qualify(cartridgeVersion)).rejects.toMatchObject({
+      code: "unavailable",
+      message:
+        "No deployment of this base model serves cartridges right now. The version was not promoted.",
+    });
+    expect(probe).not.toHaveBeenCalled();
+    expect(reports).toMatchObject([{ outcome: "no_capacity" }]);
+  });
+
+  it("rejects a cartridge whose canary showed no effect", async () => {
+    const probe = vi.fn<AdapterProbe>(async () => ({
+      ok: false,
+      rejected: true,
+      reason: "cartridge_not_applied",
+    }));
+    const { qualify, reports } = qualifier(
+      [target("a", { cartridge_enabled: true })],
+      probe,
+    );
+
+    await expect(qualify(cartridgeVersion)).rejects.toMatchObject({
+      code: "conflict",
+    });
+    expect(reports).toMatchObject([
+      { outcome: "rejected", reason: "cartridge_not_applied" },
+    ]);
+  });
+});

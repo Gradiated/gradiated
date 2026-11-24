@@ -72,6 +72,38 @@ credentials. Enrollment keys are one-time GPU-tagged Tailscale keys, revoked
 after bootstrap. Management keys are host-specific and stay in AWS and root-owned
 host files. See [instance setup](../../../docs/INSTANCE_SETUP_PLAN.md).
 
+`register_instance(provider: "aws", instance_id: "i-...")` enrolls an EC2
+instance in the GPU account through the `gradiated-gpu-fleet-operator` role
+named by `AWS_GPU_OPERATOR_ROLE_ARN` (AWS registration is refused while it is
+unset; `AWS_GPU_REGION`, `AWS_GPU_BOOTSTRAP_INSTANCE_PROFILE`,
+`AWS_GPU_LAUNCH_TEMPLATE` and `AWS_GPU_SECRET_KMS_KEY` default to `us-east-1`,
+`gradiated-gpu-prod-host-bootstrap`, `gradiated-gpu-prod-host` and
+`alias/gradiated-gpu-prod`). The
+instance must be tagged `gradiated:managed=gpu-fleet`. ops-mcp mints its
+single-use bootstrap key and writes it, with `AWS_GPU_BASE_IMAGE` (or
+`GPU_BASE_IMAGE` while that is unset; RunPod always uses `GPU_BASE_IMAGE`,
+which must be an input-hash tag since RunPod pulls only by tag, while
+`AWS_GPU_BASE_IMAGE` may instead name a digest in the same repository), to
+the secret `gradiated/gpu-bootstrap/<instance ID>`; the host launcher outside the container
+reads it with the instance profile and starts the image, which joins as
+`gpu-bootstrap-<instance ID>`. Enrollment then runs as on RunPod. A fresh
+running instance needs no reset: ops-mcp only writes its secret, and only while
+the instance still has the bootstrap profile and no `gpu-<instance UUID>` device
+exists in the tailnet; any other running instance without a bootstrap peer is
+refused, since its one-shot launcher will not read the secret. An authorized
+reset, or a stopped instance, runs in this order: delete any bootstrap secret
+left behind and remove the bootstrap profile, confirming both are gone (refusing,
+before any change, an instance with another profile), start a stopped instance and wait for it to run, read the AMI of the
+launch template's default version, replace the root volume with that AMI
+(deleting the old volume) and wait for the task and the instance, and only then
+attach the bootstrap profile and write the secret with a fresh key, so an old
+root volume never sees the key or the profile's credentials.
+The instance and its capacity stay; nothing stops or terminates an instance.
+Writing the secret waits up to two minutes for an earlier forced deletion of
+the same name to finish; a pending secret is never restored. Once enrolled, the
+secret is force-deleted and the instance profile removed, so
+the host holds no AWS credentials; if either fails, the registration fails.
+
 There is no general shell, SSH, Kubernetes exec, secret reader, arbitrary HTTP
 fetch or database tool. Registration alone uses a fixed SSH bootstrap on
 bootstrap-tagged pods; command text and

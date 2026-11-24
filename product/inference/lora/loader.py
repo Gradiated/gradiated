@@ -2,6 +2,7 @@ import copy
 import http.client
 import json
 import logging
+import math
 import re
 import shutil
 import threading
@@ -10,6 +11,7 @@ import urllib.error
 import uuid
 from pathlib import Path
 
+import cartridge
 from artifacts import cache_key, download, has_fused_experts, materialize, remaining
 
 logger = logging.getLogger(__name__)
@@ -17,6 +19,51 @@ logger = logging.getLogger(__name__)
 
 class CapacityError(RuntimeError):
     pass
+
+
+class CartridgeNotApplied(ValueError):
+    """The cartridge loaded but did not change the canary's next-token distribution."""
+
+
+# A fixed open-ended prompt, so the base model's first tokens are not forced.
+CANARY_MESSAGES = [{"role": "user", "content": "In one sentence, what do you help people with?"}]
+CANARY_TOKENS = 8
+# Total variation between the top-20 next-token distributions; unapplied cartridges give ~0.
+CANARY_MIN_DIVERGENCE = 0.02
+# Each canary generation is 8 tokens; the API's probe deadline counts two of these.
+CANARY_TIMEOUT_SECONDS = 30
+
+
+def canary_positions(content):
+    """Each position's greedy token and top-token probabilities; malformed is a runtime fault."""
+    try:
+        positions = [
+            (
+                row["token"],
+                {item["token"]: math.exp(item["logprob"]) for item in row["top_logprobs"]},
+            )
+            for row in content
+        ]
+        if not positions or not all(
+            isinstance(token, str) and all(isinstance(t, str) for t in top)
+            for token, top in positions
+        ):
+            raise ValueError
+        return positions
+    except (KeyError, IndexError, TypeError, ValueError, OverflowError):
+        raise RuntimeError("Canary logprobs are malformed") from None
+
+
+def canary_divergence(with_cartridge, without):
+    """Largest next-token divergence while both greedy outputs agree; a differing token is 1."""
+    largest = 0.0
+    for (left, p), (right, q) in zip(with_cartridge, without):
+        distance = sum(abs(p.get(t, 0.0) - q.get(t, 0.0)) for t in p.keys() | q.keys())
+        largest = max(largest, distance / 2)
+        if left != right:
+            return 1.0
+    # One output stopping first (EOS, which logprobs omit) is also a differing greedy token.
+    return 1.0 if len(with_cartridge) != len(without) else largest
 
 
 class Loader:
@@ -97,7 +144,7 @@ class Loader:
         version, workspace = spec["version"], spec["workspace_id"]
         adapter = version["adapter"]
         if (
-            adapter.get("format") != "peft_lora"
+            adapter.get("format") not in ("peft_lora", "cartridge")
             or version["base_model_id"] != self.config["base_model_id"]
             or adapter.get("validated_base_model_revision", adapter.get("base_model_revision"))
             != self.config["base_model_revision"]
@@ -106,11 +153,13 @@ class Loader:
             or str(uuid.UUID(workspace)) != workspace
             or not isinstance(version["name"], str)
             or not 0 < len(version["name"]) <= 300
-            or type(adapter["rank"]) is not int
-            or not 0 < adapter["rank"] <= self.config["max_rank"]
             or type(adapter["size_bytes"]) is not int
             or not 0 < adapter["size_bytes"] < self.config["disk_cache_bytes"]
         ):
+            raise ValueError("Incompatible task version")
+        if adapter["format"] == "cartridge":
+            cartridge.validate_metadata(adapter, self.config["model_config"])
+        elif type(adapter["rank"]) is not int or not 0 < adapter["rank"] <= self.config["max_rank"]:
             raise ValueError("Incompatible task version")
         spec["version"] = {
             "id": version["id"],
@@ -146,9 +195,11 @@ class Loader:
             entry["spec"] = spec
         return name
 
-    def engine(self, method, path, body=None):
+    def engine(self, method, path, body=None, timeout=None):
         connection = http.client.HTTPConnection(
-            "127.0.0.1", self.engine_port, timeout=60 if method == "POST" else 5
+            "127.0.0.1",
+            self.engine_port,
+            timeout=timeout or (60 if method == "POST" else 5),
         )
         try:
             connection.request(
@@ -186,13 +237,15 @@ class Loader:
         )
 
     def prepare_version(self, name, workspace_id):
+        """Prepares the version and returns its loader key."""
         deadline = time.monotonic() + 60
-        return self.operation(
-            "prepare",
-            lambda: self.prepare(
-                self.version_key(name, workspace_id, deadline), workspace_id, deadline
-            ),
-        )
+
+        def prepare():
+            key = self.version_key(name, workspace_id, deadline)
+            self.prepare(key, workspace_id, deadline)
+            return key
+
+        return self.operation("prepare", prepare)
 
     def operation(self, action, call):
         started = time.monotonic()
@@ -234,6 +287,9 @@ class Loader:
 
     def local_files(self, name):
         path = self.root / name
+        adapter = self.entries[name]["spec"]["version"]["adapter"]
+        if adapter["format"] == "cartridge":
+            return cartridge.resolved_files(path, adapter)
         return {"path": str(path), "is_3d_lora_weight": has_fused_experts(path)}
 
     def resolve_files(self, name, workspace_id, deadline=None):
@@ -273,6 +329,9 @@ class Loader:
 
     def prepare(self, name, workspace_id, deadline=None):
         files = self.resolve_files(name, workspace_id, deadline)
+        # SGLang reads a cartridge from its path on first use; there is nothing to register.
+        if files.get("kind") == "cartridge":
+            return
         runtime_name = f"{workspace_id}/{self.entries[name]['spec']['version']['name']}"
         # SGLang's resolver hook can call the loader while it loads an adapter.
         # Do not hold the materialization lock across calls back into SGLang.
@@ -331,17 +390,29 @@ class Loader:
                 self.reserve_disk(name, required)
 
         try:
-            _path, disk, _tensor_bytes = materialize(
-                entry["spec"],
-                self.root,
-                self.config["disk_cache_bytes"],
-                self.allowed_hosts,
-                self.config["model_config"],
-                fetch=fetch,
-                reserve=reserve,
-                deadline=deadline,
-                allowed_target_modules=self.config.get("allowed_target_modules"),
-            )
+            if entry["spec"]["version"]["adapter"]["format"] == "cartridge":
+                _path, disk = cartridge.materialize(
+                    entry["spec"],
+                    self.root,
+                    self.config["disk_cache_bytes"],
+                    self.allowed_hosts,
+                    self.config["model_config"],
+                    fetch=fetch,
+                    reserve=reserve,
+                    deadline=deadline,
+                )
+            else:
+                _path, disk, _tensor_bytes = materialize(
+                    entry["spec"],
+                    self.root,
+                    self.config["disk_cache_bytes"],
+                    self.allowed_hosts,
+                    self.config["model_config"],
+                    fetch=fetch,
+                    reserve=reserve,
+                    deadline=deadline,
+                    allowed_target_modules=self.config.get("allowed_target_modules"),
+                )
         finally:
             with self.lock:
                 directory = self.root / name
@@ -359,7 +430,7 @@ class Loader:
         return self.local_files(name)
 
     def probe(self, name, workspace_id):
-        self.prepare_version(name, workspace_id)
+        key = self.prepare_version(name, workspace_id)
         result = json.loads(
             self.engine(
                 "POST",
@@ -378,6 +449,82 @@ class Loader:
             or not result.get("usage", {}).get("completion_tokens", 0)
         ):
             raise RuntimeError("Adapter probe identity or usage mismatch")
+        with self.lock:
+            adapter = self.entries[key]["spec"]["version"]["adapter"]
+        if adapter["format"] == "cartridge":
+            self.cartridge_canary(f"{workspace_id}/{name}", key, adapter)
+
+    def cartridge_canary(self, model, key, adapter):
+        """Fails when the cartridge does not change the canary prompt's next-token logits.
+
+        The control is the base model with the slot text as the system prompt, so both
+        requests have the same token IDs and only the cartridge embeddings differ.
+        """
+
+        def runtime_json(data):
+            # A 200 with an unreadable body is a runtime fault (503), never a rejected adapter.
+            try:
+                return json.loads(data)
+            except ValueError:
+                raise RuntimeError("Canary response is not JSON") from None
+
+        try:
+            served = [
+                row["id"]
+                for row in runtime_json(self.engine("GET", "/v1/models"))["data"]
+                if not row.get("parent")
+            ]
+        except (KeyError, TypeError, AttributeError):
+            raise RuntimeError("Runtime model list is malformed") from None
+        if len(served) != 1:
+            raise RuntimeError("Runtime base model is ambiguous")
+
+        try:
+            slot_text = runtime_json(
+                self.engine(
+                    "POST",
+                    "/v1/detokenize",
+                    {
+                        "model": served[0],
+                        "tokens": cartridge.slot_ids(self.root / key / cartridge.FILE),
+                        "skip_special_tokens": False,
+                    },
+                    timeout=CANARY_TIMEOUT_SECONDS,
+                )
+            )["text"]
+            if not isinstance(slot_text, str):
+                raise TypeError
+        except (KeyError, TypeError):
+            raise RuntimeError("Runtime detokenize response is malformed") from None
+        control = [{"role": "system", "content": slot_text + adapter["separator"]}, *CANARY_MESSAGES]
+
+        def positions(name, messages):
+            result = runtime_json(
+                self.engine(
+                    "POST",
+                    "/v1/chat/completions",
+                    {
+                        "model": name,
+                        "messages": messages,
+                        "max_tokens": CANARY_TOKENS,
+                        "temperature": 0,
+                        "logprobs": True,
+                        "top_logprobs": 20,
+                    },
+                    timeout=CANARY_TIMEOUT_SECONDS,
+                )
+            )
+            try:
+                content = result["choices"][0]["logprobs"]["content"]
+                if result.get("model") != name:
+                    raise ValueError
+            except (KeyError, IndexError, TypeError, ValueError):
+                raise RuntimeError("Canary identity or logprobs mismatch") from None
+            return canary_positions(content)
+
+        with_cartridge = positions(model, CANARY_MESSAGES)
+        if canary_divergence(with_cartridge, positions(served[0], control)) <= CANARY_MIN_DIVERGENCE:
+            raise CartridgeNotApplied("Cartridge did not change the canary")
 
     def status(self):
         with self.lock:

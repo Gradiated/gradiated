@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import sys
 
-from config import MODEL, REVISION, SGLANG_SOURCE, commands
+from config import CARTRIDGE_POOL_BYTES, MODEL, REVISION, SGLANG_SOURCE, commands
 
 
 def verify(root):
@@ -62,6 +62,7 @@ def verify(root):
     _, adapted_backend, _ = commands(lora)
     adapted = parser.parse_args(adapted_backend[2:])
     assert adapted.enable_lora and adapted.max_loras_per_batch == 8 and adapted.max_loaded_loras == 64
+    assert adapted.cartridge_pool_bytes == CARTRIDGE_POOL_BYTES
     assert compileall.compile_dir(site / 'sglang', quiet=1)
     assert compileall.compile_dir(root / 'deepseek-sglang', quiet=1)
     print(json.dumps({'cpu_artifact_verified': True, 'source': SGLANG_SOURCE, 'model': MODEL,

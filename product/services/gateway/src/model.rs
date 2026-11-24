@@ -1,9 +1,10 @@
 use std::collections::{HashMap, HashSet};
 
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde::{Deserialize, Deserializer, Serialize};
+use serde_json::{value::RawValue, Value};
 use thiserror::Error;
+use uuid::Uuid;
 use validator::{Validate, ValidationErrors};
 
 use crate::deployment::{DeploymentError, DeploymentStatus, GatewayModelDeployment};
@@ -19,12 +20,40 @@ pub struct GatewayModel {
     pub name: String,
     pub status: ModelStatus,
     pub properties: GatewayModelProperties,
+    #[serde(deserialize_with = "deserialize_deployments")]
     pub deployments: Vec<GatewayModelDeployment>,
     #[serde(default)]
     pub openrouter_model_id: Option<String>,
     /// The tokenizer to count with when no deployment supplies one.
     #[serde(default)]
     pub tokenizer: Option<PinnedTokenizer>,
+    /// The only organization whose keys can call or list the model; none is the
+    /// public catalog. Records cached before this field existed live under
+    /// another key, so a missing field is never an old record of an owned model.
+    #[serde(default)]
+    pub organization_id: Option<Uuid>,
+}
+
+fn deserialize_deployments<'de, D>(deserializer: D) -> Result<Vec<GatewayModelDeployment>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let records = Vec::<Box<RawValue>>::deserialize(deserializer)?;
+    let mut deployments = Vec::with_capacity(records.len());
+
+    for (deployment_index, record) in records.into_iter().enumerate() {
+        match serde_json::from_str(record.get()) {
+            Ok(deployment) => deployments.push(deployment),
+            Err(_) => crate::diagnostics::limited_warn!(
+                deployment_index,
+                phase = "model_deployment_read",
+                error_code = "malformed_record",
+                "dropping an unreadable model deployment"
+            ),
+        }
+    }
+
+    Ok(deployments)
 }
 
 /// A Hugging Face tokenizer at an immutable revision.
@@ -41,6 +70,46 @@ impl PinnedTokenizer {
         bounded(&self.path)
             && self.revision.len() == 40
             && self.revision.bytes().all(|byte| byte.is_ascii_hexdigit())
+    }
+}
+
+/// Which models a caller may see. Serving state takes one for every model read,
+/// and it is built only from an authenticated identity, so no read can return
+/// an organization's own model without one.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ModelAccess {
+    organization_id: Uuid,
+    every_owner: bool,
+}
+
+impl ModelAccess {
+    /// Public models and the caller's organization's own.
+    pub fn caller(identity: &crate::auth::AuthenticatedIdentity) -> Self {
+        Self {
+            organization_id: identity.organization_id,
+            every_owner: false,
+        }
+    }
+
+    /// As [`Self::caller`], except that the platform's verification workspace
+    /// may call every organization's models, so the worker can qualify their
+    /// pods and probe them.
+    pub fn calling(
+        identity: &crate::auth::AuthenticatedIdentity,
+        verification_workspace_id: Option<Uuid>,
+    ) -> Self {
+        Self {
+            every_owner: verification_workspace_id == Some(identity.workspace_id),
+            ..Self::caller(identity)
+        }
+    }
+
+    /// Another organization's model is withheld as if it did not exist.
+    pub fn permits(&self, model: &GatewayModel) -> bool {
+        self.every_owner
+            || model
+                .organization_id
+                .is_none_or(|owner| owner == self.organization_id)
     }
 }
 

@@ -52,6 +52,7 @@ these constants.
 | `assertions.ts`       | Public error and propagation assertions.                              |
 | `admission.ts`        | Gated requests that hold admission slots.                             |
 | `chat.ts`             | The official chat client and checked stream chunks.                   |
+| `typesafe.ts`         | The official TypeSafe SDK client and its error assertions.            |
 | `mock-runtimes/`      | The Kev, vLLM and OpenRouter wire profiles and the fault server.      |
 | `adapter-versions.ts` | Private adapter versions and LoRA-enabled deployments for a case.     |
 | `http-client.ts`      | A raw HTTP client for repeated headers, large bodies and cut streams. |
@@ -65,6 +66,17 @@ responses, raw terminal stream events, and SDK stream helpers against the durabl
 settled charge, including cached input, service tiers, free models, cache writes,
 and reasoning. Anthropic's final-message helper drops extension fields; its
 `streamEvent` callback is the tested path for reading cost.
+
+`typesafe-sdk.test.ts` uses the official TypeSafe SDK (`@typesafe-ai/sdk`, the
+version pinned in `package.json`) against `/v1/systemone`. It covers every
+question type and its typed answer, usage and settled charge, the question and
+option bounds, state shapes, the SDK's error classes for gateway and runtime
+failures, its retry policy (each attempt is a generation, and only the answer is
+billed), timeouts and aborts settled as client cancellations, protocol mismatch
+and deployment pinning. The SDK cannot send list-form choice criteria, so those
+tests use raw HTTP and check that the runtime receives the object form. Tests
+named `known gap` pin a current incompatibility and say what should replace
+them. `proxy/test/e2e/sdk/typesafe.test.ts` runs the SDK through the proxy.
 
 ## OpenRouter capacity
 

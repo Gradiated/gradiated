@@ -3,12 +3,19 @@ import {
   OpenRouterModelIdSchema,
 } from "@gradiated/contracts";
 import {
-  modelType,
+  catalogModel,
   modelSupportedUses,
 } from "@gradiated/contracts/model-catalog";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { catalogModels, legacyModels } from "../src/catalog/models/index.js";
+import { requireOwnedModelNames } from "../src/catalog/apply.js";
+import {
+  catalogModels,
+  legacyModels,
+  trainingOnlyModels,
+} from "../src/catalog/models/index.js";
+import type { CatalogModelInput } from "../src/catalog/service.js";
 import { createKev9bModelConfiguration } from "../src/catalog/models/kev-9b.js";
 
 const prices = (model: { properties: unknown }) => {
@@ -41,6 +48,43 @@ describe("model configurations", () => {
     },
   );
 
+  it.each([...catalogModels, ...legacyModels])(
+    "$id keeps an owner's model under its slug and out of the public catalog",
+    (model: CatalogModelInput) => {
+      expect(() => requireOwnedModelNames(model)).not.toThrow();
+      if (model.owner) expect(catalogModel(model.id)).toBeUndefined();
+    },
+  );
+
+  it("names an owned model under its owner's slug", () => {
+    const owned = (id: string, aliases: string[] = []) => ({
+      id,
+      aliases,
+      owner: { organizationSlug: "posthog" },
+      type: "decision",
+    });
+
+    expect(() =>
+      requireOwnedModelNames(
+        owned("posthog/jeeves", ["posthog/jevk5"]) as CatalogModelInput,
+      ),
+    ).not.toThrow();
+    for (const definition of [
+      owned("jeeves"),
+      owned("posthogx/jeeves"),
+      owned("posthog/"),
+      owned("posthog/jeeves", ["jeeves"]),
+      // A further segment could be a private version name.
+      owned("posthog/support/v1"),
+      owned("posthog/jeeves", ["posthog/support/v1"]),
+      // The gateway lowercases requests, so this could never be called.
+      owned("posthog/Jeeves"),
+    ])
+      expect(() =>
+        requireOwnedModelNames(definition as CatalogModelInput),
+      ).toThrow("must be named");
+  });
+
   const pinnedPrices: Record<string, { input: number[]; output: number[] }> = {
     "deepseek/deepseek-v4.1-flash-1017": {
       input: [300, 7],
@@ -64,6 +108,8 @@ describe("model configurations", () => {
       output: [8_000, 8_000],
     },
     "z-ai/glm-5.3": { input: [1_400, 260], output: [4_400, 4_400] },
+    "posthog/jeeves": { input: [20, 20], output: [0] },
+    "posthog/jevk5": { input: [20, 20], output: [0] },
   };
 
   it.each([...catalogModels, ...legacyModels])(
@@ -97,6 +143,8 @@ describe("model configurations", () => {
       "perplexity-ai/pplx-decider-v1.2": null,
       "moonshotai/kimi-k3.1-pro": "moonshotai/kimi-k3.1-pro",
       "z-ai/glm-5.3": "z-ai/glm-5.3",
+      "posthog/jeeves": null,
+      "posthog/jevk5": null,
     });
     for (const mapping of Object.values(mappings)) {
       if (typeof mapping === "string") OpenRouterModelIdSchema.parse(mapping);
@@ -116,7 +164,7 @@ describe("model configurations", () => {
 
   it("retains Kev 9B history while retiring it from published catalogs", () => {
     expect(createKev9bModelConfiguration().status).toBe("retired");
-    expect(modelType(createKev9bModelConfiguration().id)).toBe("decision");
+    expect(createKev9bModelConfiguration().type).toBe("decision");
     const [output] =
       createKev9bModelConfiguration().properties.output_modalities;
 
@@ -129,7 +177,7 @@ describe("model configurations", () => {
   });
 
   it("classifies the generation models as chat", () => {
-    expect(catalogModels.map((model) => modelType(model.id))).toEqual([
+    expect(catalogModels.map((model) => model.type)).toEqual([
       "decision",
       "decision",
       "chat",
@@ -138,6 +186,8 @@ describe("model configurations", () => {
       "decision",
       "chat",
       "chat",
+      "decision",
+      "decision",
     ]);
   });
 
@@ -232,7 +282,7 @@ it("serves text-only linden-1 with no external provider or training capability",
   expect(
     model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
   ).toBeNull();
-  expect(modelType("gradiated/linden-1")).toBe("decision");
+  expect(model?.type).toBe("decision");
   expect(modelSupportedUses("gradiated/linden-1")).toEqual(["serving"]);
   expect(model?.properties).toMatchObject({
     hugging_face_id: "gradiated/linden-1",
@@ -249,9 +299,83 @@ it("retires Decider v1.2 but keeps its historical model ID", () => {
   expect(
     model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
   ).toBeNull();
-  expect(modelType("perplexity-ai/pplx-decider-v1.2")).toBe("decision");
+  expect(model?.type).toBe("decision");
   expect(modelSupportedUses("perplexity-ai/pplx-decider-v1.2")).toEqual([
     "serving",
   ]);
   expect(model?.properties.quantization).toBe("int4");
+});
+
+it("declares the type every pinned runtime's release protocol serves", () => {
+  // A deployment whose protocol doesn't match its model's type is withdrawn,
+  // so a mismatch here would take that runtime out of service.
+  const runtimes = Object.values(
+    JSON.parse(
+      readFileSync(
+        new URL("../../../inference/gpu/runtimes.json", import.meta.url),
+        "utf8",
+      ),
+    ) as Record<string, { model_id: string; release: { protocol?: string } }>,
+  );
+  const definitions = new Map(
+    [...catalogModels, ...legacyModels].map((model) => [model.id, model]),
+  );
+  let checked = 0;
+  for (const runtime of runtimes) {
+    const definition = definitions.get(runtime.model_id);
+    if (!definition) continue;
+    checked += 1;
+    expect(
+      runtime.release.protocol === "system_one" ? "decision" : "chat",
+      runtime.model_id,
+    ).toBe(definition.type);
+  }
+  expect(checked).toBeGreaterThan(0);
+});
+
+it("backfills each existing model with the type its definition declares", () => {
+  // Migration 0036 types existing rows from this list alone; a definition that
+  // disagreed would be retired as type_changed on the first catalog pass.
+  const migration = readFileSync(
+    new URL("../migrations/0036_organization_models.sql", import.meta.url),
+    "utf8",
+  );
+  const list = /WHEN "id" IN \(([^)]*)\)/.exec(migration)?.[1] ?? "";
+  const backfilled = [...list.matchAll(/'([^']+)'/g)].map((match) => match[1]);
+
+  expect(backfilled.sort()).toEqual(
+    // Owned models are new rows, written with their type.
+    [...catalogModels, ...legacyModels, ...trainingOnlyModels()]
+      .filter((model) => model.type === "decision" && !("owner" in model))
+      .map((model) => model.id)
+      .sort(),
+  );
+});
+
+it.each([
+  ["posthog/jeeves", "available"],
+  ["posthog/jevk5", "available"],
+] as const)("defines %s as PostHog's own decision model (%s)", (id, status) => {
+  const model: CatalogModelInput | undefined = catalogModels.find(
+    (item) => item.id === id,
+  );
+
+  expect(model).toMatchObject({
+    owner: { organizationSlug: "posthog" },
+    type: "decision",
+    status,
+    openrouterModelId: null,
+    properties: {
+      tokenizer: "Qwen",
+      input_modalities: [
+        { supported_inputs: { max_prompt_length: { value: 16_384 } } },
+      ],
+      output_modalities: [{ streaming: false, max_length: { value: 1 } }],
+    },
+  });
+  expect(model?.id.startsWith("posthog/")).toBe(true);
+  expect(model?.aliases ?? []).toEqual([]);
+  expect(() => requireOwnedModelNames(model!)).not.toThrow();
+  // Never compiled into the public catalog, so never published or listed.
+  expect(catalogModel(id)).toBeUndefined();
 });

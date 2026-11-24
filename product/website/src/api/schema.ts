@@ -1314,7 +1314,7 @@ export interface paths {
     };
     /**
      * Read version file
-     * @description Returns the text of a Markdown, CSV, JSON or plain-text file of at most 2 MiB.
+     * @description Returns the text of a Markdown, CSV, JSON or plain-text file of at most 2 MiB, or a .eval.json file of at most 32 MiB.
      */
     get: operations["getTaskVersionFileContent"];
     put?: never;
@@ -2595,27 +2595,52 @@ export interface components {
        * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
        */
       id: string;
-      /** Format: uri */
-      config_url: string;
-      /** Format: uri */
-      weights_url: string;
+      /**
+       * Format: uri
+       * @description LoRA uploads only.
+       */
+      config_url?: string;
+      /**
+       * Format: uri
+       * @description LoRA uploads only.
+       */
+      weights_url?: string;
+      /**
+       * Format: uri
+       * @description Cartridge uploads only.
+       */
+      cartridge_url?: string;
       /**
        * Format: date-time
        * @example 2026-08-16T12:00:00.000Z
        */
       expires_at: string;
     };
-    CreateModelUpload: {
-      task: string;
-      /** @default false */
-      create_task: boolean;
-      name: string;
-      base_model_id: string;
-      /** @description Legacy hint; the uploaded config determines declared training provenance. */
-      base_model_revision?: string;
-      config_size: number;
-      weights_size: number;
-    };
+    CreateModelUpload:
+      | {
+          /** @enum {string} */
+          format: "cartridge";
+          task: string;
+          /** @default false */
+          create_task: boolean;
+          name: string;
+          base_model_id: string;
+          /** @description Size of cartridge.safetensors in bytes. */
+          cartridge_size: number;
+        }
+      | {
+          /** @enum {string} */
+          format?: "peft_lora";
+          task: string;
+          /** @default false */
+          create_task: boolean;
+          name: string;
+          base_model_id: string;
+          /** @description Legacy hint; the uploaded config determines declared training provenance. */
+          base_model_revision?: string;
+          config_size: number;
+          weights_size: number;
+        };
     TaskVersion: {
       /**
        * Format: uuid
@@ -2643,18 +2668,48 @@ export interface components {
        */
       created_at: string;
     };
-    TaskVersionAdapter: {
-      /** @enum {string} */
+    TaskVersionAdapter:
+      | components["schemas"]["PeftLoraAdapter"]
+      | components["schemas"]["CartridgeAdapter"];
+    PeftLoraAdapter: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
       format: "peft_lora";
       artifact_uri: string;
       sha256: string;
       size_bytes: number;
-      rank: number;
       /** @description Immutable training checkpoint declared in the adapter config, when known. */
       base_model_revision?: string;
       declared_base_model_revision?: string;
       /** @description Supported base checkpoint used for deterministic tensor validation; this is not proof of training provenance. */
       validated_base_model_revision?: string;
+      rank: number;
+    };
+    CartridgeAdapter: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      format: "cartridge";
+      artifact_uri: string;
+      sha256: string;
+      size_bytes: number;
+      /** @description Immutable training checkpoint declared in the adapter config, when known. */
+      base_model_revision?: string;
+      declared_base_model_revision?: string;
+      /** @description Supported base checkpoint used for deterministic tensor validation; this is not proof of training provenance. */
+      validated_base_model_revision?: string;
+      /** @description Prompt positions the cartridge occupies. */
+      num_tokens: number;
+      hidden_size: number;
+      /** @enum {string} */
+      placement: "system_prompt_start";
+      /** @description Text placed between the cartridge and the system prompt. */
+      separator: string;
+      /** @description Whether the cartridge records the token IDs it was trained behind. */
+      has_slot_token_ids: boolean;
     };
     StartTrainingRunResponse: {
       /**
@@ -3198,7 +3253,12 @@ export interface components {
        */
       created_at: string;
       adapter: {
-        rank: number;
+        /** @enum {string} */
+        format: "peft_lora" | "cartridge";
+        /** @description LoRA rank; null for cartridges. */
+        rank: number | null;
+        /** @description Cartridge positions; null for LoRA adapters. */
+        num_tokens: number | null;
         size_bytes: number;
         /** @description Base model revision the adapter applies to, when known. */
         checkpoint: string | null;
@@ -3348,7 +3408,7 @@ export interface components {
             [key: string]: components["schemas"]["SystemOneJson"];
           }
         | components["schemas"]["SystemOneJson"][];
-      /** @description One to 64 named questions; each name is 1..200 characters. */
+      /** @description One to 1,024 named questions; each name is 1..200 characters. Runtime token limits usually bind first. */
       questions: {
         [key: string]: components["schemas"]["SystemOneQuestion"];
       };
@@ -3380,10 +3440,12 @@ export interface components {
            */
           type: "choice";
           instructions?: components["schemas"]["SystemOneJson"] & unknown;
-          /** @description One to 255 named options with JSON descriptions; null leaves an option undescribed. */
-          criteria: {
-            [key: string]: components["schemas"]["SystemOneJson"];
-          };
+          /** @description Named options: an object of option names to JSON descriptions, or a list of option names. */
+          criteria:
+            | {
+                [key: string]: components["schemas"]["SystemOneJson"];
+              }
+            | string[];
         }
       | {
           /**
@@ -3405,7 +3467,7 @@ export interface components {
            */
           type: "score";
           instructions?: components["schemas"]["SystemOneJson"] & unknown;
-          /** @description One to 255 ordered JSON level descriptions, indexed from zero. A single level is answered with certainty; perplexity-ai/pplx-decider-v1.2 still requires at least two. */
+          /** @description One to 255 ordered JSON level descriptions, indexed from zero. A single level is answered with certainty. */
           criteria: components["schemas"]["SystemOneJson"][];
         };
     ChatCompletionResponse: {
@@ -3952,6 +4014,15 @@ export interface components {
           /** @description Whether the provider catalog advertises HIPAA compliance. */
           hipaa: boolean;
         };
+      }[];
+      /** @description The same models as data, as TypeSafe SDK model cards; name is the id to send. */
+      models: {
+        /** @description Exact hosted model ID from GET /v1/models; no aliases or fallback. */
+        name: string;
+        /** @description Human-readable model description. */
+        description: string;
+        /** @description UTC release date of the model, as YYYY-MM-DD. */
+        release_date: string;
       }[];
     };
   };
@@ -9267,6 +9338,8 @@ export interface operations {
       /** @description Admission or inference capacity is exhausted. */
       429: {
         headers: {
+          /** @description Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog). */
+          "Retry-After"?: number;
           [name: string]: unknown;
         };
         content?: never;
@@ -9341,6 +9414,8 @@ export interface operations {
       /** @description Admission or inference capacity exhausted. */
       429: {
         headers: {
+          /** @description Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog). */
+          "Retry-After"?: number;
           [name: string]: unknown;
         };
         content?: never;
@@ -9415,6 +9490,8 @@ export interface operations {
       /** @description Admission or inference capacity exhausted. */
       429: {
         headers: {
+          /** @description Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog). */
+          "Retry-After"?: number;
           [name: string]: unknown;
         };
         content?: never;
@@ -9489,6 +9566,8 @@ export interface operations {
       /** @description Admission or inference capacity exhausted. */
       429: {
         headers: {
+          /** @description Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog). */
+          "Retry-After"?: number;
           [name: string]: unknown;
         };
         content?: never;
@@ -9562,6 +9641,8 @@ export interface operations {
       /** @description Admission or inference capacity exhausted. */
       429: {
         headers: {
+          /** @description Seconds to wait before retrying: the runtime's own value capped at 30, otherwise 1 (5 for settlement_backlog). */
+          "Retry-After"?: number;
           [name: string]: unknown;
         };
         content?: never;

@@ -222,6 +222,9 @@ impl StreamStop {
             return false;
         };
 
+        if let Self::RuntimeFailed(failure) = self {
+            call.keep_own_error(failure);
+        }
         match self {
             Self::RuntimeFailed(failure) => failure.log_attempt(
                 call.generation_id,

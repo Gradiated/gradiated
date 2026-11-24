@@ -1,0 +1,18 @@
+--- a/sglang/srt/models/deepseek_v4.py
++++ b/sglang/srt/models/deepseek_v4.py
+@@ -74,6 +74,7 @@
+ )
+ from sglang.srt.layers.attention.dsv4.indexer import C4Indexer
+ from sglang.srt.layers.aux_hidden_states import AuxHiddenStatePacker
++from sglang.srt.layers.cartridge_embedding import apply_cartridges
+ from sglang.srt.layers.cp.cp_decode_attn_tp import get_cp_decode_attn_tp_ctx
+ from sglang.srt.layers.cp.utils import (
+     cp_gather_full_sequence_states,
+@@ -4468,6 +4469,7 @@
+                 hidden_states = self.embed_tokens(input_ids)
+             else:
+                 hidden_states = input_embeds
++            apply_cartridges(hidden_states, forward_batch)
+             from sglang.kernels.ops.layernorm.mhc import hc_broadcast
+ 
+             hidden_states = hc_broadcast(hidden_states, self.hc_mult)

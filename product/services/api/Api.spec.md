@@ -83,16 +83,16 @@ The public HTTP API: browser sessions, the management API, the Stripe webhook an
   checklist: keyed-ordering dismissed: credits commute, so no ordering domain applies
   checklist: acknowledgment-barrier dismissed: the route returns success only after the posting commits
   checklist: retry-classification dismissed: Stripe owns retries; the route only returns success or an error
-- private readiness reports: Deployment status is accepted only on the private GPU control listener and is bound to its configured provider.
+- private readiness reports: Deployment status is accepted only on the private GPU control listener, for a deployment on one of its configured providers.
   over: every deployment status report on the private listener
-  via: fixed provider binding and deployment/runtime validation
+  via: configured provider set and deployment/runtime validation
   because: GPUs and cluster workloads are trusted serving components, while public clients must not submit readiness observations
   crossing: private-network -> control-plane
   kinds: identity, message
   checklist: capability-authorization declared as private readiness reports
   checklist: message-authenticity declared as private-network authentication; there is no bearer token or signature on this path
   checklist: input-validation declared as exact deployment, provider and runtime-revision validation
-  checklist: identity-continuity declared as a fixed provider on this listener
+  checklist: identity-continuity declared as the deployment ID, an unguessable pod UID each host learns only for its own pods, plus its runtime revision; RunPod and AWS hosts share one listener and the same tag:gpu-inference network access, so a provider check cannot authenticate the sender
   checklist: separation-of-duties dismissed: SDK qualification runs in EKS before a replica is made available; GPU reports alone cannot promote an unqualified pod
 - tokened profiling reports: A profiling batch is accepted only with the profiling bearer token.
   over: every request to the profiling ingest route: a missing token, a non-Bearer scheme and a wrong token of the same length

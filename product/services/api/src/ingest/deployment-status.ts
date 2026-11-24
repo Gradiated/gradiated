@@ -11,7 +11,7 @@ import { serviceLog } from "../logging.js";
 
 type DeploymentStatusIngestDependencies = {
   service: DeploymentStatusService;
-  provider: string;
+  providers: readonly string[];
 };
 
 const failureStatus: Record<DeploymentStatusFailure, 403 | 404> = {
@@ -21,7 +21,7 @@ const failureStatus: Record<DeploymentStatusFailure, 403 | 404> = {
 };
 
 export const createDeploymentStatusIngestApp = ({
-  provider,
+  providers,
   service,
 }: DeploymentStatusIngestDependencies): Hono => {
   const app = new Hono();
@@ -39,7 +39,7 @@ export const createDeploymentStatusIngestApp = ({
       }
 
       try {
-        await service.report(provider, parsed.data);
+        await service.report(providers, parsed.data);
       } catch (error) {
         if (!(error instanceof DeploymentStatusError)) throw error;
 

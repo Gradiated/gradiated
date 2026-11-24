@@ -126,9 +126,13 @@ impl ServingState for FailingState {
         self.inner.account(organization_id).await
     }
 
-    async fn model(&self, model_id: &str) -> Result<Option<GatewayModel>, ServingStateError> {
+    async fn model_for(
+        &self,
+        access: crate::ModelAccess,
+        model_id: &str,
+    ) -> Result<Option<GatewayModel>, ServingStateError> {
         self.read(StateRead::Model)?;
-        self.inner.model(model_id).await
+        self.inner.model_for(access, model_id).await
     }
 
     async fn private_model_exists(
@@ -147,9 +151,12 @@ impl ServingState for FailingState {
         self.inner.private_adapter(workspace_id, name).await
     }
 
-    async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError> {
+    async fn models_visible_to(
+        &self,
+        access: crate::ModelAccess,
+    ) -> Result<Vec<GatewayModel>, ServingStateError> {
         self.read(StateRead::Models)?;
-        self.inner.models().await
+        self.inner.models_visible_to(access).await
     }
 
     async fn deployment_statuses(

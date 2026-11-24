@@ -1,9 +1,6 @@
 use std::sync::LazyLock;
 
-use axum::{
-    response::{IntoResponse, Response},
-    Json,
-};
+use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 use serde_json::Value;
 use switchyard_translation::{
@@ -154,9 +151,7 @@ impl Protocol {
     pub fn error_response(self, error: GatewayError) -> Response {
         match self {
             Self::OpenAiChat | Self::OpenAiResponses => error.into_response(),
-            Self::AnthropicMessages => {
-                (error.status(), Json(error.anthropic_envelope())).into_response()
-            }
+            Self::AnthropicMessages => error.response_with(error.anthropic_envelope()),
         }
     }
 

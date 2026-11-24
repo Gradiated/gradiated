@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { createOpenApiDocument } from "../src/openapi.js";
 
-import { createTestApp, modelRecord, sessionStoreDown } from "./support.js";
+import {
+  createTestApp,
+  modelRecord,
+  organizationModelRecord,
+  sessionStoreDown,
+} from "./support.js";
 
 describe("model catalog route", () => {
   it("lists the advertised exact models without a session", async () => {
@@ -50,8 +55,12 @@ describe("model catalog route", () => {
     });
   });
 
-  it("adds decision type to legacy stored rows without mutating their properties", async () => {
-    const decisionRecord = { ...modelRecord, id: "jaredpalmer/kev-9b" };
+  it("lists each row's stored type without mutating its properties", async () => {
+    const decisionRecord = {
+      ...modelRecord,
+      id: "jaredpalmer/kev-9b",
+      type: "decision" as const,
+    };
     const app = createTestApp({
       services: {
         catalogBilling: {
@@ -154,5 +163,21 @@ describe("model catalog route", () => {
     await expect(response.json()).resolves.toMatchObject({
       data: [{ id: modelRecord.id }],
     });
+  });
+
+  it("never publishes an organization's own model", async () => {
+    const app = createTestApp({
+      services: {
+        catalogBilling: {
+          listModels: async () => [modelRecord, organizationModelRecord],
+        },
+      },
+    });
+
+    const response = await app.request("/api/v1/models");
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { data: { id: string }[] };
+    expect(body.data.map((model) => model.id)).toEqual([modelRecord.id]);
   });
 });

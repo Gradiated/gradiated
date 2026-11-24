@@ -32,6 +32,23 @@ const schema = z
       .string()
       .regex(/^\/(?!\/)[^\s]+$/)
       .default("/brand/png/gradiated-mark-dark-1024.png"),
+    links: z
+      .array(
+        z
+          .object({
+            label: z.string().trim().min(1),
+            href: z.string().url().startsWith("https://"),
+          })
+          .strict(),
+      )
+      .optional(),
+    note: z
+      .object({
+        title: z.string().trim().min(1),
+        items: z.array(z.string().trim().min(1)).min(1),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
   .refine(

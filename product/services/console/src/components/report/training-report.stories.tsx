@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { evalReport, evalReportData } from "@/stories/eval-fixture";
 import { createStoryQueryClient } from "@/stories/query-client";
 import {
   everyBlockReport,
@@ -62,6 +63,10 @@ export const EveryBlock: Story = {
 
 export const Full: Story = {
   render: () => <Report markdown={sampleReport} files={sampleReportData} />,
+};
+
+export const Eval: Story = {
+  render: () => <Report markdown={evalReport} files={evalReportData} />,
 };
 
 export const MissingData: Story = {

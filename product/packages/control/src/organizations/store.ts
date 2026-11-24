@@ -26,7 +26,11 @@ import {
   activeCustomerOrganization,
 } from "../access.js";
 import { ControlServiceError } from "../errors.js";
-import { isTakenOrganizationSlug, requireChangeableSlug } from "./slugs.js";
+import {
+  isTakenOrganizationSlug,
+  lockModelNamespaces,
+  requireChangeableSlug,
+} from "./slugs.js";
 
 const OrganizationRecordSchema = CurrentOrganizationSchema.pick({
   id: true,
@@ -272,6 +276,8 @@ export const createOrganizationStore = (database: ControlDatabase) => {
 
       await database
         .transaction(async (transaction) => {
+          // Before the organization row, in the order catalog apply takes them.
+          if (update.slug !== undefined) await lockModelNamespaces(transaction);
           const [current] = await transaction
             .select({ slug: organizations.slug })
             .from(organizations)

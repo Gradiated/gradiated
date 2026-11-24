@@ -7,13 +7,19 @@ mod systemone;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use reqwest::StatusCode;
+use reqwest::{
+    header::{HeaderMap, RETRY_AFTER},
+    StatusCode,
+};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::{GatewayError, GatewayModelDeployment, InferenceRequest, NormalizedUsage};
+use crate::{
+    error::MAX_RETRY_AFTER_SECONDS, GatewayError, GatewayModelDeployment, InferenceRequest,
+    NormalizedUsage,
+};
 
 pub use client::{RuntimeClientError, RuntimeTlsConfig, SglangClient};
 pub use openrouter::{supports_parameter as openrouter_supports_parameter, OpenRouterClient};
@@ -243,7 +249,7 @@ impl RuntimeFailureKind {
     pub fn public_error(self) -> GatewayError {
         match self {
             Self::InvalidRequest => GatewayError::invalid_request(None),
-            Self::CapacityExceeded => GatewayError::CapacityExceeded,
+            Self::CapacityExceeded => GatewayError::capacity_exceeded(),
             Self::Unavailable
             | Self::TimedOut
             | Self::ResponseTooLarge
@@ -259,6 +265,7 @@ pub struct RuntimeFailure {
     kind: RuntimeFailureKind,
     usage: NormalizedUsage,
     cause: FailureCause,
+    retry_after_seconds: Option<u8>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -469,7 +476,16 @@ impl RuntimeFailure {
             kind,
             usage: NormalizedUsage::zero(),
             cause,
+            retry_after_seconds: None,
         }
+    }
+
+    pub(super) fn with_retry_after(mut self, headers: &HeaderMap) -> Self {
+        if self.kind == RuntimeFailureKind::CapacityExceeded {
+            self.retry_after_seconds = retry_after_seconds(headers, Utc::now());
+        }
+
+        self
     }
 
     fn rejected(status: StatusCode, usage: NormalizedUsage) -> Self {
@@ -580,9 +596,29 @@ impl RuntimeFailure {
     pub fn gateway_error(&self) -> GatewayError {
         match self.kind {
             RuntimeFailureKind::InvalidRequest => GatewayError::invalid_request(self.parameter()),
+            RuntimeFailureKind::CapacityExceeded => GatewayError::CapacityExceeded {
+                retry_after_seconds: self.retry_after_seconds,
+            },
             kind => kind.public_error(),
         }
     }
+}
+
+/// A past HTTP date means retry now; an unreadable value falls back to the default.
+pub(crate) fn retry_after_seconds(headers: &HeaderMap, now: DateTime<Utc>) -> Option<u8> {
+    let value = headers.get(RETRY_AFTER)?.to_str().ok()?.trim();
+    let seconds = match value.parse::<u64>() {
+        Ok(seconds) => seconds,
+        Err(_) => {
+            let at = DateTime::parse_from_rfc2822(value)
+                .ok()?
+                .with_timezone(&Utc);
+            let millis = (at - now).num_milliseconds().max(0) as u64;
+            millis.div_ceil(1000)
+        }
+    };
+
+    Some(seconds.min(u64::from(MAX_RETRY_AFTER_SECONDS)) as u8)
 }
 
 /// A vLLM `QueueOverflowError` or `MaxQueuedTokensError` rejects with HTTP 503
@@ -604,3 +640,72 @@ fn failure_kind_for_status(status: StatusCode) -> RuntimeFailureKind {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod retry_after_tests {
+    use chrono::TimeZone;
+    use reqwest::header::HeaderValue;
+
+    use super::*;
+
+    fn parsed(value: &str) -> Option<u8> {
+        let mut headers = HeaderMap::new();
+        headers.insert(RETRY_AFTER, HeaderValue::from_str(value).unwrap());
+        let now = Utc.with_ymd_and_hms(2026, 11, 20, 12, 0, 0).unwrap();
+
+        retry_after_seconds(&headers, now)
+    }
+
+    #[test]
+    fn a_runtime_retry_after_is_read_and_capped() {
+        assert_eq!(parsed("7"), Some(7));
+        assert_eq!(parsed(" 0 "), Some(0));
+        assert_eq!(parsed("30"), Some(30));
+        assert_eq!(parsed("31"), Some(MAX_RETRY_AFTER_SECONDS));
+        assert_eq!(
+            parsed("18446744073709551615"),
+            Some(MAX_RETRY_AFTER_SECONDS)
+        );
+        assert_eq!(parsed("Fri, 20 Nov 2026 12:00:04 GMT"), Some(4));
+        assert_eq!(
+            parsed("Fri, 20 Nov 2026 13:00:00 GMT"),
+            Some(MAX_RETRY_AFTER_SECONDS)
+        );
+        assert_eq!(parsed("Fri, 20 Nov 2026 11:00:00 GMT"), Some(0));
+        assert_eq!(parsed("-1"), None);
+        assert_eq!(parsed("1.5"), None);
+        assert_eq!(parsed("soon"), None);
+        assert_eq!(retry_after_seconds(&HeaderMap::new(), Utc::now()), None);
+    }
+
+    #[test]
+    fn only_a_capacity_rejection_keeps_the_runtime_retry_after() {
+        let mut headers = HeaderMap::new();
+        headers.insert(RETRY_AFTER, HeaderValue::from_static("7"));
+
+        for status in [
+            StatusCode::TOO_MANY_REQUESTS,
+            StatusCode::SERVICE_UNAVAILABLE,
+        ] {
+            assert_eq!(
+                RuntimeFailure::rejected(status, NormalizedUsage::zero())
+                    .with_retry_after(&headers)
+                    .gateway_error(),
+                GatewayError::CapacityExceeded {
+                    retry_after_seconds: Some(7)
+                }
+            );
+        }
+        assert_eq!(
+            RuntimeFailure::rejected(StatusCode::TOO_MANY_REQUESTS, NormalizedUsage::zero())
+                .gateway_error(),
+            GatewayError::capacity_exceeded()
+        );
+        assert_eq!(
+            RuntimeFailure::rejected(StatusCode::BAD_GATEWAY, NormalizedUsage::zero())
+                .with_retry_after(&headers)
+                .gateway_error(),
+            GatewayError::RuntimeUnavailable
+        );
+    }
+}

@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import {
   MAX_ADAPTER_BYTES,
   MAX_UPLOADED_ADAPTER_RANK,
-  CreateModelUploadSchema,
+  LoraModelUploadSchema,
 } from "@gradiated/contracts";
 import {
   catalogModel,
@@ -231,7 +231,8 @@ export const UploadModelDialog = ({
       ...incoming,
     ]);
   };
-  const draft = CreateModelUploadSchema.omit({
+  const draft = LoraModelUploadSchema.omit({
+    format: true,
     base_model_revision: true,
   }).safeParse({
     task: task?.name ?? taskName.trim(),
@@ -304,11 +305,14 @@ export const UploadModelDialog = ({
         return completeModelUpload(workspaceId, completedTransfer.current.id);
       }
       const grant = await createModelUpload(workspaceId, draft.data);
+      const { config_url: configUrl, weights_url: weightsUrl } = grant;
+      if (!configUrl || !weightsUrl)
+        throw new Error("The upload could not be started. Please try again.");
       await Promise.all(
         (
           [
-            [grant.config_url, config],
-            [grant.weights_url, weights],
+            [configUrl, config],
+            [weightsUrl, weights],
           ] as const
         ).map(async ([url, file]) => {
           const response = await fetch(url, {

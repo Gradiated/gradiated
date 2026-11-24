@@ -46,6 +46,13 @@ export const selectImages = (
       verificationKey(image, revision) !== verificationKey(before[i], base),
   );
 };
+// The parent as a full SHA: plan() refuses anything else, and selectImages
+// treats a base it cannot plan as "every image changed".
+export const parentRevision = (revision, cwd = undefined) =>
+  execFileSync("git", ["rev-parse", "--verify", `${revision}^{commit}^`], {
+    encoding: "utf8",
+    cwd,
+  }).trim();
 const hashArchive = async (path) => {
   const hash = createHash("sha256");
   for await (const chunk of createReadStream(path)) hash.update(chunk);
@@ -194,7 +201,7 @@ const main = async () => {
   if (command === "find") return;
   if (!artifact) {
     // Only unchanged inputs may reuse an image from before artifact promotion existed.
-    const changed = selectImages(`${revision}^`, revision, [name]);
+    const changed = selectImages(parentRevision(revision), revision, [name]);
     if (changed.length)
       throw new Error(
         `No passing CI image artifact for ${name}. Rebase/retest the PR; deployment never rebuilds or scans images.`,

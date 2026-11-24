@@ -9,6 +9,7 @@ import type {
   Response,
 } from "../../../../gateway/test/integration/http-client.js";
 import type { JsonObject } from "../../../../gateway/test/integration/json.js";
+import type { RuntimeKind } from "../../../../gateway/test/integration/mock-runtimes/server.js";
 import { Link } from "./link.js";
 import { MockProvider } from "./provider.js";
 import { ProxyProcess } from "./proxy-process.js";
@@ -142,7 +143,7 @@ export interface ExtraProxyOptions {
 
 export interface ProxyFixture {
   /** A tenant with a hosted model that the proxy's catalog already holds. */
-  hostedCase(options?: CaseOptions): Promise<Case>;
+  hostedCase(options?: CaseOptions, kind?: RuntimeKind): Promise<Case>;
   /**
    * Another proxy process with the same upstreams and some settings changed. It
    * stops after the current test.
@@ -163,7 +164,7 @@ export interface ProxyFixture {
  * gateway stack. After each test the provider must have seen no contract error.
  */
 export const useProxy = (
-  makeCase: (kind: "vllm", options?: CaseOptions) => Promise<Case>,
+  makeCase: (kind: RuntimeKind, options?: CaseOptions) => Promise<Case>,
   options: ProxyFixtureOptions = {},
 ): ProxyFixture => {
   let proxy: ProxyProcess | undefined;
@@ -230,8 +231,8 @@ export const useProxy = (
   };
 
   return {
-    async hostedCase(options) {
-      const instance = await makeCase("vllm", options);
+    async hostedCase(options, kind = "vllm") {
+      const instance = await makeCase(kind, options);
       // Only a load that starts after the model row is committed can contain it.
       await required(proxy, "proxy").catalogRefreshedAfter(Date.now());
 

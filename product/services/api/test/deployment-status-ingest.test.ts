@@ -26,7 +26,7 @@ const createIngestApp = (
   service: DeploymentStatusService = { report: async () => undefined },
 ) =>
   createDeploymentStatusIngestApp({
-    provider: "runpod",
+    providers: ["runpod"],
     service,
   });
 
@@ -45,7 +45,7 @@ describe("deployment status ingestion", () => {
   it("uses the configured provider on the private listener without a bearer token", async () => {
     const reportStatus = vi.fn(async () => undefined);
     const app = createDeploymentStatusIngestApp({
-      provider: "runpod",
+      providers: ["runpod"],
       service: { report: reportStatus },
     });
     const payload = report();
@@ -55,7 +55,7 @@ describe("deployment status ingestion", () => {
       body: JSON.stringify(payload),
     });
     expect(response.status).toBe(204);
-    expect(reportStatus).toHaveBeenCalledWith("runpod", payload);
+    expect(reportStatus).toHaveBeenCalledWith(["runpod"], payload);
   });
 
   it("passes the runtime active request limit to the status service", async () => {
@@ -68,7 +68,7 @@ describe("deployment status ingestion", () => {
     );
 
     expect(response.status).toBe(204);
-    expect(reportStatus).toHaveBeenCalledWith("runpod", payload);
+    expect(reportStatus).toHaveBeenCalledWith(["runpod"], payload);
   });
 
   it("rejects malformed JSON", async () => {

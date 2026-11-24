@@ -1,6 +1,13 @@
-import { z } from "zod";
+export {
+  AwsGpuBaseImageSchema,
+  GpuBaseImageSchema,
+  gpuBaseRepository,
+} from "@gradiated/gpu-hosts";
 
-// RunPod ECR delegation requires a tag. Input-hash tags identify immutable builds.
-export const GpuBaseImageSchema = z
-  .string()
-  .regex(/^[a-z0-9.-]+\/[a-z0-9._/-]+:gpu-base-inputs-[0-9a-f]{64}$/);
+// The AWS account whose ECR registry, and so artifact bucket, holds the image.
+export const artifactAccount = (image: string) => {
+  const account = image.match(/^(\d{12})\.dkr\.ecr\./)?.[1];
+  if (!account)
+    throw new Error("GPU base image must identify its artifact account");
+  return account;
+};

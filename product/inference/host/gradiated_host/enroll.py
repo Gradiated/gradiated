@@ -12,7 +12,7 @@ from . import files, schema, seed
 from .paths import AGENT_PORT, DESMOND, DOWNLOADER, Layout
 from .tailscale import BOOTSTRAP_TAG, INFERENCE_TAG, Tailscale, tags
 
-PRODUCTS = {'B200': 'B200', 'B300': 'B300', 'H100': 'H100', 'H200': 'H200', 'L40S': 'L40S',
+PRODUCTS = {'B200': 'B200', 'B300': 'B300', 'H100': 'H100', 'H200': 'H200', 'L4': 'L4', 'L40S': 'L40S',
             'RTX PRO 6000': 'RTX-PRO-6000'}
 
 
@@ -69,16 +69,22 @@ def inventory(layout):
     products = {product for name in names for marker, product in PRODUCTS.items()
                 if re.search(r'\b' + re.escape(marker) + r'\b', name)}
     if not names or len(set(names)) != 1 or len(products) != 1:
-        raise EnrollmentError('Enrollment needs a homogeneous B200, B300, H100, H200, L40S or RTX PRO 6000 GPU set')
+        raise EnrollmentError('Enrollment needs a homogeneous B200, B300, H100, H200, L4, L40S or RTX PRO 6000 GPU set')
     quota = (layout.cgroup / 'cpu.max').read_text().split()
     cpu = os.cpu_count() if quota[0] == 'max' else int(quota[0]) // int(quota[1])
     limit = (layout.cgroup / 'memory.max').read_text().strip()
     if limit == 'max':
         total = next(line for line in layout.meminfo.read_text().splitlines() if line.startswith('MemTotal:'))
         limit = int(total.split()[1]) * 1024
-    # Headroom for the host agent, Tailscale and the page cache.
     return {'gpu_count': len(names), 'gpu_product': products.pop(), 'cpu': max(1, int(cpu * 0.9)),
-            'memory_gib': max(1, int(limit) // 1024 ** 3 - 16)}
+            'memory_gib': schedulable_gib(int(limit) // 1024 ** 3)}
+
+
+# Headroom for the host agent, Tailscale and the page cache: an eighth of the
+# host, at least 2 GiB and at most 16 GiB, so a 16 GiB host keeps 14 GiB
+# schedulable and every host of 128 GiB or more keeps 16 GiB back.
+def schedulable_gib(total_gib):
+    return max(1, total_gib - min(16, max(2, total_gib // 8)))
 
 
 # Every step checks what is already there, so enrolling again with the same payload is safe.

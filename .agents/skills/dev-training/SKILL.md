@@ -1,11 +1,11 @@
 ---
 name: dev-training
-description: Search available GPU compute and prices across providers, get a spot or on-demand GPU VM (Nebius, Ornn or Spheron) for development training or experiments, connect to it over Tailscale or SSH, and delete it afterwards. Use whenever an agent needs a GPU outside the serving fleet, including multi-node training; the VMs are isolated from production and from every other machine on the tailnet.
+description: Search available GPU compute and prices across providers, get a spot or on-demand GPU VM (Nebius, Ornn, Spheron or SF Compute) for development training or experiments, connect to it over Tailscale or SSH, and delete it afterwards. Use whenever an agent needs a GPU outside the serving fleet, including multi-node training; the VMs are isolated from production and from every other machine on the tailnet.
 ---
 
 # Development training GPUs
 
-`gradctl compute` creates GPU VMs from Nebius, Ornn or Spheron for
+`gradctl compute` creates GPU VMs from Nebius, Ornn, Spheron or SF Compute for
 training runs and experiments. Use it instead of leasing a serving host when the
 work does not need production hardware.
 
@@ -70,7 +70,7 @@ only what you copy to them, and `gradiated/dev/env` holds only development keys.
 
 ## Use
 
-1. Find compute: `gradctl compute search [--provider nebius,ornn,spheron] [--gpu h100]
+1. Find compute: `gradctl compute search [--provider nebius,ornn,spheron,sfcompute] [--gpu h100]
    [--term spot] [--region us-] [--max-gpus 8] [--max-price 3]` lists what is
    available now, cheapest per GPU-hour first, with the provider,
    virtualization, GPUs per VM, how many such VMs can start now (`AVAIL`) and
@@ -127,6 +127,26 @@ only what you copy to them, and `gradiated/dev/env` holds only development keys.
    part way, run it again.
 
 Report the VM, its hours and where the results are in your response or PR.
+
+## SF Compute
+
+Use `--provider sfcompute` and a `sku_...` platform from `platforms` or `search`.
+See `tools/gradctl/README.md` for setup and bounded-order semantics. `up` requires
+`--max-price`; `--duration-hours` (default 1) bounds the prepaid window and rounds
+the end down to the provider's schedule grid. Spot enables resale/preemption;
+on-demand holds the allocation until expiry. Neither supports stop/resume.
+`down` deletes the instance but does not refund its prepaid pool: sell unused time
+in the SF Compute console. Do not assume the other providers' hourly refund or
+billing behavior applies. Failed/ambiguous purchases retain their named pool and
+refuse repeat purchases until reconciled. `gradctl compute extend <name> --provider sfcompute --hours <additional-hours>
+--max-price <USD-per-GPU-hour>` buys contiguous time on the same active, dedicated
+one-node pool without replacing the VM. Extend before expiry; other providers
+currently use continuous billing/automatic hourly renewal and expose no explicit
+extension for the rental types gradctl creates. Callable SF orders stay at the
+API maximum 20% markup over the buy limit; 30% is unsupported, and this is not
+a markup over the actual fill price.
+`meter` uses actual order fills across the pool for VM usage; unused prepaid time, fees and resale
+credits are reflected only in provider billing.
 
 ## Adding a provider
 

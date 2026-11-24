@@ -197,7 +197,7 @@ async fn late_capacity_cannot_create_a_third_runtime_attempt() {
 
         assert_eq!(
             items.last(),
-            Some(&StreamItem::Error(GatewayError::CapacityExceeded))
+            Some(&StreamItem::Error(GatewayError::capacity_exceeded()))
         );
         assert_eq!(harness.journal.dispatches().len(), 2);
         assert_eq!(harness.only_finalized()["status"], "failed");
@@ -225,7 +225,7 @@ async fn role_frames_and_reported_work_prevent_late_capacity_retry() {
 
         assert_eq!(
             items.last(),
-            Some(&StreamItem::Error(GatewayError::CapacityExceeded))
+            Some(&StreamItem::Error(GatewayError::capacity_exceeded()))
         );
         assert_eq!(harness.journal.dispatches().len(), 1);
         assert_eq!(harness.only_finalized()["status"], "failed");
@@ -241,7 +241,7 @@ async fn a_stream_that_fails_to_open_without_a_fallback_returns_the_settled_erro
 
     assert_eq!(
         harness.open().await.err(),
-        Some(GatewayError::CapacityExceeded)
+        Some(GatewayError::capacity_exceeded())
     );
 
     assert_eq!(harness.journal.dispatches().len(), 1);

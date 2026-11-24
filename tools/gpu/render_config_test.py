@@ -56,12 +56,17 @@ class RenderTests(unittest.TestCase):
             with patch.object(renderer, 'GPU', gpu):
                 outputs = renderer.render()
                 self.assertEqual(json.loads(outputs[gpu / 'gpu-fleet-pins.yaml'][0]['data']['pins.json']), pins)
+                aws = {**pins, 'awsImage': pins['image'].split(':')[0] + '@sha256:' + 'b' * 64}
+                (gpu / 'pins.json').write_text(json.dumps(aws))
+                self.assertEqual(json.loads(renderer.render()[gpu / 'gpu-fleet-pins.yaml'][0]['data']['pins.json']), aws)
                 # The controller applies whatever bundle the operator chose for each host.
                 self.assertNotIn('host_bundle', json.loads(outputs[gpu / 'controller.yaml'][0]['data']['hosts.json']))
                 for invalid in ({**pins, 'hostBundle': {**pins['hostBundle'], 'sha256': '../escape'}},
                                 {**pins, 'image': pins['image'] + '@' + pins['imageDigest']},
                                 {**pins, 'image': 'docker.io/library/ubuntu:latest'},
                                 {**pins, 'imageDigest': 'latest'},
+                                {**pins, 'awsImage': pins['image'].split(':')[0] + ':latest'},
+                                {**pins, 'awsImage': '873716897517.dkr.ecr.us-east-1.amazonaws.com/other@sha256:' + 'b' * 64},
                                 {**pins, 'extra': True}):
                     (gpu / 'pins.json').write_text(json.dumps(invalid))
                     with self.assertRaises(ValueError):
@@ -89,9 +94,12 @@ class RenderTests(unittest.TestCase):
         copies = renderer.pinned_copies(pins)
         self.assertEqual(json.loads(copies[renderer.TEMPLATES])['image'], pins['image'])
         workload = copies[renderer.OPS_MCP]
-        for name, value in (('GPU_BASE_IMAGE', pins['image']), ('GPU_HOST_BOOTSTRAP_SHA256', 'a' * 64),
-                            ('GPU_HOST_BOOTSTRAP_BASE_ID', 'test-base')):
+        for name, value in (('GPU_BASE_IMAGE', pins['image']), ('AWS_GPU_BASE_IMAGE', pins['image']),
+                            ('GPU_HOST_BOOTSTRAP_SHA256', 'a' * 64), ('GPU_HOST_BOOTSTRAP_BASE_ID', 'test-base')):
             self.assertRegex(workload, rf'- name: {name}\n\s+value: {re.escape(value)}\n')
+        aws = pins['image'].split(':')[0] + '@sha256:' + 'b' * 64
+        self.assertRegex(renderer.pinned_copies({**pins, 'awsImage': aws})[renderer.OPS_MCP],
+                         rf'- name: AWS_GPU_BASE_IMAGE\n\s+value: {re.escape(aws)}\n')
         # Everything else in the workload is left as written.
         current = renderer.OPS_MCP.read_text().splitlines()
         self.assertEqual(len(workload.splitlines()), len(current))
@@ -207,7 +215,7 @@ class RenderTests(unittest.TestCase):
         # Hosts being retired keep their node access until --retire drops it with their key.
         listed = {host['metadata']['name'] for host in self.hosts}
         credentials = list(yaml.safe_load_all((renderer.GPU / 'credentials.yaml').read_text()))
-        retained = {'gpu-' + entry['secretKey'] for entry in credentials[1]['spec']['data']}
+        retained = {'gpu-' + entry['secretKey'] for secret in credentials[1:] for entry in secret['spec']['data']}
         self.assertLessEqual(listed, set(updates[0]['resourceNames']))
         self.assertLessEqual(set(updates[0]['resourceNames']) - listed, retained)
         policies = list(yaml.safe_load_all((renderer.GPU / 'gpu-fleet.yaml').read_text()))
@@ -215,6 +223,55 @@ class RenderTests(unittest.TestCase):
                           and d['metadata']['name'] == 'gpu-fleet-node-updates')
         self.assertEqual(restricted['spec']['matchConditions'], [{'name': 'gpu-fleet',
             'expression': "request.userInfo.username == 'system:serviceaccount:gpu-inference:gpu-fleet'"}])
+
+    def test_independent_management_keys_do_not_block_other_hosts(self):
+        self.assert_independent_management_keys(self.hosts)
+
+    def assert_independent_management_keys(self, hosts):
+        documents = list(yaml.safe_load_all((renderer.GPU / 'credentials.yaml').read_text()))
+        expected = {}
+        shared = {}
+        for host in hosts:
+            instance = host['spec']['instanceId']
+            entry = {'secretKey': instance, 'remoteRef': host['spec']['managementSecret']}
+            if host['metadata'].get('annotations', {}).get(renderer.INDEPENDENT_MANAGEMENT_KEY) == 'true':
+                expected['gpu-host-' + instance] = entry
+            else:
+                shared[instance] = entry
+
+        base = documents[1]
+        self.assertEqual(base['spec']['target'], {'name': 'gpu-controller', 'creationPolicy': 'Owner'})
+        self.assertTrue(shared.items() <= {entry['secretKey']: entry for entry in base['spec']['data']}.items())
+        roles = yaml.safe_load_all((renderer.GPU / 'rbac.yaml').read_text())
+        listed = {host['spec']['instanceId'] for host in hosts}
+        draining = {name.removeprefix('gpu-') for name in renderer.node_names(roles)} - listed
+        independent = {}
+        for doc in documents[2:]:
+            entry, = doc['spec']['data']
+            name = doc['metadata']['name']
+            self.assertEqual(name, 'gpu-host-' + entry['secretKey'])
+            self.assertEqual(doc['spec']['target'], {'name': name, 'creationPolicy': 'Owner'})
+            if entry['secretKey'] not in draining:
+                self.assertEqual(entry, expected[name])
+            self.assertNotIn(name, independent)
+            independent[name] = entry
+        self.assertTrue(expected.items() <= independent.items())
+        self.assertTrue({entry['secretKey'] for entry in base['spec']['data']}.isdisjoint(
+            entry['secretKey'] for entry in independent.values()))
+
+        for workload in ('controller.yaml', 'gpu-fleet.yaml'):
+            resources = yaml.safe_load_all((renderer.GPU / workload).read_text())
+            deployment = next(doc for doc in resources if doc['kind'] == 'Deployment')
+            volumes = deployment['spec']['template']['spec']['volumes']
+            keys = next(volume for volume in volumes if volume['name'] == 'keys')
+            if not independent:
+                self.assertEqual(keys, {'name': 'keys', 'secret': {'secretName': 'gpu-controller', 'defaultMode': 288}})
+                continue
+            sources = [source['secret'] for source in keys['projected']['sources']]
+            self.assertEqual(sources[0], {'name': 'gpu-controller'})
+            optional = {source['name'] for source in sources[1:] if source.get('optional')}
+            self.assertEqual(independent.keys(), optional)
+            self.assertEqual(len(sources), 1 + len(optional))
 
     def test_argo_never_deletes_the_crd_or_a_gpuhost(self):
         options = self.definition['metadata']['annotations']['argocd.argoproj.io/sync-options'].split(',')
@@ -244,23 +301,34 @@ class RenderTests(unittest.TestCase):
             runtime_path = root / 'product/inference/gpu/runtimes.json'
             runtime_path.parent.mkdir(parents=True)
             shutil.copyfile(renderer.ROOT / 'product/inference/gpu/runtimes.json', runtime_path)
-            removed = self.hosts[-1]['spec']['instanceId']
-            (gpu / 'hosts.yaml').write_text(yaml.safe_dump_all(self.hosts[:-1]))
+            # The last host no pool reservation depends on.
+            host = [h for h in self.hosts if not h['spec'].get('extraTaints')][-1]
+            independent = next((entry for entry in self.hosts
+                                if entry['metadata'].get('annotations', {}).get(renderer.INDEPENDENT_MANAGEMENT_KEY)
+                                == 'true'), None)
+            removed = [entry['spec']['instanceId'] for entry in (host, independent) if entry]
+            remaining = [entry for entry in self.hosts if entry['spec']['instanceId'] not in removed]
+            (gpu / 'hosts.yaml').write_text(yaml.safe_dump_all(remaining))
             with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu, MODELS=gpu / 'models'):
                 # Step one: out of hosts.yaml, so Argo stops wanting the GpuHost,
                 # but still drainable.
                 with patch('sys.argv', ['render-config.py']):
                     renderer.main()
-                self.assertIn('gpu-' + removed, (gpu / 'rbac.yaml').read_text())
-                self.assertIn(removed, (gpu / 'credentials.yaml').read_text())
+                for instance in removed:
+                    self.assertIn('gpu-' + instance, (gpu / 'rbac.yaml').read_text())
+                    self.assertIn(instance, (gpu / 'credentials.yaml').read_text())
                 with patch('sys.argv', ['render-config.py', '--check']):
                     renderer.main()
+                self.assert_independent_management_keys(remaining)
 
-                # Step two, once the GpuHost is gone.
-                with patch('sys.argv', ['render-config.py', '--retire', removed]):
+                # Step two, once the GpuHosts are gone.
+                retire = [flag for instance in removed for flag in ('--retire', instance)]
+                with patch('sys.argv', ['render-config.py', *retire]):
                     renderer.main()
-                self.assertNotIn('gpu-' + removed, (gpu / 'rbac.yaml').read_text())
-                self.assertNotIn(removed, (gpu / 'credentials.yaml').read_text())
+                for instance in removed:
+                    self.assertNotIn('gpu-' + instance, (gpu / 'rbac.yaml').read_text())
+                    self.assertNotIn(instance, (gpu / 'credentials.yaml').read_text())
+                self.assert_independent_management_keys(remaining)
                 with patch('sys.argv', ['render-config.py', '--check']):
                     renderer.main()
 
@@ -296,12 +364,19 @@ class RenderTests(unittest.TestCase):
             # Hosts being retired keep their keys after the listed hosts.
             self.assertIn({'secretKey': instance, 'remoteRef': entry['spec']['managementSecret']},
                           outputs[gpu / 'credentials.yaml'][1]['spec']['data'])
+            entry['metadata'].setdefault('annotations', {})[renderer.INDEPENDENT_MANAGEMENT_KEY] = 'true'
+            (gpu / 'hosts.yaml').write_text(yaml.safe_dump_all([*self.hosts, entry]))
+            with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu, MODELS=gpu / 'models'):
+                with patch('sys.argv', ['render-config.py']):
+                    renderer.main()
+                self.assert_independent_management_keys([*self.hosts, entry])
             models = json.loads((gpu / 'models.json').read_text())
             models.pop('gradiated/linden-1')
             (gpu / 'models.json').write_text(json.dumps(models))
             stock = models['z-ai/glm-5.3-flash']
             with patch.multiple(renderer, ROOT=root, KUBE=kube, GPU=gpu, MODELS=gpu / 'models'):
-                self.assertEqual(renderer.retired_outputs(renderer.render()), {gpu / 'models/linden-b300/linden-b300.yaml'})
+                self.assertEqual(renderer.retired_outputs(renderer.render()), {
+                    gpu / 'models/linden-b300/linden-b300.yaml', gpu / 'models/linden-b300-us/linden-b300-us.yaml'})
                 with patch('sys.argv', ['render-config.py', '--check']), \
                         self.assertRaisesRegex(SystemExit, 'kubectl -n gpu-inference delete rollout,scaledobject,poddisruptionbudget linden-b300'):
                     renderer.main()
@@ -490,6 +565,40 @@ class RenderTests(unittest.TestCase):
         self.assertNotIn('affinity', spec)
         self.assertEqual(spec['schedulerName'], 'gradiated-gpu')
 
+    def aws_host(self, instance='019d5a4a-0000-7000-8000-000000000003', ec2='i-0123456789abcdef0'):
+        document = self.host(instance)
+        document['spec']['provider'] = {'name': 'aws', 'accountId': '111122223333', 'region': 'us-east-1',
+                                        'availabilityZone': 'us-east-1b', 'ec2InstanceId': ec2}
+        document['spec']['inventory'] = {'gpuProduct': 'L4', 'gpuCount': 1, 'cpu': 3, 'memoryGiB': 12}
+        document['spec']['extraTaints'] = [{'key': 'gradiated.com/reserved', 'value': 'posthog', 'effect': 'NoSchedule'}]
+        return document
+
+    def test_an_aws_host_and_a_pool_pinned_to_aws_hosts(self):
+        runpod = self.host()
+        hosts, secrets = renderer.inventory([runpod, self.aws_host()])
+        self.assertNotIn('provider', hosts[0])
+        self.assertEqual(hosts[1]['provider'], 'aws')
+        self.assertEqual(len(secrets), 2)
+        # EC2 instance IDs are unique per provider, and a pod ID never collides with one.
+        with self.assertRaisesRegex(ValueError, 'unique'):
+            renderer.inventory([self.aws_host(), self.aws_host('019d5a4a-0000-7000-8000-000000000004')])
+        unknown = self.host()
+        unknown['spec']['provider']['name'] = 'elsewhere'
+        with self.assertRaisesRegex(ValueError, 'provider must be one of'):
+            renderer.inventory([unknown])
+
+        pool = {'runtime': 'private', 'gpu': 'L4', 'provider': 'aws', 'reservation': 'posthog', 'max_replicas': 1,
+                'progress_deadline_seconds': 60}
+        pools, catalogue = self.synthetic({'posthog': pool}, hosts=hosts, private={'active_requests': 4})
+        spec = renderer.rollout('posthog', pools['posthog'], catalogue)['spec']['template']['spec']
+        self.assertEqual(spec['nodeSelector'], {'gradiated.com/provider': 'aws', 'nvidia.com/gpu.product': 'L4'})
+        self.assertIn({'key': 'gradiated.com/reserved', 'operator': 'Equal', 'value': 'posthog', 'effect': 'NoSchedule'},
+                      spec['tolerations'])
+        for invalid, message in (({**pool, 'provider': 'gcp'}, 'provider must be one of'),
+                                 ({**pool, 'provider': 'runpod'}, 'is not one')):
+            with self.subTest(pool=invalid), self.assertRaisesRegex(ValueError, message):
+                self.synthetic({'posthog': invalid}, hosts=hosts, private={'active_requests': 4})
+
     def test_an_unreserved_pool_prefers_hosts_holding_its_startup_state(self):
         digest = '0123456789abcdef' * 4
         pools, catalogue = self.synthetic({'pool': {'runtime': digest, 'gpu': 'B300', 'max_replicas': 2,
@@ -510,7 +619,19 @@ class RenderTests(unittest.TestCase):
                 reserved.setdefault((taint['key'], taint['value']), []).append(host['instance_id'])
         # No host is held for training: it runs on shared capacity, preemptible by models.
         self.assertEqual(reserved, {
-            ('gradiated.com/reserved', 'kimi-k31'): ['01a0fbf7-5276-700b-903b-7e04da150ed6']})
+            ('gradiated.com/reserved', 'kimi-k31'): ['01a0fbf7-5276-700b-903b-7e04da150ed6'],
+            ('gradiated.com/reserved', 'linden-us'): ['01a1f438-b779-71cd-ac20-ccaeb04496e6'],
+            # PostHog's own models on its four AWS L4 hosts.
+            ('gradiated.com/reserved', 'posthog'): [
+                '01a2087d-f7d4-73cd-85dc-b2598e892f28',
+                '01a2087d-fec7-761d-957f-07c70d17a2cf',
+                '01a2087e-0540-749d-bcdc-65b7065851d1',
+                '01a2087e-0bc2-75c1-988b-b97db8e1206c'],
+            ('gradiated.com/reserved', 'posthog-expansion'): [
+                '01a20b53-db59-7350-b854-41550562cffd',
+                '01a20b53-db59-7431-8789-a26ebb43905c',
+                '01a20b53-db59-769d-858f-8fd853a9b8d7',
+                '01a20b53-db59-7b43-a7a7-e25ffa5c3b56']})
         models, runtimes, inventory = self.fleet()
         pools = renderer.plan(models, runtimes, inventory)
         templates = {name: renderer.rollout(name, pools[name], runtimes)['spec']['template']['spec']
@@ -627,6 +748,29 @@ class RenderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'no single GLM SGLang profile'):
             renderer.validate_active_requests(placed, changed, profiles)
 
+    def test_only_lora_deepseek_releases_serve_cartridges(self):
+        _, runtimes, _ = self.fleet()
+        renderer.validate_cartridges(runtimes)
+        deepseek = next(key for key, runtime in runtimes.items()
+                        if runtime['image'].startswith('gradiated/deepseek-sglang-bundle@')
+                        and runtime['release'].get('lora_enabled'))
+        glm = next(key for key, runtime in runtimes.items()
+                   if runtime['image'].startswith('gradiated/glm-sglang-bundle@'))
+        for key, release, environment, message in [
+                (glm, {'cartridge_enabled': True}, {}, 'only DeepSeek SGLang'),
+                (glm, {'cartridge_enabled': False}, {}, 'only DeepSeek SGLang'),
+                (deepseek, {'cartridge_enabled': True, 'lora_enabled': False}, {}, 'only with lora_enabled'),
+                (deepseek, {'cartridge_enabled': True}, {'LORA_ENABLED': 'false'}, 'only with lora_enabled')]:
+            changed = copy.deepcopy(runtimes)
+            changed[key]['release'].update(release)
+            changed[key].setdefault('environment', {}).update(environment)
+            with self.subTest(key=key, release=release), self.assertRaisesRegex(ValueError, message):
+                renderer.validate_cartridges(changed)
+        for enabled in (True, False):
+            changed = copy.deepcopy(runtimes)
+            changed[deepseek]['release']['cartridge_enabled'] = enabled
+            renderer.validate_cartridges(changed)
+
     def test_b300_sglang_pool_keeps_its_compact_memory_request(self):
         models, runtimes, hosts = self.fleet()
         pool = renderer.plan(models, runtimes, hosts)['glm-dealign-sglang']
@@ -699,6 +843,25 @@ class RenderTests(unittest.TestCase):
         self.assertEqual({t['metadata']['threshold'] for t in scaled['triggers']}, {'3'})
         for trigger in scaled['triggers']:
             self.assertTrue(trigger['metadata']['query'].endswith('> time() - 45))'))
+
+    def test_pool_may_set_its_own_utilization_target_and_hold(self):
+        pool = {'runtime': 'twelve', 'gpu': 'B300', 'max_replicas': 2, 'progress_deadline_seconds': 60}
+        pools, _ = self.synthetic({'tuned': {**pool, 'utilization': 1.0, 'hold_minutes': 30}},
+                                  twelve={'active_requests': 12})
+        queries = renderer.scaling_queries('tuned', pools['tuned'])
+        self.assertTrue(queries['utilization'].endswith('/ 1.0, 0)[30m:30s])'))
+        self.assertTrue(queries['refusals'].endswith('or vector(0))[30m:30s])'))
+        for field, value in [('utilization', 0.4), ('utilization', 1.5), ('utilization', True), ('utilization', '1'),
+                             ('hold_minutes', 5), ('hold_minutes', 180), ('hold_minutes', 30.0)]:
+            with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, field):
+                self.synthetic({'tuned': {**pool, field: value}}, twelve={'active_requests': 12})
+        # The uncensored GLM pool trades headroom for revenue per replica-hour;
+        # every other pool keeps the defaults.
+        models, runtimes, hosts = self.fleet()
+        fleet = renderer.plan(models, runtimes, hosts)
+        tuned = {name: (pool['utilization'], pool['hold_minutes']) for name, pool in fleet.items()
+                 if (pool['utilization'], pool['hold_minutes']) != (renderer.UTILIZATION, renderer.HOLD_MINUTES)}
+        self.assertEqual(tuned, {'glm-dealign-sglang': (1.0, 30)})
 
     def test_replica_rules_follow_rollout_targets_and_floors(self):
         models, runtimes, hosts = self.fleet()

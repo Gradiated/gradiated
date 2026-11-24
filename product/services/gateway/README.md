@@ -121,8 +121,13 @@ are required. See the [loader configuration](../../inference/lora/README.md).
 ## Native SystemOne
 
 `POST /v1/systemone` accepts an exact model, text/object/array `state`, and
-1..64 named `choice`, `noul`, or `score` questions. Instructions and criteria
-support structured JSON. Optional `noul` criteria allow only `false` and `true`
+1..1,024 named `choice`, `noul`, or `score` questions. Instructions and criteria
+support structured JSON. `choice` criteria may also be a list of 1..255
+distinct, non-empty option names (as PostHog's clients send); the gateway
+rewrites the list to `{name: null, ...}` before routing, so runtimes and answer
+validation see only the object form. The question bound is a backstop: every
+runtime's token limits reject large requests well before 1,024 questions.
+Optional `noul` criteria allow only `false` and `true`
 outcome keys; any other key is rejected. Unknown fields, streaming, output-token controls,
 caller priority, and `fast`/`flex` are rejected; only `default` is implemented.
 An optional `session_id` must contain 1..256 UTF-16 code units.
@@ -136,6 +141,14 @@ do not affect this state affinity. The runtime reports authoritative prefill
 input and cached-input usage with exactly zero output tokens; serialized
 answers are not generated tokens. The gateway validates answers and runtime
 model identity before returning the requested public model ID.
+
+The official TypeSafe SDK works against the gateway unchanged. Its `requestId`
+reads `x-typesafe-request-id`, which every inference response (errors included)
+sets to the generation ID. Every 429 sends `Retry-After`: the runtime's own
+value capped at 30 seconds, otherwise 1 second (5 for `settlement_backlog`),
+and the SDK waits that long before it retries. `GET /v1/models` returns the
+SDK's `models` cards (`name`, `description`, `release_date`) beside the
+provider `data` array that OpenAI and OpenRouter clients read.
 
 ## Deployment routing
 

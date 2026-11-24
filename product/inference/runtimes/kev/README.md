@@ -16,7 +16,8 @@ select dispatch.
 - Upstream `choice`, `noul`, and `score` inputs and answers are preserved.
   Reject unknown top-level/question fields, duplicate JSON keys, nonfinite
   numbers, unsupported model IDs and ignored noul criteria names.
-- 1–64 questions, question keys 1–200 characters, JSON depth at most 32,
+- 1–1,024 questions (the gateway's bound; the token limits below bind first),
+  question keys 1–200 characters, JSON depth at most 32,
   body at most **1 MiB**, including streamed/chunked bodies. Gateway's 32 MiB
   limit is intentionally looser. Body receipt has a 15-second deadline.
 - Upstream `model.encode(..., strict=True)` enforces 8,192 state tokens and

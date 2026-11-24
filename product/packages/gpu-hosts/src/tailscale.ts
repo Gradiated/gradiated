@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { providerInstanceId } from "./ids.js";
+
 const API = "https://api.tailscale.com/api/v2";
 
 export type OAuthCredentials = () => Promise<{
@@ -107,17 +109,15 @@ export const tailscaleAuthKey = async (
     credentials,
   );
 
+// For a RunPod pod or an EC2 instance, by its provider instance ID.
 export const bootstrapAuthKey = async (
-  podId: string,
+  instanceId: string,
   request: typeof fetch = fetch,
   credentials: OAuthCredentials,
 ) =>
   singleUseKey(
     "tag:gpu-bootstrap",
-    `GPU bootstrap ${z
-      .string()
-      .regex(/^[a-z0-9]{1,40}$/)
-      .parse(podId)}`,
+    `GPU bootstrap ${providerInstanceId.parse(instanceId)}`,
     request,
     credentials,
   );
@@ -179,6 +179,7 @@ export type InstanceTailnet = {
   connected: boolean;
   // When control last saw any such device; undefined if there is none.
   lastSeen?: string;
+  address?: string;
 };
 
 // What Tailscale's control plane knows of a host, independent of whether the
@@ -188,7 +189,11 @@ export const instanceTailnet = async (
   request: typeof fetch,
   credentials: OAuthCredentials,
 ): Promise<InstanceTailnet> => {
-  const { devices } = await instanceDevices(instanceId, request, credentials);
+  const { devices, hostname } = await instanceDevices(
+    instanceId,
+    request,
+    credentials,
+  );
   const connected = devices.some(
     (device) => device.connectedToControl !== false,
   );
@@ -197,8 +202,29 @@ export const instanceTailnet = async (
     .filter((value): value is string => value !== undefined)
     .sort()
     .at(-1);
-  return { connected, ...(seen && { lastSeen: seen }) };
+  const [device] = devices;
+  const address =
+    devices.length === 1 &&
+    device?.connectedToControl !== false &&
+    device?.hostname === hostname &&
+    device.name.split(".")[0] === hostname
+      ? device.addresses.find(tailnetAddress)
+      : undefined;
+  return {
+    connected,
+    ...(seen && { lastSeen: seen }),
+    ...(address && { address }),
+  };
 };
+
+// Whether any tag:gpu-inference device, online or not, uses gpu-<id>: the
+// host enrolled and promoted at least once.
+export const instanceHasDevice = async (
+  instanceId: string,
+  request: typeof fetch,
+  credentials: OAuthCredentials,
+) =>
+  (await instanceDevices(instanceId, request, credentials)).devices.length > 0;
 
 export const releaseInstanceName = async (
   instanceId: string,

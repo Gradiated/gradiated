@@ -4,7 +4,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from artifacts import strict_json
-from loader import CapacityError
+from loader import CapacityError, CartridgeNotApplied
 
 
 def create_server(loader, port):
@@ -69,6 +69,8 @@ def create_server(loader, port):
                 self.respond(200, {"boot_id": loader.boot_id, "ready": True})
             except CapacityError:
                 self.respond(503, {"error": "capacity_unavailable"})
+            except CartridgeNotApplied:
+                self.respond(422, {"error": "cartridge_not_applied"})
             except LookupError:
                 self.respond(503, {"error": "adapter_unavailable"})
             except (ValueError, KeyError, TypeError):

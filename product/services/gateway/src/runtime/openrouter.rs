@@ -179,8 +179,11 @@ impl OpenRouterClient {
         }
 
         if status != StatusCode::BAD_REQUEST {
+            let headers = response.headers().clone();
             let status = record_rejection(response).await.as_u16();
-            return Err(failure_for_code(status, NormalizedUsage::zero()));
+            return Err(
+                failure_for_code(status, NormalizedUsage::zero()).with_retry_after(&headers)
+            );
         }
 
         if !rejects_model(response, &model).await {

@@ -147,9 +147,19 @@ const taskRoute = createRoute({
   component: lazyRouteComponent(() => import("@/pages/task-page"), "TaskPage"),
 });
 
+const reportSearch = (search: Record<string, unknown>) => ({
+  ...(typeof search.eval === "string" && search.eval
+    ? { eval: search.eval }
+    : {}),
+  ...(typeof search.case === "string" && search.case
+    ? { case: search.case }
+    : {}),
+});
+
 const versionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/tasks/$taskId/versions/$versionId",
+  validateSearch: reportSearch,
   component: lazyRouteComponent(
     () => import("@/pages/version-page"),
     "VersionPage",
@@ -159,6 +169,7 @@ const versionRoute = createRoute({
 const sharedReportRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/share/$versionId/$signature",
+  validateSearch: reportSearch,
   component: lazyRouteComponent(
     () => import("@/pages/shared-report-page"),
     "SharedReportPage",

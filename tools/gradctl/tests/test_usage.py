@@ -85,6 +85,25 @@ class Meter(unittest.TestCase):
         self.assertEqual(second[0]['properties']['cost_usd'], 30.0)
         self.assertEqual((second[0]['properties']['customer'], second[0]['properties']['stage']), ('bild-ai', 'training'))
 
+    def test_known_expiry_caps_first_and_previously_running_observations(self):
+        ended = T0 + timedelta(hours=1)
+        terminal = vm(state='COMPLETED', billing_ended_at=ended.isoformat())
+        with mock.patch.object(usage, 'send', return_value=1):
+            first = commands.meter_vms(self.cloud, [terminal], T0 + timedelta(hours=2), 'test')
+            self.assertEqual(first[0]['properties']['cost_usd'], 60)
+            self.assertEqual(first[0]['properties']['gpu_hours'], 8)
+            self.assertEqual(first[0]['properties']['interval_end'], ended.isoformat())
+            self.assertEqual(commands.meter_vms(self.cloud, [terminal], T0 + timedelta(hours=3), 'test'), [])
+        # Repeat with an earlier running observation in a fresh ledger interval.
+        with usage.ledger(self.dir) as book:
+            book.clear()
+            book['ornn:train-1'] = {'started_at': T0.isoformat()}
+        self.meter(T0 + timedelta(minutes=30))
+        with mock.patch.object(usage, 'send', return_value=1):
+            final = commands.meter_vms(self.cloud, [terminal], T0 + timedelta(hours=2), 'test')
+        self.assertEqual(final[0]['properties']['cost_usd'], 30)
+        self.assertEqual(final[0]['properties']['interval_end'], ended.isoformat())
+
     def test_a_failed_send_is_retried_as_the_identical_event(self):
         with self.assertRaises(OSError):
             self.meter(T0 + timedelta(hours=1), fail=True)

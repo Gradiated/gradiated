@@ -40,6 +40,24 @@ regexes = [
   '''(?i)(sha256|sha1|digest|revision|fingerprint)[a-z0-9_.\-]*["'`]?\s*[:=]\s*["'`]?[0-9a-f]{40,64}''',
 ]
 
+# The public Hugging Face repository `alibiserikbay/JevK5` as a runtime
+# release's `tokenizer_path`: "token" in the key and a mixed-case ID look like a
+# credential. Only that ID, only in the runtime catalogue and its rendered copies.
+[[allowlists]]
+description = "Public Hugging Face tokenizer repository in the runtime catalogue"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = [
+  '''^product/inference/gpu/runtimes\.json$''',
+  '''^infra/environments/prod/us-east-1/kubernetes/gpu-inference/controller\.yaml$''',
+  '''^infra/environments/prod/us-east-1/kubernetes/gpu-inference/models/jevk5-l4/jevk5-l4\.yaml$''',
+  '''^infra/environments/prod/us-east-1/kubernetes/gpu-inference/models/jevk5-l4-expansion/jevk5-l4-expansion\.yaml$''',
+]
+regexTarget = "match"
+regexes = [
+  '''^tokenizer_path["']?\s*[:=]\s*["']?alibiserikbay/JevK5["']?$''',
+]
+
 # PostHog `phc_` project tokens are public client keys by design.
 [[allowlists]]
 description = "Public PostHog project tokens"

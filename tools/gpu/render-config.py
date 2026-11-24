@@ -6,6 +6,7 @@ import json
 import math
 import re
 import sys
+from textwrap import indent
 from pathlib import Path
 import uuid
 
@@ -20,6 +21,12 @@ MODELS = GPU / 'models'
 APPLICATIONS = KUBE / 'platform/gpu-models.yaml'
 
 
+# The Virtual Kubelet node label gradiated.com/provider of each GpuHost
+# spec.provider.name, and the field naming the host at that provider.
+PROVIDERS = {'runpod': 'podId', 'aws': 'ec2InstanceId'}
+INDEPENDENT_MANAGEMENT_KEY = 'fleet.gradiated.com/independent-management-key'
+
+
 # Field bounds are checked against the GpuHost CRD schema by
 # tools/security/check_gpu_inference.py; this derives what the manifests need.
 def inventory(documents):
@@ -31,9 +38,13 @@ def inventory(documents):
         instance = str(uuid.UUID(spec['instanceId']))
         if instance != spec['instanceId'] or document['metadata']['name'] != 'gpu-' + instance:
             raise ValueError('A GpuHost must be named gpu-<canonical instance ID>')
-        if any(host['instance_id'] == instance for host in hosts) or spec['provider']['podId'] in pods:
+        provider = spec['provider']['name']
+        if provider not in PROVIDERS:
+            raise ValueError(f'GpuHost provider must be one of {sorted(PROVIDERS)}')
+        machine = (provider, spec['provider'][PROVIDERS[provider]])
+        if any(host['instance_id'] == instance for host in hosts) or machine in pods:
             raise ValueError('GpuHost instance and pod IDs must be unique')
-        pods.add(spec['provider']['podId'])
+        pods.add(machine)
         capacity = spec['inventory']
         extra_taints = host_taints(spec)
         hosts.append({'instance_id': instance,
@@ -41,6 +52,8 @@ def inventory(documents):
                       'token_file': f'/var/run/gradiated-host-keys/{instance}',
                       'gpu_count': capacity['gpuCount'], 'cpu': capacity['cpu'],
                       'memory_gib': capacity['memoryGiB'], 'gpu_product': capacity['gpuProduct'],
+                      # RunPod is implied, so existing output is unchanged.
+                      **({'provider': provider} if provider != 'runpod' else {}),
                       **({'extra_taints': extra_taints} if extra_taints else {})})
         secrets.append({'secretKey': instance, 'remoteRef': dict(spec['managementSecret'])})
     if not hosts:
@@ -78,14 +91,16 @@ def host_taints(spec):
 # one Rollout: one runtime release on one GPU type. A slot is one concurrent
 # request a replica admits: its runtime's enforced active_requests, or the pool's
 # slots for a runtime without one. Every pool scales on the same two signals;
-# there is no per-model tuning.
+# a pool may set its own utilization target and hold_minutes.
 UTILIZATION = 0.7  # keep each model's in-flight requests at 70% of its slots
+HOLD_MINUTES = 10  # how long a pool keeps capacity for its last peak
 REFUSAL_SHARE = 0.05  # add a replica while our capacity refuses over 5% of requests
 RESERVED = 'gradiated.com/reserved'
 PROMETHEUS = 'http://observability-kube-prometh-prometheus.observability.svc:9090'
 REPLICA_RULES = KUBE / 'workloads/observability/model-replica-rules.yaml'
 NAME = re.compile(r'[a-z](?:[a-z0-9-]*[a-z0-9])?')
-POOL_FIELDS = {'runtime', 'gpu', 'gpu_count', 'reservation', 'spread', 'slots', 'max_replicas', 'mode', 'replicas',
+POOL_FIELDS = {'runtime', 'gpu', 'gpu_count', 'provider', 'reservation', 'spread', 'slots', 'max_replicas', 'mode', 'replicas',
+               'utilization', 'hold_minutes',
                'progress_deadline_seconds', 'max_surge', 'max_unavailable', 'rolling_update', 'labels', 'annotations'}
 SERVING_ANNOTATIONS = {'gradiated.com/model-id', 'gradiated.com/release',
                        'gradiated.com/serving-model-id', 'gradiated.com/serving-mode'}
@@ -100,6 +115,7 @@ def plan(models, runtimes, hosts):
     if not isinstance(models, dict) or not models:
         raise ValueError('models.json must map public model IDs to their pools')
     reserved = {}
+    providers = {host['instance_id']: host.get('provider', 'runpod') for host in hosts}
     for host in hosts:
         for taint in host.get('extra_taints', []):
             if taint['key'] == RESERVED:
@@ -153,10 +169,27 @@ def plan(models, runtimes, hosts):
                 unfilled = max(0, unfilled - floor * slots)
             else:
                 raise ValueError(f'Pool {name} mode must be production or qualification')
+            # A pool may trade headroom for revenue per replica-hour: a higher
+            # utilization target adds replicas later, a longer hold keeps them
+            # through the gaps between bursts instead of restarting them.
+            utilization = pool.get('utilization', UTILIZATION)
+            if type(utilization) not in (int, float) or not 0.5 <= utilization <= 1.2:
+                raise ValueError(f'Pool {name} utilization must be a number from 0.5 to 1.2')
+            hold = pool.get('hold_minutes', HOLD_MINUTES)
+            if not count(hold, 10) or hold > 120:
+                raise ValueError(f'Pool {name} hold_minutes must be an integer from 10 to 120')
             if 'reservation' in pool and not reserved.get(pool['reservation']):
                 raise ValueError(f'Pool {name} needs a host in hosts.yaml reserved for {pool["reservation"]!r}')
+            # The hosts a pool runs on: RunPod unless it names another provider.
+            provider = pool.get('provider', 'runpod')
+            if provider not in PROVIDERS:
+                raise ValueError(f'Pool {name} provider must be one of {sorted(PROVIDERS)}')
+            if 'reservation' in pool and any(providers[host] != provider for host in reserved[pool['reservation']]):
+                raise ValueError(f'Pool {name} runs on {provider} hosts, but a host reserved for '
+                                 f'{pool["reservation"]!r} is not one')
             pools[name] = {**pool, 'model': model_id, 'mode': mode, 'slots': slots, 'floor': floor,
                            'maximum': maximum, 'ahead': list(ahead),
+                           'utilization': utilization, 'hold_minutes': hold,
                            'hosts': sorted(reserved.get(pool.get('reservation'), []))}
             if mode == 'production' and maximum:
                 ahead.append((name, maximum, slots))
@@ -215,7 +248,7 @@ def rollout(name, pool, runtimes):
         # revisions become stable at once; once max_replicas is raised the worker
         # still routes only pods that pass their own SDK qualification.
         steps = []
-    selector = {'gradiated.com/provider': 'runpod', 'nvidia.com/gpu.product': pool['gpu']}
+    selector = {'gradiated.com/provider': pool.get('provider', 'runpod'), 'nvidia.com/gpu.product': pool['gpu']}
     if 'gpu_count' in pool:
         if not count(pool['gpu_count'], 1):
             raise ValueError('gpu_count must be a positive integer')
@@ -320,6 +353,20 @@ def validate_active_requests(pools, runtimes, profiles):
             raise ValueError(f'Pool {name} runtime active_requests must equal its launcher profile, {enforced}')
 
 
+def validate_cartridges(runtimes):
+    # The DeepSeek runtime sizes its cartridge pool whenever LORA_ENABLED is set; the release flag
+    # only lets the gateway route cartridges there, so it may be off while the pool exists.
+    for key, runtime in runtimes.items():
+        if 'cartridge_enabled' not in runtime['release']:
+            continue
+        if not runtime['image'].startswith('gradiated/deepseek-sglang-bundle@'):
+            raise ValueError(f'Runtime release {key} cannot serve cartridges; only DeepSeek SGLang can')
+        if runtime['release']['cartridge_enabled'] and (
+                runtime['release'].get('lora_enabled') is not True
+                or runtime.get('environment', {}).get('LORA_ENABLED') != 'true'):
+            raise ValueError(f'Runtime release {key} serves cartridges only with lora_enabled and LORA_ENABLED')
+
+
 def disruption_budget(name, pool):
     # Voluntary disruptions, such as a host drain, take one replica below the floor at most.
     return {'apiVersion': 'policy/v1', 'kind': 'PodDisruptionBudget',
@@ -344,7 +391,7 @@ def scaling_queries(name, pool):
     # maximum; once it requests its maximum only its ready replicas count, so
     # demand it cannot place or serve passes on.
     busy = f'(max(gradiated:model_busy_slots{{{model}}}) or (0 * sum(gradiated:autoscaling_demand{{service="gateway"}})))'
-    need = f'{busy} / {UTILIZATION}' + ''.join(
+    need = f'{busy} / {pool["utilization"]}' + ''.join(
         f' - (({ready_replicas(other)} * {slots} and on() ({desired_replicas(other)} >= {maximum}))'
         f' or vector({maximum * slots}))' for other, maximum, slots in pool['ahead'])
     # While refusals exceed their share, ask for one replica more than are
@@ -366,11 +413,13 @@ def scaling_queries(name, pool):
     deleting = f'kube_pod_deletion_timestamp{{{pods}}}'
     staying = f'count({active} unless on(pod) {deleting})'
     draining = f'(count({deleting} and on(pod) {active}) > 0)'
-    # Each scaling signal keeps its ten-minute peak: scale-up follows at once,
-    # scale-down only after ten quiet minutes. Kept here, not in the HPA window,
-    # so a draining hold does not restart the wait.
-    signals = {'utilization': f'max_over_time(clamp_min({need}, 0)[10m:30s])',
-               'refusals': f'max_over_time((({step} and on() {refusing}{full}) or vector(0))[10m:30s])',
+    # Each scaling signal keeps its peak for the pool's hold (ten minutes by
+    # default): scale-up follows at once, scale-down only after that many quiet
+    # minutes. Kept here, not in the HPA window, so a draining hold does not
+    # restart the wait.
+    hold = f'[{pool["hold_minutes"]}m:30s]'
+    signals = {'utilization': f'max_over_time(clamp_min({need}, 0){hold})',
+               'refusals': f'max_over_time((({step} and on() {refusing}{full}) or vector(0)){hold})',
                'draining': f'(({staying} * {pool["slots"]} and on() {draining}) or vector(0))'}
     if not pool['floor']:
         # A pool with no floor may be at zero replicas when a new revision lands,
@@ -438,6 +487,7 @@ def replica_rules(pools):
 def model_outputs(models, runtimes, hosts):
     pools = plan(models, runtimes, hosts)
     validate_active_requests(pools, runtimes, glm_sglang_profiles())
+    validate_cartridges(runtimes)
     outputs = {}
     for name, pool in pools.items():
         documents = [rollout(name, pool, runtimes)]
@@ -460,6 +510,9 @@ def node_names(documents):
 
 
 IMAGE = re.compile(r'\d{12}\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com/[a-z0-9/._-]+:gpu-base-inputs-[0-9a-f]{64}')
+# AWS hosts pull with their own ECR credentials, so they can also run a build by digest.
+AWS_IMAGE = re.compile(r'(?P<repository>\d{12}\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com/[a-z0-9/._-]+)'
+                       r'(:gpu-base-inputs-[0-9a-f]{64}|@sha256:[0-9a-f]{64})')
 TEMPLATES = ROOT / 'infra/environments/prod/runpod/templates.json'
 RUNTIMES = ROOT / 'product/inference/gpu/runtimes.json'
 OPS_MCP = KUBE / 'operations/ops-mcp/workload.yaml'
@@ -467,7 +520,11 @@ OPS_MCP = KUBE / 'operations/ops-mcp/workload.yaml'
 
 def validate_pins(pins):
     # RunPod pulls only by tag; imageDigest records the build the tag names.
-    if (set(pins) != {'image', 'imageDigest', 'hostBundle'} or set(pins['hostBundle']) != {'sha256', 'baseId'} or
+    # awsImage, in the same repository, is what AWS hosts run instead.
+    aws = AWS_IMAGE.fullmatch(pins.get('awsImage', pins['image']))
+    if (set(pins) - {'awsImage'} != {'image', 'imageDigest', 'hostBundle'} or
+            set(pins['hostBundle']) != {'sha256', 'baseId'} or
+            not aws or not pins['image'].startswith(aws['repository'] + ':') or
             not IMAGE.fullmatch(pins['image']) or not re.fullmatch('sha256:[0-9a-f]{64}', pins['imageDigest']) or
             not re.fullmatch('[0-9a-f]{64}', pins['hostBundle']['sha256']) or
             not re.fullmatch('[A-Za-z0-9._-]{1,64}', pins['hostBundle']['baseId'])):
@@ -494,6 +551,7 @@ def pinned_copies(pins):
     templates['image'] = pins['image']
     workload = OPS_MCP.read_text()
     for name, value in (('GPU_BASE_IMAGE', pins['image']),
+                        ('AWS_GPU_BASE_IMAGE', pins.get('awsImage', pins['image'])),
                         ('GPU_HOST_BOOTSTRAP_SHA256', pins['hostBundle']['sha256']),
                         ('GPU_HOST_BOOTSTRAP_BASE_ID', pins['hostBundle']['baseId'])):
         pattern = re.compile(rf'(- name: {name}\n\s+value: )\S+')
@@ -503,8 +561,32 @@ def pinned_copies(pins):
     return {TEMPLATES: json.dumps(templates, indent=2) + '\n', OPS_MCP: workload}
 
 
+def management_key_volume(credentials):
+    shared = credentials[1]['spec']['target']['name']
+    if len(credentials) == 2:
+        return {'name': 'keys', 'secret': {'secretName': shared, 'defaultMode': 288}}
+    sources = [{'secret': {'name': shared}}]
+    sources.extend({'secret': {'name': resource['spec']['target']['name'], 'optional': True}}
+                   for resource in credentials[2:])
+    return {'name': 'keys', 'projected': {'defaultMode': 288, 'sources': sources}}
+
+
+def fleet_key_manifest(path, credentials):
+    # Only the keys volume is generated. Keep the rest of the manifest,
+    # including its comments, editable.
+    volume = indent(yaml.safe_dump([management_key_volume(credentials)], sort_keys=False), ' ' * 6)
+    content, count = re.subn(r'^      - name: keys\n(?:^ {8}[^\n]*\n)+', volume,
+                             path.read_text(), flags=re.MULTILINE)
+    if count != 1:
+        raise ValueError(f'{path} must contain exactly one keys volume')
+    return content
+
+
 def render(retire=()):
-    hosts, secrets = inventory([item for item in yaml.safe_load_all((GPU / 'hosts.yaml').read_text()) if item])
+    documents = [item for item in yaml.safe_load_all((GPU / 'hosts.yaml').read_text()) if item]
+    hosts, secrets = inventory(documents)
+    independent_keys = {host['spec']['instanceId'] for host in documents
+                        if host['metadata'].get('annotations', {}).get(INDEPENDENT_MANAGEMENT_KEY) == 'true'}
     runtimes = json.loads(RUNTIMES.read_text())
     controller = list(yaml.safe_load_all((GPU / 'controller.yaml').read_text()))
     pins = json.loads((GPU / 'pins.json').read_text())
@@ -526,7 +608,10 @@ def render(retire=()):
     listed = {host['instance_id'] for host in hosts}
     retiring = [name.removeprefix('gpu-') for name in node_names(rbac)
                 if name.removeprefix('gpu-') not in listed and name.removeprefix('gpu-') not in retire]
-    secrets += [entry for entry in credentials[1]['spec'].get('data', []) if entry['secretKey'] in retiring]
+    store, shared_keys, *host_keys = credentials
+    secrets += [entry for entry in shared_keys['spec'].get('data', []) if entry['secretKey'] in retiring]
+    retiring_keys = [resource for resource in host_keys
+                     if resource['spec']['data'][0]['secretKey'] in retiring]
     names = ['gpu-' + instance for instance in [host['instance_id'] for host in hosts] + retiring]
     for resource in rbac:
         # gpu-fleet-nodes lets the operator cordon a GPU node it is draining, and no other node.
@@ -534,8 +619,30 @@ def render(retire=()):
             for rule in resource['rules']:
                 if 'resourceNames' in rule:
                     rule['resourceNames'] = names
-    credentials[1]['spec'].pop('dataFrom', None)
-    credentials[1]['spec']['data'] = secrets
+    shared_keys['spec'].pop('dataFrom', None)
+    shared_keys['spec']['data'] = [entry for entry in secrets if entry['secretKey'] not in independent_keys]
+    # Enrollment creates each key serially. A missing key must not block a
+    # different host's Secret or prevent either deployment from starting.
+    credentials = [store, shared_keys]
+    for entry in secrets:
+        if entry['secretKey'] not in independent_keys:
+            continue
+        name = 'gpu-host-' + entry['secretKey']
+        credentials.append({
+            'apiVersion': shared_keys['apiVersion'],
+            'kind': 'ExternalSecret',
+            'metadata': {'name': name, 'namespace': shared_keys['metadata']['namespace']},
+            'spec': {
+                'refreshInterval': shared_keys['spec']['refreshInterval'],
+                'secretStoreRef': shared_keys['spec']['secretStoreRef'],
+                'target': {'name': name, 'creationPolicy': 'Owner'},
+                'data': [entry],
+            },
+        })
+    credentials.extend(retiring_keys)
+    volumes = controller[1]['spec']['template']['spec']['volumes']
+    keys_index, = (index for index, volume in enumerate(volumes) if volume['name'] == 'keys')
+    volumes[keys_index] = management_key_volume(credentials)
     fleet_pins = [{'apiVersion': 'v1', 'kind': 'ConfigMap',
                    'metadata': {'name': 'gpu-fleet-pins', 'namespace': 'gpu-inference'},
                    'data': {'pins.json': json.dumps(pins, indent=2) + '\n'}}]
@@ -575,7 +682,10 @@ def main():
                          + '; '.join(f'kubectl -n gpu-inference delete rollout,scaledobject,poddisruptionbudget {name}' for name in names)
                          + '.')
     stale = []
-    for path, content in pinned_copies(json.loads((GPU / 'pins.json').read_text())).items():
+    text_outputs = pinned_copies(json.loads((GPU / 'pins.json').read_text()))
+    fleet = GPU / 'gpu-fleet.yaml'
+    text_outputs[fleet] = fleet_key_manifest(fleet, outputs[GPU / 'credentials.yaml'])
+    for path, content in text_outputs.items():
         if args.check:
             if path.read_text() != content:
                 stale.append(str(path.relative_to(ROOT)))

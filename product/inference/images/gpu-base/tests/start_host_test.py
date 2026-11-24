@@ -130,6 +130,16 @@ done; true''').splitlines()
             time.sleep(.5)
         self.assertEqual(self.shell(container, SSH_LISTENERS), '')
 
+    def test_an_ec2_host_joins_as_its_instance(self):
+        # The AWS host launcher runs the image with the instance ID and the key it read
+        # from the instance's bootstrap secret.
+        container = self.start('GRADIATED_PROVIDER_INSTANCE_ID=i-0123456789abcdef0',
+                               f'GRADIATED_TAILSCALE_BOOTSTRAP_KEY={KEY}')
+        self.wait(container, 'grep -q " up " /var/log/fake-tailscale-calls')
+        calls = self.shell(container, 'cat /var/log/fake-tailscale-calls').splitlines()
+        self.assertIn(' up --hostname=gpu-bootstrap-i-0123456789abcdef0 ', calls[0])
+        self.assertEqual(self.shell(container, SSH_LISTENERS), '')
+
     def test_a_pod_without_a_bootstrap_key_waits_for_one(self):
         container = self.start('RUNPOD_POD_ID=abc123')
         self.wait(container, 'pgrep -f "gradiated-host start" >/dev/null')

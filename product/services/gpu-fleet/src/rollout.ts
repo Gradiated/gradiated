@@ -3,13 +3,19 @@ import { isDeepStrictEqual } from "node:util";
 import type { Cluster, ClusterPod } from "./cluster.js";
 import { ReimageNotSent, type Enrollment } from "./enroll.js";
 import {
+  ENROLL_DURING_RUNPOD_HOLD_ANNOTATION,
   GPU_HOSTS,
   hostName,
   hostState,
+  isAws,
+  isRunPod,
   LEASE_ANNOTATION,
   leaseEnded,
   leaseRequest,
   parseHosts,
+  providerInstanceId,
+  recordedImage,
+  RESUME_ENROLLMENT_VERIFY_ANNOTATION,
   RETRY_ANNOTATION,
   type GpuHost,
   type HostLease,
@@ -18,7 +24,7 @@ import {
 import type { Kubernetes } from "./kubernetes.js";
 import type { Metrics } from "./metrics.js";
 import type { Observation } from "./observe.js";
-import type { Pins } from "./pins.js";
+import { pinnedImage, type Pins } from "./pins.js";
 import {
   leaseRefusal,
   planHost,
@@ -57,10 +63,13 @@ export const DEFAULT_LIMITS = {
   Join: 30 * MINUTE,
   Enroll: 45 * MINUTE,
   Promote: 10 * MINUTE,
+  RemoveAccess: 10 * MINUTE,
   Verify: 20 * MINUTE,
   BundleVerify: 35 * MINUTE,
   Soak: 30 * MINUTE,
   Uncordon: 10 * MINUTE,
+  // A model drained with a replica unavailable gets it back, loaded, by then.
+  Restore: 100 * MINUTE,
   Hold: 10 * MINUTE,
   // Apply waits for serving pods still loading, as Surge does.
   Apply: 100 * MINUTE,
@@ -87,7 +96,8 @@ export type RolloutDependencies = {
   cluster: Cluster;
   ping: (instanceId: string) => Promise<Observation>;
   pins: () => Promise<Pins>;
-  // Undefined while RunPod and Tailscale access is unavailable; asked again each pass.
+  // Undefined while RunPod and Tailscale access is unavailable; asked again
+  // each pass. AWS hosts are reached through it too.
   enrollment: () => Promise<Enrollment | undefined>;
   modelStatuses: () => Promise<
     ReadonlyMap<string, "available" | "unavailable" | "retired">
@@ -181,6 +191,8 @@ export const createRollouts = (deps: RolloutDependencies) => {
       rollout?: Rollout | null;
       plan?: string | null;
       lease?: HostLease | null;
+      image?: string;
+      adoptedUnder?: string;
     },
   ) => {
     ensureLeading();
@@ -208,6 +220,10 @@ export const createRollouts = (deps: RolloutDependencies) => {
           ...(rollout !== undefined && { rollout }),
           ...(status.plan !== undefined && { plan: status.plan }),
           ...(status.lease !== undefined && { lease: status.lease }),
+          ...(status.image !== undefined && { image: status.image }),
+          ...(status.adoptedUnder !== undefined && {
+            adoptedUnder: status.adoptedUnder,
+          }),
         },
       },
     )) as GpuHost | undefined;
@@ -240,6 +256,20 @@ export const createRollouts = (deps: RolloutDependencies) => {
     }
   };
 
+  const workloads = (pods: ClusterPod[]) => {
+    const live = pods.filter((pod) => !pod.terminating);
+    const servingWorkloads = live.filter((pod) => pod.model);
+
+    return {
+      servingPods: servingWorkloads.length,
+      trainingPods: live.filter((pod) => pod.training).length,
+      pods: live.length,
+      usedGpus: live.reduce((sum, pod) => sum + pod.gpus, 0),
+      servingWorkloads,
+      residentWorkloads: pods,
+    };
+  };
+
   const facts = async (host: GpuHost): Promise<Facts> => {
     const id = host.spec.instanceId;
     const quietly = <T>(read: Promise<T> | undefined, source: string) =>
@@ -252,33 +282,43 @@ export const createRollouts = (deps: RolloutDependencies) => {
         });
         return undefined;
       });
-    const [observation, pod, tailnet, pods, node] = await Promise.all([
-      deps.ping(id),
-      quietly(enrollment?.pod(host), "runpod"),
-      quietly(enrollment?.tailnetOf(host), "tailscale"),
-      cluster.podsOn(id),
-      cluster.node(id),
-    ]);
-    const live = pods.filter((item) => !item.terminating);
+    const [observation, pod, instance, tailnet, pods, node] = await Promise.all(
+      [
+        deps.ping(id),
+        quietly(isRunPod(host) ? enrollment?.pod(host) : undefined, "runpod"),
+        quietly(isAws(host) ? enrollment?.instance(host) : undefined, "ec2"),
+        quietly(enrollment?.tailnetOf(host), "tailscale"),
+        cluster.podsOn(id),
+        cluster.node(id),
+      ],
+    );
+    const instanceStorage =
+      instance && leaseRequest(host)
+        ? await quietly(
+            enrollment?.instanceStorage(host, instance.instanceType),
+            "ec2",
+          )
+        : undefined;
     return {
       host,
       observation,
       ...(pod && { pod }),
+      ...(instance && { instance }),
+      ...(instanceStorage !== undefined && { instanceStorage }),
       ...(tailnet && { tailnet }),
       ...(node && { node }),
-      servingPods: live.filter((item) => item.model).length,
-      trainingPods: live.filter((item) => item.training).length,
-      pods: live.length,
-      usedGpus: live.reduce((sum, item) => sum + item.gpus, 0),
-      servingWorkloads: live.filter((item) => item.model),
-      residentWorkloads: pods,
+      ...workloads(pods),
     };
   };
 
   // Whether a blocked host's serving pods would fit on the other Ready,
   // schedulable hosts with the same GPU product, largest first. Autoscaling
   // that only fills GPUs never makes a blocked host try again.
-  const relocationGap = (blocked: Facts, all: Facts[]) => {
+  const relocationGap = (
+    blocked: Facts,
+    all: Facts[],
+    unavailable: ReadonlySet<string> = new Set(),
+  ) => {
     const { gpuProduct } = blocked.host.spec.inventory;
     const residents: PlacedPod[] = all.flatMap((other) =>
       other.residentWorkloads.map((pod) => ({
@@ -368,7 +408,9 @@ export const createRollouts = (deps: RolloutDependencies) => {
     if (
       assign(
         blocked.servingWorkloads.filter(
-          (pod) => !pod.model || !retired.has(pod.model),
+          (pod) =>
+            !pod.model ||
+            (!retired.has(pod.model) && !unavailable.has(pod.model)),
         ),
       )
     )
@@ -379,8 +421,89 @@ export const createRollouts = (deps: RolloutDependencies) => {
       : `No capacity for a replacement ${missingModel} replica`;
   };
 
-  const roomFor = (blocked: Facts, all: Facts[]) =>
-    relocationGap(blocked, all) === undefined;
+  // Why a model on a host with no room for its replica cannot be drained
+  // with that replica unavailable, or undefined if it can: its budget allows
+  // the disruption, it has one replica here, and every other replica is Ready
+  // and qualified, so no other host of the pool is down. Null for a model
+  // without a PodDisruptionBudget, which never has a replica unavailable.
+  const unavailableRefusal = async (blocked: Facts, model: string) => {
+    const allowed = await cluster.disruptionsAllowed(model);
+    if (allowed === undefined) return null;
+    if (allowed < 1)
+      return `the ${model} PodDisruptionBudget allows no disruption`;
+    const here = blocked.servingWorkloads.filter((pod) => pod.model === model);
+    if (here.length !== 1)
+      return `${here.length} ${model} replicas run on the host`;
+    if (
+      currentFacts.some(
+        (other) =>
+          other.host !== blocked.host &&
+          other.host.status?.rollout?.result === "Running",
+      )
+    )
+      return "another host's rollout is running";
+    const replicas = await cluster.replicas(model);
+    const ready = readyElsewhere(await cluster.modelPods(model), blocked.host);
+    if (ready < 1 || ready < replicas - 1)
+      return `not every other ${model} replica is Ready`;
+  };
+
+  // A re-image with no room for every replica may drain the fewest models it
+  // must with one replica unavailable each, only when each may lose one.
+  const relocation = async (
+    blocked: Facts,
+    all: Facts[],
+    kind: Rollout["kind"],
+  ): Promise<{ gap?: string; unavailable: string[] }> => {
+    const gap = relocationGap(blocked, all);
+    if (!gap) return { unavailable: [] };
+    if (kind !== "reimage") return { gap, unavailable: [] };
+
+    const models = [
+      ...new Set(
+        blocked.servingWorkloads
+          .map((pod) => pod.model)
+          .filter((model): model is string => !!model && !retired.has(model)),
+      ),
+    ].sort();
+    const refusals = new Map<string, string>();
+    const eligible: string[] = [];
+    for (const model of models) {
+      const refusal = await unavailableRefusal(blocked, model);
+      if (refusal) refusals.set(model, refusal);
+      else if (refusal === undefined) eligible.push(model);
+    }
+
+    const subsets = (size: number, from = 0): string[][] =>
+      size === 0
+        ? [[]]
+        : eligible
+            .slice(from)
+            .flatMap((model, index) =>
+              subsets(size - 1, from + index + 1).map((rest) => [
+                model,
+                ...rest,
+              ]),
+            );
+    for (let size = 1; size <= Math.min(eligible.length, 4); size++)
+      for (const subset of subsets(size))
+        if (!relocationGap(blocked, all, new Set(subset)))
+          return { unavailable: subset };
+
+    const why = [...refusals].map(([, refusal]) => refusal);
+    return {
+      gap: why.length
+        ? `${gap}, and a replica cannot be unavailable: ${why.join("; ")}`
+        : gap,
+      unavailable: [],
+    };
+  };
+
+  const roomFor = async (blocked: Facts, all: Facts[], kind: Rollout["kind"]) =>
+    (await relocation(blocked, all, kind)).gap === undefined;
+
+  const unavailableText = (models: readonly string[]) =>
+    models.map((model) => `one ${model} replica`).join(" and ");
 
   const retryAfter = (rollout: Rollout) =>
     Math.min(
@@ -414,9 +537,180 @@ export const createRollouts = (deps: RolloutDependencies) => {
   const revokeKeys = async (host: GpuHost, rollout: Rollout) => {
     for (const id of rollout.keys ?? []) await revokeKey(host, id);
   };
+  // A failed re-image leaves no bootstrap access behind if it can help it;
+  // what is left is logged, and a retry removes it once the host enrolls.
+  // Returns a note on any other instance profile, which is left alone.
+  const removeAccess = async (host: GpuHost) => {
+    const { left, kept } = await act(() =>
+      required().removeBootstrapAccess(host),
+    ).catch((error: unknown) => {
+      if (error instanceof LeadershipLost) throw error;
+      return { left: [(error as Error).message], kept: [] as string[] };
+    });
+    if (left.length || kept.length)
+      deps.log({
+        event: "gpu_rollout_bootstrap_access_left",
+        instance_id: host.spec.instanceId,
+        left,
+        kept,
+      });
+    return kept.length
+      ? `; instance profile ${kept.join(", ")} was left in place`
+      : "";
+  };
 
-  const imageRuns = ({ pod }: HostFacts, rollout: Rollout) =>
-    pod?.imageName === rollout.target.image;
+  // An AWS host runs the target once this rollout re-imaged and enrolled it.
+  const imageRuns = ({ host, pod }: HostFacts, rollout: Rollout) =>
+    isRunPod(host)
+      ? pod?.imageName === rollout.target.image
+      : (rollout.enrolledAt !== undefined &&
+          rollout.reimageRequestedAt !== undefined) ||
+        recordedImage(host) === rollout.target.image;
+
+  const afterEnroll = (host: GpuHost) =>
+    isAws(host) ? "RemoveAccess" : "Verify";
+
+  // A pod whose binding was in flight during the cordon can still land;
+  // nothing on a live host is wiped without being moved or blocking.
+  const beforeWipe = async (
+    facts: Facts,
+    rollout: Rollout,
+  ): Promise<Outcome | undefined> => {
+    const { host } = facts;
+    if (await runningTraining(host, rollout))
+      return { block: "A training job runs on the host" };
+    const live = (await cluster.podsOn(host.spec.instanceId)).filter(
+      (pod) => !pod.terminating,
+    );
+    const serving = live.some((pod) => pod.model);
+    if (serving && rollout.kind === "reimage") return { next: "Surge" };
+    // A leased host was handed over empty; any pod on it now landed while
+    // its cordon was lifted, and is not wiped with it.
+    if (serving && rollout.kind === "return")
+      return { block: "A model pod runs on the leased host" };
+    if (live.length && rollout.kind === "return")
+      return { block: "A pod runs on the leased host" };
+
+    if (rollout.kind === "enroll" && (live.length || facts.node?.ready))
+      return {
+        block: "The host already has a Ready node or running workloads",
+      };
+
+    if (
+      rollout.kind === "enroll" &&
+      !facts.observation.reachable &&
+      facts.observation.keyMissing &&
+      isAws(host) &&
+      !facts.instance?.instanceProfileArn
+    )
+      return {
+        block: "EC2 no longer reports an instance profile for the new host",
+      };
+
+    if (rollout.kind === "recover" || rollout.kind === "enroll") {
+      // The plan saw no connected device; check again right before the wipe.
+      const tailnet = await required().tailnetOf(host);
+      if (tailnet.connected || facts.observation.reachable)
+        return { block: "The host is online again, so it is not re-imaged" };
+    }
+  };
+
+  // EC2 replaces the root volume in place, keeping the instance and its
+  // capacity. The request time, recorded before EC2 is asked, makes the
+  // task's client token, so a repeated request is the same task. The key is
+  // minted and written only once that task is the last to have succeeded, so
+  // only the new root volume's launcher can read it.
+  const reimageAws: Step = async (facts, rollout, record) => {
+    const { host } = facts;
+    const enroll = required();
+
+    if (rollout.rootVolumeTask) {
+      const { state } = await enroll.rootVolumeTask(
+        host,
+        rollout.rootVolumeTask,
+      );
+      if (state.startsWith("fail"))
+        throw new Fatal(
+          `Replacing the root volume ${state} (task ${rollout.rootVolumeTask})`,
+        );
+      if (state !== "succeeded")
+        return { stay: "Waiting for EC2 to replace the root volume" };
+      const { inFlight, last } = await enroll.replacements(host);
+      if (inFlight.length)
+        return {
+          stay: `Waiting for replace-root-volume task ${inFlight.map((task) => task.id).join(", ")} to end`,
+        };
+      if (last?.id !== rollout.rootVolumeTask)
+        throw new Fatal(
+          `Replace-root-volume task ${last?.id} ran after this rollout's, so no bootstrap key was written`,
+        );
+      const instance = await enroll.instance(host);
+      if (instance.state !== "running")
+        return {
+          stay: `Waiting for the instance, ${instance.state}, to run on its new root volume`,
+        };
+
+      await act(() =>
+        enroll.attachBootstrapProfile(host, rollout.rootVolumeTask!),
+      );
+      const key = await act(() => enroll.bootstrapKey(host));
+      let current: Rollout;
+      try {
+        current = await record({ keys: [...(rollout.keys ?? []), key.id] });
+      } catch (error) {
+        await revokeKey(host, key.id);
+        throw error;
+      }
+      await act(() =>
+        enroll.deliverBootstrapKey(
+          host,
+          rollout.rootVolumeTask!,
+          rollout.target.image,
+          key.key,
+        ),
+      );
+      return { next: "Join", set: { keys: current.keys } };
+    }
+
+    let requestedAt = rollout.reimageRequestedAt;
+    if (requestedAt === undefined) {
+      const refused = await beforeWipe(facts, rollout);
+      if (refused) return refused;
+
+      const refusal = await enroll.ec2Refusal(host);
+      if (refusal) throw new Fatal(refusal);
+      const instance = await enroll.instance(host);
+      if (instance.state === "stopped") {
+        await act(() => enroll.startInstance(host));
+        return { stay: "Starting the instance" };
+      }
+      if (instance.state !== "running")
+        return { stay: `Waiting for the instance, ${instance.state}, to run` };
+      const { inFlight } = await enroll.replacements(host);
+      if (inFlight.length)
+        return {
+          stay: `Waiting for replace-root-volume task ${inFlight.map((task) => task.id).join(", ")} to end`,
+        };
+
+      requestedAt = now().toISOString();
+      await record({ reimageRequestedAt: requestedAt });
+    }
+
+    // A request whose answer was lost is sent again with the same token.
+    const { task, imageId } = await act(() =>
+      enroll.replaceRoot(host, requestedAt),
+    );
+    deps.log({
+      event: "gpu_rollout_root_volume_replacement",
+      instance_id: host.spec.instanceId,
+      task_id: task.id,
+      image_id: imageId,
+    });
+    return {
+      stay: "Waiting for EC2 to replace the root volume",
+      set: { rootVolumeTask: task.id },
+    };
+  };
 
   const healthy = (facts: HostFacts, rollout: Rollout) =>
     facts.observation.reachable &&
@@ -461,6 +755,11 @@ export const createRollouts = (deps: RolloutDependencies) => {
     // is decided from the pods on the node once nothing more can land there.
     Cordon: async (facts, rollout) => {
       const { host } = facts;
+      // Refused before anything on the host moves.
+      if (isAws(host)) {
+        const refusal = await required().ec2Refusal(host);
+        if (refusal) throw new Fatal(refusal);
+      }
       if (await runningTraining(host, rollout))
         return { block: "A training job runs on the host" };
 
@@ -472,18 +771,55 @@ export const createRollouts = (deps: RolloutDependencies) => {
           return { block: "The node is cordoned by someone else" };
       }
       if (moves(rollout.kind)) {
-        const gap = relocationGap(facts, currentFacts);
-        if (gap) return { block: gap };
+        const placed = await relocation(facts, currentFacts, rollout.kind);
+        if (placed.gap) return { block: placed.gap };
       }
 
       await act(() => cluster.cordon(host.spec.instanceId));
       if (await runningTraining(host, rollout))
         return { block: "A training job runs on the host" };
 
-      const serving = (await cluster.podsOn(host.spec.instanceId)).some(
-        (pod) => pod.model && !pod.terminating,
-      );
-      if (moves(rollout.kind) && serving) return { next: "Surge" };
+      if (moves(rollout.kind)) {
+        const here = workloads(await cluster.podsOn(host.spec.instanceId));
+        if (here.servingPods) {
+          const updated = { ...facts, ...here };
+          const all = await Promise.all(
+            currentFacts.map(async (item) =>
+              item === facts
+                ? updated
+                : {
+                    ...item,
+                    ...workloads(
+                      await cluster.podsOn(item.host.spec.instanceId),
+                    ),
+                  },
+            ),
+          );
+          const { gap, unavailable } = await relocation(
+            updated,
+            all,
+            rollout.kind,
+          );
+          if (gap) return { block: gap };
+
+          if (unavailable.length) {
+            deps.log({
+              event: "gpu_rollout_replica_unavailable",
+              instance_id: host.spec.instanceId,
+              models: unavailable,
+            });
+            await writeStatus(host, {
+              plan: `Draining with ${unavailableText(unavailable)} unavailable: no other host has room for it`,
+            });
+          }
+
+          return {
+            next: "Surge",
+            set: unavailable.length ? { unavailable } : {},
+          };
+        }
+      }
+
       return { next: rollout.kind === "lease" ? "Hold" : "Reimage" };
     },
 
@@ -498,6 +834,14 @@ export const createRollouts = (deps: RolloutDependencies) => {
       for (const pod of await cluster.podsOn(host.spec.instanceId))
         if (pod.model && !pod.terminating)
           counts.set(pod.model, (counts.get(pod.model) ?? 0) + 1);
+      for (const model of rollout.unavailable ?? []) {
+        const count = counts.get(model) ?? 0;
+        if (count > 1)
+          return {
+            block: `Cannot drain with one ${model} replica unavailable: ${count} replicas run on the host`,
+          };
+      }
+
       const surge = [...(rollout.surge ?? [])];
       const added = [...counts].filter(
         ([model]) => !surge.some((entry) => entry.model === model),
@@ -507,7 +851,12 @@ export const createRollouts = (deps: RolloutDependencies) => {
           surge.push({
             model,
             replicas: await cluster.replicas(model),
-            extra: retired.has(model) ? -count : count,
+            // A model drained unavailable is scaled down by its one
+            // replica here, as a retired model is, until Drain unpauses it.
+            extra:
+              retired.has(model) || rollout.unavailable?.includes(model)
+                ? -count
+                : count,
           });
         return { stay: "Recording each model's replica count", set: { surge } };
       }
@@ -611,6 +960,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
     // restart never sends a second re-image or leaves a key unrevoked.
     Reimage: async (facts, rollout, record) => {
       const { host } = facts;
+      if (!isRunPod(host)) return reimageAws(facts, rollout, record);
       const enroll = required();
 
       // A container started on the target image after the request means the
@@ -643,28 +993,8 @@ export const createRollouts = (deps: RolloutDependencies) => {
         if (now().getTime() - requested < limits.reimageAfter)
           return { stay: "Waiting for RunPod to restart the pod" };
       }
-      // A pod whose binding was in flight during the cordon can still land;
-      // nothing on a live host is wiped without being moved or blocking.
-      if (await runningTraining(host, rollout))
-        return { block: "A training job runs on the host" };
-      const live = (await cluster.podsOn(host.spec.instanceId)).filter(
-        (pod) => !pod.terminating,
-      );
-      const serving = live.some((pod) => pod.model);
-      if (serving && rollout.kind === "reimage") return { next: "Surge" };
-      // A leased host was handed over empty; any pod on it now landed while
-      // its cordon was lifted, and is not wiped with it.
-      if (serving && rollout.kind === "return")
-        return { block: "A model pod runs on the leased host" };
-      if (live.length && rollout.kind === "return")
-        return { block: "A pod runs on the leased host" };
-
-      if (rollout.kind === "recover" || rollout.kind === "enroll") {
-        // The plan saw no connected device; check again right before the wipe.
-        const tailnet = await enroll.tailnetOf(host);
-        if (tailnet.connected || facts.observation.reachable)
-          return { block: "The host is online again, so it is not re-imaged" };
-      }
+      const refused = await beforeWipe(facts, rollout);
+      if (refused) return refused;
 
       const key = await act(() => enroll.bootstrapKey(host));
       let current: Rollout;
@@ -698,7 +1028,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
       return peer
         ? { next: "Enroll", set: { bootstrapAddress: peer.ip } }
         : {
-            stay: `Waiting for gpu-bootstrap-${host.spec.provider.podId} to join the tailnet`,
+            stay: `Waiting for gpu-bootstrap-${providerInstanceId(host)} to join the tailnet`,
           };
     },
 
@@ -765,7 +1095,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
       if (promotion) return { next: "Promote", set: enrolled };
 
       await revokeKeys(host, current);
-      return { next: "Verify", set: { ...enrolled, keys: undefined } };
+      return { next: afterEnroll(host), set: { ...enrolled, keys: undefined } };
     },
 
     Promote: async ({ host }, rollout) => {
@@ -778,9 +1108,30 @@ export const createRollouts = (deps: RolloutDependencies) => {
 
       await revokeKeys(host, rollout);
       return {
-        next: "Verify",
+        next: afterEnroll(host),
         set: { keys: undefined, bundle: rollout.target.bundle },
       };
+    },
+
+    // An enrolled AWS host keeps no AWS credentials: its bootstrap secret is
+    // deleted and its instance profile removed before it serves again.
+    RemoveAccess: async ({ host }, rollout) => {
+      const { left, kept } = await act(() =>
+        required().removeBootstrapAccess(host),
+      );
+      if (left.length)
+        throw new Error(
+          `The host enrolled, but ${left.join(" and ")} could not be removed`,
+        );
+      // Not the fleet's to remove, but the host must not serve holding it.
+      if (kept.length)
+        throw new Fatal(
+          `The host enrolled, but it has instance profile ${kept.join(", ")}, not the bootstrap profile; it stays cordoned until that profile is removed`,
+        );
+
+      if (host.status?.image !== rollout.target.image)
+        await writeStatus(host, { image: rollout.target.image });
+      return { next: "Verify" };
     },
 
     Verify: async (facts, rollout) => {
@@ -836,8 +1187,27 @@ export const createRollouts = (deps: RolloutDependencies) => {
       return rollout.kind === "bundle" ? { done: true } : { next: "Uncordon" };
     },
 
-    Uncordon: async ({ host }) => {
+    Uncordon: async ({ host }, rollout) => {
       await act(() => cluster.uncordon(host.spec.instanceId));
+      return rollout.unavailable?.length ? { next: "Restore" } : { done: true };
+    },
+
+    // The next host waits until each model drained unavailable has all its
+    // replicas Ready and qualified again, so two never go down together.
+    Restore: async (_facts, rollout) => {
+      for (const model of rollout.unavailable ?? []) {
+        const replicas = await cluster.replicas(model);
+        const live = (await cluster.modelPods(model)).filter(
+          (pod) => !pod.terminating,
+        );
+        const ready = live.filter(
+          (pod) => pod.ready && pod.qualifiedRuntime !== undefined,
+        ).length;
+        if (ready < replicas || ready < live.length)
+          return {
+            stay: `Waiting for the ${model} replica drained unavailable to be Ready again`,
+          };
+      }
       return { done: true };
     },
 
@@ -911,6 +1281,10 @@ export const createRollouts = (deps: RolloutDependencies) => {
       for (const { model } of rollout.surge ?? [])
         await act(() => cluster.pauseScaling(model, null));
       await revokeKeys(host, rollout);
+      const kept =
+        isAws(host) && rollout.reimageRequestedAt
+          ? await removeAccess(host)
+          : "";
       // A blocked host goes back into service; a failed one stays cordoned,
       // unless it failed to be leased, which never handed it to anyone.
       if (result === "Blocked" || rollout.kind === "lease")
@@ -923,7 +1297,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
       });
       await record({
         result,
-        lastError: reason,
+        lastError: reason + kept,
         finishedAt: now().toISOString(),
         surge: undefined,
         keys: undefined,
@@ -1056,7 +1430,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
     await writeStatus(host, {
       rollout: {
         kind: plan.kind,
-        target: target(pins),
+        target: target(pins, host),
         step: FIRST_STEP[plan.kind],
         result: "Running",
         startedAt: time,
@@ -1069,7 +1443,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
         ...(ends && request && { lease: request }),
         // A retry after a block keeps its count, so the waits keep growing.
         ...(host.status?.rollout?.result === "Blocked" &&
-          sameTarget(host.status.rollout, pins) && {
+          sameTarget(host, host.status.rollout, pins) && {
             blockedCount: host.status.rollout.blockedCount,
           }),
         ...(refused && {
@@ -1087,8 +1461,13 @@ export const createRollouts = (deps: RolloutDependencies) => {
   };
 
   // The API server reorders a stored target's fields, so compare values.
-  const sameTarget = (rollout: Rollout | undefined, pins: Pins) =>
-    rollout !== undefined && isDeepStrictEqual(rollout.target, target(pins));
+  const sameTarget = (
+    host: GpuHost,
+    rollout: Rollout | undefined,
+    pins: Pins,
+  ) =>
+    rollout !== undefined &&
+    isDeepStrictEqual(rollout.target, target(pins, host));
 
   // A failed rollout stops the fleet until the pins change or a person sets
   // the retry annotation to a new value. A failed lease never took the host
@@ -1098,12 +1477,47 @@ export const createRollouts = (deps: RolloutDependencies) => {
     if (
       rollout?.result !== "Failed" ||
       rollout.kind === "lease" ||
-      !sameTarget(rollout, pins)
+      !sameTarget(host, rollout, pins)
     )
       return false;
 
     const retry = host.metadata.annotations?.[RETRY_ANNOTATION];
     return !retry || retry === rollout.retry;
+  };
+
+  const isRunPodJoinFailure = ({ host }: Facts) =>
+    isRunPod(host) &&
+    host.status?.rollout?.kind === "recover" &&
+    host.status.rollout.step === "Join";
+
+  const resumableEnrollmentVerify = (item: Facts) => {
+    const { host, node } = item;
+    const rollout = host.status?.rollout;
+    const requested =
+      host.metadata.annotations?.[RESUME_ENROLLMENT_VERIFY_ANNOTATION];
+    const timeout = `Verify did not finish within ${Math.round(limits.Verify / MINUTE)} minutes`;
+
+    if (
+      !requested ||
+      !isAws(host) ||
+      host.metadata.annotations?.[ENROLL_DURING_RUNPOD_HOLD_ANNOTATION] !==
+        "true" ||
+      host.status?.lease ||
+      leaseRequest(host) ||
+      item.pods ||
+      (node?.unschedulable && !node.cordonedByRollout) ||
+      !rollout ||
+      rollout.kind !== "enroll" ||
+      rollout.step !== "Verify" ||
+      rollout.result !== "Failed" ||
+      !rollout.enrolledAt ||
+      rollout.finishedAt !== requested ||
+      rollout.lastError !== timeout ||
+      !healthy(item, rollout)
+    )
+      return;
+
+    return rollout;
   };
 
   const mayAct = (kind: Rollout["kind"]) =>
@@ -1346,13 +1760,13 @@ export const createRollouts = (deps: RolloutDependencies) => {
           : planHost(item, pins, now());
       if (
         rollout?.result === "Blocked" &&
-        sameTarget(rollout, pins) &&
+        sameTarget(item.host, rollout, pins) &&
         plan.action === "start" &&
         // A lease request on the host is refused at once instead.
         plan.kind !== "lease"
       ) {
         blocked = item;
-        const room = roomFor(item, all);
+        const room = await roomFor(item, all, plan.kind);
         const due = (since(rollout.finishedAt) ?? 0) + retryAfter(rollout);
         retryBlocked = room && time >= due;
         plans.set(
@@ -1373,6 +1787,23 @@ export const createRollouts = (deps: RolloutDependencies) => {
     report(all, pins, plans, blocked);
     for (const item of all)
       if (leaseEnded(item.host)) await endRequest(item.host);
+    // EC2 cannot show what an AWS host the operator never re-imaged runs, so
+    // it is taken to be current until the pinned image changes.
+    for (const item of all)
+      if (
+        isAws(item.host) &&
+        item.observation.reachable &&
+        recordedImage(item.host) === undefined
+      ) {
+        deps.log({
+          event: "gpu_rollout_host_adopted",
+          instance_id: item.host.spec.instanceId,
+          image: pinnedImage(pins, item.host),
+        });
+        await writeStatus(item.host, {
+          adoptedUnder: pinnedImage(pins, item.host),
+        });
+      }
     // A leased host stays cordoned even if someone lifts the cordon or its
     // node is recreated, until its return reaches Uncordon.
     for (const item of all) {
@@ -1411,7 +1842,50 @@ export const createRollouts = (deps: RolloutDependencies) => {
     }
     await preempt(all, plans);
 
-    const halted = all.find((item) => holding(item.host, pins));
+    const held = all.filter((item) => holding(item.host, pins));
+    if (mayAct("enroll")) {
+      for (const item of held) {
+        if (
+          !held.every((other) => other === item || isRunPodJoinFailure(other))
+        )
+          continue;
+        const rollout = resumableEnrollmentVerify(item);
+        if (!rollout) continue;
+
+        const { host } = item;
+        const id = host.spec.instanceId;
+        await act(() => cluster.cordon(id));
+        await writeStatus(host, {
+          rollout: {
+            ...rollout,
+            result: "Running",
+            stepStartedAt: now().toISOString(),
+            finishedAt: undefined,
+            lastError: undefined,
+            healthySince: undefined,
+          },
+        });
+        deps.log({ event: "gpu_enrollment_verify_resumed", instance_id: id });
+        return;
+      }
+    }
+
+    const halted = held[0];
+    // A failed RunPod recovery is still held while explicitly opted-in,
+    // empty AWS hosts enroll through their separate bootstrap path.
+    const onlyRunPodJoinFailures = held.every(isRunPodJoinFailure);
+    const mayEnrollDuringHold = (item: Facts, plan: Plan) =>
+      onlyRunPodJoinFailures &&
+      plan.action === "start" &&
+      plan.kind === "enroll" &&
+      isAws(item.host) &&
+      !item.pods &&
+      !item.node?.ready &&
+      !item.host.status?.observed?.lastSeen &&
+      recordedImage(item.host) === undefined &&
+      item.host.metadata.annotations?.[ENROLL_DURING_RUNPOD_HOLD_ANNOTATION] ===
+        "true";
+
     // A new retry annotation restarts that host's rollout; the rest wait for it.
     const retried = all.find((item) => {
       const rollout = item.host.status?.rollout;
@@ -1419,7 +1893,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
       return (
         rollout?.result === "Failed" &&
         rollout.kind !== "lease" &&
-        sameTarget(rollout, pins) &&
+        sameTarget(item.host, rollout, pins) &&
         retry !== undefined &&
         retry !== rollout.retry
       );
@@ -1439,11 +1913,25 @@ export const createRollouts = (deps: RolloutDependencies) => {
         waitingForCapacity &&
         plan.action === "start" &&
         skipsCapacityWait(plan.kind);
-      const wanted = text(plan, own || restores ? undefined : holder);
+      const independentEnrollment = halted && mayEnrollDuringHold(item, plan);
+      const wanted = text(
+        plan,
+        own || restores || independentEnrollment ? undefined : holder,
+      );
       if (wanted !== item.host.status?.plan)
         await writeStatus(item.host, { plan: wanted ?? null });
     }
-    if (halted) return;
+    if (halted) {
+      if (enrollment && mayAct("enroll")) {
+        for (const item of all) {
+          const plan = plans.get(item.host.spec.instanceId)!;
+          if (plan.action === "start" && mayEnrollDuringHold(item, plan))
+            return start(item, plan, pins);
+        }
+      }
+
+      return;
+    }
 
     // A lease that this operator cannot start is refused at once rather than
     // left waiting ahead of the host's other plans.

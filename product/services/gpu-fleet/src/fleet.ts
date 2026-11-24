@@ -6,8 +6,12 @@ import {
   uncordonIfReturned,
 } from "./drain.js";
 import {
+  faultDomain,
   GPU_HOSTS,
+  isAws,
   parseHosts,
+  providerInstanceId,
+  RESOLVE_ENROLLMENT_EGRESS_ANNOTATION,
   type GpuHost,
   type HostStatus,
 } from "./hosts.js";
@@ -29,6 +33,7 @@ export type FleetDependencies = {
   api: Kubernetes;
   metrics: Metrics;
   ping: (instanceId: string) => Promise<Observation>;
+  enrollmentAddress?: (host: GpuHost) => Promise<string | undefined>;
   // Undefined while the operator has no PostgreSQL credential.
   sync: () => SyncFleet | undefined;
   // Checked before every write, so a replica that lost the lease stops writing.
@@ -39,16 +44,21 @@ export type FleetDependencies = {
 
 export class LeadershipLost extends Error {}
 
-const fleetHost = (host: GpuHost): FleetHost => ({
-  instanceId: host.spec.instanceId,
-  provider: host.spec.provider.name,
-  accountId: host.spec.provider.accountId,
-  podId: host.spec.provider.podId,
-  sku: `${host.spec.inventory.gpuCount}x ${host.spec.inventory.gpuProduct}`,
-  ...(host.spec.provider.machineId && {
-    faultDomain: `runpod:${host.spec.provider.machineId}`,
-  }),
-});
+const fleetHost = (host: GpuHost): FleetHost => {
+  const domain = faultDomain(host);
+  const { provider } = host.spec;
+  // A RunPod host keeps the region its registration wrote.
+  const region = provider.name === "aws" ? provider.region : undefined;
+  return {
+    instanceId: host.spec.instanceId,
+    provider: provider.name,
+    accountId: provider.accountId,
+    providerInstanceId: providerInstanceId(host),
+    sku: `${host.spec.inventory.gpuCount}x ${host.spec.inventory.gpuProduct}`,
+    ...(region && { region }),
+    ...(domain && { faultDomain: domain }),
+  };
+};
 
 // The rollout and plan fields belong to the rollout loop, not this comparison.
 const withoutLastSeen = (status: HostStatus | undefined) =>
@@ -63,6 +73,7 @@ export const createFleet = ({
   api,
   metrics,
   ping,
+  enrollmentAddress,
   sync,
   leading,
   log,
@@ -94,7 +105,20 @@ export const createFleet = ({
 
     ensureLeading();
     try {
-      const change = await reconcileService(api, host);
+      const rollout = host.status?.rollout;
+      // The Tailscale proxy may miss an unresolved FQDN when its device first
+      // joins. Switching the route to its verified address triggers a refresh.
+      const enrollmentTarget =
+        isAws(host) &&
+        host.metadata.annotations?.[RESOLVE_ENROLLMENT_EGRESS_ANNOTATION] ===
+          "true" &&
+        rollout?.kind === "enroll" &&
+        rollout.enrolledAt &&
+        rollout.result !== "Succeeded"
+          ? { address: await enrollmentAddress?.(host) }
+          : undefined;
+      ensureLeading();
+      const change = await reconcileService(api, host, enrollmentTarget);
       if (change !== "unchanged") {
         metrics.serviceChanges.inc({ change });
         log({ event: "gpu_host_service", instance_id: id, change });

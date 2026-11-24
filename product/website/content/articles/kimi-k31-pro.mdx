@@ -1,0 +1,116 @@
+---
+title: "Kimi K3.1 Pro"
+description: "The open-weight frontier moves forward."
+path: /library/kimi-k-3-point-1-pro/
+category: notes
+status: published
+publishedAt: "2026-11-23"
+image: /brand/library/kimi-k31-pro.jpg
+links:
+  - label: Tech Report from Moonshot
+    href: https://www.kimi.ai/blog/kimi-k3-1-pro
+  - label: Model weights
+    href: https://huggingface.co/moonshotai/Kimi-K3.1-Pro
+  - label: License
+    href: https://huggingface.co/moonshotai/Kimi-K3.1-Pro/blob/main/LICENSE
+---
+
+import { GapToggle } from "../../src/components/articles/kimi-k31-pro/GapFigure";
+import { Callout } from "../../src/components/handbook/Callout";
+import { Expandable } from "../../src/components/design/Expandable";
+
+import { RunIt } from "../../src/components/articles/kimi-k31-pro/RunCost";
+import { LandingPage } from "../../src/components/articles/kimi-k31-pro/LandingPage";
+
+## The latest
+
+A new very large, very capable open-weight model was released November 4th. [Ranked by general intelligence](https://artificialanalysis.ai/models/open-source), the latest Kimi model is now the most capable open-weight model by a large margin.
+
+It's a general purpose model that was intentionally trained to excel at serving coding agents, designing office and document automations, doing financial and legal research, and making 3D (including CAD) creations. The official [announcement](https://www.kimi.ai/blog/kimi-k3-1-pro) was surprisingly artistic, and here are the highlights.
+
+## Kimi in context
+
+The Kimi models have been closely watched since their first major headline outside of China in July, 2025. At the time, Moonshot AI (their maker) decided to open-source the best model it had, Kimi K2, and its performance [shocked](https://www.nature.com/articles/d41586-025-02275-6) a global audience.
+
+Kimi K2 was the first open-weight model to perform particularly well at agentic coding (how well the model works with a coding agent). This was a big deal because it was the first indicator that open-weight models might soon compete with frontier models in coding agents.
+
+Kimi K3 was released in July of this year, and now only 3 months later Kimi K3.1 surpasses its capabilities substantially. Moonshot suggests there will be more Kimi K3.1 models to follow, calling it the first in a new series.
+
+## Kimi in action
+
+Public benchmarks are sometimes helpful for broad comparisons, but the best way to see if the latest Kimi model performs well on your work is to [try it](https://www.gradiated.com/docs/) ✨.
+
+We've tested its performance on a couple of agentic workflows that require tool calls. Our first impression is that on this kind of work, Kimi K3.1 Pro is somewhere around Sonnet's level of competence. Our rough estimations are that it's around 2-3x cheaper than Sonnet depending on the task, but this will change as we continue to optimize how we serve it.
+
+<Expandable>
+
+Its strongest public benchmark is [Terminal-Bench](https://www.tbench.ai/).
+
+In the test, the model runs inside a coding agent (Claude Code), which is installed in a Linux environment that only has a terminal. It's given a written brief for 66 tasks that cover hard problems in software, science, machine learning, hardware and a few other disciplines. The test has a time limit of 8 hours per task, and its score is the percentage of tasks it completed correctly.
+
+</Expandable>
+
+<GapToggle />
+
+It would be remiss to show the above without also highlighting some key news. Researchers at [R40](https://r40.org/) ran Terminal-Bench on Kimi K3.1 Pro themselves and observed the following:
+
+> Kimi K3.1, the top model on Artificial Analysis’s Terminal-Bench 4.0 leaderboard, follows instructions it was never given. In 23% of its attempts, its reasoning cites “instructions” that are not in the task but that the hidden tests check.
+>
+> [R40, 2026](https://r40.org/papers/kimi_k31_benchmark_audit.pdf)
+
+"Hidden tests" here means that the tests were hidden to the model while it was doing the test, but these tests were not hidden during the model's development. The test itself, and how it's graded are all publicly available on [GitHub](https://github.com/harbor-framework/terminal-bench/tree/v4.0.0/tasks).
+
+Kimi K3.1 Pro is a very capable and useful open-weight model, but findings like the above lead us to rely on our own experiments and observations to really benchmark what it can do. We find it definitely falls short of the performance promises made by the benchmarks in Moonshot's announcement. It does feel like this Kimi model is more "benchmaxxed" than other models.
+
+## Technically of note
+
+#### A post-trained version of Kimi K3 with a change in attention architecture
+
+Given the substantial improvements over Kimi K3, it's noteworthy that it isn't built from a new base model, and instead uses Kimi K3 as its base model. Moonshot mentions they managed to do large-scale joint reinforcement learning (RL) across hundreds of domains but provide few other details on how this was achieved.
+
+A change they do name is an adjustment to the model's attention architecture. Of the model's 93 layers, 24 of them changed from full attention layers to [DeepSeek's Sparse Attention](https://arxiv.org/abs/2512.02556). This enables more efficient work with long contexts and is especially helpful for long-running agent work where context builds up quickly.
+
+#### Deliberately impaired cybersecurity performance
+
+Moonshot has paid special attention to the model's knowledge of cybersecurity. They expressed a deliberate interest in not advancing the frontier of cyber capabilities, but Kimi K3.1 Pro's capabilities are still a large leap forward from Kimi K3. As Moonshot noticed its capabilities improving they catalogued the cyber-related data in their training environments and did a targeted removal. They comment on this explicitly, and state:
+
+> K3.1 Pro improves substantially over its predecessor, indicating that stronger general coding and long-horizon debugging capabilities generalize to cyber tasks even after targeted data removal.
+>
+> [Moonshot AI](https://www.kimi.ai/blog/kimi-k3-1-pro#cybersecurity)
+
+## How to run it
+
+Open-source inference engines [vLLM](https://recipes.vllm.ai/moonshotai/Kimi-K3.1-Pro) and [SGLang](https://lmsysorg.mintlify.app/cookbook/autoregressive/Moonshotai/Kimi-K3.1-Pro) both support the model, and have a recipe for serving it.
+
+The hardware you choose needs a minimum 1.56 TB of GPU memory to store the model weights and around 20% more to serve it (1.87 TB). Given it has 4-bit weights you'd also want to use something with FP4 hardware.
+
+At the moment we serve it with 8 × B300s and use the SGLang engine. A set up like that at current pricing costs around $76/hour or $55,480/month.
+
+<RunIt />
+
+Each 8 × B300 server carries one copy of the model, with the model weights split over the 8 GPUs. There are many ways to distribute them, and how you choose to do so depends on what you're optimizing for.
+
+We split them by slicing each model layer into 8 parts. To pass a token through a layer of the model, all 8 GPUs calculate their part concurrently and then communicate to produce the output of the layer. This is called tensor parallelism (TP8) and it's the configuration SGLang recommends for low latency.
+
+By splitting the layers, each GPU can read its portion of all the layers it needs for a given token (about 17 GB) from memory, in parallel. On its own, one GPU would take about 17 ms to read the weights it needs (137 GB), but split eight ways it only takes about 2.1 ms, plus some time for co-ordinating.
+
+#### Scale
+
+Speed is important, but we're primarily interested in cost and energy efficiency which start to move when serving many requests concurrently. Efficient batching is hard, but it's especially important. We'll publish our findings as we learn more about how to serve this model well.
+
+## A practical frame
+
+Comparing cost and energy usage between models is easier with something tangible.
+We asked Kimi to make a landing page for a new SaaS product. This cost $0.254 and used 524 kJ. Roughly the same amount of energy it takes to boil a 1.5L kettle.
+
+We compare that to its predecessor K3, where the performance jump becomes quite obvious. The website produced by K3 is simply really bad. The outputs of Sonnet and Opus look similar to one another at first glance, but the product demos on Opus' landing page are very impressive. It also took Opus almost 17 minutes.
+
+For a balance of cost, quality, and speed here, Kimi K3.1 Pro comes out on top. Sonnet is a much fairer comparison than Opus, which we have only included for perspective.
+
+<LandingPage />
+
+## License summary
+
+Kimi K3.1 Pro is free to use commercially. Selling it as a service past $20M in yearly revenue requires a separate agreement with Moonshot.
+
+Products with over 100M monthly users or $20M in monthly revenue must display "Kimi K3.1-Pro" in their interface.

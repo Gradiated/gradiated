@@ -11,7 +11,6 @@ import {
   catalogModel,
   isLegacyModelId,
   modelSupportedUses,
-  modelType,
 } from "@gradiated/contracts/model-catalog";
 import type { createExternalModelCatalog } from "../catalog/external-models.js";
 
@@ -75,7 +74,7 @@ const modelResponse = (record: ListedModelRecord): Model => ({
   status: record.status,
   properties: {
     ...record.properties,
-    type: modelType(record.id),
+    type: record.type,
     supported_uses: [...modelSupportedUses(record.id)],
   },
   icon: catalogModel(record.id)?.icon ?? null,
@@ -102,7 +101,14 @@ export const registerModelRoutes = (
 
     return context.json(
       {
-        data: records.filter(isListedModel).map(modelResponse),
+        // This response is publicly cached, so it never carries an
+        // organization's own model, even if a caller listed one.
+        data: records
+          .filter(
+            (record): record is ListedModelRecord =>
+              record.organizationId === null && isListedModel(record),
+          )
+          .map(modelResponse),
         next_cursor: null,
         service_tiers: [...SERVICE_TIER_PRICING_POLICY],
       },

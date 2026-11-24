@@ -11,7 +11,9 @@ const PATH = "/v1/systemone";
 
 const REQUEST_FIELDS = ["model", "state", "questions", "priority"];
 const QUESTION_TYPES = ["noul", "choice", "score"] as const;
-const MAX_QUESTIONS = 64;
+// SYSTEMONE_MAX_QUESTIONS in @gradiated/contracts: the gateway's and kev_http's bound. Not
+// imported because the proxy and collector typecheck these mocks without that package.
+const MAX_QUESTIONS = 1024;
 
 type QuestionType = (typeof QUESTION_TYPES)[number];
 
@@ -45,6 +47,11 @@ const questions = (body: JsonObject): Question[] => {
     }
     if (!isQuestionType(question.type)) {
       throw new Error("unknown question type");
+    }
+    // kev_http takes choice criteria only as an object. The gateway rewrites a
+    // customer's list form before dispatch, so a list here is a gateway bug.
+    if (question.type === "choice" && !isJsonObject(question.criteria)) {
+      throw new Error("choice criteria must be an object");
     }
 
     return { name, type: question.type, criteria: question.criteria };

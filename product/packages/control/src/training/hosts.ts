@@ -18,6 +18,7 @@ export const trainingNodes = async (
     .from(instances)
     .where(
       and(
+        // Training stays on RunPod hosts; AWS GPU hosts serve inference only.
         eq(instances.provider, "runpod"),
         inArray(instances.providerInstanceId, podIds),
         isNull(instances.retiredAt),

@@ -1,0 +1,801 @@
+{
+  "source": "Jeeves 954d063 runtime (its model code, bf16) on an NVIDIA L4",
+  "model": "PostHog/jeeves@04b9f87a79484fda54131de3b030b579d399e704",
+  "temperature": 1.522,
+  "cases": [
+    {
+      "state": "I was billed twice, please refund the duplicate charge on my card.",
+      "question": {
+        "type": "noul",
+        "instructions": "Does the customer ask for money back?"
+      },
+      "input_tokens": 55,
+      "probabilities": [0.993513, 0.006487]
+    },
+    {
+      "state": "I was billed twice, please refund the duplicate charge on my card.",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this?",
+        "criteria": {
+          "billing": "Payments, refunds, charges",
+          "tech": "Bugs, crashes, login",
+          "general": "Everything else"
+        }
+      },
+      "input_tokens": 91,
+      "probabilities": [0.999557, 9.8e-5, 0.000344]
+    },
+    {
+      "state": "I was billed twice, please refund the duplicate charge on my card.",
+      "question": {
+        "type": "score",
+        "instructions": "How urgent is this ticket?",
+        "criteria": ["not urgent", "somewhat urgent", "urgent", "critical"]
+      },
+      "input_tokens": 75,
+      "probabilities": [0.108526, 0.438502, 0.39796, 0.055012]
+    },
+    {
+      "state": "The app crashes whenever I open settings on Android 14.",
+      "question": {
+        "type": "noul",
+        "instructions": "Does the customer ask for money back?"
+      },
+      "input_tokens": 54,
+      "probabilities": [0.008143, 0.991857]
+    },
+    {
+      "state": "The app crashes whenever I open settings on Android 14.",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this?",
+        "criteria": {
+          "billing": "Payments, refunds, charges",
+          "tech": "Bugs, crashes, login",
+          "general": "Everything else"
+        }
+      },
+      "input_tokens": 90,
+      "probabilities": [9e-5, 0.997364, 0.002546]
+    },
+    {
+      "state": "The app crashes whenever I open settings on Android 14.",
+      "question": {
+        "type": "score",
+        "instructions": "How urgent is this ticket?",
+        "criteria": ["not urgent", "somewhat urgent", "urgent", "critical"]
+      },
+      "input_tokens": 74,
+      "probabilities": [0.040508, 0.203395, 0.366218, 0.389878]
+    },
+    {
+      "state": "Can you tell me your opening hours on Sunday?",
+      "question": {
+        "type": "noul",
+        "instructions": "Does the customer ask for money back?"
+      },
+      "input_tokens": 51,
+      "probabilities": [0.001634, 0.998366]
+    },
+    {
+      "state": "Can you tell me your opening hours on Sunday?",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this?",
+        "criteria": {
+          "billing": "Payments, refunds, charges",
+          "tech": "Bugs, crashes, login",
+          "general": "Everything else"
+        }
+      },
+      "input_tokens": 87,
+      "probabilities": [0.000242, 0.00148, 0.998278]
+    },
+    {
+      "state": "Can you tell me your opening hours on Sunday?",
+      "question": {
+        "type": "score",
+        "instructions": "How urgent is this ticket?",
+        "criteria": ["not urgent", "somewhat urgent", "urgent", "critical"]
+      },
+      "input_tokens": 71,
+      "probabilities": [0.764536, 0.190104, 0.035132, 0.010229]
+    },
+    {
+      "state": "My package arrived damaged and I want a replacement, not a refund.",
+      "question": {
+        "type": "noul",
+        "instructions": "Does the customer ask for money back?"
+      },
+      "input_tokens": 55,
+      "probabilities": [0.016416, 0.983584]
+    },
+    {
+      "state": "My package arrived damaged and I want a replacement, not a refund.",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this?",
+        "criteria": {
+          "billing": "Payments, refunds, charges",
+          "tech": "Bugs, crashes, login",
+          "general": "Everything else"
+        }
+      },
+      "input_tokens": 91,
+      "probabilities": [0.043493, 0.005924, 0.950583]
+    },
+    {
+      "state": "My package arrived damaged and I want a replacement, not a refund.",
+      "question": {
+        "type": "score",
+        "instructions": "How urgent is this ticket?",
+        "criteria": ["not urgent", "somewhat urgent", "urgent", "critical"]
+      },
+      "input_tokens": 75,
+      "probabilities": [0.096117, 0.470066, 0.381593, 0.052224]
+    },
+    {
+      "state": "Please delete my account and all associated data under GDPR.",
+      "question": {
+        "type": "noul",
+        "instructions": "Does the customer ask for money back?"
+      },
+      "input_tokens": 52,
+      "probabilities": [0.001827, 0.998173]
+    },
+    {
+      "state": "Please delete my account and all associated data under GDPR.",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this?",
+        "criteria": {
+          "billing": "Payments, refunds, charges",
+          "tech": "Bugs, crashes, login",
+          "general": "Everything else"
+        }
+      },
+      "input_tokens": 88,
+      "probabilities": [0.003222, 0.080618, 0.91616]
+    },
+    {
+      "state": "Please delete my account and all associated data under GDPR.",
+      "question": {
+        "type": "score",
+        "instructions": "How urgent is this ticket?",
+        "criteria": ["not urgent", "somewhat urgent", "urgent", "critical"]
+      },
+      "input_tokens": 72,
+      "probabilities": [0.095823, 0.272755, 0.411023, 0.220399]
+    },
+    {
+      "state": "Why was I charged a late fee when I paid on the due date?",
+      "question": {
+        "type": "noul",
+        "instructions": "Does the customer ask for money back?"
+      },
+      "input_tokens": 56,
+      "probabilities": [0.407047, 0.592953]
+    },
+    {
+      "state": "Why was I charged a late fee when I paid on the due date?",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this?",
+        "criteria": {
+          "billing": "Payments, refunds, charges",
+          "tech": "Bugs, crashes, login",
+          "general": "Everything else"
+        }
+      },
+      "input_tokens": 92,
+      "probabilities": [0.99404, 0.001123, 0.004837]
+    },
+    {
+      "state": "Why was I charged a late fee when I paid on the due date?",
+      "question": {
+        "type": "score",
+        "instructions": "How urgent is this ticket?",
+        "criteria": ["not urgent", "somewhat urgent", "urgent", "critical"]
+      },
+      "input_tokens": 76,
+      "probabilities": [0.243968, 0.44973, 0.254537, 0.051765]
+    },
+    {
+      "state": "Love the new update, the dark mode looks great!",
+      "question": {
+        "type": "noul",
+        "instructions": "Does the customer ask for money back?"
+      },
+      "input_tokens": 52,
+      "probabilities": [0.002452, 0.997548]
+    },
+    {
+      "state": "Love the new update, the dark mode looks great!",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this?",
+        "criteria": {
+          "billing": "Payments, refunds, charges",
+          "tech": "Bugs, crashes, login",
+          "general": "Everything else"
+        }
+      },
+      "input_tokens": 88,
+      "probabilities": [0.000508, 0.06599, 0.933502]
+    },
+    {
+      "state": "Love the new update, the dark mode looks great!",
+      "question": {
+        "type": "score",
+        "instructions": "How urgent is this ticket?",
+        "criteria": ["not urgent", "somewhat urgent", "urgent", "critical"]
+      },
+      "input_tokens": 72,
+      "probabilities": [0.898685, 0.075063, 0.017296, 0.008956]
+    },
+    {
+      "state": "I can't log in, the password reset email never arrives.",
+      "question": {
+        "type": "noul",
+        "instructions": "Does the customer ask for money back?"
+      },
+      "input_tokens": 54,
+      "probabilities": [0.002255, 0.997745]
+    },
+    {
+      "state": "I can't log in, the password reset email never arrives.",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this?",
+        "criteria": {
+          "billing": "Payments, refunds, charges",
+          "tech": "Bugs, crashes, login",
+          "general": "Everything else"
+        }
+      },
+      "input_tokens": 90,
+      "probabilities": [9.4e-5, 0.998988, 0.000919]
+    },
+    {
+      "state": "I can't log in, the password reset email never arrives.",
+      "question": {
+        "type": "score",
+        "instructions": "How urgent is this ticket?",
+        "criteria": ["not urgent", "somewhat urgent", "urgent", "critical"]
+      },
+      "input_tokens": 74,
+      "probabilities": [0.084127, 0.324728, 0.422184, 0.168961]
+    },
+    {
+      "state": "1. within audit clause employee invoice notice termination contract escalate quarter 4970.\n2. termination region percent audit escalate date notice approval amount approval 1554.\n3. unless quarter invoice escalate days after quarter unless audit approval 5082.\n4. refund before exception audit ledger when threshold termination days refund 5797.\n5. clause threshold unless except escalate date days termination renewal ledger 8542.\n6. invoice employee quarter escalate days escalate policy exception before fiscal 6535.\n7. after fiscal quarter when except policy unless termination fiscal ledger 5459.\n8. deadline before threshold after ledger exception date escalate percent deadline 3910.\n9. quarter approval quarter days renewal exception exception threshold audit notice 8017.\n10. refund amount days amount after refund days threshold fiscal escalate 8853.\n11. date quarter unless days percent amount renewal exception unless quarter 6307.\n12. threshold percent deadline amount manager date fiscal manager employee unless 4261.\n13. termination exception exception when within approval audit approval escalate employee 1315.\n14. audit after escalate fiscal days when contract fiscal after notice 4516.\n15. notice quarter deadline ledger date audit when percent fiscal clause 9498.\n16. invoice renewal termination when except after escalate quarter region exception 5314.\n17. unless refund termination percent except threshold ledger date deadline policy 4441.\n18. refund after deadline region quarter manager threshold clause fiscal employee 1649.\n19. quarter approval ledger after deadline employee fiscal percent except escalate 8753.\n20. unless when exception policy refund except date unless fiscal percent 1962.\n21. contract exception region fiscal refund employee unless policy date manager 2030.\n22. termination date before quarter employee escalate when policy days clause 1663.\n23. fiscal invoice exception deadline exception except amount region clause manager 1001.\n24. notice renewal employee unless refund after contract date invoice region 7705.\n25. fiscal audit escalate percent manager after when date within employee 2593.\n26. ledger manager threshold notice invoice refund unless escalate renewal when 2865.\n27. policy termination when clause audit percent ledger notice escalate amount 5852.\n28. contract fiscal when invoice approval days after policy renewal before 1296.\n29. threshold before employee days invoice approval deadline within termination region 9997.\n30. amount when region percent audit except ledger unless approval after 5084.\n31. contract before clause fiscal except exception policy unless date after 5479.\n32. manager deadline deadline except renewal contract after audit when percent 6790.\n33. employee contract ledger after percent clause within when after employee 2715.\n34. renewal exception invoice after manager renewal notice audit termination escalate 9199.\n35. unless within policy audit employee termination threshold amount fiscal renewal 817.\n36. quarter fiscal audit quarter clause date days except exception fiscal 2139.\n37. policy contract when clause threshold policy date policy after within 39.\n38. fiscal when notice unless refund date refund unless except date 4955.\n39. invoice after manager refund termination ledger escalate contract except exception 358.\n40. invoice escalate renewal quarter quarter refund ledger invoice approval except 8534.\n41. fiscal except except region refund ledger approval invoice ledger policy 694.\n42. employee date when invoice days threshold region percent escalate ledger 689.\n43. ledger before after unless except termination after except audit renewal 7135.\n44. region ledger days manager date contract percent amount policy approval 2475.\n45. invoice threshold threshold quarter region after exception threshold within unless 585.\n46. employee invoice manager approval percent amount region contract days approval 4808.\n47. refund termination before deadline escalate employee amount manager ledger notice 1162.\n48. amount contract fiscal threshold amount clause refund refund days escalate 7884.\n49. termination threshold fiscal quarter quarter threshold refund termination refund after 8155.\n50. clause employee amount threshold before when audit approval escalate manager 9249.\n51. contract quarter except exception exception quarter exception date before deadline 1002.\n52. contract policy refund contract days notice amount renewal escalate termination 9583.\n53. after when date clause exception region deadline invoice percent within 2730.\n54. clause date region refund exception fiscal ledger ledger after policy 8615.\n55. renewal within when date refund termination contract invoice date except 690.\n56. quarter date unless approval refund date renewal contract region days 2480.\n57. refund unless termination approval percent contract except when clause audit 8540.\n58. termination when escalate audit threshold fiscal termination termination except when 3310.\n59. days unless escalate deadline policy threshold after before audit threshold 5273.\n60. employee notice approval ledger invoice unless quarter approval fiscal contract 9552.\n61. amount after after quarter termination exception quarter exception notice ledger 646.\n62. exception deadline approval employee amount policy within ledger renewal threshold 2633.\n63. quarter approval ledger except renewal region notice contract audit notice 8232.\n64. employee percent exception when quarter quarter notice within unless exception 6986.\n65. audit within date amount days audit unless clause fiscal termination 6367.\n66. unless percent deadline ledger ledger quarter policy when audit policy 2982.",
+      "question": {
+        "type": "noul",
+        "instructions": "Does the customer ask for money back?"
+      },
+      "input_tokens": 1342,
+      "probabilities": [0.42018, 0.57982]
+    },
+    {
+      "state": "1. notice percent invoice threshold exception termination ledger invoice fiscal amount 6686.\n2. contract quarter contract employee manager except escalate approval deadline amount 5473.\n3. employee employee termination clause approval termination audit ledger unless after 1338.\n4. when after approval quarter region clause employee unless renewal contract 7519.\n5. employee refund termination within approval policy employee unless unless approval 5307.\n6. refund after days except region date contract quarter within within 8034.\n7. refund audit employee unless after renewal unless except escalate threshold 2037.\n8. when after unless amount quarter ledger approval escalate contract quarter 4814.\n9. escalate before ledger when quarter refund notice ledger quarter date 626.\n10. quarter contract renewal region within date renewal region quarter except 1235.\n11. employee audit escalate employee termination invoice audit policy notice when 9327.\n12. percent audit date deadline exception within fiscal audit audit except 8232.\n13. after notice clause notice amount refund approval clause audit percent 6915.\n14. escalate exception escalate refund clause exception refund clause within approval 504.\n15. quarter renewal clause when clause policy termination escalate ledger threshold 4139.\n16. exception region exception refund region after policy region region manager 164.\n17. fiscal deadline fiscal region exception unless audit approval date policy 3356.\n18. when when before audit refund before policy amount region after 404.\n19. escalate unless deadline ledger approval manager renewal refund termination region 4231.\n20. approval policy date region threshold termination amount amount escalate audit 9064.\n21. except threshold manager percent exception refund days percent amount manager 6171.\n22. audit approval approval quarter deadline threshold notice deadline deadline within 3014.\n23. amount region clause when employee ledger approval unless policy contract 1277.\n24. after exception approval clause amount days clause before escalate approval 9685.\n25. clause amount except region exception deadline renewal except region except 8671.\n26. employee contract clause policy clause before audit threshold renewal date 6089.\n27. amount termination exception manager quarter refund invoice refund days unless 2522.\n28. quarter after renewal escalate contract manager within clause clause manager 4063.\n29. renewal threshold escalate notice approval region renewal except except exception 7919.\n30. within date amount policy fiscal after renewal unless renewal policy 3584.\n31. amount refund within except amount days unless approval clause after 7724.\n32. exception when termination within deadline days within contract invoice except 355.\n33. refund invoice audit when employee policy invoice contract notice audit 9530.\n34. after contract renewal refund before invoice region amount ledger within 3212.\n35. unless exception employee exception quarter invoice amount days threshold refund 8687.\n36. ledger deadline audit escalate within manager exception clause ledger amount 4633.\n37. notice approval percent notice except date days refund clause except 8906.\n38. contract before within audit quarter invoice amount renewal region percent 2258.\n39. manager refund after refund contract contract percent renewal approval days 4899.\n40. region except termination before clause date termination termination after notice 5215.\n41. termination except employee renewal amount approval before termination employee audit 3535.\n42. policy region termination contract audit policy ledger notice exception when 1334.\n43. when before escalate when contract policy region employee refund unless 62.\n44. invoice ledger except after amount before audit deadline approval within 9386.\n45. amount date refund clause renewal after threshold contract manager threshold 6910.\n46. except audit when clause approval renewal escalate after approval notice 5179.\n47. approval date escalate manager renewal region quarter contract clause quarter 8061.\n48. contract before deadline quarter date renewal date percent after employee 6363.\n49. employee deadline except exception ledger manager region employee before except 2841.\n50. deadline unless amount unless exception after ledger notice within amount 5785.\n51. clause renewal employee except after notice when except days escalate 7056.\n52. percent renewal termination invoice after termination date threshold invoice employee 718.\n53. employee manager region policy amount except policy approval exception quarter 7009.\n54. when deadline unless contract days escalate deadline renewal date threshold 9967.\n55. refund unless audit exception quarter threshold threshold days renewal audit 5328.\n56. invoice policy notice employee date region exception date ledger notice 5665.\n57. date fiscal date invoice when before before amount amount notice 6303.\n58. invoice termination region ledger after deadline employee amount escalate days 1186.\n59. policy renewal termination before renewal employee escalate quarter clause termination 7546.\n60. renewal refund exception exception deadline refund fiscal within approval clause 3498.\n61. renewal unless exception fiscal clause days within audit fiscal contract 645.\n62. manager deadline termination deadline approval fiscal ledger invoice escalate region 5237.\n63. clause refund days audit amount unless days quarter date after 4861.\n64. within renewal notice unless renewal days except invoice invoice deadline 272.\n65. refund unless quarter after refund manager before clause deadline date 4663.\n66. audit before when policy before days notice clause ledger employee 1996.",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this?",
+        "criteria": {
+          "billing": "Payments, refunds, charges",
+          "tech": "Bugs, crashes, login",
+          "general": "Everything else"
+        }
+      },
+      "input_tokens": 1377,
+      "probabilities": [0.938448, 0.005749, 0.055802]
+    },
+    {
+      "state": "1. except invoice refund before percent region deadline when after after 8957.\n2. when amount deadline before fiscal audit deadline exception notice amount 5363.\n3. deadline region except termination amount percent manager approval quarter policy 9063.\n4. notice threshold region percent except policy quarter approval audit contract 2544.\n5. manager notice exception approval within date quarter escalate within termination 9331.\n6. within after date deadline before approval fiscal deadline within contract 5792.\n7. unless percent approval except termination audit escalate refund unless fiscal 427.\n8. notice unless region termination renewal amount policy deadline days except 2672.\n9. when audit termination quarter before termination days threshold after ledger 1291.\n10. invoice approval unless contract after date fiscal threshold quarter amount 6293.\n11. employee date employee threshold before before deadline threshold ledger renewal 3702.\n12. invoice region when manager amount policy region percent days employee 2478.\n13. region policy termination except employee policy deadline employee policy deadline 5353.\n14. exception fiscal employee region when clause approval audit escalate date 7356.\n15. clause approval region amount manager except threshold before quarter before 6696.\n16. contract policy clause audit invoice days days quarter before when 7581.\n17. within employee percent escalate refund clause contract manager policy notice 2265.\n18. unless ledger when notice fiscal before after approval exception threshold 3890.\n19. fiscal fiscal fiscal manager deadline policy quarter audit manager before 9199.\n20. manager after exception clause escalate ledger unless refund unless except 7496.\n21. after approval unless unless employee invoice threshold quarter before before 6169.\n22. policy except escalate audit employee termination exception region amount when 2471.\n23. renewal deadline notice region manager before within contract threshold invoice 8067.\n24. contract policy amount notice audit amount days termination employee within 8713.\n25. percent days invoice escalate when employee renewal contract before refund 6616.\n26. region termination employee policy invoice before employee invoice when when 9536.\n27. after within escalate amount when within date within notice notice 5576.\n28. contract fiscal invoice date refund percent threshold quarter escalate deadline 9604.\n29. when before days when audit region manager escalate ledger audit 2508.\n30. threshold ledger before fiscal policy percent fiscal employee percent approval 5646.\n31. region amount except amount threshold termination quarter contract unless clause 2786.\n32. policy quarter approval percent employee renewal approval threshold escalate policy 7872.\n33. escalate when fiscal when within invoice before unless date exception 8993.\n34. escalate clause invoice fiscal manager notice manager exception when except 2579.\n35. percent refund notice except quarter days unless contract within clause 4355.\n36. amount amount policy clause within fiscal after invoice invoice days 8639.\n37. days threshold threshold date after quarter clause quarter approval ledger 98.\n38. within notice approval quarter when after escalate quarter percent contract 5914.\n39. renewal employee days escalate clause except unless quarter quarter within 3741.\n40. audit policy region notice manager when date except region except 8143.\n41. policy before before deadline percent audit deadline invoice manager within 6881.\n42. exception percent renewal deadline before after renewal ledger notice audit 1646.\n43. date manager renewal escalate exception escalate clause except contract invoice 4141.\n44. clause audit within within region unless threshold exception amount policy 8070.\n45. policy within invoice date within contract contract clause within except 6378.\n46. after audit fiscal employee percent renewal region fiscal percent approval 9248.\n47. after invoice threshold fiscal policy contract termination escalate notice approval 682.\n48. exception percent ledger region region policy exception date after refund 8858.\n49. termination employee threshold escalate fiscal ledger policy threshold contract audit 2053.\n50. within except invoice clause when approval unless approval contract ledger 5016.\n51. notice employee manager approval audit approval escalate termination after except 766.\n52. before fiscal notice employee fiscal days after before after except 6345.\n53. manager region quarter percent fiscal exception exception days manager fiscal 4352.\n54. date quarter invoice threshold after after invoice quarter invoice notice 7479.\n55. escalate approval within audit renewal days approval employee except percent 2900.\n56. except notice employee audit within threshold fiscal exception date except 7481.\n57. unless deadline quarter renewal notice manager after threshold escalate except 2210.\n58. termination within days employee days exception fiscal notice threshold policy 1311.\n59. refund clause unless region percent renewal threshold fiscal contract notice 5932.\n60. fiscal ledger except refund approval threshold escalate policy manager before 2050.\n61. policy threshold audit unless date employee clause except employee after 5100.\n62. quarter contract escalate employee unless within quarter after manager region 1269.\n63. clause employee renewal region unless audit unless within invoice when 5075.\n64. percent ledger quarter renewal clause manager policy renewal quarter invoice 3122.\n65. contract exception region refund refund policy region policy manager contract 224.\n66. threshold renewal quarter days before ledger after termination termination exception 848.",
+      "question": {
+        "type": "score",
+        "instructions": "How urgent is this ticket?",
+        "criteria": ["not urgent", "somewhat urgent", "urgent", "critical"]
+      },
+      "input_tokens": 1364,
+      "probabilities": [0.281091, 0.358296, 0.238127, 0.122486]
+    },
+    {
+      "state": "1. ledger contract quarter quarter ledger escalate invoice policy except notice 1569.\n2. fiscal fiscal exception threshold region refund termination employee approval escalate 8464.\n3. except quarter amount employee policy contract threshold manager days after 2407.\n4. manager manager within escalate manager except when deadline audit escalate 5379.\n5. policy termination audit except when contract employee deadline deadline except 4614.\n6. threshold manager deadline region deadline manager audit clause renewal region 9264.\n7. approval contract percent within policy manager escalate percent policy when 6389.\n8. after quarter manager approval policy policy fiscal threshold notice policy 626.\n9. employee within escalate refund percent unless approval within approval when 6224.\n10. quarter policy clause clause percent escalate when threshold after deadline 2259.\n11. region notice date days contract exception approval clause percent when 5745.\n12. refund clause audit clause deadline termination contract deadline escalate contract 3934.\n13. except termination contract escalate percent exception fiscal invoice invoice audit 8628.\n14. region days policy unless unless within termination audit deadline invoice 661.\n15. unless threshold ledger quarter contract except refund days audit ledger 799.\n16. approval after contract policy within clause before ledger contract clause 1718.\n17. after renewal unless renewal manager manager threshold termination clause manager 9670.\n18. escalate ledger amount within notice refund escalate region region approval 5860.\n19. within termination except notice within employee date audit invoice manager 9564.\n20. threshold amount contract except employee amount days clause employee when 6727.\n21. invoice contract before date region approval approval refund unless region 2716.\n22. policy clause percent contract renewal exception except after after when 1276.\n23. within clause days before days approval manager approval date manager 3740.\n24. policy notice approval fiscal termination region audit audit unless before 4720.\n25. after quarter threshold when refund quarter escalate ledger fiscal clause 4289.\n26. audit manager threshold except notice threshold days after approval escalate 6163.\n27. before before days amount deadline audit escalate contract region contract 7722.\n28. notice amount clause clause fiscal refund when approval approval policy 9560.\n29. unless except after escalate audit notice refund after within except 3358.\n30. unless except unless notice refund invoice after before unless manager 6159.\n31. exception quarter employee policy refund audit region fiscal before termination 5216.\n32. refund when renewal region percent after invoice when termination quarter 3748.\n33. escalate manager days days fiscal audit exception within ledger notice 2753.\n34. policy fiscal except ledger manager audit notice clause unless when 3410.\n35. renewal after when contract invoice policy percent approval escalate contract 2808.\n36. audit renewal percent employee escalate contract escalate quarter exception except 9638.\n37. contract threshold deadline notice ledger renewal employee termination unless refund 4403.\n38. fiscal notice termination days except contract termination invoice manager deadline 8864.\n39. region manager amount ledger unless fiscal escalate approval renewal exception 1123.\n40. termination contract percent clause days exception invoice termination deadline fiscal 1817.\n41. amount approval region quarter refund approval when ledger employee fiscal 2242.\n42. percent days date policy employee ledger contract days after within 9859.\n43. termination after after refund escalate termination days region ledger within 5621.\n44. ledger refund when policy deadline deadline termination fiscal amount invoice 3681.\n45. policy termination region notice escalate threshold exception exception amount percent 6919.\n46. deadline before region contract ledger within approval deadline amount escalate 3266.\n47. before within termination when audit quarter region amount contract unless 2120.\n48. fiscal within refund contract region notice ledger termination deadline except 6127.\n49. except escalate region clause invoice region contract within within after 4639.\n50. ledger refund termination audit amount refund renewal approval region escalate 3991.\n51. before manager escalate threshold termination deadline refund when contract contract 7616.\n52. notice renewal escalate percent fiscal unless deadline when contract notice 5099.\n53. termination deadline threshold notice when policy exception termination threshold contract 3726.\n54. fiscal clause employee percent within employee clause exception invoice date 5355.\n55. manager refund manager quarter after region policy deadline employee policy 6270.\n56. days policy approval refund fiscal unless unless escalate escalate date 1337.\n57. before renewal date ledger policy notice audit unless ledger clause 1095.\n58. days manager escalate deadline deadline escalate clause contract termination quarter 7.\n59. clause date contract within employee unless invoice policy percent region 6021.\n60. fiscal threshold when renewal except approval unless notice exception invoice 1692.\n61. after refund invoice policy after approval unless within when approval 6209.\n62. date percent when threshold date clause notice notice refund days 1730.\n63. after escalate termination refund notice audit renewal termination manager renewal 8975.\n64. threshold approval clause invoice contract exception percent notice threshold fiscal 3827.\n65. renewal deadline region termination within escalate clause policy renewal before 99.\n66. days contract within within renewal deadline clause deadline invoice termination 7784.\n67. approval deadline renewal amount region except termination unless escalate escalate 2439.\n68. fiscal notice when exception date amount escalate notice except when 2012.\n69. employee approval threshold employee threshold ledger unless quarter manager within 7678.\n70. contract when date clause termination date manager contract employee quarter 5554.\n71. audit within when fiscal notice date before threshold manager notice 8893.\n72. after ledger unless percent clause approval except after unless termination 9351.\n73. escalate date unless renewal employee deadline termination audit unless fiscal 5205.\n74. days before date policy employee employee approval deadline renewal ledger 9994.\n75. deadline when when refund ledger within notice clause escalate except 4693.\n76. audit when threshold termination when date manager region days fiscal 5842.\n77. after renewal contract renewal when threshold ledger renewal exception approval 3601.\n78. within refund within approval escalate contract renewal after days date 6028.\n79. after employee policy contract date exception ledger clause percent percent 6741.\n80. days date except policy when approval notice except escalate termination 5057.\n81. contract days days exception exception unless before termination within policy 3342.\n82. clause unless within region amount exception before policy within quarter 3918.\n83. unless ledger policy percent ledger notice region approval renewal invoice 1806.\n84. percent renewal invoice audit fiscal deadline contract contract before notice 5567.\n85. deadline fiscal percent invoice escalate exception employee approval threshold except 9572.\n86. percent termination exception notice termination clause threshold contract before ledger 398.\n87. refund clause unless when escalate approval within approval audit policy 1949.\n88. after clause deadline employee except invoice invoice contract refund region 4779.\n89. region unless quarter except date before fiscal days days employee 5551.\n90. notice days policy manager escalate termination fiscal policy except ledger 4225.\n91. threshold approval region refund unless days clause quarter within exception 4121.\n92. percent refund notice exception ledger percent approval termination employee notice 3661.\n93. region refund days fiscal after date manager after when deadline 6538.\n94. date unless after before renewal region manager invoice before audit 5711.\n95. days ledger date date renewal fiscal threshold approval invoice days 8.\n96. exception when fiscal threshold amount ledger after quarter threshold employee 1386.\n97. unless policy amount quarter refund manager after invoice date notice 9088.\n98. region ledger renewal exception clause notice days fiscal clause refund 1317.\n99. percent renewal threshold manager amount deadline except clause when after 4698.\n100. employee policy fiscal policy except ledger invoice exception ledger when 5131.\n101. threshold days except amount employee quarter after deadline ledger audit 8465.\n102. approval invoice unless employee quarter contract clause invoice percent deadline 4153.\n103. threshold escalate quarter days termination audit renewal after refund clause 6136.\n104. manager notice employee deadline after quarter termination contract policy deadline 1329.\n105. amount refund fiscal manager audit approval renewal policy audit within 5934.\n106. notice clause refund notice deadline termination amount invoice contract clause 7713.\n107. after escalate escalate employee manager after audit ledger notice region 3318.\n108. deadline approval deadline quarter amount quarter approval manager days invoice 8916.\n109. policy manager deadline ledger fiscal before clause escalate audit after 2570.\n110. deadline within days approval audit fiscal percent when manager before 4063.\n111. notice within amount quarter ledger ledger quarter after before policy 7552.\n112. quarter audit ledger date employee clause manager contract notice contract 3482.\n113. contract days notice termination refund approval ledger exception days policy 1340.\n114. policy before deadline before contract renewal when invoice clause region 6493.\n115. invoice before exception audit within manager percent deadline before date 743.\n116. within ledger employee notice quarter exception after renewal deadline renewal 2204.\n117. unless except audit notice amount policy unless approval region when 5866.\n118. region fiscal amount notice except after invoice approval policy termination 3271.\n119. unless contract threshold termination amount renewal approval termination fiscal amount 5438.\n120. region ledger except unless contract contract percent contract after audit 8217.\n121. amount when fiscal within percent fiscal deadline date clause date 4345.\n122. notice manager notice approval quarter unless notice within audit days 8296.\n123. fiscal fiscal except termination escalate threshold invoice clause amount renewal 8630.\n124. employee quarter before date invoice renewal after exception policy date 9785.\n125. refund ledger invoice quarter policy fiscal ledger date audit manager 2845.",
+      "question": {
+        "type": "noul",
+        "instructions": "Does the customer ask for money back?"
+      },
+      "input_tokens": 2544,
+      "probabilities": [0.366296, 0.633704]
+    },
+    {
+      "state": "1. region unless quarter invoice policy when when policy policy unless 2744.\n2. fiscal ledger amount fiscal deadline contract fiscal termination before region 5812.\n3. exception percent clause quarter refund after policy within manager policy 9731.\n4. days invoice region before date ledger escalate contract date threshold 3023.\n5. quarter manager termination when approval unless percent notice clause percent 3715.\n6. audit policy employee clause audit unless employee except except except 2221.\n7. notice exception clause amount threshold except escalate except escalate fiscal 3098.\n8. after employee threshold approval threshold when before invoice termination termination 9978.\n9. escalate threshold invoice audit except exception renewal quarter within manager 1765.\n10. notice invoice days after contract unless renewal clause when manager 9953.\n11. escalate clause within approval when when fiscal within quarter refund 9577.\n12. within refund fiscal manager before termination amount when before refund 6976.\n13. invoice invoice quarter refund except region notice fiscal days quarter 1225.\n14. policy employee unless policy within approval audit refund clause contract 7887.\n15. audit policy threshold except fiscal approval exception after contract except 9490.\n16. before deadline employee date clause escalate escalate audit policy employee 9816.\n17. quarter contract approval days before after amount clause contract audit 8952.\n18. employee before fiscal renewal audit days approval days audit approval 3397.\n19. percent manager fiscal exception percent termination amount invoice invoice date 6606.\n20. when policy ledger except ledger employee notice within within exception 169.\n21. except amount approval within approval fiscal within notice approval refund 5444.\n22. policy before fiscal threshold fiscal approval threshold percent within exception 1412.\n23. region date invoice renewal threshold when termination termination days notice 1383.\n24. exception threshold renewal contract within contract days termination days clause 8498.\n25. exception escalate deadline approval except contract fiscal ledger notice threshold 2428.\n26. audit exception approval approval employee contract except percent refund when 1116.\n27. notice invoice percent amount region when ledger before termination contract 9691.\n28. fiscal threshold before when audit unless renewal notice region deadline 8228.\n29. employee before contract quarter region threshold quarter notice policy deadline 9411.\n30. exception termination refund region clause within unless deadline days policy 8499.\n31. notice refund employee percent region employee region manager threshold invoice 7964.\n32. termination within escalate audit clause policy quarter except within deadline 7822.\n33. before before audit region when quarter ledger fiscal quarter before 2634.\n34. escalate employee within before termination notice when escalate manager fiscal 6313.\n35. after amount when audit percent termination date escalate policy after 7443.\n36. unless unless fiscal when manager unless renewal threshold percent threshold 7045.\n37. percent within ledger ledger except approval notice clause contract deadline 6040.\n38. contract amount deadline date invoice deadline days percent ledger escalate 6096.\n39. renewal deadline unless threshold unless except approval threshold deadline approval 4206.\n40. days manager days after after unless refund audit escalate renewal 7862.\n41. date after manager unless region unless deadline after quarter exception 8861.\n42. termination audit date amount contract invoice notice date region ledger 6664.\n43. threshold before policy employee date date unless fiscal manager ledger 9130.\n44. renewal exception invoice notice amount after termination clause fiscal threshold 6314.\n45. employee ledger escalate refund audit employee threshold manager within invoice 9156.\n46. renewal amount days audit clause ledger escalate termination region deadline 1470.\n47. before exception quarter except exception notice policy ledger when percent 8407.\n48. threshold before fiscal unless refund audit percent deadline policy employee 1565.\n49. fiscal escalate before amount exception fiscal percent ledger contract after 2104.\n50. within audit percent escalate escalate unless notice ledger audit date 4551.\n51. amount manager escalate manager percent deadline approval approval audit deadline 4226.\n52. termination quarter amount approval before unless invoice date exception approval 6668.\n53. manager date ledger percent policy region days when termination when 2068.\n54. within fiscal before invoice exception audit before after unless ledger 4576.\n55. quarter unless before deadline policy audit approval fiscal date before 9462.\n56. when policy clause approval approval termination days employee notice threshold 3605.\n57. when manager renewal threshold when audit renewal deadline except except 4512.\n58. when after date refund region termination invoice region days percent 4633.\n59. date amount days contract exception manager contract refund percent escalate 1560.\n60. notice ledger approval after ledger escalate escalate renewal approval clause 4287.\n61. audit before days date within quarter manager before exception invoice 7218.\n62. threshold contract notice employee region fiscal ledger contract before before 6291.\n63. days approval within after after days percent approval except employee 5004.\n64. unless renewal notice within percent clause date renewal date contract 1438.\n65. refund days contract refund notice when renewal before except manager 529.\n66. date deadline deadline refund unless contract clause exception audit fiscal 8978.\n67. date notice date date termination exception date escalate ledger refund 8409.\n68. approval unless date days percent notice except unless clause unless 6471.\n69. ledger except escalate invoice when quarter termination except except unless 474.\n70. region region within quarter date after except employee date renewal 3527.\n71. notice when date fiscal policy approval deadline renewal termination exception 9901.\n72. invoice fiscal except amount contract threshold before before escalate when 4874.\n73. audit when exception unless refund fiscal termination region unless unless 1448.\n74. deadline ledger approval clause escalate audit deadline ledger policy termination 4636.\n75. approval notice ledger except region before when approval refund notice 5267.\n76. threshold when before exception region audit quarter fiscal date date 4837.\n77. notice after clause except before before contract contract employee approval 7224.\n78. exception amount except when approval notice date fiscal unless termination 5734.\n79. approval percent approval audit percent clause invoice before date refund 2586.\n80. approval renewal escalate ledger days clause escalate manager fiscal employee 4897.\n81. within termination percent exception when region except escalate refund refund 8099.\n82. deadline notice employee policy ledger after when quarter percent exception 7630.\n83. fiscal invoice before percent invoice after days quarter contract manager 3893.\n84. except refund when fiscal percent before within notice manager termination 3985.\n85. policy deadline approval after unless when within ledger approval ledger 2529.\n86. ledger within quarter fiscal percent unless manager exception refund invoice 1565.\n87. invoice unless renewal percent within invoice percent clause employee after 1225.\n88. approval fiscal renewal employee region threshold invoice except clause contract 364.\n89. amount except deadline date within exception percent before approval deadline 8568.\n90. date renewal threshold ledger policy within invoice clause percent notice 8974.\n91. approval after threshold after percent except days contract escalate date 4887.\n92. refund renewal except except invoice deadline quarter except invoice audit 5019.\n93. exception region approval renewal policy contract except renewal employee except 4676.\n94. notice unless within clause renewal unless fiscal percent before notice 3190.\n95. manager fiscal policy invoice refund fiscal contract after invoice date 7943.\n96. audit termination invoice notice contract approval unless termination invoice ledger 2818.\n97. after policy date threshold invoice after after ledger fiscal refund 512.\n98. clause amount threshold unless before escalate date threshold clause within 2090.\n99. except refund deadline region within before escalate termination renewal manager 5801.\n100. clause ledger clause clause region percent refund exception days quarter 7420.\n101. approval refund policy quarter notice ledger after contract except termination 3891.\n102. contract except before refund clause employee when fiscal amount unless 2793.\n103. amount invoice notice refund days when when threshold policy approval 25.\n104. exception threshold within threshold renewal ledger date deadline region audit 9364.\n105. renewal invoice days manager renewal contract policy refund policy refund 5401.\n106. before date amount days refund notice within amount audit exception 1678.\n107. days unless amount before employee deadline escalate fiscal refund when 2696.\n108. renewal manager manager renewal invoice audit fiscal after manager renewal 9355.\n109. policy days contract policy refund refund amount exception except within 6250.\n110. date invoice before contract deadline renewal except unless notice days 6030.\n111. manager clause except quarter policy percent clause unless deadline amount 5683.\n112. notice threshold termination except ledger within before renewal audit before 4150.\n113. region invoice within manager manager audit deadline audit renewal threshold 381.\n114. region termination unless quarter after amount when deadline policy refund 7525.\n115. before notice fiscal audit manager date fiscal contract after unless 5436.\n116. days approval employee termination clause audit renewal quarter audit renewal 6026.\n117. policy date percent date exception termination approval when exception before 8504.\n118. after when days contract unless invoice date exception clause policy 8922.\n119. termination after before threshold before escalate policy date unless amount 6863.\n120. renewal after notice after amount exception employee exception region contract 6759.\n121. contract quarter except after within except within deadline amount termination 6563.\n122. days policy except clause except amount when termination approval contract 7071.\n123. escalate contract after escalate audit within fiscal percent before unless 4948.\n124. termination days region amount clause fiscal escalate percent except within 2785.\n125. region employee clause renewal renewal amount exception when deadline threshold 3786.",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this?",
+        "criteria": {
+          "billing": "Payments, refunds, charges",
+          "tech": "Bugs, crashes, login",
+          "general": "Everything else"
+        }
+      },
+      "input_tokens": 2585,
+      "probabilities": [0.798567, 0.020066, 0.181367]
+    },
+    {
+      "state": "1. policy unless threshold approval manager fiscal audit termination audit exception 1632.\n2. manager unless employee deadline except manager policy except notice escalate 7165.\n3. when clause manager amount contract renewal amount days employee manager 7846.\n4. manager audit audit refund when refund termination fiscal before amount 5002.\n5. amount contract employee percent fiscal invoice threshold within renewal exception 981.\n6. within except after fiscal amount deadline escalate escalate renewal except 5069.\n7. days escalate date contract audit exception clause employee employee quarter 1499.\n8. region policy amount amount employee policy employee unless employee approval 9732.\n9. ledger manager termination except exception percent approval policy before days 2212.\n10. quarter refund exception after exception unless within when refund date 1641.\n11. escalate termination clause exception refund termination after ledger renewal notice 2754.\n12. days refund approval ledger region before ledger clause notice approval 1323.\n13. except notice employee before audit days deadline refund before quarter 6196.\n14. audit region notice escalate threshold days after percent days contract 5026.\n15. deadline percent after exception approval unless contract ledger within region 4647.\n16. region notice region policy policy policy approval invoice before when 3433.\n17. except audit approval manager refund fiscal termination before termination when 2062.\n18. invoice invoice fiscal approval ledger employee manager escalate when region 5301.\n19. date except refund notice quarter termination approval except invoice threshold 3106.\n20. except refund unless when after deadline region quarter contract within 1690.\n21. invoice within escalate contract days region employee except threshold deadline 6457.\n22. employee within clause days invoice within quarter manager escalate invoice 765.\n23. before invoice before exception threshold except clause policy within when 4370.\n24. deadline except escalate fiscal ledger within after manager invoice region 8582.\n25. except refund manager termination date ledger percent unless percent exception 6685.\n26. amount fiscal after when employee invoice policy policy quarter unless 2600.\n27. threshold manager audit contract deadline percent days fiscal date escalate 518.\n28. except days within ledger audit date renewal audit days when 7367.\n29. percent unless threshold fiscal region region refund within quarter policy 6862.\n30. region manager termination ledger audit deadline before when before ledger 6309.\n31. within unless policy when ledger escalate date unless before termination 6773.\n32. within contract manager approval when clause contract renewal fiscal before 3518.\n33. invoice exception after escalate manager escalate percent policy amount escalate 3025.\n34. refund approval invoice manager contract invoice notice audit except clause 5250.\n35. days before clause termination renewal refund invoice unless threshold invoice 4137.\n36. before amount contract unless notice policy termination escalate except notice 8227.\n37. date clause invoice before except within clause before employee policy 6792.\n38. days exception quarter invoice after quarter policy policy termination when 6391.\n39. days region days termination notice renewal days before before after 7781.\n40. percent manager quarter percent within policy unless region date amount 7053.\n41. exception deadline refund manager quarter unless renewal except approval escalate 8145.\n42. threshold ledger renewal ledger after approval termination quarter ledger invoice 8049.\n43. threshold after notice before quarter deadline within employee region escalate 8368.\n44. invoice contract fiscal days except audit unless refund amount audit 2126.\n45. notice approval approval exception escalate threshold date employee policy termination 7715.\n46. exception percent notice employee approval except renewal percent approval percent 4232.\n47. exception amount region escalate approval audit renewal escalate region employee 5405.\n48. refund audit refund unless when refund amount when amount percent 5985.\n49. manager within policy when within termination contract contract except date 1497.\n50. clause ledger invoice termination clause when termination audit contract approval 7033.\n51. quarter date within clause except within date invoice exception quarter 2243.\n52. renewal threshold region amount quarter quarter renewal threshold deadline manager 7556.\n53. approval after threshold quarter deadline termination approval refund days percent 9905.\n54. renewal before threshold manager exception when threshold manager invoice escalate 5837.\n55. when after refund refund contract threshold within threshold amount threshold 25.\n56. date when except amount except manager manager ledger days manager 7787.\n57. deadline exception after notice audit invoice audit after refund employee 6208.\n58. before exception contract renewal termination when approval after approval employee 1853.\n59. approval except refund fiscal contract unless audit refund amount exception 9449.\n60. percent refund date ledger before audit amount ledger fiscal contract 2820.\n61. notice renewal after invoice within threshold except manager except quarter 6614.\n62. invoice audit audit manager escalate manager fiscal before exception date 8522.\n63. fiscal audit within region when before renewal ledger audit when 1488.\n64. threshold notice clause quarter quarter amount renewal quarter employee approval 5721.\n65. manager termination deadline escalate deadline exception approval escalate within renewal 7115.\n66. refund region within deadline refund threshold approval date deadline unless 8966.",
+      "question": {
+        "type": "score",
+        "instructions": "How urgent is this ticket?",
+        "criteria": ["not urgent", "somewhat urgent", "urgent", "critical"]
+      },
+      "input_tokens": 1366,
+      "probabilities": [0.260408, 0.35332, 0.248132, 0.13814]
+    },
+    {
+      "state": "1. when termination ledger threshold percent except ledger termination audit notice 4423.\n2. within amount policy unless when unless escalate manager invoice date 8200.\n3. days after fiscal refund amount renewal manager refund employee renewal 8687.\n4. notice days unless percent days before when contract ledger clause 5202.\n5. unless quarter threshold deadline threshold termination approval notice before before 427.\n6. before termination quarter approval policy exception days ledger policy ledger 2267.\n7. within ledger refund employee threshold escalate amount when date within 1028.\n8. when employee within deadline before manager audit quarter region contract 8687.\n9. unless when region audit clause date contract before employee unless 3654.\n10. percent policy audit renewal before policy clause approval within date 1039.\n11. percent except approval escalate escalate audit quarter threshold within invoice 4831.\n12. within audit renewal threshold notice clause termination threshold quarter invoice 8461.\n13. ledger amount renewal quarter days threshold contract when threshold escalate 6613.\n14. audit within invoice escalate after policy date fiscal escalate after 7651.\n15. within amount contract clause before before fiscal ledger escalate fiscal 2127.\n16. escalate manager termination date manager unless escalate date exception ledger 4435.\n17. notice fiscal notice manager percent ledger manager when termination refund 7886.\n18. escalate deadline clause manager refund fiscal employee notice employee after 1473.\n19. quarter before before refund audit percent approval approval percent date 5884.\n20. region refund refund contract termination approval threshold percent audit notice 3329.\n21. unless deadline within unless percent renewal unless amount refund approval 6855.\n22. fiscal refund before audit date after approval manager escalate after 4354.\n23. invoice quarter when threshold manager renewal after threshold days refund 1481.\n24. contract policy employee date threshold clause audit deadline quarter threshold 7004.\n25. percent refund threshold exception termination unless termination amount deadline contract 968.\n26. region threshold manager exception days invoice renewal policy quarter quarter 2617.\n27. ledger approval before days percent threshold when before renewal ledger 1108.\n28. quarter contract fiscal invoice renewal amount policy contract ledger policy 7466.\n29. quarter refund approval quarter fiscal amount threshold amount unless approval 8016.\n30. quarter renewal policy unless threshold escalate approval clause quarter policy 4895.\n31. ledger manager percent quarter quarter manager exception clause ledger within 8388.\n32. ledger renewal ledger fiscal escalate days except within approval escalate 6884.\n33. fiscal threshold approval after escalate days region percent manager fiscal 1351.\n34. exception deadline refund date termination audit after ledger except date 454.\n35. quarter ledger contract threshold invoice region percent invoice renewal escalate 8507.\n36. before employee amount ledger renewal clause escalate ledger deadline audit 7763.\n37. policy notice fiscal unless before contract after quarter ledger quarter 5521.\n38. date percent region amount quarter manager manager before after invoice 3272.\n39. quarter refund region before contract approval amount quarter invoice after 2748.\n40. ledger contract policy when escalate fiscal exception fiscal manager escalate 6396.\n41. clause exception exception when percent deadline days exception date threshold 7418.\n42. days after unless quarter refund within manager quarter audit manager 9923.\n43. percent unless employee ledger renewal within invoice date days employee 8088.\n44. exception policy except employee unless date manager termination within when 3265.\n45. notice amount percent before percent exception approval region ledger days 14.\n46. audit unless threshold except amount audit days quarter deadline percent 4978.\n47. policy percent clause region exception threshold invoice fiscal within region 1646.\n48. amount percent approval region employee before policy fiscal except unless 6562.\n49. policy clause deadline fiscal clause percent renewal amount fiscal policy 2876.\n50. after percent renewal days exception except within policy when employee 1490.\n51. approval contract contract unless manager before deadline except days refund 489.\n52. ledger employee contract contract fiscal amount manager fiscal contract policy 5224.\n53. except clause notice date escalate notice quarter region unless deadline 529.\n54. clause termination notice except employee fiscal fiscal date threshold renewal 3016.\n55. percent date date employee date refund amount within threshold threshold 4994.\n56. quarter approval manager percent before clause invoice employee contract quarter 1811.\n57. within percent quarter ledger escalate termination manager quarter contract quarter 3637.\n58. clause within contract approval days except renewal audit unless after 5942.\n59. escalate employee except unless notice deadline date notice contract termination 3675.\n60. percent before exception days refund approval audit manager amount policy 5229.\n61. refund approval unless except notice unless quarter manager days clause 4202.\n62. policy within quarter region approval employee notice date after renewal 4425.\n63. within clause ledger escalate within employee within deadline percent invoice 3166.\n64. threshold when refund after fiscal invoice termination region fiscal amount 953.\n65. invoice after refund region amount date escalate threshold deadline deadline 3265.\n66. date when contract refund days invoice when manager region audit 6401.",
+      "question": {
+        "type": "noul",
+        "instructions": "Does the customer ask for money back?"
+      },
+      "input_tokens": 1343,
+      "probabilities": [0.22816, 0.77184]
+    },
+    {
+      "state": "1. audit days when employee days clause when refund invoice quarter 3294.\n2. notice amount before exception audit refund notice clause when days 5783.\n3. manager approval quarter refund amount before ledger quarter before within 4829.\n4. manager termination audit amount deadline escalate ledger escalate days percent 3942.\n5. exception termination quarter date region clause invoice escalate threshold escalate 1693.\n6. quarter approval renewal fiscal except region notice approval exception escalate 7552.\n7. contract within termination threshold fiscal unless amount termination approval amount 748.\n8. clause after quarter exception renewal percent manager exception within refund 6454.\n9. deadline amount except refund clause except percent amount days escalate 511.\n10. percent employee contract before clause notice region deadline audit within 4021.\n11. manager except except refund refund days unless approval amount region 7953.\n12. notice deadline clause within approval escalate unless unless audit manager 5598.\n13. manager within when ledger policy threshold approval refund notice threshold 9936.\n14. audit deadline refund before before audit days escalate refund before 7824.\n15. notice unless after escalate escalate termination amount threshold audit unless 1485.\n16. date employee except escalate contract invoice notice after threshold deadline 9639.\n17. audit threshold invoice before quarter before after audit exception quarter 7376.\n18. quarter approval employee when refund renewal escalate after invoice within 5485.\n19. invoice renewal policy threshold before threshold except deadline fiscal region 5932.\n20. region escalate after contract date policy contract except percent days 5050.\n21. contract quarter unless policy days ledger audit refund threshold policy 7112.\n22. approval exception fiscal approval employee when escalate days amount date 5923.\n23. deadline percent exception within deadline when clause threshold except except 4697.\n24. policy exception renewal invoice except contract date manager before escalate 7421.\n25. policy manager ledger policy manager percent when escalate employee exception 6059.",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this?",
+        "criteria": {
+          "billing": "Payments, refunds, charges",
+          "tech": "Bugs, crashes, login",
+          "general": "Everything else"
+        }
+      },
+      "input_tokens": 565,
+      "probabilities": [0.914257, 0.008883, 0.076861]
+    },
+    {
+      "state": "1. when deadline ledger deadline termination invoice amount percent quarter region 8789.\n2. threshold except within after termination escalate unless notice fiscal fiscal 819.\n3. deadline approval before date deadline refund approval refund employee unless 9169.\n4. exception percent fiscal before quarter unless clause renewal except renewal 6480.\n5. policy before unless within except notice except audit threshold after 8555.\n6. date approval unless amount days amount when contract unless notice 824.\n7. renewal percent percent deadline escalate contract invoice days when amount 1983.\n8. fiscal threshold percent after invoice after notice invoice renewal renewal 1692.\n9. escalate percent fiscal amount threshold after exception after clause ledger 5586.\n10. before policy quarter refund fiscal after threshold fiscal percent refund 9130.\n11. date percent when when policy escalate escalate policy policy amount 7580.\n12. refund notice when escalate policy termination before deadline invoice ledger 8433.\n13. amount quarter escalate invoice date before contract unless renewal escalate 7812.\n14. amount threshold policy within ledger percent within unless unless within 4824.\n15. refund threshold after exception approval contract renewal invoice fiscal region 4561.\n16. unless escalate when before within deadline after manager days renewal 7643.\n17. invoice termination refund exception escalate when manager days employee within 4113.\n18. region ledger threshold region employee contract when threshold manager amount 7801.\n19. employee days notice amount threshold escalate invoice within unless except 5241.\n20. exception fiscal region fiscal policy quarter renewal fiscal unless manager 5881.\n21. audit unless amount after invoice termination policy renewal manager deadline 5695.\n22. deadline refund ledger except employee contract renewal quarter contract except 9809.\n23. fiscal employee threshold policy when policy renewal invoice date after 2885.\n24. renewal refund after within before contract days employee invoice refund 2248.\n25. employee policy invoice clause notice when within fiscal percent amount 1118.",
+      "question": {
+        "type": "score",
+        "instructions": "How urgent is this ticket?",
+        "criteria": ["not urgent", "somewhat urgent", "urgent", "critical"]
+      },
+      "input_tokens": 549,
+      "probabilities": [0.228493, 0.359116, 0.273621, 0.13877]
+    },
+    {
+      "state": "1. termination percent threshold invoice threshold deadline employee before notice deadline 7246.\n2. notice after policy when fiscal contract threshold employee notice audit 3326.\n3. after before refund days deadline policy fiscal before days threshold 2453.\n4. quarter after deadline percent termination days termination clause manager renewal 4301.\n5. manager employee region when amount ledger ledger before threshold except 4492.\n6. deadline contract policy employee ledger audit within when refund approval 9808.\n7. threshold audit percent manager policy employee quarter days escalate manager 9493.\n8. approval exception approval approval days manager clause contract policy region 4723.\n9. region within percent within policy deadline percent escalate policy region 6019.\n10. threshold exception percent when when region region exception clause date 5913.\n11. percent invoice quarter approval date fiscal notice manager unless approval 8284.\n12. quarter escalate refund threshold percent percent days except unless refund 2712.\n13. region invoice renewal invoice renewal manager contract clause region refund 5198.\n14. approval invoice ledger quarter manager threshold renewal within exception region 6125.\n15. invoice ledger when region fiscal approval clause date date manager 9539.\n16. renewal unless clause when quarter percent after deadline within policy 5990.\n17. approval policy renewal clause escalate percent quarter refund fiscal employee 6363.\n18. amount unless after date clause policy ledger after unless deadline 6619.\n19. unless termination fiscal termination unless clause contract escalate contract employee 5079.\n20. manager manager ledger fiscal threshold refund notice unless renewal manager 9425.\n21. ledger contract deadline after approval invoice policy audit renewal quarter 5139.\n22. termination ledger region notice within deadline amount percent fiscal policy 8048.\n23. after approval invoice date region policy ledger amount unless clause 3713.\n24. escalate policy deadline ledger quarter unless contract approval ledger invoice 9458.\n25. quarter days date within approval audit contract percent fiscal when 7871.\n26. region audit ledger fiscal when termination unless after quarter approval 505.\n27. before unless contract when fiscal clause region amount quarter approval 4754.\n28. termination invoice contract after unless deadline quarter fiscal renewal quarter 3311.\n29. after manager termination within renewal employee before escalate fiscal before 6719.\n30. date notice amount after ledger clause refund amount invoice manager 2469.\n31. within date amount approval manager region date ledger percent percent 2609.\n32. employee refund approval escalate invoice percent amount amount manager employee 4572.\n33. percent fiscal region refund clause invoice threshold after unless days 8596.\n34. except invoice ledger refund days days quarter employee policy threshold 6950.\n35. unless termination quarter threshold audit when percent quarter deadline refund 6968.\n36. clause when exception percent ledger invoice ledger within days region 2462.\n37. employee policy approval contract fiscal region quarter policy region quarter 5487.\n38. notice percent escalate fiscal fiscal quarter percent contract days escalate 1821.\n39. refund unless days date date threshold except days contract approval 673.\n40. audit audit exception escalate employee except region date audit clause 9341.\n41. after except refund clause date threshold exception refund escalate before 2252.\n42. invoice deadline escalate when before manager date escalate ledger contract 7131.\n43. date ledger date policy notice invoice clause after quarter date 8350.\n44. refund quarter within unless region ledger audit except ledger threshold 4117.\n45. notice deadline termination percent date percent employee percent audit when 1773.\n46. invoice clause except refund quarter employee refund threshold threshold refund 4637.\n47. refund deadline ledger quarter amount quarter percent exception refund contract 7868.\n48. approval escalate threshold deadline approval deadline approval employee after percent 888.\n49. renewal termination days days deadline clause ledger deadline date unless 1595.\n50. threshold manager after amount refund renewal renewal date except termination 4291.\n51. quarter termination date quarter renewal when manager unless date fiscal 9339.\n52. contract region clause invoice contract manager approval before unless days 8032.\n53. refund quarter deadline unless audit region when ledger percent invoice 122.\n54. amount renewal ledger audit date contract deadline amount percent threshold 401.\n55. region fiscal employee clause escalate before within policy percent quarter 8985.\n56. quarter policy before employee employee clause unless amount renewal threshold 431.\n57. audit days contract refund clause invoice quarter before employee quarter 5555.\n58. employee employee region except quarter when within when refund unless 229.\n59. audit except notice except refund fiscal percent within days employee 3478.\n60. percent percent clause fiscal invoice refund refund manager refund ledger 2548.\n61. days deadline deadline termination escalate unless escalate invoice contract date 838.\n62. notice notice termination ledger exception ledger deadline approval contract after 7508.\n63. exception deadline deadline ledger within refund approval clause ledger when 8043.\n64. clause invoice unless quarter date days employee days after when 6398.\n65. approval after termination before percent quarter approval employee audit amount 6330.\n66. percent termination when renewal unless before quarter clause threshold within 8733.",
+      "question": {
+        "type": "noul",
+        "instructions": "Does the customer ask for money back?"
+      },
+      "input_tokens": 1343,
+      "probabilities": [0.299746, 0.700254]
+    },
+    {
+      "state": "1. fiscal exception amount ledger days notice deadline threshold escalate fiscal 4977.\n2. deadline ledger notice clause invoice amount quarter contract threshold before 5243.\n3. fiscal fiscal date fiscal refund amount amount date refund deadline 6695.\n4. days manager threshold date clause quarter renewal ledger ledger deadline 4499.\n5. notice region contract ledger exception percent termination renewal when refund 2731.\n6. except refund quarter notice quarter invoice invoice policy contract contract 3259.\n7. policy unless manager quarter employee clause clause threshold audit clause 6223.\n8. employee invoice escalate termination when percent percent policy escalate exception 581.\n9. approval unless days deadline manager audit ledger before threshold clause 2290.\n10. notice amount escalate within escalate termination deadline except exception invoice 2410.\n11. unless date deadline approval policy audit after policy renewal invoice 4942.\n12. before notice policy contract renewal quarter unless within except manager 631.\n13. manager except ledger policy notice contract region exception ledger threshold 428.\n14. when audit renewal before notice deadline invoice contract employee clause 7377.\n15. termination manager fiscal date except refund ledger days notice refund 8579.\n16. date except within after ledger before ledger days escalate contract 5271.\n17. invoice deadline before unless employee threshold when invoice audit exception 9847.\n18. percent fiscal quarter manager refund renewal within policy termination region 4099.\n19. clause audit manager employee after notice manager ledger manager clause 3257.\n20. amount unless days percent employee employee deadline policy percent within 6055.\n21. quarter invoice renewal quarter before unless amount invoice notice threshold 6135.\n22. approval exception except renewal days refund fiscal before refund approval 2695.\n23. threshold clause date days invoice before region except region invoice 8318.\n24. ledger before policy notice quarter audit escalate exception when clause 1821.\n25. percent fiscal after clause renewal quarter exception before refund before 7466.",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this?",
+        "criteria": {
+          "billing": "Payments, refunds, charges",
+          "tech": "Bugs, crashes, login",
+          "general": "Everything else"
+        }
+      },
+      "input_tokens": 564,
+      "probabilities": [0.898234, 0.010718, 0.091047]
+    },
+    {
+      "state": "1. approval contract before manager clause ledger days employee region clause 4562.\n2. amount approval exception except percent renewal days escalate threshold escalate 9756.\n3. date days when quarter when when escalate employee fiscal deadline 7283.\n4. before before except notice clause approval days days employee before 3225.\n5. escalate amount days date invoice employee notice region after before 4662.\n6. contract approval employee date unless amount fiscal date renewal amount 53.\n7. employee clause clause days after policy after manager when refund 6014.\n8. clause deadline ledger within invoice within contract notice region percent 2543.\n9. before exception threshold date when employee contract ledger within contract 4563.\n10. threshold date notice after within deadline percent percent percent employee 8049.\n11. quarter deadline date invoice manager ledger manager renewal deadline employee 1285.\n12. deadline contract contract clause except within policy approval unless amount 5055.\n13. except employee percent date amount termination contract refund unless when 5714.\n14. exception when renewal region deadline unless percent employee quarter refund 5869.\n15. when renewal ledger date amount amount before refund within policy 1116.\n16. ledger when unless clause ledger date termination date termination fiscal 9142.\n17. when before contract notice termination manager approval policy notice renewal 1212.\n18. ledger clause except audit after threshold before manager exception percent 5575.\n19. renewal unless date after termination when quarter clause employee manager 4103.\n20. amount days amount ledger when clause escalate within percent policy 8079.\n21. exception termination amount before renewal when days region escalate termination 1146.\n22. except amount date within escalate clause renewal region renewal except 2372.\n23. within after termination audit region exception invoice except percent date 9617.\n24. approval when notice amount except exception manager before policy ledger 9153.\n25. percent before within when after audit days renewal quarter days 7911.\n26. invoice manager policy fiscal except audit audit clause region amount 7164.\n27. employee after escalate employee employee deadline clause within except exception 765.\n28. contract termination unless date refund invoice policy manager termination unless 773.\n29. exception policy invoice approval renewal within manager audit fiscal date 3919.\n30. except deadline escalate days when policy employee quarter renewal termination 5438.\n31. approval except exception employee ledger when unless employee audit employee 3742.\n32. ledger contract within within invoice quarter policy termination invoice quarter 1646.\n33. days approval exception region before threshold except notice ledger except 3288.\n34. ledger days when unless audit quarter unless quarter date days 8435.\n35. amount notice deadline manager manager region exception refund amount clause 6937.\n36. notice invoice notice approval refund region contract refund fiscal escalate 3054.\n37. fiscal employee clause days policy percent invoice escalate when before 9384.\n38. before threshold deadline within policy employee escalate employee policy deadline 5367.\n39. refund except before fiscal except after exception amount invoice renewal 945.\n40. within refund clause deadline invoice invoice audit within percent unless 1814.\n41. audit approval days refund region region escalate quarter invoice escalate 5991.\n42. employee exception clause amount quarter region invoice ledger audit policy 2259.\n43. termination threshold deadline date exception clause region days when exception 2651.\n44. manager except unless deadline fiscal days exception amount after notice 6209.\n45. employee except region date renewal percent percent date renewal notice 1669.\n46. escalate renewal audit date region ledger unless threshold threshold after 9868.\n47. unless audit ledger quarter policy fiscal audit clause within audit 1749.\n48. threshold contract clause region deadline approval ledger audit region escalate 6147.\n49. contract after days audit amount after fiscal after when date 3401.\n50. exception quarter contract fiscal date manager date employee threshold quarter 6189.\n51. except exception audit ledger refund quarter unless days unless employee 5978.\n52. approval manager region renewal clause threshold amount escalate within amount 5280.\n53. clause before manager renewal when approval when renewal approval clause 8856.\n54. except region threshold refund policy escalate audit after approval after 5856.\n55. threshold when date refund after escalate amount region unless employee 1538.\n56. after renewal ledger except days ledger except unless deadline policy 7455.\n57. termination exception deadline exception date date escalate except quarter escalate 9804.\n58. date region region policy amount after invoice ledger when policy 5556.\n59. unless employee region manager clause exception before when clause escalate 9005.\n60. audit after approval when renewal termination days when except threshold 221.\n61. region policy exception renewal termination after policy deadline notice employee 1784.\n62. escalate contract refund clause approval ledger termination percent percent escalate 4979.\n63. percent contract policy ledger ledger days employee percent date escalate 2722.\n64. unless manager renewal manager renewal date policy notice within employee 8341.\n65. termination audit termination contract invoice fiscal except within escalate fiscal 7439.\n66. threshold unless unless days except except refund within manager percent 666.\n67. renewal termination audit termination invoice clause deadline within quarter employee 513.\n68. before escalate before threshold contract termination deadline unless percent policy 8765.\n69. except date percent within threshold audit date after approval quarter 4822.\n70. days days after manager clause ledger escalate unless escalate refund 4199.\n71. contract date exception unless escalate region fiscal contract approval within 6737.\n72. quarter days termination audit refund invoice clause region quarter ledger 6014.\n73. audit fiscal within contract region fiscal within clause when invoice 116.\n74. date escalate renewal region date exception threshold policy contract ledger 6857.\n75. date percent clause deadline escalate except except audit before after 6871.\n76. threshold refund policy date except amount exception date amount escalate 1403.\n77. date manager deadline percent after within clause except threshold amount 2562.\n78. deadline except notice termination policy within approval termination except unless 1088.\n79. policy amount fiscal renewal before invoice date notice days approval 5584.\n80. amount approval manager within threshold contract after amount region renewal 7894.\n81. ledger clause manager unless renewal date invoice within clause except 7166.\n82. termination employee threshold audit quarter ledger termination threshold except employee 5298.\n83. termination region except except renewal audit exception exception fiscal before 8763.\n84. amount except audit amount unless clause ledger threshold audit except 7457.\n85. refund region when renewal except clause days employee contract days 5758.\n86. except policy region within audit policy percent termination notice unless 6975.\n87. deadline when after employee amount notice quarter days date unless 8820.\n88. audit date when refund notice contract refund days employee invoice 5223.\n89. threshold employee renewal when before within approval notice percent policy 9795.\n90. except quarter unless unless clause invoice termination invoice unless before 8723.\n91. escalate when deadline amount manager deadline escalate date termination before 3977.\n92. deadline within invoice fiscal region date escalate percent after threshold 2443.\n93. exception quarter contract date within date fiscal unless unless date 6247.\n94. ledger manager termination after amount unless exception escalate before refund 5042.\n95. date policy employee region exception renewal amount amount termination contract 4513.\n96. deadline when days region notice escalate unless refund audit except 5317.\n97. contract region refund days within audit approval unless termination unless 9607.\n98. audit contract notice region quarter invoice days approval when approval 1247.\n99. approval exception invoice employee after audit except deadline except notice 5832.\n100. before contract days region ledger before refund after before quarter 8244.\n101. after percent before termination policy within date days quarter clause 339.\n102. clause when clause percent days days deadline refund exception ledger 5522.\n103. clause days amount except date termination renewal manager except except 9563.\n104. percent amount notice days termination quarter region refund fiscal audit 31.\n105. threshold within region renewal approval days invoice employee exception renewal 2965.\n106. quarter fiscal termination except audit amount except notice approval manager 9708.\n107. exception when deadline escalate notice when after manager renewal employee 1983.\n108. quarter notice region within threshold clause region deadline escalate refund 6734.\n109. quarter before termination before unless percent notice audit exception percent 9858.\n110. after percent renewal amount policy threshold days termination refund when 9188.\n111. before amount ledger audit escalate refund unless quarter region employee 9599.\n112. within manager quarter amount when ledger manager threshold fiscal termination 3671.\n113. contract fiscal threshold except fiscal after days fiscal policy region 5550.\n114. percent audit renewal date renewal clause percent before quarter percent 5183.\n115. clause clause termination date manager termination employee within date employee 8118.\n116. ledger policy manager refund manager notice date when before refund 1990.\n117. ledger clause date notice audit policy manager contract manager refund 6897.\n118. ledger threshold notice within deadline when renewal employee refund refund 3263.\n119. notice refund refund days after exception unless exception policy escalate 2949.\n120. invoice escalate renewal percent notice escalate approval amount when amount 9346.\n121. percent unless deadline threshold invoice within approval escalate before except 8116.\n122. manager threshold escalate escalate when date deadline approval before unless 6451.\n123. termination contract employee percent manager unless quarter policy amount refund 780.\n124. clause employee approval date escalate escalate amount exception when date 323.\n125. percent renewal contract clause when termination date invoice after when 1226.",
+      "question": {
+        "type": "score",
+        "instructions": "How urgent is this ticket?",
+        "criteria": ["not urgent", "somewhat urgent", "urgent", "critical"]
+      },
+      "input_tokens": 2563,
+      "probabilities": [0.278885, 0.330293, 0.241948, 0.148874]
+    },
+    {
+      "state": "1. region termination clause threshold unless ledger policy when employee ledger 1886.\n2. percent unless termination renewal date after ledger renewal notice policy 4129.\n3. deadline employee escalate deadline fiscal within escalate threshold quarter before 8298.\n4. invoice within employee contract region after date deadline escalate date 5176.\n5. policy unless after refund employee exception deadline quarter region unless 1740.\n6. days contract invoice except date quarter manager renewal renewal renewal 3587.\n7. audit escalate percent exception within notice days manager after refund 5591.\n8. fiscal percent manager exception after invoice after within clause audit 4976.\n9. date approval refund when deadline escalate escalate except date amount 4142.\n10. quarter employee ledger refund fiscal approval days termination audit fiscal 4311.\n11. after approval exception refund within date fiscal unless notice deadline 3640.\n12. approval renewal date termination ledger fiscal unless termination refund ledger 5940.\n13. clause days manager policy clause except quarter percent unless approval 9705.\n14. after approval after contract escalate region before notice days date 3346.\n15. escalate region deadline unless termination fiscal except escalate employee within 6775.\n16. unless when fiscal renewal employee days threshold date threshold fiscal 2674.\n17. policy threshold fiscal ledger termination within exception days quarter audit 9995.\n18. within contract fiscal amount percent days manager deadline when policy 7790.\n19. refund after after date renewal amount percent amount amount policy 5751.\n20. invoice when exception policy unless policy audit renewal audit escalate 771.\n21. approval exception employee invoice amount before exception escalate exception fiscal 1313.\n22. deadline quarter percent unless employee quarter fiscal except threshold threshold 9903.\n23. fiscal quarter unless renewal policy days fiscal when unless before 7987.\n24. before fiscal contract amount ledger unless policy deadline region region 5265.\n25. manager clause date contract employee quarter policy invoice audit within 9915.\n26. days date ledger amount approval unless policy before contract fiscal 4223.\n27. deadline policy employee unless manager before renewal escalate unless approval 3673.\n28. fiscal unless before fiscal threshold amount except contract notice after 1278.\n29. notice termination deadline invoice invoice employee ledger region percent amount 9263.\n30. invoice deadline after amount threshold notice fiscal amount invoice audit 6191.\n31. termination refund after exception clause date except manager when fiscal 3422.\n32. invoice ledger region except notice renewal except renewal after unless 6720.\n33. date within days renewal ledger threshold refund before date unless 7826.\n34. amount escalate percent within refund fiscal escalate policy employee escalate 1169.\n35. when after after quarter deadline escalate days clause except threshold 8233.\n36. refund exception termination amount before termination renewal audit employee amount 8884.\n37. except days ledger termination region unless termination approval when days 3712.\n38. except employee renewal percent deadline deadline percent deadline when employee 4646.\n39. refund contract threshold clause region approval percent contract renewal approval 6796.\n40. manager deadline employee region renewal fiscal when renewal refund when 5396.\n41. invoice unless approval before after amount employee date notice amount 4283.\n42. deadline exception renewal refund days termination before threshold ledger manager 5011.\n43. notice refund policy date deadline region days audit ledger manager 6112.\n44. quarter threshold deadline amount date ledger except notice within audit 897.\n45. when contract invoice amount contract invoice exception except employee policy 9596.\n46. fiscal approval deadline audit days policy days before approval percent 4721.\n47. escalate when manager manager percent termination employee except termination unless 5100.\n48. ledger days audit deadline when after escalate audit when region 1964.\n49. quarter date fiscal deadline approval approval invoice notice termination amount 7322.\n50. amount date threshold date approval renewal termination quarter audit manager 8390.\n51. deadline within clause contract invoice date region except amount renewal 2170.\n52. after clause contract renewal clause before date audit unless employee 4187.\n53. percent notice before employee when termination percent ledger employee clause 9788.\n54. escalate manager policy policy unless invoice audit manager exception fiscal 522.\n55. invoice threshold policy after amount ledger contract refund contract clause 5419.\n56. within date after escalate fiscal quarter deadline manager ledger unless 7265.\n57. fiscal audit contract threshold fiscal renewal days before approval fiscal 9328.\n58. refund before within amount renewal unless ledger refund approval quarter 4976.\n59. days deadline except notice threshold within when clause escalate percent 5495.\n60. within exception audit region termination policy refund approval approval when 4194.\n61. invoice audit approval quarter escalate deadline manager region threshold when 8214.\n62. deadline ledger within deadline percent employee ledger notice when date 8919.\n63. termination fiscal region manager contract termination termination date fiscal renewal 8951.\n64. contract after amount deadline refund notice before renewal quarter clause 4463.\n65. threshold exception refund within approval except fiscal deadline termination days 2948.\n66. employee renewal manager notice before termination approval policy deadline manager 3228.\n67. unless employee threshold region within termination amount quarter threshold percent 5504.\n68. threshold exception amount except contract audit exception after within termination 5213.\n69. percent region quarter clause refund before refund when policy approval 8729.\n70. percent region quarter audit deadline policy exception days refund when 5034.\n71. clause contract amount fiscal threshold termination employee within deadline invoice 5410.\n72. clause quarter ledger threshold employee exception exception employee threshold ledger 9335.\n73. fiscal approval before employee audit escalate amount percent within invoice 9844.\n74. ledger quarter before fiscal deadline except notice quarter threshold audit 9057.\n75. date fiscal date approval unless renewal audit contract fiscal fiscal 2546.\n76. exception invoice before escalate before before contract ledger threshold when 5395.\n77. amount except audit clause threshold audit quarter except date except 286.\n78. quarter within audit quarter except clause approval threshold exception approval 3789.\n79. notice approval termination amount percent employee renewal after renewal days 2410.\n80. except notice ledger contract exception unless ledger unless deadline fiscal 7494.\n81. except clause days threshold days deadline employee fiscal audit policy 4507.\n82. unless contract after approval deadline deadline except quarter audit ledger 6799.\n83. ledger unless ledger notice ledger within manager approval when employee 3955.\n84. escalate refund percent policy deadline percent refund exception except employee 3146.\n85. deadline approval date threshold clause notice escalate clause exception region 9656.\n86. exception threshold except quarter contract refund notice threshold employee exception 797.\n87. amount amount after employee quarter audit manager refund region region 4662.\n88. manager renewal when clause within date except before deadline exception 2010.\n89. clause manager termination percent notice renewal audit days after notice 2922.\n90. within policy after audit escalate refund policy termination approval date 5379.\n91. percent employee exception notice notice invoice quarter approval invoice threshold 6973.\n92. refund before ledger contract after policy before amount days escalate 4909.\n93. clause unless threshold termination after amount employee ledger policy termination 2093.\n94. refund when employee date invoice deadline refund except notice deadline 3123.\n95. notice amount clause amount quarter fiscal renewal audit before termination 9379.\n96. audit clause date date when fiscal policy after date region 2721.\n97. amount quarter date employee days clause audit clause days threshold 3492.\n98. approval amount exception approval employee threshold escalate employee approval except 1094.\n99. notice refund refund before employee refund approval contract ledger unless 4999.\n100. policy renewal refund date unless before unless notice days policy 3823.\n101. manager policy percent renewal invoice ledger amount audit unless unless 2969.\n102. escalate ledger notice unless contract audit threshold refund manager refund 9024.\n103. approval termination approval policy unless employee amount date refund invoice 4226.\n104. renewal termination audit quarter escalate deadline invoice audit when unless 9112.\n105. clause audit renewal amount renewal deadline unless days clause refund 6851.\n106. contract date refund before region fiscal except except except percent 3972.\n107. audit when ledger before policy notice when exception policy after 6670.\n108. region date after date threshold clause refund employee ledger before 8052.\n109. clause ledger amount invoice contract unless invoice contract percent approval 2050.\n110. policy exception manager employee threshold ledger unless region notice renewal 7144.\n111. quarter date contract employee region within when notice contract when 7506.\n112. percent unless contract percent invoice fiscal unless percent refund except 2848.\n113. amount manager except when days within percent before days contract 4219.\n114. approval except percent exception audit amount clause amount within clause 45.\n115. termination date notice ledger amount quarter date policy within unless 8439.\n116. amount refund clause before within region before contract escalate region 9967.\n117. before fiscal contract fiscal date threshold audit policy employee refund 8252.\n118. after except except clause refund clause threshold except deadline threshold 5474.\n119. after region region approval threshold threshold exception invoice threshold quarter 4493.\n120. except amount audit approval clause percent contract deadline unless refund 3767.\n121. audit invoice renewal except audit approval quarter amount escalate approval 4523.\n122. employee policy deadline region threshold when except refund after renewal 976.\n123. invoice approval termination date deadline threshold exception refund invoice termination 7672.\n124. amount clause quarter before region percent days manager exception within 1924.\n125. approval contract invoice exception ledger days percent after ledger amount 8550.",
+      "question": {
+        "type": "noul",
+        "instructions": "Does the customer ask for money back?"
+      },
+      "input_tokens": 2549,
+      "probabilities": [0.352446, 0.647554]
+    },
+    {
+      "state": "1. after escalate termination clause audit deadline region invoice escalate invoice 5396.\n2. manager invoice date refund amount within contract contract threshold renewal 1562.\n3. when exception escalate fiscal ledger days deadline manager renewal date 9536.\n4. region within invoice employee approval quarter policy after region renewal 4682.\n5. when within percent amount after except audit fiscal threshold manager 244.\n6. percent amount manager policy renewal renewal audit ledger refund audit 7167.\n7. when after ledger except termination within exception employee renewal when 7158.\n8. deadline invoice approval percent termination renewal exception except ledger region 6786.\n9. fiscal days amount termination termination renewal threshold percent escalate amount 1361.\n10. refund refund exception audit deadline after clause renewal exception audit 9678.\n11. renewal fiscal except policy escalate days manager approval within quarter 6737.\n12. fiscal days when threshold manager escalate after threshold manager deadline 7879.\n13. contract manager refund region manager renewal refund after approval threshold 613.\n14. ledger after refund amount amount quarter invoice escalate manager percent 3398.\n15. contract termination after days policy invoice except within contract percent 1838.\n16. amount region days days contract amount amount exception renewal after 3693.\n17. amount termination policy deadline quarter policy refund policy threshold clause 2341.\n18. amount employee refund fiscal quarter refund ledger amount renewal fiscal 5035.\n19. before approval clause invoice within region invoice clause clause percent 8468.\n20. amount percent quarter termination clause deadline after except manager when 7450.\n21. amount approval refund percent manager approval invoice within escalate amount 4539.\n22. refund threshold refund policy date exception percent after threshold notice 737.\n23. invoice unless except termination clause audit refund manager invoice when 3195.\n24. deadline unless threshold manager fiscal employee escalate employee policy date 1553.\n25. before when employee audit escalate termination exception amount date notice 5837.",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this?",
+        "criteria": {
+          "billing": "Payments, refunds, charges",
+          "tech": "Bugs, crashes, login",
+          "general": "Everything else"
+        }
+      },
+      "input_tokens": 564,
+      "probabilities": [0.93128, 0.010454, 0.058266]
+    },
+    {
+      "state": "1. audit except clause manager ledger within deadline audit after notice 9102.\n2. percent escalate manager renewal contract date fiscal employee notice within 7001.\n3. percent after termination approval clause unless fiscal notice notice ledger 1260.\n4. manager percent fiscal fiscal manager threshold unless manager unless clause 5909.\n5. except unless clause when clause amount date contract clause percent 6831.\n6. notice after deadline before renewal exception policy when when percent 7800.\n7. notice employee threshold threshold within within escalate threshold termination except 9411.\n8. within audit amount within percent ledger audit notice exception employee 1104.\n9. after amount fiscal manager audit invoice before deadline when exception 1553.\n10. percent date employee amount clause invoice exception notice unless employee 310.\n11. before approval when deadline exception clause approval after within percent 9974.\n12. escalate ledger region exception date quarter deadline termination within percent 1489.\n13. ledger quarter notice deadline ledger notice renewal audit manager renewal 9885.\n14. region deadline approval refund amount termination audit notice when after 967.\n15. audit contract date clause fiscal escalate renewal percent approval quarter 6325.\n16. employee days quarter policy notice deadline days percent region policy 2156.\n17. exception notice refund deadline after after audit manager contract region 3386.\n18. exception clause date after within approval after deadline termination unless 6727.\n19. amount region manager before fiscal before invoice amount after audit 6505.\n20. region deadline escalate ledger deadline after date clause when except 2242.\n21. contract amount within escalate fiscal audit date manager fiscal employee 5211.\n22. when threshold audit when unless ledger escalate when employee amount 3074.\n23. fiscal termination approval except employee after manager days fiscal date 6054.\n24. renewal escalate clause deadline notice approval within manager fiscal when 7904.\n25. notice unless fiscal approval after policy unless employee contract approval 1017.\n26. fiscal fiscal ledger date when percent contract date termination policy 6607.\n27. notice days refund invoice renewal employee fiscal within threshold termination 890.\n28. termination approval ledger after approval after unless region renewal threshold 994.\n29. exception date percent when before before audit policy exception clause 4450.\n30. date refund threshold deadline threshold quarter termination days contract days 3151.\n31. deadline contract fiscal exception termination termination fiscal policy renewal date 29.\n32. date deadline amount unless notice manager exception termination within unless 6440.\n33. contract manager policy escalate employee exception quarter refund termination unless 1560.\n34. exception date contract threshold invoice employee within unless except notice 9585.\n35. within when termination notice days before quarter fiscal fiscal when 5348.\n36. except refund when audit threshold within invoice policy invoice employee 552.\n37. contract region policy termination percent region escalate manager deadline within 3039.\n38. notice fiscal unless unless manager fiscal invoice when renewal fiscal 7533.\n39. approval date invoice fiscal manager after refund when deadline approval 1367.\n40. invoice renewal termination region except policy approval date region after 4042.\n41. employee escalate policy invoice ledger manager escalate percent employee renewal 4258.\n42. region audit percent refund except except contract invoice threshold contract 5587.\n43. contract region fiscal threshold date notice escalate amount when after 8016.\n44. ledger before ledger date employee employee invoice ledger audit region 2563.\n45. unless before percent termination audit amount escalate contract deadline ledger 401.\n46. quarter approval escalate within days invoice manager escalate ledger contract 4984.\n47. unless when invoice policy before escalate region refund percent region 5631.\n48. fiscal notice after ledger threshold after escalate unless deadline before 8309.\n49. deadline invoice policy notice manager threshold after notice before date 4333.\n50. region deadline ledger quarter contract region ledger days contract ledger 5251.\n51. threshold when clause contract amount fiscal deadline except days after 1734.\n52. invoice ledger exception threshold fiscal renewal escalate ledger approval audit 8830.\n53. termination days ledger exception invoice date manager refund invoice threshold 9003.\n54. policy threshold notice policy approval region termination refund unless deadline 6346.\n55. when deadline invoice employee policy unless fiscal region days percent 4400.\n56. ledger threshold escalate policy notice within audit unless policy percent 6356.\n57. deadline renewal when when escalate fiscal termination amount audit approval 6320.\n58. policy date deadline clause within when exception quarter exception when 5093.\n59. exception threshold quarter after approval clause refund refund date refund 2855.\n60. quarter date date days region ledger exception notice deadline when 4495.\n61. within after date notice date invoice quarter fiscal exception date 7858.\n62. deadline exception percent region fiscal within policy percent ledger amount 2822.\n63. audit date policy days except after quarter renewal within before 8630.\n64. region unless fiscal quarter deadline contract before approval unless region 8325.\n65. notice manager termination exception date termination region termination before unless 6836.\n66. invoice manager before policy escalate ledger ledger except termination invoice 664.\n67. exception unless except before employee quarter region fiscal days escalate 7914.\n68. ledger clause fiscal escalate percent audit except audit termination within 2024.\n69. date ledger when employee region contract audit invoice region notice 9778.\n70. threshold fiscal approval threshold approval refund before region exception invoice 5752.\n71. contract refund ledger threshold percent approval fiscal contract notice amount 4150.\n72. region audit manager percent employee refund date termination exception threshold 3628.\n73. invoice quarter renewal manager clause except date days notice days 7451.\n74. manager termination after approval termination termination days before escalate region 9990.\n75. when notice within after employee date manager exception after fiscal 5151.\n76. contract termination contract unless notice contract employee percent escalate threshold 2354.\n77. manager invoice except after manager percent manager ledger renewal within 1637.\n78. unless before region fiscal unless fiscal audit unless deadline days 9990.\n79. contract threshold approval percent notice quarter unless renewal notice refund 6519.\n80. fiscal contract amount threshold renewal percent when ledger quarter except 5227.\n81. contract renewal refund ledger approval termination termination renewal manager within 3511.\n82. before manager after refund except fiscal after except region approval 9422.\n83. notice manager percent except days renewal deadline deadline days clause 7698.\n84. except audit manager employee unless notice invoice amount notice refund 349.\n85. termination invoice clause employee audit after invoice termination employee fiscal 8953.\n86. fiscal termination within termination percent notice threshold except when termination 6933.\n87. days invoice unless employee audit exception exception deadline date date 4488.\n88. except fiscal except threshold except days ledger manager days contract 3737.\n89. deadline notice exception policy within region policy manager amount contract 7777.\n90. employee approval when audit after region quarter within unless refund 5013.\n91. approval contract when after clause when ledger termination termination threshold 9303.\n92. manager deadline audit region audit threshold unless manager percent clause 6263.\n93. threshold quarter threshold ledger before days fiscal clause approval renewal 1305.\n94. except after amount contract date policy after notice within renewal 3625.\n95. amount policy when policy quarter escalate amount unless fiscal policy 1011.\n96. unless deadline notice threshold region ledger region quarter exception notice 9531.\n97. fiscal invoice policy approval employee quarter exception audit ledger days 5472.\n98. audit exception quarter percent before invoice approval region quarter except 9514.\n99. audit except deadline unless policy clause days threshold clause before 6513.\n100. when contract renewal when refund notice policy renewal invoice when 1863.\n101. region exception termination threshold audit notice contract audit contract refund 8752.\n102. unless policy manager clause escalate except fiscal escalate contract region 547.\n103. employee before unless manager region manager quarter renewal amount unless 7914.\n104. except after threshold within amount except refund region manager termination 601.\n105. after renewal quarter clause invoice region date policy region deadline 9992.\n106. audit notice refund date quarter contract ledger amount manager policy 6869.\n107. quarter quarter unless region unless renewal manager percent audit clause 4849.\n108. date fiscal days when invoice region except unless threshold contract 9845.\n109. unless after quarter ledger after audit percent clause before within 1852.\n110. contract escalate date employee after quarter date termination when audit 5527.\n111. notice deadline days before deadline termination within after ledger before 7811.\n112. deadline within refund approval approval before invoice within quarter threshold 2110.\n113. within fiscal employee percent when percent after notice contract manager 6151.\n114. renewal ledger ledger employee invoice renewal region except amount ledger 6395.\n115. escalate unless clause notice exception clause termination before amount deadline 299.\n116. clause amount unless fiscal renewal escalate percent percent termination contract 5436.\n117. before region unless quarter approval region amount percent renewal approval 8484.\n118. audit date amount exception renewal approval invoice refund manager region 8401.\n119. after termination escalate percent employee days escalate unless manager when 6871.\n120. except date invoice policy audit except percent region policy when 5223.\n121. ledger threshold refund except date exception days contract employee contract 9472.\n122. amount deadline approval ledger days refund region quarter days date 3103.\n123. except within before ledger notice clause fiscal except manager clause 319.\n124. invoice invoice ledger exception policy renewal amount invoice within audit 6004.\n125. employee clause within audit employee unless employee date unless policy 2375.",
+      "question": {
+        "type": "score",
+        "instructions": "How urgent is this ticket?",
+        "criteria": ["not urgent", "somewhat urgent", "urgent", "critical"]
+      },
+      "input_tokens": 2563,
+      "probabilities": [0.269102, 0.342869, 0.248245, 0.139784]
+    },
+    {
+      "state": "1. date fiscal notice except contract audit clause after threshold refund 1650.\n2. except deadline threshold exception except manager manager days quarter deadline 7961.\n3. notice unless unless exception clause percent notice deadline notice after 5482.\n4. audit invoice notice contract renewal refund percent policy except within 6699.\n5. ledger exception region quarter amount days before employee audit ledger 770.\n6. region manager refund deadline region notice fiscal employee within threshold 8981.\n7. deadline percent deadline threshold exception ledger when within exception employee 1620.\n8. audit escalate escalate threshold termination contract except after contract termination 5610.\n9. region except employee within approval renewal exception days threshold approval 6771.\n10. threshold employee renewal escalate audit clause unless manager region renewal 7621.\n11. deadline region percent unless within policy when percent deadline within 8910.\n12. exception deadline audit ledger exception unless manager clause renewal deadline 4935.\n13. unless when unless refund policy termination quarter except employee policy 2552.\n14. after except before employee quarter after termination approval date clause 2407.\n15. quarter audit except employee date manager days after policy date 1102.\n16. approval days within policy date contract within except before after 9052.\n17. quarter when quarter before before termination after unless policy after 7568.\n18. notice contract invoice quarter policy within ledger renewal after before 2862.\n19. termination ledger date exception date renewal policy threshold quarter fiscal 6332.\n20. ledger refund fiscal when contract manager contract escalate unless before 8936.\n21. before clause amount manager escalate clause days invoice escalate except 8586.\n22. fiscal refund escalate quarter clause fiscal before before exception region 151.\n23. within days termination amount before contract percent renewal except termination 5829.\n24. quarter escalate termination notice notice deadline policy audit region deadline 4060.\n25. amount audit invoice clause clause invoice amount approval policy deadline 2217.",
+      "question": {
+        "type": "noul",
+        "instructions": "Does the customer ask for money back?"
+      },
+      "input_tokens": 529,
+      "probabilities": [0.658216, 0.341784]
+    },
+    {
+      "state": "I got charged twice for the same card payment at a restaurant last night, can you reverse one?",
+      "question": {
+        "type": "choice",
+        "instructions": "Which banking intent does this message express?",
+        "criteria": {
+          "activate_my_card": null,
+          "age_limit": null,
+          "apple_pay_or_google_pay": null,
+          "atm_support": null,
+          "automatic_top_up": null,
+          "balance_not_updated_after_bank_transfer": null,
+          "balance_not_updated_after_cheque_or_cash_deposit": null,
+          "beneficiary_not_allowed": null,
+          "cancel_transfer": null,
+          "card_about_to_expire": null,
+          "card_acceptance": null,
+          "card_arrival": null,
+          "card_delivery_estimate": null,
+          "card_linking": null,
+          "card_not_working": null,
+          "card_payment_fee_charged": null,
+          "card_payment_not_recognised": null,
+          "card_payment_wrong_exchange_rate": null,
+          "card_swallowed": null,
+          "cash_withdrawal_charge": null,
+          "cash_withdrawal_not_recognised": null,
+          "change_pin": null,
+          "compromised_card": null,
+          "contactless_not_working": null,
+          "country_support": null,
+          "declined_card_payment": null,
+          "declined_cash_withdrawal": null,
+          "declined_transfer": null,
+          "direct_debit_payment_not_recognised": null,
+          "disposable_card_limits": null,
+          "edit_personal_details": null,
+          "exchange_charge": null,
+          "exchange_rate": null,
+          "exchange_via_app": null,
+          "extra_charge_on_statement": null,
+          "failed_transfer": null,
+          "fiat_currency_support": null,
+          "get_disposable_virtual_card": null,
+          "get_physical_card": null,
+          "getting_spare_card": null,
+          "getting_virtual_card": null,
+          "lost_or_stolen_card": null,
+          "lost_or_stolen_phone": null,
+          "order_physical_card": null,
+          "passcode_forgotten": null,
+          "pending_card_payment": null,
+          "pending_cash_withdrawal": null,
+          "pending_top_up": null,
+          "pending_transfer": null,
+          "pin_blocked": null,
+          "receiving_money": null,
+          "Refund_not_showing_up": null,
+          "request_refund": null,
+          "reverted_card_payment?": null,
+          "supported_cards_and_currencies": null,
+          "terminate_account": null,
+          "top_up_by_bank_transfer_charge": null,
+          "top_up_by_card_charge": null,
+          "top_up_by_cash_or_cheque": null,
+          "top_up_failed": null,
+          "top_up_limits": null,
+          "top_up_reverted": null,
+          "topping_up_by_card": null,
+          "transaction_charged_twice": null,
+          "transfer_fee_charged": null,
+          "transfer_into_account": null,
+          "transfer_not_received_by_recipient": null,
+          "transfer_timing": null,
+          "unable_to_verify_identity": null,
+          "verify_my_identity": null,
+          "verify_source_of_funds": null,
+          "verify_top_up": null,
+          "virtual_card_not_working": null,
+          "visa_or_mastercard": null,
+          "why_verify_identity": null,
+          "wrong_amount_of_cash_received": null,
+          "wrong_exchange_rate_for_cash_withdrawal": null
+        }
+      },
+      "input_tokens": 1125,
+      "probabilities": [
+        6e-6, 2e-6, 4e-5, 2e-6, 1.1e-5, 2.7e-5, 2.6e-5, 1.8e-5, 0.00029, 1.1e-5,
+        4.4e-5, 9e-6, 7e-6, 8.6e-5, 0.000248, 0.001838, 0.004109, 0.000292,
+        3.6e-5, 8.6e-5, 0.000128, 5e-6, 0.000285, 0.000115, 3e-6, 0.000259,
+        2.6e-5, 3.6e-5, 0.000764, 1.1e-5, 1.3e-5, 4.8e-5, 1.3e-5, 8e-6,
+        0.002373, 0.000129, 1e-6, 1e-6, 3e-6, 2e-6, 2e-6, 2.3e-5, 1.8e-5, 3e-6,
+        6e-6, 0.000686, 1.4e-5, 1.5e-5, 1.7e-5, 3e-6, 5e-6, 0.000827, 0.004372,
+        0.005802, 1e-6, 2e-6, 6e-6, 2.1e-5, 1e-6, 6e-6, 0.0, 1.3e-5, 1.1e-5,
+        0.976282, 0.00017, 2.9e-5, 0.000107, 3.4e-5, 6e-6, 3e-6, 2.7e-5, 3e-6,
+        8e-6, 4e-6, 2e-6, 1.2e-5, 4.8e-5
+      ]
+    },
+    {
+      "state": "My new card still hasn't shown up and it's been two weeks since I ordered it.",
+      "question": {
+        "type": "choice",
+        "instructions": "Which banking intent does this message express?",
+        "criteria": {
+          "activate_my_card": null,
+          "age_limit": null,
+          "apple_pay_or_google_pay": null,
+          "atm_support": null,
+          "automatic_top_up": null,
+          "balance_not_updated_after_bank_transfer": null,
+          "balance_not_updated_after_cheque_or_cash_deposit": null,
+          "beneficiary_not_allowed": null,
+          "cancel_transfer": null,
+          "card_about_to_expire": null,
+          "card_acceptance": null,
+          "card_arrival": null,
+          "card_delivery_estimate": null,
+          "card_linking": null,
+          "card_not_working": null,
+          "card_payment_fee_charged": null,
+          "card_payment_not_recognised": null,
+          "card_payment_wrong_exchange_rate": null,
+          "card_swallowed": null,
+          "cash_withdrawal_charge": null,
+          "cash_withdrawal_not_recognised": null,
+          "change_pin": null,
+          "compromised_card": null,
+          "contactless_not_working": null,
+          "country_support": null,
+          "declined_card_payment": null,
+          "declined_cash_withdrawal": null,
+          "declined_transfer": null,
+          "direct_debit_payment_not_recognised": null,
+          "disposable_card_limits": null,
+          "edit_personal_details": null,
+          "exchange_charge": null,
+          "exchange_rate": null,
+          "exchange_via_app": null,
+          "extra_charge_on_statement": null,
+          "failed_transfer": null,
+          "fiat_currency_support": null,
+          "get_disposable_virtual_card": null,
+          "get_physical_card": null,
+          "getting_spare_card": null,
+          "getting_virtual_card": null,
+          "lost_or_stolen_card": null,
+          "lost_or_stolen_phone": null,
+          "order_physical_card": null,
+          "passcode_forgotten": null,
+          "pending_card_payment": null,
+          "pending_cash_withdrawal": null,
+          "pending_top_up": null,
+          "pending_transfer": null,
+          "pin_blocked": null,
+          "receiving_money": null,
+          "Refund_not_showing_up": null,
+          "request_refund": null,
+          "reverted_card_payment?": null,
+          "supported_cards_and_currencies": null,
+          "terminate_account": null,
+          "top_up_by_bank_transfer_charge": null,
+          "top_up_by_card_charge": null,
+          "top_up_by_cash_or_cheque": null,
+          "top_up_failed": null,
+          "top_up_limits": null,
+          "top_up_reverted": null,
+          "topping_up_by_card": null,
+          "transaction_charged_twice": null,
+          "transfer_fee_charged": null,
+          "transfer_into_account": null,
+          "transfer_not_received_by_recipient": null,
+          "transfer_timing": null,
+          "unable_to_verify_identity": null,
+          "verify_my_identity": null,
+          "verify_source_of_funds": null,
+          "verify_top_up": null,
+          "virtual_card_not_working": null,
+          "visa_or_mastercard": null,
+          "why_verify_identity": null,
+          "wrong_amount_of_cash_received": null,
+          "wrong_exchange_rate_for_cash_withdrawal": null
+        }
+      },
+      "input_tokens": 1124,
+      "probabilities": [
+        0.004339, 4e-5, 0.000268, 3.2e-5, 6e-5, 0.000287, 0.000119, 9.2e-5,
+        0.000129, 0.001986, 0.000661, 0.818066, 0.028687, 0.101383, 0.003515,
+        0.000182, 0.00049, 5.1e-5, 0.000628, 4e-6, 1.7e-5, 3.8e-5, 0.000169,
+        0.000308, 6e-5, 0.000281, 4e-5, 4.5e-5, 3.2e-5, 4.2e-5, 4.8e-5, 7e-6,
+        4e-6, 6e-6, 6.6e-5, 6.4e-5, 4e-6, 4.5e-5, 0.004599, 0.001242, 0.000714,
+        0.000588, 0.000192, 0.02257, 2.8e-5, 0.003866, 9.7e-5, 0.000165,
+        0.000413, 9.3e-5, 2.1e-5, 0.000527, 0.000544, 6.4e-5, 1.5e-5, 2.3e-5,
+        2e-6, 4e-6, 3e-6, 2.3e-5, 1e-6, 6e-6, 2.5e-5, 3.7e-5, 1.6e-5, 4.5e-5,
+        0.000831, 0.000282, 8e-6, 5e-6, 7e-6, 6e-6, 0.000546, 6.2e-5, 6e-6,
+        3e-6, 3e-5
+      ]
+    },
+    {
+      "state": "Hi, our SAML login stopped working for everyone after we rotated the IdP certificate this morning.",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this ticket?",
+        "criteria": {
+          "billing": "Invoices, refunds and failed payments",
+          "accounts": "Login, password resets, 2FA",
+          "sso": "SAML and SCIM setup",
+          "api": "API keys, rate limits, SDK errors",
+          "ingestion": "Events not arriving, delays",
+          "dashboards": "Insights and dashboards",
+          "replay": "Session replay",
+          "flags": "Feature flags and experiments",
+          "surveys": "Surveys",
+          "data_warehouse": "Warehouse sources and SQL",
+          "cdp": "Destinations and pipelines",
+          "mobile": "iOS, Android, React Native SDKs",
+          "web": "JavaScript SDK and toolbar",
+          "privacy": "GDPR, deletion requests, DPA",
+          "security": "Vulnerability reports and incidents",
+          "sales": "Pricing questions and enterprise plans",
+          "partnerships": "Agencies and integrations partners",
+          "legal": "Contracts and terms",
+          "hiring": "Job applications",
+          "other": "Anything else"
+        }
+      },
+      "input_tokens": 454,
+      "probabilities": [
+        2e-6, 0.056337, 0.939096, 1.5e-5, 1.1e-5, 1e-5, 3e-6, 1e-6, 0.0, 1e-6,
+        2e-6, 1.2e-5, 2.8e-5, 1e-5, 0.004311, 0.0, 0.000129, 0.0, 0.0, 3.3e-5
+      ]
+    },
+    {
+      "state": "Please delete all data you hold about me under GDPR article 17.",
+      "question": {
+        "type": "choice",
+        "instructions": "Which team should handle this ticket?",
+        "criteria": {
+          "billing": "Invoices, refunds and failed payments",
+          "accounts": "Login, password resets, 2FA",
+          "sso": "SAML and SCIM setup",
+          "api": "API keys, rate limits, SDK errors",
+          "ingestion": "Events not arriving, delays",
+          "dashboards": "Insights and dashboards",
+          "replay": "Session replay",
+          "flags": "Feature flags and experiments",
+          "surveys": "Surveys",
+          "data_warehouse": "Warehouse sources and SQL",
+          "cdp": "Destinations and pipelines",
+          "mobile": "iOS, Android, React Native SDKs",
+          "web": "JavaScript SDK and toolbar",
+          "privacy": "GDPR, deletion requests, DPA",
+          "security": "Vulnerability reports and incidents",
+          "sales": "Pricing questions and enterprise plans",
+          "partnerships": "Agencies and integrations partners",
+          "legal": "Contracts and terms",
+          "hiring": "Job applications",
+          "other": "Anything else"
+        }
+      },
+      "input_tokens": 449,
+      "probabilities": [
+        2e-6, 0.000321, 1.6e-5, 3e-6, 5e-6, 4.3e-5, 2.6e-5, 5e-6, 1.3e-5,
+        0.000126, 0.000207, 3e-6, 2e-5, 0.998848, 0.000146, 5e-6, 2e-6,
+        0.000171, 0.0, 3.7e-5
+      ]
+    },
+    {
+      "state": "Hi! I'm writing from Milan, and my card payment hasn't worked since last night.",
+      "question": {
+        "type": "choice",
+        "instructions": "Which country is the customer most likely in?",
+        "criteria": {
+          "argentina": "Argentina",
+          "australia": "Australia",
+          "austria": "Austria",
+          "belgium": "Belgium",
+          "brazil": "Brazil",
+          "canada": "Canada",
+          "chile": "Chile",
+          "china": "China",
+          "colombia": "Colombia",
+          "denmark": "Denmark",
+          "egypt": "Egypt",
+          "finland": "Finland",
+          "france": "France",
+          "germany": "Germany",
+          "greece": "Greece",
+          "india": "India",
+          "indonesia": "Indonesia",
+          "ireland": "Ireland",
+          "italy": "Italy",
+          "japan": "Japan",
+          "kenya": "Kenya",
+          "mexico": "Mexico",
+          "morocco": "Morocco",
+          "netherlands": "Netherlands",
+          "new_zealand": "New Zealand",
+          "nigeria": "Nigeria",
+          "norway": "Norway",
+          "peru": "Peru",
+          "poland": "Poland",
+          "portugal": "Portugal",
+          "south_africa": "South Africa",
+          "south_korea": "South Korea",
+          "spain": "Spain",
+          "sweden": "Sweden",
+          "switzerland": "Switzerland",
+          "thailand": "Thailand",
+          "turkey": "Turkey",
+          "united_kingdom": "United Kingdom",
+          "united_states": "United States",
+          "vietnam": "Vietnam"
+        }
+      },
+      "input_tokens": 635,
+      "probabilities": [
+        0.000873, 0.000908, 0.003139, 0.004144, 0.000689, 0.001109, 0.00044,
+        0.00113, 0.000332, 0.000616, 0.000398, 0.002564, 0.009926, 0.008711,
+        0.00288, 0.000637, 0.000586, 0.001404, 0.925037, 0.000359, 0.000264,
+        0.00082, 0.001141, 0.005572, 0.000272, 0.000344, 0.000617, 0.000234,
+        0.002452, 0.002027, 0.000222, 0.000553, 0.00478, 0.00098, 0.00711,
+        0.000271, 0.001631, 0.00233, 0.002267, 0.000229
+      ]
+    },
+    {
+      "state": "The production database is down and every customer request is failing.",
+      "question": {
+        "type": "score",
+        "instructions": "How severe is this incident, from 0 (none) to 16 (worst possible)?",
+        "criteria": [
+          "severity 0 of 16",
+          "severity 1 of 16",
+          "severity 2 of 16",
+          "severity 3 of 16",
+          "severity 4 of 16",
+          "severity 5 of 16",
+          "severity 6 of 16",
+          "severity 7 of 16",
+          "severity 8 of 16",
+          "severity 9 of 16",
+          "severity 10 of 16",
+          "severity 11 of 16",
+          "severity 12 of 16",
+          "severity 13 of 16",
+          "severity 14 of 16",
+          "severity 15 of 16",
+          "severity 16 of 16"
+        ]
+      },
+      "input_tokens": 404,
+      "probabilities": [
+        0.002043, 0.006515, 0.014199, 0.024726, 0.040631, 0.040637, 0.042349,
+        0.04897, 0.063425, 0.068618, 0.079532, 0.077473, 0.09128, 0.098398,
+        0.123312, 0.107175, 0.070717
+      ]
+    }
+  ]
+}

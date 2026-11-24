@@ -128,14 +128,24 @@ release's hash tag, like its deployment statuses.
 
 `systemone.rs` validates the closed request envelope and rejects duplicate JSON
 keys at every depth. A required exact model and text/object/array state accompany
-1..64 named questions, each with optional instructions (as in TypeSafe's API).
-`choice` takes 1..255 named criteria; `score` takes 1..255 ordered criteria.
-The pinned `perplexity-ai/pplx-decider-v1.2` bundle predates both relaxations, so
-for that model instructions stay required and `score` takes 2..255 criteria; `noul` optionally takes a null or object criteria value
+1..1,024 named questions, each with optional instructions (as in TypeSafe's API).
+`choice` takes 1..255 named criteria, as an object of descriptions or a list of
+distinct, non-empty names; parsing rewrites a list to `{name: null, ...}`, so the
+runtime request, answer validation and everything after parsing see only the
+object form. `score` takes 1..255 ordered criteria;
+`noul` optionally takes a null or object criteria value
 whose only permitted keys are `false` and `true`. Unknown outcome keys are
 rejected, never silently dropped. Instructions and descriptions accept JSON values.
 Model and question names are 1..200 UTF-16 code units; an optional, non-null
 session ID is 1..256. Shared accepted/rejected fixtures test TypeScript parity.
+
+The question bound is shared with every runtime through Kev's `kev_http` adapter
+(`MAX_QUESTIONS`), which Decider, Linden and the PostHog runtimes reuse. It is a
+backstop, not the work bound: each runtime's own token limits (Kev and Decider
+8,192 tokens a request, PostHog runtimes 16,384 a prompt and 65,536 a request,
+Linden 32,768 a prompt with the shared prefix prefilled once) and the runtime's
+1 MiB body limit reject large requests first, with 422. One request holds one
+admission slot regardless of its question count, and usage bills every input token.
 
 Only `service_tier: "default"` is implemented. Streaming, output-token controls,
 caller priority and unknown fields fail before dispatch. A `system_one` runtime
@@ -202,13 +212,13 @@ class for each step of the request lifecycle.
 
 The gateway owns these canonical routes:
 
-| Method | Path                   | Authentication     | Purpose                                                  |
-| ------ | ---------------------- | ------------------ | -------------------------------------------------------- |
-| `POST` | `/v1/chat/completions` | Bearer credential  | Streaming and non-streaming exact-model inference.       |
-| `GET`  | `/v1/models`           | Bearer credential  | Provider schema for configured non-retired exact models. |
-| `GET`  | `/health/live`         | none               | Process liveness only.                                   |
-| `GET`  | `/health/ready`        | none               | Readiness of required serving dependencies.              |
-| `GET`  | `/metrics`             | network-restricted | Prometheus metrics for the private observability stack.  |
+| Method | Path                   | Authentication     | Purpose                                                                    |
+| ------ | ---------------------- | ------------------ | -------------------------------------------------------------------------- |
+| `POST` | `/v1/chat/completions` | Bearer credential  | Streaming and non-streaming exact-model inference.                         |
+| `GET`  | `/v1/models`           | Bearer credential  | Provider schema and TypeSafe cards for public and the caller's own models. |
+| `GET`  | `/health/live`         | none               | Process liveness only.                                                     |
+| `GET`  | `/health/ready`        | none               | Readiness of required serving dependencies.                                |
+| `GET`  | `/metrics`             | network-restricted | Prometheus metrics for the private observability stack.                    |
 
 Both SDKs use `https://api.gradiated.com` as their public base URL. The public
 ALB routes the OpenAI and Anthropic request paths to this service. The gateway
@@ -410,29 +420,38 @@ admission; other omitted parameters retain the pinned runtime/model defaults.
 ### 5. Canonical model and parameter qualification
 
 1. Convert the requested model ID to ASCII lowercase.
-2. Read `model:<normalized_model_id>` directly from Valkey.
-3. Strictly deserialize `GatewayModel` and its closed `ModelProperties`.
+2. Read `model:v2:<normalized_model_id>` through Valkey.
+3. Deserialize `GatewayModel` and its closed `ModelProperties`. Drop each
+   unreadable deployment entry from the model's deployment list.
 4. Require `model.id` to equal the normalized request model exactly.
-5. Reject `unavailable` or `retired` models for inference.
-6. Read the model's projected `deployments` array and optional
+5. Treat a model with an `organization_id` as missing unless the caller's key
+   belongs to that organization or to the configured verification workspace,
+   so another organization gets the same `model_not_found` as for an unknown
+   ID. Serving state applies this itself: `model_for` and `models_visible_to`
+   take a `ModelAccess` built from the authenticated identity, and the record
+   read without one is private to the Valkey state.
+6. Reject `unavailable` or `retired` models for inference.
+7. Read the model's projected `deployments` array and optional
    `openrouter_model_id` from that same `GatewayModel` value.
-7. Select the first valid `available` deployment in projection order; reject a
-   malformed one. A model without one qualifies only when OpenRouter may serve
-   it; otherwise the existing `503 serving_state_unavailable` applies.
-8. Read the text output modality's `supported_parameters` and the model's
+8. Select the first `available` deployment in projection order and validate it.
+   A model without one qualifies only when OpenRouter may serve it. Otherwise
+   `503 serving_state_unavailable` applies.
+9. Read the text output modality's `supported_parameters` and the model's
    request-scoped `passthrough_parameters` maps.
-9. Validate every advertised non-envelope top-level field against its
-   model-specific descriptor. Remove optional fields that the selected model
-   does not advertise.
-10. Apply the descriptor's outer type, range, enum, and size checks without
+10. Validate every advertised non-envelope top-level field against its
+    model-specific descriptor. Remove optional fields that the selected model
+    does not advertise.
+11. Apply the descriptor's outer type, range, enum, and size checks without
     recreating every nested OpenAI or SGLang type in Rust.
-11. Preserve every qualified, supported JSON value unchanged in the upstream
+12. Preserve every qualified, supported JSON value unchanged in the upstream
     body and capture effective pricing and the deployment release digest.
 
 The `GatewayModel` is the complete current PostgreSQL record of the model and its
 deployments, read through Valkey. Nothing projects it: a cache miss reads
 PostgreSQL and caches the row for `GATEWAY_RECORD_CACHE_TTL_SECONDS`, and a model
-PostgreSQL does not have is never cached. Apart from explicit catalog aliases, lookup has no scoring,
+PostgreSQL does not have is never cached. The record carries the owning
+`organization_id`; records cached under the earlier `model:<id>` key have no
+owner, so they are never read. Apart from explicit catalog aliases, lookup has no scoring,
 fallback, provider selection, or network discovery. The descriptor map is the
 public capability list. It does not claim that every model supports the same
 parameters. Adding a parameter normally changes
@@ -884,7 +903,9 @@ access checks as Chat Completions but does not create a lease.
    use `KEYS` or an unbounded Valkey scan.
 3. Fetch each corresponding `GatewayModel` and its deployment status hash.
 4. Exclude retired, malformed, or missing-deployment models, unless OpenRouter
-   may serve the model for the caller.
+   may serve the model for the caller. Exclude every model owned by another
+   organization; an organization sees its own. OpenRouter's key belongs to its
+   own organization, so its provider listing never includes one.
 5. Set `is_ready = true` when at least one deployment has fresh healthy status,
    or when the model is available and OpenRouter may serve it for the caller.
 6. Include explicitly staged unavailable models with `is_ready = false` so the
@@ -894,6 +915,12 @@ access checks as Chat Completions but does not create a lease.
 8. Convert integer nano-USD token prices to exact base-10 USD strings.
 9. Require `released_at` before advertising a model because the provider
    document requires a creation timestamp.
+10. Beside the provider `data` array, return the same models as TypeSafe SDK
+    model cards in `models`: `name` is the model ID, `description` is the
+    catalog description and `release_date` is the UTC date of `released_at`
+    (`YYYY-MM-DD`). The TypeSafe SDK's `models.list()` reads only `models`;
+    OpenAI and OpenRouter clients read only `data`. Both arrays come from the
+    same filtered list, so neither can show a model the other hides.
 
 The response never exposes `service_url`, `SGLANG_API_KEY`, artifact revisions,
 or the internal served-release digest.
@@ -901,7 +928,8 @@ or the internal served-release digest.
 ## Deployment records and release identity
 
 `GatewayModel` is Zod-authored and projected from the PostgreSQL model plus all
-of its deployment rows. Rust strictly validates the complete Valkey document.
+of its deployment rows. Rust decodes each deployment independently and keeps
+strict release decoding so the release digest includes every field.
 An available model must have at least one valid available child deployment.
 Fresh deployment status controls live routing. Missing routes fail closed.
 
@@ -1131,6 +1159,23 @@ Desmond sets `accepting_requests: false` before severe KV or queue pressure.
 |       `413` | `payload_too_large`                                                            | Request exceeded the transport body ceiling.             |
 |       `429` | `capacity_exceeded`, `concurrency_exceeded`, `settlement_backlog`              | SGLang overload or gateway admission rejection.          |
 |       `503` | `serving_state_unavailable`, `runtime_unavailable`, `finalization_unavailable` | Required serving dependency or invariant is unavailable. |
+
+Every `429` carries `Retry-After` in whole seconds, which the official SDKs
+honour before their own backoff:
+
+- `capacity_exceeded` from a runtime that sent `Retry-After` (delay-seconds or
+  an HTTP date) passes that value through, capped at 30 seconds so one replica
+  cannot park callers another replica could serve;
+- any other `capacity_exceeded` and `concurrency_exceeded` send `1`. Admission
+  has no queue: a slot frees as soon as any in-flight request on the model or
+  organization ends, and route status is cached for one second, so a sooner
+  retry would see the same full view;
+- `settlement_backlog` sends `5`, because the settlement stream drains at its
+  consumer's pace rather than when one request ends.
+
+Every inference response, successful or not, carries its generation ID in
+both `x-gradiated-generation-id` and `x-typesafe-request-id`, the header the
+TypeSafe SDK reads as `requestId`.
 
 Errors caused by caller input do not mark readiness unhealthy. Valkey
 unavailability, configured-runtime unavailability, invalid loaded catalog

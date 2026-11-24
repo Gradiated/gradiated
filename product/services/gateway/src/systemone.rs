@@ -4,8 +4,10 @@ use serde_json::{Map, Value};
 use crate::{json::strict_json, GatewayError, ServiceTier};
 
 const MAX_OPTIONS: usize = 255;
-/// The pinned Decider v1.2 bundle predates optional instructions and one-level scores; remove with Decider.
-const DECIDER_V1_2: &str = "perplexity-ai/pplx-decider-v1.2";
+/// Questions per request. Every runtime (Kev's `kev_http` adapter, which Decider,
+/// Linden and the PostHog runtimes share) accepts the same bound, and their token
+/// limits stop a request with this many questions long before this count matters.
+pub(crate) const MAX_QUESTIONS: usize = 1024;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct SystemOneRequest {
@@ -115,30 +117,20 @@ impl SystemOneRequest {
             return Err(GatewayError::invalid_request(Some("session_id")));
         }
 
-        let shapes = question_shapes(&wire.questions)
+        let mut questions = wire.questions;
+        let shapes = question_shapes(&mut questions)
             .ok_or(GatewayError::invalid_request(Some("questions")))?;
-        if wire.model.eq_ignore_ascii_case(DECIDER_V1_2)
-            && (wire
-                .questions
-                .values()
-                .any(|question| question.get("instructions").is_none())
-                || shapes
-                    .iter()
-                    .any(|(_, shape)| *shape == AnswerShape::Score { levels: 1 }))
-        {
-            return Err(GatewayError::invalid_request(Some("questions")));
-        }
-
         Ok(Self {
             model: wire.model,
             state: wire.state,
             session_id: wire.session_id,
             service_tier: wire.service_tier,
-            questions: wire.questions,
+            questions,
             shapes,
         })
     }
 
+    /// The questions as runtimes receive them: choice criteria are always in object form.
     pub(crate) fn questions(&self) -> &Map<String, Value> {
         &self.questions
     }
@@ -148,18 +140,50 @@ impl SystemOneRequest {
     }
 }
 
-fn question_shapes(questions: &Map<String, Value>) -> Option<Vec<(String, AnswerShape)>> {
-    if !(1..=64).contains(&questions.len()) {
+fn question_shapes(questions: &mut Map<String, Value>) -> Option<Vec<(String, AnswerShape)>> {
+    if !(1..=MAX_QUESTIONS).contains(&questions.len()) {
         return None;
     }
 
     questions
-        .iter()
+        .iter_mut()
         .map(|(id, question)| {
+            normalize_choice_criteria(question)?;
             let shape = AnswerShape::parse(question).filter(|_| bounded_name(id))?;
             Some((id.clone(), shape))
         })
         .collect()
+}
+
+/// Rewrites list-form choice criteria (`["billing", "technical"]`, as PostHog's
+/// clients send) to the object form with undescribed options
+/// (`{"billing": null, "technical": null}`), so that runtimes, answer validation
+/// and everything else see only the object form. A list must hold 1 to 255
+/// distinct, non-empty strings.
+fn normalize_choice_criteria(question: &mut Value) -> Option<()> {
+    let Some(question) = question.as_object_mut() else {
+        return Some(());
+    };
+    if question.get("type").and_then(Value::as_str) != Some("choice") {
+        return Some(());
+    }
+    let Some(Value::Array(labels)) = question.get("criteria") else {
+        return Some(());
+    };
+    if !(1..=MAX_OPTIONS).contains(&labels.len()) {
+        return None;
+    }
+
+    let mut options = Map::with_capacity(labels.len());
+    for label in labels {
+        let label = label.as_str().filter(|label| !label.is_empty())?;
+        if options.insert(label.to_owned(), Value::Null).is_some() {
+            return None;
+        }
+    }
+    question.insert("criteria".to_owned(), Value::Object(options));
+
+    Some(())
 }
 
 fn bounded_name(value: &str) -> bool {
@@ -368,33 +392,91 @@ mod tests {
     }
 
     #[test]
-    fn the_pinned_decider_keeps_requiring_instructions_and_two_score_levels() {
-        for (question, valid) in [
-            (json!({"type":"noul"}), false),
+    fn list_choice_criteria_become_undescribed_options_in_order() {
+        let mut body = request_value();
+        body["questions"]["pick"] = json!({"type":"choice","criteria":["technical","billing"]});
+        let request = SystemOneRequest::parse(&serde_json::to_vec(&body).unwrap()).unwrap();
+
+        let criteria = &request.questions()["pick"]["criteria"];
+        assert_eq!(criteria, &json!({"technical":null,"billing":null}));
+        assert_eq!(
+            criteria.as_object().unwrap().keys().collect::<Vec<_>>(),
+            ["technical", "billing"]
+        );
+        assert_eq!(
+            request.answer_shapes()[0],
             (
-                json!({"type":"score","instructions":"Rate","criteria":["only"]}),
-                false,
-            ),
-            (json!({"type":"noul","instructions":null}), true),
-            (
-                json!({"type":"score","instructions":"Rate","criteria":["a","b"]}),
-                true,
-            ),
+                "pick".to_owned(),
+                AnswerShape::Choice {
+                    options: vec!["technical".to_owned(), "billing".to_owned()]
+                }
+            )
+        );
+        // Other questions are forwarded unchanged.
+        assert_eq!(
+            request.questions()["level"],
+            request_value()["questions"]["level"]
+        );
+    }
+
+    #[test]
+    fn list_choice_criteria_follow_the_object_bounds() {
+        let labels =
+            |count: usize| Value::from((0..count).map(|i| i.to_string()).collect::<Vec<_>>());
+        for (criteria, accepted) in [
+            (json!(["only"]), true),
+            (labels(255), true),
+            (json!(["😀", " ", "a".repeat(10_000)]), true),
+            (json!([]), false),
+            (labels(256), false),
+            (json!(["a", "a"]), false),
+            (json!(["a", "b", "a"]), false),
+            (json!([""]), false),
+            (json!(["a", ""]), false),
+            (json!(["a", null]), false),
+            (json!(["a", 1]), false),
+            (json!(["a", ["b"]]), false),
+            (json!(["a", {"b":null}]), false),
+            (json!([true]), false),
         ] {
             let mut body = request_value();
-            body["model"] = json!(DECIDER_V1_2);
-            body["questions"]["pick"] = question.clone();
+            body["questions"]["pick"]["criteria"] = criteria.clone();
             assert_eq!(
                 SystemOneRequest::parse(&serde_json::to_vec(&body).unwrap()).is_ok(),
-                valid,
-                "{question}"
+                accepted,
+                "criteria: {criteria}"
             );
         }
+        // Only choice criteria have a list form for labels; score lists stay level descriptions.
+        let mut body = request_value();
+        body["questions"]["level"]["criteria"] = json!(["low", "low"]);
+        let request = SystemOneRequest::parse(&serde_json::to_vec(&body).unwrap()).unwrap();
+        assert_eq!(
+            request.questions()["level"]["criteria"],
+            json!(["low", "low"])
+        );
+    }
+
+    #[test]
+    fn question_bound_matches_typescript() {
+        // The shared fixtures stop at 65 questions; this keeps the bound itself in step.
+        let contract = include_str!("../../../packages/contracts/src/systemone.ts");
+        assert!(contract.contains(&format!(
+            "export const SYSTEMONE_MAX_QUESTIONS = {MAX_QUESTIONS};"
+        )));
+        let mock = include_str!("../test/integration/mock-runtimes/kev.ts");
+        assert!(mock.contains(&format!("const MAX_QUESTIONS = {MAX_QUESTIONS};")));
     }
 
     #[test]
     fn request_count_and_name_boundaries() {
-        for (count, valid) in [(1, true), (64, true), (65, false)] {
+        for (count, valid) in [
+            (1, true),
+            (64, true),
+            (65, true),
+            (MAX_QUESTIONS, true),
+            (MAX_QUESTIONS + 1, false),
+        ] {
             let mut body = request_value();
             body["questions"] = Value::Object(
                 (0..count)

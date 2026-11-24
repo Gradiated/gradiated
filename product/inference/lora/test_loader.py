@@ -1,6 +1,7 @@
 import concurrent.futures
 import copy
 import json
+import math
 import tempfile
 import threading
 import unittest
@@ -9,8 +10,15 @@ import uuid
 from pathlib import Path
 from unittest import mock
 
-from fixtures import archive, grant, settings
-from loader import CapacityError, Loader
+from fixtures import (
+    archive,
+    cartridge_file,
+    cartridge_grant,
+    cartridge_model_config,
+    grant,
+    settings,
+)
+from loader import CANARY_TIMEOUT_SECONDS, CapacityError, CartridgeNotApplied, Loader
 from startup import start_preload
 
 
@@ -383,6 +391,203 @@ class LoaderTests(unittest.TestCase):
         )
         self.assertEqual(len(self.models), 1)
         self.assertEqual(self.fetches, 1)
+
+
+class CartridgeLoaderTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.config = {**settings(), "model_config": cartridge_model_config()}
+        self.payload = cartridge_file()
+        self.fetches = 0
+        self.commands = []
+        self.loader = Loader(self.config, self.temp.name, 1, set(), fetch=self.fetch)
+        self.loader.ready = True
+        self.loader.engine = self.engine
+
+    def fetch(self, spec, path, hosts, deadline=None):
+        self.fetches += 1
+        path.write_bytes(self.payload)
+
+    def engine(self, method, path, body=None):
+        self.commands.append((method, path, body))
+        return b"ok"
+
+    def test_resolution_returns_the_cartridge_kind_and_verified_path(self):
+        spec = cartridge_grant(self.payload)
+        self.loader.resolve = lambda name, workspace, deadline=None: spec
+
+        files = self.loader.resolve_version(spec["version"]["name"], spec["workspace_id"])
+
+        self.assertEqual(files["kind"], "cartridge")
+        self.assertEqual(files["sha256"], spec["version"]["adapter"]["sha256"])
+        self.assertEqual(files["num_tokens"], 3)
+        self.assertEqual(Path(files["path"]).read_bytes(), self.payload)
+        self.assertEqual(
+            self.loader.resolve_version(spec["version"]["name"], spec["workspace_id"]),
+            files,
+        )
+        self.assertEqual(self.fetches, 1)
+
+    def test_preparation_never_registers_a_cartridge_as_a_lora_adapter(self):
+        spec = cartridge_grant(self.payload)
+        self.loader.resolve = lambda name, workspace, deadline=None: spec
+
+        self.loader.prepare_version(spec["version"]["name"], spec["workspace_id"])
+
+        self.assertEqual(self.commands, [])
+        self.assertEqual(self.loader.status()["registered_adapters"], 0)
+
+    def test_cartridges_need_the_pinned_model_dimensions(self):
+        spec = cartridge_grant(self.payload, hidden=8)
+        with self.assertRaises(ValueError):
+            self.loader.register_metadata(spec)
+
+        self.loader.config = {**self.config, "model_config": {"num_hidden_layers": 2}}
+        with self.assertRaises(ValueError):
+            self.loader.register_metadata(cartridge_grant(self.payload))
+
+    def test_lora_versions_still_require_a_valid_rank(self):
+        spec = grant(archive())
+        spec["version"]["adapter"]["rank"] = 0
+        with self.assertRaises(ValueError):
+            self.loader.register_metadata(spec)
+
+        del spec["version"]["adapter"]["rank"]
+        with self.assertRaises(KeyError):
+            self.loader.register_metadata(spec)
+
+    def test_cartridge_disk_budget_evicts_unpinned_files_only(self):
+        first = cartridge_grant(self.payload)
+        self.loader.resolve = lambda name, workspace, deadline=None: first
+        files = self.loader.resolve_version(first["version"]["name"], first["workspace_id"])
+
+        self.loader.config = {
+            **self.config,
+            "disk_cache_bytes": len(self.payload) + 4096 + 128,
+        }
+        second = cartridge_grant(self.payload)
+        self.loader.resolve = lambda name, workspace, deadline=None: second
+        with self.assertRaises(CapacityError):
+            self.loader.resolve_version(second["version"]["name"], second["workspace_id"])
+        self.assertTrue(Path(files["path"]).is_file())
+
+
+class CartridgeCanaryTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.payload = cartridge_file()
+        self.spec = cartridge_grant(self.payload)
+        self.loader = Loader(
+            {**settings(), "model_config": cartridge_model_config()},
+            self.temp.name,
+            1,
+            set(),
+            fetch=lambda spec, path, hosts, deadline=None: path.write_bytes(self.payload),
+        )
+        self.loader.ready = True
+        self.loader.resolve = lambda name, workspace, deadline=None: self.spec
+        self.adapter = f"{self.spec['workspace_id']}/{self.spec['version']['name']}"
+        self.models = [{"id": "base-model"}, {"id": "other/lora", "parent": "base-model"}]
+        self.outputs = {}
+        self.messages = {}
+        self.timeouts = []
+        self.loader.engine = self.engine
+
+    @staticmethod
+    def position(token, *top):
+        top_logprobs = [{"token": t, "logprob": math.log(p)} for t, p in top]
+        return {"token": token, "top_logprobs": top_logprobs}
+
+    def engine(self, method, path, body=None, timeout=None):
+        self.timeouts.append(timeout)
+        if path == "/v1/models":
+            return json.dumps({"data": self.models}).encode()
+        if path == "/v1/detokenize":
+            self.detokenized = body
+            return json.dumps({"text": "<slots>"}).encode()
+        if body.get("logprobs"):
+            self.messages[body["model"]] = body["messages"]
+        content = self.outputs.get(body["model"]) if body.get("logprobs") else None
+        return json.dumps({"model": body["model"], "choices": [{"logprobs": {"content": content}}],
+                           "usage": {"completion_tokens": 1}}).encode()
+
+    def probe(self):
+        self.loader.probe(self.spec["version"]["name"], self.spec["workspace_id"])
+
+    def test_a_cartridge_passes_only_when_it_changes_the_canary_logits(self):
+        base = [
+            self.position("I", ("I", 0.6), ("We", 0.4)),
+            self.position(" help", (" help", 0.9)),
+        ]
+        self.outputs = {"base-model": base, self.adapter: base}
+        with self.assertRaises(CartridgeNotApplied):
+            self.probe()
+
+        self.outputs[self.adapter] = [self.position("I", ("I", 0.9), ("We", 0.1)), base[1]]
+        self.probe()
+        # A forced first token still passes once a later greedy token differs.
+        self.outputs[self.adapter] = [base[0], self.position(" write", (" write", 0.9))]
+        self.probe()
+        # The two canary generations use the shorter budget the API's deadline counts.
+        self.assertEqual(self.timeouts[-2:], [CANARY_TIMEOUT_SECONDS] * 2)
+        # The control carries the same slot tokens as text, so only the embeddings differ.
+        self.assertEqual(self.detokenized["tokens"], [10, 11, 12])
+        self.assertFalse(self.detokenized["skip_special_tokens"])
+        self.assertEqual(self.messages["base-model"][0], {"role": "system", "content": "<slots>\n\n"})
+        self.assertEqual(self.messages[self.adapter], self.messages["base-model"][1:])
+
+    def test_one_output_stopping_first_counts_as_a_change(self):
+        base = [self.position("I", ("I", 0.6), ("We", 0.4)), self.position(".", (".", 0.9))]
+        self.outputs = {"base-model": base, self.adapter: base[:1]}
+        self.probe()
+        self.outputs = {"base-model": base[:1], self.adapter: base}
+        self.probe()
+
+    def test_unreadable_canary_responses_are_a_retryable_runtime_fault(self):
+        good = [self.position("I", ("I", 1.0))]
+        self.outputs = {"base-model": good, self.adapter: good}
+        engine = self.engine
+
+        def truncated(method, path, body=None, timeout=None):
+            if path == "/v1/models" or (body or {}).get("logprobs"):
+                return b'{"choices": ['
+            return engine(method, path, body, timeout)
+
+        self.loader.engine = truncated
+        with self.assertRaises(RuntimeError):
+            self.probe()
+        self.loader.engine = engine
+        self.models = None
+        with self.assertRaises(RuntimeError):
+            self.probe()
+
+    def test_malformed_canary_logprobs_are_a_retryable_runtime_fault(self):
+        good = [self.position("I", ("I", 0.6), ("We", 0.4))]
+        for broken in (
+            [{"token": "I", "top_logprobs": None}],
+            [{"token": "I", "top_logprobs": [{"token": "I"}]}],
+            [{"token": "I", "top_logprobs": [{"logprob": -0.5}]}],
+            [{"token": None, "top_logprobs": []}],
+            [{"top_logprobs": []}],
+            [None],
+            [],
+        ):
+            self.outputs = {"base-model": good, self.adapter: broken}
+            with self.subTest(broken=broken), self.assertRaises(RuntimeError):
+                self.probe()
+
+    def test_the_canary_needs_one_base_model_and_logprobs(self):
+        base = [self.position("I", ("I", 1.0))]
+        self.outputs = {"base-model": base, self.adapter: base}
+        self.models = [{"id": "a"}, {"id": "b"}]
+        with self.assertRaises(RuntimeError):
+            self.probe()
+        self.models = [{"id": "base-model"}]
+        self.outputs = {"base-model": base}
+        with self.assertRaises(RuntimeError):
+            self.probe()
 
 
 if __name__ == "__main__":

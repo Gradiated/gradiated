@@ -4,7 +4,7 @@ use axum::{
     body::Bytes,
     extract::{rejection::BytesRejection, DefaultBodyLimit, State},
     http::{
-        header::{AUTHORIZATION, CONTENT_ENCODING, CONTENT_LENGTH, CONTENT_TYPE},
+        header::{AUTHORIZATION, CONTENT_ENCODING, CONTENT_LENGTH, CONTENT_TYPE, RETRY_AFTER},
         HeaderMap, HeaderName, HeaderValue, Method, StatusCode,
     },
     response::{
@@ -40,6 +40,8 @@ const ZSTD_WINDOW_LOG_MAX: u32 = 25;
 /// well under a millisecond.
 const DECOMPRESSION_WAIT: Duration = Duration::from_secs(2);
 const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-generation-id");
+/// The TypeSafe SDK reads `requestId` from this header.
+const TYPESAFE_REQUEST_ID_HEADER: HeaderName = HeaderName::from_static("x-typesafe-request-id");
 const SERVICE_TIER_HEADER: HeaderName = HeaderName::from_static("x-gradiated-service-tier");
 const DEPLOYMENT_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-deployment-id");
 const STREAM_KEEP_ALIVE: Duration = Duration::from_secs(10);
@@ -56,8 +58,10 @@ pub fn browser_cors(origins: Vec<HeaderValue>) -> CorsLayer {
         ])
         .expose_headers([
             GENERATION_ID_HEADER,
+            TYPESAFE_REQUEST_ID_HEADER,
             SERVICE_TIER_HEADER,
             DEPLOYMENT_ID_HEADER,
+            RETRY_AFTER,
         ])
         .max_age(Duration::from_secs(3600))
 }
@@ -404,9 +408,10 @@ fn finish(
         |error| endpoint.protocol.error_response(error),
     );
 
-    response
-        .headers_mut()
-        .insert(GENERATION_ID_HEADER, generation_id_header(generation_id));
+    let id = generation_id_header(generation_id);
+    let headers = response.headers_mut();
+    headers.insert(TYPESAFE_REQUEST_ID_HEADER, id.clone());
+    headers.insert(GENERATION_ID_HEADER, id);
 
     response
 }
@@ -879,6 +884,8 @@ mod tests {
         assert!(exposed_headers.contains("x-gradiated-generation-id"));
         assert!(exposed_headers.contains("x-gradiated-service-tier"));
         assert!(exposed_headers.contains("x-gradiated-deployment-id"));
+        assert!(exposed_headers.contains("x-typesafe-request-id"));
+        assert!(exposed_headers.contains("retry-after"));
 
         let denied = app
             .oneshot(
@@ -964,6 +971,11 @@ mod tests {
                 .get_version_num(),
             7
         );
+        assert_eq!(
+            response.headers()[TYPESAFE_REQUEST_ID_HEADER],
+            response.headers()[GENERATION_ID_HEADER]
+        );
+        assert!(!response.headers().contains_key(RETRY_AFTER));
         assert_eq!(error_code(response).await, "invalid_api_key");
     }
 
@@ -1085,7 +1097,7 @@ mod tests {
     async fn streaming_errors_render_the_protocol_envelope_inline() {
         let response = sse_response(
             Protocol::AnthropicMessages,
-            futures_util::stream::iter(vec![StreamItem::Error(GatewayError::CapacityExceeded)]),
+            futures_util::stream::iter(vec![StreamItem::Error(GatewayError::capacity_exceeded())]),
         );
         let body = to_bytes(response.into_body(), 4_096).await.unwrap();
         let body = String::from_utf8(body.to_vec()).unwrap();
@@ -1341,3 +1353,7 @@ mod support;
 #[cfg(test)]
 #[path = "http_diagnostics_tests.rs"]
 mod diagnostics_tests;
+
+#[cfg(test)]
+#[path = "http_listing_tests.rs"]
+mod listing_tests;

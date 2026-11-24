@@ -100,7 +100,7 @@ func TestControllerReadsTheFleetFromGpuHosts(t *testing.T) {
 	if err != nil || len(hosts) != 2 || hosts[0].InstanceID != first || hosts[1].InstanceID != second {
 		t.Fatalf("hosts = %+v, err %v", hosts, err)
 	}
-	want := host{InstanceID: first, Endpoint: "http://gpu-" + first + ".tailscale-inference.svc.cluster.local:8888/_kubelet",
+	want := host{InstanceID: first, Provider: "runpod", Endpoint: "http://gpu-" + first + ".tailscale-inference.svc.cluster.local:8888/_kubelet",
 		TokenFile: "/var/run/gradiated-host-keys/" + first, GPUCount: 4, CPU: 64, MemoryGiB: 896, GPUProduct: "B300",
 		FaultDomain: "machine01a0"}
 	if hostsSignature(hosts[:1]) != hostsSignature([]host{want}) {
@@ -108,13 +108,49 @@ func TestControllerReadsTheFleetFromGpuHosts(t *testing.T) {
 	}
 }
 
+func awsHostObject(id string) *unstructured.Unstructured {
+	object := gpuHostObject(id, 1)
+	spec := object.Object["spec"].(map[string]any)
+	spec["provider"] = map[string]any{"name": "aws", "accountId": "111122223333", "region": "us-east-1",
+		"availabilityZone": "us-east-1b", "ec2InstanceId": "i-0123456789abcdef0"}
+	spec["inventory"] = map[string]any{"gpuProduct": "L4", "gpuCount": int64(1), "cpu": int64(3), "memoryGiB": int64(12)}
+	return object
+}
+
+func TestAnAwsHostIsLabelledWithItsProviderAndZone(t *testing.T) {
+	hosts, err := listHosts(context.Background(), fleetClient(awsHostObject(second), gpuHostObject(first, 4)))
+	if err != nil || len(hosts) != 2 {
+		t.Fatalf("hosts = %+v, err %v", hosts, err)
+	}
+	if hosts[0].Provider != "runpod" || hosts[0].FaultDomain != "machine01a0" {
+		t.Fatalf("runpod host = %+v", hosts[0])
+	}
+	aws := hosts[1]
+	if aws.Provider != "aws" || aws.FaultDomain != "us-east-1b" || aws.GPUProduct != "L4" {
+		t.Fatalf("aws host = %+v", aws)
+	}
+	labels := nodeLabels(aws)
+	want := map[string]string{"type": "virtual-kubelet", "kubernetes.io/hostname": "gpu-" + second,
+		"gradiated.com/provider": "aws", "gradiated.com/instance-id": second, "nvidia.com/gpu.product": "L4",
+		"nvidia.com/gpu.count": "1", "gradiated.com/fault-domain": "us-east-1b"}
+	if !reflect.DeepEqual(labels, want) {
+		t.Fatalf("labels = %v, want %v", labels, want)
+	}
+	if got := nodeLabels(hosts[0])["gradiated.com/provider"]; got != "runpod" {
+		t.Fatalf("runpod provider label = %q", got)
+	}
+}
+
 func TestAnInvalidGpuHostIsSkippedNotTheWholeFleet(t *testing.T) {
 	misnamed := gpuHostObject(first, 4)
 	misnamed.SetName("gpu-other")
+	unknown := gpuHostObject(first, 4)
+	unknown.Object["spec"].(map[string]any)["provider"].(map[string]any)["name"] = "elsewhere"
 	for name, object := range map[string]*unstructured.Unstructured{
-		"misnamed":     misnamed,
-		"too many GPU": gpuHostObject(first, 9),
-		"no GPUs":      gpuHostObject(first, 0),
+		"misnamed":         misnamed,
+		"too many GPU":     gpuHostObject(first, 9),
+		"no GPUs":          gpuHostObject(first, 0),
+		"unknown provider": unknown,
 	} {
 		hosts, err := listHosts(context.Background(), fleetClient(object, gpuHostObject(second, 8)))
 		if err != nil || len(hosts) != 1 || hosts[0].InstanceID != second {

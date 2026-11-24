@@ -1,0 +1,150 @@
+.rc {
+  margin: 4em 0;
+  padding: 1.25em 1.4em 1.1em;
+  border: 1px solid var(--color-rule);
+  background:
+    radial-gradient(var(--color-rule) 1px, transparent 1px) 0 0 / 14px 14px,
+    var(--color-module);
+  font-size: 0.85em;
+  line-height: 1.3;
+}
+
+.gr-root .rc-sources {
+  margin: 1.1em 0 0;
+  font-size: 0.8em;
+  color: var(--color-text-muted);
+}
+
+.rc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25em 1em;
+  margin-block-end: 1em;
+}
+
+.rc-title {
+  font-family: var(--font-title);
+  font-size: 1.25em;
+  font-weight: 600;
+}
+
+.rc-when {
+  font-family: var(--font-code);
+  font-size: 0.85em;
+  color: var(--color-text-muted);
+}
+
+.rc-plot {
+  position: relative;
+  padding-block: 1.9em 2em;
+}
+
+.rc-axis {
+  position: absolute;
+  inset: 0;
+}
+
+.rc-scale {
+  position: relative;
+  height: 100%;
+}
+
+.gr-root .rc-ticks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rc-ticks li {
+  position: absolute;
+  inset-block: 1.9em 0;
+  left: calc(var(--at) * 100%);
+  display: flex;
+  align-items: flex-end;
+  border-inline-start: 1px dashed var(--color-rule);
+  font-family: var(--font-code);
+  font-size: 0.8em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--color-text-muted);
+}
+
+.rc-need {
+  position: absolute;
+  inset-block: 1.4em 1.6em;
+  left: calc(var(--at) * 100%);
+  border-inline-start: 2px dashed var(--color-text);
+  z-index: 1;
+}
+
+.rc-need-label {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  padding-block-end: 0.3em;
+  font-family: var(--font-code);
+  font-size: 0.8em;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.gr-root .rc-rows {
+  display: grid;
+  gap: 0.6em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rc-row {
+  display: grid;
+  grid-template-columns: 8em minmax(0, 1fr) 5.5em;
+  align-items: center;
+  gap: 0.75em;
+}
+
+.rc-name {
+  display: grid;
+  font-variant-numeric: tabular-nums;
+}
+
+.rc-note {
+  font-family: var(--font-code);
+  font-size: 0.75em;
+  color: var(--color-text-muted);
+}
+
+.rc-track {
+  display: block;
+  height: 1.1em;
+}
+
+.rc-fill {
+  display: block;
+  width: calc(var(--w) * 100%);
+  height: 100%;
+  background: var(--color-rule);
+}
+
+.rc-row--fits .rc-fill {
+  background: var(--color-cloud-blue);
+}
+
+.rc-value {
+  font-family: var(--font-code);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  color: var(--color-text-muted);
+}
+
+.rc-row--fits .rc-value {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.gr-root .gr-prose > .rc {
+  margin-block: 4em;
+}

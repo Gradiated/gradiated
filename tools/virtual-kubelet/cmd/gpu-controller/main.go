@@ -43,6 +43,7 @@ import (
 type host struct {
 	Runtimes    json.RawMessage `json:"-"`
 	InstanceID  string          `json:"instance_id"`
+	Provider    string          `json:"provider"`
 	Endpoint    string          `json:"endpoint"`
 	TokenFile   string          `json:"token_file"`
 	GPUCount    int64           `json:"gpu_count"`
@@ -387,13 +388,20 @@ func (p *provider) startupParts(ctx context.Context) ([]string, error) {
 	return result.Parts, err
 }
 
-func runHost(ctx context.Context, client kubernetes.Interface, namespace string, h host, fence *hostFence) error {
-	name := "gpu-" + h.InstanceID
-	resources := v1.ResourceList{v1.ResourceCPU: *resource.NewQuantity(h.CPU, resource.DecimalSI), v1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", h.MemoryGiB)), v1.ResourcePods: resource.MustParse("16"), "nvidia.com/gpu": *resource.NewQuantity(h.GPUCount, resource.DecimalSI)}
-	labels := map[string]string{"type": "virtual-kubelet", "kubernetes.io/hostname": name, "gradiated.com/provider": "runpod", "gradiated.com/instance-id": h.InstanceID, "nvidia.com/gpu.product": h.GPUProduct, "nvidia.com/gpu.count": fmt.Sprint(h.GPUCount)}
+// nodeLabels are the labels a host's node is created with. The provider label
+// comes from the GpuHost, so a workload can select runpod or aws hosts.
+func nodeLabels(h host) map[string]string {
+	labels := map[string]string{"type": "virtual-kubelet", "kubernetes.io/hostname": "gpu-" + h.InstanceID, providerLabel: h.Provider, "gradiated.com/instance-id": h.InstanceID, "nvidia.com/gpu.product": h.GPUProduct, "nvidia.com/gpu.count": fmt.Sprint(h.GPUCount)}
 	if h.FaultDomain != "" {
 		labels[faultDomainLabel] = h.FaultDomain
 	}
+	return labels
+}
+
+func runHost(ctx context.Context, client kubernetes.Interface, namespace string, h host, fence *hostFence) error {
+	name := "gpu-" + h.InstanceID
+	resources := v1.ResourceList{v1.ResourceCPU: *resource.NewQuantity(h.CPU, resource.DecimalSI), v1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", h.MemoryGiB)), v1.ResourcePods: resource.MustParse("16"), "nvidia.com/gpu": *resource.NewQuantity(h.GPUCount, resource.DecimalSI)}
+	labels := nodeLabels(h)
 	if err := labelNode(ctx, client, h); err != nil {
 		return err
 	}

@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
+import { awsAccountOf } from "@gradiated/gpu-hosts";
 import {
   createCatalogService,
   createControlDatabase,
@@ -42,7 +43,51 @@ const config = z
     RECONCILE_SECONDS: z.coerce.number().int().min(5).default(30),
     ROLLOUT_SECONDS: z.coerce.number().int().min(5).default(15),
     SYNC_SECONDS: z.coerce.number().int().min(30).default(300),
+    // Comma-separated arn:aws:iam::<GPU account>:role/gradiated-gpu-fleet-operator
+    // roles; an AWS host in an account without one is never changed.
+    AWS_GPU_OPERATOR_ROLE_ARNS: z
+      .string()
+      .default("")
+      .transform((value) =>
+        value
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+      )
+      .pipe(
+        z.array(
+          z.string().regex(/^arn:aws:iam::\d{12}:role\/[\w+=,.@/-]{1,512}$/),
+        ),
+      ),
+    AWS_GPU_REGION: z
+      .string()
+      .regex(/^[a-z]{2}(-[a-z]+)+-\d{1,2}$/)
+      .default("us-east-1"),
+    AWS_GPU_BOOTSTRAP_INSTANCE_PROFILE: z
+      .string()
+      .min(1)
+      .default("gradiated-gpu-prod-host-bootstrap"),
+    // Its default version names the AMI a re-image restores.
+    AWS_GPU_LAUNCH_TEMPLATE: z
+      .string()
+      .min(1)
+      .default("gradiated-gpu-prod-host"),
+    AWS_GPU_SECRET_KMS_KEY: z
+      .string()
+      .min(1)
+      .default("alias/gradiated-gpu-prod"),
   })
+  .refine(
+    ({ AWS_GPU_OPERATOR_ROLE_ARNS, FLEET_ACCOUNTS }) =>
+      AWS_GPU_OPERATOR_ROLE_ARNS.every((arn) =>
+        FLEET_ACCOUNTS.includes(`aws/${awsAccountOf(arn)}`),
+      ),
+    {
+      message:
+        "Each AWS GPU operator role must be in an aws FLEET_ACCOUNTS account",
+      path: ["AWS_GPU_OPERATOR_ROLE_ARNS"],
+    },
+  )
   .parse(process.env);
 
 const log = (event: Record<string, unknown>) =>
@@ -82,14 +127,6 @@ const leading = () => Date.now() < leaseValidUntil;
 
 const api = inClusterKubernetes();
 const metrics = createMetrics();
-const fleet = createFleet({
-  api,
-  metrics,
-  ping: (instanceId) => pingHost(instanceId, config.HOST_KEYS_DIRECTORY),
-  sync: credential.resolve,
-  leading,
-  log,
-});
 const pins = () => readPins(config.PINS_FILE);
 const ping = (instanceId: string) =>
   pingHost(instanceId, config.HOST_KEYS_DIRECTORY);
@@ -109,6 +146,13 @@ const enrollment = async () => {
       apiEndpoint: config.GPU_CONTROL_ENDPOINT,
       socksPort: config.TAILSCALE_SOCKS5_PORT,
       localApiSocket: config.TAILSCALE_LOCALAPI_SOCKET,
+      aws: {
+        roleArns: config.AWS_GPU_OPERATOR_ROLE_ARNS,
+        region: config.AWS_GPU_REGION,
+        bootstrapInstanceProfile: config.AWS_GPU_BOOTSTRAP_INSTANCE_PROFILE,
+        launchTemplateName: config.AWS_GPU_LAUNCH_TEMPLATE,
+        secretKmsKeyId: config.AWS_GPU_SECRET_KMS_KEY,
+      },
     },
     runpod,
     pins,
@@ -116,6 +160,18 @@ const enrollment = async () => {
   access = { runpod, enrollment: built };
   return built;
 };
+const fleet = createFleet({
+  api,
+  metrics,
+  ping,
+  enrollmentAddress: async (host) => {
+    const access = await enrollment();
+    return (await access?.tailnetOf(host))?.address;
+  },
+  sync: credential.resolve,
+  leading,
+  log,
+});
 const rollouts = createRollouts({
   api,
   cluster: createCluster(api, log),
@@ -127,7 +183,10 @@ const rollouts = createRollouts({
     if (!database)
       throw new Error("The model catalog credential is unavailable");
 
-    const models = await createCatalogService(database).listModels();
+    // Organizations' own models run on fleet pools like any other.
+    const models = await createCatalogService(database).listModels({
+      includeOrganizationModels: true,
+    });
     return new Map(models.map((model) => [model.id, model.status]));
   },
   mode: config.MODE,

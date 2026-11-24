@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   bootstrapAuthKey,
   claimInstanceName,
+  instanceHasDevice,
   instanceTailnet,
   releaseInstanceName,
   tailscaleAuthKey,
@@ -195,7 +196,7 @@ describe("GPU tailnet names across a re-image", () => {
     const device = tailnet.join(hostname, "tag:gpu-inference");
     await expect(
       instanceTailnet(instance, tailnet.fetch, credentials),
-    ).resolves.toEqual({ connected: true });
+    ).resolves.toEqual({ connected: true, address: device.addresses[0] });
 
     tailnet.disconnect(device);
     const renamed = tailnet.join(hostname, "tag:gpu-inference");
@@ -209,5 +210,19 @@ describe("GPU tailnet names across a re-image", () => {
     await expect(
       instanceTailnet(instance, tailnet.fetch, credentials),
     ).resolves.toEqual({ connected: false, lastSeen: renamed.lastSeen });
+  });
+
+  it("tells whether a host was ever promoted to gpu-<id>, online or not", async () => {
+    const tailnet = fakeTailnet();
+    tailnet.join("gpu-bootstrap-pod1", "tag:gpu-bootstrap");
+    await expect(
+      instanceHasDevice(instance, tailnet.fetch, credentials),
+    ).resolves.toBe(false);
+
+    const device = tailnet.join(hostname, "tag:gpu-inference");
+    tailnet.disconnect(device);
+    await expect(
+      instanceHasDevice(instance, tailnet.fetch, credentials),
+    ).resolves.toBe(true);
   });
 });

@@ -148,15 +148,17 @@ def scaling_tests(name, pool, queries, wrap=False):
     case('load does not decay to idle during a scrape outage', stale + [
         series('gradiated_gateway_active_generations', '100+0x12', model=model, deployment='d')], absent)
 
-    # 35 in flight across gateways, part of it on OpenRouter, needs 50 slots at 70%.
+    # 35 in flight across gateways, part of it on OpenRouter, needs 50 slots at
+    # the default 70% target, or 35 at a pool's target of 100%.
+    need = round(35 / pool['utilization'], 6)
     case('in-flight requests across gateways and OpenRouter set the slot need', reporters() + [
         series('gradiated_gateway_active_generations', '24+0x12', model=model, deployment='d'),
         series('gradiated_gateway_active_generations', '11+0x12', 'b', model=model, deployment='openrouter')],
-         {**zero, 'utilization': max(0, 50 - ahead)})
-    # Utilization keeps its ten-minute peak, so load that just stopped still holds the count.
-    case('the slot need holds its ten-minute peak', reporters() + [
+         {**zero, 'utilization': max(0, need - ahead)})
+    # Utilization keeps its peak for the pool's hold, so load that just stopped still holds the count.
+    case('the slot need holds its peak', reporters() + [
         series('gradiated_gateway_active_generations', '35 35 0+0x10', model=model, deployment='d')],
-         {**zero, 'utilization': max(0, 50 - ahead)}, eval_time='5m')
+         {**zero, 'utilization': max(0, need - ahead)}, eval_time='5m')
     case('another model does not affect this model', reporters() + [
         series('gradiated_gateway_active_generations', '100+0x12', model='other', deployment='d')], zero)
 
@@ -206,20 +208,24 @@ def scaling_tests(name, pool, queries, wrap=False):
          zero)
     case('customer policy rejection does not grow GPU pools', reporters() + requests(
         54, 6, 'gradiated_gateway_admission_rejections_total', reason='insufficient_balance'), zero)
-    # A refusal burst keeps its step for ten minutes, so a starting replica is not removed.
-    burst = [series('gradiated_gateway_admissions_total', '0+54x4 216+0x40', model=model, deployment='d'),
-             series('gradiated_gateway_routing_capacity_rejections_total', '0+6x4 24+0x40', model=model)]
-    long_reporters = [{**item, 'values': item['values'].replace('x12', 'x40')} for item in reporters()]
-    case('a refusal burst holds its step for ten minutes', long_reporters + burst, {**zero, 'refusals': step}, eval_time='8m')
-    case('refusals expire ten minutes after their rate window', long_reporters + burst, zero, eval_time='16m')
+    # A refusal burst keeps its step for the pool's hold (ten minutes by
+    # default), so a starting replica is not removed.
+    hold = pool['hold_minutes']
+    samples = 2 * (hold + 10)
+    burst = [series('gradiated_gateway_admissions_total', f'0+54x4 216+0x{samples}', model=model, deployment='d'),
+             series('gradiated_gateway_routing_capacity_rejections_total', f'0+6x4 24+0x{samples}', model=model)]
+    long_reporters = [{**item, 'values': item['values'].replace('x12', f'x{samples}')} for item in reporters()]
+    case('a refusal burst holds its step for the hold', long_reporters + burst, {**zero, 'refusals': step},
+         eval_time=f'{hold - 2}m')
+    case('refusals expire a hold after their rate window', long_reporters + burst, zero, eval_time=f'{hold + 6}m')
     if pool['ahead']:
         case('refusals wait for the pools ahead to reach their maximum',
              [item for item in reporters() if 'gpu-inference' not in item['series']]
              + rollouts(ahead=pool['ahead'][0][1] - 1) + requests(54, 6), zero)
         case('demand the pools ahead can hold leaves this pool idle', reporters() + [
-            series('gradiated_gateway_active_generations', f'{ahead * 0.7:g}+0x12', model=model, deployment='d')], zero)
+            series('gradiated_gateway_active_generations', f'{ahead * pool["utilization"]:g}+0x12', model=model, deployment='d')], zero)
         held = [item for item in reporters() if 'gpu-inference' not in item['series']]
-        demand = [series('gradiated_gateway_active_generations', f'{ahead * 0.7:g}+0x12', model=model, deployment='d')]
+        demand = [series('gradiated_gateway_active_generations', f'{ahead * pool["utilization"]:g}+0x12', model=model, deployment='d')]
         case('a pool ahead at its maximum that cannot serve hands its demand on',
              held + rollouts(ahead_ready=0) + demand, {**zero, 'utilization': ahead})
         case('a pool ahead still growing keeps its share while it loads',

@@ -1,6 +1,13 @@
 import { z } from "zod";
 
-import { hostName, NODES, PODS, ROLLOUTS, SCALED_OBJECTS } from "./hosts.js";
+import {
+  DISRUPTION_BUDGETS,
+  hostName,
+  NODES,
+  PODS,
+  ROLLOUTS,
+  SCALED_OBJECTS,
+} from "./hosts.js";
 import { CORDONED_BY } from "./drain.js";
 import type { Kubernetes } from "./kubernetes.js";
 import {
@@ -291,6 +298,13 @@ export const createCluster = (
       if (rollout?.spec?.replicas === undefined)
         throw new Error(`Rollout ${model} has no replica count`);
       return rollout.spec.replicas;
+    },
+
+    // What the pool's PodDisruptionBudget allows now; undefined without one.
+    disruptionsAllowed: async (model: string) => {
+      const budget = (await api.get(`${DISRUPTION_BUDGETS}/${model}`)) as
+        { status?: { disruptionsAllowed?: number } } | undefined;
+      return budget?.status?.disruptionsAllowed;
     },
 
     // Sets or clears KEDA's paused replica count, writing only on a change.

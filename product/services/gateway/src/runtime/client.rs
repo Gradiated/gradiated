@@ -196,6 +196,8 @@ impl Transport {
 pub(super) struct ModelNames {
     pub(super) requested: String,
     pub(super) runtime: String,
+    /// Cartridge positions the runtime counts as prompt tokens; usage leaves them out.
+    pub(super) cartridge_tokens: u64,
 }
 
 impl ModelNames {
@@ -208,7 +210,11 @@ impl ModelNames {
             .or_else(|| call.deployment.release.runtime_model_name.clone())
             .unwrap_or_else(|| requested.clone());
 
-        Self { requested, runtime }
+        Self {
+            requested,
+            runtime,
+            cartridge_tokens: call.request.cartridge_tokens,
+        }
     }
 }
 
@@ -229,7 +235,8 @@ impl ModelRuntime for SglangClient {
             return Err(RuntimeFailure::rejected(
                 response.status(),
                 crate::NormalizedUsage::zero(),
-            ));
+            )
+            .with_retry_after(response.headers()));
         }
 
         let body = read_bounded_body(response).await?;
@@ -354,9 +361,10 @@ pub(super) async fn send(request: RequestBuilder) -> Result<Response, RuntimeFai
 }
 
 pub(super) async fn rejected_response(response: Response) -> RuntimeFailure {
+    let headers = response.headers().clone();
     let status = record_rejection(response).await;
 
-    RuntimeFailure::rejected(status, crate::NormalizedUsage::zero())
+    RuntimeFailure::rejected(status, crate::NormalizedUsage::zero()).with_retry_after(&headers)
 }
 
 pub(super) async fn record_rejection(mut response: Response) -> reqwest::StatusCode {

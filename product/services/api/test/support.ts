@@ -173,8 +173,19 @@ export const modelRecord: ModelRecord = {
   openrouterModelId: null,
   tokenizerPath: null,
   tokenizerRevision: null,
+  organizationId: null,
+  type: "chat",
   createdAt: now,
   updatedAt: now,
+};
+
+/** A SystemOne decision model owned by one organization, like `posthog/jeeves`. */
+export const organizationModelRecord: ModelRecord = {
+  ...modelRecord,
+  id: "acme/jeeves",
+  name: "Jeeves",
+  organizationId,
+  type: "decision",
 };
 
 export const notUsed = (name: string) => async (): Promise<never> => {

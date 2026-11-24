@@ -96,6 +96,82 @@ Each catalog entry says what a command does before you run it:
   tool. Use `--` before them when one could be mistaken for gradctl's own, for
   example `gradctl gpu render-config -- --help`.
 
+## Compute provider defaults
+
+Ornn is temporarily excluded from default aggregate compute results (`search`,
+`ls`, and `meter`). Its implementation remains available through explicit
+`--provider ornn` selection, including commands for existing VMs.
+
+## SF Compute training GPUs
+
+`gradctl compute search --provider sfcompute` reads live SKU-specific market quotes
+using `SF_COMPUTE_API_TOKEN` from `gradiated/dev/env`. Instance lookups and lifecycle
+commands are scoped to `SF_COMPUTE_WORKSPACE`. Prices are USD per GPU-hour;
+SF Compute buys whole nodes. Quotes cover the window ending at the last provider
+schedule boundary within one hour, and do not guarantee availability.
+
+Before provisioning, merge and deploy the Tailscale provider tag/OAuth client in
+this change, then run `gradctl compute setup tailscale` to copy its credentials
+and `gradctl compute setup sfcompute` to store a dedicated SSH key and workspace
+in the shared development secret. Both setup commands require AWS write access;
+they do not buy compute. With multiple workspaces, set `SF_COMPUTE_WORKSPACE` to
+the chosen workspace ID or resource path first. The API token is the only SF
+credential that needs to be supplied manually.
+
+```sh
+gradctl compute search --provider sfcompute --gpu h100
+gradctl compute up train-sf --provider sfcompute --platform <sku_id> \
+  --term on-demand --max-price 3 --duration-hours 4
+gradctl compute ssh train-sf --provider sfcompute -- nvidia-smi
+gradctl compute down train-sf --provider sfcompute
+```
+
+`up` requires a finite positive `--max-price` and buys one node with a non-standing,
+non-partial order into a dedicated `gradctl-<name>` pool. The price cap rounds down
+to a market tick. `--duration-hours` defaults to 1 and is an upper bound: the end
+is the last provider schedule boundary inside that window. There is no automatic
+renewal. Before expiry, extend with a new price cap:
+
+```sh
+gradctl compute extend train-sf --provider sfcompute --hours 2 --max-price 3
+```
+
+This buys a contiguous block on the same pool/SKU without replacing the VM.
+`--hours` (alias `--duration-hours`) bounds the added time; the end rounds down
+to a provider schedule boundary. Extensions require an active, dedicated one-node
+gradctl pool with no allocation gaps or outstanding buy orders. An expired or
+terminated instance cannot be revived. Identical order bodies use the same
+idempotency key; ambiguous responses still require reconciliation before retrying.
+
+Nebius VMs run until stopped/deleted or preempted, Ornn hourly rentals renew
+automatically until ended, and Spheron GPU VMs bill while running. Their supported
+rental APIs have no explicit extension operation; `extend` explains this and
+does not submit a purchase. It cannot override seller listing ends or spot reclaim.
+
+Spot uses SF Compute's preview resale/preemption feature (1.2 times the
+buy limit, the API maximum); a 30% markup is not supported. The multiplier uses
+the order's price limit rather than its actual fill price. On extension this
+applies to the new block's buy limit. On-demand omits this feature. Both terminate
+at allocation expiry. VMs use
+cloud-init, root SSH, and the public Ubuntu 24.04/CUDA 13.2 image by default;
+`--image` accepts another SF image ID/resource path. Stop/resume is unsupported.
+
+**`down` deletes the VM but does not refund prepaid compute.** Remaining time stays
+in its pool until expiry; sell unused time through SF Compute. Pools are retained
+so failed or ambiguous purchases remain inspectable. Reusing a name with an
+existing pool is refused to prevent a second purchase. Inspect the pool/orders in
+the console before retrying; mutations are never automatically retried. `meter`
+weights actual buy-order fill rates by their overlap with each usage interval,
+including extension blocks, and caps terminal usage intervals at allocation expiry
+(or an earlier provider-observed termination update). It excludes unused prepaid
+time, fees, and resale credits. Instances without a tracked order
+keep pricing unknown. Provider billing remains the source of truth for total spend.
+
+The REST contracts are documented in SF Compute's
+[instance API](https://docs.sfcompute.com/api-reference/instances/create-instance),
+[order API](https://docs.sfcompute.com/api-reference/orders/create-order), and
+[market quote API](https://docs.sfcompute.com/api-reference/orderbook/get-market-quote).
+
 ## Commands
 
 Run `gradctl commands` for the current list.

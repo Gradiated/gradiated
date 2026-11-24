@@ -29,6 +29,8 @@ export type Registration = {
   error?: string;
   tailscaleIp?: string;
   kubernetes?: {
+    // The GpuHost's spec.provider, as gpu-inference/hosts.yaml records it.
+    provider: GpuHostProvider;
     inventory: GpuInventory;
     inventoryEntry: {
       instance_id: string;
@@ -41,6 +43,56 @@ export type Registration = {
   };
 };
 
+export type GpuHostProvider =
+  | {
+      name: "runpod";
+      accountId: string;
+      podId: string;
+      machineId?: string;
+    }
+  | {
+      name: "aws";
+      accountId: string;
+      region: string;
+      availabilityZone: string;
+      ec2InstanceId: string;
+    };
+
+// Providers record a host's fault domain as <provider>:<machine or zone>.
+const faultDomainOf = (instance: ProviderInstance) => {
+  const prefix = `${instance.provider}:`;
+  return instance.faultDomain?.startsWith(prefix)
+    ? instance.faultDomain.slice(prefix.length)
+    : undefined;
+};
+
+export const gpuHostProvider = (
+  instance: ProviderInstance,
+): GpuHostProvider => {
+  const domain = faultDomainOf(instance);
+  if (instance.provider === "aws") {
+    if (!instance.region || !domain)
+      throw new Error(
+        `EC2 instance ${instance.providerInstanceId} has no region or availability zone`,
+      );
+    return {
+      name: "aws",
+      accountId: instance.providerAccountId,
+      region: instance.region,
+      availabilityZone: domain,
+      ec2InstanceId: instance.providerInstanceId,
+    };
+  }
+  if (instance.provider === "runpod")
+    return {
+      name: "runpod",
+      accountId: instance.providerAccountId,
+      podId: instance.providerInstanceId,
+      ...(domain ? { machineId: domain } : {}),
+    };
+  throw new Error(`GpuHost has no provider ${instance.provider}`);
+};
+
 export type RegistrationRequest = {
   readonly provider: string;
   readonly providerInstanceId: string;
@@ -51,7 +103,9 @@ export type RegistrationRequest = {
 export type RegistrationDependencies = {
   readonly providers: Readonly<Record<string, () => Promise<InstanceProvider>>>;
   readonly instances: () => Promise<InstanceService>;
+  // The GPU base image every provider runs, unless hostImages names another.
   readonly hostImage: string;
+  readonly hostImages?: Readonly<Record<string, string>>;
   readonly enrollmentPayload: (
     instance: ProviderInstance,
     instanceId: string,
@@ -101,6 +155,9 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
     });
   };
 
+  const hostImage = (provider: string) =>
+    dependencies.hostImages?.[provider] ?? dependencies.hostImage;
+
   const run = async (
     registration: Registration,
     provider: InstanceProvider,
@@ -122,13 +179,14 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
       );
       const inventory = await provider.bootstrap(
         instance,
-        dependencies.hostImage,
+        hostImage(registration.provider),
         payload,
         { allowReset: registration.resetRunningPod },
       );
       advance(registration, "prepared", {
         tailscaleIp: inventory.tailscale_ip,
         kubernetes: {
+          provider: gpuHostProvider(instance),
           inventory,
           inventoryEntry: {
             instance_id: record.id,
@@ -159,6 +217,8 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
   ) => {
     const provider = await createProvider();
     const instance = await provider.describe(request.providerInstanceId);
+    // Refuse a host the GpuHost manifest could not name before touching it.
+    gpuHostProvider(instance);
     await provider.checkTailscaleEnrollment(request.providerInstanceId, {
       allowReset: request.resetRunningPod,
     });
@@ -169,7 +229,7 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
       !request.resetRunningPod &&
       (await provider.supportsInPlace?.(
         request.providerInstanceId,
-        dependencies.hostImage,
+        hostImage(request.provider),
       ));
 
     if (!stopped && !request.resetRunningPod && !resuming && !inPlace) {

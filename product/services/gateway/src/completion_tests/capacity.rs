@@ -217,7 +217,7 @@ async fn when_openrouter_also_fails_the_caller_gets_our_own_failure_settled_once
 
     assert_eq!(
         harness.complete().await.unwrap_err(),
-        GatewayError::CapacityExceeded
+        GatewayError::capacity_exceeded()
     );
 
     assert_eq!(
@@ -243,7 +243,7 @@ async fn openrouter_finding_no_provider_answers_as_our_capacity_would_have() {
         .local_status(|status| status.accepting_requests = false);
     assert_eq!(
         saturated.complete().await.unwrap_err(),
-        GatewayError::CapacityExceeded
+        GatewayError::capacity_exceeded()
     );
 
     let without_deployments = Harness::new(mapped_request(0), [])
@@ -258,7 +258,7 @@ async fn openrouter_finding_no_provider_answers_as_our_capacity_would_have() {
         .local_status(|status| status.accepting_requests = false);
     assert_eq!(
         streamed.stream().await.err(),
-        Some(GatewayError::CapacityExceeded)
+        Some(GatewayError::capacity_exceeded())
     );
 }
 
@@ -274,7 +274,7 @@ async fn an_openrouter_stream_failing_before_any_frame_answers_with_our_failure(
 
     assert_eq!(
         items.last(),
-        Some(&StreamItem::Error(GatewayError::CapacityExceeded))
+        Some(&StreamItem::Error(GatewayError::capacity_exceeded()))
     );
     assert_eq!(
         harness.only_finalized()["outcome"]["error_code"],
@@ -351,7 +351,7 @@ async fn an_unmapped_model_keeps_its_local_failure() {
         .local_status(|status| status.accepting_requests = false);
     assert_eq!(
         harness.complete().await.unwrap_err(),
-        GatewayError::CapacityExceeded
+        GatewayError::capacity_exceeded()
     );
     assert_eq!(harness.journal.external_dispatches(), 0);
     assert_eq!(
@@ -580,6 +580,8 @@ fn adapter() -> crate::PrivateAdapter {
         base_model_id: "model-a".to_owned(),
         base_model_revision: "model-revision".to_owned(),
         sha256: "a".repeat(64),
+        format: crate::AdapterFormat::PeftLora,
+        num_tokens: None,
     }
 }
 
@@ -632,7 +634,8 @@ fn serve_all(harness: &Harness) {
     }
 }
 
-struct RuntimeNames(std::sync::Mutex<Vec<Option<String>>>);
+/// Each attempt's runtime adapter name and cartridge length.
+struct RuntimeNames(std::sync::Mutex<Vec<(Option<String>, u64)>>);
 
 #[tokio::test]
 async fn an_adapter_is_served_with_its_adapter_when_it_can_be() {
@@ -722,7 +725,9 @@ async fn a_failed_adapter_attempt_moves_to_base_capacity_then_openrouter() {
 async fn a_degraded_base_attempt_drops_the_adapter_runtime_name() {
     let journal = Journal::default();
     let names = Arc::new(RuntimeNames(std::sync::Mutex::new(Vec::new())));
-    let mut harness = Harness::new(adapter_request(0, 1, false), []);
+    let mut request = adapter_request(0, 1, false);
+    request.request.cartridge_tokens = 512;
+    let mut harness = Harness::new(request, []);
     serve_all(&harness);
     harness.service.runtime = Arc::new(NamingRuntime {
         names: names.clone(),
@@ -731,7 +736,8 @@ async fn a_degraded_base_attempt_drops_the_adapter_runtime_name() {
 
     harness.complete().await.unwrap();
 
-    assert_eq!(*names.0.lock().unwrap(), [None]);
+    // Without the cartridge, its positions are not subtracted from usage either.
+    assert_eq!(*names.0.lock().unwrap(), [(None, 0)]);
 }
 
 struct NamingRuntime {
@@ -752,7 +758,7 @@ impl ModelRuntime for NamingRuntime {
             .0
             .lock()
             .unwrap()
-            .push(request.runtime_model_name.clone());
+            .push((request.runtime_model_name.clone(), request.cartridge_tokens));
         self.inner
             .complete(
                 deployment,
@@ -795,4 +801,48 @@ async fn an_adapter_whose_base_is_mapped_degrades_to_openrouter() {
     assert_eq!(finalized["model_id"], "acme/task-a/task-a-v1");
     assert_eq!(finalized["served_release_digest"], openrouter_digest());
     assert_eq!(finalized["usage"]["charge"], EXTERNAL_CHARGE);
+}
+
+/// A cartridge request as the coordinator qualifies it: no base or OpenRouter tier.
+fn cartridge_request() -> QualifiedRequest {
+    let mut request = adapter_request(1, 0, false);
+    let adapter = request.adapter.as_mut().unwrap();
+    adapter.format = crate::AdapterFormat::Cartridge;
+    adapter.num_tokens = Some(512);
+    request.request.cartridge_tokens = 512;
+    request
+}
+
+#[tokio::test]
+async fn a_cartridge_without_capacity_fails_closed_and_is_not_billed() {
+    let harness = Harness::new(cartridge_request(), []);
+    serve_all(&harness);
+    harness.state.statuses.lock().unwrap()[0].healthy = false;
+
+    // The error an adapter gets when its capacity is unhealthy everywhere.
+    assert_eq!(
+        harness.complete().await.unwrap_err(),
+        GatewayError::RuntimeUnavailable
+    );
+    assert!(harness.journal.steps().is_empty());
+
+    let harness = Harness::new(
+        cartridge_request(),
+        [
+            failure(RuntimeFailureKind::Unavailable),
+            failure(RuntimeFailureKind::Unavailable),
+        ],
+    );
+    serve_all(&harness);
+
+    harness.complete().await.unwrap_err();
+
+    assert_eq!(
+        harness.journal.dispatches(),
+        [Uuid::from_u128(1)],
+        "only the cartridge deployment is tried"
+    );
+    let finalized = harness.only_finalized();
+    assert_eq!(finalized["status"], "failed");
+    assert_eq!(finalized["usage"]["charge"], 0);
 }

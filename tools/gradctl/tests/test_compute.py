@@ -3,6 +3,7 @@
 import argparse
 import re
 import unittest
+from unittest import mock
 
 import _path  # noqa: F401
 from gradctl.compute import commands as dev_training
@@ -33,9 +34,19 @@ class SearchTests(unittest.TestCase):
         with self.assertRaises(argparse.ArgumentTypeError):
             dev_training.provider_list('aws')
 
+    def test_default_results_skip_ornn_but_explicit_selection_still_works(self):
+        with mock.patch.object(dev_training, 'provider') as provider:
+            visited = []
+            dev_training.each_provider(None, lambda name, cloud: visited.append(name))
+            self.assertEqual(visited, ['nebius', 'sfcompute', 'spheron'])
+            self.assertNotIn(mock.call('ornn'), provider.call_args_list)
+            dev_training.each_provider(['ornn'], lambda name, cloud: visited.append(name))
+            self.assertEqual(visited[-1], 'ornn')
+            provider.assert_called_with('ornn')
+
     def test_each_platform_name_has_one_provider(self):
         for platform, expected in (('gpu-h100-sxm', 'nebius'), ('nvidia_b300', 'ornn'), ('cpu', 'ornn'),
-                                    ('H100_SXM5', 'spheron'), ('B300_SXM6', 'spheron')):
+                                    ('H100_SXM5', 'spheron'), ('B300_SXM6', 'spheron'), ('sku_abc', 'sfcompute')):
             owners = [name for name, cls in dev_training.PROVIDERS.items()
                       if re.match(cls.platform_pattern, platform)]
             self.assertEqual(owners, [expected])
@@ -90,7 +101,7 @@ class SearchTests(unittest.TestCase):
             def offers(self, term):
                 return [OFFER]
 
-        providers, dev_training.PROVIDERS = dev_training.PROVIDERS, {'nebius': Hung, 'ornn': Healthy}
+        providers, dev_training.PROVIDERS = dev_training.PROVIDERS, {'nebius': Hung, 'spheron': Healthy}
         rows = []
         try:
             dev_training.each_provider(None, lambda name, cloud: rows.extend(cloud.offers(None)))
@@ -106,6 +117,40 @@ class SearchTests(unittest.TestCase):
         self.assertAlmostEqual(nebius.hourly_price('eu-north1', 'gpu-h100-sxm', '8gpu-128vcpu-1600gb', 'spot'), 18.96)
         self.assertEqual(nebius.hourly_price('eu-north1', 'gpu-h100-sxm', '1gpu-16vcpu-200gb', 'on-demand'), 99.0)
         self.assertEqual(nebius.hourly_price('eu-north1', 'gpu-l40s-a', '1gpu-8vcpu-32gb', 'spot'), 99.0)
+
+
+class ExtensionCommandTests(unittest.TestCase):
+    def test_dispatch_preserves_provider_result(self):
+        from unittest import mock
+        from types import SimpleNamespace
+        cloud = SimpleNamespace(name='sfcompute', extend=mock.Mock(return_value={
+            'hours': 2, 'end_at': 10800, 'order_id': 'ordr_test'}))
+        vm = {'name': 'exp'}
+        args = argparse.Namespace(name='exp', provider='sfcompute', hours=2, max_price=3)
+        with mock.patch.object(dev_training, 'locate', return_value=(cloud, vm)):
+            result = dev_training.extend(args)
+        cloud.extend.assert_called_once_with(vm, 2, 3)
+        self.assertEqual(result.data['provider'], 'sfcompute')
+        self.assertEqual(result.data['order_id'], 'ordr_test')
+
+    def test_continuously_billed_providers_explain_why_extension_is_unnecessary(self):
+        from unittest import mock
+        from gradctl.core import UsageError
+        for name in ('nebius', 'ornn', 'spheron'):
+            cloud = dev_training.PROVIDERS[name](lambda name: '', None)
+            args = argparse.Namespace(name='exp', provider=name, hours=1, max_price=3)
+            with mock.patch.object(dev_training, 'locate', return_value=(cloud, {'name': 'exp'})):
+                with self.assertRaisesRegex(UsageError, name):
+                    dev_training.extend(args)
+
+    def test_invalid_limits_fail_before_provider_lookup(self):
+        from unittest import mock
+        from gradctl.core import UsageError
+        for hours, cap in ((0, 2), (float('nan'), 2), (1, float('inf')), (1, -1)):
+            with mock.patch.object(dev_training, 'locate') as locate:
+                with self.assertRaises(UsageError):
+                    dev_training.extend(argparse.Namespace(hours=hours, max_price=cap))
+                locate.assert_not_called()
 
 
 class SshTests(unittest.TestCase):

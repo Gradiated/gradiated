@@ -41,6 +41,25 @@ image, no exposed ports and that key in its environment, waits for it to join,
 and enrolls it as above; nobody handles the key. The reset stops the pod's
 workloads, so drain a serving host first.
 
+AWS GPU hosts are EC2 instances in the GPU account, launched from its launch
+template, which runs the GPU base image with no published ports. Register one
+with `register_instance(provider: "aws", instance_id: "<EC2 instance ID>")`.
+ops-mcp delivers the single-use bootstrap key through the instance's
+`gradiated/gpu-bootstrap/<instance ID>` secret instead of a provider environment
+variable; the host joins as `gpu-bootstrap-<instance ID>` and enrolls as above,
+and its secret and instance profile are removed once it is enrolled. On AWS a
+reset replaces the root volume (EC2 `CreateReplaceRootVolumeTask`) with the AMI
+of the launch template's default version and keeps the instance; the same reset
+authorization applies. The secret is written only after the new root volume is
+in place, so an old root's launcher never consumes the single-use key. Its `GpuHost` provider is
+`{name: aws, accountId, region, availabilityZone, ec2InstanceId}`; its fault
+domain is `aws:<availability zone>`. Pin a pool to AWS hosts with `provider:
+aws` in `models.json` (the node selector `gradiated.com/provider: aws`) and a
+reservation. Add `aws/<account ID>` to the operator's `FLEET_ACCOUNTS` with the
+first AWS host. The `gpu-fleet` operator rolls AWS hosts as it does RunPod pods, through
+the account's operator role named in its `AWS_GPU_OPERATOR_ROLE_ARNS`; see the
+[operator README](../tools/virtual-kubelet/README.md). Training stays on RunPod hosts.
+
 Commit the prepared host as a `GpuHost` in
 `infra/environments/prod/us-east-1/kubernetes/gpu-inference/hosts.yaml`: its
 instance ID, RunPod account and pod ID, measured inventory and management secret

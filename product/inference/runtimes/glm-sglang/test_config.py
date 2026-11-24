@@ -70,6 +70,7 @@ class Configuration(unittest.TestCase):
     def test_invalid_devices_tp_adapters_and_port_collisions_fail(self):
         for delta in [{'NVIDIA_VISIBLE_DEVICES': 'GPU-a'}, {'NVIDIA_VISIBLE_DEVICES': 'GPU-a,GPU-a'},
                       {'TENSOR_PARALLEL_SIZE': '1'}, {'LORA_ENABLED': 'true'}, {'WARMUP_PORT': '18081'},
+                      {'CARTRIDGE_POOL_BYTES': '1073741824'},
                       {'WARMUP_PORT': '18084'}, {'RUNTIME_PORT': '65532'}, {'MAX_QUEUED_REQUESTS': '6'}, {'MAX_QUEUED_TOKENS': '1000'}]:
             with self.subTest(delta=delta), self.assertRaises(ValueError):
                 config.commands({**self.environment, **delta})

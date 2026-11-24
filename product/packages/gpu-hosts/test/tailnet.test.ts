@@ -67,7 +67,26 @@ describe("tailnet bootstrap peers", () => {
       expect(() => bootstrapPeer({ Peer: { a: broken } }, "pod1")).toThrow(
         "not online with Tailscale SSH",
       );
-    expect(() => bootstrapPeer({}, "../pod")).toThrow("Invalid RunPod pod ID");
+    for (const invalid of [
+      "../pod",
+      "i-xyz",
+      "i-0123abc",
+      "I-0123456789abcdef0",
+    ])
+      expect(() => bootstrapPeer({}, invalid)).toThrow(
+        "Invalid RunPod pod or EC2 instance ID",
+      );
+  });
+
+  it("finds an EC2 instance's bootstrap device by its instance ID", () => {
+    const instance = "i-0123456789abcdef0";
+    expect(
+      bootstrapPeer(
+        { Peer: { a: peer({ HostName: `gpu-bootstrap-${instance}` }) } },
+        instance,
+      ),
+    ).toEqual({ ip: "100.64.0.9", hostKeysSha256: [fingerprint] });
+    expect(bootstrapPeer({ Peer: { a: peer() } }, instance)).toBeNull();
   });
 
   it("ignores the offline device a re-imaged pod leaves under the same name", () => {

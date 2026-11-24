@@ -9,8 +9,10 @@ import {
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {
+  awsAccountOf,
   bootstrapAuthKey,
   claimInstanceName,
+  createAwsGpuClient,
   createRunPodClient,
   instanceTailnet,
   localStatus,
@@ -19,6 +21,8 @@ import {
   socksConnector,
   sshRunner,
   tailscaleAuthKey,
+  type AwsGpuAccess,
+  type AwsGpuClient,
   type OAuthCredentials,
 } from "@gradiated/gpu-hosts";
 import { z } from "zod";
@@ -34,6 +38,25 @@ export type EnrollmentSettings = {
   apiEndpoint: string;
   socksPort: number;
   localApiSocket: string;
+  // Each AWS GPU account's operator role, with the settings its hosts share.
+  aws?: {
+    roleArns: readonly string[];
+  } & Omit<AwsGpuAccess, "roleArn" | "sessionName">;
+};
+
+// One client per account, each assuming that account's operator role.
+export const awsClients = (
+  settings: EnrollmentSettings["aws"],
+): ((accountId: string) => AwsGpuClient | undefined) => {
+  const clients = new Map(
+    (settings?.roleArns ?? []).map((roleArn) => [
+      awsAccountOf(roleArn),
+      createAwsGpuClient({
+        access: { ...settings!, roleArn, sessionName: "gradiated-gpu-fleet" },
+      }),
+    ]),
+  );
+  return (accountId) => clients.get(accountId);
 };
 
 const secrets = new SecretsManagerClient({});
@@ -137,13 +160,15 @@ export const productionEnrollment = (
   const bootstrap = oauth("tailscale-gpu-bootstrap");
   return createEnrollment({
     runpod,
+    aws: awsClients(settings.aws),
     tailnet: {
       status: () => localStatus(settings.localApiSocket),
       run: sshRunner(socksConnector("127.0.0.1", settings.socksPort)),
     },
     instanceTailnet: (instanceId) =>
       instanceTailnet(instanceId, fetch, enrollment),
-    bootstrapKey: (podId) => bootstrapAuthKey(podId, fetch, bootstrap),
+    bootstrapKey: (instanceId) =>
+      bootstrapAuthKey(instanceId, fetch, bootstrap),
     inferenceKey: (instanceId) =>
       tailscaleAuthKey(instanceId, fetch, enrollment),
     revokeKey: (client, id) =>

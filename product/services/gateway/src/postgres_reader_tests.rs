@@ -92,8 +92,8 @@ impl Tenant {
             .unwrap();
         client
             .execute(
-                "insert into models (id, name, status, properties, openrouter_model_id)
-                 values ($1, $2, 'available', $3::text::jsonb, 'author/reader-test')",
+                "insert into models (id, name, status, properties, openrouter_model_id, type)
+                 values ($1, $2, 'available', $3::text::jsonb, 'author/reader-test', 'chat')",
                 &[&model_id, &model.name, &record["properties"].to_string()],
             )
             .await
@@ -206,10 +206,36 @@ async fn a_model_deserializes_into_the_type_the_gateway_serves() {
     assert_eq!(model.id, tenant.model_id);
     assert_eq!(model.deployments.len(), 1);
     assert_eq!(model.openrouter_model(), Some("author/reader-test"));
+    assert_eq!(model.organization_id, None);
     model
         .properties
         .validate_for_serving()
         .expect("a catalog model should be servable");
+
+    tenant.remove(&reader).await;
+}
+
+#[tokio::test]
+#[ignore = "requires the local Compose PostgreSQL with migrations applied"]
+async fn an_organization_model_carries_its_owner() {
+    let reader = local_reader();
+    let tenant = Tenant::insert(&reader).await;
+    reader
+        .client()
+        .await
+        .unwrap()
+        .execute(
+            "update models set organization_id = $2 where id = $1",
+            &[&tenant.model_id, &tenant.organization_id],
+        )
+        .await
+        .unwrap();
+
+    let record = reader.model_json(&tenant.model_id).await.unwrap().unwrap();
+    let model: GatewayModel = serde_json::from_str(&record).unwrap();
+
+    assert_eq!(model.organization_id, Some(tenant.organization_id));
+    assert!(reader.model_ids().await.unwrap().contains(&tenant.model_id));
 
     tenant.remove(&reader).await;
 }
@@ -547,6 +573,10 @@ async fn adapter_query_reads_exact_versions_and_production_with_workspace_isolat
     assert_eq!(adapter.base_model_revision, "frozen-revision");
     assert_eq!(adapter.size_bytes, 1024);
     assert_eq!(adapter.sha256, "a".repeat(64));
+    assert_eq!(
+        (adapter.format, adapter.num_tokens),
+        (crate::AdapterFormat::PeftLora, None)
+    );
     assert_eq!(
         reader
             .private_adapter_json(owner.workspace_id, &owner.name("support"))

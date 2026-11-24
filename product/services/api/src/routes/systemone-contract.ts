@@ -5,6 +5,7 @@ import {
 import type { OpenAPIHono } from "@hono/zod-openapi";
 
 import type { ApiEnvironment } from "../types.js";
+import { retryAfterHeaders } from "./gateway-schemas.js";
 
 // Documentation only. The Rust gateway serves and authenticates this route.
 export const registerSystemOneContract = (app: OpenAPIHono<ApiEnvironment>) => {
@@ -43,7 +44,10 @@ export const registerSystemOneContract = (app: OpenAPIHono<ApiEnvironment>) => {
         description: "The exact requested model is unavailable or unknown.",
       },
       413: { description: "The request exceeds the gateway body limit." },
-      429: { description: "Admission or inference capacity is exhausted." },
+      429: {
+        description: "Admission or inference capacity is exhausted.",
+        headers: retryAfterHeaders,
+      },
       503: {
         description:
           "Runtime failure, invalid native response, no healthy deployment, or an unavailable gateway dependency.",

@@ -9,7 +9,9 @@ from .paths import PROXY_PORT, SERVE_PORT, TAILSCALE
 
 BOOTSTRAP_TAG = 'tag:gpu-bootstrap'
 INFERENCE_TAG = 'tag:gpu-inference'
-POD_ID = re.compile(r'[a-z0-9]{1,40}')
+# The provider's ID for the host, which names its bootstrap device gpu-bootstrap-<id>: a
+# RunPod pod ID or an EC2 instance ID.
+PROVIDER_INSTANCE_ID = re.compile(r'[a-z0-9]{1,40}|i-[0-9a-f]{8,17}')
 AUTH_KEY = re.compile(r'tskey-auth-[A-Za-z0-9-]{1,200}')
 # The end-to-end test's control server (headscale) issues these.
 TEST_AUTH_KEY = re.compile(r'hskey-auth-[A-Za-z0-9_-]{1,200}')
@@ -34,8 +36,9 @@ def tags(status):
 
 
 class Tailscale:
-    # tailscale.json holds the pod ID and, once promotion is staged, the instance ID. The live
-    # tags decide bootstrap or inference, so a failed promotion leaves a retryable bootstrap device.
+    # tailscale.json holds the provider instance ID (as 'pod': a RunPod pod or an EC2 instance) and,
+    # once promotion is staged, the instance ID. The live tags decide bootstrap or inference, so a
+    # failed promotion leaves a retryable bootstrap device.
     def __init__(self, layout, clock=time.time):
         self.layout = layout
         self.clock = clock
@@ -51,7 +54,7 @@ class Tailscale:
             config = json.loads(self.layout.tailscale_config.read_text())
         except (FileNotFoundError, ValueError):
             return None
-        if not isinstance(config, dict) or not POD_ID.fullmatch(str(config.get('pod', ''))):
+        if not isinstance(config, dict) or not PROVIDER_INSTANCE_ID.fullmatch(str(config.get('pod', ''))):
             return None
         if 'instance_id' in config and config['instance_id'] != str(uuid.UUID(str(config['instance_id']))):
             return None
@@ -80,8 +83,9 @@ class Tailscale:
             login_server = ''
         if login_server and not LOGIN_SERVER.fullmatch(login_server):
             raise ValueError('GRADIATED_TAILSCALE_LOGIN_SERVER must be https://<host>[:<port>]')
-        if not POD_ID.fullmatch(pod) or not self._valid_key(key, login_server):
-            raise ValueError('A new GPU pod needs RUNPOD_POD_ID and GRADIATED_TAILSCALE_BOOTSTRAP_KEY')
+        if not PROVIDER_INSTANCE_ID.fullmatch(pod) or not self._valid_key(key, login_server):
+            raise ValueError('A new GPU host needs GRADIATED_PROVIDER_INSTANCE_ID (or RunPod\'s RUNPOD_POD_ID) '
+                             'and GRADIATED_TAILSCALE_BOOTSTRAP_KEY')
         files.directory(self.state, 0o700, self.layout.account(TAILSCALE))
         self._write(self.auth_key, key)
         self._write(self.layout.tailscale_config,

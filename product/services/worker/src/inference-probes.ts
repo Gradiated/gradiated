@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import type { ModelRecord, ModelReplica } from "@gradiated/control";
-import { modelType } from "@gradiated/contracts/model-catalog";
 import { Counter, Gauge, Histogram, type Registry } from "prom-client";
 import { INFERENCE_PROBE_TIMEOUT_MS } from "./inference-probe.js";
 import { sleep } from "./sleep.js";
@@ -11,16 +10,15 @@ export interface ModelProbeTarget {
   readonly protocol?: "system_one";
 }
 
+/** Each model's row declares the interface it serves. */
 export const catalogProbeTargets = (
-  models: readonly Pick<ModelRecord, "id" | "status">[],
+  models: readonly Pick<ModelRecord, "id" | "status" | "type">[],
 ): ModelProbeTarget[] =>
   models
     .filter((model) => model.status === "available")
     .map((model) => ({
       modelId: model.id,
-      ...(modelType(model.id) === "decision"
-        ? { protocol: "system_one" as const }
-        : {}),
+      ...(model.type === "decision" ? { protocol: "system_one" as const } : {}),
     }));
 
 const labels = ["model", "deployment"] as const;

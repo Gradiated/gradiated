@@ -156,6 +156,84 @@
       "original_sha256": "8122dcd8c12c9416f7b4329215df735f0d87809fe6065093c213df3df4744f34",
       "overlay_sha256": "1e12d80b60b80a6b969558c2a10567b65fa5d39b63b9c16f1d8642978abc71fe",
       "patch": "hicache_cp_slice_writer.patch"
+    },
+    {
+      "path": "sglang/srt/managers/cartridge.py",
+      "original_sha256": null,
+      "overlay_sha256": "9302750f5e98cd7585e05179b5d1a0451eb844ef2f0c5fc40c919c8193aefc25",
+      "patch": "cartridge_module.patch"
+    },
+    {
+      "path": "sglang/srt/layers/cartridge_embedding.py",
+      "original_sha256": null,
+      "overlay_sha256": "5c9037a4ca7ea7ba0f20741079148dee08e34f7f8f37dcaa6aa32a30797a3340",
+      "patch": "cartridge_embedding.patch"
+    },
+    {
+      "path": "sglang/srt/arg_groups/fields/lora.py",
+      "original_sha256": "46cfcd820c3f1b07ed3fea8c0c4dac687b2a9d16a2f33a864f3399641b1e3879",
+      "overlay_sha256": "2d96aa9158d9035d21a9f48aeda469c7d55ad23db4c7ebbdaf319267ede0c0bc",
+      "patch": "cartridge_server_args.patch"
+    },
+    {
+      "path": "sglang/srt/arg_groups/lora_hook.py",
+      "original_sha256": "694cf9b3b521cffa134212f1c87b1004bd27090d1f18057f01352d4139e48fdd",
+      "overlay_sha256": "c667d51e566896d4870b3d590d9e7e130adf46fcdf50130a5d743260d4c8d613",
+      "patch": "cartridge_lora_hook.patch"
+    },
+    {
+      "path": "sglang/srt/managers/io_struct.py",
+      "original_sha256": "61144c8623ea144412069348f1b880d023ba16e0c03af431c250fd80ef64b216",
+      "overlay_sha256": "2adc98f080134d41319c48e881add0074a7189f7215e8c554909523f549e7e1b",
+      "patch": "cartridge_io_struct.patch"
+    },
+    {
+      "path": "sglang/srt/managers/tokenizer_manager.py",
+      "original_sha256": "4068aa12fd45ff432b2ac83f6faa018c49bd08a7b3e58164c277e1d77ad40ca8",
+      "overlay_sha256": "e179662e3215113301c0d7dadadb3ef4da48504bb01fbfe24dabfa8fc202ebe5",
+      "patch": "cartridge_tokenizer_manager.patch"
+    },
+    {
+      "path": "sglang/srt/entrypoints/openai/serving_base.py",
+      "original_sha256": "2133d5582ca39868a7568173c0d387db04fead3a218336d127968a8825a6047f",
+      "overlay_sha256": "062f36a489d6dc855e6fef124bb7fd918eeb1bf4015445903a1fa86f28766a83",
+      "patch": "cartridge_serving_base.patch"
+    },
+    {
+      "path": "sglang/srt/entrypoints/openai/serving_chat.py",
+      "original_sha256": "f4e21c5c758c38dbc7d3a1fecae3adf56d49ff889c2284a060fb002e72465bd8",
+      "overlay_sha256": "1a51d9e577a14845f648a629f1e34f297338afd845b59b8fd02b533ec44f1a5c",
+      "patch": "cartridge_serving_chat.patch"
+    },
+    {
+      "path": "sglang/srt/managers/schedule_batch.py",
+      "original_sha256": "aef83476e5e140aec2cd5b3e098687dae42a3e1e6d44fc9586a4b4db56846801",
+      "overlay_sha256": "f4f5d3f83cf5bb81f7459c3591eb07d963d9f639762644ae3bd9399154eb9b07",
+      "patch": "cartridge_schedule_batch.patch"
+    },
+    {
+      "path": "sglang/srt/managers/scheduler.py",
+      "original_sha256": "907e51e425133aaacc2259a0c70aa6a93aef50086b2fd3efbd2030c046246e73",
+      "overlay_sha256": "fb5641b720053977d62f0427530b18cd558f4538f2040c124b274e0fae6a945a",
+      "patch": "cartridge_scheduler.patch"
+    },
+    {
+      "path": "sglang/srt/model_executor/forward_batch_info.py",
+      "original_sha256": "e9253650088bb28f0810770ea07a412a76b6227e4f268bc94a196f25e7c97438",
+      "overlay_sha256": "8e78b0911967248de956b82761545948ad094de8d49c040d6037775d5cd0b0d7",
+      "patch": "cartridge_forward_batch_info.patch"
+    },
+    {
+      "path": "sglang/srt/model_executor/runner/prefill_cuda_graph_runner.py",
+      "original_sha256": "797abcfd7c08dd0cc2298d900c310a43e5d25d81bac1648c99bf0077d9a53f7c",
+      "overlay_sha256": "84db7d944c92ffab4961773530a2a67960f65831ded583f9f06c19d07a1c8174",
+      "patch": "cartridge_prefill_cuda_graph_runner.patch"
+    },
+    {
+      "path": "sglang/srt/models/deepseek_v4.py",
+      "original_sha256": "dacc12ca7b9d4afeb6d3f23197a815b93333000c42e8a8bc70f5328f25f3ca72",
+      "overlay_sha256": "b3f5c0c6b5d9e23a52c552bc1d1a5212c19d5a22532bfc89b09f477bbe98ce88",
+      "patch": "cartridge_deepseek_v4.patch"
     }
   ]
 }

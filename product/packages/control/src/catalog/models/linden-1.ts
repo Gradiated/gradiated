@@ -10,10 +10,11 @@ export const createLinden1ModelConfiguration = () =>
     id: linden1ModelId,
     name: modelDisplayName(linden1ModelId),
     status: "available",
+    type: "decision",
     openrouterModelId: null,
     properties: {
       description:
-        "linden-1 31B answers typed questions about text and structured state, returning calibrated choices, probabilities and scores instead of generated text.",
+        "linden-1 answers typed questions about text and structured state, returning calibrated choices, probabilities and scores instead of generated text.",
       released_at: "2026-11-18T00:00:00.000Z",
       hugging_face_id: linden1ArtifactModelPath,
       quantization: "bf16",

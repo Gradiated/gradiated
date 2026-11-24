@@ -1,0 +1,144 @@
+--- a/sglang/srt/entrypoints/openai/serving_chat.py
++++ b/sglang/srt/entrypoints/openai/serving_chat.py
+@@ -109,7 +109,8 @@
+     normalize_json_schema_types,
+     strip_structural_tag_excludes,
+ )
+-from sglang.srt.managers.io_struct import GenerateReqInput
++from sglang.srt.managers.cartridge import Cartridge, MessageAdapter, place_cartridge
++from sglang.srt.managers.io_struct import CartridgeRef, GenerateReqInput
+ from sglang.srt.models.unlimited_ocr_v2_support.chat import ChatDocSplitter
+ from sglang.srt.parser.conversation import generate_chat_conv
+ from sglang.srt.parser.hunyuan_reasoning import (
+@@ -386,9 +387,39 @@
+     return config or None
+ 
+ 
++def _message_field(message, name):
++    return message[name] if isinstance(message, dict) else getattr(message, name)
++
++
++def _with_field(value, name, new):
++    if isinstance(value, dict):
++        return {**value, name: new}
++    return value.model_copy(update={name: new})
++
++
++PROTOCOL_MESSAGES = MessageAdapter(
++    role=lambda message: _message_field(message, "role"),
++    content=lambda message: _message_field(message, "content"),
++    with_content=lambda message, content: _with_field(message, "content", content),
++    system=lambda content: ChatCompletionMessageGenericParam(
++        role="system", content=content
++    ),
++    text_part=lambda text: ChatCompletionMessageContentTextPart(type="text", text=text),
++    part_text=lambda part: (
++        part.text
++        if isinstance(part, ChatCompletionMessageContentTextPart)
++        else part.get("text")
++        if isinstance(part, dict) and part.get("type") == "text"
++        else None
++    ),
++    with_part_text=lambda part, text: _with_field(part, "text", text),
++)
++
++
+ class OpenAIServingChat(OpenAIServingBase):
+     """Handler for /v1/chat/completions requests"""
+ 
++    accepts_cartridges = True
+     _default_sampling_params_logged = False
+     _KIMI_K3_GENERATION_STUB_TOKENS = 3
+ 
+@@ -1295,10 +1326,42 @@
+             and not processed_messages.modalities
+         )
+ 
++    def _place_cartridge(
++        self,
++        request: ChatCompletionRequest,
++        is_multimodal: bool,
++        cartridge: tuple[Cartridge, str],
++    ) -> tuple[MessageProcessingResult, CartridgeRef]:
++        spec, slot_text = cartridge
++        if any(v is not None for v in (request.input_ids, request.session_id, request.lora_path)):
++            raise ValueError("Cartridge requests take chat messages without a session or LoRA path")
++
++        def render(messages):
++            processed = self._process_messages(
++                request.model_copy(update={"messages": messages}, deep=True),
++                is_multimodal,
++            )
++            if not isinstance(processed.prompt_ids, list) or any(
++                (processed.image_data, processed.video_data, processed.audio_data)
++            ):
++                raise ValueError("Cartridge requests take text chat messages")
++            return processed.prompt_ids, processed
++
++        processed, start = place_cartridge(
++            render, request.messages, spec, slot_text, PROTOCOL_MESSAGES
++        )
++        return processed, CartridgeRef(
++            sha256=spec.sha256,
++            path=spec.path,
++            num_tokens=spec.num_tokens,
++            start=start,
++        )
++
+     def _convert_to_internal_request(
+         self,
+         request: ChatCompletionRequest,
+         raw_request: Request = None,
++        cartridge: Optional[tuple[Cartridge, str]] = None,
+     ) -> tuple[GenerateReqInput, ChatCompletionRequest]:
+ 
+         # Header-based opt-in (same rationale as request_headers.py).
+@@ -1349,7 +1412,13 @@
+         is_multimodal = self.tokenizer_manager.model_config.is_multimodal
+ 
+         # Process messages and apply chat template
+-        processed_messages = self._process_messages(request, is_multimodal)
++        cartridge_ref = None
++        if cartridge is None:
++            processed_messages = self._process_messages(request, is_multimodal)
++        else:
++            processed_messages, cartridge_ref = self._place_cartridge(
++                request, is_multimodal, cartridge
++            )
+         # Build sampling parameters
+         sampling_params = request.to_sampling_params(
+             stop=processed_messages.stop,
+@@ -1362,8 +1431,10 @@
+         )
+ 
+         # Handle single vs multiple requests
+-        if request.input_ids is not None or self._can_reuse_text_only_prompt_ids(
+-            processed_messages, is_multimodal
++        if (
++            cartridge_ref is not None
++            or request.input_ids is not None
++            or self._can_reuse_text_only_prompt_ids(processed_messages, is_multimodal)
+         ):
+             prompt_kwargs = {"input_ids": processed_messages.prompt_ids}
+         else:
+@@ -1381,7 +1452,11 @@
+         )
+ 
+         # Resolve LoRA adapter from model parameter or explicit lora_path
+-        lora_path = self._resolve_lora_path(request.model, request.lora_path)
++        lora_path = (
++            None
++            if cartridge_ref is not None
++            else self._resolve_lora_path(request.model, request.lora_path)
++        )
+         img_max_dynamic_patch, vid_max_dynamic_patch = _extract_max_dynamic_patch(
+             request
+         )
+@@ -1436,6 +1511,7 @@
+                 or self._should_return_input_ids(request)
+             ),
+         )
++        adapted_request.cartridge = cartridge_ref
+         if (
+             raw_request is not None
+             and envs.SGLANG_ENABLE_REQUEST_HEADER_OVERRIDES.get()

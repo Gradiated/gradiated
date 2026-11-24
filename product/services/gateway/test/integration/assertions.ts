@@ -58,6 +58,12 @@ export const expectPublicError = (
   expect(response.status, response.text).toBe(status);
   expect(response.error()).toMatchObject({ code, type });
   if (param !== undefined) expect(response.error().param).toBe(param);
+  // Every 429 says when to retry, in whole seconds the gateway caps at 30.
+  if (status === 429) {
+    expect(response.headers["retry-after"]).toMatch(/^([0-9]|[12][0-9]|30)$/);
+  } else {
+    expect(response.headers["retry-after"]).toBeUndefined();
+  }
 };
 
 /** An inference request that was refused still carries its generation ID. */
@@ -66,7 +72,9 @@ export const expectRejected = (
   rejection: Rejection,
 ): void => {
   expectPublicError(response, rejection);
-  expect(response.headers["x-gradiated-generation-id"]).toBeTruthy();
+  const generationId = response.headers["x-gradiated-generation-id"];
+  expect(generationId).toBeTruthy();
+  expect(response.headers["x-typesafe-request-id"]).toBe(generationId);
 };
 
 /**

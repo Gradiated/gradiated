@@ -15,6 +15,7 @@ export const createTrainingModelConfiguration = (
     id: recipe.model,
     name: modelDisplayName(modelId),
     status: "unavailable",
+    type: "chat",
     properties: {
       description:
         "Training base. Hosted inference and serving prices are not configured.",

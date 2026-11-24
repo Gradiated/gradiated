@@ -208,6 +208,21 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(sglang.batches, [[]])
         self.assertGreater(result['usage']['input_tokens'], 0)
 
+    def test_long_prefills_over_one_step_are_read_individually(self):
+        def read(lengths):
+            engine, client = make()
+            rows = [[index] * length for index, length in enumerate(lengths)]
+            tokens = [list(range(index + 2)) for index in range(len(rows))]
+            result = engine._read(rows, tokens)
+            self.assertEqual(result, [[-0.5 * i for i in ids] for ids in tokens])
+            self.assertEqual([row for batch in client.batches for row in batch], rows)
+            return [len(batch) for batch in client.batches]
+
+        self.assertEqual(read([2048] * 8), [8])
+        self.assertEqual(read([3000] * 8), [1] * 8)
+        self.assertEqual(read([8600, 8600]), [2])
+        self.assertEqual(read([100, 5500, 5500, 5500]), [4])
+
     def test_unread_options_are_never_answered(self):
         engine, _ = make(scores=[0.0, None])
         with self.assertRaises(common.InvalidModelOutput):

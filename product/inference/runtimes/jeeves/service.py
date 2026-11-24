@@ -36,11 +36,13 @@ MAX_TOKENS = 16384
 # About ten seconds of an L4's prompt throughput; a request whose prompts sum to more is rejected before it runs.
 REQUEST_MAX_TOKENS = 65536
 ACTIVE_REQUESTS = 8
+LONG_PROMPT_TOKENS = 2048
+PREFILL_STEP_TOKENS = MAX_TOKENS + 1
 SGLANG_FLAGS = [
     '--mem-fraction-static', '0.80', '--max-running-requests', '32',
     # The head reads a question's options and <decide> in one forward step: no chunked prefill and no radix cache,
     # whose hits would leave the options out of the step.
-    '--chunked-prefill-size', '-1', '--disable-radix-cache', '--max-prefill-tokens', str(MAX_TOKENS + 1),
+    '--chunked-prefill-size', '-1', '--disable-radix-cache', '--max-prefill-tokens', str(PREFILL_STEP_TOKENS),
 ]
 
 
@@ -73,8 +75,8 @@ class Engine:
         answers = {key: common.answer(question, {prompt.keys(question)[0]: 1.0}, self.legend(question))
                    for key, question in questions.items() if key not in asked}
         try:
-            scores = self.sglang.logprobs([rows[key] for key in asked],
-                                          [list(range(len(prompt.keys(questions[key])))) for key in asked])
+            scores = self._read([rows[key] for key in asked],
+                                [list(range(len(prompt.keys(questions[key])))) for key in asked])
         except self.sglang.http_error as exc:
             # SGLang answers 400 for a prompt over the context length; anything else is a failed engine.
             if exc.response is not None and exc.response.status_code == 400:
@@ -98,6 +100,14 @@ class Engine:
         return {'model': MODEL, 'answers': answers,
                 'usage': {'input_tokens': tokens, 'cached_input_tokens': 0, 'output_tokens': 0},
                 'latency_ms': round((time.perf_counter() - started) * 1000, 3)}
+
+    def _read(self, rows, token_ids):
+        # On L4, packing long unchunked prefills into a full step costs more than
+        # submitting each separately. Other concurrent requests can still co-batch.
+        lengths = [len(row) for row in rows]
+        if len(rows) >= 4 and sum(lengths) > PREFILL_STEP_TOKENS and min(lengths) >= LONG_PROMPT_TOKENS:
+            return [self.sglang.logprobs([row], [ids])[0] for row, ids in zip(rows, token_ids)]
+        return self.sglang.logprobs(rows, token_ids)
 
     @staticmethod
     def legend(question):

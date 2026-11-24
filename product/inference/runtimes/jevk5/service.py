@@ -42,10 +42,9 @@ ACTIVE_REQUESTS = 8
 # it would be recomputed, it is prefilled once first and the passes start from its cached state.
 SHARED_PREFIX_MIN_TOKENS = 128
 SHARED_PREFIX_SAVED_TOKENS = 1024
-# A separate prefix-only forward adds latency to small L4 batches. Retain it when
-# the possible reuse is large, or when many passes compete for a prefill step.
-SMALL_BATCH_MAX_PASSES = 8
-SMALL_BATCH_PREFIX_SAVED_TOKENS = 6144
+# The pinned Qwen3.5 GatedDeltaNet backend checkpoints recurrent state on 64-token boundaries.
+GDN_CHECKPOINT_TOKENS = 64
+LONG_SHARED_PREFIX_TOKENS = 2560
 SGLANG_FLAGS = [
     '--mem-fraction-static', '0.80', '--max-running-requests', '64',
     # A whole prompt is read in one step; JevK5's limit is the step.
@@ -182,9 +181,10 @@ class Engine:
         if len(rows) < 2:
             return
         shared = common.common_prefix_length(rows)
-        savings_needed = (SMALL_BATCH_PREFIX_SAVED_TOKENS if len(rows) <= SMALL_BATCH_MAX_PASSES
-                          else SHARED_PREFIX_SAVED_TOKENS)
-        if shared >= SHARED_PREFIX_MIN_TOKENS and shared * (len(rows) - 1) >= savings_needed:
+        if shared >= SHARED_PREFIX_MIN_TOKENS and shared * (len(rows) - 1) >= SHARED_PREFIX_SAVED_TOKENS:
+            # The production L4 uses the full shared prefix outside this measured shape.
+            if len(rows) == 3 and shared >= LONG_SHARED_PREFIX_TOKENS:
+                shared -= shared % GDN_CHECKPOINT_TOKENS
             self.sglang.prefill(rows[0][:shared])
 
     def _read(self, keys, rows):

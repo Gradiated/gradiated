@@ -44,7 +44,8 @@ not ported.
 
 The head needs a question's options and `<decide>` in one forward step, so SGLang runs without chunked prefill and
 without radix cache (a cache hit would leave the options out of the step). A question read from an incomplete step
-gets NaN scores, which the adapter refuses with a 500 rather than answering. Confidence is the top probability, as
+gets NaN scores, which the adapter refuses with a 500 rather than answering. For batches with at least four scored questions, when each has
+at least 2,048 tokens and their total exceeds one 16,385-token prefill step, the adapter submits them one at a time. Confidence is the top probability, as
 PostHog reports it; usage counts every question's whole prompt, nothing cached.
 
 ## Limits

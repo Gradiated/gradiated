@@ -32,8 +32,11 @@ ceil(n / 16) groups, then a final over the groups' best, sharpened by 0.93. All 
 SGLang in one batched call; upstream's own `spread` is replayed over the passes read so far to find the next ones.
 The LM head runs in FP32 (`--enable-fp32-lm-head`).
 
-The runtime prefills a shared prefix separately when at least 128 tokens match and the estimated savings reach
-6,144 tokens for two to eight passes, or 1,024 for larger batches. Smaller savings go straight to the batched read. Confidence is the top probability, as PostHog reports it.
+For a batch of three passes sharing at least 2,560 tokens, the runtime prefills through the last shared 64-token
+recurrent-state checkpoint. Every pass still receives its complete original input. For other shapes, the runtime
+prefills a shared prefix separately when at least 128 tokens match and the estimated savings reach
+1,024 tokens. This is the cutoff used by the stock L4 bundle `bd5c11d31dd9`. The 6,144-token small-batch cutoff
+reduced throughput in the four-question production canary. Smaller savings go straight to the batched read. Confidence is the top probability, as PostHog reports it.
 Usage counts every pass's whole prompt, as upstream does, with nothing reported as cached.
 
 ## Limits

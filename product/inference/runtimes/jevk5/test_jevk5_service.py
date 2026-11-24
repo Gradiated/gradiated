@@ -222,13 +222,34 @@ class JevK5Tests(unittest.TestCase):
         self.assertGreater(result['usage']['input_tokens'], 0)
 
     def test_prefix_only_forward_depends_on_shared_tokens_and_batch_size(self):
-        for count, shared, expect_prefill in [(2, 1024, False), (3, 3071, False), (3, 3072, True),
-                                               (8, 147, False), (9, 127, False), (9, 128, True)]:
+        for count, shared, expect_prefill in [(2, 1023, False), (2, 1024, True), (3, 2559, True),
+                                               (3, 2560, True), (4, 450, True), (8, 146, False),
+                                               (8, 147, True), (9, 127, False), (9, 128, True)]:
             with self.subTest(count=count, shared=shared):
                 engine, sglang = make()
                 prefix = [7] * shared
                 engine._share_prefix([prefix + [i] for i in range(count)])
                 self.assertEqual(sglang.prefills, [prefix] if expect_prefill else [])
+
+    def test_long_shared_prefix_stops_at_a_recurrent_checkpoint(self):
+        engine, sglang = make()
+        prefix = [7] * 2879
+        rows = [prefix + [i] for i in range(3)]
+        engine._share_prefix(rows)
+        self.assertEqual(sglang.prefills, [prefix[:2816]])
+        self.assertEqual([len(row) for row in rows], [2880] * 3)
+        engine, sglang = make()
+        engine._share_prefix(rows + [prefix + [3]])
+        self.assertEqual(sglang.prefills, [prefix])
+
+    def test_unaligned_prefix_matches_stock_outside_long_three_passes(self):
+        # These nonmultiples of 64 distinguish full-prefix warmup from checkpoint rounding.
+        for count, shared in [(2, 2879), (3, 2559), (4, 450), (8, 2879)]:
+            with self.subTest(count=count, shared=shared):
+                engine, sglang = make()
+                prefix = [7] * shared
+                engine._share_prefix([prefix + [i] for i in range(count)])
+                self.assertEqual(sglang.prefills, [prefix])
 
     def test_inputs_over_the_limits_are_client_errors(self):
         engine, sglang = make()

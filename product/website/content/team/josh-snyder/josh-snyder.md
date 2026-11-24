@@ -8,11 +8,11 @@ location:
   city: Cambridge
   country: UK
 # Links shown as icons beside your name. Remove the # to use any of them:
-# links:
-#   website: https://example.com
-#   github: https://github.com/your-handle
-#   linkedin: https://www.linkedin.com/in/your-handle
-#   x: https://x.com/your-handle
+links:
+  # website: https://example.com
+  github: https://github.com/joshsny
+  linkedin: https://www.linkedin.com/in/joshsny/
+  x: https://x.com/joshsny
 # Pictures in images/gallery/ beside this file are your gallery. To caption
 # one:
 # captions:
@@ -35,6 +35,8 @@ on each, and what the open question is. Keep this one current.
 
 - **An area of research.** What you are trying to find out.
 -->
+
+- **RL experiments.** Running reinforcement learning experiments - including post-training loops over production traces and reconstructing production environments from traces to turn smaller open-weight models into reliable, cost-effective specialists for real-world workloads.
 
 ## Things I've done
 

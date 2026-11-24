@@ -9,7 +9,7 @@ location:
   country: UK
 # Links shown as icons beside your name. Remove the # to use any of them:
 links:
-   linkedin: https://uk.linkedin.com/in/aidan-gabriel-mcconnell
+  linkedin: https://uk.linkedin.com/in/aidan-gabriel-mcconnell
 #   x: https://x.com/your-handle
 # Pictures in images/gallery/ beside this file are your gallery. To caption
 # one:

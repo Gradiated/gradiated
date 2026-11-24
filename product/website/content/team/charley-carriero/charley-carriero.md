@@ -28,15 +28,12 @@ is not shown, so delete nothing: fill in what you want. -->
 paragraphs read better than one long one. Until you write this, your summary
 above is shown as your bio. -->
 
-I'd like to make it easier to follow what's going on in AI right now. 
+I'd like to make it easier to follow what's going on in AI right now.
 
-It's quite clear this technology is here to stay, but there are still really large problems to solve. 
+It's quite clear this technology is here to stay, but there are still really large problems to solve.
 Understanding how to build cheap and energy efficient AI systems is one of them.
 
 We're giving that one a go, and I'm very happy to be writing about it.
-
-
-
 
 ## Working on
 
@@ -46,7 +43,7 @@ on each, and what the open question is. Keep this one current.
 - **An area of research.** What you are trying to find out.
 -->
 
-Leaning lots about decision models. 
+Leaning lots about decision models.
 
 ## Things I've done
 
@@ -63,7 +60,6 @@ Add writing from anywhere else as a list of links, with an optional note:
 
 - [Title of the post](https://example.com/your-post) — where or when
 -->
-
 
 ## Gallery
 

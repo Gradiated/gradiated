@@ -241,3 +241,19 @@ Applying our upgraded Multi-View (`14B plain K=16` + `14B ZS-Rich K=16`) + `r=64
 - **`webpack/webpack` (JS, 239 conflicts / 79 merges; `2-view oracle = 220/239` = 92.05%):** **`200/239` (83.68%)** (`mv-ep2`, `α=0.5`; `199/239` at `α=1.0` on both `ep1` & `ep2`) — **+4.60 pp vs 7B control (`189/239`, +14/−3, 95% CI +1.66 to +9.27 pp, highly significant)** (+2 conflicts above single-view `198/239`).
 - **`cli/cli` (Go, 201 conflicts / 94 merges; `2-view oracle = 177/201` = 88.06%):** **`157/201` (78.11%)** (`mv-ep2`, `α=1.0`; `156/201` on `ep1`) — **+3.48 pp vs 7B & 14B** (+13/−6, 95% CI **0.00 to +6.88 pp**).
 - **`spring-projects/spring-boot` (Java, 205 conflicts / 102 merges; `2-view oracle = 173/205` = 84.39%):** **`148/205` (72.20%)** (`α=4.0` on both `ep1` & `ep2`; `146/205` at `α=2.0`) — **+5.85 pp vs 7B control (`136/205`, +21/−9, 95% CI −0.74 to +10.92 pp)**, reproducing Arm 15 (`149/205`).
+
+### Arm 22 & Arm 23 — Controlled Pre-Merge Git-Context Ablation Ladder (`728/1,000` Fixed / `725/1,000` 5-Fold CV — Final Best!)
+
+To isolate *which* strictly pre-merge Git signals move the needle most beyond Level-1 branch diffs (`723–724/1,000`), we built and evaluated two progressively richer Git-context levels on the exact same 1,000 forward DuckDB conflicts (strictly from `merge^1`, `merge^2`, `merge-base`, zero post-merge leakage):
+
+- **Arm 22 — Level 2: Pre-Merge `<symbol_definitions>` (`src/include/` header declarations at `OURS` vs `THEIRS` for novel/changed hunk identifiers; `892/1,000` forward conflicts & `2,392` pre-cutoff train rows enriched):**
+  - **Generation (`symdef-passk`):** `greedy 679`, `pass@8 800`, `pass@16 819`, lifting `4-View (+SymDef)` oracle to **872/1,000 (87.2%)**.
+  - **Zero-shot `<symbol_definitions>` on existing `Arm 11` verifier (`v11-sym`):** Pure `verifier_only` on `14B K=16` jumped `699 → 709/1,000` (**+1.00 pp**, +70/−42, **95% CI +0.79 to +5.02 pp** vs 7B); `14B K=16` (`α=2.0`) `716 → 719`; `3-View` (`α=2.0`) `723 → 726`; **`4-View (+SymDef)` (`α=2.0`) = 727/1,000 (72.70%, +4.60 pp, +73/−27, 95% CI +2.56 to +6.66 pp)**.
+  - **Trained `r=64` `<symbol_definitions>` verifier (`v22-ep1`, fixed `α=2.0`):** Independently reproduced **`727/1,000` (72.70%, +4.60 pp, +71/−25, 95% CI +2.46 to +6.77 pp)** on `4-View (+SymDef)` (and `726/1,000` on `3-View` for both `ep1` and `ep2`).
+  - **Level-2 Verifier Ensemble (`v11-sym + v22-ep1 + v22-ep2`) on `4-View (+SymDef)`:**
+    - **Fixed `α=2.0`: `728/1,000` (72.80%)** vs 7B control 681 (+74/−27, **+4.70 pp**, **95% CI +2.60 to +6.84 pp**, highly significant) — **+1.70 pp above frontier GPT-6.2-Sol (`711/1,000`)**!
+    - **Strict 5-fold merge-grouped out-of-fold CV:** **`725/1,000` (72.50%)** (`fold alphas = [2.0, 1.5, 1.5, 2.0, 2.0]`, +71/−27, **+4.40 pp**, **95% CI +2.34 to +6.51 pp**) — **+1.40 pp above GPT-6.2-Sol out-of-fold**!
+- **Arm 23 — Level 3: Deep Git Context (file-specific `git log <mb>..<OURS|THEIRS> -- <path>` + timestamps + header symbol definitions + cross-file call sites + ±55-line surrounding file context & `#include`s; `1,000/1,000` forward conflicts enriched):**
+  - **Generation (`l3-passk`):** Achieved our highest `pass@16` (**824/1,000**) and highest `4-View (+Level3)` oracle (**875/1,000**).
+  - **Verification (`v23-ep1` on `4-View (+Level3)`):** **723/1,000 (72.30%, +4.20 pp, +74/−32, 95% CI +2.14 to +6.23 pp)** at `α=0.5` (`ep2`: 717/1,000).
+  - **Context-ablation takeaway:** Compact, surgical `<symbol_definitions>` (Level 2: **728/1,000** fixed / **725/1,000** 5-fold CV) outperformed dumping wider ±55-line raw file blocks + call sites (Level 3: 723/1,000) because Level 3 crowds the verifier's 4,096-token window, whereas Level 3's richer context yielded the highest generator `pass@16` (`824`) and 4-view oracle (`875`).

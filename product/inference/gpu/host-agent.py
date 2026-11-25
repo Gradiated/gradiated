@@ -158,8 +158,29 @@ def runtime_profile(config, pod):
 
 
 HUB_API = "https://huggingface.co/api/models"
+DEFAULT_HF_TOKEN_FILE = "/etc/gradiated/hf-token"
 CACHE_MARKER = ".gradiated-last-used"
 UNUSED_WEIGHT_FORMATS = (".bin", ".pt", ".pth", ".ckpt", ".gguf", ".h5", ".msgpack", ".onnx")
+
+
+def hf_token(config):
+    path = config.get("hf_token_file", DEFAULT_HF_TOKEN_FILE)
+    if not path:
+        return None
+    try:
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    except FileNotFoundError:
+        return None
+    try:
+        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+            raise ValueError("HF token file must be a regular file")
+        with os.fdopen(descriptor, "r", encoding="utf-8") as handle:
+            descriptor = -1
+            token = handle.read().strip()
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+    return token or None
 
 
 def reporter_environment(profile, uid, base, path):
@@ -213,8 +234,10 @@ def repo_directory(hub, repo):
     return hub / ("models--" + repo.replace("/", "--"))
 
 
-def hub_files(repo, revision):
-    with urllib.request.urlopen(f"{HUB_API}/{repo}/revision/{revision}?blobs=true", timeout=30) as response:
+def hub_files(repo, revision, token=None):
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    request = urllib.request.Request(f"{HUB_API}/{repo}/revision/{revision}?blobs=true", headers=headers)
+    with urllib.request.urlopen(request, timeout=30) as response:
         siblings = json.load(response)["siblings"]
     # The cache stores LFS files under their SHA-256 and other files under their git blob id.
     files = {item["rfilename"]: (item.get("size") or 0, (item.get("lfs") or {}).get("sha256") or item.get("blobId"))
@@ -314,9 +337,11 @@ def prepare_model_cache(config, profile, directory, pods, log, files=hub_files, 
         protected = {repo_directory(hub, repo).name for item, _ in pods for repo in model_repos(item)}
         needed = config.get("model_cache_reserve_gib", 64) * 2**30
         needed += sum(lora_headroom(item, path) for item, path in pods)
+        token = hf_token(config)
         for repo, revision in required:
             try:
-                needed += missing_bytes(hub, repo, revision, files(repo, revision))
+                listing = files(repo, revision, token=token) if files is hub_files else files(repo, revision)
+                needed += missing_bytes(hub, repo, revision, listing)
             except (OSError, ValueError, KeyError) as error:
                 log(f"Could not size {repo}@{revision}: {error}")
         evict_models(hub, needed, protected, log, usage)
@@ -424,6 +449,9 @@ def task(uid, stopping):
         "GRADIATED_RUNTIME_DIR": str(directory),
         **profile.get("environment", {}),
     }
+    token = hf_token(config)
+    if token:
+        environment["HF_TOKEN"] = token
     if profile.get("kind") == "training":
         environment.update({"GRADIATED_POD_UID": uid,
                             "GRADIATED_RUNTIME_ROOT": str(bundle), "TRAINER_IMAGE_DIGEST": digest})

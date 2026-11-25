@@ -1250,5 +1250,37 @@ class ModelCacheTest(unittest.TestCase):
 
         self.assertTrue(old.exists())
 
+    @unittest.skipUnless(hasattr(agent, 'hf_token'), 'the frozen recovery agent predates gated HF token support')
+    def test_hf_token_is_optional_rejects_symlinks_and_authenticates_hub_sizing(self):
+        missing = self.home / 'missing-hf-token'
+        self.assertIsNone(agent.hf_token({'hf_token_file': str(missing)}))
+
+        empty = self.home / 'empty-hf-token'
+        empty.write_text('  \n')
+        self.assertIsNone(agent.hf_token({'hf_token_file': str(empty)}))
+
+        token_file = self.home / 'hf-token'
+        token_file.write_text('hf_test_token_value\n')
+        self.assertEqual(agent.hf_token({'hf_token_file': str(token_file)}), 'hf_test_token_value')
+
+        link = self.home / 'hf-token-link'
+        link.symlink_to(token_file)
+        with self.assertRaises(OSError):
+            agent.hf_token({'hf_token_file': str(link)})
+
+        listing = {'siblings': [{'rfilename': 'model.safetensors', 'size': 10, 'blobId': 'b' * 40}]}
+        response = MagicMock()
+        response.__enter__.return_value = response
+        response.read.return_value = json.dumps(listing).encode()
+        with patch.object(agent.urllib.request, 'urlopen', return_value=response) as opened:
+            agent.hub_files('lyber-ai/Kimi-K3.1-Pro-UNCENSORED-MXFP4', self.revision, token='hf_test_token_value')
+            req = opened.call_args.args[0]
+            self.assertEqual(req.get_header('Authorization'), 'Bearer hf_test_token_value')
+
+        with patch.object(agent.urllib.request, 'urlopen', return_value=response) as opened:
+            agent.hub_files('moonshotai/Kimi-K3.1-Pro', self.revision)
+            req = opened.call_args.args[0]
+            self.assertIsNone(req.get_header('Authorization'))
+
 if __name__ == '__main__':
     unittest.main()

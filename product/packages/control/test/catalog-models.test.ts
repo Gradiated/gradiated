@@ -107,6 +107,10 @@ describe("model configurations", () => {
       input: [1_600, 160],
       output: [8_000, 8_000],
     },
+    "yetalabs/kimi-k3.1-pro-abliterated": {
+      input: [1_600, 160],
+      output: [8_000, 8_000],
+    },
     "z-ai/glm-5.3": { input: [1_400, 260], output: [4_400, 4_400] },
     "posthog/jeeves": { input: [20, 20], output: [0] },
     "posthog/jevk5": { input: [20, 20], output: [0] },
@@ -142,6 +146,7 @@ describe("model configurations", () => {
       "gradiated/linden-1": null,
       "perplexity-ai/pplx-decider-v1.2": null,
       "moonshotai/kimi-k3.1-pro": "moonshotai/kimi-k3.1-pro",
+      "yetalabs/kimi-k3.1-pro-abliterated": null,
       "z-ai/glm-5.3": "z-ai/glm-5.3",
       "posthog/jeeves": null,
       "posthog/jevk5": null,
@@ -184,6 +189,7 @@ describe("model configurations", () => {
       "chat",
       "chat",
       "decision",
+      "chat",
       "chat",
       "chat",
       "decision",
@@ -232,6 +238,27 @@ it("offers Kimi with exact OpenRouter capacity and its reasoning contract", () =
         },
       },
     ],
+  });
+});
+
+it("offers YetaLabs' abliterated Kimi K3.1 Pro without OpenRouter fallback", () => {
+  const model = catalogModels.find(
+    (item) => item.id === "yetalabs/kimi-k3.1-pro-abliterated",
+  );
+
+  expect(model?.status).toBe("available");
+  expect(
+    model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
+  ).toBeNull();
+  expect(model?.properties).toMatchObject({
+    hugging_face_id: "yetalabs/Kimi-K3.1-Pro-abliterated",
+    quantization: "mxfp4",
+    tokenizer: "Kimi K3.1",
+    input_modalities: [{ type: "text" }],
+    reasoning: {
+      supported_efforts: ["low", "high", "max"],
+      default_effort: "max",
+    },
   });
 });
 

@@ -3,6 +3,10 @@ import type { CatalogModelInput } from "../service.js";
 
 export const kimiK31ProModelId = "moonshotai/kimi-k3.1-pro";
 export const kimiK31ProArtifactModelPath = "moonshotai/Kimi-K3.1-Pro";
+export const yetalabsKimiK31ProAbliteratedModelId =
+  "yetalabs/kimi-k3.1-pro-abliterated";
+export const yetalabsKimiK31ProAbliteratedArtifactModelPath =
+  "yetalabs/Kimi-K3.1-Pro-abliterated";
 
 export const createKimiK31ProModelConfiguration = () =>
   ({
@@ -75,3 +79,24 @@ export const createKimiK31ProModelConfiguration = () =>
       },
     },
   }) satisfies CatalogModelInput;
+
+export const createYetalabsKimiK31ProAbliteratedModelConfiguration = () => {
+  const base = createKimiK31ProModelConfiguration();
+
+  return {
+    ...base,
+    id: yetalabsKimiK31ProAbliteratedModelId,
+    name: modelDisplayName(yetalabsKimiK31ProAbliteratedModelId),
+    status: "available",
+    type: "chat",
+    // OpenRouter does not serve YetaLabs' weights; stock Kimi K3.1 Pro is a different model.
+    openrouterModelId: null,
+    properties: {
+      ...base.properties,
+      description:
+        "YetaLabs' abliterated MXFP4 Kimi K3.1 Pro with retained reasoning and tool use.",
+      released_at: "2026-11-17T00:00:00.000Z",
+      hugging_face_id: yetalabsKimiK31ProAbliteratedArtifactModelPath,
+    },
+  } satisfies CatalogModelInput;
+};

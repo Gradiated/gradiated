@@ -461,7 +461,46 @@ grad sources add langfuse --dataset support-prod --host https://cloud.langfuse.c
 
 ---
 
-## 9. Phased Rollout
+## 9. Paper Reproductions Hub (`gradiated.com/papers/` & One-Click `grad run`)
+
+Separate from `/docs/`, Gradiated ships a public **Paper Reproductions Hub** (`gradiated.com/papers/<slug>/`, backed by `papers/<slug>/` templates) where popular and newly released post-training papers are implemented in 15–60 lines of `grad` against pinned public datasets — acting as the **"one-click deploy button" equivalent for ML research**.
+
+### 9.1 Template Contract (`papers/<slug>/paper.yaml`)
+
+Each paper directory is self-contained and machine-runnable:
+
+```yaml
+# papers/sdft/paper.yaml
+slug: sdft
+title: "Self-Distillation Fine-Tuning (SDFT)"
+arxiv: "https://arxiv.org/abs/2601.19897"
+category: distillation
+public_dataset: "hf://sciknoweval/chemistry-demo"
+base_default: "Qwen/Qwen3-8B"
+compute: gpu
+entrypoint: train.py            # or recipe.yaml for managed recipes
+estimate: { gpu: "1x H100", minutes: 18, approx_usd: 1.40 }
+```
+
+### 9.2 Three Zero-Friction Launch Paths
+
+1. **One-click Web Launch (Console Deep-Link):**
+   `https://console.gradiated.com/run?template=papers/sdft&base=Qwen/Qwen3-8B` opens the Gradiated Console pre-filled with the paper's recipe, pinned public dataset, `$0` dry-run cost/time estimate, and a single **Run** button — plus an embeddable **"Run on Gradiated"** README badge for paper authors.
+2. **One-command CLI (`grad run` / `grad init`):**
+   ```bash
+   grad run papers/sdft --dry-run    # validate pinned public dataset + estimate time & cost ($0)
+   grad run papers/sdft --wait       # stream live metrics, compare vs. paper table, export .grad
+   grad init papers/sdft             # copy the ~30-line script locally to modify loss or data
+   ```
+3. **Coding-agent handoff:** Every `/papers/<slug>/` page exposes **Copy Markdown** and **Copy prompt** so a researcher can drop the paper reproduction straight into Claude Code or Codex and adapt it to their own dataset.
+
+### 9.3 Launch Slate & Day-0 Paper Drops
+
+Every page reports **measured** Gradiated runs (wall-clock time, USD cost, learning curve, and eval delta) clearly distinguished from **paper-reported** numbers. Initial flagship templates (all verified in our 60-paper primitive suite): `routellm` *(CPU, 5s, $0 GPU)*, `sdft`, `dapo`, `gspo`, `cartridges`, `simpo`, `search-r1`, and `math-shepherd` — followed by rapid same-day reproductions as notable new papers land on arXiv.
+
+---
+
+## 10. Phased Rollout
 
 - **Phase 0 — `Gradiated/grad` v0 (Private Repo, OSS-Ready):**
   - Lock `spec/openapi.yaml` (validated from Rust `server/api` via `utoipa`).

@@ -40,6 +40,8 @@ However, I think as models have become more powerful, people are simply picking 
 
 When we've critically assessed the best open source models on production tasks to power software products, we've had an overall feeling that many of them are heavily benchmaxxed, in a way that feels _less_ true for the frontier models. Intelligence is much more than your ability to hit numbers along a chart - it's multidimensional.
 
+For example, when we ran DeepSeek V4.1 Flash through one of our environments, it completed the entire task but then failed to mark it as finished, despite the instructions. As a result, it scored very poorly. It could do the work, but missed the final step that let the environment recognize it had succeeded. These details matter when you're putting a model into a real workflow: being capable of solving the problem is only useful if it reliably follows through.
+
 ## Most agents are still running on vibes
 
 Working directly with customers has made another problem very clear: most companies we've spoken to don't have good evals for their agents. This includes sophisticated teams with well-structured evals for other machine learning workloads. Evaluating an agent is difficult, so changes often get shipped because they seem better.

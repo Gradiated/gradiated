@@ -191,3 +191,13 @@ To test generator scaling and cross-scale candidate diversity, we trained **`Qwe
   - `α=2.0`: **716/1,000 (71.60%)** (+70/−35, **+3.50 pp** vs 7B control, 95% CI **+1.59 to +5.49 pp**); `α=4.0`: **717/1,000 (71.70%)** (+72/−36, **+3.60 pp**, 95% CI **+1.66 to +5.65 pp**) — even on `32B` candidates never seen during verifier training, the 14B Repo Verifier lifts accuracy by **+3.10 to +3.20 pp** over `32B` greedy!
 - **`14B + 32B` Union `pass@32` + `Arm 11 14B Repo-Aware Verifier` (`ep1`, fixed `α=2.0`):**
   - **720/1,000 (72.00%)** vs 7B control 681 (+71/−32, **+3.90 pp**, 95% CI **+1.97 to +5.84 pp**, highly significant) — **+0.90 pp above frontier GPT-6.2-Sol (`711/1,000`)** (`ep2` reached **717/1,000** at `α=0.25`, +68/−32, +3.60 pp, 95% CI **+1.31 to +5.91 pp**).
+
+### Arm 18 — Multi-View `<repo_context>`-Conditioned `14B` Generator Diversity + `14B` Repo-Aware Verifier (`723/1,000` — New Best!)
+
+To test whether injecting strictly pre-merge `<repo_context>` into candidate *generation* adds complementary repo-grounded candidates that plain-hunk generators miss, we evaluated both zero-shot rich-context `14B` (`Arm 18a`) and a 1-epoch `<repo_context>`-trained `14B` generator (`Arm 18b`, trained on `arm5-train.jsonl.gz` with strictly pre-cutoff DuckDB 3-way merges `< 1595239541`):
+
+- **`Arm 18b` (`14B Trained-Rich` single-pass greedy):** **698/1,000 (69.80%)** vs 7B control 681 (+62/−45, **+1.70 pp**, 95% CI −0.29 to +3.66 pp) — **new best single-pass greedy generator** (+0.50 pp over `14B` plain `693`, +2.80 pp over `7B` rich-ctx `670`). With `Arm 11 14B` Repo Verifier (`α=2.0`): **716/1,000** (+3.50 pp, 95% CI **+1.57 to +5.53 pp**).
+- **`Arm 18a` (`14B ZS-Rich` `K=16` + `Arm 11 14B` Repo Verifier):** Greedy 677, `maj16` 688, `pass@16` 818; with `14B` Repo Verifier: pure **`verifier_only` (0 votes) = 710/1,000 (71.00%, +2.90 pp, 95% CI +0.68 to +5.30 pp)**; at fixed `α=2.0`: **718/1,000 (71.80%, +3.70 pp, +73/−36, 95% CI +1.60 to +5.77 pp)**.
+- **3-View Candidate Unions + `Arm 11 14B` Repo Verifier (fixed `α=2.0`):**
+  - **`14B plain + 32B plain + 14B ZS-Rich`:** **723/1,000 (72.30%)** vs 7B control 681 (+71/−29, **+4.20 pp**, 95% CI **+2.38 to +6.10 pp**, highly significant) — **+1.20 pp above frontier GPT-6.2-Sol (`711/1,000`)**!
+  - **`14B plain + 32B plain + 14B Trained-Rich`:** **721/1,000 (72.10%)** vs 7B control 681 (+70/−30, **+4.00 pp**, 95% CI **+2.23 to +5.85 pp**).

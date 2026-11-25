@@ -131,11 +131,12 @@ impl CompletionService {
         qualified: &QualifiedRequest,
         request: &Value,
     ) -> Result<u64, GatewayError> {
-        if let Some(local) = qualified
-            .local
-            .as_ref()
-            .filter(|local| local.deployment.release.model_path == "moonshotai/Kimi-K3.1-Pro")
-        {
+        if let Some(local) = qualified.local.as_ref().filter(|local| {
+            matches!(
+                local.deployment.release.model_path.as_str(),
+                "moonshotai/Kimi-K3.1-Pro" | "lyber-ai/Kimi-K3.1-Pro-UNCENSORED-MXFP4"
+            )
+        }) {
             // Kimi ships tiktoken and a native renderer, not tokenizer.json.
             let route = self
                 .route(qualified, local)

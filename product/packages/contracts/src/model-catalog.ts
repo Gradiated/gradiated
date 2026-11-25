@@ -38,6 +38,12 @@ export const MODEL_CATALOG = [
     },
   },
   {
+    id: "lyber/kimi-k3.1-pro-abliterated",
+    displayName: "Kimi K3.1 Pro Abliterated",
+    icon: null,
+    supportedUses: ["judge", "comparison", "serving"],
+  },
+  {
     id: "deepseek/deepseek-v4.1-flash-1017",
     displayName: "DeepSeek V4.1 Flash 1017",
     icon: "/model-providers/deepseek.svg",

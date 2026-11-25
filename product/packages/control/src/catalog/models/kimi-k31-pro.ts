@@ -3,6 +3,10 @@ import type { CatalogModelInput } from "../service.js";
 
 export const kimiK31ProModelId = "moonshotai/kimi-k3.1-pro";
 export const kimiK31ProArtifactModelPath = "moonshotai/Kimi-K3.1-Pro";
+export const lyberKimiK31ProAbliteratedModelId =
+  "lyber/kimi-k3.1-pro-abliterated";
+export const lyberKimiK31ProAbliteratedArtifactModelPath =
+  "lyber-ai/Kimi-K3.1-Pro-UNCENSORED-MXFP4";
 
 export const createKimiK31ProModelConfiguration = () =>
   ({
@@ -75,3 +79,24 @@ export const createKimiK31ProModelConfiguration = () =>
       },
     },
   }) satisfies CatalogModelInput;
+
+export const createLyberKimiK31ProAbliteratedModelConfiguration = () => {
+  const base = createKimiK31ProModelConfiguration();
+
+  return {
+    ...base,
+    id: lyberKimiK31ProAbliteratedModelId,
+    name: modelDisplayName(lyberKimiK31ProAbliteratedModelId),
+    status: "available",
+    type: "chat",
+    // OpenRouter does not serve Lyber's weights; stock Kimi K3.1 Pro is a different model.
+    openrouterModelId: null,
+    properties: {
+      ...base.properties,
+      description:
+        "Lyber's uncensored MXFP4 Kimi K3.1 Pro with retained reasoning and tool use.",
+      released_at: "2026-11-06T00:00:00.000Z",
+      hugging_face_id: lyberKimiK31ProAbliteratedArtifactModelPath,
+    },
+  } satisfies CatalogModelInput;
+};

@@ -8,7 +8,10 @@ import {
 } from "./glm-5-3-flash.js";
 import { createGlm53ModelConfiguration } from "./glm-5-3.js";
 import { createKev9bModelConfiguration } from "./kev-9b.js";
-import { createKimiK31ProModelConfiguration } from "./kimi-k31-pro.js";
+import {
+  createKimiK31ProModelConfiguration,
+  createLyberKimiK31ProAbliteratedModelConfiguration,
+} from "./kimi-k31-pro.js";
 import { createJeevesModelConfiguration } from "./posthog-jeeves.js";
 import { createJevk5ModelConfiguration } from "./posthog-jevk5.js";
 
@@ -20,6 +23,7 @@ export const catalogModels = [
   createDealignGlm53FlashModelConfiguration(),
   createKev9bModelConfiguration(),
   createKimiK31ProModelConfiguration(),
+  createLyberKimiK31ProAbliteratedModelConfiguration(),
   createGlm53ModelConfiguration(),
   // Organization-owned: never in MODEL_CATALOG, listed only to their owner.
   createJeevesModelConfiguration(),

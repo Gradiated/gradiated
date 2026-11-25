@@ -733,28 +733,33 @@ async fn partial_mode_applies_only_to_models_that_declare_it() {
 
 #[tokio::test]
 async fn only_open_limit_models_leave_an_unset_output_limit_to_the_runtime() {
-    let kimi = || {
-        let mut state = TestServingState::ready();
-        state.model.as_mut().unwrap().id = "moonshotai/kimi-k3.1-pro".to_owned();
-        Arc::new(state)
-    };
-    const UNSET: &[u8] = br#"{"model":"moonshotai/kimi-k3.1-pro","messages":[{}]}"#;
-    const SET: &[u8] = br#"{"model":"moonshotai/kimi-k3.1-pro","messages":[{}],"max_tokens":64}"#;
+    for model_id in [
+        "moonshotai/kimi-k3.1-pro",
+        "lyber/kimi-k3.1-pro-abliterated",
+    ] {
+        let kimi = || {
+            let mut state = TestServingState::ready();
+            state.model.as_mut().unwrap().id = model_id.to_owned();
+            Arc::new(state)
+        };
+        let unset = format!(r#"{{"model":"{model_id}","messages":[{{}}]}}"#);
+        let set = format!(r#"{{"model":"{model_id}","messages":[{{}}],"max_tokens":64}}"#);
 
-    let open = qualify_chat(kimi(), UNSET).await.unwrap();
-    assert!(open.request.open_output_limit);
-    assert_eq!(open.effective_output_tokens, 1_024);
-    let body = open
-        .request
-        .into_upstream_body_for_model(open.effective_output_tokens, None);
-    assert!(body.get("max_completion_tokens").is_none());
+        let open = qualify_chat(kimi(), unset.as_bytes()).await.unwrap();
+        assert!(open.request.open_output_limit);
+        assert_eq!(open.effective_output_tokens, 1_024);
+        let body = open
+            .request
+            .into_upstream_body_for_model(open.effective_output_tokens, None);
+        assert!(body.get("max_completion_tokens").is_none());
 
-    let set = qualify_chat(kimi(), SET).await.unwrap();
-    assert!(!set.request.open_output_limit);
-    let body = set
-        .request
-        .into_upstream_body_for_model(set.effective_output_tokens, None);
-    assert_eq!(body["max_tokens"], 64);
+        let set = qualify_chat(kimi(), set.as_bytes()).await.unwrap();
+        assert!(!set.request.open_output_limit);
+        let body = set
+            .request
+            .into_upstream_body_for_model(set.effective_output_tokens, None);
+        assert_eq!(body["max_tokens"], 64);
+    }
 
     let other = qualify_chat(
         Arc::new(TestServingState::ready()),

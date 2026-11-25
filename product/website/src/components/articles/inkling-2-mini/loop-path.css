@@ -1,0 +1,105 @@
+.gr-root .gr-prose > .ipath {
+  margin-block: 3.5em;
+}
+
+.ipath {
+  --ipath-bg: var(--color-panel);
+  --ipath-off: color-mix(in srgb, var(--color-text-muted) 14%, transparent);
+  --ipath-on: color-mix(in srgb, var(--color-text-muted) 45%, transparent);
+
+  padding: 1.5em 1.75em;
+  border-radius: 0.75rem;
+  background: var(--ipath-bg);
+  font-size: 0.9em;
+}
+
+.ipath-grid {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 1.1em 1em;
+}
+
+.ipath-label,
+.ipath-count {
+  padding-top: 0.2em;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 0.75em;
+  white-space: nowrap;
+}
+
+/* Stored is half the run's 48 layers, so half its width. */
+.ipath-stored {
+  display: block;
+  width: 50%;
+}
+
+.ipath-row {
+  display: flex;
+  gap: 7px;
+}
+
+.ipath-group {
+  display: flex;
+  flex: 1 1 0;
+  gap: 2px;
+}
+
+.ipath-group:has(> :nth-child(2)) {
+  flex-grow: 2;
+}
+
+.ipath-block {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 0.3em;
+  min-width: 0;
+}
+
+.ipath-ticks {
+  display: flex;
+  gap: 2px;
+  height: 1.5em;
+}
+
+.ipath-tick {
+  flex: 1;
+  border-radius: 2px;
+  background: var(--ipath-off);
+}
+
+.ipath-block--looped .ipath-tick {
+  background: var(--ipath-on);
+}
+
+.ipath-num {
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 0.62em;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .ipath {
+    padding: 1.25em 1em;
+  }
+
+  .ipath-grid {
+    grid-template-columns: auto 1fr;
+  }
+
+  .ipath-count {
+    display: none;
+  }
+
+  .ipath-row {
+    gap: 4px;
+  }
+
+  .ipath-group,
+  .ipath-ticks {
+    gap: 1px;
+  }
+}

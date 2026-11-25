@@ -9,7 +9,6 @@ publishedAt: "2026-11-25"
 image: /brand/library/inkling-2-mini.jpg
 ---
 
-import { LoopPath } from "../../src/components/articles/inkling-2-mini/LoopPath";
 import { LoopsFigure } from "../../src/components/articles/inkling-2-mini/LoopsFigure";
 import {
   BrowseCompFigure,
@@ -63,8 +62,6 @@ With this in mind, we may discuss the layers. The model is a composite function,
 So how do the loops happen? Only blocks two and three are involved in the loop. A token passes through the first block once, and then moves through blocks two and three sequentially, three separate times before moving through the fourth block once. The idea here is that the middle blocks are where abstract reasoning likely happens. It's very hard to know what reasoning happens where, as a consequence of it being hard to understand how this math function can reason at all.
 
 The intuition that the middle layers are the layers that are beneficial to loop through is based on an understanding that the model must do some translating between tokens and its own internal representations. That translating likely happens in the layers closest to the input and output. It is an intuition, and the Thinking Machines team did test different loop configurations. They found that looping through only the middle layers (blocks two and three) beat looping through the later layers (blocks three and four) on 27 of the 28 tests they ran.
-
-<LoopPath />
 
 The overall result here is a model that computes through 48 layers but only needs to store 24.
 

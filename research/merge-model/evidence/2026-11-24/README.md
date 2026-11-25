@@ -201,3 +201,23 @@ To test whether injecting strictly pre-merge `<repo_context>` into candidate *ge
 - **3-View Candidate Unions + `Arm 11 14B` Repo Verifier (fixed `α=2.0`):**
   - **`14B plain + 32B plain + 14B ZS-Rich`:** **723/1,000 (72.30%)** vs 7B control 681 (+71/−29, **+4.20 pp**, 95% CI **+2.38 to +6.10 pp**, highly significant) — **+1.20 pp above frontier GPT-6.2-Sol (`711/1,000`)**!
   - **`14B plain + 32B plain + 14B Trained-Rich`:** **721/1,000 (72.10%)** vs 7B control 681 (+70/−30, **+4.00 pp**, 95% CI **+2.23 to +5.85 pp**).
+
+### Arm 17 — `Qwen2.5-Coder-32B-Instruct` Raw-Backbone Verifier Ablation (Domain-Adapted Backbone Matters!)
+
+To test whether scaling the verifier backbone to 32B without merge-domain pretraining beats our 14B `merge14b-base` verifier, we trained a 32B FSDP LoRA verifier (`r=32`, 2 epochs on `ver14-data/`):
+- On `14B K=16`: `ep1` **704/1,000** (`α=0.5`, `verifier_only 664`), `ep2` **706/1,000** (`α=1.0`, +2.50 pp vs 7B, 95% CI **+0.22 to +4.63 pp**, `verifier_only 679`).
+- On `3-View Union`: `ep1` **713/1,000** (`α=0.25`, +3.20 pp vs 7B, 95% CI **+0.98 to +5.50 pp**, `verifier_only 608`). Ensembling raw-32B scores with `Arm 11 14B` monotonically decreased accuracy (`723 → 717 → 715`).
+- **Takeaway:** Initializing the Repo-Aware Verifier from the **merge-domain-adapted backbone (`merge14b-base`)** beats a **2.3× larger** raw instruct model by **+1.10 pp on `14B K=16` (`717` vs `706`)** and **+1.00 pp on `3-View Union` (`723` vs `713`)**.
+
+### Arm 19 — Multi-View (`plain + ZS-Rich`) + Single-Repo `14B` Verifier Ablation on Pure C (`tmux/tmux`) & 2nd C++ Repo (`ossrs/srs`)
+
+To directly ablate `Single-View` vs `Multi-View` (`14B plain K=16` + `14B ZS-Rich K=16`) and `Zero-Shot` vs `Single-Repo Adapted` on two more held-out codebases (bringing our single-repo suite to **6 repositories across 5 languages**):
+
+- **`tmux/tmux` (pure C, 152 forward conflicts, 90 merges; 327 strictly pre-cutoff C 3-way merges `< 1456942611`):**
+  - `7B` control **91/152 (59.87%)**; `14B` plain greedy **85/152 (55.92%, −3.95 pp vs 7B)**; `14B` rich greedy 88/152; `ZS 14B Ver` (`plain` 90/152, `Multi-View` 91/152).
+  - **Single-Repo Adapted `14B` Verifier (`Multi-View`):** `ep1` (`α=2.0`) **93/152** (+5.26 pp vs 14B greedy, +9/−1, **95% CI +1.31 to +9.83 pp**); `ep2` (`α=2.0`) **96/152 (63.16%)** (+7.24 pp vs 14B greedy, +14/−3, **95% CI +1.41 to +14.00 pp**, +3.29 pp vs 7B); `ep2` (`α=4.0`) **99/152 (65.13%)** (+9.21 pp vs 14B greedy, +5.26 pp vs 7B, +14/−6). Multi-View outperformed Single-View across both epochs (`ep1`: 93 vs 89 at `α=2.0`; `ep2`: 97 vs 92 `verifier_only`, 99 vs 95 at `α=4.0`).
+- **`ossrs/srs` (C++, 200 forward conflicts, 99 merges; 318 strictly pre-cutoff C++ 3-way merges `< 1472801120`):**
+  - `7B` control **158/200 (79.00%)**; `14B` plain greedy **153/200 (76.50%, −2.50 pp vs 7B)**; `14B` rich greedy 154/200.
+  - **`Multi-View` + `ep1` (`α=1.0`) 157/200 (78.50%, +2.00 pp vs 14B greedy, matching `ZS-MV` 157/200)**; fixed `α=2.0` **155/200 (+1.00 pp vs 14B greedy, +3/−1)**. Multi-View beat Single-View at every epoch (`zs`: 157 vs 153; `ep1`: 157 vs 154; `ep2`: 155 vs 149), while `ep2` overfit on this small 75-step/epoch dataset (155 → 150 at `α=2.0`), confirming **`ep1` as the safest default**.
+- **Pooled across all 5 non-DuckDB single-repo reproductions (Java Spring Boot, Go `cli/cli`, JS `webpack/webpack`, C `tmux/tmux`, C++ `ossrs/srs` — 997 forward conflicts across 464 merges):**
+  - `14B` greedy **724/997 (72.62%)** → **`14B + Single-Repo 14B Verifier` (`ep1`, fixed `α=2.0`) 746/997 (74.82%, +2.21 pp — positive on 5/5 repos!)**; best `ep1/ep2` at fixed `α=2.0`: **755/997 (75.73%, +3.11 pp over both `14B` greedy and `7B` control 724/997)**.

@@ -234,65 +234,22 @@ grad sources sync src_01J9X
 
 ### Supported providers
 
-| Provider | `--format` / `provider` | File imports | Incremental sync | Outbound sink |
-| --- | --- | --- | --- | --- |
-| Gradiated Native | `gradiated` | JSONL, `.jsonl.zst` | Automatic / S3 cursor | Native |
-| Native schema | `grad_trajectories` | JSONL, Parquet | `trajectories.push()` | — |
-| OpenTelemetry / OpenInference | `otel` | OTLP JSONL, Parquet | OTLP collector | OTLP/HTTP |
-| PostHog | `posthog` | Batch Parquet, CSV, JSON | HogQL API | OTLP (`/i/v0/ai/otel`) |
-| Langfuse | `langfuse` | S3 Parquet, JSONL, CSV | Traces + Scores API | OTLP |
-| Braintrust | `braintrust` | BTQL JSONL, CSV | BTQL cursor | OTLP |
-| LangSmith | `langsmith` | Bulk Parquet | Runs + Feedback API | OTLP |
-| Arize Phoenix | `phoenix` | Parquet, JSONL | Spans + Annotations API | OTLP |
-| Datadog LLMObs | `datadog` | Span archive | Events Search API | OTLP |
-| W&B Weave | `weave` | Parquet, JSONL | Calls + Feedback API | OTLP |
-| Comet Opik | `opik` | JSON, CSV | Traces API | OTLP |
-| Pydantic Logfire | `logfire` | Arrow, Parquet | SQL Query API | OTLP |
-| Laminar | `laminar` | SQL export | Query API | OTLP |
-| Helicone | `helicone` | JSONL, CSV | Query API | Custom JSON log |
-
-## Export trajectories back to your observability tool
-
-Add an outbound sink if your team reviews traces in OpenTelemetry, Langfuse, Braintrust, or another OTLP backend. Trajectories captured by Gradiated endpoints are forwarded in bounded batches (`<= 3.5 MB` uncompressed).
-
-<DocsCodeTabs>
-  <DocsCodeTab label="Python">
-
-```python
-client.sinks.create(
-    provider="otel",
-    config={"endpoint": "https://otel.internal.example/v1/traces"},
-    secret_ref="env:OTEL_AUTH_HEADER",
-    include_content=False,
-)
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="TypeScript">
-
-```ts
-await grad.sinks.create({
-  provider: "otel",
-  config: { endpoint: "https://otel.internal.example/v1/traces" },
-  secretRef: "env:OTEL_AUTH_HEADER",
-  includeContent: false,
-});
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="CLI">
-
-```bash
-grad sinks add otel \
-  --endpoint https://otel.internal.example/v1/traces \
-  --secret-ref env:OTEL_AUTH_HEADER \
-  --include-content false
-```
-
-  </DocsCodeTab>
-</DocsCodeTabs>
-
-Set `--include-content false` to forward latency, token counts, costs, routing decisions, and scores without prompt or completion text.
+| Provider | `--format` / `provider` | File imports | Incremental sync |
+| --- | --- | --- | --- |
+| Gradiated Native | `gradiated` | JSONL, `.jsonl.zst` | Automatic / S3 cursor |
+| Native schema | `grad_trajectories` | JSONL, Parquet | `trajectories.push()` |
+| OpenTelemetry / OpenInference | `otel` | OTLP JSONL, Parquet | OTLP collector |
+| PostHog | `posthog` | Batch Parquet, CSV, JSON | HogQL API |
+| Langfuse | `langfuse` | S3 Parquet, JSONL, CSV | Traces + Scores API |
+| Braintrust | `braintrust` | BTQL JSONL, CSV | BTQL cursor |
+| LangSmith | `langsmith` | Bulk Parquet | Runs + Feedback API |
+| Arize Phoenix | `phoenix` | Parquet, JSONL | Spans + Annotations API |
+| Datadog LLMObs | `datadog` | Span archive | Events Search API |
+| W&B Weave | `weave` | Parquet, JSONL | Calls + Feedback API |
+| Comet Opik | `opik` | JSON, CSV | Traces API |
+| Pydantic Logfire | `logfire` | Arrow, Parquet | SQL Query API |
+| Laminar | `laminar` | SQL export | Query API |
+| Helicone | `helicone` | JSONL, CSV | Query API |
 
 ## The `Trajectory` schema
 

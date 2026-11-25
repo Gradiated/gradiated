@@ -283,7 +283,7 @@ Unifies base models (`Qwen/Qwen3-32B`), pinned versions (`support-router@v12`), 
 | `GET` | `/v1/trajectories/imports/{import_id}` | Status, parsed trajectory count, dropped count, detected `scores` keys |
 | `POST` / `GET` / `PATCH` / `DELETE` | `/v1/trajectories/sources` | Scheduled incremental pull sync from external provider (secret ref, filter, schedule cron, opaque `cursor`) |
 | `POST` | `/v1/trajectories/sources/{source_id}/sync` | Trigger immediate incremental pull |
-| `POST` / `GET` / `PATCH` / `DELETE` | `/v1/trajectories/sinks` | Outbound sync FROM Gradiated trajectories INTO external provider (OTLP GenAI preset or Helicone; `include_content` redaction) |
+| `POST` / `GET` / `PATCH` / `DELETE` | `/v1/trajectories/sinks` | *(Deferred to Phase 2)* Outbound sync FROM Gradiated trajectories INTO external provider (OTLP GenAI preset or Helicone; `include_content` redaction) |
 
 ---
 
@@ -421,7 +421,6 @@ grad runs inspect run_01J9X --yaml > recipe.yaml
 grad deploy support-router@latest --canary 0.10 # 1-line upsert deploy using artifact defaults
 grad endpoints status support-router --watch    # live canary & IPS SLA monitor
 grad sources add langfuse --dataset support-prod --host https://cloud.langfuse.com --secret-ref env:LANGFUSE_API_KEY --schedule "*/15 * * * *"
-grad sinks add otel --endpoint https://otel.internal.example/v1/traces --secret-ref env:OTEL_AUTH_HEADER --include-content false
 ```
 
 ---
@@ -466,15 +465,15 @@ grad sinks add otel --endpoint https://otel.internal.example/v1/traces --secret-
 
 - **Phase 0 — `Gradiated/grad` v0 (Private Repo, OSS-Ready):**
   - Lock `spec/openapi.yaml` (validated from Rust `server/api` via `utoipa`).
-  - Build Rust `server/api` + `server/runtime` (`onnx_runner`, `endpoint_policy` w/ Valkey Pessimistic LCB/IPS SLA + canary/shadow, `remote_llm` proxy, `OTLPGenAISink`).
+  - Build Rust `server/api` + `server/runtime` (`onnx_runner`, `endpoint_policy` w/ Valkey Pessimistic LCB/IPS SLA + canary/shadow, `remote_llm` proxy).
   - Build Python `server/trainer` (5 core primitives, managed recipes: `router` [33M CPU + `Qwen3-0.6B` GPU], `classifier`, Tier-1 trace connectors: `Gradiated`, `OTEL`, `Langfuse`, `PostHog`, `Braintrust`, `LangSmith`, `grad_trajectories`) + `server/docker-compose.yml` (CPU + `--profile gpu`) + `server/helm/grad/`.
   - Ship Rust `grad` CLI + OSS-generated v0 SDKs with idiomatic façades & shared wire-level contract tests for **TypeScript, Python, Go, and Rust**.
   - End-to-end verification on AppWorld + CRMArena-Pro fixtures.
 - **Phase 1 — Gradiated Cloud Hosting, Interactive Compute API & Generative/RL Recipes:**
   - Deploy `server/` into Gradiated Cloud (Temporal + S3 + ClickHouse); embed `grad-runtime` into `product/services/gateway` for zero-hop proxy routing.
   - Expose public `/v1/trainers/*`, `/v1/artifacts/{id}/{sample,score-logprobs,embed,tokenize}`, `/v1/tensors/{ref_id}`, and `POST /v1/artifacts/merge`, plus `sft`, `dpo`, `grpo` (with stateful `DockerComposeEnv` support), and `distill` recipes.
-  - Add Console UI (Pareto curves, canary/SLA monitors, trajectory source/sink setup).
+  - Add Console UI (Pareto curves, canary/SLA monitors, trajectory source setup).
 - **Phase 2 — Public OSS Release & Expansion:**
-  - Tier-2 trace sources (`Phoenix`, `Datadog`, `Weave`, `Opik`, `Logfire`, `Laminar`, `Helicone`) + `HeliconeSink`.
+  - Tier-2 trace sources (`Phoenix`, `Datadog`, `Weave`, `Opik`, `Logfire`, `Laminar`, `Helicone`) + outbound sinks (`OTLPGenAISink`, `HeliconeSink`).
   - Managed sandbox pool for customer `docker-compose.yml` environments, additional recipes (`Cartridges`, `GenRM`, `EAGLE-3`, `BGE-M3`).
   - Flip `Gradiated/grad` public.

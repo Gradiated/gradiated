@@ -61,12 +61,14 @@ base_handler = base.handler
 
 class Supervisor(base.Supervisor):
     def __init__(self, *args, backend_url=None, active_requests=ACTIVE_REQUESTS,
-                 tokenizer_path=MODEL, **kwargs):
+                 tokenizer_path=MODEL, revision=REVISION, served_model_name=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.backend_url = backend_url
         self.active_requests = active_requests
         self.concurrencies = startup_concurrencies(active_requests)
         self.tokenizer_path = tokenizer_path
+        self.revision = revision
+        self.served_model_name = served_model_name or tokenizer_path
 
     def native_probe(self, input_ids, timeout, output_tokens=4):
         if not self.backend_url or not self.backend_url.startswith('http://127.0.0.1:'):
@@ -92,7 +94,7 @@ class Supervisor(base.Supervisor):
 
     def load_tokenizer(self):
         from transformers import AutoTokenizer
-        return AutoTokenizer.from_pretrained(self.tokenizer_path, revision=REVISION,
+        return AutoTokenizer.from_pretrained(self.tokenizer_path, revision=self.revision,
                                              trust_remote_code=True, local_files_only=True)
 
     def read_cache_geometry(self):
@@ -190,7 +192,7 @@ class Supervisor(base.Supervisor):
 
     def probe(self, words, timeout, output_tokens=64, seed=None):
         prompt = uuid.uuid4().hex + ' ' + 'warmup ' * words + '\nReply with a numbered list.'
-        body = {'model': MODEL, 'messages': [{'role': 'user', 'content': prompt}],
+        body = {'model': self.served_model_name, 'messages': [{'role': 'user', 'content': prompt}],
                 'stream': True, 'max_tokens': output_tokens, 'reasoning_effort': 'max',
                 'temperature': 1.0, 'top_p': 0.95, 'stream_options': {'include_usage': True}}
         if seed is not None:
@@ -317,16 +319,21 @@ def handler(supervisor, config):
 def main(environment=os.environ):
     config = settings(environment)
     original = base.handler
+    previous_model = base.MODEL
     base.handler = lambda supervisor: handler(supervisor, config)
+    base.MODEL = config['served_model_name']
     try:
         supervisor = Supervisor([sys.executable, str(root / 'kimi-k31/service.py')],
             runtime_url=f"http://127.0.0.1:{config['front']}",
             backend_url=f"http://127.0.0.1:{config['backend']}", active_requests=config['active_requests'],
+            tokenizer_path=config['model'], revision=config['revision'],
+            served_model_name=config['served_model_name'],
             timeout=int(environment.get('RUNTIME_STARTUP_TIMEOUT_SECONDS', '3600')),
             max_queued_requests=config['active_requests'] + QUEUED_REQUESTS)
         return supervisor.run(port=config['warmup'])
     finally:
         base.handler = original
+        base.MODEL = previous_model
 
 
 if __name__ == '__main__':

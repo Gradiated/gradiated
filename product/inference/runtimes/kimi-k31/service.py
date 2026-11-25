@@ -10,13 +10,13 @@ import urllib.request
 from config import MODEL, backend_environment, commands, validate_hardware
 
 
-def backend_ready(port):
+def backend_ready(port, served_model_name=MODEL):
     with urllib.request.urlopen(f'http://127.0.0.1:{port}/health', timeout=2) as response:
         if response.status != 200:
             return False
     with urllib.request.urlopen(f'http://127.0.0.1:{port}/v1/models', timeout=2) as response:
         models = json.load(response)
-    return MODEL in [row.get('id') for row in models.get('data', [])]
+    return served_model_name in [row.get('id') for row in models.get('data', [])]
 
 
 def stop_children(children):
@@ -48,7 +48,7 @@ def run(environment=os.environ):
             if time.monotonic() >= deadline:
                 raise TimeoutError('SGLang startup deadline')
             try:
-                if backend_ready(config['backend']):
+                if backend_ready(config['backend'], config['served_model_name']):
                     break
             except (OSError, TimeoutError):
                 pass

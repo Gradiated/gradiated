@@ -70,10 +70,22 @@ class Configuration(unittest.TestCase):
                        '--dcp-size', '--ep-size']:
             self.assertNotIn(unsafe, backend)
 
+    def test_lyber_abliterated_model_id_selects_pinned_uncensored_checkpoint(self):
+        settings, backend, _ = config.commands({**self.environment, 'MODEL_ID': config.LYBER_MODEL_ID})
+        self.assertEqual(settings['model_id'], 'lyber/kimi-k3.1-pro-abliterated')
+        self.assertEqual(settings['model'], 'lyber-ai/Kimi-K3.1-Pro-UNCENSORED-MXFP4')
+        self.assertEqual(settings['revision'], '6194fda9590f279eafb6e4c171102bd626c67921')
+        self.assertEqual(settings['served_model_name'], 'lyber-ai/Kimi-K3.1-Pro-UNCENSORED-MXFP4')
+        for flag, value in [('--model-path', 'lyber-ai/Kimi-K3.1-Pro-UNCENSORED-MXFP4'),
+                            ('--revision', '6194fda9590f279eafb6e4c171102bd626c67921'),
+                            ('--served-model-name', 'lyber-ai/Kimi-K3.1-Pro-UNCENSORED-MXFP4')]:
+            self.assertEqual(backend[backend.index(flag) + 1], value)
+
     def test_invalid_allocations_fail_before_startup(self):
         for delta in [{'NVIDIA_VISIBLE_DEVICES': 'GPU-a,GPU-b'},
                       {'NVIDIA_VISIBLE_DEVICES': ','.join(['GPU-a'] * 8)},
                       {'TENSOR_PARALLEL_SIZE': '2'}, {'LORA_ENABLED': 'true'},
+                      {'MODEL_ID': 'unknown/model'},
                       {'WARMUP_PORT': '18084'}, {'RUNTIME_PORT': '65532'},
                       {'MAX_QUEUED_REQUESTS': '4'}, {'GRADIATED_RUNTIME_ROOT': 'relative'}]:
             with self.subTest(delta=delta), self.assertRaises(ValueError):

@@ -1,6 +1,6 @@
-# Recipes (Level 0 & 1)
+# Recipes
 
-<DocsLead>Start with automatic training, validate with a dry run, inspect the exact YAML Gradiated resolved, and tune any typed field without writing a training loop.</DocsLead>
+<DocsLead>Pick the recipe for the model you want to train, start with sensible defaults, validate with a dry run, and tune any typed field or YAML file without writing a training loop.</DocsLead>
 
 A **recipe** defines a dataset split, a `ModelSpec`, a loss or solver, an optimizer, and a held-out evaluation. Every completed run writes an immutable `.grad` artifact alongside its `EvalReport`.
 
@@ -8,7 +8,6 @@ A **recipe** defines a dataset split, a `ModelSpec`, a loss or solver, an optimi
 
 | Recipe | Guide | Expected dataset fields | Default compute |
 | --- | --- | --- | --- |
-| `auto` | *(this page)* | Any `grad.trajectory/1` dataset; picks the matching recipe below | Auto (`cpu` or `gpu`) |
 | `router` | [Model router](/docs/training/recipes/router/) | Multi-model traces with `scores` and `metrics.cost_usd` | `cpu` *(optional `gpu`)* |
 | `classifier` | [Classifiers and decisions](/docs/training/recipes/classifier/) | `expected_output.label` or `scores` (binary, multiclass, ordinal) | `cpu` *(optional `gpu`)* |
 | `sft` | [Fine-tuning and preferences](/docs/training/recipes/sft-dpo/) | `input` + `expected_output` (or filtered high-score `output`) | `gpu` |
@@ -19,9 +18,9 @@ A **recipe** defines a dataset split, a `ModelSpec`, a loss or solver, an optimi
 
 For specialized training patterns built on these same primitives, see [Reward models and verifiers](/docs/training/recipes/reward-models/) and [Embeddings and rerankers](/docs/training/recipes/embeddings/).
 
-## Level 0: Automatic training
+## Start with recipe defaults
 
-Pass a dataset and a name. `recipe` defaults to `"auto"`.
+Every recipe ships with working defaults for base model, compute target, train/eval split, optimizer, and calibration. Pass your dataset, output name, and recipe — then run `--dry-run` (or `runs.plan()`) to verify data coverage before launching compute.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -32,12 +31,13 @@ from grad import Grad
 client = Grad()
 
 # Optional pre-flight check before launching compute
-plan = client.runs.plan(dataset="support-prod", name="support-router")
+plan = client.runs.plan(dataset="support-prod", name="support-router", recipe="router")
 print(plan.resolved_recipe, plan.warnings, plan.estimated_compute)
 
 run = client.runs.create(
     dataset="support-prod",
     name="support-router",
+    recipe="router",
 ).wait(
     on_metric=lambda m: print(f"step={m.step} loss={m.loss:.4f}"),
 )
@@ -54,11 +54,15 @@ import { Grad } from "@gradiated/grad";
 
 const grad = new Grad();
 
-const plan = await grad.runs.plan({ dataset: "support-prod", name: "support-router" });
+const plan = await grad.runs.plan({
+  dataset: "support-prod",
+  name: "support-router",
+  recipe: "router",
+});
 console.log(plan.resolvedRecipe, plan.warnings);
 
 const run = await grad.runs
-  .create({ dataset: "support-prod", name: "support-router" })
+  .create({ dataset: "support-prod", name: "support-router", recipe: "router" })
   .wait({
     onMetric: (m) => console.log(`step=${m.step} loss=${m.loss.toFixed(4)}`),
   });
@@ -70,12 +74,17 @@ console.log(run.artifactId, run.evalReport);
   <DocsCodeTab label="Go">
 
 ```go
-plan, _ := client.Runs.Plan(ctx, grad.RunParams{Dataset: "support-prod", Name: "support-router"})
+plan, _ := client.Runs.Plan(ctx, grad.RunParams{
+	Dataset: "support-prod",
+	Name:    "support-router",
+	Recipe:  "router",
+})
 fmt.Println(plan.ResolvedRecipe, plan.Warnings)
 
 run, _ := client.Runs.Create(ctx, grad.RunParams{
 	Dataset: "support-prod",
 	Name:    "support-router",
+	Recipe:  "router",
 }).Wait(ctx)
 fmt.Println(run.ArtifactID, run.EvalReport)
 ```
@@ -84,11 +93,11 @@ fmt.Println(run.ArtifactID, run.EvalReport)
   <DocsCodeTab label="CLI">
 
 ```bash
-# Preview the resolved recipe, dataset warnings, and estimated compute ($0)
-grad train --dataset support-prod --name support-router --dry-run
+# Preview the resolved defaults, dataset warnings, and estimated compute ($0)
+grad train --dataset support-prod --name support-router --recipe router --dry-run
 
 # Launch and stream progress
-grad train --dataset support-prod --name support-router --wait
+grad train --dataset support-prod --name support-router --recipe router --wait
 ```
 
   </DocsCodeTab>
@@ -98,23 +107,23 @@ grad train --dataset support-prod --name support-router --wait
 curl https://api.gradiated.com/v1/runs \
   -H "Authorization: Bearer $GRADIATED_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"dataset": "support-prod", "name": "support-router"}'
+  -d '{"dataset": "support-prod", "name": "support-router", "recipe": "router"}'
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
-### Inspect what `auto` chose
+### Inspect resolved defaults
 
-Automatic runs are never opaque. Export the exact resolved config as YAML to see the base model, split strategy, filters, and hyperparameters, then check it into Git as your starting point for Level 1.
+Export the full resolved config of any run as YAML to see every default — base model, split strategy, filters, and hyperparameters — and check it into Git:
 
 ```bash
 grad runs inspect run_01J9X --yaml > recipe.yaml
 ```
 
-## Level 1: Managed recipes
+## Tune recipe parameters
 
-Name a recipe explicitly and pass typed top-level configuration fields. Any field you omit keeps the recipe's default.
+Pass typed top-level fields to customize any part of a recipe. Fields you omit keep the recipe's defaults.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Router">
@@ -274,7 +283,7 @@ run = client.runs.create(
 
 ### Run recipes from YAML
 
-Every Level 1 config maps 1:1 to a flat YAML file you can version in Git and run from CI:
+Every recipe config maps 1:1 to a flat YAML file you can version in Git and run from CI:
 
 ```yaml
 # recipe.yaml
@@ -360,9 +369,9 @@ grad artifacts inspect fast-diff-merge@2026-11-25-2 --json
 
 Router artifacts include a held-out cost-vs-quality Pareto curve and 95% bootstrap confidence intervals against your fallback model.
 
-## When to move to Level 2
+## When to write a custom loop
 
-Use Level 1 while a built-in recipe matches your objective. Move to [Level 2 custom loops](/docs/training/custom-loops/) when you need:
+Stay with managed recipes while a built-in recipe matches your objective. Move to [custom loops](/docs/training/custom-loops/) when you need:
 
 - A custom loss function (for example, SimPO, ORPO, BGE-M3 tri-objective, or representation steering).
 - A stateful multi-turn environment running on your own infrastructure (Docker Compose stacks, local databases, or internal MCP tools).
@@ -374,7 +383,7 @@ Use Level 1 while a built-in recipe matches your objective. Move to [Level 2 cus
     <strong>Environments and rubrics</strong>
   </a>
   <a href="/docs/training/custom-loops/">
-    <small>Level 2</small>
+    <small>Advanced</small>
     <strong>Custom loops</strong>
   </a>
 </DocsNext>

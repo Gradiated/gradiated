@@ -4,14 +4,14 @@
 
 Use `grpo` when you can **grade an outcome** (unit tests pass, SQL returns the right rows, an API state matches expectations) even if you do not have a single gold answer. For best stability, run a short [SFT](/docs/training/recipes/sft-dpo/) pass first so the model already emits valid tool calls, then chain into GRPO with `init_from`.
 
-## Level 1 vs. Level 2 for RL
+## Managed recipe vs. custom loop for RL
 
 | Setup | Use | Why |
 | --- | --- | --- |
-| **Single-turn tasks + HTTP grader** | **Level 1 (`recipe="grpo"`)** | Pass a dataset of prompts and a grading webhook; Gradiated handles sampling, advantage normalization, and updates. |
-| **Multi-turn apps, Docker Compose, seeded DBs, custom curricula** | **Level 2 (`Environment` + `Trainer`)** | Your environment stays on your own CPU/Kubernetes infrastructure and talks to `Artifact` and `Trainer` over HTTP. |
+| **Single-turn tasks + HTTP grader** | **Managed recipe (`recipe="grpo"`)** | Pass a dataset of prompts and a grading webhook; Gradiated handles sampling, advantage normalization, and updates. |
+| **Multi-turn apps, Docker Compose, seeded DBs, custom curricula** | **Custom loop (`Environment` + `Trainer`)** | Your environment stays on your own CPU/Kubernetes infrastructure and talks to `Artifact` and `Trainer` over HTTP. |
 
-## Option A: Managed GRPO (Level 1)
+## Option A: Managed GRPO recipe
 
 Provide a dataset of task prompts (see [Trajectories and data](/docs/training/trajectories/)) and a grading webhook. Gradiated sends `Authorization: Bearer <secret>` with each rollout and expects `scores` plus a scalar `reward`:
 
@@ -51,7 +51,7 @@ run = client.runs.create(
 print(run.artifact_id)
 ```
 
-## Option B: Stateful multi-turn agents (Level 2)
+## Option B: Stateful multi-turn agents (custom loop)
 
 When the agent must call tools against a real backend stack (Postgres, Redis, internal APIs), subclass `Environment` and drive `Trainer` directly. See [Environments and rubrics](/docs/training/environments/) for the full `DockerComposeEnv` implementation.
 

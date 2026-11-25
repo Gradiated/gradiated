@@ -11,7 +11,7 @@ from grad import Grad
 client = Grad()
 client.trajectories.import_file("./support_traces.jsonl", dataset="support-prod").wait()
 
-run = client.runs.create(dataset="support-prod", name="support-router").wait()
+run = client.runs.create(dataset="support-prod", name="support-router", recipe="router").wait()
 endpoint = run.deploy(canary=0.10)
 ```
 
@@ -24,7 +24,9 @@ import { Grad } from "@gradiated/grad";
 const grad = new Grad();
 await grad.trajectories.importFile("./support_traces.jsonl", { dataset: "support-prod" }).wait();
 
-const run = await grad.runs.create({ dataset: "support-prod", name: "support-router" }).wait();
+const run = await grad.runs
+  .create({ dataset: "support-prod", name: "support-router", recipe: "router" })
+  .wait();
 const endpoint = await run.deploy({ canary: 0.1 });
 ```
 
@@ -35,7 +37,11 @@ const endpoint = await run.deploy({ canary: 0.1 });
 client := grad.NewClient()
 client.Trajectories.ImportFile(ctx, "./support_traces.jsonl", grad.ImportOpts{Dataset: "support-prod"}).Wait(ctx)
 
-run, _ := client.Runs.Create(ctx, grad.RunParams{Dataset: "support-prod", Name: "support-router"}).Wait(ctx)
+run, _ := client.Runs.Create(ctx, grad.RunParams{
+	Dataset: "support-prod",
+	Name:    "support-router",
+	Recipe:  "router",
+}).Wait(ctx)
 endpoint, _ := run.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
 ```
 
@@ -44,7 +50,7 @@ endpoint, _ := run.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
 
 ```bash
 grad import ./support_traces.jsonl --dataset support-prod
-grad train --dataset support-prod --name support-router --wait
+grad train --dataset support-prod --name support-router --recipe router --wait
 grad deploy support-router@latest --canary 0.10
 ```
 
@@ -168,17 +174,16 @@ curl https://api.gradiated.com/v1/endpoints/support-router/infer \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-## Progressive control (Level 0 → 1 → 2)
+## Two ways to train
 
-Start at Level 0. Move down a level only when you need control the level above does not expose.
+Start with a managed recipe and its built-in defaults. Drop down to custom loops only when you need control a recipe does not expose.
 
-| Level | How it works | When to use it |
+| Mode | How it works | When to use it |
 | --- | --- | --- |
-| [**Level 0 — Automatic**](/docs/training/recipes/) | Pass a dataset and name. Gradiated inspects the data, selects a recipe and compute target, trains, and runs a held-out evaluation. | You have traces or labeled examples and want a measured baseline fast. |
-| [**Level 1 — Managed recipes**](/docs/training/recipes/) | Pick a recipe ([router](/docs/training/recipes/router/), [classifier](/docs/training/recipes/classifier/), [sft](/docs/training/recipes/sft-dpo/), [dpo](/docs/training/recipes/sft-dpo/), [grpo](/docs/training/recipes/rl-agents/), [distill](/docs/training/recipes/distillation/), [cartridge](/docs/training/recipes/distillation/)) with typed top-level config or checked-in YAML. | You want explicit, reproducible runs in Git or CI without maintaining a training loop. |
-| [**Level 2 — Custom loops**](/docs/training/custom-loops/) | Drive `Trainer`, `Artifact`, `Environment`, and `Rubric` directly in Python with built-in losses or client-side PyTorch losses. | You need custom losses, stateful Docker Compose environments, reward models, or custom RL curricula. |
+| [**Managed recipes**](/docs/training/recipes/) | Pick a recipe ([router](/docs/training/recipes/router/), [classifier](/docs/training/recipes/classifier/), [sft](/docs/training/recipes/sft-dpo/), [dpo](/docs/training/recipes/sft-dpo/), [grpo](/docs/training/recipes/rl-agents/), [distill](/docs/training/recipes/distillation/), [cartridge](/docs/training/recipes/distillation/)). Start with defaults in one call, then pass typed fields or checked-in YAML to tune base model, adapter, loss, optimizer, split, or filters. | You want fast, reproducible training and held-out evals without maintaining a training loop. |
+| [**Custom loops**](/docs/training/custom-loops/) | Drive `Trainer`, `Artifact`, `Environment`, and `Rubric` directly in Python with built-in losses or client-side PyTorch losses. | You need custom losses, stateful Docker Compose environments, reward models, or custom RL curricula. |
 
-Every Level 0 run exports its exact resolved Level 1 YAML (`grad runs inspect <run_id> --yaml`), so graduating from automatic training to checked-in config takes one command.
+Any managed run can export its full resolved defaults as YAML (`grad runs inspect <run_id> --yaml > recipe.yaml`), so moving from defaults to version-controlled config takes one command.
 
 ## The five primitives
 
@@ -231,7 +236,7 @@ Read https://gradiated.com/docs/training/environments.md and https://gradiated.c
 1. Subclass `grad.Environment` around our existing `docker-compose.yml` and seed script (`setup`, `step` returning `Observation(text=...)`, `evaluate` before `teardown`, and guaranteed `teardown`).
 2. Write a `Rubric` with deterministic stateful assertions against the live container state.
 3. Run a 2-task smoke test against a base `Artifact` (`max_concurrency=2`) to verify `loss_mask` masks tool outputs and containers clean up cleanly.
-4. Wire a Level 2 GRPO / async CISPO loop using `with client.trainers.create(...) as trainer:`.
+4. Wire a GRPO / async CISPO custom loop using `with client.trainers.create(...) as trainer:`.
 ```
 
   </DocsCodeTab>

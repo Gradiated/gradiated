@@ -186,7 +186,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/training/recipes/": {
     title: "Training recipes",
     description:
-      "Run Level 0 automatic training and Level 1 managed recipes for routers, classifiers, SFT, DPO, GRPO, distillation, and Cartridges.",
+      "Run managed recipes for routers, classifiers, SFT, DPO, GRPO, distillation, and Cartridges with smart defaults and typed YAML config.",
   },
   "/docs/training/environments/": {
     title: "Environments and rubrics",
@@ -196,7 +196,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/training/custom-loops/": {
     title: "Custom training loops",
     description:
-      "Build Level 2 RL, preference, distillation, and custom PyTorch loss loops directly on Gradiated Trainer and Artifact primitives.",
+      "Build custom RL, preference, distillation, and PyTorch loss loops directly on Gradiated Trainer and Artifact primitives.",
   },
   "/docs/training/endpoints/": {
     title: "Artifacts and endpoints",

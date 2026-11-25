@@ -245,9 +245,9 @@ curl https://api.gradiated.com/v1/endpoints/support-router/infer \
 - **Circuit breaker:** If rolling quality drop crosses `hard_stop_drop` (default `0.05`), the endpoint shifts 100% of traffic back to the fallback model.
 - **Zero-hop gateway mode:** On Gradiated Cloud, pass `"model": "<org>/support-router"` directly to `/v1/chat/completions`, `/v1/responses`, or `/v1/messages` to run routing in-process with no extra hop.
 
-## Going deeper (Level 2)
+## Going deeper with custom loops
 
-Drop to [Level 2 custom loops](/docs/training/custom-loops/) when you need pairwise arena matrix-factorization routing, custom latency-weighted utility functions, or teacher reward-model distillation into a compact router head.
+Drop to [custom loops](/docs/training/custom-loops/) when you need pairwise arena matrix-factorization routing, custom latency-weighted utility functions, or teacher reward-model distillation into a compact router head.
 
 <DocsNext>
   <a href="/docs/training/recipes/classifier/">

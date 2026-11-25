@@ -16,7 +16,7 @@ Offline SFT on teacher outputs teaches the student what the teacher says on *tea
 - **Only prompts:** You do not need gold answers — 1,000–5,000 representative production prompts in `input.messages` ([trajectories](/docs/training/trajectories/)) are enough.
 - **A teacher artifact:** Any base model (`Qwen/Qwen3-32B`) or a larger fine-tuned `.grad` [artifact](/docs/training/endpoints/) you trained earlier.
 
-### Train with Level 1
+### Train with the managed recipe
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -99,7 +99,7 @@ grad train -f distill-4b.yaml --wait
   </DocsCodeTab>
 </DocsCodeTabs>
 
-### Custom distillation divergences (Level 2)
+### Custom distillation divergences (custom loop)
 
 For custom schedules such as Jensen-Shannon divergence, reverse KL, or multi-teacher ensembles, fetch `top_k` opaque `TensorRef`s from the teacher and pass `gather_indices` to `forward_backward_custom` so only `(T_resp, 32)` logprobs cross the wire:
 
@@ -147,7 +147,7 @@ with client.trainers.create(
 
 If every request prepends the same 30k–100k tokens of documentation, API specs, or compliance rules, a Cartridge compresses that context into a small trainable KV-cache prefix (`adapter: "prefix_kv"`, typically 128–1,024 virtual tokens). The base model weights stay frozen; only the prefix KV tensors are trained so the student without the long prompt matches the teacher *with* the long prompt.
 
-### Train a Cartridge (Level 1)
+### Train a Cartridge
 
 ```python
 from grad import Grad

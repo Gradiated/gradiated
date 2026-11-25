@@ -1,8 +1,8 @@
-# Custom loops (Level 2)
+# Custom loops
 
 <DocsLead>Write your own RL, preference, distillation, or representation training loop in Python while Gradiated handles GPU execution, adapters, and weight snapshots.</DocsLead>
 
-Level 2 gives you direct access to the compute primitives behind Gradiated's managed recipes. Your loop runs on any CPU machine (your laptop, CI, or an orchestrator) and drives remote `Trainer` and `Artifact` endpoints over HTTP.
+Custom loops give you direct access to the compute primitives behind Gradiated's managed [recipes](/docs/training/recipes/). Your loop runs on any CPU machine (your laptop, CI, or an orchestrator) and drives remote `Trainer` and `Artifact` endpoints over HTTP.
 
 Install the Python SDK with the optional `torch` extra when writing client-side custom losses:
 

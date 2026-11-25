@@ -239,9 +239,9 @@ curl https://api.gradiated.com/v1/endpoints/coding-effort/infer \
 
 Recording `expected_output` when an attempt fails turns production misses directly into labeled training data for the next retrain.
 
-## Going deeper (Level 2)
+## Going deeper with custom loops
 
-Drop to [Level 2 custom loops](/docs/training/custom-loops/) when you want:
+Drop to [custom loops](/docs/training/custom-loops/) when you want:
 
 - **Deep-ensemble uncertainty:** attach multiple seeded heads (`heads={"h0": {"dim": 1}, "h1": {"dim": 1}, "h2": {"dim": 1}}`) and abstain on high variance via `artifact.infer_batch()`.
 - **Few-shot contrastive classification (SetFit):** fine-tune the encoder with `loss={"kind": "infonce"}` first, extract pooled embeddings with `artifact.embed(pool="mean")`, and fit the final head with `fit_batch`.

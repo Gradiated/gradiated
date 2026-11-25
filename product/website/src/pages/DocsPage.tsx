@@ -121,7 +121,7 @@ export const documents = {
     Component: DocsTrainingTrajectories,
   },
   "training-recipes": {
-    title: "Recipes (Level 0 & 1)",
+    title: "Recipes",
     path: "/docs/training/recipes/",
     Component: DocsTrainingRecipes,
   },
@@ -131,7 +131,7 @@ export const documents = {
     Component: DocsTrainingEnvironments,
   },
   "training-custom-loops": {
-    title: "Custom loops (Level 2)",
+    title: "Custom loops",
     path: "/docs/training/custom-loops/",
     Component: DocsTrainingCustomLoops,
   },

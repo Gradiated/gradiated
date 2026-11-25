@@ -258,9 +258,9 @@ curl https://api.gradiated.com/v1/endpoints/fast-diff-merge/infer \
 
 Whenever a developer fixes a bad merge, attaching `expectedOutput` builds the exact next SFT dataset — and pairing the bad output with `humanFix` builds your next DPO dataset.
 
-## Going deeper (Level 2)
+## Going deeper with custom loops
 
-Drop to [Level 2 custom loops](/docs/training/custom-loops/) when you want reference-free preference losses (`SimPO`, `ORPO`), unpaired thumbs-up/down alignment (`KTO`, `BCO`), differential LoRA+ learning rates (`param_groups`), or weight-space merging across task checkpoints (`client.artifacts.merge`).
+Drop to [custom loops](/docs/training/custom-loops/) when you want reference-free preference losses (`SimPO`, `ORPO`), unpaired thumbs-up/down alignment (`KTO`, `BCO`), differential LoRA+ learning rates (`param_groups`), or weight-space merging across task checkpoints (`client.artifacts.merge`).
 
 <DocsNext>
   <a href="/docs/training/recipes/rl-agents/">

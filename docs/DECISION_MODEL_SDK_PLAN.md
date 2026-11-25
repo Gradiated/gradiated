@@ -24,9 +24,9 @@ Every concept in `grad` maps to one clear, non-overlapping noun:
 
 | # | Primitive | Strictly 1 or Many? | One-Sentence Mental Model | Core Operations |
 | :--- | :--- | :--- | :--- | :--- |
-| **1** | **`Trajectory`** *(in a **`Dataset`**)* | Data | Universal model-agnostic data unit covering production traces (PostHog/Langfuse/Braintrust/Gradiated), supervised `(input → expected_output)`, multimodal `media[]`, and multi-turn RL rollouts (w/ atomic `.append_env_tokens()` and `.to_datum()`). | `import`, `sync`, `split`, `append_env_tokens()`, `to_datum()` *(Level 2)* |
+| **1** | **`Trajectory`** *(in a **`Dataset`**)* | Data | Universal model-agnostic data unit covering production traces (PostHog/Langfuse/Braintrust/Gradiated), supervised `(input → expected_output)`, multimodal `media[]`, and multi-turn RL rollouts (w/ atomic `.append_env_tokens()` and `.to_datum()`). | `import`, `sync`, `split`, `append_env_tokens()`, `to_datum()` *(custom loops)* |
 | **2** | **`Environment` + `Rubric`** | Task & Scoring | Optional stateful harness (Docker Compose stacks, seed scripts, MCP tools, sandboxes, counterfactual replay) with explicit `setup / step / evaluate(handle, traj) / teardown` lifecycle + composable scoring (pointwise `RewardFunc`, groupwise comparative rubrics, `ExistingScoreReward`). | `setup()`, `step()`, `evaluate()`, `teardown()`, `rollout_groups()` |
-| **3** | **`Trainer`** *(composed by **`Recipe`**)* | Weight Mutation | Remote CPU/GPU engine that learns weights — either via Level 0/1 managed `Recipe` jobs or Level 2 interactive training loops (`fit_batch`, `forward_backward`, `forward_backward_custom` over `forward`+`backward_surrogate`, `optim_step`, `save_state`, `snapshot()`, `export()`). | `train()`, `fit_batch()`, `forward_backward()`, `forward_backward_custom()`, `optim_step()`, `snapshot()`, `export()` |
+| **3** | **`Trainer`** *(composed by **`Recipe`**)* | Weight Mutation | Remote CPU/GPU engine that learns weights — either via managed `Recipe` runs (`router`, `classifier`, `sft`, `dpo`, `grpo`, `distill`, `cartridge`) or interactive custom training loops (`fit_batch`, `forward_backward`, `forward_backward_custom` over `forward`+`backward_surrogate`, `optim_step`, `save_state`, `snapshot()`, `export()`). | `runs.create()`, `fit_batch()`, `forward_backward()`, `forward_backward_custom()`, `optim_step()`, `snapshot()`, `export()` |
 | **4** | **`Artifact`** *(a `.grad` bundle or base model)* | **ALWAYS 1 immutable model** | One concrete, versioned, callable model (`support-router@2026-11-25-1`, `Qwen/Qwen3-32B`, or ephemeral `trainer.snapshot()`). Owns weights + tokenizer + runtime hooks (steering/grammar) + offline `EvalReport` + lineage. | `infer()`, `infer_batch()`, `sample()`, `score_logprobs()`, `embed()`, `tokenize()`, `merge()` |
 | **5** | **`Endpoint`** *(live production slot)* | **1 OR MANY `Artifact`s** | Named production serving alias (`POST /v1/endpoints/{name}/infer` + `POST /v1/feedback`). Owns traffic splits (`active`, `canary`, `shadow`), online safety/calibration (`SLAPolicy`, confidence/syntax fallbacks), multi-model / test-time strategies (`Cascade`, `BestOfN`, `MajorityVote`, `BudgetForcing`), and automatic `Trajectory` logging. | `infer()`, `feedback()`, `promote()`, `canary()`, `shadow()`, `status()` |
 
@@ -113,7 +113,7 @@ flowchart LR
 
 ### 3.1 `Trajectory` (`grad.trajectory/1`) — Universal Model-Agnostic Record
 
-One unified record for production observability traces, supervised `(input → expected_output)` examples, multimodal inputs, and multi-turn RL rollouts (Level 0/1 developers only ever work with `Trajectory`; only Level 2 custom training loops build tokenizer-bound `Datum`s):
+One unified record for production observability traces, supervised `(input → expected_output)` examples, multimodal inputs, and multi-turn RL rollouts (managed recipes work directly on `Trajectory`; custom training loops build tokenizer-bound `Datum`s):
 
 ```json
 {
@@ -148,7 +148,7 @@ One unified record for production observability traces, supervised `(input → e
 }
 ```
 - Atomic `.append_env_tokens(tokens, turn_id)` helper on `Trajectory` appends tool/RAG/verifier tokens with `loss_mask = 0.0`, `sampling_logprobs = 0.0`, and `weight_version = "env"` in lockstep (eliminating 4-array misalignment bugs in multi-turn RL).
-- Built-in `.to_datum(advantage=..., advantages=..., ref_logprobs=..., teacher_topk=..., scalar=...)` SDK helper converts a `Trajectory` directly into a Level 2 `Datum` (copying `token_ids`, `loss_mask`, `sampling_logprobs`, `turn_ids`, `response_offset` and auto-broadcasting scalar `advantage` to length `T`).
+- Built-in `.to_datum(advantage=..., advantages=..., ref_logprobs=..., teacher_topk=..., scalar=...)` SDK helper converts a `Trajectory` directly into a custom-loop `Datum` (copying `token_ids`, `loss_mask`, `sampling_logprobs`, `turn_ids`, `response_offset` and auto-broadcasting scalar `advantage` to length `T`).
 
 ### 3.2 `Artifact` (`.grad`, `grad.artifact/1`) — Always Strictly One Immutable Model
 
@@ -249,18 +249,18 @@ Unifies base models (`Qwen/Qwen3-32B`), pinned versions (`support-router@v12`), 
 | `POST` | `/v1/artifacts/{id}/tokenize` | Authoritative server-side tokenization & chat-template rendering (`messages`, `tools`, optional `return_loss_mask: true` for assistant-only multi-turn SFT masking; prevents client/server tokenizer drift across TS, Go, Rust, Python) |
 | `GET` | `/v1/tensors/{ref_id}` | Binary Safetensors/Arrow fetch for opaque `TensorRef`s (keeps 152K-vocab logits & hidden states out of JSON) |
 
-### 4.3 Training Plane (Level 0/1 Managed Recipes + Level 2 Compute Primitives)
+### 4.3 Training Plane (Managed Recipes + Interactive Compute Primitives)
 
-#### Managed Training Jobs (Level 0 & Level 1)
+#### Managed Training Runs
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| `POST` | `/v1/runs` | Enqueue a managed recipe run (`202 Accepted` + `run_id`; Level 0 = `recipe: "auto"`, Level 1 = task-agnostic recipes `router \| classifier \| sft \| dpo \| grpo \| distill \| cartridge` with flat typed top-level config: `base`, `adapter`, `init_from`, `loss`, `optimizer`, `split`, `filter`, `calibration`, `teacher`, `rubric`). SDK exposes `.wait(on_metric=...)` and `.deploy(canary=...)`; CLI exposes `--dry-run`, `--json`, `grad runs inspect <id> --yaml`, and `grad train -f recipe.yaml`. |
+| `POST` | `/v1/runs` | Enqueue a managed recipe run (`202 Accepted` + `run_id`; explicit `recipe`: `router \| classifier \| sft \| dpo \| grpo \| distill \| cartridge` with smart defaults and flat typed top-level config: `base`, `adapter`, `init_from`, `loss`, `optimizer`, `split`, `filter`, `calibration`, `teacher`, `rubric`). SDK exposes `.wait(on_metric=...)` and `.deploy(canary=...)`; CLI exposes `--dry-run`, `--json`, `grad runs inspect <id> --yaml`, and `grad train -f recipe.yaml`. |
 | `POST` | `/v1/runs/plan` | Zero-cost pre-flight dry run (`--dry-run` / `client.runs.plan(...)`): validates dataset coverage, surfaces data warnings, returns resolved `recipe_spec` + estimated compute/cost before launching GPU jobs |
 | `GET` | `/v1/runs/{run_id}` | Status, progress, `compute` (`cpu`/`gpu`), resolved `recipe_spec`, `eval_report`, produced `artifact_id` |
 | `GET` | `/v1/runs/{run_id}/metrics` | Structured step-by-step telemetry stream (`step`, `loss`, `grad_norm`, `lr`, `eval_metrics`, `tokens_per_sec`) — SSE or paginated JSON |
 | `POST` | `/v1/runs/{run_id}/cancel` | Cancel active training job |
 
-#### Interactive Compute Trainers (Level 2 — Imperative Training Primitives)
+#### Interactive Compute Trainers (Custom Loops)
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | `POST` | `/v1/trainers` | Allocate a `Trainer` pinning `model_spec` (`backbone`, open plugin strings for `adapter`/`train_mode`/`pool`: `frozen_head`, `lora`, `prefix_kv`, `loreft`, `qat_int4`, `partial_unfreeze`, `full`, `eagle3_draft`, `heads` with per-head `{ dim, token_level?, trainable? }`, `init_from`) + `compute` (`cpu`/`gpu`) |
@@ -351,11 +351,10 @@ For any `tokens` sequence of length `T`, **every** per-token array (`loss_mask`,
 - `positions` + `labels` support sparse multi-position targets (Math-Shepherd step PRMs, LLMLingua-2 token compression).
 - **Anti-bloat rule:** Keep ~9 workhorse built-in losses in OpenAPI; exotic variants (`GSPO`, `Dr. GRPO`, `KTO`, `ORPO`, `SPPO`, `Matryoshka MRL`, `RMU`, `BGE-M3`) run via the SDK's `trainer.forward_backward_custom(datums, outputs, loss_fn)` helper over `/forward` + `/backward-surrogate` (verified bit-exact `0.00e+00`) or Python loss plugins without touching OpenAPI/SDKs.
 
-### 5.3 Progressive Disclosure: Level 0 → Level 1 → Level 2
+### 5.3 Progressive Disclosure: Managed Recipes → Custom Loops
 
-- **Level 0 (1-line dev UX):** `grad train support-router` (`recipe: "auto"`). Full resolved `recipe_spec` + live step metrics (`/runs/{id}/metrics`) are always inspectable — zero black box.
-- **Level 1 (Declarative overrides):** Override `loss`, `model_spec`, `optimizer`, `split`, `filter`, or `mix` directly in YAML/JSON without writing a loop.
-- **Level 2 (Imperative loop):** Drive `Trainer`, `Artifact` (`trainer.snapshot()`), `Environment`, and `Rubric` directly — verified end-to-end across **60 diverse papers** (Model Router, Effort Detector, Diff-Merge SFT→GRPO, DAPO, GSPO, CISPO, Kimi k1.5, OPD, Cartridges, Online DPO, KTO, ORPO, IPO, SimPO, SPPO, SPIN, NPO, VAPO, PRIME, AZR, RMU, Matryoshka+ColBERT, Math-Shepherd, EAGLE-3, Medusa, MTP, VLM GRPO, LoReFT, TIES/DARE Merge, RepE Steering, Search-R1, SCoRe, ArCHer, SPIRAL, Toolformer, ArmoRM, GenRM, SaySelf, s1, Conformal, RouteLLM, FrugalGPT, BGE-M3, SetFit, LLMLingua-2).
+- **Managed recipes (default path):** Explicitly pick the recipe (`router`, `classifier`, `sft`, `dpo`, `grpo`, `distill`, `cartridge`). Every recipe ships with smart defaults (`grad train --dataset support-prod --name support-router --recipe router --wait`), exports its full resolved config (`grad runs inspect <id> --yaml > recipe.yaml`), and accepts typed top-level fields (`base`, `adapter`, `loss`, `optimizer`, `split`, `filter`, `calibration`) without writing a loop.
+- **Custom loops (full control):** Drive `Trainer`, `Artifact` (`trainer.snapshot()`), `Environment`, and `Rubric` directly — verified end-to-end across **60 diverse papers** (Model Router, Effort Detector, Diff-Merge SFT→GRPO, DAPO, GSPO, CISPO, Kimi k1.5, OPD, Cartridges, Online DPO, KTO, ORPO, IPO, SimPO, SPPO, SPIN, NPO, VAPO, PRIME, AZR, RMU, Matryoshka+ColBERT, Math-Shepherd, EAGLE-3, Medusa, MTP, VLM GRPO, LoReFT, TIES/DARE Merge, RepE Steering, Search-R1, SCoRe, ArCHer, SPIRAL, Toolformer, ArmoRM, GenRM, SaySelf, s1, Conformal, RouteLLM, FrugalGPT, BGE-M3, SetFit, LLMLingua-2).
 
 ---
 
@@ -368,7 +367,7 @@ Every v0 SDK uses a **two-layer structure** — 100% open-source generated trans
 | Language | Package | OSS Generator | Idiomatic Façade Highlights |
 | --- | --- | --- | --- |
 | **TypeScript / JS** | `@gradiated/grad` (npm) | **`@hey-api/openapi-ts`** | Native `fetch` (Node, Bun, Deno, Edge), retries, generic `grad.endpoint(...).infer<TIn, TOut>()`, typed presets (`grad.router(...)`), local `Rubric` runner, `wrapOpenAI` / `wrapAnthropic` / Vercel AI SDK helpers, OTel stamper. |
-| **Python** | `grad-sdk` (PyPI) | **`openapi-python-client`** | Sync + `async` (`httpx`), Level 0/1/2 clients (`with client.trainers.create(...) as trainer:`, `runs.create(...).wait(on_metric=...)`, `trainer.forward_backward_custom`, `trajectory.to_datum`, `artifact.infer_batch`), `Environment` (`Observation(text=...)` auto-tokenized + `max_concurrency`/`timeout_s`) + `Rubric` helpers, OpenAI/Anthropic wrappers, zero server deps (optional `torch` extra only for Level 2 custom surrogate losses). |
+| **Python** | `grad-sdk` (PyPI) | **`openapi-python-client`** | Sync + `async` (`httpx`), managed recipe + custom-loop clients (`with client.trainers.create(...) as trainer:`, `runs.create(...).wait(on_metric=...)`, `run.deploy()`, `trainer.forward_backward_custom`, `trajectory.to_datum`, `artifact.infer_batch`), `Environment` (`Observation(text=...)` auto-tokenized + `max_concurrency`/`timeout_s`) + `Rubric` helpers, OpenAI/Anthropic wrappers, zero server deps (optional `torch` extra only for client-side custom surrogate losses). |
 | **Go** | `github.com/Gradiated/grad/sdks/go` | **`oapi-codegen`** | Standard-library `net/http`, `context.Context`, functional options, generic `grad.InferAs[T](...)` + router preset. |
 | **Rust** | `grad-sdk` (crates.io) | **`progenitor`** *(Oxide)* | Typed async `reqwest` client with generic `infer_as<T>(...)`, shared by `grad` CLI and Gradiated's Rust services. |
 
@@ -416,8 +415,8 @@ await grad.feedback.record({
 # Rust `grad` CLI (single static binary via cargo-dist / Homebrew; `--json` on every command)
 grad local up                                   # CPU default (`--gpu` enables CUDA trainer & serving)
 grad import ./support_traces.jsonl --dataset support-prod   # format auto-detected (`--format` optional)
-grad train --dataset support-prod --name support-router --dry-run --json
-grad train --dataset support-prod --name support-router --wait
+grad train --dataset support-prod --name support-router --recipe router --dry-run --json
+grad train --dataset support-prod --name support-router --recipe router --wait
 grad runs inspect run_01J9X --yaml > recipe.yaml
 grad deploy support-router@latest --canary 0.10 # 1-line upsert deploy using artifact defaults
 grad endpoints status support-router --watch    # live canary & IPS SLA monitor
@@ -468,12 +467,12 @@ grad sinks add otel --endpoint https://otel.internal.example/v1/traces --secret-
 - **Phase 0 — `Gradiated/grad` v0 (Private Repo, OSS-Ready):**
   - Lock `spec/openapi.yaml` (validated from Rust `server/api` via `utoipa`).
   - Build Rust `server/api` + `server/runtime` (`onnx_runner`, `endpoint_policy` w/ Valkey Pessimistic LCB/IPS SLA + canary/shadow, `remote_llm` proxy, `OTLPGenAISink`).
-  - Build Python `server/trainer` (5 core primitives, Level 0/1 recipes: `router_dual_head` [33M CPU + `Qwen3-0.6B` GPU], `effort_ordinal`, `auto`, Tier-1 trace connectors: `Gradiated`, `OTEL`, `Langfuse`, `PostHog`, `Braintrust`, `LangSmith`, `grad_trajectories`) + `server/docker-compose.yml` (CPU + `--profile gpu`).
+  - Build Python `server/trainer` (5 core primitives, managed recipes: `router` [33M CPU + `Qwen3-0.6B` GPU], `classifier`, Tier-1 trace connectors: `Gradiated`, `OTEL`, `Langfuse`, `PostHog`, `Braintrust`, `LangSmith`, `grad_trajectories`) + `server/docker-compose.yml` (CPU + `--profile gpu`) + `server/helm/grad/`.
   - Ship Rust `grad` CLI + OSS-generated v0 SDKs with idiomatic façades & shared wire-level contract tests for **TypeScript, Python, Go, and Rust**.
   - End-to-end verification on AppWorld + CRMArena-Pro fixtures.
-- **Phase 1 — Gradiated Cloud Hosting, Level 2 Compute API & Generative/RL Recipes:**
+- **Phase 1 — Gradiated Cloud Hosting, Interactive Compute API & Generative/RL Recipes:**
   - Deploy `server/` into Gradiated Cloud (Temporal + S3 + ClickHouse); embed `grad-runtime` into `product/services/gateway` for zero-hop proxy routing.
-  - Expose public Level 2 `/v1/trainers/*`, `/v1/artifacts/{id}/{sample,score-logprobs,embed,tokenize}`, `/v1/tensors/{ref_id}`, and `POST /v1/artifacts/merge`, plus `diff_merge_sft`, `diff_merge_grpo` (with stateful `DockerComposeEnv` support), `opd_distill`, and `dpo` recipes.
+  - Expose public `/v1/trainers/*`, `/v1/artifacts/{id}/{sample,score-logprobs,embed,tokenize}`, `/v1/tensors/{ref_id}`, and `POST /v1/artifacts/merge`, plus `sft`, `dpo`, `grpo` (with stateful `DockerComposeEnv` support), and `distill` recipes.
   - Add Console UI (Pareto curves, canary/SLA monitors, trajectory source/sink setup).
 - **Phase 2 — Public OSS Release & Expansion:**
   - Tier-2 trace sources (`Phoenix`, `Datadog`, `Weave`, `Opik`, `Logfire`, `Laminar`, `Helicone`) + `HeliconeSink`.

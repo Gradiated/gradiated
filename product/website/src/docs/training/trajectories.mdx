@@ -296,7 +296,7 @@ Set `--include-content false` to forward latency, token counts, costs, routing d
 
 ## The `Trajectory` schema
 
-Level 0 and Level 1 recipes work directly on `grad.trajectory/1` records. You do not pre-tokenize datasets or reshape columns per model family.
+Managed recipes work directly on `grad.trajectory/1` records. You do not pre-tokenize datasets or reshape columns per model family.
 
 ```json
 {
@@ -350,7 +350,7 @@ Key fields used by recipes:
 - `session_id` lets recipes split by session instead of by turn so multi-turn conversations never leak into held-out evaluation.
 - `output.token_ids`, `sampling_logprobs`, `loss_mask`, and `turn_ids` are filled automatically by `Artifact.sample()` for RL and distillation.
 
-In [Level 2 custom loops](/docs/training/custom-loops/), two built-in helpers keep per-token arrays aligned:
+In [custom training loops](/docs/training/custom-loops/), two built-in helpers keep per-token arrays aligned:
 
 - `traj.append_env_tokens(tokens, turn_id)` appends tool or environment observations with `loss_mask = 0.0` and `sampling_logprobs = 0.0` in lockstep.
 - `traj.to_datum(advantage=..., ref_logprobs=..., teacher_topk=...)` converts a `Trajectory` into a tokenizer-aligned `Datum`.
@@ -358,7 +358,7 @@ In [Level 2 custom loops](/docs/training/custom-loops/), two built-in helpers ke
 <DocsNext>
   <a href="/docs/training/recipes/">
     <small>Next</small>
-    <strong>Recipes (Level 0 &amp; 1)</strong>
+    <strong>Recipes</strong>
   </a>
   <a href="/docs/training/environments/">
     <small>RL &amp; evals</small>

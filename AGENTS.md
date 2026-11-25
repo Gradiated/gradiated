@@ -56,6 +56,7 @@ This repository is the complete project state for the research and product-build
 - `$product-build`: repository-first product implementation, verification, and handoff.
 - `$experiment-run`: bounded, reproducible experiments with cleanup; routine output stays untracked.
 - `$dev-training`: spot GPU VMs for development training, isolated from production on the tailnet.
+- `$internal-ai-gateway`: internal tailnet AI gateway for calling Gemini, Anthropic, and OpenAI models from team, dev, and training machines.
 - `$gpu-host-lease`: lease a whole GPU host out of the serving pool for hand-run work, then hand it back to be wiped.
 - `$gpu-model-rollout`: roll a risky runtime change out to a GPU model pool one replica at a time, hold at the first, compare, then finish or roll back.
 

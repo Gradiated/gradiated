@@ -221,3 +221,15 @@ To directly ablate `Single-View` vs `Multi-View` (`14B plain K=16` + `14B ZS-Ric
   - **`Multi-View` + `ep1` (`α=1.0`) 157/200 (78.50%, +2.00 pp vs 14B greedy, matching `ZS-MV` 157/200)**; fixed `α=2.0` **155/200 (+1.00 pp vs 14B greedy, +3/−1)**. Multi-View beat Single-View at every epoch (`zs`: 157 vs 153; `ep1`: 157 vs 154; `ep2`: 155 vs 149), while `ep2` overfit on this small 75-step/epoch dataset (155 → 150 at `α=2.0`), confirming **`ep1` as the safest default**.
 - **Pooled across all 5 non-DuckDB single-repo reproductions (Java Spring Boot, Go `cli/cli`, JS `webpack/webpack`, C `tmux/tmux`, C++ `ossrs/srs` — 997 forward conflicts across 464 merges):**
   - `14B` greedy **724/997 (72.62%)** → **`14B + Single-Repo 14B Verifier` (`ep1`, fixed `α=2.0`) 746/997 (74.82%, +2.21 pp — positive on 5/5 repos!)**; best `ep1/ep2` at fixed `α=2.0`: **755/997 (75.73%, +3.11 pp over both `14B` greedy and `7B` control 724/997)**.
+
+### Arm 20 — Multi-View Hard-Negative Mining, Higher-Rank (`r=64`) Calibrated `merge14b-base` Verifier Ensemble & `4-View` Union (`724/1,000` — New Best!)
+
+Doubling down on our proven `merge14b-base` verifier backbone, we mined hard negatives across **5,000 pre-cutoff conflicts from BOTH `plain` and `rich` views** (`4,801` rows: `1,993` pos / `2,808` neg), trained two independent `r=64` cosine-LR label-smoothed verifiers (`s1` seed 42, 2 epochs; `s2` seed 1337, 1 epoch), and evaluated them alongside `Arm 11` (`v11`) across `14B K=16`, `3-View Union` (`865/1,000` oracle), and `4-View Union` (`14B + 32B + ZS-Rich + Trained-Rich`, `869/1,000` oracle):
+
+- **Independent seed reproduction (`s2-ep1`, fresh seed 1337, `r=64`, fixed `α=2.0`):** **722/1,000 (72.20%)** on both `3-View` and `4-View` (reproducing `v11`'s 723/1,000 to within 1 conflict; `s1-ep1` reached `704/1,000` pure `verifier_only` on `14B K=16`, +5 over `v11`'s 699).
+- **3-Model `merge14b-base` Verifier Ensemble (`v11 + s1-ep1 + s2-ep1`, fixed `α=2.0`):**
+  - `3-View`: **722/1,000 (72.20%)** vs 7B control 681 (+72/−31, **+4.10 pp**, 95% CI **+2.23 to +6.09 pp**).
+  - `4-View`: **721/1,000 (72.10%)** (+73/−33, **+4.00 pp**, 95% CI **+2.16 to +6.00 pp**).
+- **4-Checkpoint `merge14b-base` Verifier Ensemble (`v11 + s1-ep1 + s1-ep2 + s2-ep1`):**
+  - **`3-View` (`α=1.5`):** **724/1,000 (72.40%)** vs 7B control 681 (+71/−28, **+4.30 pp**, 95% CI **+2.57 to +6.21 pp**, highly significant) — **+1.30 pp above frontier GPT-6.2-Sol (`711/1,000`)** (`4-View` at `α=2.0`: **723/1,000**).
+  - **Strict 5-fold merge-grouped CV (`3-View` log-product cross-view agreement + 4-ckpt ensemble):** **717/1,000 (71.70%)** (+70/−34, **+3.60 pp**, 95% CI **+1.69 to +5.59 pp**) — **+0.60 pp above GPT-6.2-Sol out-of-fold**.

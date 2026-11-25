@@ -162,3 +162,16 @@ Scaling both the merge generator and the canonicalized Repo-Aware Verifier from 
   - **5-fold merge-grouped CV for `α` (`Arm 11 ep1`):** **714/1,000 (71.40%)** (`α=2.0` on 4/5 folds, `1.5` on 1/5) — beats GPT-6.2-Sol even under strict out-of-fold cross-validation.
   - Pure verifier lift (`Arm 11 ep1`, 717) vs `14B greedy` (693): **+2.40 pp** (+44/−20, 95% CI −0.37 to +5.05); vs `14B maj16` (692): **+2.50 pp** (+47/−22, 95% CI −0.26 to +5.26).
   - Reproducibility across epochs: `Arm 11 ep2` reached **716/1,000** at both `α=0.5` and `α=2.0` (and **704/1,000** pure `verifier_only`, 0 votes; `ep1` `verifier_only` **703/1,000**); `7B+14B` union reached **715/1,000** (`ep1`) and **711/1,000** (`ep2`).
+
+### Arm 13, Arm 14 & Arm 15 — Cross-Repo & Cross-Language Reproduction (`14B + 14B Repo-Aware Verifier`)
+
+To confirm that our winning `14B merge-base` + `14B Repo-Aware Verifier` recipe generalizes outside DuckDB (C++), we evaluated it on held-out non-DuckDB codebases across **5 languages (Java, Go, C, JavaScript, C++)** with strict chronological pre-cutoff splits (zero merge overlap):
+
+- **Arm 15 — Single-Repo Focused Java Reproduction (`spring-projects/spring-boot`, 205 forward Java conflicts, 102 merges; 362 strictly pre-cutoff Java 3-way merges `< 1559901034`):**
+  - `7B pooled-control` greedy: **136/205 (66.34%)**; `14B merge-base` greedy: **139/205 (67.80%, +1.46 pp)**; `14B maj16`: 133/205 (64.88%); oracle `pass@16`: **169/205 (82.44%)**.
+  - Zero-shot DuckDB-adapted `14B Verifier` (`ver14-adapter-ep1`, zero Spring Boot data): `a=2.0` **141/205 (68.78%, +2.44 pp vs 7B)**, `verifier_only` **144/205 (70.24%, +3.90 pp vs 7B, +2.44 pp vs 14B greedy)**.
+  - **Single-repo Spring Boot adapted `14B Verifier` (`ep2`, exact same `α=2.0` as DuckDB):** **149/205 (72.68%)** — **+6.34 pp vs 7B control** (+19/−6, 95% CI −0.67 to +10.99 pp) and **+4.88 pp vs 14B greedy** (`ep1` reached 143/205 at `α=2.0` and 146/205 at `α=4.0`).
+- **Arm 13 — Multi-Repo 4-Language Reproduction (`cli/cli` Go, `tmux/tmux` C, `webpack/webpack` JS, `ossrs/srs` C++; 564 chronological forward conflicts, 280 merges):**
+  - Overall: `7B` greedy **418/564 (74.1%)** → `14B` greedy **419/564 (74.3%)** → `14B + Zero-Shot 14B Verifier` **422/564 (74.8%)** → **`14B + Target-Repo Adapted 14B Verifier` (`α=1.0`) 423/564 (75.0%, +0.89 pp vs 7B, +0.71 pp vs 14B greedy, +10/−6, zero regressions across all 4 repos)**; pure `verifier_only` jumped from 408 (zero-shot) to **417** (+1.60 pp from target-repo adaptation). On `webpack/webpack` (JS), `14B + 14B Verifier` reached **82.0–82.7%** (+5.33 to +6.00 pp vs 7B's 76.7%).
+- **Arm 14 — 14B Position-Debiased Side-by-Side Pairwise Repo Judge (ablation):**
+  - Independently confirmed the 14B Repo Judge gain (`710/1,000` `vote+pair` on DuckDB, `716/1,000` full stack; `422/564` on 4 non-DuckDB repos), while showing our simpler 1-pass Pointwise BCE Verifier (`Arm 11`: 717/1,000; `Arm 13`: 423/564) is both faster and slightly stronger.

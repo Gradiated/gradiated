@@ -248,6 +248,11 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Review Gradiated API endpoints, request fields, and response formats.",
   },
+  "/docs/reference/primitives/": {
+    title: "Primitives reference",
+    description:
+      "Schemas, field definitions, and enums for Trajectory, Datum, ModelSpec, Artifact, and Endpoint.",
+  },
   "/privacy/": {
     title: "Privacy",
     description:

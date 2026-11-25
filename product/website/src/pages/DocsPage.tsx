@@ -31,6 +31,7 @@ import DocsModelsPricing from "../docs/models-pricing.mdx";
 import DocsOpenAiSdk from "../docs/openai-sdk.mdx";
 import DocsOpenCode from "../docs/opencode.mdx";
 import DocsQuickstart from "../docs/quickstart.mdx";
+import DocsPrimitivesReference from "../docs/reference/primitives.mdx";
 import DocsServiceTiers from "../docs/service-tiers.mdx";
 import DocsSystemOneSdk from "../docs/systemone-sdk.mdx";
 import DocsTrainingCustomLoops from "../docs/training/custom-loops.mdx";
@@ -185,6 +186,11 @@ export const documents = {
     path: "/docs/api-reference/",
     Component: DocsApiReference,
   },
+  "primitives-reference": {
+    title: "Primitives reference",
+    path: "/docs/reference/primitives/",
+    Component: DocsPrimitivesReference,
+  },
 } satisfies Record<string, DocsDocument>;
 
 export type DocsPageKey = keyof typeof documents;
@@ -229,7 +235,7 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
     ],
   },
   { heading: "Integrations", items: ["opencode", "codex", "claude-code"] },
-  { heading: "Reference", items: ["api-reference"] },
+  { heading: "Reference", items: ["api-reference", "primitives-reference"] },
 ];
 
 export const legacyPaths: Record<string, string> = {

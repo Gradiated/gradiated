@@ -251,66 +251,17 @@ grad sources sync src_01J9X
 | Laminar | `laminar` | SQL export | Query API |
 | Helicone | `helicone` | JSONL, CSV | Query API |
 
-## The `Trajectory` schema
+## Fields recipes use
 
-Managed recipes work directly on `grad.trajectory/1` records. You do not pre-tokenize datasets or reshape columns per model family.
+Managed recipes operate directly on `grad.trajectory/1` records — you do not pre-tokenize datasets or reshape columns per model family. The main fields recipes look for:
 
-```json
-{
-  "schema": "grad.trajectory/1",
-  "id": "traj_9f82a1",
-  "session_id": "sess_42",
-  "group_id": "grp_prompt_42",
-  "role": "rollout",
-  "source": "otel",
-  "input": {
-    "messages": [{ "role": "user", "content": "Refund order #8821" }],
-    "tools": [{ "name": "issue_refund" }],
-    "media": [{ "kind": "image", "ref": "s3://bucket/screenshot.png" }],
-    "features": { "customer_tier": "enterprise", "turn_index": 0 },
-    "payload": null
-  },
-  "output": {
-    "turns": [{ "role": "assistant", "content": "Refund issued." }],
-    "token_ids": [151644, 8948],
-    "turn_ids": [0, 0],
-    "response_offset": 1,
-    "sampling_logprobs": [0.0, -0.12],
-    "loss_mask": [0.0, 1.0],
-    "weight_version": "v12",
-    "payload": null
-  },
-  "expected_output": null,
-  "scores": { "task_success": 1.0, "user_thumbs": 1.0 },
-  "metrics": {
-    "cost_usd": 0.01105,
-    "latency_ms": 4210,
-    "input_tokens": 1820,
-    "output_tokens": 240
-  },
-  "metadata": {
-    "endpoint": "support-router",
-    "artifact": "support-router@v12",
-    "inference_id": "inf_01J9Y",
-    "propensity": 0.10,
-    "is_probe": true
-  },
-  "timestamp": "2026-11-25T18:00:05Z"
-}
-```
+- `input.messages`, `input.tools`, `input.media`, and `input.features` hold text, tool schemas, image or audio refs, and tabular features.
+- `expected_output` holds gold corrections (a human-edited diff or label) for `sft` and `classifier` runs.
+- `scores` and `metrics.cost_usd` provide quality and cost signals for `router` runs, data filters, and rubrics.
+- `group_id` and `role` (`chosen`, `rejected`, `anchor`, `positive`, `negative`, `rollout`) keep pairs and rollout groups atomic across splits and microbatches.
+- `session_id` splits multi-turn conversations by session so turns never leak into held-out evaluation.
 
-Key fields used by recipes:
-
-- `input.messages`, `input.tools`, `input.media`, and `input.features` hold text, tool schemas, image or audio refs, and numeric/categorical features.
-- `expected_output` holds gold corrections (such as a human-edited diff or label) for `sft` and `classifier` runs.
-- `group_id` and `role` (`chosen`, `rejected`, `anchor`, `positive`, `negative`, `rollout`) keep pairs and rollout groups atomic across train/eval splits and microbatches.
-- `session_id` lets recipes split by session instead of by turn so multi-turn conversations never leak into held-out evaluation.
-- `output.token_ids`, `sampling_logprobs`, `loss_mask`, and `turn_ids` are filled automatically by `Artifact.sample()` for RL and distillation.
-
-In [custom training loops](/docs/training/custom-loops/), two built-in helpers keep per-token arrays aligned:
-
-- `traj.append_env_tokens(tokens, turn_id)` appends tool or environment observations with `loss_mask = 0.0` and `sampling_logprobs = 0.0` in lockstep.
-- `traj.to_datum(advantage=..., ref_logprobs=..., teacher_topk=...)` converts a `Trajectory` into a tokenizer-aligned `Datum`.
+See the [Primitives reference](/docs/reference/primitives/) for the full `grad.trajectory/1` JSON schema and custom-loop helpers (`append_env_tokens()` and `to_datum()`).
 
 <DocsNext>
   <a href="/docs/training/recipes/">

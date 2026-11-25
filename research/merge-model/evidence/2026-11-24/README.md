@@ -233,3 +233,11 @@ Doubling down on our proven `merge14b-base` verifier backbone, we mined hard neg
 - **4-Checkpoint `merge14b-base` Verifier Ensemble (`v11 + s1-ep1 + s1-ep2 + s2-ep1`):**
   - **`3-View` (`α=1.5`):** **724/1,000 (72.40%)** vs 7B control 681 (+71/−28, **+4.30 pp**, 95% CI **+2.57 to +6.21 pp**, highly significant) — **+1.30 pp above frontier GPT-6.2-Sol (`711/1,000`)** (`4-View` at `α=2.0`: **723/1,000**).
   - **Strict 5-fold merge-grouped CV (`3-View` log-product cross-view agreement + 4-ckpt ensemble):** **717/1,000 (71.70%)** (+70/−34, **+3.60 pp**, 95% CI **+1.69 to +5.59 pp**) — **+0.60 pp above GPT-6.2-Sol out-of-fold**.
+
+### Arm 21 — Final Multi-View (`plain + ZS-Rich`) + `r=64` Cosine-LR Verifier v2 Across Java, Go & JavaScript
+
+Applying our upgraded Multi-View (`14B plain K=16` + `14B ZS-Rich K=16`) + `r=64` multi-view-mined Verifier v2 recipe to our first three non-DuckDB codebases (completing apples-to-apples Multi-View coverage across all 6 repositories / 5 languages):
+
+- **`webpack/webpack` (JS, 239 conflicts / 79 merges; `2-view oracle = 220/239` = 92.05%):** **`200/239` (83.68%)** (`mv-ep2`, `α=0.5`; `199/239` at `α=1.0` on both `ep1` & `ep2`) — **+4.60 pp vs 7B control (`189/239`, +14/−3, 95% CI +1.66 to +9.27 pp, highly significant)** (+2 conflicts above single-view `198/239`).
+- **`cli/cli` (Go, 201 conflicts / 94 merges; `2-view oracle = 177/201` = 88.06%):** **`157/201` (78.11%)** (`mv-ep2`, `α=1.0`; `156/201` on `ep1`) — **+3.48 pp vs 7B & 14B** (+13/−6, 95% CI **0.00 to +6.88 pp**).
+- **`spring-projects/spring-boot` (Java, 205 conflicts / 102 merges; `2-view oracle = 173/205` = 84.39%):** **`148/205` (72.20%)** (`α=4.0` on both `ep1` & `ep2`; `146/205` at `α=2.0`) — **+5.85 pp vs 7B control (`136/205`, +21/−9, 95% CI −0.74 to +10.92 pp)**, reproducing Arm 15 (`149/205`).

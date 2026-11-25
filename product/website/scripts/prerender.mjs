@@ -215,6 +215,7 @@ const llmsText = [
   "",
   "## Company",
   "",
+  `- [Paper reproductions](${absoluteUrl("/papers/")}): One-click reproducible templates for landmark post-training papers on public datasets.`,
   `- [About](${absoluteUrl("/about/")}): How Gradiated began inside PostHog and why it exists.`,
   `- [Careers](${absoluteUrl("/careers/")}): Open roles in inference software and silicon.`,
   `- [Thesis](${absoluteUrl("/library/our-thesis/")}): The Gradiated view of inference.`,

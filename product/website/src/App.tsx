@@ -12,7 +12,9 @@ import { pinToAnchor } from "./pin-to-anchor";
 import { jobs } from "./careers";
 import { handbookPages } from "./handbook";
 import { models } from "./models";
+import { papers } from "./papers";
 import { ModelsPage } from "./pages/ModelsPage";
+import { PaperDetailPage, PapersIndexPage } from "./pages/PapersPages";
 import { LibraryPage } from "./pages/LibraryPage";
 import { SystemPage } from "./pages/SystemPage";
 import { RailShell } from "./components/design/RailShell";
@@ -295,6 +297,25 @@ export const AppRoutes = (): ReactElement => (
         }
         key={model.slug}
         path={`/models/${model.slug}/`}
+      />
+    ))}
+    <Route
+      element={
+        <Shelled>
+          <PapersIndexPage />
+        </Shelled>
+      }
+      path="/papers/"
+    />
+    {papers.map((paper) => (
+      <Route
+        element={
+          <Shelled>
+            <PaperDetailPage paper={paper} />
+          </Shelled>
+        }
+        key={paper.slug}
+        path={`/papers/${paper.slug}/`}
       />
     ))}
     <Route

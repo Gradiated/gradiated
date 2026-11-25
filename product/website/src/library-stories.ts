@@ -72,6 +72,9 @@ const excerptFor = (slug: string): string | undefined => {
    and the lead/pair landscape). Pieces without an entry keep their generated
    wafer cover — the maps below stay as the fallback, not a competitor. */
 const NOTE_ART: Record<string, StoryArt> = {
+  "/library/2026-11-finding-the-bottleneck/": {
+    tall: "/brand/library/cheaper-isnt-enough.png",
+  },
   "/library/gemma-inference-engine/": {
     tall: "/brand/library/carat.webp",
   },

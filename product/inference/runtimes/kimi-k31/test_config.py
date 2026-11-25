@@ -70,10 +70,22 @@ class Configuration(unittest.TestCase):
                        '--dcp-size', '--ep-size']:
             self.assertNotIn(unsafe, backend)
 
+    def test_yetalabs_abliterated_model_id_selects_pinned_open_checkpoint(self):
+        settings, backend, _ = config.commands({**self.environment, 'MODEL_ID': config.ABLITERATED_MODEL_ID})
+        self.assertEqual(settings['model_id'], 'yetalabs/kimi-k3.1-pro-abliterated')
+        self.assertEqual(settings['model'], 'yetalabs/Kimi-K3.1-Pro-abliterated')
+        self.assertEqual(settings['revision'], '0911ef0765f49d26dfa25bb0d071f29463f8000b')
+        self.assertEqual(settings['served_model_name'], 'yetalabs/Kimi-K3.1-Pro-abliterated')
+        for flag, value in [('--model-path', 'yetalabs/Kimi-K3.1-Pro-abliterated'),
+                            ('--revision', '0911ef0765f49d26dfa25bb0d071f29463f8000b'),
+                            ('--served-model-name', 'yetalabs/Kimi-K3.1-Pro-abliterated')]:
+            self.assertEqual(backend[backend.index(flag) + 1], value)
+
     def test_invalid_allocations_fail_before_startup(self):
         for delta in [{'NVIDIA_VISIBLE_DEVICES': 'GPU-a,GPU-b'},
                       {'NVIDIA_VISIBLE_DEVICES': ','.join(['GPU-a'] * 8)},
                       {'TENSOR_PARALLEL_SIZE': '2'}, {'LORA_ENABLED': 'true'},
+                      {'MODEL_ID': 'unknown/model'},
                       {'WARMUP_PORT': '18084'}, {'RUNTIME_PORT': '65532'},
                       {'MAX_QUEUED_REQUESTS': '4'}, {'GRADIATED_RUNTIME_ROOT': 'relative'}]:
             with self.subTest(delta=delta), self.assertRaises(ValueError):

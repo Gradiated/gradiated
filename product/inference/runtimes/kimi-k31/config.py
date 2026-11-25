@@ -7,6 +7,21 @@ import sys
 
 MODEL = 'moonshotai/Kimi-K3.1-Pro'
 REVISION = 'd9e99b0792a5e93b78ea9bea62a68167e36ddd9e'
+STOCK_MODEL_ID = 'moonshotai/kimi-k3.1-pro'
+ABLITERATED_MODEL_ID = 'yetalabs/kimi-k3.1-pro-abliterated'
+# Public model ID (MODEL_ID) -> pinned checkpoint. Runtimes without MODEL_ID serve stock Kimi K3.1 Pro.
+MODELS = {
+    STOCK_MODEL_ID: {
+        'model': MODEL,
+        'revision': REVISION,
+        'served_model_name': MODEL,
+    },
+    ABLITERATED_MODEL_ID: {
+        'model': 'yetalabs/Kimi-K3.1-Pro-abliterated',
+        'revision': '0911ef0765f49d26dfa25bb0d071f29463f8000b',
+        'served_model_name': 'yetalabs/Kimi-K3.1-Pro-abliterated',
+    },
+}
 SGLANG_SOURCE = 'afcd7d6b487a9cbe73e25941971b4cc107e6f9ae'
 KIMI_OVERLAY_FINGERPRINT = '6509efad47e02e681caa9cdb49bb9b9375fb94aa30276fcfa5a082e9bfcdab3e'
 DRAFT_MODEL = 'RadixArk/Kimi-K3.1-Dflash2-Preview'
@@ -50,6 +65,10 @@ def settings(environment):
     root = Path(environment['GRADIATED_RUNTIME_ROOT'])
     if not root.is_absolute():
         raise ValueError('Runtime root must be absolute')
+    model_id = environment.get('MODEL_ID', STOCK_MODEL_ID)
+    if model_id not in MODELS:
+        raise ValueError('Unknown Kimi K3.1 model')
+    selected = MODELS[model_id]
     if environment.get('LORA_ENABLED', 'false') != 'false':
         raise ValueError('Kimi K3.1 Pro has no qualified adapters')
     if environment.get('TENSOR_PARALLEL_SIZE', '8') != '8':
@@ -65,7 +84,8 @@ def settings(environment):
     if not all(1024 <= p <= 65535 for p in ports) or len(set(ports)) != 4 or warmup in [front + 1, front + 2]:
         raise ValueError('Runtime ports overlap or are outside the host allocation')
     return {'root': root, 'front': front, 'warmup': warmup, 'backend': backend,
-            'metrics': metrics, 'active_requests': ACTIVE_REQUESTS}
+            'metrics': metrics, 'active_requests': ACTIVE_REQUESTS,
+            'model_id': model_id, **selected}
 
 
 def validate_hardware(environment):
@@ -79,8 +99,8 @@ def validate_hardware(environment):
 def commands(environment):
     config = settings(environment)
     python = str(config['root'] / 'python/bin/python3')
-    backend = [python, str(config['root'] / 'energy/launch.py'), '--model-path', MODEL,
-               '--revision', REVISION, '--served-model-name', MODEL, '--tp-size', '8', '--trust-remote-code',
+    backend = [python, str(config['root'] / 'energy/launch.py'), '--model-path', config['model'],
+               '--revision', config['revision'], '--served-model-name', config['served_model_name'], '--tp-size', '8', '--trust-remote-code',
                '--reasoning-parser', 'kimi_k3', '--tool-call-parser', 'kimi_k3',
                '--moe-runner-backend', 'flashinfer_mxfp4', '--flashinfer-mxfp4-moe-precision', 'default',
                '--speculative-algorithm', 'DFLASH', '--speculative-draft-model-path',

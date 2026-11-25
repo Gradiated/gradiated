@@ -1,0 +1,4 @@
+interface:
+  display_name: "Internal AI Gateway"
+  short_description: "Internal skill for calling Gemini, Anthropic, and OpenAI models over the tailnet"
+  default_prompt: "Use $internal-ai-gateway to call Gemini, Anthropic, or OpenAI models through the internal Gradiated tailnet AI gateway."

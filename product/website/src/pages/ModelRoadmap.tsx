@@ -1,70 +1,18 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import type { ReactElement } from "react";
 import { Band, Module } from "../components/design";
-
-type Model = {
-  id: string;
-  title: string;
-  description: string;
-  status?: "In progress";
-  release?: { api: string; weights: string };
-};
-
-const models: readonly Model[] = [
-  {
-    id: "task-routing",
-    title: "Model router",
-    status: "In progress",
-    description:
-      "Choose a model for each request. Send routine work to open models and reserve frontier calls for work that needs them.",
-  },
-  {
-    id: "security-review",
-    title: "Security review",
-    description:
-      "Flag likely vulnerabilities in first-party diffs and point reviewers to the code that needs attention.",
-  },
-  {
-    id: "code-review",
-    title: "Code review",
-    description:
-      "Review pull requests for regressions, missed edge cases, and gaps in test coverage.",
-  },
-  {
-    id: "diff-merging",
-    title: "Diff merging",
-    description:
-      "Reconcile conflicting edits and surface the decisions that still need a human.",
-  },
-  {
-    id: "context-compaction",
-    title: "Context compaction",
-    description:
-      "Compress long agent sessions while preserving decisions, constraints, and unfinished work.",
-  },
-  {
-    id: "ci-triage",
-    title: "CI failure triage",
-    description:
-      "Find the first meaningful failure in noisy CI logs and distinguish flakes from likely regressions.",
-  },
-  {
-    id: "error-triage",
-    title: "Production error triage",
-    description:
-      "Group related errors and use traces, stack frames, and release context to suggest where to look first.",
-  },
-  {
-    id: "product-analytics",
-    title: "Product analytics queries",
-    description:
-      "Turn questions about funnels, retention, and feature adoption into queries against your event schema.",
-  },
-];
+import { ModelNameSuggestion } from "../components/ModelNameSuggestion";
+import { canSuggestName, roadmapEntries } from "../model-roadmap";
+import type { RoadmapEntry } from "../model-roadmap";
 
 type RoadmapState = {
-  votes: Partial<Record<Model["id"], boolean>>;
+  votes: Partial<Record<RoadmapEntry["id"], boolean>>;
 };
+
+const releaseDate = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "medium",
+  timeZone: "UTC",
+});
 
 const storageKey = "gradiated:model-roadmap-preview:v1";
 const emptyState: RoadmapState = { votes: {} };
@@ -81,6 +29,7 @@ const readRoadmap = (): RoadmapState => {
 export const ModelRoadmap = (): ReactElement => {
   const [roadmap, setRoadmap] = useState(emptyState);
   const [feedback, setFeedback] = useState("");
+  const [suggestion, setSuggestion] = useState<RoadmapEntry>();
 
   useEffect(() => {
     setRoadmap(readRoadmap());
@@ -105,17 +54,17 @@ export const ModelRoadmap = (): ReactElement => {
     return true;
   };
 
-  const toggleVote = (model: Model) => {
+  const toggleVote = (entry: RoadmapEntry) => {
     const current = readRoadmap();
-    const voted = !current.votes[model.id];
+    const voted = !current.votes[entry.id];
     const saved = save({
       ...current,
-      votes: { ...current.votes, [model.id]: voted },
+      votes: { ...current.votes, [entry.id]: voted },
     });
 
     setFeedback(
       saved
-        ? `${voted ? "Vote saved" : "Vote removed"} for ${model.title}.`
+        ? `${voted ? "Vote saved" : "Vote removed"} for ${entry.name ?? entry.category}.`
         : "This browser could not save your vote.",
     );
   };
@@ -129,53 +78,73 @@ export const ModelRoadmap = (): ReactElement => {
               Model roadmap
             </h2>
           </header>
-          <p>Every model on this roadmap will be open source.</p>
+          <p>Every model we release will be open source.</p>
           <table
             aria-labelledby="model-roadmap-title"
             className="gr-roadmap-table"
           >
             <thead>
               <tr>
-                <th scope="col">Model</th>
+                <th scope="col">Project</th>
                 <th scope="col">Description</th>
                 <th scope="col">Access</th>
               </tr>
             </thead>
             <tbody>
-              {models.map((model) => {
-                const voted = Boolean(roadmap.votes[model.id]);
+              {roadmapEntries.map((entry) => {
+                const voted = Boolean(roadmap.votes[entry.id]);
 
                 return (
-                  <tr key={model.id}>
+                  <tr key={entry.id}>
                     <th scope="row">
-                      {model.title}
+                      {entry.name ?? entry.category}
                       <br />
                       <small className="gr-muted">
-                        {model.status ?? "Roadmap"}
+                        {entry.name ? entry.category : "Model"} ·{" "}
+                        {entry.release ? (
+                          <time dateTime={entry.release.date}>
+                            {releaseDate.format(new Date(entry.release.date))}
+                          </time>
+                        ) : (
+                          (entry.status ?? "Roadmap")
+                        )}
                       </small>
                     </th>
-                    <td>{model.description}</td>
+                    <td>{entry.description}</td>
                     <td>
-                      {model.release ? (
-                        <>
-                          <a className="gr-link" href={model.release.api}>
-                            API
-                          </a>
-                          {" · "}
-                          <a className="gr-link" href={model.release.weights}>
-                            Weights
-                          </a>
-                        </>
+                      {entry.release ? (
+                        entry.release.links.map(({ label, href }, index) => (
+                          <Fragment key={href}>
+                            {index > 0 && " · "}
+                            <a className="gr-link" href={href}>
+                              {label}
+                            </a>
+                          </Fragment>
+                        ))
                       ) : (
                         <button
-                          aria-label={`Upvote ${model.title}`}
+                          aria-label={`Upvote ${entry.name ?? entry.category}`}
                           aria-pressed={voted}
                           className="gr-link"
-                          onClick={() => toggleVote(model)}
+                          onClick={() => toggleVote(entry)}
                           type="button"
                         >
                           {voted ? "Voted" : "Upvote"}
                         </button>
+                      )}
+                      {canSuggestName(entry) && (
+                        <>
+                          <br />
+                          <button
+                            aria-haspopup="dialog"
+                            aria-label={`Suggest a name for ${entry.category}`}
+                            className="gr-link"
+                            onClick={() => setSuggestion(entry)}
+                            type="button"
+                          >
+                            Suggest a name
+                          </button>
+                        </>
                       )}
                     </td>
                   </tr>
@@ -189,6 +158,12 @@ export const ModelRoadmap = (): ReactElement => {
           </span>
         </div>
       </Module>
+      {suggestion && (
+        <ModelNameSuggestion
+          entry={suggestion}
+          onClose={() => setSuggestion(undefined)}
+        />
+      )}
     </Band>
   );
 };

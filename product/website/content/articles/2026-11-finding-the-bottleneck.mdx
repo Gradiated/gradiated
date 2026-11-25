@@ -1,0 +1,83 @@
+---
+title: "November 2026: Cheaper isn’t enough"
+author: James Hawkins
+path: /library/2026-11-finding-the-bottleneck/
+category: notes
+status: draft
+publishedAt: "2026-11-24"
+image: /brand/library/cheaper-isnt-enough.png
+---
+
+## Getting into the game
+
+Last month, I wrote about starting Gradiated on hard mode: doing cold outreach myself, implementing open-weight models for customers, and trying to learn before trying to scale. November has turned out to be a really solid month of learning for us.
+
+We've gone from zero inference revenue to very roughly $170K in annualized revenue, based on the average of the last two weeks. Initially this sounds exciting (at this kind of growth rate, we'll be trillionaires, surely!), especially given that our first customer was doing about $0.50 a day. It also needs a fairly large caveat. It's bad quality revenue.
+
+Almost all of that revenue comes through inference market places, serving unusual models. It was very hard getting listed, and where we did get listed on relatively obscure routers, the router takes well over half of what the customer pays, whilst we get to pay for all the GPUs!
+
+## Demand is the hard part
+
+When we first thought about entering this market, we expected near-infinite demand for open-weight models. Getting enough GPUs and competing with other inference providers seemed like the hard parts. Getting customers to use the models seemed relatively straightforward.
+
+That isn't what we've found. Demand is relatively much smaller than we expected compared to supply - there are plenty of providers for buyers to choose from. Having capacity and being technically good at serving a model doesn't automatically give anyone a reason to choose you.
+
+This changes how we think about building the business. We need to understand where people actually want open-weight models, what they're trying to do with them, and what stops them from using them today. Otherwise, it's quite possible to build an impressive inference service and spend all your time trying to find work for idle GPUs, alongside every other Tom, Dick and Harry.
+
+## Cheaper isn't always useful
+
+We also expected customers to be very sensitive to price. If inference is becoming a commodity and switching providers is easy, surely being cheaper should be a big advantage?
+
+In practice, quality is overwhelmingly the bottleneck today. If an open-weight model already costs a tenth of the frontier model a customer uses, making it another 20% cheaper isn't that important. The bigger question is can you make use of open-weight models at all?
+
+Optimization is still very important, but not something we need to shout about to customers. A customer trying to get their agent to work doesn't care deeply whether we've written a clever kernel or have access to custom hardware. They care whether their agent works, and hopefully that it's being run on secure and reliable infrastructure. Certainly, our margins will care a lot about how efficiently we serve models once we have customers, and that often goes hand in hand with reliability, but we need to distinguish between something that makes our business better and something that helps a customer adopt the product in the first place.
+
+## More clever models lead to more complex tasks
+
+We felt initially that open source models were easily good enough to do lots of tasks, so there would be a huge shift in demand towards them. We saw things like the rise of open source inference on OpenRouter as evidence of this.
+
+However, I think as models have become more powerful, people are simply picking up increasingly complex tasks themselves. For example, I've spent today creating a whole bunch of video memes for when we start talking about our work on social media - I'm able to create scripts, video clips, music, months of work for an experienced editor. Sure, I'm getting away with it because it's memes and they can be low quality, but I would pay ten times as much for something better quality.
+
+When we've critically assessed the best open source models on production tasks to power software products, we've had an overall feeling that many of them are heavily benchmaxxed, in a way that feels _less_ true for the frontier models. Intelligence is much more than your ability to hit numbers along a chart - it's multidimensional.
+
+For example, when we ran DeepSeek V4.1 Flash through one of our environments, it completed the entire task but then failed to mark it as finished, despite the instructions. As a result, it scored very poorly. It could do the work, but missed the final step that let the environment recognize it had succeeded. These details matter when you're putting a model into a real workflow: being capable of solving the problem is only useful if it reliably follows through.
+
+## Most agents are still running on vibes
+
+Working directly with customers has made another problem very clear: most companies we've spoken to don't have good evals for their agents. This includes sophisticated teams with well-structured evals for other machine learning workloads. Evaluating an agent is difficult, so changes often get shipped because they seem better.
+
+That makes replacing a frontier model particularly hard. Before we can work out whether a cheaper model is good enough, we need a useful way to tell whether we've made the agent worse.
+
+The encouraging part is that production traces contain a lot of the information we need. With a customer's traces and codebase, we've seen that we can build useful evals and reinforcement learning environments around the work their agents actually do.
+
+This was a bet we were making last month. We've now tried it with multiple customers, and there's real signal in the traces. They show the kinds of inputs, situations and failures that occur in production, which are difficult to reconstruct by inventing examples from scratch, and this has meant we've been able to get RL environments up and running successfully.
+
+## Training has to pay for itself
+
+Building an environment is only part of the problem. Getting a useful result quickly, at a cost that makes sense for the customer, has been harder.
+
+If a company spends $1K a month on inference, spending for example $30K on training is difficult to justify even if we could get its inference bill close to zero. A technically successful experiment can still be a bad deal.
+
+Towards the end of last week, we started seeing promising results from a different approach. Instead of optimizing model weights directly, we first optimize prompts against the reinforcement learning environment (which often leads to a dramatic improvement in performance), then fine-tune a model using the results which helps generalize the vibe of the optimized prompts. We're focused on this at the moment because it could give us a cheaper, quicker route to a useful model.
+
+It's early. The question is whether we can make it work reliably and economically across customer workloads, rather than just get a good-looking result in an experiment.
+
+## We don't need to buy all the GPUs
+
+Last month, I wrote about how strange buying compute can be. We've become increasingly skeptical that access to compute is the main constraint on building an inference business.
+
+From what we're seeing, there's a lot of idle capacity relative to demand for open-weight inference. Our current view is that more capacity could come back onto the market over the next six to twelve months as companies walk back commitments. That's a view we're forming, rather than something we can know for certain. We'll write more on this topic I imagine - it's beyond the scope of today's post.
+
+The practical consequence is straightforward: we think it's a better business to avoid making large compute commitments ahead of demand. Buying or leasing GPUs doesn't solve the problem of finding something valuable to do with them.
+
+## Starting with a specific job
+
+The specific models we've had traction for give us an interesting clue. Almost all of our inference revenue is coming from a very specific set of use cases, rather than general demand for another provider of general-purpose models.
+
+There may be a much better business in getting a model to do one particular job well. A specialized model can be useful in a way that isn't captured by comparing the price of the same model across a dozen providers.
+
+We're also interested in whether customers need to replace a frontier model across an entire workload at all. A company-specific router could hand simpler tasks to an open-weight model and leave the harder ones with the frontier model. Training a really great router for specific customers' workloads may be a more practical starting point than trying to close the whole quality gap through training.
+
+We're going to start shipping vertical specific models ourselves for the painpoints we've experienced. Starting with an open source router. This will give us distribution we believe, even if the models are small and don't generate much revenue. As distribution spreads, it'll hopefully lead to natural growth of our core business of providing tools to train bespoke models for particular workloads for our customers, and making money from running inference on these.
+
+The lesson from October still holds: talk to customers every day. We have more revenue and more evidence now, but we still have a lot to learn about what we should build.

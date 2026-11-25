@@ -35,17 +35,15 @@ run = client.runs.create(
     init_from="sql-agent@sft-v1",
     adapter="lora",
     compute="gpu",
-    overrides={
-        "rubric": {
-            "kind": "webhook",
-            "url": "https://eval.internal.example/grade-sql",
-            "secret_ref": "env:EVAL_WEBHOOK_TOKEN",
-        },
-        "group_size": 8,
-        "max_new_tokens": 512,
-        "loss": {"kind": "grpo", "clip_low": 0.2, "clip_high": 0.28, "kl_beta": 0.01},
-        "optimizer": {"kind": "adamw", "lr": 2e-5},
+    rubric={
+        "kind": "webhook",
+        "url": "https://eval.internal.example/grade-sql",
+        "secret_ref": "env:EVAL_WEBHOOK_TOKEN",
     },
+    group_size=8,
+    max_new_tokens=512,
+    loss={"kind": "grpo", "clip_low": 0.2, "clip_high": 0.28, "kl_beta": 0.01},
+    optimizer={"kind": "adamw", "lr": 2e-5},
 ).wait(
     on_metric=lambda m: print(f"step={m.step} reward={m.eval_metrics.get('mean_reward', 0):.3f}"),
 )

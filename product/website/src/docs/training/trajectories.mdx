@@ -60,15 +60,16 @@ await grad.trajectories.push({
 
 ## Import from files
 
-Stream Parquet or JSONL exports into a named dataset. Gradiated normalizes messages, tool calls, token counts, costs, and evaluation scores into `grad.trajectory/1`.
+Stream Parquet or JSONL exports into a named dataset. Gradiated auto-detects the source schema (`grad.trajectory/1`, OTLP, Langfuse, Braintrust, etc.) and normalizes messages, tool calls, token counts, costs, and evaluation scores — pass `--format` only when you want to override auto-detection.
 
 <DocsCodeTabs>
   <DocsCodeTab label="CLI">
 
 ```bash
-grad import ./traces.parquet \
-  --format otel \
-  --dataset support-prod
+grad import ./traces.parquet --dataset support-prod
+
+# Or pin a specific parser explicitly:
+grad import ./traces.parquet --format otel --dataset support-prod --json
 ```
 
   </DocsCodeTab>
@@ -81,7 +82,6 @@ client = Grad()
 
 job = client.trajectories.import_file(
     "./traces.parquet",
-    format="otel",
     dataset="support-prod",
 ).wait()
 
@@ -98,7 +98,6 @@ const grad = new Grad();
 
 const job = await grad.trajectories
   .importFile("./traces.parquet", {
-    format: "otel",
     dataset: "support-prod",
   })
   .wait();

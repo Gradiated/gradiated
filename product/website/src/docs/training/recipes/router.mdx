@@ -31,6 +31,14 @@ A router needs historical trajectories with **at least two candidate models**, a
 Start on CPU with the default dual-head solver (`dual_head_kernel_lbfgs`), which combines a kernel nearest-neighbor estimator with an L2-regularized linear head over frozen embeddings. Move to `compute="gpu"` with a larger backbone only if CPU held-out AUC plateaus.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad train --dataset support-traces --name support-router --recipe router --wait
+grad deploy support-router@latest --canary 0.10
+```
+
+  </DocsCodeTab>
   <DocsCodeTab label="Python">
 
 ```python
@@ -44,12 +52,10 @@ run = client.runs.create(
     recipe="router",
     base="BAAI/bge-small-en-v1.5",
     compute="cpu",
-    overrides={
-        "solver": "dual_head_kernel_lbfgs",
-        "score_key": "task_success",
-        "split": {"strategy": "by_session", "eval_fraction": 0.15},
-        "calibration": {"max_quality_drop": 0.02},
-    },
+    solver="dual_head_kernel_lbfgs",
+    score_key="task_success",
+    split={"strategy": "by_session", "eval_fraction": 0.15},
+    calibration={"max_quality_drop": 0.02},
 ).wait()
 
 print(run.artifact_id)
@@ -71,12 +77,10 @@ const run = await grad.runs
     recipe: "router",
     base: "BAAI/bge-small-en-v1.5",
     compute: "cpu",
-    overrides: {
-      solver: "dual_head_kernel_lbfgs",
-      scoreKey: "task_success",
-      split: { strategy: "by_session", evalFraction: 0.15 },
-      calibration: { maxQualityDrop: 0.02 },
-    },
+    solver: "dual_head_kernel_lbfgs",
+    scoreKey: "task_success",
+    split: { strategy: "by_session", evalFraction: 0.15 },
+    calibration: { maxQualityDrop: 0.02 },
   })
   .wait();
 
@@ -84,22 +88,9 @@ console.log(run.artifactId, run.evalReport.paretoSummary);
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="CLI">
-
-```bash
-grad train \
-  --dataset support-traces \
-  --name support-router \
-  --recipe router \
-  --wait
-
-grad artifacts inspect support-router@latest
-```
-
-  </DocsCodeTab>
 </DocsCodeTabs>
 
-### Key overrides
+### Key parameters
 
 | Field | Default | What it controls |
 | --- | --- | --- |

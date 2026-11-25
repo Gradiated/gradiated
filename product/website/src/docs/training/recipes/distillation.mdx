@@ -33,13 +33,11 @@ run = client.runs.create(
     base="Qwen/Qwen3-4B",
     adapter="lora",
     compute="gpu",
-    overrides={
-        "teacher": "Qwen/Qwen3-32B",
-        "mode": "on_policy",
-        "loss": {"kind": "topk_kl_distill", "top_k": 32},
-        "optimizer": {"kind": "adamw", "lr": 1e-4},
-        "merge_adapter": True,
-    },
+    teacher="Qwen/Qwen3-32B",
+    mode="on_policy",
+    loss={"kind": "topk_kl_distill", "top_k": 32},
+    optimizer={"kind": "adamw", "lr": 1e-4},
+    merge_adapter=True,
 ).wait()
 
 print(run.artifact_id, run.eval_report)
@@ -56,16 +54,15 @@ recipe: distill
 base: Qwen/Qwen3-4B
 adapter: lora
 compute: gpu
-overrides:
-  teacher: Qwen/Qwen3-32B
-  mode: on_policy
-  loss:
-    kind: topk_kl_distill
-    top_k: 32
-  optimizer:
-    kind: adamw
-    lr: 1e-4
-  merge_adapter: true
+teacher: Qwen/Qwen3-32B
+mode: on_policy
+loss:
+  kind: topk_kl_distill
+  top_k: 32
+optimizer:
+  kind: adamw
+  lr: 1e-4
+merge_adapter: true
 ```
 
 ```bash
@@ -135,15 +132,12 @@ run = client.runs.create(
     name="api-docs-cartridge",
     recipe="cartridge",
     base="Qwen/Qwen3-8B",
-    adapter="prefix_kv",
+    adapter={"kind": "prefix_kv", "num_tokens": 256},
     compute="gpu",
-    overrides={
-        "adapter_params": {"num_tokens": 256},
-        "context_ref": "s3://my-bucket/api-docs-bundle.md",
-        "teacher": "Qwen/Qwen3-8B",
-        "loss": {"kind": "topk_kl_distill", "top_k": 20},
-        "optimizer": {"kind": "adamw", "lr": 2e-2},
-    },
+    context_ref="s3://my-bucket/api-docs-bundle.md",
+    teacher="Qwen/Qwen3-8B",
+    loss={"kind": "topk_kl_distill", "top_k": 20},
+    optimizer={"kind": "adamw", "lr": 2e-2},
 ).wait()
 
 print(run.artifact_id, run.eval_report)
@@ -154,17 +148,12 @@ print(run.artifact_id, run.eval_report)
 Cartridges export as standard `.grad` artifacts (`prefix_kv.safetensors` + `base_model_ref`) and deploy onto any `Endpoint` identically to a LoRA adapter. Requests hit the endpoint with only the user question — no giant system prompt required:
 
 ```python
-client.endpoints.create(
-    slug="api-docs-assistant",
-    artifact=run.artifact_id,
-    capture_dataset="api-docs-prod",
-    strategy={"kind": "direct"},
-)
+endpoint = run.deploy()
 ```
 
 | Parameter | Guidance |
 | --- | --- |
-| `adapter_params.num_tokens` | `128`–`256` for 10k–30k token manuals; `512`–`1024` for 100k+ token corpora. |
+| `adapter.num_tokens` | `128`–`256` for 10k–30k token manuals; `512`–`1024` for 100k+ token corpora. |
 | `optimizer.lr` | Prefix KV parameters need a much higher learning rate (`1e-2`–`2e-2`) than LoRA adapters. |
 | `eval_report` | Compare KL divergence and task QA accuracy against the full-context teacher to pick the smallest `num_tokens` that holds quality. |
 

@@ -9,7 +9,7 @@ Use `sft` when you have verified examples of the exact output you want (fast cod
 ### For SFT
 
 - **Minimum volume:** 300–1,000 clean `(input, expected_output)` [trajectories](/docs/training/trajectories/) for narrow format or code-edit tasks; 2,000+ for broader tasks.
-- **Data quality beats volume:** Filter out low-scoring or unverified traces with `overrides.filter` rather than training on raw logs.
+- **Data quality beats volume:** Filter out low-scoring or unverified traces with `filter` rather than training on raw logs.
 
 ```json
 {
@@ -66,15 +66,12 @@ sft = client.runs.create(
     name="fast-diff-merge",
     recipe="sft",
     base="Qwen/Qwen3-8B",
-    adapter="lora",
+    adapter={"kind": "lora", "rank": 32},
     compute="gpu",
-    overrides={
-        "adapter_params": {"rank": 32},
-        "optimizer": {"kind": "adamw", "lr": 2e-4},
-        "split": {"strategy": "by_session", "eval_fraction": 0.10},
-        "filter": {"min_score": {"tests_passed": 1.0}},
-        "merge_adapter": True,
-    },
+    optimizer={"kind": "adamw", "lr": 2e-4},
+    split={"strategy": "by_session", "eval_fraction": 0.10},
+    filter={"min_score": {"tests_passed": 1.0}},
+    merge_adapter=True,
 ).wait(
     on_metric=lambda m: print(f"step={m.step} loss={m.loss:.4f}"),
 )
@@ -91,21 +88,20 @@ dataset: diff-merge-prod
 name: fast-diff-merge
 recipe: sft
 base: Qwen/Qwen3-8B
-adapter: lora
+adapter:
+  kind: lora
+  rank: 32
 compute: gpu
-overrides:
-  adapter_params:
-    rank: 32
-  optimizer:
-    kind: adamw
-    lr: 2e-4
-  split:
-    strategy: by_session
-    eval_fraction: 0.10
-  filter:
-    min_score:
-      tests_passed: 1.0
-  merge_adapter: true
+optimizer:
+  kind: adamw
+  lr: 2e-4
+split:
+  strategy: by_session
+  eval_fraction: 0.10
+filter:
+  min_score:
+    tests_passed: 1.0
+merge_adapter: true
 ```
 
 ```bash
@@ -127,21 +123,19 @@ dpo = client.runs.create(
     init_from=sft.artifact_id,
     adapter="lora",
     compute="gpu",
-    overrides={
-        "loss": {"kind": "dpo", "beta": 0.1},
-        "optimizer": {"kind": "adamw", "lr": 5e-5},
-        "merge_adapter": True,
-    },
+    loss={"kind": "dpo", "beta": 0.1},
+    optimizer={"kind": "adamw", "lr": 5e-5},
+    merge_adapter=True,
 ).wait()
 
 print(dpo.artifact_id, dpo.eval_report)
 ```
 
-### Key overrides
+### Key parameters
 
 | Field | Guidance |
 | --- | --- |
-| `adapter_params.rank` | `16`–`32` works for most single-task fine-tunes; increase to `64` for large coding or multi-skill datasets. |
+| `adapter.rank` | `16`–`32` works for most single-task fine-tunes; increase to `64` for large coding or multi-skill datasets. |
 | `optimizer.lr` | Start around `2e-4` for LoRA SFT and `2e-5`–`5e-5` for DPO. |
 | `loss.beta` *(DPO)* | Higher `beta` (`0.2`–`0.5`) stays closer to the SFT reference; lower (`0.05`–`0.1`) pushes harder away from rejected patterns. |
 | `merge_adapter` | Set `true` for lowest serving latency; leave `false` to hot-swap many adapters on one shared base model. |

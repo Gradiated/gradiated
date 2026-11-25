@@ -253,7 +253,8 @@ Unifies base models (`Qwen/Qwen3-32B`), pinned versions (`support-router@v12`), 
 #### Managed Training Jobs (Level 0 & Level 1)
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| `POST` | `/v1/runs` | Enqueue a managed recipe run (`202 Accepted` + `run_id`; Level 0 = `recipe: "auto"`, Level 1 = task-agnostic recipes `router \| classifier \| sft \| dpo \| grpo \| distill \| cartridge` with top-level `init_from` & declarative `overrides`). SDK exposes `.wait(on_metric=...)` and CLI exposes `grad runs inspect <id> --yaml` + `grad train -f recipe.yaml`. |
+| `POST` | `/v1/runs` | Enqueue a managed recipe run (`202 Accepted` + `run_id`; Level 0 = `recipe: "auto"`, Level 1 = task-agnostic recipes `router \| classifier \| sft \| dpo \| grpo \| distill \| cartridge` with flat typed top-level config: `base`, `adapter`, `init_from`, `loss`, `optimizer`, `split`, `filter`, `calibration`, `teacher`, `rubric`). SDK exposes `.wait(on_metric=...)` and `.deploy(canary=...)`; CLI exposes `--dry-run`, `--json`, `grad runs inspect <id> --yaml`, and `grad train -f recipe.yaml`. |
+| `POST` | `/v1/runs/plan` | Zero-cost pre-flight dry run (`--dry-run` / `client.runs.plan(...)`): validates dataset coverage, surfaces data warnings, returns resolved `recipe_spec` + estimated compute/cost before launching GPU jobs |
 | `GET` | `/v1/runs/{run_id}` | Status, progress, `compute` (`cpu`/`gpu`), resolved `recipe_spec`, `eval_report`, produced `artifact_id` |
 | `GET` | `/v1/runs/{run_id}/metrics` | Structured step-by-step telemetry stream (`step`, `loss`, `grad_norm`, `lr`, `eval_metrics`, `tokens_per_sec`) — SSE or paginated JSON |
 | `POST` | `/v1/runs/{run_id}/cancel` | Cancel active training job |
@@ -411,13 +412,13 @@ await grad.feedback.record({
 ```
 
 ```bash
-# Rust `grad` CLI (single static binary via cargo-dist / Homebrew; zero Python/Node deps)
+# Rust `grad` CLI (single static binary via cargo-dist / Homebrew; `--json` on every command)
 grad local up                                   # CPU default (`--gpu` enables CUDA trainer & serving)
-grad import ./support_traces.jsonl --format grad_trajectories --dataset support-prod
+grad import ./support_traces.jsonl --dataset support-prod   # format auto-detected (`--format` optional)
+grad train --dataset support-prod --name support-router --dry-run --json
 grad train --dataset support-prod --name support-router --wait
 grad runs inspect run_01J9X --yaml > recipe.yaml
-grad endpoints create support-router --artifact support-router@2026-11-25-1 --strategy sla_lagrangian --fallback claude-opus-4-7
-grad endpoints promote support-router support-router@2026-11-26-1 --mode canary --weight 0.10
+grad deploy support-router@latest --canary 0.10 # 1-line upsert deploy using artifact defaults
 grad endpoints status support-router --watch    # live canary & IPS SLA monitor
 grad sources add langfuse --dataset support-prod --host https://cloud.langfuse.com --secret-ref env:LANGFUSE_API_KEY --schedule "*/15 * * * *"
 grad sinks add otel --endpoint https://otel.internal.example/v1/traces --secret-ref env:OTEL_AUTH_HEADER --include-content false

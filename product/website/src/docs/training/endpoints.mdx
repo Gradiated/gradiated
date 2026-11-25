@@ -19,35 +19,58 @@ art = client.artifacts.get("coding-effort@2026-11-25-1")
 preds = art.infer_batch([{"messages": m} for m in eval_messages])
 ```
 
-## Create an endpoint and serve traffic
+## Deploy in one line (or configure explicitly)
 
-Create a named endpoint once, attach an artifact and serving strategy, and call the endpoint slug from your application. Router artifacts carry their candidate models and default pricing in `manifest.json`, so you only specify the fallback model and quality budget (pass `actions` only when overriding prices for custom models).
+Every trained `.grad` artifact carries its model type, source dataset, and default serving strategy in `manifest.json`. For the common path, `grad deploy` (and `run.deploy()`) creates the endpoint on first deploy and updates traffic splits on subsequent deploys:
 
-<DocsCodeTabs action={<DocsApiKeyAction />}>
+<DocsCodeTabs>
+  <DocsCodeTab label="CLI">
+
+```bash
+# First deploy (creates `support-router` with artifact defaults)
+grad deploy support-router@latest
+
+# Subsequent deploys: shadow -> 10% canary -> 100% active (or instant rollback)
+grad deploy support-router@2026-11-26-1 --shadow
+grad deploy support-router@2026-11-26-1 --canary 0.10
+grad endpoints status support-router --watch
+grad deploy support-router@2026-11-26-1 --active
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+# Deploy straight from a completed run or any pinned artifact ID
+endpoint = run.deploy(canary=0.10)
+# Or: client.endpoints.deploy("support-router@2026-11-26-1", canary=0.10)
+```
+
+  </DocsCodeTab>
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad } from "@gradiated/grad";
+const endpoint = await run.deploy({ canary: 0.1 });
+// Or: await grad.endpoints.deploy("support-router@2026-11-26-1", { canary: 0.1 });
+```
 
-const grad = new Grad();
+  </DocsCodeTab>
+</DocsCodeTabs>
 
-await grad.endpoints.create({
-  slug: "support-router",
-  artifact: "support-router@2026-11-25-1",
-  captureDataset: "support-prod",
-  strategy: {
-    kind: "sla_lagrangian",
-    fallback: "claude-opus-4-7",
-    maxQualityDrop: 0.02,
-  },
-});
+When you want explicit control over fallback models, SLA bounds, or multi-artifact strategies, use `endpoints.create()` directly:
 
-const decision = await grad.router("support-router").route({
-  messages,
-  tools,
-});
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="CLI">
 
-const reply = await callYourLLM(decision.model, messages, tools);
+```bash
+curl https://api.gradiated.com/v1/endpoints/support-router/infer \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": {
+      "messages": [{"role": "user", "content": "Refund order #8821"}]
+    }
+  }'
 ```
 
   </DocsCodeTab>
@@ -74,17 +97,30 @@ reply = call_your_llm(decision.model, messages, tools)
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="cURL">
+  <DocsCodeTab label="TypeScript">
 
-```bash
-curl https://api.gradiated.com/v1/endpoints/support-router/infer \
-  -H "Authorization: Bearer $GRADIATED_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "input": {
-      "messages": [{"role": "user", "content": "Refund order #8821"}]
-    }
-  }'
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+
+await grad.endpoints.create({
+  slug: "support-router",
+  artifact: "support-router@2026-11-25-1",
+  captureDataset: "support-prod",
+  strategy: {
+    kind: "sla_lagrangian",
+    fallback: "claude-opus-4-7",
+    maxQualityDrop: 0.02,
+  },
+});
+
+const decision = await grad.router("support-router").route({
+  messages,
+  tools,
+});
+
+const reply = await callYourLLM(decision.model, messages, tools);
 ```
 
   </DocsCodeTab>
@@ -139,19 +175,19 @@ Feedback is deduplicated by `idempotency_key`, updates online SLA and canary tel
 
 ## Shadow, canary, and rollback
 
-Roll out new versions without changing application code:
+Every artifact is immutable, so rolling forward or rolling back never mutates weights or requires a redeploy of your app. Use `grad deploy` (shorthand) or explicit `endpoints promote`:
 
 ```bash
 # 1. Shadow: run the new artifact silently alongside active traffic (0% user impact)
-grad endpoints promote support-router support-router@2026-11-26-1 --mode shadow
+grad deploy support-router@2026-11-26-1 --shadow
 
 # 2. Canary: shift 10% of requests and watch live quality and cost deltas
-grad endpoints promote support-router support-router@2026-11-26-1 --mode canary --weight 0.10
+grad deploy support-router@2026-11-26-1 --canary 0.10
 grad endpoints status support-router --watch
 
-# 3. Promote to 100%, or roll back to any previous immutable artifact
-grad endpoints promote support-router support-router@2026-11-26-1 --mode active
-grad endpoints promote support-router support-router@2026-11-25-1 --mode active
+# 3. Promote to 100%, or roll back to any earlier version in one command
+grad deploy support-router@2026-11-26-1 --active
+grad deploy support-router@2026-11-25-1 --active
 ```
 
 ## Serving strategies

@@ -46,6 +46,14 @@ Choose the loss that matches your label structure:
 - **`bce_logits`** for binary gates or multi-label tags.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad train --dataset coding-effort --name coding-effort --recipe classifier --wait
+grad deploy coding-effort@latest
+```
+
+  </DocsCodeTab>
   <DocsCodeTab label="Python">
 
 ```python
@@ -59,12 +67,10 @@ run = client.runs.create(
     recipe="classifier",
     base="BAAI/bge-small-en-v1.5",
     compute="cpu",
-    overrides={
-        "labels": ["low", "medium", "high"],
-        "loss": {"kind": "ordinal_bce"},
-        "calibration": {"method": "temperature"},
-        "split": {"strategy": "by_session", "eval_fraction": 0.15},
-    },
+    labels=["low", "medium", "high"],
+    loss={"kind": "ordinal_bce"},
+    calibration={"method": "temperature"},
+    split={"strategy": "by_session", "eval_fraction": 0.15},
 ).wait()
 
 print(run.artifact_id)
@@ -86,27 +92,14 @@ const run = await grad.runs
     recipe: "classifier",
     base: "BAAI/bge-small-en-v1.5",
     compute: "cpu",
-    overrides: {
-      labels: ["low", "medium", "high"],
-      loss: { kind: "ordinal_bce" },
-      calibration: { method: "temperature" },
-      split: { strategy: "by_session", evalFraction: 0.15 },
-    },
+    labels: ["low", "medium", "high"],
+    loss: { kind: "ordinal_bce" },
+    calibration: { method: "temperature" },
+    split: { strategy: "by_session", evalFraction: 0.15 },
   })
   .wait();
 
 console.log(run.artifactId, run.evalReport);
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="CLI">
-
-```bash
-grad train \
-  --dataset coding-effort \
-  --name coding-effort \
-  --recipe classifier \
-  --wait
 ```
 
   </DocsCodeTab>

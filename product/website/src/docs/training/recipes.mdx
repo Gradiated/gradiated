@@ -1,6 +1,6 @@
 # Recipes (Level 0 & 1)
 
-<DocsLead>Start with automatic training, inspect the exact config Gradiated resolved, and override any component declaratively without writing a training loop.</DocsLead>
+<DocsLead>Start with automatic training, validate with a dry run, inspect the exact YAML Gradiated resolved, and tune any typed field without writing a training loop.</DocsLead>
 
 A **recipe** defines a dataset split, a `ModelSpec`, a loss or solver, an optimizer, and a held-out evaluation. Every completed run writes an immutable `.grad` artifact alongside its `EvalReport`.
 
@@ -27,10 +27,11 @@ Pass a dataset and a name. `recipe` defaults to `"auto"`.
   <DocsCodeTab label="CLI">
 
 ```bash
-grad train \
-  --dataset support-prod \
-  --name support-router \
-  --wait
+# Preview the resolved recipe, dataset warnings, and estimated compute ($0)
+grad train --dataset support-prod --name support-router --dry-run
+
+# Launch and stream progress
+grad train --dataset support-prod --name support-router --wait
 ```
 
   </DocsCodeTab>
@@ -40,6 +41,10 @@ grad train \
 from grad import Grad
 
 client = Grad()
+
+# Optional pre-flight check before launching compute
+plan = client.runs.plan(dataset="support-prod", name="support-router")
+print(plan.resolved_recipe, plan.warnings, plan.estimated_compute)
 
 run = client.runs.create(
     dataset="support-prod",
@@ -59,6 +64,9 @@ print(run.eval_report)
 import { Grad } from "@gradiated/grad";
 
 const grad = new Grad();
+
+const plan = await grad.runs.plan({ dataset: "support-prod", name: "support-router" });
+console.log(plan.resolvedRecipe, plan.warnings);
 
 const run = await grad.runs
   .create({ dataset: "support-prod", name: "support-router" })
@@ -80,9 +88,9 @@ Automatic runs are never opaque. Export the exact resolved config as YAML to see
 grad runs inspect run_01J9X --yaml > recipe.yaml
 ```
 
-## Level 1: Managed recipes with overrides
+## Level 1: Managed recipes
 
-Name a recipe explicitly and pass `overrides` for the fields you want to change. Unspecified fields keep the recipe's defaults.
+Name a recipe explicitly and pass typed top-level configuration fields. Any field you omit keeps the recipe's default.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Router">
@@ -98,12 +106,10 @@ run = client.runs.create(
     recipe="router",
     base="BAAI/bge-small-en-v1.5",
     compute="cpu",
-    overrides={
-        "solver": "dual_head_kernel_lbfgs",
-        "score_key": "task_success",
-        "split": {"strategy": "by_session", "eval_fraction": 0.15},
-        "calibration": {"max_quality_drop": 0.02},
-    },
+    solver="dual_head_kernel_lbfgs",
+    score_key="task_success",
+    split={"strategy": "by_session", "eval_fraction": 0.15},
+    calibration={"max_quality_drop": 0.02},
 ).wait()
 ```
 
@@ -121,12 +127,10 @@ run = client.runs.create(
     recipe="classifier",
     base="BAAI/bge-small-en-v1.5",
     compute="cpu",
-    overrides={
-        "labels": ["low", "medium", "high"],
-        "loss": {"kind": "ordinal_bce"},
-        "calibration": {"method": "temperature"},
-        "split": {"strategy": "by_session", "eval_fraction": 0.10},
-    },
+    labels=["low", "medium", "high"],
+    loss={"kind": "ordinal_bce"},
+    calibration={"method": "temperature"},
+    split={"strategy": "by_session", "eval_fraction": 0.10},
 ).wait()
 ```
 
@@ -143,15 +147,12 @@ run = client.runs.create(
     name="fast-diff-merge",
     recipe="sft",
     base="Qwen/Qwen3-8B",
-    adapter="lora",
+    adapter={"kind": "lora", "rank": 32},
     compute="gpu",
-    overrides={
-        "adapter_params": {"rank": 32},
-        "optimizer": {"kind": "adamw", "lr": 2e-4},
-        "split": {"strategy": "by_session", "eval_fraction": 0.10},
-        "filter": {"min_score": {"tests_passed": 1.0}},
-        "merge_adapter": True,
-    },
+    optimizer={"kind": "adamw", "lr": 2e-4},
+    split={"strategy": "by_session", "eval_fraction": 0.10},
+    filter={"min_score": {"tests_passed": 1.0}},
+    merge_adapter=True,
 ).wait()
 ```
 
@@ -170,10 +171,8 @@ run = client.runs.create(
     init_from="support-responder@sft-v1",
     adapter="lora",
     compute="gpu",
-    overrides={
-        "loss": {"kind": "dpo", "beta": 0.1},
-        "optimizer": {"kind": "adamw", "lr": 5e-5},
-    },
+    loss={"kind": "dpo", "beta": 0.1},
+    optimizer={"kind": "adamw", "lr": 5e-5},
 ).wait()
 ```
 
@@ -192,16 +191,14 @@ run = client.runs.create(
     init_from="fast-diff-merge@sft-v1",
     adapter="lora",
     compute="gpu",
-    overrides={
-        "rubric": {
-            "kind": "webhook",
-            "url": "https://ci.internal.example/grade-diff",
-            "secret_ref": "env:GRADER_WEBHOOK_TOKEN",
-        },
-        "group_size": 8,
-        "loss": {"kind": "grpo", "clip_low": 0.2, "clip_high": 0.28},
-        "optimizer": {"kind": "adamw", "lr": 2e-5},
+    rubric={
+        "kind": "webhook",
+        "url": "https://ci.internal.example/grade-diff",
+        "secret_ref": "env:GRADER_WEBHOOK_TOKEN",
     },
+    group_size=8,
+    loss={"kind": "grpo", "clip_low": 0.2, "clip_high": 0.28},
+    optimizer={"kind": "adamw", "lr": 2e-5},
 ).wait()
 ```
 
@@ -220,12 +217,10 @@ run = client.runs.create(
     base="Qwen/Qwen3-4B",
     adapter="lora",
     compute="gpu",
-    overrides={
-        "teacher": "Qwen/Qwen3-32B",
-        "mode": "on_policy",
-        "loss": {"kind": "topk_kl_distill", "top_k": 32},
-        "optimizer": {"kind": "adamw", "lr": 1e-4},
-    },
+    teacher="Qwen/Qwen3-32B",
+    mode="on_policy",
+    loss={"kind": "topk_kl_distill", "top_k": 32},
+    optimizer={"kind": "adamw", "lr": 1e-4},
 ).wait()
 ```
 
@@ -242,14 +237,11 @@ run = client.runs.create(
     name="docs-cartridge",
     recipe="cartridge",
     base="Qwen/Qwen3-8B",
-    adapter="prefix_kv",
+    adapter={"kind": "prefix_kv", "num_tokens": 256},
     compute="gpu",
-    overrides={
-        "adapter_params": {"num_tokens": 256},
-        "teacher": "Qwen/Qwen3-8B",
-        "loss": {"kind": "topk_kl_distill", "top_k": 20},
-        "optimizer": {"kind": "adamw", "lr": 2e-2},
-    },
+    teacher="Qwen/Qwen3-8B",
+    loss={"kind": "topk_kl_distill", "top_k": 20},
+    optimizer={"kind": "adamw", "lr": 2e-2},
 ).wait()
 ```
 
@@ -258,7 +250,7 @@ run = client.runs.create(
 
 ### Run recipes from YAML
 
-Store any Level 1 config in Git and run it from CI or your terminal:
+Every Level 1 config maps 1:1 to a flat YAML file you can version in Git and run from CI:
 
 ```yaml
 # recipe.yaml
@@ -266,24 +258,24 @@ dataset: diff-merge-prod
 name: fast-diff-merge
 recipe: sft
 base: Qwen/Qwen3-8B
-adapter: lora
+adapter:
+  kind: lora
+  rank: 32
 compute: gpu
-overrides:
-  adapter_params:
-    rank: 32
-  optimizer:
-    kind: adamw
-    lr: 2e-4
-  split:
-    strategy: by_session
-    eval_fraction: 0.10
-  filter:
-    min_score:
-      tests_passed: 1.0
-  merge_adapter: true
+optimizer:
+  kind: adamw
+  lr: 2e-4
+split:
+  strategy: by_session
+  eval_fraction: 0.10
+filter:
+  min_score:
+    tests_passed: 1.0
+merge_adapter: true
 ```
 
 ```bash
+grad train -f recipe.yaml --dry-run
 grad train -f recipe.yaml --wait
 ```
 
@@ -306,7 +298,7 @@ rl = client.runs.create(
     recipe="grpo",
     init_from=sft.artifact_id,
     compute="gpu",
-    overrides={"rubric": {"kind": "webhook", "url": "https://ci.internal.example/grade-diff"}},
+    rubric={"kind": "webhook", "url": "https://ci.internal.example/grade-diff"},
 ).wait()
 ```
 
@@ -319,7 +311,7 @@ Stream step-by-step telemetry (`step`, `loss`, `grad_norm`, `lr`, `tokens_per_se
 
 ```bash
 grad runs logs run_01J9X --follow
-grad artifacts inspect fast-diff-merge@2026-11-25-2
+grad artifacts inspect fast-diff-merge@2026-11-25-2 --json
 ```
 
   </DocsCodeTab>

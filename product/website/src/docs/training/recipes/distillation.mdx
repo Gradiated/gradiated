@@ -170,6 +170,28 @@ run = client.runs.create(
 print(run.artifact_id, run.eval_report)
 ```
 
+### Prompt distillation into LoRA weights
+
+If you want to internalize a long system prompt into standard LoRA weights (and optionally merge them with `merge_adapter=True`) instead of maintaining a separate `prefix_kv` Cartridge, run `recipe="distill"` with `context_ref` and `adapter="lora"`:
+
+```python
+run = client.runs.create(
+    dataset="api-docs-qa-prompts",
+    name="api-docs-prompt-distilled",
+    recipe="distill",
+    base="Qwen/Qwen3-8B",
+    adapter="lora",
+    compute="gpu",
+    teacher="Qwen/Qwen3-8B",
+    context_ref="s3://my-bucket/api-docs-bundle.md",
+    mode="on_policy",
+    loss={"kind": "topk_kl_distill", "top_k": 32},
+    merge_adapter=True,
+).wait()
+```
+
+Choose **`cartridge` (`prefix_kv`)** when you serve many per-tenant or per-repository contexts against one shared frozen base model; choose **prompt distillation (`distill` + `lora`)** when you want one merged checkpoint with zero prefix-KV overhead.
+
 ### Deploy and serve
 
 Cartridges export as standard `.grad` artifacts (`prefix_kv.safetensors` + `base_model_ref`) and deploy onto any `Endpoint` identically to a LoRA adapter. Requests hit the endpoint with only the user question — no giant system prompt required:

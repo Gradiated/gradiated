@@ -123,7 +123,7 @@ All modern policy-gradient methods share the same rollout loop — only the adva
 | **DAPO** | Long reasoning or multi-turn coding where standard clipping collapses entropy. | `loss={"kind": "grpo", "clip_low": 0.2, "clip_high": 0.28}` + skip zero-variance groups + length penalty in `Rubric`. |
 | **CISPO** | Async rollout pools where Docker Compose workers finish 1–4 weight versions behind the trainer. | `loss={"kind": "cispo", "clip_low": 0.2, "clip_high": 0.2}` — stable under off-policy lag. |
 | **PPO + Critic** | Dense per-token value baselines with GAE when group sampling is too expensive. | Attach `heads={"v": {"dim": 1, "token_level": True}}` and train policy + value head jointly via `forward_backward_custom()`. |
-| **RLOO** | Small group sizes (`group_size=4`) where std-normalization is noisy. | Unbiased leave-one-out baseline `(sum(rewards) - r) / (G - 1)` in `traj.to_datum(advantage=...)` + `cispo`. |
+| **RLOO** | Small group sizes (`group_size=4`) where std-normalization is noisy. | Unbiased leave-one-out baseline `(sum(rewards) - r) / (G - 1)` in `traj.to_datum(advantage=...)` + `importance_sampling` or `cispo`. |
 | **REINFORCE++** | Global batch stability with per-token KL shaping against a frozen reference. | Score `ref.score_logprobs(trajectories)`, shape returns per token, whiten across the batch, pass `advantages=[...]` to `to_datum()`. |
 | **GSPO** | MoE models or long multi-turn agent trajectories where token-level importance ratios diverge. | Sequence-level geometric mean ratio in 8 lines via `trainer.forward_backward_custom()`. |
 
@@ -225,9 +225,24 @@ trainer.optim_step(lr=2e-5).result()
   </DocsCodeTab>
 </DocsCodeTabs>
 
-## Structured tool calls during rollouts
+## Sampling controls and structured tool calls
 
-For tool-calling or JSON-extraction agents, pass `response_format={"type": "json_schema", "schema": ...}` to `artifact.sample()` (or `env.rollout_groups()`). Grammar-constrained sampling keeps every rollout syntactically valid while still recording exact `sampling_logprobs` for policy-gradient updates.
+`artifact.sample()` and `env.rollout_groups()` support stop delimiters, nucleus sampling, deterministic seeds, and grammar-constrained JSON while preserving exact 1:1 `sampling_logprobs` for policy-gradient updates:
+
+```python
+rollouts = snap.sample(
+    prompt_inputs,
+    n=8,
+    temperature=0.8,
+    top_p=0.95,
+    max_new_tokens=512,
+    stop=["</tool_call>", "\nObservation:"],
+    seed=42,
+    response_format={"type": "json_schema", "schema": tool_call_schema},
+)
+```
+
+Use `stop` (strings or token IDs) to halt generation cleanly at tool-call boundaries so the environment can execute the tool and append its output before the next turn.
 
 ## Deploy with test-time scaling or cascade
 

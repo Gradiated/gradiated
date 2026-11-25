@@ -107,13 +107,15 @@ Used in [custom loops](/docs/training/custom-loops/). For any `model_input.token
 | `train_mode` | `frozen_head`, `lora`, `prefix_kv`, `loreft`, `partial_unfreeze`, `full` |
 | `pool` | `last`, `mean`, `mean_last`, `none` |
 | `heads` | Map of `{ name: { dim, token_level?: bool, trainable?: bool } }` |
-| `init_from` | Optional `Artifact` or `StateCheckpoint` ID |
+| `init_from` | Optional `Artifact` or `StateCheckpoint` ID (loads weights only by default) |
+| `restore_optimizer` | `false` *(default)* or `true` to also restore optimizer moments from a `save_state` checkpoint |
 
-Built-in `forward_backward` losses: `cross_entropy`, `bce_logits`, `l2_logistic`, `dpo`, `grpo`, `cispo`, `reverse_kl_distill`, `topk_kl_distill`, `infonce`, `bce_sparse_positions`. Custom objectives run via `trainer.forward_backward_custom()`.
+Built-in `forward_backward` losses: `cross_entropy`, `bce_logits`, `l2_logistic`, `dpo`, `importance_sampling`, `grpo`, `cispo`, `reverse_kl_distill`, `topk_kl_distill`, `infonce`, `bce_sparse_positions`. Custom objectives run via `trainer.forward_backward_custom()`.
 
 ## `Artifact` (`.grad`) & `Endpoint` (`grad.endpoint/1`)
 
 - An **`Artifact`** is always **one** immutable model (`name@version`, base model ID, or ephemeral `trainer.snapshot()`), containing `manifest.json`, runtime weight files, and `eval_report.json`.
+- `Artifact.sample()` returns 1:1 token-aligned `Trajectory` rollouts and accepts `n`, `temperature`, `top_p`, `max_new_tokens`, `stop` *(string or token-ID sequences)*, `seed`, `response_format` *(JSON Schema grammar)*, `resume_from`, and `append_env_tokens`.
 - An **`Endpoint`** is a mutable production slot over **one or more** artifacts supporting `active`, `canary`, and `shadow` routing and seven strategies: `direct`, `sla_lagrangian`, `confidence_fallback`, `syntax_fallback`, `cascade`, `best_of_n` / `majority_vote`, and `budget_forcing`. See [Artifacts and endpoints](/docs/training/endpoints/).
 
 <DocsNext>

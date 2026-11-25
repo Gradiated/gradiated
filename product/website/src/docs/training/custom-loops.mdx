@@ -183,18 +183,31 @@ ref_lps = ref_artifact.score_logprobs(trajectories)["aligned_logprobs"]
 datums = [t.to_datum(advantage=a, ref_logprobs=r) for t, a, r in zip(trajectories, advs, ref_lps)]
 ```
 
-### Pause and resume long runs (`save_state`)
+### Pause, resume, and stage transitions (`save_state`)
 
-Checkpoint both weights and optimizer moments mid-run with `trainer.save_state()`, then resume later with `init_from`:
+Passing `init_from` loads **weights only** with a fresh optimizer — use this for stage transitions such as `SFT → DPO` or `SFT → GRPO`. To pause and resume an interrupted run with its AdamW/Muon moments and step counter intact, checkpoint with `trainer.save_state()` and pass `restore_optimizer=True`:
 
 ```python
 ckpt = trainer.save_state(name="code-agent-step-500")
 
-# Later, in a new process:
+# Resume the exact same run (weights + optimizer moments):
 with client.trainers.create(
-    ModelSpec(base="Qwen/Qwen3-8B", adapter="lora", train_mode="lora", init_from=ckpt.id),
+    ModelSpec(
+        base="Qwen/Qwen3-8B",
+        adapter="lora",
+        train_mode="lora",
+        init_from=ckpt.id,
+        restore_optimizer=True,
+    ),
     compute="gpu",
 ) as resumed:
+    ...
+
+# Or start a new stage (weights only, fresh optimizer):
+with client.trainers.create(
+    ModelSpec(base="Qwen/Qwen3-8B", adapter="lora", train_mode="lora", init_from="code-agent@sft-v1"),
+    compute="gpu",
+) as grpo_trainer:
     ...
 ```
 
@@ -215,6 +228,33 @@ mean_loss = sum(f.result().loss for f in futs) / len(futs)
 
 # Run held-out eval without retaining autograd graphs on the GPU
 eval_out = trainer.forward(val_datums, outputs=["logprobs"], retain_graph=False)
+```
+
+### High-concurrency async rollouts (`AsyncGrad`)
+
+When driving hundreds of concurrent tool-calling or browser rollouts in `asyncio`, use `AsyncGrad` so rollout coroutines overlap with GPU steps without thread-pool overhead:
+
+```python
+import asyncio
+from grad import AsyncGrad, ModelSpec
+
+async def train_async(batches):
+    async with AsyncGrad() as client:
+        async with client.trainers.create(
+            ModelSpec(base="Qwen/Qwen3-8B", adapter="lora", train_mode="lora"),
+            compute="gpu",
+        ) as trainer:
+            for task_batch in batches:
+                snap = await trainer.snapshot()
+                trajectories = await asyncio.gather(
+                    *(run_async_rollout(snap, task) for task in task_batch)
+                )
+                datums = build_datums(trajectories)
+
+                fb = await trainer.forward_backward(datums, loss={"kind": "grpo"})
+                opt = await trainer.optim_step(lr=2e-5, grad_clip=1.0)
+                metrics, _ = await asyncio.gather(fb.result(), opt.result())
+                print(metrics.loss)
 ```
 
 ### Multimodal (VLM) inputs
@@ -311,6 +351,7 @@ with client.trainers.create(
 | `bce_logits` | Binary or multi-label head classification. |
 | `l2_logistic` | Regularized logistic heads. |
 | `dpo` | Paired preference optimization (`group_id` + `chosen` / `rejected`). |
+| `importance_sampling` | Unclipped importance-weighted policy gradient for on-policy or lightly off-policy RL. |
 | `grpo` | Clipped policy-gradient RL (`clip_low`, `clip_high`, `kl_beta`). |
 | `cispo` | Clipped importance-sampling RL for off-policy or async rollouts. |
 | `reverse_kl_distill` | Token-level reverse-KL distillation against `ref_logprobs`. |
@@ -326,7 +367,8 @@ with client.trainers.create(
 | `train_mode` | `frozen_head`, `lora`, `prefix_kv`, `loreft`, `partial_unfreeze`, `full` |
 | `pool` | `last`, `mean`, `mean_last`, `none` *(token-level embeddings such as ColBERT)* |
 | `heads` | Map of `{ name: { dim, token_level?: bool, trainable?: bool } }` |
-| `init_from` | Optional `Artifact` ID to warm-start weights, heads, and adapters |
+| `init_from` | Optional `Artifact` or `StateCheckpoint` ID to warm-start weights, heads, and adapters |
+| `restore_optimizer` | `false` *(default, fresh optimizer for stage transitions)* or `true` *(restore optimizer moments from `save_state`)* |
 
 <DocsNext>
   <a href="/docs/training/endpoints/">

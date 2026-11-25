@@ -60,7 +60,7 @@ See the [SystemOne SDK guide](/docs/systemone-sdk/) for linden-1 examples and su
 | `GET` | `/v1/artifacts/{id}/download` | Download a `.grad` bundle archive. |
 | `POST` | `/v1/artifacts/merge` | Zero-GPU weight-space merge (`linear`, `ties`, `dare`, `slerp`). |
 | `POST` | `/v1/artifacts/{id}/infer` | Direct read-only single or batched inference (`infer` / `infer_batch`). |
-| `POST` | `/v1/artifacts/{id}/sample` | Generate token-aligned `Trajectory` rollouts (supports `resume_from`, `append_env_tokens`, and `response_format`). |
+| `POST` | `/v1/artifacts/{id}/sample` | Generate token-aligned `Trajectory` rollouts (supports `temperature`, `top_p`, `stop`, `seed`, `resume_from`, `append_env_tokens`, and `response_format`). |
 | `POST` | `/v1/artifacts/{id}/score-logprobs` | Score full sequences, `Trajectory` objects, or `(prefix, response)` pairs (optional `top_k`, `return_layers`). |
 | `POST` | `/v1/artifacts/{id}/embed` | Extract cached embeddings or hidden states (optional `pool` override). |
 | `POST` | `/v1/artifacts/{id}/tokenize` | Server-side tokenization and chat-template rendering (`messages`, `tools`, optional `return_loss_mask`). |

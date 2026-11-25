@@ -102,6 +102,45 @@ Starting from the same merged `pooled-control` base (`681/1,000` DuckDB, `4,399/
 
 Starting from the same merged `pooled-control` base (`681/1,000` DuckDB, `4,399/6,398` others), a rank-64 LoRA (`lr=2e-4`, `kl_weight=1.5`) trained on the 41.8M-token DuckDB tree drove whole-snapshot perplexity down **15.84%** at Epoch 1 (`1.4634`, 0.38076 nats) and **18.61%** at Epoch 2 (`1.4152`, 0.34728 nats; first-party `1.4298`, −15.46%), while holding unrelated merge accuracy completely flat:
 
-- **Epoch 2 (1,702 steps):** `duckdb` 676/1,000 (67.60%, +32/−37, −0.50 pp, 95% CI −2.52 to +1.50, 0 malformed); `others` 4,400/6,398 (68.77%, +126/−125, +0.02 pp, 95% CI −0.64 to +0.96, 0 malformed). Epochs 3–4 running now on 8× H200.
+- **Epoch 2 (1,702 steps):** `duckdb` 676/1,000 (67.60%, +32/−37, −0.50 pp, 95% CI −2.52 to +1.50, 0 malformed); `others` 4,400/6,398 (68.77%, +126/−125, +0.02 pp, 95% CI −0.64 to +0.96, 0 malformed). Epoch 3 reached whole-snapshot NLL 0.31947 (PPL 1.3764, −20.8%).
 
 [Arm 1 deep NTP metrics and paired intervals](arm1-deep-ntp.json)
+
+### Arm 3b — Non-DuckDB Pre-Merge Context LoRA
+
+Training a 2-epoch rank-32 LoRA on 8,400 strictly non-DuckDB conflicts enriched with pre-merge branch commits and sibling diffs (`ctx-train.jsonl.gz`, 0 DuckDB rows) showed that prepending 3–6k chars of raw git diffs directly into single-pass 7B generation is a net distraction (`49` gained vs `60` lost on `duckdb_rich_ctx`):
+
+- `duckdb` (plain, 1,000): 682/1,000 (68.20%, +35/−34, +0.10 pp, 95% CI −2.00 to +1.87).
+- `duckdb_ctx` (branch + sibling, 1,000): 663/1,000 (66.30%, +41/−59, −1.80 pp, 95% CI −4.27 to +0.29).
+- `duckdb_rich_ctx` (+ paired `.hpp/.cpp` & cross-file symbol diffs, 1,000): 670/1,000 (67.00%, +49/−60, −1.10 pp, 95% CI −3.63 to +1.07).
+- `others` (68 repos, 6,398): 4,314/6,398 (67.43%, +150/−235, −1.33 pp, 95% CI −2.11 to −0.55).
+
+### Arm 4 — Pass@16 Headroom & Repo-Memorized Reranking
+
+Sampling `K=16` (`temp=0.7`) from `merge-base` across `plain`, `ctx`, and `rich-ctx` revealed large selection headroom sitting inside the 7B generator's own candidate pool:
+
+- **`plain` (`duck-forward`, 1,000):** greedy 681 (68.10%), `maj16` 687 (+0.60 pp, +17/−11, 95% CI −0.41 to +1.66), `hybrid_vote_arm1code` (`α=2.0`, vote + Arm 1 Epoch-2 DuckDB code-PPL tie-breaker) **690/1,000** (+0.90 pp, +19/−10, 95% CI −0.11 to +2.05), oracle `pass@4` 771, `pass@8` 810, **`pass@16` 825 (82.50%)**. Unanimous conflicts (430/1,000) are 84.9% accurate (365/430); uncertain conflicts (570/1,000) are 55.4% greedy vs 80.7% `pass@16`.
+- **`ctx` / `rich-ctx` zero-shot on `merge-base`:** greedy 668 / 672, `pass@16` 816 / 818; **3-view union (`plain` ∪ `ctx` ∪ `rich-ctx`) oracle reaches 862/1,000 (86.20%)**.
+
+### Arm 7 — Exact-Match GRPO on `merge-base`
+
+A 160-step online Exact-Match GRPO run (`G=6`, KL β=0.04 to `merge-base`, plain prompts, 60% strictly pre-cutoff DuckDB 3-way merges / 40% non-DuckDB) confirmed the local-hunk 7B ceiling:
+
+- `duckdb` (1,000): 682/1,000 (68.20%, +18/−17, +0.10 pp, 95% CI −0.94 to +1.32).
+- `others` (68 repos, 6,398): 4,354/6,398 (68.05%, +70/−115, −0.70 pp, 95% CI −1.28 to −0.16).
+
+### Arm 6v2 — Canonicalized 7B Repo-Aware Verifier (First Statistically Significant Breakthrough)
+
+Keeping `merge-base` untouched as the high-recall candidate generator (`pass@16 = 82.5%`) and training a canonicalized (`norm()`-normalized, zero formatting shortcuts) Epoch-1 7B Repo-Aware Verifier LoRA on mined `merge-base` hard negatives conditioned on strictly pre-merge `<repo_context>` (paired `.hpp/.cpp` diffs, cross-file changed-identifier diffs, and branch commit history) plus strictly pre-cutoff DuckDB 3-way merges produced our **first statistically significant gain on forward DuckDB conflicts**, closing to within 0.80 pp of GPT-6.2-Sol (`71.1%`) with a 7B model:
+
+- **`Arm 6v2` (`vote + ver`, `α=1.0`) vs `pooled-control` (681):** **703/1,000 (70.30%)**, +42 / −20, **+2.20 pp** (95% CI **+0.51 to +3.99 pp**, statistically significant).
+- **`Arm 6v2` (703) vs `maj16` (687):** +33 / −17, **+1.60 pp** (95% CI **0.00 to +3.19 pp**).
+- **5-fold merge-grouped CV for `α`:** **703/1,000** (`α=1.0` selected on all 5/5 folds; zero hyperparameter overfitting). Pure `verifier_only` (0 votes) scored 683/1,000 (+0.20 pp over greedy).
+
+### Arm 9 — Zero-Shot Cross-Repo Generalization Check (4 Held-Out Non-DuckDB Languages)
+
+Evaluating the DuckDB-adapted `Arm 6v2` Verifier **zero-shot** (no target-repo pre-cutoff adaptation) on 4 zero-overlap held-out repositories (`cli/cli` Go, `ossrs/srs` C++, `tmux/tmux` C, `webpack/webpack` JS; 844 `subset=="final"` conflicts):
+
+- Overall: greedy **628/844 (74.4%)**, `maj16` **630/844 (74.6%)**, `Arm 6v2` zero-shot **632/844 (74.9%, +0.47 pp at `α=0.25`; 631/844 at `α=1.0`)**, oracle `pass@16` **717/844 (85.0%)**.
+- Per repo (`greedy → ver α=1.0`): `webpack/webpack` 77.8% → 79.1% (+1.33 pp), `cli/cli` 78.7% → 79.1% (+0.44 pp), `ossrs/srs` 81.3% → 81.3% (0.00 pp), `tmux/tmux` 55.0% → 54.4% (−0.59 pp).
+- **Takeaway:** The much larger lift on DuckDB (+2.20 pp vs +0.47 pp zero-shot on unseen repos) directly isolates the value of **target-repo adaptation** of the Verifier to the codebase's own pre-cutoff 3-way merge history. Next: Listwise InfoNCE Verifier (Arm 6v3), `Qwen2.5-Coder-14B` merge-base + Repo Verifier (Arm 8), and per-repo Verifier adaptation on non-DuckDB codebases.

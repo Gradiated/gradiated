@@ -63,6 +63,7 @@ export const ArticleReadingPage = ({
             }
             art={storyAt(article.path)?.art?.tall}
             cover={storyAt(article.path)?.cover}
+            id={article.path.split("/").filter(Boolean).pop()}
             lede={article.description}
             links={article.links}
             note={article.note}

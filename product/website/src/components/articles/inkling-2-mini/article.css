@@ -1,0 +1,20 @@
+.gr-read[data-article="inkling-2-mini"] .gr-prose blockquote {
+  margin-block: 2.5em;
+  padding: 1.6em 1.8em 1.4em 3.2em;
+  border-radius: 0.75rem;
+  background: var(--color-panel);
+  font-family: var(--font-title);
+  font-size: 1.25em;
+  line-height: 1.4;
+}
+
+.gr-read[data-article="inkling-2-mini"] .gr-prose blockquote::before {
+  inset-inline-start: 0.5em;
+  top: 0.45em;
+  color: var(--color-interactive);
+}
+
+.gr-read[data-article="inkling-2-mini"] .gr-prose blockquote > p + p {
+  margin-block-start: 1em;
+  font-size: 0.55em;
+}

@@ -213,30 +213,69 @@ const docsNavigation: SectionNavigationGroup[] = navigation.map((group) => ({
   })),
 }));
 
-/** Copies the page as Markdown, for pasting into a model. */
-const CopyPage = ({ path }: { path: string }): ReactElement => {
-  const [copied, setCopied] = useState(false);
+/** Copies the page as Markdown, or as a ready-to-paste coding agent prompt. */
+const PageActions = ({
+  path,
+  title,
+}: {
+  path: string;
+  title: string;
+}): ReactElement => {
+  const [copied, setCopied] = useState<"page" | "prompt" | null>(null);
 
-  const copy = async () => {
+  const copy = async (mode: "page" | "prompt") => {
     try {
-      const response = await fetch(markdownPathFor(path));
+      const mdPath = markdownPathFor(path);
+      const response = await fetch(mdPath);
       if (!response.ok) throw new Error("No Markdown for this page.");
-      await navigator.clipboard.writeText(await response.text());
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
+      const markdown = await response.text();
+
+      const text =
+        mode === "page"
+          ? markdown
+          : [
+              `Use the Gradiated documentation for "${title}" to implement this in my repository.`,
+              "",
+              `Reference: https://gradiated.com${mdPath}`,
+              "Full docs index: https://gradiated.com/llms.txt",
+              "",
+              "Guidelines:",
+              "- Inspect my existing codebase first and match its language and conventions.",
+              "- Read GRADIATED_API_KEY from the environment (or GRAD_BASE_URL for local mode); never hardcode secrets.",
+              "- For training runs, run a dry run (`--dry-run --json` or `runs.plan()`) before launching GPU compute.",
+              "",
+              "Documentation:",
+              "",
+              markdown.trim(),
+            ].join("\n");
+
+      await navigator.clipboard.writeText(text);
+      setCopied(mode);
+      window.setTimeout(() => setCopied(null), 1600);
     } catch {
-      setCopied(false);
+      setCopied(null);
     }
   };
 
   return (
-    <button
-      className="gr-doc-copypage"
-      onClick={() => void copy()}
-      type="button"
-    >
-      {copied ? "Copied" : "Copy page"}
-    </button>
+    <div className="gr-doc-actions">
+      <button
+        aria-label="Copy this page as Markdown"
+        className="gr-doc-copypage"
+        onClick={() => void copy("page")}
+        type="button"
+      >
+        {copied === "page" ? "Copied" : "Copy page"}
+      </button>
+      <button
+        aria-label="Copy a coding agent prompt for this page"
+        className="gr-doc-copypage"
+        onClick={() => void copy("prompt")}
+        type="button"
+      >
+        {copied === "prompt" ? "Copied" : "Copy prompt"}
+      </button>
+    </div>
   );
 };
 
@@ -278,7 +317,7 @@ const DocsBody = (): ReactElement => {
             />
 
             <article className="gr-doc-main gr-prose">
-              <CopyPage path={document.path} />
+              <PageActions path={document.path} title={document.title} />
               <Content
                 components={{
                   pre: DocsPre,

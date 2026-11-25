@@ -3825,9 +3825,15 @@ a.gr-read-author-name:focus-visible {
 }
 
 /* Floated, so the page's first heading sits beside it rather than under it. */
-.gr-doc-copypage {
+.gr-doc-actions {
   float: right;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
   margin: 0 0 var(--u) var(--u);
+}
+
+.gr-doc-copypage {
   padding: 0.5em 0.9em;
   border: 1px solid var(--color-rule);
   /* A button, not a switch: it takes the system corner. */

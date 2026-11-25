@@ -163,18 +163,58 @@ Every concept in `grad` maps to one of five non-overlapping primitives:
 
 ## Using with coding agents
 
-The `grad` CLI and docs are built for autonomous agent loops as well as human developers:
+Every docs page includes **Copy page** (raw Markdown) and **Copy prompt** (a ready-to-paste coding-agent prompt) in the top right, and every page is served as plain Markdown at `<url>.md`, indexed in [`/llms.txt`](/llms.txt) and `/llms-full.txt`.
 
-- **Machine-readable docs:** every page is served as plain Markdown at `<url>.md`, indexed in [`/llms.txt`](/llms.txt) and `/llms-full.txt`.
-- **Structured CLI output:** pass `--json` to any `grad` command for a single JSON envelope on stdout and deterministic exit codes.
-- **Zero-cost pre-flight checks:** run `grad train ... --dry-run --json` (or `client.runs.plan(...)`) to validate dataset coverage, preview the resolved recipe, and estimate compute before spending GPU time.
+The CLI is designed for non-interactive agent loops: pass `--json` to any `grad` command for a single JSON envelope on stdout, and run `--dry-run --json` (or `client.runs.plan(...)`) to validate dataset coverage and estimate compute before spending GPU time.
 
-```bash
-# Safe autonomous loop: pre-flight check -> train -> inspect eval -> canary deploy
-grad train --dataset support-prod --name support-router --dry-run --json
-grad train --dataset support-prod --name support-router --wait --json
-grad deploy support-router@latest --canary 0.10 --json
+### Starter prompts to paste into Claude Code, Codex, or Cursor
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Model router">
+
+```text
+Read https://gradiated.com/docs/training/recipes/router.md and integrate a Gradiated model router into this codebase:
+1. Find where we call LLMs and inspect how we log or store completed requests and outcomes.
+2. Push or import historical traces into a Gradiated dataset using GRADIATED_API_KEY from env.
+3. Run `grad train --dataset <name> --name <router> --recipe router --dry-run --json` first and fix any data warnings.
+4. Train the router, verify `eval_report.pareto_summary.quality_drop_ci95` stays inside 2%, and deploy with `grad deploy <router>@latest --canary 0.10`.
+5. Wire `grad.router("<router>").route(...)` and `grad.feedback.record(...)` with idempotency keys.
 ```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Fine-tune (SFT & DPO)">
+
+```text
+Read https://gradiated.com/docs/training/recipes/sft-dpo.md and set up a fine-tuning pipeline for our task:
+1. Export verified passing examples into a Gradiated dataset (`input.messages`, `expected_output`, `session_id`, and `scores`).
+2. Create a checked-in `recipe.yaml` for `recipe: sft` with `split.strategy: by_session` and a score filter.
+3. Validate with `grad train -f recipe.yaml --dry-run --json` before running on GPU.
+4. Deploy behind a `syntax_fallback` endpoint and wire `feedback.record()` so human fixes are captured as `expected_output`.
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="RL agent (Docker Compose)">
+
+```text
+Read https://gradiated.com/docs/training/environments.md and https://gradiated.com/docs/training/recipes/rl-agents.md:
+1. Subclass `grad.Environment` around our existing `docker-compose.yml` and seed script (`setup`, `step` returning `Observation(text=...)`, `evaluate` before `teardown`, and guaranteed `teardown`).
+2. Write a `Rubric` with deterministic stateful assertions against the live container state.
+3. Run a 2-task smoke test against a base `Artifact` (`max_concurrency=2`) to verify `loss_mask` masks tool outputs and containers clean up cleanly.
+4. Wire a Level 2 GRPO / async CISPO loop using `with client.trainers.create(...) as trainer:`.
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Distill / Cartridge">
+
+```text
+Read https://gradiated.com/docs/training/recipes/distillation.md:
+1. Identify our high-volume frontier prompts or repeated long system prompts.
+2. Write a flat YAML recipe for on-policy `distill` (32B teacher -> 4B/8B student) or `cartridge` (`prefix_kv` over our static context).
+3. Validate with `grad train -f recipe.yaml --dry-run --json`, run training, compare `eval_report` against the baseline, and deploy with `--shadow` first.
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
 
 ## Local vs. Gradiated Cloud
 

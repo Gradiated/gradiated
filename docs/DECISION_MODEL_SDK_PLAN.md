@@ -387,8 +387,8 @@ Conceptual guides and recipe walkthroughs live as hand-written MDX under `produc
 ```ts
 import { Grad } from "@gradiated/grad";
 
-// Reads GRADIATED_API_KEY (and optional GRAD_BASE_URL for local mode) automatically
-const grad = new Grad();
+// Reads GRADIATED_API_KEY (and optional GRAD_BASE_URL) automatically, or pass explicitly:
+const grad = new Grad({ apiKey: process.env.GRADIATED_API_KEY });
 
 // 1. Model Router Endpoint (candidate models & pricing inferred from trained artifact manifest)
 const decision = await grad.router("support-agent-router").route({ messages, tools });

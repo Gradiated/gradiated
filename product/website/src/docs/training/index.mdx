@@ -99,7 +99,49 @@ brew install gradiated/tap/grad
   </DocsCodeTab>
 </DocsCodeTabs>
 
-All SDKs and the CLI read `GRADIATED_API_KEY` automatically (create one in the [quickstart](/docs/quickstart/)) and connect to `https://api.gradiated.com`. Prefer to run on your own infrastructure or locally? See the [self-hosting guide](/docs/training/self-hosting/) for Docker Compose and the Kubernetes Helm chart.
+All SDKs and the CLI read `GRADIATED_API_KEY` automatically when set in the environment (create one in the [quickstart](/docs/quickstart/)) and connect to `https://api.gradiated.com`. You can also pass the key explicitly when initializing the client — useful for multi-tenant apps or secret managers:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+import os
+from grad import Grad
+
+# Reads GRADIATED_API_KEY automatically, or pass it explicitly:
+client = Grad(api_key=os.environ["GRADIATED_API_KEY"])
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+// Reads process.env.GRADIATED_API_KEY automatically, or pass it explicitly:
+const grad = new Grad({ apiKey: process.env.GRADIATED_API_KEY });
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+// Reads GRADIATED_API_KEY automatically, or pass it explicitly:
+client := grad.NewClient(grad.WithAPIKey(os.Getenv("GRADIATED_API_KEY")))
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Rust">
+
+```rust
+// Reads GRADIATED_API_KEY automatically, or pass it explicitly:
+let client = grad_sdk::Client::new().with_api_key(std::env::var("GRADIATED_API_KEY")?);
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Prefer to run on your own infrastructure or locally? See the [self-hosting guide](/docs/training/self-hosting/) for Docker Compose and the Kubernetes Helm chart.
 
 ## Call your endpoint and close the loop
 

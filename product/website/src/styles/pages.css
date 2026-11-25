@@ -2222,12 +2222,16 @@
   font-size: var(--text-note);
 }
 
+/* The subheading role, like the prose H3s. At the card size with the
+   heading's -4% tracking, the bold title was cramped and sat smaller than
+   the standfirst under it. */
 .gr-storylist-title {
   display: block;
   font-family: var(--font-title);
-  font-size: var(--text-card);
+  font-size: var(--text-subheading);
   font-weight: var(--weight-heading);
-  letter-spacing: var(--tracking-heading);
+  letter-spacing: var(--tracking-subheading);
+  line-height: 1.25;
 }
 
 .gr-storylist-lede {
@@ -2253,6 +2257,7 @@
    * disagreeing about how big a piece's name is. */
   .gr-storylist-title {
     font-size: var(--text-heading);
+    letter-spacing: var(--tracking-heading);
     line-height: 1.2;
   }
 }
@@ -2538,6 +2543,16 @@
   .gr-read-body {
     grid-column: 3;
     grid-row: 1;
+  }
+
+  /* Never taller than the space above the button; a long one scrolls. */
+  .gr-read-side {
+    max-height: calc(
+      100dvh - 1.5 * var(--u) - var(--rail-foot, 32px) - 36px - var(--u)
+    );
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
   }
 
   .gr-read-side > * {
@@ -5708,7 +5723,7 @@ a.gr-read-author-name:focus-visible {
 
 .gr-root[data-tier]:not([data-tier="wide"]) .gr-fab {
   position: fixed;
-  inset-block-end: calc(1.25 * var(--u));
+  inset-block-end: calc(1.25 * var(--u) + var(--lift, 0px));
   inset-inline-end: calc(1.25 * var(--u));
   /* Below every layer the nav puts up — scrim, drawer, and the cross above
      both. Sharing the nav's stacking context is what makes this comparison
@@ -5828,20 +5843,6 @@ a.gr-read-author-name:focus-visible {
   transition:
     opacity var(--dur-fast) var(--ease-response),
     translate var(--dur-fast) var(--ease-response);
-}
-
-.gr-fab--away {
-  opacity: 0;
-  /* Down and out, the way it came in — not shrinking, which on a ring reads
-     as the progress changing rather than the button leaving. */
-  translate: 0 calc(0.5 * var(--u));
-}
-
-/* Unreachable while it is invisible, or a thumb near the footer's last link
-   would still be hitting a button it cannot see. */
-.gr-fab--away,
-.gr-fab--away > * {
-  pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -6707,4 +6708,29 @@ a.gr-read-author-name:focus-visible {
 .gr-root .gr-masthead-title,
 .gr-root .gr-doc-main h1 {
   font-weight: 700;
+}
+
+/* The Library is a field of posters, not a row of three. Phones get one
+   column; tablets two, so a poster is neither page-wide nor a thumbnail;
+   three only once each can be about desktop size. Rows open up so the next
+   poster doesn't start right under the last one's standfirst. */
+@media (min-width: 40rem) and (max-width: 79.9375rem) {
+  .gr-root .gr-library-grid .gr-story-row[data-uniform] {
+    /* Capped near the desktop poster, so the step up to three columns
+       doesn't halve it. */
+    grid-template-columns: repeat(2, minmax(0, 22.5rem)) !important;
+    justify-content: space-between;
+    column-gap: var(--card-gutter);
+    row-gap: calc(3 * var(--u));
+  }
+}
+
+@media (min-width: 80rem) {
+  .gr-root .gr-library-grid .gr-story-row[data-uniform] {
+    /* 10% under the shared narrow card; the space goes to the gutters so
+       three posters still span the row. */
+    --card-narrow: 25%;
+    --card-gutter: 12.5%;
+    row-gap: calc(3 * var(--u));
+  }
 }

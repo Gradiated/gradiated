@@ -975,7 +975,9 @@ deadline is returned as a timeout.
 ### Request and response
 
 The provider receives the qualified Chat Completions payload, its mapped model
-ID and the effective output limit. Both clients request usage in the final
+ID and the effective output limit. A route may specify one additional exact
+response model identifier when the provider reports a different name for the
+mapped model. Both clients request usage in the final
 stream frame. They apply the public model's parameter rules and forward the
 qualified parameters without a separate provider-specific allowlist. The
 gateway strips upstream identity and rewrites the response to the public model

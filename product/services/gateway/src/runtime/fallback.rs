@@ -95,6 +95,7 @@ struct FallbackRoute {
     provider: FallbackVendor,
     base_url: String,
     model: String,
+    response_model: Option<String>,
     nano_usd_per_token: TokenRates,
 }
 
@@ -148,6 +149,12 @@ impl FallbackRoutes {
                         && route.model.len() <= 300
                         && route.model.trim() == route.model
                         && !route.model.chars().any(char::is_control)
+                        && route.response_model.as_deref().is_none_or(|model| {
+                            !model.is_empty()
+                                && model.len() <= 300
+                                && model.trim() == model
+                                && !model.chars().any(char::is_control)
+                        })
                         && route.endpoint().is_some()
                         && route.nano_usd_per_token.valid()
                 })
@@ -170,6 +177,7 @@ struct FallbackProvider {
     client: reqwest::Client,
     endpoint: Url,
     model: String,
+    response_model: Option<String>,
     rates: TokenRates,
     credentials: Arc<CredentialLoader>,
 }
@@ -239,6 +247,7 @@ impl FallbackProvider {
             &self.model,
             UpstreamBilling::Direct(self.vendor, self.rates),
         )
+        .with_response_model(self.response_model.as_deref())
     }
 
     async fn complete(
@@ -317,6 +326,7 @@ impl FallbackRouter {
                         client: client.clone(),
                         endpoint: route.endpoint().expect("validated provider endpoint"),
                         model: route.model.clone(),
+                        response_model: route.response_model.clone(),
                         rates: route.nano_usd_per_token,
                         credentials: credentials.clone(),
                     })

@@ -191,6 +191,12 @@ const SECTIONS: readonly Section[] = [
         href: "/about/",
         image: "/brand/nav/about.webp",
       },
+      {
+        title: "Thesis",
+        blurb: "Why we exist, and what we believe.",
+        href: "/library/our-thesis/",
+        image: "/brand/nav/thesis.webp",
+      },
     ],
   },
   {

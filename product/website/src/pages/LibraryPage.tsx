@@ -13,7 +13,7 @@ import {
   StoryRow,
   Substrate,
 } from "../components/design";
-import type { Story } from "../components/design";
+import type { Story, StoryArt } from "../components/design";
 import { SandCircuitArtwork } from "../components/design/SandCircuitArtwork";
 import { ChipLayersArtwork } from "../components/sand-library/ChipLayersArtwork";
 import { displayDate, libraryStories } from "../library-stories";
@@ -23,18 +23,30 @@ import "../components/sand-library/sand-library.css";
 const SAND_OVERVIEW_PATH =
   "/library/sand-to-thought/how-to-get-an-answer-out-of-sand/";
 
+/* Journeys with a poster show it; the rest keep their live illustration. */
+const JOURNEY_ART: Record<string, StoryArt> = {
+  "/library/sand-to-thought/fabricating-a-transistor/": {
+    tall: "/brand/library/print-transistor.webp",
+  },
+};
+
+const JourneyIllustration = ({ path }: { path: string }): ReactElement =>
+  path === SAND_OVERVIEW_PATH ? (
+    <SandCircuitArtwork />
+  ) : (
+    <ChipLayersArtwork variant="chip" />
+  );
+
 const journeys: Array<Story & { publishedAt: string }> = articles
   .filter((article) => article.collection === "sand-to-thought")
   .map((article) => ({
+    art: JOURNEY_ART[article.path],
     date: displayDate(article.publishedAt),
     dateTime: article.status === "draft" ? undefined : article.publishedAt,
     href: article.path,
-    illustration:
-      article.path === SAND_OVERVIEW_PATH ? (
-        <SandCircuitArtwork />
-      ) : (
-        <ChipLayersArtwork variant="chip" />
-      ),
+    illustration: JOURNEY_ART[article.path] ? undefined : (
+      <JourneyIllustration path={article.path} />
+    ),
     kind: "note",
     lede: article.description,
     publishedAt: article.publishedAt,
@@ -93,11 +105,13 @@ export const LibraryPage = (): ReactElement => {
           {view === "list" ? (
             <StoryList stories={shown} />
           ) : (
-            <StoryRow
-              columns="repeat(3, var(--card-narrow))"
-              stories={shown}
-              uniform
-            />
+            <div className="gr-library-grid">
+              <StoryRow
+                columns="repeat(3, var(--card-narrow))"
+                stories={shown}
+                uniform
+              />
+            </div>
           )}
         </Module>
       </Band>

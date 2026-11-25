@@ -38,6 +38,7 @@ import DocsTrainingEndpoints from "../docs/training/endpoints.mdx";
 import DocsTrainingEnvironments from "../docs/training/environments.mdx";
 import DocsTrainingOverview from "../docs/training/index.mdx";
 import DocsTrainingRecipes from "../docs/training/recipes.mdx";
+import DocsTrainingSelfHosting from "../docs/training/self-hosting.mdx";
 import DocsRecipeClassifier from "../docs/training/recipes/classifier.mdx";
 import DocsRecipeDistillation from "../docs/training/recipes/distillation.mdx";
 import DocsRecipeEmbeddings from "../docs/training/recipes/embeddings.mdx";
@@ -139,6 +140,11 @@ export const documents = {
     path: "/docs/training/endpoints/",
     Component: DocsTrainingEndpoints,
   },
+  "training-self-hosting": {
+    title: "Self-hosting",
+    path: "/docs/training/self-hosting/",
+    Component: DocsTrainingSelfHosting,
+  },
   "recipe-router": {
     title: "Model router",
     path: "/docs/training/recipes/router/",
@@ -207,6 +213,7 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
       "training-environments",
       "training-custom-loops",
       "training-endpoints",
+      "training-self-hosting",
     ],
   },
   {

@@ -56,6 +56,36 @@ await grad.trajectories.push({
 ```
 
   </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+_ = client.Trajectories.Push(ctx, "diff-merge-gold", []grad.Trajectory{{
+	SessionID:      "pr_481",
+	Input:          grad.TrajectoryInput{Messages: []grad.Message{{Role: "user", Content: prompt}}},
+	ExpectedOutput: map[string]any{"content": goldMergedCode},
+	Scores:         map[string]float64{"tests_passed": 1.0},
+}})
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://api.gradiated.com/v1/trajectories \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "dataset": "diff-merge-gold",
+    "trajectories": [{
+      "session_id": "pr_481",
+      "input": {"messages": [{"role": "user", "content": "..."}]},
+      "expected_output": {"content": "..."},
+      "scores": {"tests_passed": 1.0}
+    }]
+  }'
+```
+
+  </DocsCodeTab>
 </DocsCodeTabs>
 
 ## Import from files
@@ -63,16 +93,6 @@ await grad.trajectories.push({
 Stream Parquet or JSONL exports into a named dataset. Gradiated auto-detects the source schema (`grad.trajectory/1`, OTLP, Langfuse, Braintrust, etc.) and normalizes messages, tool calls, token counts, costs, and evaluation scores — pass `--format` only when you want to override auto-detection.
 
 <DocsCodeTabs>
-  <DocsCodeTab label="CLI">
-
-```bash
-grad import ./traces.parquet --dataset support-prod
-
-# Or pin a specific parser explicitly:
-grad import ./traces.parquet --format otel --dataset support-prod --json
-```
-
-  </DocsCodeTab>
   <DocsCodeTab label="Python">
 
 ```python
@@ -106,6 +126,36 @@ console.log(job.importedCount, job.droppedCount, job.detectedScores);
 ```
 
   </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+job, _ := client.Trajectories.ImportFile(ctx, "./traces.parquet", grad.ImportOpts{
+	Dataset: "support-prod",
+}).Wait(ctx)
+fmt.Println(job.ImportedCount, job.DetectedScores)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad import ./traces.parquet --dataset support-prod
+
+# Or pin a specific parser explicitly:
+grad import ./traces.parquet --format otel --dataset support-prod --json
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://api.gradiated.com/v1/trajectories/imports \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -F "dataset=support-prod" \
+  -F "file=@./traces.parquet"
+```
+
+  </DocsCodeTab>
 </DocsCodeTabs>
 
 The import result lists how many trajectories were parsed, how many were dropped, and every `scores` key detected in the file so you can check target coverage before training.
@@ -115,19 +165,6 @@ The import result lists how many trajectories were parsed, how many were dropped
 Register a source to pull new traces and feedback scores incrementally on a cron schedule. Provider credentials stay behind a secret reference and are never written into dataset records or `.grad` artifacts.
 
 <DocsCodeTabs>
-  <DocsCodeTab label="CLI">
-
-```bash
-grad sources add langfuse \
-  --dataset support-prod \
-  --host https://cloud.langfuse.com \
-  --secret-ref env:LANGFUSE_API_KEY \
-  --schedule "*/15 * * * *"
-
-grad sources sync src_01J9X
-```
-
-  </DocsCodeTab>
   <DocsCodeTab label="Python">
 
 ```python
@@ -166,6 +203,33 @@ await grad.sources.sync(source.id);
 ```
 
   </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+source, _ := client.Sources.Create(ctx, grad.SourceParams{
+	Provider:  "langfuse",
+	Dataset:   "support-prod",
+	Config:    map[string]any{"host": "https://cloud.langfuse.com"},
+	SecretRef: "env:LANGFUSE_API_KEY",
+	Schedule:  "*/15 * * * *",
+})
+_ = client.Sources.Sync(ctx, source.ID)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad sources add langfuse \
+  --dataset support-prod \
+  --host https://cloud.langfuse.com \
+  --secret-ref env:LANGFUSE_API_KEY \
+  --schedule "*/15 * * * *"
+
+grad sources sync src_01J9X
+```
+
+  </DocsCodeTab>
 </DocsCodeTabs>
 
 ### Supported providers
@@ -191,12 +255,42 @@ await grad.sources.sync(source.id);
 
 Add an outbound sink if your team reviews traces in OpenTelemetry, Langfuse, Braintrust, or another OTLP backend. Trajectories captured by Gradiated endpoints are forwarded in bounded batches (`<= 3.5 MB` uncompressed).
 
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+client.sinks.create(
+    provider="otel",
+    config={"endpoint": "https://otel.internal.example/v1/traces"},
+    secret_ref="env:OTEL_AUTH_HEADER",
+    include_content=False,
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+await grad.sinks.create({
+  provider: "otel",
+  config: { endpoint: "https://otel.internal.example/v1/traces" },
+  secretRef: "env:OTEL_AUTH_HEADER",
+  includeContent: false,
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
 ```bash
 grad sinks add otel \
   --endpoint https://otel.internal.example/v1/traces \
   --secret-ref env:OTEL_AUTH_HEADER \
   --include-content false
 ```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
 
 Set `--include-content false` to forward latency, token counts, costs, routing decisions, and scores without prompt or completion text.
 

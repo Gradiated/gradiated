@@ -31,14 +31,6 @@ A router needs historical trajectories with **at least two candidate models**, a
 Start on CPU with the default dual-head solver (`dual_head_kernel_lbfgs`), which combines a kernel nearest-neighbor estimator with an L2-regularized linear head over frozen embeddings. Move to `compute="gpu"` with a larger backbone only if CPU held-out AUC plateaus.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
-  <DocsCodeTab label="CLI">
-
-```bash
-grad train --dataset support-traces --name support-router --recipe router --wait
-grad deploy support-router@latest --canary 0.10
-```
-
-  </DocsCodeTab>
   <DocsCodeTab label="Python">
 
 ```python
@@ -88,6 +80,30 @@ console.log(run.artifactId, run.evalReport.paretoSummary);
 ```
 
   </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+run, _ := client.Runs.Create(ctx, grad.RunParams{
+	Dataset:     "support-traces",
+	Name:        "support-router",
+	Recipe:      "router",
+	Base:        "BAAI/bge-small-en-v1.5",
+	Compute:     "cpu",
+	ScoreKey:    "task_success",
+	Calibration: &grad.Calibration{MaxQualityDrop: 0.02},
+}).Wait(ctx)
+fmt.Println(run.ArtifactID, run.EvalReport)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad train --dataset support-traces --name support-router --recipe router --wait
+grad deploy support-router@latest --canary 0.10
+```
+
+  </DocsCodeTab>
 </DocsCodeTabs>
 
 ### Key parameters
@@ -130,6 +146,37 @@ Before deploying, inspect `run.eval_report`:
 The trained router artifact already records its candidate models and default pricing in `manifest.json`. Name the fallback model and quality budget when creating the endpoint:
 
 <DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+client.endpoints.create(
+    slug="support-router",
+    artifact="support-router@2026-11-25-1",
+    capture_dataset="support-traces",
+    strategy={
+        "kind": "sla_lagrangian",
+        "fallback": "claude-opus-4-7",
+        "max_quality_drop": 0.02,
+        "hard_stop_drop": 0.05,
+        "fallback_probe_rate": 0.10,
+    },
+)
+
+decision = client.router("support-router").route(messages=messages, tools=tools)
+reply = call_your_llm(decision.model, messages, tools)
+
+client.feedback.record(
+    inference_id=decision.inference_id,
+    score=1.0 if ticket_resolved else 0.0,
+    metrics={"cost_usd": reply.cost_usd, "latency_ms": reply.latency_ms},
+)
+```
+
+  </DocsCodeTab>
   <DocsCodeTab label="TypeScript">
 
 ```ts
@@ -165,34 +212,27 @@ await grad.feedback.record({
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="Python">
+  <DocsCodeTab label="Go">
 
-```python
-from grad import Grad
+```go
+decision, _ := client.Router("support-router").Route(ctx, grad.RouteInput{Messages: messages, Tools: tools})
+reply := callYourLLM(decision.Model, messages, tools)
 
-client = Grad()
+_ = client.Feedback.Record(ctx, grad.FeedbackEvent{
+	InferenceID: decision.InferenceID,
+	Score:       score,
+	Metrics:     map[string]float64{"cost_usd": reply.CostUSD, "latency_ms": reply.LatencyMS},
+})
+```
 
-client.endpoints.create(
-    slug="support-router",
-    artifact="support-router@2026-11-25-1",
-    capture_dataset="support-traces",
-    strategy={
-        "kind": "sla_lagrangian",
-        "fallback": "claude-opus-4-7",
-        "max_quality_drop": 0.02,
-        "hard_stop_drop": 0.05,
-        "fallback_probe_rate": 0.10,
-    },
-)
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
 
-decision = client.router("support-router").route(messages=messages, tools=tools)
-reply = call_your_llm(decision.model, messages, tools)
-
-client.feedback.record(
-    inference_id=decision.inference_id,
-    score=1.0 if ticket_resolved else 0.0,
-    metrics={"cost_usd": reply.cost_usd, "latency_ms": reply.latency_ms},
-)
+```bash
+curl https://api.gradiated.com/v1/endpoints/support-router/infer \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"messages": [{"role": "user", "content": "Where is invoice #9941?"}]}}'
 ```
 
   </DocsCodeTab>

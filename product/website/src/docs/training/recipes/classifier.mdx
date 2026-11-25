@@ -46,14 +46,6 @@ Choose the loss that matches your label structure:
 - **`bce_logits`** for binary gates or multi-label tags.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
-  <DocsCodeTab label="CLI">
-
-```bash
-grad train --dataset coding-effort --name coding-effort --recipe classifier --wait
-grad deploy coding-effort@latest
-```
-
-  </DocsCodeTab>
   <DocsCodeTab label="Python">
 
 ```python
@@ -103,6 +95,29 @@ console.log(run.artifactId, run.evalReport);
 ```
 
   </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+run, _ := client.Runs.Create(ctx, grad.RunParams{
+	Dataset: "coding-effort",
+	Name:    "coding-effort",
+	Recipe:  "classifier",
+	Base:    "BAAI/bge-small-en-v1.5",
+	Compute: "cpu",
+	Labels:  []string{"low", "medium", "high"},
+}).Wait(ctx)
+fmt.Println(run.ArtifactID, run.EvalReport)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad train --dataset coding-effort --name coding-effort --recipe classifier --wait
+grad deploy coding-effort@latest
+```
+
+  </DocsCodeTab>
 </DocsCodeTabs>
 
 ### Calibration options
@@ -125,6 +140,36 @@ Inspect `run.eval_report` before shipping:
 Attach the artifact to an [endpoint](/docs/training/endpoints/) using `confidence_fallback`. Whenever top-class confidence falls below `min_conf`, the endpoint returns your safe fallback label (for example, `"high"` effort so complex prompts never get under-budgeted).
 
 <DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+client.endpoints.create(
+    slug="coding-effort",
+    artifact="coding-effort@2026-11-25-1",
+    capture_dataset="coding-effort",
+    strategy={
+        "kind": "confidence_fallback",
+        "labels": ["low", "medium", "high"],
+        "min_conf": 0.75,
+        "fallback": "high",
+    },
+)
+
+effort = client.endpoint("coding-effort").infer(input={"messages": messages})
+
+if not tests_passed:
+    client.feedback.record(
+        inference_id=effort.inference_id,
+        score=0.0,
+        expected_output={"label": "high"},
+    )
+```
+
+  </DocsCodeTab>
   <DocsCodeTab label="TypeScript">
 
 ```ts
@@ -161,33 +206,32 @@ if (!testsPassed) {
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="Python">
+  <DocsCodeTab label="Go">
 
-```python
-from grad import Grad
+```go
+type EffortOut struct {
+	Label      string  `json:"label"`
+	Confidence float64 `json:"confidence"`
+}
+effort, _ := grad.InferAs[EffortOut](ctx, client, "coding-effort", grad.InferInput{Messages: messages})
 
-client = Grad()
+if !testsPassed {
+	_ = client.Feedback.Record(ctx, grad.FeedbackEvent{
+		InferenceID:    effort.InferenceID,
+		Score:          0.0,
+		ExpectedOutput: map[string]any{"label": "high"},
+	})
+}
+```
 
-client.endpoints.create(
-    slug="coding-effort",
-    artifact="coding-effort@2026-11-25-1",
-    capture_dataset="coding-effort",
-    strategy={
-        "kind": "confidence_fallback",
-        "labels": ["low", "medium", "high"],
-        "min_conf": 0.75,
-        "fallback": "high",
-    },
-)
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
 
-effort = client.endpoint("coding-effort").infer(input={"messages": messages})
-
-if not tests_passed:
-    client.feedback.record(
-        inference_id=effort.inference_id,
-        score=0.0,
-        expected_output={"label": "high"},
-    )
+```bash
+curl https://api.gradiated.com/v1/endpoints/coding-effort/infer \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"messages": [{"role": "user", "content": "Refactor auth middleware"}]}}'
 ```
 
   </DocsCodeTab>

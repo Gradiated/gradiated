@@ -21,23 +21,9 @@ preds = art.infer_batch([{"messages": m} for m in eval_messages])
 
 ## Deploy in one line (or configure explicitly)
 
-Every trained `.grad` artifact carries its model type, source dataset, and default serving strategy in `manifest.json`. For the common path, `grad deploy` (and `run.deploy()`) creates the endpoint on first deploy and updates traffic splits on subsequent deploys:
+Every trained `.grad` artifact carries its model type, source dataset, and default serving strategy in `manifest.json`. For the common path, `run.deploy()` (and `grad deploy`) creates the endpoint on first deploy and updates traffic splits on subsequent deploys:
 
 <DocsCodeTabs>
-  <DocsCodeTab label="CLI">
-
-```bash
-# First deploy (creates `support-router` with artifact defaults)
-grad deploy support-router@latest
-
-# Subsequent deploys: shadow -> 10% canary -> 100% active (or instant rollback)
-grad deploy support-router@2026-11-26-1 --shadow
-grad deploy support-router@2026-11-26-1 --canary 0.10
-grad endpoints status support-router --watch
-grad deploy support-router@2026-11-26-1 --active
-```
-
-  </DocsCodeTab>
   <DocsCodeTab label="Python">
 
 ```python
@@ -55,25 +41,33 @@ const endpoint = await run.deploy({ canary: 0.1 });
 ```
 
   </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+endpoint, _ := run.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
+// Or: client.Endpoints.Deploy(ctx, "support-router@2026-11-26-1", grad.DeployOpts{Canary: 0.10})
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+# First deploy (creates `support-router` with artifact defaults)
+grad deploy support-router@latest
+
+# Subsequent deploys: shadow -> 10% canary -> 100% active (or instant rollback)
+grad deploy support-router@2026-11-26-1 --shadow
+grad deploy support-router@2026-11-26-1 --canary 0.10
+grad endpoints status support-router --watch
+grad deploy support-router@2026-11-26-1 --active
+```
+
+  </DocsCodeTab>
 </DocsCodeTabs>
 
 When you want explicit control over fallback models, SLA bounds, or multi-artifact strategies, use `endpoints.create()` directly:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
-  <DocsCodeTab label="CLI">
-
-```bash
-curl https://api.gradiated.com/v1/endpoints/support-router/infer \
-  -H "Authorization: Bearer $GRADIATED_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "input": {
-      "messages": [{"role": "user", "content": "Refund order #8821"}]
-    }
-  }'
-```
-
-  </DocsCodeTab>
   <DocsCodeTab label="Python">
 
 ```python
@@ -124,9 +118,53 @@ const reply = await callYourLLM(decision.model, messages, tools);
 ```
 
   </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+_, _ = client.Endpoints.Create(ctx, grad.EndpointParams{
+	Slug:           "support-router",
+	Artifact:       "support-router@2026-11-25-1",
+	CaptureDataset: "support-prod",
+	Strategy: map[string]any{
+		"kind":             "sla_lagrangian",
+		"fallback":         "claude-opus-4-7",
+		"max_quality_drop": 0.02,
+	},
+})
+
+decision, _ := client.Router("support-router").Route(ctx, grad.RouteInput{Messages: messages, Tools: tools})
+reply := callYourLLM(decision.Model, messages, tools)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://api.gradiated.com/v1/endpoints/support-router/infer \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": {
+      "messages": [{"role": "user", "content": "Refund order #8821"}]
+    }
+  }'
+```
+
+  </DocsCodeTab>
 </DocsCodeTabs>
 
 For classifiers, effort detectors, or generative models, call `endpoint(...).infer`:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+effort = client.endpoint("coding-effort").infer(input={"messages": messages})
+print(effort.output["label"], effort.output["confidence"])
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
 
 ```ts
 const effort = await grad
@@ -136,6 +174,30 @@ const effort = await grad
   });
 ```
 
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+type EffortOut struct {
+	Label      string  `json:"label"`
+	Confidence float64 `json:"confidence"`
+}
+effort, _ := grad.InferAs[EffortOut](ctx, client, "coding-effort", grad.InferInput{Messages: messages})
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://api.gradiated.com/v1/endpoints/coding-effort/infer \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"messages": [{"role": "user", "content": "Refactor auth middleware"}]}}'
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
 If an endpoint times out or trips a circuit breaker, it fails open to its configured fallback so user requests still succeed. See [errors, limits, and retries](/docs/errors/) for HTTP status codes and retry guidance.
 
 ## Record feedback
@@ -143,6 +205,19 @@ If an endpoint times out or trips a circuit breaker, it fails open to its config
 Every `/v1/endpoints/{name}/infer` response returns an `inference_id` and records a [`Trajectory`](/docs/training/trajectories/) into `capture_dataset`. Send outcomes back whenever they are known — right after a unit test or hours later when a support ticket resolves.
 
 <DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+client.feedback.record(
+    inference_id=merged.inference_id,
+    idempotency_key=f"pr-{pr_number}-check-1",
+    score=1.0 if tests_passed else 0.0,
+    expected_output={"merged_code": human_fix} if human_fix else None,
+    metrics={"cost_usd": 0.0012, "latency_ms": 480},
+)
+```
+
+  </DocsCodeTab>
   <DocsCodeTab label="TypeScript">
 
 ```ts
@@ -156,16 +231,32 @@ await grad.feedback.record({
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="Python">
+  <DocsCodeTab label="Go">
 
-```python
-client.feedback.record(
-    inference_id=merged.inference_id,
-    idempotency_key=f"pr-{pr_number}-check-1",
-    score=1.0 if tests_passed else 0.0,
-    expected_output={"merged_code": human_fix} if human_fix else None,
-    metrics={"cost_usd": 0.0012, "latency_ms": 480},
-)
+```go
+_ = client.Feedback.Record(ctx, grad.FeedbackEvent{
+	InferenceID:    merged.InferenceID,
+	IdempotencyKey: fmt.Sprintf("pr-%d-check-1", prNumber),
+	Score:          score,
+	Metrics:        map[string]float64{"cost_usd": 0.0012, "latency_ms": 480},
+})
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://api.gradiated.com/v1/feedback \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "events": [{
+      "inference_id": "inf_01J9Y",
+      "idempotency_key": "pr-481-check-1",
+      "score": 1.0,
+      "metrics": {"cost_usd": 0.0012, "latency_ms": 480}
+    }]
+  }'
 ```
 
   </DocsCodeTab>

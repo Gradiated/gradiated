@@ -43,8 +43,9 @@ Gradiated/grad/
 ├── Cargo.toml                    # Rust workspace: server/api, server/runtime, cli, sdks/rust
 ├── spec/
 │   └── openapi.yaml              # Single source of truth (OpenAPI 3.1, validated from Rust via utoipa)
-├── server/                       # Open-source server (local Docker Compose + Gradiated Cloud)
+├── server/                       # Open-source server (local Docker Compose, Helm chart, + Gradiated Cloud)
 │   ├── docker-compose.yml        # 1-command local stack (CPU default; `--profile gpu` for CUDA trainer/serving)
+│   ├── helm/grad/                # Official Helm chart (`charts.gradiated.com`) for production Kubernetes (CPU + GPU node pools)
 │   ├── api/                      # Rust (Axum): OpenAPI HTTP server, auth, DB state, job/session proxy, OTLP sink
 │   ├── runtime/                  # Rust crate (`grad-runtime`): pluggable runtime adapters
 │   │   ├── onnx_runner.rs        #   in-process `ort` ONNX (routers, effort detectors, classifiers, GBDTs)

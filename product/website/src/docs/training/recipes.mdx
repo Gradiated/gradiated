@@ -24,17 +24,6 @@ For specialized training patterns built on these same primitives, see [Reward mo
 Pass a dataset and a name. `recipe` defaults to `"auto"`.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
-  <DocsCodeTab label="CLI">
-
-```bash
-# Preview the resolved recipe, dataset warnings, and estimated compute ($0)
-grad train --dataset support-prod --name support-router --dry-run
-
-# Launch and stream progress
-grad train --dataset support-prod --name support-router --wait
-```
-
-  </DocsCodeTab>
   <DocsCodeTab label="Python">
 
 ```python
@@ -75,6 +64,41 @@ const run = await grad.runs
   });
 
 console.log(run.artifactId, run.evalReport);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+plan, _ := client.Runs.Plan(ctx, grad.RunParams{Dataset: "support-prod", Name: "support-router"})
+fmt.Println(plan.ResolvedRecipe, plan.Warnings)
+
+run, _ := client.Runs.Create(ctx, grad.RunParams{
+	Dataset: "support-prod",
+	Name:    "support-router",
+}).Wait(ctx)
+fmt.Println(run.ArtifactID, run.EvalReport)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+# Preview the resolved recipe, dataset warnings, and estimated compute ($0)
+grad train --dataset support-prod --name support-router --dry-run
+
+# Launch and stream progress
+grad train --dataset support-prod --name support-router --wait
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://api.gradiated.com/v1/runs \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"dataset": "support-prod", "name": "support-router"}'
 ```
 
   </DocsCodeTab>
@@ -307,19 +331,28 @@ rl = client.runs.create(
 Stream step-by-step telemetry (`step`, `loss`, `grad_norm`, `lr`, `tokens_per_sec`, `eval_metrics`) while a run is active, or inspect the saved `eval_report.json` afterward:
 
 <DocsCodeTabs>
-  <DocsCodeTab label="CLI">
-
-```bash
-grad runs logs run_01J9X --follow
-grad artifacts inspect fast-diff-merge@2026-11-25-2 --json
-```
-
-  </DocsCodeTab>
   <DocsCodeTab label="Python">
 
 ```python
 for metric in client.runs.metrics(run.id, follow=True):
     print(metric.step, metric.loss, metric.eval_metrics)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+for await (const metric of grad.runs.metrics(run.id, { follow: true })) {
+  console.log(metric.step, metric.loss, metric.evalMetrics);
+}
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad runs logs run_01J9X --follow
+grad artifacts inspect fast-diff-merge@2026-11-25-2 --json
 ```
 
   </DocsCodeTab>

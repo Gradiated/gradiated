@@ -1,0 +1,178 @@
+# Self-hosting
+
+<DocsLead>Run the exact same Gradiated API, training worker, and serving runtime on your laptop with Docker Compose or in production Kubernetes with Helm.</DocsLead>
+
+Self-hosted deployments expose the same OpenAPI 3.1 contract, `.grad` artifact format, and SDKs as Gradiated Cloud. Switching between local, self-hosted Kubernetes, and Gradiated Cloud requires changing only `GRAD_BASE_URL` — zero application code changes.
+
+## Local development (Docker Compose)
+
+Start a complete local stack in one command with the `grad` CLI:
+
+```bash
+brew install gradiated/tap/grad
+
+# CPU stack (default): routers, classifiers, trace sync, and local serving
+grad local up
+
+# GPU stack (requires NVIDIA Container Toolkit): adds CUDA trainer and LLM serving
+grad local up --gpu
+```
+
+`grad local up` starts the Rust API and ONNX serving runtime on `http://localhost:8787`, Postgres, Valkey, local object storage, and a trainer worker. Run `grad local down` to stop and clean up the stack.
+
+## Production Kubernetes (Helm)
+
+Deploy `grad` into any Kubernetes cluster using the official Helm chart. The chart runs the Rust API server, CPU trainer workers, and optional GPU node-pool trainer/serving replicas.
+
+```bash
+helm repo add gradiated https://charts.gradiated.com
+helm repo update
+
+helm upgrade --install grad gradiated/grad \
+  --namespace grad \
+  --create-namespace \
+  -f values.yaml
+```
+
+### Minimal `values.yaml`
+
+By default, the chart ships with a CPU trainer pool and works with your existing Postgres, Valkey/Redis, and S3-compatible bucket (or bundled dev dependencies for evaluation clusters):
+
+```yaml
+# values.yaml
+api:
+  replicas: 2
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: grad.internal.example
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: grad-tls
+        hosts:
+          - grad.internal.example
+
+# Reference a Kubernetes Secret holding API_KEY_HASH, DATABASE_URL, VALKEY_URL, S3 credentials
+auth:
+  existingSecret: grad-secrets
+
+storage:
+  s3:
+    bucket: my-org-grad-artifacts
+    region: us-east-1
+
+trainer:
+  cpu:
+    replicas: 2
+    resources:
+      requests: { cpu: "4", memory: "16Gi" }
+  gpu:
+    enabled: true
+    replicas: 1
+    resources:
+      limits: { nvidia.com/gpu: "1" }
+    nodeSelector:
+      accelerator: nvidia-h100
+    tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+```
+
+For air-gapped or private VPC deployments, mirror the container images (`ghcr.io/gradiated/grad-server` and `ghcr.io/gradiated/grad-trainer`) to your internal registry and set `image.registry`.
+
+## Connect SDKs and CLI
+
+Point any SDK or the CLI at your local or self-hosted URL via `GRAD_BASE_URL` (or pass `base_url` / `baseURL` directly):
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+import os
+from grad import Grad
+
+# Or set GRAD_BASE_URL=https://grad.internal.example in your environment
+client = Grad(
+    base_url="https://grad.internal.example",
+    api_key=os.environ["GRADIATED_API_KEY"],
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad({
+  baseURL: "https://grad.internal.example",
+  apiKey: process.env.GRADIATED_API_KEY,
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+package main
+
+import (
+	"os"
+
+	grad "github.com/Gradiated/grad/sdks/go"
+)
+
+func main() {
+	client := grad.NewClient(
+		grad.WithBaseURL("https://grad.internal.example"),
+		grad.WithAPIKey(os.Getenv("GRADIATED_API_KEY")),
+	)
+	_ = client
+}
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+export GRAD_BASE_URL=https://grad.internal.example
+export GRADIATED_API_KEY=grad_...
+
+grad endpoints status support-router --json
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://grad.internal.example/v1/artifacts \
+  -H "Authorization: Bearer $GRADIATED_API_KEY"
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Deployment parity
+
+| Component | Local (`grad local up`) | Self-hosted Kubernetes (Helm) | Gradiated Cloud |
+| --- | --- | --- | --- |
+| Base URL | `http://localhost:8787` | `https://grad.internal.example` | `https://api.gradiated.com` |
+| API & ONNX runtime | `grad-server` container | `grad-server` Deployment (HPA) | Multi-region managed runtime + zero-hop gateway |
+| Training workers | CPU container (`--gpu` for CUDA) | CPU + optional GPU Deployments | Managed CPU and GPU pools |
+| State & queue | Local Postgres + Valkey | External Postgres + Valkey | Managed Postgres, Valkey, and Temporal |
+| Artifacts & trajectories | Local volume or MinIO | S3 / GCS / MinIO | KMS-encrypted S3 |
+
+<DocsNext>
+  <a href="/docs/training/">
+    <small>Overview</small>
+    <strong>Training overview</strong>
+  </a>
+  <a href="/docs/training/endpoints/">
+    <small>Serving</small>
+    <strong>Artifacts and endpoints</strong>
+  </a>
+</DocsNext>

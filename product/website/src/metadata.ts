@@ -203,6 +203,11 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Promote immutable .grad artifacts to named endpoints for shadow testing, canary rollouts, SLA routing, cascades, and feedback capture.",
   },
+  "/docs/training/self-hosting/": {
+    title: "Self-hosting grad",
+    description:
+      "Run the Gradiated training and serving server locally with Docker Compose or in production Kubernetes with the official Helm chart.",
+  },
   "/docs/training/recipes/router/": {
     title: "Model router guide",
     description:

@@ -44,7 +44,34 @@ print(run.artifact_id, run.eval_report)
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="YAML + CLI">
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+
+const run = await grad.runs
+  .create({
+    dataset: "support-prompts",
+    name: "support-4b-distilled",
+    recipe: "distill",
+    base: "Qwen/Qwen3-4B",
+    adapter: "lora",
+    compute: "gpu",
+    teacher: "Qwen/Qwen3-32B",
+    mode: "on_policy",
+    loss: { kind: "topk_kl_distill", topK: 32 },
+    optimizer: { kind: "adamw", lr: 1e-4 },
+    mergeAdapter: true,
+  })
+  .wait();
+
+console.log(run.artifactId, run.evalReport);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI (YAML)">
 
 ```yaml
 # distill-4b.yaml

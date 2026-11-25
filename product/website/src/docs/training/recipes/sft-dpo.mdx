@@ -80,7 +80,33 @@ print(sft.artifact_id)
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="YAML + CLI">
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+
+const sft = await grad.runs
+  .create({
+    dataset: "diff-merge-prod",
+    name: "fast-diff-merge",
+    recipe: "sft",
+    base: "Qwen/Qwen3-8B",
+    adapter: { kind: "lora", rank: 32 },
+    compute: "gpu",
+    optimizer: { kind: "adamw", lr: 2e-4 },
+    split: { strategy: "by_session", evalFraction: 0.1 },
+    filter: { minScore: { tests_passed: 1.0 } },
+    mergeAdapter: true,
+  })
+  .wait();
+
+console.log(sft.artifactId);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI (YAML)">
 
 ```yaml
 # sft-diff-merge.yaml
@@ -144,6 +170,37 @@ print(dpo.artifact_id, dpo.eval_report)
 
 For structured JSON, SQL, or code-editing [endpoints](/docs/training/endpoints/), use `syntax_fallback`. If the fine-tuned model ever emits invalid syntax or fails your JSON schema, the endpoint retries automatically against a larger fallback model.
 
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+client.endpoints.create(
+    slug="fast-diff-merge",
+    artifact="fast-diff-merge@2026-11-25-2",
+    capture_dataset="diff-merge-prod",
+    strategy={
+        "kind": "syntax_fallback",
+        "validator": "typescript_ast",
+        "fallback": "Qwen/Qwen3-32B",
+    },
+)
+
+merged = client.endpoint("fast-diff-merge").infer(input={"original": original, "edit": edit})
+
+client.feedback.record(
+    inference_id=merged.inference_id,
+    score=1.0 if tests_passed else 0.0,
+    expected_output={"merged_code": human_fix} if human_fix else None,
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
 ```ts
 import { Grad } from "@gradiated/grad";
 
@@ -172,6 +229,32 @@ await grad.feedback.record({
   expectedOutput: humanFix ? { merged_code: humanFix } : undefined,
 });
 ```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+type MergeOut struct {
+	MergedCode string `json:"merged_code"`
+}
+merged, _ := grad.InferAs[MergeOut](ctx, client, "fast-diff-merge", grad.InferInput{
+	Payload: map[string]any{"original": original, "edit": edit},
+})
+_ = client.Feedback.Record(ctx, grad.FeedbackEvent{InferenceID: merged.InferenceID, Score: score})
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://api.gradiated.com/v1/endpoints/fast-diff-merge/infer \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"payload": {"original": "...", "edit": "..."}}}'
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
 
 Whenever a developer fixes a bad merge, attaching `expectedOutput` builds the exact next SFT dataset — and pairing the bad output with `humanFix` builds your next DPO dataset.
 

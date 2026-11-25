@@ -3,15 +3,6 @@
 <DocsLead>Train routers, classifiers, reward models, and fine-tuned or RL-tuned LLMs from traces or live environments. Start in three lines, and drop down into full PyTorch loops whenever you need to.</DocsLead>
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
-  <DocsCodeTab label="CLI">
-
-```bash
-grad import ./support_traces.jsonl --dataset support-prod
-grad train --dataset support-prod --name support-router --wait
-grad deploy support-router@latest --canary 0.10
-```
-
-  </DocsCodeTab>
   <DocsCodeTab label="Python">
 
 ```python
@@ -38,20 +29,33 @@ const endpoint = await run.deploy({ canary: 0.1 });
 ```
 
   </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+client := grad.NewClient()
+client.Trajectories.ImportFile(ctx, "./support_traces.jsonl", grad.ImportOpts{Dataset: "support-prod"}).Wait(ctx)
+
+run, _ := client.Runs.Create(ctx, grad.RunParams{Dataset: "support-prod", Name: "support-router"}).Wait(ctx)
+endpoint, _ := run.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad import ./support_traces.jsonl --dataset support-prod
+grad train --dataset support-prod --name support-router --wait
+grad deploy support-router@latest --canary 0.10
+```
+
+  </DocsCodeTab>
 </DocsCodeTabs>
 
-Already sending inference requests through Gradiated with the `x-gradiated-task` header? Skip `import` — your dataset is populated automatically, so you go straight to `grad train` and `grad deploy`.
+Already sending inference requests through Gradiated with the `x-gradiated-task` header? Skip `import` — your dataset is populated automatically, so you go straight to training and deploying.
 
 ## Install and connect
 
 <DocsCodeTabs>
-  <DocsCodeTab label="CLI">
-
-```bash
-brew install gradiated/tap/grad
-```
-
-  </DocsCodeTab>
   <DocsCodeTab label="Python">
 
 ```bash
@@ -80,33 +84,22 @@ cargo add grad-sdk
 ```
 
   </DocsCodeTab>
-</DocsCodeTabs>
-
-The CLI and SDKs read `GRADIATED_API_KEY` automatically (create one in the [quickstart](/docs/quickstart/)) and target `https://api.gradiated.com`. To run locally instead, start the open-source server with Docker Compose:
-
-```bash
-grad local up
-export GRAD_BASE_URL=http://localhost:8787
-```
-
-`grad local up` starts the API server on `:8787`, Postgres, Valkey, and a CPU trainer worker — enough for routers, classifiers, and trace syncing. Pass `--gpu` on a CUDA machine for LLM fine-tuning and RL, and run `grad local down` to stop the stack.
-
-## Call your endpoint and close the loop
-
-`run.deploy()` (and `grad deploy`) reads the artifact's manifest to configure its default serving strategy, fallback model, and capture dataset. Call the endpoint in your app and send outcomes back so live traffic feeds the next training run:
-
-<DocsCodeTabs>
   <DocsCodeTab label="CLI">
 
 ```bash
-# Watch live canary quality, offload %, and cost savings
-grad endpoints status support-router --watch
-
-# Promote to 100% when metrics hold, or roll back in one command
-grad deploy support-router@2026-11-25-1 --active
+brew install gradiated/tap/grad
 ```
 
   </DocsCodeTab>
+</DocsCodeTabs>
+
+All SDKs and the CLI read `GRADIATED_API_KEY` automatically (create one in the [quickstart](/docs/quickstart/)) and connect to `https://api.gradiated.com`. Prefer to run on your own infrastructure or locally? See the [self-hosting guide](/docs/training/self-hosting/) for Docker Compose and the Kubernetes Helm chart.
+
+## Call your endpoint and close the loop
+
+`run.deploy()` (and `grad deploy`) reads the artifact's manifest to configure its default serving strategy, fallback model, and capture dataset. Call the endpoint in your app and record outcomes so live traffic feeds the next training run:
+
+<DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
@@ -132,6 +125,44 @@ await grad.feedback.record({
   score: userResolved ? 1.0 : 0.0,
   metrics: { cost_usd: reply.costUsd, latency_ms: reply.latencyMs },
 });
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+decision, _ := client.Router("support-router").Route(ctx, grad.RouteInput{
+	Messages: messages,
+	Tools:    tools,
+})
+reply := callYourLLM(decision.Model, messages, tools)
+
+_ = client.Feedback.Record(ctx, grad.FeedbackEvent{
+	InferenceID: decision.InferenceID,
+	Score:       score,
+	Metrics:     map[string]float64{"cost_usd": reply.CostUSD, "latency_ms": reply.LatencyMS},
+})
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+# Watch live canary quality, offload %, and cost savings
+grad endpoints status support-router --watch
+
+# Promote to 100% when metrics hold, or roll back in one command
+grad deploy support-router@2026-11-25-1 --active
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://api.gradiated.com/v1/endpoints/support-router/infer \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"messages": [{"role": "user", "content": "Where is invoice #9941?"}]}}'
 ```
 
   </DocsCodeTab>
@@ -216,24 +247,13 @@ Read https://gradiated.com/docs/training/recipes/distillation.md:
   </DocsCodeTab>
 </DocsCodeTabs>
 
-## Local vs. Gradiated Cloud
-
-The HTTP API, `.grad` artifact format, recipes, and SDKs are identical locally and on Gradiated Cloud.
-
-| Component | Local (`grad local up`) | Gradiated Cloud |
-| --- | --- | --- |
-| Base URL | `http://localhost:8787` | `https://api.gradiated.com` |
-| Training worker | Local CPU container (`--gpu` for CUDA) | Managed CPU and GPU pools |
-| Storage | Local volume or MinIO | Encrypted S3 |
-| Serving | Local ONNX runtime + optional local LLM container | Hosted runtime + zero-hop gateway routing |
-
 <DocsNext>
   <a href="/docs/training/trajectories/">
     <small>Next</small>
     <strong>Trajectories and data</strong>
   </a>
-  <a href="/docs/training/recipes/">
-    <small>Recipes</small>
-    <strong>Recipes (Level 0 &amp; 1)</strong>
+  <a href="/docs/training/self-hosting/">
+    <small>Infrastructure</small>
+    <strong>Self-hosting</strong>
   </a>
 </DocsNext>

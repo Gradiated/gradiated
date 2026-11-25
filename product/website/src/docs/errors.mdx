@@ -4,25 +4,25 @@
 
 Each error response has the code in `error.code`. If a `/v1/responses` stream fails after it starts, the `error` event has the code in `code`.
 
-| Code                                                                           | Status | Action                                                          |
-| ------------------------------------------------------------------------------ | -----: | --------------------------------------------------------------- |
-| `invalid_request`                                                              |  `400` | Fix the request body or the named parameter.                    |
-| `unsupported_parameter`                                                        |  `400` | Remove or change the named parameter.                           |
-| `context_length_exceeded`                                                      |  `400` | Reduce the input or output limit.                               |
-| `invalid_api_key`                                                              |  `401` | Check the key. Create another key if it was revoked or expired. |
-| `insufficient_balance`                                                         |  `402` | Add credits or use another funded workspace.                    |
-| `workspace_archived`                                                           |  `403` | Use a key from a workspace that is not archived.                |
-| `organization_suspended`                                                       |  `403` | Contact team@gradiated.com.                                     |
-| `model_not_found`                                                              |  `404` | Choose a model from the model catalog.                          |
-| `model_unavailable`                                                            |  `404` | Retry later or select another ready model.                      |
-| `payload_too_large`                                                            |  `413` | Send a request body smaller than 32 MB.                         |
-| `concurrency_exceeded`                                                         |  `429` | Wait for a running request to finish, then retry.               |
-| `capacity_exceeded`, `settlement_backlog`                                      |  `429` | Retry with backoff.                                             |
-| `runtime_unavailable`, `serving_state_unavailable`, `finalization_unavailable` |  `503` | Retry with backoff.                                             |
+| Code                                                                                               | Status | Action                                                          |
+| -------------------------------------------------------------------------------------------------- | -----: | --------------------------------------------------------------- |
+| `invalid_request`                                                                                  |  `400` | Fix the request body or the named parameter.                    |
+| `unsupported_parameter`                                                                            |  `400` | Remove or change the named parameter.                           |
+| `context_length_exceeded`                                                                          |  `400` | Reduce the input or output limit.                               |
+| `invalid_api_key`                                                                                  |  `401` | Check the key. Create another key if it was revoked or expired. |
+| `insufficient_balance`                                                                             |  `402` | Add credits or use another funded workspace.                    |
+| `workspace_archived`                                                                               |  `403` | Use a key from a workspace that is not archived.                |
+| `organization_suspended`                                                                           |  `403` | Contact team@gradiated.com.                                     |
+| `model_not_found`                                                                                  |  `404` | Choose a model from the model catalog.                          |
+| `model_unavailable`                                                                                |  `404` | Retry later or select another ready model.                      |
+| `payload_too_large`                                                                                |  `413` | Send a request body smaller than 32 MB.                         |
+| `concurrency_exceeded`                                                                             |  `429` | Wait for a running request to finish, then retry.               |
+| `capacity_exceeded`, `settlement_backlog`                                                          |  `429` | Retry with backoff.                                             |
+| `runtime_unavailable`, `serving_state_unavailable`, `finalization_unavailable`, `proxy_overloaded` |  `503` | Retry with backoff.                                             |
 
 ## Retry rules
 
-You should retry `429` and temporary `503` responses with exponential backoff.
+You should retry `429` and temporary `503` responses with exponential backoff. A `429` response has a `Retry-After` header. Wait that number of seconds before you retry.
 
 Do not retry a request that has a `401`, `model_not_found`, or parameter errors without changing the request, it will continue to fail.
 

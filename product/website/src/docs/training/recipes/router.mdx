@@ -141,6 +141,10 @@ Before deploying, inspect `run.eval_report`:
 - **95% bootstrap confidence intervals (`quality_drop_ci95`):** Check the upper bound, not just the point estimate. If the upper bound exceeds your budget, collect more scored [trajectories](/docs/training/trajectories/) before tightening `max_quality_drop`.
 - **Calibration error (`ece`):** Confirms predicted success probabilities match observed win rates.
 
+<DocsCallout label="Why 10% fallback probes matter" tone="tip">
+Without unbiased probes, a router only observes outcomes on the model it picked — so silent drift on offloaded traffic goes unnoticed. Setting `fallback_probe_rate: 0.10` gives you an inverse-propensity-weighted live quality delta against your frontier model continuously, with no separate A/B test.
+</DocsCallout>
+
 ## Deploy with SLA guardrails
 
 The trained router artifact already records its candidate models and default pricing in `manifest.json`. Name the fallback model and quality budget when creating the endpoint:

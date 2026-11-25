@@ -143,6 +143,37 @@ with client.trainers.create(
     trainer.optim_step(lr=1e-4).result()
 ```
 
+### Self-Distillation Fine-Tuning (SDFT)
+
+Want continual learning from golden demonstrations without hosting a larger teacher model or suffering SFT catastrophic forgetting? In SDFT, the **same base model** acts as teacher when shown the question *plus* a golden demo in context, while the student sees only the question. Because `score_logprobs` accepts split `(prefix_tokens, response_tokens)` and `to_datum()` aligns `response_offset` automatically, the full loop is 15 lines:
+
+```python
+teacher = client.artifacts.get("Qwen/Qwen3-8B")  # frozen base model, no extra deployment
+
+with client.trainers.create(
+    ModelSpec(base="Qwen/Qwen3-8B", adapter="lora", train_mode="lora", params={"rank": 64}),
+    compute="gpu",
+) as trainer:
+    for batch in demo_batches:
+        # Student generates on-policy seeing ONLY the question
+        rollouts = [g[0] for g in trainer.snapshot().sample(batch.question_inputs, n=1, max_new_tokens=512)]
+
+        # Teacher scores the student's exact tokens while conditioning on (question + golden_demo)
+        t_refs = teacher.score_logprobs(
+            prefix_tokens=batch.demo_prefix_tokens,
+            response_tokens=[r.output["response_tokens"] for r in rollouts],
+            top_k=20,
+        )["topk_refs"]
+
+        datums = [r.to_datum(teacher_topk=ref) for r, ref in zip(rollouts, t_refs)]
+        trainer.forward_backward(datums, loss={"kind": "topk_kl_distill"}).result()
+        trainer.optim_step(lr=2e-5).result()
+```
+
+<DocsCallout label="Picking the right distillation pattern" tone="tip">
+Use **`distill`** to shrink a larger teacher (32B → 4B) on unlabeled prompts. Use **SDFT** to learn new skills from demonstrations while preserving prior capabilities. Use **LoRA prompt distillation** (`distill` + `context_ref`) for one merged prompt-free checkpoint, or **`cartridge` (`prefix_kv`)** to swap many per-tenant contexts on one shared frozen base model.
+</DocsCallout>
+
 ## Context Cartridges (`cartridge`)
 
 If every request prepends the same 30k–100k tokens of documentation, API specs, or compliance rules, a Cartridge compresses that context into a small trainable KV-cache prefix (`adapter: "prefix_kv"`, typically 128–1,024 virtual tokens). The base model weights stay frozen; only the prefix KV tensors are trained so the student without the long prompt matches the teacher *with* the long prompt.

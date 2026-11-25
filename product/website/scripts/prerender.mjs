@@ -124,10 +124,21 @@ const toPortableMarkdown = (source) =>
       (_match, href, label) => `[${stripTags(label)}](${href})`,
     )
     .replace(
+      /<DocsCallout(?:\s+[^>]*label="([^"]+)"[^>]*)?>\s*([\s\S]*?)\s*<\/DocsCallout>/g,
+      (_match, label, content) =>
+        `> **${label || "Note"}:** ${content.trim().replace(/\n/g, "\n> ")}\n`,
+    )
+    .replace(
+      /<DocsTerminal(?:\s+[^>]*command="([^"]+)"[^>]*)?>\s*([\s\S]*?)\s*<\/DocsTerminal>/g,
+      (_match, command, content) =>
+        `${command ? `\`\`\`bash\n${command}\n\`\`\`\n\n` : ""}${content.trim()}\n`,
+    )
+    .replace(
       /<DocsModelCatalog\s*\/>/g,
       "[View the live model catalog](https://api.gradiated.com/api/v1/models)",
     )
     .replace(/<DocsApiKeyAction\s*\/>/g, "")
+    .replace(/<Docs(?:TrainingFlywheel|RecipeChooser|TokenAlignment|PipelineDiagram|EnvLifecycle|EndpointDiagram)\s*\/>/g, "")
     .replace(/<\/?Docs[A-Za-z]+(?:\s[^>]*)?>/g, "")
     .replace(/^[ \t]+$/gm, "")
     .replace(/\n{3,}/g, "\n\n")

@@ -18,14 +18,17 @@ pip install "grad-sdk[torch]"
 
 ## Universal 1:1 token alignment
 
-Every per-token array on a `Datum` (`loss_mask`, `sampling_logprobs`, `ref_logprobs`, `advantages`, and `forward().logprobs`) has the **exact same length `T` as `tokens`**:
+Most training APIs force you to shift `input[:-1]` against `targets[1:]` and pad prompts manually — a single off-by-one mistake silently trains on the wrong tokens. In `grad`, every per-token array on a `Datum` (`loss_mask`, `sampling_logprobs`, `ref_logprobs`, `advantages`, and `forward().logprobs`) has the **exact same length `T` as `tokens`**:
 
-| Index | Meaning |
-| --- | --- |
-| `0` | Always `0.0` (no prior token predicts token `0`). |
-| `i` (`1 .. T-1`) | Prediction of `tokens[i]` given `tokens[:i]`. |
+<DocsTokenAlignment />
 
-`Artifact.sample()`, `Artifact.score_logprobs()`, [`Trajectory.append_env_tokens()`](/docs/training/trajectories/), and [`Trajectory.to_datum()`](/docs/training/trajectories/) all preserve this invariant so you never shift or slice arrays by one.
+`Artifact.sample()`, `Artifact.score_logprobs()`, `Artifact.tokenize(..., return_loss_mask=True)`, [`Trajectory.append_env_tokens()`](/docs/training/trajectories/), and [`Trajectory.to_datum()`](/docs/training/trajectories/) all preserve this invariant automatically.
+
+### Pipelining GPU execution in one RTT
+
+Queue `forward_backward()` and `optim_step()` before calling `.result()` so the GPU executes forward, backward, and weight updates back-to-back with zero idle gap between them:
+
+<DocsPipelineDiagram />
 
 ### Chat templates and assistant-only masking
 
@@ -96,6 +99,10 @@ with client.trainers.create(
     artifact = trainer.export(name="code-agent-grpo", merge_adapter=True)
     print(artifact.id)
 ```
+
+<DocsCallout label="Built-in RL numerics diagnostics" tone="tip">
+On every `grpo`, `cispo`, or `importance_sampling` step, `fb.result().metrics` reports `kl_sample_train` and `sample_train_max_diff` — comparing the sampler's exact `sampling_logprobs` against the trainer's recomputed logprobs so you spot off-policy staleness or tokenizer mismatches immediately.
+</DocsCallout>
 
 Passing an empty `datums` list (when every group in a batch has identical rewards) is a safe no-op.
 
@@ -257,19 +264,25 @@ async def train_async(batches):
                 print(metrics.loss)
 ```
 
-### Multimodal (VLM) inputs
+### Multimodal (VLM and audio) inputs
 
-Pass image or audio `MediaRef`s directly inside `ModelInput.media` — both `Artifact.sample()` and `Trainer.forward_backward()` handle multimodal tokens identically to text-only inputs:
+Pass image or audio `MediaRef`s directly to `base.tokenize()` and `ModelInput.media` — the server handles model-specific vision/audio preprocessing and special token expansion so you never need a client-side image processor or model-specific renderer:
 
 ```python
 from grad import Datum, DatumTargets, MediaRef, ModelInput
 
+img = MediaRef(kind="image", ref="s3://my-bucket/screens/checkout_step2.png")
+encoded = base.tokenize(
+    messages=[
+        {"role": "user", "content": "What button should the user click to complete checkout?"},
+        {"role": "assistant", "content": "Click 'Pay $49.00' in the bottom-right panel."},
+    ],
+    media=[img],
+    return_loss_mask=True,
+)
 vlm_datum = Datum(
-    ModelInput(
-        tokens=vlm_tokens,
-        media=[MediaRef(kind="image", ref="s3://my-bucket/screens/checkout_step2.png")],
-    ),
-    DatumTargets(loss_mask=vlm_mask),
+    ModelInput(tokens=encoded["tokens"], media=[img]),
+    DatumTargets(loss_mask=encoded["loss_mask"]),
 )
 ```
 

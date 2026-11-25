@@ -36,9 +36,11 @@ To reuse scores already attached to imported production traces, pass `RubricTerm
 
 ## Stateful environments (Docker Compose and seed scripts)
 
-When an agent modifies live state (inserting rows in Postgres, calling an internal API, or editing files), each parallel rollout needs isolation and guaranteed cleanup.
+When an agent modifies live state (inserting rows in Postgres, calling an internal API, or editing files), each parallel rollout needs isolation and guaranteed cleanup. `Environment` runs four hooks in strict order so your rubric inspects live container state **before** cleanup:
 
-Subclass `Environment` and implement four hooks:
+<DocsEnvLifecycle />
+
+Subclass `Environment` and implement those four hooks:
 
 1. `setup(task, rollout_id)` — start or lease an isolated environment and run your seed script.
 2. `step(handle, action)` — run the agent's tool call against `handle` and return an `Observation(text=..., done=...)`.
@@ -99,7 +101,9 @@ class AppComposeEnv(Environment):
         )
 ```
 
-You do not need to load a local tokenizer in `step()`. Returning `Observation(text=...)` tokenizes the observation via `artifact.tokenize()` on the server and injects it with `loss_mask = 0.0`. If you need exact token IDs (for example, injecting a specific control token), pass `Observation(tokens=[...], done=False)` instead.
+<DocsCallout label="No client-side tokenizer required" tone="tip">
+Returning `Observation(text=...)` from `step()` tokenizes tool output on the server using the exact model tokenizer and injects it with `loss_mask = 0.0` and `sampling_logprobs = 0.0`. Pass `Observation(tokens=[...])` only when you need explicit control tokens.
+</DocsCallout>
 
 ### Faster resets with a warm pool
 
@@ -110,6 +114,25 @@ Cold-starting `docker compose up` per rollout works for small runs, but a warm p
 - Return the slot to the pool in `teardown()`.
 
 Because `setup` and `teardown` are plain Python hooks, you can start with cold `docker compose up -d` and move to a warm pool later without changing your rubric or training loop.
+
+## Plug in an existing OpenAI-based agent
+
+Already have an agent built on the OpenAI SDK, LangGraph, or an existing coding-agent harness? You do not have to rewrite it to call `artifact.sample()` directly. Wrap any live `trainer.snapshot()` with `snap.openai_client()` — every chat completion runs against the snapshot and automatically records exact 1:1 `token_ids`, `sampling_logprobs`, and `loss_mask` into a `Trajectory`:
+
+```python
+snap = trainer.snapshot()
+
+with snap.openai_client() as (openai_client, recorder):
+    # Pass `openai_client` into your existing agent with zero agent rewrite
+    result = await my_existing_agent.run(task, client=openai_client)
+
+traj = recorder.to_trajectory(scores={"reward": grade(result, task)})
+datum = traj.to_datum(advantage=adv)
+```
+
+<DocsCallout label="Zero rewrite, exact RL numerics" tone="note">
+Because `snap.openai_client()` uses the server's chat renderer and preserves the exact token IDs sampled by the policy, multi-turn tool calls still keep 1:1 token alignment without re-tokenization drift.
+</DocsCallout>
 
 ## Running rollouts
 

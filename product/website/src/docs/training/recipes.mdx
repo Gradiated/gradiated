@@ -2,7 +2,9 @@
 
 <DocsLead>Pick the recipe for the model you want to train, start with sensible defaults, validate with a dry run, and tune any typed field or YAML file without writing a training loop.</DocsLead>
 
-A **recipe** defines a dataset split, a `ModelSpec`, a loss or solver, an optimizer, and a held-out evaluation. Every completed run writes an immutable `.grad` artifact alongside its `EvalReport`.
+A **recipe** bundles a dataset split, a `ModelSpec`, a loss or solver, an optimizer, and a held-out evaluation. Every completed run writes an immutable `.grad` artifact alongside its `EvalReport` — with zero boilerplate training loop to maintain.
+
+<DocsRecipeChooser />
 
 ## Built-in recipes
 
@@ -112,6 +114,25 @@ curl https://api.gradiated.com/v1/runs \
 
   </DocsCodeTab>
 </DocsCodeTabs>
+
+### Preview with `--dry-run` before spending GPU time
+
+Every run supports a zero-cost pre-flight check (`--dry-run` or `client.runs.plan()`) that inspects dataset coverage, warns about missing scores or class imbalance, prints the resolved defaults, and estimates runtime before allocating compute:
+
+<DocsTerminal
+  title="Pre-flight dry run ($0)"
+  command="grad train --dataset diff-merge-prod --name fast-diff-merge --recipe sft --dry-run"
+>
+
+```text
+Dataset   diff-merge-prod (1,420 trajectories -> 1,184 after min_score filter)
+Split     by_session: 1,065 train / 119 eval (0 overlapping sessions)
+Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · merge_adapter=true
+Optimizer adamw · lr=2.0e-4 (calibrated for Qwen/Qwen3-8B LoRA) · cosine decay
+Estimate  ~6m on 1x H100 · warnings: 0
+```
+
+</DocsTerminal>
 
 ### Inspect resolved defaults
 

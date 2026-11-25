@@ -111,6 +111,11 @@ with client.trainers.create(
 1. **Verify observation masking:** Tool responses, retrieved docs, and error tracebacks must have `loss_mask = 0.0`. Using `Environment.step()` returning `Observation(text=...)` or `traj.append_env_tokens()` enforces this automatically.
 2. **Watch zero-variance group rate:** If >70% of prompt groups get all `0.0` (too hard) or all `1.0` (too easy), add partial-credit rubric terms or filter your task pool to medium-difficulty prompts.
 3. **Warm-start with SFT:** If the base model emits malformed tool JSON on >30% of rollouts, run a short [SFT](/docs/training/recipes/sft-dpo/) stage on 200–500 valid trajectories first, then pass `init_from`.
+4. **Monitor `kl_sample_train`:** Every RL `forward_backward` step logs `kl_sample_train` and `sample_train_max_diff` comparing the sampler's logprobs against the trainer's recomputed logprobs. Sudden spikes on on-policy steps immediately flag a chat-template or tokenization mismatch.
+
+<DocsCallout label="Already have an OpenAI-SDK or LangGraph agent?" tone="tip">
+You do not need to rewrite your agent loop to call `artifact.sample()`. Wrap `trainer.snapshot()` with `snap.openai_client()` (see [Environments and rubrics](/docs/training/environments/)) to run your existing agent unchanged while recording exact 1:1 token-aligned trajectories for GRPO.
+</DocsCallout>
 
 ## Choosing an RL method for your environment
 

@@ -61,9 +61,9 @@ See the [SystemOne SDK guide](/docs/systemone-sdk/) for linden-1 examples and su
 | `POST` | `/v1/artifacts/merge` | Zero-GPU weight-space merge (`linear`, `ties`, `dare`, `slerp`). |
 | `POST` | `/v1/artifacts/{id}/infer` | Direct read-only single or batched inference (`infer` / `infer_batch`). |
 | `POST` | `/v1/artifacts/{id}/sample` | Generate token-aligned `Trajectory` rollouts (supports `temperature`, `top_p`, `stop`, `seed`, `resume_from`, `append_env_tokens`, and `response_format`). |
-| `POST` | `/v1/artifacts/{id}/score-logprobs` | Score full sequences, `Trajectory` objects, or `(prefix, response)` pairs (optional `top_k`, `return_layers`). |
+| `POST` | `/v1/artifacts/{id}/score-logprobs` | Score full sequences, `Trajectory` objects, or `(prefix, response)` pairs (optional `top_k`, `candidate_tokens`, `return_layers`). |
 | `POST` | `/v1/artifacts/{id}/embed` | Extract cached embeddings or hidden states (optional `pool` override). |
-| `POST` | `/v1/artifacts/{id}/tokenize` | Server-side tokenization and chat-template rendering (`messages`, `tools`, optional `return_loss_mask`). |
+| `POST` | `/v1/artifacts/{id}/tokenize` | Server-side tokenization and chat-template rendering (`messages`, `tools`, `media`, optional `return_loss_mask`). |
 | `GET` | `/v1/tensors/{ref_id}` | Fetch binary Safetensors/Arrow payloads for opaque `TensorRef`s. |
 | `POST` / `GET` / `PATCH` / `DELETE` | `/v1/endpoints` / `/v1/endpoints/{name}` | Manage named production endpoints over one or more artifacts. |
 | `POST` | `/v1/endpoints/{name}/promote` | Promote an artifact to `shadow`, `canary`, or `active`. |

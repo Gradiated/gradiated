@@ -256,7 +256,9 @@ curl https://api.gradiated.com/v1/endpoints/fast-diff-merge/infer \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Whenever a developer fixes a bad merge, attaching `expectedOutput` builds the exact next SFT dataset — and pairing the bad output with `humanFix` builds your next DPO dataset.
+<DocsCallout label="Turn production misses into your next DPO dataset" tone="tip">
+Whenever a developer fixes a bad output or `syntax_fallback` catches invalid JSON/AST, attaching `expected_output` via `feedback.record()` logs both the rejected attempt and the gold fix on the same trajectory — giving you ready-made SFT examples and DPO pairs with zero manual curation.
+</DocsCallout>
 
 ## Going deeper with custom loops
 

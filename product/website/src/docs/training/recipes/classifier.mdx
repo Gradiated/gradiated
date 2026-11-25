@@ -239,6 +239,46 @@ curl https://api.gradiated.com/v1/endpoints/coding-effort/infer \
 
 Recording `expected_output` when an attempt fails turns production misses directly into labeled training data for the next retrain.
 
+## Dynamic choices without a fixed head (`candidate_tokens`)
+
+When your choice set changes per request (for example, ranking candidate tools or scoring zero-shot multiple-choice decisions with an LLM), score or train directly on the next-token probability distribution over those specific `candidate_tokens` in a single forward pass — without fetching full 152k-vocabulary logits:
+
+```python
+import torch
+from grad import Datum, DatumTargets, Grad, ModelInput, ModelSpec
+
+client = Grad()
+base = client.artifacts.get("Qwen/Qwen3-8B")
+
+# Score a dynamic per-request choice set in one forward pass
+choice_ids = [base.tokenize(c)[-1] for c in ["A", "B", "C"]]
+logprobs = base.score_logprobs(
+    sequences=[base.tokenize(messages=prompt_messages)],
+    candidate_tokens=choice_ids,
+)["candidate_logprobs"][0]
+probs = torch.softmax(torch.tensor(logprobs), dim=-1)
+
+# Or fine-tune on soft target probabilities with Brier / KL loss
+def brier_loss(datums, out):
+    losses = []
+    for lp, d in zip(out["topk_logprobs"], datums):
+        p = torch.softmax(lp[-1], dim=-1)
+        target = torch.tensor(d.metadata["target_probs"])
+        losses.append(((p - target) ** 2).sum())
+    return torch.stack(losses).mean()
+
+fb = trainer.forward_backward_custom(
+    datums=decision_datums,
+    outputs=["topk_logprobs"],
+    gather_indices=choice_ids,
+    loss_fn=brier_loss,
+)
+```
+
+<DocsCallout label="Fixed head vs. prompted choices" tone="tip">
+Use `recipe="classifier"` (dedicated head on CPU) when your labels are fixed across requests — it runs in under 10 ms at a fraction of LLM cost. Use `candidate_tokens` when choices vary per request or when zero-shot LLM world knowledge matters.
+</DocsCallout>
+
 ## Going deeper with custom loops
 
 Drop to [custom loops](/docs/training/custom-loops/) when you want:

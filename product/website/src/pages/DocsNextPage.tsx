@@ -1,4 +1,12 @@
-import { Children, isValidElement, useId, useState } from "react";
+import {
+  Children,
+  createContext,
+  isValidElement,
+  useContext,
+  useEffect,
+  useId,
+  useState,
+} from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from "react";
 import {
@@ -16,6 +24,16 @@ import { DocsAccount } from "../components/docs/DocsAccount";
 import { DocsApiKeyAction } from "../components/docs/InteractiveQuickstart";
 import { DocsModelCatalog } from "../components/docs/DocsModelCatalog";
 import { DocsSessionProvider } from "../components/docs/DocsSession";
+import {
+  DocsCallout,
+  DocsEndpointDiagram,
+  DocsEnvLifecycle,
+  DocsPipelineDiagram,
+  DocsRecipeChooser,
+  DocsTerminal,
+  DocsTokenAlignment,
+  DocsTrainingFlywheel,
+} from "../components/docs/DocsTrainingInteractive";
 import {
   documents,
   legacyPaths,
@@ -94,6 +112,86 @@ const DocsNext = ({ children }: { children: ReactNode }): ReactElement => (
    code component's data attribute. The logic is small; the styling is the
    whole point. */
 
+const slugify = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const DocsHeading = ({
+  as: Tag,
+  children,
+  ...props
+}: ComponentPropsWithoutRef<"h2"> & { as: "h2" | "h3" }): ReactElement => {
+  const id = props.id ?? slugify(getText(children));
+  return (
+    <Tag {...props} className={`gr-doc-heading ${props.className ?? ""}`} id={id || undefined}>
+      {children}
+      {id ? (
+        <a aria-label={`Link to ${getText(children)}`} className="gr-doc-anchor" href={`#${id}`}>
+          #
+        </a>
+      ) : null}
+    </Tag>
+  );
+};
+
+const DocsH2 = (props: ComponentPropsWithoutRef<"h2">): ReactElement => (
+  <DocsHeading {...props} as="h2" />
+);
+
+const DocsH3 = (props: ComponentPropsWithoutRef<"h3">): ReactElement => (
+  <DocsHeading {...props} as="h3" />
+);
+
+const SYNCED_LANGUAGES = new Set([
+  "Python",
+  "TypeScript",
+  "JavaScript",
+  "Go",
+  "Rust",
+  "CLI",
+  "CLI (YAML)",
+  "cURL",
+]);
+
+const DocsLanguageContext = createContext<{
+  language: string | null;
+  setLanguage: (lang: string) => void;
+}>({ language: null, setLanguage: () => {} });
+
+const DocsLanguageProvider = ({
+  children,
+}: {
+  children: ReactNode;
+}): ReactElement => {
+  const [language, setLanguageState] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("gradiated.docs.lang");
+      if (saved) setLanguageState(saved);
+    } catch {
+      // Ignore storage access errors.
+    }
+  }, []);
+
+  const setLanguage = (lang: string) => {
+    setLanguageState(lang);
+    try {
+      window.localStorage.setItem("gradiated.docs.lang", lang);
+    } catch {
+      // Ignore storage access errors.
+    }
+  };
+
+  return (
+    <DocsLanguageContext.Provider value={{ language, setLanguage }}>
+      {children}
+    </DocsLanguageContext.Provider>
+  );
+};
+
 type Labelled = { children: ReactNode; label: string };
 
 export const DocsCodeTab = ({ children }: Labelled): ReactElement => (
@@ -104,11 +202,33 @@ export const DocsCodeVariant = ({ children }: Labelled): ReactElement => (
   <>{children}</>
 );
 
-const useTabs = (children: ReactNode) => {
+const useTabs = (children: ReactNode, syncLanguage = false) => {
   const items = Children.toArray(children).filter(
     (child): child is ReactElement<Labelled> => isValidElement<Labelled>(child),
   );
-  const [selected, setSelected] = useState(0);
+  const { language, setLanguage } = useContext(DocsLanguageContext);
+  const [localSelected, setLocalSelected] = useState(0);
+
+  const isLanguageGroup =
+    syncLanguage &&
+    items.length > 0 &&
+    items.some((item) => SYNCED_LANGUAGES.has(item.props.label));
+
+  const syncedIndex =
+    isLanguageGroup && language
+      ? items.findIndex((item) => item.props.label === language)
+      : -1;
+
+  const selected = syncedIndex >= 0 ? syncedIndex : localSelected;
+
+  const setSelected = (index: number) => {
+    setLocalSelected(index);
+    const chosen = items[index]?.props.label;
+    if (isLanguageGroup && chosen && SYNCED_LANGUAGES.has(chosen)) {
+      setLanguage(chosen);
+    }
+  };
+
   return { id: useId(), items, selected, setSelected };
 };
 
@@ -120,7 +240,7 @@ export const DocsCodeTabs = ({
   action?: ReactNode;
   children: ReactNode;
 }): ReactElement => {
-  const { id, items, selected, setSelected } = useTabs(children);
+  const { id, items, selected, setSelected } = useTabs(children, true);
   const active = items[selected] ?? items[0];
 
   return (
@@ -320,16 +440,26 @@ const DocsBody = (): ReactElement => {
               <PageActions path={document.path} title={document.title} />
               <Content
                 components={{
+                  h2: DocsH2,
+                  h3: DocsH3,
                   pre: DocsPre,
                   table: DocsTable,
                   DocsApiKeyAction,
+                  DocsCallout,
                   DocsCodeTab,
                   DocsCodeTabs,
                   DocsCodeVariant,
                   DocsCodeVariants,
+                  DocsEndpointDiagram,
+                  DocsEnvLifecycle,
                   DocsLead,
                   DocsModelCatalog,
                   DocsNext,
+                  DocsPipelineDiagram,
+                  DocsRecipeChooser,
+                  DocsTerminal,
+                  DocsTokenAlignment,
+                  DocsTrainingFlywheel,
                 }}
               />
             </article>
@@ -346,6 +476,8 @@ const DocsBody = (): ReactElement => {
 
 export const DocsNextPage = (): ReactElement => (
   <DocsSessionProvider>
-    <DocsBody />
+    <DocsLanguageProvider>
+      <DocsBody />
+    </DocsLanguageProvider>
   </DocsSessionProvider>
 );

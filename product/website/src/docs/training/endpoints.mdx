@@ -281,9 +281,30 @@ grad deploy support-router@2026-11-26-1 --active
 grad deploy support-router@2026-11-25-1 --active
 ```
 
+<DocsTerminal
+  title="Live canary telemetry"
+  command="grad endpoints status support-router --watch"
+>
+
+```text
+Endpoint  support-router · strategy=sla_lagrangian · circuit_breaker=ARMED
+Active    support-router@2026-11-25-1  (90% traffic · 18,412 req/hr · p50 6.2ms)
+Canary    support-router@2026-11-26-1  (10% traffic ·  2,044 req/hr · p50 5.9ms)
+
+  Metric (last 24h, IPS-adjusted via 10% fallback probes)
+    Quality delta vs. fallback : -0.4%  (budget <= 2.0% · PASS)
+    Offload to cheaper models  : 66.8%  (+2.7% vs. active)
+    Estimated spend savings    : $412/day
+    Feedback attached          : 94.2% of requests
+```
+
+</DocsTerminal>
+
 ## Serving strategies
 
-Endpoints support single-artifact and multi-artifact strategies:
+Endpoints support single-artifact and multi-artifact strategies. Select a strategy to inspect its request path and guardrail:
+
+<DocsEndpointDiagram />
 
 | `strategy.kind` | Artifacts | Behavior | Guide |
 | --- | --- | --- | --- |

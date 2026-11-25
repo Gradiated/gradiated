@@ -21,6 +21,16 @@ import {
 import { DocsApiKeyAction } from "../components/docs/InteractiveQuickstart";
 import { DocsModelCatalog } from "../components/docs/DocsModelCatalog";
 import { DocsSessionProvider } from "../components/docs/DocsSession";
+import {
+  DocsCallout,
+  DocsEndpointDiagram,
+  DocsEnvLifecycle,
+  DocsPipelineDiagram,
+  DocsRecipeChooser,
+  DocsTerminal,
+  DocsTokenAlignment,
+  DocsTrainingFlywheel,
+} from "../components/docs/DocsTrainingInteractive";
 import DocsAnthropicSdk from "../docs/anthropic-sdk.mdx";
 import DocsApiReference from "../docs/api-reference.mdx";
 import DocsClaudeCode from "../docs/claude-code.mdx";
@@ -501,13 +511,21 @@ const DocsContent = (): ReactElement => {
             th: DocsTableHead,
             ul: DocsUnorderedList,
             DocsApiKeyAction,
+            DocsCallout,
             DocsCodeTab,
             DocsCodeTabs,
             DocsCodeVariant,
             DocsCodeVariants,
+            DocsEndpointDiagram,
+            DocsEnvLifecycle,
             DocsLead,
             DocsModelCatalog,
             DocsNext,
+            DocsPipelineDiagram,
+            DocsRecipeChooser,
+            DocsTerminal,
+            DocsTokenAlignment,
+            DocsTrainingFlywheel,
           }}
         />
       </article>

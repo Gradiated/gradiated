@@ -1,0 +1,230 @@
+# Model router
+
+<DocsLead>Route each request to the cheapest model that meets your quality bar, with calibrated fallback probes and a hard-stop SLA guardrail.</DocsLead>
+
+A model router inspects each incoming prompt and predicts the probability that each candidate model will succeed. At serving time, the endpoint picks the lowest-cost model that satisfies your quality drop budget — typically running in under 10 ms on CPU with a frozen 33M-parameter encoder.
+
+## What data you need
+
+A router needs historical trajectories with **at least two candidate models**, a **quality score**, and **request cost**:
+
+- **Minimum volume:** ~500 scored trajectories per candidate model to fit a reliable CPU dual-head router (2,000+ for noisy multi-domain traffic).
+- **Required fields:** `input.messages` (plus optional `input.tools` and `input.features`), `metadata.model` (or `output.payload.action`), a scalar quality signal in `scores` (e.g. `task_success` in `[0, 1]`), and `metrics.cost_usd`.
+- **Fallback coverage:** Include trajectories from your frontier fallback model so calibration can measure quality drop directly against it.
+
+```json
+{
+  "schema": "grad.trajectory/1",
+  "session_id": "sess_42",
+  "input": {
+    "messages": [{ "role": "user", "content": "Where is invoice #9941?" }],
+    "features": { "customer_tier": "enterprise", "turn_index": 0 }
+  },
+  "scores": { "task_success": 1.0 },
+  "metrics": { "cost_usd": 0.0008, "latency_ms": 540 },
+  "metadata": { "model": "gpt-4.1-mini" }
+}
+```
+
+## Train the router
+
+Start on CPU with the default dual-head solver (`dual_head_kernel_lbfgs`), which combines a kernel nearest-neighbor estimator with an L2-regularized linear head over frozen embeddings. Move to `compute="gpu"` with a larger backbone only if CPU held-out AUC plateaus.
+
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+run = client.runs.create(
+    dataset="support-traces",
+    name="support-router",
+    recipe="router",
+    base="BAAI/bge-small-en-v1.5",
+    compute="cpu",
+    overrides={
+        "solver": "dual_head_kernel_lbfgs",
+        "score_key": "task_success",
+        "split": {"strategy": "by_session", "eval_fraction": 0.15},
+        "calibration": {"max_quality_drop": 0.02},
+    },
+).wait()
+
+print(run.artifact_id)
+print(run.eval_report["pareto_summary"])
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+
+const run = await grad.runs
+  .create({
+    dataset: "support-traces",
+    name: "support-router",
+    recipe: "router",
+    base: "BAAI/bge-small-en-v1.5",
+    compute: "cpu",
+    overrides: {
+      solver: "dual_head_kernel_lbfgs",
+      scoreKey: "task_success",
+      split: { strategy: "by_session", evalFraction: 0.15 },
+      calibration: { maxQualityDrop: 0.02 },
+    },
+  })
+  .wait();
+
+console.log(run.artifactId, run.evalReport.paretoSummary);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad train \
+  --dataset support-traces \
+  --name support-router \
+  --recipe router \
+  --wait
+
+grad artifacts inspect support-router@latest
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+### Key overrides
+
+| Field | Default | What it controls |
+| --- | --- | --- |
+| `base` | `BAAI/bge-small-en-v1.5` | Frozen text encoder (`Qwen/Qwen3-0.6B` on GPU for complex code or long context). |
+| `solver` | `dual_head_kernel_lbfgs` | `dual_head_kernel_lbfgs` (fast, calibrated on small data) or `lightgbm` (tabular-heavy inputs). |
+| `score_key` | Auto-detected | Key inside `trajectory.scores` treated as task success. |
+| `split.strategy` | `by_session` | Splits whole conversations so turns from one session never leak across train and eval. |
+| `calibration.max_quality_drop` | `0.02` | Maximum held-out quality loss vs. your fallback model used to pick the initial Lagrangian multiplier `λ`. |
+
+## Read the evaluation report
+
+Before deploying, inspect `run.eval_report`:
+
+```json
+{
+  "eval_examples": 480,
+  "fallback_model": "claude-opus-4-7",
+  "fallback_quality": 0.912,
+  "pareto_summary": {
+    "target_max_drop": 0.02,
+    "routed_quality": 0.904,
+    "quality_drop": 0.008,
+    "quality_drop_ci95": [-0.004, 0.019],
+    "offload_rate": 0.64,
+    "cost_savings_pct": 0.57,
+    "ece": 0.018
+  }
+}
+```
+
+- **Cost savings at target drop:** Expected USD reduction vs. sending 100% of traffic to your fallback model at `max_quality_drop`.
+- **95% bootstrap confidence intervals (`quality_drop_ci95`):** Check the upper bound, not just the point estimate. If the upper bound exceeds your budget, collect more scored [trajectories](/docs/training/trajectories/) before tightening `max_quality_drop`.
+- **Calibration error (`ece`):** Confirms predicted success probabilities match observed win rates.
+
+## Deploy with SLA guardrails
+
+The trained router artifact already records its candidate models and default pricing in `manifest.json`. Name the fallback model and quality budget when creating the endpoint:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+
+await grad.endpoints.create({
+  slug: "support-router",
+  artifact: "support-router@2026-11-25-1",
+  captureDataset: "support-traces",
+  strategy: {
+    kind: "sla_lagrangian",
+    fallback: "claude-opus-4-7",
+    maxQualityDrop: 0.02,
+    hardStopDrop: 0.05,
+    fallbackProbeRate: 0.1,
+  },
+});
+
+const decision = await grad.router("support-router").route({
+  messages,
+  tools,
+});
+
+const reply = await callYourLLM(decision.model, messages, tools);
+
+await grad.feedback.record({
+  inferenceId: decision.inferenceId,
+  score: ticketResolved ? 1.0 : 0.0,
+  metrics: { cost_usd: reply.costUsd, latency_ms: reply.latencyMs },
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+client.endpoints.create(
+    slug="support-router",
+    artifact="support-router@2026-11-25-1",
+    capture_dataset="support-traces",
+    strategy={
+        "kind": "sla_lagrangian",
+        "fallback": "claude-opus-4-7",
+        "max_quality_drop": 0.02,
+        "hard_stop_drop": 0.05,
+        "fallback_probe_rate": 0.10,
+    },
+)
+
+decision = client.router("support-router").route(messages=messages, tools=tools)
+reply = call_your_llm(decision.model, messages, tools)
+
+client.feedback.record(
+    inference_id=decision.inference_id,
+    score=1.0 if ticket_resolved else 0.0,
+    metrics={"cost_usd": reply.cost_usd, "latency_ms": reply.latency_ms},
+)
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+### How the online guardrail works
+
+- **10% fallback probes:** When the router chooses a cheaper model, `fallback_probe_rate` (default `0.10`) sends a random sample to the fallback anyway and records the exact `propensity`. That gives an unbiased inverse-propensity estimate of live quality drop without a separate A/B test.
+- **Online dual update:** As feedback arrives, the endpoint adjusts `λ` automatically to hold quality within `max_quality_drop`.
+- **Circuit breaker:** If rolling quality drop crosses `hard_stop_drop` (default `0.05`), the endpoint shifts 100% of traffic back to the fallback model.
+- **Zero-hop gateway mode:** On Gradiated Cloud, pass `"model": "<org>/support-router"` directly to `/v1/chat/completions`, `/v1/responses`, or `/v1/messages` to run routing in-process with no extra hop.
+
+## Going deeper (Level 2)
+
+Drop to [Level 2 custom loops](/docs/training/custom-loops/) when you need pairwise arena matrix-factorization routing, custom latency-weighted utility functions, or teacher reward-model distillation into a compact router head.
+
+<DocsNext>
+  <a href="/docs/training/recipes/classifier/">
+    <small>Next guide</small>
+    <strong>Classifiers and decisions</strong>
+  </a>
+  <a href="/docs/training/endpoints/">
+    <small>Serving</small>
+    <strong>Artifacts and endpoints</strong>
+  </a>
+</DocsNext>

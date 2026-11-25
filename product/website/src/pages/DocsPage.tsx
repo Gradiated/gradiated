@@ -33,6 +33,19 @@ import DocsOpenCode from "../docs/opencode.mdx";
 import DocsQuickstart from "../docs/quickstart.mdx";
 import DocsServiceTiers from "../docs/service-tiers.mdx";
 import DocsSystemOneSdk from "../docs/systemone-sdk.mdx";
+import DocsTrainingCustomLoops from "../docs/training/custom-loops.mdx";
+import DocsTrainingEndpoints from "../docs/training/endpoints.mdx";
+import DocsTrainingEnvironments from "../docs/training/environments.mdx";
+import DocsTrainingOverview from "../docs/training/index.mdx";
+import DocsTrainingRecipes from "../docs/training/recipes.mdx";
+import DocsRecipeClassifier from "../docs/training/recipes/classifier.mdx";
+import DocsRecipeDistillation from "../docs/training/recipes/distillation.mdx";
+import DocsRecipeEmbeddings from "../docs/training/recipes/embeddings.mdx";
+import DocsRecipeRewardModels from "../docs/training/recipes/reward-models.mdx";
+import DocsRecipeRlAgents from "../docs/training/recipes/rl-agents.mdx";
+import DocsRecipeRouter from "../docs/training/recipes/router.mdx";
+import DocsRecipeSftDpo from "../docs/training/recipes/sft-dpo.mdx";
+import DocsTrainingTrajectories from "../docs/training/trajectories.mdx";
 
 type DocsDocument = {
   title: string;
@@ -96,6 +109,71 @@ export const documents = {
     path: "/docs/claude-code/",
     Component: DocsClaudeCode,
   },
+  "training-overview": {
+    title: "Overview",
+    path: "/docs/training/",
+    Component: DocsTrainingOverview,
+  },
+  "training-trajectories": {
+    title: "Trajectories and data",
+    path: "/docs/training/trajectories/",
+    Component: DocsTrainingTrajectories,
+  },
+  "training-recipes": {
+    title: "Recipes (Level 0 & 1)",
+    path: "/docs/training/recipes/",
+    Component: DocsTrainingRecipes,
+  },
+  "training-environments": {
+    title: "Environments and rubrics",
+    path: "/docs/training/environments/",
+    Component: DocsTrainingEnvironments,
+  },
+  "training-custom-loops": {
+    title: "Custom loops (Level 2)",
+    path: "/docs/training/custom-loops/",
+    Component: DocsTrainingCustomLoops,
+  },
+  "training-endpoints": {
+    title: "Artifacts and endpoints",
+    path: "/docs/training/endpoints/",
+    Component: DocsTrainingEndpoints,
+  },
+  "recipe-router": {
+    title: "Model router",
+    path: "/docs/training/recipes/router/",
+    Component: DocsRecipeRouter,
+  },
+  "recipe-classifier": {
+    title: "Classifiers and decisions",
+    path: "/docs/training/recipes/classifier/",
+    Component: DocsRecipeClassifier,
+  },
+  "recipe-sft-dpo": {
+    title: "Fine-tuning (SFT & DPO)",
+    path: "/docs/training/recipes/sft-dpo/",
+    Component: DocsRecipeSftDpo,
+  },
+  "recipe-rl-agents": {
+    title: "RL for agents (GRPO)",
+    path: "/docs/training/recipes/rl-agents/",
+    Component: DocsRecipeRlAgents,
+  },
+  "recipe-distillation": {
+    title: "Distillation and Cartridges",
+    path: "/docs/training/recipes/distillation/",
+    Component: DocsRecipeDistillation,
+  },
+  "recipe-reward-models": {
+    title: "Reward models and verifiers",
+    path: "/docs/training/recipes/reward-models/",
+    Component: DocsRecipeRewardModels,
+  },
+  "recipe-embeddings": {
+    title: "Embeddings and rerankers",
+    path: "/docs/training/recipes/embeddings/",
+    Component: DocsRecipeEmbeddings,
+  },
   "api-reference": {
     title: "API reference",
     path: "/docs/api-reference/",
@@ -118,6 +196,29 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
       "systemone-sdk",
       "service-tiers",
       "errors",
+    ],
+  },
+  {
+    heading: "Training",
+    items: [
+      "training-overview",
+      "training-trajectories",
+      "training-recipes",
+      "training-environments",
+      "training-custom-loops",
+      "training-endpoints",
+    ],
+  },
+  {
+    heading: "Recipe guides",
+    items: [
+      "recipe-router",
+      "recipe-classifier",
+      "recipe-sft-dpo",
+      "recipe-rl-agents",
+      "recipe-distillation",
+      "recipe-reward-models",
+      "recipe-embeddings",
     ],
   },
   { heading: "Integrations", items: ["opencode", "codex", "claude-code"] },

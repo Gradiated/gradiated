@@ -1,0 +1,199 @@
+# Artifacts and endpoints
+
+<DocsLead>Every training run writes an immutable `.grad` artifact. Serve one or more artifacts behind a named endpoint for shadow testing, canary rollouts, guardrails, and live feedback capture.</DocsLead>
+
+## Artifact vs. Endpoint
+
+Separating raw model weights from live traffic slots keeps rollbacks instant and makes multi-model strategies explicit.
+
+| | **Artifact** | **Endpoint** |
+| --- | --- | --- |
+| **Cardinality** | Always **1** immutable model | **1 or many** artifacts |
+| **Changes over time?** | Never; every retrain writes a new `name@version` | Yes; promote, canary, shadow, or roll back in place |
+| **Primary use** | Offline evals, RL rollouts (`sample`), distillation (`score_logprobs`), embeddings (`embed`), weight merges | Production serving (`infer`), traffic splits, online SLA guardrails, delayed feedback capture |
+
+You can call a pinned `Artifact` directly during evaluation, calibration, or hard-negative mining, including batched calls via `artifact.infer_batch(inputs)`. Multi-head models always return `heads: { name: tensor }` (respecting `token_level: true` heads) alongside `logits` for single-head models:
+
+```python
+art = client.artifacts.get("coding-effort@2026-11-25-1")
+preds = art.infer_batch([{"messages": m} for m in eval_messages])
+```
+
+## Create an endpoint and serve traffic
+
+Create a named endpoint once, attach an artifact and serving strategy, and call the endpoint slug from your application. Router artifacts carry their candidate models and default pricing in `manifest.json`, so you only specify the fallback model and quality budget (pass `actions` only when overriding prices for custom models).
+
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+
+await grad.endpoints.create({
+  slug: "support-router",
+  artifact: "support-router@2026-11-25-1",
+  captureDataset: "support-prod",
+  strategy: {
+    kind: "sla_lagrangian",
+    fallback: "claude-opus-4-7",
+    maxQualityDrop: 0.02,
+  },
+});
+
+const decision = await grad.router("support-router").route({
+  messages,
+  tools,
+});
+
+const reply = await callYourLLM(decision.model, messages, tools);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+client.endpoints.create(
+    slug="support-router",
+    artifact="support-router@2026-11-25-1",
+    capture_dataset="support-prod",
+    strategy={
+        "kind": "sla_lagrangian",
+        "fallback": "claude-opus-4-7",
+        "max_quality_drop": 0.02,
+    },
+)
+
+decision = client.router("support-router").route(messages=messages, tools=tools)
+reply = call_your_llm(decision.model, messages, tools)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://api.gradiated.com/v1/endpoints/support-router/infer \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": {
+      "messages": [{"role": "user", "content": "Refund order #8821"}]
+    }
+  }'
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+For classifiers, effort detectors, or generative models, call `endpoint(...).infer`:
+
+```ts
+const effort = await grad
+  .endpoint("coding-effort")
+  .infer<{ messages: Msg[] }, { label: "low" | "medium" | "high"; confidence: number }>({
+    input: { messages },
+  });
+```
+
+If an endpoint times out or trips a circuit breaker, it fails open to its configured fallback so user requests still succeed. See [errors, limits, and retries](/docs/errors/) for HTTP status codes and retry guidance.
+
+## Record feedback
+
+Every `/v1/endpoints/{name}/infer` response returns an `inference_id` and records a [`Trajectory`](/docs/training/trajectories/) into `capture_dataset`. Send outcomes back whenever they are known — right after a unit test or hours later when a support ticket resolves.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+await grad.feedback.record({
+  inferenceId: merged.inferenceId,
+  idempotencyKey: `pr-${prNumber}-check-1`,
+  score: testsPassed ? 1.0 : 0.0,
+  expectedOutput: humanFix ? { merged_code: humanFix } : undefined,
+  metrics: { cost_usd: 0.0012, latency_ms: 480 },
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+client.feedback.record(
+    inference_id=merged.inference_id,
+    idempotency_key=f"pr-{pr_number}-check-1",
+    score=1.0 if tests_passed else 0.0,
+    expected_output={"merged_code": human_fix} if human_fix else None,
+    metrics={"cost_usd": 0.0012, "latency_ms": 480},
+)
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Feedback is deduplicated by `idempotency_key`, updates online SLA and canary telemetry in real time, and attaches directly to the captured `Trajectory` for the next training run.
+
+## Shadow, canary, and rollback
+
+Roll out new versions without changing application code:
+
+```bash
+# 1. Shadow: run the new artifact silently alongside active traffic (0% user impact)
+grad endpoints promote support-router support-router@2026-11-26-1 --mode shadow
+
+# 2. Canary: shift 10% of requests and watch live quality and cost deltas
+grad endpoints promote support-router support-router@2026-11-26-1 --mode canary --weight 0.10
+grad endpoints status support-router --watch
+
+# 3. Promote to 100%, or roll back to any previous immutable artifact
+grad endpoints promote support-router support-router@2026-11-26-1 --mode active
+grad endpoints promote support-router support-router@2026-11-25-1 --mode active
+```
+
+## Serving strategies
+
+Endpoints support single-artifact and multi-artifact strategies:
+
+| `strategy.kind` | Artifacts | Behavior | Guide |
+| --- | --- | --- | --- |
+| `direct` | 1 | Pass-through inference on the active artifact. | [Distillation & Cartridges](/docs/training/recipes/distillation/) |
+| `sla_lagrangian` | 1 | Calibrated lower-confidence-bound routing with fallback probes (`10%`), online primal-dual `λ`, and a hard-stop circuit breaker. | [Model router](/docs/training/recipes/router/) |
+| `confidence_fallback` | 1 | Temperature- or conformal-calibrated softmax threshold with automatic fallback label or model. | [Classifiers & decisions](/docs/training/recipes/classifier/) |
+| `syntax_fallback` | 1–2 | Validates JSON schema or AST on generated output and retries on a fallback artifact if invalid. | [Fine-tuning (SFT & DPO)](/docs/training/recipes/sft-dpo/) |
+| `cascade` | 2–3 | Runs a fast draft artifact, scores it with a [verifier](/docs/training/recipes/reward-models/), and escalates to a frontier artifact only below threshold. | [RL for agents](/docs/training/recipes/rl-agents/) |
+| `best_of_n` / `majority_vote` | 1–2 | Samples `N` completions and picks the majority answer or highest verifier-scored candidate. | [Reward models & verifiers](/docs/training/recipes/reward-models/) |
+| `budget_forcing` | 1 | Enforces thinking-token budgets or continuation prompts at test time. | [Custom loops](/docs/training/custom-loops/) |
+
+### Multi-artifact example: cascade
+
+```python
+client.endpoints.create(
+    slug="sql-assistant",
+    artifact="sql-8b@v3",
+    strategy={
+        "kind": "cascade",
+        "verifier": "sql-verifier@v2",
+        "frontier": "Qwen/Qwen3-32B",
+        "threshold": 0.75,
+    },
+)
+```
+
+## Zero-hop gateway routing
+
+On Gradiated Cloud, `router` endpoints also run directly inside the [OpenAI SDK](/docs/openai-sdk/) and [Anthropic SDK](/docs/anthropic-sdk/) inference gateway with no extra round trip. Pass `"model": "<org>/<endpoint-slug>"` to `/v1/chat/completions`, `/v1/responses`, or `/v1/messages`. The gateway runs the router in-process, dispatches to the selected model, and returns `x-gradiated-inference-id`, `x-gradiated-action`, and `x-gradiated-artifact` headers so you can still send outcomes to `grad.feedback.record()`.
+
+<DocsNext>
+  <a href="/docs/api-reference/">
+    <small>Reference</small>
+    <strong>API reference</strong>
+  </a>
+  <a href="/docs/training/">
+    <small>Back to start</small>
+    <strong>Training overview</strong>
+  </a>
+</DocsNext>

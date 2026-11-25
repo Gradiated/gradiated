@@ -1,0 +1,222 @@
+# Classifiers and decisions
+
+<DocsLead>Train calibrated binary guardrails, multiclass triage models, and ordinal effort detectors that run in milliseconds on CPU and fall back automatically when uncertain.</DocsLead>
+
+Use the `classifier` recipe whenever your model outputs a discrete label or ordered level rather than free-form text: thinking-effort detectors (`low / medium / high`), support ticket routing, PII/safety gates, or escalation triggers.
+
+## What data you need
+
+- **Minimum volume:** ~200 labeled [trajectories](/docs/training/trajectories/) per class for a frozen-encoder head on CPU; 1,000+ when fine-tuning the encoder with LoRA or full weights.
+- **Required fields:** `input.messages` (plus optional `input.features` for structured signals like user tier, token length, or retry count) and `expected_output.label` (string or integer class).
+
+```python
+from grad import Grad
+
+client = Grad()
+
+client.trajectories.push(
+    dataset="coding-effort",
+    trajectories=[
+        {
+            "session_id": "issue_104",
+            "input": {
+                "messages": [{"role": "user", "content": "Rename foo to bar in utils.ts"}],
+                "features": {"file_count": 1, "diff_lines": 4},
+            },
+            "expected_output": {"label": "low"},
+        },
+        {
+            "session_id": "issue_105",
+            "input": {
+                "messages": [{"role": "user", "content": "Refactor auth middleware for multi-tenant OAuth"}],
+                "features": {"file_count": 14, "diff_lines": 420},
+            },
+            "expected_output": {"label": "high"},
+        },
+    ],
+)
+```
+
+## Train the classifier
+
+Choose the loss that matches your label structure:
+
+- **`cross_entropy`** for unordered categories (`billing`, `bug`, `feature_request`).
+- **`ordinal_bce`** for ordered tiers (`low < medium < high`), so confusing `low` with `high` costs more than confusing `low` with `medium`.
+- **`bce_logits`** for binary gates or multi-label tags.
+
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+run = client.runs.create(
+    dataset="coding-effort",
+    name="coding-effort",
+    recipe="classifier",
+    base="BAAI/bge-small-en-v1.5",
+    compute="cpu",
+    overrides={
+        "labels": ["low", "medium", "high"],
+        "loss": {"kind": "ordinal_bce"},
+        "calibration": {"method": "temperature"},
+        "split": {"strategy": "by_session", "eval_fraction": 0.15},
+    },
+).wait()
+
+print(run.artifact_id)
+print(run.eval_report)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+
+const run = await grad.runs
+  .create({
+    dataset: "coding-effort",
+    name: "coding-effort",
+    recipe: "classifier",
+    base: "BAAI/bge-small-en-v1.5",
+    compute: "cpu",
+    overrides: {
+      labels: ["low", "medium", "high"],
+      loss: { kind: "ordinal_bce" },
+      calibration: { method: "temperature" },
+      split: { strategy: "by_session", evalFraction: 0.15 },
+    },
+  })
+  .wait();
+
+console.log(run.artifactId, run.evalReport);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad train \
+  --dataset coding-effort \
+  --name coding-effort \
+  --recipe classifier \
+  --wait
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+### Calibration options
+
+| `calibration.method` | What it does |
+| --- | --- |
+| `temperature` | Fits a single scalar temperature on the held-out split to minimize NLL so confidence scores reflect real accuracy. |
+| `conformal` | Computes a split-conformal quantile threshold for a target coverage rate (e.g. `alpha: 0.10`), guaranteeing bounded abstention error on exchangeable traffic. |
+
+## Read the evaluation report
+
+Inspect `run.eval_report` before shipping:
+
+- **Per-class precision, recall, and F1:** Watch minority classes (for example, `high` effort or safety escalations) — overall accuracy hides class imbalance.
+- **Confusion matrix:** For ordinal models, verify errors stay adjacent (`low ↔ medium`) rather than jumping extremes (`low ↔ high`).
+- **Expected calibration error (ECE):** Lower ECE means `min_conf` thresholds behave predictably in production.
+
+## Deploy with confidence fallback
+
+Attach the artifact to an [endpoint](/docs/training/endpoints/) using `confidence_fallback`. Whenever top-class confidence falls below `min_conf`, the endpoint returns your safe fallback label (for example, `"high"` effort so complex prompts never get under-budgeted).
+
+<DocsCodeTabs>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+
+await grad.endpoints.create({
+  slug: "coding-effort",
+  artifact: "coding-effort@2026-11-25-1",
+  captureDataset: "coding-effort",
+  strategy: {
+    kind: "confidence_fallback",
+    labels: ["low", "medium", "high"],
+    minConf: 0.75,
+    fallback: "high",
+  },
+});
+
+const effort = await grad
+  .endpoint("coding-effort")
+  .infer<{ messages: Msg[] }, { label: "low" | "medium" | "high"; confidence: number; fallbackUsed: boolean }>({
+    input: { messages },
+  });
+
+// Send back a correction when a "low" effort attempt fails tests
+if (!testsPassed) {
+  await grad.feedback.record({
+    inferenceId: effort.inferenceId,
+    score: 0.0,
+    expectedOutput: { label: "high" },
+  });
+}
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+client.endpoints.create(
+    slug="coding-effort",
+    artifact="coding-effort@2026-11-25-1",
+    capture_dataset="coding-effort",
+    strategy={
+        "kind": "confidence_fallback",
+        "labels": ["low", "medium", "high"],
+        "min_conf": 0.75,
+        "fallback": "high",
+    },
+)
+
+effort = client.endpoint("coding-effort").infer(input={"messages": messages})
+
+if not tests_passed:
+    client.feedback.record(
+        inference_id=effort.inference_id,
+        score=0.0,
+        expected_output={"label": "high"},
+    )
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Recording `expected_output` when an attempt fails turns production misses directly into labeled training data for the next retrain.
+
+## Going deeper (Level 2)
+
+Drop to [Level 2 custom loops](/docs/training/custom-loops/) when you want:
+
+- **Deep-ensemble uncertainty:** attach multiple seeded heads (`heads={"h0": {"dim": 1}, "h1": {"dim": 1}, "h2": {"dim": 1}}`) and abstain on high variance via `artifact.infer_batch()`.
+- **Few-shot contrastive classification (SetFit):** fine-tune the encoder with `loss={"kind": "infonce"}` first, extract pooled embeddings with `artifact.embed(pool="mean")`, and fit the final head with `fit_batch`.
+- **Token-level classification:** set `token_level: True` on a head for prompt compression or step-level process reward models.
+
+<DocsNext>
+  <a href="/docs/training/recipes/sft-dpo/">
+    <small>Next guide</small>
+    <strong>Fine-tuning and preferences (SFT &amp; DPO)</strong>
+  </a>
+  <a href="/docs/training/recipes/rl-agents/">
+    <small>RL agents</small>
+    <strong>RL for agents (GRPO)</strong>
+  </a>
+</DocsNext>

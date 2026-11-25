@@ -1,0 +1,115 @@
+# Embeddings and rerankers
+
+<DocsLead>Fine-tune domain-specific dense embeddings, ColBERT multi-vector retrievers, and cross-encoder rerankers with built-in InfoNCE and batched hard-negative mining.</DocsLead>
+
+Off-the-shelf embedding models degrade on internal jargon, codebases, and domain-specific schemas. Fine-tuning a compact encoder on your own query/document pairs typically recovers 10–25 points of Recall@10 while keeping latency under 10 ms.
+
+## What data you need
+
+Group each query with its positive document and one or more hard negatives using `group_id` and `role` (`anchor`, `positive`, `negative`):
+
+- **Minimum volume:** 1,000–5,000 query groups for domain adaptation.
+- **Hard negatives matter most:** Random negatives saturate quickly; mine near-miss documents from your existing retriever or refresh them periodically with `trainer.snapshot()`.
+
+## 1. Dense bi-encoder (`infonce`)
+
+Train a mean-pooled encoder with the built-in `infonce` loss, then extract normalized embeddings directly from the exported [Artifact](/docs/training/endpoints/):
+
+```python
+from grad import Datum, Grad, ModelInput, ModelSpec
+
+client = Grad()
+base = client.artifacts.get("BAAI/bge-small-en-v1.5")
+
+datums = [
+    Datum(ModelInput(tokens=base.tokenize("how to rotate api keys")), group_id="q0", role="anchor"),
+    Datum(ModelInput(tokens=base.tokenize("API key rotation procedure and revocation")), group_id="q0", role="positive"),
+    Datum(ModelInput(tokens=base.tokenize("Configuring OAuth redirect URIs")), group_id="q0", role="negative"),
+]
+
+with client.trainers.create(
+    ModelSpec(base="BAAI/bge-small-en-v1.5", adapter="full", train_mode="full", pool="mean"),
+    compute="gpu",
+) as trainer:
+    for batch in query_batches:
+        m = trainer.forward_backward(batch, loss={"kind": "infonce", "temp": 0.05}).result()
+        trainer.optim_step(lr=2e-5).result()
+
+    embed_artifact = trainer.export(name="docs-embedder")
+
+vectors = embed_artifact.embed(
+    [ModelInput(tokens=embed_artifact.tokenize("rotate api keys"))],
+    pool="mean",
+)["embeddings"]
+```
+
+## 2. Multi-vector (ColBERT) and Matryoshka embeddings
+
+Set `pool="none"` in `ModelSpec` to receive full per-token embeddings `(L, D)` in `forward_backward_custom` for ColBERT MaxSim, Matryoshka nested-dimension truncation, or combined dense + sparse retrieval:
+
+```python
+import torch
+import torch.nn.functional as F
+from grad import Grad, ModelSpec
+
+def matryoshka_colbert_loss(datums, out, dims=(128, 256, 384)):
+    q_tok, p_tok, n_tok = out["embeddings"][0], out["embeddings"][1], out["embeddings"][2]
+    loss = torch.tensor(0.0)
+    # Matryoshka loss on mean-pooled prefixes
+    qm, pm, nm = q_tok.mean(0), p_tok.mean(0), n_tok.mean(0)
+    for d in dims:
+        qd, pd, nd = F.normalize(qm[:d], dim=-1), F.normalize(pm[:d], dim=-1), F.normalize(nm[:d], dim=-1)
+        loss = loss + F.cross_entropy(torch.stack([qd @ pd, qd @ nd]).unsqueeze(0) / 0.05, torch.tensor([0]))
+    # ColBERT MaxSim over token vectors
+    qc, pc, nc = F.normalize(q_tok, dim=-1), F.normalize(p_tok, dim=-1), F.normalize(n_tok, dim=-1)
+    s_pos = (qc @ pc.T).max(dim=-1).values.sum()
+    s_neg = (qc @ nc.T).max(dim=-1).values.sum()
+    loss = loss + F.cross_entropy(torch.stack([s_pos, s_neg]).unsqueeze(0) / 0.1, torch.tensor([0]))
+    return loss
+```
+
+At serving time, override pooling per call on the exported artifact (`embed_artifact.embed(inputs, pool="none")` for token vectors or `pool="mean"` for a single dense vector).
+
+## 3. Cross-encoder reranker with hard-negative refresh
+
+Pair `(query, document)` sequences into a cross-encoder with a relevance head (`heads={"rel": {"dim": 1}}`). Periodically score your corpus with `trainer.snapshot().infer_batch(...)` to pull the highest-scoring false positives into the next training epoch:
+
+```python
+import torch
+import torch.nn.functional as F
+from grad import Datum, Grad, ModelInput, ModelSpec
+
+client = Grad()
+
+with client.trainers.create(
+    ModelSpec(base="BAAI/bge-reranker-base", adapter="full", train_mode="full", heads={"rel": {"dim": 1}}),
+    compute="gpu",
+) as trainer:
+    for epoch in range(3):
+        snap = trainer.snapshot()
+        # Mine fresh hard negatives with batched inference
+        cand_scores = [r["logits"].item() for r in snap.infer_batch(candidate_pairs)]
+        hard_batch = build_listnet_batch(queries, positives, candidate_pairs, cand_scores)
+
+        trainer.forward_backward_custom(
+            datums=hard_batch,
+            outputs=["heads"],
+            loss_fn=lambda ds, o: F.cross_entropy(torch.cat(o["heads"]["rel"]).unsqueeze(0), torch.tensor([0])),
+        ).result()
+        trainer.optim_step(lr=2e-5).result()
+
+    reranker = trainer.export(name="docs-reranker")
+```
+
+Deploy the exported encoder or reranker behind a `direct` [Endpoint](/docs/training/endpoints/) to serve live retrieval traffic and log click-through [feedback](/docs/training/trajectories/) for future refreshes.
+
+<DocsNext>
+  <a href="/docs/training/custom-loops/">
+    <small>Level 2</small>
+    <strong>Custom loops</strong>
+  </a>
+  <a href="/docs/training/endpoints/">
+    <small>Deploy</small>
+    <strong>Artifacts and endpoints</strong>
+  </a>
+</DocsNext>

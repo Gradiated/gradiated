@@ -1,0 +1,355 @@
+# Recipes (Level 0 & 1)
+
+<DocsLead>Start with automatic training, inspect the exact config Gradiated resolved, and override any component declaratively without writing a training loop.</DocsLead>
+
+A **recipe** defines a dataset split, a `ModelSpec`, a loss or solver, an optimizer, and a held-out evaluation. Every completed run writes an immutable `.grad` artifact alongside its `EvalReport`.
+
+## Built-in recipes
+
+| Recipe | Guide | Expected dataset fields | Default compute |
+| --- | --- | --- | --- |
+| `auto` | *(this page)* | Any `grad.trajectory/1` dataset; picks the matching recipe below | Auto (`cpu` or `gpu`) |
+| `router` | [Model router](/docs/training/recipes/router/) | Multi-model traces with `scores` and `metrics.cost_usd` | `cpu` *(optional `gpu`)* |
+| `classifier` | [Classifiers and decisions](/docs/training/recipes/classifier/) | `expected_output.label` or `scores` (binary, multiclass, ordinal) | `cpu` *(optional `gpu`)* |
+| `sft` | [Fine-tuning and preferences](/docs/training/recipes/sft-dpo/) | `input` + `expected_output` (or filtered high-score `output`) | `gpu` |
+| `dpo` | [Fine-tuning and preferences](/docs/training/recipes/sft-dpo/) | Paired `group_id` trajectories with `role: chosen \| rejected` | `gpu` |
+| `grpo` | [RL for agents (GRPO)](/docs/training/recipes/rl-agents/) | Prompts + a rubric, webhook, or stateful environment | `gpu` |
+| `distill` | [Distillation and Cartridges](/docs/training/recipes/distillation/) | Prompts or traces + `teacher` artifact ID | `gpu` |
+| `cartridge` | [Distillation and Cartridges](/docs/training/recipes/distillation/) | Static context corpus + QA prompts (`prefix_kv`) | `gpu` |
+
+For specialized training patterns built on these same primitives, see [Reward models and verifiers](/docs/training/recipes/reward-models/) and [Embeddings and rerankers](/docs/training/recipes/embeddings/).
+
+## Level 0: Automatic training
+
+Pass a dataset and a name. `recipe` defaults to `"auto"`.
+
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad train \
+  --dataset support-prod \
+  --name support-router \
+  --wait
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+run = client.runs.create(
+    dataset="support-prod",
+    name="support-router",
+).wait(
+    on_metric=lambda m: print(f"step={m.step} loss={m.loss:.4f}"),
+)
+
+print(run.artifact_id)
+print(run.eval_report)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+
+const run = await grad.runs
+  .create({ dataset: "support-prod", name: "support-router" })
+  .wait({
+    onMetric: (m) => console.log(`step=${m.step} loss=${m.loss.toFixed(4)}`),
+  });
+
+console.log(run.artifactId, run.evalReport);
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+### Inspect what `auto` chose
+
+Automatic runs are never opaque. Export the exact resolved config as YAML to see the base model, split strategy, filters, and hyperparameters, then check it into Git as your starting point for Level 1.
+
+```bash
+grad runs inspect run_01J9X --yaml > recipe.yaml
+```
+
+## Level 1: Managed recipes with overrides
+
+Name a recipe explicitly and pass `overrides` for the fields you want to change. Unspecified fields keep the recipe's defaults.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Router">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+run = client.runs.create(
+    dataset="support-prod",
+    name="support-router",
+    recipe="router",
+    base="BAAI/bge-small-en-v1.5",
+    compute="cpu",
+    overrides={
+        "solver": "dual_head_kernel_lbfgs",
+        "score_key": "task_success",
+        "split": {"strategy": "by_session", "eval_fraction": 0.15},
+        "calibration": {"max_quality_drop": 0.02},
+    },
+).wait()
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Classifier">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+run = client.runs.create(
+    dataset="coding-effort-labels",
+    name="coding-effort",
+    recipe="classifier",
+    base="BAAI/bge-small-en-v1.5",
+    compute="cpu",
+    overrides={
+        "labels": ["low", "medium", "high"],
+        "loss": {"kind": "ordinal_bce"},
+        "calibration": {"method": "temperature"},
+        "split": {"strategy": "by_session", "eval_fraction": 0.10},
+    },
+).wait()
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="SFT">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+run = client.runs.create(
+    dataset="diff-merge-prod",
+    name="fast-diff-merge",
+    recipe="sft",
+    base="Qwen/Qwen3-8B",
+    adapter="lora",
+    compute="gpu",
+    overrides={
+        "adapter_params": {"rank": 32},
+        "optimizer": {"kind": "adamw", "lr": 2e-4},
+        "split": {"strategy": "by_session", "eval_fraction": 0.10},
+        "filter": {"min_score": {"tests_passed": 1.0}},
+        "merge_adapter": True,
+    },
+).wait()
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="DPO">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+run = client.runs.create(
+    dataset="support-preferences",
+    name="support-responder",
+    recipe="dpo",
+    init_from="support-responder@sft-v1",
+    adapter="lora",
+    compute="gpu",
+    overrides={
+        "loss": {"kind": "dpo", "beta": 0.1},
+        "optimizer": {"kind": "adamw", "lr": 5e-5},
+    },
+).wait()
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="GRPO">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+run = client.runs.create(
+    dataset="diff-merge-tasks",
+    name="fast-diff-merge",
+    recipe="grpo",
+    init_from="fast-diff-merge@sft-v1",
+    adapter="lora",
+    compute="gpu",
+    overrides={
+        "rubric": {
+            "kind": "webhook",
+            "url": "https://ci.internal.example/grade-diff",
+            "secret_ref": "env:GRADER_WEBHOOK_TOKEN",
+        },
+        "group_size": 8,
+        "loss": {"kind": "grpo", "clip_low": 0.2, "clip_high": 0.28},
+        "optimizer": {"kind": "adamw", "lr": 2e-5},
+    },
+).wait()
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Distill">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+run = client.runs.create(
+    dataset="support-prompts",
+    name="support-fast-distill",
+    recipe="distill",
+    base="Qwen/Qwen3-4B",
+    adapter="lora",
+    compute="gpu",
+    overrides={
+        "teacher": "Qwen/Qwen3-32B",
+        "mode": "on_policy",
+        "loss": {"kind": "topk_kl_distill", "top_k": 32},
+        "optimizer": {"kind": "adamw", "lr": 1e-4},
+    },
+).wait()
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Cartridge">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+run = client.runs.create(
+    dataset="api-docs-corpus",
+    name="docs-cartridge",
+    recipe="cartridge",
+    base="Qwen/Qwen3-8B",
+    adapter="prefix_kv",
+    compute="gpu",
+    overrides={
+        "adapter_params": {"num_tokens": 256},
+        "teacher": "Qwen/Qwen3-8B",
+        "loss": {"kind": "topk_kl_distill", "top_k": 20},
+        "optimizer": {"kind": "adamw", "lr": 2e-2},
+    },
+).wait()
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+### Run recipes from YAML
+
+Store any Level 1 config in Git and run it from CI or your terminal:
+
+```yaml
+# recipe.yaml
+dataset: diff-merge-prod
+name: fast-diff-merge
+recipe: sft
+base: Qwen/Qwen3-8B
+adapter: lora
+compute: gpu
+overrides:
+  adapter_params:
+    rank: 32
+  optimizer:
+    kind: adamw
+    lr: 2e-4
+  split:
+    strategy: by_session
+    eval_fraction: 0.10
+  filter:
+    min_score:
+      tests_passed: 1.0
+  merge_adapter: true
+```
+
+```bash
+grad train -f recipe.yaml --wait
+```
+
+### Chain stages with `init_from`
+
+Because every run produces a versioned `Artifact` carrying its base model and architecture in `manifest.json`, chaining SFT into DPO or GRPO only requires passing `init_from`:
+
+```python
+sft = client.runs.create(
+    dataset="diff-merge-gold",
+    name="fast-diff-merge",
+    recipe="sft",
+    base="Qwen/Qwen3-8B",
+    compute="gpu",
+).wait()
+
+rl = client.runs.create(
+    dataset="diff-merge-tasks",
+    name="fast-diff-merge",
+    recipe="grpo",
+    init_from=sft.artifact_id,
+    compute="gpu",
+    overrides={"rubric": {"kind": "webhook", "url": "https://ci.internal.example/grade-diff"}},
+).wait()
+```
+
+## Live metrics and evaluation
+
+Stream step-by-step telemetry (`step`, `loss`, `grad_norm`, `lr`, `tokens_per_sec`, `eval_metrics`) while a run is active, or inspect the saved `eval_report.json` afterward:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad runs logs run_01J9X --follow
+grad artifacts inspect fast-diff-merge@2026-11-25-2
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+for metric in client.runs.metrics(run.id, follow=True):
+    print(metric.step, metric.loss, metric.eval_metrics)
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Router artifacts include a held-out cost-vs-quality Pareto curve and 95% bootstrap confidence intervals against your fallback model.
+
+## When to move to Level 2
+
+Use Level 1 while a built-in recipe matches your objective. Move to [Level 2 custom loops](/docs/training/custom-loops/) when you need:
+
+- A custom loss function (for example, SimPO, ORPO, BGE-M3 tri-objective, or representation steering).
+- A stateful multi-turn environment running on your own infrastructure (Docker Compose stacks, local databases, or internal MCP tools).
+- Custom rollout control such as hard-task replay buffers, branched tree search, or multi-agent self-play.
+
+<DocsNext>
+  <a href="/docs/training/environments/">
+    <small>Next</small>
+    <strong>Environments and rubrics</strong>
+  </a>
+  <a href="/docs/training/custom-loops/">
+    <small>Level 2</small>
+    <strong>Custom loops</strong>
+  </a>
+</DocsNext>

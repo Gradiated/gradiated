@@ -24,4 +24,51 @@ Authorization: Bearer grad_...
 
 See the [SystemOne SDK guide](/docs/systemone-sdk/) for linden-1 examples and supported parameters.
 
+## Trajectories and sync
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/v1/trajectories` | Push `grad.trajectory/1` records into a dataset. |
+| `POST` / `GET` | `/v1/trajectories/imports` / `/v1/trajectories/imports/{id}` | Stream Parquet or JSONL files from supported trace providers and inspect import status. |
+| `POST` / `GET` / `PATCH` / `DELETE` | `/v1/trajectories/sources` | Configure scheduled incremental pull sync from an observability provider. |
+| `POST` | `/v1/trajectories/sources/{id}/sync` | Trigger an immediate incremental pull. |
+| `POST` / `GET` / `PATCH` / `DELETE` | `/v1/trajectories/sinks` | Forward Gradiated trajectories outward via OTLP or provider webhook. |
+
+## Training and compute primitives
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/v1/runs` | Start a Level 0 (`auto`) or Level 1 managed recipe run. |
+| `GET` | `/v1/runs/{id}` | Inspect run status, resolved `recipe_spec`, `eval_report`, and produced `artifact_id`. |
+| `GET` | `/v1/runs/{id}/metrics` | Stream step-by-step training telemetry (SSE or JSON). |
+| `POST` | `/v1/runs/{id}/cancel` | Cancel an active training run. |
+| `POST` / `DELETE` | `/v1/trainers` / `/v1/trainers/{id}` | Allocate or release a Level 2 interactive `Trainer` lease. |
+| `POST` | `/v1/trainers/{id}/fit-batch` | Closed-form or convex fit over embeddings or datums. |
+| `POST` | `/v1/trainers/{id}/forward-backward` | Run a pipelined forward and backward pass with a built-in loss. |
+| `POST` | `/v1/trainers/{id}/forward` | Run a forward pass returning requested differentiable tensors (`logprobs`, `topk_logprobs`, `embeddings`, `heads`, `layers`). |
+| `POST` | `/v1/trainers/{id}/backward-surrogate` | Apply client-computed surrogate gradients (`dLoss/dOut`). |
+| `POST` | `/v1/trainers/{id}/optim-step` | Apply an optimizer step (`adamw`, `muon`, `sgd`, `param_groups`, `weight_anchor`). |
+| `POST` | `/v1/trainers/{id}/snapshot` | Snapshot current weights into an ephemeral callable `Artifact`. |
+| `POST` | `/v1/trainers/{id}/save-state` | Checkpoint trainer and optimizer state for pause/resume. |
+| `POST` | `/v1/trainers/{id}/export` | Freeze trained weights and `eval_report` into an immutable `.grad` artifact. |
+
+## Artifacts and endpoints
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/v1/artifacts` / `/v1/artifacts/{id}` | List or inspect immutable `.grad` artifacts. |
+| `GET` | `/v1/artifacts/{id}/download` | Download a `.grad` bundle archive. |
+| `POST` | `/v1/artifacts/merge` | Zero-GPU weight-space merge (`linear`, `ties`, `dare`, `slerp`). |
+| `POST` | `/v1/artifacts/{id}/infer` | Direct read-only single or batched inference (`infer` / `infer_batch`). |
+| `POST` | `/v1/artifacts/{id}/sample` | Generate token-aligned `Trajectory` rollouts (supports `resume_from`, `append_env_tokens`, and `response_format`). |
+| `POST` | `/v1/artifacts/{id}/score-logprobs` | Score full sequences, `Trajectory` objects, or `(prefix, response)` pairs (optional `top_k`, `return_layers`). |
+| `POST` | `/v1/artifacts/{id}/embed` | Extract cached embeddings or hidden states (optional `pool` override). |
+| `POST` | `/v1/artifacts/{id}/tokenize` | Server-side tokenization and chat-template rendering (`messages`, `tools`, optional `return_loss_mask`). |
+| `GET` | `/v1/tensors/{ref_id}` | Fetch binary Safetensors/Arrow payloads for opaque `TensorRef`s. |
+| `POST` / `GET` / `PATCH` / `DELETE` | `/v1/endpoints` / `/v1/endpoints/{name}` | Manage named production endpoints over one or more artifacts. |
+| `POST` | `/v1/endpoints/{name}/promote` | Promote an artifact to `shadow`, `canary`, or `active`. |
+| `GET` | `/v1/endpoints/{name}/status` | Inspect live canary telemetry, SLA drop, and cost savings. |
+| `POST` | `/v1/endpoints/{name}/infer` | Run production inference with configured guardrails and trajectory capture. |
+| `POST` | `/v1/feedback` | Record deduplicated outcomes and gold corrections by `inference_id` or `trace_id`. |
+
 [View the API reference](https://api.gradiated.com/docs).

@@ -1,0 +1,253 @@
+# Training overview
+
+<DocsLead>Train routers, classifiers, reward models, and fine-tuned or RL-tuned LLMs from production traces or live environments. Run the same code locally or on Gradiated Cloud.</DocsLead>
+
+Gradiated models training and serving around five primitives. Start with a single automatic command, drop down to managed recipes with overrides when you want repeatable config, or write a Python training loop when you need custom losses or environments.
+
+## The five primitives
+
+| Primitive | What it is | Main operations |
+| --- | --- | --- |
+| [**Trajectory**](/docs/training/trajectories/) *(in a Dataset)* | A recorded interaction: production traces, labeled `(input, expected_output)` pairs, multimodal inputs, or multi-turn RL rollouts. | `import`, `push`, `sync`, `to_datum()` |
+| [**Environment & Rubric**](/docs/training/environments/) | An optional test harness (Docker Compose stack, sandbox, tool server) and scoring functions that grade trajectories. | `setup()`, `step()`, `evaluate()`, `teardown()` |
+| [**Trainer**](/docs/training/custom-loops/) *(driven by a [Recipe](/docs/training/recipes/))* | The CPU or GPU worker that updates model weights and writes checkpoints. | `runs.create()`, `fit_batch()`, `forward_backward()`, `optim_step()`, `snapshot()`, `export()` |
+| [**Artifact**](/docs/training/endpoints/) *(a `.grad` bundle)* | One immutable, versioned model: a base model, a trained checkpoint, or an ephemeral RL snapshot. | `infer()`, `infer_batch()`, `sample()`, `score_logprobs()`, `embed()`, `merge()` |
+| [**Endpoint**](/docs/training/endpoints/) | A named production serving slot over one or more artifacts, with canary splits, guardrails, and automatic trajectory capture. | `create()`, `infer()`, `feedback()`, `promote()`, `status()` |
+
+Every model follows the same loop: put **trajectories** into a **dataset**, run a **recipe** on a **trainer** to produce an immutable **artifact**, serve that artifact on an **endpoint**, and record **feedback** so live traffic feeds the next training run.
+
+## Choose your level
+
+Move down a level only when you hit a limit in the level above.
+
+| Level | How it works | When to use it |
+| --- | --- | --- |
+| [**Level 0 — Automatic**](/docs/training/recipes/) | Pass a dataset and a model name. Gradiated inspects the data, selects a recipe and compute target, trains, and runs a held-out evaluation. | You have traces or labeled examples and want a measured baseline quickly. |
+| [**Level 1 — Managed recipes**](/docs/training/recipes/) | Choose a recipe ([router](/docs/training/recipes/router/), [classifier](/docs/training/recipes/classifier/), [sft](/docs/training/recipes/sft-dpo/), [dpo](/docs/training/recipes/sft-dpo/), [grpo](/docs/training/recipes/rl-agents/), [distill](/docs/training/recipes/distillation/), [cartridge](/docs/training/recipes/distillation/)) and override base model, adapter, loss, optimizer, or data filters. | You want explicit, version-controlled training config without maintaining a training loop. |
+| [**Level 2 — Custom loops**](/docs/training/custom-loops/) | Drive `Trainer`, `Artifact`, `Environment`, and `Rubric` directly in Python with built-in losses or client-side PyTorch losses. | You need a custom loss, stateful Docker Compose environment, curriculum, or multi-model RL loop. |
+
+Every Level 0 run can export its exact resolved Level 1 config (`grad runs inspect <run_id> --yaml`), so moving from automatic training to checked-in YAML takes one command.
+
+## Quickstart
+
+This walkthrough imports production traces, trains a model router on CPU, deploys it to an endpoint, and records live feedback.
+
+### 1. Install and connect
+
+<DocsCodeTabs>
+  <DocsCodeTab label="CLI">
+
+```bash
+brew install gradiated/tap/grad
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```bash
+pip install grad-sdk
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```bash
+npm install @gradiated/grad
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```bash
+go get github.com/Gradiated/grad/sdks/go
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Rust">
+
+```bash
+cargo add grad-sdk
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+The CLI and SDKs read `GRADIATED_API_KEY` automatically (create one in the [quickstart](/docs/quickstart/)) and target `https://api.gradiated.com`. To run locally instead, start the open-source server with Docker Compose:
+
+```bash
+grad local up
+export GRAD_BASE_URL=http://localhost:8787
+```
+
+`grad local up` starts the API server on `:8787`, Postgres, Valkey, and a CPU trainer worker — enough for routers, classifiers, and trace syncing. Pass `--gpu` on a CUDA machine for LLM fine-tuning and RL, and run `grad local down` to stop the stack.
+
+### 2. Import traces and train (Level 0)
+
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad import ./support_traces.jsonl --format grad_trajectories --dataset support-prod
+
+grad train \
+  --dataset support-prod \
+  --name support-router \
+  --wait
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+client.trajectories.import_file(
+    "./support_traces.jsonl",
+    format="grad_trajectories",
+    dataset="support-prod",
+).wait()
+
+run = client.runs.create(
+    dataset="support-prod",
+    name="support-router",
+).wait()
+
+print(run.artifact_id)   # support-router@2026-11-25-1
+print(run.eval_report)   # held-out metrics with 95% confidence intervals
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+
+await grad.trajectories
+  .importFile("./support_traces.jsonl", {
+    format: "grad_trajectories",
+    dataset: "support-prod",
+  })
+  .wait();
+
+const run = await grad.runs
+  .create({ dataset: "support-prod", name: "support-router" })
+  .wait();
+
+console.log(run.artifactId, run.evalReport);
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+### 3. Deploy to an endpoint and record feedback
+
+Create an endpoint pointing at the new artifact, route requests through it, and send back the outcome. The router artifact already stores the candidate models and pricing from training, so you only name the fallback model and quality budget.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+
+await grad.endpoints.create({
+  slug: "support-router",
+  artifact: "support-router@2026-11-25-1",
+  captureDataset: "support-prod",
+  strategy: {
+    kind: "sla_lagrangian",
+    fallback: "claude-opus-4-7",
+    maxQualityDrop: 0.02,
+  },
+});
+
+const decision = await grad.router("support-router").route({
+  messages,
+  tools,
+});
+
+const reply = await callYourLLM(decision.model, messages, tools);
+
+await grad.feedback.record({
+  inferenceId: decision.inferenceId,
+  score: userResolved ? 1.0 : 0.0,
+  metrics: { cost_usd: reply.costUsd, latency_ms: reply.latencyMs },
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+client.endpoints.create(
+    slug="support-router",
+    artifact="support-router@2026-11-25-1",
+    capture_dataset="support-prod",
+    strategy={
+        "kind": "sla_lagrangian",
+        "fallback": "claude-opus-4-7",
+        "max_quality_drop": 0.02,
+    },
+)
+
+decision = client.router("support-router").route(
+    messages=messages,
+    tools=tools,
+)
+
+reply = call_your_llm(decision.model, messages, tools)
+
+client.feedback.record(
+    inference_id=decision.inference_id,
+    score=1.0 if user_resolved else 0.0,
+    metrics={"cost_usd": reply.cost_usd, "latency_ms": reply.latency_ms},
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad endpoints create support-router \
+  --artifact support-router@2026-11-25-1 \
+  --capture-dataset support-prod \
+  --strategy sla_lagrangian \
+  --fallback claude-opus-4-7 \
+  --max-quality-drop 0.02
+
+grad endpoints status support-router --watch
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Local vs. Gradiated Cloud
+
+The HTTP API, `.grad` artifact format, recipes, and SDKs are identical locally and on Gradiated Cloud.
+
+| Component | Local (`grad local up`) | Gradiated Cloud |
+| --- | --- | --- |
+| Base URL | `http://localhost:8787` | `https://api.gradiated.com` |
+| Training worker | Local CPU container (`--gpu` for CUDA) | Managed CPU and GPU pools |
+| Storage | Local volume or MinIO | Encrypted S3 |
+| Serving | Local ONNX runtime + optional local LLM container | Hosted runtime + zero-hop gateway routing |
+
+<DocsNext>
+  <a href="/docs/training/trajectories/">
+    <small>Next</small>
+    <strong>Trajectories and data</strong>
+  </a>
+  <a href="/docs/training/recipes/">
+    <small>Recipes</small>
+    <strong>Recipes (Level 0 &amp; 1)</strong>
+  </a>
+</DocsNext>

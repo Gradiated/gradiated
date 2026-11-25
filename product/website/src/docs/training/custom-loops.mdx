@@ -1,0 +1,340 @@
+# Custom loops (Level 2)
+
+<DocsLead>Write your own RL, preference, distillation, or representation training loop in Python while Gradiated handles GPU execution, adapters, and weight snapshots.</DocsLead>
+
+Level 2 gives you direct access to the compute primitives behind Gradiated's managed recipes. Your loop runs on any CPU machine (your laptop, CI, or an orchestrator) and drives remote `Trainer` and `Artifact` endpoints over HTTP.
+
+Install the Python SDK with the optional `torch` extra when writing client-side custom losses:
+
+```bash
+pip install "grad-sdk[torch]"
+```
+
+## Mental model
+
+- **`Trainer`** owns mutable weights and optimizer state on the server. Open it in a `with client.trainers.create(...) as trainer:` block so the compute lease releases automatically on exit or error.
+- **`trainer.snapshot()`** returns an immutable, ephemeral [**`Artifact`**](/docs/training/endpoints/) pointing at the current weights. Call `sample()`, `score_logprobs()`, `infer_batch()`, or `embed()` on it while training continues.
+- **`trainer.export(name=...)`** writes a durable `.grad` **`Artifact`** ready to deploy on an [**`Endpoint`**](/docs/training/endpoints/).
+
+## Universal 1:1 token alignment
+
+Every per-token array on a `Datum` (`loss_mask`, `sampling_logprobs`, `ref_logprobs`, `advantages`, and `forward().logprobs`) has the **exact same length `T` as `tokens`**:
+
+| Index | Meaning |
+| --- | --- |
+| `0` | Always `0.0` (no prior token predicts token `0`). |
+| `i` (`1 .. T-1`) | Prediction of `tokens[i]` given `tokens[:i]`. |
+
+`Artifact.sample()`, `Artifact.score_logprobs()`, [`Trajectory.append_env_tokens()`](/docs/training/trajectories/), and [`Trajectory.to_datum()`](/docs/training/trajectories/) all preserve this invariant so you never shift or slice arrays by one.
+
+### Chat templates and assistant-only masking
+
+For multi-turn chat or tool-use SFT, let the server render the model's exact chat template and return `loss_mask` (`0.0` on system, user, and tool turns; `1.0` on assistant turns):
+
+```python
+base = client.artifacts.get("Qwen/Qwen3-8B")
+
+encoded = base.tokenize(
+    messages=[
+        {"role": "system", "content": "You are a concise SQL assistant."},
+        {"role": "user", "content": "Count active users from yesterday."},
+        {"role": "assistant", "content": "SELECT count(*) FROM users WHERE active_at >= current_date - 1;"},
+    ],
+    tools=tool_schemas,
+    return_loss_mask=True,
+)
+datum = Datum(ModelInput(tokens=encoded["tokens"]), DatumTargets(loss_mask=encoded["loss_mask"]))
+```
+
+## Example 1: Multi-turn GRPO loop
+
+This loop runs rollouts in a [stateful environment](/docs/training/environments/), normalizes rewards per prompt group, skips zero-variance groups, updates LoRA weights with GRPO, and exports a merged artifact. See the [RL for agents guide](/docs/training/recipes/rl-agents/) for swapping in DAPO, async CISPO, or sequence-level GSPO.
+
+```python
+import statistics
+from grad import Grad, ModelSpec
+
+client = Grad()
+
+with client.trainers.create(
+    ModelSpec(base="Qwen/Qwen3-8B", adapter="lora", train_mode="lora", params={"rank": 32}),
+    compute="gpu",
+) as trainer:
+    for step, task_batch in enumerate(batches):
+        snap = trainer.snapshot()
+        groups = env.rollout_groups(
+            artifact=snap,
+            tasks=task_batch,
+            group_size=8,
+            max_turns=6,
+            max_new_tokens=512,
+            max_concurrency=8,
+        )
+
+        datums = []
+        for group in groups:
+            rewards = [t.scores["reward"] for t in group]
+            sd = statistics.pstdev(rewards)
+            if sd < 1e-6:
+                continue
+
+            mean = statistics.fmean(rewards)
+            for traj, r in zip(group, rewards):
+                datums.append(traj.to_datum(advantage=(r - mean) / (sd + 1e-6)))
+
+        # Queue both calls before waiting to pipeline GPU execution across one RTT.
+        fb = trainer.forward_backward(
+            datums,
+            loss={"kind": "grpo", "clip_low": 0.2, "clip_high": 0.28},
+        )
+        opt = trainer.optim_step(lr=2e-5, grad_clip=1.0)
+
+        metrics = fb.result()
+        opt.result()
+        print(f"step={step} loss={metrics.loss:.4f} grad_norm={metrics.metrics['grad_norm']:.3f}")
+
+    artifact = trainer.export(name="code-agent-grpo", merge_adapter=True)
+    print(artifact.id)
+```
+
+Passing an empty `datums` list (when every group in a batch has identical rewards) is a safe no-op.
+
+## Example 2: Custom loss with `forward_backward_custom`
+
+You do not need to wait for a server-side loss enum to test a new objective. `trainer.forward_backward_custom()` requests differentiable outputs from `/forward`, evaluates your PyTorch loss locally on the client, and sends exact gradients back to `/backward-surrogate`. No untrusted user code runs on GPU workers, and gradients match native PyTorch `.backward()` bit-for-bit.
+
+Here is reference-free SimPO:
+
+```python
+import torch
+import torch.nn.functional as F
+from grad import Datum, DatumTargets, Grad, ModelInput, ModelSpec
+
+client = Grad()
+base = client.artifacts.get("Qwen/Qwen3-8B")
+
+prompt_toks = base.tokenize("Explain tail latency in one sentence.")
+chosen_toks = base.tokenize("Tail latency is the response time of the slowest few percent of requests.")
+rejected_toks = base.tokenize("Latency is when computers wait a long time for packets to arrive.")
+
+preference_pairs = [
+    Datum(
+        ModelInput(tokens=prompt_toks + chosen_toks),
+        DatumTargets(loss_mask=[0.0] * len(prompt_toks) + [1.0] * len(chosen_toks)),
+        group_id="p0",
+        role="chosen",
+    ),
+    Datum(
+        ModelInput(tokens=prompt_toks + rejected_toks),
+        DatumTargets(loss_mask=[0.0] * len(prompt_toks) + [1.0] * len(rejected_toks)),
+        group_id="p0",
+        role="rejected",
+    ),
+]
+
+def simpo_loss(datums, out, beta=2.0, gamma=0.5):
+    losses = []
+    for i in range(0, len(datums), 2):
+        mc = torch.tensor(datums[i].targets.loss_mask)
+        mr = torch.tensor(datums[i + 1].targets.loss_mask)
+        avg_chosen = (out["logprobs"][i] * mc).sum() / mc.sum().clamp(min=1.0)
+        avg_rejected = (out["logprobs"][i + 1] * mr).sum() / mr.sum().clamp(min=1.0)
+        losses.append(-F.logsigmoid(beta * (avg_chosen - avg_rejected) - gamma))
+    return torch.stack(losses).mean()
+
+with client.trainers.create(
+    ModelSpec(base="Qwen/Qwen3-8B", adapter="lora", train_mode="lora"),
+    compute="gpu",
+) as trainer:
+    fb = trainer.forward_backward_custom(
+        datums=preference_pairs,
+        outputs=["logprobs"],
+        loss_fn=simpo_loss,
+    )
+    trainer.optim_step(lr=5e-5).result()
+    print(fb.result().loss)
+```
+
+### Compact top-k distillation with `gather_indices`
+
+Never pull full 152k-vocabulary logits over the wire for custom distillation. Ask the teacher for `top_k=32` opaque `TensorRef`s and pass them as `gather_indices` so the student returns only the matching `(T_resp, 32)` logprobs. Inside your loss function, fetch any `TensorRef` payload with `client.tensors.fetch(ref)` (see the full JSD example in the [Distillation guide](/docs/training/recipes/distillation/)):
+
+```python
+teacher = client.artifacts.get("Qwen/Qwen3-32B")
+
+t_refs = teacher.score_logprobs(
+    prefix_tokens=prefixes,
+    response_tokens=responses,
+    top_k=32,
+)["topk_refs"]
+
+fb = trainer.forward_backward_custom(
+    datums=datums,
+    outputs=["topk_logprobs"],
+    gather_indices=t_refs,
+    loss_fn=my_skew_kl_loss,
+)
+```
+
+For multi-turn trajectories with no single prompt/response boundary, pass the `Trajectory` list directly to `score_logprobs`:
+
+```python
+ref_lps = ref_artifact.score_logprobs(trajectories)["aligned_logprobs"]
+datums = [t.to_datum(advantage=a, ref_logprobs=r) for t, a, r in zip(trajectories, advs, ref_lps)]
+```
+
+### Pause and resume long runs (`save_state`)
+
+Checkpoint both weights and optimizer moments mid-run with `trainer.save_state()`, then resume later with `init_from`:
+
+```python
+ckpt = trainer.save_state(name="code-agent-step-500")
+
+# Later, in a new process:
+with client.trainers.create(
+    ModelSpec(base="Qwen/Qwen3-8B", adapter="lora", train_mode="lora", init_from=ckpt.id),
+    compute="gpu",
+) as resumed:
+    ...
+```
+
+### Gradient accumulation, LR schedules, and held-out eval
+
+Because `forward_backward()` accumulates gradients on the trainer until `optim_step()` runs, multi-microbatch accumulation and per-step cosine schedules take four lines:
+
+```python
+import math
+
+def cosine_lr(step: int, total_steps: int, max_lr: float = 2e-4, min_lr: float = 2e-5) -> float:
+    return min_lr + 0.5 * (max_lr - min_lr) * (1.0 + math.cos(math.pi * step / total_steps))
+
+# Accumulate 4 microbatches before one optimizer update
+futs = [trainer.forward_backward(mb, loss={"kind": "cross_entropy"}) for mb in microbatches]
+trainer.optim_step(lr=cosine_lr(step, total_steps), grad_clip=1.0).result()
+mean_loss = sum(f.result().loss for f in futs) / len(futs)
+
+# Run held-out eval without retaining autograd graphs on the GPU
+eval_out = trainer.forward(val_datums, outputs=["logprobs"], retain_graph=False)
+```
+
+### Multimodal (VLM) inputs
+
+Pass image or audio `MediaRef`s directly inside `ModelInput.media` — both `Artifact.sample()` and `Trainer.forward_backward()` handle multimodal tokens identically to text-only inputs:
+
+```python
+from grad import Datum, DatumTargets, MediaRef, ModelInput
+
+vlm_datum = Datum(
+    ModelInput(
+        tokens=vlm_tokens,
+        media=[MediaRef(kind="image", ref="s3://my-bucket/screens/checkout_step2.png")],
+    ),
+    DatumTargets(loss_mask=vlm_mask),
+)
+```
+
+## Example 3: Multi-stage heads, differential LRs, and weight merges
+
+- **Freeze Stage-1 heads in Stage 2:** set `trainable: False` per head in `ModelSpec.heads`.
+- **Differential learning rates (e.g. LoRA+):** pass `param_groups` to `optim_step`.
+- **Continual learning anchor (L2-SP / EWC):** pass `weight_anchor` to `optim_step`.
+- **Zero-GPU weight merging:** combine checkpoints with `client.artifacts.merge()`.
+
+```python
+with client.trainers.create(
+    ModelSpec(
+        base="Qwen/Qwen3-8B",
+        adapter="frozen_head",
+        train_mode="frozen_head",
+        init_from="reward-model@stage1",
+        heads={
+            "attrs": {"dim": 5, "trainable": False},
+            "gate": {"dim": 5, "trainable": True},
+        },
+    ),
+    compute="gpu",
+) as trainer:
+    trainer.forward_backward_custom(datums, outputs=["heads"], loss_fn=gating_bt_loss).result()
+    trainer.optim_step(
+        param_groups=[{"match": "extra_heads.gate", "lr": 5e-3}],
+        weight_anchor={"artifact_id": "reward-model@stage1", "strength": 0.01},
+    ).result()
+
+merged = client.artifacts.merge(
+    name="assistant-merged",
+    artifacts=["coder@v4", "reasoner@v2"],
+    weights=[0.6, 0.4],
+    method="ties",
+    density=0.5,
+)
+```
+
+## Closed-form and convex fits (`fit_batch`)
+
+Routers, linear probes, and representation steering vectors do not need SGD. Extract cached embeddings once with `Artifact.embed()` and solve in a single `fit_batch()` call:
+
+```python
+from grad import Datum, DatumTargets, Grad, ModelInput, ModelSpec
+
+client = Grad()
+encoder = client.artifacts.get("BAAI/bge-small-en-v1.5")
+
+embeddings = encoder.embed(inputs, pool="mean")["embeddings"]
+embedding_datums = [
+    Datum(
+        ModelInput(embedding=emb.tolist()),
+        DatumTargets(scalar=label),
+        metadata={"action_id": model_id},
+    )
+    for emb, label, model_id in zip(embeddings, labels, model_ids)
+]
+
+with client.trainers.create(
+    ModelSpec(base="BAAI/bge-small-en-v1.5", adapter="frozen_head", train_mode="frozen_head"),
+    compute="cpu",
+) as trainer:
+    trainer.fit_batch(
+        datums=embedding_datums,
+        solver="dual_head_kernel_lbfgs",
+        params={"l2": 0.1},
+    )
+    router_artifact = trainer.export(name="support-router")
+```
+
+## Reference tables
+
+### Built-in `forward_backward` losses
+
+| `loss.kind` | Use it for |
+| --- | --- |
+| `cross_entropy` | Next-token SFT respecting `loss_mask`. |
+| `bce_logits` | Binary or multi-label head classification. |
+| `l2_logistic` | Regularized logistic heads. |
+| `dpo` | Paired preference optimization (`group_id` + `chosen` / `rejected`). |
+| `grpo` | Clipped policy-gradient RL (`clip_low`, `clip_high`, `kl_beta`). |
+| `cispo` | Clipped importance-sampling RL for off-policy or async rollouts. |
+| `reverse_kl_distill` | Token-level reverse-KL distillation against `ref_logprobs`. |
+| `topk_kl_distill` | Distillation against `teacher_topk` (`TensorRef` or multi-teacher list). |
+| `infonce` | Contrastive embedding training (`anchor` / `positive` / `negative`). |
+| `bce_sparse_positions` | Token-level or step-level heads at explicit `positions` (PRMs, prompt compression). |
+
+### Common `ModelSpec` options
+
+| Field | Values |
+| --- | --- |
+| `adapter` | `frozen_head`, `lora`, `dora`, `qlora_nf4`, `prefix_kv`, `loreft`, `eagle3_draft`, `full` |
+| `train_mode` | `frozen_head`, `lora`, `prefix_kv`, `loreft`, `partial_unfreeze`, `full` |
+| `pool` | `last`, `mean`, `mean_last`, `none` *(token-level embeddings such as ColBERT)* |
+| `heads` | Map of `{ name: { dim, token_level?: bool, trainable?: bool } }` |
+| `init_from` | Optional `Artifact` ID to warm-start weights, heads, and adapters |
+
+<DocsNext>
+  <a href="/docs/training/endpoints/">
+    <small>Next</small>
+    <strong>Artifacts and endpoints</strong>
+  </a>
+  <a href="/docs/api-reference/">
+    <small>Reference</small>
+    <strong>API reference</strong>
+  </a>
+</DocsNext>

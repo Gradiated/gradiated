@@ -1,0 +1,274 @@
+# Trajectories and data
+
+<DocsLead>Every training run reads from a dataset of trajectories: production traces, labeled examples, or multi-turn rollouts stored in one model-agnostic schema.</DocsLead>
+
+Populate a dataset in any of four ways:
+
+1. **Automatic capture** from Gradiated inference or any deployed [Endpoint](/docs/training/endpoints/).
+2. **Direct SDK push** from your own database or evaluation scripts.
+3. **File import** from Parquet or JSONL exports.
+4. **Scheduled pull sync** from your LLM observability provider.
+
+## Push trajectories from code
+
+If your labeled examples or production logs already live in your own database, push them directly into a dataset with `trajectories.push`.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+client.trajectories.push(
+    dataset="diff-merge-gold",
+    trajectories=[
+        {
+            "session_id": "pr_481",
+            "input": {"messages": [{"role": "user", "content": prompt}]},
+            "expected_output": {"content": gold_merged_code},
+            "scores": {"tests_passed": 1.0},
+        },
+    ],
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+
+await grad.trajectories.push({
+  dataset: "diff-merge-gold",
+  trajectories: [
+    {
+      sessionId: "pr_481",
+      input: { messages: [{ role: "user", content: prompt }] },
+      expectedOutput: { content: goldMergedCode },
+      scores: { tests_passed: 1.0 },
+    },
+  ],
+});
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Import from files
+
+Stream Parquet or JSONL exports into a named dataset. Gradiated normalizes messages, tool calls, token counts, costs, and evaluation scores into `grad.trajectory/1`.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad import ./traces.parquet \
+  --format otel \
+  --dataset support-prod
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+job = client.trajectories.import_file(
+    "./traces.parquet",
+    format="otel",
+    dataset="support-prod",
+).wait()
+
+print(job.imported_count, job.dropped_count, job.detected_scores)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+
+const job = await grad.trajectories
+  .importFile("./traces.parquet", {
+    format: "otel",
+    dataset: "support-prod",
+  })
+  .wait();
+
+console.log(job.importedCount, job.droppedCount, job.detectedScores);
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+The import result lists how many trajectories were parsed, how many were dropped, and every `scores` key detected in the file so you can check target coverage before training.
+
+## Sync from observability providers
+
+Register a source to pull new traces and feedback scores incrementally on a cron schedule. Provider credentials stay behind a secret reference and are never written into dataset records or `.grad` artifacts.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad sources add langfuse \
+  --dataset support-prod \
+  --host https://cloud.langfuse.com \
+  --secret-ref env:LANGFUSE_API_KEY \
+  --schedule "*/15 * * * *"
+
+grad sources sync src_01J9X
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+source = client.sources.create(
+    provider="langfuse",
+    dataset="support-prod",
+    config={"host": "https://cloud.langfuse.com"},
+    secret_ref="env:LANGFUSE_API_KEY",
+    schedule="*/15 * * * *",
+)
+
+client.sources.sync(source.id)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+
+const source = await grad.sources.create({
+  provider: "langfuse",
+  dataset: "support-prod",
+  config: { host: "https://cloud.langfuse.com" },
+  secretRef: "env:LANGFUSE_API_KEY",
+  schedule: "*/15 * * * *",
+});
+
+await grad.sources.sync(source.id);
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+### Supported providers
+
+| Provider | `--format` / `provider` | File imports | Incremental sync | Outbound sink |
+| --- | --- | --- | --- | --- |
+| Gradiated Native | `gradiated` | JSONL, `.jsonl.zst` | Automatic / S3 cursor | Native |
+| Native schema | `grad_trajectories` | JSONL, Parquet | `trajectories.push()` | — |
+| OpenTelemetry / OpenInference | `otel` | OTLP JSONL, Parquet | OTLP collector | OTLP/HTTP |
+| PostHog | `posthog` | Batch Parquet, CSV, JSON | HogQL API | OTLP (`/i/v0/ai/otel`) |
+| Langfuse | `langfuse` | S3 Parquet, JSONL, CSV | Traces + Scores API | OTLP |
+| Braintrust | `braintrust` | BTQL JSONL, CSV | BTQL cursor | OTLP |
+| LangSmith | `langsmith` | Bulk Parquet | Runs + Feedback API | OTLP |
+| Arize Phoenix | `phoenix` | Parquet, JSONL | Spans + Annotations API | OTLP |
+| Datadog LLMObs | `datadog` | Span archive | Events Search API | OTLP |
+| W&B Weave | `weave` | Parquet, JSONL | Calls + Feedback API | OTLP |
+| Comet Opik | `opik` | JSON, CSV | Traces API | OTLP |
+| Pydantic Logfire | `logfire` | Arrow, Parquet | SQL Query API | OTLP |
+| Laminar | `laminar` | SQL export | Query API | OTLP |
+| Helicone | `helicone` | JSONL, CSV | Query API | Custom JSON log |
+
+## Export trajectories back to your observability tool
+
+Add an outbound sink if your team reviews traces in OpenTelemetry, Langfuse, Braintrust, or another OTLP backend. Trajectories captured by Gradiated endpoints are forwarded in bounded batches (`<= 3.5 MB` uncompressed).
+
+```bash
+grad sinks add otel \
+  --endpoint https://otel.internal.example/v1/traces \
+  --secret-ref env:OTEL_AUTH_HEADER \
+  --include-content false
+```
+
+Set `--include-content false` to forward latency, token counts, costs, routing decisions, and scores without prompt or completion text.
+
+## The `Trajectory` schema
+
+Level 0 and Level 1 recipes work directly on `grad.trajectory/1` records. You do not pre-tokenize datasets or reshape columns per model family.
+
+```json
+{
+  "schema": "grad.trajectory/1",
+  "id": "traj_9f82a1",
+  "session_id": "sess_42",
+  "group_id": "grp_prompt_42",
+  "role": "rollout",
+  "source": "otel",
+  "input": {
+    "messages": [{ "role": "user", "content": "Refund order #8821" }],
+    "tools": [{ "name": "issue_refund" }],
+    "media": [{ "kind": "image", "ref": "s3://bucket/screenshot.png" }],
+    "features": { "customer_tier": "enterprise", "turn_index": 0 },
+    "payload": null
+  },
+  "output": {
+    "turns": [{ "role": "assistant", "content": "Refund issued." }],
+    "token_ids": [151644, 8948],
+    "turn_ids": [0, 0],
+    "response_offset": 1,
+    "sampling_logprobs": [0.0, -0.12],
+    "loss_mask": [0.0, 1.0],
+    "weight_version": "v12",
+    "payload": null
+  },
+  "expected_output": null,
+  "scores": { "task_success": 1.0, "user_thumbs": 1.0 },
+  "metrics": {
+    "cost_usd": 0.01105,
+    "latency_ms": 4210,
+    "input_tokens": 1820,
+    "output_tokens": 240
+  },
+  "metadata": {
+    "endpoint": "support-router",
+    "artifact": "support-router@v12",
+    "inference_id": "inf_01J9Y",
+    "propensity": 0.10,
+    "is_probe": true
+  },
+  "timestamp": "2026-11-25T18:00:05Z"
+}
+```
+
+Key fields used by recipes:
+
+- `input.messages`, `input.tools`, `input.media`, and `input.features` hold text, tool schemas, image or audio refs, and numeric/categorical features.
+- `expected_output` holds gold corrections (such as a human-edited diff or label) for `sft` and `classifier` runs.
+- `group_id` and `role` (`chosen`, `rejected`, `anchor`, `positive`, `negative`, `rollout`) keep pairs and rollout groups atomic across train/eval splits and microbatches.
+- `session_id` lets recipes split by session instead of by turn so multi-turn conversations never leak into held-out evaluation.
+- `output.token_ids`, `sampling_logprobs`, `loss_mask`, and `turn_ids` are filled automatically by `Artifact.sample()` for RL and distillation.
+
+In [Level 2 custom loops](/docs/training/custom-loops/), two built-in helpers keep per-token arrays aligned:
+
+- `traj.append_env_tokens(tokens, turn_id)` appends tool or environment observations with `loss_mask = 0.0` and `sampling_logprobs = 0.0` in lockstep.
+- `traj.to_datum(advantage=..., ref_logprobs=..., teacher_topk=...)` converts a `Trajectory` into a tokenizer-aligned `Datum`.
+
+<DocsNext>
+  <a href="/docs/training/recipes/">
+    <small>Next</small>
+    <strong>Recipes (Level 0 &amp; 1)</strong>
+  </a>
+  <a href="/docs/training/environments/">
+    <small>RL &amp; evals</small>
+    <strong>Environments and rubrics</strong>
+  </a>
+</DocsNext>

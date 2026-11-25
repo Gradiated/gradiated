@@ -134,15 +134,23 @@ const toPortableMarkdown = (source) =>
     .trim()
     .concat("\n");
 
+const resolveDocsMdxPath = async (path) => {
+  const docsRoot = join(websiteRoot, "src", "docs");
+  if (path === "/docs/") return join(docsRoot, "index.mdx");
+  const rel = path.replace(/^\/docs\//, "").replace(/\/$/, "");
+  const nestedIndex = join(docsRoot, rel, "index.mdx");
+  try {
+    await readFile(nestedIndex, "utf8");
+    return nestedIndex;
+  } catch {
+    return join(docsRoot, `${rel}.mdx`);
+  }
+};
+
 const docsPages = pages.filter(({ path }) => path.startsWith("/docs/"));
 const markdownPages = await Promise.all(
   docsPages.map(async ({ path }) => {
-    const slug =
-      path === "/docs/" ? "index" : path.split("/").filter(Boolean).at(-1);
-    const source = await readFile(
-      join(websiteRoot, "src", "docs", `${slug}.mdx`),
-      "utf8",
-    );
+    const source = await readFile(await resolveDocsMdxPath(path), "utf8");
     return {
       content: toPortableMarkdown(source),
       path:

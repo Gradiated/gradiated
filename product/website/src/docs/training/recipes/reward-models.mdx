@@ -1,0 +1,143 @@
+# Reward models and verifiers
+
+<DocsLead>Train pairwise Bradley-Terry reward models, step-level process verifiers, and generative judges to grade RL rollouts and gate production cascades.</DocsLead>
+
+When unit tests or exact-match rules cannot grade an output on their own, train a dedicated verifier artifact. The same artifact works in two places: inside a [Rubric](/docs/training/environments/) during RL, and as the `verifier` stage inside a production `cascade` or `majority_vote` [Endpoint](/docs/training/endpoints/).
+
+## Choose a verifier type
+
+| Type | Output | Best for |
+| --- | --- | --- |
+| **Pairwise reward model (Bradley-Terry)** | Scalar score per response | Ranking candidates, best-of-N reranking, or scoring open-ended quality from `(chosen, rejected)` pairs. |
+| **Process reward model (PRM)** | Score per reasoning step or tool call | Dense credit assignment in multi-turn agents and catching bad steps early. |
+| **Generative verifier (GenRM)** | Short critique + `yes` / `no` verdict | Complex rubric grading where chain-of-thought reasoning beats a single linear head. |
+
+## 1. Pairwise Bradley-Terry reward model
+
+Use `(chosen, rejected)` [trajectories](/docs/training/trajectories/) sharing a `group_id` and train a single scalar head (`heads={"rm": {"dim": 1}}`) with Bradley-Terry loss:
+
+```python
+import torch
+import torch.nn.functional as F
+from grad import Grad, ModelSpec
+
+client = Grad()
+
+def bradley_terry_loss(datums, out):
+    scores = out["heads"]["rm"]
+    losses = [
+        -F.logsigmoid(scores[i][0] - scores[i + 1][0])
+        for i in range(0, len(datums), 2)
+    ]
+    return torch.stack(losses).mean()
+
+with client.trainers.create(
+    ModelSpec(
+        base="Qwen/Qwen3-8B",
+        adapter="lora",
+        train_mode="lora",
+        heads={"rm": {"dim": 1}},
+    ),
+    compute="gpu",
+) as trainer:
+    for batch in pair_batches:
+        fb = trainer.forward_backward_custom(
+            datums=batch,
+            outputs=["heads"],
+            loss_fn=bradley_terry_loss,
+        )
+        trainer.optim_step(lr=1e-4).result()
+        print(f"bt_loss={fb.result().loss:.4f}")
+
+    rm_artifact = trainer.export(name="sql-verifier", merge_adapter=True)
+```
+
+Score candidate rollouts offline or inside a rubric using batched inference:
+
+```python
+scores = [
+    torch.sigmoid(res["logits"][0]).item()
+    for res in rm_artifact.infer_batch(candidate_inputs)
+]
+```
+
+## 2. Step-level process reward model (PRM)
+
+Attach a `token_level: True` head and label only the end-of-step token positions using the built-in `bce_sparse_positions` loss:
+
+```python
+from grad import Datum, DatumTargets, Grad, ModelInput, ModelSpec
+
+client = Grad()
+
+datums = [
+    Datum(
+        ModelInput(tokens=step_traj_tokens),
+        DatumTargets(
+            positions=[42, 98, 151],     # token indices ending steps 1, 2, 3
+            labels=[1.0, 1.0, 0.0],      # step 3 introduced an error
+        ),
+    ),
+]
+
+with client.trainers.create(
+    ModelSpec(
+        base="Qwen/Qwen3-8B",
+        adapter="lora",
+        train_mode="lora",
+        heads={"prm": {"dim": 1, "token_level": True}},
+    ),
+    compute="gpu",
+) as trainer:
+    m = trainer.forward_backward(
+        datums,
+        loss={"kind": "bce_sparse_positions", "head": "prm"},
+    ).result()
+    trainer.optim_step(lr=1e-4).result()
+    prm_artifact = trainer.export(name="reasoning-prm")
+```
+
+At inference time, `prm_artifact.infer(input)["heads"]["prm"]` returns a `(L, 1)` tensor with a calibrated correctness logit at every step boundary.
+
+## 3. Generative verifier (GenRM)
+
+When grading requires reasoning (checking subtle policy violations or comparing code diffs against requirements), train a small 4B–8B model with [SFT](/docs/training/recipes/sft-dpo/) on `(prompt, candidate, critique + verdict)` trajectories, optionally followed by [GRPO](/docs/training/recipes/rl-agents/) where the reward is exact agreement with human labels.
+
+Deploy the trained verifier with `majority_vote` for higher accuracy at test time:
+
+```python
+client.endpoints.create(
+    slug="policy-judge",
+    artifact="policy-judge@2026-11-25-1",
+    strategy={"kind": "majority_vote", "n_samples": 5},
+)
+```
+
+## Use a verifier in production cascades
+
+Pass any trained reward model or verifier artifact into a `cascade` [endpoint](/docs/training/endpoints/) so easy requests stay on a fast 8B model while low-scoring outputs escalate automatically:
+
+```python
+client.endpoints.create(
+    slug="sql-agent",
+    artifact="sql-agent@2026-11-25-2",
+    capture_dataset="sql-agent-prod",
+    strategy={
+        "kind": "cascade",
+        "verifier": "sql-verifier@2026-11-25-1",
+        "frontier": "Qwen/Qwen3-32B",
+        "threshold": 0.75,
+    },
+)
+```
+
+<DocsNext>
+  <a href="/docs/training/recipes/embeddings/">
+    <small>Next guide</small>
+    <strong>Embeddings and rerankers</strong>
+  </a>
+  <a href="/docs/training/endpoints/">
+    <small>Deploy</small>
+    <strong>Artifacts and endpoints</strong>
+  </a>
+</DocsNext>

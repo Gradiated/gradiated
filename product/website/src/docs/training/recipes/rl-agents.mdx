@@ -1,0 +1,261 @@
+# RL for agents (GRPO)
+
+<DocsLead>Train models to pass tests, call tools, and recover from errors using verifiable reinforcement learning against a rubric or live Docker Compose environment.</DocsLead>
+
+Use `grpo` when you can **grade an outcome** (unit tests pass, SQL returns the right rows, an API state matches expectations) even if you do not have a single gold answer. For best stability, run a short [SFT](/docs/training/recipes/sft-dpo/) pass first so the model already emits valid tool calls, then chain into GRPO with `init_from`.
+
+## Level 1 vs. Level 2 for RL
+
+| Setup | Use | Why |
+| --- | --- | --- |
+| **Single-turn tasks + HTTP grader** | **Level 1 (`recipe="grpo"`)** | Pass a dataset of prompts and a grading webhook; Gradiated handles sampling, advantage normalization, and updates. |
+| **Multi-turn apps, Docker Compose, seeded DBs, custom curricula** | **Level 2 (`Environment` + `Trainer`)** | Your environment stays on your own CPU/Kubernetes infrastructure and talks to `Artifact` and `Trainer` over HTTP. |
+
+## Option A: Managed GRPO (Level 1)
+
+Provide a dataset of task prompts (see [Trajectories and data](/docs/training/trajectories/)) and a grading webhook. Gradiated sends `Authorization: Bearer <secret>` with each rollout and expects `scores` plus a scalar `reward`:
+
+```json
+// POST https://eval.internal.example/grade-sql
+{ "task": { "id": "q_42", "expected_rows": 12 }, "trajectory": { "output": { "turns": [...] } } }
+
+// 200 OK
+{ "scores": { "sql_valid": 1.0, "exact_rows": 1.0 }, "reward": 1.0 }
+```
+
+```python
+from grad import Grad
+
+client = Grad()
+
+run = client.runs.create(
+    dataset="sql-benchmark-tasks",
+    name="sql-agent",
+    recipe="grpo",
+    init_from="sql-agent@sft-v1",
+    adapter="lora",
+    compute="gpu",
+    overrides={
+        "rubric": {
+            "kind": "webhook",
+            "url": "https://eval.internal.example/grade-sql",
+            "secret_ref": "env:EVAL_WEBHOOK_TOKEN",
+        },
+        "group_size": 8,
+        "max_new_tokens": 512,
+        "loss": {"kind": "grpo", "clip_low": 0.2, "clip_high": 0.28, "kl_beta": 0.01},
+        "optimizer": {"kind": "adamw", "lr": 2e-5},
+    },
+).wait(
+    on_metric=lambda m: print(f"step={m.step} reward={m.eval_metrics.get('mean_reward', 0):.3f}"),
+)
+
+print(run.artifact_id)
+```
+
+## Option B: Stateful multi-turn agents (Level 2)
+
+When the agent must call tools against a real backend stack (Postgres, Redis, internal APIs), subclass `Environment` and drive `Trainer` directly. See [Environments and rubrics](/docs/training/environments/) for the full `DockerComposeEnv` implementation.
+
+```python
+import statistics
+from grad import Grad, ModelSpec
+
+client = Grad()
+
+with client.trainers.create(
+    ModelSpec(
+        base="Qwen/Qwen3-8B",
+        adapter="lora",
+        train_mode="lora",
+        init_from="support-agent@sft-v1",
+        params={"rank": 32},
+    ),
+    compute="gpu",
+) as trainer:
+    for step, task_batch in enumerate(task_batches):
+        groups = env.rollout_groups(
+            artifact=trainer.snapshot(),
+            tasks=task_batch,
+            group_size=8,
+            max_turns=6,
+            max_new_tokens=512,
+            max_concurrency=8,
+            timeout_s=60,
+        )
+
+        datums = []
+        for group in groups:
+            rewards = [t.scores["reward"] for t in group]
+            sd = statistics.pstdev(rewards)
+            if sd < 1e-6:
+                continue  # zero-variance prompts carry no relative signal
+
+            mean = statistics.fmean(rewards)
+            for traj, r in zip(group, rewards):
+                datums.append(traj.to_datum(advantage=(r - mean) / (sd + 1e-6)))
+
+        fb = trainer.forward_backward(
+            datums,
+            loss={"kind": "grpo", "clip_low": 0.2, "clip_high": 0.28},
+        )
+        opt = trainer.optim_step(lr=2e-5, grad_clip=1.0)
+        m = fb.result()
+        opt.result()
+
+        print(f"step={step} datums={len(datums)} loss={m.loss:.4f}")
+
+    artifact = trainer.export(name="support-agent", merge_adapter=True)
+```
+
+## Practical checks that prevent wasted GPU hours
+
+1. **Verify observation masking:** Tool responses, retrieved docs, and error tracebacks must have `loss_mask = 0.0`. Using `Environment.step()` returning `Observation(text=...)` or `traj.append_env_tokens()` enforces this automatically.
+2. **Watch zero-variance group rate:** If >70% of prompt groups get all `0.0` (too hard) or all `1.0` (too easy), add partial-credit rubric terms or filter your task pool to medium-difficulty prompts.
+3. **Warm-start with SFT:** If the base model emits malformed tool JSON on >30% of rollouts, run a short [SFT](/docs/training/recipes/sft-dpo/) stage on 200–500 valid trajectories first, then pass `init_from`.
+
+## Choosing an RL method for your environment
+
+All modern policy-gradient methods share the same rollout loop — only the advantage calculation or loss config changes.
+
+| Method | When to use it | How to run it |
+| --- | --- | --- |
+| **GRPO** | Default synchronous RL against verifiable rubrics. | `loss={"kind": "grpo", "clip_low": 0.2, "clip_high": 0.2}` |
+| **Dr. GRPO** | Remove std-division and length bias in reasoning RL. | Pass unnormalized `advantage = r - mean` (no `/ sd`) into `traj.to_datum()`. |
+| **DAPO** | Long reasoning or multi-turn coding where standard clipping collapses entropy. | `loss={"kind": "grpo", "clip_low": 0.2, "clip_high": 0.28}` + skip zero-variance groups + length penalty in `Rubric`. |
+| **CISPO** | Async rollout pools where Docker Compose workers finish 1–4 weight versions behind the trainer. | `loss={"kind": "cispo", "clip_low": 0.2, "clip_high": 0.2}` — stable under off-policy lag. |
+| **PPO + Critic** | Dense per-token value baselines with GAE when group sampling is too expensive. | Attach `heads={"v": {"dim": 1, "token_level": True}}` and train policy + value head jointly via `forward_backward_custom()`. |
+| **RLOO** | Small group sizes (`group_size=4`) where std-normalization is noisy. | Unbiased leave-one-out baseline `(sum(rewards) - r) / (G - 1)` in `traj.to_datum(advantage=...)` + `cispo`. |
+| **REINFORCE++** | Global batch stability with per-token KL shaping against a frozen reference. | Score `ref.score_logprobs(trajectories)`, shape returns per token, whiten across the batch, pass `advantages=[...]` to `to_datum()`. |
+| **GSPO** | MoE models or long multi-turn agent trajectories where token-level importance ratios diverge. | Sequence-level geometric mean ratio in 8 lines via `trainer.forward_backward_custom()`. |
+
+### Example: swapping RL algorithms or running async rollouts
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Async rollout pool (CISPO)">
+
+```python
+from concurrent.futures import ThreadPoolExecutor
+
+# Overlap slow Docker Compose rollouts with GPU steps; refresh snapshot every step.
+with ThreadPoolExecutor(max_workers=1) as pool:
+    next_rollouts = pool.submit(env.rollout_groups, trainer.snapshot(), batches[0], group_size=8, max_turns=6)
+
+    for step in range(len(batches)):
+        groups = next_rollouts.result()
+        if step + 1 < len(batches):
+            next_rollouts = pool.submit(env.rollout_groups, trainer.snapshot(), batches[step + 1], group_size=8, max_turns=6)
+
+        datums = build_group_datums(groups)
+        trainer.forward_backward(datums, loss={"kind": "cispo", "clip_low": 0.2, "clip_high": 0.2}).result()
+        trainer.optim_step(lr=2e-5, grad_clip=1.0).result()
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="PPO + Value head">
+
+```python
+import torch
+
+# Trainer created with ModelSpec(..., heads={"v": {"dim": 1, "token_level": True}})
+def ppo_gae_loss(datums, out, eps=0.2, vf_coef=0.5):
+    losses = []
+    for lp, v, d in zip(out["logprobs"], out["heads"]["v"], datums):
+        mask = torch.tensor(d.targets.loss_mask); mask[0] = 0.0
+        ret = torch.full((lp.shape[0],), d.targets.scalar)
+        adv = ret - v[:, 0].detach()
+        r = torch.exp(lp - torch.tensor(d.targets.sampling_logprobs))
+        pg = -torch.minimum(r * adv, r.clamp(1 - eps, 1 + eps) * adv)
+        vf = 0.5 * (v[:, 0] - ret) ** 2
+        losses.append(((pg + vf_coef * vf) * mask).sum() / mask.sum().clamp(min=1.0))
+    return torch.stack(losses).mean()
+
+trainer.forward_backward_custom(datums, outputs=["logprobs", "heads"], loss_fn=ppo_gae_loss).result()
+trainer.optim_step(lr=2e-5, grad_clip=1.0).result()
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Sequence-level GSPO">
+
+```python
+import torch
+
+def gspo_loss(datums, out, eps=0.2):
+    losses = []
+    for lp, d in zip(out["logprobs"], datums):
+        mask = torch.tensor(d.targets.loss_mask)
+        mask[0] = 0.0
+        old_lp = torch.tensor(d.targets.sampling_logprobs)
+        adv = torch.tensor(d.targets.advantages)
+        # Geometric-mean importance ratio over generated tokens only (env tokens masked out)
+        seq_log_r = ((lp - old_lp) * mask).sum() / mask.sum().clamp(min=1.0)
+        r = torch.exp(seq_log_r)
+        a_seq = (adv * mask).sum() / mask.sum().clamp(min=1.0)
+        losses.append(-torch.minimum(r * a_seq, r.clamp(1 - eps, 1 + eps) * a_seq))
+    return torch.stack(losses).mean()
+
+fb = trainer.forward_backward_custom(datums, outputs=["logprobs"], loss_fn=gspo_loss)
+trainer.optim_step(lr=2e-5, grad_clip=1.0).result()
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Multi-turn per-turn KL (SCoRe)">
+
+```python
+import torch
+
+# `turn_ids` on each Datum identifies which turn generated each token.
+ref_lps = ref_artifact.score_logprobs(trajectories)["aligned_logprobs"]
+datums = [t.to_datum(advantage=a, ref_logprobs=r) for t, a, r in zip(trajectories, advs, ref_lps)]
+
+def per_turn_kl_loss(datums, out):
+    losses = []
+    for lp, d in zip(out["logprobs"], datums):
+        mask = torch.tensor(d.targets.loss_mask); mask[0] = 0.0
+        kl_beta = torch.where(torch.tensor(d.model_input.turn_ids) == 0, 0.2, 0.01)
+        rlp = torch.tensor(d.targets.ref_logprobs)
+        kl = torch.exp(rlp - lp) - (rlp - lp) - 1.0
+        w = torch.exp(lp - torch.tensor(d.targets.sampling_logprobs)).clamp(0.8, 1.2).detach()
+        adv = torch.tensor(d.targets.advantages)
+        losses.append(((-w * adv * lp + kl_beta * kl) * mask).sum() / mask.sum().clamp(min=1.0))
+    return torch.stack(losses).mean()
+
+fb = trainer.forward_backward_custom(datums, outputs=["logprobs"], loss_fn=per_turn_kl_loss)
+trainer.optim_step(lr=2e-5).result()
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Structured tool calls during rollouts
+
+For tool-calling or JSON-extraction agents, pass `response_format={"type": "json_schema", "schema": ...}` to `artifact.sample()` (or `env.rollout_groups()`). Grammar-constrained sampling keeps every rollout syntactically valid while still recording exact `sampling_logprobs` for policy-gradient updates.
+
+## Deploy with test-time scaling or cascade
+
+RL-tuned 4B–8B agents often match a frontier model on 80–90% of requests. Pair the trained artifact with a [trained verifier](/docs/training/recipes/reward-models/) in a `cascade` [endpoint](/docs/training/endpoints/) so hard tasks still escalate cleanly:
+
+```python
+client.endpoints.create(
+    slug="sql-agent",
+    artifact="sql-agent@2026-11-25-2",
+    capture_dataset="sql-agent-prod",
+    strategy={
+        "kind": "cascade",
+        "verifier": "sql-verifier@v1",
+        "frontier": "Qwen/Qwen3-32B",
+        "threshold": 0.75,
+    },
+)
+```
+
+<DocsNext>
+  <a href="/docs/training/recipes/distillation/">
+    <small>Next guide</small>
+    <strong>Distillation and Cartridges</strong>
+  </a>
+  <a href="/docs/training/environments/">
+    <small>Deep dive</small>
+    <strong>Environments and rubrics</strong>
+  </a>
+</DocsNext>

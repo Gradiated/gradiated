@@ -173,6 +173,71 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     title: "Claude Code",
     description: "Connect Claude Code to the Gradiated API.",
   },
+  "/docs/training/": {
+    title: "Training overview",
+    description:
+      "Train routers, classifiers, reward models, and fine-tuned or RL-tuned LLMs from traces or environments using Gradiated.",
+  },
+  "/docs/training/trajectories/": {
+    title: "Trajectories and data",
+    description:
+      "Push, import, and sync LLM trajectories from PostHog, Langfuse, Braintrust, OpenTelemetry, or Parquet files into Gradiated datasets.",
+  },
+  "/docs/training/recipes/": {
+    title: "Training recipes",
+    description:
+      "Run Level 0 automatic training and Level 1 managed recipes for routers, classifiers, SFT, DPO, GRPO, distillation, and Cartridges.",
+  },
+  "/docs/training/environments/": {
+    title: "Environments and rubrics",
+    description:
+      "Score trajectories with composable rubrics and run multi-turn RL rollouts against stateful Docker Compose apps and seed scripts.",
+  },
+  "/docs/training/custom-loops/": {
+    title: "Custom training loops",
+    description:
+      "Build Level 2 RL, preference, distillation, and custom PyTorch loss loops directly on Gradiated Trainer and Artifact primitives.",
+  },
+  "/docs/training/endpoints/": {
+    title: "Artifacts and endpoints",
+    description:
+      "Promote immutable .grad artifacts to named endpoints for shadow testing, canary rollouts, SLA routing, cascades, and feedback capture.",
+  },
+  "/docs/training/recipes/router/": {
+    title: "Model router guide",
+    description:
+      "Train and deploy a calibrated SLA-bounded model router on CPU or GPU using Gradiated trajectories and fallback probes.",
+  },
+  "/docs/training/recipes/classifier/": {
+    title: "Classifiers and decisions guide",
+    description:
+      "Train calibrated binary guardrails, multiclass triage models, and ordinal effort detectors with automatic confidence fallback.",
+  },
+  "/docs/training/recipes/sft-dpo/": {
+    title: "Fine-tuning and preferences guide",
+    description:
+      "Run LoRA supervised fine-tuning and DPO alignment on verified trajectories, then deploy with automatic syntax fallback.",
+  },
+  "/docs/training/recipes/rl-agents/": {
+    title: "RL for agents guide",
+    description:
+      "Train reasoning and tool-use agents with GRPO, DAPO, CISPO, RLOO, and GSPO against rubrics and Docker Compose environments.",
+  },
+  "/docs/training/recipes/distillation/": {
+    title: "Distillation and Cartridges guide",
+    description:
+      "Distill larger teacher models into fast students with on-policy top-k KL, or compress static context into KV-cache Cartridges.",
+  },
+  "/docs/training/recipes/reward-models/": {
+    title: "Reward models and verifiers guide",
+    description:
+      "Train pairwise Bradley-Terry reward models, step-level process reward models, and generative judges for RL rubrics and production cascades.",
+  },
+  "/docs/training/recipes/embeddings/": {
+    title: "Embeddings and rerankers guide",
+    description:
+      "Fine-tune dense bi-encoders with InfoNCE, Matryoshka and ColBERT multi-vector retrievers, and cross-encoder rerankers with hard-negative refresh.",
+  },
   "/docs/api-reference/": {
     title: "API reference",
     description:

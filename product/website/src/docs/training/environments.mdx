@@ -1,0 +1,147 @@
+# Environments and rubrics
+
+<DocsLead>Score trajectories with composable rubrics and run multi-turn RL rollouts against real apps, seeded databases, and Docker Compose stacks.</DocsLead>
+
+Environments run **outside the GPU training cluster**, on your own CPU machines, Kubernetes cluster, or sandbox pool, and call Gradiated [Artifact](/docs/training/endpoints/) and [Trainer](/docs/training/custom-loops/) endpoints over HTTP. Your containers, seed scripts, and internal credentials never leave your network.
+
+## Rubrics
+
+A `Rubric` combines weighted `RubricTerm` scorers into a single `reward` while storing every sub-score in [`trajectory.scores`](/docs/training/trajectories/).
+
+```python
+from grad import Rubric, RubricTerm
+
+def passes_unit_tests(traj, handle) -> float:
+    res = handle.exec("pytest -q tests/target_test.py")
+    return 1.0 if res.returncode == 0 else 0.0
+
+def concise_patch(traj) -> float:
+    return 1.0 if len(traj.output["token_ids"]) < 1024 else 0.5
+
+rubric = Rubric([
+    RubricTerm("tests", weight=0.8, fn=passes_unit_tests, stateful=True),
+    RubricTerm("concise", weight=0.2, fn=concise_patch),
+])
+```
+
+Rubrics support three scoring modes:
+
+| Mode | Flag | Use it for |
+| --- | --- | --- |
+| **Pointwise** | *(default)* | Deterministic checks (unit tests, AST/JSON validation, exact match) or single-trajectory LLM judges. |
+| **Stateful** | `stateful=True` | Checks that inspect live Postgres rows, Redis keys, API responses, or files before teardown. |
+| **Groupwise** | `groupwise=True` | Comparing all `G` rollouts for the same prompt side by side (comparative judges, pairwise win rates). |
+
+To reuse scores already attached to imported production traces, pass `RubricTerm.from_score("task_success", weight=1.0)`.
+
+## Stateful environments (Docker Compose and seed scripts)
+
+When an agent modifies live state (inserting rows in Postgres, calling an internal API, or editing files), each parallel rollout needs isolation and guaranteed cleanup.
+
+Subclass `Environment` and implement four hooks:
+
+1. `setup(task, rollout_id)` — start or lease an isolated environment and run your seed script.
+2. `step(handle, action)` — run the agent's tool call against `handle` and return an `Observation(text=..., done=...)`.
+3. `evaluate(handle, trajectory)` — score the trajectory **while the environment is still running** so stateful rubric terms can query Postgres, Redis, or your API.
+4. `teardown(handle)` — stop containers or reset the database. `rollout_groups()` always runs `teardown` in a `finally:` block, even on timeout or error.
+
+```python
+import subprocess
+from dataclasses import dataclass
+from grad import Environment, Observation, Rubric
+
+@dataclass
+class ComposeHandle:
+    project: str
+    base_url: str
+    db_url: str
+
+class AppComposeEnv(Environment):
+    def __init__(self, compose_file: str, rubric: Rubric):
+        super().__init__(rubric)
+        self.compose_file = compose_file
+
+    def setup(self, task: dict, rollout_id: str) -> ComposeHandle:
+        project = f"grad_{rollout_id}"
+        subprocess.run(
+            ["docker", "compose", "-p", project, "-f", self.compose_file, "up", "-d", "--wait"],
+            check=True,
+        )
+        subprocess.run(
+            ["./scripts/seed.sh", project, task["fixture_id"]],
+            check=True,
+        )
+        api_port = get_mapped_port(project, "api", 8080)
+        db_port = get_mapped_port(project, "postgres", 5432)
+        return ComposeHandle(
+            project=project,
+            base_url=f"http://127.0.0.1:{api_port}",
+            db_url=f"postgres://postgres:postgres@127.0.0.1:{db_port}/app",
+        )
+
+    def step(self, handle: ComposeHandle, action) -> Observation:
+        tool_call = parse_tool_call(action.text)
+        if tool_call is None:
+            return Observation(done=True)
+
+        obs_text = execute_tool_against_api(handle.base_url, tool_call)
+        return Observation(text=obs_text, done=False)
+
+    def evaluate(self, handle: ComposeHandle, trajectory) -> dict[str, float]:
+        # Runs BEFORE teardown so stateful RubricTerms can query `handle.db_url`.
+        self.rubric.score(trajectory, state=handle)
+        return trajectory.scores
+
+    def teardown(self, handle: ComposeHandle) -> None:
+        subprocess.run(
+            ["docker", "compose", "-p", handle.project, "-f", self.compose_file, "down", "-v", "--remove-orphans"],
+            check=False,
+        )
+```
+
+You do not need to load a local tokenizer in `step()`. Returning `Observation(text=...)` tokenizes the observation via `artifact.tokenize()` on the server and injects it with `loss_mask = 0.0`. If you need exact token IDs (for example, injecting a specific control token), pass `Observation(tokens=[...], done=False)` instead.
+
+### Faster resets with a warm pool
+
+Cold-starting `docker compose up` per rollout works for small runs, but a warm pool is 10–50x faster during GRPO:
+
+- Boot `N` stacks once (matching `max_concurrency`) and lease a slot in `setup()`.
+- Restore Postgres from a pre-seeded template database (`DROP DATABASE app; CREATE DATABASE app TEMPLATE seed_v1;`) and flush Redis, typically in under 50 ms.
+- Return the slot to the pool in `teardown()`.
+
+Because `setup` and `teardown` are plain Python hooks, you can start with cold `docker compose up -d` and move to a warm pool later without changing your rubric or training loop.
+
+## Running rollouts
+
+Run `env.rollout_groups()` against any `Artifact`: a base model for offline evals, or `trainer.snapshot()` inside an online RL loop.
+
+```python
+groups = env.rollout_groups(
+    artifact=trainer.snapshot(),
+    tasks=task_batch,
+    group_size=8,
+    max_turns=6,
+    max_new_tokens=512,
+    max_concurrency=8,
+    timeout_s=60,
+)
+```
+
+Every rollout enforces three guarantees automatically:
+
+- **Observation masking:** tool outputs and retrieved documents are appended via [`append_env_tokens()`](/docs/training/trajectories/) with `loss_mask = 0.0` and `sampling_logprobs = 0.0`, so gradients apply only to tokens generated by the model.
+- **Bounded concurrency:** `max_concurrency` caps active stacks so large rollout groups do not exhaust CPU or memory.
+- **Timeout cleanup:** rollouts exceeding `timeout_s` are cancelled, assigned `reward = 0.0`, and still run `teardown()`.
+
+See the [RL for agents guide](/docs/training/recipes/rl-agents/) for full GRPO, DAPO, CISPO, and GSPO loops running against an `Environment`.
+
+<DocsNext>
+  <a href="/docs/training/custom-loops/">
+    <small>Next</small>
+    <strong>Custom loops (Level 2)</strong>
+  </a>
+  <a href="/docs/training/endpoints/">
+    <small>Deploy</small>
+    <strong>Artifacts and endpoints</strong>
+  </a>
+</DocsNext>

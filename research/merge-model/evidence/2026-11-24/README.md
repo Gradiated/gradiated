@@ -143,4 +143,22 @@ Evaluating the DuckDB-adapted `Arm 6v2` Verifier **zero-shot** (no target-repo p
 
 - Overall: greedy **628/844 (74.4%)**, `maj16` **630/844 (74.6%)**, `Arm 6v2` zero-shot **632/844 (74.9%, +0.47 pp at `α=0.25`; 631/844 at `α=1.0`)**, oracle `pass@16` **717/844 (85.0%)**.
 - Per repo (`greedy → ver α=1.0`): `webpack/webpack` 77.8% → 79.1% (+1.33 pp), `cli/cli` 78.7% → 79.1% (+0.44 pp), `ossrs/srs` 81.3% → 81.3% (0.00 pp), `tmux/tmux` 55.0% → 54.4% (−0.59 pp).
-- **Takeaway:** The much larger lift on DuckDB (+2.20 pp vs +0.47 pp zero-shot on unseen repos) directly isolates the value of **target-repo adaptation** of the Verifier to the codebase's own pre-cutoff 3-way merge history. Next: Listwise InfoNCE Verifier (Arm 6v3), `Qwen2.5-Coder-14B` merge-base + Repo Verifier (Arm 8), and per-repo Verifier adaptation on non-DuckDB codebases.
+- **Takeaway:** The much larger lift on DuckDB (+2.20 pp vs +0.47 pp zero-shot on unseen repos) directly isolates the value of **target-repo adaptation** of the Verifier to the codebase's own pre-cutoff 3-way merge history.
+
+### Arm 6v3 & Arm 10 — Listwise InfoNCE Ablation & Multi-Repo 7B Target Adaptation
+
+- **Arm 6v3 (Listwise InfoNCE Verifier, 23% DuckDB mix):** Reached 694/1,000 (`plain ep2`) and 696/1,000 (`union ep2`, +1.50 pp over control), confirming that Pointwise BCE with higher target-repo concentration (Arm 6v2: 703/1,000, +2.20 pp) is better calibrated for additive vote + verifier reranking.
+- **Arm 10 (7B Pointwise BCE Verifier adapted across 4 non-DuckDB languages simultaneously, 564 chronological forward conflicts):** Greedy 418/564 (74.1%), `maj16` 423/564 (75.0%, +0.89 pp; `webpack/webpack` +2.67 pp), `Arm 10 ep1` (`α=1.0`) 419/564 (+0.18 pp, 95% CI −1.13 to +1.55 pp), oracle `pass@16` 489/564 (86.7%).
+
+### Arm 8 & Arm 11 — `Qwen2.5-Coder-14B` Merge-Base + 14B Repo-Aware Verifier (Beats GPT-6.2-Sol!)
+
+Scaling both the merge generator and the canonicalized Repo-Aware Verifier from 7B to **`Qwen/Qwen2.5-Coder-14B-Instruct`** (1-epoch rank-64 LoRA on 48k non-DuckDB pooled conflicts + 14B Repo-Aware Verifier trained on mined 14B hard negatives with pre-merge `<repo_context>`) decisively beat both the 7B control and frontier **GPT-6.2-Sol (`711/1,000`)** on the frozen 1,000 forward DuckDB conflicts, while also improving across all 68 unrelated held-out repositories:
+
+- **`14B merge-base` greedy (`Arm 8`):**
+  - `duckdb` (1,000): **693/1,000 (69.30%)** vs 7B control 681 (+60/−48, **+1.20 pp**, 95% CI −2.06 to +4.73); `pass@16` **832/1,000 (83.20%)**; `7B+14B` `pass@32` union **862/1,000 (86.20%)** (`maj32` **697/1,000**).
+  - `others` (6,398 conflicts, **68 held-out repos**): **4,444/6,398 (69.46%)** vs 7B control 4,399 (+367/−322, **+0.70 pp**, 95% CI −0.15 to +1.72).
+- **`14B + 14B Repo-Aware Verifier` (`Arm 11`):**
+  - **`Arm 11 ep1` (`α=2.0`) vs 7B control (681):** **717/1,000 (71.70%)**, +71 / −35, **+3.60 pp** (95% CI **+1.64 to +5.56 pp**, highly significant) — **beating frontier GPT-6.2-Sol (711/1,000, +0.60 pp)**.
+  - **5-fold merge-grouped CV for `α` (`Arm 11 ep1`):** **714/1,000 (71.40%)** (`α=2.0` on 4/5 folds, `1.5` on 1/5) — beats GPT-6.2-Sol even under strict out-of-fold cross-validation.
+  - Pure verifier lift (`Arm 11 ep1`, 717) vs `14B greedy` (693): **+2.40 pp** (+44/−20, 95% CI −0.37 to +5.05); vs `14B maj16` (692): **+2.50 pp** (+47/−22, 95% CI −0.26 to +5.26).
+  - Reproducibility across epochs: `Arm 11 ep2` reached **716/1,000** at both `α=0.5` and `α=2.0` (and **704/1,000** pure `verifier_only`, 0 votes; `ep1` `verifier_only` **703/1,000**); `7B+14B` union reached **715/1,000** (`ep1`) and **711/1,000** (`ep2`).

@@ -251,9 +251,7 @@ it("offers Kimi with exact OpenRouter capacity and its reasoning contract", () =
 });
 
 it("offers YetaLabs' Kimi K3.1 Pro Cyber without OpenRouter fallback and aliases NanoGPT's ID", () => {
-  const model = catalogModels.find(
-    (item) => item.id === "kimi-k3.1-pro-cyber",
-  );
+  const model = catalogModels.find((item) => item.id === "kimi-k3.1-pro-cyber");
   const retired = legacyModels.find(
     (item) => item.id === "yetalabs/kimi-k3.1-pro-abliterated",
   );

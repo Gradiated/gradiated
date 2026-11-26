@@ -8,11 +8,27 @@ import sys
 MODEL = 'moonshotai/Kimi-K3.1-Pro'
 REVISION = 'd9e99b0792a5e93b78ea9bea62a68167e36ddd9e'
 STOCK_MODEL_ID = 'moonshotai/kimi-k3.1-pro'
+CYBER_MODEL_ID = 'kimi-k3.1-pro-cyber'
 ABLITERATED_MODEL_ID = 'yetalabs/kimi-k3.1-pro-abliterated'
 # Public model ID (MODEL_ID) -> pinned checkpoint and qualified serving profile.
 # Runtimes without MODEL_ID serve stock Kimi K3.1 Pro with its 5-slot profile.
 ACTIVE_REQUESTS = 5
 ABLITERATED_ACTIVE_REQUESTS = 16
+CYBER_PROFILE = {
+    'model': 'yetalabs/Kimi-K3.1-Pro-abliterated',
+    'revision': '0911ef0765f49d26dfa25bb0d071f29463f8000b',
+    'served_model_name': 'yetalabs/Kimi-K3.1-Pro-abliterated',
+    'active_requests': ABLITERATED_ACTIVE_REQUESTS,
+    'mem_fraction_static': '0.88',
+    'chunked_prefill_size': '16384',
+    'mamba_full_memory_ratio': '1.5',
+    'extra_backend_args': (
+        '--ep-size', '8',
+        '--dcp-size', '8',
+        '--speculative-draft-kv-cache-dtype', 'fp8_e4m3',
+        '--enable-int8-mamba-checkpoint',
+    ),
+}
 MODELS = {
     STOCK_MODEL_ID: {
         'model': MODEL,
@@ -24,21 +40,8 @@ MODELS = {
         'mamba_full_memory_ratio': '0.45',
         'extra_backend_args': (),
     },
-    ABLITERATED_MODEL_ID: {
-        'model': 'yetalabs/Kimi-K3.1-Pro-abliterated',
-        'revision': '0911ef0765f49d26dfa25bb0d071f29463f8000b',
-        'served_model_name': 'yetalabs/Kimi-K3.1-Pro-abliterated',
-        'active_requests': ABLITERATED_ACTIVE_REQUESTS,
-        'mem_fraction_static': '0.88',
-        'chunked_prefill_size': '16384',
-        'mamba_full_memory_ratio': '1.5',
-        'extra_backend_args': (
-            '--ep-size', '8',
-            '--dcp-size', '8',
-            '--speculative-draft-kv-cache-dtype', 'fp8_e4m3',
-            '--enable-int8-mamba-checkpoint',
-        ),
-    },
+    CYBER_MODEL_ID: CYBER_PROFILE,
+    ABLITERATED_MODEL_ID: CYBER_PROFILE,
 }
 SGLANG_SOURCE = 'afcd7d6b487a9cbe73e25941971b4cc107e6f9ae'
 KIMI_OVERLAY_FINGERPRINT = '6509efad47e02e681caa9cdb49bb9b9375fb94aa30276fcfa5a082e9bfcdab3e'

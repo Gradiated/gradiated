@@ -73,29 +73,31 @@ class Configuration(unittest.TestCase):
             self.assertNotIn(unsafe, backend)
 
     def test_yetalabs_abliterated_model_id_selects_pinned_open_checkpoint_and_tuned_profile(self):
-        settings, backend, router = config.commands({**self.environment, 'MODEL_ID': config.ABLITERATED_MODEL_ID})
-        self.assertEqual(settings['model_id'], 'yetalabs/kimi-k3.1-pro-abliterated')
-        self.assertEqual(settings['model'], 'yetalabs/Kimi-K3.1-Pro-abliterated')
-        self.assertEqual(settings['revision'], '0911ef0765f49d26dfa25bb0d071f29463f8000b')
-        self.assertEqual(settings['served_model_name'], 'yetalabs/Kimi-K3.1-Pro-abliterated')
-        self.assertEqual(settings['active_requests'], 16)
-        self.assertEqual(router[router.index('--max-concurrent-requests') + 1], '16')
-        for flag, value in [('--model-path', 'yetalabs/Kimi-K3.1-Pro-abliterated'),
-                            ('--revision', '0911ef0765f49d26dfa25bb0d071f29463f8000b'),
-                            ('--served-model-name', 'yetalabs/Kimi-K3.1-Pro-abliterated'),
-                            ('--tp-size', '8'), ('--ep-size', '8'), ('--dcp-size', '8'),
-                            ('--max-running-requests', '16'), ('--cuda-graph-max-bs-decode', '16'),
-                            ('--mem-fraction-static', '0.88'), ('--mamba-full-memory-ratio', '1.5'),
-                            ('--chunked-prefill-size', '16384'), ('--max-prefill-tokens', '16384'),
-                            ('--speculative-draft-kv-cache-dtype', 'fp8_e4m3'),
-                            ('--speculative-dflash-block-size', '5'), ('--mamba-ssm-dtype', 'float32')]:
-            self.assertEqual(backend[backend.index(flag) + 1], value)
-        self.assertIn('--enable-int8-mamba-checkpoint', backend)
-        self.assertIn('--disable-overlap-schedule', backend)
-        self.assertIn('--enable-linear-replayssm-spec', backend)
-        for unsafe in ['--enable-nvidia-megakernel', '--speculative-use-block-verification',
-                       '--enable-symm-mem', '--enable-deterministic-inference', '--kv-cache-dtype']:
-            self.assertNotIn(unsafe, backend)
+        for model_id in (config.CYBER_MODEL_ID, config.ABLITERATED_MODEL_ID):
+            with self.subTest(model_id=model_id):
+                settings, backend, router = config.commands({**self.environment, 'MODEL_ID': model_id})
+                self.assertEqual(settings['model_id'], model_id)
+                self.assertEqual(settings['model'], 'yetalabs/Kimi-K3.1-Pro-abliterated')
+                self.assertEqual(settings['revision'], '0911ef0765f49d26dfa25bb0d071f29463f8000b')
+                self.assertEqual(settings['served_model_name'], 'yetalabs/Kimi-K3.1-Pro-abliterated')
+                self.assertEqual(settings['active_requests'], 16)
+                self.assertEqual(router[router.index('--max-concurrent-requests') + 1], '16')
+                for flag, value in [('--model-path', 'yetalabs/Kimi-K3.1-Pro-abliterated'),
+                                    ('--revision', '0911ef0765f49d26dfa25bb0d071f29463f8000b'),
+                                    ('--served-model-name', 'yetalabs/Kimi-K3.1-Pro-abliterated'),
+                                    ('--tp-size', '8'), ('--ep-size', '8'), ('--dcp-size', '8'),
+                                    ('--max-running-requests', '16'), ('--cuda-graph-max-bs-decode', '16'),
+                                    ('--mem-fraction-static', '0.88'), ('--mamba-full-memory-ratio', '1.5'),
+                                    ('--chunked-prefill-size', '16384'), ('--max-prefill-tokens', '16384'),
+                                    ('--speculative-draft-kv-cache-dtype', 'fp8_e4m3'),
+                                    ('--speculative-dflash-block-size', '5'), ('--mamba-ssm-dtype', 'float32')]:
+                    self.assertEqual(backend[backend.index(flag) + 1], value)
+                self.assertIn('--enable-int8-mamba-checkpoint', backend)
+                self.assertIn('--disable-overlap-schedule', backend)
+                self.assertIn('--enable-linear-replayssm-spec', backend)
+                for unsafe in ['--enable-nvidia-megakernel', '--speculative-use-block-verification',
+                               '--enable-symm-mem', '--enable-deterministic-inference', '--kv-cache-dtype']:
+                    self.assertNotIn(unsafe, backend)
 
     def test_invalid_allocations_fail_before_startup(self):
         for delta in [{'NVIDIA_VISIBLE_DEVICES': 'GPU-a,GPU-b'},

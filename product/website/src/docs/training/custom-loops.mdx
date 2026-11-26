@@ -49,17 +49,17 @@ datum = base.to_datum(
 
 ## Example 1: Multi-turn GRPO loop
 
-This loop runs rollouts in a [stateful environment](/docs/training/environments/), normalizes rewards per prompt group via `grad.group_datums()` (skipping zero-variance groups automatically), updates LoRA weights with `losses.GRPO`, and exports a merged artifact. See the [RL for agents guide](/docs/training/recipes/rl-agents/) for swapping in DAPO, Dr. GRPO (`norm="mean"`), RLOO (`norm="rloo"`), async CISPO, or sequence-level GSPO.
+This loop runs rollouts in a [stateful environment](/docs/training/environments/), computes group-normalized advantages via `grad.group_datums()` with an extensible `AdvantageEstimator` (skipping zero-variance groups automatically), updates LoRA weights with `losses.GRPO`, and exports a merged artifact. See the [RL for agents guide](/docs/training/recipes/rl-agents/) for swapping in DAPO, Dr. GRPO (`advantages.GroupMean()`), RLOO (`advantages.RLOO()`), async CISPO, or sequence-level GSPO.
 
 ```python
 import grad
-from grad import Grad, Model, adapters, losses, optim
+from grad import Grad, Model, adapters, advantages, losses, optim
 
 client = Grad()
 
 with client.trainers.create(
     model=Model("Qwen/Qwen3-8B"),
-    adapter=adapters.LoRA(rank=32),
+    adapter=adapters.LoRA(rank=32, merge_on_export=True),
 ) as trainer:
     for step, task_batch in enumerate(batches):
         snap = trainer.snapshot()
@@ -72,8 +72,8 @@ with client.trainers.create(
             max_concurrency=8,
         )
 
-        # Group-normalize rewards and skip zero-variance groups (norm="std" | "mean" | "rloo")
-        datums = grad.group_datums(groups, norm="std", skip_zero_var=True)
+        # Group-normalize rewards with an AdvantageEstimator (GroupStd | GroupMean | RLOO | custom)
+        datums = grad.group_datums(groups, advantage=advantages.GroupStd(), skip_zero_var=True)
 
         # Queue both calls before waiting to pipeline execution across one RTT.
         fb = trainer.forward_backward(datums, loss=losses.GRPO(clip_low=0.2, clip_high=0.28))
@@ -83,7 +83,7 @@ with client.trainers.create(
         opt.result()
         print(f"step={step} loss={metrics.loss:.4f} grad_norm={metrics.metrics['grad_norm']:.3f}")
 
-    artifact = trainer.export(name="code-agent-grpo", merge_adapter=True)
+    artifact = trainer.export(name="code-agent-grpo")
     print(artifact.id)
 ```
 
@@ -207,7 +207,7 @@ trainer.optim_step(optim.AdamW(lr=cosine_lr(step, total_steps), grad_clip=1.0)).
 mean_loss = sum(f.result().loss for f in futs) / len(futs)
 
 # Run held-out eval without retaining autograd graphs on the GPU
-eval_out = trainer.forward(val_datums, outputs=("logprobs",), retain_graph=False)
+eval_out = trainer.evaluate(val_datums, outputs=("logprobs",))
 ```
 
 ### High-concurrency async rollouts (`AsyncGrad`)
@@ -217,7 +217,7 @@ When driving hundreds of concurrent tool-calling or browser rollouts in `asyncio
 ```python
 import asyncio
 import grad
-from grad import AsyncGrad, Model, adapters, losses, optim
+from grad import AsyncGrad, Model, adapters, advantages, losses, optim
 
 async def train_async(batches):
     async with AsyncGrad() as client:
@@ -227,7 +227,7 @@ async def train_async(batches):
                 groups = await asyncio.gather(
                     *(run_async_group(snap, task) for task in task_batch)
                 )
-                datums = grad.group_datums(groups, norm="std")
+                datums = grad.group_datums(groups, advantage=advantages.GroupStd())
 
                 fb = await trainer.forward_backward(datums, loss=losses.GRPO())
                 opt = await trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0))
@@ -242,7 +242,7 @@ Pass image or audio `MediaRef`s directly to `base.to_datum()` — the server han
 ```python
 from grad import MediaRef
 
-img = MediaRef(kind="image", ref="s3://my-bucket/screens/checkout_step2.png")
+img = MediaRef.image("s3://my-bucket/screens/checkout_step2.png")
 vlm_datum = base.to_datum(
     messages=[
         {"role": "user", "content": "What button should the user click to complete checkout?"},
@@ -255,27 +255,28 @@ vlm_datum = base.to_datum(
 ## Example 3: Multi-stage heads, differential LRs, and weight merges
 
 - **Freeze Stage-1 heads in Stage 2:** set `trainable=False` on `heads.Linear(...)`.
-- **Differential learning rates (e.g. LoRA+):** pass `param_groups=[optim.ParamGroup(...)]` to `optim.AdamW`.
+- **Differential learning rates (e.g. LoRA+):** pass `param_groups=[optim.ParamGroup(target=..., lr=...)]` to `optim.AdamW` targeting a declared head or adapter group directly (never fragile internal module paths).
 - **Continual learning anchor (L2-SP / EWC):** pass `weight_anchor=optim.WeightAnchor(...)`.
-- **Zero-train-token weight merging:** combine checkpoints with `client.artifacts.merge()`.
+- **Zero-train-token weight merging:** combine checkpoints with `client.artifacts.merge()` and a typed `mergers.*` strategy (`mergers.TIES`, `mergers.Linear`, `mergers.DARE`, `mergers.SLERP`).
 
 ```python
-from grad import Grad, adapters, heads, optim
+from grad import Grad, adapters, heads, mergers, optim
 
 stage1 = client.artifacts.get("reward-model@stage1")
+gate_head = heads.Linear(dim=5, trainable=True)
 
 with client.trainers.create(
     model=stage1,
     adapter=adapters.FrozenHead(),
     heads={
         "attrs": heads.Linear(dim=5, trainable=False),
-        "gate": heads.Linear(dim=5, trainable=True),
+        "gate": gate_head,
     },
 ) as trainer:
     trainer.forward_backward(datums, loss=GatingBTLoss()).result()
     trainer.optim_step(
         optim.AdamW(
-            param_groups=[optim.ParamGroup(match="extra_heads.gate", lr=5e-3)],
+            param_groups=[optim.ParamGroup(target=gate_head, lr=5e-3)],
             weight_anchor=optim.WeightAnchor(artifact=stage1, strength=0.01),
         )
     ).result()
@@ -285,10 +286,8 @@ reasoner = client.artifacts.get("reasoner@v2")
 
 merged = client.artifacts.merge(
     name="assistant-merged",
-    artifacts=[coder, reasoner],
-    weights=[0.6, 0.4],
-    method="ties",
-    density=0.5,
+    artifacts=[(coder, 0.6), (reasoner, 0.4)],
+    merger=mergers.TIES(density=0.5),
 )
 ```
 
@@ -297,12 +296,12 @@ merged = client.artifacts.merge(
 Routers, linear probes, and representation steering vectors do not need SGD. Extract cached embeddings once with `Model.embed()` and solve in a single `fit_batch()` call with a typed `Solver`:
 
 ```python
-from grad import Datum, DatumTargets, Grad, ModelInput, adapters, solvers
+from grad import Datum, DatumTargets, Grad, ModelInput, adapters, pooling, solvers
 
 client = Grad()
 encoder = client.models.get("BAAI/bge-small-en-v1.5")
 
-embeddings = encoder.embed(inputs, pool="mean").embeddings
+embeddings = encoder.embed(inputs, pool=pooling.Mean()).embeddings
 embedding_datums = [
     Datum(
         ModelInput(embedding=emb.tolist()),

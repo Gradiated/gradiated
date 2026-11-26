@@ -156,13 +156,14 @@ curl https://api.gradiated.com/v1/endpoints/support-router/infer \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-For classifiers, effort detectors, or generative models, grab the endpoint handle with `client.endpoints.get(...)` and call `.infer(...)`:
+For classifiers, effort detectors, or generative models, fetch the endpoint handle once with `client.endpoints.get(...)` (or construct a zero-RTT `Endpoint("coding-effort")` ref in stateless workers) and call `.infer(...)`:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
-effort = client.endpoints.get("coding-effort").infer(messages=messages)
+endpoint = client.endpoints.get("coding-effort")
+effort = endpoint.infer(messages=messages)
 print(effort.output["label"], effort.output["confidence"])
 ```
 
@@ -170,9 +171,10 @@ print(effort.output["label"], effort.output["confidence"])
   <DocsCodeTab label="TypeScript">
 
 ```ts
-const effort = await grad.endpoints
-  .get("coding-effort")
-  .infer<{ label: "low" | "medium" | "high"; confidence: number }>({ messages });
+const endpoint = await grad.endpoints.get("coding-effort");
+const effort = await endpoint.infer<{ label: "low" | "medium" | "high"; confidence: number }>({
+  messages,
+});
 ```
 
   </DocsCodeTab>
@@ -183,7 +185,8 @@ type EffortOut struct {
 	Label      string  `json:"label"`
 	Confidence float64 `json:"confidence"`
 }
-effort, _ := grad.InferAs[EffortOut](ctx, client.Endpoints.Get("coding-effort"), grad.InferInput{Messages: messages})
+endpoint, _ := client.Endpoints.Get(ctx, "coding-effort")
+effort, _ := grad.InferAs[EffortOut](ctx, endpoint, grad.InferInput{Messages: messages})
 ```
 
   </DocsCodeTab>
@@ -203,40 +206,44 @@ If an endpoint times out or trips a circuit breaker, it fails open to its config
 
 ## Record feedback
 
-Every `/v1/endpoints/{name}/infer` response returns an `inference_id` and records a [`Trajectory`](/docs/training/trajectories/) into `capture_dataset`. Send outcomes back whenever they are known — right after a unit test or hours later when a support ticket resolves.
+Every `/v1/endpoints/{name}/infer` response returns an `inference_id` and records a [`Trajectory`](/docs/training/trajectories/) into `capture_dataset`. Call `.record_feedback(...)` directly on the response when the outcome is known inline, or call `client.feedback.record(inference_id=...)` from an async worker hours later when a unit test finishes or a support ticket resolves:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
-client.feedback.record(
-    inference_id=merged.inference_id,
+# Inline right after inference:
+merged.record_feedback(
     idempotency_key=f"pr-{pr_number}-check-1",
     score=1.0 if tests_passed else 0.0,
     expected_output={"merged_code": human_fix} if human_fix else None,
     metrics={"cost_usd": 0.0012, "latency_ms": 480},
 )
+
+# Or later from an async webhook worker with only the stored inference_id:
+# client.feedback.record(inference_id=saved_inference_id, score=1.0)
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="TypeScript">
 
 ```ts
-await grad.feedback.record({
-  inferenceId: merged.inferenceId,
+await merged.recordFeedback({
   idempotencyKey: `pr-${prNumber}-check-1`,
   score: testsPassed ? 1.0 : 0.0,
   expectedOutput: humanFix ? { merged_code: humanFix } : undefined,
   metrics: { cost_usd: 0.0012, latency_ms: 480 },
 });
+
+// Or later from an async webhook worker with only the stored inferenceId:
+// await grad.feedback.record({ inferenceId: savedInferenceId, score: 1.0 });
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="Go">
 
 ```go
-_ = client.Feedback.Record(ctx, grad.FeedbackEvent{
-	InferenceID:    merged.InferenceID,
+_ = merged.RecordFeedback(ctx, grad.Feedback{
 	IdempotencyKey: fmt.Sprintf("pr-%d-check-1", prNumber),
 	Score:          score,
 	Metrics:        map[string]float64{"cost_usd": 0.0012, "latency_ms": 480},

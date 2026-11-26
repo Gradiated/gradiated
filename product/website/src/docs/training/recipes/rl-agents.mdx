@@ -58,14 +58,14 @@ When the agent must call tools against a real backend stack (Postgres, Redis, in
 
 ```python
 import grad
-from grad import Grad, adapters, losses, optim
+from grad import Grad, adapters, advantages, losses, optim
 
 client = Grad()
 sft_art = client.artifacts.get("support-agent@sft-v1")
 
 with client.trainers.create(
     model=sft_art,
-    adapter=adapters.LoRA(rank=32),
+    adapter=adapters.LoRA(rank=32, merge_on_export=True),
 ) as trainer:
     for step, task_batch in enumerate(task_batches):
         groups = env.rollout_groups(
@@ -78,8 +78,8 @@ with client.trainers.create(
             timeout_s=60,
         )
 
-        # Group-normalize rewards and automatically skip zero-variance prompt groups
-        datums = grad.group_datums(groups, norm="std", skip_zero_var=True)
+        # Group-normalize rewards with an AdvantageEstimator and skip zero-variance groups
+        datums = grad.group_datums(groups, advantage=advantages.GroupStd(), skip_zero_var=True)
 
         fb = trainer.forward_backward(datums, loss=losses.GRPO(clip_low=0.2, clip_high=0.28))
         opt = trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0))
@@ -88,7 +88,7 @@ with client.trainers.create(
 
         print(f"step={step} datums={len(datums)} loss={m.loss:.4f} kl_st={m.metrics['kl_sample_train']:.5f}")
 
-    artifact = trainer.export(name="support-agent", merge_adapter=True)
+    artifact = trainer.export(name="support-agent")
 ```
 
 ## Practical checks that prevent wasted training tokens
@@ -108,12 +108,12 @@ All modern policy-gradient methods share the same rollout loop and `trainer.forw
 
 | Method | When to use it | How to run it |
 | --- | --- | --- |
-| **GRPO** | Default synchronous RL against verifiable rubrics. | `grad.group_datums(groups, norm="std")` + `losses.GRPO(clip_low=0.2, clip_high=0.2)` |
-| **Dr. GRPO** | Remove std-division and length bias in reasoning RL. | `grad.group_datums(groups, norm="mean")` + constant-denominator `CustomLoss` |
+| **GRPO** | Default synchronous RL against verifiable rubrics. | `grad.group_datums(groups, advantage=advantages.GroupStd())` + `losses.GRPO(clip_low=0.2, clip_high=0.2)` |
+| **Dr. GRPO** | Remove std-division and length bias in reasoning RL. | `grad.group_datums(groups, advantage=advantages.GroupMean())` + constant-denominator `CustomLoss` |
 | **DAPO** | Long reasoning or multi-turn coding where standard clipping collapses entropy. | `losses.GRPO(clip_low=0.2, clip_high=0.28)` + `skip_zero_var=True` + length penalty in `Rubric` |
 | **CISPO** | Async rollout pools where Docker Compose workers finish 1–4 weight versions behind the trainer. | `losses.CISPO(clip_low=0.2, clip_high=0.28)` — stable under off-policy lag |
 | **PPO + Critic** | Dense per-token value baselines with GAE when group sampling is too expensive. | Attach `heads={"v": heads.Linear(dim=1, token_level=True)}` + `PPOGAELoss(CustomLoss)` |
-| **RLOO** | Small group sizes (`group_size=4`) where std-normalization is noisy. | `grad.group_datums(groups, norm="rloo")` + `losses.ImportanceSampling(kl_beta=0.02)` |
+| **RLOO** | Small group sizes (`group_size=4`) where std-normalization is noisy. | `grad.group_datums(groups, advantage=advantages.RLOO())` + `losses.ImportanceSampling(kl_beta=0.02)` |
 | **REINFORCE++** | Global batch stability with per-token KL shaping against a frozen reference. | Score `ref.score_logprobs(trajs).aligned_logprobs`, whiten active tokens, pass `advantages=[...]` to `to_datum()` |
 | **GSPO** | MoE models or long multi-turn agent trajectories where token-level importance ratios diverge. | Sequence-level geometric mean ratio in 7 lines via `GSPOLoss(CustomLoss)` |
 
@@ -125,7 +125,7 @@ All modern policy-gradient methods share the same rollout loop and `trainer.forw
 ```python
 from concurrent.futures import ThreadPoolExecutor
 import grad
-from grad import losses, optim
+from grad import advantages, losses, optim
 
 # Overlap slow Docker Compose rollouts with training steps; refresh snapshot every step.
 with ThreadPoolExecutor(max_workers=1) as pool:
@@ -136,7 +136,7 @@ with ThreadPoolExecutor(max_workers=1) as pool:
         if step + 1 < len(batches):
             next_rollouts = pool.submit(env.rollout_groups, trainer.snapshot(), batches[step + 1], group_size=8, max_turns=6)
 
-        datums = grad.group_datums(groups, norm="std")
+        datums = grad.group_datums(groups, advantage=advantages.GroupStd())
         trainer.forward_backward(datums, loss=losses.CISPO(clip_low=0.2, clip_high=0.28)).result()
         trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0)).result()
 ```
@@ -204,11 +204,11 @@ trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0)).result()
 ```python
 import torch
 import grad
-from grad import losses, optim
+from grad import advantages, losses, optim
 
 # `turn_ids` on each Datum identifies which turn generated each token.
 ref_lps = ref_artifact.score_logprobs(trajectories).aligned_logprobs
-datums = grad.group_datums(groups, norm="mean", ref_logprobs=ref_lps)
+datums = grad.group_datums(groups, advantage=advantages.GroupMean(), ref_logprobs=ref_lps)
 
 class PerTurnKLLoss(losses.CustomLoss):
     outputs = ("logprobs",)

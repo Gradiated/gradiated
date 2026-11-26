@@ -36,7 +36,7 @@ client = Grad()
 
 with client.trainers.create(
     model=Model("Qwen/Qwen3-8B"),
-    adapter=adapters.LoRA(rank=32),
+    adapter=adapters.LoRA(rank=32, merge_on_export=True),
     heads={"rm": heads.Linear(dim=1)},
 ) as trainer:
     for batch in pair_batches:
@@ -44,7 +44,7 @@ with client.trainers.create(
         trainer.optim_step(optim.AdamW(lr=1e-4)).result()
         print(f"bt_loss={fb.result().loss:.4f}")
 
-    rm_artifact = trainer.export(name="sql-verifier", merge_adapter=True)
+    rm_artifact = trainer.export(name="sql-verifier")
 ```
 
 Score candidate rollouts (passing `Trajectory` or `ModelInput` lists directly) offline or inside a rubric using batched inference:

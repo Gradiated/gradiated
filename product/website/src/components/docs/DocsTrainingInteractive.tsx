@@ -311,7 +311,7 @@ run = client.runs.create(
     recipe=DistillRecipe(
         model=Model("Qwen/Qwen3-4B"),
         teacher=Model("Qwen/Qwen3-32B"),
-        mode="on_policy",
+        rollout=OnPolicy(max_new_tokens=512),
     ),
 ).wait()`,
   },
@@ -321,7 +321,7 @@ run = client.runs.create(
     recipe: "CartridgeRecipe",
     profile: "adapters.PrefixKV (frozen base)",
     typicalWin: "Pay to encode docs once; swap per tenant",
-    dataNeeded: "Static docs corpus (context_ref) + QA prompts",
+    dataNeeded: "Static docs corpus (Context) + QA prompts",
     href: "/docs/training/recipes/distillation/",
     snippet: `dataset = client.datasets.get("api-docs-qa")
 run = client.runs.create(
@@ -329,7 +329,7 @@ run = client.runs.create(
     name="api-docs-cartridge",
     recipe=CartridgeRecipe(
         model=Model("Qwen/Qwen3-8B"),
-        context_ref="s3://my-bucket/api-docs.md",
+        context=Context.from_uri("s3://my-bucket/api-docs.md"),
         adapter=adapters.PrefixKV(num_tokens=256),
     ),
 ).wait()`,

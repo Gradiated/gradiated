@@ -155,7 +155,6 @@ endpoint = client.endpoints.create(
     artifact=run.artifact,
     capture_dataset=capture,
     strategy=strategies.ConfidenceFallback(
-        labels=["low", "medium", "high"],
         min_conf=0.75,
         fallback="high",
     ),
@@ -164,8 +163,7 @@ endpoint = client.endpoints.create(
 effort = endpoint.infer(messages=messages)
 
 if not tests_passed:
-    client.feedback.record(
-        inference_id=effort.inference_id,
+    effort.record_feedback(
         score=0.0,
         expected_output={"label": "high"},
     )
@@ -185,7 +183,6 @@ const endpoint = await grad.endpoints.create({
   artifact: run.artifact,
   captureDataset: capture,
   strategy: strategies.confidenceFallback({
-    labels: ["low", "medium", "high"],
     minConf: 0.75,
     fallback: "high",
   }),
@@ -199,8 +196,7 @@ const effort = await endpoint.infer<{
 
 // Send back a correction when a "low" effort attempt fails tests
 if (!testsPassed) {
-  await grad.feedback.record({
-    inferenceId: effort.inferenceId,
+  await effort.recordFeedback({
     score: 0.0,
     expectedOutput: { label: "high" },
   });
@@ -215,11 +211,11 @@ type EffortOut struct {
 	Label      string  `json:"label"`
 	Confidence float64 `json:"confidence"`
 }
-effort, _ := grad.InferAs[EffortOut](ctx, client.Endpoints.Get("coding-effort"), grad.InferInput{Messages: messages})
+endpoint, _ := client.Endpoints.Get(ctx, "coding-effort")
+effort, _ := grad.InferAs[EffortOut](ctx, endpoint, grad.InferInput{Messages: messages})
 
 if !testsPassed {
-	_ = client.Feedback.Record(ctx, grad.FeedbackEvent{
-		InferenceID:    effort.InferenceID,
+	_ = effort.RecordFeedback(ctx, grad.Feedback{
 		Score:          0.0,
 		ExpectedOutput: map[string]any{"label": "high"},
 	})
@@ -284,7 +280,7 @@ Use `ClassifierRecipe` (dedicated head) when your labels are fixed across reques
 Drop to [custom loops](/docs/training/custom-loops/) when you want:
 
 - **Deep-ensemble uncertainty:** attach multiple seeded heads (`heads={"h0": heads.Linear(1), "h1": heads.Linear(1), "h2": heads.Linear(1)}`) and abstain on high variance via `artifact.infer_batch()`.
-- **Few-shot contrastive classification (SetFit):** fine-tune the encoder with `losses.InfoNCE()` first, extract pooled embeddings with `artifact.embed(inputs, pool="mean").embeddings`, and fit the final head with `fit_batch(..., solver=solvers.DualHeadKernelLBFGS())`.
+- **Few-shot contrastive classification (SetFit):** fine-tune the encoder with `losses.InfoNCE()` first, extract pooled embeddings with `artifact.embed(inputs, pool=pooling.Mean()).embeddings`, and fit the final head with `fit_batch(..., solver=solvers.DualHeadKernelLBFGS())`.
 - **Token-level classification:** set `heads.Linear(dim=1, token_level=True)` for prompt compression or step-level process reward models.
 
 <DocsNext>

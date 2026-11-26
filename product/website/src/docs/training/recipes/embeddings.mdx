@@ -16,7 +16,7 @@ Group each query with its positive document and one or more hard negatives using
 Train a mean-pooled encoder with `losses.InfoNCE`, then extract normalized embeddings directly from the exported [Artifact](/docs/training/endpoints/):
 
 ```python
-from grad import Datum, Grad, ModelInput, adapters, losses, optim
+from grad import Datum, Grad, ModelInput, adapters, losses, optim, pooling
 
 client = Grad()
 base = client.models.get("BAAI/bge-small-en-v1.5")
@@ -30,7 +30,7 @@ datums = [
 with client.trainers.create(
     model=base,
     adapter=adapters.Full(),
-    pool="mean",
+    pool=pooling.Mean(),
 ) as trainer:
     for batch in query_batches:
         m = trainer.forward_backward(batch, loss=losses.InfoNCE(temp=0.05)).result()
@@ -40,13 +40,13 @@ with client.trainers.create(
 
 vectors = embed_artifact.embed(
     [ModelInput(tokens=embed_artifact.tokenize("rotate api keys"))],
-    pool="mean",
+    pool=pooling.Mean(),
 ).embeddings
 ```
 
 ## 2. Multi-vector (ColBERT) and Matryoshka embeddings
 
-Set `pool="none"` to receive full per-token embeddings `(L, D)` inside a `losses.CustomLoss`, using `grad.by_group()` so arbitrary batch sizes stay shuffle-safe across ColBERT MaxSim and Matryoshka nested prefixes:
+Set `pool=pooling.PerToken()` to receive full per-token embeddings `(L, D)` inside a `losses.CustomLoss`, using `grad.by_group()` so arbitrary batch sizes stay shuffle-safe across ColBERT MaxSim and Matryoshka nested prefixes:
 
 ```python
 import torch
@@ -84,7 +84,7 @@ class MatryoshkaColBERTLoss(losses.CustomLoss):
         return torch.stack(terms).mean()
 ```
 
-At serving time, override pooling per call on the exported artifact (`embed_artifact.embed(inputs, pool="none").embeddings` for token vectors or `pool="mean"` for a single dense vector).
+At serving time, override pooling per call on the exported artifact (`embed_artifact.embed(inputs, pool=pooling.PerToken()).embeddings` for token vectors or `pool=pooling.Mean()` for a single dense vector).
 
 ## 3. Cross-encoder reranker with hard-negative refresh
 

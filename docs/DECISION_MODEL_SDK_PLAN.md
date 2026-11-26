@@ -391,22 +391,19 @@ import { Grad } from "@gradiated/grad";
 const grad = new Grad({ apiKey: process.env.GRADIATED_API_KEY });
 
 // 1. Model Router Endpoint (candidate models & pricing inferred from trained artifact manifest)
-const router = grad.endpoints.get("support-agent-router");
+const router = await grad.endpoints.get("support-agent-router");
 const decision = await router.route({ messages, tools });
 const reply = await callLLM(decision.model, messages, tools);
-await grad.feedback.record({ inferenceId: decision.inferenceId, score: 1.0, metrics: { cost_usd: 0.0009 } });
+await decision.recordFeedback({ score: 1.0, metrics: { cost_usd: 0.0009 } });
 
 // 2. Effort-Level Detector Endpoint
-const effort = await grad.endpoints
-  .get("coding-effort")
-  .infer<{ label: "low" | "medium" | "high" }>({ messages });
+const effortEndpoint = await grad.endpoints.get("coding-effort");
+const effort = await effortEndpoint.infer<{ label: "low" | "medium" | "high" }>({ messages });
 
 // 3. Diff-Merge Generative Endpoint (with gold expectedOutput correction feedback!)
-const merged = await grad.endpoints
-  .get("fast-diff-merge")
-  .infer<{ merged_code: string }>({ payload: { original, snippet } });
-await grad.feedback.record({
-  inferenceId: merged.inferenceId,
+const mergeEndpoint = await grad.endpoints.get("fast-diff-merge");
+const merged = await mergeEndpoint.infer<{ merged_code: string }>({ payload: { original, snippet } });
+await merged.recordFeedback({
   score: testsPassed ? 1.0 : 0.0,
   expectedOutput: humanFix ? { merged_code: humanFix } : undefined,
 });

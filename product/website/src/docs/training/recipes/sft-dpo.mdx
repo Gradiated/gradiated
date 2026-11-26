@@ -67,10 +67,9 @@ dataset = client.datasets.get("diff-merge-prod").filter(
 
 sft_recipe = SFTRecipe(
     model=Model("Qwen/Qwen3-8B"),
-    adapter=adapters.LoRA(rank=32),
+    adapter=adapters.LoRA(rank=32, merge_on_export=True),
     optimizer=optim.AdamW(lr=2e-4),
     split=splits.BySession(eval_fraction=0.10),
-    merge_adapter=True,
 )
 
 sft = client.runs.create(
@@ -101,10 +100,9 @@ const sft = await grad.runs
     name: "fast-diff-merge",
     recipe: recipes.sft({
       model: new Model("Qwen/Qwen3-8B"),
-      adapter: adapters.lora({ rank: 32 }),
+      adapter: adapters.lora({ rank: 32, mergeOnExport: true }),
       optimizer: optim.adamW({ lr: 2e-4 }),
       split: splits.bySession({ evalFraction: 0.1 }),
-      mergeAdapter: true,
     }),
   })
   .wait();
@@ -128,13 +126,13 @@ model: Qwen/Qwen3-8B
 adapter:
   kind: lora
   rank: 32
+  merge_on_export: true
 optimizer:
   kind: adamw
   lr: 2e-4
 split:
   strategy: by_session
   eval_fraction: 0.10
-merge_adapter: true
 ```
 
 ```bash
@@ -163,10 +161,9 @@ dpo = client.runs.create(
     name="fast-diff-merge",
     recipe=DPORecipe(
         model=sft.artifact,
-        adapter=adapters.LoRA(rank=32),
+        adapter=adapters.LoRA(rank=32, merge_on_export=True),
         loss=losses.DPO(beta=0.1),
         optimizer=optim.AdamW(lr=5e-5),
-        merge_adapter=True,
     ),
 ).wait()
 
@@ -197,10 +194,9 @@ dpo = (
     .then(
         dataset=prefs_ds,
         recipe=DPORecipe(
-            adapter=adapters.LoRA(rank=32),
+            adapter=adapters.LoRA(rank=32, merge_on_export=True),
             loss=losses.DPO(beta=0.1),
             optimizer=optim.AdamW(lr=5e-5),
-            merge_adapter=True,
         ),
     )
     .wait()
@@ -214,20 +210,19 @@ dpo = (
 
 | Component | Guidance |
 | --- | --- |
-| `adapters.LoRA(rank=...)` | `16`–`32` works for most single-task fine-tunes; increase to `64` for large coding or multi-skill datasets. |
+| `adapters.LoRA(rank=..., merge_on_export=...)` | `rank=16`–`32` works for most single-task fine-tunes (`64` for large coding datasets). Set `merge_on_export=True` for lowest serving latency, or leave `False` to hot-swap adapters on one shared base model. |
 | `optim.AdamW(lr=...)` | Start around `2e-4` for LoRA SFT and `2e-5`–`5e-5` for DPO. |
 | `losses.DPO(beta=...)` | Higher `beta` (`0.2`–`0.5`) stays closer to the SFT reference; lower (`0.05`–`0.1`) pushes harder away from rejected patterns. |
-| `merge_adapter` | Set `True` for lowest serving latency; leave `False` to hot-swap many adapters on one shared base model. |
 
 ## Deploy with syntax fallback
 
-For structured JSON, SQL, or code-editing [endpoints](/docs/training/endpoints/), use `strategies.SyntaxFallback`. If the fine-tuned model ever emits invalid syntax or fails your JSON schema, the endpoint retries automatically against a larger fallback model.
+For structured JSON, SQL, or code-editing [endpoints](/docs/training/endpoints/), use `strategies.SyntaxFallback` with any built-in `validators.*` class (`validators.TypeScriptAST()`, `validators.JSONSchema(...)`, `validators.SQL()`) or your own `Validator` subclass / callable. If the fine-tuned model emits invalid syntax, the endpoint retries automatically against a larger fallback model.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Model, strategies
+from grad import Grad, Model, strategies, validators
 
 client = Grad()
 capture = client.datasets.get("diff-merge-prod")
@@ -237,15 +232,14 @@ endpoint = client.endpoints.create(
     artifact=dpo.artifact,
     capture_dataset=capture,
     strategy=strategies.SyntaxFallback(
-        validator="typescript_ast",
+        validator=validators.TypeScriptAST(),
         fallback=Model("Qwen/Qwen3-32B"),
     ),
 )
 
 merged = endpoint.infer(payload={"original": original, "edit": edit})
 
-client.feedback.record(
-    inference_id=merged.inference_id,
+merged.record_feedback(
     score=1.0 if tests_passed else 0.0,
     expected_output={"merged_code": human_fix} if human_fix else None,
 )
@@ -255,7 +249,7 @@ client.feedback.record(
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Model, strategies } from "@gradiated/grad";
+import { Grad, Model, strategies, validators } from "@gradiated/grad";
 
 const grad = new Grad();
 const capture = await grad.datasets.get("diff-merge-prod");
@@ -265,7 +259,7 @@ const endpoint = await grad.endpoints.create({
   artifact: dpo.artifact,
   captureDataset: capture,
   strategy: strategies.syntaxFallback({
-    validator: "typescript_ast",
+    validator: validators.typeScriptAST(),
     fallback: new Model("Qwen/Qwen3-32B"),
   }),
 });
@@ -274,8 +268,7 @@ const merged = await endpoint.infer<{ mergedCode: string }>({
   payload: { original, edit },
 });
 
-await grad.feedback.record({
-  inferenceId: merged.inferenceId,
+await merged.recordFeedback({
   score: testsPassed ? 1.0 : 0.0,
   expectedOutput: humanFix ? { merged_code: humanFix } : undefined,
 });
@@ -288,10 +281,11 @@ await grad.feedback.record({
 type MergeOut struct {
 	MergedCode string `json:"merged_code"`
 }
-merged, _ := grad.InferAs[MergeOut](ctx, client.Endpoints.Get("fast-diff-merge"), grad.InferInput{
+endpoint, _ := client.Endpoints.Get(ctx, "fast-diff-merge")
+merged, _ := grad.InferAs[MergeOut](ctx, endpoint, grad.InferInput{
 	Payload: map[string]any{"original": original, "edit": edit},
 })
-_ = client.Feedback.Record(ctx, grad.FeedbackEvent{InferenceID: merged.InferenceID, Score: score})
+_ = merged.RecordFeedback(ctx, grad.Feedback{Score: score})
 ```
 
   </DocsCodeTab>

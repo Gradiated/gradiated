@@ -9,12 +9,12 @@ Both recipes reduce serving cost and latency without sacrificing task quality, i
 
 ## On-policy distillation (`DistillRecipe`)
 
-Offline SFT on teacher outputs teaches the student what the teacher says on *teacher* prefixes, which drifts as soon as the student generates its own tokens. On-policy distillation (`mode="on_policy"`) samples from the **student**, scores those exact sequences with the **teacher's** top-`k` logprobs, and minimizes KL divergence where the student actually goes.
+Offline SFT on teacher outputs teaches the student what the teacher says on *teacher* prefixes, which drifts as soon as the student generates its own tokens. On-policy distillation (`rollout=OnPolicy(...)`) samples from the **student**, scores those exact sequences with the **teacher's** top-`k` logprobs, and minimizes KL divergence where the student actually goes.
 
 ### What data you need
 
 - **Only prompts:** You do not need gold answers — 1,000–5,000 representative production prompts in `input.messages` ([trajectories](/docs/training/trajectories/)) are enough.
-- **A teacher artifact:** Any base model (`Qwen/Qwen3-32B`) or a larger fine-tuned `.grad` [artifact](/docs/training/endpoints/) you trained earlier.
+- **A teacher model:** Any catalog `Model` (`Model("Qwen/Qwen3-32B")`) or a larger fine-tuned `.grad` [`Artifact`](/docs/training/endpoints/) you trained earlier.
 
 ### Train with `DistillRecipe`
 
@@ -23,7 +23,7 @@ Offline SFT on teacher outputs teaches the student what the teacher says on *tea
 
 ```python
 from grad import Grad, Model, adapters, losses, optim
-from grad.recipes import DistillRecipe
+from grad.recipes import DistillRecipe, OnPolicy
 
 client = Grad()
 dataset = client.datasets.get("support-prompts")
@@ -31,11 +31,10 @@ dataset = client.datasets.get("support-prompts")
 recipe = DistillRecipe(
     model=Model("Qwen/Qwen3-4B"),
     teacher=Model("Qwen/Qwen3-32B"),
-    adapter=adapters.LoRA(rank=32),
-    mode="on_policy",
+    adapter=adapters.LoRA(rank=32, merge_on_export=True),
+    rollout=OnPolicy(max_new_tokens=512),
     loss=losses.TopKKLDistill(top_k=32),
     optimizer=optim.AdamW(lr=1e-4),
-    merge_adapter=True,
 )
 
 run = client.runs.create(dataset=dataset, name="support-4b-distilled", recipe=recipe).wait()
@@ -59,11 +58,10 @@ const run = await grad.runs
     recipe: recipes.distill({
       model: new Model("Qwen/Qwen3-4B"),
       teacher: new Model("Qwen/Qwen3-32B"),
-      adapter: adapters.lora({ rank: 32 }),
-      mode: "on_policy",
+      adapter: adapters.lora({ rank: 32, mergeOnExport: true }),
+      rollout: recipes.onPolicy({ maxNewTokens: 512 }),
       loss: losses.topKKLDistill({ topK: 32 }),
       optimizer: optim.adamW({ lr: 1e-4 }),
-      mergeAdapter: true,
     }),
   })
   .wait();
@@ -84,14 +82,16 @@ teacher: Qwen/Qwen3-32B
 adapter:
   kind: lora
   rank: 32
-mode: on_policy
+  merge_on_export: true
+rollout:
+  kind: on_policy
+  max_new_tokens: 512
 loss:
   kind: topk_kl_distill
   top_k: 32
 optimizer:
   kind: adamw
   lr: 1e-4
-merge_adapter: true
 ```
 
 ```bash
@@ -130,11 +130,7 @@ teacher = client.models.get("Qwen/Qwen3-32B")
 
 with client.trainers.create(model=Model("Qwen/Qwen3-4B"), adapter=adapters.LoRA(rank=32)) as trainer:
     rollouts = [g[0] for g in trainer.snapshot().sample(prompt_inputs, n=1, max_new_tokens=256)]
-    t_refs = teacher.score_logprobs(
-        [r.input["tokens"] for r in rollouts],
-        response_tokens=[r.output["response_tokens"] for r in rollouts],
-        top_k=32,
-    ).topk_refs
+    t_refs = teacher.score_logprobs(rollouts, top_k=32).topk_refs
 
     datums = [r.to_datum(teacher_topk=ref) for r, ref in zip(rollouts, t_refs)]
 
@@ -157,7 +153,7 @@ with client.trainers.create(model=teacher, adapter=adapters.LoRA(rank=64)) as tr
         # Teacher scores the student's exact tokens while conditioning on (question + golden_demo)
         t_refs = teacher.score_logprobs(
             batch.demo_prefix_tokens,
-            response_tokens=[r.output["response_tokens"] for r in rollouts],
+            response_tokens=[r.response_tokens for r in rollouts],
             top_k=20,
         ).topk_refs
 
@@ -167,7 +163,7 @@ with client.trainers.create(model=teacher, adapter=adapters.LoRA(rank=64)) as tr
 ```
 
 <DocsCallout label="Picking the right distillation pattern" tone="tip">
-Use **`DistillRecipe`** to shrink a larger teacher (32B → 4B) on unlabeled prompts. Use **SDFT** to learn new skills from demonstrations while preserving prior capabilities. Use **LoRA prompt distillation** (`DistillRecipe` + `context_ref`) for one merged prompt-free checkpoint, or **`CartridgeRecipe` (`adapters.PrefixKV`)** to swap many per-tenant contexts on one shared frozen base model.
+Use **`DistillRecipe`** to shrink a larger teacher (32B → 4B) on unlabeled prompts. Use **SDFT** to learn new skills from demonstrations while preserving prior capabilities. Use **LoRA prompt distillation** (`DistillRecipe` + `context=Context.from_uri(...)`) for one merged prompt-free checkpoint, or **`CartridgeRecipe` (`adapters.PrefixKV`)** to swap many per-tenant contexts on one shared frozen base model.
 </DocsCallout>
 
 ## Context Cartridges (`CartridgeRecipe`)
@@ -177,7 +173,7 @@ If every request prepends the same 30k–100k tokens of documentation, API specs
 ### Train a Cartridge
 
 ```python
-from grad import Grad, Model, adapters, losses, optim
+from grad import Context, Grad, Model, adapters, losses, optim
 from grad.recipes import CartridgeRecipe
 
 client = Grad()
@@ -186,7 +182,7 @@ dataset = client.datasets.get("api-docs-qa-prompts")
 recipe = CartridgeRecipe(
     model=Model("Qwen/Qwen3-8B"),
     teacher=Model("Qwen/Qwen3-8B"),
-    context_ref="s3://my-bucket/api-docs-bundle.md",
+    context=Context.from_uri("s3://my-bucket/api-docs-bundle.md"),
     adapter=adapters.PrefixKV(num_tokens=256),
     loss=losses.TopKKLDistill(top_k=20),
     optimizer=optim.AdamW(lr=2e-2),
@@ -199,17 +195,16 @@ print(run.artifact.id, run.eval_report)
 
 ### Prompt distillation into LoRA weights
 
-If you want to internalize a long system prompt into standard LoRA weights (and optionally merge them with `merge_adapter=True`) instead of maintaining a separate `PrefixKV` Cartridge, pass `context_ref` to `DistillRecipe` with `adapters.LoRA`:
+If you want to internalize a long system prompt into standard LoRA weights (and optionally merge them with `merge_on_export=True`) instead of maintaining a separate `PrefixKV` Cartridge, pass `context=` (`Context.from_uri`, `Context.from_file`, or `Context.from_text`) to `DistillRecipe` with `adapters.LoRA`:
 
 ```python
 recipe = DistillRecipe(
     model=Model("Qwen/Qwen3-8B"),
     teacher=Model("Qwen/Qwen3-8B"),
-    context_ref="s3://my-bucket/api-docs-bundle.md",
-    adapter=adapters.LoRA(rank=32),
-    mode="on_policy",
+    context=Context.from_uri("s3://my-bucket/api-docs-bundle.md"),
+    adapter=adapters.LoRA(rank=32, merge_on_export=True),
+    rollout=OnPolicy(max_new_tokens=512),
     loss=losses.TopKKLDistill(top_k=32),
-    merge_adapter=True,
 )
 
 run = client.runs.create(dataset=dataset, name="api-docs-prompt-distilled", recipe=recipe).wait()

@@ -191,8 +191,7 @@ router = client.endpoints.get("support-router")
 decision = router.route(messages=messages, tools=tools)
 reply = call_your_llm(decision.model, messages, tools)
 
-client.feedback.record(
-    inference_id=decision.inference_id,
+decision.record_feedback(
     score=1.0 if user_resolved else 0.0,
     metrics={"cost_usd": reply.cost_usd, "latency_ms": reply.latency_ms},
 )
@@ -202,12 +201,11 @@ client.feedback.record(
   <DocsCodeTab label="TypeScript">
 
 ```ts
-const router = grad.endpoints.get("support-router");
+const router = await grad.endpoints.get("support-router");
 const decision = await router.route({ messages, tools });
 const reply = await callYourLLM(decision.model, messages, tools);
 
-await grad.feedback.record({
-  inferenceId: decision.inferenceId,
+await decision.recordFeedback({
   score: userResolved ? 1.0 : 0.0,
   metrics: { cost_usd: reply.costUsd, latency_ms: reply.latencyMs },
 });
@@ -217,17 +215,16 @@ await grad.feedback.record({
   <DocsCodeTab label="Go">
 
 ```go
-router := client.Endpoints.Get("support-router")
+router, _ := client.Endpoints.Get(ctx, "support-router")
 decision, _ := router.Route(ctx, grad.RouteInput{
 	Messages: messages,
 	Tools:    tools,
 })
 reply := callYourLLM(decision.Model, messages, tools)
 
-_ = client.Feedback.Record(ctx, grad.FeedbackEvent{
-	InferenceID: decision.InferenceID,
-	Score:       score,
-	Metrics:     map[string]float64{"cost_usd": reply.CostUSD, "latency_ms": reply.LatencyMS},
+_ = decision.RecordFeedback(ctx, grad.Feedback{
+	Score:   score,
+	Metrics: map[string]float64{"cost_usd": reply.CostUSD, "latency_ms": reply.LatencyMS},
 })
 ```
 

@@ -127,10 +127,10 @@
     },
     "request_memory": "256Gi"
   },
-  "6a3e6b30fa2aee6f7a2b3d09dae4498ef428d579293f5cbeb7be8d5606a52dd5": {
-    "image": "gradiated/kimi-k31-bundle@sha256:6a3e6b30fa2aee6f7a2b3d09dae4498ef428d579293f5cbeb7be8d5606a52dd5",
+  "3045e79abe0f9e22d53cfda589237eeeabd61710a5399984c954654907774dc5": {
+    "image": "gradiated/kimi-k31-bundle@sha256:3045e79abe0f9e22d53cfda589237eeeabd61710a5399984c954654907774dc5",
     "bundles": {
-      "ubuntu24-cuda13-amd64-v3": "6a3e6b30fa2aee6f7a2b3d09dae4498ef428d579293f5cbeb7be8d5606a52dd5"
+      "ubuntu24-cuda13-amd64-v3": "3045e79abe0f9e22d53cfda589237eeeabd61710a5399984c954654907774dc5"
     },
     "model_id": "kimi-k3.1-pro-cyber",
     "release": {
@@ -139,7 +139,7 @@
       "model_revision": "0911ef0765f49d26dfa25bb0d071f29463f8000b",
       "tokenizer_path": "yetalabs/Kimi-K3.1-Pro-abliterated",
       "tokenizer_revision": "0911ef0765f49d26dfa25bb0d071f29463f8000b",
-      "runtime_revision": "kimi-k31-cyber-6a3e6b30fa2a",
+      "runtime_revision": "kimi-k31-cyber-3045e79abe0f",
       "runtime_model_name": "yetalabs/Kimi-K3.1-Pro-abliterated"
     },
     "gpus": 8,
@@ -151,7 +151,7 @@
     "warmup": true,
     "environment": {
       "TENSOR_PARALLEL_SIZE": "8",
-      "MODEL_ID": "yetalabs/kimi-k3.1-pro-abliterated"
+      "MODEL_ID": "kimi-k3.1-pro-cyber"
     }
   },
   "66d1e0c0bbf4ebcc9c8cd996938ece0ae63a3a75333ab3f6209b2b55bcb6397b": {

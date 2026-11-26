@@ -110,6 +110,32 @@ export const createYetalabsKimiK31ProAbliteratedModelConfiguration = () => {
         "YetaLabs' Kimi K3.1 Pro Cyber (MXFP4) with retained reasoning and tool use.",
       released_at: "2026-11-17T00:00:00.000Z",
       hugging_face_id: yetalabsKimiK31ProAbliteratedArtifactModelPath,
+      input_modalities: base.properties.input_modalities.map((modality) => ({
+        ...modality,
+        pricing: [
+          { type: "prompt" as const, unit: "token" as const, cost: 1_000 },
+          {
+            type: "cached_prompt" as const,
+            unit: "token" as const,
+            cost: 100,
+          },
+        ],
+      })),
+      output_modalities: base.properties.output_modalities.map((modality) => ({
+        ...modality,
+        pricing: [
+          {
+            type: "completion" as const,
+            unit: "token" as const,
+            cost: 5_000,
+          },
+          {
+            type: "internal_reasoning" as const,
+            unit: "token" as const,
+            cost: 5_000,
+          },
+        ],
+      })),
     },
   } satisfies CatalogModelInput;
 };

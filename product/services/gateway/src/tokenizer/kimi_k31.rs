@@ -5,7 +5,8 @@
 //! `yetalabs/Kimi-K3.1-Pro-abliterated`.
 
 use std::{
-    collections::{BTreeMap, HashMap},
+    cmp::Reverse,
+    collections::{BTreeMap, BinaryHeap, HashMap},
     fs,
     path::Path,
 };
@@ -271,51 +272,75 @@ impl KimiK31Tokenizer {
             out.push(rank);
             return Ok(());
         }
-        if piece.len() < 2 {
+        let len = piece.len();
+        if len < 2 {
             return Err(TokenizerRequestError::Encode);
         }
 
-        let mut parts: Vec<(usize, u32)> = (0..=piece.len()).map(|i| (i, u32::MAX)).collect();
-        let get_rank = |parts: &[(usize, u32)], start: usize, skip: usize| -> u32 {
-            if start + skip + 2 < parts.len() {
-                self.encoder
-                    .get(&piece[parts[start].0..parts[start + skip + 2].0])
-                    .copied()
-                    .unwrap_or(u32::MAX)
-            } else {
-                u32::MAX
-            }
+        // Doubly-linked list of active token spans in `piece` paired with a
+        // min-heap over `(merge_rank, left_start_index)` so long pieces merge
+        // in O(L log L) instead of rescanning and shifting a Vec on each step.
+        const NONE: usize = usize::MAX;
+        let mut prev: Vec<usize> = (0..len)
+            .map(|i| if i == 0 { NONE } else { i - 1 })
+            .collect();
+        let mut next: Vec<usize> = (0..len)
+            .map(|i| if i + 1 < len { i + 1 } else { NONE })
+            .collect();
+        let mut span_end: Vec<usize> = (1..=len).collect();
+        let mut alive = vec![true; len];
+        let mut heap: BinaryHeap<Reverse<(u32, usize, usize)>> = BinaryHeap::new();
+
+        let pair_rank = |left: usize, right: usize, span_end: &[usize]| -> Option<u32> {
+            self.encoder.get(&piece[left..span_end[right]]).copied()
         };
 
-        for i in 0..parts.len() - 2 {
-            parts[i].1 = get_rank(&parts, i, 0);
+        for left in 0..len - 1 {
+            if let Some(rank) = pair_rank(left, left + 1, &span_end) {
+                heap.push(Reverse((rank, left, left + 1)));
+            }
         }
 
-        loop {
-            let mut min_rank = u32::MAX;
-            let mut min_idx = 0;
-            for (i, &(_, rank)) in parts[..parts.len() - 1].iter().enumerate() {
-                if rank < min_rank {
-                    min_rank = rank;
-                    min_idx = i;
+        while let Some(Reverse((rank, left, right))) = heap.pop() {
+            // Skip stale heap entries invalidated by an earlier adjacent merge.
+            if !alive[left] || !alive[right] || next[left] != right {
+                continue;
+            }
+            if pair_rank(left, right, &span_end) != Some(rank) {
+                continue;
+            }
+
+            // Merge `right` into `left`.
+            let after = next[right];
+            span_end[left] = span_end[right];
+            next[left] = after;
+            if after != NONE {
+                prev[after] = left;
+            }
+            alive[right] = false;
+
+            // Enqueue newly formed pairs with `left`'s neighbors.
+            let before = prev[left];
+            if before != NONE {
+                if let Some(new_rank) = pair_rank(before, left, &span_end) {
+                    heap.push(Reverse((new_rank, before, left)));
                 }
             }
-            if min_rank == u32::MAX {
-                break;
+            if after != NONE {
+                if let Some(new_rank) = pair_rank(left, after, &span_end) {
+                    heap.push(Reverse((new_rank, left, after)));
+                }
             }
-            parts[min_idx].1 = get_rank(&parts, min_idx, 1);
-            if min_idx > 0 {
-                parts[min_idx - 1].1 = get_rank(&parts, min_idx - 1, 1);
-            }
-            parts.remove(min_idx + 1);
         }
 
-        for window in parts.windows(2) {
+        let mut cursor = 0;
+        while cursor != NONE {
             let &rank = self
                 .encoder
-                .get(&piece[window[0].0..window[1].0])
+                .get(&piece[cursor..span_end[cursor]])
                 .ok_or(TokenizerRequestError::Encode)?;
             out.push(rank);
+            cursor = next[cursor];
         }
 
         Ok(())
@@ -1165,8 +1190,9 @@ mod tests {
         for byte in 0u8..=255 {
             lines.push(format!("{} {}", BASE64_STANDARD.encode([byte]), byte));
         }
-        // Add a few multi-byte merges so BPE merging is exercised too.
-        for (offset, token) in [b"he".as_slice(), b"ll", b"lo", b"hel", b"hello"]
+        // Add multi-byte merges with an unambiguous BPE merge chain:
+        // h+e -> he (256), l+l -> ll (257), he+ll -> hell (258), hell+o -> hello (259).
+        for (offset, token) in [b"he".as_slice(), b"ll", b"hell", b"hello"]
             .into_iter()
             .enumerate()
         {
@@ -1176,7 +1202,7 @@ mod tests {
                 256 + offset
             ));
         }
-        let base = 256 + 5;
+        let base = 256 + 4;
         let config = json!({
             "tokenizer_class": "TikTokenTokenizer",
             "auto_map": {
@@ -1219,8 +1245,8 @@ mod tests {
         assert_eq!(ids.iter().filter(|&&id| id == close_id).count(), 2);
         assert_eq!(ids.iter().filter(|&&id| id == sep_id).count(), 6);
         assert_eq!(ids.iter().filter(|&&id| id == eom_id).count(), 2);
-        // "hello" merged to its single BPE token (260).
-        assert!(ids.contains(&260));
+        // "hello" merged to its single BPE token (259).
+        assert!(ids.contains(&259));
     }
 
     #[test]
@@ -1320,5 +1346,18 @@ mod tests {
             build_chat_segments(&image),
             Err(TokenizerRequestError::Rejected)
         );
+    }
+
+    #[test]
+    fn encodes_max_length_unbroken_piece_in_sublinear_time_per_merge() {
+        let tokenizer = synthetic_tokenizer();
+        let long_piece = "hello".repeat(5_000); // 25,000 chars, full MAX_NO_WHITESPACES_CHARS run
+        let mut out = Vec::new();
+        tokenizer
+            .byte_pair_encode(long_piece.as_bytes(), &mut out)
+            .unwrap();
+        // Every "hello" merges cleanly to token 259 via h+e -> he, l+l -> ll, he+ll -> hell, hell+o -> hello.
+        assert_eq!(out.len(), 5_000);
+        assert!(out.iter().all(|&id| id == 259));
     }
 }

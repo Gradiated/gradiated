@@ -108,8 +108,8 @@ describe("model configurations", () => {
       output: [8_000, 8_000],
     },
     "yetalabs/kimi-k3.1-pro-abliterated": {
-      input: [1_600, 160],
-      output: [8_000, 8_000],
+      input: [1_000, 100],
+      output: [5_000, 5_000],
     },
     "z-ai/glm-5.3": { input: [1_400, 260], output: [4_400, 4_400] },
     "posthog/jeeves": { input: [20, 20], output: [0] },

@@ -146,12 +146,16 @@ describe("vLLM chat parameters", () => {
     expect(instance.runtimes[0]!.calls[0]!.max_tokens).toBe(8);
   });
 
+  it("caps an output limit above the model maximum", async () => {
+    const instance = await makeCase("vllm");
+
+    const response = await instance.post({ max_tokens: 875_091 });
+
+    expect(response.status, response.text).toBe(200);
+    expect(instance.runtimes[0]!.calls[0]!.max_tokens).toBe(256);
+  });
+
   it.each<{ field: string; value: JsonValue; rejection: Rejection }>([
-    {
-      field: "max_tokens",
-      value: 257,
-      rejection: { code: "context_length_exceeded", param: "max_tokens" },
-    },
     {
       field: "max_tokens",
       value: 0,

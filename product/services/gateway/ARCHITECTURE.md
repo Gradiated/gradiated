@@ -495,8 +495,8 @@ continue to use the public model ID.
 3. Read text input `supported_inputs.max_prompt_length` and
    `max_context_length`, plus text output `max_length`, from the captured model
    properties.
-4. Require the effective output-token ceiling to be at most
-   output `max_length`.
+4. Cap the effective output-token ceiling at output `max_length`; a larger
+   requested limit is served at the cap, not refused.
 5. Require `input_tokens <= max_prompt_length`.
 6. Require `input_tokens + effective_output_tokens <= max_context_length` using
    checked arithmetic.

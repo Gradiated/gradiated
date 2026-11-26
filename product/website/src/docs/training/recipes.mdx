@@ -245,7 +245,7 @@ run = client.runs.create(dataset=dataset, name="support-responder", recipe=recip
   <DocsCodeTab label="GRPO">
 
 ```python
-from grad import Grad, Judge, Rubric, Scorer, adapters, losses, optim, validators
+from grad import Grad, Judge, Rubric, Scorer, adapters, validators
 from grad.recipes import GRPORecipe
 
 client = Grad()
@@ -265,8 +265,6 @@ recipe = GRPORecipe(
         ),
     ]),
     group_size=8,
-    loss=losses.GRPO(clip_low=0.2, clip_high=0.28),
-    optimizer=optim.AdamW(lr=2e-5),
 )
 
 run = client.runs.create(dataset=dataset, name="fast-diff-merge", recipe=recipe).wait()

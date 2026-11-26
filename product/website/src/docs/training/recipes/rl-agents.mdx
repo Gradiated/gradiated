@@ -19,7 +19,7 @@ Pass a `Dataset` of prompts and a [`Rubric`](/docs/training/rubrics/) with code 
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Judge, Rubric, Scorer, adapters, losses, optim, validators
+from grad import Grad, Judge, Rubric, Scorer, adapters, validators
 from grad.recipes import GRPORecipe
 
 client = Grad()
@@ -40,8 +40,6 @@ recipe = GRPORecipe(
     ]),
     group_size=8,
     max_new_tokens=512,
-    loss=losses.GRPO(clip_low=0.2, clip_high=0.28, kl_beta=0.01),
-    optimizer=optim.AdamW(lr=2e-5),
 )
 
 run = client.runs.create(dataset=dataset, name="sql-agent", recipe=recipe).wait(
@@ -55,7 +53,7 @@ print(run.artifact.id)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Judge, Rubric, Scorer, adapters, losses, optim, recipes, validators } from "@gradiated/grad";
+import { Grad, Judge, Rubric, Scorer, adapters, recipes, validators } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("sql-benchmark-tasks");
@@ -79,8 +77,6 @@ const run = await grad.runs
       ]),
       groupSize: 8,
       maxNewTokens: 512,
-      loss: losses.grpo({ clipLow: 0.2, clipHigh: 0.28, klBeta: 0.01 }),
-      optimizer: optim.adamW({ lr: 2e-5 }),
     }),
   })
   .wait();
@@ -99,10 +95,9 @@ console.log(run.artifact.id);
 
 ### Key parameters
 
-- **`group_size`:** how many candidate answers the model tries per prompt (`8` is a good default; larger groups give cleaner learning signal at higher token cost).
-- **`max_new_tokens`:** cap on each generated attempt — set it high enough for the model to finish its answer without wasting tokens on runaway loops.
-- **`losses.GRPO(clip_low=0.2, clip_high=0.28, kl_beta=0.01)`:** controls how aggressively weights can move per step; raise `kl_beta` (e.g. `0.05`) if outputs start drifting away from your starting model's style.
-- **`optim.AdamW(lr=...)`:** keep the learning rate low (`1e-5`–`3e-5`) so training stays stable.
+- **`group_size`:** how many candidate answers the model generates per prompt to compare against each other (`8` is a good default; larger groups give cleaner signal at higher token cost).
+- **`max_new_tokens`:** the max length of each generated attempt (like `max_tokens` on an inference call) — set it high enough for the model to finish its answer without getting cut off, and low enough to avoid wasting tokens on rambling outputs.
+- **`loss` & `optimizer`:** `GRPORecipe` ships with tuned GRPO defaults (`losses.GRPO()` and `optim.AdamW(lr=2e-5)`). Only override `kl_beta` (e.g. `losses.GRPO(kl_beta=0.05)`) if outputs start drifting away from your starting model's style.
 
 ## Practical tips before scaling up
 

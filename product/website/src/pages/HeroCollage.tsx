@@ -198,6 +198,7 @@ const GROUPS = [
   ["gr-lab-sticker-joules", "gr-lab-sticker-g"],
 ];
 const CLEARANCE = 112; /* px between the buttons and a dropped piece */
+const FOOT = 32; /* px kept under the lowest piece, before the roadmap */
 
 const useTextClearance = (collage: RefObject<HTMLDivElement | null>) => {
   useEffect(() => {
@@ -268,7 +269,7 @@ const useTextClearance = (collage: RefObject<HTMLDivElement | null>) => {
         if (shown > piece.offsetWidth / 2)
           lowest = Math.max(lowest, piece.offsetTop + piece.offsetHeight);
       }
-      const extra = Math.max(0, lowest + CLEARANCE - element.offsetHeight);
+      const extra = Math.max(0, lowest + FOOT - element.offsetHeight);
       if (extra)
         stage.style.setProperty("--lab-extra", `${Math.ceil(extra)}px`);
     };

@@ -52,7 +52,7 @@ See the [SystemOne SDK guide](/docs/systemone-sdk/) for linden-1 examples and su
 | `POST` | `/v1/trainers/{id}/snapshot` | Snapshot current weights into an ephemeral callable `Artifact`. |
 | `POST` | `/v1/trainers/{id}/save-state` | Checkpoint trainer and optimizer state for `trainers.resume(ckpt)`. |
 | `POST` | `/v1/trainers/{id}/export` | Freeze trained weights and `eval_report` into an immutable `.grad` artifact. |
-| `POST` / `DELETE` | `/v1/secrets` / `/v1/secrets/{name}` | Store or delete write-only named workspace secrets for observability sync and webhook rubrics. |
+| `POST` / `DELETE` | `/v1/secrets` / `/v1/secrets/{name}` | Store or delete write-only named workspace secrets for observability sync. |
 
 ## Artifacts and endpoints
 

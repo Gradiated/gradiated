@@ -59,7 +59,7 @@ rubric = Rubric([
 tasks = [Task.from_trajectory(t) for t in hard_traces]
 ```
 
-If you already have a database fixture or unit tests that can execute the generated SQL or code patch, you can run them deterministically inside a `Scorer` (or `WebhookRubric`) and reserve `Judge` only for subjective quality checks.
+If you already have a database fixture or unit tests that can execute the generated SQL or code patch, run them deterministically inside a `Scorer` and reserve `Judge` only for subjective quality checks.
 
 ## Level 2: Trace to Mock / Replay Tool Environment (multi-turn)
 

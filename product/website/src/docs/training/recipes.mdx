@@ -14,7 +14,7 @@ Every **recipe** (`RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, 
 | `ClassifierRecipe` | [Classifiers and decisions](/docs/training/recipes/classifier/) | `expected_output.label` or `scores` (binary, multiclass, ordinal) |
 | `SFTRecipe` | [Fine-tuning and preferences](/docs/training/recipes/sft-dpo/) | `input` + `expected_output` (or filtered high-score `output`) |
 | `DPORecipe` | [Fine-tuning and preferences](/docs/training/recipes/sft-dpo/) | Paired `group_id` trajectories with `role: chosen \| rejected` |
-| `GRPORecipe` | [RL for agents (GRPO)](/docs/training/recipes/rl-agents/) | Prompts + a `Rubric`, `WebhookRubric`, or stateful `Environment` |
+| `GRPORecipe` | [RL for agents (GRPO)](/docs/training/recipes/rl-agents/) | Prompts + a `Rubric` (`Judge` / `validators.*`) or stateful `Environment` |
 | `DistillRecipe` | [Distillation and Cartridges](/docs/training/recipes/distillation/) | Prompts or traces + `teacher` artifact |
 | `CartridgeRecipe` | [Distillation and Cartridges](/docs/training/recipes/distillation/) | Static context corpus + QA prompts (`adapters.PrefixKV`) |
 
@@ -240,21 +240,25 @@ run = client.runs.create(dataset=dataset, name="support-responder", recipe=recip
   <DocsCodeTab label="GRPO">
 
 ```python
-from grad import Grad, WebhookRubric, adapters, losses, optim
+from grad import Grad, Judge, Model, Rubric, Scorer, adapters, losses, optim, validators
 from grad.recipes import GRPORecipe
 
 client = Grad()
 dataset = client.datasets.get("diff-merge-tasks")
 sft_art = client.artifacts.get("fast-diff-merge@sft-v1")
-webhook_secret = client.secrets.get("grader-webhook-token")
 
 recipe = GRPORecipe(
     model=sft_art,
     adapter=adapters.LoRA(rank=32),
-    rubric=WebhookRubric(
-        url="https://ci.internal.example/grade-diff",
-        secret=webhook_secret,
-    ),
+    rubric=Rubric([
+        Scorer("valid_ts", weight=0.4, fn=validators.TypeScriptAST()),
+        Judge(
+            name="exact_merge",
+            model=Model("claude-sonnet-4-6"),
+            prompt="Verify the merged file applies the edit cleanly without breaking surrounding code.",
+            weight=0.6,
+        ),
+    ]),
     group_size=8,
     loss=losses.GRPO(clip_low=0.2, clip_high=0.28),
     optimizer=optim.AdamW(lr=2e-5),
@@ -363,13 +367,22 @@ Every `Recipe` turns an input `Model` (a catalog `Model(...)` ref or a trained `
   <DocsCodeTab label="Chained (.then)">
 
 ```python
-from grad import Grad, Model, WebhookRubric, adapters, optim
+from grad import Grad, Judge, Model, Rubric, Scorer, adapters, optim, validators
 from grad.recipes import GRPORecipe, SFTRecipe
 
 client = Grad()
 gold_ds = client.datasets.get("diff-merge-gold")
 tasks_ds = client.datasets.get("diff-merge-tasks")
-webhook_secret = client.secrets.get("grader-webhook-token")
+
+merge_rubric = Rubric([
+    Scorer("valid_ts", weight=0.4, fn=validators.TypeScriptAST()),
+    Judge(
+        name="exact_merge",
+        model=Model("claude-sonnet-4-6"),
+        prompt="Verify the merged file applies the edit cleanly without breaking surrounding code.",
+        weight=0.6,
+    ),
+])
 
 # Stage 2 queues behind Stage 1 on the server and auto-cancels if Stage 1 fails.
 run = (
@@ -382,7 +395,7 @@ run = (
         dataset=tasks_ds,
         recipe=GRPORecipe(
             adapter=adapters.LoRA(rank=32),
-            rubric=WebhookRubric(url="https://ci.internal.example/grade-diff", secret=webhook_secret),
+            rubric=merge_rubric,
             optimizer=optim.AdamW(lr=2e-5),
         ),
     )
@@ -396,7 +409,6 @@ run = (
 ```python
 gold_ds = client.datasets.get("diff-merge-gold")
 tasks_ds = client.datasets.get("diff-merge-tasks")
-webhook_secret = client.secrets.get("grader-webhook-token")
 
 # Omit .wait() here to queue Stage 2 server-side, or call .wait() to inspect sft.eval_report first.
 sft = client.runs.create(
@@ -410,7 +422,7 @@ rl = client.runs.create(
     name="fast-diff-merge",
     recipe=GRPORecipe(
         model=sft.artifact,
-        rubric=WebhookRubric(url="https://ci.internal.example/grade-diff", secret=webhook_secret),
+        rubric=merge_rubric,
     ),
 ).wait()
 ```

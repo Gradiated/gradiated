@@ -8,37 +8,33 @@ Use `GRPORecipe` (or a custom `Trainer` + `Environment` loop) when you can **gra
 
 | Setup | Use | Why |
 | --- | --- | --- |
-| **Single-turn tasks + HTTP grader** | **`GRPORecipe` + `WebhookRubric`** | Pass a dataset of prompts and a grading webhook; Gradiated handles sampling, advantage normalization, and updates. |
-| **Multi-turn apps, Docker Compose, seeded DBs, custom curricula** | **Custom loop (`Environment` + `Trainer`)** | Your environment stays on your own CPU/Kubernetes infrastructure and talks to `Artifact` and `Trainer` over HTTP. |
+| **Single-turn tasks + `Rubric` (`Judge` / `validators.*`)** | **`GRPORecipe` + `Rubric`** | Pass a dataset of prompts and a declarative `Rubric` (built-in `validators.*` and/or a `Judge`); Gradiated runs sampling, grading, and updates server-side. |
+| **Multi-turn apps, Harbor, Docker Compose, seeded DBs, custom code** | **Custom loop (`Environment` + `Trainer`)** | Your environment stays on your own CPU/Kubernetes infrastructure and talks to `Model`/`Artifact` and `Trainer` over HTTP. |
 
 ## Option A: Managed `GRPORecipe`
 
-Provide a dataset of task prompts (see [Trajectories and data](/docs/training/trajectories/)) and a `WebhookRubric` backed by a named workspace secret (`grad secrets set eval-webhook-token`). Gradiated sends `Authorization: Bearer <secret>` with each rollout and expects `scores` plus a scalar `reward`:
-
-```json
-// POST https://eval.internal.example/grade-sql
-{ "task": { "id": "q_42", "expected_rows": 12 }, "trajectory": { "output": { "turns": [...] } } }
-
-// 200 OK
-{ "scores": { "sql_valid": 1.0, "exact_rows": 1.0 }, "reward": 1.0 }
-```
+Provide a dataset of task prompts (see [Trajectories and data](/docs/training/trajectories/)) and a `Rubric` combining deterministic validators (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`) and/or a [`Judge`](/docs/training/environments/) (either a catalog `Model` or a trained verifier `Artifact`):
 
 ```python
-from grad import Grad, WebhookRubric, adapters, losses, optim
+from grad import Grad, Judge, Model, Rubric, Scorer, adapters, losses, optim, validators
 from grad.recipes import GRPORecipe
 
 client = Grad()
 dataset = client.datasets.get("sql-benchmark-tasks")
 sft_art = client.artifacts.get("sql-agent@sft-v1")
-webhook_secret = client.secrets.get("eval-webhook-token")
 
 recipe = GRPORecipe(
     model=sft_art,
     adapter=adapters.LoRA(rank=32),
-    rubric=WebhookRubric(
-        url="https://eval.internal.example/grade-sql",
-        secret=webhook_secret,
-    ),
+    rubric=Rubric([
+        Scorer("valid_sql", weight=0.3, fn=validators.SQL()),
+        Judge(
+            name="correct_query",
+            model=Model("claude-sonnet-4-6"),
+            prompt="Verify the SQL answers the question accurately without hallucinated columns.",
+            weight=0.7,
+        ),
+    ]),
     group_size=8,
     max_new_tokens=512,
     loss=losses.GRPO(clip_low=0.2, clip_high=0.28, kl_beta=0.01),

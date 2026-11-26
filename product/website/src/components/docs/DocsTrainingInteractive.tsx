@@ -279,19 +279,21 @@ sft = client.runs.create(
     id: "grpo",
     goal: "RL-train an agent against real tests or tools",
     recipe: "GRPORecipe",
-    profile: "LoRA + webhook or Docker env",
+    profile: "LoRA + Rubric, Harbor, or Docker env",
     typicalWin: "Learns error recovery & multi-turn tool use",
-    dataNeeded: "Task prompts + WebhookRubric or Environment",
+    dataNeeded: "Task prompts + Rubric (Judge / validators) or Environment",
     href: "/docs/training/recipes/rl-agents/",
     snippet: `dataset = client.datasets.get("sql-tasks")
 sft_art = client.artifacts.get("sql-agent@sft-v1")
-secret = client.secrets.get("eval-webhook-token")
 run = client.runs.create(
     dataset=dataset,
     name="sql-agent",
     recipe=GRPORecipe(
         model=sft_art,
-        rubric=WebhookRubric(url="https://eval.internal/grade", secret=secret),
+        rubric=Rubric([
+            Scorer("valid_sql", weight=0.3, fn=validators.SQL()),
+            Judge(name="correct", model=Model("claude-sonnet-4-6"), prompt="Verify SQL accuracy.", weight=0.7),
+        ]),
         group_size=8,
     ),
 ).wait()`,

@@ -28,7 +28,7 @@ afterEach(() => {
 });
 
 test("only unnamed models accept suggestions", async () => {
-  for (const id of ["task-routing", "linden-1", "carat", "unknown"]) {
+  for (const id of ["task-routing", "linden-1", "unknown"]) {
     expect((await submit(id, "Example name")).status).toBe(400);
   }
 

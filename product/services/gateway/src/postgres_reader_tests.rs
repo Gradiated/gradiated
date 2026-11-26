@@ -217,6 +217,67 @@ async fn a_model_deserializes_into_the_type_the_gateway_serves() {
 
 #[tokio::test]
 #[ignore = "requires the local Compose PostgreSQL with migrations applied"]
+async fn a_model_reads_deployments_attached_to_its_aliases() {
+    let reader = local_reader();
+    let tenant = Tenant::insert(&reader).await;
+    let canonical_id = format!("reader-canonical/{}", tenant.organization_id);
+    let record = crate::test_support::model_record(true);
+    let client = reader.client().await.unwrap();
+
+    client
+        .execute(
+            "update models set status = 'retired' where id = $1",
+            &[&tenant.model_id],
+        )
+        .await
+        .unwrap();
+    client
+        .execute(
+            "insert into models (id, aliases, name, status, properties, type)
+             values ($1, array[$2]::text[], 'Canonical', 'available', $3::text::jsonb, 'chat')",
+            &[
+                &canonical_id,
+                &tenant.model_id,
+                &record["properties"].to_string(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    let mismatched_id = Uuid::now_v7();
+    let mut mismatched_release = record["deployments"][0]["release"].clone();
+    mismatched_release["protocol"] = serde_json::json!("system_one");
+    client
+        .execute(
+            "insert into model_deployments
+               (id, model_id, status, provider, region, fault_domain, service_url, release)
+             values ($1, $2, 'available', 'local', 'local', 'local:decision', 'http://127.0.0.1:30001', $3::text::jsonb)",
+            &[&mismatched_id, &tenant.model_id, &mismatched_release.to_string()],
+        )
+        .await
+        .unwrap();
+
+    for lookup in [&canonical_id, &tenant.model_id] {
+        let json = reader
+            .model_json(lookup)
+            .await
+            .unwrap()
+            .expect("canonical and alias lookups should resolve");
+        let model: GatewayModel = serde_json::from_str(&json).unwrap();
+        assert_eq!(model.id, canonical_id);
+        assert_eq!(model.deployments.len(), 1);
+        assert_ne!(model.deployments[0].id, mismatched_id);
+    }
+
+    client
+        .execute("delete from models where id = $1", &[&canonical_id])
+        .await
+        .unwrap();
+    tenant.remove(&reader).await;
+}
+
+#[tokio::test]
+#[ignore = "requires the local Compose PostgreSQL with migrations applied"]
 async fn an_organization_model_carries_its_owner() {
     let reader = local_reader();
     let tenant = Tenant::insert(&reader).await;

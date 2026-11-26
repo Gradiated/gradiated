@@ -1,6 +1,11 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import type { ControlDatabase } from "../db/client.js";
-import { models, organizations, tasks } from "../db/schema/index.js";
+import {
+  modelDeployments,
+  models,
+  organizations,
+  tasks,
+} from "../db/schema/index.js";
 import { lockModelNamespaces } from "../organizations/slugs.js";
 import {
   catalogModels,
@@ -238,6 +243,22 @@ export const applyCatalog = async (
 
     for (const definition of writes) {
       await catalog.upsertModel(definition);
+    }
+    // Move existing deployments off retired IDs that became aliases of a new
+    // canonical model in the same transaction so traffic and probes never drop.
+    for (const definition of writes) {
+      if (definition.status === "retired") continue;
+      const aliases = ModelRecordSchema.shape.aliases.parse(definition.aliases);
+      if (aliases.length === 0) continue;
+      await tx
+        .update(modelDeployments)
+        .set({ modelId: definition.id, updatedAt: new Date() })
+        .where(
+          and(
+            inArray(modelDeployments.modelId, aliases),
+            sql`(coalesce(${modelDeployments.release}->>'protocol', '') = 'system_one') = ${definition.type === "decision"}`,
+          ),
+        );
     }
     if (retiring.length)
       await tx

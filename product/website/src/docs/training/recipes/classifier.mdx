@@ -1,4 +1,4 @@
-# Classifiers and decisions
+# Classifiers
 
 <DocsLead>Train calibrated binary guardrails, multiclass triage models, and ordinal effort detectors that run in milliseconds and fall back automatically when uncertain.</DocsLead>
 
@@ -237,59 +237,17 @@ curl https://api.gradiated.com/v1/endpoints/coding-effort/infer \
 
 Recording `expected_output` when an attempt fails turns production misses directly into labeled training data for the next retrain.
 
-## Dynamic choices without a fixed head (`candidate_tokens`)
+## Want more control?
 
-When your choice set changes per request (for example, ranking candidate tools or scoring zero-shot multiple-choice decisions with an LLM), score or train directly on the next-token probability distribution over those specific `candidate_tokens` in a single forward pass — without fetching full 152k-vocabulary logits:
-
-```python
-import torch
-from grad import Grad, losses
-
-client = Grad()
-base = client.models.get("Qwen/Qwen3-8B")
-
-# Score a dynamic per-request choice set in one forward pass
-choice_ids = [base.tokenize(c)[-1] for c in ["A", "B", "C"]]
-scored = base.score_logprobs(
-    [base.tokenize(messages=prompt_messages)],
-    candidate_tokens=choice_ids,
-)
-probs = torch.softmax(torch.tensor([scored.candidate_logprobs[0][t] for t in choice_ids]), dim=-1)
-
-# Or fine-tune on soft target probabilities with a CustomLoss
-class BrierLoss(losses.CustomLoss):
-    outputs = ("topk_logprobs",)
-
-    def compute(self, records, out) -> torch.Tensor:
-        terms = []
-        for lp, rec in zip(out.topk_logprobs, records):
-            p = torch.softmax(lp[-1], dim=-1)
-            target = torch.tensor(rec.metadata["target_probs"])
-            terms.append(((p - target) ** 2).sum())
-        return torch.stack(terms).mean()
-
-fb = trainer.forward_backward(decision_records, loss=BrierLoss(), gather_indices=choice_ids)
-```
-
-<DocsCallout label="Fixed head vs. prompted choices" tone="tip">
-Use `ClassifierRecipe` (dedicated head) when your labels are fixed across requests — it runs in under 10 ms at a fraction of LLM cost. Use `candidate_tokens` when choices vary per request or when zero-shot LLM world knowledge matters.
-</DocsCallout>
-
-## Going deeper with custom loops
-
-Drop to [custom loops](/docs/training/custom-loops/) when you want:
-
-- **Deep-ensemble uncertainty:** attach multiple seeded heads (`heads={"h0": heads.Linear(1), "h1": heads.Linear(1), "h2": heads.Linear(1)}`) and abstain on high variance via `artifact.infer_batch()`.
-- **Few-shot contrastive classification (SetFit):** fine-tune the encoder with `losses.InfoNCE()` first, extract pooled embeddings with `artifact.embed(inputs, pool=pooling.Mean()).embeddings`, and fit the final head with `fit_batch(..., solver=solvers.DualHeadKernelLBFGS())`.
-- **Token-level classification:** set `heads.Linear(dim=1, token_level=True)` for prompt compression or step-level process reward models.
+Need dynamic per-request choices (`candidate_tokens`), deep-ensemble uncertainty heads, SetFit few-shot contrastive classification, or token-level heads? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
-  <a href="/docs/training/recipes/sft-dpo/">
+  <a href="/docs/training/recipes/sft/">
     <small>Next guide</small>
-    <strong>Fine-tuning and preferences (SFT &amp; DPO)</strong>
+    <strong>Supervised fine-tuning (SFT)</strong>
   </a>
-  <a href="/docs/training/recipes/rl-agents/">
-    <small>RL agents</small>
-    <strong>RL for agents (GRPO)</strong>
+  <a href="/docs/training/recipes/router/">
+    <small>Previous</small>
+    <strong>Model router</strong>
   </a>
 </DocsNext>

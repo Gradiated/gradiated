@@ -1,38 +1,18 @@
-# Artifacts and endpoints
+# Endpoints
 
-<DocsLead>Every training run writes an immutable `.grad` artifact. Serve one or more artifacts behind a named endpoint for shadow testing, canary rollouts, guardrails, and live feedback capture.</DocsLead>
+<DocsLead>Serve one or more `.grad` artifacts behind a named production endpoint with shadow testing, canary rollouts, extensible guardrails, and automatic feedback capture.</DocsLead>
 
-## Artifact vs. Endpoint
-
-Separating raw model weights from live traffic slots keeps rollbacks instant and makes multi-model strategies explicit.
-
-| | **Artifact** | **Endpoint** |
-| --- | --- | --- |
-| **Cardinality** | Always **1** immutable model | **1 or many** artifacts |
-| **Changes over time?** | Never; every retrain writes a new `name@version` | Yes; promote, canary, shadow, or roll back in place |
-| **Primary use** | Offline evals, RL rollouts (`sample`), distillation (`score_logprobs`), embeddings (`embed`), weight merges | Production serving (`infer` / `route`), traffic splits, online SLA guardrails, delayed feedback capture |
-
-You can call a pinned `Artifact` directly during evaluation, calibration, or hard-negative mining, including batched calls via `artifact.infer_batch(inputs)`. Multi-head models always populate `res.heads` (respecting `token_level=True` heads) alongside `res.logits` for single-head models:
-
-```python
-from grad import Record
-
-art = client.artifacts.get("coding-effort@2026-11-25-1")
-preds = art.infer_batch([Record(messages=m) for m in eval_messages])
-print(preds[0].logits)
-```
+An **`Endpoint`** is a mutable production serving slot over **one or more** immutable [`Artifact`](/docs/training/artifacts/)s. Your application always calls the stable endpoint slug (`support-router`, `coding-effort`, `fast-diff-merge`), while you shadow, canary, promote, or roll back artifacts behind it without redeploying your app.
 
 ## Deploy in one line (or configure explicitly)
 
-Every trained `.grad` artifact carries its model type, source dataset, and default serving strategy in `manifest.json`. For the common path, `run.deploy()` (and `grad deploy`) creates the endpoint on first deploy and updates traffic splits on subsequent deploys:
+Every trained `.grad` [`Artifact`](/docs/training/artifacts/) carries its model type, source dataset, and default serving strategy in `manifest.json`. For the common path, `run.deploy()` (or `artifact.deploy()` / `grad deploy`) creates the endpoint on first deploy and updates traffic splits on subsequent deploys:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
-# Deploy straight from a completed run or any pinned Artifact
 endpoint = run.deploy(canary=0.10)
-# Or: endpoint = client.artifacts.get("support-router@2026-11-26-1").deploy(canary=0.10)
 ```
 
   </DocsCodeTab>
@@ -40,7 +20,6 @@ endpoint = run.deploy(canary=0.10)
 
 ```ts
 const endpoint = await run.deploy({ canary: 0.1 });
-// Or: const endpoint = await (await grad.artifacts.get("support-router@2026-11-26-1")).deploy({ canary: 0.1 });
 ```
 
   </DocsCodeTab>
@@ -48,7 +27,6 @@ const endpoint = await run.deploy({ canary: 0.1 });
 
 ```go
 endpoint, _ := run.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
-// Or: art, _ := client.Artifacts.Get(ctx, "support-router@2026-11-26-1"); endpoint, _ := art.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
 ```
 
   </DocsCodeTab>
@@ -68,7 +46,7 @@ grad deploy support-router@2026-11-26-1 --active
   </DocsCodeTab>
 </DocsCodeTabs>
 
-When you want explicit control over fallback models, SLA bounds, or multi-artifact orchestration, pass first-class `Artifact`, `Dataset`, `Model`, and extensible `Strategy` objects to `client.endpoints.create()`:
+When you want explicit control over fallback models, SLA bounds, or multi-artifact orchestration, pass first-class [`Artifact`](/docs/training/artifacts/), [`Dataset`](/docs/training/trajectories/), `Model`, and extensible `Strategy` objects to `client.endpoints.create()`:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -274,7 +252,7 @@ Feedback is deduplicated by `idempotency_key`, updates online SLA and canary tel
 
 ## Shadow, canary, and rollback
 
-Every artifact is immutable, so rolling forward or rolling back never mutates weights or requires a redeploy of your app. Use `grad deploy` (shorthand) or explicit `endpoints promote`:
+Because every [`Artifact`](/docs/training/artifacts/) is immutable, rolling forward or rolling back is a single pointer flip with zero redeploy:
 
 ```bash
 # 1. Shadow: run the new artifact silently alongside active traffic (0% user impact)
@@ -318,10 +296,10 @@ Endpoints support single-artifact and multi-artifact orchestration via extensibl
 | --- | --- | --- | --- |
 | `strategies.Direct()` | 1 | Pass-through inference on the active artifact. | [Model distillation](/docs/training/recipes/distillation/) |
 | `strategies.SLALagrangian(...)` | 1 | Calibrated lower-confidence-bound routing with fallback probes (`10%`), online primal-dual `λ`, and a hard-stop circuit breaker. | [Model router](/docs/training/recipes/router/) |
-| `strategies.ConfidenceFallback(...)` | 1 | Temperature- or conformal-calibrated softmax threshold with automatic fallback label or model. | [Classifiers & decisions](/docs/training/recipes/classifier/) |
-| `strategies.SyntaxFallback(...)` | 1–2 | Validates JSON schema or AST on generated output and retries on a fallback `Model` or `Artifact` if invalid. | [Fine-tuning (SFT & DPO)](/docs/training/recipes/sft-dpo/) |
-| `strategies.Cascade(...)` | 2–3 | Runs a fast draft artifact, scores it with a [verifier](/docs/training/recipes/reward-models/) `Artifact`, and escalates to a frontier `Model` only below threshold. | [RL for agents](/docs/training/recipes/rl-agents/) |
-| `strategies.BestOfN(...)` / `MajorityVote(...)` | 1–2 | Samples `N` completions and picks the majority answer or highest verifier-scored candidate. | [Reward models & verifiers](/docs/training/recipes/reward-models/) |
+| `strategies.ConfidenceFallback(...)` | 1 | Temperature- or conformal-calibrated softmax threshold with automatic fallback label or model. | [Classifiers](/docs/training/recipes/classifier/) |
+| `strategies.SyntaxFallback(...)` | 1–2 | Validates JSON schema or AST on generated output and retries on a fallback `Model` or `Artifact` if invalid. | [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) |
+| `strategies.Cascade(...)` | 2–3 | Runs a fast draft artifact, scores it with a [reward model](/docs/training/recipes/reward-models/) `Artifact`, and escalates to a frontier `Model` only below threshold. | [RL for agents](/docs/training/recipes/rl-agents/) |
+| `strategies.BestOfN(...)` / `MajorityVote(...)` | 1–2 | Samples `N` completions and picks the majority answer or highest verifier-scored candidate. | [Reward models](/docs/training/recipes/reward-models/) |
 | `strategies.BudgetForcing(...)` | 1 | Enforces thinking-token budgets or continuation prompts at test time. | [Custom loops](/docs/training/custom-loops/) |
 
 ### Multi-artifact example: cascade
@@ -348,12 +326,12 @@ client.endpoints.create(
 On Gradiated Cloud, `router` endpoints also run directly inside the [OpenAI SDK](/docs/openai-sdk/) and [Anthropic SDK](/docs/anthropic-sdk/) inference gateway with no extra round trip. Pass `"model": "<org>/<endpoint-slug>"` to `/v1/chat/completions`, `/v1/responses`, or `/v1/messages`. The gateway runs the router in-process, dispatches to the selected model, and returns `x-gradiated-inference-id`, `x-gradiated-action`, and `x-gradiated-artifact` headers so you can still send outcomes to `client.feedback.record()`.
 
 <DocsNext>
-  <a href="/docs/api-reference/">
-    <small>Reference</small>
-    <strong>API reference</strong>
+  <a href="/docs/training/artifacts/">
+    <small>Artifacts</small>
+    <strong>Artifacts</strong>
   </a>
-  <a href="/docs/training/">
-    <small>Back to start</small>
-    <strong>Training overview</strong>
+  <a href="/docs/training/recipes/router/">
+    <small>Recipe guides</small>
+    <strong>Model router</strong>
   </a>
 </DocsNext>

@@ -291,7 +291,7 @@ Read https://gradiated.com/docs/training/recipes/router.md and integrate a Gradi
   <DocsCodeTab label="Fine-tune (SFT & DPO)">
 
 ```text
-Read https://gradiated.com/docs/training/recipes/sft-dpo.md and set up a fine-tuning pipeline for our task:
+Read https://gradiated.com/docs/training/recipes/sft.md (and https://gradiated.com/docs/training/recipes/dpo.md) and set up a fine-tuning pipeline for our task:
 1. Export verified passing examples into a Gradiated `Dataset` (`input.messages`, `expected_output`, `session_id`, and `scores`).
 2. Filter the dataset with `dataset.filter(lambda t: t.scores.get("tests_passed") == 1.0)` and configure an `SFTRecipe` (chaining into `DPORecipe` with `.then(...)` if needed) with `Model(...)` and `splits.BySession()`.
 3. Validate with `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json` before starting training.
@@ -325,7 +325,7 @@ Read https://gradiated.com/docs/training/recipes/distillation.md (or https://gra
 <DocsNext>
   <a href="/docs/training/trajectories/">
     <small>Next</small>
-    <strong>Trajectories and data</strong>
+    <strong>Trajectories</strong>
   </a>
   <a href="/papers/">
     <small>One-click templates</small>

@@ -1,117 +1,98 @@
-# Reward models and verifiers
+# Reward models
 
-<DocsLead>Train pairwise Bradley-Terry reward models, step-level process verifiers, and generative judges to grade RL rollouts and gate production cascades.</DocsLead>
+<DocsLead>Train fast, task-specific verifier models from preference pairs with `RewardModelRecipe` to grade RL rollouts, score datasets, and gate production cascades.</DocsLead>
 
-When unit tests or exact-match rules cannot grade an output on their own, train a dedicated verifier artifact. The same artifact works in two places: inside a [Rubric](/docs/training/environments/) during RL, and as the `verifier` stage inside a production `strategies.Cascade` or `strategies.MajorityVote` [Endpoint](/docs/training/endpoints/).
+When unit tests or syntax checks cannot grade an output on their own — or when frontier `Judge` calls are too slow or expensive at scale — train a dedicated verifier [`Artifact`](/docs/training/artifacts/) with **`RewardModelRecipe`**. The same artifact works in three places:
 
-## Choose a verifier type
+- Inside a [`Judge`](/docs/training/rubrics/) for [`dataset.score(judge)`](/docs/training/trajectories/) or [`GRPORecipe`](/docs/training/recipes/rl-agents/).
+- As the `verifier` inside a production `strategies.Cascade` [`Endpoint`](/docs/training/endpoints/) so easy requests stay on a fast 8B model while low-scoring drafts escalate to a frontier model.
+- Behind `strategies.BestOfN` or `strategies.MajorityVote` for test-time reranking.
 
-| Type | Output | Best for |
-| --- | --- | --- |
-| **Pairwise reward model (Bradley-Terry)** | Scalar score per response | Ranking candidates, best-of-N reranking, or scoring open-ended quality from `(chosen, rejected)` pairs. |
-| **Process reward model (PRM)** | Score per reasoning step or tool call | Dense credit assignment in multi-turn agents and catching bad steps early. |
-| **Generative verifier (GenRM)** | Short critique + `yes` / `no` verdict | Complex rubric grading where chain-of-thought reasoning beats a single linear head. |
+## What data you need
 
-## 1. Pairwise Bradley-Terry reward model
+- **Minimum volume:** 500–2,000 `(chosen, rejected)` pairs in a [`Dataset`](/docs/training/trajectories/) (same format as [Preference tuning (DPO)](/docs/training/recipes/dpo/), sharing a `group_id` with `role: "chosen"` and `role: "rejected"`).
 
-Use `PreferencePair` records (or paired `(chosen, rejected)` [trajectories](/docs/training/trajectories/)) and train a single scalar head (`heads.Linear(dim=1)`) with a shuffle-safe `BradleyTerryLoss` using `grad.by_group()`:
+## Train with `RewardModelRecipe`
+
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="Python">
 
 ```python
-import torch
-import torch.nn.functional as F
-import grad
-from grad import Grad, Model, adapters, heads, losses, optim
-
-class BradleyTerryLoss(losses.CustomLoss):
-    outputs = ("heads",)
-
-    def compute(self, records, out) -> torch.Tensor:
-        terms = [
-            -F.logsigmoid(g["chosen"].heads["rm"][0] - g["rejected"].heads["rm"][0])
-            for g in grad.by_group(records, out)
-        ]
-        return torch.stack(terms).mean()
+from grad import Grad, Model, adapters, optim, splits
+from grad.recipes import RewardModelRecipe
 
 client = Grad()
+pairs_ds = client.datasets.get("sql-preferences")
 
-with client.trainers.create(
+recipe = RewardModelRecipe(
     model=Model("Qwen/Qwen3-8B"),
     adapter=adapters.LoRA(rank=32, merge_on_export=True),
-    heads={"rm": heads.Linear(dim=1)},
-) as trainer:
-    for batch in pair_batches:
-        fb = trainer.forward_backward(batch, loss=BradleyTerryLoss())
-        trainer.optim_step(optim.AdamW(lr=1e-4)).result()
-        print(f"bt_loss={fb.result().loss:.4f}")
-
-    rm_artifact = trainer.export(name="sql-verifier")
-```
-
-Score candidate rollouts (passing `Trajectory` or `Record` lists directly) offline or inside a rubric using batched inference:
-
-```python
-scores = [
-    torch.sigmoid(res.logits[0]).item()
-    for res in rm_artifact.infer_batch(candidate_trajectories)
-]
-```
-
-## 2. Step-level process reward model (PRM)
-
-Attach a `token_level=True` head and label only the end-of-step token positions using the built-in `losses.BCESparsePositions` loss:
-
-```python
-from grad import Grad, Model, Record, adapters, heads, losses, optim
-
-client = Grad()
-
-records = [
-    Record(
-        tokens=step_traj_tokens,
-        positions=[42, 98, 151],     # token indices ending steps 1, 2, 3
-        labels=[1.0, 1.0, 0.0],      # step 3 introduced an error
-    ),
-]
-
-with client.trainers.create(
-    model=Model("Qwen/Qwen3-8B"),
-    adapter=adapters.LoRA(rank=32),
-    heads={"prm": heads.Linear(dim=1, token_level=True)},
-) as trainer:
-    m = trainer.forward_backward(records, loss=losses.BCESparsePositions(head="prm")).result()
-    trainer.optim_step(optim.AdamW(lr=1e-4)).result()
-    prm_artifact = trainer.export(name="reasoning-prm")
-```
-
-At inference time, `prm_artifact.infer(inp).heads["prm"]` returns a `(L, 1)` tensor with a calibrated correctness logit at every step boundary.
-
-## 3. Generative verifier (GenRM)
-
-When grading requires reasoning (checking subtle policy violations or comparing code diffs against requirements), train a small 4B–8B model with [`SFTRecipe`](/docs/training/recipes/sft-dpo/) on `(prompt, candidate, critique + verdict)` trajectories, optionally followed by [`GRPORecipe`](/docs/training/recipes/rl-agents/) where the reward is exact agreement with human labels.
-
-Deploy the trained verifier with `strategies.MajorityVote` for higher accuracy at test time:
-
-```python
-from grad import strategies
-
-judge = client.artifacts.get("policy-judge@2026-11-25-1")
-
-client.endpoints.create(
-    slug="policy-judge",
-    artifact=judge,
-    strategy=strategies.MajorityVote(n_samples=5),
+    optimizer=optim.AdamW(lr=1e-4),
+    split=splits.BySession(eval_fraction=0.10),
 )
+
+run = client.runs.create(dataset=pairs_ds, name="sql-verifier", recipe=recipe).wait()
+
+print(run.artifact.id, run.eval_report)
 ```
 
-## Use a verifier in production cascades
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
 
-Pass any trained reward model or verifier artifact into a `strategies.Cascade` [endpoint](/docs/training/endpoints/) so easy requests stay on a fast 8B model while low-scoring outputs escalate automatically:
+```ts
+import { Grad, Model, adapters, optim, recipes, splits } from "@gradiated/grad";
+
+const grad = new Grad();
+const pairsDs = await grad.datasets.get("sql-preferences");
+
+const run = await grad.runs
+  .create({
+    dataset: pairsDs,
+    name: "sql-verifier",
+    recipe: recipes.rewardModel({
+      model: new Model("Qwen/Qwen3-8B"),
+      adapter: adapters.lora({ rank: 32, mergeOnExport: true }),
+      optimizer: optim.adamW({ lr: 1e-4 }),
+      split: splits.bySession({ evalFraction: 0.1 }),
+    }),
+  })
+  .wait();
+
+console.log(run.artifact.id, run.evalReport);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad train --dataset sql-preferences --name sql-verifier --recipe reward-model --wait
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Use your verifier in `Judge` or production cascades
+
+### 1. Plug straight into a `Judge` (for datasets or RL)
+
+Because `Artifact` subclasses `Model`, pass `run.artifact` directly to [`Judge`](/docs/training/rubrics/) with no prompt required:
+
+```python
+from grad import Judge
+
+sql_judge = Judge(name="sql_quality", model=run.artifact)
+scored = client.datasets.get("sql-prod").score(sql_judge).wait()
+```
+
+### 2. Gate a production `Cascade` endpoint
+
+Pair a fast fine-tuned specialist with your verifier so only uncertain outputs escalate to a frontier model:
 
 ```python
 from grad import Model, strategies
 
 agent = client.artifacts.get("sql-agent@2026-11-25-2")
-verifier = client.artifacts.get("sql-verifier@2026-11-25-1")
+verifier = run.artifact
 capture = client.datasets.get("sql-agent-prod")
 
 client.endpoints.create(
@@ -126,13 +107,17 @@ client.endpoints.create(
 )
 ```
 
+## Want more control?
+
+Need step-level Process Reward Models (PRMs) that score every reasoning step, multi-attribute gating heads, or custom PyTorch Bradley-Terry losses? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
+
 <DocsNext>
   <a href="/docs/training/recipes/embeddings/">
     <small>Next guide</small>
-    <strong>Embeddings and rerankers</strong>
+    <strong>Embeddings</strong>
   </a>
-  <a href="/docs/training/endpoints/">
-    <small>Deploy</small>
-    <strong>Artifacts and endpoints</strong>
+  <a href="/docs/training/rubrics/">
+    <small>Grading</small>
+    <strong>Rubrics</strong>
   </a>
 </DocsNext>

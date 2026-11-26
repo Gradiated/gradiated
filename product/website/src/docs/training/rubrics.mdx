@@ -1,0 +1,96 @@
+# Rubrics
+
+<DocsLead>Grade model outputs and datasets with composable, statically typed scorers and model-based judges — from deterministic syntax checks to frontier or fine-tuned verifiers.</DocsLead>
+
+A **`Rubric`** combines one or more weighted **`Scorer`**s into a single reward while storing every individual sub-score in [`trajectory.scores`](/docs/training/trajectories/). Use the exact same `Rubric` or `Judge` in three places:
+
+- **Dataset curation:** score historical traces once via [`dataset.score(rubric)`](/docs/training/trajectories/) and filter cheaply afterward.
+- **Managed RL:** pass `rubric=` directly to [`GRPORecipe`](/docs/training/recipes/rl-agents/).
+- **Stateful rollouts:** attach a `Rubric` to an [`Environment`](/docs/training/environments/) so checks can inspect live databases, APIs, or containers before teardown.
+
+## Composing a `Rubric`
+
+Combine deterministic checks (validators, unit tests, length limits) with a model-based **`Judge`** so fast rules catch obvious failures and the judge grades nuanced quality:
+
+```python
+from grad import Judge, Model, Rubric, Scorer, validators
+
+rubric = Rubric([
+    Scorer("valid_sql", weight=0.3, fn=validators.SQL()),
+    Judge(
+        name="accurate_query",
+        model=Model("claude-sonnet-4-6"),
+        prompt="Verify the SQL answers the user's question accurately without hallucinated columns.",
+        weight=0.7,
+    ),
+])
+```
+
+## Scorer hierarchy
+
+Each grading pattern is a typed class so static type checkers verify your function signatures automatically:
+
+| Class | Subclasses / signature | Use it for |
+| --- | --- | --- |
+| **`Scorer`** | `(traj: Trajectory) -> float` | Deterministic checks (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`), exact match, or custom Python functions. |
+| **`Judge(Scorer)`** | `Judge(name, model, prompt=...)` | Prompted frontier-model judges (`Model("claude-sonnet-4-6")`) **or** a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact` (no prompt needed for scalar reward models). |
+| **`StatefulScorer(Scorer)`** | `(traj: Trajectory, handle: H) -> float` | Checks that query live Postgres rows, Redis keys, HTTP APIs, or container files inside an [`Environment`](/docs/training/environments/) before teardown. |
+| **`GroupScorer`** | `(group: list[Trajectory]) -> list[float]` | Grading all `G` rollouts for the same prompt side by side (for example, **`PairwiseJudge(GroupScorer)`** for comparative win rates). |
+
+To reuse scores already stored on imported production traces, pass `Scorer.from_score("task_success", weight=1.0)`.
+
+## Using a `Judge` on a `Dataset`
+
+Call `dataset.score(judge)` to grade historical traces in parallel on the server and persist scores onto `trajectory.scores`. Already-scored trajectories are skipped automatically, so you can adjust filter thresholds or reuse scores across [recipes](/docs/training/recipes/) for $0:
+
+```python
+from grad import Grad, Judge, Model
+
+client = Grad()
+dataset = client.datasets.get("support-prod")
+
+judge = Judge(
+    name="resolved",
+    model=Model("claude-sonnet-4-6"),
+    prompt="Did the assistant resolve the user's request accurately without policy errors?",
+)
+scored = dataset.score(judge).wait()
+good = scored.filter(lambda t: t.scores["resolved"] >= 0.8)
+```
+
+<DocsCallout label="Scaling past frontier judge costs" tone="tip">
+Start with a frontier `Model` in `Judge` to validate your rubric quickly. Once you have 1,000+ graded pairs, train a fast 8B verifier with [`RewardModelRecipe`](/docs/training/recipes/reward-models/) and pass that [`Artifact`](/docs/training/artifacts/) straight into `Judge(name="resolved", model=verifier_artifact)`.
+</DocsCallout>
+
+## Stateful grading inside an `Environment`
+
+When grading requires checking live application state (such as verifying a row was inserted in Postgres or a test suite passes in a container), use `StatefulScorer`:
+
+```python
+from grad import Rubric, Scorer, StatefulScorer
+
+def passes_unit_tests(traj, handle) -> float:
+    res = handle.exec("pytest -q tests/target_test.py")
+    return 1.0 if res.returncode == 0 else 0.0
+
+def concise_patch(traj) -> float:
+    return 1.0 if len(traj.token_ids) < 1024 else 0.5
+
+rubric = Rubric([
+    StatefulScorer("tests", weight=0.8, fn=passes_unit_tests),
+    Scorer("concise", weight=0.2, fn=concise_patch),
+])
+```
+
+See [Environments](/docs/training/environments/) for how `evaluate(handle, trajectory)` runs `StatefulScorer` terms before `teardown()`.
+
+<DocsNext>
+  <a href="/docs/training/environments/">
+    <small>Next</small>
+    <strong>Environments</strong>
+  </a>
+  <a href="/docs/training/recipes/reward-models/">
+    <small>Train a verifier</small>
+    <strong>Reward models</strong>
+  </a>
+</DocsNext>

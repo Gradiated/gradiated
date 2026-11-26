@@ -2,7 +2,7 @@
 
 <DocsLead>Pick a composable recipe class, start with sensible defaults, validate token volume with a dry run, and swap any adapter, loss, splitter, or optimizer without rewriting a training loop.</DocsLead>
 
-Every **recipe** (`RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`) is an open, inspectable Python class composed from typed building blocks (`adapters.*`, `losses.*`, `optim.*`, `splits.*`, `solvers.*`, `calibration.*`) on top of the five core primitives. Every completed run writes an immutable `.grad` [`Artifact`](/docs/training/endpoints/) alongside its `EvalReport`.
+Every **recipe** (`RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`, `RewardModelRecipe`, `EmbeddingRecipe`) is an open, inspectable Python class composed from typed building blocks (`adapters.*`, `losses.*`, `optim.*`, `splits.*`, `solvers.*`, `calibration.*`) on top of the core primitives. Every completed run writes an immutable `.grad` [`Artifact`](/docs/training/artifacts/) alongside its `EvalReport`.
 
 <DocsRecipeChooser />
 
@@ -11,14 +11,14 @@ Every **recipe** (`RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, 
 | Recipe class | Guide | Expected dataset fields |
 | --- | --- | --- |
 | `RouterRecipe` | [Model router](/docs/training/recipes/router/) | Multi-model traces with `scores`, `metrics.cost_usd`, and `metadata.model` |
-| `ClassifierRecipe` | [Classifiers and decisions](/docs/training/recipes/classifier/) | `expected_output.label` or `scores` (binary, multiclass, ordinal) |
-| `SFTRecipe` | [Fine-tuning and preferences](/docs/training/recipes/sft-dpo/) | `input` + `expected_output` (or filtered high-score `output`) |
-| `DPORecipe` | [Fine-tuning and preferences](/docs/training/recipes/sft-dpo/) | Paired `group_id` trajectories with `role: chosen \| rejected` |
-| `GRPORecipe` | [RL for agents (GRPO)](/docs/training/recipes/rl-agents/) | Prompts + a `Rubric` (`Judge` / `validators.*`) or stateful `Environment` |
+| `ClassifierRecipe` | [Classifiers](/docs/training/recipes/classifier/) | `expected_output.label` or `scores` (binary, multiclass, ordinal) |
+| `SFTRecipe` | [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) | `input` + `expected_output` (or filtered high-score `output`) |
+| `DPORecipe` | [Preference tuning (DPO)](/docs/training/recipes/dpo/) | Paired `group_id` trajectories with `role: chosen \| rejected` |
+| `GRPORecipe` | [RL for agents](/docs/training/recipes/rl-agents/) | Prompts + a [`Rubric`](/docs/training/rubrics/) (`Judge` / `validators.*`) or [`Environment`](/docs/training/environments/) |
 | `DistillRecipe` | [Model distillation](/docs/training/recipes/distillation/) | Prompts or traces + `teacher` model |
-| `CartridgeRecipe` | [Context Cartridges](/docs/training/recipes/cartridges/) | Static context corpus (`Context`) + QA prompts (`adapters.PrefixKV`) |
-
-For specialized training patterns built on these same primitives, see [Reward models and verifiers](/docs/training/recipes/reward-models/) and [Embeddings and rerankers](/docs/training/recipes/embeddings/).
+| `CartridgeRecipe` | [Context Cartridges](/docs/training/recipes/cartridges/) | Static corpus (`Context`) + QA prompts (`num_tokens`) |
+| `RewardModelRecipe` | [Reward models](/docs/training/recipes/reward-models/) | Paired `group_id` trajectories with `role: chosen \| rejected` |
+| `EmbeddingRecipe` | [Embeddings](/docs/training/recipes/embeddings/) | Query groups with `role: anchor \| positive \| negative` |
 
 ## Start with recipe defaults
 
@@ -472,12 +472,12 @@ Stay with `Recipe` (including swapping in a `CustomLoss` or custom `Splitter`) w
 - Full imperative control over microbatch scheduling, mid-loop `trainer.snapshot()` mining, or stateful Docker Compose rollouts.
 
 <DocsNext>
-  <a href="/docs/training/environments/">
+  <a href="/docs/training/rubrics/">
     <small>Next</small>
-    <strong>Environments and rubrics</strong>
+    <strong>Rubrics</strong>
   </a>
-  <a href="/docs/training/custom-loops/">
-    <small>Advanced</small>
-    <strong>Custom loops</strong>
+  <a href="/docs/training/environments/">
+    <small>RL &amp; evals</small>
+    <strong>Environments</strong>
   </a>
 </DocsNext>

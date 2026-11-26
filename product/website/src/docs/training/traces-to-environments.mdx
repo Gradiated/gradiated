@@ -2,7 +2,7 @@
 
 <DocsLead>Turn production traces into a verifiable RL environment — starting from simple prompt-and-rubric tasks, upgrading to mock tool-replay sandboxes, or synthesizing Harbor container benchmarks with automated fail-to-pass verification.</DocsLead>
 
-Most teams start with thousands of logged production traces in a [`Dataset`](/docs/training/trajectories/), not a hand-built RL simulator. You do not need to build a full container benchmark on day one: progress through three levels of fidelity using the same [`Task`, `Environment`, and `Rubric`](/docs/training/environments/) primitives.
+Most teams start with thousands of logged production traces in a [`Dataset`](/docs/training/trajectories/), not a hand-built RL simulator. You do not need to build a full container benchmark on day one: progress through three levels of fidelity using the same [`Task` and `Environment`](/docs/training/environments/) and [`Rubric`](/docs/training/rubrics/) primitives.
 
 | Level | Best for | Setup effort | What runs during rollouts |
 | --- | --- | --- | --- |
@@ -198,12 +198,12 @@ Run a quick 8–16 task smoke pass against your starting model before scaling up
 - **Use a warm pool once the loop works:** Cold container startup is fine for validating 20 tasks, then switch to pre-warmed containers or template DB resets before scaling to thousands of rollouts.
 
 <DocsNext>
+  <a href="/docs/training/artifacts/">
+    <small>Next</small>
+    <strong>Artifacts</strong>
+  </a>
   <a href="/docs/training/environments/">
     <small>Back</small>
-    <strong>Environments and rubrics</strong>
-  </a>
-  <a href="/docs/training/recipes/rl-agents/">
-    <small>Train with RL</small>
-    <strong>RL for agents (GRPO)</strong>
+    <strong>Environments</strong>
   </a>
 </DocsNext>

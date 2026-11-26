@@ -125,7 +125,7 @@ const PRIMITIVES: PrimitiveNode[] = [
     index: "04",
     name: "Artifact",
     role: "1 immutable model",
-    href: "/docs/training/endpoints/",
+    href: "/docs/training/artifacts/",
     summary: "A versioned .grad bundle (subclassing Model) with weights, tokenizer, manifest, and eval_report, or a live RL snapshot.",
     ops: ["infer_batch()", "sample()", "score_logprobs()", "embed()", "artifacts.merge()"],
     detail: "Always one concrete, immutable model. Rollbacks never mutate weights; merges combine checkpoints with zero train tokens.",
@@ -265,7 +265,7 @@ run = client.runs.create(
     profile: "LoRA or full weights",
     typicalWin: "5–10x lower latency on structured edits & SQL",
     dataNeeded: "Verified passing outputs (or chosen/rejected pairs)",
-    href: "/docs/training/recipes/sft-dpo/",
+    href: "/docs/training/recipes/sft/",
     snippet: `dataset = client.datasets.get("diff-merge-prod").filter(
     lambda t: t.scores.get("tests_passed") == 1.0,
 )

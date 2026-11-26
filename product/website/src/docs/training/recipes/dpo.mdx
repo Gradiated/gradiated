@@ -1,0 +1,154 @@
+# Preference tuning (DPO)
+
+<DocsLead>Align a fine-tuned model away from recurring failure modes using `(chosen, rejected)` preference pairs with `DPORecipe`.</DocsLead>
+
+Use **`DPORecipe`** after [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) when your model already knows the right format but still makes avoidable mistakes (subtle truncations, verbose explanations, tone slips, or bad tool arguments) that you can contrast as **chosen** vs. **rejected** responses.
+
+## What data you need
+
+- **Minimum volume:** 300–1,000 preference pairs for narrow failure modes; 2,000+ for general style and quality alignment.
+- **Format:** Store pairs sharing a `group_id` with `role: "chosen"` and `role: "rejected"` in a [`Dataset`](/docs/training/trajectories/). Pairs automatically stay together in the same train or eval split.
+
+```json
+[
+  {
+    "schema": "grad.trajectory/1",
+    "group_id": "pair_19",
+    "role": "chosen",
+    "input": { "messages": [{ "role": "user", "content": "Merge this diff." }] },
+    "output": { "turns": [{ "role": "assistant", "content": "clean merged code..." }] }
+  },
+  {
+    "schema": "grad.trajectory/1",
+    "group_id": "pair_19",
+    "role": "rejected",
+    "input": { "messages": [{ "role": "user", "content": "Merge this diff." }] },
+    "output": { "turns": [{ "role": "assistant", "content": "truncated code with syntax error..." }] }
+  }
+]
+```
+
+## Train with `DPORecipe`
+
+Pass an existing SFT [`Artifact`](/docs/training/artifacts/) directly as `model=`, or chain `SFTRecipe` into `DPORecipe` in one expression with `.then(...)` so Stage 2 starts automatically on the server when Stage 1 finishes:
+
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="From an SFT artifact">
+
+```python
+from grad import Grad, adapters, losses, optim
+from grad.recipes import DPORecipe
+
+client = Grad()
+sft_art = client.artifacts.get("fast-diff-merge@sft-v1")
+prefs = client.datasets.get("diff-merge-preferences")
+
+dpo = client.runs.create(
+    dataset=prefs,
+    name="fast-diff-merge",
+    recipe=DPORecipe(
+        model=sft_art,
+        adapter=adapters.LoRA(rank=32, merge_on_export=True),
+        loss=losses.DPO(beta=0.1),
+        optimizer=optim.AdamW(lr=5e-5),
+    ),
+).wait()
+
+print(dpo.artifact.id, dpo.eval_report)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Chain SFT → DPO (.then)">
+
+```python
+from grad import Grad, Model, adapters, losses, optim, splits
+from grad.recipes import DPORecipe, SFTRecipe
+
+client = Grad()
+sft_ds = client.datasets.get("diff-merge-prod").filter(
+    lambda t: t.scores.get("tests_passed") == 1.0,
+)
+prefs_ds = client.datasets.get("diff-merge-preferences")
+
+dpo = (
+    client.runs.create(
+        dataset=sft_ds,
+        name="fast-diff-merge",
+        recipe=SFTRecipe(
+            model=Model("Qwen/Qwen3-8B"),
+            adapter=adapters.LoRA(rank=32),
+            optimizer=optim.AdamW(lr=2e-4),
+            split=splits.BySession(0.10),
+        ),
+    )
+    .then(
+        dataset=prefs_ds,
+        recipe=DPORecipe(
+            adapter=adapters.LoRA(rank=32, merge_on_export=True),
+            loss=losses.DPO(beta=0.1),
+            optimizer=optim.AdamW(lr=5e-5),
+        ),
+    )
+    .wait()
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, adapters, losses, optim, recipes } from "@gradiated/grad";
+
+const grad = new Grad();
+const sftArt = await grad.artifacts.get("fast-diff-merge@sft-v1");
+const prefs = await grad.datasets.get("diff-merge-preferences");
+
+const dpo = await grad.runs
+  .create({
+    dataset: prefs,
+    name: "fast-diff-merge",
+    recipe: recipes.dpo({
+      model: sftArt,
+      adapter: adapters.lora({ rank: 32, mergeOnExport: true }),
+      loss: losses.dpo({ beta: 0.1 }),
+      optimizer: optim.adamW({ lr: 5e-5 }),
+    }),
+  })
+  .wait();
+
+console.log(dpo.artifact.id, dpo.evalReport);
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+### Key parameters
+
+| Component | Guidance |
+| --- | --- |
+| `losses.DPO(beta=...)` | Higher `beta` (`0.2`–`0.5`) stays closer to the SFT reference; lower (`0.05`–`0.1`) pushes harder away from rejected patterns. |
+| `optim.AdamW(lr=...)` | Use a lower learning rate than SFT (`2e-5`–`5e-5`) to prevent reward hacking or formatting drift. |
+| `adapters.LoRA(rank=32, merge_on_export=True)` | Set `merge_on_export=True` on the final stage for lowest serving latency. |
+
+## Deploy
+
+Promote the aligned [`Artifact`](/docs/training/artifacts/) to your [`Endpoint`](/docs/training/endpoints/) with a canary split to verify quality gains against your previous SFT version:
+
+```python
+endpoint = dpo.deploy(canary=0.10)
+```
+
+## Want more control?
+
+Swap `losses.DPO()` for a custom PyTorch `losses.CustomLoss` (such as SimPO, ORPO, or KTO) right inside `DPORecipe` — see [Custom loops](/docs/training/custom-loops/) and [Advanced objectives](/docs/training/advanced-objectives/).
+
+<DocsNext>
+  <a href="/docs/training/recipes/rl-agents/">
+    <small>Next guide</small>
+    <strong>RL for agents</strong>
+  </a>
+  <a href="/docs/training/recipes/sft/">
+    <small>Previous</small>
+    <strong>Supervised fine-tuning (SFT)</strong>
+  </a>
+</DocsNext>

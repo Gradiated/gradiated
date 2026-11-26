@@ -13,8 +13,8 @@ pip install "grad-sdk[torch]"
 ## Mental model
 
 - **`Trainer`** owns mutable weights and optimizer state on the server. Open it in a `with client.trainers.create(model=..., adapter=...) as trainer:` block so the remote trainer session closes cleanly on exit or error. Training is billed strictly **per million tokens processed** (forward/backward and sampling) plus storage for saved weights and checkpoints — never idle GPU time.
-- **`trainer.snapshot()`** returns an immutable, ephemeral [**`Artifact`**](/docs/training/endpoints/) pointing at the current weights. Call `sample()`, `score_logprobs()`, `infer_batch()`, or `embed()` on it while training continues.
-- **`trainer.export(name=...)`** writes a durable `.grad` **`Artifact`** ready to deploy on an [**`Endpoint`**](/docs/training/endpoints/).
+- **`trainer.snapshot()`** returns an immutable, ephemeral [**`Artifact`**](/docs/training/artifacts/) pointing at the current weights. Call `sample()`, `score_logprobs()`, `infer_batch()`, or `embed()` on it while training continues.
+- **`trainer.export(name=...)`** writes a durable `.grad` [**`Artifact`**](/docs/training/artifacts/) ready to deploy on an [**`Endpoint`**](/docs/training/endpoints/).
 
 ## Universal 1:1 token alignment
 
@@ -339,12 +339,12 @@ with client.trainers.create(model=encoder, adapter=adapters.FrozenHead()) as tra
 | `adapters.Full()` | All backbone parameters + trainable `heads`. |
 
 <DocsNext>
-  <a href="/docs/training/endpoints/">
+  <a href="/docs/training/advanced-objectives/">
     <small>Next</small>
-    <strong>Artifacts and endpoints</strong>
+    <strong>Advanced objectives</strong>
   </a>
-  <a href="/docs/api-reference/">
-    <small>Reference</small>
-    <strong>API reference</strong>
+  <a href="/docs/training/artifacts/">
+    <small>Outputs</small>
+    <strong>Artifacts</strong>
   </a>
 </DocsNext>

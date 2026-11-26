@@ -1,133 +1,94 @@
-# Embeddings and rerankers
+# Embeddings
 
-<DocsLead>Fine-tune domain-specific dense embeddings, ColBERT multi-vector retrievers, and cross-encoder rerankers with built-in InfoNCE and batched hard-negative mining.</DocsLead>
+<DocsLead>Fine-tune domain-specific dense embedding models on your internal jargon, codebases, and schemas with `EmbeddingRecipe`.</DocsLead>
 
-Off-the-shelf embedding models degrade on internal jargon, codebases, and domain-specific schemas. Fine-tuning a compact encoder on your own query/document pairs typically recovers 10–25 points of Recall@10 while keeping latency under 10 ms.
+Off-the-shelf embedding models degrade on internal acronyms, product terminology, and proprietary schemas. Fine-tuning a compact encoder with **`EmbeddingRecipe`** on your own query/document pairs typically recovers 10–25 points of Recall@10 while keeping serving latency under 10 ms.
 
 ## What data you need
 
-Group each query with its positive document and one or more hard negatives using `group_id` and `role` (`anchor`, `positive`, `negative`):
+- **Minimum volume:** 1,000–5,000 query groups in a [`Dataset`](/docs/training/trajectories/) sharing a `group_id` with `role: "anchor"` (query), `role: "positive"` (matching document), and one or more `role: "negative"` (hard near-miss documents).
+- **Hard negatives matter most:** Random negatives saturate quickly; pull near-miss documents from your existing search or RAG retriever.
 
-- **Minimum volume:** 1,000–5,000 query groups for domain adaptation.
-- **Hard negatives matter most:** Random negatives saturate quickly; mine near-miss documents from your existing retriever or refresh them periodically with `trainer.snapshot()`.
+## Train with `EmbeddingRecipe`
 
-## 1. Dense bi-encoder (`losses.InfoNCE`)
-
-Train a mean-pooled encoder with `losses.InfoNCE`, then extract normalized embeddings directly from the exported [Artifact](/docs/training/endpoints/):
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Model, Record, Triplet, adapters, losses, optim, pooling
+from grad import Grad, Model, adapters, losses, optim, pooling
+from grad.recipes import EmbeddingRecipe
 
 client = Grad()
+dataset = client.datasets.get("docs-retrieval-triplets")
 
-triplets = [
-    Triplet(
-        anchor="how to rotate api keys",
-        positive="API key rotation procedure and revocation",
-        negatives=["Configuring OAuth redirect URIs"],
-    ),
-]
-
-with client.trainers.create(
+recipe = EmbeddingRecipe(
     model=Model("BAAI/bge-small-en-v1.5"),
     adapter=adapters.Full(),
     pool=pooling.Mean(),
-) as trainer:
-    for batch in query_batches:
-        m = trainer.forward_backward(batch, loss=losses.InfoNCE(temp=0.05)).result()
-        trainer.optim_step(optim.AdamW(lr=2e-5)).result()
+    loss=losses.InfoNCE(temp=0.05),
+    optimizer=optim.AdamW(lr=2e-5),
+)
 
-    embed_artifact = trainer.export(name="docs-embedder")
+run = client.runs.create(dataset=dataset, name="docs-embedder", recipe=recipe).wait()
 
-vectors = embed_artifact.embed(
+print(run.artifact.id, run.eval_report)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, Model, adapters, losses, optim, pooling, recipes } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = await grad.datasets.get("docs-retrieval-triplets");
+
+const run = await grad.runs
+  .create({
+    dataset,
+    name: "docs-embedder",
+    recipe: recipes.embedding({
+      model: new Model("BAAI/bge-small-en-v1.5"),
+      adapter: adapters.full(),
+      pool: pooling.mean(),
+      loss: losses.infoNCE({ temp: 0.05 }),
+      optimizer: optim.adamW({ lr: 2e-5 }),
+    }),
+  })
+  .wait();
+
+console.log(run.artifact.id, run.evalReport);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad train --dataset docs-retrieval-triplets --name docs-embedder --recipe embedding --wait
+grad deploy docs-embedder@latest
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Embed offline or deploy to an endpoint
+
+Extract normalized embeddings directly from the exported [`Artifact`](/docs/training/artifacts/) or deploy it behind a `strategies.Direct()` [`Endpoint`](/docs/training/endpoints/) to serve live retrieval traffic:
+
+```python
+from grad import Record, pooling
+
+vectors = run.artifact.embed(
     [Record(text="rotate api keys")],
     pool=pooling.Mean(),
 ).embeddings
+
+endpoint = run.deploy()
 ```
 
-## 2. Multi-vector (ColBERT) and Matryoshka embeddings
+## Want more control?
 
-Set `pool=pooling.PerToken()` to receive full per-token embeddings `(L, D)` inside a `losses.CustomLoss`, using `grad.by_group()` so arbitrary batch sizes stay shuffle-safe across ColBERT MaxSim and Matryoshka nested prefixes:
-
-```python
-import torch
-import torch.nn.functional as F
-import grad
-from grad import losses
-
-class MatryoshkaColBERTLoss(losses.CustomLoss):
-    outputs = ("embeddings",)
-
-    def __init__(self, dims: tuple[int, ...] = (128, 256, 384)):
-        self.dims = dims
-
-    def compute(self, records, out) -> torch.Tensor:
-        terms = []
-        for g in grad.by_group(records, out):
-            q_tok, p_tok, n_tok = g["anchor"].embeddings, g["positive"].embeddings, g["negative"].embeddings
-            qm, pm, nm = q_tok.mean(0), p_tok.mean(0), n_tok.mean(0)
-            mrl = sum(
-                F.cross_entropy(
-                    torch.stack([
-                        F.normalize(qm[:d], dim=-1) @ F.normalize(pm[:d], dim=-1),
-                        F.normalize(qm[:d], dim=-1) @ F.normalize(nm[:d], dim=-1),
-                    ]).unsqueeze(0) / 0.05,
-                    torch.tensor([0]),
-                )
-                for d in self.dims
-            ) / len(self.dims)
-            qc, pc, nc = F.normalize(q_tok, dim=-1), F.normalize(p_tok, dim=-1), F.normalize(n_tok, dim=-1)
-            colbert = F.cross_entropy(
-                torch.stack([(qc @ pc.T).max(-1).values.sum(), (qc @ nc.T).max(-1).values.sum()]).unsqueeze(0) / 0.1,
-                torch.tensor([0]),
-            )
-            terms.append(mrl + colbert)
-        return torch.stack(terms).mean()
-```
-
-At serving time, override pooling per call on the exported artifact (`embed_artifact.embed(inputs, pool=pooling.PerToken()).embeddings` for token vectors or `pool=pooling.Mean()` for a single dense vector).
-
-## 3. Cross-encoder reranker with hard-negative refresh
-
-Pair `(query, document)` sequences into a cross-encoder with a relevance head (`heads.Linear(dim=1)`). Periodically score your corpus with `trainer.snapshot().infer_batch(...)` to pull the highest-scoring false positives into the next training epoch:
-
-```python
-import torch
-import torch.nn.functional as F
-import grad
-from grad import Grad, Model, adapters, heads, losses, optim
-
-class ListNetRerankLoss(losses.CustomLoss):
-    outputs = ("heads",)
-
-    def compute(self, records, out) -> torch.Tensor:
-        terms = []
-        for g in grad.by_group(records, out):
-            pos = g["positive"].heads["rel"][0]
-            negs = [v.heads["rel"][0] for role, v in g.items() if role.startswith("negative")]
-            terms.append(F.cross_entropy(torch.stack([pos, *negs]).unsqueeze(0), torch.tensor([0])))
-        return torch.stack(terms).mean()
-
-client = Grad()
-
-with client.trainers.create(
-    model=Model("BAAI/bge-reranker-base"),
-    adapter=adapters.Full(),
-    heads={"rel": heads.Linear(dim=1)},
-) as trainer:
-    for epoch in range(3):
-        snap = trainer.snapshot()
-        # Mine fresh hard negatives with batched inference
-        cand_scores = [res.logits.item() for res in snap.infer_batch(candidate_pairs)]
-        hard_batch = build_listnet_batch(queries, positives, candidate_pairs, cand_scores)
-
-        trainer.forward_backward(hard_batch, loss=ListNetRerankLoss()).result()
-        trainer.optim_step(optim.AdamW(lr=2e-5)).result()
-
-    reranker = trainer.export(name="docs-reranker")
-```
-
-Deploy the exported encoder or reranker behind a `strategies.Direct()` [Endpoint](/docs/training/endpoints/) to serve live retrieval traffic and log click-through [feedback](/docs/training/trajectories/) for future refreshes.
+Need Matryoshka nested dimensions, ColBERT multi-vector token embeddings (`pooling.PerToken()`), or cross-encoder rerankers with iterative hard-negative mining? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
   <a href="/docs/training/custom-loops/">
@@ -136,6 +97,6 @@ Deploy the exported encoder or reranker behind a `strategies.Direct()` [Endpoint
   </a>
   <a href="/docs/training/endpoints/">
     <small>Deploy</small>
-    <strong>Artifacts and endpoints</strong>
+    <strong>Endpoints</strong>
   </a>
 </DocsNext>

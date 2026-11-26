@@ -1,0 +1,110 @@
+# Artifacts
+
+<DocsLead>Every completed training run exports an immutable `.grad` artifact containing model weights, metadata, and its held-out evaluation report.</DocsLead>
+
+An **`Artifact`** subclasses `Model` and always represents **one** concrete, immutable model version (`support-router@2026-11-26-1`). Separating immutable artifacts from live serving [`Endpoint`](/docs/training/endpoints/) slots makes rollbacks instant and keeps offline evaluation cleanly isolated from production traffic.
+
+| | **Artifact** | **[Endpoint](/docs/training/endpoints/)** |
+| --- | --- | --- |
+| **Cardinality** | Always **1** immutable model | **1 or many** artifacts |
+| **Changes over time?** | Never; every retrain writes a new `name@version` | Yes; shadow, canary, promote, or roll back in place |
+| **Primary use** | Held-out evals, batch scoring (`infer_batch`), RL rollouts (`sample`), weight merges | Production serving (`infer` / `route`), traffic splits, online SLA guardrails, feedback capture |
+
+## Inspect and evaluate an artifact
+
+Retrieve any saved artifact with `client.artifacts.get(...)` (or directly from a completed run via `run.artifact`). You can inspect its held-out `eval_report` or run batched offline evaluation directly against the pinned weights:
+
+```python
+from grad import Grad, Record
+
+client = Grad()
+art = client.artifacts.get("coding-effort@2026-11-25-1")
+
+print(art.eval_report)
+
+preds = art.infer_batch([Record(messages=m) for m in eval_messages])
+print(preds[0].logits)
+```
+
+Because `Artifact` subclasses `Model`, you can pass any trained artifact anywhere a `Model` is expected:
+
+- **Warm-start a next stage:** `DPORecipe(model=sft.artifact, ...)` or `GRPORecipe(model=sft.artifact, ...)`.
+- **Use as a verifier:** `Judge(name="sql_ok", model=verifier_artifact)` or `strategies.Cascade(verifier=verifier_artifact, ...)`.
+- **Use as a distillation teacher:** `DistillRecipe(model=Model("Qwen/Qwen3-4B"), teacher=teacher_artifact)`.
+
+## Deploy an artifact
+
+Every `.grad` artifact stores its model type, source dataset, and default serving strategy in `manifest.json`. Deploy any run or pinned artifact to an [`Endpoint`](/docs/training/endpoints/) in one line:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+endpoint = run.deploy(canary=0.10)
+# Or deploy a previously saved artifact:
+# endpoint = client.artifacts.get("support-router@2026-11-26-1").deploy(canary=0.10)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+const endpoint = await run.deploy({ canary: 0.1 });
+// Or deploy a previously saved artifact:
+// const art = await grad.artifacts.get("support-router@2026-11-26-1");
+// const endpoint = await art.deploy({ canary: 0.1 });
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+endpoint, _ := run.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
+// Or deploy a previously saved artifact:
+// art, _ := client.Artifacts.Get(ctx, "support-router@2026-11-26-1")
+// endpoint, _ := art.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad artifacts inspect support-router@2026-11-26-1 --json
+grad deploy support-router@2026-11-26-1 --canary 0.10
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Merge artifacts (zero training tokens)
+
+Combine two specialist checkpoints built from the same base model (for example, a coding specialist and a reasoning specialist) into a single new immutable `Artifact` with `client.artifacts.merge()` and an extensible `mergers.*` strategy (`mergers.TIES`, `mergers.Linear`, `mergers.DARE`, `mergers.SLERP`):
+
+```python
+from grad import Grad, mergers
+
+client = Grad()
+coder = client.artifacts.get("coder@v4")
+reasoner = client.artifacts.get("reasoner@v2")
+
+merged = client.artifacts.merge(
+    name="assistant-merged",
+    artifacts=[(coder, 0.6), (reasoner, 0.4)],
+    merger=mergers.TIES(density=0.5),
+)
+```
+
+## Download and portability
+
+Every `.grad` artifact is a portable bundle (`manifest.json`, weight files such as ONNX or Safetensors, and `eval_report.json`). Download any artifact via `GET /v1/artifacts/{id}/download` or run it on your own infrastructure with [Self-hosting](/docs/training/self-hosting/).
+
+<DocsNext>
+  <a href="/docs/training/endpoints/">
+    <small>Next</small>
+    <strong>Endpoints</strong>
+  </a>
+  <a href="/docs/training/recipes/">
+    <small>Train</small>
+    <strong>Recipes</strong>
+  </a>
+</DocsNext>

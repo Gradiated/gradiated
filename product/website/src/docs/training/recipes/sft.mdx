@@ -1,0 +1,232 @@
+# Supervised fine-tuning (SFT)
+
+<DocsLead>Fine-tune an open model on verified gold outputs with `SFTRecipe` to cut latency and cost on structured generation, code edits, or domain-specific tasks.</DocsLead>
+
+Use **`SFTRecipe`** when you have clean examples of the exact output you want (code diff-merging, structured JSON extraction, SQL generation, or domain-specific formatting). Once the model reliably matches your format, you can optionally chain a [Preference tuning (DPO)](/docs/training/recipes/dpo/) or [RL for agents](/docs/training/recipes/rl-agents/) stage on top of the exported [`Artifact`](/docs/training/artifacts/).
+
+## What data you need
+
+- **Minimum volume:** 300–1,000 clean `(input, expected_output)` [trajectories](/docs/training/trajectories/) for narrow formatting or code-edit tasks; 2,000+ for broader tasks.
+- **Quality beats volume:** Filter out low-scoring or unverified traces on the `Dataset` (`dataset.filter(lambda t: t.scores.get("tests_passed") == 1.0)`) rather than training on raw logs.
+
+```json
+{
+  "schema": "grad.trajectory/1",
+  "session_id": "pr_481",
+  "input": {
+    "messages": [
+      { "role": "system", "content": "Apply the edit snippet to the original file. Return only the merged file." },
+      { "role": "user", "content": "<original>...</original>\n<edit>...</edit>" }
+    ]
+  },
+  "expected_output": { "content": "export const retry = ..." },
+  "scores": { "tests_passed": 1.0 }
+}
+```
+
+## Train with `SFTRecipe`
+
+Filter your `Dataset` to verified passing examples, configure a LoRA adapter (`merge_on_export=True` merges the adapter into standalone weights for lowest serving latency), and split by `session_id` so multi-turn conversations never leak into eval:
+
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, Model, adapters, optim, splits
+from grad.recipes import SFTRecipe
+
+client = Grad()
+dataset = client.datasets.get("diff-merge-prod").filter(
+    lambda t: t.scores.get("tests_passed") == 1.0,
+)
+
+sft_recipe = SFTRecipe(
+    model=Model("Qwen/Qwen3-8B"),
+    adapter=adapters.LoRA(rank=32, merge_on_export=True),
+    optimizer=optim.AdamW(lr=2e-4),
+    split=splits.BySession(eval_fraction=0.10),
+)
+
+sft = client.runs.create(
+    dataset=dataset,
+    name="fast-diff-merge",
+    recipe=sft_recipe,
+).wait(
+    on_metric=lambda m: print(f"step={m.step} loss={m.loss:.4f}"),
+)
+
+print(sft.artifact.id)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, Model, adapters, optim, recipes, splits } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = (await grad.datasets.get("diff-merge-prod")).filter(
+  (t) => t.scores.tests_passed === 1.0,
+);
+
+const sft = await grad.runs
+  .create({
+    dataset,
+    name: "fast-diff-merge",
+    recipe: recipes.sft({
+      model: new Model("Qwen/Qwen3-8B"),
+      adapter: adapters.lora({ rank: 32, mergeOnExport: true }),
+      optimizer: optim.adamW({ lr: 2e-4 }),
+      split: splits.bySession({ evalFraction: 0.1 }),
+    }),
+  })
+  .wait();
+
+console.log(sft.artifact.id);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI (YAML)">
+
+```yaml
+# sft-diff-merge.yaml
+dataset:
+  name: diff-merge-prod
+  filter:
+    min_score:
+      tests_passed: 1.0
+name: fast-diff-merge
+recipe: sft
+model: Qwen/Qwen3-8B
+adapter:
+  kind: lora
+  rank: 32
+  merge_on_export: true
+optimizer:
+  kind: adamw
+  lr: 2e-4
+split:
+  strategy: by_session
+  eval_fraction: 0.10
+```
+
+```bash
+grad train -f sft-diff-merge.yaml --wait
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+### Key parameters
+
+| Component | Guidance |
+| --- | --- |
+| `adapters.LoRA(rank=..., merge_on_export=...)` | `rank=16`–`32` works for most single-task fine-tunes (`64` for large coding datasets). Set `merge_on_export=True` for lowest serving latency, or leave `False` to hot-swap adapters on one shared base model. |
+| `optim.AdamW(lr=...)` | Start around `2e-4` for LoRA SFT. |
+| `splits.BySession(0.10)` | Keeps all turns from the same conversation together across train and held-out eval. |
+
+## Deploy with syntax fallback
+
+For structured JSON, SQL, or code-editing [endpoints](/docs/training/endpoints/), pair the trained [`Artifact`](/docs/training/artifacts/) with `strategies.SyntaxFallback` and any built-in `validators.*` class (`validators.TypeScriptAST()`, `validators.JSONSchema(...)`, `validators.SQL()`) or your own callable. Invalid outputs automatically retry on your fallback model:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, Model, strategies, validators
+
+client = Grad()
+capture = client.datasets.get("diff-merge-prod")
+
+endpoint = client.endpoints.create(
+    slug="fast-diff-merge",
+    artifact=sft.artifact,
+    capture_dataset=capture,
+    strategy=strategies.SyntaxFallback(
+        validator=validators.TypeScriptAST(),
+        fallback=Model("Qwen/Qwen3-32B"),
+    ),
+)
+
+merged = endpoint.infer(payload={"original": original, "edit": edit})
+
+merged.record_feedback(
+    score=1.0 if tests_passed else 0.0,
+    expected_output={"merged_code": human_fix} if human_fix else None,
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, Model, strategies, validators } from "@gradiated/grad";
+
+const grad = new Grad();
+const capture = await grad.datasets.get("diff-merge-prod");
+
+const endpoint = await grad.endpoints.create({
+  slug: "fast-diff-merge",
+  artifact: sft.artifact,
+  captureDataset: capture,
+  strategy: strategies.syntaxFallback({
+    validator: validators.typeScriptAST(),
+    fallback: new Model("Qwen/Qwen3-32B"),
+  }),
+});
+
+const merged = await endpoint.infer<{ mergedCode: string }>({
+  payload: { original, edit },
+});
+
+await merged.recordFeedback({
+  score: testsPassed ? 1.0 : 0.0,
+  expectedOutput: humanFix ? { merged_code: humanFix } : undefined,
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+type MergeOut struct {
+	MergedCode string `json:"merged_code"`
+}
+endpoint, _ := client.Endpoints.Get(ctx, "fast-diff-merge")
+merged, _ := grad.InferAs[MergeOut](ctx, endpoint, grad.InferInput{
+	Payload: map[string]any{"original": original, "edit": edit},
+})
+_ = merged.RecordFeedback(ctx, grad.Feedback{Score: score})
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://api.gradiated.com/v1/endpoints/fast-diff-merge/infer \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"payload": {"original": "...", "edit": "..."}}}'
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+<DocsCallout label="Turn production misses into your next dataset" tone="tip">
+Whenever a developer fixes a bad output or `SyntaxFallback` catches invalid JSON/AST, attaching `expected_output` via `record_feedback()` logs both the rejected attempt and the gold fix on the same trajectory — giving you ready-made examples for your next SFT or [DPO](/docs/training/recipes/dpo/) run.
+</DocsCallout>
+
+## Want more control?
+
+Drop to [Custom loops](/docs/training/custom-loops/) for differential LoRA+ learning rates (`optim.ParamGroup`) or zero-train-token checkpoint merging ([Artifacts](/docs/training/artifacts/)).
+
+<DocsNext>
+  <a href="/docs/training/recipes/dpo/">
+    <small>Next guide</small>
+    <strong>Preference tuning (DPO)</strong>
+  </a>
+  <a href="/docs/training/recipes/rl-agents/">
+    <small>RL agents</small>
+    <strong>RL for agents</strong>
+  </a>
+</DocsNext>

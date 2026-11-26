@@ -54,7 +54,7 @@ See the [SystemOne SDK guide](/docs/systemone-sdk/) for linden-1 examples and su
 | `POST` | `/v1/trainers/{id}/export` | Freeze trained weights and `eval_report` into an immutable `.grad` artifact. |
 | `POST` / `DELETE` | `/v1/secrets` / `/v1/secrets/{name}` | Store or delete write-only named workspace secrets for observability sync. |
 
-## Artifacts and endpoints
+## Artifacts
 
 | Method | Path | Purpose |
 | --- | --- | --- |
@@ -67,6 +67,11 @@ See the [SystemOne SDK guide](/docs/systemone-sdk/) for linden-1 examples and su
 | `POST` | `/v1/artifacts/{id}/embed` | Extract cached embeddings or hidden states (optional `pool` override). |
 | `POST` | `/v1/artifacts/{id}/tokenize` | Server-side tokenization and chat-template rendering (`messages`, `tools`, `media`, optional `return_loss_mask`). |
 | `GET` | `/v1/tensors/{ref_id}` | Fetch binary Safetensors/Arrow payloads for opaque `TensorRef`s. |
+
+## Endpoints
+
+| Method | Path | Purpose |
+| --- | --- | --- |
 | `POST` / `GET` / `PATCH` / `DELETE` | `/v1/endpoints` / `/v1/endpoints/{name}` | Manage named production endpoints over one or more artifacts. |
 | `POST` | `/v1/endpoints/{name}/promote` | Promote an artifact to `shadow`, `canary`, or `active`. |
 | `GET` | `/v1/endpoints/{name}/status` | Inspect live canary telemetry, SLA drop, and cost savings. |

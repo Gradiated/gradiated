@@ -117,7 +117,7 @@ The SDK passes strict domain entities (`Dataset`, `Model`, `Artifact`, `Endpoint
 | **Losses & Advantages** | Extensible `Loss` / `AdvantageEstimator` | Built-in GPU kernels (`losses.CrossEntropy`, `losses.BCEWithLogits`, `losses.OrdinalBCE`, `losses.DPO`, `losses.ImportanceSampling`, `losses.GRPO`, `losses.CISPO`, `losses.ReverseKLDistill`, `losses.TopKKLDistill`, `losses.InfoNCE`, `losses.BCESparsePositions`), user `losses.CustomLoss` subclasses, and `advantages.GroupStd`, `advantages.GroupMean`, `advantages.RLOO` |
 | **Solvers, Splitters & Mergers** | Extensible interfaces | `solvers.DualHeadKernelLBFGS`, `solvers.MeanDiffSteering`, `splits.BySession`, `splits.ByGroup`, `splits.Random`, `mergers.TIES`, `mergers.Linear`, `mergers.DARE`, `mergers.SLERP` *(filter datasets with any `dataset.filter(lambda t: ...)` predicate)* |
 | **Rubrics & Validators** | Typed scorers & validators | `Rubric`, `Scorer`, `Judge(Scorer)`, `StatefulScorer(Scorer)`, `GroupScorer`, `PairwiseJudge(GroupScorer)`; `validators.TypeScriptAST`, `validators.JSONSchema`, `validators.SQL` (or any `Callable[[str], bool]`) |
-| **Recipes** | Subclassable `Recipe` + chained `Run` | `RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe(rollout=OnPolicy/OffPolicy)`, `CartridgeRecipe(context=Context.from_file(...), num_tokens=256)` — chain via `run.then(...)` or pending `run.artifact`, stream via `run.metrics()` |
+| **Recipes** | Subclassable `Recipe` + chained `Run` | `RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe(rollout=OnPolicy/OffPolicy)`, `CartridgeRecipe(context=Context.from_file(...), num_tokens=256)`, `RewardModelRecipe`, `EmbeddingRecipe` — chain via `run.then(...)` or pending `run.artifact`, stream via `run.metrics()` |
 | **Endpoint Strategies** | Extensible `Strategy` base class | `strategies.Direct`, `strategies.SLALagrangian`, `strategies.ConfidenceFallback`, `strategies.SyntaxFallback`, `strategies.Cascade`, `strategies.BestOfN`, `strategies.MajorityVote`, `strategies.BudgetForcing` (configurable or subclassable) |
 
 - `Artifact` subclasses `Model`, so `model=` on any `Recipe`, `Trainer`, or `Strategy` accepts a pure `Model("Qwen/Qwen3-8B")` ref, a live `client.models.get(...)` handle, a completed `Artifact`, or a pending `run.artifact` from an in-flight run.
@@ -130,7 +130,7 @@ The SDK passes strict domain entities (`Dataset`, `Model`, `Artifact`, `Endpoint
 - `Model.score_logprobs()` / `Artifact.score_logprobs()` returns a typed `ScoreResult` (`.response_logprobs`, `.aligned_logprobs`, `.topk_refs`, `.candidate_logprobs`, `.layer_refs`) for full sequences, `Trajectory` objects, or `(prefix_tokens, response_tokens)` pairs.
 - `Model.infer()` / `Artifact.infer_batch()` accept `Record` or `Trajectory` lists and return typed `InferResult` objects (`.logits`, `.heads`).
 - `Model.tokenize()` renders chat templates server-side (`messages`, `tools`, `media`, optional `return_loss_mask=True`); `Trainer` calls this automatically whenever you pass untokenized `Record(messages=...)`, `PreferencePair`, or `Triplet` inputs.
-- An **`Endpoint`** is a mutable production slot over **one or more** artifacts retrieved via `client.endpoints.get(slug)` or returned by `client.endpoints.create(...)` / `artifact.deploy()` / `run.deploy()`. See [Artifacts and endpoints](/docs/training/endpoints/).
+- An **`Endpoint`** is a mutable production slot over **one or more** [artifacts](/docs/training/artifacts/) retrieved via `client.endpoints.get(slug)` or returned by `client.endpoints.create(...)` / `artifact.deploy()` / `run.deploy()`. See [Artifacts](/docs/training/artifacts/) and [Endpoints](/docs/training/endpoints/).
 
 <DocsNext>
   <a href="/docs/api-reference/">
@@ -139,6 +139,6 @@ The SDK passes strict domain entities (`Dataset`, `Model`, `Artifact`, `Endpoint
   </a>
   <a href="/docs/training/trajectories/">
     <small>Data</small>
-    <strong>Trajectories and data</strong>
+    <strong>Trajectories</strong>
   </a>
 </DocsNext>

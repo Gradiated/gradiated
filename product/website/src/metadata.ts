@@ -194,34 +194,49 @@ const pageMetadata: Record<string, PageMetadataContent> = {
       "Train routers, classifiers, reward models, and fine-tuned or RL-tuned LLMs from traces or environments using Gradiated.",
   },
   "/docs/training/trajectories/": {
-    title: "Trajectories and data",
+    title: "Trajectories",
     description:
-      "Push, import, and sync LLM trajectories from PostHog, Langfuse, Braintrust, OpenTelemetry, or Parquet files into Gradiated datasets.",
+      "Push, import, score, filter, and sync LLM trajectories from PostHog, Langfuse, Braintrust, OpenTelemetry, or Parquet files into Gradiated datasets.",
   },
   "/docs/training/recipes/": {
     title: "Training recipes",
     description:
-      "Run managed recipes for routers, classifiers, SFT, DPO, GRPO, distillation, and Cartridges with smart defaults and typed YAML config.",
+      "Run composable recipes for routers, classifiers, SFT, DPO, GRPO, distillation, Cartridges, reward models, and embeddings with smart defaults.",
+  },
+  "/docs/training/rubrics/": {
+    title: "Rubrics",
+    description:
+      "Grade datasets and RL rollouts with composable scorers, validators, and model-based Judges.",
   },
   "/docs/training/environments/": {
-    title: "Environments and rubrics",
+    title: "Environments",
     description:
-      "Define typed tasks, score trajectories with rubrics and judges, and run multi-turn RL rollouts against Harbor benchmarks, MCP servers, and Docker Compose apps.",
+      "Define typed tasks and run multi-turn RL rollouts against Harbor benchmarks, MCP servers, Docker Compose apps, and existing agent harnesses.",
   },
   "/docs/training/traces-to-environments/": {
     title: "Building an environment from traces",
     description:
       "Turn production LLM traces into verifiable RL environments: trace-to-task rubrics, mock tool-replay sandboxes, and fail-to-pass Harbor benchmarks.",
   },
+  "/docs/training/artifacts/": {
+    title: "Artifacts",
+    description:
+      "Inspect, evaluate, merge, download, and deploy immutable .grad model artifacts produced by Gradiated training runs.",
+  },
+  "/docs/training/endpoints/": {
+    title: "Endpoints",
+    description:
+      "Serve one or more .grad artifacts behind named endpoints with shadow testing, canary rollouts, extensible strategies, and feedback capture.",
+  },
   "/docs/training/custom-loops/": {
     title: "Custom training loops",
     description:
       "Build custom RL, preference, distillation, and PyTorch loss loops directly on Gradiated Trainer and Artifact primitives.",
   },
-  "/docs/training/endpoints/": {
-    title: "Artifacts and endpoints",
+  "/docs/training/advanced-objectives/": {
+    title: "Advanced objectives",
     description:
-      "Promote immutable .grad artifacts to named endpoints for shadow testing, canary rollouts, SLA routing, cascades, and feedback capture.",
+      "Research-grade PyTorch losses, PPO, GSPO, CISPO, SCoRe, step-level PRMs, ColBERT + Matryoshka embeddings, and SDFT on Gradiated.",
   },
   "/docs/training/self-hosting/": {
     title: "Self-hosting grad",
@@ -231,27 +246,32 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/training/recipes/router/": {
     title: "Model router guide",
     description:
-      "Train and deploy a calibrated SLA-bounded model router on CPU or GPU using Gradiated trajectories and fallback probes.",
+      "Train and deploy a calibrated SLA-bounded model router using Gradiated trajectories and fallback probes.",
   },
   "/docs/training/recipes/classifier/": {
-    title: "Classifiers and decisions guide",
+    title: "Classifiers guide",
     description:
       "Train calibrated binary guardrails, multiclass triage models, and ordinal effort detectors with automatic confidence fallback.",
   },
-  "/docs/training/recipes/sft-dpo/": {
-    title: "Fine-tuning and preferences guide",
+  "/docs/training/recipes/sft/": {
+    title: "Supervised fine-tuning (SFT) guide",
     description:
-      "Run LoRA supervised fine-tuning and DPO alignment on verified trajectories, then deploy with automatic syntax fallback.",
+      "Fine-tune open models on verified gold trajectories with SFTRecipe and deploy with automatic syntax fallback.",
+  },
+  "/docs/training/recipes/dpo/": {
+    title: "Preference tuning (DPO) guide",
+    description:
+      "Align fine-tuned models away from recurring failure modes using preference pairs with DPORecipe.",
   },
   "/docs/training/recipes/rl-agents/": {
     title: "RL for agents guide",
     description:
-      "Train reasoning and tool-use agents with GRPO, DAPO, CISPO, RLOO, and GSPO against rubrics and Docker Compose environments.",
+      "Train reasoning and tool-use agents with GRPORecipe, rubrics, judges, and verifiable environments.",
   },
   "/docs/training/recipes/distillation/": {
     title: "Model distillation guide",
     description:
-      "Distill larger teacher models into fast students with on-policy top-k KL, custom divergences, and Self-Distillation Fine-Tuning (SDFT).",
+      "Distill larger teacher models into fast 4B–8B students with on-policy top-k KL using DistillRecipe.",
   },
   "/docs/training/recipes/cartridges/": {
     title: "Context Cartridges guide",
@@ -259,14 +279,14 @@ const pageMetadata: Record<string, PageMetadataContent> = {
       "Compress 30k–100k token static corpora and repeated system prompts into hot-swappable KV-cache Cartridges with CartridgeRecipe.",
   },
   "/docs/training/recipes/reward-models/": {
-    title: "Reward models and verifiers guide",
+    title: "Reward models guide",
     description:
-      "Train pairwise Bradley-Terry reward models, step-level process reward models, and generative judges for RL rubrics and production cascades.",
+      "Train task-specific verifier models from preference pairs with RewardModelRecipe for Judges and production cascades.",
   },
   "/docs/training/recipes/embeddings/": {
-    title: "Embeddings and rerankers guide",
+    title: "Embeddings guide",
     description:
-      "Fine-tune dense bi-encoders with InfoNCE, Matryoshka and ColBERT multi-vector retrievers, and cross-encoder rerankers with hard-negative refresh.",
+      "Fine-tune domain-specific dense embedding models on internal jargon and codebases with EmbeddingRecipe.",
   },
   "/docs/api-reference/": {
     title: "API reference",

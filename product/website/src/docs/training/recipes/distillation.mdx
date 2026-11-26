@@ -1,13 +1,13 @@
 # Model distillation
 
-<DocsLead>Shrink a slow teacher model into a fast student with on-policy top-k KL distillation, custom divergences, or Self-Distillation Fine-Tuning (SDFT).</DocsLead>
+<DocsLead>Shrink a slow frontier or 32B teacher model into a fast 4B–8B student using on-policy distillation on your production prompts — no gold answers required.</DocsLead>
 
-Offline SFT on teacher outputs teaches the student what the teacher says on *teacher* prefixes, which drifts as soon as the student generates its own tokens. **`DistillRecipe`** with on-policy rollouts (`rollout=OnPolicy(...)`) samples from the **student**, scores those exact sequences with the **teacher's** top-`k` logprobs, and minimizes KL divergence where the student actually goes.
+Offline SFT on teacher outputs teaches the student what the teacher says on *teacher* prefixes, which drifts as soon as the student generates its own tokens. **`DistillRecipe`** with on-policy rollouts (`rollout=OnPolicy(...)`) samples from the **student**, scores those exact sequences with the **teacher's** probabilities, and minimizes KL divergence where the student actually goes.
 
 ## What data you need
 
 - **Only prompts:** You do not need gold answers — 1,000–5,000 representative production prompts in `input.messages` ([trajectories](/docs/training/trajectories/)) are enough.
-- **A teacher model:** Any catalog `Model` (`Model("Qwen/Qwen3-32B")`) or a larger fine-tuned `.grad` [`Artifact`](/docs/training/endpoints/) you trained earlier.
+- **A teacher model:** Any catalog `Model` (`Model("Qwen/Qwen3-32B")`) or a larger fine-tuned `.grad` [`Artifact`](/docs/training/artifacts/) you trained earlier.
 
 ## Train with `DistillRecipe`
 
@@ -94,78 +94,21 @@ grad train -f distill-4b.yaml --wait
   </DocsCodeTab>
 </DocsCodeTabs>
 
-## Custom distillation divergences (`CustomLoss` + `gather_indices`)
-
-For custom divergences such as Jensen-Shannon divergence (GKD) or Skew KL (DistiLLM), fetch `top_k` opaque `TensorRef`s from the teacher and pass `gather_indices=t_refs` to `trainer.forward_backward(...)`. Only `(T_resp, 32)` student logprobs cross the wire, and `out.teacher_topk_logprobs` is automatically batch-fetched in a single RPC:
-
-```python
-import torch
-from grad import Grad, Model, adapters, losses, optim
-
-class JSDLoss(losses.CustomLoss):
-    outputs = ("topk_logprobs",)
-
-    def __init__(self, beta: float = 0.5):
-        self.beta = beta
-
-    def compute(self, records, out) -> torch.Tensor:
-        terms = []
-        for slp, tlp in zip(out.topk_logprobs, out.teacher_topk_logprobs):
-            pt, ps = torch.softmax(tlp, dim=-1), torch.softmax(slp, dim=-1)
-            m = self.beta * pt + (1.0 - self.beta) * ps
-            kl_t = (pt * (torch.log(pt + 1e-9) - torch.log(m + 1e-9))).sum(-1)
-            kl_s = (ps * (torch.log(ps + 1e-9) - torch.log(m + 1e-9))).sum(-1)
-            terms.append((self.beta * kl_t + (1.0 - self.beta) * kl_s).mean())
-        return torch.stack(terms).mean()
-
-client = Grad()
-teacher = client.models.get("Qwen/Qwen3-32B")
-
-with client.trainers.create(model=Model("Qwen/Qwen3-4B"), adapter=adapters.LoRA(rank=32)) as trainer:
-    rollouts = [g[0] for g in trainer.snapshot().sample(prompt_inputs, n=1, max_new_tokens=256)]
-    t_refs = teacher.score_logprobs(rollouts, top_k=32).topk_refs
-
-    batch = [r.with_targets(teacher_topk=ref) for r, ref in zip(rollouts, t_refs)]
-
-    trainer.forward_backward(batch, loss=JSDLoss(beta=0.5), gather_indices=t_refs).result()
-    trainer.optim_step(optim.AdamW(lr=1e-4)).result()
-```
-
-## Self-Distillation Fine-Tuning (SDFT)
-
-Want continual learning from golden demonstrations without hosting a larger teacher model or suffering SFT catastrophic forgetting? In SDFT, the **same base model** acts as teacher when shown the question *plus* a golden demo in context, while the student sees only the question. Because `score_logprobs` accepts split `(prefix_tokens, response_tokens)` and `with_targets()` aligns `response_offset` automatically, the full loop is 15 lines:
-
-```python
-teacher = client.models.get("Qwen/Qwen3-8B")  # frozen base model, no extra deployment
-
-with client.trainers.create(model=teacher, adapter=adapters.LoRA(rank=64)) as trainer:
-    for demo_batch in demo_batches:
-        # Student generates on-policy seeing ONLY the question
-        rollouts = [g[0] for g in trainer.snapshot().sample(demo_batch.question_inputs, n=1, max_new_tokens=512)]
-
-        # Teacher scores the student's exact tokens while conditioning on (question + golden_demo)
-        t_refs = teacher.score_logprobs(
-            demo_batch.demo_prefix_tokens,
-            response_tokens=[r.response_tokens for r in rollouts],
-            top_k=20,
-        ).topk_refs
-
-        records = [r.with_targets(teacher_topk=ref) for r, ref in zip(rollouts, t_refs)]
-        trainer.forward_backward(records, loss=losses.TopKKLDistill()).result()
-        trainer.optim_step(optim.AdamW(lr=2e-5)).result()
-```
-
 <DocsCallout label="Compressing a long static system prompt instead?" tone="tip">
-To eliminate 30k–100k repeated tokens of documentation or per-tenant context on every request, see the dedicated [Context Cartridges (`CartridgeRecipe`)](/docs/training/recipes/cartridges/) guide.
+To eliminate 30k–100k repeated tokens of documentation or per-tenant context on every request, see [Context Cartridges](/docs/training/recipes/cartridges/).
 </DocsCallout>
 
 ## Deploy and serve
 
-Distilled checkpoints export as standard `.grad` artifacts and deploy onto any [`Endpoint`](/docs/training/endpoints/) with `strategies.Direct()` (or `strategies.Cascade` paired with a verifier):
+Distilled checkpoints export as standard `.grad` [`Artifact`](/docs/training/artifacts/)s and deploy onto any [`Endpoint`](/docs/training/endpoints/) with `strategies.Direct()` (or `strategies.Cascade` paired with a [reward model](/docs/training/recipes/reward-models/)):
 
 ```python
 endpoint = run.deploy(canary=0.10)
 ```
+
+## Want more control?
+
+Need custom distillation divergences (Jensen-Shannon / GKD, Skew KL) or Self-Distillation Fine-Tuning (SDFT) for continual learning without catastrophic forgetting? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
   <a href="/docs/training/recipes/cartridges/">
@@ -174,6 +117,6 @@ endpoint = run.deploy(canary=0.10)
   </a>
   <a href="/docs/training/recipes/reward-models/">
     <small>Verifiers</small>
-    <strong>Reward models and verifiers</strong>
+    <strong>Reward models</strong>
   </a>
 </DocsNext>

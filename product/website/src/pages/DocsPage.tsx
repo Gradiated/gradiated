@@ -44,21 +44,25 @@ import DocsQuickstart from "../docs/quickstart.mdx";
 import DocsPrimitivesReference from "../docs/reference/primitives.mdx";
 import DocsServiceTiers from "../docs/service-tiers.mdx";
 import DocsSystemOneSdk from "../docs/systemone-sdk.mdx";
+import DocsTrainingAdvancedObjectives from "../docs/training/advanced-objectives.mdx";
+import DocsTrainingArtifacts from "../docs/training/artifacts.mdx";
 import DocsTrainingCustomLoops from "../docs/training/custom-loops.mdx";
 import DocsTrainingEndpoints from "../docs/training/endpoints.mdx";
 import DocsTrainingEnvironments from "../docs/training/environments.mdx";
-import DocsTrainingTracesToEnvironments from "../docs/training/traces-to-environments.mdx";
 import DocsTrainingOverview from "../docs/training/index.mdx";
 import DocsTrainingRecipes from "../docs/training/recipes.mdx";
+import DocsTrainingRubrics from "../docs/training/rubrics.mdx";
 import DocsTrainingSelfHosting from "../docs/training/self-hosting.mdx";
+import DocsTrainingTracesToEnvironments from "../docs/training/traces-to-environments.mdx";
 import DocsRecipeCartridges from "../docs/training/recipes/cartridges.mdx";
 import DocsRecipeClassifier from "../docs/training/recipes/classifier.mdx";
 import DocsRecipeDistillation from "../docs/training/recipes/distillation.mdx";
+import DocsRecipeDpo from "../docs/training/recipes/dpo.mdx";
 import DocsRecipeEmbeddings from "../docs/training/recipes/embeddings.mdx";
 import DocsRecipeRewardModels from "../docs/training/recipes/reward-models.mdx";
 import DocsRecipeRlAgents from "../docs/training/recipes/rl-agents.mdx";
 import DocsRecipeRouter from "../docs/training/recipes/router.mdx";
-import DocsRecipeSftDpo from "../docs/training/recipes/sft-dpo.mdx";
+import DocsRecipeSft from "../docs/training/recipes/sft.mdx";
 import DocsTrainingTrajectories from "../docs/training/trajectories.mdx";
 
 type DocsDocument = {
@@ -129,7 +133,7 @@ export const documents = {
     Component: DocsTrainingOverview,
   },
   "training-trajectories": {
-    title: "Trajectories and data",
+    title: "Trajectories",
     path: "/docs/training/trajectories/",
     Component: DocsTrainingTrajectories,
   },
@@ -138,8 +142,13 @@ export const documents = {
     path: "/docs/training/recipes/",
     Component: DocsTrainingRecipes,
   },
+  "training-rubrics": {
+    title: "Rubrics",
+    path: "/docs/training/rubrics/",
+    Component: DocsTrainingRubrics,
+  },
   "training-environments": {
-    title: "Environments and rubrics",
+    title: "Environments",
     path: "/docs/training/environments/",
     Component: DocsTrainingEnvironments,
   },
@@ -148,15 +157,25 @@ export const documents = {
     path: "/docs/training/traces-to-environments/",
     Component: DocsTrainingTracesToEnvironments,
   },
+  "training-artifacts": {
+    title: "Artifacts",
+    path: "/docs/training/artifacts/",
+    Component: DocsTrainingArtifacts,
+  },
+  "training-endpoints": {
+    title: "Endpoints",
+    path: "/docs/training/endpoints/",
+    Component: DocsTrainingEndpoints,
+  },
   "training-custom-loops": {
     title: "Custom loops",
     path: "/docs/training/custom-loops/",
     Component: DocsTrainingCustomLoops,
   },
-  "training-endpoints": {
-    title: "Artifacts and endpoints",
-    path: "/docs/training/endpoints/",
-    Component: DocsTrainingEndpoints,
+  "training-advanced-objectives": {
+    title: "Advanced objectives",
+    path: "/docs/training/advanced-objectives/",
+    Component: DocsTrainingAdvancedObjectives,
   },
   "training-self-hosting": {
     title: "Self-hosting",
@@ -169,17 +188,22 @@ export const documents = {
     Component: DocsRecipeRouter,
   },
   "recipe-classifier": {
-    title: "Classifiers and decisions",
+    title: "Classifiers",
     path: "/docs/training/recipes/classifier/",
     Component: DocsRecipeClassifier,
   },
-  "recipe-sft-dpo": {
-    title: "Fine-tuning (SFT & DPO)",
-    path: "/docs/training/recipes/sft-dpo/",
-    Component: DocsRecipeSftDpo,
+  "recipe-sft": {
+    title: "Supervised fine-tuning (SFT)",
+    path: "/docs/training/recipes/sft/",
+    Component: DocsRecipeSft,
+  },
+  "recipe-dpo": {
+    title: "Preference tuning (DPO)",
+    path: "/docs/training/recipes/dpo/",
+    Component: DocsRecipeDpo,
   },
   "recipe-rl-agents": {
-    title: "RL for agents (GRPO)",
+    title: "RL for agents",
     path: "/docs/training/recipes/rl-agents/",
     Component: DocsRecipeRlAgents,
   },
@@ -194,12 +218,12 @@ export const documents = {
     Component: DocsRecipeCartridges,
   },
   "recipe-reward-models": {
-    title: "Reward models and verifiers",
+    title: "Reward models",
     path: "/docs/training/recipes/reward-models/",
     Component: DocsRecipeRewardModels,
   },
   "recipe-embeddings": {
-    title: "Embeddings and rerankers",
+    title: "Embeddings",
     path: "/docs/training/recipes/embeddings/",
     Component: DocsRecipeEmbeddings,
   },
@@ -238,11 +262,11 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
       "training-overview",
       "training-trajectories",
       "training-recipes",
+      "training-rubrics",
       "training-environments",
       "training-traces-to-environments",
-      "training-custom-loops",
+      "training-artifacts",
       "training-endpoints",
-      "training-self-hosting",
     ],
   },
   {
@@ -250,12 +274,21 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
     items: [
       "recipe-router",
       "recipe-classifier",
-      "recipe-sft-dpo",
+      "recipe-sft",
+      "recipe-dpo",
       "recipe-rl-agents",
       "recipe-distillation",
       "recipe-cartridges",
       "recipe-reward-models",
       "recipe-embeddings",
+    ],
+  },
+  {
+    heading: "Advanced",
+    items: [
+      "training-custom-loops",
+      "training-advanced-objectives",
+      "training-self-hosting",
     ],
   },
   { heading: "Integrations", items: ["opencode", "codex", "claude-code"] },
@@ -269,6 +302,7 @@ export const legacyPaths: Record<string, string> = {
   "/docs/migrate/": documents.quickstart.path,
   "/docs/streaming/": documents["openai-sdk"].path,
   "/docs/tool-calling/": documents["openai-sdk"].path,
+  "/docs/training/recipes/sft-dpo/": documents["recipe-sft"].path,
   "/docs/usage/": documents.index.path,
 };
 

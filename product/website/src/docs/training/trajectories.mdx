@@ -1,6 +1,6 @@
-# Trajectories and data
+# Trajectories
 
-<DocsLead>Every training run reads from a dataset of trajectories: production traces, labeled examples, or multi-turn rollouts stored in one model-agnostic schema.</DocsLead>
+<DocsLead>Every training run reads from a `Dataset` of trajectories: production traces, labeled examples, or multi-turn rollouts stored in one model-agnostic schema.</DocsLead>
 
 Populate a dataset in any of four ways:
 
@@ -155,7 +155,7 @@ The import result lists how many trajectories were parsed, how many were dropped
 
 Filter a `Dataset` with any predicate function `(Trajectory) -> bool` — `dataset.filter(...)` returns a reusable `Dataset` view so data selection stays separate from your `Recipe` hyperparameters.
 
-When you want to filter by a model-graded criterion (e.g. "did the assistant resolve the user's request without hallucinating?"), score the dataset once with a [`Judge`](/docs/training/environments/) (`Judge` subclasses `Scorer` and accepts either a catalog `Model` + `prompt` or a trained verifier `Artifact`). `dataset.score(...)` runs batched on the server, skips already-scored trajectories, and persists results to `trajectory.scores` so you can adjust filter thresholds or reuse scores across runs without re-judging:
+When you want to filter by a model-graded criterion (e.g. "did the assistant resolve the user's request without hallucinating?"), score the dataset once with a [`Judge`](/docs/training/rubrics/) (`Judge` subclasses `Scorer` and accepts either a catalog `Model` + `prompt` or a trained verifier [`Artifact`](/docs/training/artifacts/)). `dataset.score(...)` runs batched on the server, skips already-scored trajectories, and persists results to `trajectory.scores` so you can adjust filter thresholds or reuse scores across runs without re-judging:
 
 ```python
 from grad import Grad, Judge, Model
@@ -292,8 +292,8 @@ Need images, audio, tools, or the full JSON field list? See the [Primitives refe
     <small>Next</small>
     <strong>Recipes</strong>
   </a>
-  <a href="/docs/training/environments/">
-    <small>RL &amp; evals</small>
-    <strong>Environments and rubrics</strong>
+  <a href="/docs/training/rubrics/">
+    <small>Grading</small>
+    <strong>Rubrics</strong>
   </a>
 </DocsNext>

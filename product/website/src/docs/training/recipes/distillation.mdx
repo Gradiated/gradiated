@@ -7,7 +7,7 @@ If you just fine-tune a small model on saved outputs from a big model, it can go
 ## What data you need
 
 - **Only prompts:** you don't need labeled answers; 1,000–5,000 real prompts in `input.messages` ([trajectories](/docs/training/trajectories/)) are enough.
-- **A teacher model:** any larger `Model` (`"qwen/qwen3-32b"`) or a fine-tuned `.grad` [`Artifact`](/docs/training/artifacts/) you trained earlier.
+- **A teacher model:** any larger base model (such as `"qwen/qwen3-32b"`) or a fine-tuned `.grad` [`Artifact`](/docs/training/artifacts/) you trained earlier.
 
 ## Train with `DistillRecipe`
 
@@ -95,7 +95,7 @@ grad train -f distill-4b.yaml --wait
 
 ### Key parameters
 
-- **`teacher`:** the stronger model you want to copy, either a catalog `Model` (like `"qwen/qwen3-32b"`) or a larger `.grad` [`Artifact`](/docs/training/artifacts/) you already fine-tuned.
+- **`teacher`:** the stronger model you want to copy, either a catalog model (like `"qwen/qwen3-32b"`) or a larger `.grad` [`Artifact`](/docs/training/artifacts/) you already fine-tuned.
 - **`rollout=OnPolicy(max_new_tokens=512)`:** generates answers from the student and grades them with the teacher so the student learns where it actually makes mistakes. Switch to `OffPolicy()` only if you already have fixed teacher completions you want to train on directly.
 - **`losses.TopKKLDistill(top_k=32)`:** matches the teacher's top 32 next-token probabilities at every step (`top_k=16..32` captures almost all the signal cleanly).
 - **`optim.AdamW(lr=...)`:** start around `1e-4` for LoRA distillation.

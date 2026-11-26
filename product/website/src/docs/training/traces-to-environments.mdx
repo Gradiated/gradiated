@@ -126,7 +126,7 @@ tasks = [extract_replay_task(t) for t in hard_traces]
 ```
 
 <DocsCallout label="Handling unexpected tool calls" tone="tip">
-During RL, the model will try tool arguments that weren't in the original log. Return a realistic `"not_found"` response from your local store (or fall back to a small mock `Model`) instead of crashing the run.
+During RL, the model will try tool arguments that weren't in the original log. Return a realistic `"not_found"` response from your local store (or fall back to a small mock model) instead of crashing the run.
 </DocsCallout>
 
 ## Level 3: Trace to Harbor containers (coding, CLI, and full-stack apps)

@@ -2,7 +2,7 @@
 
 <DocsLead>Score model outputs and datasets with Python checks, validators, or an LLM judge.</DocsLead>
 
-A **`Rubric`** combines one or more weighted **`Scorer`**s into an overall score while saving each individual check in [`trajectory.scores`](/docs/training/trajectories/). You can reuse the same `Rubric` or `Judge` in three places:
+A **`Rubric`** combines one or more weighted **`Scorer`** checks into an overall score while saving each individual check in [`trajectory.scores`](/docs/training/trajectories/). You can reuse the same `Rubric` or `Judge` in three places:
 
 - **Cleaning datasets:** score old logs once with [`dataset.score(rubric)`](/docs/training/trajectories/), then filter on the scores.
 - **Managed RL:** pass `rubric=` directly to [`GRPORecipe`](/docs/training/recipes/rl-agents/).
@@ -33,9 +33,9 @@ Pick the scorer class that matches how you grade an answer:
 | Class | Signature | When to use it |
 | --- | --- | --- |
 | **`Scorer`** | `(traj: Trajectory) -> float` | Fast code checks (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`), exact matches, or your own Python function. |
-| **`Judge(Scorer)`** | `Judge(name, model, prompt=...)` | Grade with a frontier `Model` (`"{{SONNET_MODEL}}"`) **or** a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact` (no prompt needed for a reward model). |
-| **`StatefulScorer(Scorer)`** | `(traj: Trajectory, handle: H) -> float` | Checks that query live Postgres rows, Redis keys, HTTP endpoints, or container files inside an [`Environment`](/docs/training/environments/) before cleanup. |
-| **`GroupScorer`** | `(group: list[Trajectory]) -> list[float]` | Compare multiple candidate answers for the same prompt side by side (for example, **`PairwiseJudge(GroupScorer)`**). |
+| **`Judge`** | `Judge(name, model, prompt=...)` | Grade with a frontier model string (such as `"{{SONNET_MODEL}}"`) **or** a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact` (no prompt needed for a reward model). |
+| **`StatefulScorer`** | `(traj: Trajectory, handle: H) -> float` | Checks that query live Postgres rows, Redis keys, HTTP endpoints, or container files inside an [`Environment`](/docs/training/environments/) before cleanup. |
+| **`GroupScorer`** | `(group: list[Trajectory]) -> list[float]` | Compare multiple candidate answers for the same prompt side by side (for example, **`PairwiseJudge`**). |
 
 To reuse a score already stored on your imported logs, pass `Scorer.from_score("task_success", weight=1.0)`.
 

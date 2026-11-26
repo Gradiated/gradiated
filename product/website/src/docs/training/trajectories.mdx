@@ -155,7 +155,7 @@ The import result lists how many trajectories were parsed, how many were dropped
 
 Filter a `Dataset` with any plain function `(Trajectory) -> bool`. `dataset.filter(...)` returns a new filtered view of the dataset without copying data, keeping data selection separate from your training settings.
 
-If you want to filter by something a human or LLM needs to judge (like "did the assistant answer accurately?"), score the dataset once with a [`Judge`](/docs/training/rubrics/). A `Judge` can use a catalog `Model` with a prompt or a fine-tuned [reward model](/docs/training/recipes/reward-models/) [`Artifact`](/docs/training/artifacts/). `dataset.score(...)` runs in batches on the server, skips rows that already have a score, and saves results to `trajectory.scores` so you can tweak thresholds or reuse them across runs for free:
+If you want to filter by something a human or LLM needs to judge (like "did the assistant answer accurately?"), score the dataset once with a [`Judge`](/docs/training/rubrics/). A `Judge` can use a catalog model with a prompt or a fine-tuned [reward model](/docs/training/recipes/reward-models/) [`Artifact`](/docs/training/artifacts/). `dataset.score(...)` runs in batches on the server, skips rows that already have a score, and saves results to `trajectory.scores` so you can tweak thresholds or reuse them across runs for free:
 
 ```python
 from grad import Grad, Judge

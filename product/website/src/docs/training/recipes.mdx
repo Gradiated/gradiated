@@ -362,7 +362,7 @@ grad train -f recipe.yaml --wait
 
 ## Chaining stages (`SFT → DPO` / `SFT → GRPO`)
 
-Every recipe takes a `Model` (a base model or a trained `Artifact`) and produces a new `Artifact`. `run.artifact` can be passed straight into a second run before the first finishes: use `.then(...)` for a simple chain, pass `model=sft.artifact` if you want to branch, or call `.wait()` in between to check metrics before continuing:
+Every recipe takes a model (a base model string or a trained `Artifact`) and produces a new `Artifact`. `run.artifact` can be passed straight into a second run before the first finishes: use `.then(...)` for a simple chain, pass `model=sft.artifact` if you want to branch, or call `.wait()` in between to check metrics before continuing:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Chained (.then)">

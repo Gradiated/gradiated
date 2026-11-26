@@ -13,7 +13,7 @@ Use **`GRPORecipe`** when you can **grade whether an answer worked** (valid SQL,
 
 ## Train with `GRPORecipe`
 
-Pass a `Dataset` of prompts and a [`Rubric`](/docs/training/rubrics/) with code checks (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`) and/or a `Judge` (a frontier `Model` or a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact`):
+Pass a `Dataset` of prompts and a [`Rubric`](/docs/training/rubrics/) with code checks (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`) and/or a `Judge` (a frontier model string or a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact`):
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">

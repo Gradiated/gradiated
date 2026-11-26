@@ -1,0 +1,5 @@
+split,conflicts,merge_clusters,correct_4b,correct_7b,only_7b,only_4b,delta_pp,ci95_low_pp,ci95_high_pp
+fresh_repo,611,206,416,404,42,54,-1.964,-5.423,1.395
+fresh_time,1000,474,779,732,55,102,-4.7,-10.986,0.43
+w1b_repo,163,82,133,136,8,5,1.84,-1.744,5.618
+w1b_time,153,35,135,134,5,6,-0.654,-3.906,4.431

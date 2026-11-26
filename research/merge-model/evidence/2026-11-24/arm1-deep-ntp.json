@@ -1,0 +1,45 @@
+{
+  "arm": "arm1-deep-ntp",
+  "base": "pooled-control checkpoint-011839 merged into Qwen2.5-Coder-7B-Instruct",
+  "rank": 64,
+  "lr": 0.0002,
+  "kl_weight": 1.5,
+  "epoch_1": {
+    "step": 851,
+    "whole_nll": 0.3807567015323804,
+    "project_source_nll": 0.3879510183726896,
+    "whole_ppl": 1.463391490801681,
+    "project_source_ppl": 1.4739576313764455
+  },
+  "epoch_2": {
+    "step": 1702,
+    "whole_nll": 0.34728207476873535,
+    "project_source_nll": 0.3575114583215541,
+    "whole_ppl": 1.4152158881160602,
+    "project_source_ppl": 1.4297669725410787,
+    "whole_ppl_reduction_pct": 18.61,
+    "project_source_ppl_reduction_pct": 15.46,
+    "duckdb": {
+      "conflicts": 1000,
+      "grouping": "merge",
+      "groups": 329,
+      "control_correct": 681,
+      "adapted_correct": 676,
+      "gained": 32,
+      "lost": 37,
+      "delta": -0.005,
+      "delta_ci95": [-0.02516238206541817, 0.015011727997178918]
+    },
+    "others": {
+      "conflicts": 6398,
+      "grouping": "repo",
+      "groups": 68,
+      "control_correct": 4399,
+      "adapted_correct": 4400,
+      "gained": 126,
+      "lost": 125,
+      "delta": 0.00015629884338855892,
+      "delta_ci95": [-0.006424040205891594, 0.009590412747738954]
+    }
+  }
+}

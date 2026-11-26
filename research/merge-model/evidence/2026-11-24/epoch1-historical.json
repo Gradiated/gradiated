@@ -1,0 +1,58 @@
+{
+  "w1b_repo": {
+    "conflicts": 163,
+    "grouping": "merge",
+    "groups": 82,
+    "control_correct": 136,
+    "adapted_correct": 138,
+    "gained": 3,
+    "lost": 1,
+    "delta": 0.012269938650306749,
+    "delta_ci95": [
+      -0.011051258440761201,
+      0.0375
+    ]
+  },
+  "w1b_time": {
+    "conflicts": 153,
+    "grouping": "merge",
+    "groups": 35,
+    "control_correct": 134,
+    "adapted_correct": 134,
+    "gained": 2,
+    "lost": 2,
+    "delta": 0.0,
+    "delta_ci95": [
+      -0.019830966362118455,
+      0.039473684210526314
+    ]
+  },
+  "fresh_repo": {
+    "conflicts": 611,
+    "grouping": "merge",
+    "groups": 206,
+    "control_correct": 404,
+    "adapted_correct": 400,
+    "gained": 11,
+    "lost": 15,
+    "delta": -0.006546644844517185,
+    "delta_ci95": [
+      -0.022508189402942757,
+      0.01138546954486233
+    ]
+  },
+  "fresh_time": {
+    "conflicts": 1000,
+    "grouping": "merge",
+    "groups": 474,
+    "control_correct": 732,
+    "adapted_correct": 746,
+    "gained": 33,
+    "lost": 19,
+    "delta": 0.014,
+    "delta_ci95": [
+      -0.0063904597563684195,
+      0.038161207086440704
+    ]
+  }
+}

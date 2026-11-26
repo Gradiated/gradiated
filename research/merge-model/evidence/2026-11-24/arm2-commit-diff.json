@@ -1,0 +1,59 @@
+{
+  "arm": "arm2-commit-diff",
+  "base": "pooled-control checkpoint-011839 merged into Qwen2.5-Coder-7B-Instruct",
+  "data": "2,500 strictly pre-cutoff DuckDB commit diffs (< 1595239541, 5,070,993 tokens) + 314 strictly pre-cutoff DuckDB conflicts",
+  "rank": 32,
+  "lr": 0.0001,
+  "sft_weight": 0.5,
+  "kl_weight": 2.5,
+  "epoch_1": {
+    "step": 104,
+    "duckdb": {
+      "conflicts": 1000,
+      "grouping": "merge",
+      "groups": 329,
+      "control_correct": 681,
+      "adapted_correct": 675,
+      "gained": 25,
+      "lost": 31,
+      "delta": -0.006,
+      "delta_ci95": [-0.02242152466367713, 0.010796878560036445]
+    },
+    "others": {
+      "conflicts": 6398,
+      "grouping": "repo",
+      "groups": 68,
+      "control_correct": 4399,
+      "adapted_correct": 4372,
+      "gained": 98,
+      "lost": 125,
+      "delta": -0.004220068771491091,
+      "delta_ci95": [-0.010001548068009465, 0.0017656312566431734]
+    }
+  },
+  "epoch_3": {
+    "step": 312,
+    "duckdb": {
+      "conflicts": 1000,
+      "grouping": "merge",
+      "groups": 329,
+      "control_correct": 681,
+      "adapted_correct": 673,
+      "gained": 32,
+      "lost": 40,
+      "delta": -0.008,
+      "delta_ci95": [-0.02979887471958446, 0.014669926650366748]
+    },
+    "others": {
+      "conflicts": 6398,
+      "grouping": "repo",
+      "groups": 68,
+      "control_correct": 4399,
+      "adapted_correct": 4394,
+      "gained": 117,
+      "lost": 122,
+      "delta": -0.0007814942169427947,
+      "delta_ci95": [-0.0056634354013909245, 0.004705153198011934]
+    }
+  }
+}

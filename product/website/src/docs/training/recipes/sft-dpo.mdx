@@ -144,12 +144,12 @@ grad train -f sft-diff-merge.yaml --wait
   </DocsCodeTab>
 </DocsCodeTabs>
 
-## Stage 2: Preference alignment (`DPORecipe` or `Pipeline`)
+## Stage 2: Preference alignment (`DPORecipe`)
 
-Pass `sft.artifact` directly as `model=` to warm-start from the SFT checkpoint — or compose both stages into a single server-side `Pipeline` so Stage 2 starts automatically when Stage 1 finishes:
+Pass `sft.artifact` directly as `model=` to warm-start from the SFT checkpoint (before or after `.wait()`), or use `.then(...)` as shorthand to queue Stage 2 behind Stage 1 on the server:
 
 <DocsCodeTabs>
-  <DocsCodeTab label="Imperative (inspect SFT first)">
+  <DocsCodeTab label="Pass sft.artifact (inspect or queue)">
 
 ```python
 from grad import adapters, losses, optim
@@ -157,6 +157,7 @@ from grad.recipes import DPORecipe
 
 prefs = client.datasets.get("diff-merge-preferences")
 
+# Works whether `sft` already finished (after `.wait()`) or is still running (queues server-side).
 dpo = client.runs.create(
     dataset=prefs,
     name="fast-diff-merge",
@@ -173,40 +174,37 @@ print(dpo.artifact.id, dpo.eval_report)
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="Declarative Pipeline">
+  <DocsCodeTab label="Fluent chaining (.then)">
 
 ```python
-from grad import Model, Pipeline, Stage, adapters, filters, losses, optim, splits
+from grad import Model, adapters, filters, losses, optim, splits
 from grad.recipes import DPORecipe, SFTRecipe
 
 sft_ds = client.datasets.get("diff-merge-prod").filter(filters.MinScore(tests_passed=1.0))
 prefs_ds = client.datasets.get("diff-merge-preferences")
 
-pipe = Pipeline(
-    model=Model("Qwen/Qwen3-8B"),
-    name="fast-diff-merge",
-    stages=[
-        Stage(
-            dataset=sft_ds,
-            recipe=SFTRecipe(
-                adapter=adapters.LoRA(rank=32),
-                optimizer=optim.AdamW(lr=2e-4),
-                split=splits.BySession(0.10),
-            ),
+dpo = (
+    client.runs.create(
+        dataset=sft_ds,
+        name="fast-diff-merge",
+        recipe=SFTRecipe(
+            model=Model("Qwen/Qwen3-8B"),
+            adapter=adapters.LoRA(rank=32),
+            optimizer=optim.AdamW(lr=2e-4),
+            split=splits.BySession(0.10),
         ),
-        Stage(
-            dataset=prefs_ds,
-            recipe=DPORecipe(
-                adapter=adapters.LoRA(rank=32),
-                loss=losses.DPO(beta=0.1),
-                optimizer=optim.AdamW(lr=5e-5),
-                merge_adapter=True,
-            ),
+    )
+    .then(
+        dataset=prefs_ds,
+        recipe=DPORecipe(
+            adapter=adapters.LoRA(rank=32),
+            loss=losses.DPO(beta=0.1),
+            optimizer=optim.AdamW(lr=5e-5),
+            merge_adapter=True,
         ),
-    ],
+    )
+    .wait()
 )
-
-run = client.runs.create(pipe).wait()
 ```
 
   </DocsCodeTab>

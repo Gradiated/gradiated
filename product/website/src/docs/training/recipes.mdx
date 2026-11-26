@@ -164,7 +164,7 @@ dataset = client.datasets.get("support-prod")
 recipe = RouterRecipe(
     model=Model("BAAI/bge-small-en-v1.5"),
     solver=solvers.DualHeadKernelLBFGS(l2=0.1),
-    score_key="task_success",
+    score=lambda t: t.scores["task_success"],  # or "task_success" / Scorer / Rubric
     split=splits.BySession(eval_fraction=0.15),
     calibration=calibration.SLA(max_quality_drop=0.02),
 )
@@ -356,15 +356,15 @@ grad train -f recipe.yaml --dry-run
 grad train -f recipe.yaml --wait
 ```
 
-## Multi-stage pipelines (`SFT → DPO` / `SFT → GRPO`)
+## Chaining stages (`SFT → DPO` / `SFT → GRPO`)
 
-Every `Recipe` transforms an input `Model` (a catalog `Model(...)` ref or a trained `Artifact`) into a new immutable `Artifact`. You can chain stages imperatively when you want to inspect metrics in between, or compose them into a single server-side `Pipeline`:
+Every `Recipe` turns an input `Model` (a catalog `Model(...)` ref or a trained `Artifact`) into a new immutable `Artifact`, and `run.artifact` is a pending `Artifact` handle you can pass straight into the next stage before calling `.wait()`. Use `.then(...)` as syntactic sugar for linear chains, pass `model=sft.artifact` directly for branching DAGs, or call `.wait()` on Stage 1 first whenever you want to inspect metrics before starting Stage 2:
 
 <DocsCodeTabs>
-  <DocsCodeTab label="Declarative Pipeline">
+  <DocsCodeTab label="Chained (.then)">
 
 ```python
-from grad import Grad, Model, Pipeline, Stage, WebhookRubric, adapters, optim
+from grad import Grad, Model, WebhookRubric, adapters, optim
 from grad.recipes import GRPORecipe, SFTRecipe
 
 client = Grad()
@@ -372,44 +372,40 @@ gold_ds = client.datasets.get("diff-merge-gold")
 tasks_ds = client.datasets.get("diff-merge-tasks")
 webhook_secret = client.secrets.get("grader-webhook-token")
 
-pipe = Pipeline(
-    model=Model("Qwen/Qwen3-8B"),
-    name="fast-diff-merge",
-    stages=[
-        Stage(
-            dataset=gold_ds,
-            recipe=SFTRecipe(adapter=adapters.LoRA(rank=32), optimizer=optim.AdamW(lr=2e-4)),
+# Stage 2 queues behind Stage 1 on the server and auto-cancels if Stage 1 fails.
+run = (
+    client.runs.create(
+        dataset=gold_ds,
+        name="fast-diff-merge",
+        recipe=SFTRecipe(model=Model("Qwen/Qwen3-8B"), adapter=adapters.LoRA(rank=32), optimizer=optim.AdamW(lr=2e-4)),
+    )
+    .then(
+        dataset=tasks_ds,
+        recipe=GRPORecipe(
+            adapter=adapters.LoRA(rank=32),
+            rubric=WebhookRubric(url="https://ci.internal.example/grade-diff", secret=webhook_secret),
+            optimizer=optim.AdamW(lr=2e-5),
         ),
-        Stage(
-            dataset=tasks_ds,
-            recipe=GRPORecipe(
-                adapter=adapters.LoRA(rank=32),
-                rubric=WebhookRubric(url="https://ci.internal.example/grade-diff", secret=webhook_secret),
-                optimizer=optim.AdamW(lr=2e-5),
-            ),
-        ),
-    ],
+    )
+    .wait()
 )
-
-plan = client.runs.plan(pipe)          # validates both stages + total token/cost estimate ($0)
-run = client.runs.create(pipe).wait()  # stage 1 artifact flows directly into stage 2 on the server
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="Imperative (inspect between stages)">
+  <DocsCodeTab label="Pass run.artifact (or inspect in between)">
 
 ```python
 gold_ds = client.datasets.get("diff-merge-gold")
 tasks_ds = client.datasets.get("diff-merge-tasks")
 webhook_secret = client.secrets.get("grader-webhook-token")
 
+# Omit .wait() here to queue Stage 2 server-side, or call .wait() to inspect sft.eval_report first.
 sft = client.runs.create(
     dataset=gold_ds,
     name="fast-diff-merge",
     recipe=SFTRecipe(model=Model("Qwen/Qwen3-8B"), adapter=adapters.LoRA(rank=32)),
-).wait()
+)
 
-# Inspect sft.eval_report, then pass sft.artifact directly as `model=`
 rl = client.runs.create(
     dataset=tasks_ds,
     name="fast-diff-merge",

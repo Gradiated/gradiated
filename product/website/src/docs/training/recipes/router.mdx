@@ -43,7 +43,7 @@ dataset = client.datasets.get("support-traces")
 recipe = RouterRecipe(
     model=Model("BAAI/bge-small-en-v1.5"),
     solver=solvers.DualHeadKernelLBFGS(l2=0.1),
-    score_key="task_success",
+    score=lambda t: t.scores["task_success"],  # or "task_success" / Scorer / Rubric
     split=splits.BySession(eval_fraction=0.15),
     calibration=calibration.SLA(max_quality_drop=0.02),
 )
@@ -66,7 +66,7 @@ const dataset = await grad.datasets.get("support-traces");
 const recipe = recipes.router({
   model: new Model("BAAI/bge-small-en-v1.5"),
   solver: solvers.dualHeadKernelLBFGS({ l2: 0.1 }),
-  scoreKey: "task_success",
+  score: (t) => t.scores.task_success, // or "task_success" / Scorer / Rubric
   split: splits.bySession({ evalFraction: 0.15 }),
   calibration: calibration.sla({ maxQualityDrop: 0.02 }),
 });
@@ -90,7 +90,7 @@ run, _ := client.Runs.Create(ctx, grad.RunParams{
 	Recipe: grad.RouterRecipe{
 		Model:       grad.Model("BAAI/bge-small-en-v1.5"),
 		Solver:      grad.DualHeadKernelLBFGS{L2: 0.1},
-		ScoreKey:    "task_success",
+		Score:       grad.FromScore("task_success"),
 		Split:       grad.BySessionSplit{EvalFraction: 0.15},
 		Calibration: grad.SLACalibration{MaxQualityDrop: 0.02},
 	},
@@ -115,7 +115,7 @@ grad deploy support-router@latest --canary 0.10
 | --- | --- | --- |
 | `model` | `Model("BAAI/bge-small-en-v1.5")` | Frozen text encoder (`Model("Qwen/Qwen3-0.6B")` for complex code or long context). |
 | `solver` | `solvers.DualHeadKernelLBFGS()` | `DualHeadKernelLBFGS` (fast, calibrated on small data), `LightGBM` (tabular-heavy inputs), or a custom `Solver` subclass. |
-| `score_key` | Auto-detected | Key inside `trajectory.scores` treated as task success. |
+| `score` | Auto-detected | Quality scorer: a `Callable[[Trajectory], float]`, a `Scorer` / `Rubric`, or a score key string (normalized internally to `Scorer.from_score(key)`). |
 | `split` | `splits.BySession(0.15)` | Splits whole conversations so turns from one session never leak across train and eval. |
 | `calibration` | `calibration.SLA(max_quality_drop=0.02)` | Maximum held-out quality loss vs. your fallback model used to pick the initial Lagrangian multiplier `λ`. |
 

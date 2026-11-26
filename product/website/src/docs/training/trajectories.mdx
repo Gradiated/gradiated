@@ -153,7 +153,7 @@ The import result lists how many trajectories were parsed, how many were dropped
 
 ## Filter and slice datasets
 
-Filter a `Dataset` with composable `filters.*` specs before passing it to a training run or `Pipeline` stage — `dataset.filter(...)` returns a reusable `Dataset` view so filtering stays separate from your `Recipe` hyperparameters:
+Filter a `Dataset` with composable `filters.*` specs before passing it to a training run — `dataset.filter(...)` returns a reusable `Dataset` view so filtering stays separate from your `Recipe` hyperparameters:
 
 ```python
 from grad import Grad, filters

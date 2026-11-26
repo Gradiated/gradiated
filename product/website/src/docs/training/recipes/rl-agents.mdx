@@ -2,7 +2,7 @@
 
 <DocsLead>Train models to pass tests, call tools, and recover from errors using verifiable reinforcement learning against a rubric or live Docker Compose environment.</DocsLead>
 
-Use `GRPORecipe` (or a custom `Trainer` + `Environment` loop) when you can **grade an outcome** (unit tests pass, SQL returns the right rows, an API state matches expectations) even if you do not have a single gold answer. For best stability, warm-start with [SFT](/docs/training/recipes/sft-dpo/) first so the model already emits valid tool calls, then pass that SFT `Artifact` as `model=` (or chain both in a [`Pipeline`](/docs/training/recipes/)).
+Use `GRPORecipe` (or a custom `Trainer` + `Environment` loop) when you can **grade an outcome** (unit tests pass, SQL returns the right rows, an API state matches expectations) even if you do not have a single gold answer. For best stability, warm-start with [SFT](/docs/training/recipes/sft-dpo/) first so the model already emits valid tool calls, then pass that SFT `Artifact` as `model=` (or chain directly with [`.then(...)`](/docs/training/recipes/)).
 
 ## Managed recipe vs. custom loop for RL
 

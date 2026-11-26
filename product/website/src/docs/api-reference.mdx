@@ -38,8 +38,8 @@ See the [SystemOne SDK guide](/docs/systemone-sdk/) for linden-1 examples and su
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` | `/v1/runs` | Start a managed `Recipe` or multi-stage `Pipeline` run. |
-| `POST` | `/v1/runs/plan` | Dry-run pre-flight check: validate dataset coverage, resolve recipe/pipeline defaults, and estimate training tokens and cost (`--dry-run`). |
+| `POST` | `/v1/runs` | Start a managed `Recipe` run (or queue a chained run via `depends_on` / `run.then(...)`). |
+| `POST` | `/v1/runs/plan` | Dry-run pre-flight check: validate dataset coverage, resolve recipe defaults, and estimate training tokens and cost (`--dry-run`). |
 | `GET` | `/v1/runs/{id}` | Inspect run status, resolved `recipe_spec`, `eval_report`, and produced `artifact_id`. |
 | `GET` | `/v1/runs/{id}/metrics` | Stream step-by-step training telemetry (SSE or JSON). |
 | `POST` | `/v1/runs/{id}/cancel` | Cancel an active training run. |

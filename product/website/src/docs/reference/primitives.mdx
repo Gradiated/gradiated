@@ -115,10 +115,10 @@ The SDK passes strict domain entities (`Dataset`, `Model`, `Artifact`, `Endpoint
 | **Losses** | Extensible `Loss` interface | Built-in GPU kernels (`losses.CrossEntropy`, `losses.BCEWithLogits`, `losses.OrdinalBCE`, `losses.DPO`, `losses.ImportanceSampling`, `losses.GRPO`, `losses.CISPO`, `losses.ReverseKLDistill`, `losses.TopKKLDistill`, `losses.InfoNCE`, `losses.BCESparsePositions`) or user `losses.CustomLoss` subclasses — all accepted by `trainer.forward_backward(datums, loss=...)` |
 | **Solvers, Splitters & Filters** | Extensible interfaces | `solvers.DualHeadKernelLBFGS`, `solvers.MeanDiffSteering`, `splits.BySession`, `splits.ByGroup`, `splits.Random`, `filters.MinScore` (applied via `dataset.filter(...)`) |
 | **Rubrics** | Typed scorers | `Rubric`, `Scorer`, `StatefulScorer`, `GroupScorer`, `WebhookRubric` |
-| **Recipes & Pipelines** | Subclassable `Recipe` + Composite `Pipeline` | `RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`, `Pipeline`, `Stage` |
+| **Recipes** | Subclassable `Recipe` + chained `Run` | `RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe` (chain stages via `run.then(...)` or passing pending `run.artifact`) |
 | **Endpoint Strategies** | Extensible `Strategy` base class | `strategies.Direct`, `strategies.SLALagrangian`, `strategies.ConfidenceFallback`, `strategies.SyntaxFallback`, `strategies.Cascade`, `strategies.BestOfN`, `strategies.MajorityVote`, `strategies.BudgetForcing` (configurable or subclassable) |
 
-- `Artifact` subclasses `Model`, so `model=` on any `Recipe`, `Pipeline`, `Trainer`, or `Strategy` accepts either a pure `Model("Qwen/Qwen3-8B")` ref, a live `client.models.get(...)` handle, or a trained `Artifact`.
+- `Artifact` subclasses `Model`, so `model=` on any `Recipe`, `Trainer`, or `Strategy` accepts a pure `Model("Qwen/Qwen3-8B")` ref, a live `client.models.get(...)` handle, a completed `Artifact`, or a pending `run.artifact` from an in-flight run.
 - `client.trainers.resume(ckpt)` restores both weights and optimizer moments from a `trainer.save_state()` checkpoint.
 
 ## `Model`, `Artifact` (`.grad`) & `Endpoint` (`grad.endpoint/1`)

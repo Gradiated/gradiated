@@ -261,7 +261,7 @@ Every built-in `Recipe` is an open Python class composed out of the five primiti
 
 | Mode | How it works | When to use it |
 | --- | --- | --- |
-| [**Recipes & pipelines**](/docs/training/recipes/) | Instantiate a typed recipe (`RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`), optionally compose stages into a `Pipeline`, or serialize to YAML. | You want fast, reproducible training, held-out evals, or to swap just one component (loss, splitter, or rubric) without rewriting loop plumbing. |
+| [**Recipes**](/docs/training/recipes/) | Instantiate a typed recipe (`RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`), chain stages with `.then(...)` or `run.artifact`, or serialize to YAML. | You want fast, reproducible training, held-out evals, or to swap just one component (loss, splitter, or rubric) without rewriting loop plumbing. |
 | [**Custom loops**](/docs/training/custom-loops/) | Drive `Trainer`, `Artifact`, `Environment`, and `Rubric` directly in Python with built-in or `CustomLoss` PyTorch objectives. | You need custom multi-trainer loops, replay buffers, branched tree search, or multi-agent self-play. |
 
 Any run can export its full resolved config as YAML (`grad runs inspect <run_id> --yaml > recipe.yaml`), so moving from Python defaults to version-controlled config takes one command.
@@ -296,7 +296,7 @@ Read https://gradiated.com/docs/training/recipes/router.md and integrate a Gradi
 ```text
 Read https://gradiated.com/docs/training/recipes/sft-dpo.md and set up a fine-tuning pipeline for our task:
 1. Export verified passing examples into a Gradiated `Dataset` (`input.messages`, `expected_output`, `session_id`, and `scores`).
-2. Filter the dataset with `dataset.filter(filters.MinScore(...))` and configure an `SFTRecipe` (or `Pipeline` chaining SFT -> DPO) with `Model(...)` and `splits.BySession()`.
+2. Filter the dataset with `dataset.filter(filters.MinScore(...))` and configure an `SFTRecipe` (chaining into `DPORecipe` with `.then(...)` if needed) with `Model(...)` and `splits.BySession()`.
 3. Validate with `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json` before starting training.
 4. Deploy with `strategies.SyntaxFallback(fallback=Model(...))` and wire `feedback.record()` so human fixes are captured as `expected_output`.
 ```
